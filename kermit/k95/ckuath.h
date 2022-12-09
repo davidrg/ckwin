@@ -39,6 +39,18 @@
 #ifndef K5STREAM_H
 #define K5STREAM_H
 
+#ifdef COMMENT
+/*
+  We can't possibly know where krb5.h is, so can't hardwire its
+  location into this code.  The Makefile target has to find; see
+  examples in linux+krb5-new and netbsd+krb5-new.
+  - fdc, 2 December 2022
+*/
+#ifdef CK_KERBEROS
+#include <krb5.h>                               /* Type defs. */
+#endif /* def CK_KERBEROS */
+#endif /* COMMENT */
+
 typedef void *kstream_ptr;                      /* Data send on the kstream */
 struct kstream_data_block {
   kstream_ptr ptr;

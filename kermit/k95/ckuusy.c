@@ -39,6 +39,11 @@ extern int debtim;
 #endif /* CK_SSL */
 #include <signal.h>
 
+#ifdef CK_ANSIC
+/* prototype for static funtion - fdc 30 November 2022 */
+static int xx_ftp( char *, char * );
+#endif /* CK_ANSIC */
+
 #ifdef OS2
 #include <io.h>
 #ifdef KUI
@@ -446,11 +451,13 @@ char *hlp2[] = {
 "  -L                Negotiate Telnet Binary Output only\n",
 "  -x                Require Encryption\n",
 "  -D                Disable forward-X\n",
+#ifndef NOICP
 "  -T cert=file      Use certificate in file\n",
 "  -T key=file       Use private key in file\n",
 "  -T crlfile=file   Use CRL in file\n",
 "  -T crldir=dir     Use CRLs in directory\n",
 "  -T cipher=string  Use only ciphers in string\n",
+#endif /* NOICP */
 "  -f                Forward credentials to host\n",
 "  -k realm          Set default Kerberos realm\n",
 ""
@@ -728,6 +735,7 @@ cmdlin() {
 #endif /* OS2 */
 
         debug(F100,"http personality","",0);
+#ifndef NOICP
 #ifdef CK_URL
         if (haveurl) {
             int type;
@@ -790,6 +798,7 @@ cmdlin() {
             doexit(x ? GOOD_EXIT : BAD_EXIT, -1);
         } else 
 #endif /* CK_URL */
+#endif /* NOICP */
 	  {
 	      int http_action = 0;
 	      char * host = NULL, * svc = NULL, * lpath = NULL;
@@ -859,6 +868,7 @@ cmdlin() {
 			  break;
 
 #ifdef CK_SSL
+#ifndef NOICP
                         case 'z': {
 			    /* *xargv contains a value of the form tag=value */
 			    /* we need to lookup the tag and save the value  */
@@ -902,6 +912,7 @@ cmdlin() {
 			    free(p);
 			    break;
                         }
+#endif /* NOICP */
 #endif /* CK_SSL */
 
 			case 'h':	/* Help */
@@ -2360,6 +2371,7 @@ iniopthlp() {
     inixopthlp();
 }
 
+#ifndef NOICP
 int
 doxarg(s,pre) char ** s; int pre; {
 #ifdef IKSD
@@ -2910,6 +2922,7 @@ doxarg(s,pre) char ** s; int pre; {
     }
     return(0);
 }
+#endif /* NOICP */
 
 #ifdef IKSD
 #ifdef IKSDCONF
@@ -3393,7 +3406,7 @@ extern char *line, *tmpbuf;             /* Character buffers for anything */
         debug(F000,"doarg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOICP
 	  case '-':			/* Extended commands... */
 	    if (doxarg(xargv,0) < 0) {
 		XFATAL("Extended option error");
@@ -4375,18 +4388,18 @@ dotnarg(x) char x;
         debug(F000,"dotnarg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOICP
 	  case '-':			/* Extended commands... */
             if (doxarg(xargv,0) < 0) {
                 XFATAL("Extended option error");
             } /* Full thru... */
 	  case '+':			/* Extended command for prescan() */
             return(0);
-#else  /* COMMENT */
+#else  /* NOICP */
 	  case '-':
 	  case '+':
 	    XFATAL("Extended options not configured");
-#endif /* COMMENT */
+#endif /* NOICP */
 
 /*
  * -#                Kermit 95 Startup Flags
@@ -4586,18 +4599,18 @@ dorlgarg(x) char x;
         debug(F000,"dorlgarg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOICP
 	  case '-':			/* Extended commands... */
             if (doxarg(xargv,0) < 0) {
             XFATAL("Extended option error");
             } /* Full thru... */
 	  case '+':			/* Extended command for prescan() */
             return(0);
-#else  /* COMMENT */
+#else  /* NOICP */
 	  case '-':
 	  case '+':
 	    XFATAL("Extended options not configured");
-#endif /* COMMENT */
+#endif /* NOICP */
 
 /*
  * -d                Debug
@@ -4677,18 +4690,18 @@ dossharg(x) char x;
         debug(F000,"dossharg arg","",x);
         switch (x) {                    /* Big switch on arg */
 
-#ifndef COMMENT
+#ifndef NOCICP
 	  case '-':			/* Extended commands... */
             if (doxarg(xargv,0) < 0) {
                 XFATAL("Extended option error");
             } /* Full thru... */
 	  case '+':			/* Extended command for prescan() */
             return(0);
-#else  /* COMMENTP */
+#else  /* NOICP */
 	  case '-':
 	  case '+':
 	    XFATAL("Extended options not configured");
-#endif /* COMMENT */
+#endif /* NOICP */
 
 /*
  * -d                Debug

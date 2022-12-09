@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Fri Sep 23 16:29:47 2022
+    Sat Dec  3 05:28:43 2022
 */
 
 /*
@@ -231,7 +231,6 @@ extern char diafil[];
 #define getchar(x) coninc(0)
 #endif /* STRATUS */
 
-
 #ifdef ANYX25
 extern int revcall, closgr, cudata;
 int x25ver;
@@ -309,6 +308,18 @@ extern int tcp_keepalive;
 #endif /* NOTCPOPTS */
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
+
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static VOID evalerr( char * );
+static char * fneval( char *, char*[], int, char * );
+static char * dokwval( char *, char * );
+static char * findinpath( char * );
+static char * getip( char * );
+static char * jpgdate( FILE * );
+static char * pathval( int );
+static int ckcindex( char, char * );
+#endif /* CK_ANSI */
 
 extern char * floname[];
 
@@ -2410,7 +2421,11 @@ doconect(q,async) int q, async; {
 }
 #endif /* NOLOCAL */
 
-#ifndef NOICP
+#ifdef NOICP
+char *
+homepath() { return(zhome()); }
+
+#else
 #ifdef COMMENT
 /*
   It seemed that this was needed for OS/2, in which \v(cmdfile) and other
@@ -4089,6 +4104,8 @@ debopn(s,disp) char *s; int disp; {
 }
 
 
+#ifndef NOICP
+
 /*  C K D A T E  --  Returns current date/time in standard format  */
 
 static char nowbuf[18];
@@ -4134,8 +4151,6 @@ ckdate() {
 
     return((char *)nowbuf);
 }
-
-#ifndef NOICP
 #ifdef CKLOGDIAL
 
 /*
@@ -7849,9 +7864,13 @@ evalerr(fn) char * fn; {
     }
 }
 
-
 static int
-ckcindex(c,s) char c, *s; {
+#ifdef CK_ANSIC
+ckcindex(char c, char *s)
+#else
+ckcindex(c,s) char c, *s;
+#endif /* CK_ANSIC */
+{
     int rc;
     if (!c || !s) return(0);
     for (rc = 0; s[rc]; rc++) {
@@ -15827,6 +15846,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             break;
 #endif /* NOSPL */                      /* Handle \nnn even if NOSPL. */
 
+#ifndef NOICP
 #ifndef NOKVERBS
         case 'K':
         case 'k': {
@@ -15892,6 +15912,7 @@ zzstring(s,s2,n) char *s; char **s2; int *n; {
             break;
         }
 #endif /* NOKVERBS */
+#endif /* NOICP */
 
         default:                        /* Maybe it's a backslash code */
           y = xxesc(&s);                /* Go interpret it */

@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 10.0.281, 23 Sep 2022";
+char *cktelv = "Telnet support, 10.0.282, 30 Nov 2022";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -209,6 +209,10 @@ int tn_env_flg = 0;
 #endif /* CK_NAWS */
 #endif /* NOSIGWINCH */
 #endif /* COMMENT */
+
+#ifdef CK_ANSIC
+static int tn_outst( int );             /* fdc - 30 November 2022 */
+#endif /* CK_ANSIC */
 
 CHAR sb[TSBUFSIZ];                      /* Buffer - incoming subnegotiations */
 CHAR sb_out[TSBUFSIZ];                  /* Buffer - outgoing subnegotiations */

@@ -1,11 +1,17 @@
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 10.0.166, 23 Sep 2022";
+"C-Kermit Protocol Module 10.0.168, 6 Nov 2022";
 
-int kactive = 0;			/* Kermit protocol is active */
+/*
+  From 1985 to 2022 (37 years) this file was produced by a preprocessor
+  called Wart (ckwart.c).  As of C-Kermit 10.0 Beta.07, Wart is no more
+  and this is a regular source file to be edited directly when changes
+  are needed.
+*/
+int kactive = 0;			/* Kermit protocol active flag */
 
 #define PKTZEROHACK
 
-/* C K C P R O  -- C-Kermit Protocol Module, in Wart preprocessor notation. */
+/* C K C P R O  -- C-Kermit Protocol Module */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
@@ -34,22 +40,26 @@ int kactive = 0;			/* Kermit protocol is active */
 #include "ckuath.h"                     /* fdc 2021-12-17 */
 #endif /* CK_AUTHENTICATION */
 
-/*
- Note -- This file may also be preprocessed by the UNIX Lex program, but
- you must indent the above #include statements before using Lex, and then
- restore them to the left margin in the resulting C program before compilation.
- Also, the invocation of the "wart()" function below must be replaced by an
- invocation  of the "yylex()" function.  It might also be necessary to remove
- comments in the (%)(%)...(%)(%) section.
-*/
-
-/* State definitions for Wart (or Lex) */
-%states ipkt rfile rattr rdpkt ssinit ssfile ssattr ssdata sseof sseot
-%states serve generic get rgen ssopkt ropkt
+/* State definitions for  */
+#define ipkt 1
+#define rfile 2
+#define rattr 3
+#define rdpkt 4
+#define ssinit 5
+#define ssfile 6
+#define ssattr 7
+#define ssdata 8
+#define sseof 9
+#define sseot 10
+#define serve 11
+#define generic 12
+#define get 13
+#define rgen 14
+#define ssopkt 15
+#define ropkt 16
 
 _PROTOTYP(static VOID xxproto,(void));
 _PROTOTYP(static VOID wheremsg,(void));
-_PROTOTYP(int wart,(void));
 _PROTOTYP(static int sgetinit,(int,int));
 _PROTOTYP(int sndspace,(int));
 
@@ -312,8 +322,6 @@ extern int what, lastxfer;
   static int x;				/* General-purpose integer */
   static char *s;			/* General-purpose string pointer */
 
-/* Macros - Note, BEGIN is predefined by Wart (and Lex) as "state = ", */
-/* BEGIN is NOT a GOTO! */
 #define TINIT if (tinit(1) < 0) return(-9)
 #define SERVE { TINIT; resetc(); nakstate=1; what=W_NOTHING; cmarg2=""; \
 sendmode=SM_SEND; havefs=0; recursive=r_save; fnspath=p_save; BEGIN serve; }
@@ -347,22 +355,36 @@ static int srv_rename();		/* Server executes REMOTE RENAME */
 static int srv_login();			/* Server executes REMOTE LOGIN */
 static int srv_timeout();		/* Server times out */
 
-%%
+
+#define BEGIN state =
+
+int state = 0;
 
 /*
-  Protocol entry points, one for each start state (sstate).
-  The lowercase letters are internal "inputs" from the user interface.
-  NOTE: The start state letters that appear on the left margin immediately
-  below can NOT be used as packet types OR as G-packet subcodes.
+  This is the wart FUNCTION, not the wart PROGRAM.
+  It's the Kermit file-transfer protocol state machine.
 */
-
-s { TINIT;				/* Send file(s) */
+int
+wart()
+{
+    int c,actno;
+    extern char tbl[];
+    while (1) {
+	c = input() - 32;
+	debug(F000,"PROTO input",ckitoa(state),c+32);
+	if (c < 0 || c > 95) c = 0;
+	if ((actno = tbl[c + state*96]) != -1)
+	    switch(actno) {
+case 1:
+    { TINIT;				/* Send file(s) */
     if (sinit() > 0) BEGIN ssinit;
        else RESUME; }
-
-v { TINIT; nakstate = 1; BEGIN get; }	/* Receive file(s) */
-
-r {					/* Client sends a GET command */
+    break;
+case 2:
+    { TINIT; nakstate = 1; BEGIN get; }
+    break;
+case 3:
+    {					/* Client sends a GET command */
     TINIT;
     vstate = get;
     reget = 0;
@@ -377,8 +399,9 @@ r {					/* Client sends a GET command */
     else
       RESUME;
 }
-
-h {					/* Client sends a RETRIEVE command */
+    break;
+case 4:
+    {					/* Client sends a RETRIEVE command */
     TINIT;
     vstate = get;
     reget = 0;
@@ -390,7 +413,9 @@ h {					/* Client sends a RETRIEVE command */
     else
       RESUME;
 }
-j {					/* Client sends a REGET command */
+    break;
+case 5:
+    {					/* Client sends a REGET command */
     TINIT;
     vstate = get;
     reget = 1;
@@ -402,7 +427,9 @@ j {					/* Client sends a REGET command */
     else
       RESUME;
 }
-o {					/* Client sends Extended GET Packet */
+    break;
+case 6:
+    {					/* Client sends Extended GET Packet */
     TINIT;
     vstate = get;
     reget = oopts & GOPT_RES;
@@ -414,7 +441,9 @@ o {					/* Client sends Extended GET Packet */
     else
       RESUME;
 }
-c {					/* Client sends a Host command */
+    break;
+case 7:
+    {					/* Client sends a Host command */
     TINIT;
     vstate = rgen;
     vcmd = 'C';
@@ -423,7 +452,9 @@ c {					/* Client sends a Host command */
     else
       RESUME;
 }
-k { TINIT;				/* Client sends a Kermit command */
+    break;
+case 8:
+    { TINIT;				/* Client sends a Kermit command */
     vstate = rgen;
     vcmd = 'K';
     if (sipkt('I') >= 0)
@@ -431,7 +462,9 @@ k { TINIT;				/* Client sends a Kermit command */
     else
       RESUME;
 }
-g {					/* Client sends a REMOTE command */
+    break;
+case 9:
+    {					/* Client sends a REMOTE command */
     TINIT;
     vstate = rgen;
     vcmd = 'G';
@@ -440,7 +473,9 @@ g {					/* Client sends a REMOTE command */
     else
       RESUME;
 }
-x {					/* Enter server mode */
+    break;
+case 10:
+    {					/* Enter server mode */
     int x;
     x = justone;
     if (!ENABLED(en_del)) {		/* If DELETE is disabled */
@@ -462,8 +497,9 @@ x {					/* Enter server mode */
     if (ikdbopen) slotstate(what, "SERVER", "", "");
 #endif /* IKSDB */
 }
-
-a {
+    break;
+case 11:
+    {
     int b1 = 0, b2 = 0;
     if (!data) TINIT;			/* "ABEND" -- Tell other side. */
 
@@ -487,25 +523,17 @@ a {
     success = 0;
     return(0);				/* Return from protocol. */
 }
-
-/*
-  Dynamic states: <current-states>input-character { action }
-  nakstate != 0 means we're in a receiving state, in which we send ACKs & NAKs.
-*/
-
-<rgen,get,serve,ropkt>S {		/* Receive Send-Init packet. */
+    break;
+case 12:
+    {		/* Receive Send-Init packet. */
     rc = rcv_s_pkt();
     cancel = 0;				/* Reset cancellation counter */
     debug(F101,"rcv_s_pkt","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
-
-/* States in which we get replies back from commands sent to a server. */
-/* Complicated because direction of protocol changes, packet number    */
-/* stays at zero through I-G-S sequence, and complicated even more by  */
-/* sliding windows buffer allocation. */
-
-<ipkt>Y {				/* Get ack for I-packet */
+    break;
+case 13:
+    {				/* Get ack for I-packet */
     int x = 0;
 #ifdef PKTZEROHACK
     ckstrncpy(ipktack,(char *)rdatap,PKTZEROLEN); /* Save a copy of the ACK */
@@ -545,8 +573,9 @@ a {
 	BEGIN vstate;			/* Switch to desired state */
     }
 }
-
-<ssopkt>Y {				/* Got ACK to O-Packet */
+    break;
+case 14:
+    {				/* Got ACK to O-Packet */
     debug(F100,"CPCPRO <ssopkt>Y","",0);
     x = sopkt();
     debug(F101,"CPCPRO <ssopkt>Y x","",x);
@@ -566,8 +595,9 @@ a {
     }
     debug(F101,"CPCPRO <ssopkt>Y not changing state","",x);
 }
-
-<ipkt>E {				/* Ignore Error reply to I packet */
+    break;
+case 15:
+    {				/* Ignore Error reply to I packet */
     int x = 0;
     winlo = 0;				/* Set window-low back to zero */
     debug(F101,"<ipkt>E winlo","",winlo);
@@ -591,15 +621,15 @@ a {
 	BEGIN vstate;
     }
 }
-
-<get>Y {		/* Resend of previous I-pkt ACK, same seq number */
+    break;
+case 16:
+    {		/* Resend of previous I-pkt ACK, same seq number */
     freerpkt(0);			/* Free the ACK's receive buffer */
     resend(0);				/* Send the GET packet again. */
 }
-
-/* States in which we're being a server */
-
-<serve,get>I {				/* Get I-packet */
+    break;
+case 17:
+    {				/* Get I-packet */
 #ifndef NOSERVER
     spar(rdatap);			/* Set parameters from it */
     ack1(rpar());			/* Respond with our own parameters */
@@ -618,8 +648,9 @@ a {
 #endif /* NOSERVER */
     cancel = 0;				/* Reset cancellation counter */
 }
-
-<serve>R {				/* GET */
+    break;
+case 18:
+    {				/* GET */
 #ifndef NOSERVER
     if (x_login && !x_logged) {
 	errpkt((CHAR *)"Login required");
@@ -635,8 +666,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>H {				/* GET /DELETE (RETRIEVE) */
+    break;
+case 19:
+    {				/* GET /DELETE (RETRIEVE) */
 #ifndef NOSERVER
     if (x_login && !x_logged) {
 	errpkt((CHAR *)"Login required");
@@ -656,8 +688,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>V {				/* GET /RECURSIVE */
+    break;
+case 20:
+    {				/* GET /RECURSIVE */
 #ifndef NOSERVER
     recursive = 1;			/* Set these before sgetinit() */
     if (fnspath == PATH_OFF)
@@ -676,8 +709,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>W {				/* GET /RECURSIVE /DELETE */
+    break;
+case 21:
+    {				/* GET /RECURSIVE /DELETE */
 #ifndef NOSERVER
     recursive = 1;			/* Set these before sgetinit() */
     if (fnspath == PATH_OFF)
@@ -701,8 +735,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>J {				/* GET /RECOVER (REGET) */
+    break;
+case 22:
+    {				/* GET /RECOVER (REGET) */
 #ifndef NOSERVER
     if (x_login && !x_logged) {
 	errpkt((CHAR *)"Login required");
@@ -718,8 +753,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>O {				/* Extended GET */
+    break;
+case 23:
+    {				/* Extended GET */
 #ifndef NOSERVER
     if (x_login && !x_logged) {		/* (any combination of options) */
 	errpkt((CHAR *)"Login required");
@@ -741,8 +777,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<ropkt>O {
+    break;
+case 24:
+    {
 #ifndef NOSERVER
     if (x_login && !x_logged) {		/* (any combination of options) */
 	errpkt((CHAR *)"Login required");
@@ -763,8 +800,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>G {				/* Generic server command */
+    break;
+case 25:
+    {				/* Generic server command */
 #ifndef NOSERVER
     srvptr = srvcmd;			/* Point to command buffer */
     decode(rdatap,putsrv,0);		/* Decode packet data into it */
@@ -794,8 +832,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>C {				/* Receive Host command */
+    break;
+case 26:
+    {				/* Receive Host command */
 #ifndef NOSERVER
     if (x_login && !x_logged) {
 	errpkt((CHAR *)"Login required");
@@ -831,21 +870,24 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<serve>q {				/* Interrupted or connection lost */
+    break;
+case 27:
+    {				/* Interrupted or connection lost */
     rc = srv_timeout();
     debug(F101,"srv_timeout","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
-
-<serve>N {				/* Server got a NAK in command-wait */
+    break;
+case 28:
+    {				/* Server got a NAK in command-wait */
 #ifndef NOSERVER
     errpkt((CHAR *)"Did you say RECEIVE instead of GET?");
     RESUME;
 #endif /* NOSERVER */
 }
-
-<serve>. {				/* Any other command in this state */
+    break;
+case 29:
+    {				/* Any other command in this state */
 #ifndef NOSERVER
     if (c != ('E' - SP) && c != ('Y' - SP)) /* except E and Y packets. */
       errpkt((CHAR *)"Unimplemented server function");
@@ -855,14 +897,16 @@ a {
     RESUME;				/* Go back to server command wait. */
 #endif /* NOSERVER */
 }
-
-<generic>I {				/* Login/Out */
+    break;
+case 30:
+    {				/* Login/Out */
     rc = srv_login();
     debug(F101,"<generic>I srv_login","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
-
-<generic>C {				/* Got REMOTE CD command */
+    break;
+case 31:
+    {				/* Got REMOTE CD command */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -914,8 +958,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>A {				/* Got REMOTE PWD command */
+    break;
+case 32:
+    {				/* Got REMOTE PWD command */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -936,8 +981,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>D {				/* REMOTE DIRECTORY command */
+    break;
+case 33:
+    {				/* REMOTE DIRECTORY command */
 #ifndef NOSERVER
     char *n2;
 #ifdef CKSYSLOG
@@ -979,8 +1025,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>E {				/* REMOTE DELETE (Erase) */
+    break;
+case 34:
+    {				/* REMOTE DELETE (Erase) */
 #ifndef NOSERVER
     char *n2;
 #ifdef CKSYSLOG
@@ -1019,8 +1066,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>F {				/* FINISH */
+    break;
+case 35:
+    {				/* FINISH */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -1040,8 +1088,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>X {				/* EXIT */
+    break;
+case 36:
+    {				/* EXIT */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -1060,8 +1109,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>L {				/* BYE (Logout) */
+    break;
+case 37:
+    {				/* BYE (Logout) */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -1103,8 +1153,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>H {				/* REMOTE HELP */
+    break;
+case 38:
+    {				/* REMOTE HELP */
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
       cksyslog(SYSLG_PR, 1, "server", "REMOTE HELP", NULL);
@@ -1121,20 +1172,23 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>R {                            /* REMOTE RENAME */
+    break;
+case 39:
+    {                            /* REMOTE RENAME */
     rc = srv_rename();
     debug(F101,"srv_rename","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
-
-<generic>K {                            /* REMOTE COPY */
+    break;
+case 40:
+    {                            /* REMOTE COPY */
     rc = srv_copy();
     debug(F101,"srv_copy","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
-
-<generic>S {				/* REMOTE SET */
+    break;
+case 41:
+    {				/* REMOTE SET */
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
       cksyslog(SYSLG_PR, 1, "server", "REMOTE SET", (char *)srvcmd);
@@ -1156,8 +1210,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>T {				/* REMOTE TYPE */
+    break;
+case 42:
+    {				/* REMOTE TYPE */
 #ifndef NOSERVER
     char *n2;
 #ifdef CKSYSLOG
@@ -1196,8 +1251,9 @@ a {
     }
 #endif /* NOSERVER */
 }
-
-<generic>m {				/* REMOTE MKDIR */
+    break;
+case 43:
+    {				/* REMOTE MKDIR */
 #ifndef NOSERVER
 #ifdef CK_MKDIR
 #ifdef CKSYSLOG
@@ -1235,8 +1291,9 @@ a {
 #endif /* CK_MKDIR */
 #endif /* NOSERVER */
 }
-
-<generic>d {				/* REMOTE RMDIR */
+    break;
+case 44:
+    {				/* REMOTE RMDIR */
 #ifndef NOSERVER
 #ifdef CK_MKDIR
 #ifdef CKSYSLOG
@@ -1274,8 +1331,9 @@ a {
 #endif /* CK_MKDIR */
 #endif /* NOSERVER */
 }
-
-<generic>U {				/* REMOTE SPACE */
+    break;
+case 45:
+    {				/* REMOTE SPACE */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -1326,8 +1384,9 @@ _PROTOTYP(int sndspace,(int));
     }
 #endif /* NOSERVER */
 }
-
-<generic>W {				/* REMOTE WHO */
+    break;
+case 46:
+    {				/* REMOTE WHO */
 #ifndef NOSERVER
 #ifdef CKSYSLOG
     if (ckxsyslog >= SYSLG_PR && ckxlogging)
@@ -1359,14 +1418,16 @@ _PROTOTYP(int sndwho,(char *));
     }
 #endif /* NOSERVER */
 }
-
-<generic>V {				/* Variable query or set */
+    break;
+case 47:
+    {				/* Variable query or set */
     rc = srv_query();
     debug(F101,"srv_query","",rc);
     if (rc > -1) return(rc);
 }
-
-<generic>M {				/* REMOTE MESSAGE command */
+    break;
+case 48:
+    {				/* REMOTE MESSAGE command */
 #ifndef NOSERVER
     debug(F110,"RMSG",(char *)srvcmd+2,0);
     xxscreen(SCR_MS,0,0L,(char *)(srvcmd+2));
@@ -1374,8 +1435,9 @@ _PROTOTYP(int sndwho,(char *));
     RESUME;
 #endif	/* NOSERVER */
 }
-
-<generic>q {				/* Interrupted or connection lost */
+    break;
+case 49:
+    {				/* Interrupted or connection lost */
 #ifndef NOSERVER
     if (fatalio) {			/* Connection lost */
 #ifdef CKSYSLOG
@@ -1404,15 +1466,17 @@ _PROTOTYP(int sndwho,(char *));
     }
 #endif /* NOSERVER */
 }
-
-<generic>. {				/* Anything else in this state... */
+    break;
+case 50:
+    {				/* Anything else in this state... */
 #ifndef NOSERVER
     errpkt((CHAR *)"Unimplemented REMOTE command"); /* Complain */
     RESUME;				/* and return to server command wait */
 #endif /* NOSERVER */
 }
-
-<rgen>q {				/* Sent BYE and connection broken */
+    break;
+case 51:
+    {				/* Sent BYE and connection broken */
     if (bye_active && ttchk() < 0) {
 	msleep(500);
 	bye_active = 0;
@@ -1423,14 +1487,16 @@ _PROTOTYP(int sndwho,(char *));
 	return(success = 0);		/* or connection not broken */
     }
 }
-
-<rgen>Y {				/* Short-Form reply */
+    break;
+case 52:
+    {				/* Short-Form reply */
     rc = rcv_shortreply();
     debug(F101,"<rgen>Y rcv_shortreply","",rc);
     if (rc > -1) return(rc);
 }
-
-<rgen,rfile>F {				/* File header */
+    break;
+case 53:
+    {				/* File header */
     /* char *n2; */
     extern int rsn;
     debug(F101,"<rfile>F winlo 1","",winlo);
@@ -1524,8 +1590,9 @@ _PROTOTYP(int sndwho,(char *));
 	BEGIN rattr;			/* Now expect Attribute packets */
     }
 }
-
-<rgen,rfile>X {				/* X-packet instead of file header */
+    break;
+case 54:
+    {				/* X-packet instead of file header */
     xflg = 1;				/* Screen data */
     if (!czseen)
       cancel = 0;			/* Reset cancellation counter */
@@ -1553,8 +1620,9 @@ _PROTOTYP(int sndwho,(char *));
 #endif /* IKSDB */
     BEGIN rattr;			/* Expect Attribute packets */
 }
-
-<rattr>A {				/* Attribute packet */
+    break;
+case 55:
+    {				/* Attribute packet */
     if (gattr(rdatap,&iattr) == 0) {	/* Read into attribute structure */
 #ifdef CK_RESEND
 	ack1((CHAR *)iattr.reply.val);	/* Reply with data */
@@ -1573,15 +1641,17 @@ _PROTOTYP(int sndwho,(char *));
 #endif /* TLOG */
     }
 }
-
-<rattr>D {				/* First data packet */
+    break;
+case 56:
+    {				/* First data packet */
     debug(F100,"<rattr> D firstdata","",0);
     rc = rcv_firstdata();
     debug(F101,"rcv_firstdata rc","",rc);
     if (rc > -1) return(rc);		/* (see below) */
 }
-
-<rfile>B {				/* EOT, no more files */
+    break;
+case 57:
+    {				/* EOT, no more files */
     ack();				/* Acknowledge the B packet */
     reot();				/* Do EOT things */
 #ifdef CK_TMPDIR
@@ -1595,8 +1665,9 @@ _PROTOTYP(int sndwho,(char *));
 #endif /* CK_TMPDIR */
     RESUME;				/* and quit */
 }
-
-<rdpkt>D {				/* Got Data packet */
+    break;
+case 58:
+    {				/* Got Data packet */
     debug(F101,"<rdpkt>D cxseen","",cxseen);
     debug(F101,"<rdpkt>D czseen","",czseen);
     if (cxseen || czseen || discard) {	/* If file or group interruption */
@@ -1643,8 +1714,9 @@ _PROTOTYP(int sndwho,(char *));
 	  ack();
     }
 }
-
-<rattr>Z {				/* EOF immediately after A-Packet. */
+    break;
+case 59:
+    {				/* EOF immediately after A-Packet. */
     rf_err = "Can't create file";
     timint = s_timint;
     if (discard) {			/* Discarding a real file... */
@@ -1679,16 +1751,18 @@ _PROTOTYP(int sndwho,(char *));
 	BEGIN rfile;			/* and await another file */
     }
 }
-
-<rdpkt>q {  				/* Ctrl-C or connection loss. */
+    break;
+case 60:
+    {  				/* Ctrl-C or connection loss. */
     timint = s_timint;
     window(1);				/* Set window size back to 1... */
     cxseen = 1;
     x = clsof(1);			/* Close file */
     return(success = 0);		/* Failed */
 }
-
-<rdpkt>Z {				/* End Of File (EOF) Packet */
+    break;
+case 61:
+    {				/* End Of File (EOF) Packet */
 /*  wslots = 1;	*/			/* (don't set) Window size back to 1 */
 #ifndef COHERENT /* Coherent compiler blows up on this switch() statement. */
     x = reof(filnam, &iattr);		/* Handle the EOF packet */
@@ -1745,8 +1819,9 @@ _PROTOTYP(int sndwho,(char *));
     }
 #endif /* COHERENT */
 }
-
-<ssinit>Y {				/* ACK for Send-Init */
+    break;
+case 62:
+    {				/* ACK for Send-Init */
     spar(rdatap);			/* set parameters from it */
     cancel = 0;
     if (bctf) {
@@ -1794,28 +1869,24 @@ _PROTOTYP(int sndwho,(char *));
     }
 #endif /* CK_RESEND */
 }
-
-/*
-  These states are necessary to handle the case where we get a server command
-  packet (R, G, or C) reply with an S packet, but the client retransmits the
-  command packet.  The input() function doesn't catch this because the packet
-  number is still zero.
-*/
-<ssinit>R {				/* R packet was retransmitted. */
+    break;
+case 63:
+    {				/* R packet was retransmitted. */
     xsinit();				/* Resend packet 0 */
 }
-
-<ssinit>G {				/* Same deal if G packet comes again */
+    break;
+case 64:
+    {				/* Same deal if G packet comes again */
     xsinit();
 }
-
-/* should probably add cases for O, W, V, H, J, ... */
-
-<ssinit>C {				/* Same deal if C packet comes again */
+    break;
+case 65:
+    {				/* Same deal if C packet comes again */
     xsinit();
 }
-
-<ssfile>Y {				/* ACK for F or X packet */
+    break;
+case 66:
+    {				/* ACK for F or X packet */
     srvptr = srvcmd;			/* Point to string buffer */
     decode(rdatap,putsrv,0);		/* Decode data field, if any */
     putsrv(NUL);			/* Terminate with null */
@@ -1865,8 +1936,9 @@ _PROTOTYP(int sndwho,(char *));
 	}
     }
 }
-
-<ssattr>Y {				/* Got ACK to A packet */
+    break;
+case 67:
+    {				/* Got ACK to A packet */
     ffc = 0L;				/* Reset file byte counter */
     debug(F101,"<ssattr>Y cxseen","",cxseen);
     if (cxseen||czseen) {		/* Interrupted? */
@@ -1908,15 +1980,17 @@ _PROTOTYP(int sndwho,(char *));
 	}
     }
 }
-
-<ssdata>q {  				/* Ctrl-C or connection loss. */
+    break;
+case 68:
+    {  				/* Ctrl-C or connection loss. */
     window(1);				/* Set window size back to 1... */
     cxseen = 1;				/* To indicate interruption */
     x = clsif();			/* Close file */
     return(success = 0);		/* Failed */
 }
-
-<ssdata>Y {				/* Got ACK to Data packet */
+    break;
+case 69:
+    {				/* Got ACK to Data packet */
     canned(rdatap);			/* Check if file transfer cancelled */
     debug(F111,"<ssdata>Y cxseen",rdatap,cxseen);
     debug(F111,"<ssdata>Y czseen",rdatap,czseen);
@@ -1940,8 +2014,9 @@ _PROTOTYP(int sndwho,(char *));
     }
     /* NOTE: If x == 0 it means we're draining: see sdata()! */
 }
-
-<sseof>Y {				/* Got ACK to EOF */
+    break;
+case 70:
+    {				/* Got ACK to EOF */
     int g, xdiscard;
     canned(rdatap);			/* Check if file transfer cancelled */
     debug(F111,"<sseof>Y cxseen",rdatap,cxseen);
@@ -2064,13 +2139,15 @@ _PROTOTYP(int sndwho,(char *));
     }
 #endif /* COMMENT */
 }
-
-<sseot>Y {				/* Got ACK to EOT */
+    break;
+case 71:
+    {				/* Got ACK to EOT */
     debug(F101,"sseot justone","",justone);
     RESUME;				/* All done, just quit */
 }
-
-E {					/* Got Error packet, in any state */
+    break;
+case 72:
+    {					/* Got Error packet, in any state */
     char *s = "";
     window(1);				/* Close window */
     timint = s_timint;			/* Restore original timeout */
@@ -2121,17 +2198,128 @@ E {					/* Got Error packet, in any state */
 #endif /* IKSDB */
     RESUME;
 }
-
-q { success = 0; QUIT; }		/* Ctrl-C or connection loss. */
-
-. {					/* Anything not accounted for above */
+    break;
+case 73:
+    { success = 0; QUIT; }
+    break;
+case 74:
+    {					/* Anything not accounted for above */
     errpkt((CHAR *)"Unexpected packet type"); /* Give error message */
     window(1);
     xitsta |= (what & W_KERMIT);	/* Save this for doexit(). */
     RESUME;				/* and quit */
 }
+    break;
 
-%%
+	    }
+    }
+}
+
+char tbl[] = {
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 15, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 13, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 57, 74, 74, 72, 53, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 54, 74, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 55, 74, 74, 56, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 59, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 58, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 61, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 60,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 65, 74, 72, 74, 64, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 63, 74, 74, 74, 74, 74, 74, 62, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 66, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 67, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 69, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 68,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 70, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 71, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+ 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+ 29, 29, 29, 26, 29, 29, 29, 25, 19, 17, 22, 29, 29, 29, 28, 23,
+ 29, 29, 18, 12, 29, 29, 20, 21, 29, 29, 29, 29, 29, 29, 29, 29,
+ 29, 11, 29,  7, 29, 29, 29,  9,  4, 29,  5,  8, 29, 29, 29,  6,
+ 29, 27,  3,  1, 29, 29,  2, 29, 10, 29, 29, 29, 29, 29, 29, 29,
+ -1, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
+ 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
+ 50, 32, 50, 31, 33, 34, 35, 50, 38, 30, 50, 40, 37, 48, 50, 50,
+ 50, 50, 39, 41, 42, 45, 47, 46, 36, 50, 50, 50, 50, 50, 50, 50,
+ 50, 11, 50,  7, 44, 50, 50,  9,  4, 50,  5,  8, 50, 43, 50,  6,
+ 50, 49,  3,  1, 50, 50,  2, 50, 10, 50, 50, 50, 50, 50, 50, 50,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 17, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 12, 74, 74, 74, 74, 74, 16, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 53, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 12, 74, 74, 74, 74, 54, 52, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 51,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+ -1, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 14, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74, 74,
+  0, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 74, 74, 74, 74, 72, 74, 74, 74, 74, 74, 74, 74, 74, 74, 24,
+ 74, 74, 74, 12, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74,
+ 74, 11, 74,  7, 74, 74, 74,  9,  4, 74,  5,  8, 74, 74, 74,  6,
+ 74, 73,  3,  1, 74, 74,  2, 74, 10, 74, 74, 74, 74, 74, 74,74
+};
+
 
 /*
   From here down to proto() are routines that were moved out of the state
@@ -3124,10 +3312,11 @@ _PROTOTYP( int pxyz, (int) );
 	}
     }
 
-/* Set up the communication line for file transfer. */
-/* NOTE: All of the xxscreen() calls prior to the wart() invocation */
-/* could just as easily be printf's or, for that matter, hints. */
-
+/*
+  Set up the communication line for file transfer.
+  NOTE: All of the xxscreen() calls prior to the wart() invocation 
+  could just as easily be printf's or, for that matter, hints.
+*/
     if (local && (speed < 0L) && (network == 0)) {
 	xxscreen(SCR_EM,0,0L,"Sorry, you must 'set speed' first");
 	return;
@@ -3158,6 +3347,8 @@ _PROTOTYP( int pxyz, (int) );
 	xxscreen(SCR_EM,0,0L,"Can't condition line");
 	return;
     }
+#ifndef V7
+    /* this tickles a bug in the Unix V7 compiler - fdc 2 November 2022 */
     if (local && !network && carrier != CAR_OFF) {
 	int x;				/* Serial connection */
 	x = ttgmdm();			/* with carrier checking */
@@ -3169,6 +3360,7 @@ _PROTOTYP( int pxyz, (int) );
 	    }
 	}
     }
+#endif /* V7 */
     /* Send remote side's "receive" or "server" startup string, if any */
     if (local && ckindex((char *)xss,"srgcjhk",0,0,1)) {
 	char *s = NULL;
@@ -3419,11 +3611,11 @@ _PROTOTYP( int pxyz, (int) );
     if (!local) sleep(1);
 #endif /* COMMENT */
 /*
-  The 'wart()' function is generated by the wart program.  It gets a
-  character from the input() routine and then based on that character and
-  the current state, selects the appropriate action, according to the state
-  table above, which is transformed by the wart program into a big case
-  statement.  The function is active for one transaction.
+  The 'wart()' function gets a character from the input() routine and then
+  based on that character and the current state, selects the appropriate
+  action, according to the state table above, which is transformed by the wart
+  program into a big switch statement.  The function is active for one
+  transaction.
 */
     rtimer();				/* Reset elapsed-time timer */
 #ifdef GFTIMER

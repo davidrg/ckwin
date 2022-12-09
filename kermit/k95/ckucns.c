@@ -2701,6 +2701,7 @@ doesc(c) char c;
 	    return;
 
 	  default:			/* Other */
+#ifndef NOICP
 	    if (c == CMDQ) {		/* Backslash escape */
 		int x;
 		ecbp = ecbuf;
@@ -2718,6 +2719,7 @@ doesc(c) char c;
 		    return;
 		}
 	    }
+#endif /* NOICP */
 	    conoc(BEL); return; 	/* Invalid esc arg, beep */
     	}
     }

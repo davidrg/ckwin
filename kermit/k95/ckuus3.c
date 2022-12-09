@@ -14,7 +14,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 23 September 2022
+    Last update: Fri Dec  2 07:26:48 2022 (changes for XYZMODEM internal)
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -6936,15 +6936,15 @@ setproto() {                            /* Select a file transfer protocol */
      "Optional command to send to host prior to uploading in binary mode",
                p1)) < 0) {
         if (x == -3) {
-            /* DavidG 2022-11-29: If the protocol is internal and P is not
-             * available, bail. Otherwise, the user is able to set the protocol
-             * to xmodem (which won't work) and receives an error if they try
-             * to change it back to kermit.
-             *
-             * I have no idea *why* we don't just jump to protoexit in this case
-             * like all the others which is why the existing behaviour is being
-             * left as-is for now.
-             * */
+          /* DavidG 2022-11-29: If the protocol is internal and P is not
+           * available, bail. Otherwise, the user is able to set the protocol
+           * to xmodem (which won't work) and receives an error if they try
+           * to change it back to kermit.
+           *
+           * I have no idea *why* we don't just jump to protoexit in this case
+           * like all the others which is why the existing behaviour is being
+           * left as-is for now.
+           * */
 #ifdef XYZ_INTERNAL
             if (!p_avail) {
                 bleep(BP_WARN);
@@ -8802,6 +8802,16 @@ dosetsftp() {
 #ifdef KUI
 #include "ikui.h"
 extern ULONG RGBTable[16];
+
+#ifdef CK_ANSIC
+/* Prototypes for static functions - fdc 30 November 2022 */
+static char * sexpdebug( char * );
+static int setdial ( int ); 
+static int dialstr( char **, char * );
+static int parsdir( int );
+static int protofield( char *, char *, char * );
+static int setprinter( int );
+#endif /* CK_ANSIC */
 
 #define GUI_RGB  1
 #define GUI_WIN  2
@@ -11026,8 +11036,10 @@ case XYCARR:                            /* CARRIER-WATCH */
             y = cmnum("Error message verbosity level, 0-3","1",10,&x,xxstring);
             return(setnum(&cmd_err,x,y,3));
 
+#ifndef NOSPL
 	  case SCMD_VAR:
 	    return(setvareval());
+#endif /* NOSPL */
 
           default:
             return(-2);
@@ -11653,7 +11665,7 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
 
         if (x < 0) {
             if (x == -3) printf("?value required\n");
-#ifdef USETCSETSPEED
+#ifdef USETCSETSPEED               /* SCO Unixware 7 only */
             /* In this case, any number can be tried */
             /* There's a parse error message but the request still goes thru */
             if (rdigits(atmbuf))
@@ -11680,12 +11692,11 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
             printf("\n?Speed cannot be set for network connections\n");
             return(success = 0);
         }
-
 /*
   Note: This way of handling speeds is not 16-bit safe for speeds greater
   than 230400.  The argument to ttsspd() should have been a long.
 */
-#ifdef USETCSETSPEED
+#ifdef USETCSETSPEED               /* SCO Unixware 7 only */
         if (zz > -1L)
           x = zz / 10L;
 #endif /* USETCSETSPEED */

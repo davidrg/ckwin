@@ -1,9 +1,12 @@
 C-KERMIT 10.0 DEVELOPMENT
 
-C-Kermit 10.0 Beta.06 14 October 2022
+C-Kermit 10.0 Beta.07 07 December 2022
 
-Beta.06 fixes a couple problems in Beta.05 and adds numerous
-improvements for (Open)VMS from SMS.  For details see:
+See this page for a brief summary of Beta.07:
+
+  https://www.kermitproject.org/ck10beta07.html 
+
+and the C-Kermit Change Log:
 
   https://www.kermitproject.org/ckupdates.html 
 

@@ -523,6 +523,9 @@
 
 #ifdef MINIX
 #ifdef MINIX340
+#ifdef HERALD
+#undef HERALD
+#endif  /* HERALD */
 #define HERALD " Minix 3.4.0"
 #ifndef MINIX3
 #define MINIX3
@@ -1007,7 +1010,7 @@
 #endif /* OS/2 */
 
 #ifndef HERALD
-#define HERALD " Unknown Version"
+#define HERALD " Unknown Platform"
 #endif /* HERALD */
 
 /* Hardware type */

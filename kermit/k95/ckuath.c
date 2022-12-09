@@ -1,4 +1,4 @@
-char *ckathv = "Authentication, 10.0.239, 30 Sep 2022";
+char *ckathv = "Authentication, 10.0.243, 04 Dec 2022";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
@@ -147,29 +147,37 @@ int accept_complete = 0;
 #endif /* printf */
 #include "krb5.h"
 
+/* ifdefs -fdc 22 November 2022 */
+#ifdef XX_COM_ERR_H
 #include "com_err.h"
+#else
+#ifdef K5_COM_ERR_H
+#include "krb5/com_err.h"
+#else
+#ifdef ET_COM_ERR_H
+#include "et/com_err.h"
+#endif /* ET_COM_ERR_H */
+#endif /* K5_COM_ERR_H */
+#endif /* COM_ERR_H */
 
 #ifdef saveprintf
 #define printf saveprintf
 #endif /* saveprintf */
 #else /* HEIMDAL */
 #include "krb5.h"
-#ifdef BETATEST
-#include "profile.h"
-#endif /* BETATEST */
-#include "com_err.h"
+/* #include "com_err.h" */ /* already done just above */
 #ifdef KRB5_GET_INIT_CREDS_OPT_TKT_LIFE
 #define KRB5_HAVE_GET_INIT_CREDS
 #else
 #define krb5_free_unparsed_name(con,val) krb5_xfree((char *)(val))
-#endif
+#endif /* KRB5_GET_INIT_CREDS_OPT_TKT_LIFE */
 #ifndef KRB5_HAVE_GET_INIT_CREDS
 #define krb5_free_data_contents(c,v) krb5_xfree((char *)(v)->data)
 #endif
 #endif /* HEIMDAL */
 #ifdef HAVE_PWD_H
 #include <pwd.h>
-#endif
+#endif /* HAVE_PWD_H */
 #endif /* KRB5 */
 
 #ifdef KRB4
@@ -676,6 +684,13 @@ ck_krb4_is_installed_as_server()
 #endif /* KRB524 */
     else
         return(0);
+
+/* 2022-12-01  SMS.  Added return in case where ifndef KRB4.  Smarter to
+ * make the whole function ifdef KRB4, like its only invocation, below?
+ */
+#else /* def KRB4 */
+    return(0);
+
 #endif /* KRB4 */
 }
 
@@ -5033,9 +5048,9 @@ k5_auth_reply(how,data,cnt) int how; unsigned char *data; int cnt;
             !krb5_tls_verified) {
             printf(
     "Man in the middle attack detected.  Session terminated.\r\n");
-#ifndef BETATEST
+#ifndef KRB_BETATEST
             netclos();
-#endif /* BETATEST */
+#endif /* KRB_BETATEST */
             krb5_errno = -1;
             makestr(&krb5_errmsg,"TLS not verified");
             auth_finished(AUTH_REJECT);
@@ -7759,7 +7774,7 @@ ck_krb5_initTGT(op,init,k4_init)
     /* This is our realm unless it is changed */
     ckstrncpy(realm,init->realm ? init->realm : krb5_d_realm, 256);
 
-#ifdef BETATEST
+#ifdef KRB5_BETATEST
     /* This code is going to take the realm and attempt to correct */
     /* the case.                                                   */
     {
@@ -7812,7 +7827,7 @@ ck_krb5_initTGT(op,init,k4_init)
              ckstrcmp(realm,krb5_d_realm,-1,1) != 0)
             strcpy(krb5_d_realm,realm);
     }
-#endif /* BETATEST */
+#endif /* KRB_BETATEST */
 
     if (init->principal == NULL) {       /* No principal name specified */
 #ifndef NO_KEYTAB

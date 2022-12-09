@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *userv = "User Interface 10.0.328, 10 October 2022";
+char *userv = "User Interface 10.0.329, 30 November 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -166,6 +166,18 @@ extern int batch;
 #include <packets:common.h>
 #define fgets(stringbuf,max,fd) dg_fgets(stringbuf,max,fd)
 #endif /* datageneral */
+
+#ifdef CK_ANSIC
+/* Prototypes for static functions - fdc 30 November 2022 */
+static VOID doend( int );
+static int dodcl( int );
+static int addsend( int );
+static int clrarray( int );
+static int doadd( int, int );
+static int doeval( int );
+static int xdohttp(int, char *, char *, char *, char *,
+ char *, char *, char *, char *, char, int );
+#endif /* CK_ANSIC */
 
 extern int xcmdsrc, hints, cmflgs, whyclosed;
 
@@ -776,6 +788,14 @@ struct keytab cmdtab[] = {
 #endif /* NOLOCAL */
     { "continue",    XXCONT,  CM_INV },	/* CONTINUE */
 #ifndef NOFRILLS
+
+#ifndef NOCSETS
+    { "convert",     XXXLA, 0 },	/* Synonym for TRANSLATE */
+#else
+    { "convert",     XXNOTAV, CM_INV },
+#endif /* NOCSETS */
+
+
 #ifdef ZCOPY
     { "co",          XXCPY, CM_INV|CM_ABR },
     { "cop",         XXCPY, CM_INV|CM_ABR },
@@ -3491,6 +3511,7 @@ static struct keytab typetab[] = {	/* TYPE command switches */
     { "/count",          TYP_COU, 0 },
 #ifdef UNICODE
     { "/character-set",  TYP_XIN, CM_ARG },
+    { "/convert",        TYP_XUT, CM_ARG },
 #endif /* UNICODE */
 #ifdef KUI
     { "/gui",            TYP_GUI, CM_ARG },
@@ -3513,7 +3534,7 @@ static struct keytab typetab[] = {	/* TYPE command switches */
     { "/prefix",         TYP_PFX, CM_ARG },
     { "/tail",           TYP_TAI, CM_ARG },
 #ifdef UNICODE
-    { "/translate-to",   TYP_XUT, CM_ARG },
+    { "/translate-to",   TYP_XUT, CM_INV|CM_ARG },
     { "/transparent",    TYP_XPA, 0 },
 #endif /* UNICODE */
     { "/width",          TYP_WID, CM_ARG },
@@ -5913,10 +5934,16 @@ static int nhttpptab = sizeof(httpptab)/sizeof(struct keytab) - 1;
 #define HTTP_MAXHDR 8
 
 static int
+#ifdef CK_ANSIC
+xdohttp(int action, char * lfile,
+ char * rf, char * dfile, char * agent, char * hdr, char * user, char * pass,
+  char * mime, char array, int type)
+#else
 xdohttp(action, lfile, rf, dfile, agent, hdr, user, pass, mime, array, type)
     int action;
     char *lfile, *rf, *dfile, *agent, *hdr, *user, *pass, *mime, array;
     int type;
+#endif  /* CK_ANSIC */
 /* xdohttp */ {
     int i, rc = 0;
     char * hdrlist[HTTP_MAXHDR];
@@ -7970,6 +7997,7 @@ hmsgaa(s,s2) char *s[]; char *s2;
 
 /*  I S I N T E R N A L M A C R O  -- April 2017  */
 
+#ifndef NOSPL
 int
 isinternalmacro(x) int x; {          /* Test if macro is internally defined */
     char * m;
@@ -8029,6 +8057,7 @@ isinternalmacro(x) int x; {          /* Test if macro is internally defined */
     }
     return(internal);
 }
+#endif /* NOSPL */
 
 /*  N E W E R R M S G  -- New error message routine, April 2017  */
 
