@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 10.0.236, 24 Sep 2022";
+char *cksslv = "SSL/TLS support, 10.0.237, 01 Dec 2022";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 

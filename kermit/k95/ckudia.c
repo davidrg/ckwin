@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 10.0.162, 23 Sep 2022";
+char *dialv = "Dial Command, 10.0.164, 30 Nov 2022";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
@@ -35,10 +35,12 @@ char *dialv = "Dial Command, 10.0.162, 23 Sep 2022";
 */
 
 /*
+
   This module calls externally defined system-dependent functions for
-  communications i/o, as described in CKCPLM.DOC, the C-Kermit Program Logic
-  Manual, and thus should be portable to all systems that implement those
-  functions, and where alarm() and signal() work.
+  communications i/o, as described in the C-Kermit Program Logic Manual:
+   https://kermitproject.org/ckcplm.html
+  and thus should be portable to all systems that implement those functions,
+  and where alarm() and signal() work.
 
   HOW TO ADD SUPPORT FOR ANOTHER MODEM:
 
@@ -136,6 +138,15 @@ The remaining steps are in this module:
 #endif /* ZILOG */
 
 #include "ckcsig.h"        /* C-Kermit signal processing */
+
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static VOID dologdial( char * );
+static VOID ttslow( char *, int );
+static VOID waitfor( char * );
+static int ddinc( int );
+static int dialfail( int );
+#endif /* CK_ANSIC */
 
 #ifdef MAC
 #define signal msignal
@@ -6430,7 +6441,7 @@ ckdial(nbr) char *nbr;
 ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 #endif /* OLD_DIAL */
 /* ckdial */ {
-#define ERMSGL 50
+#define ERMSGL 100                      /* fdc 13 November 2022 (was 50) */
     char errmsg[ERMSGL], *erp;		/* For error messages */
     int n = F_TIME;
     char *s;
@@ -6572,10 +6583,18 @@ ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 
     if (ttopen(ttname,&local,mdmtyp,0) < 0) { /* Open, no carrier wait */
 	erp = errmsg;
+
+#ifdef COMMENT
+        /* This gets compiler warnings */
 	if ((int)strlen(ttname) < (ERMSGL - 18)) /* safe, checked */
 	  sprintf(erp,"Sorry, can't open %s",ttname);
 	else
 	  sprintf(erp,"Sorry, can't open device");
+#else  /* fdc 13 November 2022 */
+        /* Safe and portable replacement for snprinf() AND sprintf() */
+        ckmakmsg(erp,ERMSGL,"Sorry, can't open ",ttname,NULL,NULL);
+#endif  /* COMMENT */
+
 	perror(errmsg);
 	dialsta = DIA_OPEN;
 #ifdef DYNAMIC

@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 10.0.267, 23 Sep 2022";
+char *ckftpv = "FTP Client, 10.0.269, 30 Nov 2022";
 
 /*
   Authors:
@@ -485,7 +485,9 @@ int ssl_ftp_proxy = 0;                  /* FTP over SSL/TLS Proxy Server */
 #ifdef KRB5
 #ifndef HEIMDAL
 #ifndef NOFTP_GSSAPI			/* 299 */
+#ifdef HAVE_GSSAPI                      /* fdc 22 November 2022 */
 #define FTP_GSSAPI
+#endif  /* HAVE_GSSAPI */
 #endif	/* NOFTP_GSSAPI */
 #endif /* HEIMDAL */
 #endif /* KRB5 */
@@ -564,6 +566,7 @@ int ssl_ftp_proxy = 0;                  /* FTP over SSL/TLS Proxy Server */
 
 #ifdef FTP_GSSAPI
 #include <gssapi/gssapi.h>
+/* #include <gssapi/gssapi_krb5.h> */
 /*
   Need to include the krb5 file, because we're doing manual fallback
   from the v2 mech to the v1 mech.  Once there's real negotiation,
@@ -795,7 +798,7 @@ static char *fncnam[] = {
 #define zzout(fd,c) \
 ((fd<0)?(-1):((nout>=ucbufsiz)?(zzsend(fd,c)):(ucbuf[nout++]=c)))
 
-#define CHECKCONN() if(!connected){printf(nocx);return(-9);}
+#define CHECKCONN() if(!connected){printf("%s\n",nocx);return(-9);}
 
 /* Externals */
 
@@ -949,6 +952,55 @@ char * ftp_apw = NULL;			/* Anonymous password */
 #define sig_t my_sig_t
 #define sigtype SIGTYP
 typedef sigtype (*sig_t)();
+
+/* Prototypes for static functions defined in ckcftp.c */
+#ifdef CK_ANSIC
+
+static VOID bytswap( int *, int * );
+static VOID cancel_remote( int );
+static VOID changetype( int, int );
+static VOID dbtime( char *, struct tm * );
+static VOID ftscreen( int, char, CK_OFF_T, char * );
+static char * ftp_hookup( char *, int, int );
+static char * radix_error( int );
+static char * shopl( int );
+static char * strval( char *, char * );
+static int check_data_connection( int, int );
+static int chkmodtime( char *, char *, int );
+static int dataconn( char * );
+static int doftpcwd( char *, int );
+static int doftpdir( int );
+static int doftpxmkd( char *, int );
+static int ftp_login( char * );
+static int ftp_rename( char *, char * );
+static int ftp_umask( char * );
+static int ftp_user( char *, char *, char * );
+static int ftpcmd( char *, char *, int, int, int );
+static int fts_cpl( int );
+static int fts_dpl( int );
+static int getfile( char *, char *, int, int, char *, int, int, int );
+static int getreply( int, int, int, int, int );
+static int ispathsep( int );
+static int looping_read(int, register char *, register int );
+static int looping_write( int, register CONST char *, int );
+static int openftp( char *, int );
+static int putfile( int, char *, char *, int, int, char *, char *,
+ char *, int, int, int, int, int, int, int );
+static int recvrequest(char *, char *, char *, char *, int, int,
+ char *, int, int, int );
+static int secure_flush( int );
+static int secure_getbyte( int, int );
+static int secure_read( int fd, char *, int );
+static int sendrequest( char *, char *, char *, int, int, int, int );
+static int syncdir( char *, int );
+static int tmcompare( struct tm *, struct tm * );
+static int xlatec( int, int, int, int );
+static sigtype cancelrecv( int );
+static sigtype cancelsend( int );
+static sigtype cmdcancel( int );
+
+#endif  /* CK_ANSIC */
+
 
 /* Static global variables */
 
@@ -2597,7 +2649,12 @@ ftpissecure() {
 }
 
 static VOID
-ftscreen(n, c, z, s) int n; char c; CK_OFF_T z; char * s; {
+#ifdef CK_ANSIC
+ftscreen(int n, char c, CK_OFF_T z, char *s)
+#else
+ftscreen(n, c, z, s) int n; char c; CK_OFF_T z; char * s;
+#endif  /* CK_ANSIC */
+{
     if (displa && fdispla && !backgrd && !quiet && !out2screen) {
         if (!dpyactive) {
             ckscreen(SCR_PT,'S',(CK_OFF_T)0,"");
