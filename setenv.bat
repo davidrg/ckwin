@@ -63,6 +63,17 @@ set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
 REM Set include path for targeting Windows.
 set include=%include%;%ckwinclude%
 
+REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
+REM is what we get when we do "set LIB=%LIB%;C:\somewhere" when LIB starts out
+REM empty. So we need to make sure there is always at least *something* in the
+REM lib path before we go appending things to it. That something doesn't
+REM actually have to exist, so when starting with an empty LIB path we'll just
+REM add something thats sure not to have any libs in it. For reference, the
+REM error you get if you don't do this is:
+REM   Internal error on line 323 of ..\..\c\fuzzy.c. Please contact the Open Watcom maintainers at http://www.openwatcom.com/"
+if not defined lib set lib=%root%\dummy
+if "%lib%" == "" set lib=%root%\dummy
+
 REM Add on any optional dependencies
 
 set CKF_ZLIB=no

@@ -10,7 +10,7 @@ Major features include:
  * More than 40 terminal emulations
  * Virtual Terminal connections over SSH, Telnet (including TLS support), 
    rlogin, modem, serial port and pty
- * Scriptable file transfer via Kermit, HTTP, HTTPS, FTP and FTPS protocols
+ * Scriptable file transfer via Kermit, X/Y/Z Modem, HTTP, HTTPS, FTP and FTPS protocols
  * International character set translation
  * Pathworks supported for LAT and CTERM Virtual Terminal connections. 
    Can optionally be built with SuperLAT support as well (not enabled by
@@ -59,11 +59,9 @@ and TLS.
 The old Kermit 95 Dialer is back and rebranded as the C-Kermit for Windows
 Dialer. Otherwise, it's the same old app for better or worse.
 
-Features Expected to Return Soon
---------------------------------
-
-* X/Y/Z Modem support - the author of the 3rd party library Kermit 95 used has
-  OKd its open-sourcing so once that happens it will return.
+Support for sending and receiving files via the xmodem, ymodem and zmodem
+protocols is supported once again. Thanks to Jyrki Salmi of Online Solutions Oy
+(www.online.fi) for open-sourcing 'P', the library relied on to support this.
 
 Compiling
 ---------
