@@ -12459,8 +12459,12 @@ shofea() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* NOHTTP */
 #ifdef NOARROWKEYS
+/* OS/2 and Windows always have arrow key support regardless of the NOARROWKEYS
+ * build option */
+#ifndef OS2
     printf(" No arrow-key support\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* OS2 */
 #endif /* NOARROWKEYS */
 
 
