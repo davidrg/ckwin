@@ -1,3 +1,4 @@
+#include <windowsx.h>
 #include "ktermin.hxx"
 #include "kmenu.hxx"
 #include "ktoolbar.hxx"
@@ -10,6 +11,14 @@
 #include "ikterm.h"
 #include "ikui.h"
 #include "ikextern.h"
+
+#ifndef GET_X_LPARAM
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#endif
+
+#ifndef GET_Y_LPARAM
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif
 
 
 #ifndef NOTOOLBAR
@@ -26,6 +35,12 @@ ToolBitmapDef tbButtons[] = {
 // { { 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0L, 0 }, 0 }
 };
 #endif
+
+extern "C" {
+/* This is declared in ckotio.c and set to 1 when we're on NT 3.51
+ * (and 3.50 and 3.1) */
+extern int nt351;
+}
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -511,10 +526,18 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         done = TRUE;
         break;
 
-#ifndef CKT_NT31
+    case WM_NCLBUTTONDOWN:
+        if (nt351) {
+            /* On NT 3.x we emulate WM_SIZING and WM_EXITSIZEMOVE via
+             * intercepting WM_NCLBUTTONDOWN and implementing the size loop
+             * ourselves */
+            done = OnNCLButtonDown(hwnd, FALSE, (int) (short) LOWORD(lParam),
+                                   (int) (short) HIWORD(lParam), (UINT)(wParam));
+        }
+        break;
+
     case WM_SIZING:
     case WM_EXITSIZEMOVE:
-#endif
     case WM_ACTIVATE:
     case WM_SIZE:
     case WM_GETMINMAXINFO:
@@ -844,3 +867,419 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     }
     return done;
 }
+
+/*
+ * Gets a rect representing one edge of the overall resize rect.
+ */
+void GetEdgeRect(RECT rect, int cyFrame, int cxFrame,
+                 UINT edge, RECT* result) {
+
+    int width = (rect.right - rect.left);
+    int height = (rect.bottom - rect.top);
+
+    switch(edge) {
+        case WMSZ_TOP:
+            result->left = rect.left;
+            result->top = rect.top;
+            result->right = width;
+            result->bottom = cyFrame;
+            break;
+        case WMSZ_BOTTOM:
+            result->left = rect.left + cxFrame;
+            result->top = rect.bottom - cyFrame;
+            result->right = width - cxFrame;
+            result->bottom = cyFrame;
+            break;
+        case WMSZ_RIGHT:
+            result->left = rect.right - cxFrame;
+            result->top = rect.top + cyFrame;
+            result->right = cxFrame;
+            result->bottom = height - cyFrame - cyFrame;
+            break;
+        case WMSZ_LEFT:
+            result->left = rect.left;
+            result->top = (rect.top + cyFrame);
+            result->right = cxFrame;
+            result->bottom = height - cyFrame;
+            break;
+    }
+
+    result->right += result->left;
+    result->bottom += result->top;
+}
+
+
+#ifdef NT35_RESIZE_RECT
+
+#define PATBLT_RECT(hdc, rect) \
+    PatBlt(hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, PATINVERT);
+/*              X          Y         Width                   Height */
+
+#define RECT_EQ(rc1, rc2) (rc1.top == rc2.top && rc1.bottom == rc2.bottom && \
+    rc1.left == rc2.left && rc1.right == rc2.right)
+
+/* TODO: This doesn't work very well. Its slow and tends to leave bits of rect
+ *       behind, especially when resizing at the corners. Its only here because
+ *       as bad as it is, its probably better than having no resize rectangle
+ *       at all.
+ *
+ * TODO: Also, the window size popup isn't being drawn - not an issue with
+ *       the resize rect but rather a bug hiding somewhere in the custom
+ *       window resize modal loop.
+ *
+ * This code is *only* used on Windows NT 3.x because we have to override the
+ * default window size modal loop in order to emulate WM_SIZING and
+ * WM_EXITSIZEMOVE which means we have to also implement the resize rectangle
+ * that's normally provided by Windows.
+ *
+ * This function is called on button down and button up with rect == rcPrevious,
+ * as well during mouse move when a WM_SIZING event is generated
+ *
+ * Parameters:
+ *   hdc  - Device Context to draw to
+ *   hwnd - The window being resized
+ *   rect - The new window dimensions
+ *   rcPrevious - The previous window dimensions (last time this was called)
+ *   edge - the edge or edges being resized (eg, WMSZ_BOTTOMRIGHT)
+ */
+void DrawResizeRect(HDC hdc, HWND hwnd, RECT rect, RECT rcPrevious, UINT edge)
+{
+    int cxFrame, cyFrame;
+    BOOL drawLeft=TRUE, drawRight=TRUE, drawTop=TRUE, drawBottom=TRUE;
+    BOOL drawLeftPrev=TRUE, drawRightPrev=TRUE, drawTopPrev=TRUE, drawBottomPrev=TRUE;
+
+    // Rect components - old and new
+    RECT rcLeft, rcRight, rcTop, rcBottom;
+    RECT rcLeftPrev, rcRightPrev, rcTopPrev, rcBottomPrev;
+    RECT rcLeftIsect, rcRightIsect, rcTopIsect, rcBottomIsect;
+    int leftIsect = 0, rightIsect = 0, topIsect = 0, bottomIsect = 0;
+
+    // If the rect has changed from previous at all
+    BOOL forceDraw = !RECT_EQ(rect, rcPrevious);
+
+    // Get the resizing border dimensions
+    cxFrame = GetSystemMetrics(SM_CXFRAME);
+    cyFrame = GetSystemMetrics(SM_CYFRAME);
+
+    // Get rect component coordinates & dimensions & intersection
+    GetEdgeRect(rect, cyFrame, cxFrame, WMSZ_LEFT, &rcLeft);
+    GetEdgeRect(rcPrevious, cyFrame, cxFrame, WMSZ_LEFT, &rcLeftPrev);
+    leftIsect = IntersectRect(&rcLeftIsect, &rcLeftPrev, &rcLeft);
+
+    GetEdgeRect(rect, cyFrame, cxFrame, WMSZ_RIGHT, &rcRight);
+    GetEdgeRect(rcPrevious, cyFrame, cxFrame, WMSZ_RIGHT, &rcRightPrev);
+    rightIsect = IntersectRect(&rcRightIsect, &rcRightPrev, &rcRight);
+
+    GetEdgeRect(rect, cyFrame, cxFrame, WMSZ_TOP, &rcTop);
+    GetEdgeRect(rcPrevious, cyFrame, cxFrame, WMSZ_TOP, &rcTopPrev);
+    topIsect = IntersectRect(&rcTopIsect, &rcTopPrev, &rcTop);
+
+    GetEdgeRect(rect, cyFrame, cxFrame, WMSZ_BOTTOM, &rcBottom);
+    GetEdgeRect(rcPrevious, cyFrame, cxFrame, WMSZ_BOTTOM, &rcBottomPrev);
+    bottomIsect = IntersectRect(&rcBottomIsect, &rcBottomPrev, &rcBottom);
+
+    if (leftIsect) {
+        // the right dimension will always equal as it's just the frame width
+
+        if (rcLeft.left != rcLeftPrev.left) {
+            // It's moved slightly to one side but not by its full width
+            if (rcLeft.left > rcLeftPrev.left) {
+                // Moved right
+                rcLeft.left = rcLeftIsect.right;
+                rcLeftPrev.right = rcLeftIsect.left;
+            } else {
+                // Moved left
+                rcLeft.right = rcLeftIsect.left;
+                rcLeftPrev.left = rcLeftIsect.right;
+            }
+        } else if (rcLeft.top != rcLeftPrev.top) {
+            // It's been extended up
+            drawLeftPrev = FALSE;
+            rcLeft.bottom = rcLeftPrev.top;
+        } else if (rcLeft.bottom != rcLeftPrev.bottom) {
+            // It's been extended down
+            drawLeftPrev = FALSE;
+            rcLeft.top = rcLeftPrev.bottom;
+        } else {
+            // It hasn't moved at all. Don't redraw it or it will be erased.
+            drawLeft = forceDraw;
+        }
+    }
+
+    if (rightIsect) {
+        // the right dimension will always equal as it's just the frame width
+
+        if (rcRight.left != rcRightPrev.left) {
+            // It's moved slightly to one side but not by its full width.
+            if (rcRight.left > rcRightPrev.left) {
+                // Moved right
+                rcRight.left = rcRightIsect.right;
+                rcRightPrev.right = rcRightIsect.left;
+            } else {
+                // Moved left
+                rcRight.right = rcRightIsect.left;
+                rcRightPrev.left = rcRightIsect.right;
+            }
+        } else if (rcRight.top != rcRightPrev.top) {
+            // It's been extended up
+            drawRightPrev = FALSE;
+            rcRight.bottom = rcRightPrev.top;
+        } else if (rcRight.bottom != rcRightPrev.bottom) {
+            // It's been extended down
+            drawRightPrev = FALSE;
+            rcRight.top = rcRightPrev.bottom;
+        } else {
+            // It hasn't moved at all. Don't redraw it or it will be erased.
+            drawRight = forceDraw;
+        }
+    }
+
+    if (topIsect) {
+        // The bottom dimension will always equal as it's just the frame height
+
+        if (rcTop.top != rcTopPrev.top) {
+            // It's moved up or down slightly but not by its full height
+            if (rcTop.top > rcTopPrev.top) {
+                // Moved up
+                rcTop.top = rcTopIsect.bottom;
+                rcTopPrev.bottom = rcTopIsect.top;
+            } else {
+                // Moved down
+                rcTop.bottom = rcTopIsect.top;
+                rcTopPrev.top = rcTopIsect.bottom;
+            }
+        } else if (rcTop.right != rcTopPrev.right) {
+            // It's been extended to the right
+            drawTopPrev = FALSE;
+            rcTop.left = rcTopPrev.right;
+        } else if (rcTop.left != rcTopPrev.left) {
+            // It's been extended to the left
+            drawTopPrev = FALSE;
+            rcTop.right = rcTopPrev.left;
+        } else {
+            // It hasn't moved at all. Don't redraw it or it will be erased.
+            drawTop = forceDraw;
+        }
+    }
+
+    if (bottomIsect) {
+        // The bottom dimension will always equal as it's just the frame height
+
+        if (rcBottom.top != rcBottomPrev.top) {
+            // It's moved up or down slightly but not by its full height
+            if (rcBottom.top > rcBottomPrev.top) {
+                // Moved up
+                rcBottom.top = rcBottomIsect.bottom;
+                rcBottomPrev.bottom = rcBottomIsect.top;
+            } else {
+                // Moved down
+                rcBottom.bottom = rcBottomIsect.top;
+                rcBottomPrev.top = rcBottomIsect.bottom;
+            }
+        } else if (rcBottom.right != rcBottomPrev.right) {
+            // It's been extended to the right
+            drawBottomPrev = FALSE;
+            rcBottom.left = rcBottomPrev.right;
+        } else if (rcBottom.left != rcBottomPrev.left) {
+            // It's been extended to the left
+            drawBottomPrev = FALSE;
+            rcBottom.right = rcBottomPrev.left;
+        } else {
+            // It hasn't moved at all. Don't redraw it or it will be erased.
+            drawBottom = forceDraw;
+        }
+    }
+
+    // Draw everything!
+    if (drawTopPrev)    PATBLT_RECT(hdc, rcTopPrev);
+    if (drawTop)        PATBLT_RECT(hdc, rcTop);
+    if (drawRightPrev)  PATBLT_RECT(hdc, rcRightPrev);
+    if (drawRight)      PATBLT_RECT(hdc, rcRight);
+    if (drawBottomPrev) PATBLT_RECT(hdc, rcBottomPrev);
+    if (drawBottom)     PATBLT_RECT(hdc, rcBottom);
+    if (drawLeftPrev)   PATBLT_RECT(hdc, rcLeftPrev);
+    if (drawLeft)       PATBLT_RECT(hdc, rcLeft);
+
+}
+#endif /* NT35_RESIZE_RECT */
+
+/* Code for emulating WM_SIZING and WM_EXITSIZEMOVE events on Windows NT 3.x
+ */
+int KTerminal::OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,
+                     UINT codeHitTest) {
+    UINT edge;
+    MSG  msg;
+    RECT rc;
+    BOOL track = TRUE;
+
+    // nt351 really means NT 3.x, not specifically NT 3.51
+    if (!nt351) {
+        // No need to emulate WM_SIZING or WM_EXITSIZEMOVE - they're supported
+        // natively.
+        return FALSE;
+    }
+
+    // We don't care about double-clicks here.
+    if (fDoubleClick)
+        return FALSE;
+
+    switch (codeHitTest) {
+        case HTRIGHT:
+            edge = WMSZ_RIGHT;
+            break;
+        case HTLEFT:
+            edge = WMSZ_LEFT;
+            break;
+        case HTTOP:
+            edge = WMSZ_TOP;
+            break;
+        case HTBOTTOM:
+            edge = WMSZ_BOTTOM;
+            break;
+        case HTTOPLEFT:
+            edge = WMSZ_TOPLEFT;
+            break;
+        case HTTOPRIGHT:
+            edge = WMSZ_TOPRIGHT;
+            break;
+        case HTBOTTOMLEFT:
+            edge = WMSZ_BOTTOMLEFT;
+            break;
+        case HTBOTTOMRIGHT:
+            edge = WMSZ_BOTTOMRIGHT;
+            break;
+
+        // For any other hit test possibilities, let Windows deal with it.
+        default:
+            return FALSE;
+    }
+
+    GetWindowRect(hwnd, &rc);
+
+#ifdef NT35_RESIZE_RECT
+    // ------ Prepare resources for drawing the Resize Rect ------
+    HBRUSH hb;
+    BITMAP bm;
+    HBITMAP hbm;
+    HDC hdc;
+
+    // See the KB Article Q68569 for information about how to draw the
+    // resizing rectangle.  That's where this pattern comes from.
+    WORD aZigzag[] = { 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA };
+
+    // Fill out the bitmap structure for the PatBlt calls later
+    bm.bmType = 0;
+    bm.bmWidth = 8;
+    bm.bmHeight = 8;
+    bm.bmWidthBytes = 2;
+    bm.bmPlanes = 1;
+    bm.bmBitsPixel = 1;
+    bm.bmBits = aZigzag;
+
+    hbm = CreateBitmapIndirect(&bm);
+    hb = CreatePatternBrush(hbm);
+
+    // By specifying NULL for the HWND in GetDC(), we get the DC for the
+    // entire screen.
+    hdc = GetDC(NULL);
+    SelectObject(hdc, hb);
+    // ------ END Prepare resources for drawing the Resize Rect ------
+
+    // Start drawing the resize rect
+    DrawResizeRect(hdc, hwnd, rc, rc, edge);
+
+#endif /* NT35_RESIZE_RECT */
+
+    // Capture the mouse so we can receive mouse events from outside the window.
+    SetCapture(hwnd);
+    while (track) {
+        // Go into a PeekMessage() look waiting for mouse messages. This creates
+        // a modal sort of situation preventing you from switching away from the
+        // resize without releasing the mouse button first.
+        while (!PeekMessage(&msg, hwnd, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
+        	WaitMessage();
+
+        switch(msg.message) {
+            case WM_MOUSEMOVE:
+                POINT pt;
+                RECT rcPrevious = rc;
+
+                // Adjust rc to the new window size
+                pt.x = GET_X_LPARAM(msg.lParam);
+                pt.y = GET_Y_LPARAM(msg.lParam);
+
+                ClientToScreen(hwnd, &pt);
+
+                switch(edge) {
+                    case WMSZ_RIGHT:
+                        rc.right = pt.x;// + rc.left;
+                        break;
+                    case WMSZ_BOTTOM:
+                        rc.bottom = pt.y;// + rc.top;
+                        break;
+                    case WMSZ_BOTTOMLEFT:
+                        rc.bottom = pt.y;// + rc.top;
+                        rc.left = pt.x;
+                        break;
+                    case WMSZ_BOTTOMRIGHT:
+                        rc.bottom = pt.y;// + rc.top;
+                        rc.right = pt.x;// + rc.left;
+                        break;
+                    case WMSZ_LEFT:
+                        rc.left = pt.x;
+                        break;
+                    case WMSZ_TOP:
+                        rc.top = pt.y;
+                        break;
+                    case WMSZ_TOPLEFT:
+                        rc.top = pt.y;
+                        rc.left = pt.x;
+                        break;
+                    case WMSZ_TOPRIGHT:
+                        rc.top = pt.y;
+                        rc.right = pt.x;// + rc.left;
+                        break;
+                }
+
+                KAppWin::message(hwnd, WM_USER_SIZING, edge, (LONG)&rc);
+
+#ifdef NT35_RESIZE_RECT
+                if (!RECT_EQ(rc, rcPrevious)) {
+                    DrawResizeRect(hdc, hwnd, rc, rcPrevious, edge);
+                }
+#endif /* NT35_RESIZE_RECT */
+
+                break;
+
+            case WM_LBUTTONUP:
+                track = FALSE;
+
+#ifdef NT35_RESIZE_RECT
+                // Erase the resize rect
+                DrawResizeRect(hdc, hwnd, rc, rc, edge);
+#endif /* NT35_RESIZE_RECT */
+
+                MoveWindow( hwnd,
+                            rc.left,
+                            rc.top,
+                            rc.right - rc.left,
+                            rc.bottom - rc.top,
+                            TRUE);
+
+                KAppWin::message(hwnd, WM_USER_EXITSIZEMOVE, 0, 0);
+                break;
+        }
+
+    }
+
+#ifdef NT35_RESIZE_RECT
+    // Clean up Resize Rect resources
+    ReleaseDC(NULL, hdc);
+    DeleteObject(hb);
+    DeleteObject(hbm);
+#endif /* NT35_RESIZE_RECT */
+
+    ReleaseCapture();
+    return TRUE;
+}
+

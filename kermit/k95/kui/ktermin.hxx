@@ -40,6 +40,9 @@ public:
     void disableClose( void );
 
   private:
+    Bool OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,
+                         UINT codeHitTest);
+
     Bool toolbar_disabled;
     KClient* client;
     Bool menuInitialized;
