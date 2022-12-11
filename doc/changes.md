@@ -23,6 +23,9 @@ slipping somewhat.
 
 ### New Features:
 * Upgraded from C-Kermit 10.0 beta.04 to beta.07
+  * [New in C-Kermit 10.0 Beta.05](https://kermitproject.org/ckupdates.html#ck100beta05) 
+  * [New in C-Kermit 10.0 Beta.06](https://kermitproject.org/ckupdates.html#ck100beta06)
+  * [New in C-Kermit 10.0 Beta.07](https://kermitproject.org/ckupdates.html#ck10beta070)
 * The default `k95custom.ini` now outputs a message on startup directing new 
   users to have a look at and optionally customise the file
 * X/Y/Z MODEM support is back thanks to Jyrki Salmi of Online Solutions Oy 
@@ -77,6 +80,7 @@ slipping somewhat.
 * SSH will now prompt for a username if the default login userid has been 
   cleared (this is how Kermit 95 behaved)
 * Fixed SSH help error: hmac-md5 is not supported, but hmac-sha1 is
+* The GUI window now resizes correctly on Windows NT 3.5x
 
 ### Minor Enhancements and other changes:
 * Upgraded to zlib 1.2.13 fixing [CVE-2022-37434](https://nvd.nist.gov/vuln/detail/CVE-2022-37434)
