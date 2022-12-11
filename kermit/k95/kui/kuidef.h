@@ -47,6 +47,10 @@ const uint WM_GOTO_FILETRANSFER_WINDOW  = WM_USER + FILETRANSFER_WINDOW;
 const uint WM_REQUEST_CLOSE_KERMIT      = WM_USER + 10;
 const uint WM_CLOSE_KERMIT              = WM_USER + 11;
 
+// For emulation of WM_SIZING nad WM_EXITSIZEMOVE on Windows NT 3.x
+const uint WM_USER_SIZING               = WM_USER + 12;
+const uint WM_USER_EXITSIZEMOVE         = WM_USER + 13;
+
 typedef struct _K_CREATEINFO {
     const char* classname;      // class name
     const char* text;           // caption or text
