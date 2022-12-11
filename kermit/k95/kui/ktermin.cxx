@@ -1205,7 +1205,9 @@ int KTerminal::OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,
         switch(msg.message) {
             case WM_MOUSEMOVE:
                 POINT pt;
+#ifdef NT35_RESIZE_RECT
                 RECT rcPrevious = rc;
+#endif /* NT35_RESIZE_RECT */
 
                 // Adjust rc to the new window size
                 pt.x = GET_X_LPARAM(msg.lParam);
