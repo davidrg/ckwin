@@ -1003,9 +1003,7 @@ cksnval.dll: cksnval.obj cksnval.def ckoker.mak
 #	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
 #            /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib 
 #        dllrname $@ CPPRMI36=CKO32RTL       
-       
-ckwart.exe: ckwart.obj $(DEF)
-	$(CC) ckwart.obj 
+
 
 docs:   ckermit.inf
 
@@ -1199,9 +1197,9 @@ cknpty$(O):     cknpty.c cknpty.h
 !endif
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
 ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
-ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \ 
-                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \
 !if "$(CKF_XYZ)" == "yes"
+ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
+                ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \
 				p_global.h p_callbk.h
 !endif
 cknsig$(O):	cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
@@ -1256,11 +1254,6 @@ p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_
 p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
 !endif
 
-ckcpro.c:	ckcpro.w ckwart.exe
-#		$(MAKE) -f ckoker.mak ckwart.exe \
-#		  CC="$(CC) $(CC2)" OUT="$(OUT)" O="$(O)" OPT="$(OPT)" \
-#		  DEBUG="$(DEBUG)" CFLAGS="-DCK_ANSIC $(CFLAGS)" LDFLAGS="$(LDFLAGS)"
-		ckwart ckcpro.w ckcpro.c
 
 ckopcf$(O):     ckopcf.c ckopcf.h
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DLL) -c ckopcf.c
@@ -1271,8 +1264,6 @@ ckotel$(O):     ckotel.c
 ckoclip$(O):     ckoclip.c
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) /Gn- -c ckoclip.c
 
-ckwart$(O):     ckwart.c
-	$(CC) -c ckwart.c
 
 #cko32rt$(O):     cko32rt.c
 #        /Gd+ /Ge- $(DLL) -c cko32rt.c

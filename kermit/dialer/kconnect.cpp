@@ -2967,16 +2967,16 @@ Event( const UI_EVENT & event )
        Browse("http://www.kermitproject.org/");
        break;
    case OPT_MENU_HELP_WEB_K95:
-       Browse("http://www.kermitproject.org/k95.html");
+       Browse("http://www.kermitproject.org/ckw10beta.html");
        break;
    case OPT_MENU_HELP_WEB_NEWS:
-       Browse("http://www.kermitproject.org/k95news.html");
+       Browse("http://www.kermitproject.org/ckw10beta.html");
        break;
    case OPT_MENU_HELP_WEB_PATCH:
-       Browse("http://www.kermitproject.org/k95patch.html");
+       Browse("http://www.kermitproject.org/ckw10beta.html");
        break;
    case OPT_MENU_HELP_WEB_TECHFAQ:
-       Browse("http://www.kermitproject.org/k95support.html");
+       Browse("http://www.kermitproject.org/k95faq.html");
        break;
    case OPT_MENU_HELP_MANUAL:
        ReadManual();
@@ -3035,7 +3035,12 @@ IsManualInstalled(void)
     /* before starting the manual.  Otherwise, Netscape may   */
     /* be unable to find the referential links.               */
 
-    strcat(exepath, "DOCS\\MANUAL\\KERMIT95.HTM");
+#ifdef WIN32
+    strcat(exepath, "DOCS\\MANUAL\\CKWIN.HTM");
+#else
+    strcat(exepath, "DOCS\\MANUAL\\CKOS2.HTM");
+#endif
+
     if ( stat(exepath,&buf) >= 0 ) {
 #ifdef COMMENT
         sprintf( manpath, "FILE://%s", exepath);

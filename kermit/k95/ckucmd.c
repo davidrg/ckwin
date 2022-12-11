@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 10.0.179, 12 Oct 2022";
+char *cmdv = "Command package 10.0.180, 30 Nov 2022";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -425,6 +425,10 @@ hasnopath(s) char * s; {
 
 /*  C K S P R E A D  --  Print string double-spaced  */
 
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static char * ckspread( char * );
+#endif /* CK_ANSIC */
 static char * sprptr = NULL;
 
 static char *
@@ -7846,14 +7850,17 @@ char *
 cmpeek() {
     return(np);
 }
-#endif /* NOICP */
-
-
-#ifdef NOICP
 #include "ckcdeb.h"
 #include "ckucmd.h"
 #include "ckcasc.h"
-#endif /* NOICP */
+
+#ifdef CK_ANSIC
+/* static function prototypes - fdc 30 November 2022 */
+static int addbuf( char * );
+static int gtword( int );
+static int setatm( char *, int );
+static int test( int, int );
+#endif /* CK_ANSIC */
 
 /*  X X E S C  --  Interprets backslash codes  */
 /*  Returns the int value of the backslash code if it is > -1 and < 256 */
@@ -8296,7 +8303,6 @@ rlookup(table,n,x) struct keytab table[]; int n, x; {
     return(NULL);
 }
 
-#ifndef NOICP
 int
 cmdsquo(x) int x; {
     quoting = x;

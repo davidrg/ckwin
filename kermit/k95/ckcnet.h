@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -200,6 +200,11 @@ _PROTOTYP( int netinc, (int) );
 _PROTOTYP( int netxin, (int, CHAR *) );
 _PROTOTYP( int nettol, (CHAR *, int) );
 _PROTOTYP( int nettoc, (CHAR) );
+_PROTOTYP( int net_read, (int fd, register char *buf, register int len) );
+_PROTOTYP( int net_write, (int fd, register const char *buf, int len) );
+_PROTOTYP( int rlog_ctrl, (unsigned char *cp, int n) );
+_PROTOTYP( int locate_txt_rr, (char *prefix, char *name, char **retstr) );
+
 #ifdef TCPSOCKET
 _PROTOTYP( int gettcpport, (void) );
 _PROTOTYP( int gettcpport, (void) );

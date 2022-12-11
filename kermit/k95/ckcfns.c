@@ -6631,9 +6631,12 @@ snddir(spec) char * spec; {
       return(-1);
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
+#ifndef V7MIN
+    /* get scary warning even though it's 100% safe */
     if ((int)strlen(name) < CMDSTRL - 11) /* Data for X packet. */
       sprintf(cmdstr,"DIRECTORY %s",name); /* safe */
     else
+#endif  /* V7MIN */
       ckstrncpy(cmdstr,"DIRECTORY",CMDSTRL);
     first = 1;				/* Init getchx lookahead */
     funcstr = 1;			/* Just set the flag. */

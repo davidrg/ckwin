@@ -1,4 +1,5 @@
 #include "ckcsym.h"
+#include "ckcdeb.h"
 #ifndef NOICP
 
 /*
@@ -23,7 +24,6 @@
 
 /* Includes */
 
-#include "ckcdeb.h"
 #include "ckcasc.h"
 #include "ckcker.h"
 #include "ckuusr.h"
@@ -124,6 +124,19 @@ extern int stdinf, sndsrc, size, rpsiz, urpsiz, fncnv, fnrpath, displa,
   g_fnspath, g_fnrpath, xfrxla, g_xfrxla;
 
 extern char *cmarg, *cmarg2;
+
+#ifdef CK_ANSIC
+/* prototypes for static functions - fdc 30 November 2022 */
+static char * xdial( char * );
+static int typegetline( int, int, char *, int );
+static int callisld( char *, char * );
+static int ddcvt( char *, FILE *, int );
+static int dncvt(int, int, int, int );
+static int renameone(char *,
+  char *,int,int,int,int,int,int,int,int,int,int,int);
+static int typeline( char *, int, int, FILE * );
+static int xxundef( char *, int, int );
+#endif  /* CK_ANSIC */
 
 #ifndef NOMSEND                         /* Multiple SEND */
 extern char *msfiles[];
@@ -732,7 +745,9 @@ int availtabn = sizeof(availtab)/sizeof(struct keytab)-1;
 
 #ifndef NODIAL
 _PROTOTYP(static int ddcvt, (char *, FILE *, int) );
+#ifdef COMMENT                          /* New prototype above */
 _PROTOTYP(static int dncvt, (int, int, int, int) );
+#endif  /* COMMENT */
 _PROTOTYP(char * getdname, (void) );
 
 static int partial  = 0;                /* For partial dial */
@@ -3381,10 +3396,12 @@ Disabling flow control temporarily %s...\n",
             if (dialtest) {             /* Just testing */
                 if (i + j == 0)
                   printf("\nTESTING...\n");
+#ifndef NOSPL
                 if (dialmac)
                   printf(" Number: \"%s\" => \"%s\"\n",sav,s);
                 else
                   printf(" Number: \"%s\"\n",s);
+#endif /* NOSPL */
                 dialsta = DIA_BUSY;
                 success = 0;
             } else {
@@ -4544,6 +4561,8 @@ dogrep() {
           case GREP_DOTF:
             matchdot = 1;
             break;
+
+#ifndef NOSPL
           case GREP_ARRA: {
 	      char * s2;
             if (c != ':' && c != '=') {
@@ -4581,6 +4600,8 @@ dogrep() {
 	    gr_name = 1;
             break;
 	  }
+#endif  /* NOSPL */
+
 #ifdef RECURSIVE
           case GREP_RECU:
             recursive = 1;
@@ -4790,14 +4811,18 @@ dogrep() {
                 fprintf(ofp,"%s:%d\n",name,count);
                 x++;
             } else if (gr_name && count > 0) { /* Show name only */
+#ifndef NOSPL
 		if (array) {
 		    if (ap) {
 			makestr(&(ap[arrayindex++]),name);
 		    }
 		} else {
+#endif  /* NOSPL */
 		    fprintf(ofp,"%s\n",name);
 		    x++;
+#ifndef NOSPL
 		}
+#endif  /* NOSPL */
             }
             if (x > 0) {
                 if (++sline > cmd_rows - 3) {
@@ -5578,6 +5603,7 @@ domydir(cx) int cx; {			/* Internal DIRECTORY command */
             }
             break;
 #endif /* NOSPL */
+
           case DIR_AFT:
           case DIR_BEF:
           case DIR_NAF:
@@ -13015,8 +13041,8 @@ doif(cx) int cx; {
 
 int
 dotake(s) char *s; {
-#ifndef NOSPL
     extern char lasttakeline[];         /* Last TAKE-file line */
+#ifndef NOSPL
     extern int tra_cmd;
 #endif /* NOSPL */
 #ifndef NOLOCAL

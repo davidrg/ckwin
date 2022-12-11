@@ -2,6 +2,7 @@
 
 /*
   For recent additions search below for "2021" and "2022".
+  Most recent update: Tue Dec  6 06:55:11 2022
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -32,7 +33,6 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Tue Sep 27 11:09:55 2022
 */
 
 /*
@@ -46,12 +46,25 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
-/* Moved here from ckcmai.c... REMOVE THIS AFTER BETA TEST! */
+/* Moved here from ckcmai.c October 2022... REMOVE THIS AFTER BETA TEST! */
 #ifndef BETATEST
 #define BETATEST
 #endif  /* BETATEST */
+
+/* Now that WTMP and Syslog are "deprecated" don't include them by default */
+
+#ifndef DOWTMP                          /* Unless explicitly requested */
+#ifndef NOWTMP                          /* No more WTMP logging */
+#define NOWTMP
+#endif  /* NOWTMP */
+#endif  /* DOWTMP */
+#ifndef DOSYSLOG                        /* Unless explicitly requested */
+#ifndef NOSYSLOG                        /* No more syslog */
+#define NOSYSLOG
+#endif  /* NOSYSLOG */
+#endif  /* DOSYSLOG */
 /* 
-   14 Sep 2022 - TYPE command new /INTERPRET switch enabled by default
+   14 Sep 2022 - TYPE command's new /INTERPRET switch enabled by default
    except in Windows where it doesn't work because of character-set issues.
 */
 #ifdef NT
@@ -60,8 +73,19 @@
 #endif  /* NOTYPEINTERPRET */
 #endif  /* NT */
 
-#ifndef NOSPL
-#ifndef NOTYPEINTERPRET                 /* 23 August - TYPE /INTERPRET */
+#ifdef NOICP                            /* 2 Nov 2022 */
+#ifndef NOIKSD
+#define NOIKSD
+#endif /* NOIKSD */
+#endif /* NOICP */
+#ifdef NOSPL                            /* 30 Oct 2022 */
+#ifndef NOIKSD                          /* 30 Oct 2022 */
+#define NOIKSD
+#endif /* NOIKSD */
+#ifndef NOLEARN                         /* 30 Oct 2022 */
+#define NOLEARN
+#endif /* NOLEARN */
+#ifndef NOTYPEINTERPRET                 /* 23 August 2022 - TYPE /INTERPRET */
 #define TYPEINTERPRET
 #endif  /* NOTYPEINTERPRET */
 #ifndef NOCOPYINTERPRET                 /* 20 Sep 2022 - COPY /INTERPRET */
@@ -88,13 +112,6 @@
 #ifndef NORLOGIN                        /* No more RLOGIN client */
 #define NORLOGIN
 #endif  /* NORLOGIN */
-#ifndef NOWTMP                          /* No more WTMP logging */
-#define NOWTMP
-#endif  /* NOWTMP */
-#ifndef NOSYSLOG                        /* No more syslog */
-#define NOSYSLOG
-#endif  /* NOSYSLOG */
-
 #endif  /* NODEPRECATED */
 /*
   As of 26 September 2022, the Arrow-key feature is included only if 
@@ -211,6 +228,42 @@
 #define PWID_T int
 #endif /* PWID_T */
 #endif /* CK_SCO32V4 */
+
+/*
+  The UNIX Seventh Edition (1979) compiler doesn't allow a lot of -D's on
+  the make command line and big modules can result in nonsensical fatal
+  compilation errors so I have to remove a lot of features to make it
+  compile at all without putting more -D's on the make-command line.
+
+  KFLAGS=-DV7MIN can also be used on other platforms, e.g. Linux, to build
+  the smallest possible C-Kermit program, about 400kb: command-line only, no
+  script programming, no making network connections, no character-set
+  support, dialing of only the most common modem types, no use of external
+  processes, and no logging or debugging.  On Ubuntu this results in an
+  executable of about 402KB, compared to the normal one of 2.8MB.
+
+  -fdc, 3 November 2022
+*/
+#ifdef V7MIN                            /* UNIX V7 MINIMUM-SIZE BUILD */
+#ifndef NOICP                           /* No interactive commands */
+#define NOICP
+#endif /* NOICP */
+#ifndef NONET                           /* No networking of any kind */
+#define NONET
+#endif /* NONET */
+#ifndef NOCSETS                         /* No character-set conversion */
+#define NOCSETS
+#endif /* NOCSETS */
+#ifndef MINIDIAL                        /* Minimum modem support */
+#define MINIDIAL
+#endif /* MINIDIAL */
+#ifndef NOPTY                           /* No spawning */
+#define NOPTY
+#endif /* NOPTY */
+#ifndef NODEBUG                         /* No debugging */
+#define NODEBUG
+#endif  /* NODEBUG */
+#endif /* V7MIN */
 
 #ifdef NOICP				/* If no command parser */
 #ifndef NOSPL				/* Then no script language either */
@@ -1132,6 +1185,7 @@
 #ifdef V7
 #ifndef UNIX
 #define UNIX
+extern int errno;                       /* fdc 1 November 2022 */
 #endif /* UNIX */
 #endif /* V7 */
 
@@ -1236,7 +1290,9 @@
 #endif /* OSKORUNIX */
 
 #ifdef OS2
+#ifndef CK_ANSIC
 #define CK_ANSIC		 /* OS/2 supports ANSIC and more extensions */
+#endif /* CK_ANSIC */
 #endif /* OS2 */
 
 #ifdef OSF50			   /* Newer OSF/1 versions imply older ones */
@@ -1285,21 +1341,40 @@
 #endif	/* __DECC */
 
 #ifdef VMS
-#ifdef __ia64				/* VMS on Itanium */
-#ifndef VMSI64
-#define VMSI64
-#endif	/* VMSI64 */
-#endif	/* __ia64 */
-#ifndef VMS64BIT			/* 64-bit VMS on Itanium or Alpha */
-#ifdef __ia64
-#define VMS64BIT
-#else
+/* 2022-12-05  SMS.  All hardware architectures after VAX are 64-bit. 
+ * Testing for (32-bit) VAX is safer in the long term than testing for
+ * __ALPHA, __ia64, __x86_64, et al.
+ */
+#ifndef VMS64                           /* Belt. */
 #ifdef __ALPHA
-#define VMS64BIT
-#endif	/* __ia64 */
-#endif	/* __ALPHA */
-#endif	/* VMS64BIT */
-#endif	/* VMS */
+#define VMS64
+#else /* def __ALPHA */
+#ifdef __ia64
+#define VMS64
+#ifndef VMSI64
+#define VMSI64                          /* See ckvtio.c.  Pointless now? */
+#endif /* ndef VMSI64 */
+#else /* def __ia64 */
+#ifdef __x86_64
+#define VMS64
+#endif /* def __x86_64 */
+#endif /* def __ia64 [else] */
+#endif /* def __ALPHA [else] */
+#endif /* ndef VMS64 */
+
+#ifndef VMS64                           /* Suspenders. */
+#ifndef __VAX
+#ifndef vax
+#ifndef __vax
+#ifndef __vax__
+#define VMS64
+#endif /* ndef __vax__ */
+#endif /* ndef __vax */
+#endif /* ndef vax */
+#endif /* ndef __VAX */
+#endif /* ndef VMS64 */
+
+#endif /* def VMS */
 
 #ifdef apollo				/* May be ANSI-C, check further */
 #ifdef __STDCPP__
@@ -1381,7 +1456,7 @@
 #ifndef NOSYSLOG
 #define NOSYSLOG
 #endif /* NOSYSLOG */
-#ifndef NOWTMP
+#ifndef NOWTMP                          /* Redundant but does no harm */
 #define NOWTMP
 #endif /* NOWTMP */
 #else
@@ -2261,8 +2336,13 @@ _PROTOTYP( void bleep, (short) );
 #endif /* AIXRS */
 #endif /* USETTYLOCK */
 #endif /* NOTTYLOCK */
-
-/* This could become more inclusive.. Solaris 10, HP-UX 11, AIX 5.3... */
+/* 
+  This could be more inclusive...  But better not to use snprintf() at all,
+  it's hard to find a way to test for its availability without using
+  nonportable preprocessor constructions.  Use ckclib.c: ckmakmsg() or
+  ckmakxmsg() instead of both sprintf() and snprintf() to squelch compiler
+  warnings and ensure no memory leaks.
+*/  
 #ifndef HAVE_SNPRINTF                   /* Safe to use snprintf() */
 #ifdef HAVE_OPENPTY
 #define HAVE_SNPRINTF
@@ -5680,7 +5760,9 @@ _PROTOTYP( int ttinl, (CHAR *, int, int, CHAR) );
 #define CK_XYZ
 #ifndef NOXYZDLL
 #define XYZ_INTERNAL			/* Internal and DLL */
+#ifndef XYZ_DLL
 #define XYZ_DLL
+#endif /* XYZ_DLL */
 #endif /* NOXYZDLL */
 #endif /* OS2 */
 #endif /* UNIX */
@@ -5858,7 +5940,9 @@ typedef CHAR * MACRO;
 #ifndef __32BIT__
 #define __32BIT__
 #endif /* __32BIT__ */
+#ifndef NOSYSTIMEBH
 #include <sys/timeb.h>
+#endif /* NOSYSTIMEBH */
 #else /* __EMX__ */
 #ifndef __WATCOMC__
 /* Watcom direct.h definition incompatible with the

@@ -13,7 +13,7 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 23 September 2022
+    Last update: 3 December 2022
 */
 
 /*
@@ -2780,6 +2780,7 @@ fnparse(string) char *string; {
          x--)
       s[x-1] = NUL;
     while (1) {                         /* Loop through rest of string */
+#ifndef NOICP
         if (*s == CMDQ) {               /* Backslash (quote character)? */
             if ((x = xxesc(&s)) > -1) { /* Go interpret it. */
                 *q++ = (char) x;        /* Numeric backslash code, ok */
@@ -2797,7 +2798,9 @@ fnparse(string) char *string; {
             while (*s == SP) s++;       /* Skip repeated spaces */
             p = q;                      /* Start of next name */
             continue;
-        } else *q++ = *s;               /* Otherwise copy the character */
+        } else
+#endif /* NOICP */
+            *q++ = *s;                  /* Otherwise copy the character */
         s++;                            /* Next input character */
     }
     debug(F101,"fnparse r","",r);
@@ -4434,7 +4437,7 @@ _PROTOTYP( VOID conbgt, (int) );
 			 (long)((CKFLOAT)ffc / fpxfsecs));
 #else
 		if (xfsecs)
-		  printf(": OK (%d sec, %ld cps)",xfsecs,ffc/xfsecs);
+		  printf(": OK (%ld sec, %ld cps)",xfsecs,ffc/xfsecs);
 #endif /* GFTIMER */
 		printf("\n");
                 return;
@@ -4629,7 +4632,7 @@ _PROTOTYP( VOID conbgt, (int) );
 #ifdef GFTIMER
                 printf(", %0.3f sec, %ld cps", fptsecs, tfcps);
 #else
-                printf(", %ld sec, %ld cps", tsecs, tfcps);
+                printf(", %d sec, %ld cps", tsecs, tfcps);
 #endif /* GFTIMER */
                 printf(".\n");
             }
@@ -5108,6 +5111,7 @@ doexit(exitstat,code) int exitstat, code; {
       exitstat |= code;
 #endif /* VMS */
 
+#ifndef NOICP
 #ifdef IKSD
 #ifdef IKSDB
     debug(F101,"doexit ikdbopen","",ikdbopen);
@@ -5119,6 +5123,7 @@ doexit(exitstat,code) int exitstat, code; {
     }
 #endif /* IKSDB */
 #endif /* IKSD */
+#endif /* NOICP */
 
 /* We have put this off till the very last moment... */
 
@@ -9217,6 +9222,7 @@ ck_cleol() {
 }
 #endif /* CK_CURPOS */
 
+#ifndef NOICP
 #ifndef NOIKSD
 #ifdef IKSDB
 
@@ -9553,6 +9559,11 @@ freeslot(n) int n; {
 #include <fcntl.h>			/* For creat() */
 #endif	/* UNIX */
 
+#ifdef CK_ANSIC
+/* prototype for static function - fdc 30 November 2022 */
+static void ck_termset( int );
+#endif  /* CK_ANSIC */
+
 int
 getslot() {                             /* Find a free slot for us */
     FILE * rfp = NULL;                  /* Returns slot number (0, 1, ...) */
@@ -9775,3 +9786,4 @@ getslot() {                             /* Find a free slot for us */
 }
 #endif /* IKSDB */
 #endif /* NOIKSD */
+#endif /* NOICP */

@@ -155,7 +155,7 @@ in_func( U8 * buf, U32 len, U32 * bytes_received )
 
     if ( rc > 0 ) {
         *bytes_received = rc ;
-        hexdump("P in_func",buf,rc);
+        ckhexdump("P in_func",buf,rc);
 
         if ( what == W_RECV ) {
             rpktl = rc ;
@@ -185,7 +185,7 @@ out_func( U8 * buf, U32 len, U32 * bytes_written )
         spackets++ ;
     }
 
-    hexdump("P out_func",buf,len);
+    ckhexdump("P out_func",buf,len);
     rc = ttxout( buf, len ) ;
     if ( rc >= 0 ) {
         *bytes_written = rc ;

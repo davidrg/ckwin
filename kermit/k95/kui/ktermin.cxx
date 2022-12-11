@@ -828,6 +828,9 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 setautodl(1,0);
                 break;
 
+            /* When adjusting URLs here, remember to update the dialer too.
+             * Equivalents to the below menu items live in kconnect.cpp */
+
             case ID_HELP_K95MANUAL:
                 readManual();
                 break;
@@ -835,10 +838,10 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 browse("http://www.kermitproject.org/");
                 break;
             case ID_WEB_K95:
-                browse("http://www.kermitproject.org/k95.html");
+                browse("http://www.kermitproject.org/ckw10beta.html");
                 break;
             case ID_WEB_NEWS:
-                browse("http://www.kermitproject.org/k95news.html");
+                browse("http://www.kermitproject.org/ckw10beta.html");
                 break;
             case ID_WEB_PATCH:
                 browse("http://www.kermitproject.org/k95upgrade.html");

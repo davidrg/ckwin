@@ -109,10 +109,12 @@ REM OpenWatcom:
 C:\watcom\owsetenv.bat
 ```
 3. Setup the C-Kermit build environment by running `setenv.bat`
-4. CD into `kermit\k95`
-5. run `mknt.bat` to build the console version and some related bits
-6. run `mkg.bat` to build the GUI version (k95g.exe)
-7. run `mkdist.bat` to collect everything you built plus any redistributable
+4. CD into `kermit\p95`
+5. run `mknt.bat` to build the X/Y/Z Modem library
+6. CD into `..\k95`
+7. run `mknt.bat` to build the console version and some related bits
+8. run `mkg.bat` to build the GUI version (k95g.exe)
+9. run `mkdist.bat` to collect everything you built plus any redistributable
     dependencies into `kermit\k95\dist`
 
 Done! Depending on the Visual C++ version you're using you may need to also

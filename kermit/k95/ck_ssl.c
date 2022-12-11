@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 10.0.236, 24 Sep 2022";
+char *cksslv = "SSL/TLS support, 10.0.237, 01 Dec 2022";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
@@ -1802,6 +1802,32 @@ ssl_tn_init(mode) int mode;
 #endif /* USE_CERT_CB */
         } else if (mode == SSL_SERVER) {
             /* We are a server */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+            /* Since OpenSSL 1.1.0, SSLv23_server_method() has been renamed to
+             * TLS_server_method with the old name #defined to the new one. This
+             * is still the case in OpenSSL 3.1 but perhaps someday the old name
+             * will disappear so for OpenSSL 1.1.0 and newer we'll just use the
+             * new name. */
+
+            ssl_ctx=(SSL_CTX *)SSL_CTX_new(TLS_server_method());
+            /* This can fail because we do not have RSA available */
+            if ( !ssl_ctx ) {
+                debug(F110,"ssl_tn_init","TLS_server_method failed",0);
+                last_ssl_mode = -1;
+                return(0);
+            }
+
+            tls_ctx=(SSL_CTX *)SSL_CTX_new(TLS_server_method());
+
+            if ( !tls_ctx ) {
+                debug(F110,"ssl_tn_init","TLS_server_method failed",0);
+                last_ssl_mode = -1;
+                return(0);
+            }
+
+#else /* OPENSSL_VERSION_NUMBER < 0x10100000L */
+
             ssl_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_server_method());
             /* This can fail because we do not have RSA available */
             if ( !ssl_ctx ) {
@@ -1809,21 +1835,19 @@ ssl_tn_init(mode) int mode;
                 last_ssl_mode = -1;
                 return(0);
             }
-#ifdef COMMENT
-            tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_server_method());
-#else /* COMMENT */
+
             tls_ctx=(SSL_CTX *)SSL_CTX_new(SSLv23_server_method());
             /* This can fail because we do not have RSA available */
             if ( !tls_ctx ) {
                 debug(F110,"ssl_tn_init","SSLv23_server_method failed",0);
                 tls_ctx=(SSL_CTX *)SSL_CTX_new(TLSv1_server_method());
             }
-#endif /* COMMENT */
             if ( !tls_ctx ) {
                 debug(F110,"ssl_tn_init","TLSv1_server_method failed",0);
                 last_ssl_mode = -1;
                 return(0);
             }
+#endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */
         } else /* Unknown mode */
             return(0);
 

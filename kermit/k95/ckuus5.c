@@ -15,6 +15,7 @@ int cmdsrc() { return(0); }
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
     Last update: Oct 10-11 2022 (fdc and sms)
+    Last update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
@@ -38,6 +39,7 @@ char tmpbuf[TMPBUFSIZ+1];               /* Temporary buffer */
 #endif /* DCMDBUF */
 char lasttakeline[TMPBUFSIZ+1];         /* Last TAKE-file line */
 
+int noherald = 0;         /* Whether to print the program herald on startup */
 #ifndef NOICP
 
 #include "ckcnet.h"
@@ -89,6 +91,15 @@ extern bool cursorena[] ;
 #ifdef VMS
 #include <stat.h>
 #endif /* def VMS */
+
+#ifdef CK_ANSIC
+/* prototypes for static functions - fdc 30 November 2022 */
+static char * cmddisplay( char *, int );
+static char * vardef( char *, int *, int *, int * );
+static int isaa( char * );
+static int iseom( char * );
+static int traceval( char *, char * );
+#endif /* CK_ANSIC */
 
 /* For formatted screens, "more?" prompting, etc. */
 
@@ -504,7 +515,6 @@ char kermrcb[KERMRCL];
 char *kermrc = kermrcb;
 #endif /* DCMDBUF */
 
-int noherald = 0;         /* Whether to print the program herald on startup */
 int cm_retry = 1;                       /* Command retry enabled */
 xx_strp xxstring = zzstring;
 
@@ -5811,7 +5821,7 @@ shomou() {
                          mousename(button,event),
                          mousemap[button][event].key.scancode);
                 }
-              break;
+                break;
             case kverb:
               id = mousemap[button][event].kverb.id & ~(F_KVERB);
               if (id != K_IGNORE) {
@@ -6378,7 +6388,7 @@ shotapi(int option) {
                 tapiusecfg?"on ":"off", tapipass?"(n/a)":"");
         printf("\n");
 
-#ifdef BETATEST
+#ifdef TAPI_BETATEST
         if (tapipass) {
 printf("K-95 uses the TAPI Line in an exclusive mode.  Other applications\n");
 printf("may open the device but may not place calls nor answer calls.\n");
@@ -6411,7 +6421,7 @@ printf(
 printf("the TAPI Dialing Properties are altered or when the TAPI Location\n");
 printf("is changed.\n\n");
         }
-#endif /* BETATEST */
+#endif /* TAPI_BETATEST */
 
         if (tapipass) {
             printf("Type SHOW MODEM to see MODEM configuration.\n");
@@ -6897,7 +6907,7 @@ doshow(x) int x; {
   then handle with big switch() statement.
 */
 #ifndef NOSPL
-    if (x != SHBUI && x != SHARR)
+    if (x != SHBUI && x != SHARR) {
 #endif /* NOSPL */
       if (x == SHFUN) {                 /* For SHOW FUNCTIONS */
           int y;
@@ -6913,6 +6923,9 @@ doshow(x) int x; {
               return(y);
           }
       }
+#ifndef NOSPL
+    }
+#endif /* NOSPL */
 
 #ifdef COMMENT
     /* This restriction is too general. */
@@ -10341,6 +10354,17 @@ initoptlist() {
 #ifdef PIPESEND
     makestr(&(optlist[noptlist++]),"PIPESEND");
 #endif /* PIPESEND */
+
+#ifdef C89
+    makestr(&(optlist[noptlist++]),"C89");
+#endif /* C89 */
+#ifdef C90
+    makestr(&(optlist[noptlist++]),"C90");
+#endif /* C90 */
+#ifdef C99
+    makestr(&(optlist[noptlist++]),"C99");
+#endif /* C99 */
+
 #ifdef CK_SPEED
     makestr(&(optlist[noptlist++]),"CK_SPEED");
 #endif /* CK_SPEED */
@@ -10356,6 +10380,15 @@ initoptlist() {
 #ifdef CK_MKDIR
     makestr(&(optlist[noptlist++]),"CK_MKDIR");
 #endif /* CK_MKDIR */
+#ifdef HAVE_GSSAPI
+    makestr(&(optlist[noptlist++]),"HAVE_GSSAPI");
+#endif /* HAVE_GSSAPI */
+#ifdef HAVE_KRB4
+    makestr(&(optlist[noptlist++]),"HAVE_KRB4");
+#endif /* HAVE_KRB4 */
+#ifdef HAVE_KRB5
+    makestr(&(optlist[noptlist++]),"HAVE_KRB5");
+#endif /* HAVE_KRB5 */
 #ifdef HAVE_LOCALE
     makestr(&(optlist[noptlist++]),"HAVE_LOCALE");
 #endif /* HAVE_LOCALE */
@@ -10996,7 +11029,10 @@ initoptlist() {
 #endif /* DCLPOPEN */
 #ifdef NOSETBUF
     makestr(&(optlist[noptlist++]),"NOSETBUF");
-#endif /* NOSETBUF */
+#endif /* NOWSETBUF */
+#ifdef NOWTMP
+    makestr(&(optlist[noptlist++]),"NOWTMP");
+#endif /* NOWTMP */
 #ifdef NOXFER
     makestr(&(optlist[noptlist++]),"NOXFER");
 #endif /* NOXFER */
@@ -11038,9 +11074,15 @@ initoptlist() {
 #ifdef NOKVERBS
     makestr(&(optlist[noptlist++]),"NOKVERBS");
 #endif /* NOKVERBS */
+#ifdef NOPRINTFSUBST
+    makestr(&(optlist[noptlist++]),"NOPRINTFSUBST");
+#endif /* NOPRINTFSUBST */
 #ifdef NOSETREU
     makestr(&(optlist[noptlist++]),"NOSETREU");
 #endif /* NOSETREU */
+#ifdef NOSYSLOG
+    makestr(&(optlist[noptlist++]),"NOSYSLOG");
+#endif /* NOSYSLOG */
 #ifdef LCKDIR
     makestr(&(optlist[noptlist++]),"LCKDIR");
 #endif /* LCKDIR */
@@ -11267,7 +11309,7 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"VMSORUNIX");
 #endif /* VMSORUNIX */
 #ifdef VMS64BIT
-    makestr(&(optlist[noptlist++]),"VMS64BIT");	/* VMS on Alpha or IA64 */
+    makestr(&(optlist[noptlist++]),"VMS64BIT");	/* VMS on non-VAX */
 #endif /* VMS64BIT */
 #ifdef VMSI64
     makestr(&(optlist[noptlist++]),"VMSI64"); /* VMS on IA64 */
@@ -12006,6 +12048,30 @@ shofea() {
     if (inserver)
       return(1);
 
+    if (0) {
+#ifdef UNIX
+    printf("UNIX defined\n");
+#else
+    printf("UNIX not defined\n");
+#endif
+#ifdef DOWTMP
+    printf("DOWTMP defined\n");
+#else
+    printf("DOWTMP not defined\n");
+#endif
+#ifdef NOWTMP
+    printf("NOWTMP defined\n");
+#else
+printf("NOWTMP not defined\n");
+#endif
+#ifdef CKWTMP
+    printf("Have CKWTMP defined\n");
+#else
+    printf("CKWTMP not defined\n");
+#endif
+    return(1);
+      }
+
     debug(F101,"shofea NOPTLIST","",NOPTLIST);
     initoptlist();
     debug(F101,"shofea noptlist","",noptlist);
@@ -12039,7 +12105,7 @@ shofea() {
 #endif /* OS2 */
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
-    printf("Major optional features included:\n");
+    printf("Major features included:\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 
     if (sizeof(CK_OFF_T) == 8) {
@@ -12459,8 +12525,12 @@ shofea() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* NOHTTP */
 #ifdef NOARROWKEYS
+/* OS/2 and Windows always have arrow key support regardless of the NOARROWKEYS
+ * build option */
+#ifndef OS2
     printf(" No arrow-key support\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* OS2 */
 #endif /* NOARROWKEYS */
 
 
