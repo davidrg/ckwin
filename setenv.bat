@@ -76,10 +76,6 @@ if "%lib%" == "" set lib=%root%\dummy
 
 REM Add on any optional dependencies
 
-set CKF_ZLIB=no
-set CKF_SSL=no
-set CKF_SSH=no
-
 set CK_DIST_DLLS=
 
 if not defined vcpkg_installed goto :end_vcpkg
@@ -90,16 +86,22 @@ REM ------------------------------------------
 set include=%include%;%vcpkg_installed%\include
 set lib=%lib%;%vcpkg_installed%\lib
 
+if "%CKF_ZLIB%" == "no" goto :novcpkgzlib
 if exist %vcpkg_installed%\lib\zlib.lib set CKF_ZLIB=yes
 if exist %vcpkg_installed%\bin\zlib1.dll set CK_ZLIB_DIST_DLLS=%vcpkg_installed%\bin\zlib1.dll
+:novcpkgzlib
 
+if "%CKF_SSL%" == "no" goto :novcpkgssl
 if exist %vcpkg_installed%\lib\libssl.lib set CKF_SSL=yes
 if exist %vcpkg_installed%\bin\libcrypto-3.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3.dll %vcpkg_installed%\bin\libssl-3.dll
 if exist %vcpkg_installed%\bin\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
 if exist %vcpkg_installed%\tools\openssl\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\tools\openssl\openssl.exe
+:novcpkgssl
 
+if "%CKF_SSH%" == "no" goto :novcpkgssh
 if exist %vcpkg_installed%\lib\ssh.lib set CKF_SSH=yes
 if exist %vcpkg_installed%\bin\ssh.dll set CK_SSH_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\ssh.dll %vcpkg_installed%\bin\pthreadVC3.dll
+:novcpkgssh
 
 :end_vcpkg
 
@@ -108,12 +110,15 @@ REM Look for optional dependencies in the manual-build locations
 REM ------------------------------------------------------------
 
 REM zlib:
+if "%CKF_ZLIB%" == "no" goto :nozlib
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
 if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
+:nozlib
 
 REM OpenSSL
+if "%CKF_SSL%" == "no" goto :nossl
 REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
 if exist %openssl_root%\include\openssl\NUL set include=%include%;%openssl_root%\include
 REM OpenSSL 1.0.1 and 1.0.2 uses this:
@@ -137,12 +142,20 @@ if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
+:nossl
 
 REM libssh:
+if "%CKF_SSH%" == "no" goto :nossh
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
 if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
+:nossh
+
+
+if not defined CKF_ZLIB set CKF_ZLIB=no
+if not defined CKF_SSL set CKF_SSL=no
+if not defined CKF_SSH set CKF_SSH=no
 
 
 REM --------------------------------------------------------------
