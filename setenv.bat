@@ -153,8 +153,8 @@ if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
 
 REM A bit of debugging for when the openssl root exists but SSL was not found
-if not exist %openssl_root%\NUL goto :nossl
-if "%CKF_SSL%" == "yes" goto :nossl
+REM if not exist %openssl_root%\NUL goto :nossl
+REM if "%CKF_SSL%" == "yes" goto :nossl
 echo OpenSSL Root contains:
 dir %openssl_root%
 :nossl
