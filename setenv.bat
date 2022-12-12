@@ -36,7 +36,7 @@ set zlib_root=%root%\zlib\1.2.12
 
 REM openssl - set to the folder where the include folder and .lib and .dll files
 REM live.
-set openssl_root=%root%\openssl\1.1.1q
+set openssl_root=%root%\openssl\1.1.1s
 
 REM libssh - set to the folder where the include directory lives.
 set libssh_root=%root%\libssh\0.10.3
