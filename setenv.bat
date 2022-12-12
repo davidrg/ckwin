@@ -151,12 +151,6 @@ if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
-
-REM A bit of debugging for when the openssl root exists but SSL was not found
-REM if not exist %openssl_root%\NUL goto :nossl
-REM if "%CKF_SSL%" == "yes" goto :nossl
-echo OpenSSL Root contains:
-dir %openssl_root%
 :nossl
 
 REM libssh:
