@@ -33,12 +33,14 @@
 #endif /* LIBDES */
 #ifdef OS2
 #ifdef NT
+#ifdef NTLM
 #include <windows.h>
 #define SECURITY_WIN32
 #include <security.h>
 #ifndef NTLMSP_NAME_A
 #define NTLMSP_NAME_A "NTLM"
 #endif /* NTLMSP_NAME_A */
+#endif /* NTLM */
 
 #else /* NT */
 #define INCL_DOSMODULEMGR

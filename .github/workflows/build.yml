@@ -19,6 +19,8 @@ env:
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
   OPENZINC: https://ftp.zx.net.nz/pub/dev/openzinc/oz1/OZ1.zip
+  # For building k95crypt.dll - expected to be a .tar.gz file
+  LIBDES: https://www.mirrorservice.org/sites/ftp.wiretapped.net/pub/security/cryptography/libraries/libdes/libdes.tar.gz
 
 jobs:
   Build-VisualCxx:
@@ -59,9 +61,12 @@ jobs:
         path: |
           ${{github.workspace}}\zlib 
           ${{github.workspace}}\openssl 
-          ${{github.workspace}}\libssh 
+          ${{github.workspace}}\libssh
+          ${{github.workspace}}\libdes\des
+          ${{github.workspace}}\libdes\Release
+          ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -100,6 +105,15 @@ jobs:
         cd ${{env.LIBSSH_VERSION}}
         mkdir build
         cd ..
+        cd ..
+        
+        # Get and unpack libdes
+        cd libdes
+        wget ${{env.LIBDES}} -outfile libdes.tar.gz
+        7z x libdes.tar.gz
+        7z x libdes.tar
+        del *.tar
+        del *.gz
         cd ..
         
         # Get and unpack nasm
@@ -144,6 +158,13 @@ jobs:
         cd libssh\${{env.LIBSSH_VERSION}}\build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
+
+    - name: Build libdes
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      shell: cmd
+      run: |
+        cd libdes\
+        call mknt.bat
 
       ##########################################################################
       # Build K95, K95G and other bits for redistribution                      #

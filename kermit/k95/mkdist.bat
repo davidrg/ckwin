@@ -8,6 +8,7 @@ if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 
 @echo Move build outputs...
 move *.exe dist
+if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
@@ -27,6 +28,7 @@ if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
 copy k95.ini dist
 copy k95custom.ini dist
 copy k95d.cfg dist
+copy welcome.txt dist
 
 @echo Copy runtime libraries
 if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist

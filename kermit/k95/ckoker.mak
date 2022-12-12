@@ -818,9 +818,12 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 
 
 
-win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe se.exe
+win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe \
+    se.exe \
+!if "$(CKF_CRYPTDLL)" == "yes"
+    k95crypt.dll
+!endif
 # SRP support: srp-tconf.exe srp-passwd.exe
-# Crypto stuff: k95crypt.dll
 
 win32md: mdnker.exe
 
@@ -996,13 +999,13 @@ cksnval.dll: cksnval.obj cksnval.def ckoker.mak
 	$(CC) $(CC2) $(DEBUG) $(DLL) cksnval.obj \
         cksnval.def $(OUT) $@ $(LIBS)
 
-#k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-#	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
-#       
-#k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
-#	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
-#            /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib 
-#        dllrname $@ CPPRMI36=CKO32RTL       
+k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
+
+k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
+	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
+            /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib
+        dllrname $@ CPPRMI36=CKO32RTL
 
 
 docs:   ckermit.inf
@@ -1233,13 +1236,13 @@ ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
 !if "$(PLATFORM)" == "OS2"
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_crp.c
+!endif
+
+ck_des$(O):     ck_des.c
+!if "$(PLATFORM)" == "OS2"
+	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
 
 !endif
-#ck_des$(O):     ck_des.c
-#!if "$(PLATFORM)" == "OS2"
-#	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
-#
-#!endif
 
 # X/Y/Z Modem support (3rd-party library)
 !if "$(CKF_XYZ)" == "yes"
