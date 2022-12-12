@@ -45,6 +45,10 @@ REM libssh - set to where you built libssh. This should have a subdirectory
 REM called 'src' containing ssh.dll and ssh.lib
 set libssh_build=%libssh_root%\build
 
+REM libdes - required for building k95crypt.dll and enabling a few features that
+REm rely on obsolete and easily broken encryption
+set libdes_root=%root%\libdes
+
 REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
@@ -152,10 +156,19 @@ if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
 :nossh
 
+REM libdes:
+if "%CKF_LIBDES%" == "no" goto :nolibdes
+if exist %libdes_root%\des\des.h set CKF_LIBDES=yes
+if exist %libdes_root%\des\des.h set CKF_CRYPTDLL=yes
+if exist %libdes_root%\des\des.h set INCLUDE=%include%;%libdes_root%
+if exist %libdes_root%\Release\libdes.lib set lib=%lib%;%libdes_root%\Release\
+if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
+:nolibdes
 
 if not defined CKF_ZLIB set CKF_ZLIB=no
 if not defined CKF_SSL set CKF_SSL=no
 if not defined CKF_SSH set CKF_SSH=no
+if not defined CKF_LIBDES set CKF_LIBDES=no
 
 
 REM --------------------------------------------------------------
@@ -399,6 +412,7 @@ echo     zlib: %CKF_ZLIB%
 echo  OpenSSL: %CKF_SSL%
 echo   libssh: %CKF_SSH%
 echo     zinc: %CKF_ZINC%
+echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting

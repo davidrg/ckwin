@@ -7,15 +7,17 @@ unavailable. These are:
 * [zlib](https://zlib.net/)
 * [OpenSSL](https://www.openssl.org/) 0.9.8 - 3.0.x
 * [libssh](https://www.libssh.org/) 0.9.x, 0.10.x
+* libdes 4.01
 
-For SSH support all three are required and the openssl version should be >=1.1.1 
-(though apparently 1.0.2 and 1.1.0 also work but have known security issues). 
+For SSH support the first three are required and the openssl version should 
+be >=1.1.1 (though apparently 1.0.2 and 1.1.0 also work but have known security 
+issues). 
 
 You may also want a CA certificates bundle. A convenient source is here:
 https://curl.se/docs/caextract.html. Save the file as `ca_certs.pem` in the CKW 
 directory and it should be picked up automatically.
 
-## Building with SSH Support
+## Building with SSH and SSL/TLS Support
 
 This doesn't necessarily document the *best* way to build these dependencies.
 Ideally you should read the readme file and other documentation for each of 
@@ -55,6 +57,9 @@ Normally everything is arranged into directories as follows:
    - openssl\
      - 1.1.1q\
        - files & directories from openssl 1.1.1q
+   - libdes\
+     - des\
+       - files & directories from the libdes distribution
    - libssh\
      - 0.9.6\
        - files & directories from libssh 0.9.6
@@ -63,9 +68,9 @@ Normally everything is arranged into directories as follows:
        - SuperLAT header files
 ```
 
-Once you've built the dependencies you want you can uncomment the associated
-lines in setenv.bat which will result in any features requiring the dependencies
-you've built to be automatically enabled.
+Once you've built the dependencies you want you can alter the associated lines
+in setenv.bat to point to where you've built the dependencies which will result
+in any features requiring them to be automatically enabled.
 
 ### 1. Building zlib
 
@@ -113,6 +118,27 @@ cd ..\..\..\
 Note that this does not build libssh with GSSAPI support. If you're building
 libssh 0.10.x and want DSA support (ssh-dss), add `-DWITH_DSA=ON` to the end
 of the cmake command.
+
+## Building with Telnet Encryption Option (DES and CAST) Support
+In addition to SSL/TLS secured telnet, C-Kermit for Windows also optionally
+supports the [Telnet Encryption Option](https://www.rfc-editor.org/rfc/rfc2946.html)
+using the long obsolete DES and CAST encryption algorithms. This relies on
+libdes, a very old crypto library. Needless to say the security here will not be
+great, but perhaps it's better than entirely unencrypted telnet (assuming you 
+can find a telnet _server_ that supports the Encryption Option).
+
+This feature currently requires at least Visual C++ 5.0 - OpenWatcom and earlier
+versions of Visual C++ are not supported due to makefile incompatibilities.
+
+To enable the Encryption Option, simply build libdes. To do this:
+1. Grab libdes from somewhere. [This version](http://www.mirrorservice.org/sites/ftp.wiretapped.net/pub/security/cryptography/libraries/libdes/libdes.tar.gz)
+   from early 1998 calling itself 4.01 works.
+2. extract the libdes distribution  to `/libdes/des` such that the file `des.h` 
+   exists at `/libdes/des/des.h`.
+3. run `mknt.bat` inside of `/libdes`
+
+When you build CKW, libdes should be detected and the support library 
+`k95crypt.dll` will be built.
 
 ## Building with Meridian SuperLAT support
 

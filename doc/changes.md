@@ -61,6 +61,8 @@ slipping somewhat.
 * SuperLAT support is now available as a custom build option - it is not enabled
   by default due to the unclear license on the publicly available Meridian
   SuperLAT SDK.
+* The Telnet Encryption Option (DES/CAST) is supported again, not that you
+  should use it if you care about security.
 
 ### Fixed Bugs
 * Fixed a bug introduced in beta 3 that can prevent the cursor and other 

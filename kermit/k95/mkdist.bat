@@ -8,6 +8,7 @@ if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 
 @echo Move build outputs...
 move *.exe dist
+if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
