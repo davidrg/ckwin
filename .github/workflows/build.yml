@@ -171,6 +171,7 @@ jobs:
       ##########################################################################
     - name: Full Build
       run: |
+        dir ..\
         call ..\setenv.bat
         cd p95
         call mknt.bat
