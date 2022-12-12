@@ -27,6 +27,7 @@ if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
 copy k95.ini dist
 copy k95custom.ini dist
 copy k95d.cfg dist
+copy welcome.txt dist
 
 @echo Copy runtime libraries
 if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist
