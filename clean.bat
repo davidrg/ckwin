@@ -12,11 +12,15 @@ cd ..\dialer
 call clean.bat
 
 :nozinc
-if "%CKF_XYZ%" == "no" goto :done
+if "%CKF_XYZ%" == "no" goto :noxyz
 echo Clean p95 build...
 cd ..\p95
 call clean.bat
+:noxyz
+
+cd ..\..\libdes
+call clean.bat
 
 :done
-cd ..\..\
+cd ..\
 echo Done!

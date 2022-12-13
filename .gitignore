@@ -238,6 +238,9 @@ zlib/
 libssh/
 redist/
 zinc/
+libdes/des/*
+libdes/Release/*
+libdes/Debug/*
 
 # Misc
 setenv_local.bat

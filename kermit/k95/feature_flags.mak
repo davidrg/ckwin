@@ -18,6 +18,7 @@
 #   CKF_SSL        no         SSL support
 #   CKF_SSH        no         libssh support (built-in SSH)
 #   CKF_CONPTY     no         Windows PTY support.
+#   CKF_CRYPTDLL   no         Build k95crypt and enable telnet encryption support
 #   CKF_DEBUG      yes        Debug logging - on by default
 #   CKF_BETATEST   yes        Set to no to do a release build
 #   CKF_NO_CRYPTO  no         Disable all cryptography (SSL, SSH, Crypt DLL)
@@ -250,9 +251,9 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 #   Requires: libdes
 #     OR: reworking to use OpenSSL instead
 #   Turn off with: -DNO_ENCRYPTION
-!if "$(CKF_TELNET_ENCRYPTION)" == "yes"
+!if "$(CKF_CRYPTDLL)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption CryptDLL
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCRYPT_DLL
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCRYPT_DLL -DLIBDES
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) TelnetEncryptionOption CryptDLL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION

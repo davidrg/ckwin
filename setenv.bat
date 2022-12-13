@@ -32,11 +32,11 @@ REM update the paths. If you're using vcpkg to get these dependencies you can
 REM comment out the four SET lines below.
 
 REM zlib - set to the folder where zlib.h and the .lib and .dll files live:
-set zlib_root=%root%\zlib\1.2.12
+set zlib_root=%root%\zlib\1.2.13
 
 REM openssl - set to the folder where the include folder and .lib and .dll files
 REM live.
-set openssl_root=%root%\openssl\1.1.1q
+set openssl_root=%root%\openssl\1.1.1s
 
 REM libssh - set to the folder where the include directory lives.
 set libssh_root=%root%\libssh\0.10.3
@@ -44,6 +44,10 @@ set libssh_root=%root%\libssh\0.10.3
 REM libssh - set to where you built libssh. This should have a subdirectory
 REM called 'src' containing ssh.dll and ssh.lib
 set libssh_build=%libssh_root%\build
+
+REM libdes - required for building k95crypt.dll and enabling a few features that
+REm rely on obsolete and easily broken encryption
+set libdes_root=%root%\libdes
 
 REM ============================================================================
 REM ================== No changes required beyond this point ===================
@@ -86,11 +90,13 @@ REM ------------------------------------------
 set include=%include%;%vcpkg_installed%\include
 set lib=%lib%;%vcpkg_installed%\lib
 
+if "%CKF_ZLIB%" == "no" echo Skipping check for ZLIB
 if "%CKF_ZLIB%" == "no" goto :novcpkgzlib
 if exist %vcpkg_installed%\lib\zlib.lib set CKF_ZLIB=yes
 if exist %vcpkg_installed%\bin\zlib1.dll set CK_ZLIB_DIST_DLLS=%vcpkg_installed%\bin\zlib1.dll
 :novcpkgzlib
 
+if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :novcpkgssl
 if exist %vcpkg_installed%\lib\libssl.lib set CKF_SSL=yes
 if exist %vcpkg_installed%\bin\libcrypto-3.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3.dll %vcpkg_installed%\bin\libssl-3.dll
@@ -98,6 +104,7 @@ if exist %vcpkg_installed%\bin\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DI
 if exist %vcpkg_installed%\tools\openssl\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\tools\openssl\openssl.exe
 :novcpkgssl
 
+if "%CKF_SSH%" == "no" echo Skipping check for libssh
 if "%CKF_SSH%" == "no" goto :novcpkgssh
 if exist %vcpkg_installed%\lib\ssh.lib set CKF_SSH=yes
 if exist %vcpkg_installed%\bin\ssh.dll set CK_SSH_DIST_DLLS=%CK_DIST_DLLS% %vcpkg_installed%\bin\ssh.dll %vcpkg_installed%\bin\pthreadVC3.dll
@@ -110,6 +117,7 @@ REM Look for optional dependencies in the manual-build locations
 REM ------------------------------------------------------------
 
 REM zlib:
+if "%CKF_ZLIB%" == "no" echo Skipping check for ZLIB
 if "%CKF_ZLIB%" == "no" goto :nozlib
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
@@ -118,6 +126,7 @@ if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
 REM OpenSSL
+if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :nossl
 REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
 if exist %openssl_root%\include\openssl\NUL set include=%include%;%openssl_root%\include
@@ -145,6 +154,7 @@ if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_D
 :nossl
 
 REM libssh:
+if "%CKF_SSH%" == "no" echo Skipping check for libssh
 if "%CKF_SSH%" == "no" goto :nossh
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
 if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
@@ -152,10 +162,20 @@ if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
 :nossh
 
+REM libdes:
+if "%CKF_LIBDES%" == "no" echo Skipping check for libdes
+if "%CKF_LIBDES%" == "no" goto :nolibdes
+if exist %libdes_root%\des\des.h set CKF_LIBDES=yes
+if exist %libdes_root%\des\des.h set CKF_CRYPTDLL=yes
+if exist %libdes_root%\des\des.h set INCLUDE=%include%;%libdes_root%
+if exist %libdes_root%\Release\libdes.lib set lib=%lib%;%libdes_root%\Release\
+if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
+:nolibdes
 
 if not defined CKF_ZLIB set CKF_ZLIB=no
 if not defined CKF_SSL set CKF_SSL=no
 if not defined CKF_SSH set CKF_SSH=no
+if not defined CKF_LIBDES set CKF_LIBDES=no
 
 
 REM --------------------------------------------------------------
@@ -399,6 +419,7 @@ echo     zlib: %CKF_ZLIB%
 echo  OpenSSL: %CKF_SSL%
 echo   libssh: %CKF_SSH%
 echo     zinc: %CKF_ZINC%
+echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting

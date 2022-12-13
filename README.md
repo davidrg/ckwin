@@ -99,6 +99,8 @@ bits that couldn't be open sourced at the time:
 * SuperLAT support has been restored as a custom build option. The SDK, while made
   publicly available by Meridian, has an unclear license so SuperLAT support
   isn't included by default at this time.
+* The Telnet Encryption Option (DES/CAST) is supported again, not that anyone
+  should be using it today if they care about security.
 
 Additionally, a number of new features have been added:
 * Compiler support has been extended down to Visual C++ 2.0 and all the way up
@@ -132,9 +134,8 @@ C-Kermit for Windows at this time:
   years ago. Work needs to be done to support Heimdal Kerberos which seems to
   be more up-to-date.
 * SRP: Formerly provided by the Stanford SRP distribution, now unmaintained for
-  over a decade. OpenSSL includes SRP support but it would probably be a lot of
+  over a decade. OpenSSL includes SRP support, but it would probably be a lot of
   work to switch
-* Telnet Encryption Option: Haven't figured out how to build it yet.
 
 Code to support Kerberos for Windows and Stanford SRP still exists and should
 still work if there is some need for these features despite any security issues
