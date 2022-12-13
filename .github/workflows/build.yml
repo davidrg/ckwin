@@ -213,6 +213,7 @@ jobs:
         (
         echo ^<html^>
         echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+        echo ^<body^>
         ) > change-log.html
         python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
         python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
