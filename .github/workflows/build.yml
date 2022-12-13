@@ -201,6 +201,14 @@ jobs:
         Set-Content ca_certs.readme $readme
       shell: powershell
       working-directory: ${{ github.workspace }}\kermit\k95\dist
+      
+    - name: HTMLise Markdown Docs
+      run: |
+        pip3 install markdown
+        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md > ssh-readme.html
+        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md > change-log.html
+      working-directory: ${{ github.workspace }}\kermit\k95\dist
+      
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -306,7 +314,7 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95
       env:
         ROOT: ${{ github.workspace }}
-        WATCOM: ${{ github.workspace }}\watcom
+        WATCOM: ${{ github.workspace }}\watcom        
     - name: Prepare Artifacts
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -539,6 +547,13 @@ jobs:
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
           ROOT: ${{ github.workspace }}
+          
+      - name: HTMLise Markdown Docs
+        run: |
+          pip3 install markdown
+          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
+        working-directory: ${{ github.workspace }}\kermit\k95\dist                  
+          
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95

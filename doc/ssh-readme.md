@@ -128,7 +128,7 @@ At this time password, public key and keyboard interactive authentication are
 implemented and work.
 
 There is not yet support for using ssh agents or GSSAPI (Kerberos)
-authentication but as both of these are supported by the ssh backend use by
+authentication but as both of these are supported by the ssh backend used by
 C-Kermit support for these may appear in a future release.
 
 [^1]: https://libssh.org
