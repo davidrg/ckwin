@@ -205,8 +205,26 @@ jobs:
     - name: HTMLise Markdown Docs
       run: |
         pip3 install markdown
-        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md > ssh-readme.html
-        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md > change-log.html
+        (
+        echo ^<html^>
+        echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+        echo ^<body^>
+        ) > ssh-readme.html
+        (
+        echo ^<html^>
+        echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+        ) > change-log.html
+        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+        (
+        echo ^</body^>
+        echo ^</html^>
+        ) >> change-log.html
+        (
+        echo ^</body^>
+        echo ^</html^>
+        ) >> ssh-readme.html
+      shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       
     - name: Prepare Artifact
