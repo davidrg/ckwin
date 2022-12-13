@@ -203,10 +203,10 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       
     - name: HTMLise Markdown Docs
-      uses: ZacJW/markdown-html-action@1.1.1
-      with:
-        input_files: '[["doc/ssh-readme.md"],["doc/changes.md"]]'
-        output_files: '[["${{ github.workspace }}/kermit/k95/dist/ssh-readme.html"],["${{ github.workspace }}/kermit/k95/dist/change-log.html"]]'
+      run: |
+        pip3 install markdown
+        python -m markdown docs/ssh-readme.md > ssh-readme.html
+        python -m markdown docs/changes.md > change-log.html
       
     - name: Prepare Artifact
       shell: cmd
