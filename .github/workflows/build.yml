@@ -205,8 +205,8 @@ jobs:
     - name: HTMLise Markdown Docs
       run: |
         pip3 install markdown
-        python -m markdown docs/ssh-readme.md > ssh-readme.html
-        python -m markdown docs/changes.md > change-log.html
+        python -m markdown ${{ github.workspace }}\docs\ssh-readme.md > ssh-readme.html
+        python -m markdown ${{ github.workspace }}\docs\changes.md > change-log.html
       
     - name: Prepare Artifact
       shell: cmd
