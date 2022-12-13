@@ -201,6 +201,13 @@ jobs:
         Set-Content ca_certs.readme $readme
       shell: powershell
       working-directory: ${{ github.workspace }}\kermit\k95\dist
+      
+    - name: HTMLise Markdown Docs
+      uses: ZacJW/markdown-html-action@1.1.1
+      with:
+        input_files: '[["doc/ssh-readme.md"],["doc/changes.md"]]'
+        output_files: '[["${{ github.workspace }}/kermit/k95/dist/ssh-readme.html"],["${{ github.workspace }}/kermit/k95/dist/change-log.html"]]'
+      
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
