@@ -22,10 +22,13 @@ slipping somewhat.
       with Kermit 95 due to a difference in supported SSH options.
 
 ### New Features:
-* Upgraded from C-Kermit 10.0 beta.04 to beta.07
+* Upgraded from C-Kermit 10.0 beta.04 to beta.07, plus beta.08 changes from
+  the 11th and 12th of December 2022.
     * [New in C-Kermit 10.0 Beta.05](https://kermitproject.org/ckupdates.html#ck100beta05) 
     * [New in C-Kermit 10.0 Beta.06](https://kermitproject.org/ckupdates.html#ck100beta06)
-    * [New in C-Kermit 10.0 Beta.07](https://kermitproject.org/ckupdates.html#ck10beta070)
+    * [New in C-Kermit 10.0 Beta.07](https://kermitproject.org/ckupdates.html#ck10beta07)
+    * [New in C-Kermit 10.0 Beta.08](https://kermitproject.org/ckupdates.html#ck10beta08)
+      (Only up to and including 12 December 2022)
 * The default `k95custom.ini` now outputs a message on startup directing new 
   users to have a look at and optionally customise the file
 * X/Y/Z MODEM support is back thanks to Jyrki Salmi of Online Solutions Oy 
