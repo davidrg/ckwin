@@ -134,6 +134,10 @@ CKF_MOUSEWHEEL=no
 # crash on startup at ckonbi.c:152
 !message Turning NetBIOS support off - OpenWatcom builds just crash with it enabled.
 CKF_NETBIOS=no
+
+!message Turning X/Y/Z MODEM support off - build errors with OpenWatcom need fixing
+CKF_XYZ=no
+
 !endif
 
 !if "$(CKF_SSH)" == "yes"
