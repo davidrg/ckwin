@@ -78,6 +78,7 @@
 #define NOIKSD
 #endif /* NOIKSD */
 #endif /* NOICP */
+
 #ifdef NOSPL                            /* 30 Oct 2022 */
 #ifndef NOIKSD                          /* 30 Oct 2022 */
 #define NOIKSD
@@ -85,14 +86,20 @@
 #ifndef NOLEARN                         /* 30 Oct 2022 */
 #define NOLEARN
 #endif /* NOLEARN */
+#else                                   /* 12 December 2022 */
+
 #ifndef NOTYPEINTERPRET                 /* 23 August 2022 - TYPE /INTERPRET */
+#ifndef TYPEINTERPRET
 #define TYPEINTERPRET
+#endif  /* TYPEINTERPRET */
 #endif  /* NOTYPEINTERPRET */
+
 #ifndef NOCOPYINTERPRET                 /* 20 Sep 2022 - COPY /INTERPRET */
 #ifndef COPYINTERPRET
 #define COPYINTERPRET
 #endif  /* COPYINTERPRET */
 #endif  /* NOCOPYINTERPRET */
+
 #endif /* NOSPL */
 /*
   Disinclude features that are "deprecated" in 2022;
@@ -683,7 +690,7 @@
 /* Commented out fdc May 2020 to allow external SSH command */
 /* #ifdef NETPTY */
 /* #undef NETPTY */
-/* #endif /* NETPTY */
+/* #endif NETPTY */
 #ifdef RLOGCODE
 #undef RLOGCODE
 #endif /* RLOGCODE */

@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *userv = "User Interface 10.0.329, 30 November 2022";
+char *userv = "User Interface 10.0.330, 11 December 2022";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 

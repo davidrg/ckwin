@@ -4126,7 +4126,7 @@ reof(f,yy) char *f; struct zattr *yy; {
 	    c = *p++;
 #ifndef UNIX
 /*
-  See ckcpro.w.  In UNIX we don't use temp files any more -- we pipe the
+  See ckcpro.c.  In UNIX we don't use temp files any more -- we pipe the
   stuff right into mail or lpr.
 */
 	    if (c == 'M') {		/* Mail to user. */
@@ -4886,7 +4886,7 @@ int
 seof(x) int x; {
     char * s;
 /*
-  ckcpro.w, before calling seof(), sets window size back to 1 and then calls
+  ckcpro.c, before calling seof(), sets window size back to 1 and then calls
   window(), which clears out the old buffers.  This is OK because the final
   data packet for the file has been ACK'd.  However, sdata() has already
   called nxtpkt(), which set the new value of pktnum which seof() will use.

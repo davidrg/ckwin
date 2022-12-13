@@ -1660,7 +1660,7 @@ case 57:
 	int x;
 	x = zchdir((char *) savdir);	/* ... restore previous directory */
 	f_tmpdir = 0;			/* and remember we did it. */
-	debug(F111,"ckcpro.w B tmpdir restoring",savdir,x);
+	debug(F111,"ckcpro.c B tmpdir restoring",savdir,x);
     }
 #endif /* CK_TMPDIR */
     RESUME;				/* and quit */
@@ -2160,7 +2160,7 @@ case 72:
     if (!*s)				/* Hopefully we'll never see this. */
       s = "Unknown error";
     success = 0;			/* For IF SUCCESS/FAIL. */
-    debug(F101,"ckcpro.w justone at E pkt","",justone);
+    debug(F101,"ckcpro.c justone at E pkt","",justone);
 
     success = 0;			/* Transfer failed */
     xferstat = success;			/* Remember transfer status */
@@ -2190,7 +2190,7 @@ case 72:
 	int x;
 	x = zchdir((char *) savdir);	/* ... restore previous directory */
 	f_tmpdir = 0;			/* and remember we did it. */
-	debug(F111,"ckcpro.w E tmpdir restored",savdir,x);
+	debug(F111,"ckcpro.c E tmpdir restored",savdir,x);
     }
 #endif /* CK_TMPDIR */
 #ifdef IKSDB

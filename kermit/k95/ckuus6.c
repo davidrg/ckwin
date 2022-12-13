@@ -20,6 +20,7 @@
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
     Fri Sep 23 16:40:42 2022 (corrections from David Goodwin)
     Wed Oct  5 14:44:10 2022 (fixed "dir filespec1 filespec2 filespec3.." -fdc)
+    Mon Dec 12 05:41:18 2022 (new GREP options)
 */
 
 /* Includes */
@@ -4438,13 +4439,23 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
 #define GREP_OUTP 13                    /* /OUTPUTFILE: */
 #define GREP_EXCP 14			/* /EXCEPT: */
 #define GREP_ARRA 15			/* /ARRAY: */
+#define GREP_DISP 16			/* /DISPLAY: */
+#define GREP_VERB 17			/* /VERBATIM */
+#define GREP_MACR 18			/* /DEFINE */
 
 static struct keytab greptab[] = {
     { "/array",        GREP_ARRA, CM_ARG },
     { "/count",        GREP_COUN, CM_ARG },
+#ifndef NOSPL
+    { "/define",       GREP_MACR, CM_ARG|CM_INV },
+#endif /* NOSPL */
+    { "/display",      GREP_DISP, CM_ARG },
     { "/dotfiles",     GREP_DOTF, 0 },
     { "/except",       GREP_EXCP, CM_ARG },
     { "/linenumbers",  GREP_NUMS, 0 },
+#ifndef NOSPL
+    { "/macro",        GREP_MACR, CM_ARG },
+#endif /* NOSPL */
     { "/nameonly",     GREP_NAME, 0 },
     { "/nobackupfiles",GREP_NOBK, 0 },
     { "/nocase",       GREP_CASE, 0 },
@@ -4458,24 +4469,27 @@ static struct keytab greptab[] = {
 #ifdef RECURSIVE
     { "/recursive",    GREP_RECU, 0 },
 #endif /* RECURSIVE */
+    { "/show",         GREP_DISP, CM_ARG|CM_INV },
     { "/type",         GREP_TYPE, CM_ARG },
+    { "/verbatim",     GREP_VERB, 0 },
     { "", 0, 0 }
 };
 static int ngreptab =  sizeof(greptab)/sizeof(struct keytab)-1;
 
 static char * grep_except = NULL;
-
 int
 dogrep() {
     int match, x, y, fc, getval, mc = 0, count = 0, bigcount = 0;
     int fline = 0, sline = 0, wild = 0, len = 0;
-    int xmode = -1, scan = 0;
+    int xmode = -1, scan = 0, dispmode = 0, verbatim = 0;
     char c, name[CKMAXPATH+1], outfile[CKMAXPATH+1], *p, *s, *cv = NULL;
     FILE * fp = NULL;
 #ifndef NOSPL
     char array = NUL;
     char ** ap = NULL;
     int arrayindex = 0;
+    char macroname[CKMAXPATH+1];        /* Macro name buffer */
+    char macrodef[CKMAXPATH+1];         /* Macro definition buffer */
 #endif /* NOSPL */
 
     int                                 /* Switch values and defaults */
@@ -4488,8 +4502,16 @@ dogrep() {
       gr_nums = 0,
       gr_excp = 0,
       gr_page = xaskmore;
+#ifndef NOSPL
+    int gr_macr = 0;                    /* Initialize GREP macro flag */
+#endif /* NOSPL */
 
     struct FDB sw, fl;
+
+#ifndef NOSPL
+    macroname[0] = NUL;                 /* Initialize macro name buffer */
+    macrodef[0] = NUL;                  /* Initialize macro def buffer */
+#endif /* NOSPL */
 
     g_matchdot = matchdot;              /* Save global matchdot setting */
     outfile[0] = NUL;
@@ -4517,7 +4539,7 @@ dogrep() {
            "",                          /* addtl string data */
            0,                           /* addtl numeric data 1 */
            0,                           /* addtl numeric data 2 */
-           xxstring,			/* xxstring */
+           xxstring,                    /* processing function */
            NULL,
            NULL
            );
@@ -4525,8 +4547,9 @@ dogrep() {
         x = cmfdb(&sw);                 /* Parse something */
         if (x < 0)
           return(x);
-        if (cmresult.fcode != _CMKEY)   /* Break out if not a switch */
-          break;
+        if (cmresult.fcode != _CMKEY) {   /* Break out if not a switch */
+            break;
+        }
         c = cmgbrk();
         if ((getval = (c == ':' || c == '=')) && !(cmgkwflgs() & CM_ARG)) {
             printf("?This switch does not take an argument\n");
@@ -4607,6 +4630,15 @@ dogrep() {
             recursive = 1;
             break;
 #endif /* RECURSIVE */
+#ifndef NOSPL
+          case GREP_MACR: {             /* Results become macro definition */
+              gr_macr = 1;
+              if ((x = cmfld("macro name","",&s,xxstring)) < 0) 
+                return(x);
+              ckstrncpy(macroname,s,CKMAXPATH); /* Macro name */
+              break;
+          }
+#endif /* NOSPL */
           case GREP_TYPE: {
               extern struct keytab txtbin[];
               if ((x = cmkey(txtbin,3,"","",xxstring)) < 0)
@@ -4635,6 +4667,28 @@ dogrep() {
 		gr_excp++;
 		makestr(&grep_except,s);
 	    }
+	  case GREP_DISP:		/* Display options */
+	    if (getval) {
+                if ((y = cmnum("number: max lines to show",
+                               "0",10,&x,xxstring)) < 0)
+                  return(y);
+                dispmode = x;           /* Number of lines to display */
+                break;
+	    }
+	  case GREP_VERB:               /* VERBATIM */
+            cmfdbi(&fl,                 /* Don't call zzstring */
+                   _CMFLD,              /* fcode */
+                   "",                  /* hlpmsg */
+                   "",                  /* default */
+                   "",                  /* addtl string data */
+                   0,                   /* addtl numeric data 1 */
+                   0,                   /* addtl numeric data 2 */
+                   NULL,                /* processing function */
+                   NULL,
+                   NULL
+                   );
+            verbatim = 1;
+            break;
         }
     }
     if (outfile[0]) {
@@ -4771,16 +4825,28 @@ dogrep() {
             len = (int)strlen(line);    /* Get length */
             while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
               line[--len] = NUL;        /* Chop off terminators */
-            match = ckmatch(p,line,gr_case,1+4); /* Match against pattern */
-	    if (match && gr_excp) {
-		if (ckmatch(grep_except,line,gr_case,1+4))
-		    match = 0;
-	    }
+            if (verbatim) {             /* Match literally */
+                match = ckindex(p,line,0,0,gr_case);
+            } else {
+                match = ckmatch(p,line,gr_case,1+4); /* Match pattern */
+                if (match && gr_excp) {
+                    if (ckmatch(grep_except,line,gr_case,1+4))
+                      match = 0;
+                }
+            }
             if (gr_noma)                /* Invert match sense if requested */
               match = !match;
             if (match) {                /* Have a matching line */
                 mc++;                   /* Total match count */
                 count++;                /* Match count this file */
+#ifndef NOSPL
+                if (gr_macr) {          /* Saving grep lines in macro */
+                    int len = 0;
+                    len = ckstrncat(macrodef,line,CKMAXPATH);
+                    (VOID)ckstrncat(macrodef,"\n",CKMAXPATH);
+                    continue;
+                }
+#endif /* NOSPL */
                 if (gr_name) {          /* Don't care how many lines match */
                     fclose(fp);         /* Close the file */
                     fp = NULL;          /* and quit the line-reading loop. */
@@ -4803,6 +4869,9 @@ dogrep() {
                 if (sline > cmd_rows - 3) {
                     if (!askmore()) { goto xgrep; } else { sline = 0; }
                 }
+                if (mc >= dispmode) {
+                    goto xgrep;
+                }
             }
         }
         if (!gr_noli) {			/* If not not listing... */
@@ -4816,7 +4885,6 @@ dogrep() {
 		    if (ap) {
 			makestr(&(ap[arrayindex++]),name);
 		    }
-		} else {
 #endif  /* NOSPL */
 		    fprintf(ofp,"%s\n",name);
 		    x++;
@@ -4834,6 +4902,7 @@ dogrep() {
     }
   xgrep:
 #ifndef NOSPL
+    if (gr_macr) if (*macrodef) addmac(macroname,macrodef);
     if (array) if (ap) makestr(&(ap[0]),ckitoa(arrayindex));
     if (gr_coun && cv) {                /* /COUNT:blah */
         addmac(cv,ckitoa(bigcount));    /* set the variable */
