@@ -205,8 +205,8 @@ jobs:
     - name: HTMLise Markdown Docs
       run: |
         pip3 install markdown
-        python -m markdown ${{ github.workspace }}\doc\ssh-readme.md > ssh-readme.html
-        python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
+        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md > ssh-readme.html
+        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md > change-log.html
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       
     - name: Prepare Artifact
