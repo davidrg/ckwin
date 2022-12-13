@@ -3502,17 +3502,23 @@ KD_LIST_ITEM :: Event( const UI_EVENT & event )
          *   EVENT_TYPE K_CONNECTOR::
          *   Event( const UI_EVENT & event ).
          */
-	if ( event.message.message == WM_RBUTTONDOWN || event.message.message == WM_CONTEXTMENU) {
+	if ( event.message.message == WM_RBUTTONDOWN
+#ifdef WM_CONTEXTMENU
+    || event.message.message == WM_CONTEXTMENU
+#endif /* WM_CONTEXTMENU */
+    ) {
 #ifndef COMMENT
             UIW_VT_LIST * list = (UIW_VT_LIST *) connector->Get( LIST_ENTRIES ) ; 
             list->SetCurrent( this );
 
             UI_WINDOW_OBJECT * obj = this;
             int left, top;
+#ifdef WM_CONTEXTMENU
             if (event.message.message == WM_CONTEXTMENU) {
                 left = GET_X_LPARAM(event.message.lParam);
                 top = GET_Y_LPARAM(event.message.lParam);
             } else {
+#endif /* WM_CONTEXTMENU */
                 left = event.position.column + trueRegion.left;
                 top = event.position.line;
                 for (; obj->parent ; obj = obj->parent );
@@ -3525,7 +3531,9 @@ KD_LIST_ITEM :: Event( const UI_EVENT & event )
                 top += obj3->relative.bottom - obj3->relative.top;
                 UI_WINDOW_OBJECT * obj4 = obj->Get( STATUS_BAR );
                 top += obj4->relative.bottom - obj4->relative.top;
+#ifdef WM_CONTEXTMENU
             }
+#endif /* WM_CONTEXTMENU */
 
             ShowContextMenu(left, top);
 #else
