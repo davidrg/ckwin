@@ -3,7 +3,7 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
-## C-Kermit for Windows 10.0b7 beta 4 - Soon
+## C-Kermit for Windows 10.0b8 beta 4 - 15 December 2022
 This release is mostly a collection of minor improvements and bug fixes as I
 have been unexpectedly busy since the prior release resulting in the schedule
 slipping somewhat.
