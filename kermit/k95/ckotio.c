@@ -1795,7 +1795,7 @@ sysinit() {
         char * p = GetLoadPath();
         DWORD len;
 
-        len = GetShortPathName(p,exedir,CKMAXPATH);
+        len = ckGetShortPathName(p,exedir,CKMAXPATH);
         if ( len == 0 || len > CKMAXPATH )
             ckstrncpy(exedir, p, CKMAXPATH);
     }
@@ -1819,7 +1819,7 @@ sysinit() {
         char * p = zgtdir();
         DWORD len;
 
-        len = GetShortPathName(p,startupdir,CKMAXPATH);
+        len = ckGetShortPathName(p,startupdir,CKMAXPATH);
         if ( len == 0 || len > CKMAXPATH )
             ckstrncpy(startupdir, p, CKMAXPATH);
     }

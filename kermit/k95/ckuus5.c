@@ -1959,7 +1959,7 @@ extern int ckrooterr;
             }
         }
 #ifdef NT
-        GetShortPathName(inidir,inidir,CCHMAXPATH);
+        ckGetShortPathName(inidir,inidir,CCHMAXPATH);
 #endif /* NT */
     }
 }

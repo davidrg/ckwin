@@ -2396,7 +2396,7 @@ zhome() {
     }
 
 #ifdef NT
-    GetShortPathName(homedir,homedir,CKMAXPATH);
+    ckGetShortPathName(homedir,homedir,CKMAXPATH);
 #endif /* NT */
 
     /* we know have the directory, but need to make it consistent */
@@ -2560,6 +2560,165 @@ ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
         return(p_GetLongPathNameA(lpFileName,lpBuffer,cchBuffer));
     }
 }
+
+static DWORD (WINAPI *p_GetShortPathNameA)(
+    LPCSTR lpszLongPath,
+    LPSTR lpszShortPath,
+    DWORD cchBuffer
+    ) = NULL;
+
+DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer);
+
+DWORD ckGetShortPathName(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer) {
+    if ( !p_GetShortPathNameA ) {
+        if (hKernel == INVALID_HANDLE_VALUE)
+            hKernel = LoadLibrary("kernel32.dll");
+        if (hKernel != INVALID_HANDLE_VALUE)
+            (FARPROC) p_GetShortPathNameA =
+                GetProcAddress( hKernel, "GetShortPathNameA" );
+    }
+
+    if ( !p_GetShortPathNameA ) {
+#ifdef CKT_NT31
+        return (GetShortPathNameC(lpszLongPath, lpszShortPath, cchBuffer));
+#else
+        DWORD len, i;
+        if ( !lpszLongPath || !lpszShortPath )
+            return(0);
+
+        len = strlen(lpszLongPath);
+        if ( len + 1 <= cchBuffer )
+            ckstrncpy(lpszShortPath,lpszLongPath,cchBuffer);
+        return (len);
+#endif
+    } else {
+        return (p_GetShortPathNameA(lpszLongPath, lpszShortPath, cchBuffer));
+    }
+}
+
+#ifdef CKT_NT31
+/* Windows NT 3.1 doesn't have GetShortPathName implementation, so here is an
+ * equivalent function that uses only Win32 APIs available on NT 3.1 */
+DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer) {
+    DWORD length = 0;
+    BOOL makeShortPath = TRUE;
+    BOOL firstIteration = TRUE;
+    char* workingCopy;
+    char* longFileName;
+    char* pch;
+    int longFileNameLen;
+
+    if (lpszShortPath == NULL || cchBuffer == 0) {
+        makeShortPath = FALSE;
+    }
+
+    longFileNameLen = strlen(lpszLongPath) + 1;
+
+    workingCopy = _strdup(lpszLongPath);
+    longFileName = malloc(longFileNameLen);
+    longFileName[0] = '\0';
+
+    if (makeShortPath) {
+        lpszShortPath[0] = '\0';
+    }
+
+    pch = strtok(workingCopy, "\\");
+    while (pch != NULL) {
+
+        /* Handle the drive letter if there is one */
+        if (strlen(pch) == 2 && pch[1] == ':' && firstIteration) {
+            /* Got the drive letter */
+            length += 2; /* Letter :  */
+
+            strncat(longFileName, pch, 2);
+
+            if (makeShortPath) {
+                if (length > cchBuffer) {
+                    /*printf("Buffer length exceeded!\n");*/
+                    makeShortPath = FALSE;
+                } else {
+                    strncat(lpszShortPath, pch, 2);
+                }
+            }
+        } else {
+            int len = strlen(pch);
+            int shortlen = 0;
+            char* shortFn;
+
+            HANDLE hResult;
+            WIN32_FIND_DATAA findFileData;
+
+            strncat(longFileName,  "\\", 1);
+            strncat(longFileName,  pch, len);
+
+            if (strcmp(pch, "..") == 0) {
+                length += 2;
+                if (!firstIteration) length += 1;
+
+                if (makeShortPath && length > cchBuffer) {
+                    /*printf("Buffer length exceeded!\n");*/
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    if (!firstIteration) strncat(lpszShortPath, "\\", 1);
+                    strncat(lpszShortPath, "..", 2);
+                }
+            } else if (strcmp(pch, ".") == 0) {
+                /*printf("Curlevel\n");*/
+                length += 1;
+                if (!firstIteration) length += 1;
+
+                if (makeShortPath && length > cchBuffer) {
+                    /*printf("Buffer length exceeded!\n");*/
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    if (!firstIteration) strncat(lpszShortPath, "\\", 1);
+                    strncat(lpszShortPath, ".", 1);
+                }
+            } else {
+
+                hResult = FindFirstFileA(longFileName, &findFileData);
+                if (hResult == INVALID_HANDLE_VALUE) {
+                    /*printf("Failed to locate %s\n", longFileName);*/
+                    return 0;
+                }
+
+                shortFn = findFileData.cAlternateFileName;
+                shortlen = strlen(shortFn);
+                if (shortlen == 0) {
+                    shortFn = findFileData.cFileName;
+                    shortlen = strlen(shortFn);
+                }
+
+                length += 1 + len;
+
+                if (makeShortPath && length > cchBuffer) {
+                    /*printf("Buffer length exceeded!\n");*/
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    strncat(lpszShortPath, "\\", 1);
+                    strncat(lpszShortPath, shortFn, shortlen);
+                }
+
+                FindClose(hResult);
+            }
+        }
+
+        pch = strtok(NULL, "\\");
+        firstIteration = FALSE;
+    }
+
+    free(workingCopy);
+    free(longFileName);
+
+    return length;
+}
+#endif /* CKT_NT31 */
 #endif /* NT */
 
 /*  Z X P A N D  --  Expand a wildcard string into an array of strings  */
@@ -3631,7 +3790,7 @@ znext(fn) char *fn; {
         char name8_3[CKMAXPATH+1];
         DWORD len;
 
-        len = GetShortPathName(fn,name8_3,CKMAXPATH+1);
+        len = ckGetShortPathName(fn,name8_3,CKMAXPATH+1);
         if ( len > 0 && len <= CKMAXPATH )
             ckstrncpy(fn,name8_3,CKMAXPATH+1);
     }
@@ -7091,7 +7250,7 @@ zvpass(passwd) char *passwd; {
 
         ckstrncpy(homedir,HomeDir,CKMAXPATH+1);
 #ifdef NT
-        GetShortPathName(homedir,homedir,CKMAXPATH);
+        ckGetShortPathName(homedir,homedir,CKMAXPATH);
 #endif /* NT */
 
         /* we know have the directory, but need to make it consistent */

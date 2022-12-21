@@ -7022,6 +7022,8 @@ _PROTOTYP(int ck_auth_unloaddll, (VOID));
 #ifdef NT
 _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
                                    LPSTR lpBuffer, DWORD cchBuffer));
+_PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
+                                    LPSTR lpszShortPath, DWORD cchBuffer));
 #endif /* NT */
 
 
