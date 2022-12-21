@@ -46,7 +46,9 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
     , downloadButton(dlButton)
     , openFile(openExisting)
 {
+#ifndef CKT_NT31
     OSVERSIONINFO osverinfo ;
+#endif
 
     oldSaveAsProc = (WNDPROC)0;
     download = this;
@@ -58,7 +60,7 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
     success = FALSE;
     errorCode = 0;
 
-
+#ifndef CKT_NT31
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
     GetVersionEx( &osverinfo ) ;
 
@@ -72,6 +74,7 @@ KDownLoad::KDownLoad( K_GLOBAL* kg, BOOL dlButton, BOOL openExisting )
          * custominsing it) */
         downloadButton = FALSE;
     }
+#endif
 
     if (openExisting) {
         downloadButton = FALSE;
