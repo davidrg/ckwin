@@ -1707,7 +1707,10 @@ CloseKeyMapInitSem( void )
 }
 
 #ifdef NT
-void CALLBACK
+void
+#if _MSC_VER > 800
+CALLBACK
+#endif
 TimeProc(
     UINT IDEvent,
     UINT uReserved,
