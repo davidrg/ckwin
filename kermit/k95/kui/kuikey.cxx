@@ -4,6 +4,19 @@
 
 #include "kuidef.h"
 
+/* These three aren't known to Visual C++ 1.0 32-bit edition */
+#ifndef VK_LWIN
+#define VK_LWIN           0x5B
+#endif
+
+#ifndef VK_RWIN
+#define VK_RWIN           0x5C
+#endif
+
+#ifndef VK_APPS
+#define VK_APPS           0x5D
+#endif
+
 UINT keyArray[] = { 0                // 0x00
                   , 0                // 0x01
                   , 0                // 0x02
