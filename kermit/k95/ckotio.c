@@ -9626,7 +9626,14 @@ DisplayCommProperties(HANDLE h)
         return;
     memset( lpCommProp, 0, 1024 );
     lpCommProp->wPacketLength = 1024;
+#ifdef COMMPROP_INITIALIZED
+    /* Windows 95 only (according to VC4): Set to COMMPROP_INITIALIZED to
+     * indicate wPacketLength member is already valid. Visual C++ 4.0 is the
+     * first to document this, but Visual C++ 2.0 understands it too.
+     * Visual C++ 5.0 doesn't document it as win95-only so probably works on
+     * NT4 too. */
     lpCommProp->dwProvSpec1 = COMMPROP_INITIALIZED;
+#endif /* COMMPROP_INITIALIZED */
 
     rc = GetCommProperties( h, lpCommProp );
     if ( !rc ) {
