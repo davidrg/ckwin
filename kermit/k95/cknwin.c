@@ -19,7 +19,9 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #include "ckcasc.h"
 #include "cknwin.h"
 #include "ckowin.h"
+#ifndef NODIAL
 #include "ckntap.h"
+#endif
 #include "ckocon.h"
 #include "ckuusr.h"
 #include "ckokey.h"
