@@ -1710,6 +1710,10 @@ CloseKeyMapInitSem( void )
 void
 #if _MSC_VER > 800
 CALLBACK
+#else
+#ifdef __WATCOMC__
+CALLBACK
+#endif
 #endif
 TimeProc(
     UINT IDEvent,
