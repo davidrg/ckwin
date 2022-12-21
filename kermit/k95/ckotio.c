@@ -9714,9 +9714,12 @@ DisplayCommProperties(HANDLE h)
     case PST_RS449           :
         printf("RS449");
         break;
+#ifdef PST_MODEM
+    /* PST_MODEM not known to Visual C++ 1.0 32-bit edition */
     case PST_MODEM           :
         printf("Modem");
         break;
+#endif
     case PST_FAX             :
         printf("Fax");
         break;
