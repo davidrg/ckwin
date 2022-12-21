@@ -218,6 +218,21 @@ int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif
 #endif
 
+#ifdef NT
+/* These aren't known to Visual C++ 1.0 32-bit edition or Windows NT 3.1, but
+ * they're useful constants to have */
+#ifndef VER_PLATFORM_WIN32s
+#define VER_PLATFORM_WIN32s 0
+#endif /* VER_PLATFORM_WIN32s */
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+#define VER_PLATFORM_WIN32_WINDOWS 1
+#endif /* VER_PLATFORM_WIN32_WINDOWS */
+#ifndef VER_PLATFORM_WIN32_NT
+#define VER_PLATFORM_WIN32_NT 2
+#endif /* VER_PLATFORM_WIN32_NT */
+#endif /* NT */
+
+
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
     tidRdComWrtScr   = (TID) 0,
@@ -850,12 +865,17 @@ os2getpid(void)
 int
 setOSVer( void )
 {
+#ifdef CKT_NT31
+    OSVer = VER_PLATFORM_WIN32_NT;
+    nt351 = 1;
+#else
     OSVERSIONINFO osverinfo ;
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
     GetVersionEx( &osverinfo ) ;
     OSVer = osverinfo.dwPlatformId ;
     if ( osverinfo.dwMajorVersion < 4 )
         nt351 = 1;
+#endif
     return(OSVer);
 }
 #endif /* NT */
@@ -1362,6 +1382,50 @@ sysinit() {
     /* Construct the system ID string */
 #ifdef NT
     {
+#ifdef CKT_NT31
+        /* GetVersionEx isn't available on NT 3.1, we have to use GetVersion
+         * instead. KB article Q92395 details how to extract the major, minor
+         * and build number plus determine the platform (NT, 9x or Win32s) */
+        DWORD dwVersion;
+        int major, minor, build;
+
+        dwVersion = GetVersion();
+
+        major = LOBYTE(LOWORD(dwVersion));
+        minor = HIBYTE(LOWORD(dwVersion));
+        build = HIWORD(dwVersion);
+
+        if (dwVersion < 0x80000000) {
+            /* Windows NT */
+            OSVer = VER_PLATFORM_WIN32_NT;
+        } else if (LOBYTE(LOWORD(dwVersion))<4) {
+            /* Win32s */
+            OSVer = VER_PLATFORM_WIN32s;
+            build = build & ~0x8000;
+        } else {
+            /* Windows 95 */
+            OSVer = VER_PLATFORM_WIN32_WINDOWS;
+            build = build & ~0x8000;
+        }
+
+        /* OS Name and version */
+        sprintf(ckxsystem, " %s %1d.%02d(%1d)",
+                OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                "Unknown",
+                major, minor, build
+        );
+#ifdef CK_UTSNAME
+        sprintf(unm_nam,
+                OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                "Windows Unknown" );
+        sprintf(unm_rel,"%1d.%02d", major, minor); /* OS Release */
+        sprintf(unm_ver,"%1d", build); /* OS Version */
+#endif /* CK_UTSNAME */
+#else /* CKT_NT31 */
         OSVERSIONINFO osverinfo ;
         osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
         GetVersionEx( &osverinfo ) ;
