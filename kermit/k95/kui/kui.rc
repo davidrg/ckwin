@@ -1,7 +1,7 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
-#include "cknver.h"
+#include "../cknver.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ BEGIN
                     161,15
 END
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 249, 204
+IDD_ABOUTBOX DIALOG 0, 0, 249, 204
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
 FONT 8, "MS Sans Serif"
