@@ -16,10 +16,20 @@
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #endif
 
+#if _MSC_VER == 900
+/* Visual C++ 2.0 */
+#define CRT_DLL "msvcrt20.dll"
+#else
+#endif
+
 void
 DisplayHelp( char * name )
 {
-    printf("%s [-f]: Installs CTL3D32.DLL and MSVCRT.DLL.  -f forces the install upon error.\n\n",name);
+#ifdef CRT_DLL
+    printf("%s [-f]: Installs CTL3D32.DLL and " CRT_DLL ".  -f forces the install upon error.\n\n",name);
+#else
+    printf("%s [-f]: Installs CTL3D32.DLL.  -f forces the install upon error.\n\n",name);
+#endif
 }
 
 void
@@ -184,7 +194,10 @@ main( int argc, char * argv[] )
     }
 
     InstallFile(argv[0],srcfile,"ctl3d32.dll",forceinstall);
-    InstallFile(argv[0],"msvcrt__.dll","msvcrt.dll",forceinstall);
+
+#ifdef CRT_DLL
+    InstallFile(argv[0],CRT_DLL,CRT_DLL,forceinstall);
+#endif
 
     return 0;
 }
