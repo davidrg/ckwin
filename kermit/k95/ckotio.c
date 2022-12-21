@@ -1202,6 +1202,8 @@ Win95DisplayLocale( void )
     printf("Keyboard Layout = %s [%u]\n",lpLayoutName,(unsigned short)KBLayout);
 #endif
 
+#ifndef CKT_NT31
+    /* And Windows NT 3.1 doesn't have GetLocaleInfo */
     printf("Locale Information:\n");
     for ( LCType=0 ; LCType<= 0x5A ; LCType++ ) {
         rc = GetLocaleInfo( LOCALE_SYSTEM_DEFAULT,LCType,lpLCDATA,cchData);
@@ -1209,6 +1211,7 @@ Win95DisplayLocale( void )
         rc = GetLocaleInfo( LOCALE_USER_DEFAULT,LCType,lpLCDATA,cchData);
         printf("  \"%-25s\"\n",lpLCDATA);
     }
+#endif
 }
 #endif /* NT */
 
