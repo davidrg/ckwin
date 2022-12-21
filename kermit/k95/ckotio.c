@@ -805,8 +805,11 @@ os2getcplist(cplist, size) int *cplist; int size; {
 
     CPList[0] = GetConsoleCP() ;
 
+#ifndef CKT_NT31
+   /* TODO: Any way to do this on NT 3.1? */
    if (size > 1)
        EnumSystemCodePages( enumproc, CP_INSTALLED ) ;
+#endif
 
     return CPListIndex ;
 #else /* NT */
