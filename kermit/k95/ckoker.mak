@@ -53,7 +53,7 @@ COMMON_CFLAGS = /MD
 !endif
 
 # These options are used for all Windows .exe targets
-COMMON_OPTS = /GA /Ox
+COMMON_OPTS = /Ox
 # These are:
 # /GA     Optimise for Windows Application (ignored by OpenWatcom)
 # /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
@@ -90,6 +90,9 @@ WIN32_VERSION=0x0400
 # So that we can set the minimum subsystem version when needed
 SUBSYSTEM_CONSOLE=console
 SUBSYSTEM_WIN32=windows
+
+# These are not supported by Visual C++ prior to 4.0
+CFLAG_GF=/GF
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
@@ -170,11 +173,26 @@ SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
 !endif
 
+!if ($(MSC_VER) > 90)
+COMMON_OPTS = $(COMMON_OPTS) /GA
+!endif
+
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
 # from Visual C++ 2005 (v8.0) and up.
 
-COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /GX- /YX
+# /GX- is new in Visual C++ 2.0
+!if ($(MSC_VER) > 80)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
+!endif
+
+!if ($(MSC_VER) < 100)
+# Visual C++ 2.0 and 1.0 32-bit edition don't support these flags, so don't
+# use them.
+CFLAG_GF=
+!endif
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
@@ -291,7 +309,7 @@ msvc:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -306,7 +324,7 @@ msvc-iksd:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -321,7 +339,7 @@ msvcd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -337,7 +355,7 @@ msvcd-iksd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -385,7 +403,7 @@ kuid:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
