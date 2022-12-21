@@ -716,8 +716,7 @@ LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
        # Kerberos: wshload.lib
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
-        advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
-        rpcrt4.lib rpcns4.lib wsock32.lib \
+        advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
 !if "$(CKF_SSH)" == "yes"
        ssh.lib ws2_32.lib \
@@ -725,6 +724,14 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 !if "$(CKF_SSL)" == "yes"
        $(SSL_LIBS) \
 !endif
+
+!if ($(MSC_VER) > 80)
+# I doubt these are actually ever required. But if they ever are, they're only
+# required when building with Visual C++ 2.0 or newer (1.0 32-bit doesn't have
+# them)
+KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
+!endif
+
         #msvcrt.lib
         #Kerberos: wshload.lib
 		# SRP support: srpstatic.lib
