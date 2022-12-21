@@ -27,7 +27,7 @@
 #   CKF_NTLM       yes        Windows NTLM support
 #   CKF_LOGIN      yes
 #   CKT_NT31       no         Target NT 3.1 (Watcom, Visual C++ 1.0/2.0)
-#   CKT_NT350      no         Target NT 3.50 (Watcom, Visual C++ 2.0)
+#   CKT_NT35       no         Target NT 3.50 (Watcom, Visual C++ 2.0)
 #   CKF_TAPI       yes        Modem dialing support
 #   CKF_RICHEDIT   yes        Rich Edit control support
 #   CKF_TOOLBAR    yes        Include the toolbar
@@ -84,18 +84,19 @@ CKF_MOUSEWHEEL=no
 
 !endif
 
-!if ($(MSC_VER) < 100)
+!if ($(MSC_VER) == 90)
 # The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
 # compared to Visual C++ 4.0 so there is a special target for this level of
 # windows.
 !message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
 CKT_NT31=yes
-CKT_NT350=yes
+CKT_NT35=yes
 !endif
 
-!if ($(MSC_VER) < 90)
+!if ($(MSC_VER) == 80)
 # Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
 # provided in Windows NT 3.1
+!message Visual C++ 1.0: setting target to Windows NT 3.1 API level.
 CKT_NT31=yes
 !endif
 
@@ -105,10 +106,10 @@ CKT_NT31=yes
 # to require a special macro to exclude references to them. This allows
 # NT 3.50 and 3.1 to be targeted with both Visual C++ and OpenWatcom.
 
-!if "$(CKT_NT350)" == "yes"
+!if "$(CKT_NT35)" == "yes"
 # These features are available on NT 3.50 but not on NT 3.1
 # -> These may appear if/when work to port to NT 3.1 is done.
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT350
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35
 !endif
 
 !if "$(CKT_NT31)" == "yes"
