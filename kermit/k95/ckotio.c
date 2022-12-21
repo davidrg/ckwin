@@ -427,8 +427,10 @@ int ishandle=0;
 int pid = 0;
 #ifdef NT
 static DCB ttydcb ;
+#ifndef CKT_NT31
 static LPCOMMCONFIG ttycfg=NULL;
 static DWORD cfgsize=0;
+#endif
 #else /* NT */
 static DCBINFO ttydcb;
 #endif /* NT */
@@ -621,8 +623,10 @@ ckntsignal(int sig, SIGTYP (*f)(int)))(int) {
 static int savedtty = 0;
 #ifdef NT
 static DCB saveddcb ;
+#ifndef CKT_NT31
 static LPCOMMCONFIG savedcfg=NULL;
 static DWORD savedcfgsize=0;
+#endif
 #else /* NT */
 static long savedspeed;
 static LINECONTROL savedlc;
@@ -689,9 +693,11 @@ savetty() {
         if ( deblog )
             debugComm( "savetty initial values", &ttydcb, NULL );
 
+#ifndef CKT_NT31
         savedcfg->dwSize = 1024;
         savedcfgsize = 1024;
         GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+#endif
 #else /* NT */
         savedspeed = ttgspd();
         DosDevIOCtl(&savedlc,sizeof(savedlc),NULL,0,
@@ -715,7 +721,7 @@ restoretty() {
 
   if (savedtty) {
 #ifdef NT
-#ifdef COMMENT
+#ifdef CKT_NT31
       SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
 #else
       SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
@@ -1366,6 +1372,7 @@ sysinit() {
     ck_sleepint = isWin95() ? CK_SLEEPINT : CK_SLEEPINT * 2;
     SetFileApisToOEM() ;  /* Otherwise, filenames are translated */
 
+#ifndef CKT_NT31
     /* Allocate memory for COMMCONFIG structure */
     savedcfg = (LPCOMMCONFIG) malloc( 1024 );
     if ( savedcfg ) {
@@ -1377,6 +1384,7 @@ sysinit() {
         memset( ttycfg, 0, 1024 );
         ttycfg->dwSize = 1024;
     }
+#endif /* CKT_NT31 */
 
 #ifndef NOLOCAL
 #ifndef KUI
@@ -1523,6 +1531,7 @@ sysinit() {
                 osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
                 osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
 #endif /* CK_UTSNAME */
+#endif /* not CKT_NT31 */
 #ifdef KUI
         InitCommonControls();
 #endif /* KUI */
