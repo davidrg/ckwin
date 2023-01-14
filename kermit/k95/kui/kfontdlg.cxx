@@ -61,11 +61,11 @@ void KFontDialog::show( PLOGFONT logfont )
         | CF_NOSCRIPTSEL | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
 #else
     chf.Flags = CF_SCALABLEONLY | CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         | CF_NOSCRIPTSEL
 #endif
         | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
-#endif 
+#endif /* CKT_NT35_OR_31 */
     chf.lCustData = (LPARAM)this;
     chf.lpfnHook = KFontDlgProc;
     chf.lpTemplateName = MAKEINTRESOURCE(IDD_FONTDIALOG);

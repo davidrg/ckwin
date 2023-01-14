@@ -89,7 +89,8 @@ CKF_MOUSEWHEEL=no
 # compared to Visual C++ 4.0 so there is a special target for this level of
 # windows.
 !message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
-CKT_NT31=yes
+# TODO: Audit use of CKT_NT31 and see if any of that stuff should really be CKT_NT35
+#CKT_NT31=yes
 CKT_NT35=yes
 !endif
 
@@ -114,13 +115,23 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35
 
 !if "$(CKT_NT31)" == "yes"
 # These features are not available on Windows NT 3.50
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
+!endif
+
+# These features require Windows NT 3.51 and are unknown to Visual C++ 1.0/2.0
+!if "$(CKT_NT35)" == "yes" || "$(CKT_NT31)" == "yes"
 CKF_TAPI=no
 CKF_RICHEDIT=no
 CKF_TOOLBAR=no
 CKF_LOGIN=no
 CKF_NTLM=no
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
-RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35_OR_31
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31 /dCKT_NT35_OR_31
+!endif
+
+!if "$(CKT_NT35)" == "yes" && "$(CKT_NT31)" == "yes"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35_AND_31
 !endif
 
 !else

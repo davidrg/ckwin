@@ -314,7 +314,7 @@ void KClient::setDimensions( Bool sizeparent )
 void KClient::getCreateInfo( K_CREATEINFO* info )
 {
     info->classname = KWinClassName;
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     info->exStyle = WS_EX_CLIENTEDGE;
 #endif
     info->style = WS_CHILD | WS_VISIBLE 

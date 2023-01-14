@@ -124,7 +124,7 @@ int KuiThreadCleanup( void* hInstance )
 
     if ( IsZoomed(kui->getTerminal()->hwnd()) || 
          IsIconic(kui->getTerminal()->hwnd())) {
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         ShowWindowAsync(kui->getTerminal()->hwnd(), SW_RESTORE);
 #else
         ShowWindow(kui->getTerminal()->hwnd(), SW_RESTORE);
@@ -168,7 +168,7 @@ KuiSetTerminalPosition( int x, int y)
 {
     if ( kui )
         SetWindowPos(kui->getTerminal()->hwnd(), 0, x, y, 0, 0,
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                       SWP_ASYNCWINDOWPOS |
 #endif
                       SWP_NOZORDER | SWP_NOSIZE );
@@ -185,7 +185,7 @@ KuiSetTerminalSize( int x, int y)
         if ( y == 0 )
             y = rect.bottom - rect.top;
         SetWindowPos(kui->getTerminal()->hwnd(), 0, 0, 0, x, y,
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
                       SWP_ASYNCWINDOWPOS |
 #endif
                       SWP_NOZORDER | SWP_NOMOVE );

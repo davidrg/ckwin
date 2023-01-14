@@ -445,7 +445,7 @@ void KTerminal::browseFile( eFileType filetype )
 
     OpenFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST 
         | OFN_HIDEREADONLY
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         | OFN_EXPLORER
 #endif
         ;

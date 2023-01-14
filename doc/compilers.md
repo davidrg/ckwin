@@ -244,7 +244,9 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>✅</td> <!-- Dialer -->
     <td>No toolbar or some GUI dialogs, window resizing scales font doesn't
         currently work well. Dialer builds but is largely untested and some
-        non-functional TAPI/modem-dialing stuff may be visible.
+        non-functional TAPI/modem-dialing stuff may be visible. To target NT
+        3.1 as well as 3.50, <tt>set CKT_NT35=yes</tt> before building. CKW has known issues
+        when actually running on NT 3.1.
     </td>
 </tr>
 <tr>
@@ -269,11 +271,11 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>❌</td> <!-- SSH -->
     <td>❌</td> <!-- NTLM/Auth -->
     <td>❌</td> <!-- TAPI -->
-    <td>❌</td> <!-- GUI -->
-    <td>❌</td> <!-- Console -->
+    <td>✅</td> <!-- GUI -->
+    <td>✅</td> <!-- Console -->
     <td>❌</td> <!-- Dialer -->
     <td>
-        This compiler does not work currently
+        Compiler works but there are unresolved issues running on NT 3.1
     </td>
 </tr>
 <tr>
@@ -288,7 +290,10 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
     <td>✅</td> <!-- Dialer -->
-    <td>To target NT 3.50, <tt>set CKT_NT31=yes</tt> before building.
+    <td>To target NT 3.50, <tt>set CKT_NT35=yes</tt> before building. You
+        can target NT 3.1 with <tt>set CKT_NT31=yes</tt> - if both are set the
+        resulting binaries should work on both. Note that CKW has unresolved
+        issues when actually running on NT 3.1
     </td>
 </tr>
 <tr>
