@@ -3,6 +3,7 @@
 #ifdef NT
 #include <windows.h>
 #include <winsock.h>
+#include <errno.h>
 #define strdup _strdup
 #define ltoa   _ltoa
 #define CONFIG_FILE "k95d.cfg"
