@@ -106,8 +106,12 @@ int tcpsrv_fd = -1, ttyfd = -1 ;
 
 void  WINAPI IKSDStart (DWORD argc, LPTSTR *argv);
 #ifdef CKT_NT31ONLY
+#ifdef __WATCOMC__
+VOID WINAPI IKSDCtrlHandler (DWORD opcode);
+#else
 /* Visual C++ 1.0 32-bit edition doesn't like the WINAPI */
 VOID IKSDCtrlHandler (DWORD opcode);
+#endif
 #else
 void  WINAPI IKSDCtrlHandler (DWORD opcode);
 #endif
@@ -476,7 +480,11 @@ IKSDStart (DWORD argc, LPTSTR *argv)
 }
 
 #ifdef CKT_NT31ONLY
+#ifdef __WATCOMC__
+VOID WINAPI
+#else
 VOID
+#endif
 #else
 VOID WINAPI
 #endif
