@@ -9,6 +9,10 @@ on:
 
 env:
   # Expected filename: https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz
+  #ZLIB: https://zlib.net/
+  ZLIB: https://ftp.zx.net.nz/pub/dev/lib/zlib/
+  # As of 2023-01-21 downloads from zlib.net are coming back corrupted for an unknown reason.
+  # So we're now fetching zlib from ftp.zx.net.nz instead.
   ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 1.1.1s
@@ -74,8 +78,11 @@ jobs:
         # Get and unpack zlib
         mkdir zlib
         cd zlib
-        wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        echo "Fetching ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz to file zlib-${{env.ZLIB_VERSION}}.tar.gz..."
+        wget ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar.gz"
         7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+        echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar"
         7z x zlib-${{env.ZLIB_VERSION}}.tar
         ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
         del *.tar 
