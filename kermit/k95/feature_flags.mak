@@ -95,8 +95,6 @@ CKT_NT35=yes
 !endif
 
 !if ($(MSC_VER) == 80)
-# Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
-# provided in Windows NT 3.1
 !message Visual C++ 1.0: setting target to Windows NT 3.1 API level.
 CKT_NT31=yes
 !endif
