@@ -60,13 +60,10 @@
 #include <winsock.h>
 #include <winsvc.h>
 #include <process.h>
+#include <errno.h>
+#include <stdlib.h>
 #define strdup _strdup
 #define ltoa   _ltoa
-
-#ifndef VER_PLATFORM_WIN32_WINDOWS
-/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
-#define VER_PLATFORM_WIN32_WINDOWS      1
-#endif
 
 #endif
 #define CONFIG_FILE "iksd.cfg"
@@ -108,7 +105,12 @@ struct timeval tv;
 int tcpsrv_fd = -1, ttyfd = -1 ;
 
 void  WINAPI IKSDStart (DWORD argc, LPTSTR *argv);
+#ifdef CKT_NT31ONLY
+/* Visual C++ 1.0 32-bit edition doesn't like the WINAPI */
+VOID IKSDCtrlHandler (DWORD opcode);
+#else
 void  WINAPI IKSDCtrlHandler (DWORD opcode);
+#endif
 DWORD IKSDInitialization (DWORD argc, LPTSTR *argv, DWORD *specificError);
 HANDLE StartKermit( int socket, char * cmdline, int ShowCmd, int * );
 
@@ -473,7 +475,11 @@ IKSDStart (DWORD argc, LPTSTR *argv)
     return;
 }
 
+#ifdef CKT_NT31ONLY
+VOID
+#else
 VOID WINAPI
+#endif
 IKSDCtrlHandler (DWORD Opcode)
 {
     DWORD status;
@@ -606,14 +612,10 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
-   OSVERSIONINFO osverinfo ;
    STARTUPINFO si ;
    HANDLE sockdup = INVALID_HANDLE_VALUE ;
    static HANDLE hCurrent = INVALID_HANDLE_VALUE;
    static char buf[512] ;
-
-   osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-   GetVersionEx( &osverinfo ) ;
 
    memset( &si, 0, sizeof(STARTUPINFO) ) ;
    si.cb = sizeof(STARTUPINFO);
@@ -711,6 +713,35 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
 #endif /* NT */
 }
 
+#ifdef NT
+#ifndef VER_PLATFORM_WIN32_NT
+#define VER_PLATFORM_WIN32_NT 2
+#endif /* VER_PLATFORM_WIN32_NT */
+#endif /* NT */
+
+BOOL IsWindowsNT() {
+#ifdef NT
+#ifdef CKT_NT35_OR_31
+    DWORD dwVersion = GetVersion();
+    if (dwVersion < 0x80000000) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+#else
+    OSVERSIONINFO osverinfo ;
+    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+    GetVersionEx( &osverinfo ) ;
+    if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+#endif /* CKT_NT35_OR_31 */
+#else
+    return FALSE;
+#endif
+};
 
 // Stub initialization function.
 DWORD
@@ -722,7 +753,6 @@ IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     int on = 1, rc = 0;
 #ifdef NT
     WSADATA data ;
-    OSVERSIONINFO osverinfo ;
 
     SvcDebugOut("Internet Kermit Service Daemon\n",0);
     rc = WSAStartup( MAKEWORD( 2, 0 ), &data ) ;
@@ -752,16 +782,15 @@ IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     }
 
 #ifdef NT
-    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-    GetVersionEx( &osverinfo ) ;
 
-    if (osverinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS) {
+    if (IsWindowsNT()) {
         dbdir = getenv("SystemRoot");
     } else {
         dbdir = getenv("winbootdir");
         if (!dbdir)
             dbdir = getenv("windir");
     }
+    dbdir = getenv("SystemRoot");
     if (!dbdir)
         dbdir = "C:/";
 #else /* NT */
