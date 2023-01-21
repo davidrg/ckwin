@@ -252,7 +252,11 @@ goto :semisupported
 
 :vc1
 set CK_COMPILER_NAME=Visual C++ 1.0 32-bit Edition
-goto :unsupported
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
+set CKF_LIBDES=unsupported
+set CKF_CRYPTDLL=no
+goto :cvcdone
 
 :vc2
 set CK_COMPILER_NAME=Visual C++ 2.0
@@ -261,6 +265,7 @@ set ZINCBUILD=mvcpp200mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKF_CRYPTDLL=no
 goto :cvcdone
 
 :vc4
@@ -269,6 +274,7 @@ set ZINCBUILD=mvcpp400mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKF_CRYPTDLL=no
 goto :cvcdone
 
 :vc5
