@@ -43,6 +43,11 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
 #endif
 
+#ifdef CKT_NT35_OR_31
+/* Windows NT 3.1 and 3.50 don't have ShowWindowAsync - use ShowWindow instead */
+#define ShowWindowAsync ShowWindow
+#endif
+
 /* Global variable */
 
 HINSTANCE   hInst = 0 ;
@@ -650,11 +655,7 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
-#ifndef CKT_NT35_OR_31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
-#else
-        ShowWindow(hwndDialer,SW_SHOWNORMAL);
-#endif
         SetForegroundWindow(hwndDialer);
     } else if (_hwndDialer = FindWindow(NULL, "Kermit-95 Dialer")) {
         StartedFromDialer = 1;
@@ -665,11 +666,7 @@ StartDialer(void)
             DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
-#ifndef CKT_NT35_OR_31
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
-#else
-        ShowWindow(hwndDialer,SW_SHOWNORMAL);
-#endif
         SetForegroundWindow(hwndDialer);
         StartedFromDialer = 0;
     } else {
@@ -1057,11 +1054,7 @@ MultiInputDialogProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
             }
             /* fallthrough */
         case IDCANCEL:
-#ifndef CKT_NT35_OR_31
             ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
-#else
-            ShowWindow(hwndConsole,SW_SHOWNORMAL);
-#endif
             SetForegroundWindow(hwndConsole);
             EndDialog(hwndDlg, LOWORD(wParam));
             return TRUE;
