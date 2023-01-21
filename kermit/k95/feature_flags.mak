@@ -134,6 +134,25 @@ RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31 /dCKT_NT35_OR_31
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35_AND_31
 !endif
 
+!if "$(CKT_NT31)" == "yes" && "$(CKT_NT35)" != "yes"
+# Targeting Windows NT 3.1 only
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31ONLY
+!endif
+
+# CKT_NT31          - Compiled code must work on NT 3.1
+# CKT_NT35          - Compiled code must work on NT 3.50
+# CKT_NT31ONLY      - NT 3.1 is the only target - must be buildable with
+#                     Visual C++ 1.0 32-bit edition. No runtime checks for
+#                     available APIs.
+# CKT_NT35_AND_31   - Targeting both NT 3.1 and 3.50. Target compiler is
+#                     Visual C++ 2.0. Use runtime checks for available APIs where
+#                     required.
+# CKT_NT35_OR_31    - Targeting NT 3.50 or 3.1 (rather than NT 3.51 or newer).
+#                     Target compilers are Visual C++ 1.0 32-bit edition and 2.0.
+#                     This is for code that is common to NT 3.1 and 3.50 but not
+#                     newer versions of windows.
+# None of the above - Targeting NT 3.51 or newer
+
 !else
 
 # OS/2 gets NetBIOS support!
@@ -141,6 +160,10 @@ CKF_NETBIOS=yes
 
 # And does not get mouse wheel support (not implemented)
 CKF_MOUSEWHEEL=no
+
+# Almost certainly won't build
+# TODO: Make it build (probably *a lot* of work)
+CKF_NT_UNICODE=no
 
 !if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
 # But not when building with OpenWatcom. At the moment it causes Kermit/2 to
@@ -372,4 +395,36 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) NetBIOS
 !if "$(CKF_MOUSEWHEEL)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) Mouse-Wheel
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
+!endif
+
+# Windows NT Unicode build
+# Turn on with: -DCK_NT_UNICODE : tell C-Kermit we're targeting NT with Unicode
+#               -DUNICODE : tell the win32 headers we want Unicode APIs
+#               -D_UNICODE : tell the C Runtime we want Unicode APIs
+# Targets Windows NT using Unicode APIs. This will allow using Unicode filenames
+# and anywhere else you may want to pass unicode strings into (or get unicode
+# strings from) Windows.
+#
+# Windows 9x doesn't support the Unicode APIs so binaries built with this
+# enabled won't work on Windows 9x unless also built against the Microsoft Layer
+# for Unicode (UNICOWS.DLL) which is available starting from the Windows XP RC1
+# version of the Platform SDK. UNICOWS.DLL also apparently has some licensing
+# issues (see: https://libunicows.sourceforge.net/) so using Opencow
+# (https://opencow.sourceforge.net/) may be more desirable.
+#
+# Note that CKW will *NOT* actually build with this option enabled at this time.
+# Work still needs to be done to:
+#   - Adjust all GetProcAddress calls to get either the A or W version of an API
+#     depending on if CK_NT_UNICODE is defined (UNICODE can't be relied on as
+#     C-Kermit headers define it)
+#   - Check all other API calls are using TCHAR and LPTSTR instead of CHAR/LPSTR
+#   - Ensure everywhere strings coming from windows are being passed will handle
+#     being passed a unicode string (eg, sprintf vs swprintf) without breaking
+#     OS/2 or non-unicode (ANSI) Win32 builds.
+#   - Fix all the bugs that will most surely appear
+# This is probably only worth pursuing if it won't have a major impact on the
+# C-Kermit bits that are shared with UNIX/VMS/etc.
+!if "$(CKF_NT_UNICODE)" == "yes"
+ENABLED_FEATURES = $(DISABLED_FEATURES) Windows-Unicode
+ENABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DCK_NT_UNICODE -DUNICODE -D_UNICODE
 !endif

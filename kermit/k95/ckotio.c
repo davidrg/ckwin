@@ -634,6 +634,63 @@ static DCBINFO saveddcb;
 static BYTE savedstat;
 #endif /* NT */
 
+/* Visual C++ 1.0 (and perhaps some other ancient Win32 compilers) don't
+ * know what HINSTANCE is. Visual C++ 1.0 docs say LoadLibrary returns a
+ * HANDLE, while Visual C++ 2.0 docs say HINSTANCE. */
+#ifdef NT
+#ifndef HINSTANCE
+#define HINSTANCE HANDLE
+#endif /* HINSTANCE */
+#endif /* NT */
+
+/* Code to handle potential unavailability of GetVersionEx when
+ * targeting both Windows NT 3.1 *AND* Windows NT 3.50. When targeting
+ * NT 3.50 and newer we'll just always call GetVersionEx directly, and
+ * when targeting NT 3.1 *ONLY* we'll never bother with GetVersionEx at
+ * all. */
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+
+#else
+#ifndef CKT_NT31ONLY
+#define _GetVersionEx GetVersionEx
+#endif
+#endif /* CKT_NT35_AND_31 */
+
+#ifdef CKT_NT35_AND_31
+BOOL _GetVersionEx(LPOSVERSIONINFO lpVersionInformation) {
+    static BOOL (__stdcall *getVersionEx)(LPOSVERSIONINFO)=NULL;
+    static BOOL loaded = FALSE;
+
+    if (!loaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        loaded = TRUE;
+
+        if (hKernel32 != NULL) {
+#ifdef CK_NT_UNICODE
+            getVersionEx = (BOOL (__stdcall *)(LPOSVERSIONINFO))
+                        GetProcAddress( hKernel32, "GetVersionExW" );
+#else
+            getVersionEx = (BOOL (__stdcall *)(LPOSVERSIONINFO))
+                        GetProcAddress( hKernel32, "GetVersionExA" );
+#endif
+        }
+
+        if (getVersionEx == NULL) {
+            debug(F100, "GetVersionEx is NOT available", "", 0);
+            return FALSE;
+        } else {
+            debug(F100, "GetVersionEx is available", "", 0);
+        }
+    }
+
+    if (getVersionEx != NULL) {
+        return getVersionEx(lpVersionInformation);
+    }
+    return FALSE; /* GetVersionEx unavailable */
+}
+#endif /* CKT_NT35_AND_31 */
+#endif /* NT */
 
 #ifdef NT
 /* d e b u g C o m m -- generate a debug log entry for the */
@@ -874,18 +931,23 @@ os2getpid(void)
 int
 setOSVer( void )
 {
-#ifdef CKT_NT31
-    OSVer = VER_PLATFORM_WIN32_NT;
-    nt351 = 1;
-#else
+#ifndef CKT_NT31ONLY
     OSVERSIONINFO osverinfo ;
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-    GetVersionEx( &osverinfo ) ;
-    OSVer = osverinfo.dwPlatformId ;
-    if ( osverinfo.dwMajorVersion < 4 )
-        nt351 = 1;
-#endif
-    return(OSVer);
+    if (_GetVersionEx( &osverinfo )) {
+        OSVer = osverinfo.dwPlatformId ;
+        if ( osverinfo.dwMajorVersion > 3 ) {
+            nt351 = 0;
+        }
+        return OSVer;
+    }
+#endif /* CKT_NT31ONLY */
+
+    /* Safe default - NT 3.x */
+    OSVer = VER_PLATFORM_WIN32_NT;
+    nt351 = 1;
+
+    return (OSVer);
 }
 #endif /* NT */
 
@@ -1396,142 +1458,149 @@ sysinit() {
     /* Construct the system ID string */
 #ifdef NT
     {
-#ifdef CKT_NT31
-        /* GetVersionEx isn't available on NT 3.1, we have to use GetVersion
-         * instead. KB article Q92395 details how to extract the major, minor
-         * and build number plus determine the platform (NT, 9x or Win32s) */
-        DWORD dwVersion;
-        int major, minor, build;
-
-        dwVersion = GetVersion();
-
-        major = LOBYTE(LOWORD(dwVersion));
-        minor = HIBYTE(LOWORD(dwVersion));
-        build = HIWORD(dwVersion);
-
-        if (dwVersion < 0x80000000) {
-            /* Windows NT */
-            OSVer = VER_PLATFORM_WIN32_NT;
-        } else if (LOBYTE(LOWORD(dwVersion))<4) {
-            /* Win32s */
-            OSVer = VER_PLATFORM_WIN32s;
-            build = build & ~0x8000;
-        } else {
-            /* Windows 95 */
-            OSVer = VER_PLATFORM_WIN32_WINDOWS;
-            build = build & ~0x8000;
-        }
-
-        /* OS Name and version */
-        sprintf(ckxsystem, " %s %1d.%02d(%1d)",
-                OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
-                OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
-                OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
-                "Unknown",
-                major, minor, build
-        );
-#ifdef CK_UTSNAME
-        sprintf(unm_nam,
-                OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
-                OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
-                OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
-                "Windows Unknown" );
-        sprintf(unm_rel,"%1d.%02d", major, minor); /* OS Release */
-        sprintf(unm_ver,"%1d", build); /* OS Version */
-#endif /* CK_UTSNAME */
-#else /* CKT_NT31 */
+#ifndef CKT_NT31ONLY
+        BOOL getVersionResult = FALSE;
         OSVERSIONINFO osverinfo ;
         osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-        GetVersionEx( &osverinfo ) ;
+        getVersionResult = _GetVersionEx( &osverinfo );
 
-        if ( startflags & 1 )
-            OSVer = VER_PLATFORM_WIN32_NT;
-        else
-            OSVer = osverinfo.dwPlatformId ;
+        if (!getVersionResult) {
+#endif /* CKT_NT31ONLY */
+            /* _GetVersionEx will fail on NT 3.1 because GetVersionEx isn't
+             * available there, we have to use GetVersion instead. KB article
+             * Q92395 details how to extract the major, minor and build number
+             * plus determine the platform (NT, 9x or Win32s) */
+            DWORD dwVersion;
+            int major, minor, build;
 
-        sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
-                 ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
-                   (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
-                   osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
-                   (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
-                   "Windows Unknown" ),
-                 osverinfo.dwMajorVersion,
-                 osverinfo.dwMinorVersion,
-                 LOWORD(osverinfo.dwBuildNumber),
-                 osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
-                 osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
-#ifdef CK_UTSNAME
-        if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-            /* Windows 95 / 98 / ME */
-            sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
-                osverinfo.dwMinorVersion == 1 ? "Windows 98" :
-                    osverinfo.dwMinorVersion == 9 ? "Windows ME" :
-                        "Windows - unknown");
-        } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-            /* Windows NT */
+            dwVersion = GetVersion();
 
-            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
-                /* Windows 10 or newer. There is currently no constant
-                 * for Windows 11 defined so this is the best we can
-                 * do. */
-                sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
-            } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
-                sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+            major = LOBYTE(LOWORD(dwVersion));
+            minor = HIBYTE(LOWORD(dwVersion));
+            build = HIWORD(dwVersion);
+
+            if (dwVersion < 0x80000000) {
+                /* Windows NT */
+                OSVer = VER_PLATFORM_WIN32_NT;
+            } else if (LOBYTE(LOWORD(dwVersion))<4) {
+                /* Win32s */
+                OSVer = VER_PLATFORM_WIN32s;
+                build = build & ~0x8000;
             } else {
-                if (osverinfo.dwMajorVersion < 5) {
-                    sprintf(unm_nam, "Windows NT");
-                } else if (osverinfo.dwMajorVersion == 5) {
-                    /* Windows 2000 / XP / 2003 */
-                    if (osverinfo.dwMinorVersion == 0) {
-                        sprintf(unm_nam, "Windows 2000" );
-                    } else if (osverinfo.dwMinorVersion == 1) {
-                        sprintf(unm_nam, "Windows XP" );
-                    } else if (osverinfo.dwMinorVersion == 2) {
-                        sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
-                    } else {
-                        sprintf(unm_nam, "Windows NT 5.x - unknown" );
-                    }
-                } else if (osverinfo.dwMajorVersion == 6) {
-                    /* Windows Vista / 7 / 8 / 8.1 */
-                    if (osverinfo.dwMinorVersion == 0) {
-                        sprintf(unm_nam, "Windows Vista / Server 2008" );
-                    } else if (osverinfo.dwMinorVersion == 1) {
-                        sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
-                    } else if (osverinfo.dwMinorVersion == 2) {
-                        sprintf(unm_nam, "Windows 8 / Server 2012 !!");
-                    } else if (osverinfo.dwMinorVersion == 3) {
-                        sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
-                    } else  {
-                        sprintf(unm_nam, "Windows NT 6.x - unknown" );
-                    }
-                } else if (osverinfo.dwMajorVersion == 10) {
-                    /* With the right stuff in the manifest, GetVersionEx should
-                     * tell the truth even when the executable has been built
-                     * with an older compiler. When built with Visual C++
-                     * 2013 or newer we won't ever get this far - Windows 10+
-                     * should be detected earlier on. */
-
-                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
-
-                } else {
-                    /* Don't know */
-                    sprintf(unm_nam, "Windows NT - unknown" );
-                }
+                /* Windows 95 */
+                OSVer = VER_PLATFORM_WIN32_WINDOWS;
+                build = build & ~0x8000;
             }
-        } else {
-            /* Unknown */
-            sprintf(unm_nam, "Windows NT - unknown" );
-        }
 
-        sprintf(unm_rel,"%1d.%02d",
-                 osverinfo.dwMajorVersion,
-                 osverinfo.dwMinorVersion);
-        sprintf(unm_ver,"(%1d)%s%s",
-                LOWORD(osverinfo.dwBuildNumber),
-                osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
-                osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+            /* OS Name and version */
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)",
+                    OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                    OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                    OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                    "Unknown",
+                    major, minor, build
+            );
+#ifdef CK_UTSNAME
+            sprintf(unm_nam,
+                    OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                    OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                    OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                    "Windows Unknown" );
+            sprintf(unm_rel,"%1d.%02d", major, minor); /* OS Release */
+            sprintf(unm_ver,"%1d", build); /* OS Version */
 #endif /* CK_UTSNAME */
-#endif /* not CKT_NT31 */
+#ifndef CKT_NT31ONLY
+        } else {
+
+            if ( startflags & 1 )
+                OSVer = VER_PLATFORM_WIN32_NT;
+            else
+                OSVer = osverinfo.dwPlatformId ;
+
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
+                     ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
+                       (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
+                       osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
+                       (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
+                       "Windows Unknown" ),
+                     osverinfo.dwMajorVersion,
+                     osverinfo.dwMinorVersion,
+                     LOWORD(osverinfo.dwBuildNumber),
+                     osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                     osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+#ifdef CK_UTSNAME
+            if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+                /* Windows 95 / 98 / ME */
+                sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
+                    osverinfo.dwMinorVersion == 1 ? "Windows 98" :
+                        osverinfo.dwMinorVersion == 9 ? "Windows ME" :
+                            "Windows - unknown");
+            } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                /* Windows NT */
+
+                if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                    /* Windows 10 or newer. There is currently no constant
+                     * for Windows 11 defined so this is the best we can
+                     * do. */
+                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+                } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
+                    sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                } else {
+                    if (osverinfo.dwMajorVersion < 5) {
+                        sprintf(unm_nam, "Windows NT");
+                    } else if (osverinfo.dwMajorVersion == 5) {
+                        /* Windows 2000 / XP / 2003 */
+                        if (osverinfo.dwMinorVersion == 0) {
+                            sprintf(unm_nam, "Windows 2000" );
+                        } else if (osverinfo.dwMinorVersion == 1) {
+                            sprintf(unm_nam, "Windows XP" );
+                        } else if (osverinfo.dwMinorVersion == 2) {
+                            sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
+                        } else {
+                            sprintf(unm_nam, "Windows NT 5.x - unknown" );
+                        }
+                    } else if (osverinfo.dwMajorVersion == 6) {
+                        /* Windows Vista / 7 / 8 / 8.1 */
+                        if (osverinfo.dwMinorVersion == 0) {
+                            sprintf(unm_nam, "Windows Vista / Server 2008" );
+                        } else if (osverinfo.dwMinorVersion == 1) {
+                            sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
+                        } else if (osverinfo.dwMinorVersion == 2) {
+                            sprintf(unm_nam, "Windows 8 / Server 2012 !!");
+                        } else if (osverinfo.dwMinorVersion == 3) {
+                            sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                        } else  {
+                            sprintf(unm_nam, "Windows NT 6.x - unknown" );
+                        }
+                    } else if (osverinfo.dwMajorVersion == 10) {
+                        /* With the right stuff in the manifest, GetVersionEx should
+                         * tell the truth even when the executable has been built
+                         * with an older compiler. When built with Visual C++
+                         * 2013 or newer we won't ever get this far - Windows 10+
+                         * should be detected earlier on. */
+
+                        sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+
+                    } else {
+                        /* Don't know */
+                        sprintf(unm_nam, "Windows NT - unknown" );
+                    }
+                }
+            } else {
+                /* Unknown */
+                sprintf(unm_nam, "Windows NT - unknown" );
+            }
+
+            sprintf(unm_rel,"%1d.%02d",
+                     osverinfo.dwMajorVersion,
+                     osverinfo.dwMinorVersion);
+            sprintf(unm_ver,"(%1d)%s%s",
+                    LOWORD(osverinfo.dwBuildNumber),
+                    osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                    osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+#endif /* CK_UTSNAME */
+        }
+#endif /* CKT_NT31ONLY */
 #ifdef KUI
         InitCommonControls();
 #endif /* KUI */
@@ -9209,11 +9278,51 @@ char *
 get_os2_vers() {
     APIRET rc ;
 #ifdef NT
+#ifndef CKT_NT31ONLY
     OSVERSIONINFO verinfo ;
     verinfo.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
 
-    rc = !GetVersionEx( &verinfo ) ;
+    rc = !_GetVersionEx( &verinfo ) ;
     if ( rc ) {
+#endif /* CKT_NT31ONLY */
+#ifdef CKT_NT35_OR_31
+        /* Could have failed because we're on NT 3.1 which doesn't have
+         * GetVersionE - we've got to use GetVersion() there instead. KB article
+         * Q92395 covers how to interpret the result. */
+
+        DWORD dwVersion;
+        int major, minor, build, _osver;
+
+        dwVersion = GetVersion();
+
+        major = LOBYTE(LOWORD(dwVersion));
+        minor = HIBYTE(LOWORD(dwVersion));
+        build = HIWORD(dwVersion);
+
+        if (dwVersion < 0x80000000) {
+            /* Windows NT */
+            _osver = VER_PLATFORM_WIN32_NT;
+        } else if (LOBYTE(LOWORD(dwVersion))<4) {
+            /* Win32s */
+            _osver = VER_PLATFORM_WIN32s;
+            build = build & ~0x8000;
+        } else {
+            /* Windows 95 */
+            _osver = VER_PLATFORM_WIN32_WINDOWS;
+            build = build & ~0x8000;
+        }
+
+        sprintf(os2version,"%s %02d.%02d.%02d",
+                _osver == VER_PLATFORM_WIN32_NT ? "WinNT" :
+                _osver == VER_PLATFORM_WIN32_WINDOWS ?
+                 (minor == 0 ? "Win95" : "Win98")  :
+                _osver == VER_PLATFORM_WIN32_WIN32S ? "Win32s" :
+                "unknown",
+                major,
+                minor,
+                build );
+#endif
+#ifndef CKT_NT31ONLY
         os2version[0] = '\0';
     } else {
         sprintf(os2version,"%s %02d.%02d.%02d",
@@ -9226,6 +9335,7 @@ get_os2_vers() {
                 verinfo.dwMinorVersion,
                 verinfo.dwBuildNumber );
     }
+#endif /* CKT_NT31ONLY */
 #else /* NT */
     ULONG StartIndex = QSV_VERSION_MAJOR ; /* Major Version Number */
     ULONG EndIndex   = QSV_VERSION_REVISION ; /* Revision Letter      */
