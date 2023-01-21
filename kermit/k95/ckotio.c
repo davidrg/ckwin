@@ -427,7 +427,7 @@ int ishandle=0;
 int pid = 0;
 #ifdef NT
 static DCB ttydcb ;
-#ifndef CKT_NT31
+#ifndef CKT_NT31ONLY
 static LPCOMMCONFIG ttycfg=NULL;
 static DWORD cfgsize=0;
 #endif
@@ -623,10 +623,10 @@ ckntsignal(int sig, SIGTYP (*f)(int)))(int) {
 static int savedtty = 0;
 #ifdef NT
 static DCB saveddcb ;
-#ifndef CKT_NT31
+#ifndef CKT_NT31ONLY
 static LPCOMMCONFIG savedcfg=NULL;
 static DWORD savedcfgsize=0;
-#endif
+#endif /* CKT_NT31ONLY */
 #else /* NT */
 static long savedspeed;
 static LINECONTROL savedlc;
@@ -742,6 +742,29 @@ debugComm( char * msg, DCB * lpDCB, COMMTIMEOUTS * timeouts )
 
 int
 savetty() {
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+    /* When targeting both Windows NT 3.50 and Windows NT 3.1, we'll try to
+     * dynamically load GetCommConfig as its only available on Windows NT 3.50
+     * and newer.
+     */
+    static BOOL (__stdcall *_GetCommConfig)(HANDLE,LPCOMMCONFIG,LPDWORD)=NULL;
+    static BOOL GetCommConfigLoaded = FALSE;
+
+    if (!GetCommConfigLoaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        GetCommConfigLoaded = TRUE;
+        _GetCommConfig = (BOOL (__stdcall *)(HANDLE,LPCOMMCONFIG,LPDWORD))
+                    GetProcAddress( hKernel32, "GetGommConfig" );
+        if (_GetCommConfig == NULL) {
+            debug(F100, "GetCommConfig is NOT available", "", 0);
+        } else {
+            debug(F100, "GetCommConfig is available", "", 0);
+        }
+    }
+#endif
+#endif
+
     if (ttyfd != -1) {
 #ifdef NT
         saveddcb.DCBlength = sizeof(DCB);
@@ -750,11 +773,25 @@ savetty() {
         if ( deblog )
             debugComm( "savetty initial values", &ttydcb, NULL );
 
-#ifndef CKT_NT31
+        /* GetCommConfig is only available on NT 3.50 and higher. If we're
+         * targeting NT 3.1 only we won't bother compiling this stuff in as it
+         * will never be used. If we're targeting NT 3.50 *and* 3.1, we'll
+         * compile in a version that does a runtime check to see if
+         * GetCommConfig is available. If we're targeting NT 3.51+ then we'll
+         * just assume GetCommConfig is always available (because the runtime
+         * library won't let the binary run anywhere it isn't)
+         */
+#ifdef CKT_NT35_AND_31
+        savedcfg->dwSize = 1024;
+        savedcfgsize = 1024;
+        _GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+#else
+#ifndef CKT_NT31ONLY
         savedcfg->dwSize = 1024;
         savedcfgsize = 1024;
         GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
-#endif /* CKT_NT31 */
+#endif /* CKT_NT31ONLY */
+#endif /* CKT_NT35_AND_31 */
 #else /* NT */
         savedspeed = ttgspd();
         DosDevIOCtl(&savedlc,sizeof(savedlc),NULL,0,
@@ -776,13 +813,47 @@ restoretty() {
     UINT cmd = 0, data = 0 ;
 #endif /* NT */
 
-  if (savedtty) {
 #ifdef NT
-#ifdef CKT_NT31
+#ifdef CKT_NT35_AND_31
+    /* When targeting both Windows NT 3.50 and Windows NT 3.1, we'll try to
+     * dynamically load SetCommConfig as its only available on Windows NT 3.50
+     * and newer.
+     */
+    static BOOL (__stdcall *_SetCommConfig)(HANDLE,LPCOMMCONFIG,DWORD)=NULL;
+    static BOOL SetCommConfigLoaded = FALSE;
+
+    if (!SetCommConfigLoaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        SetCommConfigLoaded = TRUE;
+        _SetCommConfig = (BOOL (__stdcall *)(HANDLE,LPCOMMCONFIG,DWORD))
+                    GetProcAddress( hKernel32, "SetCommConfig" );
+        if (_SetCommConfig == NULL) {
+            debug(F100, "SetCommConfig is NOT available", "", 0);
+        } else {
+            debug(F100, "SetCommConfig is available", "", 0);
+        }
+    }
+#endif
+#endif
+
+  if (savedtty) {
+      /* On NT 3.50+ : Call SetCommConfig directly - don't bother with a runtime check
+       * On NT 3.1+3.50: Do a runtime check, call SetCommConfig if its available
+       * On NT 3.1 only: Don't bother with SetCommConfig, always call SetCommState */
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+      if (_SetCommConfig == NULL) {
+          SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
+      } else {
+          _SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
+      }
+#else /* CKT_NT35_AND_31 */
+#ifdef CKT_NT31ONLY
       SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
 #else
       SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
-#endif
+#endif /* CKT_NT31ONLY */
+#endif /* CKT_NT35_AND_31 */
 #else /* NT */
     ttsetspd(savedspeed);
     DosDevIOCtl(&data,sizeof(data),&cmd,sizeof(cmd),
