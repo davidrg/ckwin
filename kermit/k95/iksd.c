@@ -3,13 +3,9 @@
 #ifdef NT
 #include <windows.h>
 #include <winsock.h>
+#include <errno.h>
 #define strdup _strdup
 #define ltoa   _ltoa
-
-#ifndef VER_PLATFORM_WIN32_WINDOWS
-/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
-#define VER_PLATFORM_WIN32_WINDOWS      1
-#endif
 
 #endif
 #define CONFIG_FILE "iksd.cfg"
@@ -103,14 +99,10 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
-   OSVERSIONINFO osverinfo ;
    STARTUPINFO si ;
    HANDLE sockdup = INVALID_HANDLE_VALUE ;
    static char buf[512] ;
 
-   osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-   GetVersionEx( &osverinfo ) ;
-    
    memset( &si, 0, sizeof(STARTUPINFO) ) ;
    si.cb = sizeof(STARTUPINFO);
    si.dwFlags = STARTF_USESHOWWINDOW;
@@ -220,6 +212,36 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
 #endif /* NT */
 }
 
+#ifdef NT
+#ifndef VER_PLATFORM_WIN32_NT
+#define VER_PLATFORM_WIN32_NT 2
+#endif /* VER_PLATFORM_WIN32_NT */
+#endif /* NT */
+
+BOOL IsWindowsNT() {
+#ifdef NT
+    #ifdef CKT_NT35_OR_31
+    DWORD dwVersion = GetVersion();
+    if (dwVersion < 0x80000000) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+#else
+    OSVERSIONINFO osverinfo ;
+    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+    GetVersionEx( &osverinfo ) ;
+    if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+#endif /* CKT_NT35_OR_31 */
+#else
+    return FALSE;
+#endif
+};
+
 int
 main( int argc, char * argv[] ) {
     char *p=NULL, * dbdir=NULL, dbfile[256];
@@ -237,7 +259,6 @@ main( int argc, char * argv[] ) {
     int tcpsrv_fd = -1, ttyfd = -1 ;
 #ifdef NT
     WSADATA data ;
-    OSVERSIONINFO osverinfo ;
     HANDLE hProcess;
 
     printf("Internet Kermit Service Daemon\n");
@@ -266,10 +287,7 @@ main( int argc, char * argv[] ) {
     }
 
 #ifdef NT
-    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-    GetVersionEx( &osverinfo ) ;
-
-    if (osverinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS) {
+    if (IsWindowsNT()) {
         dbdir = getenv("SystemRoot");
     } else {
         dbdir = getenv("winbootdir");
