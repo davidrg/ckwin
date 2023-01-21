@@ -75,6 +75,7 @@ jobs:
         mkdir zlib
         cd zlib
         wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        dir
         7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
         7z x zlib-${{env.ZLIB_VERSION}}.tar
         ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
