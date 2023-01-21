@@ -80,10 +80,18 @@ jobs:
         
         dir
         
-        7z
+        echo "Extract .tar.gz..."
+        echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar.gz"
         7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+        
+        echo "Extract .tar..."
+        echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar"
         7z x zlib-${{env.ZLIB_VERSION}}.tar
+        
+        echo "Rename..."
         ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
+        
+        echo "Cleanup..."
         del *.tar 
         del *.gz
         cd ..
