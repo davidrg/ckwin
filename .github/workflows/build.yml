@@ -76,11 +76,8 @@ jobs:
         # Get and unpack zlib
         mkdir zlib
         cd zlib
-        del zlib-${{env.ZLIB_VERSION}}.tar.gz
         echo "Fetching ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz to file zlib-${{env.ZLIB_VERSION}}.tar.gz..."
         wget ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
-        
-        dir
         
         echo "Extract .tar.gz..."
         echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar.gz"
