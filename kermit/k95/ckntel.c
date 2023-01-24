@@ -195,10 +195,13 @@ int cktapiinit(void)
    g_hWndMainWindow = g_hDlgParentWindow = hwndGUI; // This will be the parent of all dialogs.
    static const char *(CDECL *pwine_get_version)(void);
    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+   debug(F100,"Checking for WINE","",0);
    pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
-   if (pwine_get_version) {
-       debug(F100,"TAPI disabled under WINE","",0);
-       return FALSE;
+   if (hntdll != NULL) {
+       if (pwine_get_version) {
+           debug(F100,"TAPI disabled under WINE","",0);
+           return FALSE;
+       }
    }
 
    for ( i ; i < MAXDEVS ; i++ )
