@@ -1459,28 +1459,27 @@ static int connect_ssh(ssh_client_state_t* state) {
     if (rc == SSH_AUTH_ERROR) {
         return rc;
     }
+    if (rc != SSH_AUTH_SUCCESS) {
+        banner = ssh_get_issue_banner(state->session);
+        if (banner) {
+            printf(banner);
+            ssh_string_free_char(banner);
+            banner = NULL;
+        }
 
-    banner = ssh_get_issue_banner(state->session);
-    if (banner) {
-        printf(banner);
-        ssh_string_free_char(banner);
-        banner = NULL;
+        /* Authenticate! */
+        rc = authenticate(state, &user_canceled);
+        if (rc != SSH_AUTH_SUCCESS ) {
+            debug(F111, "sshsubsys - Authentication failed - disconnecting", "rc", rc);
+            printf("Authentication failed - disconnecting.\n");
+
+            if (rc == SSH_AUTH_ERROR) rc = SSH_ERR_AUTH_ERROR;
+            if (rc == SSH_AUTH_PARTIAL) rc = SSH_ERR_AUTH_ERROR;
+            if (rc == SSH_AUTH_DENIED) rc = SSH_ERR_ACCESS_DENIED;
+
+            return rc;
+        }
     }
-
-    /* Authenticate! */
-    rc = authenticate(state, &user_canceled);
-    if (rc != SSH_AUTH_SUCCESS ) {
-        debug(F111, "sshsubsys - Authentication failed - disconnecting", "rc", rc);
-        printf("Authentication failed - disconnecting.\n");
-
-        if (rc == SSH_AUTH_ERROR) rc = SSH_ERR_AUTH_ERROR;
-        if (rc == SSH_AUTH_PARTIAL) rc = SSH_ERR_AUTH_ERROR;
-        if (rc == SSH_AUTH_DENIED) rc = SSH_ERR_ACCESS_DENIED;
-
-        return rc;
-    }
-
-    debug(F100, "sshsubsys - Authenticated - starting session", "", 0);
 
     debug(F100, "sshsubsys - Authentication succeeded - starting session", "", 0);
 
