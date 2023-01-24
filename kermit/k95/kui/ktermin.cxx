@@ -536,6 +536,10 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         }
         break;
 
+    case WM_WINDOWPOSCHANGING:
+	done = TRUE;
+	break;
+
     case WM_SIZING:
     case WM_EXITSIZEMOVE:
     case WM_ACTIVATE:
