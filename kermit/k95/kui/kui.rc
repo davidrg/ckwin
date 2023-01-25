@@ -113,14 +113,18 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_ICONK95,IDC_STATIC,10,10,21,20,SS_REALSIZEIMAGE
     LTEXT           "C-Kermit for Windows",IDC_STATIC,41,10,198,8
-    LTEXT           "Version 3.0",IDC_VERSION,41,20,198,8
+    LTEXT           "Version 3.0",IDC_VERSION,41,21,198,8
+    LTEXT           "(C) Copyright 1995-2013, The Trustees of Columbia University in the City of New York.",IDC_STATIC,41,32,198,17
     CTEXT           "Jeffrey Eric Altman, Secure Endpoints Inc.",IDC_STATIC,41,52,198,8
     CTEXT           "Frank da Cruz, The Kermit Project",IDC_STATIC,41,63,198,8
-    CTEXT           "Thomas M. Wu",IDC_STATIC,41,73,198,8
-    LTEXT           "(C) Copyright 1995-2013, The Trustees of Columbia University in the City of New York.",IDC_STATIC,41,31,198,17
-    LTEXT           "This is the free and open source version of the program formerly known as Kermit 95, a commercial product of Columbia University from 1994 to 2011.",IDC_STATIC,41,88,198,26
-    LTEXT           "This version has been released under the 3-clause BSD license and does not include any proprietary components including PATHWORKS and SuperLAT networking and XYZMODEM file transfer. Certain other features may be missing for various reasons.",IDC_STATIC,41,116,198,50
-    LTEXT           "Type SHOW FEATURES at the prompt to see what features are available.",IDC_STATIC,41,160,198,17
+    CTEXT           "David Goodwin",IDC_STATIC,41,74,198,8
+    CTEXT           "Thomas M. Wu",IDC_STATIC,41,85,198,8
+    LTEXT           "This is the free and open source version of the program formerly known as Kermit 95, a commercial product of Columbia University from 1994 to 2011.",
+                    IDC_STATIC,41,103,198,26
+    LTEXT           "This version has been released under the 3-clause BSD license.",
+                    IDC_STATIC,41,133,198,17
+    LTEXT           "Type SHOW FEATURES at the prompt to see what features are available.",
+                    IDC_STATIC,41,154,197,17
     DEFPUSHBUTTON   "OK",IDOK,189,180,50,14
 END
 
