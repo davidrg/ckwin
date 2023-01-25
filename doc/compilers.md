@@ -11,9 +11,9 @@ For the best security, always use the most recent compiler you
 can. Support for older compilers remains for those wishing to build
 C-Kermit for vintage Windows systems, the security situation of which
 is well known. C-Kermit for Windows, when built with the right compiler, 
-supports Windows NT 3.50+ and Windows 95+. Windows NT 3.1 is unsupported at 
-this time though that may change in the future. Win32s (Win32 on Windows 3.x)
-can not be supported due to the lack of support for threading.
+supports Windows NT 3.50+ and Windows 95+. Limited support for Windows NT 3.1
+is also present but a few bugs impact its usefulness there. Win32s (Win32 
+on Windows 3.x) can not be supported due to the lack of support for threading.
 
 The CI system is set-up to do builds with Visual C++ 2022, 
 Visual C++ 2015, Visual C++ 2003, and OpenWatcom 1.9.
@@ -243,8 +243,8 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>✅</td> <!-- Console -->
     <td>✅</td> <!-- Dialer -->
     <td>No toolbar or some GUI dialogs, window resizing scales font doesn't
-        currently work well. Dialer builds but is largely untested and some
-        non-functional TAPI/modem-dialing stuff may be visible. To target NT
+        currently work well. Dialer builds refuses to start on NT 3.50 (see bug [#136](https://github.com/davidrg/ckwin/issues/136))
+        and would likely have some non-functional TAPI/modem-dialing stuff may be visible if it did. To target NT
         3.1 as well as 3.50, <tt>set CKT_NT35=yes</tt> before building. CKW has known issues
         when actually running on NT 3.1.
     </td>
@@ -272,7 +272,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>❌</td> <!-- NTLM/Auth -->
     <td>❌</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
-    <td>✅</td> <!-- Console -->
+    <td>❌</td> <!-- Console -->
     <td>❌</td> <!-- Dialer -->
     <td>
         Compiler works but there are unresolved issues running on NT 3.1
@@ -290,10 +290,10 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>✅</td> <!-- GUI -->
     <td>✅</td> <!-- Console -->
     <td>✅</td> <!-- Dialer -->
-    <td>To target NT 3.50, <tt>set CKT_NT35=yes</tt> before building. You
-        can target NT 3.1 with <tt>set CKT_NT31=yes</tt> - if both are set the
-        resulting binaries should work on both. Note that CKW has unresolved
-        issues when actually running on NT 3.1
+    <td>
+        To target NT 3.50, <tt>set CKT_NT35=yes</tt> before building. Can not
+        target NT 3.1 (it builds fine with <tt>set CKT_NT31=yes</tt> but the resulting
+        binary gives "Unexpected error: 11" on NT 3.1)
     </td>
 </tr>
 <tr>
