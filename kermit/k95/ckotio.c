@@ -1007,8 +1007,8 @@ setOSVer( void )
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
     if (_GetVersionEx( &osverinfo )) {
         OSVer = osverinfo.dwPlatformId ;
-        if ( osverinfo.dwMajorVersion > 3 ) {
-            nt351 = 0;
+        if ( osverinfo.dwMajorVersion < 4 ) {
+            nt351 = 1;
         }
         return OSVer;
     }
@@ -1565,6 +1565,8 @@ sysinit() {
                 build = build & ~0x8000;
             }
 
+            if (major < 4) nt351 = 1; /* We're on NT 3.51 */
+
             /* OS Name and version */
             sprintf(ckxsystem, " %s %1d.%02d(%1d)",
                     OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
@@ -1589,6 +1591,8 @@ sysinit() {
                 OSVer = VER_PLATFORM_WIN32_NT;
             else
                 OSVer = osverinfo.dwPlatformId ;
+
+            if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
 
             sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
                      ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
