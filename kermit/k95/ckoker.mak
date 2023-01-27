@@ -80,11 +80,14 @@ COMMON_OPTS = /Ox
 # B = k95g, kui, msvc-iksd, msvc
 
 
+!if "$(CK_DETECT_COMPILER)" != "no"
 CMP = VCXX
 COMPILER = unknown
 COMPILER_VERSION = assuming Visual C++ 1.0
 MSC_VER = 80
 TARGET_CPU = x86
+!endif
+
 WIN32_VERSION=0x0400
 
 # So that we can set the minimum subsystem version when needed
@@ -343,7 +346,7 @@ msvcd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
