@@ -203,7 +203,7 @@ echo Found Stanford SRP
 set CKF_SRP=yes
 set INCLUDE=%INCLUDE%;%srp_root%\include
 set LIB=%LIB%;%srp_root%\win32\libsrp_openssl\Release\
-set CK_SRP_DIST_DLLS=%srp_root%\win32\libsrp_openssl\Release\srp.dll %srp_root%\win32\libsrp_openssl\Release\tconf.exe
+set CK_SRP_DIST_DLLS=%srp_root%\win32\libsrp_openssl\Release\srp.dll %srp_root%\win32\libsrp_openssl\Release\tconf.exe %srp_root%\win32\libkrypto_openssl\Release\krypto.dll
 :nosrp
 
 REM Kerberos for Windows
