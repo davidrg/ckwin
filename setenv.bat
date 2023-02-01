@@ -76,6 +76,16 @@ set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
 REM Set include path for targeting Windows.
 set include=%include%;%ckwinclude%
 
+REM Handle path overrides. These are to allow the build server to override any
+REM hard-coded definitions in here without having to modify.
+if not "%zlib_root_override%"=="" set zlib_root=%zlib_root_override%
+if not "%openssl_root_override%"=="" set openssl_root=%openssl_root_override%
+if not "%libssh_root_override%"=="" set libssh_root=%libssh_root_override%
+if not "%libssh_build_override%"=="" set libssh_build=%libssh_build_override%
+if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
+if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
+if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
+
 REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
 REM is what we get when we do "set LIB=%LIB%;C:\somewhere" when LIB starts out
 REM empty. So we need to make sure there is always at least *something* in the
@@ -192,8 +202,12 @@ if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
 :nolibdes
 
 REM Stanford SRP
+if "%CKF_SSL%" == "no" echo Skipping check for SRP (OpenSSL is required but not available)
+if "%CKF_SSL%" == "no" goto :nosrp
+
 if "%CKF_LIBDES%" == "no" echo Skipping check for SRP (libdes is required but not available)
 if "%CKF_LIBDES%" == "no" goto :nosrp
+
 if "%CKF_SRP%" == "no" echo Skipping check for SRP
 if "%CKF_SRP%" == "no" goto :nosrp
 set CKF_SRP=no
