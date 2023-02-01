@@ -692,7 +692,7 @@ LIBS = os2386.lib rexx.lib
 LIBS = $(LIBS) bigmath.lib
 !endif
 
-!if "$(CKF_SRP") == "yes"
+!if "$(CKF_SRP)" == "yes"
 LIBS = $(LIBS) libsrp.lib
 !endif
 
