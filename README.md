@@ -129,17 +129,25 @@ A full [Change Log](doc/changes.md) is available and updated for major releases.
 The following features supported by Kermit 95 v2.1.3 remain unavailable in
 C-Kermit for Windows at this time:
 
-* SSH port forwarding, X11 forwarding and a few other features: Not reimplemented yet
-* Kerberos: Formerly provided by Kerberos for Windows, last updated around six
-  years ago. Work needs to be done to support Heimdal Kerberos which seems to
-  be more up-to-date.
+* SSH port forwarding, X11 forwarding and a few other features have not been
+  implemented yet - ticket #44 is tracking these.
+* SSH v1 support will not return as this is not supported by libssh anymore.
+* SSH/SSL/TLS on Windows versions prior to Windows XP SP3 will likely not return
+  as OpenSSL no longer supports these older versions of Windows or the compilers
+  required to target them.
+* Kerberos: Formerly provided by Kerberos for Windows, last updated back in 2007.
+  Work should be done to support Heimdal Kerberos which seems to be more 
+  up-to-date. See ticket #31 for more information.
 * SRP: Formerly provided by the Stanford SRP distribution, now unmaintained for
-  over a decade. OpenSSL includes SRP support, but it would probably be a lot of
-  work to switch
+  over a decade it is not compatible with any supported version of OpenSSL. 
+  Its still buildable if really needed but not included in any standard builds.
+  OpenSSL includes SRP support now which is probably the way forward if CKW is 
+  to ever include SRP support as standard again, but it would probably be a lot 
+  of work to switch - see ticket #32 for more information
 
-Code to support Kerberos for Windows and Stanford SRP still exists and should
-still work if there is some need for these features despite any security issues
-that may exist.
+Code to support Kerberos for Windows, Stanford SRP and old versions of OpenSSL
+still exists and should still work if there is some need for these features 
+despite the known security issues.
 
 Compiling
 ---------
@@ -169,14 +177,7 @@ get in touch before making changes to these files.
 
 History
 -------
-C-Kermit for Windows is based on what was going to be Kermit 95 v2.2. Compared 
-to the final K95 release (2.1.3) a number of bugs have been fixed and a few new
-features were added for 2.2. A full list of these is available here:
-
-http://www.kermitproject.org/k95-fixes-since-213.txt
-
-Due to the way Kermit 95 was open-sourced, not all changes documented above for
-Kermit 95 2.2 are included in C-Kermit for Windows. In particular, the version
-of the Dialer included here comes from the Kermit 95 v2.1.3 codebase and so 
-doesn't include any of the 2.2 enhancements. The original SSH subsystem was not
-open-sourced so of course any listed SSH enhancements to that don't apply.
+C-Kermit for Windows is based on what was going to be Kermit 95 v2.2 which was
+never released publicly. For full details on whats changed since the last public
+release of Kermit 95, v2.1.3 of 21 January 2003, see the 
+[Change Log](doc/changes.md).
