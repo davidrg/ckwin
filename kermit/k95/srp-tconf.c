@@ -27,6 +27,7 @@
 #endif
 #include <stdlib.h>     /* atexit exit */
 #include <stdio.h>
+#include <stdarg.h>
 #ifdef OS2
 #ifndef _WIN32
 #include <io.h>
@@ -37,6 +38,9 @@
 
 #include <t_pwd.h>
 
+#ifndef SSLDLL
+#define ck_OPENSSL_add_all_algorithms_noconf OPENSSL_add_all_algorithms_noconf
+#endif /* SSLDLL */
 
 #define MIN_BASIS_BITS 257
 #define BASIS_BITS 2048
@@ -93,6 +97,32 @@ int  debug   = 0;
 int  verbose = 0;
 int  composite = 0;
 
+/* Some C-Kermit modules redefine printf to Vscrnprintf which normally only
+ * exists within the main CKW (k95g.exe/k95.exe) so we've got to provide a
+ * compatible definition here.
+ */
+int Vscrnprintf(const char * format, ...) {
+    int result = 0;
+    va_list ap;
+
+    va_start(ap, format);
+    result = vprintf(format, ap);
+    va_end(ap);
+
+    return result;
+}
+
+#ifndef NOT_KERMIT
+/* ckossl.c only provides this function when NOT_KERMIT is supplied, which it
+ * isn't when building srp-tconf */
+void fatal(char *msg) {
+    if (!msg) msg = "";
+
+    printf(msg);
+    exit(1);        /* Exit indicating failure */
+}
+#endif /*NOT_KERMIT */
+
 int
 main(argc, argv)
      int argc;
@@ -130,10 +160,12 @@ main(argc, argv)
       exit(1);
     }
 
+#ifdef SSLDLL
     if ( !ck_crypto_loaddll() ) {
         fprintf(stderr, "%s: unable to load crypto dll\n",progName);
         exit(1);
     }
+#endif /* SSLDLL */
 
     ck_OPENSSL_add_all_algorithms_noconf();
   argc -= optind;
@@ -143,14 +175,15 @@ main(argc, argv)
         configFile = (char *)t_defaultconf();
 
     efp = fopen(configFile, "a+");
-    if(efp == NULL)
-        if(creat(configFile, 0644) < 0 || (efp = fopen(configFile, "a+")) == NULL) {
+    if(efp == NULL) {
+        if (creat(configFile, 0644) < 0 || (efp = fopen(configFile, "a+")) == NULL) {
             fprintf(stderr, "%s: unable to create %s (errno = %d)\n",
-                     progName, configFile, errno);
+                    progName, configFile, errno);
             exit(2);
-        }
-        else
+        } else {
             printf("%s: Creating new configuration file %s\n", progName, configFile);
+        }
+    }
 
   tc = t_openconf(efp);
   if(tc == NULL) {

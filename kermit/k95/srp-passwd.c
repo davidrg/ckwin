@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #ifdef OS2
 #ifndef _WIN32
@@ -92,6 +93,10 @@ struct passwd {
         char    *pw_shell;
 };
 #endif /* _WIN32 */
+
+#ifndef SSLDLL
+#define ck_OPENSSL_add_all_algorithms_noconf OPENSSL_add_all_algorithms_noconf
+#endif /* SSLDLL */
 
 /* EPS STUFF */
 
@@ -209,6 +214,32 @@ Please use a combination of upper and lower case letters and numbers.\n"
 #define DELETED "Password for '%s' deleted.\n"
 #define ADDED   "Password set for user '%s'\n"
 #define NOTADDED "Unable to add user '%s'\n"
+
+/* Some C-Kermit modules redefine printf to Vscrnprintf which normally only
+ * exists within the main CKW (k95g.exe/k95.exe) so we've got to provide a
+ * compatible definition here.
+ */
+int Vscrnprintf(const char * format, ...) {
+    int result = 0;
+    va_list ap;
+
+    va_start(ap, format);
+    result = vprintf(format, ap);
+    va_end(ap);
+
+    return result;
+}
+
+#ifndef NOT_KERMIT
+/* ckossl.c only provides this function when NOT_KERMIT is supplied, which it
+ * isn't when building srp-tconf */
+void fatal(char *msg) {
+    if (!msg) msg = "";
+
+    printf(msg);
+    exit(1);        /* Exit indicating failure */
+}
+#endif /*NOT_KERMIT */
 
 /*
  * usage - print command usage and exit
@@ -536,11 +567,12 @@ main(argc, argv)
                 }
         }
 
-
+#ifdef SSLDLL
     if ( !ck_crypto_loaddll() ) {
         fprintf(stderr, "%s: unable to load crypto dll\n",Prog);
         exit(1);
     }
+#endif
 
     ck_OPENSSL_add_all_algorithms_noconf();
 
