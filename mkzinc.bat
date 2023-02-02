@@ -53,6 +53,7 @@ cd ..
 cd ..
 
 set CKF_ZINC=yes
+set CK_HAVE_ZINC_NT=yes
 set BUILD_ZINC=no
 
 echo.
