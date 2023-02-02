@@ -437,6 +437,13 @@ if exist %root%\zinc\lib\%ZINCBUILD%\wnt_zil.lib set CK_HAVE_ZINC_NT=yes
 if "%CK_HAVE_ZINC_OS2%" == "yes" goto :have_zinc
 if "%CK_HAVE_ZINC_NT%" == "yes" goto :have_zinc
 
+echo No zinc binaries found. Checking for sources...
+if exist %root%\zinc\INCLUDE\ui_win.h goto :have_zinc_src
+
+echo OpenZinc source code not found at %root%\zinc. Extract the OpenZinc
+echo distribution in this location for building the dialer.
+
+:have_zinc_src
 REM It is not built, but it can be!
 set BUILD_ZINC=yes
 goto :cvcend

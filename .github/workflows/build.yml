@@ -479,10 +479,11 @@ jobs:
           SET WHTMLHELP=%WATCOM%\BINNT\HELP
           SET WIPFC=%WATCOM%\WIPFC
           
-          call ..\..\setenv.bat
+          call setenv.bat
+          cd kermit\k95
           call mkos2.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
@@ -495,10 +496,11 @@ jobs:
           SET WHTMLHELP=%WATCOM%\BINNT\HELP
           SET WIPFC=%WATCOM%\WIPFC
           
-          call ..\..\setenv.bat
+          call setenv.bat
+          cd kermit\dialer
           call mkos2.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\dialer
+        working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
