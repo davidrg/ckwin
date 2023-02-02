@@ -451,7 +451,7 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: os2-watcom-1.9+openzinc1
+          key: os2-watcom-1.9+openzinc1+v1
       - name: Get OpenWatcom 1.9
         if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
         run: |
@@ -462,6 +462,7 @@ jobs:
           cd watcom
           wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
           7z x open-watcom-c-win32-1.9.exe
+          cd ..
           
           mkdir zinc
           cd zinc
