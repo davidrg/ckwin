@@ -27,7 +27,21 @@ REM Restore old include and lib paths.
 set INCLUDE=%OLDINCLUDE%
 set LIB=%OLDLIB%
 
+REM because OpenWatcoms nmake clone doesn't seem to set errorlevel when the
+REM build fails.
+if not exist k2dial.exe goto :missingoutputs
+
 goto :end
+
+:missingoutputs
+echo.
+echo.
+echo ERROR: k2dial.exe was not generated. Got:
+dir /w /b *.exe
+echo Expected: k2dial.exe
+echo.
+echo.
+exit /B 1
 
 :nozinc
 echo.
@@ -39,5 +53,6 @@ echo.
 echo To force a build anyway, run:
 echo    nmake -f k95dial.mak PLATFORM=OS2 os2
 echo.
+exit /B 1
 
 :end

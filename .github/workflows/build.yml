@@ -501,10 +501,17 @@ jobs:
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
-      - name: Make Distribution
+      - name: Make Kermit\2 Distribution
         run: mkdist-os2.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Make Dialer Distribution
+        run: mkdist-os2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\dialer
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
@@ -512,7 +519,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         run: |
-          move ..\dialer\k2dial.exe dist-os2\
+          move ..\dialer\dist-os2\* dist-os2\
           move dist-os2 ${{ github.workspace }}\ckos2
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
