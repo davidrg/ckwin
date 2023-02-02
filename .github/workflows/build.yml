@@ -468,6 +468,7 @@ jobs:
           wget ${{ env.OPENZINC }} -outfile OZ1.zip
           7z x OZ1.zip
           cd ..
+          dir
         shell: powershell
       - name: Kermit/2 Build
         run: |
