@@ -26,3 +26,15 @@ copy k2.ini dist-os2
 REM OS/2 builds with OpenWatcom don't appear to depend on any Watcom runtime
 REM libraries (ckoker32.exe runs fine on a Warp 3 VM thats never had OpenWatcom
 REM installed)
+
+REM @echo Copy enabled optional dependencies
+REM for %%I in (%CK_DIST_DLLS%) do copy %%I dist-os2\
+
+@echo Copy licenses
+copy ..\..\COPYING dist-os2
+if exist dist-os2\ssh.dll copy %libssh_root%\COPYING dist-os2\COPYING.libssh
+if not exist dist-os2\openssl.exe goto :nossl
+REM OpenSSL License was renamed in 3.0.0 to LICENSE.txt
+if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist-os2\COPYING.openssl
+if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist-os2\COPYING.openssl
+:nossl

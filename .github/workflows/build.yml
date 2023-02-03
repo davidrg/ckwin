@@ -447,13 +447,14 @@ jobs:
         # decompress.
       - name: Cache OpenWatcom
         uses: actions/cache@v3.0.11
-        id: cache-watcom
+        id: cache-watcom-zinc
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: os2-watcom-1.9
+            ${{github.workspace}}\zinc
+          key: os2-watcom-1.9+openzinc1+v2
       - name: Get OpenWatcom 1.9
-        if: steps.cache-watcom.outputs.cache-hit != 'true'
+        if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
         run: |
           if (Test-Path watcom) {
             Remove-Item watcom -Force
@@ -462,8 +463,16 @@ jobs:
           cd watcom
           wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
           7z x open-watcom-c-win32-1.9.exe
+          cd ..
+          
+          mkdir zinc
+          cd zinc
+          wget ${{ env.OPENZINC }} -outfile OZ1.zip
+          7z x OZ1.zip
+          cd ..
+          dir
         shell: powershell
-      - name: Full Build
+      - name: Kermit/2 Build
         run: |
           SET PATH=%WATCOM%\BINW;%PATH%
           SET PATH=%WATCOM%\BINNT;%PATH%
@@ -472,17 +481,42 @@ jobs:
           SET WHTMLHELP=%WATCOM%\BINNT\HELP
           SET WIPFC=%WATCOM%\WIPFC
           
-          call ..\..\setenv.bat
+          call setenv.bat
+          cd kermit\k95
           call mkos2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Dialer Build
+        run: |
+          SET PATH=%WATCOM%\BINW;%PATH%
+          SET PATH=%WATCOM%\BINNT;%PATH%
+          SET INCLUDE=%WATCOM%\H;%INCLUDE%
+          SET EDPATH=%WATCOM%\EDDAT
+          SET WHTMLHELP=%WATCOM%\BINNT\HELP
+          SET WIPFC=%WATCOM%\WIPFC
+          
+          call setenv.bat
+          cd kermit\dialer
+          call mkos2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Make Kermit\2 Distribution
+        run: mkdist-os2.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
-      - name: Make Distribution
+      - name: Make Dialer Distribution
         run: mkdist-os2.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{ github.workspace }}\kermit\dialer
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
@@ -490,6 +524,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         run: |
+          move ..\dialer\dist-os2\* dist-os2\
           move dist-os2 ${{ github.workspace }}\ckos2
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1

@@ -1,4 +1,5 @@
 del *.obn
+del *.obo
 del *.exe
 del *.map
 del *.res

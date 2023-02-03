@@ -8,10 +8,28 @@
 #    set LIB=.;C:\ZINC\LIB\MVCPP400;C:\MSVC\LIB
 
 # TODO: We should only do this on Windows.
-#!if "$(PLATFORM)" == "NT"
+!if "$(PLATFORM)" == "NT"
 !message Attempting to detect compiler...
 !include ..\k95\compiler_detect.mak
-#!endif
+!else
+# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# IBM compiler to find a way to tell it apart from watcom like we do for
+# Visual C++.
+CMP = OWCL386
+COMPILER = OpenWatcom WCL386
+COMPILER_VERSION = OpenWatcom
+
+# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
+# command line arguments.
+MSC_VER = 0
+
+# Nothing supports PowerPC OS/2.
+TARGET_CPU = x86
+TARGET_PLATFORM = OS/2
+
+# Override CL so we don't end up running the Visual C++ clone cl.
+CL = wcl386
+!endif
 
 !message
 !message
@@ -68,10 +86,17 @@ WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 
 # ----- OS/2 compiler options -----------------------------------------------
+!if "$(CMP)" == "OWCL386"
+OS2_CPP=wpp386
+OS2_LINK=wlink
+OS2_LIBRARIAN=wlib
+OS2_RC=wrc
+!else
 OS2_CPP=icc
 OS2_LINK=ilink
 OS2_LIBRARIAN=ilib
 OS2_RC=rc
+!endif
 
 # ----- Compile, Link, and Lib options --------------------------------------
 #OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /Gx+ /Sp1 /Ti+ /Tm+ /Tx+ -D_DEBUG
@@ -80,13 +105,50 @@ OS2_RC=rc
 #OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /Gx+ /Sp1 /FiZIL.SYM /SiZIL.SYM
 #OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE 
 # ----- Next line for pre-compiled headers and optimization -----------------
-OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /DCKODIALER /Gx+ /Sp1 -Sm -G5 -Gt -Gd- -Gn+ -J -Fi+ -Si+ -Gi+ -Gl+ -O -Oi25 -Gm
-OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE 
+!if "$(CMP)" == "OWCL386"
+# ICC   WCC386
+# /Gx+  -xs         Enable generation of C++ Exception Handling Code (watcom: -xs = balanced exception handling)
+# /Sp1  -zp=1       Pack aggregate members on specified alignment
+# -Sm   ?           Ignore migration keywords
+# -G5   ?           Generate code optimized for use on a Pentium processor
+# -Gt   ?           Store variables so that they do not cross 64K boundaries. Default: /Gt-
+# -Gd-  ?           /Gd+: Use the version of the runtime library that is statically linked.
+# -Gn+              Do not generate default libraries in object
+# -J    N/A         /J+: Make default char type unsigned. Default: /J+ (uchar is default in watcom)
+# -Fi+  ?           Generate Precompiled Headers
+# -Si+  -Fh=<file>  Use precompiled headers where available
+# -Gi+  ?           Generate fast integer code
+# -Gl+  ?           Enable smart linking
+# -O    ?           Optimize generated code
+# -Oi25 -Oe=<num>   Set the threshold for auto-inlining to <value> intermediate code instructions
+# -Gm   ? -bm       Link with multithread runtime libraries. Default: /Gm-
+#       -bt=os2v2     Compile for target OS
+#
+# Link Flags - ICC  wlink
+# /BASE:0x10000
+# /PM:PM            ? -bw ?
+# /NOI
+# /NOE
+#                   -l=os2v2_pm Link for OS/2 v2 Presentation Manager
+#                   -x          Make name case-sensitive
+
+#
+# -c -xs
+OS2_CPP_OPTS=-D__OS2__ -DOS2 -DCKODIALER -zp=1 -bm -Fh -bt=os2
+OS2_LINK_OPTS=SYSTEM os2v2_pm OP ST=96000
 OS2_LIB_OPTS=
 OS2_RC_OPTS=
-
+OS2_OBJS=
+OS2_LIBS=os2_zil.lib,odirect.lib,oservice.lib,ostorage.lib
+!else
+OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /DCKODIALER /Gx+ /Sp1 -Sm -G5 -Gt -Gd- -Gn+ -J -Fi+ -Si+ -Gi+ -Gl+ -O -Oi25 -Gm
+OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE
+OS2_LINK_OUT=
+OS2_LIB_OPTS=
+OS2_RC_OPTS=
 OS2_OBJS=
 OS2_LIBS=os2_zil.lib odirect.lib oservice.lib ostorage.lib
+!endif
 
 .SUFFIXES : .cpp .c
 
@@ -230,6 +292,14 @@ kstatus.obn: kstatus.cpp kstatus.hpp
 # ----- OS/2 ----------------------------------------------------------
 os2: k2dial.exe
 
+#$(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
+#        wrc -q -bt=os2 ckoker.res $@
+# LINKFLAGS="-l=os2v2 -x" \
+
+# os2.def was previously included below but does not exist in the K95 2.1.3
+# build tree. I can only assume either this file was supplied by the IBM
+# compiler, or the IBM compiler did not care it was missing. Watcom cares.
+# os2.def was also removed from the link command just before $(OS2_LIBS)
 k2dial.exe: main.obo dialer.obo lstitm.obo kconnect.obo \
             kdialopt.obo kquick.obo kdconfig.obo kcolor.obo dialetc.obo \
             kdirnet.obo kdirdial.obo kdemo.obo kstatus.obo kwinmgr.obo \
@@ -237,7 +307,19 @@ k2dial.exe: main.obo dialer.obo lstitm.obo kconnect.obo \
             ksetterminal.obo ksetxfer.obo ksetserial.obo ksettelnet.obo \
             ksetkerberos.obo ksettls.obo ksetkeyboard.obo ksetlogin.obo \
             ksetprinter.obo ksetlogs.obo ksetssh.obo ksetftp.obo ksetgui.obo \
-            ksetdlg.obo kabout.obo ksettcp.obo os2.def k2dial.rc
+            ksetdlg.obo kabout.obo ksettcp.obo k2dial.rc
+!if "$(CMP)" == "OWCL386"
+	$(OS2_LINK) $(OS2_LINK_OPTS) N k2dial.exe \
+    F main.obo,dialer.obo,lstitm.obo,kconnect.obo,kdialopt.obo,kquick.obo,kdconfig.obo,\
+    kcolor.obo,dialetc.obo,kdirnet.obo,kdirdial.obo,kdemo.obo,kstatus.obo,kwinmgr.obo,\
+    klocation.obo,kmodem.obo,kmdmdlg.obo,kappl.obo,ksetgeneral.obo,\
+    ksetterminal.obo,ksetxfer.obo,ksetserial.obo,ksettelnet.obo,ksetkerberos.obo,\
+    ksettls.obo,ksetkeyboard.obo,ksetlogin.obo,ksetprinter.obo,ksetlogs.obo,\
+    ksetssh.obo,ksetgui.obo,ksetftp.obo,ksetdlg.obo,kabout.obo,ksettcp.obo \
+    L $(OS2_LIBS)
+    # k2dial.rc is empty so no need to do anything with the resource compiler.
+    #rc k2dial.rc k2dial.exe
+!else
 	$(OS2_LINK) $(OS2_LINK_OPTS) -out:k2dial.exe \
     main.obo dialer.obo lstitm.obo kconnect.obo kdialopt.obo kquick.obo kdconfig.obo\
     kcolor.obo dialetc.obo kdirnet.obo kdirdial.obo kdemo.obo kstatus.obo kwinmgr.obo \
@@ -245,7 +327,8 @@ k2dial.exe: main.obo dialer.obo lstitm.obo kconnect.obo \
     ksetterminal.obo ksetxfer.obo ksetserial.obo  ksettelnet.obo ksetkerberos.obo \
     ksettls.obo ksetkeyboard.obo ksetlogin.obo ksetprinter.obo ksetlogs.obo \
     ksetssh.obo ksetgui.obo ksetftp.obo ksetdlg.obo kabout.obo ksettcp.obo os2.def $(OS2_LIBS)
-    rc k2dial.rc k2dial.exe 
+    rc k2dial.rc k2dial.exe
+!endif
 
 main.obo: main.cpp dialer.hpp kconnect.hpp kwinmgr.hpp
 
@@ -314,7 +397,7 @@ kdconfig.obo: kdconfig.cpp kdconfig.hpp usermsg.hpp
 
 kcolor.obo: kcolor.cpp kcolor.hpp
 
-dialetc.obo: dialetc.c ..\ckoetc.h
+dialetc.obo: dialetc.c ..\k95\ckoetc.h
 
 kdirdial.obo:  kdirdial.cpp kdirdial.hpp dialer.hpp
 

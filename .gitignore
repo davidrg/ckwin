@@ -226,8 +226,10 @@ pip-log.txt
 *.exp
 *.lib
 *.obn
+*.obo
 *.obw
 kermit/k95/dist*
+kermit/dialer/dist*
 
 # IntelliJ Project
 .idea

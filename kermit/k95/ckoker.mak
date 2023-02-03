@@ -489,6 +489,7 @@ wcos2:
 !endif
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
+# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
@@ -508,6 +509,7 @@ wcos2d:
 !endif
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
+# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 # Flags are:
 #   --aa            Allows non-const initializers for local aggregates or unions.
@@ -1074,7 +1076,7 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) -l=os2v2_pm -x $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
