@@ -53,7 +53,13 @@ cd ..
 cd ..
 
 set CKF_ZINC=yes
+set CK_HAVE_ZINC_NT=yes
+
+if "%BUILD_ZINC%"=="no" goto :built
+set lib=%lib%;%ck_zinc_lib%
+set include=%include%;%ck_zinc_include%
 set BUILD_ZINC=no
+:built
 
 echo.
 echo.

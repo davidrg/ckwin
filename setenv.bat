@@ -203,9 +203,11 @@ if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
 
 REM Stanford SRP
 if "%CKF_SSL%" == "no" echo Skipping check for SRP (OpenSSL is required but not available)
+if "%CKF_SSL%" == "no" set CKF_SRP=no
 if "%CKF_SSL%" == "no" goto :nosrp
 
 if "%CKF_LIBDES%" == "no" echo Skipping check for SRP (libdes is required but not available)
+if "%CKF_LIBDES%" == "no" set CKF_SRP=no
 if "%CKF_LIBDES%" == "no" goto :nosrp
 
 if "%CKF_SRP%" == "no" echo Skipping check for SRP
@@ -420,13 +422,30 @@ if "%ZINCBUILD%" NEQ "" goto :check_zinc
 goto :cvcend
 
 :check_zinc
-REM Zinc is supported for this compiler so add it to the include and lib path
-set lib=%lib%;%root%\zinc\lib\%ZINCBUILD%
-set include=%include%;%root%\zinc\include
+REM Zinc is supported for this compiler - check to see if we have it.
+echo Checking for OpenZinc in %root%\zinc\lib\%ZINCBUILD%\
+
+set ck_zinc_lib=%root%\zinc\lib\%ZINCBUILD%
+set ck_zinc_include=%root%\zinc\include
+set lib=%lib%;%ck_zinc_lib%
+set include=%include%;%ck_zinc_include%
 
 REM Then check to see if its already built.
-if exist %root%\zinc\lib\%ZINCBUILD%\wnt_zil.lib goto :have_zinc
+set CK_HAVE_ZINC_OS2=no
+set CK_HAVE_ZINC_NT=no
+if exist %root%\zinc\lib\%ZINCBUILD%\os2_zil.lib set CK_HAVE_ZINC_OS2=yes
+if exist %root%\zinc\lib\%ZINCBUILD%\wnt_zil.lib set CK_HAVE_ZINC_NT=yes
 
+if "%CK_HAVE_ZINC_OS2%" == "yes" goto :have_zinc
+if "%CK_HAVE_ZINC_NT%" == "yes" goto :have_zinc
+
+echo No zinc binaries found. Checking for sources...
+if exist %root%\zinc\INCLUDE\ui_win.h goto :have_zinc_src
+
+echo OpenZinc source code not found at %root%\zinc. Extract the OpenZinc
+echo distribution in this location for building the dialer.
+
+:have_zinc_src
 REM It is not built, but it can be!
 set BUILD_ZINC=yes
 goto :cvcend
@@ -447,7 +466,9 @@ goto :cvcend
 REM Looks like we've got a suitable compiled copy of OpenZinc.
 set CKF_ZINC=yes
 set BUILD_ZINC=no
-echo OpenZinc found!
+if "%CK_HAVE_ZINC_OS2%" == "yes" echo OpenZinc for OS/2 found!
+if "%CK_HAVE_ZINC_NT%" == "yes" echo OpenZinc for Win32 found!
+
 goto :cvcend
 
 :cvcend

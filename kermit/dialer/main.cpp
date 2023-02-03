@@ -32,7 +32,9 @@ extern HWND hwndConsole;
 }
 #else /* WIN32 */
 #define _stat stat
+#ifndef S_IFDIR
 #define _S_IFDIR S_IFDIR
+#endif
 #endif /* WIN32 */
 
 

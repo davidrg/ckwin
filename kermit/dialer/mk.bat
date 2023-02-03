@@ -1,14 +1,14 @@
 @echo off
-if "%CKF_ZINC%" == "no" goto :nozinc
+if "%CK_HAVE_ZINC_NT%" == "no" goto :nozinc
 
-nmake -f k95dial.mak winnt
+nmake -f k95dial.mak PLATFORM=NT winnt
 
 REM The registry tool isn't useful on NT 3.x so don't build it for compilers
 REM that only support NT 3.x
 if "%ZINCBUILD%" == "mvcpp200mt" goto :end
 
 cd registry
-nmake -f registry.mak winnt
+nmake -f registry.mak PLATFORM=NT winnt
 cd ..
 
 goto :end

@@ -157,7 +157,11 @@ UNCname(char * name) {
 
 
 #ifndef WIN32
+#ifndef S_IFMT
+/* Watcom defines this as 0170000 (octal) which is 0xF000 (hex). Same value,
+ * different representation, warning about macro definition not being identical */
 #define S_IFMT 0xF000
+#endif /* S_IFMT */
 #endif
 #ifndef S_ISDIR
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
@@ -3128,11 +3132,19 @@ Browse( ZIL_ICHAR * url )
 #ifdef WIN32
         return(system(cmdbuf));
 #else
+#ifdef __WATCOMC__
+        ZIL_UINT32 tid = _beginthread((void (*)(void *)) ExecuteBrowser,
+                                      0,
+                                      65535,
+                                      (void *)cmdbuf
+                                      ) ;
+#else
         ZIL_UINT32 tid = _beginthread((void (* _Optlink)(void *)) ExecuteBrowser,
                                       0,
                                       65535, 
                                       (void *)cmdbuf
                                       ) ;
+#endif /* __WATCOMC__ */
         return ((DWORD)tid != 0xffffffff);
 #endif
     }
@@ -3152,8 +3164,12 @@ Browse( ZIL_ICHAR * url )
 
     ZIL_UINT32 tid = _beginthread( 
 #ifndef WIN32
+#ifdef __WATCOMC__
+                                   (void (*)(void *))
+#else
                                    (void (* _Optlink)(void *))
-#endif
+#endif /* __WATCOMC__ */
+#endif /* WIN32 */
 
                                    ExecuteBrowser,
 #ifndef WIN32
@@ -7497,7 +7513,15 @@ StartKermit( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_entry 
                                              /* Start an OS/2 session using "CMD.EXE /K" */
     SData.PgmTitle = PgmTitle;
     SData.PgmName = PgmName;
+
+#ifdef __WATCOMC__
+    /* ZIL_ICHAR is probably char (though it could be wchar_t if ZIL_UNICODE is defined)
+     * PgmInputs is PBYTE which is probably unsigned char*
+     * Watcom cares about the difference */
+    SData.PgmInputs = (PBYTE)buf;               /* Keep session up           */
+#else
     SData.PgmInputs = buf;                      /* Keep session up           */
+#endif
 
     SData.TermQ = 0;                            /* No termination queue      */
     SData.Environment = 0;                      /* No environment string     */
