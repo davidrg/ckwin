@@ -451,7 +451,8 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: os2-watcom-1.9+openzinc1+v1
+            ${{github.workspace}}\zinc
+          key: os2-watcom-1.9+openzinc1+v2
       - name: Get OpenWatcom 1.9
         if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
         run: |
