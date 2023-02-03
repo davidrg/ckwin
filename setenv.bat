@@ -427,6 +427,8 @@ echo Checking for OpenZinc in %root%\zinc\lib\%ZINCBUILD%\
 
 set ck_zinc_lib=%root%\zinc\lib\%ZINCBUILD%
 set ck_zinc_include=%root%\zinc\include
+set lib=%lib%;%ck_zinc_lib%
+set include=%include%;%ck_zinc_include%
 
 REM Then check to see if its already built.
 set CK_HAVE_ZINC_OS2=no
@@ -466,9 +468,6 @@ set CKF_ZINC=yes
 set BUILD_ZINC=no
 if "%CK_HAVE_ZINC_OS2%" == "yes" echo OpenZinc for OS/2 found!
 if "%CK_HAVE_ZINC_NT%" == "yes" echo OpenZinc for Win32 found!
-
-set lib=%lib%;%ck_zinc_lib%
-set include=%include%;%ck_zinc_include%
 
 goto :cvcend
 
