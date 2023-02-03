@@ -16,6 +16,7 @@ ren dist-os2\otelnet.exe telnet.exe
 ren dist-os2\otextps.exe textps.exe
 ren dist-os2\orlogin.exe rlogin.exe
 ren dist-os2\ckoclip.exe k2clip.exe
+copy dist-os2\telnet.exe dist-os2\telnetpm.exe
 
 @echo Copy manual...
 copy ..\..\doc\manual\ckos2.htm dist-os2\docs\manual\
