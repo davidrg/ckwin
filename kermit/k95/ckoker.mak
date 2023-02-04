@@ -842,7 +842,7 @@ $(PDLLDIR)\pdll_x_global.obj \
 $(PDLLDIR)\pdll_z.obj \
 $(PDLLDIR)\pdll_z_global.obj \
 
-os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe \
+os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
 !if "$(CMP)" != "OWCL386"
        cko32rtl.dll \    # IBM compiler only.
 !endif
@@ -954,6 +954,13 @@ se.exe: se.obj $(DEF) ckoker.mak
        link.exe @<<
        $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
 <<
+
+k2dc.exe: k2dc.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
+      	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
 !if "$(CMP)" == "OWCL386"
