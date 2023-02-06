@@ -244,9 +244,10 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>✅</td> <!-- Dialer -->
     <td>No toolbar or some GUI dialogs, window resizing scales font doesn't
         currently work well. Dialer builds refuses to start on NT 3.50 (see bug [#136](https://github.com/davidrg/ckwin/issues/136))
-        and would likely have some non-functional TAPI/modem-dialing stuff may be visible if it did. To target NT
-        3.1 as well as 3.50, <tt>set CKT_NT35=yes</tt> before building. CKW has known issues
-        when actually running on NT 3.1.
+        and would likely have some non-functional TAPI/modem-dialing stuff may be visible if it did. 
+        Targets NT 3.50 and 3.10 by default. To target NT 3.50 only (no runtime
+        checks for NT 3.50-only APIs), set <tt>set CKT_NT35=no</tt> before building.
+        CKW still has known issues when actually running on NT 3.1.
     </td>
 </tr>
 <tr>

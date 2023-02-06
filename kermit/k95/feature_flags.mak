@@ -92,6 +92,16 @@ CKF_MOUSEWHEEL=no
 # TODO: Audit use of CKT_NT31 and see if any of that stuff should really be CKT_NT35
 #CKT_NT31=yes
 CKT_NT35=yes
+
+# Setting CKT_NT35 and CKT_NT31 at the same time will result in runtime checks
+# for various APIs being compiled in (rather than only the NT 3.50 or NT 3.10
+# code being present with no runtime check). Visual C++ 2.0 is currently the
+# only version that can target both so we may as well have it on by default.
+!if "$(CKT_NT31)" != "no"
+!message ...and also the Windows NT 3.10 API
+CKT_NT31=yes
+!endif
+
 !endif
 
 !if ($(MSC_VER) == 80)
