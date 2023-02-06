@@ -27,7 +27,8 @@ Requirements
 ------------
 
 C-Kermit for Windows should work on every 32bit or better x86 version of Windows
-_except_ Windows NT 3.1. Win32s (Windows 3.x) is also not supported.
+[except Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164). Win32s
+(Windows 3.x) can not be supported due to a lack of threading support.
 
 Certain features within C-Kermit for Windows have a minimum Windows version
 requirement:
@@ -153,8 +154,8 @@ Compiling
 ---------
 
 To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
-You'll need at least Visual C++ 2.0 or newer, or OpenWatcom 1.9+. To build
-with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+You'll need at least Visual C++ 1.0 32-bit or newer, or OpenWatcom 1.9+. To 
+build with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
 
 To build C-Kermit for OS/2 using OpenWatcom, see the
 [OS/2 Build Instructions](doc/os2-building.md).
