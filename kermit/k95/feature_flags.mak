@@ -48,11 +48,11 @@
 
 # Network Connections are always supported. We only put it here because
 # the Watcom nmake clone can't handle empty macros so we need *something* here.
-ENABLED_FEATURES = Network-Connections
-ENABLED_FEATURE_DEFS = -DNETCONN
+#ENABLED_FEATURES = Network-Connections
+#ENABLED_FEATURE_DEFS = -DNETCONN
 
-DISABLED_FEATURES = Kerberos SRP
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP
+#DISABLED_FEATURES =
+#DISABLED_FEATURE_DEFS =
 
 # type /interpret doesn't work on windows currently.
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
@@ -172,6 +172,10 @@ CKF_NETBIOS=no
 !message Turning X/Y/Z MODEM support off - build errors with OpenWatcom need fixing
 CKF_XYZ=no
 
+!message Turning SRP off - no Watcom support for it yet.
+CKF_SRP=no
+# TODO: Figure out SRP support on OS/2 with OpenWatcom
+
 !endif
 
 !if "$(CKF_SSH)" == "yes"
@@ -188,18 +192,7 @@ CKF_SSH=no
 # SFTP:
 #   Turn on with -DSFTP_BUILTIN
 #   Requires: reimplementing with libssl (existing implementation relies on the
-#             missing OpenSSL bits)
-# Kerberos:
-#   Turn off with: -DNO_KERBEROS
-#   Requires: An antique version of MIT Kerberos for Windows.
-#      OR: Rework this to use Heimdal Kerberos
-# SRP:
-#   Turn off with: -DNO_SRP
-#   Optionally: -DPRE_SRP_1_7_3
-#   Requires: Some version of Stanford SRP (ancient)
-#      OR: Reimplementing using SRP support in OpenSSL
-#          (libssh has no SRP support and the SRP patches for OpenSSH are a
-#           decade or two out of date making this not very useful)
+#             missing OpenSSH bits)
 
 !if "$(CKF_NO_CRYPTO)" == "yes"
 # A No-crypto build has been requested regardless of what libraries may have
@@ -207,11 +200,38 @@ CKF_SSH=no
 CKF_SSH=no
 CKF_SSL=no
 CKF_TELNET_ENCRYPTION=no
+CKF_SRP=no
+CKF_K4W=no
 !endif
 
-# Force SSL off - it doesn't build currently (the OS/2 and NT bits need
-# upgrading to at least OpenSSL 1.1.1 if not 3.0)
-#CKF_SSL=no
+# MIT Kerberos for Windows:
+#   On by default
+#   Turn off with: -DNO_KERBEROS
+#   Requires: An antique version of MIT Kerberos for Windows.
+#      OR: Rework this to use Heimdal Kerberos
+!if "$(CKF_K4W)" == "yes"
+# Nothing required - its on by default.
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_KERBEROS
+!endif
+
+# Stanford SRP:
+#   On by default
+#   Turn off with: -DNO_SRP
+!if "$(CKF_SRP)" == "yes"
+# Requires Stanford SRP. Tested work version 2.1.2 but older versions may be
+# supported with -DPRE_SRP_1_7_3
+#
+# Ideally SRP functionality would be (optionally) reimplemented using OpenSSL
+# which likely has a more up-to-date and secure SRP implementation.
+ENABLED_FEATURES = $(ENABLED_FEATURES) SRP
+
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SRP
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SRP
+!endif
 
 # ZLIB:
 #   Turn on with: -DZLIB

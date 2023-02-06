@@ -226,8 +226,10 @@ pip-log.txt
 *.exp
 *.lib
 *.obn
+*.obo
 *.obw
 kermit/k95/dist*
+kermit/dialer/dist*
 
 # IntelliJ Project
 .idea
@@ -248,6 +250,29 @@ dst/
 builder/
 *.dll
 .vs/
+
+# SRP distribution files
+srp*/base
+srp*/cast
+srp*/docs
+srp*/ftp
+srp*/include
+srp*/inst
+srp*/java*
+srp*/lib*
+srp*/telnet
+srp*/win32
+srp*/aclocal.m4
+srp*/CHANGES
+srp*/configure*
+srp*/INSTALL
+srp*/install-sh
+srp*/Makefile.*
+srp*/missing
+srp*/mkinstalldirs
+srp*/README
+srp*/README.NIS
+srp*/README.WIN32
 
 # These files belong to C-Kermit for UNIX so we don't want to accidentally
 # commit them when we're updating shared code.

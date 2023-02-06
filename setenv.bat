@@ -49,9 +49,18 @@ REM libdes - required for building k95crypt.dll and enabling a few features that
 REm rely on obsolete and easily broken encryption
 set libdes_root=%root%\libdes
 
+REM Stanford SRP - Optional SRP Authentication for Telnet and FTP connections
+REM Extract srp-2.1.2.tar.gz to the following location:
+set srp_root=%root%\srp
+
+REM Kerberos for Windows, support for which probably hasn't been built since 2002
+set k4w_root=%root%\kerberos\kfw-2.2-beta-2
+
 REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
+
+echo Searching for Optional Dependencies...
 
 REM base include path - this is required for both Windows and OS/2
 set ckinclude=%root%\kermit\k95
@@ -66,6 +75,16 @@ set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
 
 REM Set include path for targeting Windows.
 set include=%include%;%ckwinclude%
+
+REM Handle path overrides. These are to allow the build server to override any
+REM hard-coded definitions in here without having to modify.
+if not "%zlib_root_override%"=="" set zlib_root=%zlib_root_override%
+if not "%openssl_root_override%"=="" set openssl_root=%openssl_root_override%
+if not "%libssh_root_override%"=="" set libssh_root=%libssh_root_override%
+if not "%libssh_build_override%"=="" set libssh_build=%libssh_build_override%
+if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
+if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
+if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
 
 REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
 REM is what we get when we do "set LIB=%LIB%;C:\somewhere" when LIB starts out
@@ -119,15 +138,18 @@ REM ------------------------------------------------------------
 REM zlib:
 if "%CKF_ZLIB%" == "no" echo Skipping check for ZLIB
 if "%CKF_ZLIB%" == "no" goto :nozlib
+set CKF_ZLIB=no
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
+if exist %zlib_root%\zlib.lib echo Found zlib
 if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
 REM OpenSSL
 if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :nossl
+set CKF_SSL=no
 REM OpenSSL 0.9.8, 1.0.0, 1.1.0, 1.1.1 and 3.0.x use this:
 if exist %openssl_root%\include\openssl\NUL set include=%include%;%openssl_root%\include
 REM OpenSSL 1.0.1 and 1.0.2 uses this:
@@ -136,6 +158,7 @@ if exist %openssl_root%\inc32\openssl\NUL set include=%include%;%openssl_root%\i
 REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
+if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
 if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
@@ -148,6 +171,7 @@ if exist %openssl_root%\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS
 REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
+if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
@@ -156,31 +180,67 @@ if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_D
 REM libssh:
 if "%CKF_SSH%" == "no" echo Skipping check for libssh
 if "%CKF_SSH%" == "no" goto :nossh
+set CKF_SSH=no
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
 if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
+if exist %libssh_build%\src\ssh.lib echo Found libssh
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
 :nossh
 
 REM libdes:
 if "%CKF_LIBDES%" == "no" echo Skipping check for libdes
 if "%CKF_LIBDES%" == "no" goto :nolibdes
-if exist %libdes_root%\des\des.h set CKF_LIBDES=yes
-if exist %libdes_root%\des\des.h set CKF_CRYPTDLL=yes
-if exist %libdes_root%\des\des.h set INCLUDE=%include%;%libdes_root%
+set CKF_LIBDES=no
+if not exist %libdes_root%\des\des.h goto :nolibdes
+echo Found libdes
+set CKF_LIBDES=yes
+set CKF_CRYPTDLL=yes
+set INCLUDE=%include%;%libdes_root%
 if exist %libdes_root%\Release\libdes.lib set lib=%lib%;%libdes_root%\Release\
 if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
 :nolibdes
 
-if not defined CKF_ZLIB set CKF_ZLIB=no
-if not defined CKF_SSL set CKF_SSL=no
-if not defined CKF_SSH set CKF_SSH=no
-if not defined CKF_LIBDES set CKF_LIBDES=no
+REM Stanford SRP
+if "%CKF_SSL%" == "no" echo Skipping check for SRP (OpenSSL is required but not available)
+if "%CKF_SSL%" == "no" set CKF_SRP=no
+if "%CKF_SSL%" == "no" goto :nosrp
+
+if "%CKF_LIBDES%" == "no" echo Skipping check for SRP (libdes is required but not available)
+if "%CKF_LIBDES%" == "no" set CKF_SRP=no
+if "%CKF_LIBDES%" == "no" goto :nosrp
+
+if "%CKF_SRP%" == "no" echo Skipping check for SRP
+if "%CKF_SRP%" == "no" goto :nosrp
+set CKF_SRP=no
+if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib echo Stanford SRP not found.
+if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib goto :nosrp
+echo Found Stanford SRP
+set CKF_SRP=yes
+set INCLUDE=%INCLUDE%;%srp_root%\include
+set LIB=%LIB%;%srp_root%\win32\libsrp_openssl\Release\
+set CK_SRP_DIST_DLLS=%srp_root%\win32\libsrp_openssl\Release\srp.dll %srp_root%\win32\libsrp_openssl\Release\tconf.exe %srp_root%\win32\libkrypto_openssl\Release\krypto.dll
+:nosrp
+
+REM Kerberos for Windows
+if "%CKF_K4W%" == "no" echo Skipping check for K4W
+if "%CKF_K4W%" == "no" goto :nok4w
+set CKF_K4W=no
+if not exist %k4w_root%\target\lib\i386\rel\wshload.lib echo Kerberos for Windows (K4W) not found.
+if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nok4w
+echo Found Kerberos for Windows (K4W)
+set CKF_K4W=yes
+set INCLUDE=$INCLUDE%;%k4w_root%\athena\wshelper\include
+set INCLUDE=$INCLUDE%;%k4w_root%\athena\auth\krb5\src\include
+set lib=%lib%;%k4w_root%\target\lib\i386\rel
+:nok4w
 
 
 REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
 REM --------------------------------------------------------------
+
+echo Attempting to identify compiler (this may take a moment)...
 
 REM Now figure out what compiler we're using - we need to find this out so we'll
 REM know where to look for OpenZinc and if we're able to build it if it can't be
@@ -371,13 +431,30 @@ if "%ZINCBUILD%" NEQ "" goto :check_zinc
 goto :cvcend
 
 :check_zinc
-REM Zinc is supported for this compiler so add it to the include and lib path
-set lib=%lib%;%root%\zinc\lib\%ZINCBUILD%
-set include=%include%;%root%\zinc\include
+REM Zinc is supported for this compiler - check to see if we have it.
+echo Checking for OpenZinc in %root%\zinc\lib\%ZINCBUILD%\
+
+set ck_zinc_lib=%root%\zinc\lib\%ZINCBUILD%
+set ck_zinc_include=%root%\zinc\include
+set lib=%lib%;%ck_zinc_lib%
+set include=%include%;%ck_zinc_include%
 
 REM Then check to see if its already built.
-if exist %root%\zinc\lib\%ZINCBUILD%\wnt_zil.lib goto :have_zinc
+set CK_HAVE_ZINC_OS2=no
+set CK_HAVE_ZINC_NT=no
+if exist %root%\zinc\lib\%ZINCBUILD%\os2_zil.lib set CK_HAVE_ZINC_OS2=yes
+if exist %root%\zinc\lib\%ZINCBUILD%\wnt_zil.lib set CK_HAVE_ZINC_NT=yes
 
+if "%CK_HAVE_ZINC_OS2%" == "yes" goto :have_zinc
+if "%CK_HAVE_ZINC_NT%" == "yes" goto :have_zinc
+
+echo No zinc binaries found. Checking for sources...
+if exist %root%\zinc\INCLUDE\ui_win.h goto :have_zinc_src
+
+echo OpenZinc source code not found at %root%\zinc. Extract the OpenZinc
+echo distribution in this location for building the dialer.
+
+:have_zinc_src
 REM It is not built, but it can be!
 set BUILD_ZINC=yes
 goto :cvcend
@@ -398,7 +475,9 @@ goto :cvcend
 REM Looks like we've got a suitable compiled copy of OpenZinc.
 set CKF_ZINC=yes
 set BUILD_ZINC=no
-echo OpenZinc found!
+if "%CK_HAVE_ZINC_OS2%" == "yes" echo OpenZinc for OS/2 found!
+if "%CK_HAVE_ZINC_NT%" == "yes" echo OpenZinc for Win32 found!
+
 goto :cvcend
 
 :cvcend
@@ -408,7 +487,7 @@ if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
-set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS%
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS%
 
 echo -----------------------------
 echo.
@@ -430,6 +509,8 @@ echo   libssh: %CKF_SSH%
 echo     zinc: %CKF_ZINC%
 echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
+echo      SRP: %CKF_SRP%
+echo      K4W: %CKF_K4W%
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

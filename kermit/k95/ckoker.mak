@@ -510,6 +510,7 @@ wcos2:
 !endif
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
+# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
@@ -529,6 +530,7 @@ wcos2d:
 !endif
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
+# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 # Flags are:
 #   --aa            Allows non-const initializers for local aggregates or unions.
@@ -706,26 +708,36 @@ COMMODE_OBJ = commode.obj
 
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-LIBS = os2386.lib rexx.lib \
-!if "$(CMP)" != "OWCL"
-       bigmath.lib
-!endif
+LIBS = os2386.lib rexx.lib
+
 # OpenWatcom doesn't have bigmath.lib
-# SRP support: libsrp.lib
+!if "$(CMP)" != "OWCL"
+LIBS = $(LIBS) bigmath.lib
+!endif
+
+!if "$(CKF_SRP)" == "yes"
+LIBS = $(LIBS) libsrp.lib
+!endif
+
 !else if "$(PLATFORM)" == "NT"
 !if "$(K95BUILD)" == "UIUC"
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
-       winmm.lib mpr.lib advapi32.lib winspool.lib 
-       # Kerberos: wshload.lib
+       winmm.lib mpr.lib advapi32.lib winspool.lib
+
+!if "$(CKF_K4W)" == "yes"
+LIBS = $(LIBS) wshload.lib
+!endif
+
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
 !if "$(CKF_SSH)" == "yes"
-       ssh.lib ws2_32.lib \
+KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
 !endif
+
 !if "$(CKF_SSL)" == "yes"
-       $(SSL_LIBS) \
+KUILIBS = $(KUILIBS) $(SSL_LIBS)
 !endif
 
 !if ($(MSC_VER) > 80)
@@ -735,22 +747,45 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
 !endif
 
-        #msvcrt.lib
-        #Kerberos: wshload.lib
-		# SRP support: srpstatic.lib
-        #libsrp.lib bigmath.lib
+#msvcrt.lib
+
+!if "$(CKF_SRP)" == "yes"
+# K95 2.1.3 was built with srpstatic.lib
+#KUILIBS = $(KUILIBS) srpstatic.lib
+KUILIBS = $(KUILIBS) srp.lib
+!endif
+
+# MIT Kerberos for Windows
+!if "$(CKF_K4W)" == "yes"
+KUILIBS = $(KUILIBS) wshload.lib
+!endif
+
+# Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
+
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
-       winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
+       winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
+
 !if "$(CKF_SSH)" == "yes"
-       ssh.lib ws2_32.lib \
+LIBS = $(LIBS) ssh.lib ws2_32.lib
 !endif
+
 !if "$(CKF_SSL)" == "yes"
-       $(SSL_LIBS) \
+LIBS = $(LIBS) $(SSL_LIBS)
 !endif
-       #msvcrt.lib  
-       # Kerberos: wshload.lib
-	   # SRP support: srpstatic.lib
-       # libsrp.lib bigmath.lib
+
+!if "$(CKF_SRP)" == "yes"
+# K95 2.1.3 was built with srpstatic.lib
+#LIBS = $(LIBS) srpstatic.lib
+LIBS = $(LIBS) srp.lib
+!endif
+
+# MIT Kerberos for Windows
+!if "$(CKF_K4W)" == "yes"
+LIBS = $(LIBS) wshload.lib
+!endif
+
+# Commented out LIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
+
 !endif
 !endif /* PLATFORM */
 !endif
@@ -835,12 +870,18 @@ $(PDLLDIR)\pdll_x_global.obj \
 $(PDLLDIR)\pdll_z.obj \
 $(PDLLDIR)\pdll_z_global.obj \
 
-os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe \
+os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
 !if "$(CMP)" != "OWCL386"
-       cko32rtl.dll     # IBM compiler only.
+       cko32rtl.dll \    # IBM compiler only.
 !endif
-# SRP support: srp-tconf.exe srp-passwd.exe
-# Crypto stuff: k2crypt.dll 
+!if "$(CKF_SRP)" == "yes"
+#!if "$(CKF_SSL)" == "yes"
+       srp-tconf.exe srp-passwd.exe \
+#!endif
+!endif
+!if "$(CKF_CRYPTDLL)" == "yes"
+# TODO: Figure out how to build this for OS/2 with Watcom: k2crypt.dll
+!endif
 
 # docs pcfonts.dll cksnval.dll 
 
@@ -849,9 +890,15 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe \
     se.exe \
 !if "$(CKF_CRYPTDLL)" == "yes"
-    k95crypt.dll
+    k95crypt.dll \
 !endif
-# SRP support: srp-tconf.exe srp-passwd.exe
+# These likely require an old version of SRP (perhaps pre-1.7?) to build. They
+# appear to just be versions of utilities that come with SRP likely modified to
+# load the SSL DLL dynamically like K95 did - not really something we care much
+# about now.
+#!if "$(CKF_SRP)" == "yes"
+#       srp-passwd.exe srp-tconf.exe
+#!endif
 
 win32md: mdnker.exe
 
@@ -935,6 +982,13 @@ se.exe: se.obj $(DEF) ckoker.mak
        link.exe @<<
        $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
 <<
+
+k2dc.exe: k2dc.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
+      	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
 !if "$(CMP)" == "OWCL386"
@@ -1057,7 +1111,7 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) -l=os2v2_pm -x $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
@@ -1070,21 +1124,23 @@ ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !endif
 
 # SRP support
-#srp-tconf.exe: srp-tconf.obj getopt.obj ssh\ckosslc.obj ckoker.mak
-#!if "$(PLATFORM)" == "OS2"
-#        $(CC) $(CC2) $(DEBUG) srp-tconf.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
-#        dllrname $@ CPPRMI36=CKO32RTL       
-#!else if "$(PLATFORM)" == "NT"
-#	link /debug /out:$@ srp-tconf.obj getopt.obj ssh\ckosslc.obj $(LIBS)
-#!endif
-#        
-#srp-passwd.exe: srp-passwd.obj getopt.obj ssh\ckosslc.obj ckoker.mak
-#!if "$(PLATFORM)" == "OS2"
-#        $(CC) $(CC2) $(DEBUG) srp-passwd.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
-#        dllrname $@ CPPRMI36=CKO32RTL       
-#!else if "$(PLATFORM)" == "NT"
-#	link /debug /out:$@ srp-passwd.obj getopt.obj ssh\ckosslc.obj $(LIBS)
-#!endif
+!if "$(CKF_SRP)" == "yes"
+srp-tconf.exe: srp-tconf.obj getopt.obj ckosslc.obj ckoker.mak
+!if "$(PLATFORM)" == "OS2"
+        $(CC) $(CC2) $(DEBUG) srp-tconf.obj getopt.obj ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
+        dllrname $@ CPPRMI36=CKO32RTL
+!else if "$(PLATFORM)" == "NT"
+	link /debug /out:$@ srp-tconf.obj getopt.obj ckosslc.obj $(LIBS)
+!endif
+
+srp-passwd.exe: srp-passwd.obj getopt.obj ckosslc.obj ckoker.mak
+!if "$(PLATFORM)" == "OS2"
+        $(CC) $(CC2) $(DEBUG) srp-passwd.obj getopt.obj ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
+        dllrname $@ CPPRMI36=CKO32RTL
+!else if "$(PLATFORM)" == "NT"
+	link /debug /out:$@ srp-passwd.obj getopt.obj ckosslc.obj $(LIBS)
+!endif
+!endif
         
 iksdsvc.exe: iksdsvc.obj ckoker.mak
 !if "$(PLATFORM)" == "OS2"
@@ -1302,9 +1358,11 @@ ckoclip$(O):     ckoclip.c
 k95d$(O):  k95d.c
 
 # SRP support
-#getopt$(O):     getopt.c getopt.h
-#srp-tconf$(O):  srp-tconf.c getopt.h 
-#srp-passwd$(O): srp-passwd.c getopt.h
+!if "$(CKF_SRP)" == "yes"
+getopt$(O):     getopt.c getopt.h
+srp-tconf$(O):  srp-tconf.c getopt.h
+srp-passwd$(O): srp-passwd.c getopt.h
+!endif
 
 iksdsvc$(O):    iksdsvc.c 
 

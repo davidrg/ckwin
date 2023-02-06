@@ -27,3 +27,29 @@ move *.obj os2  > nul
 REM Restore old include and lib paths.
 set INCLUDE=%OLDINCLUDE%
 set LIB=%OLDLIB%
+
+
+REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
+REM fails. So we'll check the expected outputs were generated and if not report
+REM the error ourselves.
+if not exist ckoclip.exe goto :missingoutputs
+if not exist ckoker32.exe goto :missingoutputs
+if not exist orlogin.exe goto :missingoutputs
+if not exist osetup.exe goto :missingoutputs
+if not exist otelnet.exe goto :missingoutputs
+if not exist otextps.exe goto :missingoutputs
+
+goto :end
+
+:missingoutputs
+echo.
+echo.
+echo ERROR: One or more outputs were not generated. Got:
+dir /w /b *.exe
+echo Expected: ckoclip.exe, ckoker32.exe, orlogin.exe, osetup.exe, otelnet.exe,
+echo           otextps.exe
+echo.
+echo.
+exit /B 1
+
+:end
