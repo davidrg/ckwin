@@ -731,7 +731,7 @@ LIBS = $(LIBS) wshload.lib
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
-        winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
+        winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
 !if "$(CKF_SSH)" == "yes"
 KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
 !endif
