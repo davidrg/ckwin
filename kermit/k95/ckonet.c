@@ -1251,8 +1251,6 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         int argslen;
 
 #ifdef NT
-        HRESULT result;
-
         cmd_line[0] = '\0' ;
         /* Now create the child process. */
 

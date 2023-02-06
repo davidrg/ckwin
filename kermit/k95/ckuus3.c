@@ -2656,11 +2656,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          text ? text : prompt,
                          prompt,
                          MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
 #else
         ShowWindow(hwndConsole, SW_SHOWNORMAL);
-#endif
+#endif /* CKT_NT35_OR_31 */
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -2690,11 +2690,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          prompt,
                          MB_YESNO | MB_ICONINFORMATION | MB_TASKMODAL | 
                          (dflt == 2 ? MB_DEFBUTTON2 : MB_DEFBUTTON1));
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
 #else
         ShowWindow(hwndConsole,SW_SHOWNORMAL);
-#endif
+#endif /* CKT_NT35_OR_31 */
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);

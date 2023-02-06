@@ -9238,7 +9238,7 @@ docmd(cx) int cx; {
 		ckGetLongPathName(pwp,line,LINBUFSIZ);
 		line[LINBUFSIZ-1] = NUL;
 		tmpbuf[0] = NUL;
-		GetShortPathName(pwp,tmpbuf,TMPBUFSIZ);
+		ckGetShortPathName(pwp,tmpbuf,TMPBUFSIZ);
 		tmpbuf[TMPBUFSIZ-1] = NUL;
 		pwp = line;
 		if (!strcmp(line,tmpbuf)) {
@@ -13616,7 +13616,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
                 if (!askmore()) { return(0); } else { n = 0; }
             }
 	    line[0] = NUL;
-	    GetShortPathName(tmpbuf,line,LINBUFSIZ);
+	    ckGetShortPathName(tmpbuf,line,LINBUFSIZ);
 	    printf("  Short name: %s\n",line);
 	    if (++n > cmd_rows - 3) {
             if (!askmore()) { return(0); } else { n = 0; }

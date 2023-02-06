@@ -75,7 +75,7 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 
 !MESSAGE 32-bit Non-debugging build
 
-CFLAGS    = /c /W3 $(RTFLAG) /Ox /GA /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
+CFLAGS    = /c /W3 $(RTFLAG) /Ox /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
 CDEFINES  = /D_MT /DSTRICT /D_X86_ /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DOS2TEST -DKUI \
@@ -89,6 +89,10 @@ MAPFILE   =
 # /G5 is only valid on 7.1 and earlier
 !if ($(MSC_VER) < 140)
 CFLAGS = $(CFLAGS) /G5
+!endif
+
+!if ($(MSC_VER) > 90)
+CFLAGS = $(CFLAGS) /GA
 !endif
 
 !else
@@ -120,14 +124,13 @@ RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
 !endif
 
 # Customise for the compiler version we're using
-!IF ($(MSC_VER) == 80)
-# We don't do 16bit
-!ERROR *** 16bit windows is not supported
-!ELSEIF ($(MSC_VER) < 90)
-!ERROR *** Visual C++ 1.0 and earlier are not supported
-!ELSEIF ($(MSC_VER) < 131)
-# Visual C++ 6.0 and 7.0
+!IF ($(MSC_VER) < 131)
+# Visual C++ 7.0 (2002) and earlier
+
+!if ($(MSC_VER) > 100)
+# This switch is new to Visual C++ 5.0 (along with bool support)
 CFLAGS = $(CFLAGS) /noBool
+!endif
 
 # Visual C++ 7.1 - nothing required
 !ELSEIF ($(MSC_VER) > 131)

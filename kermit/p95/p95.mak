@@ -46,6 +46,22 @@
 !message
 !message
 
+!if ($(MSC_VER) == 90)
+# The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
+# compared to Visual C++ 4.0 so there is a special target for this level of
+# windows.
+!message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
+CKT_NT35=yes
+!endif
+
+!if ($(MSC_VER) == 80)
+# Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
+# provided in Windows NT 3.1
+!message Visual C++ 1.0: setting target to Windows NT 3.1 API level.
+CKT_NT31=yes
+!endif
+
+
 COMPILER = MSVC
 
 P_SRCS = \
@@ -91,9 +107,10 @@ pdll_exeio.obj
 SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
 LIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
-        advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
+        advapi32.lib shell32.lib   \
         rpcrt4.lib rpcns4.lib wsock32.lib winmm.lib
 DEFS = p95.def
+# ole32.lib oleaut32.lib uuid.lib
 
 # Visual C++ only libraries
 !if "$(CMP)" == "VCXX"
@@ -137,6 +154,25 @@ CFLAGS = $(CFLAGS) /MD
 !if "$(CMP)" == "OWCL"
 # The OpenWatcom 1.9 linker doesn't know what /nod is.
 LDFLAGS = /nologo /dll /map /debug:full
+!endif
+
+!if "$(CKT_NT35)" == "yes"
+# These features are available on NT 3.50 but not on NT 3.1
+# -> These may appear if/when work to port to NT 3.1 is done.
+CFLAGS = $(CFLAGS) -DCKT_NT35
+!endif
+
+!if "$(CKT_NT31)" == "yes"
+# These features are not available on Windows NT 3.50
+CFLAGS = $(CFLAGS) -DCKT_NT31
+!endif
+
+!if "$(CKT_NT35)" == "yes" || "$(CKT_NT31)" == "yes"
+CFLAGS = $(CFLAGS) -DCKT_NT35_OR_31
+!endif
+
+!if "$(CKT_NT35)" == "yes" && "$(CKT_NT31)" == "yes"
+CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
 !endif
 
 !if ($(MSC_VER) < 140)

@@ -1619,7 +1619,7 @@ zchko(name) char *name; {
 
 #ifdef NT
     {
-        /* We are only checking directory access at this point. 
+        /* We are only checking directory access at this point.
          * The file attribute READ_ONLY is meaningless for directories
          * in Windows.  So all we can do is see whether we can access
          * the directory information at all.  We can't use access()
@@ -2396,7 +2396,7 @@ zhome() {
     }
 
 #ifdef NT
-    GetShortPathName(homedir,homedir,CKMAXPATH);
+    ckGetShortPathName(homedir,homedir,CKMAXPATH);
 #endif /* NT */
 
     /* we know have the directory, but need to make it consistent */
@@ -2536,7 +2536,7 @@ static DWORD (WINAPI *p_GetLongPathNameA)(
     DWORD cchBuffer
     ) = NULL;
 
-DWORD 
+DWORD
 ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
 {
     if ( !p_GetLongPathNameA ) {
@@ -2560,6 +2560,212 @@ ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
         return(p_GetLongPathNameA(lpFileName,lpBuffer,cchBuffer));
     }
 }
+
+static DWORD (WINAPI *p_GetShortPathNameA)(
+    LPCSTR lpszLongPath,
+    LPSTR lpszShortPath,
+    DWORD cchBuffer
+    ) = NULL;
+
+DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer);
+
+DWORD ckGetShortPathName(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer) {
+    if ( !p_GetShortPathNameA ) {
+        if (hKernel == INVALID_HANDLE_VALUE)
+            hKernel = LoadLibrary("kernel32.dll");
+        if (hKernel != INVALID_HANDLE_VALUE)
+            (FARPROC) p_GetShortPathNameA =
+                GetProcAddress( hKernel, "GetShortPathNameA" );
+    }
+
+    if ( !p_GetShortPathNameA ) {
+        DWORD result;
+#ifdef CKT_NT31
+        debug(F111, "GetShortPathNameC lpszLongPath", lpszLongPath, 0);
+        result = (GetShortPathNameC(lpszLongPath, lpszShortPath, cchBuffer));
+        debug(F111, "GetShortPathNameC lpszShortPath", lpszShortPath, 0);
+        return result;
+#else
+        DWORD len, i;
+        if ( !lpszLongPath || !lpszShortPath )
+            return(0);
+
+        len = strlen(lpszLongPath);
+        if ( len + 1 <= cchBuffer )
+            ckstrncpy(lpszShortPath,lpszLongPath,cchBuffer);
+        return (len);
+#endif
+    } else {
+        return (p_GetShortPathNameA(lpszLongPath, lpszShortPath, cchBuffer));
+    }
+}
+
+#ifdef CKT_NT31
+/* Windows NT 3.1 doesn't have GetShortPathName implementation, so here is an
+ * equivalent function that uses only Win32 APIs available on NT 3.1 */
+DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer) {
+    DWORD length = 0;
+    BOOL makeShortPath = TRUE;
+    BOOL firstIteration = TRUE;
+    BOOL pathContainsBackSlash = FALSE;
+    char* workingCopy;
+    char* longFileName;
+    char* pch;
+    char* p;
+    char separator[2] = "\\";
+    int longFileNameLen;
+
+    if (lpszShortPath == NULL || cchBuffer == 0) {
+        makeShortPath = FALSE;
+    }
+
+    debug(F111, "GetShortPathNameC", "lpszLongPath", lpszLongPath);
+    debug(F111, "GetShortPathNameC", "cchBuffer", cchBuffer);
+    debug(F111, "GetShortPathNameC", "makeShortPath", makeShortPath);
+
+    if (!lpszLongPath || lpszLongPath[0] == '\0') {
+        debug(F100, "GetShortPathNameC: no long path supplied", "", 0);
+        lpszShortPath[0] = '\0';
+        return 0;
+    }
+
+    longFileNameLen = strlen(lpszLongPath) + 1;
+
+    workingCopy = _strdup(lpszLongPath);
+    longFileName = malloc(longFileNameLen);
+    longFileName[0] = '\0';
+
+    if (makeShortPath) {
+        lpszShortPath[0] = '\0';
+    }
+
+    /* C-Kermit uses forward slash as a path separator so we've got to handle
+     * that. Windows 10 at least remembers which path elements were separated by
+     * '/' or '\' uses the same separator in the short path name
+     * (eg, 'foo12345678\bar12345678/baz12345678.txt' will come back as
+     * 'foo123~1\bar123~`/baz123~1.txt').
+     *
+     * Its pretty unlikely C-Kermit is ever intentionally mixing path
+     * separators, let alone actually ever cares about such mixing being
+     * preserved. It seems to generally prefer converting '\' to '/' and using
+     * unix-style separators internally. So instead of trying to replicate
+     * Windows' separator-preserving behaviour, we'll just convert the input to
+     * uniformly use '\' as a separator allowing us to just use strtok to split
+     * the string. On output we'll use '/' for all separators if a single '/'
+     * was detected in the input. That doesn't match Windows' behaviour but it
+     * should be good enough for C-Kermit when its running on NT 3.10.
+     * */
+    p = workingCopy;
+    while (*p) {			/* Change them back to \ */
+        if (*p == '\\') pathContainsBackSlash=TRUE;
+        if (*p == '/') {*p = '\\'; separator[0] = '/'; }
+        p++;
+    }
+    debug(F111, "GetShortPathNameC post conversion", "lpszLongPath", lpszLongPath);
+    debug(F111, "GetShortPathNameC post conversion", "pathContainsBackSlash", pathContainsBackSlash);
+    debug(F111, "GetShortPathNameC post conversion", "pathContainsForwardSlash", separator[0] == '/');
+
+    pch = strtok(workingCopy, "\\");
+    while (pch != NULL) {
+
+        /* Handle the drive letter if there is one */
+        if (strlen(pch) == 2 && pch[1] == ':' && firstIteration) {
+            /* Got the drive letter */
+            length += 2; /* Letter :  */
+
+            strncat(longFileName, pch, 2);
+
+            if (makeShortPath) {
+                if (length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at A", "length", length);
+                    makeShortPath = FALSE;
+                } else {
+                    strncat(lpszShortPath, pch, 2);
+                }
+            }
+        } else {
+            int len = strlen(pch);
+            int shortlen = 0;
+            char* shortFn;
+
+            HANDLE hResult;
+            WIN32_FIND_DATAA findFileData;
+
+            strncat(longFileName, "\\", 1);
+
+            strncat(longFileName,  pch, len);
+
+            if (strcmp(pch, "..") == 0) {
+                length += 2;
+                if (!firstIteration) length += 1;
+
+                if (makeShortPath && length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at B", "length", length);
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    if (!firstIteration) strncat(lpszShortPath, separator, 1);
+                    strncat(lpszShortPath, "..", 2);
+                }
+            } else if (strcmp(pch, ".") == 0) {
+                /*printf("Curlevel\n");*/
+                length += 1;
+                if (!firstIteration) length += 1;
+
+                if (makeShortPath && length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at C", "length", length);
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    if (!firstIteration) {
+                        strncat(lpszShortPath, separator, 1);
+                    }
+                    strncat(lpszShortPath, ".", 1);
+                }
+            } else {
+
+                hResult = FindFirstFileA(longFileName, &findFileData);
+                if (hResult == INVALID_HANDLE_VALUE) {
+                    debug(F110, "GetShortPathNameC failed to locate long path", longFileName, 0);
+                    lpszShortPath[0] = '\0';
+                    return 0;
+                }
+
+                shortFn = findFileData.cAlternateFileName;
+                shortlen = strlen(shortFn);
+                if (shortlen == 0) {
+                    shortFn = findFileData.cFileName;
+                    shortlen = strlen(shortFn);
+                }
+
+                length += 1 + len;
+
+                if (makeShortPath && length > cchBuffer) {
+                    debug(F111, "GetShortPathNameC buffer length exceeded cchBuffer at D", "length", length);
+                    makeShortPath = FALSE;
+                }
+
+                if (makeShortPath) {
+                    strncat(lpszShortPath, separator, 1);
+                    strncat(lpszShortPath, shortFn, shortlen);
+                }
+
+                FindClose(hResult);
+            }
+        }
+
+        pch = strtok(NULL, "\\");
+        firstIteration = FALSE;
+    }
+
+    free(workingCopy);
+    free(longFileName);
+
+    return length;
+}
+#endif /* CKT_NT31 */
 #endif /* NT */
 
 /*  Z X P A N D  --  Expand a wildcard string into an array of strings  */
@@ -2895,7 +3101,7 @@ zxrewind() {
                     {
                         /* we have a directory that is not . or .. */
                         if (!os2findpush()) {
-                            fcntsav[zxpn] = fcount[zxpn] = 
+                            fcntsav[zxpn] = fcount[zxpn] =
                                 fcountstream[zxpn] =
                                 fcntstreamsav[zxpn] = -1;
                             return(fcount[zxpn]+1);
@@ -2919,7 +3125,7 @@ zxrewind() {
                 while (os2findnextfile()) {
                     if (os2findisdir()) {
                         if (!os2findpush()) {
-                            fcntsav[zxpn] = fcount[zxpn] = 
+                            fcntsav[zxpn] = fcount[zxpn] =
                                 fcountstream[zxpn] =
                                 fcntstreamsav[zxpn] = -1;
                             return(fcount[zxpn]+1);
@@ -2940,7 +3146,7 @@ zxrewind() {
         else
 #endif /* RECURSIVE */
         {
-            fcntsav[zxpn] = fcount[zxpn] = 
+            fcntsav[zxpn] = fcount[zxpn] =
                 fcountstream[zxpn] =
                     fcntstreamsav[zxpn] = -1;
             return(0);
@@ -3005,7 +3211,7 @@ nzxpand(CHAR * fn, int flags) {
     /* Initialize variables for expannsion */
     findlevel[zxpn] = 0;
     findeop[zxpn][0] = findpath[zxpn];
-    fcntsav[zxpn] = fcount[zxpn] = 
+    fcntsav[zxpn] = fcount[zxpn] =
         fcountstream[zxpn] =
             fcntstreamsav[zxpn] = 0;
     findpathwild[zxpn] = 0;
@@ -3201,7 +3407,7 @@ nzxpand(CHAR * fn, int flags) {
              (strcmp(".",FileName) && strcmp("..",FileName)) ))
         {
             if ( !findfspec2[zxpn][0] ||
-                 ckmatch(findfspec[zxpn], FileName, 0, 1) ) 
+                 ckmatch(findfspec[zxpn], FileName, 0, 1) )
             {
                 fcount[zxpn]++;
 #ifdef STREAMS
@@ -3278,7 +3484,7 @@ nzxpand(CHAR * fn, int flags) {
             if (os2findisdir() && strcmp(".",FileName) && strcmp("..",FileName))
             {
                 if (!os2findpush()) {
-                    fcntsav[zxpn] = fcount[zxpn] = 
+                    fcntsav[zxpn] = fcount[zxpn] =
                         fcountstream[zxpn] =
                             fcntstreamsav[zxpn] = 0;
                     return(fcount[zxpn]);
@@ -3297,7 +3503,7 @@ nzxpand(CHAR * fn, int flags) {
             while (os2findnextfile()) {
                 if (os2findisdir()) {
                     if (!os2findpush()) {
-                        fcntsav[zxpn] = fcount[zxpn] = 
+                        fcntsav[zxpn] = fcount[zxpn] =
                             fcountstream[zxpn] =
                                 fcntstreamsav[zxpn] = 0;
                         return(fcount[zxpn]);
@@ -3318,7 +3524,7 @@ nzxpand(CHAR * fn, int flags) {
     os2findclose();
 
     if (lasterror[zxpn] != ERROR_NO_MORE_FILES) {
-        fcntsav[zxpn] = fcount[zxpn] = 
+        fcntsav[zxpn] = fcount[zxpn] =
             fcountstream[zxpn] =
                 fcntstreamsav[zxpn] = 0;
         return(fcount[zxpn]);
@@ -3631,7 +3837,7 @@ znext(fn) char *fn; {
         char name8_3[CKMAXPATH+1];
         DWORD len;
 
-        len = GetShortPathName(fn,name8_3,CKMAXPATH+1);
+        len = ckGetShortPathName(fn,name8_3,CKMAXPATH+1);
         if ( len > 0 && len <= CKMAXPATH )
             ckstrncpy(fn,name8_3,CKMAXPATH+1);
     }
@@ -3689,7 +3895,7 @@ zchkspa(char *f, CK_OFF_T n)
   version number of "xxxx" is used.  Returns a pointer to the new name in
   argument s.
 
-  On systems which use 8.3 notation, or when SET MSKERMIT ... 
+  On systems which use 8.3 notation, or when SET MSKERMIT ...
   is used we borrow the technique used in MS-DOS Kermit:
   "The idea is to pad out the main name part (8 chars) with ascii zeros and
    then change the last chars successively to a 1, 2, etc. until
@@ -3794,13 +4000,13 @@ znewn(fn,s) char *fn, **s; {
         while (zp != xp+8) {
 			if ( zp == xp )
 				*zp++='X';
-            if ( zp < xp+7 ) 
+            if ( zp < xp+7 )
                 *zp++='0';
-            else 
+            else
                 *zp++='1';
         }
         strcpy(zp--,temp);                    /* Get the extension back */
-        
+
         while (1) {
             n = nzxpand(buf,0);                 /* Expand the resulting wild name */
             debug(F101,"znewn: matches","",n);
@@ -4134,7 +4340,7 @@ zlink(source,destination) char *source, *destination; {
                                              LPSECURITY_ATTRIBUTES lpSecurityAttributes
                                              )=NULL;
     static HANDLE hKernel = INVALID_HANDLE_VALUE;
-    
+
     if ( !p_CreateHardLinkA ) {
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
@@ -5271,12 +5477,12 @@ isdir(s) char *s; {
     }
 #ifdef NT
     attrs = GetFileAttributes(s);
-    
+
 /* Visual C++ 6 doesn't know about this */
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES -1
 #endif
-    
+
     if ( attrs == INVALID_FILE_ATTRIBUTES )
         return(0);
     return(attrs & FILE_ATTRIBUTE_DIRECTORY ? 1 : 0);
@@ -5336,7 +5542,7 @@ zmkdir(path) char *path; {
     strcpy(tp,path);
 
     /* Fixup for UNC if necessary */
-    if ( !strncmp(tp,"//",2) || !strncmp(tp,"\\\\",2) ) { 
+    if ( !strncmp(tp,"//",2) || !strncmp(tp,"\\\\",2) ) {
         strcpy(tp,UNCname(tp));
 
         xp = &tp[2];                    /* */
@@ -6870,7 +7076,7 @@ zvpass(passwd) char *passwd; {
                 foo = OpenThreadToken(hThread, TOKEN_ALL_ACCESS, FALSE, &hThreadToken );
                 debug(F111,"zvpass","OpenThreadToken()",foo ? 0 : GetLastError());
 		if ( p_DuplicateTokenEx ) {
-		    foo = p_DuplicateTokenEx(hThreadToken, MAXIMUM_ALLOWED, NULL, 
+		    foo = p_DuplicateTokenEx(hThreadToken, MAXIMUM_ALLOWED, NULL,
 					     SecurityImpersonation,
 					     TokenPrimary, &hLoggedOn);
 		    debug(F111,"zvpass","DuplicateTokenEx()",foo ? 0 : GetLastError());
@@ -7091,7 +7297,7 @@ zvpass(passwd) char *passwd; {
 
         ckstrncpy(homedir,HomeDir,CKMAXPATH+1);
 #ifdef NT
-        GetShortPathName(homedir,homedir,CKMAXPATH);
+        ckGetShortPathName(homedir,homedir,CKMAXPATH);
 #endif /* NT */
 
         /* we know have the directory, but need to make it consistent */
@@ -7858,7 +8064,7 @@ StreamCount(char * path, char * relpath, char * filename, char * pattern)
                 }
             } else {
                 if ( sid.dwStreamId == BACKUP_DATA &&
-                     (!pattern[0] || 
+                     (!pattern[0] ||
                       pattern[0] == ':' && pattern[1] == '*' && !pattern[2]) )  {
                     count++;
                 }

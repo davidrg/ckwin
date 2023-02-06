@@ -27,10 +27,10 @@
 #endif
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
-#include "ckntap.h"             /* Kermit Telephony */
-#include "cknwin.h"
 
 #ifdef CK_TAPI
+#include "ckntap.h"             /* Kermit Telephony */
+#include "cknwin.h"
 
 _PROTOTYP( char * cktapiErrorString, (DWORD));
 

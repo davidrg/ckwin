@@ -3,6 +3,7 @@
 #ifdef NT
 #include <windows.h>
 #include <winsock.h>
+#include <errno.h>
 #define strdup _strdup
 #define ltoa   _ltoa
 #define CONFIG_FILE "k95d.cfg"
@@ -291,15 +292,11 @@ StartKermit( int socket, char * scriptfile, int ShowCmd, int * psockdup )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
-   OSVERSIONINFO osverinfo ;
    STARTUPINFO si ;
    HANDLE sockdup = INVALID_HANDLE_VALUE ;
    static char buf[512] ;
 
     *psockdup = (int)INVALID_HANDLE_VALUE;
-
-   osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-   GetVersionEx( &osverinfo ) ;
 
    memset( &si, 0, sizeof(STARTUPINFO) ) ;
    si.cb = sizeof(STARTUPINFO);

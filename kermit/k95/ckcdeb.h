@@ -5268,8 +5268,20 @@ typedef unsigned int u_int;
 #ifndef CK_OFF_T
 #ifdef OS2
 #ifdef NT
+#ifdef CKT_NT31
+#ifdef CKT_NT35
+/* Any compiler capable of targeting NT 3.50 should support __int64
+ * (Visual C++ 2.0, OpenWatcom) */
 #define CK_OFF_T __int64
-#else
+#else /* CKT_NT35 */
+/* Compilers capable of targeting only Windows NT 3.1
+ * (Visual C++ 1.0 32-bit edition) may not support __int64 */
+#define CK_OFF_T long
+#endif /* CKT_NT35 */
+#else /* CKT_NT31 */
+#define CK_OFF_T __int64
+#endif /* CKT_NT31 */
+#else /* NT */
 #define CK_OFF_T long
 #endif  /* NT */
 #endif	/* OS2 */
@@ -7010,6 +7022,8 @@ _PROTOTYP(int ck_auth_unloaddll, (VOID));
 #ifdef NT
 _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
                                    LPSTR lpBuffer, DWORD cchBuffer));
+_PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
+                                    LPSTR lpszShortPath, DWORD cchBuffer));
 #endif /* NT */
 
 

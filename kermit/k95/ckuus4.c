@@ -12312,7 +12312,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp; {
 
 #ifdef NT
     if (cx == FN_SNAME) {
-        GetShortPathName(bp[0],fnval,FNVALL);
+        ckGetShortPathName(bp[0],fnval,FNVALL);
         goto fnend;
     }
     if (cx == FN_LNAME) {
@@ -15137,14 +15137,14 @@ nvlook(s) char *s; {
       case VN_PERSONAL:
         p = (char *)GetPersonal();
         if (p) {
-            GetShortPathName(p,vvbuf,VVBUFL);
+            ckGetShortPathName(p,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
       case VN_DESKTOP:
           p = (char *)GetDesktop();
           if (p) {
-              GetShortPathName(p,vvbuf,VVBUFL);
+              ckGetShortPathName(p,vvbuf,VVBUFL);
               return(vvbuf);
           }
           return("");
@@ -15152,7 +15152,7 @@ nvlook(s) char *s; {
         p = (char *)GetAppData(1);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
-            GetShortPathName(vvbuf,vvbuf,VVBUFL);
+            ckGetShortPathName(vvbuf,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
@@ -15160,7 +15160,7 @@ nvlook(s) char *s; {
         p = (char *)GetAppData(0);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
-            GetShortPathName(vvbuf,vvbuf,VVBUFL);
+            ckGetShortPathName(vvbuf,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");

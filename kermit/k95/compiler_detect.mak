@@ -6,6 +6,8 @@
 # recent release and it may also pickup Watcom and the 16bit
 # versions of Visual C++.
 
+!if "$(CK_DETECT_COMPILER)" != "no"
+
 # We'll start off assuming Visual C++ and overwrite this later if
 # its really watcom
 CMP = VCXX
@@ -172,3 +174,5 @@ TARGET_PLATFORM = Macintosh
 TARGET_CPU = x86
 
 !ENDIF
+
+!endif

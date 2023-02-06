@@ -5325,7 +5325,7 @@ EnumFontFamProc( ENUMLOGFONT *lpelfe,    // logical-font data
     return(font_list->count);
 }
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
 static int CALLBACK
 EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
                    NEWTEXTMETRICEX *lpntme,  // physical-font data
@@ -5364,7 +5364,7 @@ EnumFontFamExProc( ENUMLOGFONTEX *lpelfe,    // logical-font data
     font_list->name[font_list->count++] = strdup(name);
     return(font_list->count);
 }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
 static int
 EnumerateFonts()
@@ -5396,7 +5396,7 @@ EnumerateFonts()
         lf.lfFaceName[0] = '\0';
         lf.lfPitchAndFamily = 0;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         if ( nt351 )
             rc = EnumFontFamilies( (HDC) hdc, NULL,
                                      (FONTENUMPROC) EnumFontFamProc,
@@ -5409,7 +5409,7 @@ EnumerateFonts()
         rc = EnumFontFamilies( (HDC) hdc, NULL,
                                      (FONTENUMPROC) EnumFontFamProc,
                                      0);
-#endif
+#endif /* CKT_NT35_OR_31 */
 
         debug(F111,"EnumerateFonts()","EnumFontFamiliesEx()",rc);
         DeleteDC(hdc);

@@ -549,7 +549,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                 debug(F101,"ToUnicode","",toUnicode);
             }
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
             if ( nt351 )
 #endif
                 keycount = toUnicode( inpEvt.Event.KeyEvent.wVirtualKeyCode,
@@ -558,7 +558,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                         (LPWSTR)wbuf,
                         8,
                         FALSE );
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
             else
                 keycount = toUnicodeEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
@@ -567,11 +567,11 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                         8,
                         FALSE,
                         GetKeyboardLayout(0) );
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
             for ( i=0;i<keycount;i++ )
                 buf[i] = xl_tx[tcsl](wbuf[i]);
         }
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         else {
             keycount = ToAsciiEx( inpEvt.Event.KeyEvent.wVirtualKeyCode,
                         inpEvt.Event.KeyEvent.wVirtualScanCode | (keyDown ? 0x00 : 0x8000),
@@ -580,7 +580,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
                         FALSE,
                         GetKeyboardLayout(0) );                         
         }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
 #ifdef COMMENT
         printf("\n");

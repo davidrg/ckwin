@@ -53,7 +53,7 @@ COMMON_CFLAGS = /MD
 !endif
 
 # These options are used for all Windows .exe targets
-COMMON_OPTS = /GA /Ox
+COMMON_OPTS = /Ox
 # These are:
 # /GA     Optimise for Windows Application (ignored by OpenWatcom)
 # /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
@@ -80,16 +80,22 @@ COMMON_OPTS = /GA /Ox
 # B = k95g, kui, msvc-iksd, msvc
 
 
+!if "$(CK_DETECT_COMPILER)" != "no"
 CMP = VCXX
 COMPILER = unknown
 COMPILER_VERSION = assuming Visual C++ 1.0
 MSC_VER = 80
 TARGET_CPU = x86
+!endif
+
 WIN32_VERSION=0x0400
 
 # So that we can set the minimum subsystem version when needed
 SUBSYSTEM_CONSOLE=console
 SUBSYSTEM_WIN32=windows
+
+# These are not supported by Visual C++ prior to 4.0
+CFLAG_GF=/GF
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
@@ -170,11 +176,26 @@ SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
 !endif
 
+!if ($(MSC_VER) > 90)
+COMMON_OPTS = $(COMMON_OPTS) /GA
+!endif
+
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
 # from Visual C++ 2005 (v8.0) and up.
 
-COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /GX- /YX
+# /GX- is new in Visual C++ 2.0
+!if ($(MSC_VER) > 80)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
+!endif
+
+!if ($(MSC_VER) < 100)
+# Visual C++ 2.0 and 1.0 32-bit edition don't support these flags, so don't
+# use them.
+CFLAG_GF=
+!endif
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
@@ -291,7 +312,7 @@ msvc:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -306,7 +327,7 @@ msvc-iksd:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -321,11 +342,11 @@ msvcd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
@@ -337,7 +358,7 @@ msvcd-iksd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -385,7 +406,7 @@ kuid:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -709,10 +730,8 @@ LIBS = $(LIBS) wshload.lib
 
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
-        advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
-        rpcrt4.lib rpcns4.lib wsock32.lib \
+        advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
-
 !if "$(CKF_SSH)" == "yes"
 KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
 !endif
@@ -720,6 +739,15 @@ KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
 !if "$(CKF_SSL)" == "yes"
 KUILIBS = $(KUILIBS) $(SSL_LIBS)
 !endif
+
+!if ($(MSC_VER) > 80)
+# I doubt these are actually ever required. But if they ever are, they're only
+# required when building with Visual C++ 2.0 or newer (1.0 32-bit doesn't have
+# them)
+KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
+!endif
+
+#msvcrt.lib
 
 !if "$(CKF_SRP)" == "yes"
 # K95 2.1.3 was built with srpstatic.lib
