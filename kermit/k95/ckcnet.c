@@ -6189,6 +6189,29 @@ netinc(timo) int timo; {
                     }
                 }
                 debug(F111,"netinc","select",rc);
+
+                /*
+                 * For some yet to be determined reason, on NT 3.1 the select()
+                 * call is claiming the socket isn't ready for reading -
+                 *   !FD_ISSET(ttyfd, &rfds) == true && rc == 0
+                 * this occurs even when ttchk() returns some number of bytes
+                 * ready for reading which should mean the socket is ready for
+                 * reading. And indeed if we go ahead and try to read when
+                 * ttchk() > 0 telnet suddenly works!
+                 *
+                 * So maybe there is some bug in the NT 3.1 Winsock
+                 * implementation? Or is CKW doing something that NT 3.1 doesn't
+                 * like?
+                 *
+                 * problem is, the API ttchk() relies on (FIONREAD) is slow and
+                 * potentially unreliable so its not really an acceptable
+                 * replacement for select() unless we're ok with really bad
+                 * performance
+                 *
+                 * Note: ttchk eventually arrives at  nettchk further up in this file.
+                 * Line 5473 is about where the FIONREAD is.
+                 *
+                 */
 #ifdef NT
                 WSASafeToCancel = 0;
 #endif /* NT */
