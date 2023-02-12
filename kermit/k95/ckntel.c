@@ -192,7 +192,20 @@ BOOL  g_bCallStateReceived;
 int cktapiinit(void)
 {
    int i = 0 ;
+   HMODULE hntdll;
+   static const char *(CDECL *pwine_get_version)(void);
+
    g_hWndMainWindow = g_hDlgParentWindow = hwndGUI; // This will be the parent of all dialogs.
+
+   hntdll = GetModuleHandle("ntdll.dll");
+   debug(F100,"Checking for WINE","",0);
+   pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
+   if (hntdll != NULL) {
+       if (pwine_get_version) {
+           debug(F100,"TAPI disabled under WINE","",0);
+           return FALSE;
+       }
+   }
 
    for ( i ; i < MAXDEVS ; i++ )
       g_lpLineDevCaps[i] = NULL ;
