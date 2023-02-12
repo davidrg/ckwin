@@ -192,9 +192,12 @@ BOOL  g_bCallStateReceived;
 int cktapiinit(void)
 {
    int i = 0 ;
-   g_hWndMainWindow = g_hDlgParentWindow = hwndGUI; // This will be the parent of all dialogs.
+   HMODULE hntdll;
    static const char *(CDECL *pwine_get_version)(void);
-   HMODULE hntdll = GetModuleHandle("ntdll.dll");
+
+   g_hWndMainWindow = g_hDlgParentWindow = hwndGUI; // This will be the parent of all dialogs.
+
+   hntdll = GetModuleHandle("ntdll.dll");
    debug(F100,"Checking for WINE","",0);
    pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
    if (hntdll != NULL) {

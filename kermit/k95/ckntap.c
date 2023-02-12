@@ -442,10 +442,13 @@ int
 cktapiinit(void)
 {
     int i = 0 ;
+    HMODULE hntdll;
+    static const char *(CDECL *pwine_get_version)(void);
+
     // This will be the parent of all dialogs.
     g_hWndMainWindow = g_hDlgParentWindow = hwndConsole;
-    static const char *(CDECL *pwine_get_version)(void);
-    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+
+    hntdll = GetModuleHandle("ntdll.dll");
     debug(F100,"Checking for WINE","",0);
     pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
     if (hntdll != NULL) {
