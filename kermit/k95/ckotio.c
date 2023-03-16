@@ -123,15 +123,17 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define _WIN32_WINNT_WINBLUE 0x0603
 #endif /* _WIN32_WINNT_WINBLUE */
 
-#if _MSC_VER >= 1800
-/* Visual C++ 2013 and the Windows 8.1 Platform SDK introduce this header and
- * though the Win32 APIs it relies on have been around since Windows 2000 */
+#if _MSC_VER >= 1920
+/* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
+ * and though the Win32 APIs it relies on have been around since Windows 2000,
+ * though building with Visual C++ 2017 (1910) fails with unresovled external
+ * symbol so we'll only do this on Visual C++ 2019 or newer */
 #include <VersionHelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
 #else
-/* Anything older than Visual C++ we won't bother trying to detect Windows 8.1
- * or newer - if you're building for a modern version of windows you really
- * should be using a modern compiler. */
+/* Anything older than Visual C++ 2019 we won't bother trying to detect
+ * Windows 8.1 or newer - if you're building for a modern version of windows
+ * you really should be using a modern compiler. */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
 #endif
 
