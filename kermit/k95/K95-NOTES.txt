@@ -431,8 +431,6 @@ Zmodem downloads don't respect SET RECEIVE MOVE-TO, etc.
 
 Should choosing a QNX terminal type also choose qnx-console charset?
 
-SHOW TERM doesn't show correct TERM AUTODOWNLOAD value?
-
 SET TITLE doesn't brstrip() its text.
 
 IBM 3151 key assignments (done, I think?)

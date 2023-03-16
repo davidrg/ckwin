@@ -5851,7 +5851,7 @@ VOID
 shotrm() {
     char *s;
     extern char * getiact();
-    extern int tt_print, adl_err;
+    extern int tt_print, adl_err, adl_ask;
 #ifndef NOTRIGGER
     extern char * tt_trigger[];
 #endif /* NOTRIGGER */
@@ -5940,9 +5940,9 @@ shotrm() {
            (tt_cursor == 1) ? "half" : "underline",
 #endif /* KUI */
 #ifdef CK_AUTODL
-           "autodownload",autodl == TAD_ON ?
+           "autodownload",(autodl == TAD_ON && adl_ask == 0) ?
            (adl_err ? "on, error stop" : "on, error continue") : 
-           autodl == TAD_ASK ? 
+           (autodl == TAD_ON && adl_ask == 1) ?
            (adl_err ? "ask, error stop" : "ask, error continue") :
            "off"
 #else /* CK_AUTODL */
