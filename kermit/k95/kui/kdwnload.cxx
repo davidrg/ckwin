@@ -100,6 +100,15 @@ void KDownLoad::createWin( KWin* par )
 void KDownLoad::setInitialDirectory( char * dir )
 {
     ckstrncpy(szDir,dir,MAX_PATH);
+
+    /* Make sure we're using DOS/Windows path separators for the initial
+     * directory */
+    char* p;
+    p = szDir;
+    while (*p) {
+        if (*p == '/') {*p = '\\'; }
+        p++;
+    }
 }
 
 /*------------------------------------------------------------------------
@@ -114,6 +123,15 @@ void KDownLoad::setTitle( char * title )
 void KDownLoad::setInitialFileName( char * file )
 {
     ckstrncpy(szFile,file,MAX_PATH);
+
+    /* Make sure we're using DOS/Windows path separators for the initial
+     * filename */
+    char* p;
+    p = szFile;
+    while (*p) {
+        if (*p == '/') {*p = '\\'; }
+        p++;
+    }
 }
 
 /*------------------------------------------------------------------------
