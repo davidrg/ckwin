@@ -8097,7 +8097,7 @@ dokcompose( int mode, int ucs2 )
 
         for ( i=0;i<4;i++ )
             hexstr[i] = x[i];
-        hexstr[5] = NUL;
+        hexstr[4] = NUL;
 
         c = hextoulong(hexstr,4);
     } else {
