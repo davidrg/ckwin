@@ -179,8 +179,10 @@ CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
 # These flags and options are deprecated or unsupported
 # from Visual C++ 2005 (v8.0) and up.
 
+!if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
 CFLAGSO = $(CFLAGSO) /G5
+!endif
 
 # Global Optimizations: This been deprecated since at least Visual C++ 2005.
 # Unsure about its status in Visual C++ 2003, but its fine to use in 2002.

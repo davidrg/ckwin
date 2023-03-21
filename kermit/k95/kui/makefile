@@ -86,13 +86,18 @@ RCFLAGS   = /r
 RCDEFINES = /dNDEBUG /dWIN32 $(RC_FEATURE_DEFS)
 MAPFILE   =
 
-# /G5 is only valid on 7.1 and earlier
+# /G5 is only valid on 7.1 and earlier targeting x86
 !if ($(MSC_VER) < 140)
+!if "$(TARGET_CPU)" == "x86"
 CFLAGS = $(CFLAGS) /G5
+!endif
 !endif
 
 !if ($(MSC_VER) > 90)
+!if "$(TARGET_CPU)" != "MIPS"
+# This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
 CFLAGS = $(CFLAGS) /GA
+!endif
 !endif
 
 !else

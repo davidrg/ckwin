@@ -177,7 +177,10 @@ SUBSYSTEM_WIN32=windows,5.1
 !endif
 
 !if ($(MSC_VER) > 90)
+!if "$(TARGET_CPU)" != "MIPS"
+# This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
 COMMON_OPTS = $(COMMON_OPTS) /GA
+!endif
 !endif
 
 !if ($(MSC_VER) < 140)
@@ -200,8 +203,10 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
 
+!if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
 COMMON_OPTS = $(COMMON_OPTS) /G5
+!endif
 
 !else
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-

@@ -195,6 +195,13 @@ CKF_SSH=no
 !endif
 !endif
 
+!if "$(TARGET_CPU)" == "MIPS"
+# "Visual C++ 10.00.5292X for MIPS R-Series" can't build ckntap.c for
+# some reason. So just turn TAPI support off. You get errors about illegal
+# type conversions and tree nodes not being evaluated.
+!message Targeting NT-MIPS: Forcing TAPI support OFF
+CKF_TAPI=no
+!endif
 
 # Other features that should one day be turned on via feature flags once we
 # figure out how to build them and get any dependencies sorted out.

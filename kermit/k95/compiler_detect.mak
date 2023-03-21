@@ -141,6 +141,12 @@ TARGET_CPU = x86
 TARGET_PLATFORM = Windows
 # TODO: What if we're targeting OS/2? Watcom supports OS/2...
 
+!ELSEIF ([cl 2>&1 | findstr /C:"for MIPS R-Series" > nul] == 0)
+# We're targeting (and running on) Windows NT MIPS
+TARGET_CPU = MIPS
+
+# TODO: How do the PowerPC and Alpha compilers announce themselves?
+
 !ELSEIF ([cl 2>&1 | findstr /C:"for x64" > nul] == 0)
 # We're using the 64bit x86 compiler
 TARGET_CPU = x86-64
