@@ -40,7 +40,11 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #endif /* CKT_NT35_OR_31 */
 #endif
 #ifndef DWORD_PTR
+#ifdef _WIN64
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
+#else /* _WIN64 */
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
+#endif /* _WIN64 */
 #endif
 
 #ifdef CKT_NT35_OR_31

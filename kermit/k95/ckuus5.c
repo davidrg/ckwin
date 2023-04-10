@@ -12140,7 +12140,23 @@ printf("NOWTMP not defined\n");
 #ifdef _M_IX86
     printf("Microsoft Windows Operating Systems for 32-bit Intel CPUs.\n");
 #else /* _M_IX86 */
+#ifdef _M_IA64
+    printf("Microsoft Windows Operating Systems for Itanium CPUs.\n");
+#else /* _M_IA64 */
+#ifdef _M_AMD64
+    printf("Microsoft Windows Operating Systems for x86-64/AMD64 CPUs.\n");
+#else /* _M_AMD64 */
+#ifdef _M_ARM
+    printf("Microsoft Windows Operating Systems for ARM CPUs.\n");
+#else /* _M_ARM */
+#ifdef _M_ARM64
+    printf("Microsoft Windows Operating Systems for 64bit ARM CPUs.\n");
+#else /* _M_ARM64 */
     UNKNOWN WINDOWS PLATFORM
+#endif /* _M_ARM64 */
+#endif /* _M_ARM  */
+#endif /* _M_AMD64 */
+#endif /* _M_IA64 */
 #endif /* _M_IX86 */
 #endif /* _M_MRX000 */
 #endif /* _M_PPC */
