@@ -490,10 +490,10 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_QUERYENDSESSION:
         debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
         result = TRUE;
-#if _MSC_VER > 1000
+#if _MSC_VER > 1010
         if ( lparam & ENDSESSION_LOGOFF ) {
 #else
-        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
          * (on Windows 95 only according to the docs) */
         if (lparam) {
 #endif
@@ -507,10 +507,10 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
     case WM_ENDSESSION:
         debug(F111,"MainWndProc","WM_ENDSESSION",msg);
-#if _MSC_VER > 1000
+#if _MSC_VER > 1010
         if ( wparam && (lparam & ENDSESSION_LOGOFF) ) {
 #else
-        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
         * (on Windows 95 only according to the docs) */
         if (wparam && lparam) {
 #endif

@@ -4811,10 +4811,10 @@ getOverlappedIndex( int serial ) {
 }
 
 #ifndef __WATCOMC__
-#if _MSC_VER <= 1000
-/* Visual C++ 4.0 and earlier lack this macro */
+#if _MSC_VER <= 1010
+/* Visual C++ 4.1 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
-#endif /* _MSC_VER <= 1000 */
+#endif /* _MSC_VER <= 1010 */
 #endif /* __WATCOM__ */
 
 int

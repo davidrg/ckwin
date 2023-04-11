@@ -4190,10 +4190,10 @@ zcopy(source,destination) char *source, *destination; {
     BOOL bCancel = 0;
     static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
                                           LPCSTR lpNewFileName,
-#if _MSC_VER > 1000
+#if _MSC_VER > 1010
                                           LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
 #else
-                              /* The Platform SDK included in Visual C++ 4.0
+                              /* The Platform SDK included in Visual C++ 4.1
                                * and earlier doesn't include CopyFileExA so
                                * no defninition for LPPROGRESS_ROUTINE. We never
                                * pass a value other than NULL so its real type
