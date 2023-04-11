@@ -280,8 +280,14 @@ cl 2>&1 | findstr /C:"Version 12.0" > nul
 if %errorlevel% == 0 goto :vc6
 cl 2>&1 | findstr /C:"Version 11.0" > nul
 if %errorlevel% == 0 goto :vc5
+cl 2>&1 | findstr /C:"Version 10.2" > nul
+if %errorlevel% == 0 goto :vc42
+cl 2>&1 | findstr /C:"Version 10.1" > nul
+if %errorlevel% == 0 goto :vc41
 cl 2>&1 | findstr /C:"Version 10.0" > nul
 if %errorlevel% == 0 goto :vc4
+cl 2>&1 | findstr /C:"Version 9.1" > nul
+if %errorlevel% == 0 goto :vc21
 cl 2>&1 | findstr /C:"Version 9.0" > nul
 if %errorlevel% == 0 goto :vc2
 cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul
@@ -319,7 +325,8 @@ set CKF_CRYPTDLL=no
 goto :cvcdone
 
 :vc2
-set CK_COMPILER_NAME=Visual C++ 2.0
+:vc21
+set CK_COMPILER_NAME=Visual C++ 2.x
 REM TODO - try to find msvcrt20.dll and add it to distdlls
 set ZINCBUILD=mvcpp200mt
 set CKF_SSH=unsupported
@@ -329,7 +336,9 @@ set CKF_CRYPTDLL=no
 goto :cvcdone
 
 :vc4
-set CK_COMPILER_NAME=Visual C++ 4.0
+:vc41
+:vc42
+set CK_COMPILER_NAME=Visual C++ 4.x
 set ZINCBUILD=mvcpp400mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported

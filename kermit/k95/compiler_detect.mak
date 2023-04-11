@@ -6,6 +6,10 @@
 # recent release and it may also pickup Watcom and the 16bit
 # versions of Visual C++.
 
+# TODO: Flip this around so the oldest compilers are at the top to
+#       improve performance on older machines that are more likely
+#       to be running older compilers.
+
 !if "$(CK_DETECT_COMPILER)" != "no"
 
 # We'll start off assuming Visual C++ and overwrite this later if
@@ -89,10 +93,29 @@ COMPILER_VERSION = 6.0 (Visual Studio 6.0)
 MSC_VER = 110
 COMPILER_VERSION = 5.0 (Visual Studio 97)
 
+!ELSEIF ([cl 2>&1 | findstr /C:"Version 10.20" > nul] == 0)
+# Visual C++ 4.2
+# TODO: Check how this compares with Visual C++ 5.0
+MSC_VER = 100
+COMPILER_VERSION = 4.2
+
+!ELSEIF ([cl 2>&1 | findstr /C:"Version 10.10" > nul] == 0)
+# GUESS: Visual C++ 4.1
+MSC_VER = 100
+COMPILER_VERSION = 4.1
+
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 10.0" > nul] == 0)
 # Visual C++ 4.0 (there was no 3.0)
 MSC_VER = 100
 COMPILER_VERSION = 4.0
+
+!ELSEIF ([cl 2>&1 | findstr /C:"Version 9.10" > nul] == 0)
+# Visual C++ 2.2 (and perhaps 2.1?)
+# TODO: Check how this compares with Visual C++ 4.0
+MSC_VER = 90
+COMPILER_VERSION = 2.2
+
+# TODO: How does Visual C++ 1.1 report itself?
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 9.0" > nul] == 0)
 # Visual C++ 2.0 (very old 32bit compiler)
