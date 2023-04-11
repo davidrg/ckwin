@@ -273,8 +273,13 @@ void KToolBar::createTermTypeCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndTermTypeCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndTermTypeCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndTermTypeCombo );
 }
 
@@ -350,8 +355,13 @@ void KToolBar::createCharsetCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndCharsetCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndCharsetCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndCharsetCombo );
 }
 
@@ -427,8 +437,13 @@ void KToolBar::createFontNameCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndFontNameCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndFontNameCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndFontNameCombo );
 }
 
@@ -507,8 +522,13 @@ void KToolBar::createFontHeightCombo()
 
     // subclass the combobox for tool tip stuff
     //
+#ifdef _WIN64
+    comboProc = (WNDPROC) SetWindowLongPtr(
+            hWndFontHeightCombo, GWLP_WNDPROC, (LONG_PTR) TBComboWndProc );
+#else /* _WIN64 */
     comboProc = (WNDPROC) SetWindowLong( hWndFontHeightCombo
-                                         , GWL_WNDPROC, (LONG)TBComboWndProc );
+            , GWL_WNDPROC, (LONG)TBComboWndProc );
+#endif /* _WIN64 */
     kglob->hwndset->add( this, hWndFontHeightCombo );
 }
 

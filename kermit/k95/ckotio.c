@@ -66,6 +66,8 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #endif /* NT */
 #include "ckodir.h"
 
+#include "ckoreg.h"
+
 /* macros we might need */
 #ifndef _O_APPEND
 #define _O_APPEND  O_APPEND
@@ -7296,8 +7298,9 @@ void
 ztime(char **s) {
     time_t clock_storage;
 
-    clock_storage = time( (long *) 0 );
+    clock_storage = time( NULL );
     *s = ctime( &clock_storage );
+
 }
 
 void

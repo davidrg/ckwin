@@ -5666,6 +5666,11 @@ _PROTOTYP( int zstime, (char *, struct zattr *, int) );
 #ifdef CK_PERMS
 _PROTOTYP( char * zgperm, (char *) );
 _PROTOTYP( char * ziperm, (char *) );
+#else /* CK_PERMS */
+#ifdef OS2
+/* zgperm exists on OS/2 and NT regardless of CK_PERMS */
+_PROTOTYP( char * zgperm, (char *) );
+#endif /* OS2 */
 #endif /* CK_PERMS */
 _PROTOTYP( int zmail, (char *, char *) );
 _PROTOTYP( int zprint, (char *, char *) );
@@ -7024,6 +7029,11 @@ _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName,
                                    LPSTR lpBuffer, DWORD cchBuffer));
 _PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
                                     LPSTR lpszShortPath, DWORD cchBuffer));
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+typedef int intptr_t;
+typedef unsigned long DWORD_PTR;
+#endif
 #endif /* NT */
 
 

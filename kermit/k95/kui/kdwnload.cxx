@@ -248,7 +248,12 @@ void KDownLoad::initDialog( HWND hwnd )
     // subclass the 'save as' dialog proc
     // WNDPROC ???? it doesn't work with DLGPROC !!!! don't know why
     //
+#ifdef _WIN64
+    oldSaveAsProc = (WNDPROC) SetWindowLongPtr(
+            hwndpar, DWLP_DLGPROC, (LONG_PTR) KSaveAsDlgProc );
+#else /* _WIN64 */
     oldSaveAsProc = (WNDPROC) SetWindowLong( hwndpar, DWL_DLGPROC, (LONG) KSaveAsDlgProc );
+#endif /* _WIN64 */
 }
 
 /*------------------------------------------------------------------------

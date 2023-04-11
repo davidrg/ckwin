@@ -30,26 +30,26 @@ char* testLBStrings[] = {
 extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-BOOL APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+INT_PTR APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     KWin* win = (KWin*) kglob->hwndset->find( hwnd );
     if( !win )
         return 0;
 
     Bool ret = win->message( hwnd, msg, wParam, lParam );
-    return (BOOL) ret;
+    return (INT_PTR) ret;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-BOOL APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+INT_PTR APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     KWin* win = (KWin*) kglob->hwndset->find( hwnd );
     if( !win )
         return 0;
 
     Bool ret = win->message( hwnd, msg, wParam, lParam );
-    return (BOOL) ret;
+    return (INT_PTR) ret;
 }
 
 /*------------------------------------------------------------------------
@@ -121,7 +121,11 @@ void KStatusCustomDlg::createWin( KWin* par )
     associateHwnd( hWnd );
 
     hList = GetDlgItem( hWnd, IDC_LISTPANE );
+#ifdef _WIN64
+    LBProc = (WNDPROC) SetWindowLongPtr(hList, GWLP_WNDPROC, (LONG_PTR) PaneListWndProc );
+#else /* _WIN64 */
     LBProc = (WNDPROC) SetWindowLong( hList, GWL_WNDPROC, (LONG) PaneListWndProc );
+#endif /* _WIN64 */
     associateHwnd( hList );
 
     // populate with dummy data for now

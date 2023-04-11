@@ -49,6 +49,8 @@ _PROTOTYP( int os2settitle, (char *, int) );
 extern int priority;
 #include <signal.h>
 
+#include "ckoreg.h"
+
 /*
 
   C-Kermit's OS/2 support originally by Chris Adie <C.Adie@uk.ac.edinburgh>
@@ -586,7 +588,7 @@ zopeni(n,name) int n; char *name; {
     int x, y;
 
     debug(F111,"zopeni name",name,n);
-    debug(F101,"zopeni fp","", (unsigned) fp[n]);
+    debug(F101,"zopeni fp","", (CK_OFF_T) fp[n]);
     if (chkfn(n) != 0) {
         debug(F110,"zopeni chkfn()","file is open",0);
         return(0);
@@ -2380,10 +2382,10 @@ zhome() {
         ckstrncpy(homedir,home,CKMAXPATH);
     } else {
 #ifdef NT
-        char * homedrive = (char *)GetHomeDrive();
-        char * homepath  = (char *)GetHomePath();
+        char * homedrive = GetHomeDrive();
+        char * homepath  = GetHomePath();
         char * profile   = getenv("USERPROFILE");
-        char * personal  = (char *)GetPersonal();
+        char * personal  = GetPersonal();
         if (homedrive && homepath)
             sprintf(homedir,"%s%s",homedrive,homepath);
         else if ( profile )

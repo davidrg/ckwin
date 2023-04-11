@@ -74,7 +74,7 @@ LRESULT CALLBACK KClientWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
+VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
 {
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);
@@ -329,8 +329,13 @@ void KClient::createWin( KWin* par )
 
     KWin::createWin( par );
 
+#ifdef _WIN64
+    WNDPROC _clientProc = (WNDPROC) SetWindowLongPtr(
+            hWnd, GWLP_WNDPROC, (LONG_PTR) KClientWndProc );
+#else /* _WIN64 */
     WNDPROC _clientProc = (WNDPROC) SetWindowLong( hWnd, GWL_WNDPROC
                     , (LONG)KClientWndProc );
+#endif /* _WIN64 */
 
     // to make the updates look clean, use a memory DC for the drawing
     // and then BitBlt() it onto the screen DC.

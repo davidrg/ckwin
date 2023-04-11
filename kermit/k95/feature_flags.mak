@@ -109,6 +109,11 @@ CKT_NT31=yes
 CKT_NT31=yes
 !endif
 
+!if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
+# OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
+!endif
+
 # For all versions of windows *EXCEPT* Windows NT 3.1 and 3.50, the target
 # minimum version is defined as whatever the compiler happens to support.
 # For Windows NT 3.1 and 3.50 the API differences are enough missing APIs

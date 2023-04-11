@@ -114,7 +114,7 @@ private:    // this section is for performance
     int maxCursorCount;
     int blinkInterval;
 
-    UINT timerID;
+    UINT_PTR timerID;
     KFont* font;
 
     KScroll* vert;

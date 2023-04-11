@@ -137,7 +137,11 @@ void KStatus::createWin( KWin* par )
 
     // subclass the statusbar
     //
+#ifdef _WIN64
+    defproc = (WNDPROC) SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) KStatusProc );
+#else /* _WIN64 */
     defproc = (WNDPROC) SetWindowLong( hWnd, GWL_WNDPROC, (LONG)KStatusProc );
+#endif /* _WIN64 */
 }
 
 

@@ -407,6 +407,7 @@ extern char ttname[];
 
 #ifdef NT
 extern int winsock_version;
+char * GetLocalUser(); /* defined in ckotio.c */
 #endif /* NT */
 
 #ifdef CK_AUTHENTICATION
@@ -7302,7 +7303,7 @@ rlog_ini(hostname, port, l_addr, r_addr)
 #ifdef NT
     {
         char localuid[UIDBUFLEN+1];
-        ckstrncpy((char *)localuser,(char *)GetLocalUser(),UIDBUFLEN);
+        ckstrncpy((char *)localuser,GetLocalUser(),UIDBUFLEN);
     }
 
     if ( !localuser[0] )

@@ -5252,7 +5252,7 @@ Win32ConsoleInit( void )
         return;
 
     AllocConsole();
-    hCrt = _open_osfhandle((long) GetStdHandle(STD_OUTPUT_HANDLE),
+    hCrt = _open_osfhandle((intptr_t) GetStdHandle(STD_OUTPUT_HANDLE),
                                 _O_BINARY);
     hf = _fdopen( hCrt, "wb" );
     *stdout = *hf;
@@ -5266,12 +5266,12 @@ Win32ConsoleInit( void )
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL ) ;
         SetStdHandle( STD_INPUT_HANDLE, handle ) ;
     }
-    hCrt = _open_osfhandle((long) handle, _O_BINARY);
+    hCrt = _open_osfhandle((intptr_t ) handle, _O_BINARY);
     hf = _fdopen( hCrt, "rb" );
     *stdin = *hf;
     i = setvbuf( stdin, NULL, _IONBF, 0 );
 
-    hCrt = _open_osfhandle((long) GetStdHandle(STD_ERROR_HANDLE), _O_BINARY);
+    hCrt = _open_osfhandle((intptr_t ) GetStdHandle(STD_ERROR_HANDLE), _O_BINARY);
     hf = _fdopen( hCrt, "wb" );
     *stderr = *hf;
     i = setvbuf( stderr, NULL, _IONBF, 0 );

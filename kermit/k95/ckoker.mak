@@ -736,7 +736,8 @@ LIBS = $(LIBS) wshload.lib
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
-        winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
+        winmm.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
+# vdmdbg.lib
 !if "$(CKF_SSH)" == "yes"
 KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
 !endif
@@ -1206,11 +1207,11 @@ ckuusr$(O):	ckuusr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucm
 ckuus2$(O):	ckuus2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h
 ckuus3$(O):	ckuus3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h \
-                  ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h
+		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h ckoreg.h \
+          ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h
 ckuus4$(O):	ckuus4.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h ckocon.h \
-	          ckoetc.h ckntap.h ckuath.h ck_ssl.h
+	      ckoetc.h ckntap.h ckuath.h ck_ssl.h ckoreg.h ckoetc.h
 ckuus5$(O):	ckuus5.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
                 ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h ck_ssl.h ckossl.h kui\ikui.h
 ckuus6$(O):	ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckntap.h \
@@ -1228,7 +1229,7 @@ ckuusx$(O):	ckuusx.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckonb
 ckuusy$(O):	ckuusy.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckcnet.h ckctel.h \
 	        ck_ssl.h kui\ikui.h
 ckofio$(O):	ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
-                ckuusr.h ckcxla.h ck_ssl.h
+                ckuusr.h ckcxla.h ck_ssl.h ckoreg.h
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
 ckocon$(O):	ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h ckctel.h \
                 ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h kui\ikui.h
@@ -1259,7 +1260,7 @@ ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoke
                 ckokey.h ckokvb.h ckuusr.h ckcnet.h ckctel.h
 ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h ckop.h \
-                ckcuni.h ckowin.h ckcnet.h ckctel.h \
+                ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h \
 !if "$(PLATFORM)" == "NT"
                 ckntap.h cknwin.h  kui\ikui.h
 !else

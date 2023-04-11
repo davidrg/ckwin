@@ -15,7 +15,11 @@ extern LONG KermitDialerID ;
 extern HAB hab;
 #endif
 
+#ifdef NT
+_PROTOTYP( void DialerSend, ( UINT, LPARAM ) ) ;
+#else
 _PROTOTYP( void DialerSend, ( UINT, LONG ) ) ;
+#endif
 
 #define OPT_KERMIT_SUCCESS          12001
 #define OPT_KERMIT_FAILURE          12002
@@ -38,7 +42,7 @@ _PROTOTYP( void DialerSend, ( UINT, LONG ) ) ;
 
 #ifdef NT
 __inline void
-DialerSend(UINT message, LONG lparam)
+DialerSend(UINT message, LPARAM lparam)
 {
     if ( StartedFromDialer )
         SendMessage( hwndDialer, message, KermitDialerID, lparam ) ;

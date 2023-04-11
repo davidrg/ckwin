@@ -10,6 +10,7 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 */
 
 #include <windows.h>
+#include <process.h>
 #ifndef NODIAL
 #include <tapi.h>
 #endif
@@ -466,7 +467,7 @@ int nCmdShow;
    ShowWindow( hwndGUI, SW_HIDE ) ;
    /* Let the dialer know */
    if ( StartedFromDialer )
-      DialerSend( OPT_KERMIT_HWND, (LONG) hwndGUI ) ;
+      DialerSend( OPT_KERMIT_HWND, (LPARAM) hwndGUI ) ;
 
      /*
       * Show the window and send a WM_PAINT message to the window
@@ -580,7 +581,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                 ckstrncpy(cmdfil,file,CKMAXPATH+1);
                 DeleteStartupFile = 1;
             }
-            DialerSend( OPT_KERMIT_HWND, (LONG) hwnd ) ;
+            DialerSend( OPT_KERMIT_HWND, (LPARAM) hwnd ) ;
         }
         result = TRUE;
         break;
@@ -656,7 +657,7 @@ StartDialer(void)
 
     if ( StartedFromDialer ) {
         if ( reuse ) {
-            DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
@@ -665,9 +666,9 @@ StartDialer(void)
         StartedFromDialer = 1;
         hwndDialer = _hwndDialer;
         KermitDialerID = 0;
-        DialerSend(OPT_KERMIT_HWND, (unsigned long)hwndGUI);
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
         if ( reuse ) {
-            DialerSend(OPT_KERMIT_HWND2, (unsigned long)hwndGUI);
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
             DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
         }
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
@@ -691,8 +692,13 @@ StartDialer(void)
         if ( reuse ) {
             for ( p = " -k "; *p ; p++, q++ )
                 *q = *p;
+#ifdef _WIN64
+            for ( p = _ui64toa((unsigned __int64)hwndGUI, p, 10); *p ; p++, q++ )
+                *q = *p;
+#else /* _WIN64 */
             for ( p = ckultoa((LONG) hwndGUI); *p ; p++, q++ )
                 *q = *p;
+#endif /* _WIN64 */
             *q++ = ' ';
             for ( p = ckultoa((LONG) GetCurrentProcessId()); *p ; p++, q++ )
                 *q = *p;

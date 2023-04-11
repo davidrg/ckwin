@@ -68,6 +68,7 @@ extern char startupdir[], exedir[];
 extern int tt_modechg;
 #ifdef NT
 #include <windows.h>
+#include "ckoreg.h"
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
@@ -2234,8 +2235,8 @@ parsdir(cx) int cx; {
             char * appdata0 = NULL, * appdata1 = NULL;
 #ifdef NT
             env = getenv("K95PHONES");
-            makestr(&appdata0,(char *)GetAppData(0));
-            makestr(&appdata1,(char *)GetAppData(1));
+            makestr(&appdata0,GetAppData(0));
+            makestr(&appdata1,GetAppData(1));
 #else /* NT */
             env = getenv("K2PHONES");
 #endif /* NT */

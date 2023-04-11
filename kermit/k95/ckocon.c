@@ -2818,7 +2818,7 @@ extern int holdscreen;
 
 
 void
-isconnect()
+isconnect(void * unused)
 {
     /* ResetThreadPrty();   already done */
     while (IsConnectMode()) {
@@ -3354,7 +3354,7 @@ conect(int async) {
     VscrnIsDirty(VCMD);
 
     if ( !async )
-        isconnect();
+        isconnect(NULL);
     else
         _beginthread(isconnect,
 #ifdef OS2ONLY

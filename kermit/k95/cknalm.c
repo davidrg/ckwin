@@ -15,6 +15,7 @@
 */
 
 #include <windows.h>
+#include <process.h>
 
 #define TIMER_COUNT 65
 struct _timerInfo

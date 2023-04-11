@@ -5,7 +5,7 @@
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-BOOL APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, UINT wParam, LONG lParam )
+INT_PTR APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     if( filestatus )
