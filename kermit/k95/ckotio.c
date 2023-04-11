@@ -388,7 +388,7 @@ bool ttslip = 0 ;  /* Equals 1 if being used as a replacement for SLIPTERM */
 bool ttppp  = 0 ;  /* Equals 1 if being used as a replacement for SLATTACH */
 #endif /* OS2ONLY */
 bool ttshare = 0;                /* do not open devices in shared mode */
-int ttyfd = -1;         /* TTY file descriptor (not open yet) */
+CK_TTYFD_T ttyfd = -1;          /* TTY file descriptor (not open yet) */
 int dfprty = 0;                 /* Default parity (0 = none) */
 int ttprty = 0;                 /* Parity in use. */
 int ttmdm = 0;                  /* Modem in use. */
@@ -3238,7 +3238,7 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
             ckstrncpy(&portname[4],ttname,263);
         }
         if ( (HANDLE)(ttyfd =
-                       (int) CreateFile(portname,
+                       (CK_TTYFD_T) CreateFile(portname,
                                          GENERIC_READ | GENERIC_WRITE,
                                          ttshare ? (FILE_SHARE_READ | FILE_SHARE_WRITE) : 0,
                                          &security,

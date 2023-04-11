@@ -414,7 +414,7 @@ BOOL g_bTapiInUse = FALSE;
 // Data needed per call.  This sample only supports one call.
 HCALL g_hCall = (HCALL) 0;
 HLINE g_hLine = (HLINE) 0;
-extern int ttyfd ; /* this holds the HLINE hLine */
+extern CK_TTYFD_T ttyfd; /* this holds the HLINE hLine */
 extern int mdmtyp ;
 static int mdmtyp_sav=0;
 CHAR szModemName[256] ;
@@ -1688,8 +1688,8 @@ DoLineCallState(
 void
 CALLBACK
 cklineCallbackFunc( DWORD dwDevice, DWORD dwMsg,
-                    DWORD dwCallbackInstance,
-                    DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+                    DWORD_PTR dwCallbackInstance,
+                    DWORD_PTR dwParam1, DWORD_PTR dwParam2, DWORD_PTR dwParam3)
 {
 
     OutputDebugLineCallback(
@@ -2446,7 +2446,7 @@ cktapidial(char * number)
     if ( ttyfd == -1 || ttyfd == -2 ) {
         /* if we did not get the Comm handle via the CONNECT message */
         /* then get it now                                           */
-        ttyfd = (int) GetModemHandleFromLine( g_hLine );
+        ttyfd = (CK_TTYFD_T) GetModemHandleFromLine( g_hLine );
         SetCommMask( (HANDLE) ttyfd, EV_RXCHAR ) ;
         SetupComm( (HANDLE) ttyfd, 20000, 20000 ) ;
         PurgeComm( (HANDLE) ttyfd,
@@ -2713,7 +2713,7 @@ cktapianswer( void )
     if ( ttyfd == -1 || ttyfd == -2 ) {
         /* if we did not get the Comm handle via the CONNECT message */
         /* then get it now                                           */
-        ttyfd = (int) GetModemHandleFromLine( g_hLine );
+        ttyfd = (CK_TTYFD_T) GetModemHandleFromLine( g_hLine );
         SetCommMask( (HANDLE) ttyfd, EV_RXCHAR ) ;
         SetupComm( (HANDLE) ttyfd, 20000, 20000 ) ;
         PurgeComm( (HANDLE) ttyfd,
@@ -3981,7 +3981,7 @@ tapi_open( char * devicename )
         {
             rc = (*cklineOpen)( g_hLineApp, LineDeviceId, &g_hLine,
                                 LineDeviceAPIVersion, 0,
-                                (DWORD) hInstance,
+                                (CK_TTYFD_T) hInstance,
                                 LINECALLPRIVILEGE_OWNER | LINECALLPRIVILEGE_MONITOR,
                                 LINEMEDIAMODE_DATAMODEM,
                                 NULL);
@@ -4126,7 +4126,7 @@ tapi_open( char * devicename )
         if ( ttyfd == -1 || ttyfd == -2 ) {
             /* if we did not get the Comm handle via the CONNECT message */
             /* then get it now                                           */
-            ttyfd = (int) GetModemHandleFromLine( g_hLine );
+            ttyfd = (CK_TTYFD_T) GetModemHandleFromLine( g_hLine );
             SetCommMask( (HANDLE) ttyfd, EV_RXCHAR ) ;
             SetupComm( (HANDLE) ttyfd, 20000, 20000 ) ;
             PurgeComm( (HANDLE) ttyfd,

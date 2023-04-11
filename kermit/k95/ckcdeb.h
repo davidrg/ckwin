@@ -7036,6 +7036,18 @@ typedef unsigned long DWORD_PTR;
 #endif
 #endif /* NT */
 
+/*
+ * On Windows, ttyfd is frequently used to hold HANDLEs which are a kind of pointer.
+ * So on ttyfd must be of a sufficient size to hold a pointer.
+ */
+#ifdef OS2
+#ifdef CK_HAVE_INTPTR_T
+#define CK_TTYFD_T intptr_t
+#else /* CK_HAVE_INTPTR_T */
+#define CK_TTYFD_T int
+#endif /* CK_HAVE_INTPTR_T */
+#endif /* OS2 */
+
 
 #include "ckclib.h"
 

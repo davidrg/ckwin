@@ -204,7 +204,8 @@ USHORT DosDevIOCtl32(PVOID pData, USHORT cbData, PVOID pParms, USHORT cbParms,
 U32 _System
 break_func( U8 on )
 {
-   extern int ttyfd, ttmdm ;
+   extern int ttmdm ;
+   extern CK_TTYFD_T ttyfd;
 #ifndef NT
     MODEMSTATUS ms;
     UINT data, i;

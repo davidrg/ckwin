@@ -245,7 +245,8 @@ extern char namecopy[] ;
 extern char ipaddr[20] ;                /* Global copy of IP address */
 extern int ttnet  ;             /* Network type */
 
-extern int duplex, debses, seslog, ttyfd, quiet, doconx; /* Extern vars */
+extern int duplex, debses, seslog, quiet, doconx; /* Extern vars */
+extern CK_TTYFD_T ttyfd;
 extern int nettype;
 extern int exithangup;
 extern char ttname[] ;
@@ -857,7 +858,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                printf( "\nCreateFile error: return code = %ld\n",rc ) ;
            } else {
                DWORD Mode = PIPE_NOWAIT | PIPE_READMODE_BYTE;
-               ttyfd = (int) hPipe ;
+               ttyfd = (CK_TTYFD_T) hPipe ;
                SetNamedPipeHandleState( hPipe, &Mode, NULL, NULL) ;
                printf("\nNamed Pipe %s open.\nConnection to server complete.\n",
                       PipeName);
@@ -895,7 +896,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                debug( F101,"CreateNamedPipe error: return code","",rc) ;
                printf("\nCreateNamedPipe error: return code = %ld\n", rc);
            } else {
-               ttyfd = (int) hPipe;
+               ttyfd = (CK_TTYFD_T) hPipe;
                printf("\nNamed Pipe %s created.\nWaiting for client connection ...\n\n",
                        PipeName ) ;
                if (!ConnectNamedPipe( hPipe, NULL )) {
@@ -906,7 +907,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                    }
                } else {
                    DWORD Mode = PIPE_NOWAIT | PIPE_READMODE_BYTE;
-                   ttyfd = (int) hPipe ;
+                   ttyfd = (CK_TTYFD_T) hPipe ;
                    SetNamedPipeHandleState( hPipe, &Mode, NULL, NULL) ;
                }
            }
@@ -1218,7 +1219,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
       OVERLAPPED OverLapped ;
 
       /* Create a file handle */
-      ttyfd = (int) CreateFile (name,
+      ttyfd = (CK_TTYFD_T) CreateFile (name,
                         GENERIC_READ   ,
                         FILE_SHARE_READ,
                         NULL,

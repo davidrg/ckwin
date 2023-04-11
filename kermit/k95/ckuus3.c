@@ -9547,7 +9547,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifndef NOTCPOPTS
 #ifdef TCPSOCKET
       case XYTCP: {
+#ifdef OS2
+        extern CK_TTYFD_T ttyfd;
+#else /* OS2 */
         extern int ttyfd;
+#endif
+
 
         if ((z = cmkey(tcpopt,ntcpopt,"TCP option","nodelay",xxstring)) < 0)
           return(z);

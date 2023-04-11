@@ -149,7 +149,8 @@ int ck_lcname = 0;
 
 extern int                              /* External variables */
   duplex, debses, seslog, sessft, wasclosed,
-  ttyfd, quiet, msgflg, what, nettype, ttmdm;
+  quiet, msgflg, what, nettype, ttmdm;
+extern CK_TTYFD_T ttyfd;
 #ifdef IKSD
 extern int inserver;
 #endif /* IKSD */
@@ -1282,7 +1283,7 @@ ttbufr() {                              /* TT Buffer Read */
 /* Is used by OS/2 ... */
 /* ... and it came in handy!  For our TCP/IP layer, it avoids all the fd_set */
 /* and timeval stuff since this is the only place where it is used. */
-        int socket = ttyfd;
+        CK_TTYFD_T socket = ttyfd;
         debug(F100,"Out-of-Band IBMSELECT","",0);
         if ((select(&socket, 0, 0, 1, 0L) == 1) && (socket == ttyfd))
           outofband = 1;
