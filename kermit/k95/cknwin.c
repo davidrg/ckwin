@@ -1792,8 +1792,8 @@ EditStreamCallback(DWORD_PTR dwCookie,
 
 static EDITSTREAM EditStream = { 0, 0, EditStreamCallback };
 
-#if _MSC_VER <= 1000
-/* Visual C++ 4.0 and earlier don't know about these. They require Rich Edit
+#if _MSC_VER <= 1020
+/* Visual C++ 4.2 and earlier don't know about these. They require Rich Edit
  * 2.0 or newer */
 #ifndef EM_AUTOURLDETECT
 #define EM_AUTOURLDETECT (WM_USER+91)

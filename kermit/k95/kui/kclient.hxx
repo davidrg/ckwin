@@ -17,6 +17,12 @@
 #include "kwin.hxx"
 #include "kscroll.hxx"
 
+
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+typedef unsigned int UINT_PTR;
+#endif
+
 const int MAXNUMCOL = 256;
 struct _K_CLIENT_PAINT;
 struct _K_WORK_STORE;

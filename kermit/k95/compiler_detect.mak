@@ -96,12 +96,12 @@ COMPILER_VERSION = 5.0 (Visual Studio 97)
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 10.20" > nul] == 0)
 # Visual C++ 4.2
 # TODO: Check how this compares with Visual C++ 5.0
-MSC_VER = 100
+MSC_VER = 102
 COMPILER_VERSION = 4.2
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 10.10" > nul] == 0)
 # GUESS: Visual C++ 4.1
-MSC_VER = 100
+MSC_VER = 101
 COMPILER_VERSION = 4.1
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 10.0" > nul] == 0)

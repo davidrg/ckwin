@@ -7033,6 +7033,8 @@ _PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
 /* Any windows compiler too old to support this will be 32-bits (or less) */
 typedef int intptr_t;
 typedef unsigned long DWORD_PTR;
+typedef unsigned int UINT_PTR;
+typedef long INT_PTR;
 #endif
 #endif /* NT */
 

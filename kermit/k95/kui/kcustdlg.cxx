@@ -30,26 +30,36 @@ char* testLBStrings[] = {
 extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-INT_PTR APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     KWin* win = (KWin*) kglob->hwndset->find( hwnd );
     if( !win )
         return 0;
 
     Bool ret = win->message( hwnd, msg, wParam, lParam );
-    return (INT_PTR) ret;
+    return ret;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-INT_PTR APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     KWin* win = (KWin*) kglob->hwndset->find( hwnd );
     if( !win )
         return 0;
 
     Bool ret = win->message( hwnd, msg, wParam, lParam );
-    return (INT_PTR) ret;
+    return ret;
 }
 
 /*------------------------------------------------------------------------

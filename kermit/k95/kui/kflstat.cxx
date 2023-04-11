@@ -5,7 +5,12 @@
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-INT_PTR APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     if( filestatus )

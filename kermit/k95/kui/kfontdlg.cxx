@@ -5,7 +5,12 @@
 extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-UINT_PTR APIENTRY KFontDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+UINT_PTR
+#else
+UINT
+#endif
+APIENTRY KFontDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool b = FALSE;
 	KFontDialog* fontdlg = (KFontDialog*) kglob->hwndset->find( hwnd );

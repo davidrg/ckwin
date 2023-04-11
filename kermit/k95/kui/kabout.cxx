@@ -13,9 +13,14 @@ extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 extern "C" {
-INT_PTR CALLBACK AboutDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+CALLBACK AboutDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    return (INT_PTR)kabout->message( hwnd, msg, wParam, lParam );
+    return kabout->message( hwnd, msg, wParam, lParam );
 }
 }
 

@@ -135,8 +135,8 @@ RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
 !IF ($(MSC_VER) < 131)
 # Visual C++ 7.0 (2002) and earlier
 
-!if ($(MSC_VER) > 100)
-# This switch is new to Visual C++ 5.0 (along with bool support)
+!if ($(MSC_VER) > 102)
+# This switch is new to Visual C++ 5.0 (along with bool support) (102 == Visual C++ 4.2)
 CFLAGS = $(CFLAGS) /noBool
 !endif
 
