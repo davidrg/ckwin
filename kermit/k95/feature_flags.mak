@@ -174,10 +174,6 @@ CKF_NETBIOS=yes
 # And does not get mouse wheel support (not implemented)
 CKF_MOUSEWHEEL=no
 
-# Almost certainly won't build
-# TODO: Make it build (probably *a lot* of work)
-CKF_NT_UNICODE=no
-
 !if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
 # But not when building with OpenWatcom. At the moment it causes Kermit/2 to
 # crash on startup at ckonbi.c:152
@@ -206,6 +202,18 @@ CKF_SSH=no
 # type conversions and tree nodes not being evaluated.
 !message Targeting NT-MIPS: Forcing TAPI support OFF
 CKF_TAPI=no
+!endif
+
+# Almost certainly won't build
+# TODO: Make it build (probably *a lot* of work)
+CKF_NT_UNICODE=no
+
+# DECnet requires an x86 or Alpha CPU and is only available on Window Server
+# 2003 and older. This means Visual C++ 2019 or older.
+!if ("$(TARGET_CPU)" == "x86" || "$(TARGET_CPU)" == "AXP") && $(MSC_VER) < 193
+CKF_DECNET=yes
+!else
+CKF_DECNET=no
 !endif
 
 # Other features that should one day be turned on via feature flags once we
