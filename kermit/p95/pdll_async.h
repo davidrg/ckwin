@@ -38,7 +38,7 @@ _Inline U32 async_connected(void) {
    if ( !GetCommModemStatus( (HANDLE) dev_handle, &ModemStat ) )
    {
       p_error(P_ERROR_DOSDEVIOCTL, GetLastError(),
-               MODULE_ASYNC, __LINE__, (U32)dev_path);
+               MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
       return 0;
    }
    return ( ModemStat & MS_RLSD_ON ) ;
@@ -74,7 +74,7 @@ _Inline void async_open(void) {
 
   if (!dev_handle) {
 #ifdef NT
-    if ( (HANDLE)(dev_handle = (int) CreateFile(dev_path,
+    if ( (HANDLE)(dev_handle = (intptr_t) CreateFile(dev_path,
         GENERIC_READ | GENERIC_WRITE,
         dev_shared,  
         NULL,               /* no security specified */
@@ -100,7 +100,7 @@ _Inline void async_open(void) {
 #endif /* NT */
     if (rc)
       p_error(P_ERROR_DOSOPEN, rc,
-	      MODULE_ASYNC, __LINE__, (U32)dev_path);
+	      MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
   }
 }
 
@@ -116,7 +116,7 @@ _Inline void async_close(void) {
 #endif /* NT */
   if (rc)
     p_error(P_ERROR_DOSCLOSE, rc,
-	    MODULE_ASYNC, __LINE__, (U32)dev_path);
+	    MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
 }
 
 _Inline U32 async_incoming(void) {
@@ -150,7 +150,7 @@ _Inline U32 async_incoming(void) {
 #endif /* NT */
   if (rc)
     p_error(P_ERROR_DOSDEVIOCTL, rc,
-	    MODULE_ASYNC, __LINE__, (U32)dev_path);
+	    MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
 #ifdef NT
    if ( comstat.cbInQue )
 #else /* NT */
@@ -186,7 +186,7 @@ extern int nActuallyRead ;
           if ( overlapped_read.hEvent == (HANDLE) -1 )
           {
              p_error(P_ERROR_DOSREAD, GetLastError(),
-                      MODULE_ASYNC, __LINE__, (U32)dev_path);
+                      MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
           }
        }
        overlapped_read.Offset = overlapped_read.OffsetHigh = 0 ;
@@ -208,14 +208,14 @@ extern int nActuallyRead ;
                 else if ( error == ERROR_OPERATION_ABORTED )
                 {
                    p_error(P_ERROR_DOSREAD, error,
-                            MODULE_ASYNC, __LINE__, (U32)dev_path);
+                            MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
                 }
                 else
                 {
                    DWORD errorflags ;
                    COMSTAT comstat ;
                    p_error(P_ERROR_DOSREAD, error,
-                            MODULE_ASYNC, __LINE__, (U32)dev_path);
+                            MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
                    ClearCommError( (HANDLE) dev_handle, &errorflags, &comstat ) ;
                    return ;
                 }
@@ -224,7 +224,7 @@ extern int nActuallyRead ;
           else 
           {
              p_error(P_ERROR_DOSREAD, error,
-                      MODULE_ASYNC, __LINE__, (U32)dev_path);
+                      MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
              return ;
           }
        }
@@ -264,7 +264,7 @@ _Inline void async_flush_outbuf(void) {
           if ( overlapped_write.hEvent == (HANDLE) -1 )
           {
                    p_error(P_ERROR_DOSWRITE, GetLastError(),
-                            MODULE_ASYNC, __LINE__, (U32)dev_path);
+                            MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
           }
        }
        overlapped_write.Offset = overlapped_write.OffsetHigh = 0 ;
@@ -284,7 +284,7 @@ _Inline void async_flush_outbuf(void) {
                 else if ( error == ERROR_OPERATION_ABORTED )
                 {
                    p_error(P_ERROR_DOSWRITE, error,
-                            MODULE_ASYNC, __LINE__, (U32)dev_path);
+                            MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
                     return ;
                 }
                 else
@@ -292,7 +292,7 @@ _Inline void async_flush_outbuf(void) {
                    DWORD errorflags ;
                    COMSTAT comstat ;
                    p_error(P_ERROR_DOSWRITE, error,
-                            MODULE_ASYNC, __LINE__, (U32)dev_path);
+                            MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
                    ClearCommError( (HANDLE) dev_handle, &errorflags, &comstat ) ;
                    return ;
                 }
@@ -301,7 +301,7 @@ _Inline void async_flush_outbuf(void) {
           else 
           {
              p_error(P_ERROR_DOSWRITE, error,
-                      MODULE_ASYNC, __LINE__, (U32)dev_path);
+                      MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
              return ;
           }
        }
@@ -319,7 +319,7 @@ _Inline void async_flush_outbuf(void) {
 
   if (BytesWritten != outbuf_idx)
     p_error(P_ERROR_DOSWRITE, rc,
-	    MODULE_ASYNC, __LINE__, (U32)dev_path);
+	    MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
   if (watch_carrier && !async_connected())
     pdll_carrier_lost();
   outbuf_idx = 0;
@@ -348,7 +348,7 @@ _Inline void async_set_break_on(void) {
 #endif 
   if (rc)
     p_error(P_ERROR_DOSDEVIOCTL, rc,
-	    MODULE_ASYNC, __LINE__, (U32)dev_path);
+	    MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
 }
 
 _Inline void async_set_break_off(void) {
@@ -374,7 +374,7 @@ _Inline void async_set_break_off(void) {
 #endif
   if (rc)
     p_error(P_ERROR_DOSDEVIOCTL, rc,
-	    MODULE_ASYNC, __LINE__, (U32)dev_path);
+	    MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
 }
 
 #endif /* XYZ_DLL */

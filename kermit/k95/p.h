@@ -1004,7 +1004,7 @@ typedef struct _P_CFG {
                                     /* connected to */
   U16 socket_port;                  /* Stream socket port to be used. */
 
-  U32 dev_handle;                   /* Handle to an already open */
+  intptr_t dev_handle;              /* Handle to an already open */
                                     /* communication device */
 
   U32 inbuf_size;                   /* Size of communication input buffer */

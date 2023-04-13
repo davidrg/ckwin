@@ -27,7 +27,7 @@
  */
 
 
-_PROTOTYP( U32 _System status_func, (U32, U32, U32, U32, U32, U32));
+_PROTOTYP( U32 _System status_func, (U32, intptr_t, U32, U32, U32, intptr_t));
 _PROTOTYP( U32 _System s_open_func, (U8 **, U32 *, U32 *, U32 *,
                        U32 *, U32 *,
                        U8 *, U8 *, U8 *));

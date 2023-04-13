@@ -98,7 +98,7 @@ ioctl(passive_socket, FIONBIO, (char *)&true, sizeof(U32))
 #else
               *h_errno,
 #endif
-		  MODULE_SOCKET, __LINE__, (U32)socket_remote);
+		  MODULE_SOCKET, __LINE__, (intptr_t)socket_remote);
 	server.sin_addr.s_addr = *((unsigned long *)hostnm->h_addr);
       }
       if ((dev_handle = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -155,7 +155,7 @@ _Inline U32 tcp_connect(void) {
 #else
              *h_errno,
 #endif 
-	    MODULE_SOCKET, __LINE__, (U32)inet_ntoa(client.sin_addr));
+	    MODULE_SOCKET, __LINE__, (intptr_t)inet_ntoa(client.sin_addr));
   socket_remote = hostnm->h_name;
 
       if (

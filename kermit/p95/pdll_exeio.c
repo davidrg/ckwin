@@ -82,7 +82,7 @@ exe_getch_buf()
         if (rc && rc != ERROR_NO_DATA) 
         {
             p_error(P_ERROR_DOSREAD, rc, 
-                     MODULE_EXE, __LINE__, (U32)"exe_io");
+                     MODULE_EXE, __LINE__, (intptr_t)"exe_io");
             pdll_aborted = A_CARRIER_LOST;
             return;
         }
@@ -113,7 +113,7 @@ exe_flush_outbuf()
 	if (rc)
 	    p_error(P_ERROR_DOSWRITE, rc,
 		     MODULE_EXE, __LINE__,
-		     (U32)"exe_io");
+		     (intptr_t)"exe_io");
 	if (BytesWritten == outbuf_idx) {
 	    outbuf_idx = 0;
 	    return;
@@ -125,7 +125,7 @@ exe_flush_outbuf()
 	    }
 	}
     }
-    p_error(P_ERROR_DOSWRITE, rc, MODULE_EXE, __LINE__, (U32)"exe_io");
+    p_error(P_ERROR_DOSWRITE, rc, MODULE_EXE, __LINE__, (intptr_t)"exe_io");
 }
 
 

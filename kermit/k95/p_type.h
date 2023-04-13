@@ -34,6 +34,11 @@
 #ifndef _TYPEDEFS_H_
 #define _TYPEDEFS_H_
 
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+typedef int intptr_t;
+#endif
+
 typedef unsigned long   U32;
 typedef long            S32;
 typedef unsigned short  U16;
