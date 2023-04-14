@@ -855,26 +855,6 @@ KUIOBJS = \
     $(OUTDIR)\kappwin.obj  \
     $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
 
-PDLLDIR = pdll
-PDLLOBJS = \
-$(PDLLDIR)\pdll_common.obj \
-$(PDLLDIR)\pdll_crc.obj \
-$(PDLLDIR)\pdll_dev.obj \
-$(PDLLDIR)\pdll_error.obj \
-$(PDLLDIR)\pdll_exeio.obj \
-$(PDLLDIR)\pdll_global.obj \
-$(PDLLDIR)\pdll_main.obj \
-$(PDLLDIR)\pdll_omalloc.obj \
-$(PDLLDIR)\pdll_r.obj \
-$(PDLLDIR)\pdll_ryx.obj \
-$(PDLLDIR)\pdll_rz.obj \
-$(PDLLDIR)\pdll_s.obj \
-$(PDLLDIR)\pdll_syx.obj \
-$(PDLLDIR)\pdll_sz.obj \
-$(PDLLDIR)\pdll_tcpipapi.obj \
-$(PDLLDIR)\pdll_x_global.obj \
-$(PDLLDIR)\pdll_z.obj \
-$(PDLLDIR)\pdll_z_global.obj \
 
 os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
 !if "$(CMP)" != "OWCL386"
