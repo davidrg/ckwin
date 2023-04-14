@@ -869,7 +869,7 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 # TODO: Figure out how to build this for OS/2 with Watcom: k2crypt.dll
 !endif
 
-# docs pcfonts.dll cksnval.dll 
+# docs pcfonts.dll
 
 
 
@@ -1062,10 +1062,6 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
 !else
         rc -p -x1 ckopcf.res pcfonts.dll
 !endif
-
-cksnval.dll: cksnval.obj cksnval.def ckoker.mak
-	$(CC) $(CC2) $(DEBUG) $(DLL) cksnval.obj \
-        cksnval.def $(OUT) $@ $(LIBS)
 
 k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
 	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
@@ -1386,14 +1382,6 @@ ckon30.obj: ckonov.c ckotcp.h
 	$(CC) $(CC2) $(CFLAGS) -DTCPERRNO -I$(LWP30INC) \
            $(DEBUG) $(OPT) $(DLL) -c ckonov.c
         ren ckonov.obj ckon30.obj
-
-cksnval$(O):  ckoetc.c
-    @echo > cksnval.obj
-    del cksnval.obj
-    ren ckoetc.obj ckoetc.o
-	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) -DREXXDLL /Gn- -c ckoetc.c 
-    ren ckoetc.obj cksnval.obj
-    ren ckoetc.o ckoetc.obj
 
 ckoker.res: ckoker.rc
 !if "$(CMP)" == "OWCL386"
