@@ -1292,8 +1292,8 @@ ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 
 ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
-ckoshs(O):      ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
-ckorbf(O):      ckorbf.c ckorbf.h ckcdeb.h
+ckoshs$(O):     ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
 
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
