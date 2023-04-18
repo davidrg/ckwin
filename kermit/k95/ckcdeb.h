@@ -7034,11 +7034,7 @@ _PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
 #ifndef _INTPTR_T_DEFINED
 typedef int intptr_t;
 #endif /* _INTPTR_T_DEFINED */
-#ifndef __WATCOMC__
 typedef unsigned long DWORD_PTR;
-typedef unsigned long UINT_PTR;
-typedef long INT_PTR;
-#endif /* __WATCOMC__ */
 #define CK_HAVE_INTPTR_T
 #endif /* CK_HAVE_INTPTR_T */
 #endif /* NT */
