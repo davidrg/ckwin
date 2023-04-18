@@ -38,6 +38,7 @@
 #   CKF_SSL     Turned off always (SSL support doesn't currently build)
 #   CKF_LOGIN   Turned off when building with Visual C++ 5.0 or older
 #   CKF_NTLM    Turned off when building with Visual C++ 5.0 or older
+#   CKF_DECNET  x86 and Alpha, Windows Server 2003 and older (Visual C++ 2019 and older)
 #
 # All other flags should be set prior to starting the build, for example:
 #   set CKF_DEBUG=no
@@ -109,7 +110,7 @@ CKT_NT31=yes
 CKT_NT31=yes
 !endif
 
-!if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
+!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
 # OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
 !endif

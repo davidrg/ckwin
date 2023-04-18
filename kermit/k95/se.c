@@ -31,6 +31,7 @@ BOOL ShellExecuteEx(LPSHELLEXECUTEINFO lpExecInfo);
 /* Any windows compiler too old to support this will be 32-bits (or less) */
 typedef int intptr_t;
 typedef unsigned long DWORD_PTR;
+#define CK_HAVE_INTPTR_T
 #endif
 
 int 

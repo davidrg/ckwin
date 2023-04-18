@@ -71,12 +71,18 @@
 #define bzero(x,y) memset(x,0,y)
 #define BSDSELECT
 
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+typedef int intptr_t;
+#define CK_HAVE_INTPTR_T
+#endif
+
 #define MAXPORTS 32
 struct PORT
 {
     short id ;
-    int   lsocket ;
-    int   asocket ;
+    SOCKET   lsocket ;
+    SOCKET   asocket ;
     char  * k95cmd ;
     int   showcmd;
 } ports[MAXPORTS] ;
@@ -86,7 +92,7 @@ int portcount = 0 ;
 struct CHILDREN
 {
     HANDLE hProcess;
-    int    socket;
+    SOCKET socket;
 } children[MAXCHILDREN];
 int childcount = 0;
 
@@ -116,10 +122,16 @@ VOID IKSDCtrlHandler (DWORD opcode);
 void  WINAPI IKSDCtrlHandler (DWORD opcode);
 #endif
 DWORD IKSDInitialization (DWORD argc, LPTSTR *argv, DWORD *specificError);
-HANDLE StartKermit( int socket, char * cmdline, int ShowCmd, int * );
+HANDLE StartKermit( SOCKET socket, char * cmdline, int ShowCmd, SOCKET * );
 
 void
-SvcDebugOut(LPSTR String, DWORD Status)
+SvcDebugOut(LPSTR String,
+#ifdef _WIN64
+            intptr_t
+#else
+            DWORD
+#endif
+            Status)
 {
 #ifdef DEBUG
     CHAR  Buffer[1024];
@@ -143,7 +155,7 @@ init_children(void)
     int i;
     for ( i=0 ;i<MAXCHILDREN;i++ ) {
         children[i].hProcess = INVALID_HANDLE_VALUE;
-        children[i].socket = (int)INVALID_HANDLE_VALUE;
+        children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
     }   
 }
 
@@ -154,11 +166,11 @@ kill_children(void)
 
     for (i=0; i<MAXCHILDREN && childcount; i++) {
         if ( children[i].hProcess != INVALID_HANDLE_VALUE ) {
-            SvcDebugOut("TerminateProcess  %d\n",(int)children[i].hProcess);
+            SvcDebugOut("TerminateProcess  %d\n", (intptr_t)children[i].hProcess);
             TerminateProcess(children[i].hProcess, 1111);
             closesocket(children[i].socket);
             CloseHandle(children[i].hProcess);
-            children[i].socket = (int)INVALID_HANDLE_VALUE;
+            children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
             children[i].hProcess = INVALID_HANDLE_VALUE;
             childcount--;       
         }
@@ -179,7 +191,7 @@ check_children(void)
                     SvcDebugOut("Closing socket and process handle\n",0);
                     closesocket(children[i].socket);
                     CloseHandle(children[i].hProcess);
-                    children[i].socket = (int)INVALID_HANDLE_VALUE;
+                    children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
                     children[i].hProcess = INVALID_HANDLE_VALUE;
                     childcount--;       
                     /* Do not increase found if we reduce childcount */
@@ -318,7 +330,7 @@ listen_thread( void * dummy )
     int i, j;
     int on = 1;
     HANDLE hProcess;
-    int sockdup;
+    SOCKET sockdup;
 
     SvcDebugOut("Servicing ports:\n",0);
     for ( i=0;i<portcount ;i++ )
@@ -616,12 +628,12 @@ ParseCmdLine( int argc, char * argv[], DWORD * specificError )
 }
 
 HANDLE
-StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
+StartKermit( SOCKET socket, char * cmdline, int ShowCmd, SOCKET *psockdup )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
    STARTUPINFO si ;
-   HANDLE sockdup = INVALID_HANDLE_VALUE ;
+   SOCKET sockdup = (SOCKET)INVALID_HANDLE_VALUE ;
    static HANDLE hCurrent = INVALID_HANDLE_VALUE;
    static char buf[512] ;
 
@@ -633,10 +645,10 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
     if ( hCurrent == INVALID_HANDLE_VALUE )
         hCurrent = GetCurrentProcess();
 
-    *psockdup = (int)INVALID_HANDLE_VALUE;
+    *psockdup = (SOCKET)INVALID_HANDLE_VALUE;
 
    if (!DuplicateHandle( hCurrent, (HANDLE) socket,
-                    hCurrent, &sockdup,
+                    hCurrent, (LPHANDLE)&sockdup,
                     DUPLICATE_SAME_ACCESS, TRUE,
                     DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS ))
    {
@@ -656,7 +668,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
 #else
     strcpy( buf, "iksdnt.exe -# 132 -A " ) ;
 #endif /* DEBUG */
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -678,7 +694,7 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
                       ))
     {
         CloseHandle(StartKermitProcessInfo.hThread);
-        *psockdup = (int)sockdup;
+        *psockdup = sockdup;
         return (StartKermitProcessInfo.hProcess);
     }
 
@@ -688,7 +704,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
 #else
     strcpy( buf, "k95.exe -# 132 -A " ) ;
 #endif /* DEBUG */
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -709,12 +729,12 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
                       ))
     {
         CloseHandle(StartKermitProcessInfo.hThread);
-        *psockdup = (int)sockdup;
+        *psockdup = sockdup;
         return (StartKermitProcessInfo.hProcess);
     }
 
     SvcDebugOut("CreateProcess() failed gle=%ul\n",GetLastError());
-    CloseHandle(sockdup) ;
+    CloseHandle((HANDLE)sockdup) ;
     return(INVALID_HANDLE_VALUE);
 #else /* NT */
     Not built for OS/2 yet.

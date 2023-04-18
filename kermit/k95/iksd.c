@@ -95,12 +95,12 @@ ParseCmdLine( int argc, char * argv[] )
 }
 
 HANDLE
-StartKermit( int socket, char * cmdline, int ShowCmd ) 
+StartKermit( SOCKET socket, char * cmdline, int ShowCmd )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
    STARTUPINFO si ;
-   HANDLE sockdup = INVALID_HANDLE_VALUE ;
+   SOCKET sockdup = (SOCKET) INVALID_HANDLE_VALUE ;
    static char buf[512] ;
 
    memset( &si, 0, sizeof(STARTUPINFO) ) ;
@@ -109,11 +109,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
    si.wShowWindow = ShowCmd;
 
    if (!DuplicateHandle( GetCurrentProcess(), (HANDLE) socket, 
-                    GetCurrentProcess(), &sockdup,
+                    GetCurrentProcess(), (HANDLE) &sockdup,
                     DUPLICATE_SAME_ACCESS, TRUE, 
                     DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS ))
    {
-      closesocket( (int) socket ) ;
+      closesocket( socket ) ;
       fprintf( stderr, "\nINTERNET KERMIT SERVICE DAEMON FATAL ERROR:\n" );
       fprintf( stderr, " You are using a WinSOCK which does not allow socket handles\n");
       fprintf( stderr, " to be duplicated or shared with child processes.\n\n");
@@ -127,7 +127,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
 
 #ifdef DEBUG
     strcpy( buf, "msdev.exe cknker.exe -# 132 -A " ) ;
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -145,7 +149,7 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
                        &StartKermitProcessInfo  /* Process info */
                       )) 
     {
-        closesocket( (int) sockdup ) ;
+        closesocket( sockdup ) ;
         return (StartKermitProcessInfo.hProcess);
     } 
 #endif /* DEBUG */
@@ -155,7 +159,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
 #else
     strcpy( buf, "iksdnt.exe -# 132 -A " ) ;
 #endif /* DEBUG */
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -173,7 +181,7 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
                        &StartKermitProcessInfo  /* Process info */
                       )) 
     {
-        closesocket( (int) sockdup ) ;
+        closesocket( sockdup ) ;
         return (StartKermitProcessInfo.hProcess);
     } 
 
@@ -182,7 +190,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
 #else
     strcpy( buf, "k95.exe -# 132 -A " ) ;
 #endif /* DEBUG */
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -200,12 +212,12 @@ StartKermit( int socket, char * cmdline, int ShowCmd )
                        &StartKermitProcessInfo  /* Process info */
                       )) 
     {
-        closesocket( (int) sockdup ) ;
+        closesocket( sockdup ) ;
         return (StartKermitProcessInfo.hProcess);
     } 
 
     printf("CreateProcess() failed gle=%ul\n",GetLastError());
-    closesocket( (int) sockdup ) ;
+    closesocket( sockdup ) ;
     return(FALSE);
 #else /* NT */
     Not built for OS/2 yet.
@@ -417,7 +429,7 @@ main( int argc, char * argv[] ) {
           if ( ports[i].asocket,ports[i].k95cmd )
               printf("Starting IKSD with socket %d and command %s\n",ports[i].asocket,ports[i].k95cmd);
           else 
-              printf("Starting IKSD with socket %d\n");
+              printf("Starting IKSD with socket %d\n",ports[i].asocket);
          hProcess = StartKermit(ports[i].asocket,ports[i].k95cmd, ports[i].showcmd) ;
 	 if ( hProcess != INVALID_HANDLE_VALUE )
 	     CloseHandle(hProcess);

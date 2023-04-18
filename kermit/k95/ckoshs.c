@@ -30,6 +30,7 @@
 
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>
+#include <process.h>
 
 #include "ckcdeb.h"
 #include "ckcker.h"
@@ -422,7 +423,7 @@ int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
         tb[1].t_dflt = NULL;
         tb[1].t_echo = echo ? 1 : 2;
 
-        rc = uq_mtxt(prompt, NULL, 2, tb);
+        rc = uq_mtxt((char*)prompt, NULL, 2, tb);
         if (rc == 0) {
             debug(F100, "sshsubsys - auth_prompt - user canceled", "", 0);
             rc = -1; /* failed */
@@ -439,7 +440,7 @@ int auth_prompt(const char* prompt, char* buf, size_t len, int echo,
         return rc;
     } else {
         int rc;
-        rc = uq_txt(NULL, prompt, echo ? 1 : 2, NULL, buf, len, NULL,
+        rc = uq_txt(NULL, (char*)prompt, echo ? 1 : 2, NULL, buf, len, NULL,
                     DEFAULT_UQ_TIMEOUT);
         if (rc == 1) return 0; /* 1 == success */
         debug(F100, "sshsubsys - auth_prompt - user canceled", "", 0);
@@ -488,7 +489,7 @@ static int verify_known_host(ssh_client_state_t * state) {
     unsigned char* hash = NULL;
     size_t hash_length = 0;
     enum ssh_known_hosts_e host_state;
-    char* key_type;
+    const char* key_type;
     char* hexa;
     char msg[2048], msg2[2048];;
     char* error_msg;
@@ -839,7 +840,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
             debug(F110, "sshsubsys - kdbint auth - single prompt mode - prompt:",
                   prompt, 0);
 
-            rc = uq_txt(combined_instructions, prompt, echo ? 1 : 2, NULL,
+            rc = uq_txt(combined_instructions, (char*)prompt, echo ? 1 : 2, NULL,
                         buffer, sizeof(buffer), NULL, DEFAULT_UQ_TIMEOUT);
             if (rc == 1) {
                 rc = ssh_userauth_kbdint_setanswer(
@@ -897,7 +898,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
 
                 tb[i].t_buf = responses[i];
                 tb[i].t_len = 128;
-                tb[i].t_lbl = prompt;
+                tb[i].t_lbl = (char*)prompt;
                 tb[i].t_dflt = NULL;
                 tb[i].t_echo = echo ? 1 /* yes */ : 2; /* no - asterisks */
             }
@@ -1508,7 +1509,8 @@ static int connect_ssh(ssh_client_state_t* state) {
  *
  * @param parameters SSH client thread parameters
  */
-void ssh_thread(ssh_thread_params_t *parameters) {
+
+unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
     int rc = 0;
 
     ssh_client_state_t* state = NULL;
@@ -1524,7 +1526,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     state = ssh_client_state_new(parameters->parameters);
     if (state == NULL) {
         ssh_client_close(NULL, client, SSH_ERR_STATE_MALLOC_FAILED);
-        return;
+        return 0;
     }
 
     free(parameters); /* Don't need it anymore */
@@ -1535,7 +1537,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     if (state->session == NULL) {
         debug(F100, "sshsubsys - Failed to create SSH session", "", 0);
         ssh_client_close(state, client, SSH_ERR_NEW_SESSION_FAILED);
-        return;
+        return 0;
     }
 
     rc = connect_ssh(state);
@@ -1543,7 +1545,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     if (rc != SSH_OK) {
         debug(F111, "sshsubsys - Session start failed - disconnecting", "rc", rc);
         ssh_client_close(state, client, rc);
-        return;
+        return 0;
     }
 
     /* TODO: Setup port forwarding, etc */
@@ -1760,7 +1762,7 @@ void ssh_thread(ssh_thread_params_t *parameters) {
     CloseHandle(events[1]); /* Close the keepalive timer */
     ssh_client_close(state, client, rc);
     debug(F100, "sshsubsys - thread terminate", "", 0);
-    return;
+    return 0;
 }
 
 

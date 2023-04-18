@@ -77,6 +77,10 @@ extern UCHAR NetBiosRemote[] ;
 #include "ikui.h"
 #endif /* KUI */
 
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif
+
 #ifdef NETCONN
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
@@ -2591,7 +2595,7 @@ protoString(void)
 
 #ifdef SSHBUILTIN
         case NET_SSH:
-            ckstrncpy(buf, (char *)ssh_proto_ver(),sizeof(buf));
+            ckstrncpy(buf, ssh_proto_ver(),sizeof(buf));
             break;
 #endif /* SSHBUILTIN */
 

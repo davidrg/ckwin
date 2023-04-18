@@ -74,7 +74,7 @@ LRESULT CALLBACK KClientWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
+VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
 {
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);

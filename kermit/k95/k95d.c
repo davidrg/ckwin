@@ -32,7 +32,7 @@ int portcount = 0 ;
 struct CHILDREN
 {
     HANDLE hProcess;
-    int    socket;
+    SOCKET socket;
 } children[MAXCHILDREN];
 int childcount = 0;
 
@@ -42,7 +42,7 @@ init_children(void)
     int i;
     for ( i=0 ;i<MAXCHILDREN;i++ ) {
         children[i].hProcess = INVALID_HANDLE_VALUE;
-        children[i].socket = (int)INVALID_HANDLE_VALUE;
+        children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
     }   
 }
 
@@ -58,7 +58,7 @@ check_children(void)
                 if ( dwExit != STILL_ACTIVE ) {
                     closesocket(children[i].socket);
                     CloseHandle(children[i].hProcess);
-                    children[i].socket = (int)INVALID_HANDLE_VALUE;
+                    children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
                     children[i].hProcess = INVALID_HANDLE_VALUE;
                     childcount--;       
                     /* Do not increase found if we reduce childcount */
@@ -288,15 +288,15 @@ ParseCfgFile( void )
 }
 
 HANDLE
-StartKermit( int socket, char * scriptfile, int ShowCmd, int * psockdup )
+StartKermit( SOCKET socket, char * scriptfile, int ShowCmd, SOCKET * psockdup )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
    STARTUPINFO si ;
-   HANDLE sockdup = INVALID_HANDLE_VALUE ;
+   SOCKET sockdup = (SOCKET)INVALID_HANDLE_VALUE ;
    static char buf[512] ;
 
-    *psockdup = (int)INVALID_HANDLE_VALUE;
+    *psockdup = (SOCKET)INVALID_HANDLE_VALUE;
 
    memset( &si, 0, sizeof(STARTUPINFO) ) ;
    si.cb = sizeof(STARTUPINFO);
@@ -304,7 +304,7 @@ StartKermit( int socket, char * scriptfile, int ShowCmd, int * psockdup )
    si.wShowWindow = ShowCmd;
 
    if (!DuplicateHandle( GetCurrentProcess(), (HANDLE) socket,
-                    GetCurrentProcess(), &sockdup,
+                    GetCurrentProcess(), (LPHANDLE)&sockdup,
                     DUPLICATE_SAME_ACCESS, TRUE,
                     DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS ))
    {
@@ -319,7 +319,11 @@ StartKermit( int socket, char * scriptfile, int ShowCmd, int * psockdup )
       exit( 2 ) ;
    }
    strcpy( buf, "k95.exe -j $" ) ;
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
    ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
    strcat( buf, " -C \"" ) ;
    strcat( buf, scriptfile ) ;
    strcat( buf, "\"" ) ;
@@ -339,7 +343,7 @@ StartKermit( int socket, char * scriptfile, int ShowCmd, int * psockdup )
                       ))
     {
         CloseHandle(StartKermitProcessInfo.hThread);
-        *psockdup = (int)sockdup;
+        *psockdup = sockdup;
         return (StartKermitProcessInfo.hProcess);
     }
     else
@@ -372,7 +376,7 @@ main( int argc, char * argv[] ) {
 #ifdef NT
     WSADATA data ;
     HANDLE hProcess;
-    int sockdup = (int)INVALID_HANDLE_VALUE;
+    SOCKET sockdup = (SOCKET)INVALID_HANDLE_VALUE;
 
    printf("Kermit-95 Daemon\n");
    rc = WSAStartup( MAKEWORD( 2, 0 ), &data ) ;

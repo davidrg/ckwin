@@ -327,6 +327,10 @@ struct timezone {
 #endif /* NT */
 #endif /* OS2 */
 
+#ifdef NT
+#include "ckoreg.h"
+#endif
+
 #ifndef INADDR_NONE			/* 2010-03-29 */
 #define INADDR_NONE -1
 #endif	/* INADDR_NONE */
@@ -10349,7 +10353,7 @@ ssl_auth() {
         }
 
         ckmakmsg(path,CKMAXPATH,
-                 (char *)GetAppData(1),"kermit 95/certs",NULL,NULL);
+                 GetAppData(1),"kermit 95/certs",NULL,NULL);
         if (SSL_CTX_load_verify_locations(ssl_ftp_ctx,NULL,path) == 0)  {
             debug(F110,"ftp ssl_auth unable to load path",path,0);
             if (ssl_debug_flag)
@@ -10357,7 +10361,7 @@ ssl_auth() {
         }
 
         ckmakmsg(path,CKMAXPATH,
-                 (char *)GetAppData(0),"kermit 95/certs",NULL,NULL);
+                 GetAppData(0),"kermit 95/certs",NULL,NULL);
         if (SSL_CTX_load_verify_locations(ssl_ftp_ctx,NULL,path) == 0)  {
             debug(F110,"ftp ssl_auth unable to load path",path,0);
             if (ssl_debug_flag)
@@ -10371,7 +10375,7 @@ ssl_auth() {
                 printf("?Unable to load verify-file: %s\r\n",path);
         }
 
-        ckmakmsg(path,CKMAXPATH,(char *)GetAppData(1),
+        ckmakmsg(path,CKMAXPATH,GetAppData(1),
 		 "kermit 95/ca_certs.pem",NULL,NULL);
         if (SSL_CTX_load_verify_locations(ssl_ftp_ctx,path,NULL) == 0) {
             debug(F110,"ftp ssl_auth unable to load path",path,0);
@@ -10379,7 +10383,7 @@ ssl_auth() {
                 printf("?Unable to load verify-file: %s\r\n",path);
         }
 
-        ckmakmsg(path,CKMAXPATH,(char *)GetAppData(0),
+        ckmakmsg(path,CKMAXPATH,GetAppData(0),
 		 "kermit 95/ca_certs.pem",NULL,NULL);
         if (SSL_CTX_load_verify_locations(ssl_ftp_ctx,path,NULL) == 0) {
             debug(F110,"ftp ssl_auth unable to load path",path,0);

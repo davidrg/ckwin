@@ -7031,11 +7031,16 @@ _PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
                                     LPSTR lpszShortPath, DWORD cchBuffer));
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
 typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
+#ifndef __WATCOMC__
 typedef unsigned long DWORD_PTR;
-typedef unsigned int UINT_PTR;
+typedef unsigned long UINT_PTR;
 typedef long INT_PTR;
-#endif
+#endif /* __WATCOMC__ */
+#define CK_HAVE_INTPTR_T
+#endif /* CK_HAVE_INTPTR_T */
 #endif /* NT */
 
 /*

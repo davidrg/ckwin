@@ -175,7 +175,7 @@ CFLAGS = $(CFLAGS) -DCKT_NT35_OR_31
 CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
 !endif
 
-!if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
+!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
 # OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
 !endif

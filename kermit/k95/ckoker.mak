@@ -1214,7 +1214,7 @@ ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h c
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h ckoi31.h \
                 ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-                ckcnet.h ckctel.h kui\ikui.h
+                ckcnet.h ckctel.h kui\ikui.h ckossh.h
 ckoco4$(O):     ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckcasc.h \
                 ckokey.h ckokvb.h
 ckoco5$(O):     ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h 
@@ -1250,7 +1250,7 @@ ckowys$(O):     ckowys.c ckowys.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h c
 ckcnet$(O):	ckcnet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckonet.h ckotcp.h \
                 ckuusr.h ckcsig.h ckocon.h ckuath.h ck_ssl.h ckossl.h ckosslc.h
 ckcftp$(O):     ckcftp.c ckcdeb.h ckoker.h ckcasc.h ckcker.h ckucmd.h ckuusr.h ckcnet.h ckctel.h \
-                ckcxla.h ckuath.h ck_ssl.h ckoath.h
+                ckcxla.h ckuath.h ck_ssl.h ckoath.h ckoreg.h
 ckctel$(O):	ckctel.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckctel.h ckcnet.h ckocon.h ck_ssl.h \
                 ckossl.h ckosslc.h
 ckonet$(O):	ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \

@@ -19,9 +19,11 @@
 
 
 #ifndef CK_HAVE_INTPTR_T
+#ifndef __WATCOMC__
 /* Any windows compiler too old to support this will be 32-bits (or less) */
-typedef unsigned int UINT_PTR;
-#endif
+typedef unsigned long UINT_PTR;
+#endif /* __WATCOMC__ */
+#endif /* CK_HAVE_INTPTR_T */
 
 const int MAXNUMCOL = 256;
 struct _K_CLIENT_PAINT;
