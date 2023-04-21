@@ -197,17 +197,17 @@ jobs:
         call mkdist.bat
         
         REM Check outputs
-        if not exist dist\cknker.exe exit /b 1
-        if not exist dist\iksd.exe exit /b 1
-        if not exist dist\iksdsvc.exe exit /b 1
-        if not exist dist\k95d.exe exit /b 1
-        if not exist dist\rlogin.exe exit /b 1
-        if not exist dist\telnet.exe exit /b 1
-        if not exist dist\textps.exe exit /b 1
-        if not exist dist\ctl3dins.exe exit /b 1
-        if not exist dist\k95g.exe exit /b 1
-        if not exist dist\k95crypt.dll exit /b 1
-        if not exist dist\p95.dll exit /b 1
+        set MISSING_BUILD_RESULTS=
+        REM ctl3dins.exe
+        for %%y in (cknker.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll) do (
+          if not exist dist\%%y echo Build result not found: %%y
+          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+          if not exist dist\%%y set FAILED=yes
+        )
+
+        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
+        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
+        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
 
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\
