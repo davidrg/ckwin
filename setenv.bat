@@ -60,15 +60,46 @@ REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
 
+REM Figure out if we're doing a 64bit build or a 32bit one (this affects our
+REM choices for some libraries later on)
+set CKB_BITS_64=no
+if exist %WATCOM%\binnt\wcl386.exe goto :bitcheckdone
+cl 2>&1 | findstr /C:"for x64" > nul
+if %errorlevel% == 0 goto :bits64
+
+cl 2>&1 | findstr /C:"for Itanium" > nul
+if %errorlevel% == 0 goto :bits64
+
+REM TODO: How do you differentiate ARM32 (WinRT) and ARM64 (modern windows-on-ARM)
+cl 2>&1 | findstr /C:"for ARM" > nul
+if %errorlevel% == 0 goto :bits64
+
+REM Yes, the 64bit Windows for Alpha compiler exist. No, you can't run its output
+REM on anything (unless you happen to work for Microsoft)
+cl 2>&1 | findstr /R /C:"Digital.*Alpha.*Version 13.0" > nul
+if %errorlevel% == 0 goto :bits64
+:bits64
+REM Targeting a 64bit host (x86-64, IA64, ARM64, AXP64)
+set CKB_BITS_64=yes
+
+REM These libraries aren't supported for 64bit targets - force them off
+set CKF_SRP=no
+set CKF_K4W=no
+set CKF_SUPERLAT=no
+:bitcheckdone
+
 echo Searching for Optional Dependencies...
 
 REM base include path - this is required for both Windows and OS/2
 set ckinclude=%root%\kermit\k95
 
 REM See if the user has the SuperLAT SDK (*extremely* unlikely)
+if "%CKF_SUPERLAT%" == "no" echo Skipping check for SuperLAT
+if "%CKF_SUPERLAT%" == "no" goto :novcpkgzlib
 set CKF_SUPERLAT=no
 if exist %root%\superlat\include\latioc.h set CKF_SUPERLAT=yes
 if exist %root%\superlat\include\latioc.h set ckinclude=%ckinclude%;%root%\superlat\include
+:nosuperlat
 
 REM This and everything else is windows-specific.
 set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
@@ -118,9 +149,20 @@ if exist %vcpkg_installed%\bin\zlib1.dll set CK_ZLIB_DIST_DLLS=%vcpkg_installed%
 if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :novcpkgssl
 if exist %vcpkg_installed%\lib\libssl.lib set CKF_SSL=yes
-if exist %vcpkg_installed%\bin\libcrypto-3.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3.dll %vcpkg_installed%\bin\libssl-3.dll
 if exist %vcpkg_installed%\bin\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
 if exist %vcpkg_installed%\tools\openssl\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\tools\openssl\openssl.exe
+
+REM The OpenSSL3 DLL names vary based on arch
+if "%CKB_BITS_64%" == "yes" goto :vcpkossl64bit
+REM else 32bit
+
+if exist %vcpkg_installed%\bin\libcrypto-3.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3.dll %vcpkg_installed%\bin\libssl-3.dll
+
+goto :novcpkgssl
+:vcpkossl64bit
+
+if exist %vcpkg_installed%\bin\libcrypto-3-x64.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3-x64.dll %vcpkg_installed%\bin\libssl-3-x64.dll
+
 :novcpkgssl
 
 if "%CKF_SSH%" == "no" echo Skipping check for libssh
@@ -162,9 +204,6 @@ if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
 if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
-REM OpenSSL 3.0.x
-if exist %openssl_root%\libcrypto-3.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
-
 REM OpenSSL 1.1.x
 if exist %openssl_root%\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
 
@@ -175,6 +214,20 @@ if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
+
+REM OpenSSL libraries that vary based on 32bit/64bit
+if "%CKB_BITS_64%" == "yes" goto :ossl64bit
+REM else 32bit
+
+REM OpenSSL 3.0.x
+if exist %openssl_root%\libcrypto-3.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
+
+goto :nossl
+:ossl64bit
+
+REM OpenSSL 3.0.x
+if exist %openssl_root%\libcrypto-3-x64.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3-x64.dll %openssl_root%\libssl-3-x64.dll
+
 :nossl
 
 REM libssh:
@@ -292,6 +345,8 @@ cl 2>&1 | findstr /C:"Version 9.0" > nul
 if %errorlevel% == 0 goto :vc2
 cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul
 if %errorlevel% == 0 goto :vc1
+cl 2>&1 | findstr /R /C:"AXP.*Version 8\.0" > nul
+if %errorlevel% == 0 goto :vc1axp
 cl 2>&1 | findstr /C:"Version 8.00" > nul
 if %errorlevel% == 0 goto :vc116
 
@@ -318,6 +373,14 @@ goto :semisupported
 
 :vc1
 set CK_COMPILER_NAME=Visual C++ 1.0 32-bit Edition
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
+set CKF_LIBDES=unsupported
+set CKF_CRYPTDLL=no
+goto :cvcdone
+
+:vc1axp
+set CK_COMPILER_NAME=Visual C++ 1.0 for Alpha AXP
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
