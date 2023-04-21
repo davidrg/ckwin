@@ -34,6 +34,8 @@ jobs:
         arch:
           - x86
           - x64
+          - arm
+          - arm64
         toolset:
           - 14.0
           - 14.2
@@ -149,7 +151,7 @@ jobs:
         cmake .
         nmake -f win32\Makefile.msc
 
-    - name: Build openssl
+    - name: Build openssl (x86)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
       shell: powershell
       run: |
@@ -167,7 +169,27 @@ jobs:
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
         perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        nmake        
+        nmake       
+
+    - name: Build openssl (ARM)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'arm'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
+        nmake
+
+    - name: Build openssl (ARM-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'arm64'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
+        nmake           
 
     - name: Build libssh
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'

@@ -69,11 +69,10 @@ if %errorlevel% == 0 goto :bits64
 cl 2>&1 | findstr /C:"for Itanium" > nul
 if %errorlevel% == 0 goto :bits64
 
-REM TODO: How do you differentiate ARM32 (WinRT) and ARM64 (modern windows-on-ARM)
-cl 2>&1 | findstr /C:"for ARM" > nul
+cl 2>&1 | findstr /C:"for ARM64" > nul
 if %errorlevel% == 0 goto :bits64
 
-REM Yes, the 64bit Windows for Alpha compiler exist. No, you can't run its output
+REM Yes, the 64bit Windows for Alpha compiler exists. No, you can't run its output
 REM on anything (unless you happen to work for Microsoft)
 cl 2>&1 | findstr /R /C:"Digital.*Alpha.*Version 13.0" > nul
 if %errorlevel% == 0 goto :bits64
@@ -389,6 +388,7 @@ set CKF_CRYPTDLL=no
 goto :cvcdone
 
 :vc1axp
+REM This is in the NT 3.50 Win32 SDK. Doesn't include Visual C++ libs/runtime (msvcrt)
 set CK_COMPILER_NAME=Visual C++ 1.0 for Alpha AXP
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
