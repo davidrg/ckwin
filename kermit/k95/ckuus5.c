@@ -11806,6 +11806,9 @@ initoptlist() {
 #ifdef __WATCOMC__
     makestr(&(optlist[noptlist++]),"__WATCOMC__");
 #endif
+#ifdef _WIN64                           /* 64bit Windows NT */
+    makestr(&(optlist[noptlist++]),"_WIN64");
+#endif
 #ifdef _MSC_VER
     sprintf(line,"_MSC_VER=%d",_MSC_VER); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
