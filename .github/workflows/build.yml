@@ -191,13 +191,21 @@ jobs:
         perl Configure VC-WIN64-ARM     
         nmake           
 
-    - name: Build libssh
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+    - name: Build libssh (x86/x86-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' && matrix.arch == 'x86-64')
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
+
+    - name: Build libssh (arm/arm64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' && matrix.arch == 'x64_arm64')
+      shell: powershell
+      run: |
+        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        nmake        
 
     - name: Build libdes
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
