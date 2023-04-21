@@ -5332,6 +5332,7 @@ typedef unsigned int u_int;
 /* CK_64BIT is a compile-time symbol indicating a true 64-bit build */
 /* meaning that longs and pointers are 64 bits */
 
+#ifndef NT
 #ifndef VMS				/* VMS Alpha and IA64 are 32-bit! */
 #ifndef CK_64BIT
 #ifdef _LP64				/* Solaris */
@@ -5365,6 +5366,11 @@ typedef unsigned int u_int;
 #endif	/* _LP64 */
 #endif	/* CK_64BIT */
 #endif	/* VMS */
+#else   /* NT */
+#ifdef _WIN64               /* NT can be 32bit or 64bit */
+#define CK_64BIT
+#endif /* _WIN64 */
+#endif /* NT */
 
 #ifndef CK_OFF_T
 #ifdef CK_64BIT

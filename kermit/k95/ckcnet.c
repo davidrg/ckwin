@@ -3216,11 +3216,15 @@ ckgetpeer() {
 #ifdef MACOSX10
     static unsigned int saddrlen;
 #else
+#ifdef NT
+    static int saddrlen;
+#else
 #ifdef CK_64BIT
     static socklen_t saddrlen;
 #else
     static int saddrlen;
 #endif	/* CK_64BIT */
+#endif /* NT */
 #endif /* MACOSX10 */
 #endif /* DEC_TCPIP */
 #endif /* UNIXWARE */

@@ -1421,7 +1421,9 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 #ifndef SOCKOPT_T
 #ifdef CK_64BIT
+#ifndef NT
 #define SOCKOPT_T socklen_t
+#endif  /* NT */
 #endif	/* CK_64BIT */
 #endif	/* SOCKOPT_T */
 
@@ -1466,7 +1468,9 @@ extern char * tcp_http_proxy_pwd;       /* Password of user */
 
 #ifndef GSOCKNAME_T
 #ifdef CK_64BIT
+#ifndef NT
 #define GSOCKNAME_T socklen_t
+#endif  /* NT */
 #endif	/* CK_64BIT */
 #endif	/* GSOCKNAME_T */
 
