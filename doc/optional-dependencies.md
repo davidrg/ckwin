@@ -100,6 +100,9 @@ nmake
 cd ..\..\
 ```
 
+If you're doing a 64bit build, use `VC-WIN64A` instead of `VC-WIN32` when configuring
+OpenSSL.
+
 If you want OpenSSL to work on versions of windows older than Vista, add the
 `-D"_WIN32_WINNT=0x502"` parameter to the Configure step.
 
