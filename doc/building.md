@@ -7,6 +7,10 @@ available and the minimum version of windows your build of CKW will support.
 You can use the linked table to help choose the compiler that best meets your
 needs if you're looking to run on versions of Windows older than XP.
 
+You can build for 32bit or 64bit windows - just setup your Visual C++ build
+environment accordingly and the C-Kermit build script should handle the rest.
+There is no functional difference between 32bit and 64bit builds.
+
 If you wish to also build the Dialer (entirely optional), you'll need ideally a 
 copy of Visual C++ 6.0 SP6. OpenWatcom 1.9 is also supported but due to a lack 
 of support for CTRL3D32 in that compiler the resulting application will look 
@@ -104,6 +108,9 @@ C:\Program Files\Microsoft Visual Studio 8\VC\bin\vcvars32.bat
 
 REM Visual C++ 2019:
 "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64_x86 -vcvars_ver=14.2
+
+REM Visual C++ 2022, 64bit:
+"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=14.3
 
 REM OpenWatcom:
 C:\watcom\owsetenv.bat
