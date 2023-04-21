@@ -17,6 +17,14 @@
 #define for if (0) {} else for
 #endif
 
+// Any compiler old enough to not have this will only be 32bits.
+#ifndef CK_HAVE_INTPTR_T
+#ifndef _INTPTR_T_DEFINED
+typedef int intptr_t;
+#define _INTPTR_T_DEFINED
+#endif /* _INTPTR_T_DEFINED */
+#endif /* CK_HAVE_INTPTR_T */
+
 // some useful functions
 
 char* newstr( char* );      // duplicate the passed string

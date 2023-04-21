@@ -73,7 +73,7 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 !ifdef NODEBUG
 # Non-debugging options
 
-!MESSAGE 32-bit Non-debugging build
+!MESSAGE Non-debugging build
 
 CFLAGS    = /c /W3 $(RTFLAG) /Ox /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
 CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
@@ -105,7 +105,7 @@ CFLAGS = $(CFLAGS) /GA
 !else
 # Debugging options
 
-!MESSAGE 32-bit Debugging build
+!MESSAGE Debugging build
 
 CFLAGS    = /c /W3 /MD /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
                 /Fo$(OUTDIR)\ /I$(KERMITDIR)
@@ -150,7 +150,7 @@ CDEFINES = $(CDEFINES) -D_CRT_SECURE_NO_DEPRECATE
 !ENDIF
 
 #--------------------------------------------------------------------------
-# 32-bit Build Rules
+# Build Rules
 
 $(OUTDIR):
     if not exist $(OUTDIR)\nul mkdir $(OUTDIR)
