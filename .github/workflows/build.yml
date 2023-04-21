@@ -144,7 +144,7 @@ jobs:
       shell: powershell
 
     - name: Build zlib
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' && matrix.arch == 'x86-64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
@@ -178,7 +178,7 @@ jobs:
         cd openssl\${{env.OPENSSL_VERSION}}
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
-        perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
+        perl Configure VC-WIN32-ARM     
         nmake
 
     - name: Build openssl (ARM-64)
@@ -188,7 +188,7 @@ jobs:
         cd openssl\${{env.OPENSSL_VERSION}}
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
-        perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
+        perl Configure VC-WIN64-ARM     
         nmake           
 
     - name: Build libssh
