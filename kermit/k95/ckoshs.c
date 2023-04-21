@@ -31,6 +31,7 @@
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>
 #include <process.h>
+#include <time.h>
 
 #include "ckcdeb.h"
 #include "ckcker.h"
@@ -1365,7 +1366,7 @@ static int ssh_tty_read(ssh_client_state_t* state, ssh_client_t *client) {
  * @returns An error code on failure
  */
 int ssh_tty_write(ssh_client_state_t* state, ssh_client_t *client) {
-    int rc;
+    int rc = 0;
 
     /* Read from the input buffer and write it to the tty channel */
     if (ring_buffer_lock(client->inputBuffer, INFINITE)) {
@@ -1705,6 +1706,7 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
             rc = ssh_tty_write(state, client);
             ResetEvent(client->flushEvent);
             if (rc != SSH_ERR_OK) {
+                debug(F111, "flush event returned an error state", "rc", rc);
                 break;
             }
         }
@@ -1741,17 +1743,19 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
         }
 
         /* We process the send and receive buffers every time around even if
-         * there haven't been anyN related events as it significantly reduces
+         * there haven't been any related events as it significantly reduces
          * or eliminates a certain race condition that was breaking file
          * transfers. Its perhaps not the correct solution but it works and
          * doesn't really have much of a downside. */
         rc = ssh_tty_write(state, client);
         if (rc != SSH_ERR_OK) {
+            debug(F111, "ssh_tty_write returned an error state", "rc", rc);
             break;
         }
 
         rc = ssh_tty_read(state, client);
         if (rc != SSH_ERR_OK) {
+            debug(F111, "ssh_tty_read returned an error state", "rc", rc);
             break;
         }
     }
