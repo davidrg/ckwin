@@ -23,7 +23,7 @@ public:
     ~KFontDialog();
 
     void show( PLOGFONT );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 protected:
     Bool doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl );

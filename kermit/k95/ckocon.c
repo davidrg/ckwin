@@ -3380,6 +3380,8 @@ JumpScroll( void ) {
     updmode = TTU_FAST ;
 }
 
+char* protoString(void); /* Defined in ckoco3.c */
+
 void
 SetConnectMode( BOOL mode, int ExitCode ) {
     con_event evt;

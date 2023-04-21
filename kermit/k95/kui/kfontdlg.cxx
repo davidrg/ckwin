@@ -124,7 +124,7 @@ Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 		{
 			// find the current state
 			//
-			long state = SendMessage( hCtrl, BM_GETCHECK, 0, 0 );
+			LRESULT state = SendMessage( hCtrl, BM_GETCHECK, 0, 0 );
 			HWND hfont = GetDlgItem( hPar, 1136 );
 			HWND hsize = GetDlgItem( hPar, 1138 );
 			if( state == BST_CHECKED ) {
@@ -147,7 +147,7 @@ Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFontDialog::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KFontDialog::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )

@@ -265,7 +265,7 @@ void KuiWindowThread( void* hInstance )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KuiSetProperty( int propid, long param1, long param2 )
+void KuiSetProperty( int propid, intptr_t param1, intptr_t param2 )
 {
     if( kui )
         kui->setProperty( propid, param1, param2 );
@@ -273,7 +273,7 @@ void KuiSetProperty( int propid, long param1, long param2 )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KuiGetProperty( int propid, long param1, long param2 )
+void KuiGetProperty( int propid, intptr_t param1, intptr_t param2 )
 {
     if( kui )
         kui->getProperty( propid, param1, param2 );

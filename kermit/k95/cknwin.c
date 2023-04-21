@@ -742,9 +742,9 @@ GetConsoleHwnd( void )
 static LPWORD 
 lpwAlign( LPWORD lpIn )
 {
-    ULONG ul;
+    ULONG_PTR ul;
 
-    ul = (ULONG) lpIn;
+    ul = (ULONG_PTR) lpIn;
     ul += 3;
     ul >>=2;
     ul <<=2;

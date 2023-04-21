@@ -22,7 +22,7 @@ public:
     ~KAbout();
 
     void show( Bool bVisible = TRUE );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
 private:
     Bool anotherIsRunning;

@@ -9617,7 +9617,7 @@ os2settitle(char *newtitle, int newpriv ) {
 
 #ifdef NT
 #ifdef KUI
-    KuiSetProperty(KUI_TITLE,(long)titlebuf,(long)0) ;
+    KuiSetProperty(KUI_TITLE,(intptr_t)titlebuf,(intptr_t)0) ;
     return 1;
 #else /* KUI */
     return !SetConsoleTitle(titlebuf);

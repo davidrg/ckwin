@@ -769,7 +769,7 @@ void IKTerm::mouseEvent( HWND hwnd, UINT msg, WPARAM wParam, int x, int y )
 
 #ifndef NOSCROLLWHEEL
         case WM_MOUSEWHEEL: {
-            signed char zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+            short zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
             char button;
             if( wParam & MK_LBUTTON )
                 button = FROM_LEFT_1ST_BUTTON_PRESSED;

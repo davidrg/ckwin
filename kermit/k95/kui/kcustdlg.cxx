@@ -74,13 +74,13 @@ LRESULT CALLBACK PaneListWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     switch( msg )
     {
         case WM_MOUSEMOVE:
-            done = win->mouseMove( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+            done = win->mouseMove( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
         case WM_RBUTTONDOWN:
-            done = win->rButtonDown( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+            done = win->rButtonDown( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
         case WM_RBUTTONUP:
-            done = win->rButtonUp( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+            done = win->rButtonUp( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
     }
 
@@ -341,7 +341,7 @@ Bool KStatusCustomDlg::rButtonUp( long wParam, long x, long y )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatusCustomDlg::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KStatusCustomDlg::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     switch( msg )

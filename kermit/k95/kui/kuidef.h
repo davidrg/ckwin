@@ -20,7 +20,7 @@
 // some useful functions
 
 char* newstr( char* );      // duplicate the passed string
-int GetGlobalID( void );    // return a unique id for CreateWindowEx
+intptr_t GetGlobalID( void );    // return a unique id for CreateWindowEx
 
 #define TRUE  1
 #define FALSE 0
@@ -60,7 +60,7 @@ typedef struct _K_CREATEINFO {
     int y;                      // y position
     int width;                  // window width
     int height;                 // window height
-    long objId;                 // ID or hmenu
+    intptr_t objId;             // ID or hmenu
 } K_CREATEINFO;
 
 // registry information

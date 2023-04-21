@@ -74,7 +74,7 @@ LRESULT CALLBACK KClientWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
+VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
 {
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);
@@ -1005,7 +1005,7 @@ void KClient::drawDisabledState( int w, int h )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KClient::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     _msgret = 1;
@@ -1188,20 +1188,20 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 #else /* COMMENT */
     case WM_SYSKEYDOWN:     // needed for VK_F10
         //debug(F111,"KClient::message","WM_SYSKEYDOWN",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, TRUE, TRUE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, TRUE, TRUE );
         break;
     case WM_KEYDOWN:
         //debug(F111,"KClient::message","WM_KEYDOWN",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, TRUE, FALSE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, TRUE, FALSE );
         break;
 
     case WM_SYSKEYUP:     // needed for VK_F10
         //debug(F111,"KClient::message","WM_SYSKEYUP",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, FALSE, TRUE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, FALSE, TRUE );
         break;
     case WM_KEYUP:
         //debug(F111,"KClient::message","WM_KEYUP",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, FALSE, FALSE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, FALSE, FALSE );
         break;
 #endif /* COMMENT */
     }

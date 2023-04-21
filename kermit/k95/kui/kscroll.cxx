@@ -226,7 +226,7 @@ Bool KScroll::pageUp()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KScroll::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     int     nScrollCode   = (int)     LOWORD(wParam);
     short   nPos          = (short)   HIWORD(wParam);

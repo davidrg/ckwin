@@ -711,29 +711,29 @@ Bool KStatus::endPaneMove( eAction action, long xpos )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KStatus::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     switch( msg )
     {    
         case WM_MOUSEMOVE:
             if( _customize )
-                ret = mouseMove( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = mouseMove( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_LBUTTONDOWN:
             if( _customize )
-                ret = lButtonDown( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = lButtonDown( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_LBUTTONUP:
             if( _customize )
-                ret = lButtonUp( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = lButtonUp( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_RBUTTONDOWN:
             if( _customize )
-                ret = rButtonDown( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+                ret = rButtonDown( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
 
         case WM_SETCURSOR:

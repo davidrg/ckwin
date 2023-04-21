@@ -68,7 +68,7 @@ void KAbout::show( Bool bVisible )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAbout::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KAbout::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )

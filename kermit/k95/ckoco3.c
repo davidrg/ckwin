@@ -12556,7 +12556,7 @@ settermtype( int x, int prompts )
     ttmacro(x) ;        /* Execute any user defined terminal type macros */
 
 #ifdef KUI
-    KuiSetProperty( KUI_TERM_TYPE, (long) tt_type, (long) 0 ) ;
+    KuiSetProperty( KUI_TERM_TYPE, (intptr_t) tt_type, (intptr_t) 0 ) ;
 #endif /* KUI */
     ipadl25() ;
     VscrnIsDirty(VTERM);

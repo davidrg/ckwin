@@ -29,7 +29,7 @@ BOOL APIENTRY KSaveAsDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam 
     if( download ) {
         ret = download->saveAsMsg( hwnd, msg, wParam, lParam );
         if( !ret ) {
-            return CallWindowProc( download->getOldProc()
+            return (BOOL)CallWindowProc( download->getOldProc()
                     , hwnd, msg, wParam, lParam );
         }
     }
@@ -258,7 +258,7 @@ void KDownLoad::initDialog( HWND hwnd )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KDownLoad::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )
@@ -297,7 +297,7 @@ Bool KDownLoad::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     if( msg == WM_COMMAND )
@@ -313,7 +313,7 @@ Bool KDownLoad::saveAsMsg( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             //
 
             done = TRUE;
-            return CallWindowProc( getOldProc()
+            return (Bool)CallWindowProc( getOldProc()
                     , hwnd, msg, MAKEWPARAM(IDOK,0), lParam );
         }
     }

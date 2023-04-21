@@ -484,7 +484,7 @@ void KTerminal::browseFile( eFileType filetype )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     debug(F111,"KTerminal::message","msg",msg);
@@ -1246,7 +1246,7 @@ int KTerminal::OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,
                         break;
                 }
 
-                KAppWin::message(hwnd, WM_USER_SIZING, edge, (LONG)&rc);
+                KAppWin::message(hwnd, WM_USER_SIZING, edge, (LPARAM)&rc);
 
 #ifdef NT35_RESIZE_RECT
                 if (!RECT_EQ(rc, rcPrevious)) {

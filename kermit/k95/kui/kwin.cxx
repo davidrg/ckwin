@@ -111,7 +111,7 @@ void KWin::getPos( int& x, int& y )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     return FALSE;
 }

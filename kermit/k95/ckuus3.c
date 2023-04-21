@@ -9060,7 +9060,7 @@ setguifont() {				/* Assumes that CKFLOAT is defined! */
       return(z);
     tt_font = x;			/* Font index */
     tt_font_size = (int)(floatval * 2);	/* Font size in half points */
-    KuiSetProperty(KUI_TERM_FONT, (long)tt_font, (long)tt_font_size);
+    KuiSetProperty(KUI_TERM_FONT, (intptr_t)tt_font, (intptr_t)tt_font_size);
     return(success = 1);
 }
 
@@ -9069,25 +9069,25 @@ setguidialog(x) int x;
 {
     extern int gui_dialog;
     gui_dialog = x;
-    KuiSetProperty(KUI_GUI_DIALOGS, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_DIALOGS, (intptr_t)x, 0L);
 }
 
 VOID
 setguimenubar(x) int x;
 {
-    KuiSetProperty(KUI_GUI_MENUBAR, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
 }
 
 VOID
 setguitoolbar(x) int x;
 {
-    KuiSetProperty(KUI_GUI_TOOLBAR, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)x, 0L);
 }
 
 VOID
 setguiclose(x) int x;
 {
-    KuiSetProperty(KUI_GUI_CLOSE, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_CLOSE, (intptr_t)x, 0L);
 }
 
 int
@@ -9133,7 +9133,7 @@ setexitwarn(x) int x;
 {
     xitwarn = x;
 #ifdef KUI
-    KuiSetProperty(KUI_EXIT_WARNING, (long)x, 0L);
+    KuiSetProperty(KUI_EXIT_WARNING, (intptr_t)x, 0L);
 #endif /* KUI */
 }
 

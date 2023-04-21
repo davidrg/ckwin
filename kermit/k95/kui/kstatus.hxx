@@ -34,7 +34,7 @@ enum eAction { NOACTION, REMOVEPANE, ADDPANE };
     void endCustomize();
     Bool endPaneMove( eAction, long xpos );
 
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
     WNDPROC getdefproc() { return defproc; }
     HWND getCustomHwnd() { return customHwnd; }
 
