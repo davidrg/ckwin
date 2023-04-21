@@ -73,7 +73,7 @@ jobs:
           ${{github.workspace}}\libdes\Release
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+2
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -144,7 +144,7 @@ jobs:
       shell: powershell
 
     - name: Build zlib
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' && matrix.arch == 'x86-64')
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
@@ -192,7 +192,7 @@ jobs:
         nmake           
 
     - name: Build libssh (x86/x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' && matrix.arch == 'x86-64')
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
@@ -200,7 +200,7 @@ jobs:
         nmake
 
     - name: Build libssh (arm/arm64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' && matrix.arch == 'x64_arm64')
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
