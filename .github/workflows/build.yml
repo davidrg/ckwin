@@ -34,8 +34,8 @@ jobs:
         arch:
           - x86
           - x64
-#          - arm    # No ARM32 support?
-          - arm64
+          - x64_arm
+          - x64_arm64
         toolset:
           - 14.0
           - 14.2
@@ -172,7 +172,7 @@ jobs:
         nmake       
 
     - name: Build openssl (ARM)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'arm'
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
       shell: powershell
       run: |
         cd openssl\${{env.OPENSSL_VERSION}}
@@ -182,7 +182,7 @@ jobs:
         nmake
 
     - name: Build openssl (ARM-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'arm64'
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
       shell: powershell
       run: |
         cd openssl\${{env.OPENSSL_VERSION}}
