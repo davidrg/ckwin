@@ -73,7 +73,7 @@ jobs:
           ${{github.workspace}}\libdes\Release
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+2
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+ver3
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
