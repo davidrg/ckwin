@@ -74,7 +74,14 @@ LRESULT CALLBACK KClientWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
+// In Visual C++ 2002 (7.0) and up for 32bit windows, UINT_PTR is unsigned int
+// In Visual C++ 6.0 (and perhaps earlier) UINT_PTR is unsigned long (which
+// results in a build error)
+#if _MSC_VER < 1300
+VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
+#else
 VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
+#endif
 {
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);

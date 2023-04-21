@@ -145,7 +145,11 @@ void KToolBar::createWin( KWin* par )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
+#if _MSC_VER < 1300
+char* KToolBar::findBubbleHelp( UINT idx )
+#else
 char* KToolBar::findBubbleHelp( UINT_PTR idx )
+#endif
 {
     for( int i = 0; i < numButtons; i++ )
     {
@@ -265,7 +269,11 @@ void KToolBar::createTermTypeCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "Terminal Type";
         tinfo.hwnd = hWnd;
+#if _MSC_VER < 1300
+        tinfo.uId = (UINT) hWndTermTypeCombo;
+#else
         tinfo.uId = (UINT_PTR) hWndTermTypeCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -347,7 +355,11 @@ void KToolBar::createCharsetCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "SET TERMINAL REMOTE-CHARSET";
         tinfo.hwnd = hWnd;
+#if _MSC_VER < 1300
+        tinfo.uId = (UINT) hWndCharsetCombo;
+#else
         tinfo.uId = (UINT_PTR) hWndCharsetCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -429,7 +441,11 @@ void KToolBar::createFontNameCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "Font Name";
         tinfo.hwnd = hWnd;
+#if _MSC_VER < 1300
+        tinfo.uId = (UINT) hWndFontNameCombo;
+#else
         tinfo.uId = (UINT_PTR) hWndFontNameCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
@@ -514,7 +530,11 @@ void KToolBar::createFontHeightCombo()
         tinfo.uFlags = TTF_IDISHWND | TTF_CENTERTIP;
         tinfo.lpszText = (LPSTR) "Font Height (points)";
         tinfo.hwnd = hWnd;
+#if _MSC_VER < 1300
+        tinfo.uId = (UINT) hWndFontHeightCombo;
+#else
         tinfo.uId = (UINT_PTR) hWndFontHeightCombo;
+#endif
         tinfo.hinst = hInst;
 
         SendMessage( hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO) &tinfo );
