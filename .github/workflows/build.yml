@@ -34,7 +34,7 @@ jobs:
         arch:
           - x86
           - x64
-          - arm
+#          - arm    # No ARM32 support?
           - arm64
         toolset:
           - 14.0
