@@ -195,6 +195,20 @@ jobs:
         cd ..\k95
         call mk.bat
         call mkdist.bat
+        
+        REM Check outputs
+        if not exist dist\cknker.exe exit /b 1
+        if not exist dist\iksd.exe exit /b 1
+        if not exist dist\iksdsvc.exe exit /b 1
+        if not exist dist\k95d.exe exit /b 1
+        if not exist dist\rlogin.exe exit /b 1
+        if not exist dist\telnet.exe exit /b 1
+        if not exist dist\textps.exe exit /b 1
+        if not exist dist\ctl3dins.exe exit /b 1
+        if not exist dist\k95g.exe exit /b 1
+        if not exist dist\k95crypt.dll exit /b 1
+        if not exist dist\p95.dll exit /b 1
+
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\
       env:
