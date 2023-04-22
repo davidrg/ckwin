@@ -95,6 +95,7 @@ SUBSYSTEM_CONSOLE=console
 SUBSYSTEM_WIN32=windows
 
 # These are not supported by Visual C++ prior to 4.0
+# /GF enables read-only string pooling
 CFLAG_GF=/GF
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
@@ -645,7 +646,7 @@ ibmcd:
 !else if "$(PLATFORM)" == "NT"
 #DEFINES = -DNT -DOS2 -DDYNAMIC -DKANJI -DOS2MOUSE \
 #          -DONETERMUPD
-!endif /* PLATFORM */
+!endif
 
 # To build with NETWORK support, uncomment the following three 
 # lines and comment out the previous set:
@@ -693,12 +694,12 @@ DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
           -DNETFILE -DONETERMUPD  \
           -DNEWFTP -DBETATEST -DNO_DNS_SRV \
-          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 !if "$(CMP)" != "OWCL"
-          -D__STDC__ \
+DEFINES = $(DEFINES) -D__STDC__
 !endif
 !endif
-!endif  /* PLATFORM */
+!endif
 !else
 ! ERROR Macro named PLATFORM undefined
 !endif
@@ -790,10 +791,18 @@ LIBS = $(LIBS) srp.lib
 LIBS = $(LIBS) wshload.lib
 !endif
 
+# Visual C++ 2005 for IA64 in the Windows Server 2003 SP1 Platform SDK
+# seems to want this extra library otherwise we get link errors like:
+#   error LNK2001: unresolved external symbol .__security_check_cookie
+!if "$(TARGET_CPU)" == "IA64"
+LIBS = $(LIBS) bufferoverflowu.lib
+KUILIBS = $(KUILIBS) bufferoverflowu.lib
+!endif
+
 # Commented out LIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 !endif
-!endif /* PLATFORM */
+!endif
 !endif
 
 #---------- Inference rules:
@@ -813,7 +822,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O) cknpty$(O) \
 !else
         ckusig$(O) \
-!endif /* PLATFORM */
+!endif
         ckuath$(O) ckoath$(O) ck_ssl$(O) ckossl$(O) ckosslc$(O) \
         ckosftp$(O) ckozli$(O) \
 !if 0
@@ -827,14 +836,14 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckonet$(O) \
         ckoslp$(O) ckosyn$(O) ckothr$(O) ckotek$(O) ckotio$(O) ckowys$(O) \
         ckodg$(O)  ckoava$(O) ckoi31$(O) ckotvi$(O) ckovc$(O) \
-        ckoadm$(O) ckohzl$(O) ckohp$(O) ckoqnx$(O)\
+        ckoadm$(O) ckohzl$(O) ckohp$(O) ckoqnx$(O)
 !if "$(PLATFORM)" == "NT"
-        cknnbi$(O) \
+OBJS = $(OBJS) cknnbi$(O)
 !else
-        ckonbi$(O) \
-!endif /* PLATFORM */
+OBJS = $(OBJS) ckonbi$(O)
+!endif
 !if ("$(CKF_XYZ)" == "yes")
-        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
+OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
         p_common$(O) p_tl$(O) p_dir$(O)
 !endif
 
@@ -1064,7 +1073,10 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
 !endif
 
 k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib \
+!if "$(TARGET_CPU)" == "IA64"
+        bufferoverflowu.lib
+!endif
 
 k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
 	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \

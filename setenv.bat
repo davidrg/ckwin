@@ -60,6 +60,8 @@ REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
 
+echo Checking for a 64bit compiler...
+
 REM Figure out if we're doing a 64bit build or a 32bit one (this affects our
 REM choices for some libraries later on)
 set CKB_OPENSSL_SUFFIX=
@@ -67,7 +69,13 @@ if exist %WATCOM%\binnt\wcl386.exe goto :bitcheckdone
 cl 2>&1 | findstr /C:"for x64" > nul
 if %errorlevel% == 0 goto :x64
 
+cl 2>&1 | findstr /C:"for AMD64" > nul
+if %errorlevel% == 0 goto :x64
+
 cl 2>&1 | findstr /C:"for Itanium" > nul
+if %errorlevel% == 0 goto :bits64
+
+cl 2>&1 | findstr /C:"for IA-64" > nul
 if %errorlevel% == 0 goto :bits64
 
 cl 2>&1 | findstr /C:"for ARM64" > nul

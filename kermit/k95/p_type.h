@@ -34,6 +34,10 @@
 #ifndef _TYPEDEFS_H_
 #define _TYPEDEFS_H_
 
+#ifdef NT
+#include <io.h>
+#endif
+
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
 typedef int intptr_t;

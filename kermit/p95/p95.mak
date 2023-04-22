@@ -42,6 +42,7 @@
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message  Architecture:             $(TARGET_CPU)
 !message ===============================================================================
 !message
 !message
@@ -118,6 +119,13 @@ DEFS = p95.def
 LIBS = $(LIBS) libcmt.lib
 !else
 LIBS = $(LIBS) msvcrt.lib
+!endif
+
+# Visual C++ 2005 for IA64 in the Windows Server 2003 SP1 Platform SDK
+# seems to want this extra library otherwise we get link errors like:
+#   error LNK2001: unresolved external symbol .__security_check_cookie
+!if "$(TARGET_CPU)" == "IA64"
+LIBS = $(LIBS) bufferoverflowu.lib
 !endif
 
 # I doubt we actually need this and its not available on x86-64.

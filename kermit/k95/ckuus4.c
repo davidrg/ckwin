@@ -1671,7 +1671,7 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                                 if (yargc < 1)
                                   fatal("Window handle missing");
 #ifdef _WIN64
-                                hwndDialer = (HWND) atoll(*yargv);
+                                hwndDialer = (HWND) _atoi64(*yargv);
 #else /* _WIN64 */
                                 hwndDialer = (HWND) atol(*yargv);
 #endif /* _WIN64 */
@@ -1779,7 +1779,7 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                         if (yargc < 1)
                           fatal("Window handle missing");
 #ifdef _WIN64
-                        hwndDialer = (HWND) atoll(*yargv);
+                        hwndDialer = (HWND) _atoi64(*yargv);
 #else /* _WIN64 */
                         hwndDialer = (HWND) atol(*yargv);
 #endif /* _WIN64 */
@@ -1909,7 +1909,7 @@ prescan(dummy) int dummy; {             /* Arg is ignored. */
                     } else {
 #endif /* COMMENT */
 #ifdef _WIN64
-                        hwndDialer = (HWND) atoll(*yargv);
+                        hwndDialer = (HWND) _atoi64(*yargv);
 #else /* _WIN64 */
                         hwndDialer = (HWND) atol(*yargv);
 #endif /* _WIN64 */

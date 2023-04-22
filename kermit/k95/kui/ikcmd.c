@@ -146,11 +146,11 @@ extern int
   tt_arrow,
   tt_bell,
   tt_ctstmo,
-  tt_cols,
+  tt_cols[],
   tt_cursor,
-  tt_roll,
-  tt_rows,
-  tt_scrsize,
+  tt_roll[],
+  tt_rows[],
+  tt_scrsize[],
   tt_type,
   tt_type_mode,
   tt_updmode,
@@ -396,7 +396,7 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_HEIGHT:
-            _itoa( tt_rows, buf, 10 );
+            _itoa( tt_rows[vmode], buf, 10 );
             break;
 
         case TERM_ID:
@@ -437,7 +437,7 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_SCRSIZE:
-            _itoa( tt_scrsize, buf, 10 );
+            _itoa( tt_scrsize[vmode], buf, 10 );
             break;
 
         case TERM_SESFIL:
@@ -465,7 +465,7 @@ getVar(unsigned int idx) {
             break;
 
         case TERM_WIDTH:
-            _itoa( tt_cols, buf, 10 );
+            _itoa( tt_cols[vmode], buf, 10 );
             break;
 
         case TERM_WRAP:
