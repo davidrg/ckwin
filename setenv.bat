@@ -62,18 +62,18 @@ REM ============================================================================
 
 REM Figure out if we're doing a 64bit build or a 32bit one (this affects our
 REM choices for some libraries later on)
+set CKB_OPENSSL_SUFFIX=
 if exist %WATCOM%\binnt\wcl386.exe goto :bitcheckdone
 cl 2>&1 | findstr /C:"for x64" > nul
-if %errorlevel% == 0 goto :bits64
+if %errorlevel% == 0 goto :x64
 
 cl 2>&1 | findstr /C:"for Itanium" > nul
 if %errorlevel% == 0 goto :bits64
 
-REM TODO: How do you differentiate ARM32 (WinRT) and ARM64 (modern windows-on-ARM)
-cl 2>&1 | findstr /C:"for ARM" > nul
-if %errorlevel% == 0 goto :bits64
+cl 2>&1 | findstr /C:"for ARM64" > nul
+if %errorlevel% == 0 goto :arm64
 
-REM Yes, the 64bit Windows for Alpha compiler exist. No, you can't run its output
+REM Yes, the 64bit Windows for Alpha compiler exists. No, you can't run its output
 REM on anything (unless you happen to work for Microsoft)
 cl 2>&1 | findstr /R /C:"Digital.*Alpha.*Version 13.0" > nul
 if %errorlevel% == 0 goto :bits64
@@ -81,6 +81,14 @@ if %errorlevel% == 0 goto :bits64
 set CKB_BITS_64=no
 echo Targeting 32bit Windows
 goto :bitcheckdone
+
+:x64
+set CKB_OPENSSL_SUFFIX=-x64
+goto :bits64
+
+:arm64
+set CKB_OPENSSL_SUFFIX=-arm64
+goto :bits64
 
 :bits64
 REM Targeting a 64bit host (x86-64, IA64, ARM64, AXP64)
@@ -155,20 +163,8 @@ if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :novcpkgssl
 if exist %vcpkg_installed%\lib\libssl.lib set CKF_SSL=yes
 if exist %vcpkg_installed%\tools\openssl\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\tools\openssl\openssl.exe
-
-REM The OpenSSL3 DLL names vary based on arch
-if "%CKB_BITS_64%" == "yes" goto :vcpkossl64bit
-REM else 32bit
-
-if exist %vcpkg_installed%\bin\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
-if exist %vcpkg_installed%\bin\libcrypto-3.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3.dll %vcpkg_installed%\bin\libssl-3.dll
-
-goto :novcpkgssl
-:vcpkossl64bit
-
-if exist %vcpkg_installed%\bin\libcrypto-1_1-x64.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1-x64.dll %openssl_root%\libssl-1_1-x64.dll
-if exist %vcpkg_installed%\bin\libcrypto-3-x64.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3-x64.dll %vcpkg_installed%\bin\libssl-3-x64.dll
-
+if exist %vcpkg_installed%\bin\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-1_1-%CKB_OPENSSL_SUFFIX%.dll
+if exist %vcpkg_installed%\bin\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%vcpkg_installed%\bin\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll %vcpkg_installed%\bin\libssl-3%CKB_OPENSSL_SUFFIX%.dll
 :novcpkgssl
 
 if "%CKF_SSH%" == "no" echo Skipping check for libssh
@@ -210,6 +206,12 @@ if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
 if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
+REM OpenSSL 3.0.x
+if exist %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-3%CKB_OPENSSL_SUFFIX%.dll
+
+REM OpenSSL 1.1.x
+if exist %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-1_1%CKB_OPENSSL_SUFFIX%.dll
+
 REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
@@ -217,26 +219,6 @@ if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
-
-REM OpenSSL libraries that vary based on 32bit/64bit
-if "%CKB_BITS_64%" == "yes" goto :ossl64bit
-REM else 32bit
-
-REM OpenSSL 1.1.x
-if exist %openssl_root%\libcrypto-1_1.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1.dll %openssl_root%\libssl-1_1.dll
-
-REM OpenSSL 3.0.x
-if exist %openssl_root%\libcrypto-3.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3.dll %openssl_root%\libssl-3.dll
-
-goto :nossl
-:ossl64bit
-
-REM OpenSSL 1.1.x
-if exist %openssl_root%\libcrypto-1_1-x64.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1-x64.dll %openssl_root%\libssl-1_1-x64.dll
-
-REM OpenSSL 3.0.x
-if exist %openssl_root%\libcrypto-3-x64.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3-x64.dll %openssl_root%\libssl-3-x64.dll
-
 :nossl
 
 REM libssh:
@@ -389,6 +371,7 @@ set CKF_CRYPTDLL=no
 goto :cvcdone
 
 :vc1axp
+REM This is in the NT 3.50 Win32 SDK. Doesn't include Visual C++ libs/runtime (msvcrt)
 set CK_COMPILER_NAME=Visual C++ 1.0 for Alpha AXP
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
