@@ -967,12 +967,14 @@ static DH *
 get_dh512()
 {
     DH *dh=NULL;
+    BIGNUM *p = NULL;
+    BIGNUM *g = NULL;
 
     if ((dh=DH_new()) == NULL)
         return(NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L    
-    BIGNUM *p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
-    BIGNUM *g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
+    p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
+    g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
     if ((p == NULL) || (g == NULL)) {
 	BN_free(g);
 	BN_free(p);
@@ -997,12 +999,14 @@ static DH *
 get_dh768()
 {
     DH *dh=NULL;
+    BIGNUM *p = NULL;
+    BIGNUM *g = NULL;
 
     if ((dh=DH_new()) == NULL)
         return(NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L    
-    BIGNUM *p=BN_bin2bn(dh768_p,sizeof(dh768_p),NULL);
-    BIGNUM *g=BN_bin2bn(dh768_g,sizeof(dh768_g),NULL);
+    p=BN_bin2bn(dh768_p,sizeof(dh768_p),NULL);
+    g=BN_bin2bn(dh768_g,sizeof(dh768_g),NULL);
     if ((p == NULL) || (g == NULL)) {
 	BN_free(g);
 	BN_free(p);
@@ -1027,12 +1031,14 @@ static DH *
 get_dh1024()
 {
     DH *dh=NULL;
+    BIGNUM *p = NULL;
+    BIGNUM *g = NULL;
 
     if ((dh=DH_new()) == NULL)
         return(NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L    
-    BIGNUM *p=BN_bin2bn(dh1024_p,sizeof(dh1024_p),NULL);
-    BIGNUM *g=BN_bin2bn(dh1024_g,sizeof(dh1024_g),NULL);
+    p=BN_bin2bn(dh1024_p,sizeof(dh1024_p),NULL);
+    g=BN_bin2bn(dh1024_g,sizeof(dh1024_g),NULL);
     if ((p == NULL) || (g == NULL)) {
 	BN_free(g);
 	BN_free(p);
@@ -1057,12 +1063,14 @@ static DH *
 get_dh1536()
 {
     DH *dh=NULL;
+    BIGNUM *p = NULL;
+    BIGNUM *g = NULL;
 
     if ((dh=DH_new()) == NULL)
         return(NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L    
-    BIGNUM *p=BN_bin2bn(dh1536_p,sizeof(dh1536_p),NULL);
-    BIGNUM *g=BN_bin2bn(dh1536_g,sizeof(dh1536_g),NULL);
+    p=BN_bin2bn(dh1536_p,sizeof(dh1536_p),NULL);
+    g=BN_bin2bn(dh1536_g,sizeof(dh1536_g),NULL);
     if ((p == NULL) || (g == NULL)) {
 	BN_free(g);
 	BN_free(p);
@@ -1087,12 +1095,14 @@ static DH *
 get_dh2048()
 {
     DH *dh=NULL;
+    BIGNUM *p = NULL;
+    BIGNUM *g = NULL;
 
     if ((dh=DH_new()) == NULL)
         return(NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x10100005L    
-    BIGNUM *p=BN_bin2bn(dh2048_p,sizeof(dh2048_p),NULL);
-    BIGNUM *g=BN_bin2bn(dh2048_g,sizeof(dh2048_g),NULL);
+    p=BN_bin2bn(dh2048_p,sizeof(dh2048_p),NULL);
+    g=BN_bin2bn(dh2048_g,sizeof(dh2048_g),NULL);
     if ((p == NULL) || (g == NULL)) {
 	BN_free(g);
 	BN_free(p);
