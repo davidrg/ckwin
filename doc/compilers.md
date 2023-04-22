@@ -138,7 +138,7 @@ SSH support (as libssh is incompatible), and both ARM32 and ARM64 exclude zlib
     <td>Windows XP</td>
     <td>✅</td> <!-- Free -->
     <td>❌</td> <!-- PTY -->
-    <td>❔</td> <!-- SSH -->
+    <td>❌</td> <!-- SSH -->
     <td>✅</td> <!-- NTLM/Auth -->
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
@@ -151,7 +151,7 @@ SSH support (as libssh is incompatible), and both ARM32 and ARM64 exclude zlib
     <td>Windows 2000</td>
     <td>✅</td> <!-- Free -->
     <td>❌</td> <!-- PTY -->
-    <td>❔</td> <!-- SSH -->
+    <td>❌</td> <!-- SSH -->
     <td>✅</td> <!-- NTLM/Auth -->
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
@@ -165,7 +165,7 @@ SSH support (as libssh is incompatible), and both ARM32 and ARM64 exclude zlib
         Windows 98</td>
     <td>✅*</td> <!-- Free -->
     <td>❌</td> <!-- PTY -->
-    <td>❔</td> <!-- SSH -->
+    <td>❌</td> <!-- SSH -->
     <td>✅</td> <!-- NTLM/Auth -->
     <td>✅</td> <!-- TAPI -->
     <td>✅</td> <!-- GUI -->
