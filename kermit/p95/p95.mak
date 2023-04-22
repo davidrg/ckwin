@@ -124,7 +124,7 @@ LIBS = $(LIBS) msvcrt.lib
 # Visual C++ 2005 for IA64 in the Windows Server 2003 SP1 Platform SDK
 # seems to want this extra library otherwise we get link errors like:
 #   error LNK2001: unresolved external symbol .__security_check_cookie
-!if "$(TARGET_CPU)" == "IA64"
+!if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
 LIBS = $(LIBS) bufferoverflowu.lib
 !endif
 
@@ -148,10 +148,13 @@ CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
 LD = link
-LDFLAGS = /nologo /dll /nod /map /debug:full
+LDFLAGS = /nologo /dll /nod /map
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
 #                 Visual C++ 5.0 SP3 and its almost just a leftover of the
 #                 default Visual C++ 4.0 makefile settings
+# /debug:full   - Removed form LDFLAGS because its not really needed and
+#                 the IA64 cross-compiler complains about it when using
+#                 the Win7.1 SDK.
 
 !if "$(CKB_STATIC_CRT)"=="yes"
 CFLAGS = $(CFLAGS) /MT
