@@ -73,7 +73,7 @@ cl 2>&1 | findstr /C:"for AMD64" > nul
 if %errorlevel% == 0 goto :x64
 
 cl 2>&1 | findstr /C:"for Itanium" > nul
-if %errorlevel% == 0 goto :bits64
+if %errorlevel% == 0 goto :ia64
 
 cl 2>&1 | findstr /C:"for IA-64" > nul
 if %errorlevel% == 0 goto :bits64
@@ -96,6 +96,19 @@ goto :bits64
 
 :arm64
 set CKB_OPENSSL_SUFFIX=-arm64
+goto :bits64
+
+:ia64
+set CKB_OPENSSL_SUFFIX=-ia64
+
+REM libssh won't build for any compiler that can target IA64 windows
+REM due to lack of C99 support. Force it off.
+set CKF_SSH=no
+
+REM Also no ZLIB support on Itanium (couldn't get it to easily
+REM cross-compile) - not that CKW actually uses zlib for anything.
+set CKF_ZLIB=no
+
 goto :bits64
 
 :bits64
