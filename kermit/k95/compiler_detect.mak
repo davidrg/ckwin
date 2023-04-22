@@ -72,6 +72,8 @@ COMPILER_VERSION = 9.0 (Visual Studio 2008)
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 14.0" > nul] == 0)
 # Visual C++ 8.0 (Visual Studio 2005)
+# Microsoft (R) C/C++ Optimizing Compiler Version 14.00.40310.39 for IA-64
+# Microsoft (R) C/C++ Optimizing Compiler Version 14.00.40310.41 for AMD64
 MSC_VER = 140
 COMPILER_VERSION = 8.0 (Visual Studio 2005)
 
@@ -226,9 +228,23 @@ TARGET_CPU=AXP64
 # We're using the 64bit x86 compiler
 TARGET_CPU = x86-64
 
+!ELSEIF ([cl 2>&1 | findstr /C:"for AMD64" > nul] == 0)
+# We're using the 64bit x86 compiler
+# Microsoft (R) C/C++ Optimizing Compiler Version 14.00.40310.41 for AMD64
+TARGET_CPU = x86-64
+
 !ELSEIF ([cl 2>&1 | findstr /C:"for Itanium" > nul] == 0)
 # Intel Itanium
 TARGET_CPU = IA64
+
+!ELSEIF ([cl 2>&1 | findstr /C:"for IA-64" > nul] == 0)
+# Intel Itanium
+# Microsoft (R) C/C++ Optimizing Compiler Version 14.00.40310.39 for IA-64
+TARGET_CPU = IA64
+
+!ELSEIF ([cl 2>&1 | findstr /C:"for ARM64" > nul] == 0)
+# The 64-bit ARM compiler (for targeting the ARM edition of Windows 10+)
+TARGET_CPU = ARM64
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for ARM" > nul] == 0)
 # The ARM compiler (for targeting the ARM edition of Windows 10+ most likely)
