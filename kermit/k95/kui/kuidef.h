@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <shellapi.h>
+#include <io.h>
 
 #include "resource.h"   // for all dlg template values
 

@@ -795,6 +795,7 @@ LIBS = $(LIBS) wshload.lib
 #   error LNK2001: unresolved external symbol .__security_check_cookie
 !if "$(TARGET_CPU)" == "IA64"
 LIBS = $(LIBS) bufferoverflowu.lib
+KUILIBS = $(KUILIBS) bufferoverflowu.lib
 !endif
 
 # Commented out LIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
