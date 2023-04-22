@@ -252,8 +252,7 @@ TARGET_CPU = IA64
 TARGET_CPU = ARM64
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for ARM" > nul] == 0)
-# The ARM compiler (for targeting the ARM edition of Windows 10+ most likely)
-# could also be Windows RT but thats obscure now.
+# The 32bit ARM compiler (for targeting Windows RT most likely)
 TARGET_CPU = ARM
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for Power Mac" > nul] == 0)

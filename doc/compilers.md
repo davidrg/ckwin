@@ -15,9 +15,9 @@ supports Windows NT 3.50+ and Windows 95+. Limited support for Windows NT 3.1
 is also present but a few bugs impact its usefulness there. Win32s (Win32 
 on Windows 3.x) can not be supported due to the lack of support for threading.
 
-The CI system is set-up to do builds with Visual C++ 2022, 2019, 2015, 2003, 
-and OpenWatcom 1.9. The Visual C++ 2015/2019/2022 cmpilers are setup to do both 
-32bit and 64bit x86 builds.
+The CI system is set up to do builds with Visual C++ 2022, 2019, 2015, 2003, 
+and OpenWatcom 1.9. The Visual C++ 2015/2019/2022 compilers are set up to do x86,
+x86-64, arm and arm64 builds.
 
 The Dialer is currently known to build fine with Visual C++ 2.0-7.0 (2002) and
 OpenWatcom 1.9. Visual C++ 6.0 SP6 is the recommended compiler as newer versions
@@ -34,6 +34,12 @@ Edition on the hardware platform you're building for. The build process should
 be the same as for the equivalent x86 version of the compiler but the RISC
 compilers are known to be a bit quirky so there may be undiscovered issues. If
 you run into build errors, log a bug.
+
+Support for ARM and ARM64 builds is limited to ensuring it compiles - due to a
+lack of windows-compatible ARM hardware the C-Kermit for Windows project has no
+ability to actually test the binaries produced. ARM32 builds do not include
+SSH support (as libssh is incompatible), and both ARM32 and ARM64 exclude zlib
+(also incompatible)
 
 <table>
 <tr>

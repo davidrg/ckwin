@@ -34,6 +34,8 @@ jobs:
         arch:
           - x86
           - x64
+          - x64_arm
+          - x64_arm64
         toolset:
           - 14.0
           - 14.2
@@ -71,7 +73,7 @@ jobs:
           ${{github.workspace}}\libdes\Release
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+ver3
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -141,15 +143,20 @@ jobs:
         cpan -i Text::Template
       shell: powershell
 
+      # No zlib for ARM - it fails at the link step:
+      #   link -nologo -debug -incremental:no -opt:ref -def:./win32/zlib.def -dll -implib:zdll.lib  -out:zlib1.dll -base:0x5A4C0000 adler32.obj compress.obj crc32.obj deflate.obj gzclose.obj gzlib.obj gzread.obj  gzwrite.obj infback.obj inflate.obj inftrees.obj inffast.obj trees.obj uncompr.obj zutil.obj  zlib1.res
+      #     Creating library zdll.lib and object zdll.exp
+      #   LINK : fatal error LNK1355: invalid base address 0x5A4C0000; ARM64 image cannot have base address below 4GB
+      # See bug: https://github.com/madler/zlib/issues/325
     - name: Build zlib
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
         cmake .
         nmake -f win32\Makefile.msc
 
-    - name: Build openssl
+    - name: Build openssl (x86)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
       shell: powershell
       run: |
@@ -167,15 +174,47 @@ jobs:
         $env:Path += ";${{github.workspace}}\tools\nasm"
         $env:Path
         perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        nmake        
+        nmake       
 
-    - name: Build libssh
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+    - name: Build openssl (ARM)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN32-ARM     
+        nmake
+
+    - name: Build openssl (ARM-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN64-ARM     
+        nmake           
+
+    - name: Build libssh (x86/x86-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
+
+      # 32bit ARM doesn't get libssh as version 0.10.3 gets link errors there:
+      #   misc.c.obj : error LNK2019: unresolved external symbol __imp_GetUserNameA referenced in function ssh_get_local_username
+      #   misc.c.obj : error LNK2019: unresolved external symbol __imp_SHGetSpecialFolderPathA referenced in function ssh_get_user_home_dir
+      # zlib is also disabled as it doesn't currently build for ARM
+    - name: Build libssh (arm64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+      shell: powershell
+      run: |
+        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        nmake        
 
     - name: Build libdes
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
