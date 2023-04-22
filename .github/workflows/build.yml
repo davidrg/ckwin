@@ -710,7 +710,7 @@ jobs:
           REM Don't want to pick up headers or libraries from Visual C++ 14.0
           REM which is also on here - we only want it for cvtres.exe.
           Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
+          Set LIB=%VCT2003%\lib\ia64
           
           call setenv.bat
 
