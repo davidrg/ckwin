@@ -790,6 +790,13 @@ LIBS = $(LIBS) srp.lib
 LIBS = $(LIBS) wshload.lib
 !endif
 
+# Visual C++ 2005 for IA64 in the Windows Server 2003 SP1 Platform SDK
+# seems to want this extra library otherwise we get link errors like:
+#   error LNK2001: unresolved external symbol .__security_check_cookie
+!if "$(TARGET_CPU)" == "IA64"
+LIBS = $(LIBS) bufferoverflowu.lib
+!endif
+
 # Commented out LIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 !endif
@@ -1064,7 +1071,10 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
 !endif
 
 k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib \
+!if "$(TARGET_CPU)" == "IA64"
+        bufferoverflowu.lib
+!endif
 
 k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
 	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \

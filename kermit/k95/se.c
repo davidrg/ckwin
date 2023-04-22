@@ -1,6 +1,7 @@
 //SE.CPP
 #include <windows.h>
 #include <stdio.h>
+#include <io.h>
 /*
 typedef struct _SHELLEXECUTEINFO {    
     DWORD cbSize;     
@@ -29,7 +30,9 @@ BOOL ShellExecuteEx(LPSHELLEXECUTEINFO lpExecInfo);
 
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
 typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
 typedef unsigned long DWORD_PTR;
 #define CK_HAVE_INTPTR_T
 #endif
