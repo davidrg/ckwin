@@ -15,7 +15,7 @@ env:
   # So we're now fetching zlib from ftp.zx.net.nz instead.
   ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 1.1.1s
+  OPENSSL_VERSION: 1.1.1t
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
   LIBSSH_VERSION: 0.10.3
@@ -324,7 +324,7 @@ jobs:
   ##############################################################################
   # This is the last compiler that can target Itanium. Due to its lack of C99
   # support, builds with Visual C++ 2010 and older don't include SSH support.
-  # OpenSSL 1.1.1s is supported however.
+  # OpenSSL 1.1.1t is supported however.
   Build-PSDK71:
     runs-on: windows-latest
     strategy:
