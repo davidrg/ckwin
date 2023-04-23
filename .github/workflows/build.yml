@@ -358,6 +358,8 @@ jobs:
           wget https://ftp.zx.net.nz/public/tmp/vc_red.7z -outfile vc_red.7z
           7z x vc_red.7z
           cd ..
+          
+          wget http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe -outfile vcredist_x86.exe
         shell: powershell
 
         ##########################################################################
@@ -365,12 +367,16 @@ jobs:
         ##########################################################################
       - name: Full Build
         run: |
+          echo Install redist:
+          vcredist_x86.exe /q /norestart
+          echo Error level: %errorlevel%
+          
           echo Current working directory:
           dir /w 
           
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
-          set PATH=%PATH%;${{ github.workspace }}\vcredist
+          REM set PATH=%PATH%;${{ github.workspace }}\vcredist
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           echo PATH: %PATH%
@@ -395,7 +401,7 @@ jobs:
           
           echo Try again
           cd "Microsoft Visual Studio 10.0\VC\Bin\"
-          copy ..\..\..\vcredist\*.dll
+          REM copy ..\..\..\vcredist\*.dll
           dir /w
           cl
           echo Error level: %errorlevel%
