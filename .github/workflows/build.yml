@@ -359,9 +359,8 @@ jobs:
         ##########################################################################
       - name: Full Build
         run: |
+          SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
-          
-          cl.exe
           
           call setenv.bat
           
