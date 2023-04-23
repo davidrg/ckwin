@@ -364,6 +364,7 @@ jobs:
 
       - name: Install the Visual C++ 2010 Runtime
         run: vcredist_x86.exe /q /norestart
+        shell: cmd
         working-directory: ${{ github.workspace }}
 
         ##########################################################################
