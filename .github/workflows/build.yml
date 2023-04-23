@@ -386,6 +386,13 @@ jobs:
           "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
           echo Error level: %errorlevel%
           
+          echo Try again
+          cd "Microsoft Visual Studio 10.0\VC\Bin\"
+          dir /w
+          cl
+          echo Error level: %errorlevel%
+          cd ..\..\..
+          
           echo Run Build...
           call setenv.bat
           
