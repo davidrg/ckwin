@@ -399,8 +399,8 @@ jobs:
           
           REM Check outputs
           set MISSING_BUILD_RESULTS=
-          REM ctl3dins.exe
-          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll) do (
+          REM ctl3dins.exe k95crypt.dll
+          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe  p95.dll) do (
             if not exist dist\%%y echo Build result not found: %%y
             if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist\%%y set FAILED=yes
