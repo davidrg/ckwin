@@ -33,13 +33,13 @@ jobs:
       matrix:
         arch:
           - x86
-          - x64
-          - x64_arm
-          - x64_arm64
+          #- x64
+          #- x64_arm
+          #- x64_arm64
         toolset:
           - 14.0
-          - 14.2
-          - 14.3
+          #- 14.2
+          #- 14.3
         exclude:
           # No point building ARM or ARM64 targets with anything less than the latest as the latest
           # still supports the first ARM Windows.
@@ -369,6 +369,9 @@ jobs:
           echo PATH: %PATH%
           echo LIB: %LIB%
           echo INCLUDE: %INCLUDE%
+          
+          echo CL:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\x86_IA64"\cl.exe /version
           
           echo Run Build...
           call setenv.bat
