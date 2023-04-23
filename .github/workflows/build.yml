@@ -40,6 +40,21 @@ jobs:
           - 14.0
           - 14.2
           - 14.3
+        exclude:
+          # No point building ARM or ARM64 targets with anything less than the latest as the latest
+          # still supports the first ARM Windows.
+          - arch: x64_arm
+            toolset: 14.0
+          - arch: x64_arm
+            toolset: 14.1
+          - arch: x64_arm
+            toolset: 14.2
+          - arch: x64_arm64
+            toolset: 14.0
+          - arch: x64_arm64
+            toolset: 14.1
+          - arch: x64_arm64
+            toolset: 14.2
 
     steps:
     - uses: actions/checkout@v3
@@ -247,7 +262,7 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\
       env:
         ROOT: ${{ github.workspace }}
-        
+
     - name: Fetch CA Certs bundle
       run: |
         wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
