@@ -357,14 +357,14 @@ jobs:
           wget http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe -outfile vcredist_x86.exe
         shell: powershell
 
-      - name: Install Visual C++ 2010 Redist
-        run: ${{github.workspace}}\vcredist_x86.exe /q /norestart
-
         ##########################################################################
         # Build K95, K95G and other bits for redistribution                      #
         ##########################################################################
       - name: Full Build
-        run: |         
+        run: |
+          REM install the VC Redist
+          vcredist_x86.exe /q /norestart
+          
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
           REM set PATH=%PATH%;${{ github.workspace }}\vcredist
