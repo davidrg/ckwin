@@ -26,8 +26,8 @@ do a full build of C-Kermit for Windows with all features turned on these
 instructions should do the job.
 
 This has been tested against the following versions:
-* zlib 1.2.12
-* OpenSSL 1.1.1q
+* zlib 1.2.13
+* OpenSSL 1.1.1s
 * libssh 0.9.6, 0.10.1, 0.10.3
 
 And to build it all the following tools should work:
@@ -55,8 +55,8 @@ Normally everything is arranged into directories as follows:
      - 1.2.12\
        - files & directories from zlib 1.1.12
    - openssl\
-     - 1.1.1q\
-       - files & directories from openssl 1.1.1q
+     - 1.1.1s\
+       - files & directories from openssl 1.1.1s
    - libdes\
      - des\
        - files & directories from the libdes distribution
@@ -94,14 +94,29 @@ from CPAN with: `cpan -i Text::Template`
 Then you can build OpenSSL with the following (adjusting the zlib include path
 as necessary):
 ```
-cd openssl\1.1.1q
+cd openssl\1.1.1s
 perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.12
 nmake
 cd ..\..\
 ```
 
-If you're doing a 64bit build, use `VC-WIN64A` instead of `VC-WIN32` when configuring
-OpenSSL.
+If you're building for something other than 32bit x86, you will need to replace VC-WIN32
+with one of the following:
+
+| Architecture | Target         |
+|--------------|----------------|
+| x86 32bit    | `VC-WIN32`     |
+| x86 64bit    | `VC-WIN64A`    |
+| Itanium      | `VC-WIN64I`    |
+| ARM 32bit    | `VC-WIN32-ARM` |
+| ARM 64bit    | `VC-WIN64-ARM` |
+
+If you're cross-compiling (your target architecture is not the same as the machine you're
+building on) you *may* get a link error in some versions of OpenSSL. This has been observed
+primarily cross-compiling from x86 to Itanium and x86-64 with Visual C++ 2010. If this
+occurs you need to open `makefile` in a text editor, find the line beginning with
+`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `machine:x64` (x86-64) to the
+end of it. Save the file and run the build again.
 
 If you want OpenSSL to work on versions of windows older than Vista, add the
 `-D"_WIN32_WINNT=0x502"` parameter to the Configure step.

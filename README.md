@@ -26,9 +26,10 @@ This software is currently based on C-Kermit version 10.0 Pre-Beta.08 of
 Requirements
 ------------
 
-C-Kermit for Windows should work on every 32bit or better x86 version of Windows
-[except Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164). Win32s
-(Windows 3.x) can not be supported due to a lack of threading support. 
+C-Kermit for Windows should work on every released 32bit or 64bit version of 
+Windows [except Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164). 
+Non-x86 platforms are not actively tested due to either a lack of hardware 
+(ARM, ARM64, Itanium) or compiler licenses (Alpha, MIPS, PowerPC).
 
 Certain features within C-Kermit for Windows have a minimum Windows version
 requirement:
@@ -122,7 +123,7 @@ Additionally, a number of new features have been added:
 * Network DLLs are also fixed. You can now add support for additional protocols
   via custom DLLs which are loaded with the `set network type dll` command.
 * Mouse wheel support and terminal mouse reporting have been implemented
-* A new 64bit version for x86-64 systems
+* Support for 64bit Windows (x86-64, Itanium, ARM64)
 * A selection of other bugs fixed
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.

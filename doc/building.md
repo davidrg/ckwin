@@ -5,11 +5,8 @@ Building C-Kermit for Windows is easy! All you need is
 recommended). The compiler you choose will determine what features are 
 available and the minimum version of windows your build of CKW will support. 
 You can use the linked table to help choose the compiler that best meets your
-needs if you're looking to run on versions of Windows older than XP.
-
-You can build for 32bit or 64bit windows - just setup your Visual C++ build
-environment accordingly and the C-Kermit build script should handle the rest.
-There is no functional difference between 32bit and 64bit builds.
+needs if you're looking to run on versions of Windows older than XP or CPU
+architectures other than x86 and ARM.
 
 If you wish to also build the Dialer (entirely optional), you'll need ideally a 
 copy of Visual C++ 6.0 SP6. OpenWatcom 1.9 is also supported but due to a lack 
