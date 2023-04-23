@@ -361,6 +361,8 @@ jobs:
         run: |
           call vc10.cmd /release /xp /${{matrix.arch}}
           
+          cl.exe
+          
           call setenv.bat
           
           cd kermit\p95
