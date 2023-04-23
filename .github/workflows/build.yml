@@ -346,6 +346,7 @@ jobs:
           path: |
             ${{github.workspace}}\Microsoft SDKs 
             ${{github.workspace}}\Microsoft Visual Studio 10.0
+            ${{github.workspace}}\vcredist_x86.exe
           key: platform-sdk-71-compiler
       - name: Get Windows 7 Platform SDK v7.1
         if: steps.cache-compiler.outputs.cache-hit != 'true'
@@ -353,27 +354,17 @@ jobs:
           wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z -outfile win7-7.1-sdk-vc.7z
           7z x win7-7.1-sdk-vc.7z
           
-          mkdir vcredist
-          cd vcredist
-          wget https://ftp.zx.net.nz/public/tmp/vc_red.7z -outfile vc_red.7z
-          7z x vc_red.7z
-          cd ..
-          
           wget http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe -outfile vcredist_x86.exe
         shell: powershell
+
+      - name: Install Visual C++ 2010 Redist
+        run: ${{github.workspace}}\vcredist_x86.exe /q /norestart
 
         ##########################################################################
         # Build K95, K95G and other bits for redistribution                      #
         ##########################################################################
       - name: Full Build
-        run: |
-          echo Install redist:
-          vcredist_x86.exe /q /norestart
-          echo Error level: %errorlevel%
-          
-          echo Current working directory:
-          dir /w 
-          
+        run: |         
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
           REM set PATH=%PATH%;${{ github.workspace }}\vcredist
@@ -383,33 +374,10 @@ jobs:
           echo LIB: %LIB%
           echo INCLUDE: %INCLUDE%
           
-          echo IA64 CL:
-          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\x86_IA64"\cl.exe
-          echo Error level: %errorlevel%
-          
-          echo x86 CL:
-          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
-          echo Error level: %errorlevel%
-          
-          echo Dir:
-          dir /w "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\"
-          copy "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\Common7\IDE"\*.dll "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\"
-          
-          echo x86 CL after copy:
-          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
-          echo Error level: %errorlevel%
-          
-          echo Try again
-          cd "Microsoft Visual Studio 10.0\VC\Bin\"
-          REM copy ..\..\..\vcredist\*.dll
-          dir /w
-          cl
-          echo Error level: %errorlevel%
-          cd ..\..\..
-          
-          echo Run Build...
+          echo Configure build environment...
           call setenv.bat
           
+          echo Run build...
           cd kermit\p95
           call mknt.bat
           cd ..\k95
