@@ -372,26 +372,11 @@ jobs:
         # Build K95, K95G and other bits for redistribution                      #
         ##########################################################################
       - name: Full Build
-        run: |
-          REM install the VC Redist
-          REM vcredist_x86.exe /q /norestart
-          
+        run: |         
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
           REM set PATH=%PATH%;${{ github.workspace }}\vcredist
           call vc10.cmd /release /xp /${{matrix.arch}}
-          
-          echo PATH: %PATH%
-          echo LIB: %LIB%
-          echo INCLUDE: %INCLUDE%
-          
-          echo IA64 CL:
-          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\x86_IA64"\cl.exe
-          echo Error level: %errorlevel%
-          
-          echo x86 CL:
-          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
-          echo Error level: %errorlevel%
           
           echo Configure build environment...
           call setenv.bat
@@ -403,7 +388,7 @@ jobs:
           call mk.bat
           call mkdist.bat
           
-          REM Check outputs
+          echo Check outputs...
           set MISSING_BUILD_RESULTS=
           REM ctl3dins.exe k95crypt.dll
           for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe  p95.dll) do (
