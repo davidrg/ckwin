@@ -319,6 +319,262 @@ jobs:
         if-no-files-found: error
         retention-days: 7
 
+  ##############################################################################
+  # Build with Windows 7 Platform SDK version 7.1 (Visual C++ 2010)            #
+  ##############################################################################
+  # This is the last compiler that can target Itanium. Due to its lack of C99
+  # support, builds with Visual C++ 2010 and older don't include SSH support.
+  # OpenSSL 1.1.1s is supported however.
+  Build-PSDK71:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch:
+          - ia64
+          #- x86
+          #- x64
+
+    steps:
+      - uses: actions/checkout@v3
+        ##########################################################################
+        # Fetch the compiler                                                     #
+        ##########################################################################
+      - name: Cache Compiler
+        uses: actions/cache@v3.0.11
+        id: cache-compiler
+        with:
+          path: |
+            ${{github.workspace}}\Microsoft SDKs 
+            ${{github.workspace}}\Microsoft Visual Studio 10.0
+            ${{github.workspace}}\vc10.cmd
+            ${{github.workspace}}\vcredist_x86.exe
+          key: platform-sdk-71-compiler+sdk+redist
+      - name: Get Windows 7 Platform SDK v7.1
+        if: steps.cache-compiler.outputs.cache-hit != 'true'
+        run: |
+          wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z -outfile win7-7.1-sdk-vc.7z
+          7z x win7-7.1-sdk-vc.7z
+          
+          wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-psdk.7z -outfile win7-7.1-sdk-psdk.7z
+          7z x win7-7.1-sdk-psdk.7z
+          
+          del *.7z
+          
+          wget http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe -outfile vcredist_x86.exe
+        shell: powershell
+
+      - name: Install the Visual C++ 2010 Runtime
+        run: vcredist_x86.exe /q /norestart
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+
+        ##########################################################################
+        # Build optional dependencies (openssl, libdes)                          #
+        ##########################################################################
+      - name: Cache Optional Dependencies
+        uses: actions/cache@v3.0.11
+        id: cache-optional-dependencies
+        with:
+          path: |
+            ${{github.workspace}}\zlib 
+            ${{github.workspace}}\openssl 
+            ${{github.workspace}}\libssh
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+            ${{github.workspace}}\tools
+          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes
+
+      - name: Get dependencies
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        run: |         
+          # Get and unpack openssl
+          mkdir openssl
+          cd openssl
+          wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.OPENSSL_VERSION}}.tar
+          ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+          del *.tar 
+          del *.gz
+          cd ..
+          
+          # Get and unpack libdes
+          cd libdes
+          wget ${{env.LIBDES}} -outfile libdes.tar.gz
+          7z x libdes.tar.gz
+          7z x libdes.tar
+          del *.tar
+          del *.gz
+          cd ..
+          
+          # Get and unpack nasm
+          mkdir tools
+          cd tools
+          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+          7z x nasm-2.15.05-win32.zip
+          ren nasm-2.15.05 nasm
+          del *.zip
+          dir
+          cd nasm
+          dir
+          cd ..
+          cd ..          
+          
+          # Install perl modules required by OpenSSL build
+          cpan -i Text::Template
+        shell: powershell
+
+      - name: Build openssl (ia64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'ia64'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          perl Configure VC-WIN64I
+          
+          REM The perl configure script doesn't work quite right for cross-compiling to IA64
+          REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
+          sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:ia64/g" makefile
+          
+          nmake
+
+      - name: Build openssl (x86-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          
+          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
+          
+          REM The perl configure script doesn't work quite right for cross-compiling to x64
+          REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
+          sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:x64/g" makefile
+          
+          nmake
+
+      - name: Build openssl (x86)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          
+          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
+          nmake
+
+      - name: Build libdes
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd libdes
+          call mknt.bat
+
+        ##########################################################################
+        # Build K95, K95G and other bits for redistribution                      #
+        ##########################################################################
+      - name: Full Build
+        run: |         
+          echo Configure Platform SDK Build Environment...
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          echo Configure build environment...
+          call setenv.bat
+          
+          echo Run Build...
+          cd kermit\p95
+          call mknt.bat
+          cd ..\k95
+          call mk.bat
+          call mkdist.bat
+          
+          echo Check outputs...
+          set MISSING_BUILD_RESULTS=
+          REM ctl3dins.exe
+          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll) do (
+            if not exist dist\%%y echo Build result not found: %%y
+            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist dist\%%y set FAILED=yes
+          )
+          
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
+          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+      - name: Fetch CA Certs bundle
+        run: |
+          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+          
+          $readme = @"
+          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+          under the MPL version 2.0.
+          
+          For more information and updates, see: https://curl.se/docs/caextract.html
+          "@
+          
+          New-Item ca_certs.readme
+          Set-Content ca_certs.readme $readme
+        shell: powershell
+        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: HTMLise Markdown Docs
+        run: |
+          pip3 install markdown
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+          echo ^<body^>
+          ) > ssh-readme.html
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+          echo ^<body^>
+          ) > change-log.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> ssh-readme.html
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ckwin-vc10-${{ matrix.arch }}
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+
 
   ##############################################################################
   # Build with OpenWatcom 1.9 which allows targeting older versions of Windows #
