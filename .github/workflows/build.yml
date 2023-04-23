@@ -355,7 +355,7 @@ jobs:
           7z x win7-7.1-sdk-vc.7z
           
           wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-psdk.7z -outfile win7-7.1-sdk-psdk.7z
-          7z x win7-7.1-sdk-vc.7z
+          7z x win7-7.1-sdk-psdk.7z
           
           del *.7z
           
