@@ -359,9 +359,14 @@ jobs:
         ##########################################################################
       - name: Full Build
         run: |
+          echo Current working directory:
+          dir /w 
+          
+          echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
           
+          echo Run Build...
           call setenv.bat
           
           cd kermit\p95
