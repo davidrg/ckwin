@@ -451,7 +451,12 @@ jobs:
           cd openssl\${{env.OPENSSL_VERSION}}
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           
-          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"     
+          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
+          
+          REM The perl configure script doesn't work quite right for cross-compiling to x64
+          REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
+          sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:x64/g" makefile
+          
           nmake
 
       - name: Build openssl (x86)
