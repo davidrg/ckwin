@@ -369,13 +369,122 @@ jobs:
         working-directory: ${{ github.workspace }}
 
         ##########################################################################
+        # Build optional dependencies (openssl, libdes)                          #
+        ##########################################################################
+      - name: Cache Optional Dependencies
+        uses: actions/cache@v3.0.11
+        id: cache-optional-dependencies
+        with:
+          path: |
+            ${{github.workspace}}\zlib 
+            ${{github.workspace}}\openssl 
+            ${{github.workspace}}\libssh
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+            ${{github.workspace}}\tools
+          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes
+
+      - name: Get dependencies
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        run: |         
+          # Get and unpack openssl
+          mkdir openssl
+          cd openssl
+          wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.OPENSSL_VERSION}}.tar
+          ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+          del *.tar 
+          del *.gz
+          cd ..
+          
+          # Get and unpack libdes
+          cd libdes
+          wget ${{env.LIBDES}} -outfile libdes.tar.gz
+          7z x libdes.tar.gz
+          7z x libdes.tar
+          del *.tar
+          del *.gz
+          cd ..
+          
+          # Get and unpack nasm
+          mkdir tools
+          cd tools
+          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+          7z x nasm-2.15.05-win32.zip
+          ren nasm-2.15.05 nasm
+          del *.zip
+          dir
+          cd nasm
+          dir
+          cd ..
+          cd ..          
+          
+          # Install perl modules required by OpenSSL build
+          cpan -i Text::Template
+        shell: powershell
+
+      - name: Build openssl (ia64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'ia64'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          perl Configure VC-WIN32I
+          
+          REM The perl configure script doesn't work quite right for cross-compiling to IA64
+          REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
+          sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:ia64/g" makefile
+          
+          nmake
+
+      - name: Build openssl (x86-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          
+          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"     
+          nmake       
+
+      - name: Build openssl (x86)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+        shell: powershell
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          
+          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
+          nmake     
+
+      - name: Build libdes
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd libdes
+          call mknt.bat
+
+        ##########################################################################
         # Build K95, K95G and other bits for redistribution                      #
         ##########################################################################
       - name: Full Build
         run: |         
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
-          REM set PATH=%PATH%;${{ github.workspace }}\vcredist
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           echo Configure build environment...
@@ -390,8 +499,8 @@ jobs:
           
           echo Check outputs...
           set MISSING_BUILD_RESULTS=
-          REM ctl3dins.exe k95crypt.dll
-          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe  p95.dll) do (
+          REM ctl3dins.exe
+          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll) do (
             if not exist dist\%%y echo Build result not found: %%y
             if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist\%%y set FAILED=yes
