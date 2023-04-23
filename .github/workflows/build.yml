@@ -433,7 +433,7 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
-          perl Configure VC-WIN32I
+          perl Configure VC-WIN64I
           
           REM The perl configure script doesn't work quite right for cross-compiling to IA64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
