@@ -461,7 +461,7 @@ jobs:
 
       - name: Build openssl (x86)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
-        shell: powershell
+        shell: cmd
         run: |
           SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
