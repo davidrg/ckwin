@@ -33,13 +33,13 @@ jobs:
       matrix:
         arch:
           - x86
-          #- x64
-          #- x64_arm
-          #- x64_arm64
+          - x64
+          - x64_arm
+          - x64_arm64
         toolset:
           - 14.0
-          #- 14.2
-          #- 14.3
+          - 14.2
+          - 14.3
         exclude:
           # No point building ARM or ARM64 targets with anything less than the latest as the latest
           # still supports the first ARM Windows.
@@ -331,8 +331,8 @@ jobs:
       matrix:
         arch:
           - ia64
-          - x86
-          - x64
+          #- x86
+          #- x64
 
     steps:
       - uses: actions/checkout@v3
