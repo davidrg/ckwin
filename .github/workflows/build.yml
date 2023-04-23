@@ -366,6 +366,10 @@ jobs:
           SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
           
+          echo PATH: %PATH%
+          echo LIB: %LIB%
+          echo INCLUDE: %INCLUDE%
+          
           echo Run Build...
           call setenv.bat
           
