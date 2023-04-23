@@ -452,10 +452,10 @@ jobs:
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           
           perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"     
-          nmake       
+          nmake
 
       - name: Build openssl (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
         shell: powershell
         run: |
           SET PlatformToolset=100
@@ -466,7 +466,7 @@ jobs:
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           
           perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
-          nmake     
+          nmake
 
       - name: Build libdes
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
