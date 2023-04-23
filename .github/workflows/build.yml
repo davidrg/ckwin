@@ -331,8 +331,8 @@ jobs:
       matrix:
         arch:
           - ia64
-          #- x86
-          #- x64
+          - x86
+          - x64
 
     steps:
       - uses: actions/checkout@v3
