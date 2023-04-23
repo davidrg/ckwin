@@ -346,8 +346,9 @@ jobs:
           path: |
             ${{github.workspace}}\Microsoft SDKs 
             ${{github.workspace}}\Microsoft Visual Studio 10.0
+            ${{github.workspace}}\vc10.cmd
             ${{github.workspace}}\vcredist_x86.exe
-          key: platform-sdk-71-compiler
+          key: platform-sdk-71-compiler+sdk+redist
       - name: Get Windows 7 Platform SDK v7.1
         if: steps.cache-compiler.outputs.cache-hit != 'true'
         run: |
