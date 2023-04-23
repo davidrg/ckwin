@@ -352,6 +352,12 @@ jobs:
         run: |
           wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z -outfile win7-7.1-sdk-vc.7z
           7z x win7-7.1-sdk-vc.7z
+          
+          mkdir vcredist
+          cd vcredist
+          wget https://ftp.zx.net.nz/public/tmp/vc_red.7z -outfile vc_red.7z
+          7z x vc_red.7z
+          cd ..
         shell: powershell
 
         ##########################################################################
@@ -364,6 +370,7 @@ jobs:
           
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
+          set PATH=%PATH%;${{ github.workspace }}\vcredist
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           echo PATH: %PATH%
