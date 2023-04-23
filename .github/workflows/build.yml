@@ -370,8 +370,20 @@ jobs:
           echo LIB: %LIB%
           echo INCLUDE: %INCLUDE%
           
-          echo CL:
-          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\x86_IA64"\cl.exe /version
+          echo IA64 CL:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\x86_IA64"\cl.exe
+          echo Error level: %errorlevel%
+          
+          echo x86 CL:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
+          echo Error level: %errorlevel%
+          
+          echo Dir:
+          dir /w "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\"
+          copy "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\Common7\IDE"\*.dll "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\"
+          
+          echo x86 CL after copy:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
           echo Error level: %errorlevel%
           
           echo Run Build...
