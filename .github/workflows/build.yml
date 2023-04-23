@@ -40,11 +40,21 @@ jobs:
           - 14.0
           - 14.2
           - 14.3
-        # no-crypto=yes: builds version with all crypto disabled
-        # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)
-        no_crypto:
-          - no
-        #  - yes
+        exclude:
+          # No point building ARM or ARM64 targets with anything less than the latest as the latest
+          # still supports the first ARM Windows.
+          - arch: x64_arm
+            toolset: 14.0
+          - arch: x64_arm
+            toolset: 14.1
+          - arch: x64_arm
+            toolset: 14.2
+          - arch: x64_arm64
+            toolset: 14.0
+          - arch: x64_arm64
+            toolset: 14.1
+          - arch: x64_arm64
+            toolset: 14.2
 
     steps:
     - uses: actions/checkout@v3
@@ -252,10 +262,7 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\
       env:
         ROOT: ${{ github.workspace }}
-        # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
-        # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
-        # where the required dependencies exist.
-        CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
+
     - name: Fetch CA Certs bundle
       run: |
         wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
