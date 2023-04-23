@@ -374,10 +374,34 @@ jobs:
           echo LIB: %LIB%
           echo INCLUDE: %INCLUDE%
           
+          echo IA64 CL:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\x86_IA64"\cl.exe
+          echo Error level: %errorlevel%
+          
+          echo x86 CL:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
+          echo Error level: %errorlevel%
+          
+          echo Dir:
+          dir /w "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\"
+          copy "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\Common7\IDE"\*.dll "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin\"
+          
+          echo x86 CL after copy:
+          "D:\a\ckwin\ckwin\Microsoft Visual Studio 10.0\VC\Bin"\cl.exe
+          echo Error level: %errorlevel%
+          
+          echo Try again
+          cd "Microsoft Visual Studio 10.0\VC\Bin\"
+          REM copy ..\..\..\vcredist\*.dll
+          dir /w
+          cl
+          echo Error level: %errorlevel%
+          cd ..\..\..
+          
           echo Configure build environment...
           call setenv.bat
           
-          echo Run build...
+          echo Run Build...
           cd kermit\p95
           call mknt.bat
           cd ..\k95
