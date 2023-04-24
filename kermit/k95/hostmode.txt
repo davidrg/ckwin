@@ -1,0 +1,795 @@
+KERMIT 95 HOST MODE PROPRIETOR'S GUIDE
+
+  ---   PREPUBLICATION DRAFT   ---
+
+  Copyright (C) 1996, Frank da Cruz and Christine M. Gianone.
+  All rights reserved.
+
+Most recent update: February 8, 1996.
+Applies to: Kermit 95 1.1.3, Host Mode script version 1.00.
+
+
+CONTENTS
+
+  1. INTRODUCTION
+  2. WHAT HOST MODE IS FOR
+  3. THE HOSTMODE MANAGEMENT PROGRAM
+  4. CONFIGURATION
+  5. USER IDs
+  6. LOGS
+  7. MESSAGES
+  8. STARTING AND STOPPING HOST MODE
+  9. SUMMARY OF FILES
+ 10. IDEAS FOR IMPROVEMENT
+
+
+1. INTRODUCTION
+
+The "host mode" feature described here can be used with Kermit 95 1.1.3 and
+later, allowing people to dial up or Telnet to your PC and transfer files
+within a secure restricted environment.  Kermit 95's host mode is implemented
+entirely in the Kermit script language, and executed by Kermit itself.  You
+can find all the scripts in the Kermit 95 SCRIPTS subdirectory as HOST*.KSC.
+  
+The host-mode scripts include the host-mode user interface, a host-mode
+management program for the PC owner, and some others, plus some configuration,
+database, and documentation files.  There is also a new program, K95D.EXE, the
+"Kermit 95 Daemon", that handles incoming TCP/IP connections and starts up
+subprocesses to handle them.
+
+For a detailed explanation of Kermit's script programming language, refer to
+Chapters 11-13 of "Using C-Kermit", as supplemented by DOCS\CKERMIT.UPD.
+
+Documentation for host-mode users is in two separate files:
+
+  USERS\HOSTMODE.TXT  -  A short help file
+  PUBLIC\HOSTUSER.DOC -  A more detailed user guide
+
+The host-mode manager's guide is this file that you are reading.
+
+In this document, filenames are all relative to the Kermit 95 directory, even
+though you can configure Kermit 95's host mode to use any other directories of
+your choice.  So, for example, if you have installed Kermit 95 in D:\K95,
+then:
+
+  USERS\HOSTMODE.TXT
+
+refers to:
+
+  D:\K95\USERS\HOSTMODE.TXT
+
+Kermit 95's host mode feature is entirely self-contained and does not make any
+use at all of the Windows 95 (or NT) Registry or Windows 95/NT user IDs or
+passwords.  Therefore it is not to be run as a Windows NT Service under the
+Service Manager.
+
+When you use host mode, you become what amounts to the manager of a multiuser
+computer system.  As such, you need to understand how the system works before
+you can provide good and reliable service to your users.  So before you jump
+right in to running the Kermit 95 host, please read the following sections
+about security, configuration, user ID management, logs, and messages.
+
+
+2. WHAT HOST MODE IS FOR
+
+Windows 95 is not a multiuser operating system in the traditional sense that
+it can be dialed up and logged in to by ordinary terminals or terminal
+emulators, nor that it embodies notions of file ownership and access
+permission within the PC's file system.
+
+Yet often, the owner of a PC wants to allow other people to be able to dial up
+her PC from different types of computers and upload or download files.
+Sometimes even the owner herself needs to do this from a remote location.
+This could be done simply by leaving a Kermit server running on the desired
+communication port or TCP socket, but in that case the user gets no cues about
+what to do.  Also, security is an issue -- if you leave your PC in this state,
+anybody who knows the phone number or Internet address can access it and,
+potentially, do some damage.
+
+Kermit 95's host mode provides a simple mechanism for access control, and it
+gives users an easy-to-use menu.  The functions are limited: upload and
+download files within restricted areas, display files, display directory
+listings, read and leave messages.  Multiple authenticated users are allowed,
+as well as anonymous (guest) access if you (the PC owner) permit it.
+
+Furthermore, there are several levels of privilege, allowing different levels
+of access to the file system and to the facilities of the operating sytem.
+
+Cast of characters:
+
+PROPRIETOR
+  The PC owner, or "proprietor", is the person who grants access to users by
+  giving them IDs, and the one who configures host mode, and who starts and
+  stops host most from the PC's console (keyboard and screen).  This document
+  is for you, the proprietor.
+
+USER
+  A "user" is someone who accesses the PC from a remote location via Telnet or
+  dialup, and who logs in and accesses the PC only via the host-mode menus,
+  providing a username and a password.  The Kermit 95 host can have any number
+  of distinct users, plus a "guest" username that can be logged into by
+  anybody without a password if the PC owner wishes.
+	
+GUEST
+  An anonymous user who can log in without a password, if you allow it.
+  A guest never has any privileges.
+
+
+3. THE HOSTMODE MANAGEMENT PROGRAM
+
+Kermit 95 host mode comes with a management program to make it easy for
+the PC owner (proprietor) to start host mode, manage the configuration,
+manage user IDs, send and read messages, and so on.
+
+To run the management program, enter a console ("DOS") window and type:
+
+  hostmode
+
+NOTE: "hostmode" is simply a Batch program (hostmode.bat) that starts
+K95.EXE and has it execute the host-mode management script, HOSTMODE.KSC.
+
+You will see the following menu:
+
+--------------------------------------------
+K-95 Host Mode Management
+
+ 1 - Start host mode
+ 2 - Display configuration
+ 3 - Change configuration
+ 4 - Save configuration
+ 5 - Read messages from users
+ 6 - Leave a message for a user
+ 7 - View/edit current greeting message
+ 8 - Post a new greeting message
+ 9 - Manage user database
+10 - Help
+11 - Exit
+
+Your choice: 
+--------------------------------------------
+
+ 1 - Start host mode
+
+This option guides you through starting a host-mode listener.  You may choose
+to start a listener for Telnet connections or for dialup connections.  In each
+case, the relevant parameters are displayed for you and you can choose whether
+to proceed, or to change the parameters.  For Telnet, the only parameter is
+the socket number.  For dialup, the parameters are the dialup device (port)
+name, the speed, and the modem type.  If you wish to change any of these
+parameters, return to the main menu and choose "Change configuration", and
+then come back to "Start host mode".
+
+If you wish to use a TAPI device (in Windows 95, or Windows NT 4.00 or later),
+specify the port as "{TAPI name_of_tapi_device}". That is, the word TAPI
+followed by the name of the desired TAPI device, but with each space replaced
+by an underscore, all enclosed in braces, for example:
+
+  {TAPI US_Robotics_Sportster_28800}
+
+And specify the modem type as "TAPI". 
+
+Direct serial connections are also offered, but these are a bit tricky.  In
+particular, you have to be very sure you've got a true null-modem connection
+that cross-connects the receive and transmit wires, the DTR and CD wires, and
+the RTS and CTS wires.  The latter is important or else flow control won't
+work and there could easily be large amounts of data loss, exhibited as
+fractured screens and file transfer failures.
+
+ 2 - Display configuration
+
+This lists the current host mode configuration -- each variable and its
+assignment.
+
+ 3 - Change configuration
+
+You are prompted for each configuration variable.  The current value is shown
+in [brackets].  If you don't want to change it, just press the Enter key.  If
+you do want to change it, type in the new value and then press the Enter key.
+You can use Backspace (delete character), Ctrl-W (delete word), and Ctrl-U
+(delete line) for editing.  After entering the new value, you are given a
+chance to change your mind.  After all the variables have been processed, you
+are returned to the main menu, but the configuration data is not saved, so you
+still have other chances to change your mind.  (Don't worry, if you try to
+exit without saving the configuration, you'll be warned.)
+
+ 4 - Save configuration
+
+Saves the current configuration in the HOST.CFG file.
+
+ 5 - Read messages from users
+
+If users have sent you messages, this will display them for you.
+
+ 6 - Leave a message for a user
+
+This lets you compose and send a message to a particular user.  Whenever a
+user has messages waiting, it says so in the user's main menu.  Thus, even if
+you send a message to a logged in user, they can find out about it and read it
+right away.
+
+ 7 - View/edit current greeting message
+
+This lets you view the current greeting message that all users see when
+they log in and edit it if you want to.  It just runs Notepad on the message
+file.
+
+ 8 - Post a new greeting message
+
+This lets you post a new greeting message for all users.
+
+ 9 - Edit user database
+
+This is the user ID management feature: add, remove, and change user IDs
+and passwords.  Explained in section 5.2.
+
+10 - Help
+
+Displays a brief help message.
+
+11 - Exit
+
+Exits back to the console window "DOS" prompt.
+
+
+4. CONFIGURATION
+
+Your host-mode configuration is governed by a plain-text configuration file,
+HOST.CFG, in Kermit 95's SCRIPTS subdirectory.  The configuration variables
+are listed below, along with their default values -- that is, the values they
+have if you don't change them.  All the various scripts that make up host mode
+read this file to get the information they need.
+
+You can change the default configuration by editing the HOST.CFG file with a
+text editor like EDIT or NOTEPAD or perhaps more conveniently, by using the
+"Change configuration" option of the host-mode management program, HOSTMODE.
+The standard configuration file is shown here in its entirety:
+
+sessions=1                             ; Maximum simultaneous Telnet sessions
+maxusers=100                           ; Maximum number of user IDs
+inactivity=1200                        ; Inactivity limit (seconds)
+logintime=300                          ; Inactivity limit during login
+anonok=1                               ; Anonymous logins OK (0 = not OK)
+logging=1                              ; Logging enabled (0 = skip logging)
+dlincoming=0                           ; Downloads OK from INCOMING directory
+msgmax=200                             ; Longest message size (lines)
+hostport=3000                          ; TCP port to listen on
+comport=                               ; Communication port for dialins
+comspeed=                              ; Speed for communication port
+modem=                                 ; Type of modem on communication port
+protocol=kermit                        ; Default file transfer protocol
+xfermode=binary                        ; Default file transfer mode
+owner={THE PROPRIETOR}                 ; For user's MESSAGE FROM... message
+herald={Welcome to K-95 Host Mode}     ; Main menu title
+public=\v(startup)PUBLIC               ; Publicly readable directory
+incoming=\v(startup)INCOMING           ; Publicly writeable directory
+logdir=\v(startup)LOGS                 ; Directory for proprietor's logs
+usertree=\v(startup)USERS              ; Root of user directory tree
+tmpdir=\v(startup)TMP                  ; Directory for temp files
+userfile=\m(_usertree)/HOST.USR        ; User database file
+greeting=\m(_usertree)/GREETING.TXT    ; Message/greeting text filename
+helpfile=\m(_usertree)/HOSTMODE.TXT    ; Host-mode help file
+msgfile=\m(_usertree)/MESSAGES.TXT     ; Messages for proprietor
+
+Now, in more detail: 
+
+sessions=4
+  The maximum allowed number of simultaneous incoming TELNET sessions.
+  Strictly speaking, the number is either 1 or "more than one".  If it is
+  1, then we simply run host mode in a loop: wait for a connection to come
+  in, have a session, close the session, wait for the next connection to
+  come in, and so on.  If SESSIONS is greater than 1, we use a special
+  "daemon" to wait for incoming connections and spawn new, possibly concurrent
+  sessions.  IMPORTANT: Only Microsoft TCP/IP allows multiple sessions.  If
+  you attempt to set SESSIONS greater than 1 with Trumpet Winsock or FTP
+  OnNet, it won't work.  The default maximum of 1 session should work with
+  all varieties of TCP/IP.
+
+maxusers=100
+  The maximum number of users allowed in the user database.
+
+inactivity=1200
+  Inactivity limit in seconds.  A logged-in user who doesn't type anything in
+  this amount of time is logged out and disconnected.  This prevents idle
+  users from tying up resources on your PC.
+
+logintime=300
+  Inactivity limit in seconds in effect during the login process.  People
+  who don't type anything in this amount of time while at the Username or
+  Password prompt are logged out and disconnected.
+
+anonok=1
+  This means that anonymous (guest) logins are permitted.  Change the 1 to 0
+  if you only want known users (from your HOST.USR file) to log in.
+
+logging=1
+  This means you want to keep logs of the activities of your host-mode
+  users (see Section 6).  Change 1 to 0 if you don't want to keep logs.
+
+dlincoming=0
+  This means it is not OK for users to download from the INCOMING directory
+  nor to type files or get directory listings from it.  If you want to
+  permit this type of access, change 0 to 1.  But this carries certain risks
+  (e.g. if they upload copyrighted material illegally, then you might be
+  held responsible for its further distribution).
+
+msgmax=200
+  Maximum length (in lines) for messages sent by the user to the proprietor
+  or vice-versa.
+
+hostport=3000
+  The TCP port to be used while listening for incoming Telnet sessions.
+
+commport=
+comspeed=
+modem=
+  Communications parameters to be used when waiting for incoming modem
+  calls.  If these are left blank, the values from your K95CUSTOM.INI
+  file are used.
+ 
+  If you wish to use a TAPI device (in Windows 95, or Windows NT 4.00 or
+  later), specify the "commport" as "{TAPI name_of_tapi_device}". That is,
+  the word TAPI followed by the name of the desired TAPI device, but with
+  each space replaced by an underscore, all enclosed in braces, for
+  example:
+
+    commport={TAPI US_Robotics_Sportster_28800}
+
+protocol=kermit
+  The default file transfer protocol.  The other choices are zmodem,
+  ymodem, ymodem-g, and xmodem. 
+
+xfermode=binary
+  The default file transfer mode.  The other choice is text.
+
+owner={THE PROPRIETOR}
+  This is what is shown to users who receive messages from you.  Replace
+  this by your name, your company's name, or whatever you like.  Braces are
+  needed if the value contains any spaces.
+
+herald={Welcome to K-95 Host Mode}
+  This is the title shown at the top of the main menu screen.  Replace it
+  with anything you like, up to about 50 characters.  Braces are needed
+  if the value contains any spaces.
+
+public=\v(startup)PUBLIC
+  This is the directory that all users can CD to and download from,
+  but can't upload to.  In other words it is the public "read only"
+  directory, intended for you (the PC owner) to distribute files to
+  your users.  NOTE: \v(startup) stands for the directory that Kermit 95
+  was started from -- normally the directory you installed it into.
+
+incoming=\v(startup)INCOMING
+  This is the directory to which all users are allowed to upload files,
+  but which they can't download from or see directory listings of.
+  In other words, it is the public "write only" directory, intended for
+  your users to send files to you.  Optionally, you can configure this
+  directory to also allow your users to download from it -- see the
+  variable _dlincoming above.
+
+logdir=\v(startup)LOGS
+  This is the directory where log files are kept (see below).
+
+usertree=\v(startup)USERS
+  This is the root of the user directory tree.  So, for example, if your
+  Kermit 95 directory is D:\K95, and you have a host-mode user named Olga,
+  her personal directory will be D:\K95\USERS\Olga.  You can change this in
+  case you want to put your host-mode users someplace else.
+
+tmpdir=\v(tmpdir)
+  Name of a directory that Kermit 95 can use for writing temporary files.
+
+helpfile=\m(_usertree)/HOSTUSER.DOC
+  Help text that is displayed if the user asks for help.  This is a
+  short plain-text file that you can modify if you wish.
+
+greeting=\m(_usertree)/GREETING.TXT
+  A short text file which, if it exists, is displayed every time each
+  user logs in.  You can create it with a text editor, or use the HOSTMODE.KSC
+  script to create it for you.
+
+msgfile=\m(_usertree)/MESSAGES.TXT
+  Name of the file in which messages from users to the proprietor are placed.
+
+userfile=\m(_usertree)/HOST.USR
+  This is the user database file, as described above.
+
+5. USER IDs
+
+As distributed, HOST.KSC requires users to log in with a user ID and password.
+A user ID gives the user access to a private directory with full read/write
+access.  Guest (anonymous) users, if allowed, do not have a private directory.
+
+A failed login causes a three-second pause.  Three failed logins cause the
+host script to hang up the connection.  All logins, failed logins, and actions
+are recorded to a file.
+
+5.1. STRUCTURE OF USER IDs
+
+User IDs should be composed of letters and/or digits, and should not contain
+spaces, underscores, backslashes, or other non-alphanumeric characters.
+
+Kermit 95's host mode allows users access to three different directories:
+
+ 1. The user's own private directory, to which the user has read/write
+    access, but which other users can't access.
+
+ 2. The PUBLIC directory, to which all users have read access only.
+
+ 3. The INCOMING directory, into which all users can send files, and, if you
+    permit it, from which all users can also retrieve files.
+
+(In addition, users with "CD Privilege" can also access any (ANY) other
+directory on the system; more about this later.)
+
+Regular unpriviledged users can switch among these three directories, but they
+can't go anywhere else -- not for reading or writing files, not for getting
+directory listings.  If a file is uploaded containing a pathname, the pathname
+is stripped upon receipt, preventing users from being able to place or
+overwrite files in other other areas.  Similarly, pathnames are stripped from
+filenames given by the user in download requests, thus restricting their
+access to their current directory.
+
+5.2. MANAGEMENT OF USER IDs
+
+IDs are created only by the owner of the PC.  An ID is associated with an
+entry in the user database, normally USERS\USERS.DAT (you can change this in
+the configuration, if you want to), which is a plain-text ASCII file
+consisting of entries (lines) of the form:
+
+  username_encryptedpassword_privileges_name_address_phone_email_
+
+in which each field is terminated by an underscore, for example:
+
+  jrd_6840DF9017F59B67_0_Joe R. Doupnik_Utah State University__jrd@cc.usu.edu_
+
+The encrypted password can be created or modified only by using the tools
+provided -- not with a text editor or any other tool, because the encryption
+method is internal to Kermit 95.  The encryption method should be secure
+enough that no harm would be done if the USERS.DAT file fell into unfriendly
+hands, but of course there can be no guarantees.  In any case, the hostmode
+system is set up so that UNPRIVILEGED hostmode users will not have access to
+this file.
+
+Adding a user to the database is sufficient to create the user ID.  The host
+script creates the user's directory automatically the first time the user logs
+in successfully.
+
+To manage user IDs, select "Manage user database".  This presents you with a
+new menu that looks like:
+
+  User database management functions...
+
+  Database filename: USERS/USERS.DAT - Not loaded
+  Current user:      (none)
+
+   1 - Load user database
+   2 - Display user database
+   3 - Look up a user / set current user
+   4 - Add a new user
+   5 - Remove current user
+   6 - Modify current user
+   7 - Save user database
+   8 - Remove lock
+   9 - Return to main menu
+
+  Your choice: _
+
+Before you can do anything else you must load the user database (item 1).
+If no user database exists yet, item 1 reads "Create user database".  In
+either case, select item 1 first.
+
+Item 2 lets you look at the user database -- the literal contents of the file.
+
+Item 3 lets you look up a particular user.  You are prompted for the user's ID
+or name (either one will work).  If the user's entry is found, this becomes
+the "current user", which is the one affected by Remove and Modify selections.
+When a user is selected in this way, her ID is displayed in the Current User
+field above the menu.
+
+Item 4 lets you add a new user.  You are prompted for each field separately:
+user ID, password, privilege level, user's name, address, phone number, and
+email address.  All but the ID, password, and privilege level are optional.
+When you have entered the information, it is displayed for you and you are
+asked for permission to create the user ID, and if you give it, the ID is
+created.  NOTE: The user ID can not actually be used until you save the
+database (Item 7).
+
+Item 5 removes the current user ID (obtained from Item 3) from the database.
+The entry is displayed, your permission is requested, and if you give it, the
+entry is removed from the database.  However, the user's directory and files
+are not removed.  You can do this yourself by hand -- since it is your PC, you
+might want to see what the user has been storing there and decide what to do
+with the files.  NOTE: The user ID is not actually removed until you save the
+database (Item 7).
+
+Item 6 can be used to change the password and/or the privilege level of the
+current user.  NOTE: These changes do not actually take effect until you save
+the database (Item 7).
+
+Item 7 saves the database, activating any changes you have made to it.
+
+Item 8 unlocks the user database.  This will be necessary in case a host-mode
+session left a stale lock behind; for example, if they became disconnected
+while changing their password.  You can also remove the lock at the DOS
+prompt, simply by deleting the USERS.LCK file in the USERS directory.  You
+can also type this file -- it contains the user ID of the user who created
+the lock.  The timestamp on the file shows when it was created.
+
+Item 9 returns you to the main menu of the hostmode program.
+
+5.3. PRIVILEGES
+
+There are several levels of privilege:
+
+ 0 - No special privileges.  Users with this privilege level are restricted
+     to their own directory, plus the INCOMING and PUBLIC directories.  It
+     should be safe to give this level or privilege to anybody.  GUEST users
+     always have 0 privilege and, in addition, do not have a directory of
+     their own.
+
+ 1 - CD privilege.  This lets the user CD to any directory on the computer.
+     This should be given only to persons that you trust utterly and
+     completely yourself, and whom all of your other host-mode users can
+     trust as well.  This privilege allows the user to download any file at
+     all, to upload any file into any directory, possibly overwriting
+     critical system files or sensitive personal ones, including the host
+     mode user database, perhaps altering privilege levels of other other
+     users.  We recommend that this privilege be granted only to the PC's
+     owner and not to any other users.
+
+ 2 - DOS privilege.  This lets the user execute DOS commands.  It implies
+     and includes CD privilege, since there is no control over DOS commands,
+     their operands, and what they can do.  All the previous cautions apply,
+     and then some.
+
+
+6. LOGS
+
+All user actions are written to the hostmode window and, unless you change
+things, also written to a log file in Kermit 95's LOGS subdirectory.  The log
+file name for each session should be unique:
+
+  <user>_<date>_<time>.log
+
+for example:
+
+  olga_951224_12345.log
+
+where "olga" is the username, the first number is the julian date (yymmdd)
+and the second is the time in seconds since midnight.  These logs should be
+cleaned out periodically, especially if you have a lot of host-mode users
+and/or sessions, otherwise your disk could fill up.
+
+If you don't want to keep log files, see the Section 4 about how to disable
+the log-file feature.
+
+
+7. MESSAGES
+
+You can leave a message that all users will see when they log in (even
+anonymous users) in the greeting file.  Use the "hostmode" program to post
+messages.
+
+You can also use the hostmode program to leave a private message for a
+particular user.
+
+Users can leave messages for you ("the proprietor") via the "Leave a message"
+menu entry.  All such messages are appended to a single message file,
+MESSAGES.TXT in the root directory of the user tree.  You can read them with
+the hostmode program.
+
+All messages produced by Kermit 95 host-mode scripts are in standard e-mail
+format:
+
+Date: <date and time message was sent>
+From: <username> (or if from you, the OWNER value)
+To: <username> (or if a general message, "All")
+Subject: <line of text>
+
+<message body...>
+.
+
+Each message ends with a period alone on a line, and a blank line separates
+the headers from the message body.
+
+All message reading is done simply by putting the message into the "notepad"
+editor for you.  It is up to you to dispose of it.  There is no built-in
+mechanism for replying to a message -- instead, just choose the "Leave a
+message" from the main menu.
+
+
+8. STARTING AND STOPPING HOST MODE
+
+Using a single copy of the HOSTMODE program, you can run one or more host
+sessions simultaneously on any combination of serial communication ports or as
+TCP/IP Telnet servers.
+
+To stop a host script, bring its window to the front and type Ctrl-C, and then
+"exit" from K-95, which will close any open files, devices, or connections.
+If Ctrl-C does not bring you back to the prompt (for example, when waiting for
+an incoming TCP/IP connection), then use the mouse to close the window from
+its system menu.
+
+By the way, once you interrupt a host script by typing Ctrl-C, the connection
+is still open so you can (for example) CONNECT and then type characters which
+the client will see on her screen.  You can also use OUTPUT and TRANSMIT and
+any other commands to send text to the client's screen prior to hanging up
+and/or exiting.
+
+8.1. HOST MODE ON TCP/IP CONNECTIONS
+
+TCP/IP connections are governed by the SESSIONS and HOSTPORT parameters in
+the configuration file.
+
+HOSTPORT=3000
+
+This is the TCP port, or "socket", on which the host session listens for
+incoming connections.
+
+SESSIONS=1
+
+If SESSIONS is 1, then only one Telnet host session is allowed at a time.
+In that case, the HOSTTCP.KSC script is used to wait for incoming connections
+and then to run the HOST.KSC script for them.  This method is required for
+FTP OnNet-32 and Trumpet Winsock, because these TCP/IP stacks do not allow
+socket handles to be shared.
+
+If you are using Microsoft TCP/IP, you can set SESSIONS to 2 (or any number
+greater than 1), which allows multiple concurrent sessions.  (The number
+doesn't matter -- there is presently no way to limit the number of concurrent
+sessions to a particular maximum.)  In this case, the K95D.EXE program is
+used to listen for incoming connections and to spawn a host session for each
+one.
+
+SESSIONS=1 works with all TCP/IP stacks, and so it is the default.  Numbers
+larger than 1 only work with the Microsoft TCP/IP stack.
+
+Users should connect to your PC using a Kermit program that has built-in
+Telnet capability: Kermit 95, OS/2 C-Kermit, MS-DOS Kermit, UNIX C-Kermit, VMS
+C-Kermit, etc.  They should also enable the APC feature, if they have it,
+which allows both uploads and downloads to be automatic.  So if your PC's
+hostname were pc.oofa.com, the client Kermit command to make a connection to
+your PC would be:
+
+  set terminal apc on
+  telnet pc.oofa.com 3000
+
+For testing (under Microsoft TCP/IP only), you can run the host and client
+window on the same PC -- tell the client Kermit program to "telnet localhost
+3000".
+
+K95D.EXE can also be used for other purposes.  You can run it with a command
+line, or with a configuration file.  The command line format is:
+
+  k95d <socket> "<k95 command>"
+
+where <socket> is a socket number (such as 3000) and <k95 command> is one or
+more Kermit 95 commands (if more than one, separated by commas), for example:
+
+  k95d 3000 "take scripts/host.ksc, exit"
+
+Note the doublequotes around the K95 commands -- this causes the multiple
+words to be grouped together by the Windows shell as a single argument for
+K95D.EXE.
+
+If you start K95D.EXE without command-line options, it reads its configuration
+files, K95D.CFG, which contains lines of the same form as the command line
+arguments, but without the quotes, for example:
+
+  ; This is a comment
+  1000  set term echo local, set term newline on, connect
+  2000  server, exit                
+  3000  take scripts/host.ksc, exit
+
+Then, if any connection came in on port 1000, a "chat mode" session would be
+started.  Connections coming in on port 2000 would get a Kermit server, and
+connections on port 3000 would get a host-mode session.
+
+8.2. HOST MODE ON DIALED CONNECTIONS
+
+The management program uses HOSTMDM.KSC to run the host mode script in a loop,
+so whenever a user logs out, Kermit 95 waits for the next incoming phone call.
+Obviously, there can be only one concurrent host-mode session per serial port.
+
+Users make connections to your PC simply by dialing your modem's phone number
+and then going into terminal emulation mode.
+
+
+9. SUMMARY OF FILES
+
+Filename are all relative to the Kermit 95 directory.
+
+  HOST.CFG             The host-mode configuration file.
+  K95D.CFG             The K95D.EXE configuration file.
+  HOSTMODE.BAT         Starts the host-mode management program.
+  K95D.EXE             Daemon for managing incoming Telnet connections.
+  DOCS\HOSTMODE.DOC    This file.
+  SCRIPTS\HOST.KSC     The host-mode script.
+  SCRIPTS\HOSTTCP.KSC  Script to start host mode for TCP/IP users.
+  SCRIPTS\HOSTMDM.KSC  Script to start host mode for dialup modem users.
+  SCRIPTS\HOSTCOM.KSC  Script to start host mode for direct serial connection.
+  SCRIPTS\HOSTMODE.KSC The host-mode management program.
+  USERS\USERS.DAT      The user ID database.
+  USERS\GREETING.TXT   Short greeting text for users when they log in.
+  USERS\HOSTMODE.TXT   Help text displayed by "Help" menu item.
+  USERS\MESSAGES.TXT   Messages from users to the proprietor.
+  USERS\username.MSG   Message(s) to a particular user.
+  INCOMING             Directory to which all users can upload files.
+  PUBLIC               Directory from which all users can download files.
+  PUBLIC\HOSTUSER.DOC  A user guide which users can type or download and read.
+
+The HOST.CFG configuration file is shared by HOSTMODE.KSC, HOST.KSC, and all
+the other scripts, so you only need to change configuration parameters in one
+place.
+
+
+10. IDEAS FOR IMPROVEMENT
+
+Since Kermit 95's host mode is written entirely in the Kermit script language
+and executed by Kermit itself, anybody can make improvements.  Here are a few
+ideas:
+
+ . Callback capability for extra security.  User logs in with valid password,
+   callback number is looked up in the database (just add one more field),
+   and the host script calls the user back before presenting the menu.
+
+ . Ability of users to find out about other users, see who's logged in, etc.
+
+ . More-style paging of typed files and directory listings.
+
+ . Ability to send messages, as well as TYPE and DIRECTORY material, to the
+   user's local printer.
+
+ . File menus.
+
+ . Better messaging features, interactive chat sessions, etc.
+
+ . Limits on the length of sessions, the number of concurrent sessions, disk
+   quotas, ANSI screen coloration, etc etc...  Hey, it's BBS!
+
+Several programming considerations might not be totally obvious.  The worst
+of them is the conflict between the use of the backslash (\) character by
+Kermit's command scanner, and its use by Windows as a directory separator.
+In the Kermit script language, backslash is used to introduce variables,
+function calls, and numerical representations of special characters.
+Variables, unless you take precautions to the contrary, are evaluated
+recursively so, for example, if the variable \%f contains a Windows filename
+such as C:\K95\OOFA.TXT, then any reference to this variable, such as:
+
+  echo "\%f"
+
+would result in its full evaluation, giving undesired results like:
+
+  "C:K95OA.TXT"
+
+Windows 95, at the API level, can accept forward slash (/) as well as
+backslash (\) as a directory separator, and therefore so can self-contained
+Kermit 95 commands such as SEND, MKDIR, etc, that take filenames or directory
+names.  Unfortunately, however, Windows commands and programs such as DIR
+will not accept forward slashes, and so before feeding a filename to one of
+them, you'll need to do:
+
+  \freplace(xxx,/,\\)
+
+where xxx is the name of the variable that contains the filename.
+
+On the other hand, if the directory name contains backslashes to begin with,
+then any unguarded reference to it will result in the backslashes being
+interpreted recursively by Kermit's command scanner.  To avoid this, use
+constructions like:
+
+  open read \fdefinition(_userfile)
+
+\fdefinition means "return the definition of the macro" without evaluating
+it further.  Similarly for \%x variables:
+
+  open read \fcontents(\%f)
+
+A related consideration to be aware of is that you can't start a DOS shell
+and redirect its input and/or output to the communications channel.  It just
+doesn't work, don't even try it.  If it did work, we could easily use (e.g.)
+REDIRECT on COMMAND.COM to give hostmode users an interactive DOS session.
+(REDIRECT presently works in only one direction, and then only through the
+use of temporary files.)
+
+(End)

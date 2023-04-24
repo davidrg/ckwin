@@ -18,7 +18,7 @@ REM if not exist dist\printer\NUL mkdir dist\printer
 if not exist dist\public\NUL mkdir dist\public
 if not exist dist\scripts\NUL mkdir dist\scripts
 REM if not exist dist\ssh\NUL mkdir dist\ssh
-REM if not exist dist\users\NUL mkdir dist\users
+if not exist dist\users\NUL mkdir dist\users
 
 @echo Move build outputs...
 move *.exe dist
@@ -62,6 +62,7 @@ if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
 
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
+copy hostmode.txt dist\docs\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
 
 REM --- The following belongs in "C:\ProgramData\Kermit 95" if "installed" ---
@@ -128,6 +129,6 @@ REM SSH directory
 REM Empty directory in K-95, location not used by CKW SSH subsystem
 
 REM USERS directory
-REM contained: greeting.txt, hostmode.txt
-REM these were a MOTD type greeting for hostmode, and some informative text
-REM about where public, user and incoming files end up.
+@echo Copy User files...
+copy hostmode-greeting.txt dist\users\greeting.txt
+copy hostmode-help.txt dist\users\hostmode.txt
