@@ -2305,6 +2305,8 @@ ssl_tn_init(mode) int mode;
     }
 #endif /* COMMENT */
 
+
+
 #ifdef SSL_KRB5
 #ifndef KRB5_SERVICE_NAME
 #define KRB5_SERVICE_NAME    "host"
@@ -2320,10 +2322,18 @@ ssl_tn_init(mode) int mode;
         if (tls_con->kssl_ctx != NULL)
             kssl_ctx_setstring(tls_con->kssl_ctx, KSSL_KEYTAB, k5_keytab);
     } else {
-        if (ssl_con->kssl_ctx != NULL)
+        if (ssl_con->kssl_ctx != NULL) {
+            if (!SSL_set_tlsext_host_name(ssl_con, hostname)) {
+                debug(F100, "ssl_tn_init: SSL_set_tlsext_host_name failed", "", 0);
+            }
             kssl_ctx_setstring(ssl_con->kssl_ctx, KSSL_SERVER, szHostName);
-        if (tls_con->kssl_ctx != NULL)
+        }
+        if (tls_con->kssl_ctx != NULL) {
+            if (!SSL_set_tlsext_host_name(tls_con, hostname)) {
+                debug(F100, "ssl_tn_init: SSL_set_tlsext_host_name failed", "", 0);
+            }
             kssl_ctx_setstring(tls_con->kssl_ctx, KSSL_SERVER, szHostName);
+        }
     }
     kssl_ctx_setstring(ssl_con->kssl_ctx, KSSL_SERVICE,
                         krb5_d_srv ? krb5_d_srv : KRB5_SERVICE_NAME);
@@ -2630,6 +2640,10 @@ ssl_http_init(hostname) char * hostname;
         }
     }
 #endif /* COMMENT */
+
+    if (!SSL_set_tlsext_host_name(tls_http_con, hostname)) {
+        debug(F100, "ssl_http_init: SSL_set_tlsext_host_name failed", "", 0);
+    }
 
 #ifdef SSL_KRB5
 #ifndef KRB5_SERVICE_NAME
