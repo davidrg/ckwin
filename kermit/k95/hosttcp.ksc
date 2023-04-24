@@ -6,7 +6,28 @@
 ;   Windows 95 can accept multiple simultaneous connections.
 ;   Windows NT 3.51 can accept only one at a time.
 ;
-asg _configfile \freplace(\v(startup)scripts/host.cfg,/,\\)
+
+; The following code was added to accomodate the new Windows multi-user
+; friendly directory layouts introduced with version 1.1.21.  We have
+; check several locations for the directories that hostmode uses and
+; create them in \v(appdata) if the do not exist at all.
+
+if directory \v(exedir)USERS {
+    asg _hostroot \v(exedir)
+    forward FOUNDDIRS
+}
+if directory \v(startup)INCOMING {
+    asg _hostroot \v(startup)
+    forward FOUNDDIRS
+}
+
+if directory \v(appdata)USERS {
+    asg _hostroot \v(appdata)
+}
+
+:FOUNDDIRS
+
+asg _configfile \freplace(\m(_hostroot)/host.cfg,/,\\)
 
 def MAKEVAR2 if def \%2 _assign \%1 \%2, else _assign \%1
 

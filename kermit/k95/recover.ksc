@@ -1,0 +1,51 @@
+; Kermit 95 script demonstrating how to use file transfer recovery
+; to really, *really*, REALLY transfer a file.
+; This example uses a UNIX host and a Practical Peripherals modem.
+;
+; C. Gianone, F. da Cruz, Jan 1995.
+
+if not def LOGIN take \v(startup)login.ksc
+
+define \%s 20		  ; Seconds to pause between each try
+define \%n 7654321	  ; Phone number (replace appropriately)
+define \%f fy9495.wks	  ; Name of the file to send
+
+set port com1		  ; Communication port (ditto)
+set modem type pp14400	  ; Modem type (ditto)
+
+ask \%u { username: }         ; Your username on the other computer
+askq \%p { \%u's password: }  ; Your password on the other computer
+
+set file type binary	  ; File transfer mode must be binary
+set count 50		  ; Try up to 50 times to send the file
+goto nomsg		  ; Skip message the first time
+
+:LOOP			  ; Come here to redial
+hangup			  ; Give the phone line a rest
+echo CONNECTION BROKEN.
+echo Pausing for \%s seconds...
+sleep \%s
+Echo redialing...
+
+:NOMSG
+dial \%n		  ; Dial the phone number
+if fail goto AGAIN	  ; Keep trying...
+login \%u \%p
+if fail goto AGAIN
+
+out kermit -r\13	  ; kermit -r(eceive) on remote system
+input 10 KERMIT READY	  ; Wait for READY message
+pause 1			  ; Plus a second for safety
+resend fy9495.wks	  ; RESEND the file
+if success goto done	  ; Success means file is completely transferred
+
+:AGAIN
+if count goto LOOP	  ; Otherwise, try again.
+Stop 1 Too many tries.	  ; Too many tries, give up.
+
+:DONE
+echo File transferred OK  ; Success, give message
+output exit\13		  ; Log out from remote computer
+pause 5			  ; Give it time...
+hangup			  ; Hang up
+stop 0 Script succeeded	  ; Finished, the end.

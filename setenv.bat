@@ -122,6 +122,10 @@ set CKF_K4W=no
 set CKF_SUPERLAT=no
 :bitcheckdone
 
+REM Assume the toolchain we're using is not Windows 9x-compatible (we'll update
+REM this later if we discover otherwise)
+Set CKB_9X_COMPATIBLE=no
+
 echo Searching for Optional Dependencies...
 
 REM base include path - this is required for both Windows and OS/2
@@ -368,6 +372,7 @@ goto :unsupported
 REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
 set CK_COMPILER_NAME=OpenWatcom
 set ZINCBUILD=ow19
+set CKB_9X_COMPATIBLE=yes
 
 REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
 REM path so the dialer can find them.
@@ -381,6 +386,7 @@ set CKF_SUPERLAT=unsupported
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKB_9X_COMPATIBLE=yes
 goto :semisupported
 
 :vc1
@@ -389,6 +395,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc1axp
@@ -409,6 +416,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc4
@@ -420,6 +428,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc5
@@ -427,24 +436,29 @@ set CK_COMPILER_NAME=Visual C++ 5.0 (Visual Studio 97)
 set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc6
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc7
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc9
