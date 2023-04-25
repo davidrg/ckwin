@@ -172,6 +172,9 @@ goto :bitcheckdone
 
 :bitcheckdone
 
+echo Processor Architecture: %PROCESSOR_ARCHITECTURE%
+echo Target Architecture: %CKB_TARGET_ARCH%
+
 REM Figure out if we can run the binaries we're compiling on this machine. This is
 REM true if: we're targeting the same architecture as this machine, or we're targeting
 REM a compatible architecture (targeting x86 on an ADM64 machine)
@@ -180,6 +183,8 @@ if "%PROCESSOR_ARCHITECTURE%" == "%CKB_TARGET_ARCH%" set CKB_CROSS_COMPATIBLE=ye
 if "%PROCESSOR_ARCHITECTURE%-%CKB_TARGET_ARCH%" == "AMD64-x86" set CKB_CROSS_COMPATIBLE=yes
 REM TODO: is ARM64-x86 and ARM64-AMD64 ok? Will that run under emulation, or will it
 REM       just fail like AMD64-IA64 does (hangs the build server)
+
+if "%CKB_CROSS_COMPATIBLE%" == "no" echo Cannot run compiled binaries on this machine
 
 REM Assume the toolchain we're using is not Windows 9x-compatible (we'll update
 REM this later if we discover otherwise)
