@@ -258,6 +258,11 @@ ckuker.nr
 ckustr.sed
 ckutiox.c
 kermit/k95/makefile
+kermit/k95/android.mk
+kermit/k95/android.txt
+kermit/k95/ckermit.ini
+kermit/k95/ckpker.mak
+kermit/k95/ckubs2.mak
 
 # These files belong to C-Kermit for OpenVMS,
 ckvvms.h

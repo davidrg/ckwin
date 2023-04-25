@@ -11,6 +11,7 @@
 
   Author:
   Jeffrey E Altman (jaltman@secure-endpoints.com)
+  Last update: 13 December 2022 David Goodwin.
 */
 
 /*

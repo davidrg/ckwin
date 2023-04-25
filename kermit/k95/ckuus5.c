@@ -16,6 +16,7 @@ int cmdsrc() { return(0); }
       Secure Endpoints Inc., New York City
     Last update: Oct 10-11 2022 (fdc and sms)
     Last update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
+    Last update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
 
   Copyright (C) 1985, 2022,
     Trustees of Columbia University in the City of New York.
@@ -10717,6 +10718,16 @@ initoptlist() {
 #endif /* NOVMSSHARE */
 #endif /* VMS */
 
+#ifdef NOARROWKEYS
+    sprintf(line,"NOARROWKEYS");
+    makestr(&(optlist[noptlist++]),line);
+#endif /* NOARROWKEYS */
+
+#ifdef DOARROWKEYS
+    sprintf(line,"DOARROWKEYS");
+    makestr(&(optlist[noptlist++]),line);
+#endif /* DOARROWKEYS */
+
 #ifdef datageneral
     makestr(&(optlist[noptlist++]),"datageneral");
 #endif /* datageneral */
@@ -12592,7 +12603,6 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* OS2 */
 #endif /* NOARROWKEYS */
-
 
 #ifdef NODIAL
     printf(" No DIAL command\n");

@@ -4922,6 +4922,8 @@ static char *hxxdef[] = {
 "  if the definition includes any variable or function references, their",
 "  names are included, rather than their values (compare with ASSIGN).  If",
 "  the definition is omitted, then the named variable or macro is undefined.",
+"  If a variable of the same name already exists, its value is replaced by",
+"  the new value.",
 " ",
 "A typical macro definition looks like this:",
 " ",
