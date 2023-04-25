@@ -95,7 +95,7 @@ copy keymaps-readme.txt dist\keymaps\readme.txt
 
 REM Generate the default keymap. This will fail if we're cross-compiling for an
 REM architecture incompatible with this machine so skip it in that case.
-if "%CKB_CROSS_COMPATIBLE%" == "%no%" goto :skipkm
+if "%CKB_CROSS_COMPATIBLE%" == "no" goto :skipkm
 cd dist
 k95.exe -Y -# 127 -C "save keymap keymaps/default.ksc,exit" > NUL:
 cd ..
