@@ -1,8 +1,8 @@
-char *ckptyv = "Pseudoterminal support, 10.0.106, 23 Sep 2022";
+char *ckptyv = "Pseudoterminal support, 10.0.107, 16 Apr 2023";
 
 /*  C K U P T Y  --  C-Kermit pseudoterminal control functions for UNIX  */
 
-/* Last update: Fri Sep 23 20:11:41 2022 */
+/* Last update: Sun Apr 16 13:28:14 2023 */
 
 /*
   Copyright 1995 by the Massachusetts Institute of Technology.
@@ -315,6 +315,8 @@ char * ptyver = "PTY support 8.0.017, 18 Sep 2020";
 #include <tty.h>
 #endif /* HAVE_TTY_H */
 
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
+
 /*
   Because of the way ptyibuf is used with streams messages, we need
   ptyibuf+1 to be on a full-word boundary.  The following weirdness
@@ -428,7 +430,12 @@ int pty_master_fd = -1;			/* pty master file descriptor */
   set_termbuf() writes the structure into the kernel.
 */
 VOID
-init_termbuf(fd) int fd; {
+#ifdef CK_ANSIC
+init_termbuf( int fd )
+#else
+init_termbuf(fd) int fd;
+#endif /* CK_ANSIC */
+{
     int ttyfd;
     int rc = 0;
 
@@ -480,7 +487,12 @@ init_termbuf(fd) int fd; {
 
 #ifdef TIOCPKT_IOCTL
 VOID
-copy_termbuf(cp, len) char *cp; int len; {
+#ifdef CK_ANSIC
+copy_termbuf( char *cp, int len )
+#else
+copy_termbuf(cp, len) char *cp; int len;
+#endif /* CK_ANSIC */
+{
     if (len > sizeof(termbuf))
       len = sizeof(termbuf);
     memcpy((char *)&termbuf, cp, len);
@@ -489,7 +501,12 @@ copy_termbuf(cp, len) char *cp; int len; {
 #endif /* TIOCPKT_IOCTL */
 
 VOID
-set_termbuf(fd) int fd; {		/* Only make the necessary changes. */
+#ifdef CK_ANSIC
+set_termbuf( int fd )		/* Only make the necessary changes. */
+#else
+set_termbuf(fd) int fd;
+#endif /* CK_ANSIC */
+{
     int x;
     int ttyfd;
     ttyfd = fd;
@@ -599,7 +616,12 @@ ptyint_void_association() {
 /* PID may be zero for unknown.*/
 
 long
-pty_cleanup(slave, pid, update_utmp) char *slave; int pid; int update_utmp; {
+#ifdef CK_ANSIC
+pty_cleanup( char *slave, int pid, int update_utmp )
+#else
+pty_cleanup(slave, pid, update_utmp) char *slave; int pid; int update_utmp;
+#endif /* CK_ANSIC */
+{
 #ifdef VHANG_LAST
     int retval, fd;
 #endif /* VHANG_LAST */
@@ -693,7 +715,12 @@ pty_cleanup(slave, pid, update_utmp) char *slave; int pid; int update_utmp; {
 }
 
 long
-pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
+#ifdef CK_ANSIC
+pty_getpty( int *fd, char *slave, int slavelength ) 
+#else
+pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave;
+#endif /* CK_ANSIC */
+{
     char *cp;
     char *p;
     int i, ptynum;
@@ -862,7 +889,12 @@ pty_getpty(fd, slave, slavelength) int slavelength; int *fd; char *slave; {
 }
 
 long
-pty_init() {
+#ifdef CK_ANSIC
+pty_init( void )
+#else
+pty_init()
+#endif /* CK_ANSIC */
+{
 #ifdef HAVE_PTYM
     static char dummy;
     debug(F100,"HAVE_PTYM","",0);
@@ -897,7 +929,12 @@ static char *push_list[] = {
 #endif /* HAVE_STREAMS */
 
 long
-pty_initialize_slave (fd) int fd; {
+#ifdef CK_ANSIC
+pty_initialize_slave ( int fd )
+#else
+pty_initialize_slave (fd) int fd;
+#endif /* CK_ANSIC */
+{
 #ifdef POSIX_TERMIOS
 #ifndef ultrix
     struct termios new_termio;
@@ -1015,13 +1052,18 @@ pty_logwtmp (tty, user, host) char *user, *tty, *host; {
   rather that we have a controlling terminal at the end.  It is assumed that
   vhangup doesn't exist and confuse the process's notion of controlling
   terminal on any system without TIOCNOTTY.  That is, either vhangup() leaves
-  the controlling terminal in tact, breaks the association completely, or the
+  the controlling terminal intact, breaks the association completely, or the
   system provides TIOCNOTTY to get things back into a reasonable state.  In
   practice, vhangup() either breaks the association completely or doesn't
   effect controlling terminals, so this condition is met.
 */
 long
-pty_open_ctty(slave, fd, fc) char * slave; int *fd; int fc; {
+#ifdef CK_ANSIC
+pty_open_ctty( char * slave, int *fd, int fc )
+#else
+pty_open_ctty(slave, fd, fc) char * slave; int *fd; int fc;
+#endif /* CK_ANSIC */
+{
     int retval;
 
     debug(F110,"pty_open_ctty() slave",slave,0);
@@ -1092,7 +1134,12 @@ if (deblog) {
 }
 
 long
-pty_open_slave(slave, fd, fc) char *slave; int *fd; int fc; {
+#ifdef CK_ANSIC
+pty_open_slave( char *slave, int *fd, int fc )
+#else
+pty_open_slave(slave, fd, fc) char *slave; int *fd; int fc;
+#endif /* CK_ANSIC */
+{
     int vfd, testfd;
     long retval;
 #ifdef CK_POSIX_SIG
@@ -1540,7 +1587,12 @@ static char Xline[17] = { 0, 0 };
   fc = function code from do_pty() (q.v.)
 */
 int
-getptyslave(fd, fc) int * fd, fc; {
+#ifdef CK_ANSIC
+getptyslave( int * fd, int fc )
+#else
+getptyslave(fd, fc) int * fd, fc;
+#endif /* CK_ANSIC */
+{
     int ttyfd;
     int t = -1;
     long retval;
@@ -1813,7 +1865,12 @@ pty_trap_handler(fd) int fd; {
 #endif /* HAVE_PTYTRAP */
 
 VOID
-exec_cmd(s) char * s; {
+#ifdef CK_ANSIC
+exec_cmd( char * s )
+#else
+exec_cmd(s) char * s;
+#endif /* CK_ANSIC */
+{
     struct stringarray * q;
     char ** args = NULL;
 
@@ -1856,7 +1913,12 @@ exec_cmd(s) char * s; {
 static int pty_fc = -1;			/* Global copy of fc */
 
 int
-do_pty(fd, cmd, fc) int * fd; char * cmd; int fc; {
+#ifdef CK_ANSIC
+do_pty( int * fd, char * cmd, int fc )
+#else
+do_pty(fd, cmd, fc) int * fd; char * cmd; int fc;
+#endif /* CK_ANSIC */
+{
     long retval;
     int syncpipe[2];
     int i, ttyfd;

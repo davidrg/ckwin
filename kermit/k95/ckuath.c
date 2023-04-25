@@ -12801,6 +12801,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <sys/stat.h>
 #include <time.h>
 #define Time_t time_t
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 void
 XauDisposeAuth (auth)

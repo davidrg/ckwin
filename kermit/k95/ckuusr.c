@@ -1,5 +1,5 @@
 #include "ckcsym.h"
-char *userv = "User Interface 10.0.330, 11 December 2022";
+char *userv = "User Interface 10.0.331, 11 April 2023";
 
 /*  C K U U S R --  "User Interface" for C-Kermit (Part 1)  */
 
@@ -10,7 +10,7 @@ char *userv = "User Interface 10.0.330, 11 December 2022";
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -166,6 +166,8 @@ extern int batch;
 #include <packets:common.h>
 #define fgets(stringbuf,max,fd) dg_fgets(stringbuf,max,fd)
 #endif /* datageneral */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef CK_ANSIC
 /* Prototypes for static functions - fdc 30 November 2022 */
@@ -2779,6 +2781,7 @@ struct keytab remcmd[] = {
     { "rmdir",     XZRMD, 0 },
     { "set",       XZSET, 0 },
     { "space",	   XZSPA, 0 },
+    { "status",	   XZSTA, 0 },
 #ifndef NOFRILLS
     { "type",      XZTYP, 0 },
     { "who",       XZWHO, 0 },
@@ -3584,7 +3587,12 @@ showtypopts() {
 /* isauto == 1 if locus is being switched automatically */
 
 VOID
-setlocus(x, isauto) int x, isauto; {
+#ifdef CK_ANSIC
+setlocus(int x, int isauto)
+#else
+setlocus(x, isauto) int x, isauto;
+#endif /* CK_ANSIC */
+{
     extern int quitting;
     if (x) x = 1;
     if (x && locus) return;
@@ -3633,7 +3641,12 @@ setlocus(x, isauto) int x, isauto; {
 }
 
 VOID
-setautolocus(x) int x; {
+#ifdef CK_ANSIC
+setautolocus( int x )
+#else
+setautolocus(x) int x;
+#endif /* CK_ANSIC */
+{
     autolocus = x;
 #ifdef KUI
     KuiSetProperty(KUI_AUTO_LOCUS,x,0);
@@ -3929,7 +3942,12 @@ doping() {				/* PING command */
 #endif /* TCPSOCKET */
 
 static VOID
-doend(x) int x; {
+#ifdef CK_ANSIC
+doend( int x )
+#else
+doend(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifndef NOSPL
     /* Pop from all FOR/WHILE/XIF/SWITCH's */
     debug(F101,"doend maclvl 1","",maclvl);
@@ -4015,7 +4033,12 @@ char sndxnam[] = { "_array_x_" };	/* (with replaceable x!) */
 /*  D O X S E N D  --  Parse SEND and related commands with switches  */
 
 int
-doxsend(cx) int cx; {
+#ifdef CK_ANSIC
+doxsend( int cx )
+#else
+doxsend(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int c, i, n, wild, confirmed = 0;	/* Workers */
     int x, y;				/* of the world... */
     int getval = 0;			/* Whether to get switch value */
@@ -5437,7 +5460,12 @@ resconn() {
 }
 
 int
-doxconn(cx) int cx; {
+#ifdef CK_ANSIC
+doxconn( int cx )
+#else
+doxconn(cx) int cx; 
+#endif /* CK_ANSIC */
+{
     int c, i, n;			/* Workers */
     int x, y;
     int getval = 0;			/* Whether to get switch value */
@@ -5665,7 +5693,12 @@ doxconn(cx) int cx; {
 /* cx == XXADD or XXREMV */
 /* fc == ADD_BIN or ADD_TXT */
 static int
-doadd(cx,fc) int cx, fc; {
+#ifdef CK_ANSIC
+doadd( int cx, int fc )
+#else
+doadd(cx,fc) int cx, fc;
+#endif /* CK_ANSIC */
+{
 #ifdef PATTERNS
     char * tmp[FTPATTERNS];
     char **p = NULL;
@@ -5744,7 +5777,12 @@ doadd(cx,fc) int cx, fc; {
 /* ADD SEND-LIST */
 
 static int
-addsend(cx) int cx; {
+#ifdef CK_ANSIC
+addsend( int cx )
+#else
+addsend(cx) int cx; 
+#endif /* CK_ANSIC */
+{
 #ifndef NOMSEND
     extern struct keytab fttab[];
     extern int nfttyp;
@@ -6079,7 +6117,12 @@ static struct keytab learnswi[] = {
 #endif /* CKLEARN */
 
 int
-arrayitoa(x) int x; {			/* Array index to array letter */
+#ifdef CK_ANSIC
+arrayitoa( int x )                   /* Array index to array letter */
+#else
+arrayitoa(x) int x;
+#endif /* CK_ANSIC */
+{
     if (x == 1)
       return(64);
     else if (x < 0 || x > (122 - ARRAYBASE))
@@ -6089,7 +6132,12 @@ arrayitoa(x) int x; {			/* Array index to array letter */
 }
 
 int
-arrayatoi(c) int c; {			/* Array letter to array index */
+#ifdef CK_ANSIC
+arrayatoi( int c )			/* Array letter to array index */
+#else
+arrayatoi(c) int c;
+#endif /* CK_ANSIC */
+{
     if (c == 64)
       c = 96;
     if (c > 63 && c < 91)
@@ -6100,7 +6148,12 @@ arrayatoi(c) int c; {			/* Array letter to array index */
 }
 
 static int				/* Declare an array */
-dodcl(cx) int cx; {
+#ifdef CK_ANSIC
+dodcl( int cx ) 
+#else
+dodcl(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int i, n, v, lo, hi, rc = 0;
     int isdynamic = 0;
     char tmpbuf[64];
@@ -6401,7 +6454,12 @@ unarray() {
 }
 
 static int
-clrarray(cx) int cx; {
+#ifdef CK_ANSIC
+clrarray( int cx ) 
+#else
+clrarray(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int i, x, lo, hi;
     char c, * s, * val = NULL;
 
@@ -6772,7 +6830,12 @@ doclear() {
 
 #ifndef NOSPL
 static int
-doeval(cx) int cx; {
+#ifdef CK_ANSIC
+doeval( int cx ) 
+#else
+doeval(cx) int cx;
+#endif /* CK_ANSIC */
+{
     char *p;
     char vnambuf[VNAML], * vnp = NULL;	/* These must be on the stack */
     if (!oldeval) {
@@ -7884,7 +7947,12 @@ doprompt() {
 
 #ifdef CKLEARN
 VOID
-learncmd(s) char *s; {			/* Record commands in learned script */
+#ifdef CK_ANSIC
+learncmd( char *s )            /* Record commands in learned script */
+#else
+learncmd(s) char *s;
+#endif /* CK_ANSIC */
+{
     char buf[64];
     int i, k;
     if (learnfp && learning) {		/* Only if open and on */
@@ -7999,7 +8067,12 @@ hmsgaa(s,s2) char *s[]; char *s2;
 
 #ifndef NOSPL
 int
-isinternalmacro(x) int x; {          /* Test if macro is internally defined */
+#ifdef CK_ANSIC
+isinternalmacro( int x )     /* Test if macro is internally defined */
+#else
+isinternalmacro(x) int x;
+#endif /* CK_ANSIC */
+{
     char * m;
     /*
        7 Dec 2021: "static" added to prevent fatal "Automatic aggregate
@@ -8064,7 +8137,13 @@ isinternalmacro(x) int x; {          /* Test if macro is internally defined */
 #define ERRMSGBUFSIZ 320
 static char errmsgbuf[ERRMSGBUFSIZ] = { '\0' };
 
-VOID newerrmsg(s) char *s; {
+VOID
+#ifdef CK_ANSIC
+newerrmsg( char * s )
+#else
+newerrmsg(s) char *s; 
+#endif /* CK_ANSIC */
+{
     char * tmperrbuf[ERRMSGBUFSIZ];
 
     extern char lasttakeline[];
@@ -8174,7 +8253,12 @@ int cmdstats[256] = { -1, -1 };
 #endif /* DEBUG */
 
 int
-docmd(cx) int cx; {
+#ifdef CK_ANSIC
+docmd( int cx )
+#else
+docmd(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern int nolocal, cmkwflgs;
 
     debug(F101,"docmd entry, cx","",cx);
@@ -8548,7 +8632,7 @@ docmd(cx) int cx; {
 	debug(F101,"sexp split","",q->a_size);
 
 	if (q->a_size == 1) {		/* We should get exactly one back */
-	    char * result, * dosexp();
+	    char * result;
 	    sexprc = 0;			/* Reset out-of-band return code */
 	    result = dosexp(s);		/* Get result */
 	    debug(F111,"sexp result",result,sexprc);

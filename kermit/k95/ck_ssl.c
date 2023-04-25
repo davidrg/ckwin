@@ -130,6 +130,8 @@ ck_ssleay_is_installed()
 #include "ckotcp.h"
 #endif /* OS2ONLY */
 
+#include "ckcfnp.h"                     /* Prototypes */
+
 #ifdef SSLDLL
 int ssl_finished_messages = 0;
 #else /* SSLDLL */

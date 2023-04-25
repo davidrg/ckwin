@@ -768,6 +768,10 @@ extern int tcp_incoming;		/* Used by ENABLE macro */
 
 /* These are from the book */
 
+#ifndef SP
+#define SP 32
+#endif  /* SP */
+
 #define tochar(ch)  (((ch) + SP ) & 0xFF )	/* Number to character */
 #define xunchar(ch) (((ch) - SP ) & 0xFF )	/* Character to number */
 #define ctl(ch)     (((ch) ^ 64 ) & 0xFF )	/* Control/Uncontrol toggle */
@@ -1331,11 +1335,8 @@ _PROTOTYP( VOID ckhost, (char *, int) );
 _PROTOTYP( int gettcs, (int, int) );
 _PROTOTYP( VOID getdialenv, (void) );
 _PROTOTYP( VOID setprefix, (int) );
-_PROTOTYP(VOID initproto,(int,char *,char *,char *,char *,char *,char*,char*));
 _PROTOTYP( VOID initpat, (void) );
 _PROTOTYP( VOID initcsets, (void) );
-_PROTOTYP( char * getsysid, (char *) );
-_PROTOTYP( int getsysix, (char *) );
 #ifdef CK_TIMERS
 _PROTOTYP( VOID rttinit, (void) );
 _PROTOTYP( int getrtt, (int, int) );

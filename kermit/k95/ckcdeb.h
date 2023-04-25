@@ -7015,5 +7015,37 @@ _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName,
 
 #include "ckclib.h"
 
+#ifdef COMMENT
+/*
+  This was a first attempt to prototypes for over 400 functions that never had
+  them before, which are needed now since compilers like Clang complains about
+  every single function that does not have prototype, and claims this will be
+  a fatal error in a forthcoming release.  The new prototypes are in the new
+  header file ckcfnp.h: 436 of them to start.  But the prototypes need to know
+  about typedefs that haven't been made yet, since ckcdeb.h is #included
+  before the other headers where that happened.  I thought maybe I could
+  include them here, but it was a rabbit hole.  The only way to insure the
+  prototypes work without messing everything else up is to put "#include
+  ckcfnp.h" in every single Kermit module AFTER what was the last #include.
+  - fdc, 23 March 2023
+*/
+#ifndef NOANSI
+#ifdef __STDC__
+#ifdef CK_ANSIC                     /* New C-Kermit 10.0 Beta.09 */
+#include "ckucmd.h"                 /* For typedefs */
+#include "ckcnet.h"                 /* For typedefs */
+#include "ckuath.h"                 /* For typedefs */
+#include "ckucmd.h"                 /* For typedefs */
+#include "ckcker.h"                 /* For typedefs */
+#include "ckuusr.h"                 /* For typedefs */
+#include "ckctel.h"                 /* For typedefs */
+#include "ckcfnp.h"                 /* Prototypes for all functions */
+/* ckcsig.h */
+/* ckusig.h */
+#endif /* CK_ANSIC */
+#endif /* __STDC__ */
+#endif /* NOANSI */
+#endif /* COMMENT */
+
 /* End of ckcdeb.h */
 #endif /* CKCDEB_H */
