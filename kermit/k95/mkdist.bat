@@ -93,11 +93,13 @@ if "%CKB_9X_COMPATIBLE%" == "yes" set CK_DIST_KEYMAPS=%CK_DIST_KEYMAPS% capslock
 for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\keymaps\
 copy keymaps-readme.txt dist\keymaps\readme.txt
 
-REM Generate the default keymap. This may fail if C-Kermit was cross-compiled
-REM for another architecture
+REM Generate the default keymap. This will fail if we're cross-compiling for an
+REM architecture incompatible with this machine so skip it in that case.
+if "%CKB_CROSS_COMPATIBLE%" == "%no%" goto :skipkm
 cd dist
 k95.exe -Y -# 127 -C "save keymap keymaps/default.ksc,exit" > NUL:
 cd ..
+:skipkm
 
 REM PHONES
 REM Contains dialing directories. All the files previously distributed here are
