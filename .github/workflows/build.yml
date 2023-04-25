@@ -634,6 +634,8 @@ jobs:
         call mknt.bat
         cd ..\k95
         call mk.bat
+        
+        call mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}
       env:
@@ -661,13 +663,6 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
-    - name: Make Distribution
-      run: mkdist.bat
-      shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
-      env:
-        ROOT: ${{ github.workspace }}
-        WATCOM: ${{ github.workspace }}\watcom        
     - name: Prepare Artifacts
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -736,15 +731,10 @@ jobs:
           call mknt.bat
           cd ..\k95
           call mk.bat
+          
+          call mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit
-        env:
-          ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
-      - name: Make Distribution
-        run: mkdist.bat
-        shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
@@ -924,18 +914,14 @@ jobs:
           
           cd ..\k95
           call mk.bat
+          
+          call mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
-      - name: Make Distribution
-        run: mkdist.bat
-        shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
-        env:
-          ROOT: ${{ github.workspace }}
-          
+
       - name: HTMLise Markdown Docs
         run: |
           pip3 install markdown
@@ -1025,17 +1011,13 @@ jobs:
           
           cd ..\k95
           call mk.bat
+          
+          call mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
-      - name: Make Distribution
-        run: mkdist.bat
-        shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
-        env:
-          ROOT: ${{ github.workspace }}
 
       - name: HTMLise Markdown Docs
         run: |

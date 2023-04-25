@@ -60,10 +60,15 @@ REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
 
-echo Checking for a 64bit compiler...
+echo Checking target architecture...
 
 REM Figure out if we're doing a 64bit build or a 32bit one (this affects our
-REM choices for some libraries later on)
+REM choices for some libraries later on), and what our target architecture is
+REM (this affects whether we can run the generated binary on this machine)
+
+REM This should match the %PROCESSOR_ARCHITECTURE% on the target machine
+set CKB_TARGET_ARCH=x86
+
 set CKB_OPENSSL_SUFFIX=
 if exist %WATCOM%\binnt\wcl386.exe goto :bitcheckdone
 cl 2>&1 | findstr /C:"for x64" > nul
@@ -76,30 +81,69 @@ cl 2>&1 | findstr /C:"for Itanium" > nul
 if %errorlevel% == 0 goto :ia64
 
 cl 2>&1 | findstr /C:"for IA-64" > nul
-if %errorlevel% == 0 goto :bits64
+if %errorlevel% == 0 goto :ia64
 
 cl 2>&1 | findstr /C:"for ARM64" > nul
 if %errorlevel% == 0 goto :arm64
+
+cl 2>&1 | findstr /C:"for ARM" > nul
+if %errorlevel% == 0 goto :arm
+
+cl 2>&1 | findstr /C:"for AXP" > nul
+if %errorlevel% == 0 goto :axp
+
+cl 2>&1 | findstr /C:"for MIPS R-Series" > nul
+if %errorlevel% == 0 goto :mips
+
+REM TODO: PowerPC
 
 REM Yes, the 64bit Windows for Alpha compiler exists. No, you can't run its output
 REM on anything (unless you happen to work for Microsoft)
 cl 2>&1 | findstr /R /C:"Digital.*Alpha.*Version 13.0" > nul
 if %errorlevel% == 0 goto :bits64
 
-set CKB_BITS_64=no
-echo Targeting 32bit Windows
-goto :bitcheckdone
+REM Else something unknown or x86-32
+goto :bits32
+
+:arm
+REM 32bit ARM (Windows RT)
+REM TODO: Check
+set CKB_TARGET_ARCH=ARM
+goto :bits32
+
+:axp
+REM Alpha AXP Windows NT - 32bits
+REM TODO: Check
+set CKB_TARGET_ARCH=AXP
+goto :bits32
+
+:mips
+REM MIPS Windows NT - 32bits
+REM TODO: Check
+set CKB_TARGET_ARCH=MIPS
+goto :bits32
+
+:ppc
+REM PowerPC Windows NT - 32bits
+REM TODO: Check
+set CKB_TARGET_ARCH=PPC
+goto :bits32
 
 :x64
 set CKB_OPENSSL_SUFFIX=-x64
+set CKB_TARGET_ARCH=AMD64
 goto :bits64
 
 :arm64
 set CKB_OPENSSL_SUFFIX=-arm64
+
+REM TODO: Check
+set CKB_TARGET_ARCH=ARM64
 goto :bits64
 
 :ia64
 set CKB_OPENSSL_SUFFIX=-ia64
+set CKB_TARGET_ARCH=IA64
 
 REM libssh won't build for any compiler that can target IA64 windows
 REM due to lack of C99 support. Force it off.
@@ -108,7 +152,6 @@ set CKF_SSH=no
 REM Also no ZLIB support on Itanium (couldn't get it to easily
 REM cross-compile) - not that CKW actually uses zlib for anything.
 set CKF_ZLIB=no
-
 goto :bits64
 
 :bits64
@@ -120,7 +163,32 @@ REM These libraries aren't supported for 64bit targets - force them off
 set CKF_SRP=no
 set CKF_K4W=no
 set CKF_SUPERLAT=no
+goto :bitcheckdone
+
+:bits32
+set CKB_BITS_64=no
+echo Targeting 32bit Windows
+goto :bitcheckdone
+
 :bitcheckdone
+
+echo Processor Architecture: %PROCESSOR_ARCHITECTURE%
+echo Target Architecture: %CKB_TARGET_ARCH%
+
+REM Figure out if we can run the binaries we're compiling on this machine. This is
+REM true if: we're targeting the same architecture as this machine, or we're targeting
+REM a compatible architecture (targeting x86 on an ADM64 machine)
+set CKB_CROSS_COMPATIBLE=no
+if "%PROCESSOR_ARCHITECTURE%" == "%CKB_TARGET_ARCH%" set CKB_CROSS_COMPATIBLE=yes
+if "%PROCESSOR_ARCHITECTURE%-%CKB_TARGET_ARCH%" == "AMD64-x86" set CKB_CROSS_COMPATIBLE=yes
+REM TODO: is ARM64-x86 and ARM64-AMD64 ok? Will that run under emulation, or will it
+REM       just fail like AMD64-IA64 does (hangs the build server)
+
+if "%CKB_CROSS_COMPATIBLE%" == "no" echo Cannot run compiled binaries on this machine
+
+REM Assume the toolchain we're using is not Windows 9x-compatible (we'll update
+REM this later if we discover otherwise)
+Set CKB_9X_COMPATIBLE=no
 
 echo Searching for Optional Dependencies...
 
@@ -368,6 +436,7 @@ goto :unsupported
 REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
 set CK_COMPILER_NAME=OpenWatcom
 set ZINCBUILD=ow19
+set CKB_9X_COMPATIBLE=yes
 
 REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
 REM path so the dialer can find them.
@@ -381,6 +450,7 @@ set CKF_SUPERLAT=unsupported
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKB_9X_COMPATIBLE=yes
 goto :semisupported
 
 :vc1
@@ -389,6 +459,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc1axp
@@ -409,6 +480,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc4
@@ -420,6 +492,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc5
@@ -427,24 +500,29 @@ set CK_COMPILER_NAME=Visual C++ 5.0 (Visual Studio 97)
 set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc6
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc7
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
+set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
 :vc9

@@ -1,0 +1,6 @@
+Welcome to my PC.  This is my greeting message.  You can upload
+files, and you can download whatever you find in the PUBLIC area.
+
+Be sure your terminal program is set to VT100 or ANSI emulation,
+with at least 24 lines.  If you are using a Kermit program, be
+sure to "set terminal apc on".
