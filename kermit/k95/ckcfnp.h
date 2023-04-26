@@ -521,7 +521,11 @@ void setseslog( int );
 void setxlatype( int, int );
 void sh_sort( char **, char **, int, int, int, int );
 void shods( char * );
+#ifdef OS2
+void shokeycode( int, int );
+#else
 void shokeycode( int );
+#endif
 void shostrdef( CHAR * );
 void shotcs( int, int );
 void tn_debug( char * );

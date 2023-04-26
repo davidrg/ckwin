@@ -35,6 +35,7 @@
 #include <des/des.h>
 #endif
 
+#include "ckucmd.h"                     /* xx_strp */
 #include "ckcfnp.h"                     /* Prototypes */
 
 /* This is required by ckclib.c and normally defined in ckuus4.c */
