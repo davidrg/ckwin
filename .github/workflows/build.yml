@@ -928,21 +928,6 @@ jobs:
           #Remove-Item -Recurse -Force openssl-1.0.1u
           #Remove-Item -Recurse -Force srp-2.1.2
           #Remove-Item -Recurse -Force tools
-          #Remove-Item -Recurse -Force zlib
-          
-          # Get and unpack zlib
-          mkdir zlib
-          cd zlib
-          echo "Fetching ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz to file zlib-${{env.ZLIB_VERSION}}.tar.gz..."
-          wget ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
-          echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar.gz"
-          7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
-          echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar"
-          7z x zlib-${{env.ZLIB_VERSION}}.tar
-          ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
-          del *.tar
-          del *.gz
-          cd ..
           
           # Get and unpack nasm
           mkdir tools
@@ -1003,23 +988,6 @@ jobs:
         env:
           VCT2003: ${{ github.workspace }}\VCT2003
 
-      - name: Build zlib
-        if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
-        shell: cmd
-        run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
-          
-          cd zlib\${{env.ZLIB_VERSION}}
-          cmake .
-          nmake -f win32\Makefile.msc
-        env:
-          VCT2003: ${{ github.workspace }}\VCT2003
-
       - name: Build openssl
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         shell: cmd
@@ -1033,7 +1001,7 @@ jobs:
           
           cd openssl-1.0.1u
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
-          perl Configure VC-WIN32 enable-static-engine zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
+          perl Configure VC-WIN32 enable-static-engine
           call ms\do_ms.bat
           nmake -f ms\ntdll.mak
         env:
