@@ -982,6 +982,7 @@ jobs:
           REM which is also on here - we only want it for cvtres.exe.
           Set INCLUDE=%VCT2003%\include
           Set LIB=%VCT2003%\lib
+          set CKB_STATIC_CRT=yes
           
           cd libdes
           call mknt.bat
@@ -1022,6 +1023,7 @@ jobs:
           REM which is also on here - we only want it for cvtres.exe.
           Set INCLUDE=%VCT2003%\include
           Set LIB=%VCT2003%\lib
+          set CKB_STATIC_CRT=yes
           
           set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
           set srp_root_override=${{ github.workspace }}\srp-2.1.2
