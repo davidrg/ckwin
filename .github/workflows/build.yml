@@ -1002,6 +1002,12 @@ jobs:
           cd openssl-1.0.1u
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           perl Configure VC-WIN32 enable-static-engine
+          
+          REM adjust the makefile to statically link
+          cd ms
+          sed -i "s/\/MD /\/MT /g" ntdll.mak
+          cd ..
+          
           call ms\do_ms.bat
           nmake -f ms\ntdll.mak
         env:
