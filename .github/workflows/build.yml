@@ -1047,20 +1047,13 @@ jobs:
           set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
           set srp_root_override=${{ github.workspace }}\srp-2.1.2
   
-          call ..\setenv.bat
+          call setenv.bat
           
           REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
           REM (though apparently you can get the required import library for
           REM dynamic linking from the .NET SDK 1.1)
           set CKB_STATIC_CRT=yes
-          
-          echo Building OpenSSL...
-          
-          echo Building libdes...
-          cd libdes
-          call mknt
-          cd ..
-          
+                   
           cd kermit
           
           echo Building p95...
