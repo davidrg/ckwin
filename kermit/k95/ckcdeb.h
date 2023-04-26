@@ -7055,6 +7055,9 @@ typedef unsigned long DWORD_PTR;
 #else /* CK_HAVE_INTPTR_T */
 #define CK_TTYFD_T int
 #endif /* CK_HAVE_INTPTR_T */
+#else /* OS2 */
+/* Not on Windows or OS/2? its just an int */
+#define CK_TTYFD_T int
 #endif /* OS2 */
 
 
