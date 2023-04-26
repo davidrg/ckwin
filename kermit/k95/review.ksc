@@ -1,0 +1,185 @@
+# REVIEW
+#
+# Interactively prompts you with each filename that matches the argument
+# (or all filenames in the current directory if no argument given), giving
+# you a chance to type it, delete it, edit it, rename it, copy it, etc.
+# In UNIX, wildcards are expanded by the shell on the command line;
+# elsewhere, this script expands (a single) wildcard argument itself.
+#
+# Usage: TAKE REVIEW.KSC [ filespec ]
+#
+# Hint: Use forward slashes, not backslashes, in filespec.
+#
+# Illustrates:
+#  . Processing command-line arguments in "kerbang" scripts.
+#  . FOR and WHILE loops and SWITCH statements.
+#  . Nested loops.
+#  . Assignment of wildcard expansion to an array.
+#  . Sorting an array.
+#  . Reading commands from keyboard and matching them to a keyword list.
+#  . Getting and displaying information about files.
+#  . TYPE command switches like /HEAD, /TAIL, /COUNT, and /SEARCH.
+#
+# C-Kermit 7.0 or later or K95 1.1.19 or later required.
+#
+# Author: F. da Cruz, Columbia University
+#
+# V 1.0, 16 Apr 1999 - First version.
+# V 2.0, 26 Apr 1999 - Adds keyword table, HEAD, TAIL, SEARCH, etc;
+#                      accepts a file list on the command line
+# V 3.0, 20 May 1999 - Adds LIST command,
+#                      speedups via ARRAY COPY and \tablelook().
+#
+local file p \%i \%j \%a \%x &a[] \&c[] newname pattern ; Local variables
+
+if < \v(xversion) 1119 echo K95 1.1.19 required, exit
+
+; Command keyword list
+;
+dcl \&c[] = -
+  copy count delete edit head help info list next -
+  previous quit rename run search send tail type
+
+echo Reviewing files in \v(dir)...  ; Greeting
+sort &c                             ; Put commands in alphabetical order.
+.\%n ::= \v(argc) - 1               ; How many arguments on command line.
+
+switch \%n {
+  :0, .\%n := \ffiles(*,&a), break       ; No args, do * in current directory.
+  :1, .\%n := \ffiles(\&_[1],&a), break  ; 1 arg, expand it.
+  :default, array copy &_[] &a[]         ; More than 1 arg, use them literally.
+}
+
+; Now file list is in global array \&a[].
+
+echo \%n file(s) match.
+sort &a                             ; Sort the file list
+echo
+echo Type "help" for help.          ; Give instructions
+echo
+
+set case off                        ; Case doesn't matter in commands
+
+define DOCOMMAND {                  ; Execute a command: \%1 is the command
+    switch \%1 {                    ; Handle the command
+      :next                         ; Proceed to next file
+	 set flag on
+	 break
+      :delete               
+	 delete /verbose \m(file)   ; Delete this file
+	 if success {               ; If it was deleted
+	     .file = (DELETED)      ; replace its array entry
+	     .\&a[\%i] := \m(file)
+	     set flag on            ; and go on to next file
+	 }
+	 break
+      :quit                         ; Quit
+         stop 1 Bye.
+      :type                         ; Type this file
+	 type /page \m(file)
+	 break
+      :count                        ; Count lines in this file
+	 type /count \m(file)
+	 break
+      :head                         ; Show first lines of this file
+	 type /head \m(file)
+	 break
+      :tail                         ; Show last lines of this file
+	 type /tail \m(file)
+	 break
+      :list
+	 type /page /prefix:{\\flpad(\\v(ty_ln),3). } \m(file)
+	 break
+      :edit                         ; View this file in the editor
+	 edit \m(file)
+	 break
+      :previous                     ; Back to previous file
+	 if ( > \%i 1 ) {           ; (yes we modify the loop variable)
+	     decrement \%i 2
+	     set flag on
+	 }
+	 break
+      :run                          ; Run this file
+	 run \m(file)
+	 break
+      :info                         ; Print info about this file
+	 if equal "\m(file)" "(DELETED)" break
+	 if equal "\m(file)" "(RENAMED)" break
+	 echo \fperm(\m(file)) \fsize(\m(file)) \fdate(\m(file)) \m(file)
+	 break
+      :rename                       ; Rename this file
+	 ask newname { Rename \m(file) to: }
+	 if not def newname break
+	 rename /verbose \m(file) \m(newname)
+	 if success {               ; Handled like DELETE (q.v.)
+	     .file = (RENAMED)
+	     .\&a[\%i] := \m(file)
+	     set flag on
+	 }
+	 break
+      :copy                         ; Copy this file
+	 ask newname { Copy \m(file) to: }
+	 if def newname { copy /verbose \m(file) \m(newname) }
+	 break
+      :search
+	 ask pattern { Pattern(s) to search for: }
+	 if not def pattern break
+	 type /match:\m(pattern) \m(file)
+	 break
+      :send                         ; Send the file
+	 send \m(file)
+	 break
+      :help                         ; Print help message
+	 echo
+	 echo \fbasename(\v(cmdfile)) Commands:
+	 echo { copy     - Copy this file.}
+	 echo { count    - Count lines in this file.}
+	 echo { delete   - Delete this file.}
+	 echo { edit     - Edit this file.}
+	 echo { head     - Show top 10 lines of this file.}
+	 echo { help     - Print this message.}
+	 echo { info     - Show info about this file.}
+	 echo { list     - List this file with line numbers.}
+	 echo { next     - Next file (default).}
+	 echo { previous - Previous file.}
+	 echo { rename   - Rename this file.}
+	 echo { run      - Run this file.}
+	 echo { send     - Send this file.}
+	 echo { search   - Search this file for patterns.}
+	 echo { tail     - Show the last 10 lines of this file.}
+	 echo { type     - Type this file.}
+	 echo { quit     - Quit from \fbasename(\v(cmdfile))}
+	 echo {Commands may be abbreviated.}
+	 echo
+	 break
+      :default
+	 echo "\%a" - not a valid command - type "help" for help.
+    }
+}
+
+for \%i 1 \%n 1 {                            ; Loop for all files
+    set flag off                             ; Flag ON means go to next file
+    asg file \fcontents(\&a[\%i])
+    if directory \m(file) asg file \m(file) (DIRECTORY)
+    while not flag {                         ; Loop for each file
+        asg p \flpad(\%i,3). \freplace(\m(file),\\,/)
+	ask \%a { \m(p): }                   ; Prompt filename & get command
+	if not def \%a {
+            def \%x next                     ; Default command is "next"
+        } else {
+            .\%x := \ftablelook(\%a,&c)      ; Look up what they typed
+	    if ( = \%x -1 ) {                ; Not found
+		echo No such command: "\%a"
+		continue
+	    }
+	    if ( = \%x -2 ) {                ; Ambiguous
+		echo Ambiguous: "\%a"
+		continue
+	    }
+	    .\%x := \&c[\%x]                 ; Good - get full name
+        }
+        docommand \%x                        ; Execute it
+    }
+}
+echo
+end 0 Bye.

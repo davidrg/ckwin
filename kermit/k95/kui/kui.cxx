@@ -92,7 +92,7 @@ void Kui::start()
             case WM_SYSKEYUP:
                 {
 #ifndef COMMENT
-                con_event evt = mapkey(msg.wParam | KEY_ALT);
+                con_event evt = mapkey((UINT)msg.wParam | KEY_ALT);
                 if ( os2gks && (evt.type == error ) )
 #endif /* COMMENT */
                     TranslateMessage( (LPMSG) &msg );
@@ -120,7 +120,7 @@ void Kui::savePositions()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void Kui::setProperty( int propid, long param1, long param2 )
+void Kui::setProperty( int propid, intptr_t param1, intptr_t param2 )
 {
     switch( propid )
     {
@@ -152,7 +152,7 @@ void Kui::setProperty( int propid, long param1, long param2 )
             case CW_ERR:   /* Error message */
             case CW_MSG: { /* Info message */
                 char* c = newstr( (char*)param2 );
-                param2 = (long) c;
+                param2 = (intptr_t) c;
                 break;
             }
             }
@@ -186,7 +186,7 @@ void Kui::setProperty( int propid, long param1, long param2 )
         if( terminal ) {
             for ( int i=0; i<ntermfont; i++ ) {
                 if ( term_font[i].kwval == param1 ) {
-                    KFont * kfont = new KFont(term_font[i].kwd,param2);
+                    KFont * kfont = new KFont(term_font[i].kwd,(int)param2);
                     terminal->setKFont(kfont);
                     terminal->setFont( term_font[i].kwd, 
                                        kfont->getFontPointsH());
@@ -447,7 +447,7 @@ void Kui::getProperty( int propid, long param1, long param2 )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool Kui::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     KWin* win = kglob->hwndset->find( hwnd );
@@ -509,7 +509,7 @@ Bool Kui::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
                 break;
             }
 
-            filestatus->setProperty( wParam, lParam );
+            filestatus->setProperty( (UINT)wParam, lParam );
 
             switch( wParam )
             {

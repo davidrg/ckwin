@@ -133,7 +133,7 @@ Bool KRegistryEdit::setFontinfo( K_GLOBAL* kglob )
 
     ret = RegSetValueEx( hkey, settingLabels[Font_Facename]
                          , 0, REG_SZ, (BYTE*) &kglob->faceName
-                         , strlen(kglob->faceName) );
+                         , (DWORD)strlen(kglob->faceName) );
 
     ret = RegSetValueEx( hkey, settingLabels[Font_Height]
                          , 0, REG_DWORD, (BYTE*) &kglob->fontHeight, sizeof(DWORD) );

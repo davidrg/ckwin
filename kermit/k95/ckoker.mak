@@ -53,7 +53,7 @@ COMMON_CFLAGS = /MD
 !endif
 
 # These options are used for all Windows .exe targets
-COMMON_OPTS = /GA /Ox
+COMMON_OPTS = /Ox
 # These are:
 # /GA     Optimise for Windows Application (ignored by OpenWatcom)
 # /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
@@ -80,16 +80,23 @@ COMMON_OPTS = /GA /Ox
 # B = k95g, kui, msvc-iksd, msvc
 
 
+!if "$(CK_DETECT_COMPILER)" != "no"
 CMP = VCXX
 COMPILER = unknown
 COMPILER_VERSION = assuming Visual C++ 1.0
 MSC_VER = 80
 TARGET_CPU = x86
+!endif
+
 WIN32_VERSION=0x0400
 
 # So that we can set the minimum subsystem version when needed
 SUBSYSTEM_CONSOLE=console
 SUBSYSTEM_WIN32=windows
+
+# These are not supported by Visual C++ prior to 4.0
+# /GF enables read-only string pooling
+CFLAG_GF=/GF
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
@@ -170,17 +177,37 @@ SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
 !endif
 
+!if ($(MSC_VER) > 90)
+!if "$(TARGET_CPU)" != "MIPS"
+# This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
+COMMON_OPTS = $(COMMON_OPTS) /GA
+!endif
+!endif
+
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
 # from Visual C++ 2005 (v8.0) and up.
 
-COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /GX- /YX
+# /GX- is new in Visual C++ 2.0
+!if ($(MSC_VER) > 80)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
+!endif
+
+!if ($(MSC_VER) < 100)
+# Visual C++ 2.0 and 1.0 32-bit edition don't support these flags, so don't
+# use them.
+CFLAG_GF=
+!endif
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
 
+!if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
 COMMON_OPTS = $(COMMON_OPTS) /G5
+!endif
 
 !else
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
@@ -291,7 +318,7 @@ msvc:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -306,7 +333,7 @@ msvc-iksd:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -321,11 +348,11 @@ msvcd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
@@ -337,7 +364,7 @@ msvcd-iksd:
 	OPT="" \
     DEBUG="/Zi /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /GF /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -385,7 +412,7 @@ kuid:
 	OPT="" \
     DEBUG="/Zi /Odi" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /GF /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -489,6 +516,7 @@ wcos2:
 !endif
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
+# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
@@ -508,6 +536,7 @@ wcos2d:
 !endif
         LINKFLAGS="-l=os2v2 -x" \
 	    DEF=""  # ckoker32.def
+# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 # Flags are:
 #   --aa            Allows non-const initializers for local aggregates or unions.
@@ -617,7 +646,7 @@ ibmcd:
 !else if "$(PLATFORM)" == "NT"
 #DEFINES = -DNT -DOS2 -DDYNAMIC -DKANJI -DOS2MOUSE \
 #          -DONETERMUPD
-!endif /* PLATFORM */
+!endif
 
 # To build with NETWORK support, uncomment the following three 
 # lines and comment out the previous set:
@@ -665,12 +694,12 @@ DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
           -DNETFILE -DONETERMUPD  \
           -DNEWFTP -DBETATEST -DNO_DNS_SRV \
-          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 !if "$(CMP)" != "OWCL"
-          -D__STDC__ \
+DEFINES = $(DEFINES) -D__STDC__
 !endif
 !endif
-!endif  /* PLATFORM */
+!endif
 !else
 ! ERROR Macro named PLATFORM undefined
 !endif
@@ -685,46 +714,95 @@ COMMODE_OBJ = commode.obj
 
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-LIBS = os2386.lib rexx.lib \
-!if "$(CMP)" != "OWCL"
-       bigmath.lib
-!endif
+LIBS = os2386.lib rexx.lib
+
 # OpenWatcom doesn't have bigmath.lib
-# SRP support: libsrp.lib
+!if "$(CMP)" != "OWCL"
+LIBS = $(LIBS) bigmath.lib
+!endif
+
+!if "$(CKF_SRP)" == "yes"
+LIBS = $(LIBS) libsrp.lib
+!endif
+
 !else if "$(PLATFORM)" == "NT"
 !if "$(K95BUILD)" == "UIUC"
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
-       winmm.lib mpr.lib advapi32.lib winspool.lib 
-       # Kerberos: wshload.lib
+       winmm.lib mpr.lib advapi32.lib winspool.lib
+
+!if "$(CKF_K4W)" == "yes"
+LIBS = $(LIBS) wshload.lib
+!endif
+
 !else
 KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
-        advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
-        rpcrt4.lib rpcns4.lib wsock32.lib \
-        winmm.lib vdmdbg.lib comctl32.lib mpr.lib $(COMMODE_OBJ) \
+        advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
+        winmm.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
+# vdmdbg.lib
 !if "$(CKF_SSH)" == "yes"
-       ssh.lib ws2_32.lib \
+KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
 !endif
+
 !if "$(CKF_SSL)" == "yes"
-       $(SSL_LIBS) \
+KUILIBS = $(KUILIBS) $(SSL_LIBS)
 !endif
-        #msvcrt.lib
-        #Kerberos: wshload.lib
-		# SRP support: srpstatic.lib
-        #libsrp.lib bigmath.lib
+
+!if ($(MSC_VER) > 80)
+# I doubt these are actually ever required. But if they ever are, they're only
+# required when building with Visual C++ 2.0 or newer (1.0 32-bit doesn't have
+# them)
+KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
+!endif
+
+#msvcrt.lib
+
+!if "$(CKF_SRP)" == "yes"
+# K95 2.1.3 was built with srpstatic.lib
+#KUILIBS = $(KUILIBS) srpstatic.lib
+KUILIBS = $(KUILIBS) srp.lib
+!endif
+
+# MIT Kerberos for Windows
+!if "$(CKF_K4W)" == "yes"
+KUILIBS = $(KUILIBS) wshload.lib
+!endif
+
+# Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
+
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
-       winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ) \
+       winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
+
 !if "$(CKF_SSH)" == "yes"
-       ssh.lib ws2_32.lib \
+LIBS = $(LIBS) ssh.lib ws2_32.lib
 !endif
+
 !if "$(CKF_SSL)" == "yes"
-       $(SSL_LIBS) \
+LIBS = $(LIBS) $(SSL_LIBS)
 !endif
-       #msvcrt.lib  
-       # Kerberos: wshload.lib
-	   # SRP support: srpstatic.lib
-       # libsrp.lib bigmath.lib
+
+!if "$(CKF_SRP)" == "yes"
+# K95 2.1.3 was built with srpstatic.lib
+#LIBS = $(LIBS) srpstatic.lib
+LIBS = $(LIBS) srp.lib
 !endif
-!endif /* PLATFORM */
+
+# MIT Kerberos for Windows
+!if "$(CKF_K4W)" == "yes"
+LIBS = $(LIBS) wshload.lib
+!endif
+
+# Visual C++ 2005 for IA64 in the Windows Server 2003 SP1 Platform SDK
+# seems to want this extra library otherwise we get link errors like:
+#   error LNK2001: unresolved external symbol .__security_check_cookie
+!if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
+LIBS = $(LIBS) bufferoverflowu.lib
+KUILIBS = $(KUILIBS) bufferoverflowu.lib
+!endif
+
+# Commented out LIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
+
+!endif
+!endif
 !endif
 
 #---------- Inference rules:
@@ -744,7 +822,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         cknsig$(O) cknalm$(O) ckntap$(O) cknwin$(O) cknprt$(O) cknpty$(O) \
 !else
         ckusig$(O) \
-!endif /* PLATFORM */
+!endif
         ckuath$(O) ckoath$(O) ck_ssl$(O) ckossl$(O) ckosslc$(O) \
         ckosftp$(O) ckozli$(O) \
 !if 0
@@ -758,14 +836,14 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ckonet$(O) \
         ckoslp$(O) ckosyn$(O) ckothr$(O) ckotek$(O) ckotio$(O) ckowys$(O) \
         ckodg$(O)  ckoava$(O) ckoi31$(O) ckotvi$(O) ckovc$(O) \
-        ckoadm$(O) ckohzl$(O) ckohp$(O) ckoqnx$(O)\
+        ckoadm$(O) ckohzl$(O) ckohp$(O) ckoqnx$(O)
 !if "$(PLATFORM)" == "NT"
-        cknnbi$(O) \
+OBJS = $(OBJS) cknnbi$(O)
 !else
-        ckonbi$(O) \
-!endif /* PLATFORM */
+OBJS = $(OBJS) ckonbi$(O)
+!endif
 !if ("$(CKF_XYZ)" == "yes")
-        ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
+OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
         p_common$(O) p_tl$(O) p_dir$(O)
 !endif
 
@@ -786,44 +864,36 @@ KUIOBJS = \
     $(OUTDIR)\kappwin.obj  \
     $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
 
-PDLLDIR = pdll
-PDLLOBJS = \
-$(PDLLDIR)\pdll_common.obj \
-$(PDLLDIR)\pdll_crc.obj \
-$(PDLLDIR)\pdll_dev.obj \
-$(PDLLDIR)\pdll_error.obj \
-$(PDLLDIR)\pdll_exeio.obj \
-$(PDLLDIR)\pdll_global.obj \
-$(PDLLDIR)\pdll_main.obj \
-$(PDLLDIR)\pdll_omalloc.obj \
-$(PDLLDIR)\pdll_r.obj \
-$(PDLLDIR)\pdll_ryx.obj \
-$(PDLLDIR)\pdll_rz.obj \
-$(PDLLDIR)\pdll_s.obj \
-$(PDLLDIR)\pdll_syx.obj \
-$(PDLLDIR)\pdll_sz.obj \
-$(PDLLDIR)\pdll_tcpipapi.obj \
-$(PDLLDIR)\pdll_x_global.obj \
-$(PDLLDIR)\pdll_z.obj \
-$(PDLLDIR)\pdll_z_global.obj \
 
-os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe \
+os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
 !if "$(CMP)" != "OWCL386"
-       cko32rtl.dll     # IBM compiler only.
+       cko32rtl.dll \    # IBM compiler only.
 !endif
-# SRP support: srp-tconf.exe srp-passwd.exe
-# Crypto stuff: k2crypt.dll 
+!if "$(CKF_SRP)" == "yes"
+#!if "$(CKF_SSL)" == "yes"
+       srp-tconf.exe srp-passwd.exe \
+#!endif
+!endif
+!if "$(CKF_CRYPTDLL)" == "yes"
+# TODO: Figure out how to build this for OS/2 with Watcom: k2crypt.dll
+!endif
 
-# docs pcfonts.dll cksnval.dll 
+# docs pcfonts.dll
 
 
 
 win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe \
     se.exe \
 !if "$(CKF_CRYPTDLL)" == "yes"
-    k95crypt.dll
+    k95crypt.dll \
 !endif
-# SRP support: srp-tconf.exe srp-passwd.exe
+# These likely require an old version of SRP (perhaps pre-1.7?) to build. They
+# appear to just be versions of utilities that come with SRP likely modified to
+# load the SSL DLL dynamically like K95 did - not really something we care much
+# about now.
+#!if "$(CKF_SRP)" == "yes"
+#       srp-passwd.exe srp-tconf.exe
+#!endif
 
 win32md: mdnker.exe
 
@@ -907,6 +977,13 @@ se.exe: se.obj $(DEF) ckoker.mak
        link.exe @<<
        $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
 <<
+
+k2dc.exe: k2dc.obj $(DEF) ckoker.mak
+!if "$(CMP)" == "OWCL386"
+        $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+!else
+      	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+!endif
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
 !if "$(CMP)" == "OWCL386"
@@ -995,12 +1072,11 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
         rc -p -x1 ckopcf.res pcfonts.dll
 !endif
 
-cksnval.dll: cksnval.obj cksnval.def ckoker.mak
-	$(CC) $(CC2) $(DEBUG) $(DLL) cksnval.obj \
-        cksnval.def $(OUT) $@ $(LIBS)
-
 k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib \
+!if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
+        bufferoverflowu.lib
+!endif
 
 k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
 	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
@@ -1029,7 +1105,7 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) -l=os2v2_pm -x $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
@@ -1042,21 +1118,23 @@ ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !endif
 
 # SRP support
-#srp-tconf.exe: srp-tconf.obj getopt.obj ssh\ckosslc.obj ckoker.mak
-#!if "$(PLATFORM)" == "OS2"
-#        $(CC) $(CC2) $(DEBUG) srp-tconf.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
-#        dllrname $@ CPPRMI36=CKO32RTL       
-#!else if "$(PLATFORM)" == "NT"
-#	link /debug /out:$@ srp-tconf.obj getopt.obj ssh\ckosslc.obj $(LIBS)
-#!endif
-#        
-#srp-passwd.exe: srp-passwd.obj getopt.obj ssh\ckosslc.obj ckoker.mak
-#!if "$(PLATFORM)" == "OS2"
-#        $(CC) $(CC2) $(DEBUG) srp-passwd.obj getopt.obj ssh\ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
-#        dllrname $@ CPPRMI36=CKO32RTL       
-#!else if "$(PLATFORM)" == "NT"
-#	link /debug /out:$@ srp-passwd.obj getopt.obj ssh\ckosslc.obj $(LIBS)
-#!endif
+!if "$(CKF_SRP)" == "yes"
+srp-tconf.exe: srp-tconf.obj getopt.obj ckosslc.obj ckoker.mak
+!if "$(PLATFORM)" == "OS2"
+        $(CC) $(CC2) $(DEBUG) srp-tconf.obj getopt.obj ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
+        dllrname $@ CPPRMI36=CKO32RTL
+!else if "$(PLATFORM)" == "NT"
+	link /debug /out:$@ srp-tconf.obj getopt.obj ckosslc.obj $(LIBS)
+!endif
+
+srp-passwd.exe: srp-passwd.obj getopt.obj ckosslc.obj ckoker.mak
+!if "$(PLATFORM)" == "OS2"
+        $(CC) $(CC2) $(DEBUG) srp-passwd.obj getopt.obj ckosslc.obj ckotel.def $(OUT) $@ $(LIBS)
+        dllrname $@ CPPRMI36=CKO32RTL
+!else if "$(PLATFORM)" == "NT"
+	link /debug /out:$@ srp-passwd.obj getopt.obj ckosslc.obj $(LIBS)
+!endif
+!endif
         
 iksdsvc.exe: iksdsvc.obj ckoker.mak
 !if "$(PLATFORM)" == "OS2"
@@ -1117,11 +1195,11 @@ ckuusr$(O):	ckuusr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucm
 ckuus2$(O):	ckuus2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h
 ckuus3$(O):	ckuus3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h \
-                  ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h
+		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h ckoreg.h \
+          ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h
 ckuus4$(O):	ckuus4.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h ckocon.h \
-	          ckoetc.h ckntap.h ckuath.h ck_ssl.h
+	      ckoetc.h ckntap.h ckuath.h ck_ssl.h ckoreg.h ckoetc.h
 ckuus5$(O):	ckuus5.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
                 ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h ck_ssl.h ckossl.h kui\ikui.h
 ckuus6$(O):	ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckntap.h \
@@ -1139,7 +1217,7 @@ ckuusx$(O):	ckuusx.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckonb
 ckuusy$(O):	ckuusy.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckcnet.h ckctel.h \
 	        ck_ssl.h kui\ikui.h
 ckofio$(O):	ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
-                ckuusr.h ckcxla.h ck_ssl.h
+                ckuusr.h ckcxla.h ck_ssl.h ckoreg.h
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
 ckocon$(O):	ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h ckctel.h \
                 ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h kui\ikui.h
@@ -1148,7 +1226,7 @@ ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h c
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h ckoi31.h \
                 ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-                ckcnet.h ckctel.h kui\ikui.h
+                ckcnet.h ckctel.h kui\ikui.h ckossh.h
 ckoco4$(O):     ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckcasc.h \
                 ckokey.h ckokvb.h
 ckoco5$(O):     ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h 
@@ -1170,7 +1248,7 @@ ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoke
                 ckokey.h ckokvb.h ckuusr.h ckcnet.h ckctel.h
 ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h ckop.h \
-                ckcuni.h ckowin.h ckcnet.h ckctel.h \
+                ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h \
 !if "$(PLATFORM)" == "NT"
                 ckntap.h cknwin.h  kui\ikui.h
 !else
@@ -1184,7 +1262,7 @@ ckowys$(O):     ckowys.c ckowys.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h c
 ckcnet$(O):	ckcnet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckonet.h ckotcp.h \
                 ckuusr.h ckcsig.h ckocon.h ckuath.h ck_ssl.h ckossl.h ckosslc.h
 ckcftp$(O):     ckcftp.c ckcdeb.h ckoker.h ckcasc.h ckcker.h ckucmd.h ckuusr.h ckcnet.h ckctel.h \
-                ckcxla.h ckuath.h ck_ssl.h ckoath.h
+                ckcxla.h ckuath.h ck_ssl.h ckoath.h ckoreg.h
 ckctel$(O):	ckctel.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckctel.h ckcnet.h ckocon.h ck_ssl.h \
                 ckossl.h ckosslc.h
 ckonet$(O):	ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
@@ -1226,8 +1304,8 @@ ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 
 ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
-ckoshs(O):      ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
-ckorbf(O):      ckorbf.c ckorbf.h ckcdeb.h
+ckoshs$(O):     ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
 
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
@@ -1274,9 +1352,11 @@ ckoclip$(O):     ckoclip.c
 k95d$(O):  k95d.c
 
 # SRP support
-#getopt$(O):     getopt.c getopt.h
-#srp-tconf$(O):  srp-tconf.c getopt.h 
-#srp-passwd$(O): srp-passwd.c getopt.h
+!if "$(CKF_SRP)" == "yes"
+getopt$(O):     getopt.c getopt.h
+srp-tconf$(O):  srp-tconf.c getopt.h
+srp-passwd$(O): srp-passwd.c getopt.h
+!endif
 
 iksdsvc$(O):    iksdsvc.c 
 
@@ -1314,14 +1394,6 @@ ckon30.obj: ckonov.c ckotcp.h
 	$(CC) $(CC2) $(CFLAGS) -DTCPERRNO -I$(LWP30INC) \
            $(DEBUG) $(OPT) $(DLL) -c ckonov.c
         ren ckonov.obj ckon30.obj
-
-cksnval$(O):  ckoetc.c
-    @echo > cksnval.obj
-    del cksnval.obj
-    ren ckoetc.obj ckoetc.o
-	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) -DREXXDLL /Gn- -c ckoetc.c 
-    ren ckoetc.obj cksnval.obj
-    ren ckoetc.o ckoetc.obj
 
 ckoker.res: ckoker.rc
 !if "$(CMP)" == "OWCL386"

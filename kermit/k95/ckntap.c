@@ -27,10 +27,10 @@
 #endif
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
-#include "ckntap.h"             /* Kermit Telephony */
-#include "cknwin.h"
 
 #ifdef CK_TAPI
+#include "ckntap.h"             /* Kermit Telephony */
+#include "cknwin.h"
 
 _PROTOTYP( char * cktapiErrorString, (DWORD));
 
@@ -414,7 +414,7 @@ BOOL g_bTapiInUse = FALSE;
 // Data needed per call.  This sample only supports one call.
 HCALL g_hCall = (HCALL) 0;
 HLINE g_hLine = (HLINE) 0;
-extern int ttyfd ; /* this holds the HLINE hLine */
+extern CK_TTYFD_T ttyfd; /* this holds the HLINE hLine */
 extern int mdmtyp ;
 static int mdmtyp_sav=0;
 CHAR szModemName[256] ;
@@ -442,8 +442,21 @@ int
 cktapiinit(void)
 {
     int i = 0 ;
+    HMODULE hntdll;
+    static const char *(CDECL *pwine_get_version)(void);
+
     // This will be the parent of all dialogs.
     g_hWndMainWindow = g_hDlgParentWindow = hwndConsole;
+
+    hntdll = GetModuleHandle("ntdll.dll");
+    debug(F100,"Checking for WINE","",0);
+    pwine_get_version = (void *)GetProcAddress(hntdll, "wine_get_version");
+    if (hntdll != NULL) {
+        if (pwine_get_version) {
+            debug(F100,"TAPI disabled under WINE","",0);
+            return FALSE;
+        }
+    }
 
     for ( i=0 ; i < MAXDEVS ; i++ )
         g_lpLineDevCaps[i] = NULL ;
@@ -1675,8 +1688,8 @@ DoLineCallState(
 void
 CALLBACK
 cklineCallbackFunc( DWORD dwDevice, DWORD dwMsg,
-                    DWORD dwCallbackInstance,
-                    DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+                    DWORD_PTR dwCallbackInstance,
+                    DWORD_PTR dwParam1, DWORD_PTR dwParam2, DWORD_PTR dwParam3)
 {
 
     OutputDebugLineCallback(
@@ -2433,7 +2446,7 @@ cktapidial(char * number)
     if ( ttyfd == -1 || ttyfd == -2 ) {
         /* if we did not get the Comm handle via the CONNECT message */
         /* then get it now                                           */
-        ttyfd = (int) GetModemHandleFromLine( g_hLine );
+        ttyfd = (CK_TTYFD_T) GetModemHandleFromLine( g_hLine );
         SetCommMask( (HANDLE) ttyfd, EV_RXCHAR ) ;
         SetupComm( (HANDLE) ttyfd, 20000, 20000 ) ;
         PurgeComm( (HANDLE) ttyfd,
@@ -2700,7 +2713,7 @@ cktapianswer( void )
     if ( ttyfd == -1 || ttyfd == -2 ) {
         /* if we did not get the Comm handle via the CONNECT message */
         /* then get it now                                           */
-        ttyfd = (int) GetModemHandleFromLine( g_hLine );
+        ttyfd = (CK_TTYFD_T) GetModemHandleFromLine( g_hLine );
         SetCommMask( (HANDLE) ttyfd, EV_RXCHAR ) ;
         SetupComm( (HANDLE) ttyfd, 20000, 20000 ) ;
         PurgeComm( (HANDLE) ttyfd,
@@ -3968,7 +3981,7 @@ tapi_open( char * devicename )
         {
             rc = (*cklineOpen)( g_hLineApp, LineDeviceId, &g_hLine,
                                 LineDeviceAPIVersion, 0,
-                                (DWORD) hInstance,
+                                (CK_TTYFD_T) hInstance,
                                 LINECALLPRIVILEGE_OWNER | LINECALLPRIVILEGE_MONITOR,
                                 LINEMEDIAMODE_DATAMODEM,
                                 NULL);
@@ -4113,7 +4126,7 @@ tapi_open( char * devicename )
         if ( ttyfd == -1 || ttyfd == -2 ) {
             /* if we did not get the Comm handle via the CONNECT message */
             /* then get it now                                           */
-            ttyfd = (int) GetModemHandleFromLine( g_hLine );
+            ttyfd = (CK_TTYFD_T) GetModemHandleFromLine( g_hLine );
             SetCommMask( (HANDLE) ttyfd, EV_RXCHAR ) ;
             SetupComm( (HANDLE) ttyfd, 20000, 20000 ) ;
             PurgeComm( (HANDLE) ttyfd,

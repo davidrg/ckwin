@@ -146,10 +146,10 @@ static char errbuf[512];
 
 U32 _System
 #ifdef CK_ANSIC
-status_func(U32 type, U32 arg0, U32 arg1, U32 arg2, U32 arg3, U32 arg4 )
+status_func(U32 type, intptr_t arg0, U32 arg1, U32 arg2, U32 arg3, intptr_t arg4)
 #else
 status_func(type,arg0,arg1,arg2,arg3,arg4)
-     U32 type; U32 arg0; U32 arg1; U32 arg2; U32 arg3; U32 arg4;
+     U32 type; intptr_t arg0; U32 arg1; U32 arg2; U32 arg3; intptr_t arg4;
 #endif
 {
     switch (type) {
@@ -159,7 +159,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
                      arg2,
                      arg3,
                      arg4?(char*)arg4:"<NULL>",
-                     arg0);
+                     (U32)arg0);
             debug(F111,"P ERROR",errbuf,arg1);
 
         }
@@ -186,9 +186,9 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
 
     case PS_TIMEOUT:
         timeouts++ ;
-        sprintf(msgbuf,"Timeout (%lu secs)",arg0);
+        sprintf(msgbuf,"Timeout (%lu secs)",(U32)arg0);
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
-        debug(F111,"P status_func","TIMEOUT",arg0);
+        debug(F111,"P status_func","TIMEOUT",(U32)arg0);
         break;
 
     case PS_TRANSFER_DONE:
@@ -272,7 +272,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_XYG_NAK:
-        sprintf(msgbuf,"Got NAK on byte %lu", arg0 );
+        sprintf(msgbuf,"Got NAK on byte %lu", (U32)arg0 );
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         ckscreen(SCR_PT,'N',0L,"");
         break;
@@ -281,7 +281,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         ckscreen(SCR_PT,'E',0L,"");
         crunched++ ;
         sprintf(msgbuf, "Block numbers mismatch (%lu:%lu <> %lu:%lu)",
-             arg0, arg1,
+             (U32)arg0, arg1,
              arg2, arg3);
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         break;
@@ -328,18 +328,18 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         crunched++ ;
         ckscreen(SCR_PT,'Q',0L,"");
         sprintf(msgbuf, "Got data from invalid position: %lu, expected from %lu",
-             arg0, arg1);
+             (U32)arg0, arg1);
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         break;
 
     case PS_Z_COMMAND:
-       sprintf(msgbuf, "Zcommand: \"%s\"", arg0);
+       sprintf(msgbuf, "Zcommand: \"%s\"", (char*)arg0);
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
         break;
 
     case PS_Z_CTRL_CHAR_IGNORED:
        sprintf(msgbuf, "Unexpected control character ignored: %lu",
-             arg0);
+             (U32)arg0);
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
         break;
 
@@ -378,14 +378,14 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         crunched++ ;
         ckscreen(SCR_PT,'Q',0L,"");
         sprintf(msgbuf, "Too long zmodem subpacket received (> %lu)",
-             arg0);
+             (U32)arg0);
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         break;
 
     case PS_Z_CRASH_RECOVERY:
-        sprintf(msgbuf, "Crash recovery at %lu", arg0);
+        sprintf(msgbuf, "Crash recovery at %lu", (U32)arg0);
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
-        debug(F111,"P status_func","CRASH RECOVERY",arg0);
+        debug(F111,"P status_func","CRASH RECOVERY",(U32)arg0);
         break;
 
     case PS_Z_RECEIVER_FLAGS:
@@ -455,7 +455,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
                 ckscreen(SCR_ST,ST_ERR,0l, "No connection, try specifying a waiting time (with -wait option)");
             aborted = 1;
         } else {
-            sprintf(msgbuf, "Waiting for connect (%lu secs)", arg0 + 1);
+            sprintf(msgbuf, "Waiting for connect (%lu secs)", (U32)arg0 + 1);
             ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
             if (!opt_quiet)
                 DosBeep(250, 20);
@@ -471,7 +471,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         if (p_cfg.attr & CFG_QUERY_SERIAL_NUM) /* Let's not show it, if not */
                                            /* explicitly asked to */
         {
-            sprintf(msgbuf, "Serial number of the receiver is %lu", arg0);
+            sprintf(msgbuf, "Serial number of the receiver is %lu", (U32)arg0);
             ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
         }
         remote_serial_num = arg0;

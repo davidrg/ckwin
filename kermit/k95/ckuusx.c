@@ -6828,7 +6828,7 @@ updpct(old, new) long old, new;
     printw("%ld", new);
 #ifdef KUI
 #ifndef K95G
-    KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_PCD, (long) new);
+    KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_PCD, (intptr_t) new);
 #endif /* K95G */
 #endif /* KUI */
 #ifdef CK_PCT_BAR
@@ -6877,7 +6877,7 @@ updpct(old, new) long old, new;
     printw("%-3ld", new); /*  (was)   printw("%ld", new);  */
 #ifdef KUI
 #ifndef K95G
-    KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PCD, (long) new );
+    KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PCD, (intptr_t) new );
 #endif /* K95G */
 #endif /* KUI */
 #ifdef CK_PCT_BAR
@@ -6930,7 +6930,7 @@ shoetl(CK_OFF_T old_tr, long cps, CK_OFF_T fsiz, CK_OFF_T howfar)
             printw("%s",hhmmss(tr));
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty(KUI_FILE_TRANSFER, (long)CW_TR, (long)hhmmss(tr));
+            KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t)CW_TR, (intptr_t)hhmmss(tr));
 #endif /* K95G */
 #endif /* KUI */
             clrtoeol();
@@ -6939,7 +6939,7 @@ shoetl(CK_OFF_T old_tr, long cps, CK_OFF_T fsiz, CK_OFF_T howfar)
         printw("(unknown)");
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_TR, (long) "(unknown)" );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_TR, (intptr_t) "(unknown)" );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
@@ -7038,7 +7038,7 @@ shocps(pct, fsiz, howfar) int pct; CK_OFF_T fsiz, howfar;
         printw("%ld", cps);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, (long) cps );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_CP, (intptr_t) cps );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
@@ -7075,7 +7075,7 @@ shocps(pct, fsiz, howfar) int pct; CK_OFF_T fsiz, howfar;
         move(CW_CP,22);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, (long) cps );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_CP, (intptr_t) cps );
 #endif /* K95G */
 #endif /* KUI */
         printw("%ld", cps);
@@ -7087,7 +7087,7 @@ shocps(pct, fsiz, howfar) int pct; CK_OFF_T fsiz, howfar;
         move(CW_CP,22);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, (long) cps );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_CP, (intptr_t) cps );
 #endif /* K95G */
 #endif /* KUI */
         printw("%ld", cps);
@@ -7196,7 +7196,7 @@ scrft() {                               /* Display file type */
     clrtoeol();
 #ifdef KUI
 #ifndef K95G
-    KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_TYP, (long) xferstr );
+    KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_TYP, (intptr_t) xferstr );
 #endif /* K95G */
 #endif /* KUI */
     return;
@@ -7475,7 +7475,7 @@ char *s;        /* a string */
         printw("Current Directory: %s",zgtdir());
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_DIR, (long) zgtdir() );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_DIR, (intptr_t) zgtdir() );
 #endif /* K95G */
 #endif /* KUI */
         if (net) {
@@ -7492,7 +7492,7 @@ char *s;        /* a string */
         }
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_LIN, (long) ttname );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_LIN, (intptr_t) ttname );
 #endif /* K95G */
 #endif /* KUI */
 
@@ -7544,8 +7544,8 @@ char *s;        /* a string */
                 char buf[30];
                 sprintf(buf,"%s (SECURE)",xname);
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_SPD,
-                               (long) buf
+                               (intptr_t) CW_SPD,
+                               (intptr_t) buf
                                );
 #endif /* K95G */
 #endif /* KUI */
@@ -7555,8 +7555,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_SPD,
-                               (long) xname
+                               (intptr_t) CW_SPD,
+                               (intptr_t) xname
                                );
 #endif /* K95G */
 #endif /* KUI */
@@ -7566,8 +7566,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_SPD,
-                           (long) "(network)"
+                           (intptr_t) CW_SPD,
+                           (intptr_t) "(network)"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -7581,8 +7581,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
                     KuiSetProperty(KUI_FILE_TRANSFER,
-                                   (long) CW_SPD,
-                                   (long) "75/1200"
+                                   (intptr_t) CW_SPD,
+                                   (intptr_t) "75/1200"
                                    );
 #endif /* K95G */
 #endif /* KUI */
@@ -7593,8 +7593,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
                     KuiSetProperty(KUI_FILE_TRANSFER,
-                                   (long) CW_SPD,
-                                   (long) speedbuf
+                                   (intptr_t) CW_SPD,
+                                   (intptr_t) speedbuf
                                    );
 #endif /* K95G */
 #endif /* KUI */
@@ -7604,8 +7604,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_SPD,
-                               (long) "(unknown)"
+                               (intptr_t) CW_SPD,
+                               (intptr_t) "(unknown)"
                                );
 #endif /* K95G */
 #endif /* KUI */
@@ -7616,8 +7616,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
         KuiSetProperty(KUI_FILE_TRANSFER,
-                       (long) CW_PAR,
-                       (long) parnam((char)parity)
+                       (intptr_t) CW_PAR,
+                       (intptr_t) parnam((char)parity)
                        );
 #endif /* K95G */
 #endif /* KUI */
@@ -7743,22 +7743,22 @@ char *s;        /* a string */
         move(CW_PCD,22);                /* Erase percent done from last time */
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PCD, (long) 0 );
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_FFC, (long) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PCD, (intptr_t) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) 0 );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
         move(CW_SIZ,22);                /* Erase file size from last time */
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_SIZ, (intptr_t) 0 );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
         move(CW_ERR,22);                /* And last error message */
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) "" );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) "" );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
@@ -7824,7 +7824,7 @@ char *s;        /* a string */
         } else printw("%s",s);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
         q = len;                        /* Remember name length for later */
@@ -7842,7 +7842,7 @@ char *s;        /* a string */
             printw(" => %s",s);
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
         } else {                        /* Too long */
@@ -7854,7 +7854,7 @@ char *s;        /* a string */
             } else printw(" => %s",s);                          /* wg15 */
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s  );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s  );
 #endif /* K95G */
 #endif /* KUI */
         }
@@ -7872,7 +7872,7 @@ char *s;        /* a string */
         if (fsiz > (CK_OFF_T)-1) {
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) n );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_SIZ, (intptr_t) n );
 #endif /* K95G */
 #endif /* KUI */
             printw("%s",ckfstoa(n));
@@ -7917,8 +7917,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty( KUI_FILE_TRANSFER,
-                           (long) CW_PAR,
-                           (long) parnam((char)parity)
+                           (intptr_t) CW_PAR,
+                           (intptr_t) parnam((char)parity)
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8001,7 +8001,7 @@ char *s;        /* a string */
             printw("%d",x);
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PL, (long) x );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PL, (intptr_t) x );
 #endif /* K95G */
 #endif /* KUI */
             clrtoeol();
@@ -8012,7 +8012,7 @@ char *s;        /* a string */
         printw("%d", (what & W_RECV) ? rpackets : spackets);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PC, (long) spackets );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PC, (intptr_t) spackets );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
@@ -8041,7 +8041,7 @@ char *s;        /* a string */
                 clrtoeol();
 #ifdef KUI
 #ifndef K95G
-                KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_WS, (long) ws );
+                KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_WS, (intptr_t) ws );
 #endif /* K95G */
 #endif /* KUI */
             }
@@ -8052,7 +8052,7 @@ char *s;        /* a string */
             printw("%d",errors);
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PR, (long) errors );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PR, (intptr_t) errors );
 #endif /* K95G */
 #endif /* KUI */
             clrtoeol();
@@ -8066,7 +8066,7 @@ char *s;        /* a string */
             printw("%s", type);
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PT, (long) type );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PT, (intptr_t) type );
 #endif /* K95G */
 #endif /* KUI */
             clrtoeol();
@@ -8113,7 +8113,7 @@ char *s;        /* a string */
             }
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) howfar);
+            KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) howfar);
 #endif /* K95G */
 #endif /* KUI */
             cps = shocps((int) pct, fsiz, howfar);
@@ -8132,7 +8132,7 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_PR, (long) errors
+                               (intptr_t) CW_PR, (intptr_t) errors
                                );
 #endif /* K95G */
 #endif /* KUI */
@@ -8144,7 +8144,7 @@ char *s;        /* a string */
                     clrtoeol();
 #ifdef KUI
 #ifndef K95G
-                    KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_ERR, (long) s);
+                    KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s);
 #endif /* K95G */
 #endif /* KUI */
             }
@@ -8157,7 +8157,7 @@ char *s;        /* a string */
                 printw("%s",s);
 #ifdef KUI
 #ifndef K95G
-                KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+                KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
             }
@@ -8173,8 +8173,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "Damaged Packet"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "Damaged Packet"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8192,8 +8192,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_MSG,
-                           (long) s
+                           (intptr_t) CW_MSG,
+                           (intptr_t) s
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8206,8 +8206,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "Timeout"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "Timeout"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8219,7 +8219,7 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_PR, (long) errors
+                               (intptr_t) CW_PR, (intptr_t) errors
                                );
 #endif /* K95G */
 #endif /* KUI */
@@ -8249,7 +8249,7 @@ char *s;        /* a string */
               printw("%s", ckfstoa(ffc));
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+            KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) ffc);
 #endif /* K95G */
 #endif /* KUI */
             pct = 100;
@@ -8273,7 +8273,7 @@ char *s;        /* a string */
               printw("%s", ckfstoa(ffc));
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+            KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) ffc);
 #endif /* K95G */
 #endif /* KUI */
 #ifdef COMMENT
@@ -8289,7 +8289,7 @@ char *s;        /* a string */
         move(CW_MSG,22);                /* Remove any previous message */
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_MSG, (long) "" );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_MSG, (intptr_t) "" );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol(); refresh();
@@ -8298,7 +8298,7 @@ char *s;        /* a string */
         move(CW_TR, 22);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_TR, (long) "" );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_TR, (intptr_t) "" );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol(); refresh();
@@ -8319,8 +8319,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_MSG,
-                           (long) "Transfer OK"
+                           (intptr_t) CW_MSG,
+                           (intptr_t) "Transfer OK"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8333,8 +8333,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "File discarded"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "File discarded"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8350,8 +8350,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "Transfer interrupted"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "Transfer interrupted"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8370,8 +8370,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "File skipped"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "File skipped"
                            );
 #endif /* K95G */
 #endif /* KUI */
@@ -8387,7 +8387,7 @@ char *s;        /* a string */
             printw("%s",s);
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
 #ifdef COMMENT
@@ -8404,14 +8404,14 @@ char *s;        /* a string */
                 printw("%s", errbuf);
 #ifdef KUI
 #ifndef K95G
-                KuiSetProperty(KUI_FILE_TRANSFER,(long) CW_ERR,(long) errbuf);
+                KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t) CW_ERR,(intptr_t) errbuf);
 #endif /* K95G */
 #endif /* KUI */
             } else {
                 printw("Refused");
 #ifdef KUI
 #ifndef K95G
-                KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_ERR,(long)"Refused");
+                KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t)CW_ERR,(intptr_t)"Refused");
 #endif /* K95G */
 #endif /* KUI */
             }
@@ -8426,7 +8426,7 @@ char *s;        /* a string */
             printw("Incomplete");
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_ERR,(long)"Incomplete");
+            KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t)CW_ERR,(intptr_t)"Incomplete");
 #endif /* K95G */
 #endif /* KUI */
 #ifdef COMMENT
@@ -8440,7 +8440,7 @@ char *s;        /* a string */
             printw("%s",s);
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_MSG,(long)s);
+            KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t)CW_MSG,(intptr_t)s);
 #endif /* K95G */
 #endif /* KUI */
             clrtoeol(); refresh();
@@ -8451,8 +8451,8 @@ char *s;        /* a string */
             printw("*** screen() called with bad status ***");
 #ifdef KUI
 #ifndef K95G
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR,
-                       (long) "*** screen() called with bad status ***" );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR,
+                       (intptr_t) "*** screen() called with bad status ***" );
 #endif /* K95G */
 #endif /* KUI */
             clrtoeol(); refresh(); return;
@@ -8463,7 +8463,7 @@ char *s;        /* a string */
           move(CW_CP,22);               /* Overall transfer rate */
 #ifdef KUI
 #ifndef K95G
-          KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, tfcps);
+          KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_CP, tfcps);
 #endif /* K95G */
 #endif /* KUI */
           printw("%s", ckfstoa(tfcps));
@@ -8483,8 +8483,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
               KuiSetProperty(KUI_FILE_TRANSFER,
-                             (long) CW_MSG,
-                             (long) msgbuf
+                             (intptr_t) CW_MSG,
+                             (intptr_t) msgbuf
                              );
 #endif /* K95G */
 #endif /* KUI */
@@ -8502,8 +8502,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
           KuiSetProperty(KUI_FILE_TRANSFER,
-                         (long) CW_TR,
-                         (long) hhmmss((long)
+                         (intptr_t) CW_TR,
+                         (intptr_t) hhmmss((long)
 #ifdef GFTIMER
                                        (fptsecs + 0.5)
 #else
@@ -8555,7 +8555,7 @@ char *s;        /* a string */
         printw("FAILURE: %s",s);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
         if (xfrbel) bleep(BP_FAIL);
@@ -8581,7 +8581,7 @@ char *s;        /* a string */
         printw("%s",s);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol(); refresh(); return;
@@ -8607,7 +8607,7 @@ char *s;        /* a string */
          printw("%s", s);
 #ifdef KUI
 #ifndef K95G
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_DIR, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_DIR, (intptr_t) s );
 #endif /* K95G */
 #endif /* KUI */
         clrtoeol();
@@ -8622,8 +8622,8 @@ char *s;        /* a string */
 #ifdef KUI
 #ifndef K95G
         KuiSetProperty(KUI_FILE_TRANSFER,
-                       (long) CW_ERR,
-                       (long) "*** screen() called with bad function code ***"
+                       (intptr_t) CW_ERR,
+                       (intptr_t) "*** screen() called with bad function code ***"
                        );
 #endif /* K95G */
 #endif /* KUI */
@@ -8720,9 +8720,9 @@ char *s;        /* a string */
     }
     if (cendw) {                        /* endwin() was called previously */
         debug(F100,"screeng setup ok","",0);
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_DIR, (long) zgtdir() );
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_LIN,
-                        (long) (
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_DIR, (intptr_t) zgtdir() );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_LIN,
+                        (intptr_t) (
 #ifdef NEWFTP
                                 ftp ? (ftp_host ? ftp_host : "(unknown)") :
 #endif /* NEWFTP */
@@ -8766,19 +8766,19 @@ char *s;        /* a string */
                 char buf[30];
                 sprintf(buf,"%s (SECURE)",xname);
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_SPD,
-                               (long) buf
+                               (intptr_t) CW_SPD,
+                               (intptr_t) buf
                                );
             } else {
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_SPD,
-                               (long) xname
+                               (intptr_t) CW_SPD,
+                               (intptr_t) xname
                                );
             }
 #else
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_SPD,
-                           (long) "(network)"
+                           (intptr_t) CW_SPD,
+                           (intptr_t) "(network)"
                            );
 #endif /* NETCONN */
         } else {
@@ -8787,27 +8787,27 @@ char *s;        /* a string */
             if (speed > 0L) {
                 if (speed == 8880) {
                     KuiSetProperty(KUI_FILE_TRANSFER,
-                                   (long) CW_SPD,
-                                   (long) "75/1200"
+                                   (intptr_t) CW_SPD,
+                                   (intptr_t) "75/1200"
                                    );
                 } else {
                     char speedbuf[64] ;
                     sprintf(speedbuf, "%ld", speed);
                     KuiSetProperty(KUI_FILE_TRANSFER,
-                                   (long) CW_SPD,
-                                   (long) speedbuf
+                                   (intptr_t) CW_SPD,
+                                   (intptr_t) speedbuf
                                    );
                 }
             } else {
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_SPD,
-                               (long) "(unknown)"
+                               (intptr_t) CW_SPD,
+                               (intptr_t) "(unknown)"
                                );
             }
         }
         KuiSetProperty(KUI_FILE_TRANSFER,
-                       (long) CW_PAR,
-                       (long) parnam((char)parity)
+                       (intptr_t) CW_PAR,
+                       (intptr_t) parnam((char)parity)
                        );
         pctlbl = (what & W_SEND);
         cendw = 0;
@@ -8829,12 +8829,12 @@ char *s;        /* a string */
 #endif /* GFTIMER */
         oldwin = -1;
         fsiz = (CK_OFF_T)-1L;		/* Invalidate previous file size */
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PCD, (long) 0 );
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_FFC, (long) 0 );
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) 0 );
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) "" );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PCD, (intptr_t) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_SIZ, (intptr_t) 0 );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) "" );
 
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s );
         q = len;                        /* Remember name length for later */
         scrft();                        /* Display file type (can change) */
 #ifdef OS2
@@ -8843,7 +8843,7 @@ char *s;        /* a string */
         return;
 
       case SCR_AN:                      /* File as-name */
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s );
 #ifdef OS2
         SaveCmdMode(0, 0);
 #endif /* OS2 */
@@ -8852,7 +8852,7 @@ char *s;        /* a string */
       case SCR_FS:                      /* File size */
         fsiz = n;
         if (fsiz > (CK_OFF_T)-1) {
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_SIZ, (long) n );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_SIZ, (intptr_t) n );
         }
         if (fsiz > (CK_OFF_T)-1) {	/* Put up percent label */
             pctlbl = 1;
@@ -8871,8 +8871,8 @@ char *s;        /* a string */
             extern struct sysdata sysidlist[];
             /* Things that won't change after the 4th packet */
             KuiSetProperty( KUI_FILE_TRANSFER,
-                           (long) CW_PAR,
-                           (long) parnam((char)parity)
+                           (intptr_t) CW_PAR,
+                           (intptr_t) parnam((char)parity)
                            );
             if (
 #ifdef NEWFTP
@@ -8906,8 +8906,8 @@ char *s;        /* a string */
 				);
                     }
                     KuiSetProperty( KUI_FILE_TRANSFER,
-				    (long) CW_LIN,
-				    (long) msgbuf
+				    (intptr_t) CW_LIN,
+				    (intptr_t) msgbuf
 				    );
                 }
             }
@@ -8925,8 +8925,8 @@ char *s;        /* a string */
                 char msgbuf[64];
                 sprintf(msgbuf,"00 / 00");
                 KuiSetProperty( KUI_FILE_TRANSFER,
-				(long) CW_TMO,
-				(long) msgbuf
+				(intptr_t) CW_TMO,
+				(intptr_t) msgbuf
 				);
             } else {
                 xx = (rttdelay + 500) / 1000;
@@ -8934,8 +8934,8 @@ char *s;        /* a string */
                     char msgbuf[64];
                     sprintf(msgbuf,"%02ld / %02d", xx, rcvtimo);
                     KuiSetProperty( KUI_FILE_TRANSFER,
-				    (long) CW_TMO,
-				    (long) msgbuf
+				    (intptr_t) CW_TMO,
+				    (intptr_t) msgbuf
 				    );
                     oldrtt = xx;
                     oldtim = rcvtimo;
@@ -8949,10 +8949,10 @@ char *s;        /* a string */
           rpktl+(protocol==PROTO_K?1:0) :
             spktl;
         if (x != oldlen) {              /* But only if it changed. */
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PL, (long) x );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PL, (intptr_t) x );
             oldlen = x;
         }
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PC, (long) spackets );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PC, (intptr_t) spackets );
 
         if (protocol == PROTO_K && !ftp) { /* Window slots */
             char ws[16];
@@ -8973,19 +8973,19 @@ char *s;        /* a string */
                   oldwin = wcur;
               }
             if (flag) {
-                KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_WS, (long) ws );
+                KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_WS, (intptr_t) ws );
             }
         }
         errors = retrans + crunched + timeouts;
         if (errors != oldtry) {         /* Retry count, if changed */
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PR, (long) errors );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PR, (intptr_t) errors );
             oldtry = errors;
         }
 	/* Sender's packet type */
         if (!ftp && (c != oldtyp && c != 'Y' && c != 'N')) {
             char type[2];
             sprintf(type, "%c",c);
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_PT, (long) type );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_PT, (intptr_t) type );
             oldtyp = c;
         }
         switch (c) {                    /* Now handle specific packet types */
@@ -9024,9 +9024,9 @@ char *s;        /* a string */
                 if (pct != oldpct)      /* Only do this 100 times per file */
                   updpct(oldpct, pct);
             } else {
-                KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+                KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) ffc);
             }
-            KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) howfar);
+            KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) howfar);
             cps = shocps((int) pct, fsiz, howfar);
             /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
             break;
@@ -9038,19 +9038,19 @@ char *s;        /* a string */
             errors = retrans + crunched + timeouts;
             if (errors != oldtry) {     /* Error count, if changed */
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_PR,
-			       (long) errors
+                               (intptr_t) CW_PR,
+			       (intptr_t) errors
                                );
                 }
                 oldtry = errors;
                 if (s) if (*s) {
-                    KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_ERR, (long) s);
+                    KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s);
             }
             break;
 
           case 'E':                     /* Error packet */
             if (*s) {
-                KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+                KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s );
             }
             fcnt = fbyt = 0L;           /* So no bytes for this file */
             break;
@@ -9058,29 +9058,29 @@ char *s;        /* a string */
             cps = shocps((int) pct, fsiz, howfar);
             /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "Damaged Packet"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "Damaged Packet"
                            );
             break;
           case 'q':                     /* Ctrl-C or connection lost */
             if (!s) s = "";
             if (!*s) s = "User interruption or connection lost";
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_MSG,
-                           (long) s
+                           (intptr_t) CW_MSG,
+                           (intptr_t) s
                            );
             break;
           case 'T':                     /* Timeout */
             cps = shocps((int) pct, fsiz, howfar);
             /* old_tr = shoetl(old_tr, cps, fsiz, howfar); */
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "Timeout"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "Timeout"
                            );
             errors = retrans + crunched + timeouts;
             if (errors != oldtry) {     /* Error count, if changed */
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                               (long) CW_PR, (long) errors
+                               (intptr_t) CW_PR, (intptr_t) errors
                                );
                 oldtry = errors;
             }
@@ -9102,7 +9102,7 @@ char *s;        /* a string */
             if (pctlbl)
               updpct(oldpct,100);
             else
-                KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+                KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) ffc);
             pct = 100;
             oldpct = 0;
         } else if (fsiz > 0L)           /* Not OK, update final percent */
@@ -9117,7 +9117,7 @@ char *s;        /* a string */
             if (pctlbl) {
 		updpct(oldpct,100);
 	    } else
-                KuiSetProperty(KUI_FILE_TRANSFER, (long) CW_FFC, (long) ffc);
+                KuiSetProperty(KUI_FILE_TRANSFER, (intptr_t) CW_FFC, (intptr_t) ffc);
 #ifdef COMMENT
             pct = 100;
             oldpct = 0;
@@ -9125,29 +9125,29 @@ char *s;        /* a string */
         }
 #endif /* COMMENT */
 
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_TR, (long) "" );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_TR, (intptr_t) "" );
 
         switch (c) {                    /* Print new status message */
           case ST_OK:                   /* Transfer OK */
             fcnt++;                     /* Count this file */
 	    if (what == (W_FTP|W_FT_DELE)) {
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                                (long) CW_MSG,
-                                (long) "Delete OK"
+                                (intptr_t) CW_MSG,
+                                (intptr_t) "Delete OK"
                                 );
 	    } else {
 		fbyt += ffc;
                 KuiSetProperty(KUI_FILE_TRANSFER,
-                                (long) CW_MSG,
-                                (long) "Transfer OK"
+                                (intptr_t) CW_MSG,
+                                (intptr_t) "Transfer OK"
                                 );
 	    }
             return;
 
           case ST_DISC:                 /* Discarded */
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "File discarded"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "File discarded"
                            );
 #ifdef COMMENT
             pct = oldpct = 0;
@@ -9156,8 +9156,8 @@ char *s;        /* a string */
 
           case ST_INT:                  /* Interrupted */
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) "Transfer interrupted"
+                           (intptr_t) CW_ERR,
+                           (intptr_t) "Transfer interrupted"
                            );
 #ifdef COMMENT
             pct = oldpct = 0;
@@ -9171,8 +9171,8 @@ char *s;        /* a string */
 	    else
                 sprintf( errbuf, "File skipped" ) ;
             KuiSetProperty(KUI_FILE_TRANSFER,
-                           (long) CW_ERR,
-                           (long) errbuf
+                           (intptr_t) CW_ERR,
+                           (intptr_t) errbuf
                            );
 #ifdef COMMENT
             pct = oldpct = 0;
@@ -9181,7 +9181,7 @@ char *s;        /* a string */
         }
           case ST_ERR:                  /* Error message */
             if (!s) s = (char *)epktmsg;
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s );
 #ifdef COMMENT
             pct = oldpct = 0;
 #endif /* COMMENT */
@@ -9191,9 +9191,9 @@ char *s;        /* a string */
             if (*s) {
                 char errbuf[64] ;
                 sprintf( errbuf, "Refused, %s", s ) ;
-                KuiSetProperty(KUI_FILE_TRANSFER,(long) CW_ERR,(long) errbuf);
+                KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t) CW_ERR,(intptr_t) errbuf);
             } else {
-                KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_ERR,(long)"Refused");
+                KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t)CW_ERR,(intptr_t)"Refused");
             }
 #ifdef COMMENT
             pct = oldpct = 0;
@@ -9201,25 +9201,25 @@ char *s;        /* a string */
             return;
 
           case ST_INC:
-            KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_ERR,(long)"Incomplete");
+            KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t)CW_ERR,(intptr_t)"Incomplete");
 #ifdef COMMENT
             pct = oldpct = 0;
 #endif /* COMMENT */
             return;
 
           case ST_MSG:
-            KuiSetProperty(KUI_FILE_TRANSFER,(long)CW_MSG,(long)s);
+            KuiSetProperty(KUI_FILE_TRANSFER,(intptr_t)CW_MSG,(intptr_t)s);
             return;
 
           default:                      /* Bad call */
-            KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR,
-                       (long) "*** screen() called with bad status ***" );
+            KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR,
+                       (intptr_t) "*** screen() called with bad status ***" );
             return;
         }
 
       case SCR_TC: {                    /* Transaction complete */
           char msgbuf[128];
-          KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_CP, tfcps);
+          KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_CP, tfcps);
           if (success) {
               sprintf(msgbuf,
                       "SUCCESS.  Files: %s, Bytes: %ld, %ld CPS",
@@ -9228,13 +9228,13 @@ char *s;        /* a string */
                       tfcps
                       );
               KuiSetProperty(KUI_FILE_TRANSFER,
-                             (long) CW_MSG,
-                             (long) msgbuf
+                             (intptr_t) CW_MSG,
+                             (intptr_t) msgbuf
                              );
           }
           KuiSetProperty(KUI_FILE_TRANSFER,
-                         (long) CW_TR,
-                         (long) hhmmss((long)
+                         (intptr_t) CW_TR,
+                         (intptr_t) hhmmss((long)
 #ifdef GFTIMER
                                        (fptsecs + 0.5)
 #else
@@ -9259,7 +9259,7 @@ char *s;        /* a string */
           return;
       }
       case SCR_EM:                      /* Error packet (fatal) */
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_ERR, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_ERR, (intptr_t) s );
         if (xfrbel) bleep(BP_FAIL);
 #ifdef COMMENT
         pct = oldpct = 0;
@@ -9274,7 +9274,7 @@ char *s;        /* a string */
 
       case SCR_XD:                      /* X-packet data */
         pct = oldpct = 0;
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_NAM, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_NAM, (intptr_t) s );
         return;
 
       case SCR_CW:                      /* Close Window */
@@ -9288,7 +9288,7 @@ char *s;        /* a string */
         cendw = 1; return;
 
       case SCR_CD:                      /* Display current directory */
-        KuiSetProperty( KUI_FILE_TRANSFER, (long) CW_DIR, (long) s );
+        KuiSetProperty( KUI_FILE_TRANSFER, (intptr_t) CW_DIR, (intptr_t) s );
 #ifdef OS2
         SaveCmdMode(0, 0);
 #endif /* OS2 */
@@ -9296,8 +9296,8 @@ char *s;        /* a string */
 
       default:                          /* Bad call */
         KuiSetProperty(KUI_FILE_TRANSFER,
-                       (long) CW_ERR,
-                       (long) "*** screen() called with bad function code ***"
+                       (intptr_t) CW_ERR,
+                       (intptr_t) "*** screen() called with bad function code ***"
                        );
         return;
     }

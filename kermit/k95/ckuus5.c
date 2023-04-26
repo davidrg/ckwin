@@ -1964,7 +1964,7 @@ extern int ckrooterr;
             }
         }
 #ifdef NT
-        GetShortPathName(inidir,inidir,CCHMAXPATH);
+        ckGetShortPathName(inidir,inidir,CCHMAXPATH);
 #endif /* NT */
     }
 }
@@ -6000,7 +6000,7 @@ VOID
 shotrm() {
     char *s;
     extern char * getiact();
-    extern int tt_print, adl_err;
+    extern int tt_print, adl_err, adl_ask;
 #ifndef NOTRIGGER
     extern char * tt_trigger[];
 #endif /* NOTRIGGER */
@@ -6089,9 +6089,9 @@ shotrm() {
            (tt_cursor == 1) ? "half" : "underline",
 #endif /* KUI */
 #ifdef CK_AUTODL
-           "autodownload",autodl == TAD_ON ?
+           "autodownload",(autodl == TAD_ON && adl_ask == 0) ?
            (adl_err ? "on, error stop" : "on, error continue") : 
-           autodl == TAD_ASK ? 
+           (autodl == TAD_ON && adl_ask == 1) ?
            (adl_err ? "ask, error stop" : "ask, error continue") :
            "off"
 #else /* CK_AUTODL */
@@ -12060,6 +12060,9 @@ initoptlist() {
 #ifdef __WATCOMC__
     makestr(&(optlist[noptlist++]),"__WATCOMC__");
 #endif
+#ifdef _WIN64                           /* 64bit Windows NT */
+    makestr(&(optlist[noptlist++]),"_WIN64");
+#endif
 #ifdef _MSC_VER
     sprintf(line,"_MSC_VER=%d",_MSC_VER); /* SAFE */
     makestr(&(optlist[noptlist++]),line);
@@ -12139,6 +12142,9 @@ initoptlist() {
 #ifdef CKT_NT31
     makestr(&(optlist[noptlist++]),"CKT_NT31");
 #endif /* CKT_NT31 */
+#ifdef CKT_NT35
+    makestr(&(optlist[noptlist++]),"CKT_NT35");
+#endif /* CKT_NT35 */
 #ifdef POSIX_CRTSCTS
     makestr(&(optlist[noptlist++]),"POSIX_CRTSCTS");
 #endif /* POSIX_CRTSCTS */
@@ -12391,7 +12397,23 @@ printf("NOWTMP not defined\n");
 #ifdef _M_IX86
     printf("Microsoft Windows Operating Systems for 32-bit Intel CPUs.\n");
 #else /* _M_IX86 */
+#ifdef _M_IA64
+    printf("Microsoft Windows Operating Systems for Itanium CPUs.\n");
+#else /* _M_IA64 */
+#ifdef _M_AMD64
+    printf("Microsoft Windows Operating Systems for x86-64/AMD64 CPUs.\n");
+#else /* _M_AMD64 */
+#ifdef _M_ARM
+    printf("Microsoft Windows Operating Systems for ARM CPUs.\n");
+#else /* _M_ARM */
+#ifdef _M_ARM64
+    printf("Microsoft Windows Operating Systems for 64bit ARM CPUs.\n");
+#else /* _M_ARM64 */
     UNKNOWN WINDOWS PLATFORM
+#endif /* _M_ARM64 */
+#endif /* _M_ARM  */
+#endif /* _M_AMD64 */
+#endif /* _M_IA64 */
 #endif /* _M_IX86 */
 #endif /* _M_MRX000 */
 #endif /* _M_PPC */

@@ -708,10 +708,10 @@ Real_Win32ShellExecute( void* param )
     CloseHandle(info.hProcess);
 #endif /* COMMENT */
 
-    if (((DWORD)error) <= 32)
+    if ((intptr_t)error <= 32)
     {
         debug(F111,"Win32 ShellExecute failure",object,error);
-        switch ( (DWORD)error ) {
+        switch ( (intptr_t)error ) {
         case 0:
             debug(F110,"Win32 ShellExecute","The operating system is out of memory or resources.",0);
             break;

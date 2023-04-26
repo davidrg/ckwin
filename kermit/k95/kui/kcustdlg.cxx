@@ -30,26 +30,36 @@ char* testLBStrings[] = {
 extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-BOOL APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+APIENTRY CustomizeDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     KWin* win = (KWin*) kglob->hwndset->find( hwnd );
     if( !win )
         return 0;
 
     Bool ret = win->message( hwnd, msg, wParam, lParam );
-    return (BOOL) ret;
+    return ret;
 }
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-BOOL APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+APIENTRY CustomizeDragDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     KWin* win = (KWin*) kglob->hwndset->find( hwnd );
     if( !win )
         return 0;
 
     Bool ret = win->message( hwnd, msg, wParam, lParam );
-    return (BOOL) ret;
+    return ret;
 }
 
 /*------------------------------------------------------------------------
@@ -64,13 +74,13 @@ LRESULT CALLBACK PaneListWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     switch( msg )
     {
         case WM_MOUSEMOVE:
-            done = win->mouseMove( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+            done = win->mouseMove( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
         case WM_RBUTTONDOWN:
-            done = win->rButtonDown( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+            done = win->rButtonDown( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
         case WM_RBUTTONUP:
-            done = win->rButtonUp( wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
+            done = win->rButtonUp( (long)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam) );
             break;
     }
 
@@ -121,7 +131,11 @@ void KStatusCustomDlg::createWin( KWin* par )
     associateHwnd( hWnd );
 
     hList = GetDlgItem( hWnd, IDC_LISTPANE );
+#ifdef _WIN64
+    LBProc = (WNDPROC) SetWindowLongPtr(hList, GWLP_WNDPROC, (LONG_PTR) PaneListWndProc );
+#else /* _WIN64 */
     LBProc = (WNDPROC) SetWindowLong( hList, GWL_WNDPROC, (LONG) PaneListWndProc );
+#endif /* _WIN64 */
     associateHwnd( hList );
 
     // populate with dummy data for now
@@ -327,7 +341,7 @@ Bool KStatusCustomDlg::rButtonUp( long wParam, long x, long y )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KStatusCustomDlg::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KStatusCustomDlg::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     switch( msg )

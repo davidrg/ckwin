@@ -445,7 +445,7 @@ void KTerminal::browseFile( eFileType filetype )
 
     OpenFileName.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST 
         | OFN_HIDEREADONLY
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         | OFN_EXPLORER
 #endif
         ;
@@ -484,7 +484,7 @@ void KTerminal::browseFile( eFileType filetype )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     debug(F111,"KTerminal::message","msg",msg);
@@ -557,10 +557,10 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
     case WM_QUERYENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
         done = TRUE;
-#if _MSC_VER > 1000
+#if _MSC_VER > 1010
         if ( lParam & ENDSESSION_LOGOFF ) {
 #else
-        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
          * (on Windows 95 only according to the docs) */
         if (lParam) {
 #endif
@@ -574,10 +574,10 @@ Bool KTerminal::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
     case WM_ENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
-#if _MSC_VER > 1000
+#if _MSC_VER > 1010
         if ( wParam && (lParam & ENDSESSION_LOGOFF) ) {
 #else
-        /* Visual C++ <= 4.0: lparam == TRUE on logoff, FALSE on shutdown
+        /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
          * (on Windows 95 only according to the docs) */
         if (lParam) {
 #endif
@@ -1246,7 +1246,7 @@ int KTerminal::OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,
                         break;
                 }
 
-                KAppWin::message(hwnd, WM_USER_SIZING, edge, (LONG)&rc);
+                KAppWin::message(hwnd, WM_USER_SIZING, edge, (LPARAM)&rc);
 
 #ifdef NT35_RESIZE_RECT
                 if (!RECT_EQ(rc, rcPrevious)) {

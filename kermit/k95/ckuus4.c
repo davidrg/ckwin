@@ -79,6 +79,8 @@ LONG KermitDialerID = 0;
 #ifdef CK_PID
 #include <process.h>
 #endif /* CK_PID */
+#include "ckoreg.h"
+#include "ckoetc.h"
 #endif /* OS2 */
 
 #ifdef KUI
@@ -1333,8 +1335,8 @@ findinpath(arg) char * arg;
 #ifdef NT
     scriptenv = getenv("K95SCRIPTS");
     keymapenv = getenv("K95KEYMAPS");
-    makestr(&appdata0,(char *)GetAppData(0));
-    makestr(&appdata1,(char *)GetAppData(1));
+    makestr(&appdata0,GetAppData(0));
+    makestr(&appdata1,GetAppData(1));
 #else /* NT */
     scriptenv = getenv("K2SCRIPTS");
     keymapenv = getenv("K2KEYMAPS");
@@ -1680,7 +1682,11 @@ prescan(dummy) int dummy;
                                 yargv++, yargc--;
                                 if (yargc < 1)
                                   fatal("Window handle missing");
+#ifdef _WIN64
+                                hwndDialer = (HWND) _atoi64(*yargv);
+#else /* _WIN64 */
                                 hwndDialer = (HWND) atol(*yargv);
+#endif /* _WIN64 */
                                 StartedFromDialer = 1;
                                 yargv++, yargc--;
                                 KermitDialerID = atol(*yargv) ;
@@ -1784,7 +1790,11 @@ prescan(dummy) int dummy;
                         yargv++, yargc--;
                         if (yargc < 1)
                           fatal("Window handle missing");
+#ifdef _WIN64
+                        hwndDialer = (HWND) _atoi64(*yargv);
+#else /* _WIN64 */
                         hwndDialer = (HWND) atol(*yargv);
+#endif /* _WIN64 */
                         StartedFromDialer = 1;
                         yargv++, yargc--;
                         KermitDialerID = atol(*yargv) ;
@@ -1910,7 +1920,11 @@ prescan(dummy) int dummy;
                         break;
                     } else {
 #endif /* COMMENT */
+#ifdef _WIN64
+                        hwndDialer = (HWND) _atoi64(*yargv);
+#else /* _WIN64 */
                         hwndDialer = (HWND) atol(*yargv);
+#endif /* _WIN64 */
                         StartedFromDialer = 1;
                         yargv++, yargc--;
                         KermitDialerID = atol(*yargv) ;
@@ -9634,7 +9648,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
       case FN_OOX:
         p = "";
         if (argn > 0)
-          p = (char *) ck_oox(bp[0], (argn > 1) ? bp[1] : "");
+          p = ck_oox(bp[0], (argn > 1) ? bp[1] : "");
         goto fnend;
 #endif /* OS2 */
 
@@ -12486,7 +12500,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 
 #ifdef NT
     if (cx == FN_SNAME) {
-        GetShortPathName(bp[0],fnval,FNVALL);
+        ckGetShortPathName(bp[0],fnval,FNVALL);
         goto fnend;
     }
     if (cx == FN_LNAME) {
@@ -15313,32 +15327,32 @@ char *                                  /* Evaluate builtin variable */
 #ifdef NT
     switch (y) {
       case VN_PERSONAL:
-        p = (char *)GetPersonal();
+        p = GetPersonal();
         if (p) {
-            GetShortPathName(p,vvbuf,VVBUFL);
+            ckGetShortPathName(p,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
       case VN_DESKTOP:
-          p = (char *)GetDesktop();
+          p = GetDesktop();
           if (p) {
-              GetShortPathName(p,vvbuf,VVBUFL);
+              ckGetShortPathName(p,vvbuf,VVBUFL);
               return(vvbuf);
           }
           return("");
       case VN_COMMON:
-        p = (char *)GetAppData(1);
+        p = GetAppData(1);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
-            GetShortPathName(vvbuf,vvbuf,VVBUFL);
+            ckGetShortPathName(vvbuf,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");
       case VN_APPDATA:
-        p = (char *)GetAppData(0);
+        p = GetAppData(0);
         if (p) {
             ckmakmsg(vvbuf,VVBUFL,p,"Kermit 95/",NULL,NULL);
-            GetShortPathName(vvbuf,vvbuf,VVBUFL);
+            ckGetShortPathName(vvbuf,vvbuf,VVBUFL);
             return(vvbuf);
         }
         return("");

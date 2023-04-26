@@ -524,7 +524,7 @@ int KAppWin::readManual(void)
 {
     char manpath[512];
     struct stat buf;
-    int i;
+    size_t i;
 
     /* Need to change directory to the DOCS\\MANUAL directory */
     /* before starting the manual.  Otherwise, Netscape may   */
@@ -565,7 +565,7 @@ int KAppWin::readManual(void)
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     //debug(F111,"KAppWin::message","msg",msg);
@@ -603,7 +603,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
         //    else 
         //        kglob->mouseEffect = TERM_MOUSE_NO_EFFECT;
         }
-        done = sizing( wParam, lpRect );
+        done = sizing( (UINT)wParam, lpRect );
         kglob->mouseEffect = save;
         break;
     }
@@ -674,7 +674,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
             break;
         }
 
-        wmSize = wParam;
+        wmSize = (UINT)wParam;
         break;
 
     case WM_USER_EXITSIZEMOVE:

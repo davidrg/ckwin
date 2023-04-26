@@ -5268,8 +5268,20 @@ typedef unsigned int u_int;
 #ifndef CK_OFF_T
 #ifdef OS2
 #ifdef NT
+#ifdef CKT_NT31
+#ifdef CKT_NT35
+/* Any compiler capable of targeting NT 3.50 should support __int64
+ * (Visual C++ 2.0, OpenWatcom) */
 #define CK_OFF_T __int64
-#else
+#else /* CKT_NT35 */
+/* Compilers capable of targeting only Windows NT 3.1
+ * (Visual C++ 1.0 32-bit edition) may not support __int64 */
+#define CK_OFF_T long
+#endif /* CKT_NT35 */
+#else /* CKT_NT31 */
+#define CK_OFF_T __int64
+#endif /* CKT_NT31 */
+#else /* NT */
 #define CK_OFF_T long
 #endif  /* NT */
 #endif	/* OS2 */
@@ -5320,6 +5332,7 @@ typedef unsigned int u_int;
 /* CK_64BIT is a compile-time symbol indicating a true 64-bit build */
 /* meaning that longs and pointers are 64 bits */
 
+#ifndef NT
 #ifndef VMS				/* VMS Alpha and IA64 are 32-bit! */
 #ifndef CK_64BIT
 #ifdef _LP64				/* Solaris */
@@ -5353,6 +5366,11 @@ typedef unsigned int u_int;
 #endif	/* _LP64 */
 #endif	/* CK_64BIT */
 #endif	/* VMS */
+#else   /* NT */
+#ifdef _WIN64               /* NT can be 32bit or 64bit */
+#define CK_64BIT
+#endif /* _WIN64 */
+#endif /* NT */
 
 #ifndef CK_OFF_T
 #ifdef CK_64BIT
@@ -5654,6 +5672,11 @@ _PROTOTYP( int zstime, (char *, struct zattr *, int) );
 #ifdef CK_PERMS
 _PROTOTYP( char * zgperm, (char *) );
 _PROTOTYP( char * ziperm, (char *) );
+#else /* CK_PERMS */
+#ifdef OS2
+/* zgperm exists on OS/2 and NT regardless of CK_PERMS */
+_PROTOTYP( char * zgperm, (char *) );
+#endif /* OS2 */
 #endif /* CK_PERMS */
 _PROTOTYP( int zmail, (char *, char *) );
 _PROTOTYP( int zprint, (char *, char *) );
@@ -7010,7 +7033,29 @@ _PROTOTYP(int ck_auth_unloaddll, (VOID));
 #ifdef NT
 _PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
                                    LPSTR lpBuffer, DWORD cchBuffer));
+_PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
+                                    LPSTR lpszShortPath, DWORD cchBuffer));
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
+typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
+typedef unsigned long DWORD_PTR;
+#define CK_HAVE_INTPTR_T
+#endif /* CK_HAVE_INTPTR_T */
 #endif /* NT */
+
+/*
+ * On Windows, ttyfd is frequently used to hold HANDLEs which are a kind of pointer.
+ * So on ttyfd must be of a sufficient size to hold a pointer.
+ */
+#ifdef OS2
+#ifdef CK_HAVE_INTPTR_T
+#define CK_TTYFD_T intptr_t
+#else /* CK_HAVE_INTPTR_T */
+#define CK_TTYFD_T int
+#endif /* CK_HAVE_INTPTR_T */
+#endif /* OS2 */
 
 
 #include "ckclib.h"

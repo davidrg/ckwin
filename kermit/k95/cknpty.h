@@ -42,7 +42,7 @@
  *
  */
 BOOL pseudo_console_available();
-
+#ifdef CK_CONPTY
 /** Creates pipes for communicating with the PTY.
  *
  * inputReader and outputWriter should be assigned to the pseudo
@@ -66,14 +66,12 @@ BOOL create_pipes(PHANDLE inputReader, PHANDLE inputWriter,
  */
 HRESULT open_pseudo_console(COORD size, HANDLE input_pipe, HANDLE output_pipe);
 
-#ifdef CK_CONPTY
 /** Prepares the supplied STARTUPINFOEX for use with
  * the already crated PTY (call open_pseudo_console first)
  *
  * psi: a STARTUPINFOEX
  */
 HRESULT prepare_startup_info(STARTUPINFOEX * psi);
-#endif
 
 /** Starts a subprocess in a pseudoconsole of the specified size
  * and provides handles to communicate with it.
@@ -103,7 +101,7 @@ void resize_pseudo_console(COORD new_size);
  * terminating subprocess otherwise a deadlock may occur.
  */
 void close_pseudo_console();
-
+#endif
 #endif /* NT */
 
 #endif /* _CKNPTY_H */

@@ -13,9 +13,14 @@ extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 extern "C" {
-BOOL CALLBACK AboutDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+CALLBACK AboutDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    return (BOOL)kabout->message( hwnd, msg, wParam, lParam );
+    return kabout->message( hwnd, msg, wParam, lParam );
 }
 }
 
@@ -63,7 +68,7 @@ void KAbout::show( Bool bVisible )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KAbout::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KAbout::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )

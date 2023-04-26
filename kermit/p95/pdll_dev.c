@@ -39,7 +39,7 @@
 #include "pdll_dev.h"
 
 U8 *dev_path = NULL;
-U32 dev_handle = 0;
+intptr_t dev_handle = 0;
 U32 passive_socket = 0;
 U8 *socket_remote = NULL;
 U16 socket_port = 0;
@@ -298,7 +298,7 @@ dev_get_cfg(DEV_CFG *dev_cfg) {
 #endif 
     if (rc)
       p_error(P_ERROR_DOSDEVIOCTL, rc,
-		MODULE_DEV, __LINE__, (U32)dev_path);
+		MODULE_DEV, __LINE__, (intptr_t)dev_path);
   }
 }    
 
@@ -335,7 +335,7 @@ dev_set_cfg(DEV_CFG *dev_cfg) {
 #endif
     if (rc)
       p_error(P_ERROR_DOSDEVIOCTL, rc,
-		MODULE_DEV, __LINE__, (U32)dev_path);
+		MODULE_DEV, __LINE__, (intptr_t)dev_path);
   }
 }
 

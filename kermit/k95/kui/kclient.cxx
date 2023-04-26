@@ -74,7 +74,14 @@ LRESULT CALLBACK KClientWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
+// In Visual C++ 2002 (7.0) and up for 32bit windows, UINT_PTR is unsigned int
+// In Visual C++ 6.0 (and perhaps earlier) UINT_PTR is unsigned long (which
+// results in a build error)
+#if _MSC_VER < 1300
 VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
+#else
+VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
+#endif
 {
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);
@@ -314,7 +321,7 @@ void KClient::setDimensions( Bool sizeparent )
 void KClient::getCreateInfo( K_CREATEINFO* info )
 {
     info->classname = KWinClassName;
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     info->exStyle = WS_EX_CLIENTEDGE;
 #endif
     info->style = WS_CHILD | WS_VISIBLE 
@@ -329,8 +336,13 @@ void KClient::createWin( KWin* par )
 
     KWin::createWin( par );
 
+#ifdef _WIN64
+    WNDPROC _clientProc = (WNDPROC) SetWindowLongPtr(
+            hWnd, GWLP_WNDPROC, (LONG_PTR) KClientWndProc );
+#else /* _WIN64 */
     WNDPROC _clientProc = (WNDPROC) SetWindowLong( hWnd, GWL_WNDPROC
                     , (LONG)KClientWndProc );
+#endif /* _WIN64 */
 
     // to make the updates look clean, use a memory DC for the drawing
     // and then BitBlt() it onto the screen DC.
@@ -1000,7 +1012,7 @@ void KClient::drawDisabledState( int w, int h )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KClient::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     _msgret = 1;
@@ -1183,20 +1195,20 @@ Bool KClient::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 #else /* COMMENT */
     case WM_SYSKEYDOWN:     // needed for VK_F10
         //debug(F111,"KClient::message","WM_SYSKEYDOWN",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, TRUE, TRUE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, TRUE, TRUE );
         break;
     case WM_KEYDOWN:
         //debug(F111,"KClient::message","WM_KEYDOWN",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, TRUE, FALSE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, TRUE, FALSE );
         break;
 
     case WM_SYSKEYUP:     // needed for VK_F10
         //debug(F111,"KClient::message","WM_SYSKEYUP",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, FALSE, TRUE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, FALSE, TRUE );
         break;
     case WM_KEYUP:
         //debug(F111,"KClient::message","WM_KEYUP",msg);
-        done = ikterm->newKeyboardEvent( wParam, lParam, FALSE, FALSE );
+        done = ikterm->newKeyboardEvent( (int)wParam, (long)lParam, FALSE, FALSE );
         break;
 #endif /* COMMENT */
     }

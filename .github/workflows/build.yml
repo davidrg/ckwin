@@ -9,6 +9,10 @@ on:
 
 env:
   # Expected filename: https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz
+  #ZLIB: https://zlib.net/
+  ZLIB: https://ftp.zx.net.nz/pub/dev/lib/zlib/
+  # As of 2023-01-21 downloads from zlib.net are coming back corrupted for an unknown reason.
+  # So we're now fetching zlib from ftp.zx.net.nz instead.
   ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 1.1.1s
@@ -29,15 +33,28 @@ jobs:
       matrix:
         arch:
           - x86
+          - x64
+          - x64_arm
+          - x64_arm64
         toolset:
           - 14.0
           - 14.2
           - 14.3
-        # no-crypto=yes: builds version with all crypto disabled
-        # no-crypto=no: builds version with all crypto enabled (where required dependencies are available)
-        no_crypto:
-          - no
-        #  - yes
+        exclude:
+          # No point building ARM or ARM64 targets with anything less than the latest as the latest
+          # still supports the first ARM Windows.
+          - arch: x64_arm
+            toolset: 14.0
+          - arch: x64_arm
+            toolset: 14.1
+          - arch: x64_arm
+            toolset: 14.2
+          - arch: x64_arm64
+            toolset: 14.0
+          - arch: x64_arm64
+            toolset: 14.1
+          - arch: x64_arm64
+            toolset: 14.2
 
     steps:
     - uses: actions/checkout@v3
@@ -66,7 +83,7 @@ jobs:
           ${{github.workspace}}\libdes\Release
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+ver3
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -74,8 +91,11 @@ jobs:
         # Get and unpack zlib
         mkdir zlib
         cd zlib
-        wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        echo "Fetching ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz to file zlib-${{env.ZLIB_VERSION}}.tar.gz..."
+        wget ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+        echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar.gz"
         7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+        echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar"
         7z x zlib-${{env.ZLIB_VERSION}}.tar
         ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
         del *.tar 
@@ -133,16 +153,21 @@ jobs:
         cpan -i Text::Template
       shell: powershell
 
+      # No zlib for ARM - it fails at the link step:
+      #   link -nologo -debug -incremental:no -opt:ref -def:./win32/zlib.def -dll -implib:zdll.lib  -out:zlib1.dll -base:0x5A4C0000 adler32.obj compress.obj crc32.obj deflate.obj gzclose.obj gzlib.obj gzread.obj  gzwrite.obj infback.obj inflate.obj inftrees.obj inffast.obj trees.obj uncompr.obj zutil.obj  zlib1.res
+      #     Creating library zdll.lib and object zdll.exp
+      #   LINK : fatal error LNK1355: invalid base address 0x5A4C0000; ARM64 image cannot have base address below 4GB
+      # See bug: https://github.com/madler/zlib/issues/325
     - name: Build zlib
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
         cmake .
         nmake -f win32\Makefile.msc
 
-    - name: Build openssl
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+    - name: Build openssl (x86)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
       shell: powershell
       run: |
         cd openssl\${{env.OPENSSL_VERSION}}
@@ -151,13 +176,55 @@ jobs:
         perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
         nmake
 
-    - name: Build libssh
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+    - name: Build openssl (x86-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
+        nmake       
+
+    - name: Build openssl (ARM)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN32-ARM     
+        nmake
+
+    - name: Build openssl (ARM-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+      shell: powershell
+      run: |
+        cd openssl\${{env.OPENSSL_VERSION}}
+        $env:Path += ";${{github.workspace}}\tools\nasm"
+        $env:Path
+        perl Configure VC-WIN64-ARM     
+        nmake           
+
+    - name: Build libssh (x86/x86-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
+
+      # 32bit ARM doesn't get libssh as version 0.10.3 gets link errors there:
+      #   misc.c.obj : error LNK2019: unresolved external symbol __imp_GetUserNameA referenced in function ssh_get_local_username
+      #   misc.c.obj : error LNK2019: unresolved external symbol __imp_SHGetSpecialFolderPathA referenced in function ssh_get_user_home_dir
+      # zlib is also disabled as it doesn't currently build for ARM
+    - name: Build libssh (arm64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+      shell: powershell
+      run: |
+        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        nmake        
 
     - name: Build libdes
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -177,14 +244,25 @@ jobs:
         cd ..\k95
         call mk.bat
         call mkdist.bat
+        
+        REM Check outputs
+        set MISSING_BUILD_RESULTS=
+        REM ctl3dins.exe
+        for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll) do (
+          if not exist dist\%%y echo Build result not found: %%y
+          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+          if not exist dist\%%y set FAILED=yes
+        )
+
+        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
+        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
+        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
+
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\
       env:
         ROOT: ${{ github.workspace }}
-        # CKF_NO_CRYPTO=yes causes all crypto features to be excluded from the
-        # build. Undefined or CKF_NO_CRYPTO=no leaves crypto features enabled
-        # where the required dependencies exist.
-        CKF_NO_CRYPTO: ${{ matrix.no_crypto }}
+
     - name: Fetch CA Certs bundle
       run: |
         wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
@@ -240,6 +318,262 @@ jobs:
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
+
+  ##############################################################################
+  # Build with Windows 7 Platform SDK version 7.1 (Visual C++ 2010)            #
+  ##############################################################################
+  # This is the last compiler that can target Itanium. Due to its lack of C99
+  # support, builds with Visual C++ 2010 and older don't include SSH support.
+  # OpenSSL 1.1.1s is supported however.
+  Build-PSDK71:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch:
+          - ia64
+          #- x86
+          #- x64
+
+    steps:
+      - uses: actions/checkout@v3
+        ##########################################################################
+        # Fetch the compiler                                                     #
+        ##########################################################################
+      - name: Cache Compiler
+        uses: actions/cache@v3.0.11
+        id: cache-compiler
+        with:
+          path: |
+            ${{github.workspace}}\Microsoft SDKs 
+            ${{github.workspace}}\Microsoft Visual Studio 10.0
+            ${{github.workspace}}\vc10.cmd
+            ${{github.workspace}}\vcredist_x86.exe
+          key: platform-sdk-71-compiler+sdk+redist
+      - name: Get Windows 7 Platform SDK v7.1
+        if: steps.cache-compiler.outputs.cache-hit != 'true'
+        run: |
+          wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z -outfile win7-7.1-sdk-vc.7z
+          7z x win7-7.1-sdk-vc.7z
+          
+          wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-psdk.7z -outfile win7-7.1-sdk-psdk.7z
+          7z x win7-7.1-sdk-psdk.7z
+          
+          del *.7z
+          
+          wget http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe -outfile vcredist_x86.exe
+        shell: powershell
+
+      - name: Install the Visual C++ 2010 Runtime
+        run: vcredist_x86.exe /q /norestart
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+
+        ##########################################################################
+        # Build optional dependencies (openssl, libdes)                          #
+        ##########################################################################
+      - name: Cache Optional Dependencies
+        uses: actions/cache@v3.0.11
+        id: cache-optional-dependencies
+        with:
+          path: |
+            ${{github.workspace}}\zlib 
+            ${{github.workspace}}\openssl 
+            ${{github.workspace}}\libssh
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+            ${{github.workspace}}\tools
+          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes
+
+      - name: Get dependencies
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        run: |         
+          # Get and unpack openssl
+          mkdir openssl
+          cd openssl
+          wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.OPENSSL_VERSION}}.tar
+          ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+          del *.tar 
+          del *.gz
+          cd ..
+          
+          # Get and unpack libdes
+          cd libdes
+          wget ${{env.LIBDES}} -outfile libdes.tar.gz
+          7z x libdes.tar.gz
+          7z x libdes.tar
+          del *.tar
+          del *.gz
+          cd ..
+          
+          # Get and unpack nasm
+          mkdir tools
+          cd tools
+          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+          7z x nasm-2.15.05-win32.zip
+          ren nasm-2.15.05 nasm
+          del *.zip
+          dir
+          cd nasm
+          dir
+          cd ..
+          cd ..          
+          
+          # Install perl modules required by OpenSSL build
+          cpan -i Text::Template
+        shell: powershell
+
+      - name: Build openssl (ia64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'ia64'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          perl Configure VC-WIN64I
+          
+          REM The perl configure script doesn't work quite right for cross-compiling to IA64
+          REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
+          sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:ia64/g" makefile
+          
+          nmake
+
+      - name: Build openssl (x86-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          
+          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
+          
+          REM The perl configure script doesn't work quite right for cross-compiling to x64
+          REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
+          sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:x64/g" makefile
+          
+          nmake
+
+      - name: Build openssl (x86)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd openssl\${{env.OPENSSL_VERSION}}
+          
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          
+          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
+          nmake
+
+      - name: Build libdes
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        shell: cmd
+        run: |
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          cd libdes
+          call mknt.bat
+
+        ##########################################################################
+        # Build K95, K95G and other bits for redistribution                      #
+        ##########################################################################
+      - name: Full Build
+        run: |         
+          echo Configure Platform SDK Build Environment...
+          SET PlatformToolset=100
+          call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          echo Configure build environment...
+          call setenv.bat
+          
+          echo Run Build...
+          cd kermit\p95
+          call mknt.bat
+          cd ..\k95
+          call mk.bat
+          call mkdist.bat
+          
+          echo Check outputs...
+          set MISSING_BUILD_RESULTS=
+          REM ctl3dins.exe
+          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll) do (
+            if not exist dist\%%y echo Build result not found: %%y
+            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist dist\%%y set FAILED=yes
+          )
+          
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
+          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+      - name: Fetch CA Certs bundle
+        run: |
+          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+          
+          $readme = @"
+          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+          under the MPL version 2.0.
+          
+          For more information and updates, see: https://curl.se/docs/caextract.html
+          "@
+          
+          New-Item ca_certs.readme
+          Set-Content ca_certs.readme $readme
+        shell: powershell
+        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: HTMLise Markdown Docs
+        run: |
+          pip3 install markdown
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+          echo ^<body^>
+          ) > ssh-readme.html
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+          echo ^<body^>
+          ) > change-log.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> ssh-readme.html
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ckwin-vc10-${{ matrix.arch }}
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
 
 
   ##############################################################################
@@ -300,6 +634,8 @@ jobs:
         call mknt.bat
         cd ..\k95
         call mk.bat
+        
+        call mkdist.bat
       shell: cmd
       working-directory: ${{ github.workspace }}
       env:
@@ -327,13 +663,6 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
         WATCOM: ${{ github.workspace }}\watcom
-    - name: Make Distribution
-      run: mkdist.bat
-      shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95
-      env:
-        ROOT: ${{ github.workspace }}
-        WATCOM: ${{ github.workspace }}\watcom        
     - name: Prepare Artifacts
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -402,15 +731,10 @@ jobs:
           call mknt.bat
           cd ..\k95
           call mk.bat
+          
+          call mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit
-        env:
-          ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
-      - name: Make Distribution
-        run: mkdist.bat
-        shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
@@ -440,13 +764,14 @@ jobs:
         # decompress.
       - name: Cache OpenWatcom
         uses: actions/cache@v3.0.11
-        id: cache-watcom
+        id: cache-watcom-zinc
         with:
           path: |
             ${{github.workspace}}\watcom
-          key: os2-watcom-1.9
+            ${{github.workspace}}\zinc
+          key: os2-watcom-1.9+openzinc1+v2
       - name: Get OpenWatcom 1.9
-        if: steps.cache-watcom.outputs.cache-hit != 'true'
+        if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
         run: |
           if (Test-Path watcom) {
             Remove-Item watcom -Force
@@ -455,8 +780,16 @@ jobs:
           cd watcom
           wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
           7z x open-watcom-c-win32-1.9.exe
+          cd ..
+          
+          mkdir zinc
+          cd zinc
+          wget ${{ env.OPENZINC }} -outfile OZ1.zip
+          7z x OZ1.zip
+          cd ..
+          dir
         shell: powershell
-      - name: Full Build
+      - name: Kermit/2 Build
         run: |
           SET PATH=%WATCOM%\BINW;%PATH%
           SET PATH=%WATCOM%\BINNT;%PATH%
@@ -465,17 +798,42 @@ jobs:
           SET WHTMLHELP=%WATCOM%\BINNT\HELP
           SET WIPFC=%WATCOM%\WIPFC
           
-          call ..\..\setenv.bat
+          call setenv.bat
+          cd kermit\k95
           call mkos2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Dialer Build
+        run: |
+          SET PATH=%WATCOM%\BINW;%PATH%
+          SET PATH=%WATCOM%\BINNT;%PATH%
+          SET INCLUDE=%WATCOM%\H;%INCLUDE%
+          SET EDPATH=%WATCOM%\EDDAT
+          SET WHTMLHELP=%WATCOM%\BINNT\HELP
+          SET WIPFC=%WATCOM%\WIPFC
+          
+          call setenv.bat
+          cd kermit\dialer
+          call mkos2.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          WATCOM: ${{ github.workspace }}\watcom
+      - name: Make Kermit\2 Distribution
+        run: mkdist-os2.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
-      - name: Make Distribution
+      - name: Make Dialer Distribution
         run: mkdist-os2.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{ github.workspace }}\kermit\dialer
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
@@ -483,6 +841,7 @@ jobs:
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         run: |
+          move ..\dialer\dist-os2\* dist-os2\
           move dist-os2 ${{ github.workspace }}\ckos2
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
@@ -555,18 +914,14 @@ jobs:
           
           cd ..\k95
           call mk.bat
+          
+          call mkdist.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
-      - name: Make Distribution
-        run: mkdist.bat
-        shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
-        env:
-          ROOT: ${{ github.workspace }}
-          
+
       - name: HTMLise Markdown Docs
         run: |
           pip3 install markdown
@@ -582,6 +937,103 @@ jobs:
         uses: actions/upload-artifact@v3.1.1
         with:
           name: ckwin-vc7.1-x86
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+
+
+  ##############################################################################
+  # Build for Itanium with the Windows Server 2003 SP1 Platform SDK            #
+  ##############################################################################
+  # This uses Visual C++ 2005
+  #
+  Build-PSDK2003SP1-IA64:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # We need this only to get cvtres.exe which didn't come with either the
+      # Visual C++ 2003 Toolkit or the Windows Server 2003 SP1 Platform SDK.
+      - name: Enable Developer Command Prompt
+        # You may pin to the exact commit or the version.
+        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        uses: ilammy/msvc-dev-cmd@v1.12.0
+        with:
+          arch: x86
+          toolset: 14.0
+
+        # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
+        # quite a while to download and decompress and I don't want my FTP
+        # server being hit constantly to download this whenever a build runs.
+      - name: Cache VCT2003
+        uses: actions/cache@v3.0.11
+        id: cache-vct2003
+        with:
+          path: |
+            ${{github.workspace}}\vct2003
+          key: vct2003+psdk2003sp1+libdes
+      - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003 + libdes
+        if: steps.cache-vct2003.outputs.cache-hit != 'true'
+        run: |
+          wget https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z -outfile VCT2003+PSDK2003+cvtres.7z
+          7z x VCT2003+PSDK2003+cvtres.7z
+          Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
+          Remove-Item VCT2003+PSDK2003+cvtres.7z
+          Remove-Item VCT2003\Bin\Cvtres.exe
+          
+          # Get and unpack libdes
+          cd libdes
+          wget ${{env.LIBDES}} -outfile libdes.tar.gz
+          7z x libdes.tar.gz
+          7z x libdes.tar
+          del *.tar
+          del *.gz
+          cd ..
+        shell: powershell
+      - name: Full Build
+        run: |
+          Set PATH=%VCT2003%\bin\win64;%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib\ia64
+          
+          call setenv.bat
+
+          cd libdes
+          call mknt.bat
+          cd ..
+          
+          cd kermit\p95
+          call mknt.bat
+          
+          cd ..\k95
+          call mk.bat
+          
+          call mkdist.bat
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          VCT2003: ${{ github.workspace }}\VCT2003
+
+      - name: HTMLise Markdown Docs
+        run: |
+          pip3 install markdown
+          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
+        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: Prepare Artifact
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          move dist ${{ github.workspace }}\ckwin
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ckwin-vc8-ia64
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7

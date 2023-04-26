@@ -60,7 +60,7 @@ typedef struct _DEV_CFG {
 
 extern U32 dev_ready;
 extern U8 *dev_path;
-extern U32 dev_handle;
+extern intptr_t dev_handle;
 extern U32 passive_socket;
 extern U8 *socket_remote;
 extern U16 socket_port;

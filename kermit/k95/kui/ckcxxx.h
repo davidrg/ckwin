@@ -309,8 +309,13 @@ extern unsigned char colorstatus;       /* SET TERM COLOR STATUS-LINE (N/A?) */
 extern unsigned char colorhelp;         /* SET TERM COLOR HELP */
 extern unsigned char colorborder;       /* SET TERM COLOR BORDER (N/A) */
 
+#ifdef OS2
+extern int tt_rows[];           /* Terminal rows = SET TERM HEIGHT */
+extern int tt_cols[];           /* Terminal columns = SET TERM WIDTH */
+#else
 extern int tt_rows;             /* Terminal rows = SET TERM HEIGHT */
 extern int tt_cols;             /* Terminal columns = SET TERM WIDTH */
+#endif
 extern int cmd_rows;            /* Command screen rows = SET COMMAND HEIGHT */
 extern int cmd_cols;            /* Command screen rows = SET COMMAND WIDTH */
 extern int cmdmsk;              /* SET COMMAND BYTESIZE */
@@ -347,10 +352,10 @@ extern int sosi;                /* SET TERM LOCKING-SHIFT value */
 extern int tt_mouse;            /* SET TERM MOUSE value */
 extern int tnlm;                /* SET TERM NEWLINE-MODE value */
 extern int tt_pacing;           /* SET TERM OUTPUT-PACING value */
-extern int tt_roll;             /* SET TERM ROLL value */
+extern int tt_roll[];           /* SET TERM ROLL value */
 extern int tt_updmode;          /* SET TERM SCREEN-UPDATE mode */
 extern int tt_update;           /* SET TERM SCREEN-UPDATE time */
-extern int tt_scrsize;          /* SET TERM SCROLLBACK value */
+extern int tt_scrsize[];        /* SET TERM SCROLLBACK value */
 extern int tt_ctstmo;           /* SET TERM TRANSMIT-TIMEOUT value */
 extern int tt_type;             /* SET TERM TYPE value */
 extern int max_tt;              /* Number of terminal types */

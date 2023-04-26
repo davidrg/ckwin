@@ -57,9 +57,9 @@ void KSizePopup::paint( int w, int h )
     sprintf( tmp, " %d x %d ", w, h );
     size_t len = strlen( tmp );
     SIZE size;
-    GetTextExtentPoint32( hdc, tmp, len, &size );
+    GetTextExtentPoint32( hdc, tmp, (int)len, &size );
 
-    TextOut( hdc, 0, 0, tmp, len );
+    TextOut( hdc, 0, 0, tmp, (int)len );
 
     RECT rect;
     GetWindowRect( parent->hwnd(), &rect );

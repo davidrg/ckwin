@@ -1707,13 +1707,20 @@ CloseKeyMapInitSem( void )
 }
 
 #ifdef NT
-void CALLBACK
+void
+#if _MSC_VER > 800
+CALLBACK
+#else
+#ifdef __WATCOMC__
+CALLBACK
+#endif
+#endif
 TimeProc(
     UINT IDEvent,
     UINT uReserved,
-    DWORD dwUser,
-    DWORD dwReserved1,
-    DWORD dwReserved2 )
+    DWORD_PTR dwUser,
+    DWORD_PTR dwReserved1,
+    DWORD_PTR dwReserved2 )
 {
     if (IDEvent == htimVscrn[0]) {
         PostVscrnTimerSem(0);

@@ -573,8 +573,8 @@ int ssh_clos() {
                         "still live!", "", 0);
             return SSH_ERR_ZOMBIE_THREAD;
         } else if (result == WAIT_FAILED) {
-            debug(F110, "Warning: failed to wait for SSH thread terminate. "
-                        "error", GetLastError(), 0);
+            debug(F101, "Warning: failed to wait for SSH thread terminate. "
+                        "error", "", GetLastError());
             return SSH_ERR_UNSPECIFIED;
         } else {
             debug(F100, "ssh_clos() - thread terminated. Cleaning up...", "", 0);

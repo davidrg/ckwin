@@ -14,4 +14,7 @@ _PROTOTYP( VOID ck_decrypt, (char *) );
 _PROTOTYP( void Blowfish_encipher, (unsigned long *xl, unsigned long *xr) ) ;
 _PROTOTYP( void Blowfish_decipher, (unsigned long *xl, unsigned long *xr) ) ;
 _PROTOTYP( short InitializeBlowfish, (unsigned char key[], short keybytes) );
+
+_PROTOTYP( char * ck_oox, (char *s, char * key) );
+
 #endif /* CKOETC_H */

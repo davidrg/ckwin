@@ -22,7 +22,7 @@ public:
     ~KScroll();
 
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
     void setRange( int max, int viewable, Bool trackPos = TRUE );
     void setValues( long line, long page );

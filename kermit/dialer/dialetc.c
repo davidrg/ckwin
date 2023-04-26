@@ -1,5 +1,9 @@
 #ifdef __cplusplus
+#ifdef __WATCOMC__
+extern "C" {
+#else
 #extern "C" {
+#endif
 #endif 
 
 #include <stdio.h>

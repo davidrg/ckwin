@@ -43,7 +43,8 @@
 
 #define THRDSTKSIZ      (2*131072)
 
-extern int network, ttyfd ;
+extern int network;
+extern CK_TTYFD_T ttyfd;
 extern int TlsIndex ;
 
 int

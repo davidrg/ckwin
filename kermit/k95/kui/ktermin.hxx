@@ -25,7 +25,7 @@ public:
 
     void getCreateInfo( K_CREATEINFO* info );
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
     virtual void show( Bool bVisible = TRUE );
 
     void setTermType( char* );

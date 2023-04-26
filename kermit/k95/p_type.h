@@ -34,6 +34,16 @@
 #ifndef _TYPEDEFS_H_
 #define _TYPEDEFS_H_
 
+#ifdef NT
+#include <io.h>
+#endif
+
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+typedef int intptr_t;
+#define CK_HAVE_INTPTR_T
+#endif
+
 typedef unsigned long   U32;
 typedef long            S32;
 typedef unsigned short  U16;
@@ -47,7 +57,10 @@ typedef unsigned long   BOOLEAN;
 #ifdef XYZ_DLL
 #ifdef NT
 #ifndef __WATCOMC__
+#if _MSC_VER > 800
+/* Visual C++ 1.0 32-bit edition (MSC_VER==800) and OpenWatcom don't like this */
 typedef long APIRET ;
+#endif
 #endif /* __WATCOMC__ */
 #define DosSleep Sleep
 #endif

@@ -66,6 +66,8 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #endif /* NT */
 #include "ckodir.h"
 
+#include "ckoreg.h"
+
 /* macros we might need */
 #ifndef _O_APPEND
 #define _O_APPEND  O_APPEND
@@ -123,15 +125,17 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define _WIN32_WINNT_WINBLUE 0x0603
 #endif /* _WIN32_WINNT_WINBLUE */
 
-#if _MSC_VER >= 1800
-/* Visual C++ 2013 and the Windows 8.1 Platform SDK introduce this header and
- * though the Win32 APIs it relies on have been around since Windows 2000 */
+#if _MSC_VER >= 1920
+/* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
+ * and though the Win32 APIs it relies on have been around since Windows 2000,
+ * though building with Visual C++ 2017 (1910) fails with unresovled external
+ * symbol so we'll only do this on Visual C++ 2019 or newer */
 #include <VersionHelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
 #else
-/* Anything older than Visual C++ we won't bother trying to detect Windows 8.1
- * or newer - if you're building for a modern version of windows you really
- * should be using a modern compiler. */
+/* Anything older than Visual C++ 2019 we won't bother trying to detect
+ * Windows 8.1 or newer - if you're building for a modern version of windows
+ * you really should be using a modern compiler. */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
 #endif
 
@@ -217,6 +221,21 @@ int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif
 #endif
 #endif
+
+#ifdef NT
+/* These aren't known to Visual C++ 1.0 32-bit edition or Windows NT 3.1, but
+ * they're useful constants to have */
+#ifndef VER_PLATFORM_WIN32s
+#define VER_PLATFORM_WIN32s 0
+#endif /* VER_PLATFORM_WIN32s */
+#ifndef VER_PLATFORM_WIN32_WINDOWS
+#define VER_PLATFORM_WIN32_WINDOWS 1
+#endif /* VER_PLATFORM_WIN32_WINDOWS */
+#ifndef VER_PLATFORM_WIN32_NT
+#define VER_PLATFORM_WIN32_NT 2
+#endif /* VER_PLATFORM_WIN32_NT */
+#endif /* NT */
+
 
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
@@ -369,7 +388,7 @@ bool ttslip = 0 ;  /* Equals 1 if being used as a replacement for SLIPTERM */
 bool ttppp  = 0 ;  /* Equals 1 if being used as a replacement for SLATTACH */
 #endif /* OS2ONLY */
 bool ttshare = 0;                /* do not open devices in shared mode */
-int ttyfd = -1;         /* TTY file descriptor (not open yet) */
+CK_TTYFD_T ttyfd = -1;          /* TTY file descriptor (not open yet) */
 int dfprty = 0;                 /* Default parity (0 = none) */
 int ttprty = 0;                 /* Parity in use. */
 int ttmdm = 0;                  /* Modem in use. */
@@ -412,8 +431,10 @@ int ishandle=0;
 int pid = 0;
 #ifdef NT
 static DCB ttydcb ;
+#ifndef CKT_NT31ONLY
 static LPCOMMCONFIG ttycfg=NULL;
 static DWORD cfgsize=0;
+#endif
 #else /* NT */
 static DCBINFO ttydcb;
 #endif /* NT */
@@ -606,8 +627,10 @@ ckntsignal(int sig, SIGTYP (*f)(int)))(int) {
 static int savedtty = 0;
 #ifdef NT
 static DCB saveddcb ;
+#ifndef CKT_NT31ONLY
 static LPCOMMCONFIG savedcfg=NULL;
 static DWORD savedcfgsize=0;
+#endif /* CKT_NT31ONLY */
 #else /* NT */
 static long savedspeed;
 static LINECONTROL savedlc;
@@ -615,6 +638,63 @@ static DCBINFO saveddcb;
 static BYTE savedstat;
 #endif /* NT */
 
+/* Visual C++ 1.0 (and perhaps some other ancient Win32 compilers) don't
+ * know what HINSTANCE is. Visual C++ 1.0 docs say LoadLibrary returns a
+ * HANDLE, while Visual C++ 2.0 docs say HINSTANCE. */
+#ifdef NT
+#ifndef HINSTANCE
+#define HINSTANCE HANDLE
+#endif /* HINSTANCE */
+#endif /* NT */
+
+/* Code to handle potential unavailability of GetVersionEx when
+ * targeting both Windows NT 3.1 *AND* Windows NT 3.50. When targeting
+ * NT 3.50 and newer we'll just always call GetVersionEx directly, and
+ * when targeting NT 3.1 *ONLY* we'll never bother with GetVersionEx at
+ * all. */
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+
+#else
+#ifndef CKT_NT31ONLY
+#define _GetVersionEx GetVersionEx
+#endif
+#endif /* CKT_NT35_AND_31 */
+
+#ifdef CKT_NT35_AND_31
+BOOL _GetVersionEx(LPOSVERSIONINFO lpVersionInformation) {
+    static BOOL (__stdcall *getVersionEx)(LPOSVERSIONINFO)=NULL;
+    static BOOL loaded = FALSE;
+
+    if (!loaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        loaded = TRUE;
+
+        if (hKernel32 != NULL) {
+#ifdef CK_NT_UNICODE
+            getVersionEx = (BOOL (__stdcall *)(LPOSVERSIONINFO))
+                        GetProcAddress( hKernel32, "GetVersionExW" );
+#else
+            getVersionEx = (BOOL (__stdcall *)(LPOSVERSIONINFO))
+                        GetProcAddress( hKernel32, "GetVersionExA" );
+#endif
+        }
+
+        if (getVersionEx == NULL) {
+            debug(F100, "GetVersionEx is NOT available", "", 0);
+            return FALSE;
+        } else {
+            debug(F100, "GetVersionEx is available", "", 0);
+        }
+    }
+
+    if (getVersionEx != NULL) {
+        return getVersionEx(lpVersionInformation);
+    }
+    return FALSE; /* GetVersionEx unavailable */
+}
+#endif /* CKT_NT35_AND_31 */
+#endif /* NT */
 
 #ifdef NT
 /* d e b u g C o m m -- generate a debug log entry for the */
@@ -666,6 +746,29 @@ debugComm( char * msg, DCB * lpDCB, COMMTIMEOUTS * timeouts )
 
 int
 savetty() {
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+    /* When targeting both Windows NT 3.50 and Windows NT 3.1, we'll try to
+     * dynamically load GetCommConfig as its only available on Windows NT 3.50
+     * and newer.
+     */
+    static BOOL (__stdcall *_GetCommConfig)(HANDLE,LPCOMMCONFIG,LPDWORD)=NULL;
+    static BOOL GetCommConfigLoaded = FALSE;
+
+    if (!GetCommConfigLoaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        GetCommConfigLoaded = TRUE;
+        _GetCommConfig = (BOOL (__stdcall *)(HANDLE,LPCOMMCONFIG,LPDWORD))
+                    GetProcAddress( hKernel32, "GetGommConfig" );
+        if (_GetCommConfig == NULL) {
+            debug(F100, "GetCommConfig is NOT available", "", 0);
+        } else {
+            debug(F100, "GetCommConfig is available", "", 0);
+        }
+    }
+#endif
+#endif
+
     if (ttyfd != -1) {
 #ifdef NT
         saveddcb.DCBlength = sizeof(DCB);
@@ -674,9 +777,25 @@ savetty() {
         if ( deblog )
             debugComm( "savetty initial values", &ttydcb, NULL );
 
+        /* GetCommConfig is only available on NT 3.50 and higher. If we're
+         * targeting NT 3.1 only we won't bother compiling this stuff in as it
+         * will never be used. If we're targeting NT 3.50 *and* 3.1, we'll
+         * compile in a version that does a runtime check to see if
+         * GetCommConfig is available. If we're targeting NT 3.51+ then we'll
+         * just assume GetCommConfig is always available (because the runtime
+         * library won't let the binary run anywhere it isn't)
+         */
+#ifdef CKT_NT35_AND_31
+        savedcfg->dwSize = 1024;
+        savedcfgsize = 1024;
+        _GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+#else
+#ifndef CKT_NT31ONLY
         savedcfg->dwSize = 1024;
         savedcfgsize = 1024;
         GetCommConfig( (HANDLE) ttyfd, savedcfg, &savedcfgsize );
+#endif /* CKT_NT31ONLY */
+#endif /* CKT_NT35_AND_31 */
 #else /* NT */
         savedspeed = ttgspd();
         DosDevIOCtl(&savedlc,sizeof(savedlc),NULL,0,
@@ -698,13 +817,47 @@ restoretty() {
     UINT cmd = 0, data = 0 ;
 #endif /* NT */
 
-  if (savedtty) {
 #ifdef NT
-#ifdef COMMENT
+#ifdef CKT_NT35_AND_31
+    /* When targeting both Windows NT 3.50 and Windows NT 3.1, we'll try to
+     * dynamically load SetCommConfig as its only available on Windows NT 3.50
+     * and newer.
+     */
+    static BOOL (__stdcall *_SetCommConfig)(HANDLE,LPCOMMCONFIG,DWORD)=NULL;
+    static BOOL SetCommConfigLoaded = FALSE;
+
+    if (!SetCommConfigLoaded) {
+        HINSTANCE hKernel32 = LoadLibrary("KERNEL32");
+        SetCommConfigLoaded = TRUE;
+        _SetCommConfig = (BOOL (__stdcall *)(HANDLE,LPCOMMCONFIG,DWORD))
+                    GetProcAddress( hKernel32, "SetCommConfig" );
+        if (_SetCommConfig == NULL) {
+            debug(F100, "SetCommConfig is NOT available", "", 0);
+        } else {
+            debug(F100, "SetCommConfig is available", "", 0);
+        }
+    }
+#endif
+#endif
+
+  if (savedtty) {
+      /* On NT 3.50+ : Call SetCommConfig directly - don't bother with a runtime check
+       * On NT 3.1+3.50: Do a runtime check, call SetCommConfig if its available
+       * On NT 3.1 only: Don't bother with SetCommConfig, always call SetCommState */
+#ifdef NT
+#ifdef CKT_NT35_AND_31
+      if (_SetCommConfig == NULL) {
+          SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
+      } else {
+          _SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
+      }
+#else /* CKT_NT35_AND_31 */
+#ifdef CKT_NT31ONLY
       SetCommState( (HANDLE) ttyfd, &saveddcb ) ;
 #else
       SetCommConfig( (HANDLE) ttyfd, savedcfg, savedcfgsize );
-#endif
+#endif /* CKT_NT31ONLY */
+#endif /* CKT_NT35_AND_31 */
 #else /* NT */
     ttsetspd(savedspeed);
     DosDevIOCtl(&data,sizeof(data),&cmd,sizeof(cmd),
@@ -790,8 +943,11 @@ os2getcplist(cplist, size) int *cplist; int size; {
 
     CPList[0] = GetConsoleCP() ;
 
+#ifndef CKT_NT31
+   /* TODO: Any way to do this on NT 3.1? */
    if (size > 1)
        EnumSystemCodePages( enumproc, CP_INSTALLED ) ;
+#endif
 
     return CPListIndex ;
 #else /* NT */
@@ -850,13 +1006,23 @@ os2getpid(void)
 int
 setOSVer( void )
 {
+#ifndef CKT_NT31ONLY
     OSVERSIONINFO osverinfo ;
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-    GetVersionEx( &osverinfo ) ;
-    OSVer = osverinfo.dwPlatformId ;
-    if ( osverinfo.dwMajorVersion < 4 )
-        nt351 = 1;
-    return(OSVer);
+    if (_GetVersionEx( &osverinfo )) {
+        OSVer = osverinfo.dwPlatformId ;
+        if ( osverinfo.dwMajorVersion < 4 ) {
+            nt351 = 1;
+        }
+        return OSVer;
+    }
+#endif /* CKT_NT31ONLY */
+
+    /* Safe default - NT 3.x */
+    OSVer = VER_PLATFORM_WIN32_NT;
+    nt351 = 1;
+
+    return (OSVer);
 }
 #endif /* NT */
 
@@ -869,7 +1035,7 @@ getcpu( void )
    char numstr[32] ;
    memset( &si, 0, sizeof(si) ) ;
    GetSystemInfo( &si ) ;
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
    if ( isWin95() && !si.wProcessorLevel )
    {
       switch ( si.dwProcessorType ) {
@@ -1000,7 +1166,7 @@ getcpu( void )
         ckstrncpy( buffer, "alpha-21064", 64 ) ;
         break;
     }
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 #else /* NT */
    ckstrncpy( buffer, CKCPU, 64 ) ;
 #endif
@@ -1172,13 +1338,17 @@ Win95DisplayLocale( void )
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     /* Visual C++ 2.0 and earlier don't know about GetKeyboardLayout() */
     KBLayout = GetKeyboardLayout(0);
     GetKeyboardLayoutName(lpLayoutName);
     printf("Keyboard Layout = %s [%u]\n",lpLayoutName,(unsigned short)KBLayout);
 #endif
 
+#ifndef CKT_NT35_OR_31
+    /* And Windows NT 3.1 doesn't have GetLocaleInfo. If we're targeting NT 3.1
+     * or 3.50 we'll just omit it entirely as this entire function is only used
+     * on Windows 9x */
     printf("Locale Information:\n");
     for ( LCType=0 ; LCType<= 0x5A ; LCType++ ) {
         rc = GetLocaleInfo( LOCALE_SYSTEM_DEFAULT,LCType,lpLCDATA,cchData);
@@ -1186,6 +1356,7 @@ Win95DisplayLocale( void )
         rc = GetLocaleInfo( LOCALE_USER_DEFAULT,LCType,lpLCDATA,cchData);
         printf("  \"%-25s\"\n",lpLCDATA);
     }
+#endif /* CKT_NT35_OR_31 */
 }
 #endif /* NT */
 
@@ -1340,6 +1511,7 @@ sysinit() {
     ck_sleepint = isWin95() ? CK_SLEEPINT : CK_SLEEPINT * 2;
     SetFileApisToOEM() ;  /* Otherwise, filenames are translated */
 
+#ifndef CKT_NT31
     /* Allocate memory for COMMCONFIG structure */
     savedcfg = (LPCOMMCONFIG) malloc( 1024 );
     if ( savedcfg ) {
@@ -1351,6 +1523,7 @@ sysinit() {
         memset( ttycfg, 0, 1024 );
         ttycfg->dwSize = 1024;
     }
+#endif /* CKT_NT31 */
 
 #ifndef NOLOCAL
 #ifndef KUI
@@ -1362,97 +1535,153 @@ sysinit() {
     /* Construct the system ID string */
 #ifdef NT
     {
+#ifndef CKT_NT31ONLY
+        BOOL getVersionResult = FALSE;
         OSVERSIONINFO osverinfo ;
         osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-        GetVersionEx( &osverinfo ) ;
+        getVersionResult = _GetVersionEx( &osverinfo );
 
-        if ( startflags & 1 )
-            OSVer = VER_PLATFORM_WIN32_NT;
-        else
-            OSVer = osverinfo.dwPlatformId ;
+        if (!getVersionResult) {
+#endif /* CKT_NT31ONLY */
+            /* _GetVersionEx will fail on NT 3.1 because GetVersionEx isn't
+             * available there, we have to use GetVersion instead. KB article
+             * Q92395 details how to extract the major, minor and build number
+             * plus determine the platform (NT, 9x or Win32s) */
+            DWORD dwVersion;
+            int major, minor, build;
 
-        sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
-                 ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
-                   (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
-                   osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
-                   (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
-                   "Windows Unknown" ),
-                 osverinfo.dwMajorVersion,
-                 osverinfo.dwMinorVersion,
-                 LOWORD(osverinfo.dwBuildNumber),
-                 osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
-                 osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
-#ifdef CK_UTSNAME
-        if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
-            /* Windows 95 / 98 / ME */
-            sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
-                osverinfo.dwMinorVersion == 1 ? "Windows 98" :
-                    osverinfo.dwMinorVersion == 9 ? "Windows ME" :
-                        "Windows - unknown");
-        } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-            /* Windows NT */
+            dwVersion = GetVersion();
 
-            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
-                /* Windows 10 or newer. There is currently no constant
-                 * for Windows 11 defined so this is the best we can
-                 * do. */
-                sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
-            } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
-                sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+            major = LOBYTE(LOWORD(dwVersion));
+            minor = HIBYTE(LOWORD(dwVersion));
+            build = HIWORD(dwVersion);
+
+            if (dwVersion < 0x80000000) {
+                /* Windows NT */
+                OSVer = VER_PLATFORM_WIN32_NT;
+            } else if (LOBYTE(LOWORD(dwVersion))<4) {
+                /* Win32s */
+                OSVer = VER_PLATFORM_WIN32s;
+                build = build & ~0x8000;
             } else {
-                if (osverinfo.dwMajorVersion < 5) {
-                    sprintf(unm_nam, "Windows NT");
-                } else if (osverinfo.dwMajorVersion == 5) {
-                    /* Windows 2000 / XP / 2003 */
-                    if (osverinfo.dwMinorVersion == 0) {
-                        sprintf(unm_nam, "Windows 2000" );
-                    } else if (osverinfo.dwMinorVersion == 1) {
-                        sprintf(unm_nam, "Windows XP" );
-                    } else if (osverinfo.dwMinorVersion == 2) {
-                        sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
-                    } else {
-                        sprintf(unm_nam, "Windows NT 5.x - unknown" );
-                    }
-                } else if (osverinfo.dwMajorVersion == 6) {
-                    /* Windows Vista / 7 / 8 / 8.1 */
-                    if (osverinfo.dwMinorVersion == 0) {
-                        sprintf(unm_nam, "Windows Vista / Server 2008" );
-                    } else if (osverinfo.dwMinorVersion == 1) {
-                        sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
-                    } else if (osverinfo.dwMinorVersion == 2) {
-                        sprintf(unm_nam, "Windows 8 / Server 2012 !!");
-                    } else if (osverinfo.dwMinorVersion == 3) {
-                        sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
-                    } else  {
-                        sprintf(unm_nam, "Windows NT 6.x - unknown" );
-                    }
-                } else if (osverinfo.dwMajorVersion == 10) {
-                    /* With the right stuff in the manifest, GetVersionEx should
-                     * tell the truth even when the executable has been built
-                     * with an older compiler. When built with Visual C++
-                     * 2013 or newer we won't ever get this far - Windows 10+
-                     * should be detected earlier on. */
-
-                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
-
-                } else {
-                    /* Don't know */
-                    sprintf(unm_nam, "Windows NT - unknown" );
-                }
+                /* Windows 95 */
+                OSVer = VER_PLATFORM_WIN32_WINDOWS;
+                build = build & ~0x8000;
             }
-        } else {
-            /* Unknown */
-            sprintf(unm_nam, "Windows NT - unknown" );
-        }
 
-        sprintf(unm_rel,"%1d.%02d",
-                 osverinfo.dwMajorVersion,
-                 osverinfo.dwMinorVersion);
-        sprintf(unm_ver,"(%1d)%s%s",
-                LOWORD(osverinfo.dwBuildNumber),
-                osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
-                osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+            if (major < 4) nt351 = 1; /* We're on NT 3.51 */
+
+            /* OS Name and version */
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)",
+                    OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                    OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                    OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                    "Unknown",
+                    major, minor, build
+            );
+#ifdef CK_UTSNAME
+            sprintf(unm_nam,
+                    OSVer == VER_PLATFORM_WIN32_NT ? "Windows NT" :
+                    OSVer == VER_PLATFORM_WIN32s ? "Win32s" :
+                    OSVer == VER_PLATFORM_WIN32_WINDOWS ? "Windows 95" :
+                    "Windows Unknown" );
+            sprintf(unm_rel,"%1d.%02d", major, minor); /* OS Release */
+            sprintf(unm_ver,"%1d", build); /* OS Version */
 #endif /* CK_UTSNAME */
+#ifndef CKT_NT31ONLY
+        } else {
+
+            if ( startflags & 1 )
+                OSVer = VER_PLATFORM_WIN32_NT;
+            else
+                OSVer = osverinfo.dwPlatformId ;
+
+            if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
+
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
+                     ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
+                       (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
+                       osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ?
+                       (osverinfo.dwMajorVersion < 5 ? "Windows NT" : "Windows 2000/XP") :
+                       "Windows Unknown" ),
+                     osverinfo.dwMajorVersion,
+                     osverinfo.dwMinorVersion,
+                     LOWORD(osverinfo.dwBuildNumber),
+                     osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                     osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+#ifdef CK_UTSNAME
+            if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
+                /* Windows 95 / 98 / ME */
+                sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
+                    osverinfo.dwMinorVersion == 1 ? "Windows 98" :
+                        osverinfo.dwMinorVersion == 9 ? "Windows ME" :
+                            "Windows - unknown");
+            } else if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+                /* Windows NT */
+
+                if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                    /* Windows 10 or newer. There is currently no constant
+                     * for Windows 11 defined so this is the best we can
+                     * do. */
+                    sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+                } else if (CKWIsWinVerOrGreater(_WIN32_WINNT_WINBLUE)) {
+                    sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                } else {
+                    if (osverinfo.dwMajorVersion < 5) {
+                        sprintf(unm_nam, "Windows NT");
+                    } else if (osverinfo.dwMajorVersion == 5) {
+                        /* Windows 2000 / XP / 2003 */
+                        if (osverinfo.dwMinorVersion == 0) {
+                            sprintf(unm_nam, "Windows 2000" );
+                        } else if (osverinfo.dwMinorVersion == 1) {
+                            sprintf(unm_nam, "Windows XP" );
+                        } else if (osverinfo.dwMinorVersion == 2) {
+                            sprintf(unm_nam, "Windows XP x64 Edition / Server 2003");
+                        } else {
+                            sprintf(unm_nam, "Windows NT 5.x - unknown" );
+                        }
+                    } else if (osverinfo.dwMajorVersion == 6) {
+                        /* Windows Vista / 7 / 8 / 8.1 */
+                        if (osverinfo.dwMinorVersion == 0) {
+                            sprintf(unm_nam, "Windows Vista / Server 2008" );
+                        } else if (osverinfo.dwMinorVersion == 1) {
+                            sprintf(unm_nam, "Windows 7 / Server 2008 R2" );
+                        } else if (osverinfo.dwMinorVersion == 2) {
+                            sprintf(unm_nam, "Windows 8 / Server 2012 !!");
+                        } else if (osverinfo.dwMinorVersion == 3) {
+                            sprintf(unm_nam, "Windows 8.1 / Server 2012 R2");
+                        } else  {
+                            sprintf(unm_nam, "Windows NT 6.x - unknown" );
+                        }
+                    } else if (osverinfo.dwMajorVersion == 10) {
+                        /* With the right stuff in the manifest, GetVersionEx should
+                         * tell the truth even when the executable has been built
+                         * with an older compiler. When built with Visual C++
+                         * 2013 or newer we won't ever get this far - Windows 10+
+                         * should be detected earlier on. */
+
+                        sprintf(unm_nam, "Windows 10 / Server 2016 or newer");
+
+                    } else {
+                        /* Don't know */
+                        sprintf(unm_nam, "Windows NT - unknown" );
+                    }
+                }
+            } else {
+                /* Unknown */
+                sprintf(unm_nam, "Windows NT - unknown" );
+            }
+
+            sprintf(unm_rel,"%1d.%02d",
+                     osverinfo.dwMajorVersion,
+                     osverinfo.dwMinorVersion);
+            sprintf(unm_ver,"(%1d)%s%s",
+                    LOWORD(osverinfo.dwBuildNumber),
+                    osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                    osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+#endif /* CK_UTSNAME */
+        }
+#endif /* CKT_NT31ONLY */
 #ifdef KUI
         InitCommonControls();
 #endif /* KUI */
@@ -1576,7 +1805,7 @@ sysinit() {
     debug(F101,"hInstance","",hInstance);
     hwndConsole = GetConsoleHwnd() ;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     /* MENUITEMINFO and related bits are new to Windows 95 and not known to
      * Visual C++ 2.0 and older. */
     if ( isWin95() )
@@ -1590,7 +1819,7 @@ sysinit() {
         DrawMenuBar(hwndConsole);
         CloseHandle(hMenu);
     }
-#endif /* _MSC_VER > 900 */
+#endif /* CKT_NT35_OR_31 */
 #endif /* KUI */
     WinThreadInit = WindowThreadInit( (void *) hInstance );
 #endif /* NT */
@@ -1731,7 +1960,7 @@ sysinit() {
         char * p = GetLoadPath();
         DWORD len;
 
-        len = GetShortPathName(p,exedir,CKMAXPATH);
+        len = ckGetShortPathName(p,exedir,CKMAXPATH);
         if ( len == 0 || len > CKMAXPATH )
             ckstrncpy(exedir, p, CKMAXPATH);
     }
@@ -1755,7 +1984,7 @@ sysinit() {
         char * p = zgtdir();
         DWORD len;
 
-        len = GetShortPathName(p,startupdir,CKMAXPATH);
+        len = ckGetShortPathName(p,startupdir,CKMAXPATH);
         if ( len == 0 || len > CKMAXPATH )
             ckstrncpy(startupdir, p, CKMAXPATH);
     }
@@ -3009,7 +3238,7 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
             ckstrncpy(&portname[4],ttname,263);
         }
         if ( (HANDLE)(ttyfd =
-                       (int) CreateFile(portname,
+                       (CK_TTYFD_T) CreateFile(portname,
                                          GENERIC_READ | GENERIC_WRITE,
                                          ttshare ? (FILE_SHARE_READ | FILE_SHARE_WRITE) : 0,
                                          &security,
@@ -4582,10 +4811,10 @@ getOverlappedIndex( int serial ) {
 }
 
 #ifndef __WATCOMC__
-#if _MSC_VER <= 1000
-/* Visual C++ 4.0 and earlier lack this macro */
+#if _MSC_VER <= 1010
+/* Visual C++ 4.1 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
-#endif /* _MSC_VER <= 1000 */
+#endif /* _MSC_VER <= 1010 */
 #endif /* __WATCOM__ */
 
 int
@@ -7069,8 +7298,9 @@ void
 ztime(char **s) {
     time_t clock_storage;
 
-    clock_storage = time( (long *) 0 );
+    clock_storage = time( NULL );
     *s = ctime( &clock_storage );
+
 }
 
 void
@@ -9130,11 +9360,51 @@ char *
 get_os2_vers() {
     APIRET rc ;
 #ifdef NT
+#ifndef CKT_NT31ONLY
     OSVERSIONINFO verinfo ;
     verinfo.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
 
-    rc = !GetVersionEx( &verinfo ) ;
+    rc = !_GetVersionEx( &verinfo ) ;
     if ( rc ) {
+#endif /* CKT_NT31ONLY */
+#ifdef CKT_NT35_OR_31
+        /* Could have failed because we're on NT 3.1 which doesn't have
+         * GetVersionE - we've got to use GetVersion() there instead. KB article
+         * Q92395 covers how to interpret the result. */
+
+        DWORD dwVersion;
+        int major, minor, build, _osver;
+
+        dwVersion = GetVersion();
+
+        major = LOBYTE(LOWORD(dwVersion));
+        minor = HIBYTE(LOWORD(dwVersion));
+        build = HIWORD(dwVersion);
+
+        if (dwVersion < 0x80000000) {
+            /* Windows NT */
+            _osver = VER_PLATFORM_WIN32_NT;
+        } else if (LOBYTE(LOWORD(dwVersion))<4) {
+            /* Win32s */
+            _osver = VER_PLATFORM_WIN32s;
+            build = build & ~0x8000;
+        } else {
+            /* Windows 95 */
+            _osver = VER_PLATFORM_WIN32_WINDOWS;
+            build = build & ~0x8000;
+        }
+
+        sprintf(os2version,"%s %02d.%02d.%02d",
+                _osver == VER_PLATFORM_WIN32_NT ? "WinNT" :
+                _osver == VER_PLATFORM_WIN32_WINDOWS ?
+                 (minor == 0 ? "Win95" : "Win98")  :
+                _osver == VER_PLATFORM_WIN32_WIN32S ? "Win32s" :
+                "unknown",
+                major,
+                minor,
+                build );
+#endif
+#ifndef CKT_NT31ONLY
         os2version[0] = '\0';
     } else {
         sprintf(os2version,"%s %02d.%02d.%02d",
@@ -9147,6 +9417,7 @@ get_os2_vers() {
                 verinfo.dwMinorVersion,
                 verinfo.dwBuildNumber );
     }
+#endif /* CKT_NT31ONLY */
 #else /* NT */
     ULONG StartIndex = QSV_VERSION_MAJOR ; /* Major Version Number */
     ULONG EndIndex   = QSV_VERSION_REVISION ; /* Revision Letter      */
@@ -9346,7 +9617,7 @@ os2settitle(char *newtitle, int newpriv ) {
 
 #ifdef NT
 #ifdef KUI
-    KuiSetProperty(KUI_TITLE,(long)titlebuf,(long)0) ;
+    KuiSetProperty(KUI_TITLE,(intptr_t)titlebuf,(intptr_t)0) ;
     return 1;
 #else /* KUI */
     return !SetConsoleTitle(titlebuf);
@@ -9562,7 +9833,14 @@ DisplayCommProperties(HANDLE h)
         return;
     memset( lpCommProp, 0, 1024 );
     lpCommProp->wPacketLength = 1024;
+#ifdef COMMPROP_INITIALIZED
+    /* Windows 95 only (according to VC4): Set to COMMPROP_INITIALIZED to
+     * indicate wPacketLength member is already valid. Visual C++ 4.0 is the
+     * first to document this, but Visual C++ 2.0 understands it too.
+     * Visual C++ 5.0 doesn't document it as win95-only so probably works on
+     * NT4 too. */
     lpCommProp->dwProvSpec1 = COMMPROP_INITIALIZED;
+#endif /* COMMPROP_INITIALIZED */
 
     rc = GetCommProperties( h, lpCommProp );
     if ( !rc ) {
@@ -9637,9 +9915,12 @@ DisplayCommProperties(HANDLE h)
     case PST_RS449           :
         printf("RS449");
         break;
+#ifdef PST_MODEM
+    /* PST_MODEM not known to Visual C++ 1.0 32-bit edition */
     case PST_MODEM           :
         printf("Modem");
         break;
+#endif
     case PST_FAX             :
         printf("Fax");
         break;

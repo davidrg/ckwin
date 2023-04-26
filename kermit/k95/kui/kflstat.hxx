@@ -24,11 +24,11 @@ public:
     ~KFileStatus();
 
     void createWin( KWin* par );
-    Bool message( HWND hwnd, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
     void show( Bool bVisible = TRUE );
     void close();
 
-    void setProperty( UINT propid, LONG value );
+    void setProperty( UINT propid, intptr_t value );
 
 private:
     KProgress* progress;

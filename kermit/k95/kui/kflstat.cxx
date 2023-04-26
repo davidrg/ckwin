@@ -5,7 +5,12 @@
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-BOOL APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, UINT wParam, LONG lParam )
+#ifdef _WIN64
+INT_PTR
+#else
+BOOL
+#endif
+APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
     if( filestatus )
@@ -92,7 +97,7 @@ void KFileStatus::show( Bool bVisible )
 /*------------------------------------------------------------------------
     update the file status display with the passed information
 ------------------------------------------------------------------------*/
-void KFileStatus::setProperty( UINT propid, LONG value )
+void KFileStatus::setProperty( UINT propid, intptr_t value )
 {
     char c[64];
     switch( propid )
@@ -100,7 +105,7 @@ void KFileStatus::setProperty( UINT propid, LONG value )
         case CW_NAM:   /* Filename */
         {
             char* name = (char*)value;
-            int namelen = strlen( name );
+            size_t namelen = strlen( name );
             if( namelen ) {
                 int len = GetWindowTextLength( hsending );
                 char* tmp = new char[len + namelen + 6];  // 6 for the arrow
@@ -130,17 +135,17 @@ void KFileStatus::setProperty( UINT propid, LONG value )
             SetWindowText( hfiletype, (char*)value );
             break;
         case CW_SIZ:   /* File size */
-            _ltoa( value, c, 10 );
+            _ltoa( (long)value, c, 10 );
             SetWindowText( hfilesize, c );
             break;
         case CW_PCD:   /* Percent done */
-            progress->paint( value );
+            progress->paint( (int)value );
             break;
         case CW_TR:    /* Time remaining */
             SetWindowText( htimeleft, (char*)value );
             break;
         case CW_CP:    /* Chars per sec */
-            _ltoa( value, c, 10 );
+            _ltoa( (long)value, c, 10 );
             SetWindowText( htransferrate, c );
             break;
         case CW_WS:    /* Window slots */
@@ -150,21 +155,21 @@ void KFileStatus::setProperty( UINT propid, LONG value )
             SetWindowText( hpackettype, (char*)value );
             break;
         case CW_PC:    /* Packet count */
-            _ltoa( value, c, 10 );
+            _ltoa( (long)value, c, 10 );
             SetWindowText( hpacketcount, c );
             break;
         case CW_FFC:
-            bytesTrans = value;
+            bytesTrans = (long)value;
             _ltoa( bytesTrans, c, 10 );
             SetWindowText( hbytestrans, c );
             break;
         case CW_PL:    /* Packet length */
-            prevPacketLength = value;
-            _ltoa( value, c, 10 );
+            prevPacketLength = (long)value;
+            _ltoa( (long)value, c, 10 );
             SetWindowText( hpacketlength, c );
             break;
         case CW_PR:    /* Packet retry */
-            _itoa( value, c, 10 );
+            _itoa( (long)value, c, 10 );
             SetWindowText( hpacketretry, c );
             break;
         case CW_ERR:   /* Error message */
@@ -223,7 +228,7 @@ void KFileStatus::close()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFileStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KFileStatus::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )
@@ -268,7 +273,7 @@ Bool KFileStatus::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
 
             // set the title
             //
-            int len = strlen(kglob->hostName) + 23;
+            size_t len = strlen(kglob->hostName) + 23;
             char* c = new char[len+1];
             strcpy( c, kglob->hostName );
             strcat( c, " - File Transfer Status" );

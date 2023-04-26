@@ -11,6 +11,7 @@
 #include "ckcdeb.h"                     /* Debug & other symbols */
 #ifdef NT
 #include <windows.h>
+#include <process.h>
 #else /* NT */
 #define INCL_WIN
 #define INCL_VIO

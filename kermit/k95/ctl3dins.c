@@ -16,10 +16,20 @@
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #endif
 
+#if _MSC_VER == 900
+/* Visual C++ 2.0 */
+#define CRT_DLL "msvcrt20.dll"
+#else
+#endif
+
 void
 DisplayHelp( char * name )
 {
-    printf("%s [-f]: Installs CTL3D32.DLL and MSVCRT.DLL.  -f forces the install upon error.\n\n",name);
+#ifdef CRT_DLL
+    printf("%s [-f]: Installs CTL3D32.DLL and " CRT_DLL ".  -f forces the install upon error.\n\n",name);
+#else
+    printf("%s [-f]: Installs CTL3D32.DLL.  -f forces the install upon error.\n\n",name);
+#endif
 }
 
 void
@@ -147,7 +157,9 @@ InstallFile(char * prgname, char * srcfile, char * destfile, int forceinstall) {
 int
 main( int argc, char * argv[] )
 {
+#ifndef CKT_NT35_OR_31
     OSVERSIONINFO osverinfo ;
+#endif
     char * srcfile = NULL;
     char * destfile = "ctl3d32.dll";
     int    forceinstall = 0;
@@ -167,6 +179,13 @@ main( int argc, char * argv[] )
         }
     }
 
+#ifdef CKT_NT35_OR_31
+    if (GetVersion() < 0x80000000) {
+        srcfile = "ctl3dnt.dll";
+    } else {
+        srcfile = "ctl3d95.dll";
+    }
+#else
     /* Determine if we are on Windows 95 or Windows NT */
     /* and set the proper file names                   */
     osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
@@ -182,9 +201,13 @@ main( int argc, char * argv[] )
         printf("Invalid operating system type\n");
         return 2;
     }
+#endif /* CKT_NT35_OR_31 */
 
     InstallFile(argv[0],srcfile,"ctl3d32.dll",forceinstall);
-    InstallFile(argv[0],"msvcrt__.dll","msvcrt.dll",forceinstall);
+
+#ifdef CRT_DLL
+    InstallFile(argv[0],CRT_DLL,CRT_DLL,forceinstall);
+#endif
 
     return 0;
 }

@@ -73,10 +73,10 @@ $(OUTDIR)\ikcmd.obj: ikcmd.c ikcmd.h kdefs.h \
 !ifdef NODEBUG
 # Non-debugging options
 
-!MESSAGE 32-bit Non-debugging build
+!MESSAGE Non-debugging build
 
-CFLAGS    = /c /W3 $(RTFLAG) /Ox /GA /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
-CDEFINES  = /D_MT /DSTRICT /D_X86_ /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
+CFLAGS    = /c /W3 $(RTFLAG) /Ox /J /nologo /Fo$(OUTDIR)\ /I$(KERMITDIR)
+CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET \
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DOS2TEST -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
@@ -86,24 +86,36 @@ RCFLAGS   = /r
 RCDEFINES = /dNDEBUG /dWIN32 $(RC_FEATURE_DEFS)
 MAPFILE   =
 
-# /G5 is only valid on 7.1 and earlier
+# /D_X86_
+
+# /G5 is only valid on 7.1 and earlier targeting x86
 !if ($(MSC_VER) < 140)
+!if "$(TARGET_CPU)" == "x86"
 CFLAGS = $(CFLAGS) /G5
+!endif
+!endif
+
+!if ($(MSC_VER) > 90)
+!if "$(TARGET_CPU)" != "MIPS"
+# This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
+CFLAGS = $(CFLAGS) /GA
+!endif
 !endif
 
 !else
 # Debugging options
 
-!MESSAGE 32-bit Debugging build
+!MESSAGE Debugging build
 
 CFLAGS    = /c /W3 /MD /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
                 /Fo$(OUTDIR)\ /I$(KERMITDIR)
-CDEFINES  = /D_MT /D_X86_ /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
+CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET -DSUPERLAT\
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DRLOGCODE \
                 -DNETFILE -DONETERMUPD -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
+#  /D_X86_
 
 LFLAGS    = /NOD /NOLOGO /DEBUG:full /DEBUGTYPE:cv /SUBSYSTEM:windows
 RCFLAGS   = /r
@@ -120,14 +132,13 @@ RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
 !endif
 
 # Customise for the compiler version we're using
-!IF ($(MSC_VER) == 80)
-# We don't do 16bit
-!ERROR *** 16bit windows is not supported
-!ELSEIF ($(MSC_VER) < 90)
-!ERROR *** Visual C++ 1.0 and earlier are not supported
-!ELSEIF ($(MSC_VER) < 131)
-# Visual C++ 6.0 and 7.0
+!IF ($(MSC_VER) < 131)
+# Visual C++ 7.0 (2002) and earlier
+
+!if ($(MSC_VER) > 102)
+# This switch is new to Visual C++ 5.0 (along with bool support) (102 == Visual C++ 4.2)
 CFLAGS = $(CFLAGS) /noBool
+!endif
 
 # Visual C++ 7.1 - nothing required
 !ELSEIF ($(MSC_VER) > 131)
@@ -139,7 +150,7 @@ CDEFINES = $(CDEFINES) -D_CRT_SECURE_NO_DEPRECATE
 !ENDIF
 
 #--------------------------------------------------------------------------
-# 32-bit Build Rules
+# Build Rules
 
 $(OUTDIR):
     if not exist $(OUTDIR)\nul mkdir $(OUTDIR)

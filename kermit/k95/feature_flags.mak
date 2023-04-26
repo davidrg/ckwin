@@ -27,7 +27,7 @@
 #   CKF_NTLM       yes        Windows NTLM support
 #   CKF_LOGIN      yes
 #   CKT_NT31       no         Target NT 3.1 (Watcom, Visual C++ 1.0/2.0)
-#   CKT_NT350      no         Target NT 3.50 (Watcom, Visual C++ 2.0)
+#   CKT_NT35       no         Target NT 3.50 (Watcom, Visual C++ 2.0)
 #   CKF_TAPI       yes        Modem dialing support
 #   CKF_RICHEDIT   yes        Rich Edit control support
 #   CKF_TOOLBAR    yes        Include the toolbar
@@ -38,6 +38,7 @@
 #   CKF_SSL     Turned off always (SSL support doesn't currently build)
 #   CKF_LOGIN   Turned off when building with Visual C++ 5.0 or older
 #   CKF_NTLM    Turned off when building with Visual C++ 5.0 or older
+#   CKF_DECNET  x86 and Alpha, Windows Server 2003 and older (Visual C++ 2019 and older)
 #
 # All other flags should be set prior to starting the build, for example:
 #   set CKF_DEBUG=no
@@ -48,11 +49,11 @@
 
 # Network Connections are always supported. We only put it here because
 # the Watcom nmake clone can't handle empty macros so we need *something* here.
-ENABLED_FEATURES = Network-Connections
-ENABLED_FEATURE_DEFS = -DNETCONN
+#ENABLED_FEATURES = Network-Connections
+#ENABLED_FEATURE_DEFS = -DNETCONN
 
-DISABLED_FEATURES = Kerberos SRP
-DISABLED_FEATURE_DEFS = -DNO_KERBEROS -DNO_SRP
+#DISABLED_FEATURES =
+#DISABLED_FEATURE_DEFS =
 
 # type /interpret doesn't work on windows currently.
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
@@ -84,19 +85,34 @@ CKF_MOUSEWHEEL=no
 
 !endif
 
-!if ($(MSC_VER) < 100)
+!if ($(MSC_VER) == 90)
 # The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
 # compared to Visual C++ 4.0 so there is a special target for this level of
 # windows.
 !message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
+# TODO: Audit use of CKT_NT31 and see if any of that stuff should really be CKT_NT35
+#CKT_NT31=yes
+CKT_NT35=yes
+
+# Setting CKT_NT35 and CKT_NT31 at the same time will result in runtime checks
+# for various APIs being compiled in (rather than only the NT 3.50 or NT 3.10
+# code being present with no runtime check). Visual C++ 2.0 is currently the
+# only version that can target both so we may as well have it on by default.
+!if "$(CKT_NT31)" != "no"
+!message ...and also the Windows NT 3.10 API
 CKT_NT31=yes
-CKT_NT350=yes
 !endif
 
-!if ($(MSC_VER) < 90)
-# Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
-# provided in Windows NT 3.1
+!endif
+
+!if ($(MSC_VER) == 80)
+!message Visual C++ 1.0: setting target to Windows NT 3.1 API level.
 CKT_NT31=yes
+!endif
+
+!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
+# OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
 !endif
 
 # For all versions of windows *EXCEPT* Windows NT 3.1 and 3.50, the target
@@ -105,22 +121,51 @@ CKT_NT31=yes
 # to require a special macro to exclude references to them. This allows
 # NT 3.50 and 3.1 to be targeted with both Visual C++ and OpenWatcom.
 
-!if "$(CKT_NT350)" == "yes"
+!if "$(CKT_NT35)" == "yes"
 # These features are available on NT 3.50 but not on NT 3.1
 # -> These may appear if/when work to port to NT 3.1 is done.
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT350
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35
 !endif
 
 !if "$(CKT_NT31)" == "yes"
 # These features are not available on Windows NT 3.50
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
+!endif
+
+# These features require Windows NT 3.51 and are unknown to Visual C++ 1.0/2.0
+!if "$(CKT_NT35)" == "yes" || "$(CKT_NT31)" == "yes"
 CKF_TAPI=no
 CKF_RICHEDIT=no
 CKF_TOOLBAR=no
 CKF_LOGIN=no
 CKF_NTLM=no
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31
-RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35_OR_31
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT31 /dCKT_NT35_OR_31
 !endif
+
+!if "$(CKT_NT35)" == "yes" && "$(CKT_NT31)" == "yes"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT35_AND_31
+!endif
+
+!if "$(CKT_NT31)" == "yes" && "$(CKT_NT35)" != "yes"
+# Targeting Windows NT 3.1 only
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31ONLY
+!endif
+
+# CKT_NT31          - Compiled code must work on NT 3.1
+# CKT_NT35          - Compiled code must work on NT 3.50
+# CKT_NT31ONLY      - NT 3.1 is the only target - must be buildable with
+#                     Visual C++ 1.0 32-bit edition. No runtime checks for
+#                     available APIs.
+# CKT_NT35_AND_31   - Targeting both NT 3.1 and 3.50. Target compiler is
+#                     Visual C++ 2.0. Use runtime checks for available APIs where
+#                     required.
+# CKT_NT35_OR_31    - Targeting NT 3.50 or 3.1 (rather than NT 3.51 or newer).
+#                     Target compilers are Visual C++ 1.0 32-bit edition and 2.0.
+#                     This is for code that is common to NT 3.1 and 3.50 but not
+#                     newer versions of windows.
+# None of the above - Targeting NT 3.51 or newer
 
 !else
 
@@ -139,6 +184,10 @@ CKF_NETBIOS=no
 !message Turning X/Y/Z MODEM support off - build errors with OpenWatcom need fixing
 CKF_XYZ=no
 
+!message Turning SRP off - no Watcom support for it yet.
+CKF_SRP=no
+# TODO: Figure out SRP support on OS/2 with OpenWatcom
+
 !endif
 
 !if "$(CKF_SSH)" == "yes"
@@ -148,6 +197,25 @@ CKF_SSH=no
 !endif
 !endif
 
+!if "$(TARGET_CPU)" == "MIPS"
+# "Visual C++ 10.00.5292X for MIPS R-Series" can't build ckntap.c for
+# some reason. So just turn TAPI support off. You get errors about illegal
+# type conversions and tree nodes not being evaluated.
+!message Targeting NT-MIPS: Forcing TAPI support OFF
+CKF_TAPI=no
+!endif
+
+# Almost certainly won't build
+# TODO: Make it build (probably *a lot* of work)
+CKF_NT_UNICODE=no
+
+# DECnet requires an x86 or Alpha CPU and is only available on Window Server
+# 2003 and older. This means Visual C++ 2019 or older.
+!if ("$(TARGET_CPU)" == "x86" || "$(TARGET_CPU)" == "AXP") && $(MSC_VER) < 193
+CKF_DECNET=yes
+!else
+CKF_DECNET=no
+!endif
 
 # Other features that should one day be turned on via feature flags once we
 # figure out how to build them and get any dependencies sorted out.
@@ -155,18 +223,7 @@ CKF_SSH=no
 # SFTP:
 #   Turn on with -DSFTP_BUILTIN
 #   Requires: reimplementing with libssl (existing implementation relies on the
-#             missing OpenSSL bits)
-# Kerberos:
-#   Turn off with: -DNO_KERBEROS
-#   Requires: An antique version of MIT Kerberos for Windows.
-#      OR: Rework this to use Heimdal Kerberos
-# SRP:
-#   Turn off with: -DNO_SRP
-#   Optionally: -DPRE_SRP_1_7_3
-#   Requires: Some version of Stanford SRP (ancient)
-#      OR: Reimplementing using SRP support in OpenSSL
-#          (libssh has no SRP support and the SRP patches for OpenSSH are a
-#           decade or two out of date making this not very useful)
+#             missing OpenSSH bits)
 
 !if "$(CKF_NO_CRYPTO)" == "yes"
 # A No-crypto build has been requested regardless of what libraries may have
@@ -174,11 +231,38 @@ CKF_SSH=no
 CKF_SSH=no
 CKF_SSL=no
 CKF_TELNET_ENCRYPTION=no
+CKF_SRP=no
+CKF_K4W=no
 !endif
 
-# Force SSL off - it doesn't build currently (the OS/2 and NT bits need
-# upgrading to at least OpenSSL 1.1.1 if not 3.0)
-#CKF_SSL=no
+# MIT Kerberos for Windows:
+#   On by default
+#   Turn off with: -DNO_KERBEROS
+#   Requires: An antique version of MIT Kerberos for Windows.
+#      OR: Rework this to use Heimdal Kerberos
+!if "$(CKF_K4W)" == "yes"
+# Nothing required - its on by default.
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_KERBEROS
+!endif
+
+# Stanford SRP:
+#   On by default
+#   Turn off with: -DNO_SRP
+!if "$(CKF_SRP)" == "yes"
+# Requires Stanford SRP. Tested work version 2.1.2 but older versions may be
+# supported with -DPRE_SRP_1_7_3
+#
+# Ideally SRP functionality would be (optionally) reimplemented using OpenSSL
+# which likely has a more up-to-date and secure SRP implementation.
+ENABLED_FEATURES = $(ENABLED_FEATURES) SRP
+
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SRP
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SRP
+!endif
 
 # ZLIB:
 #   Turn on with: -DZLIB
@@ -360,4 +444,36 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) NetBIOS
 !if "$(CKF_MOUSEWHEEL)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) Mouse-Wheel
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
+!endif
+
+# Windows NT Unicode build
+# Turn on with: -DCK_NT_UNICODE : tell C-Kermit we're targeting NT with Unicode
+#               -DUNICODE : tell the win32 headers we want Unicode APIs
+#               -D_UNICODE : tell the C Runtime we want Unicode APIs
+# Targets Windows NT using Unicode APIs. This will allow using Unicode filenames
+# and anywhere else you may want to pass unicode strings into (or get unicode
+# strings from) Windows.
+#
+# Windows 9x doesn't support the Unicode APIs so binaries built with this
+# enabled won't work on Windows 9x unless also built against the Microsoft Layer
+# for Unicode (UNICOWS.DLL) which is available starting from the Windows XP RC1
+# version of the Platform SDK. UNICOWS.DLL also apparently has some licensing
+# issues (see: https://libunicows.sourceforge.net/) so using Opencow
+# (https://opencow.sourceforge.net/) may be more desirable.
+#
+# Note that CKW will *NOT* actually build with this option enabled at this time.
+# Work still needs to be done to:
+#   - Adjust all GetProcAddress calls to get either the A or W version of an API
+#     depending on if CK_NT_UNICODE is defined (UNICODE can't be relied on as
+#     C-Kermit headers define it)
+#   - Check all other API calls are using TCHAR and LPTSTR instead of CHAR/LPSTR
+#   - Ensure everywhere strings coming from windows are being passed will handle
+#     being passed a unicode string (eg, sprintf vs swprintf) without breaking
+#     OS/2 or non-unicode (ANSI) Win32 builds.
+#   - Fix all the bugs that will most surely appear
+# This is probably only worth pursuing if it won't have a major impact on the
+# C-Kermit bits that are shared with UNIX/VMS/etc.
+!if "$(CKF_NT_UNICODE)" == "yes"
+ENABLED_FEATURES = $(DISABLED_FEATURES) Windows-Unicode
+ENABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DCK_NT_UNICODE -DUNICODE -D_UNICODE
 !endif

@@ -31,7 +31,7 @@ public:
     void createWin( KWin* par );
     void size( int width, int height );
 
-    Bool message( HWND hpar, UINT msg, UINT wParam, LONG lParam );
+    Bool message( HWND hpar, UINT msg, WPARAM wParam, LPARAM lParam );
 
     void initButtons( int numbut, int numbit, ToolBitmapDef* );
     void createTermTypeCombo();
@@ -45,7 +45,11 @@ public:
     void setFontHeight( int );
 
 protected:
-    char* findBubbleHelp( int idx );
+#if _MSC_VER < 1300
+    char* findBubbleHelp( UINT idx );
+#else
+    char* findBubbleHelp( UINT_PTR idx );
+#endif
 
 private:
     ToolBitmapDef* buttonDefs;

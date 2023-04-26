@@ -69,6 +69,7 @@ extern char startupdir[], exedir[];
 extern int tt_modechg;
 #ifdef NT
 #include <windows.h>
+#include "ckoreg.h"
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
@@ -2240,8 +2241,8 @@ parsdir(cx) int cx;
             char * appdata0 = NULL, * appdata1 = NULL;
 #ifdef NT
             env = getenv("K95PHONES");
-            makestr(&appdata0,(char *)GetAppData(0));
-            makestr(&appdata1,(char *)GetAppData(1));
+            makestr(&appdata0,GetAppData(0));
+            makestr(&appdata1,GetAppData(1));
 #else /* NT */
             env = getenv("K2PHONES");
 #endif /* NT */
@@ -2667,11 +2668,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          text ? text : prompt,
                          prompt,
                          MB_OK | MB_ICONINFORMATION | MB_TASKMODAL);
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
 #else
         ShowWindow(hwndConsole, SW_SHOWNORMAL);
-#endif
+#endif /* CKT_NT35_OR_31 */
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -2701,11 +2702,11 @@ uq_ok(preface,prompt,mask,help,dflt)
                          prompt,
                          MB_YESNO | MB_ICONINFORMATION | MB_TASKMODAL | 
                          (dflt == 2 ? MB_DEFBUTTON2 : MB_DEFBUTTON1));
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         ShowWindowAsync(hwndConsole,SW_SHOWNORMAL);
 #else
         ShowWindow(hwndConsole,SW_SHOWNORMAL);
-#endif
+#endif /* CKT_NT35_OR_31 */
         SetForegroundWindow(hwndConsole);
         if (text)
 	  free(text);
@@ -9110,7 +9111,7 @@ setguifont() {				/* Assumes that CKFLOAT is defined! */
       return(z);
     tt_font = x;			/* Font index */
     tt_font_size = (int)(floatval * 2);	/* Font size in half points */
-    KuiSetProperty(KUI_TERM_FONT, (long)tt_font, (long)tt_font_size);
+    KuiSetProperty(KUI_TERM_FONT, (intptr_t)tt_font, (intptr_t)tt_font_size);
     return(success = 1);
 }
 
@@ -9119,25 +9120,25 @@ setguidialog(x) int x;
 {
     extern int gui_dialog;
     gui_dialog = x;
-    KuiSetProperty(KUI_GUI_DIALOGS, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_DIALOGS, (intptr_t)x, 0L);
 }
 
 VOID
 setguimenubar(x) int x;
 {
-    KuiSetProperty(KUI_GUI_MENUBAR, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
 }
 
 VOID
 setguitoolbar(x) int x;
 {
-    KuiSetProperty(KUI_GUI_TOOLBAR, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)x, 0L);
 }
 
 VOID
 setguiclose(x) int x;
 {
-    KuiSetProperty(KUI_GUI_CLOSE, (long)x, 0L);
+    KuiSetProperty(KUI_GUI_CLOSE, (intptr_t)x, 0L);
 }
 
 int
@@ -9187,7 +9188,7 @@ setexitwarn(x) int x;
 {
     xitwarn = x;
 #ifdef KUI
-    KuiSetProperty(KUI_EXIT_WARNING, (long)x, 0L);
+    KuiSetProperty(KUI_EXIT_WARNING, (intptr_t)x, 0L);
 #endif /* KUI */
 }
 
@@ -9611,7 +9612,12 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #ifndef NOTCPOPTS
 #ifdef TCPSOCKET
       case XYTCP: {
+#ifdef OS2
+        extern CK_TTYFD_T ttyfd;
+#else /* OS2 */
         extern int ttyfd;
+#endif
+
 
         if ((z = cmkey(tcpopt,ntcpopt,"TCP option","nodelay",xxstring)) < 0)
           return(z);

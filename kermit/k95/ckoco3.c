@@ -77,6 +77,10 @@ extern UCHAR NetBiosRemote[] ;
 #include "ikui.h"
 #endif /* KUI */
 
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif
+
 #ifdef NETCONN
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
@@ -2591,7 +2595,7 @@ protoString(void)
 
 #ifdef SSHBUILTIN
         case NET_SSH:
-            ckstrncpy(buf, (char *)ssh_proto_ver(),sizeof(buf));
+            ckstrncpy(buf, ssh_proto_ver(),sizeof(buf));
             break;
 #endif /* SSHBUILTIN */
 
@@ -8097,7 +8101,7 @@ dokcompose( int mode, int ucs2 )
 
         for ( i=0;i<4;i++ )
             hexstr[i] = x[i];
-        hexstr[5] = NUL;
+        hexstr[4] = NUL;
 
         c = hextoulong(hexstr,4);
     } else {
@@ -12552,7 +12556,7 @@ settermtype( int x, int prompts )
     ttmacro(x) ;        /* Execute any user defined terminal type macros */
 
 #ifdef KUI
-    KuiSetProperty( KUI_TERM_TYPE, (long) tt_type, (long) 0 ) ;
+    KuiSetProperty( KUI_TERM_TYPE, (intptr_t) tt_type, (intptr_t) 0 ) ;
 #endif /* KUI */
     ipadl25() ;
     VscrnIsDirty(VTERM);

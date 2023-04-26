@@ -1,14 +1,14 @@
 #include "kuidef.h"
 
-int GlobalControlID = 0;
-int GetGlobalID( void ) 
+intptr_t GlobalControlID = 0;
+intptr_t GetGlobalID( void )
 { 
     return GlobalControlID++; 
 }
 
 char* newstr( char* s )
 {
-    int len = strlen( s );
+    size_t len = strlen( s );
     char* sdup = new char[len + 1];
     strcpy( sdup, s );
     return sdup;

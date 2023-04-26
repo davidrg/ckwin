@@ -60,13 +60,10 @@
 #include <winsock.h>
 #include <winsvc.h>
 #include <process.h>
+#include <errno.h>
+#include <stdlib.h>
 #define strdup _strdup
 #define ltoa   _ltoa
-
-#ifndef VER_PLATFORM_WIN32_WINDOWS
-/* Visual C++ 2.0 and older don't define this (Win95 wasn't released yet) */
-#define VER_PLATFORM_WIN32_WINDOWS      1
-#endif
 
 #endif
 #define CONFIG_FILE "iksd.cfg"
@@ -74,12 +71,18 @@
 #define bzero(x,y) memset(x,0,y)
 #define BSDSELECT
 
+#ifndef CK_HAVE_INTPTR_T
+/* Any windows compiler too old to support this will be 32-bits (or less) */
+typedef int intptr_t;
+#define CK_HAVE_INTPTR_T
+#endif
+
 #define MAXPORTS 32
 struct PORT
 {
     short id ;
-    int   lsocket ;
-    int   asocket ;
+    SOCKET   lsocket ;
+    SOCKET   asocket ;
     char  * k95cmd ;
     int   showcmd;
 } ports[MAXPORTS] ;
@@ -89,7 +92,7 @@ int portcount = 0 ;
 struct CHILDREN
 {
     HANDLE hProcess;
-    int    socket;
+    SOCKET socket;
 } children[MAXCHILDREN];
 int childcount = 0;
 
@@ -108,12 +111,27 @@ struct timeval tv;
 int tcpsrv_fd = -1, ttyfd = -1 ;
 
 void  WINAPI IKSDStart (DWORD argc, LPTSTR *argv);
+#ifdef CKT_NT31ONLY
+#ifdef __WATCOMC__
+VOID WINAPI IKSDCtrlHandler (DWORD opcode);
+#else
+/* Visual C++ 1.0 32-bit edition doesn't like the WINAPI */
+VOID IKSDCtrlHandler (DWORD opcode);
+#endif
+#else
 void  WINAPI IKSDCtrlHandler (DWORD opcode);
+#endif
 DWORD IKSDInitialization (DWORD argc, LPTSTR *argv, DWORD *specificError);
-HANDLE StartKermit( int socket, char * cmdline, int ShowCmd, int * );
+HANDLE StartKermit( SOCKET socket, char * cmdline, int ShowCmd, SOCKET * );
 
 void
-SvcDebugOut(LPSTR String, DWORD Status)
+SvcDebugOut(LPSTR String,
+#ifdef _WIN64
+            intptr_t
+#else
+            DWORD
+#endif
+            Status)
 {
 #ifdef DEBUG
     CHAR  Buffer[1024];
@@ -137,7 +155,7 @@ init_children(void)
     int i;
     for ( i=0 ;i<MAXCHILDREN;i++ ) {
         children[i].hProcess = INVALID_HANDLE_VALUE;
-        children[i].socket = (int)INVALID_HANDLE_VALUE;
+        children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
     }   
 }
 
@@ -148,11 +166,11 @@ kill_children(void)
 
     for (i=0; i<MAXCHILDREN && childcount; i++) {
         if ( children[i].hProcess != INVALID_HANDLE_VALUE ) {
-            SvcDebugOut("TerminateProcess  %d\n",(int)children[i].hProcess);
+            SvcDebugOut("TerminateProcess  %d\n", (intptr_t)children[i].hProcess);
             TerminateProcess(children[i].hProcess, 1111);
             closesocket(children[i].socket);
             CloseHandle(children[i].hProcess);
-            children[i].socket = (int)INVALID_HANDLE_VALUE;
+            children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
             children[i].hProcess = INVALID_HANDLE_VALUE;
             childcount--;       
         }
@@ -173,7 +191,7 @@ check_children(void)
                     SvcDebugOut("Closing socket and process handle\n",0);
                     closesocket(children[i].socket);
                     CloseHandle(children[i].hProcess);
-                    children[i].socket = (int)INVALID_HANDLE_VALUE;
+                    children[i].socket = (SOCKET)INVALID_HANDLE_VALUE;
                     children[i].hProcess = INVALID_HANDLE_VALUE;
                     childcount--;       
                     /* Do not increase found if we reduce childcount */
@@ -312,7 +330,7 @@ listen_thread( void * dummy )
     int i, j;
     int on = 1;
     HANDLE hProcess;
-    int sockdup;
+    SOCKET sockdup;
 
     SvcDebugOut("Servicing ports:\n",0);
     for ( i=0;i<portcount ;i++ )
@@ -473,7 +491,15 @@ IKSDStart (DWORD argc, LPTSTR *argv)
     return;
 }
 
+#ifdef CKT_NT31ONLY
+#ifdef __WATCOMC__
 VOID WINAPI
+#else
+VOID
+#endif
+#else
+VOID WINAPI
+#endif
 IKSDCtrlHandler (DWORD Opcode)
 {
     DWORD status;
@@ -602,18 +628,14 @@ ParseCmdLine( int argc, char * argv[], DWORD * specificError )
 }
 
 HANDLE
-StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
+StartKermit( SOCKET socket, char * cmdline, int ShowCmd, SOCKET *psockdup )
 {
 #ifdef NT
    PROCESS_INFORMATION StartKermitProcessInfo ;
-   OSVERSIONINFO osverinfo ;
    STARTUPINFO si ;
-   HANDLE sockdup = INVALID_HANDLE_VALUE ;
+   SOCKET sockdup = (SOCKET)INVALID_HANDLE_VALUE ;
    static HANDLE hCurrent = INVALID_HANDLE_VALUE;
    static char buf[512] ;
-
-   osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-   GetVersionEx( &osverinfo ) ;
 
    memset( &si, 0, sizeof(STARTUPINFO) ) ;
    si.cb = sizeof(STARTUPINFO);
@@ -623,10 +645,10 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
     if ( hCurrent == INVALID_HANDLE_VALUE )
         hCurrent = GetCurrentProcess();
 
-    *psockdup = (int)INVALID_HANDLE_VALUE;
+    *psockdup = (SOCKET)INVALID_HANDLE_VALUE;
 
    if (!DuplicateHandle( hCurrent, (HANDLE) socket,
-                    hCurrent, &sockdup,
+                    hCurrent, (LPHANDLE)&sockdup,
                     DUPLICATE_SAME_ACCESS, TRUE,
                     DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS ))
    {
@@ -646,7 +668,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
 #else
     strcpy( buf, "iksdnt.exe -# 132 -A " ) ;
 #endif /* DEBUG */
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -668,7 +694,7 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
                       ))
     {
         CloseHandle(StartKermitProcessInfo.hThread);
-        *psockdup = (int)sockdup;
+        *psockdup = sockdup;
         return (StartKermitProcessInfo.hProcess);
     }
 
@@ -678,7 +704,11 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
 #else
     strcpy( buf, "k95.exe -# 132 -A " ) ;
 #endif /* DEBUG */
+#ifdef _WIN64
+   _ui64toa((unsigned __int64)sockdup, buf+strlen(buf), 10);
+#else
     ltoa( (LONG) sockdup, buf+strlen(buf), 10 ) ;
+#endif
     strcat( buf, " " );
     strcat( buf, cmdline ) ;
 
@@ -699,18 +729,47 @@ StartKermit( int socket, char * cmdline, int ShowCmd, int *psockdup )
                       ))
     {
         CloseHandle(StartKermitProcessInfo.hThread);
-        *psockdup = (int)sockdup;
+        *psockdup = sockdup;
         return (StartKermitProcessInfo.hProcess);
     }
 
     SvcDebugOut("CreateProcess() failed gle=%ul\n",GetLastError());
-    CloseHandle(sockdup) ;
+    CloseHandle((HANDLE)sockdup) ;
     return(INVALID_HANDLE_VALUE);
 #else /* NT */
     Not built for OS/2 yet.
 #endif /* NT */
 }
 
+#ifdef NT
+#ifndef VER_PLATFORM_WIN32_NT
+#define VER_PLATFORM_WIN32_NT 2
+#endif /* VER_PLATFORM_WIN32_NT */
+#endif /* NT */
+
+BOOL IsWindowsNT() {
+#ifdef NT
+#ifdef CKT_NT35_OR_31
+    DWORD dwVersion = GetVersion();
+    if (dwVersion < 0x80000000) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+#else
+    OSVERSIONINFO osverinfo ;
+    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+    GetVersionEx( &osverinfo ) ;
+    if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_NT) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+#endif /* CKT_NT35_OR_31 */
+#else
+    return FALSE;
+#endif
+};
 
 // Stub initialization function.
 DWORD
@@ -722,7 +781,6 @@ IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     int on = 1, rc = 0;
 #ifdef NT
     WSADATA data ;
-    OSVERSIONINFO osverinfo ;
 
     SvcDebugOut("Internet Kermit Service Daemon\n",0);
     rc = WSAStartup( MAKEWORD( 2, 0 ), &data ) ;
@@ -752,16 +810,15 @@ IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     }
 
 #ifdef NT
-    osverinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
-    GetVersionEx( &osverinfo ) ;
 
-    if (osverinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS) {
+    if (IsWindowsNT()) {
         dbdir = getenv("SystemRoot");
     } else {
         dbdir = getenv("winbootdir");
         if (!dbdir)
             dbdir = getenv("windir");
     }
+    dbdir = getenv("SystemRoot");
     if (!dbdir)
         dbdir = "C:/";
 #else /* NT */

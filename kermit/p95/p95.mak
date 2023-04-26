@@ -42,9 +42,26 @@
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message  Architecture:             $(TARGET_CPU)
 !message ===============================================================================
 !message
 !message
+
+!if ($(MSC_VER) == 90)
+# The Platform SDK shipped with Visual C++ 2.0 lacks quite a lot of stuff
+# compared to Visual C++ 4.0 so there is a special target for this level of
+# windows.
+!message Visual C++ 2.0: setting target to Windows NT 3.50 API level.
+CKT_NT35=yes
+!endif
+
+!if ($(MSC_VER) == 80)
+# Visual C++ 1.0 (32-bit edition) and the Win32 SDK only support the APIs
+# provided in Windows NT 3.1
+!message Visual C++ 1.0: setting target to Windows NT 3.1 API level.
+CKT_NT31=yes
+!endif
+
 
 COMPILER = MSVC
 
@@ -91,9 +108,10 @@ pdll_exeio.obj
 SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
 LIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
-        advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
+        advapi32.lib shell32.lib   \
         rpcrt4.lib rpcns4.lib wsock32.lib winmm.lib
 DEFS = p95.def
+# ole32.lib oleaut32.lib uuid.lib
 
 # Visual C++ only libraries
 !if "$(CMP)" == "VCXX"
@@ -103,8 +121,15 @@ LIBS = $(LIBS) libcmt.lib
 LIBS = $(LIBS) msvcrt.lib
 !endif
 
-# I doubt we actually need this
-LIBS = $(LIBS) vdmdbg.lib
+# Visual C++ 2005 for IA64 in the Windows Server 2003 SP1 Platform SDK
+# seems to want this extra library otherwise we get link errors like:
+#   error LNK2001: unresolved external symbol .__security_check_cookie
+!if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
+LIBS = $(LIBS) bufferoverflowu.lib
+!endif
+
+# I doubt we actually need this and its not available on x86-64.
+#LIBS = $(LIBS) vdmdbg.lib
 
 # Visual C++ 2015 refactored the C runtime .lib files - from 2015 onwards we
 # must link against ucrt.lib and vcruntime.lib
@@ -123,10 +148,13 @@ CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
 LD = link
-LDFLAGS = /nologo /dll /nod /map /debug:full
+LDFLAGS = /nologo /dll /nod /map
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
 #                 Visual C++ 5.0 SP3 and its almost just a leftover of the
 #                 default Visual C++ 4.0 makefile settings
+# /debug:full   - Removed form LDFLAGS because its not really needed and
+#                 the IA64 cross-compiler complains about it when using
+#                 the Win7.1 SDK.
 
 !if "$(CKB_STATIC_CRT)"=="yes"
 CFLAGS = $(CFLAGS) /MT
@@ -139,12 +167,38 @@ CFLAGS = $(CFLAGS) /MD
 LDFLAGS = /nologo /dll /map /debug:full
 !endif
 
+!if "$(CKT_NT35)" == "yes"
+# These features are available on NT 3.50 but not on NT 3.1
+# -> These may appear if/when work to port to NT 3.1 is done.
+CFLAGS = $(CFLAGS) -DCKT_NT35
+!endif
+
+!if "$(CKT_NT31)" == "yes"
+# These features are not available on Windows NT 3.50
+CFLAGS = $(CFLAGS) -DCKT_NT31
+!endif
+
+!if "$(CKT_NT35)" == "yes" || "$(CKT_NT31)" == "yes"
+CFLAGS = $(CFLAGS) -DCKT_NT35_OR_31
+!endif
+
+!if "$(CKT_NT35)" == "yes" && "$(CKT_NT31)" == "yes"
+CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
+!endif
+
+!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
+# OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
+CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
+!endif
+
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
 # from Visual C++ 2005 (v8.0) and up.
 
+!if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
 CFLAGSO = $(CFLAGSO) /G5
+!endif
 
 # Global Optimizations: This been deprecated since at least Visual C++ 2005.
 # Unsure about its status in Visual C++ 2003, but its fine to use in 2002.

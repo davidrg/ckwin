@@ -5,7 +5,12 @@
 extern "C" {
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-UINT APIENTRY KFontDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+#ifdef _WIN64
+UINT_PTR
+#else
+UINT
+#endif
+APIENTRY KFontDlgProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool b = FALSE;
 	KFontDialog* fontdlg = (KFontDialog*) kglob->hwndset->find( hwnd );
@@ -61,11 +66,11 @@ void KFontDialog::show( PLOGFONT logfont )
         | CF_NOSCRIPTSEL | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
 #else
     chf.Flags = CF_SCALABLEONLY | CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
         | CF_NOSCRIPTSEL
 #endif
         | CF_ENABLEHOOK | CF_ENABLETEMPLATE;
-#endif 
+#endif /* CKT_NT35_OR_31 */
     chf.lCustData = (LPARAM)this;
     chf.lpfnHook = KFontDlgProc;
     chf.lpTemplateName = MAKEINTRESOURCE(IDD_FONTDIALOG);
@@ -119,7 +124,7 @@ Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 		{
 			// find the current state
 			//
-			long state = SendMessage( hCtrl, BM_GETCHECK, 0, 0 );
+			LRESULT state = SendMessage( hCtrl, BM_GETCHECK, 0, 0 );
 			HWND hfont = GetDlgItem( hPar, 1136 );
 			HWND hsize = GetDlgItem( hPar, 1138 );
 			if( state == BST_CHECKED ) {
@@ -142,7 +147,7 @@ Bool KFontDialog::doCommand( HWND hPar, WORD code, WORD idCtrl, HWND hCtrl )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KFontDialog::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KFontDialog::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     Bool done = FALSE;
     switch( msg )

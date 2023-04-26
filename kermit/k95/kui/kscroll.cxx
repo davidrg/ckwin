@@ -67,7 +67,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
     }
     prevMaxVal = maxVal;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     UINT mask = SIF_PAGE | SIF_RANGE | SIF_POS;
     if( vertical ) {
         mask |= SIF_DISABLENOSCROLL;
@@ -92,7 +92,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
 #else
     SendMessage(parent->hwnd(), SBM_SETRANGE, minVal, maxVal);
     SendMessage(parent->hwnd(), SBM_SETPOS, currentPos, TRUE);
-#endif /* CKT_NT31 */
+#endif /* CKT_NT35_OR_31 */
 
     if( trackPos )
         track( currentPos );
@@ -105,7 +105,7 @@ Bool KScroll::isVisible()
     if ( !parent )
         return FALSE;
 
-#ifndef CKT_NT31
+#ifndef CKT_NT35_OR_31
     SCROLLINFO info;
     memset( &info, '\0', sizeof(SCROLLINFO) );
     info.cbSize = sizeof(SCROLLINFO);
@@ -116,8 +116,9 @@ Bool KScroll::isVisible()
 
     if( !disableNoScroll && info.nPage && (info.nMax <= (int)info.nPage) )
         return FALSE;
-    /* TODO: #else do the equivalent of the above */
-#endif
+#else
+    /* TODO: do the equivalent of the above */
+#endif /* CKT_NT35_OR_31 */
 
     return TRUE;
 }
@@ -225,7 +226,7 @@ Bool KScroll::pageUp()
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-Bool KScroll::message( HWND hwnd, UINT msg, UINT wParam, LONG lParam )
+Bool KScroll::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     int     nScrollCode   = (int)     LOWORD(wParam);
     short   nPos          = (short)   HIWORD(wParam);

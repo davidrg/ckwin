@@ -4103,7 +4103,7 @@ setremcharset(x, z) int x, z;
     int i;
 
 #ifdef KUI
-    KuiSetProperty( KUI_TERM_REMCHARSET, (long) x, (long) z ) ;
+    KuiSetProperty( KUI_TERM_REMCHARSET, (intptr_t) x, (intptr_t) z ) ;
 #endif /* KUI */
 #ifdef UNICODE
     if (x == TX_TRANSP)

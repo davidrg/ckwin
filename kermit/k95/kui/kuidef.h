@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <shellapi.h>
+#include <io.h>
 
 #include "resource.h"   // for all dlg template values
 
@@ -17,10 +18,18 @@
 #define for if (0) {} else for
 #endif
 
+// Any compiler old enough to not have this will only be 32bits.
+#ifndef CK_HAVE_INTPTR_T
+#ifndef _INTPTR_T_DEFINED
+typedef int intptr_t;
+#define _INTPTR_T_DEFINED
+#endif /* _INTPTR_T_DEFINED */
+#endif /* CK_HAVE_INTPTR_T */
+
 // some useful functions
 
 char* newstr( char* );      // duplicate the passed string
-int GetGlobalID( void );    // return a unique id for CreateWindowEx
+intptr_t GetGlobalID( void );    // return a unique id for CreateWindowEx
 
 #define TRUE  1
 #define FALSE 0
@@ -60,7 +69,7 @@ typedef struct _K_CREATEINFO {
     int y;                      // y position
     int width;                  // window width
     int height;                 // window height
-    long objId;                 // ID or hmenu
+    intptr_t objId;             // ID or hmenu
 } K_CREATEINFO;
 
 // registry information

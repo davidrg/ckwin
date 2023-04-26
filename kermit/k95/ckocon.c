@@ -2818,7 +2818,7 @@ extern int holdscreen;
 
 
 void
-isconnect()
+isconnect(void * unused)
 {
     /* ResetThreadPrty();   already done */
     while (IsConnectMode()) {
@@ -3354,7 +3354,7 @@ conect(int async) {
     VscrnIsDirty(VCMD);
 
     if ( !async )
-        isconnect();
+        isconnect(NULL);
     else
         _beginthread(isconnect,
 #ifdef OS2ONLY
@@ -3379,6 +3379,8 @@ void
 JumpScroll( void ) {
     updmode = TTU_FAST ;
 }
+
+char* protoString(void); /* Defined in ckoco3.c */
 
 void
 SetConnectMode( BOOL mode, int ExitCode ) {

@@ -149,7 +149,8 @@ int ck_lcname = 0;
 
 extern int                              /* External variables */
   duplex, debses, seslog, sessft, wasclosed,
-  ttyfd, quiet, msgflg, what, nettype, ttmdm;
+  quiet, msgflg, what, nettype, ttmdm;
+extern CK_TTYFD_T ttyfd;
 #ifdef IKSD
 extern int inserver;
 #endif /* IKSD */
@@ -407,6 +408,7 @@ extern char ttname[];
 
 #ifdef NT
 extern int winsock_version;
+char * GetLocalUser(); /* defined in ckotio.c */
 #endif /* NT */
 
 #ifdef CK_AUTHENTICATION
@@ -1281,7 +1283,7 @@ ttbufr() {                              /* TT Buffer Read */
 /* Is used by OS/2 ... */
 /* ... and it came in handy!  For our TCP/IP layer, it avoids all the fd_set */
 /* and timeval stuff since this is the only place where it is used. */
-        int socket = ttyfd;
+        CK_TTYFD_T socket = ttyfd;
         debug(F100,"Out-of-Band IBMSELECT","",0);
         if ((select(&socket, 0, 0, 1, 0L) == 1) && (socket == ttyfd))
           outofband = 1;
@@ -3257,11 +3259,15 @@ ckgetpeer() {
 #ifdef MACOSX10
     static unsigned int saddrlen;
 #else
+#ifdef NT
+    static int saddrlen;
+#else
 #ifdef CK_64BIT
     static socklen_t saddrlen;
 #else
     static int saddrlen;
 #endif	/* CK_64BIT */
+#endif /* NT */
 #endif /* MACOSX10 */
 #endif /* DEC_TCPIP */
 #endif /* UNIXWARE */
@@ -6256,6 +6262,29 @@ netinc(timo) int timo;
                     }
                 }
                 debug(F111,"netinc","select",rc);
+
+                /*
+                 * For some yet to be determined reason, on NT 3.1 the select()
+                 * call is claiming the socket isn't ready for reading -
+                 *   !FD_ISSET(ttyfd, &rfds) == true && rc == 0
+                 * this occurs even when ttchk() returns some number of bytes
+                 * ready for reading which should mean the socket is ready for
+                 * reading. And indeed if we go ahead and try to read when
+                 * ttchk() > 0 telnet suddenly works!
+                 *
+                 * So maybe there is some bug in the NT 3.1 Winsock
+                 * implementation? Or is CKW doing something that NT 3.1 doesn't
+                 * like?
+                 *
+                 * problem is, the API ttchk() relies on (FIONREAD) is slow and
+                 * potentially unreliable so its not really an acceptable
+                 * replacement for select() unless we're ok with really bad
+                 * performance
+                 *
+                 * Note: ttchk eventually arrives at  nettchk further up in this file.
+                 * Line 5473 is about where the FIONREAD is.
+                 *
+                 */
 #ifdef NT
                 WSASafeToCancel = 0;
 #endif /* NT */
@@ -7362,7 +7391,7 @@ rlog_ini(hostname, port, l_addr, r_addr)
 #ifdef NT
     {
         char localuid[UIDBUFLEN+1];
-        ckstrncpy((char *)localuser,(char *)GetLocalUser(),UIDBUFLEN);
+        ckstrncpy((char *)localuser,GetLocalUser(),UIDBUFLEN);
     }
 
     if ( !localuser[0] )
