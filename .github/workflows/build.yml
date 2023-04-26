@@ -915,7 +915,7 @@ jobs:
             ${{github.workspace}}\libdes\des
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
-          key: libdes+libsrp+openssl-1.0.1u
+          key: libdes+libsrp+openssl-1.0.1u-ver2
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
