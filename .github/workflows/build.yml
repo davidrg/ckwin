@@ -860,7 +860,15 @@ jobs:
   # https://epics.anl.gov/base/msvctk.php
   Build-VCT2003-PSDK2003:
     runs-on: windows-latest
-
+    strategy:
+      matrix:
+        # Do a build using ancient and insecure libraries like libsrp, k4w
+        # and SuperLAT? This is *purely* for checking support with these
+        # otherwise rarely tested build options doesn't get accidentlaly
+        # broken.
+        legacy_dependencies:
+          - yes
+          - no
     steps:
       - uses: actions/checkout@v3
 
@@ -884,6 +892,7 @@ jobs:
           path: |
             ${{github.workspace}}\vct2003
           key: vct2003+psdk2003sp1
+
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
         run: |
@@ -893,6 +902,126 @@ jobs:
           Remove-Item VCT2003+PSDK2003+cvtres.7z
           Remove-Item VCT2003\Bin\Cvtres.exe
         shell: powershell
+
+      - name: Cache legacy dependencies
+        uses: actions/cache@v3.0.11
+        id: cache-legacy-deps
+        if: matrix.legacy_dependencies == 'yes'
+        with:
+          path: |
+            ${{github.workspace}}\srp-2.1.2
+            ${{github.workspace}}\openssl-1.0.1u
+            ${{github.workspace}}\kerberos
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+          key: libdes+libsrp+openssl-1.0.1u
+
+      - name: Get Legacy Dependencies
+        if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
+        run: |
+          # Make sure everything is clean
+          Remove-Item -Recurse -Force libdes\des
+          Remove-Item -Recurse -Force libdes\Release
+          Remove-Item -Recurse -Force libdes\Debug
+          Remove-Item -Recurse -Force kerberos
+          Remove-Item -Recurse -Force openssl-1.0.1u
+          Remove-Item -Recurse -Force srp-2.1.2
+          Remove-Item -Recurse -Force tools
+          Remove-Item -Recurse -Force zlib
+          
+          # Get and unpack zlib
+          mkdir zlib
+          cd zlib
+          echo "Fetching ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz to file zlib-${{env.ZLIB_VERSION}}.tar.gz..."
+          wget ${{env.ZLIB}}/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar.gz"
+          7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+          echo "Cmd is: 7z x zlib-${{env.ZLIB_VERSION}}.tar"
+          7z x zlib-${{env.ZLIB_VERSION}}.tar
+          ren zlib-${{env.ZLIB_VERSION}} ${{env.ZLIB_VERSION}}
+          del *.tar
+          del *.gz
+          cd ..
+          
+          # Get and unpack nasm
+          mkdir tools
+          cd tools
+          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
+          7z x nasm-2.15.05-win32.zip
+          ren nasm-2.15.05 nasm
+          del *.zip
+          dir
+          cd nasm
+          dir
+          cd ..
+          cd ..
+        
+          # Get and unpack libdes`
+          cd libdes
+          wget ${{env.LIBDES}} -outfile libdes.tar.gz
+          7z x libdes.tar.gz
+          7z x libdes.tar
+          del *.tar
+          del *.gz
+          cd ..
+          
+          # and libsrp
+          wget http://srp.stanford.edu/source/srp-2.1.2.tar.gz -outfile srp-2.1.2.tar.gz
+          7z x srp-2.1.2.tar.gz
+          7z x srp-2.1.2.tar
+          cd srp-2.1.2
+          copy ..\srp\*
+          cd ..
+          
+          # and openssl
+          wget https://www.openssl.org/source/old/1.0.1/openssl-1.0.1u.tar.gz -outfile openssl.tar.gz
+          7z x openssl.tar.gz
+          7z x openssl.tar
+          
+          # todo: kerberos for windows
+          
+          # todo: superlat          
+          
+          # Install perl modules required by OpenSSL build
+          cpan -i Text::Template
+        shell: powershell
+
+      - name: Build libdes
+        if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
+        shell: cmd
+        run: |
+          cd libdes
+          call mknt.bat
+
+      - name: Build zlib
+        if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
+        shell: cmd
+        run: |
+          cd zlib\${{env.ZLIB_VERSION}}
+          cmake .
+          nmake -f win32\Makefile.msc
+
+      - name: Build openssl
+        if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
+        shell: cmd
+        run: |
+          cd openssl-1.0.1u
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          perl Configure VC-WIN32 enable-static-engine zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
+          call ms\do_ms.bat
+          nmake -f ms\ntdll.mak
+
+      - name: Build libsrp
+        if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
+        shell: cmd
+        run: |
+          set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
+          set srp_root_override=${{ github.workspace }}\srp-2.1.2
+          call setenv.bat
+          cd %srp_root_override%
+          call mknt.bat
+
       - name: Full Build
         run: |
           Set PATH=%VCT2003%\bin;%PATH%
@@ -901,6 +1030,9 @@ jobs:
           REM which is also on here - we only want it for cvtres.exe.
           Set INCLUDE=%VCT2003%\include
           Set LIB=%VCT2003%\lib
+          
+          set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
+          set srp_root_override=${{ github.workspace }}\srp-2.1.2
   
           call ..\setenv.bat
           
@@ -909,15 +1041,26 @@ jobs:
           REM dynamic linking from the .NET SDK 1.1)
           set CKB_STATIC_CRT=yes
           
+          echo Building OpenSSL...
+          
+          echo Building libdes...
+          cd libdes
+          call mknt
+          cd ..
+          
+          cd kermit
+          
+          echo Building p95...
           cd p95
           call mknt.bat
           
+          echo Building CKW...
           cd ..\k95
           call mk.bat
           
           call mkdist.bat
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit
+        working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
@@ -935,8 +1078,17 @@ jobs:
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
+        if: matrix.legacy_dependencies == 'no'
         with:
           name: ckwin-vc7.1-x86
+          path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        if: matrix.legacy_dependencies == 'yes'
+        with:
+          name: ckwin-vc7.1-x86-insecure
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7
