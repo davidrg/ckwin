@@ -39,7 +39,7 @@ int main ( int argc, char ** argv ); /* Unix and others */
 #ifdef KUI
 #define MAINISVOID
 void
-Main( int argc, char ** argv )
+Main( int argc, char ** argv );
 
 #else /* KUI */
 

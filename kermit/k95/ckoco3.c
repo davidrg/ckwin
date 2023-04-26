@@ -1375,7 +1375,7 @@ learnkeyb(con_event evt, int state) {   /* Learned script keyboard character */
   File Structuring Conventions", which allow page-oriented operations in
   Postscript previewers, page pickers, etc.
 */
-char *prolog[] = {                      /* Standard prolog */
+char *psprolog[] = {                      /* Standard prolog */
     "%!PS-Adobe-1.0",                   /* Works with Postscript 1.0 */
     "%%Title: oofa",
     "%%DocumentFonts: Courier CourierLatin1",
@@ -1639,11 +1639,11 @@ doprolog() {                            /* Output the PostScript prolog */
     int i;
     CHAR crlf[2] = { CK_CR, LF };
 
-    for (i = 0; *prolog[i]; i++) {
+    for (i = 0; *psprolog[i]; i++) {
 #ifdef NT
         if ( winprint ) {
             int rc;
-            rc = Win32PrtWrite( prolog[i], strlen(prolog[i]) );
+            rc = Win32PrtWrite( psprolog[i], strlen(psprolog[i]) );
             debug(F111,"txt2ps_char","Win32PrtWrite rc",rc);
             rc = Win32PrtWrite( crlf, 2 );
         }
@@ -1651,7 +1651,7 @@ doprolog() {                            /* Output the PostScript prolog */
 #endif /* NT */
         if ( lst ) {
             int rc;
-            rc = fwrite( prolog[i], 1, strlen(prolog[i]), lst );
+            rc = fwrite( psprolog[i], 1, strlen(psprolog[i]), lst );
             debug(F111,"txt2ps_char","fwrite rc",rc);
             rc = fwrite( crlf, 1, 2, lst );
         }
