@@ -921,14 +921,14 @@ jobs:
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         run: |
           # Make sure everything is clean
-          Remove-Item -Recurse -Force libdes\des
-          Remove-Item -Recurse -Force libdes\Release
-          Remove-Item -Recurse -Force libdes\Debug
-          Remove-Item -Recurse -Force kerberos
-          Remove-Item -Recurse -Force openssl-1.0.1u
-          Remove-Item -Recurse -Force srp-2.1.2
-          Remove-Item -Recurse -Force tools
-          Remove-Item -Recurse -Force zlib
+          #Remove-Item -Recurse -Force libdes\des
+          #Remove-Item -Recurse -Force libdes\Release
+          #Remove-Item -Recurse -Force libdes\Debug
+          #Remove-Item -Recurse -Force kerberos
+          #Remove-Item -Recurse -Force openssl-1.0.1u
+          #Remove-Item -Recurse -Force srp-2.1.2
+          #Remove-Item -Recurse -Force tools
+          #Remove-Item -Recurse -Force zlib
           
           # Get and unpack zlib
           mkdir zlib
