@@ -991,36 +991,74 @@ jobs:
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         shell: cmd
         run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+          
           cd libdes
           call mknt.bat
+        env:
+          VCT2003: ${{ github.workspace }}\VCT2003
 
       - name: Build zlib
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         shell: cmd
         run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+          
           cd zlib\${{env.ZLIB_VERSION}}
           cmake .
           nmake -f win32\Makefile.msc
+        env:
+          VCT2003: ${{ github.workspace }}\VCT2003
 
       - name: Build openssl
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         shell: cmd
         run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+          
           cd openssl-1.0.1u
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           perl Configure VC-WIN32 enable-static-engine zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
           call ms\do_ms.bat
           nmake -f ms\ntdll.mak
+        env:
+          VCT2003: ${{ github.workspace }}\VCT2003
 
       - name: Build libsrp
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         shell: cmd
         run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+          
           set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
           set srp_root_override=${{ github.workspace }}\srp-2.1.2
+          
           call setenv.bat
           cd %srp_root_override%
           call mknt.bat
+        env:
+          ROOT: ${{ github.workspace }}
+          VCT2003: ${{ github.workspace }}\VCT2003
 
       - name: Full Build
         run: |
