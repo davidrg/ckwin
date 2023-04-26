@@ -997,7 +997,7 @@ jobs:
           REM Don't want to pick up headers or libraries from Visual C++ 14.0
           REM which is also on here - we only want it for cvtres.exe.
           Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
+          Set LIB=%VCT2003%\lib;%LIB%
           
           cd openssl-1.0.1u
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
