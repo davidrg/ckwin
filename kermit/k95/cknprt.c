@@ -256,7 +256,7 @@ Win32EnumPrt( struct keytab ** pTable, struct keytab ** pTable2,
         if ( hWinSpool == INVALID_HANDLE_VALUE )
             hWinSpool = LoadLibrary("winspool.drv");
         if ( hWinSpool != INVALID_HANDLE_VALUE )
-            (FARPROC) p_GetDefaultPrinter =
+            FARPROC_LVALUE_CAST p_GetDefaultPrinter =
                 GetProcAddress( hWinSpool, "GetDefaultPrinterA" );
     }
 
