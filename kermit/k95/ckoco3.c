@@ -2249,7 +2249,7 @@ printerclose()
 }
 
 void
-prtchar( char c )
+prtchar( BYTE c )
 {
     int turnoffprinter = FALSE ;
     int rc = 0;

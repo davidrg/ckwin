@@ -2164,7 +2164,7 @@ ckotngc(int timo) {
 }
 
 int
-os2_netxin(int n, CHAR * buf) {
+os2_netxin(int n, char * buf) {
     int len;
     int rc ;
 

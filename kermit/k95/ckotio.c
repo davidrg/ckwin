@@ -259,6 +259,15 @@ extern int inserver, local;
 #undef CHAR
 #endif /* CHAR */
 
+#ifdef NT
+#ifdef __GNUC__
+/* We're building with char being unsigned by default, but GCC
+ * still considers 'unsigned char' and 'char' to be different
+ * types so... */
+#define CHAR unsigned char
+#endif
+#endif
+
 /*
  Variables available to outside world:
 
@@ -4241,7 +4250,7 @@ le_inbuf( void ) {
 }
 
 int
-le_putstr( char * s )
+le_putstr( CHAR * s )
 {
     int rc = 0;
     if ( s && s[0] )
@@ -4250,7 +4259,7 @@ le_putstr( char * s )
 }
 
 int
-le_puts( char * s, int n )
+le_puts( CHAR * s, int n )
 {
     int rc = 0 ;
     int i = 0;
@@ -4280,7 +4289,7 @@ le_puts( char * s, int n )
 }
 
 int
-le_putchar( char ch ) {
+le_putchar( CHAR ch ) {
     int rc = 0 ;
 
     RequestLocalEchoMutex( SEM_INDEFINITE_WAIT ) ;
@@ -4917,7 +4926,7 @@ freeOverlappedComplete( int serial ) {
 */
 
 int
-ttxout(char *s, int n) {
+ttxout(CHAR *s, int n) {
     int rc = 0, i=0 ;
 #ifndef NOLOCAL
     extern int tt_pacing;               /* output pacing */
