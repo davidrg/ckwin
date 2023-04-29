@@ -559,7 +559,7 @@ _PROTOTYP(void setmargins, (int, int));
 _PROTOTYP(void strinsert, (char *, char *));
 _PROTOTYP(void wrtch, (unsigned short));
 _PROTOTYP(int sendescseq, (char *));
-_PROTOTYP(int ckcgetc, (int));
+_PROTOTYP(static int ckcgetc, (int));
 _PROTOTYP(void cwrite, (unsigned short));
 _PROTOTYP(int concooked, (void));
 _PROTOTYP(int conraw, (void));
@@ -576,7 +576,7 @@ _PROTOTYP( APIRET CloseClipboardServer, (void) ) ;
 _PROTOTYP( PCHAR  GetTextFromClipboardServer, (void) ) ;
 _PROTOTYP( BOOL   PutTextToClipboardServer, ( PCHAR ) ) ;
 
-_PROTOTYP( BOOL   IsConnectMode, ( void ) ) ;
+_PROTOTYP( static BOOL IsConnectMode, ( void ) ) ;
 _PROTOTYP( void   SetConnectMode, ( BOOL, int ) ) ;
 _PROTOTYP( void   getcmdcolor, ( void ) ) ;
 _PROTOTYP( unsigned char ComputeColorFromAttr, (int, unsigned char, unsigned short));
@@ -751,7 +751,7 @@ extern int  learnst;
 
 extern int ConnectMode;
 #ifdef NT
-_inline
+static _inline
 #else
 #ifdef __WATCOMC__
 inline
