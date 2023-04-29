@@ -306,7 +306,7 @@ extern bool flipscrnflag[] ;
 
 extern videobuffer vscrn[];
 
-ascreen                                 /* For saving screens: */
+extern ascreen                          /* For saving screens: */
   vt100screen,                          /* terminal screen */
   commandscreen ;                       /* OS/2 screen */
 
@@ -333,30 +333,30 @@ vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
                             {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}},
          cmdattrib={0,0,0,0,0,0,0,0,0,0};
 
-int wherex[];                           /* Screen column, 1-based */
-int wherey[];                           /* Screen row, 1-based */
+extern int wherex[];                    /* Screen column, 1-based */
+extern int wherey[];                    /* Screen row, 1-based */
 int margintop = 1 ;                     /* Top of scrolling region, 1-based */
 int marginbot = 24 ;                    /* Bottom of same, 1-based */
 int marginleft = 1;
 int marginright = 80;
 
-int quitnow, hangnow, outshift, tcs, langsv;
+extern int quitnow, hangnow, outshift, tcs, langsv;
 
 int term_io = TRUE;                     /* Terminal emulator performs I/O */
 
 int prevchar = 0;                       /* Last char written to terminal screen */
 
 extern char answerback[81];             /* answerback */
-char usertext[(MAXTERMCOL) + 1];        /* Status line and its parts */
-char statusline[MAXTERMCOL + 1];
+extern char usertext[(MAXTERMCOL) + 1];        /* Status line and its parts */
+extern char statusline[MAXTERMCOL + 1];
 char hoststatusline[MAXTERMCOL + 1];
-char exittext[(20) + 1];
+extern char exittext[(20) + 1];
 #define HLPTXTLEN 41
-char helptext[HLPTXTLEN];
-char filetext[(20) + 1];
+extern char helptext[HLPTXTLEN];
+extern char filetext[(20) + 1];
 char savefiletext[(20) + 1] = { NUL };
 #define HSTNAMLEN 41
-char hostname[HSTNAMLEN];
+extern char hostname[HSTNAMLEN];
 
 #define DEFTABS \
 "0\
@@ -1102,7 +1102,7 @@ struct compose_key_tab l2ktab[] = {     /* The Latin-2 Compose Key Table */
 };
 int nl2ktab = (sizeof(l2ktab) / sizeof(struct compose_key_tab));
 
-vik_rec vik;
+extern vik_rec vik;
 #endif /* NOKVERBS */
 
 
