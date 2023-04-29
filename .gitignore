@@ -282,7 +282,6 @@ ckcdebu.h
 ckuker.nr
 ckustr.sed
 ckutiox.c
-kermit/k95/makefile
 
 # These files belong to C-Kermit for OpenVMS,
 ckvvms.h
