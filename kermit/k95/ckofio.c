@@ -4190,7 +4190,7 @@ zcopy(source,destination) char *source, *destination; {
     BOOL bCancel = 0;
     static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
                                           LPCSTR lpNewFileName,
-#if _MSC_VER > 1010
+#if !defined(_MSC_VER) || _MSC_VER > 1010
                                           LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
 #else
                               /* The Platform SDK included in Visual C++ 4.1

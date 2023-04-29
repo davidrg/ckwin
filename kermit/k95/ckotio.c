@@ -125,7 +125,7 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define _WIN32_WINNT_WINBLUE 0x0603
 #endif /* _WIN32_WINNT_WINBLUE */
 
-#if _MSC_VER >= 1920
+#if !defined(_MSC_VER) || _MSC_VER >= 1920
 /* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
  * and though the Win32 APIs it relies on have been around since Windows 2000,
  * though building with Visual C++ 2017 (1910) fails with unresovled external
@@ -4811,7 +4811,7 @@ getOverlappedIndex( int serial ) {
 }
 
 #ifndef __WATCOMC__
-#if _MSC_VER <= 1010
+#if defined(_MSC_VER) && _MSC_VER <= 1010
 /* Visual C++ 4.1 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
 #endif /* _MSC_VER <= 1010 */

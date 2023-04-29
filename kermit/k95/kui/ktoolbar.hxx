@@ -45,7 +45,7 @@ public:
     void setFontHeight( int );
 
 protected:
-#if _MSC_VER < 1300
+#if defined(_MSC_VER) && _MSC_VER < 1300
     char* findBubbleHelp( UINT idx );
 #else
     char* findBubbleHelp( UINT_PTR idx );
