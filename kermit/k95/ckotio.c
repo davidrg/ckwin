@@ -4522,6 +4522,7 @@ ttchk() {
     return(count);
 }
 
+static int rdch(int timo);
 
 /*  T T X I N  --  Get n characters from tty input buffer  */
 
@@ -6098,7 +6099,6 @@ ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
 /* or -3 if session limit has expired,                                     */
 /* or -4 if something or other...                                          */
 
-int rdch(int timo);
 int
 ttinc(int timo) {
     int m, i=0, j=0;
