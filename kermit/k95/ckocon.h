@@ -33,7 +33,11 @@
 
 #ifdef NT
 #ifndef APIRET
+#ifndef __GNUC__
 #define APIRET DWORD
+#else
+#define APIRET unsigned __LONG32
+#endif /* __GNUC__ */
 #endif /* APIRET */
 #ifndef SEM_INDEFINITE_WAIT
 #define SEM_INDEFINITE_WAIT INFINITE
