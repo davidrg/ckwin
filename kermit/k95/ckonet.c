@@ -182,23 +182,34 @@ static struct lat_info latinfo;
 ;                                                                             *
 ******************************************************************************/
 
-static int (* InstalledAccess)( BYTE bType ) = NULL;
-static int (* InquireServices)( BYTE bType ) = NULL;
-static int (* GetNextService)( LPSTR lpServiceName,
-                               BYTE bType )=NULL;
-static int (* OpenSession)( LPDWORD SessionID,
+typedef int (* InstalledAccess_t)( BYTE bType );
+typedef int (* InquireServices_t)( BYTE bType );
+typedef int (* GetNextService_t)( LPSTR lpServiceName,
+                               BYTE bType );
+typedef int (* OpenSession_t)( LPDWORD SessionID,
                             LPSTR lpServiceName,
                             LPVOID ConnectData,
-                            BYTE bType)=NULL;
-static int (* CloseSession)( DWORD SessionID )=NULL;
-static int (* ReadData)( DWORD SessionID, LPSTR lpString,
-                         DWORD dwLength )=NULL;
-static int (* WriteData)( DWORD SessionID, LPSTR lpString,
-                          DWORD dwLength )=NULL;
-static int (* SendBreak)( DWORD SessionID )=NULL;
-static int (* GetDetailError)( DWORD, DWORD)=NULL;
-static int (* DataNotify)( DWORD SessionID, HWND hWnd,
-                                          UINT wMsg, DWORD dwEventMask)=NULL;
+                            BYTE bType);
+typedef int (* CloseSession_t)( DWORD SessionID );
+typedef int (* ReadData_t)( DWORD SessionID, LPSTR lpString,
+                         DWORD dwLength );
+typedef int (* WriteData_t)( DWORD SessionID, LPSTR lpString,
+                          DWORD dwLength );
+typedef int (* SendBreak_t)( DWORD SessionID );
+typedef int (* GetDetailError_t)( DWORD, DWORD);
+typedef int (* DataNotify_t)( DWORD SessionID, HWND hWnd,
+                             UINT wMsg, DWORD dwEventMask);
+
+static InstalledAccess_t InstalledAccess = NULL;
+static InquireServices_t InquireServices = NULL;
+static GetNextService_t GetNextService=NULL;
+static OpenSession_t OpenSession=NULL;
+static CloseSession_t CloseSession=NULL;
+static ReadData_t ReadData=NULL;
+static WriteData_t WriteData=NULL;
+static SendBreak_t SendBreak=NULL;
+static GetDetailError_t GetDetailError=NULL;
+static DataNotify_t DataNotify=NULL;
 #endif /* NT */
 #endif /* DECNET */
 
@@ -484,22 +495,38 @@ NetCmdReadThread( HFILE pipe )
 #ifdef NETDLL
 HINSTANCE hNetDll=NULL;
 
-int    (*net_dll_netopen)(char *,char *,int,int,
-                         int(*)(char*,char*,int))=NULL;
-int    (*net_dll_netclos)(void)=NULL;
-int    (*net_dll_nettchk)(void)=NULL;
-int    (*net_dll_netflui)(void)=NULL;
-int    (*net_dll_netbreak)(void)=NULL;
-int    (*net_dll_netinc)(int)=NULL;
-int    (*net_dll_netxin)(int,char*)=NULL;
-int    (*net_dll_nettoc)(int)=NULL;
-int    (*net_dll_nettol)(char *,int)=NULL;
-int    (*net_dll_ttpkt)(void)=NULL;
-int    (*net_dll_ttvt)(void)=NULL;
-int    (*net_dll_ttres)(void)=NULL;
-void   (*net_dll_terminfo)(char *,int,int)=NULL;
-char * (*net_dll_version)(void)=NULL;
-char * (*net_dll_errorstr)(int)=NULL;
+typedef int    (*net_dll_netopen_t)(char *,char *,int,int,
+                         int(*)(char*,char*,int));
+typedef int    (*net_dll_netclos_t)(void);
+typedef int    (*net_dll_nettchk_t)(void);
+typedef int    (*net_dll_netflui_t)(void);
+typedef int    (*net_dll_netbreak_t)(void);
+typedef int    (*net_dll_netinc_t)(int);
+typedef int    (*net_dll_netxin_t)(int,char*);
+typedef int    (*net_dll_nettoc_t)(int);
+typedef int    (*net_dll_nettol_t)(char *,int);
+typedef int    (*net_dll_ttpkt_t)(void);
+typedef int    (*net_dll_ttvt_t)(void);
+typedef int    (*net_dll_ttres_t)(void);
+typedef void   (*net_dll_terminfo_t)(char *,int,int);
+typedef char * (*net_dll_version_t)(void);
+typedef char * (*net_dll_errorstr_t)(int);
+
+net_dll_netopen_t net_dll_netopen=NULL;
+net_dll_netclos_t net_dll_netclos=NULL;
+net_dll_nettchk_t net_dll_nettchk=NULL;
+net_dll_netflui_t net_dll_netflui=NULL;
+net_dll_netbreak_t net_dll_netbreak=NULL;
+net_dll_netinc_t net_dll_netinc=NULL;
+net_dll_netxin_t net_dll_netxin=NULL;
+net_dll_nettoc_t net_dll_nettoc=NULL;
+net_dll_nettol_t net_dll_nettol=NULL;
+net_dll_ttpkt_t net_dll_ttpkt=NULL;
+net_dll_ttvt_t net_dll_ttvt=NULL;
+net_dll_ttres_t net_dll_ttres=NULL;
+net_dll_terminfo_t net_dll_terminfo=NULL;
+net_dll_version_t net_dll_version=NULL;
+net_dll_errorstr_t net_dll_errorstr=NULL;
 
 int
 netdll_unload(void)
@@ -543,120 +570,120 @@ netdll_load( char * dllname )
         return (-1);
     }
 
-    if (((FARPROC) net_dll_netopen =
-          GetProcAddress( hNetDll, "netopen" )) == NULL )
+    if ((net_dll_netopen =
+          (net_dll_netopen_t)GetProcAddress( hNetDll, "netopen" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netopen",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netclos =
-          GetProcAddress( hNetDll, "netclos" )) == NULL )
+    if ((net_dll_netclos =
+          (net_dll_netclos_t)GetProcAddress( hNetDll, "netclos" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netclos",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_nettchk =
-          GetProcAddress( hNetDll, "nettchk" )) == NULL )
+    if ((net_dll_nettchk =
+          (net_dll_nettchk_t)GetProcAddress( hNetDll, "nettchk" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","nettchk",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netflui =
-          GetProcAddress( hNetDll, "netflui" )) == NULL )
+    if ((net_dll_netflui =
+          (net_dll_netflui_t)GetProcAddress( hNetDll, "netflui" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netflui",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netbreak =
-          GetProcAddress( hNetDll, "netbreak" )) == NULL )
+    if ((net_dll_netbreak =
+          (net_dll_netbreak_t)GetProcAddress( hNetDll, "netbreak" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netbreak",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netinc =
-          GetProcAddress( hNetDll, "netinc" )) == NULL )
+    if ((net_dll_netinc =
+          (net_dll_netinc_t)GetProcAddress( hNetDll, "netinc" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netinc",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_netxin =
-          GetProcAddress( hNetDll, "netxin" )) == NULL )
+    if ((net_dll_netxin =
+          (net_dll_netxin_t)GetProcAddress( hNetDll, "netxin" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","netxin",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_nettoc =
-          GetProcAddress( hNetDll, "nettoc" )) == NULL )
+    if ((net_dll_nettoc =
+          (net_dll_nettoc_t)GetProcAddress( hNetDll, "nettoc" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","nettoc",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_nettol =
-          GetProcAddress( hNetDll, "nettol" )) == NULL )
+    if ((net_dll_nettol =
+          (net_dll_nettol_t)GetProcAddress( hNetDll, "nettol" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","nettol",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_terminfo =
-          GetProcAddress( hNetDll, "terminfo" )) == NULL )
+    if ((net_dll_terminfo =
+          (net_dll_terminfo_t)GetProcAddress( hNetDll, "terminfo" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","terminfo",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_version =
-          GetProcAddress( hNetDll, "version" )) == NULL )
+    if ((net_dll_version =
+          (net_dll_version_t)GetProcAddress( hNetDll, "version" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","version",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_errorstr =
-          GetProcAddress( hNetDll, "errorstr" )) == NULL )
+    if ((net_dll_errorstr =
+          (net_dll_errorstr_t)GetProcAddress( hNetDll, "errorstr" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","errorstr",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_ttpkt =
-          GetProcAddress( hNetDll, "ttpkt" )) == NULL )
+    if ((net_dll_ttpkt =
+          (net_dll_ttpkt_t)GetProcAddress( hNetDll, "ttpkt" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","ttpkt",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_ttres =
-          GetProcAddress( hNetDll, "ttres" )) == NULL )
+    if ((net_dll_ttres =
+          (net_dll_ttres_t)GetProcAddress( hNetDll, "ttres" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","ttres",rc) ;
         netdll_unload();
         return(-1);
     }
-    if (((FARPROC) net_dll_ttvt =
-          GetProcAddress( hNetDll, "ttvt" )) == NULL )
+    if ((net_dll_ttvt =
+          (net_dll_ttvt_t)GetProcAddress( hNetDll, "ttvt" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "netdll_load GetProcAddress failed","ttvt",rc) ;
@@ -4158,61 +4185,61 @@ LoadDECTAL( void )
         debug(F111, "LoadDECTAL LoadLibrary failed","dectal",rc) ;
         return FALSE;
     }
-    if (((FARPROC) InstalledAccess = GetProcAddress( hDECTAL, "InstalledAccess" )) == NULL )
+    if ((InstalledAccess = (InstalledAccess_t)GetProcAddress( hDECTAL, "InstalledAccess" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","InstalledAccess",rc) ;
         return FALSE;
     }
-    if (((FARPROC) InquireServices = GetProcAddress( hDECTAL, "InquireServices" )) == NULL )
+    if ((InquireServices = (InquireServices_t)GetProcAddress( hDECTAL, "InquireServices" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","InquireServices",rc) ;
         return FALSE;
     }
-    if (((FARPROC) GetNextService = GetProcAddress( hDECTAL, "GetNextService" )) == NULL )
+    if ((GetNextService = (GetNextService_t)GetProcAddress( hDECTAL, "GetNextService" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","GetNextService",rc) ;
         return FALSE;
     }
-    if (((FARPROC) OpenSession = GetProcAddress( hDECTAL, "OpenSession" )) == NULL )
+    if ((OpenSession = (OpenSession_t)GetProcAddress( hDECTAL, "OpenSession" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","OpenSession",rc) ;
         return FALSE;
     }
-    if (((FARPROC) CloseSession = GetProcAddress( hDECTAL, "CloseSession" )) == NULL )
+    if ((CloseSession = (CloseSession_t)GetProcAddress( hDECTAL, "CloseSession" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","CloseSession",rc) ;
         return FALSE;
     }
-    if (((FARPROC) ReadData = GetProcAddress( hDECTAL, "ReadData" )) == NULL )
+    if ((ReadData = (ReadData_t)GetProcAddress( hDECTAL, "ReadData" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","ReadData",rc) ;
         return FALSE;
     }
-    if (((FARPROC) WriteData = GetProcAddress( hDECTAL, "WriteData" )) == NULL )
+    if ((WriteData = (WriteData_t)GetProcAddress( hDECTAL, "WriteData" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","WriteData",rc) ;
         return FALSE;
     }
-    if (((FARPROC) SendBreak = GetProcAddress( hDECTAL, "SendBreak" )) == NULL )
+    if ((SendBreak = (SendBreak_t)GetProcAddress( hDECTAL, "SendBreak" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","SendBreak",rc) ;
         return FALSE;
     }
-    if (((FARPROC) GetDetailError = GetProcAddress( hDECTAL, "GetDetailError" )) == NULL )
+    if ((GetDetailError = (GetDetailError_t)GetProcAddress( hDECTAL, "GetDetailError" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","GetDetailError",rc) ;
         return FALSE;
     }
-    if (((FARPROC) DataNotify = GetProcAddress( hDECTAL, "DataNotify" )) == NULL )
+    if ((DataNotify = (DataNotify_t)GetProcAddress( hDECTAL, "DataNotify" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "LoadDECTAL GetProcAddress failed","DataNotify",rc) ;

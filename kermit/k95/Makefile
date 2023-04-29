@@ -14,6 +14,16 @@
 #   Windows XP SP3+		Visual C++ 2019
 #	ARM Windows			Visual C++ 2022
 #   IBM OS/2 32bit		OpenWatcom 1.9
+#
+# The following optional dependencies are *NOT* supported when building with
+# GCC due to extensive use of cast-as-lvalue:
+#	Kerberos
+#	SSLDLL (dynamically loading an OpenSSL 0.9.8 DLL)
+#	SRP
+# GCC has not supported cast-as-lvalue since 4.0 so making these optional
+# dependencies in a GCC build will require writing a few hundred typedefs
+# for function pointers and moving the cast from the lvalue to the rvalue
+# when GetProcAddress is called.
 
 # TODO: dependencies for shared .c files
 # TODO: KUI defines & build flags
@@ -276,7 +286,7 @@ $(OUTDIR)/cknsig$(O): cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckcsym.h ckcnet.h ckctel.h ckonet.h ckuusr.h ckonet.h ckcsig.h ckocon.h
 $(OUTDIR)/cknalm$(O): cknalm.c cknalm.h
 $(OUTDIR)/ckntap$(O): ckntap.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckntap.h \
-	cknwin.h ckowin.h ckuusr.h ckucmd.h ckowin.h
+	cknwin.h ckowin.h ckuusr.h ckucmd.h ckowin.h ckntapi.h
 $(OUTDIR)/cknwin$(O): cknwin.c cknwin.h ckowin.h ckcdeb.h ckoker.h ckclib.h \
 	ckntap.h ckocon.h
 $(OUTDIR)/cknprt$(O): cknprt.c ckcdeb.h ckoker.h ckcker.h ckucmd.h
