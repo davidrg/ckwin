@@ -50,6 +50,9 @@ CFLAGS=-funsigned-char $(CCRELEASE) # can flip to CCDEBUG
 
 LIBS=-lws2_32 -lspoolss -lwinspool -lgdi32 -lwinmm -lversion
 
+RC=windres
+RCFLAGS=
+
 O=.obj
 
 .SUFFIXES:
@@ -59,6 +62,9 @@ $(OUTDIR)/%$(O): %.c
 
 $(OUTDIR)/%$(O): %.cxx
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -c -o $@ $*.c
+
+%.coff: %.rc
+	$(RC) $(RCFLAGS) -o $@ $<
 
 # These are specific to the K95G and KUI targets
 KUIOBJS = \
@@ -135,10 +141,10 @@ w32console: $(OUTDIR)/cknker.exe  $(OUTDIR)/telnet.exe $(OUTDIR)/rlogin.exe \
 
 w32iksdnt: $(OUTDIR)/iksdnt.exe
 
-$(OUTDIR)/cknker.exe: $(OBJS)
+$(OUTDIR)/cknker.exe: $(OBJS) cknker.coff
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OUTDIR)/iksdnt.exe: $(OBJS)
+$(OUTDIR)/iksdnt.exe: $(OBJS) cknker.coff
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 $(OUTDIR)/k95g.exe: $(OBJS) $(KUIOBJS)
