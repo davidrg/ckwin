@@ -27,9 +27,9 @@
 #define DIRSEP       '/'
 #define ISDIRSEP(c)  ((c)=='/'||(c)=='\\')
 
+#ifdef NT
 typedef LONG (WINAPI * p_RegOpenCurrentUser_t)(REGSAM samDesired, PHKEY phkResult);
 
-#ifdef NT
 static HINSTANCE hAdvApi32 = NULL;
 static p_RegOpenCurrentUser_t p_RegOpenCurrentUser=NULL;
 #endif /* NT */
