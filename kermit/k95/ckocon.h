@@ -157,7 +157,9 @@ typedef int bool;
 #else
 #ifndef __BOOL_DEFINED
 #ifndef __WATCOMC__
+#ifndef __GNUC__
 typedef int bool;
+#endif
 #endif
 #endif
 #endif
