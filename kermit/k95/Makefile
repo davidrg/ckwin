@@ -25,10 +25,10 @@
 # for function pointers and moving the cast from the lvalue to the rvalue
 # when GetProcAddress is called.
 
-# TODO: dependencies for shared .c files
-# TODO: KUI defines & build flags
-# TODO: Resource script builds
-# TODO: Fix GCC build errors
+# TODO: X/Y/Z Modem (p95.dll)
+# TODO: DES/CAST (k95crypt.dll)
+# TODO: SSL
+# TODO: SSH
 
 DEFINES=-DNO_SSL -DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-D_WIN32_WINNT=0x0400 -DK95BUILD=K95 -DNT -DWINVER=0x0400 -DOS2 \
@@ -37,18 +37,23 @@ DEFINES=-DNO_SSL -DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DOPENSSL_097 -DNO_SSL_KRB5 \
        	-DNOCKXYZ -DNOSSH -DCK_HAVE_INTPTR_T
 
-KUIDEFINES=
+KUIDEFINES=-DSTRICT -D_WINDOWS -DSCRIPTTERM -DOS2TEST -DKUI -DK95G -DCK_WIN
 
 LDDEBUG=
 LDRELEASE=-s
 LDFLAGS=$(LDRELEASE) # can flip to LDDEBUG
 
+KUILDFLAGS=$(LDFLAGS) -Wl,-subsystem,windows
+
 #-march=i686
 CCDEBUG=-g3 -ggdb
 CCRELEASE= -O2 -Wno-implicit-function-declaration -w
 CFLAGS=-funsigned-char $(CCRELEASE) # can flip to CCDEBUG
+CXXFLAGS=-funsigned-char -w
 
 LIBS=-lws2_32 -lspoolss -lwinspool -lgdi32 -lwinmm -lversion
+
+KUILIBS=$(LIBS) -lcomctl32 -lcomdlg32
 
 RC=windres
 RCFLAGS=
@@ -58,13 +63,19 @@ O=.obj
 .SUFFIXES:
 
 $(OUTDIR)/%$(O): %.c
-	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -c -o $@ $*.c
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(INC) -c -o $@ $*.c
 
-$(OUTDIR)/%$(O): %.cxx
-	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -c -o $@ $*.c
+$(OUTDIR)/%$(O): kui/%.cxx
+	$(CC) $(CC2) $(CXXFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(INC) -c -o $@ kui/$*.cxx
 
-%.coff: %.rc
+$(OUTDIR)/%$(O): kui/%.c
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(INC) -c -o $@ kui/$*.c
+
+$(OUTDIR)/%.coff: %.rc
 	$(RC) $(RCFLAGS) -o $@ $<
+
+$(OUTDIR)/%.coff: kui/%.rc
+	$(RC) $(RCFLAGS) -I. -Ikui -o $@ $<
 
 # These are specific to the K95G and KUI targets
 KUIOBJS = \
@@ -108,29 +119,28 @@ OBJS =  $(OUTDIR)/ckcmai$(O)  $(OUTDIR)/ckcfns$(O)  $(OUTDIR)/ckcfn2$(O) \
 # For SSH-enabled builds
 #OBJS = $(OBJS)  ckossh$(O) ckorbf$(O) ckoshs$(O) 
 
-all: console iksdnt
-#k95g
+all: console iksdnt k95g
 
 clean:
-	rm win95-gcc/*
-	rm nt-gcc/*
-	rm iksdnt-gcc/*
+	rm win95/*
+	rm nt/*
+	rm iksdnt/*
 
 #mkdir -p win95
 k95g:
 	echo "========== Build GUI =========="
-	$(MAKE) w32k95g OUTDIR=win95
+	$(MAKE) w32k95g OUTDIR=win95 INC="-I. -Ikui" DEFINES="$(DEFINES) $(KUIDEFINES)"
 
 #mkdir -p nt
 console:
 	echo "========== Build Console =========="
 
-	$(MAKE) w32console OUTDIR=nt
+	$(MAKE) w32console OUTDIR=nt INC="-I."
 
 #mkdir -p iksdnt
 iksdnt:
 	echo "========== Build IKSDNT =========="
-	$(MAKE) w32iksdnt OUTDIR=iksdnt
+	$(MAKE) w32iksdnt OUTDIR=iksdnt INC="-I."
 
 w32k95g: $(OUTDIR)/k95g.exe
 
@@ -141,14 +151,14 @@ w32console: $(OUTDIR)/cknker.exe  $(OUTDIR)/telnet.exe $(OUTDIR)/rlogin.exe \
 
 w32iksdnt: $(OUTDIR)/iksdnt.exe
 
-$(OUTDIR)/cknker.exe: $(OBJS) cknker.coff
+$(OUTDIR)/cknker.exe: $(OBJS) $(OUTDIR)/cknker.coff
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OUTDIR)/iksdnt.exe: $(OBJS) cknker.coff
+$(OUTDIR)/iksdnt.exe: $(OBJS) $(OUTDIR)/cknker.coff
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-$(OUTDIR)/k95g.exe: $(OBJS) $(KUIOBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+$(OUTDIR)/k95g.exe: $(KUIOBJS) $(OBJS) $(OUTDIR)/kui.coff
+	$(CXX) $(CFLAGS) $(KUILDFLAGS) -o $@ $^ $(KUILIBS)
 
 $(OUTDIR)/telnet.exe: $(OUTDIR)/telnet$(O)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
@@ -220,6 +230,7 @@ $(OUTDIR)/ktermin$(O): 	kui/ktermin.cxx kui/ktermin.hxx kui/kmenu.hxx \
 	kui/kfont.hxx kui/ksysmets.hxx kui/ikcmd.h kui/ikterm.h kui/ikui.h \
 	kui/ikextern.h
 $(OUTDIR)/kui$(O): 		kui/kui.cxx kui/ikextern.h
+$(OUTDIR)/kui.coff:		kui/kui.rc kui/resource.h
 
 # Main - cknker.exe, iksdnt.exe, k95g.exe, cknkui.exe and others
 # TODO: The list of dependencies here and in ckoker.mak haven't been updated
@@ -380,6 +391,7 @@ $(OUTDIR)/p_tl$(O):  p_tl.c ckcdeb.h ckoker.h ckclib.h ckocon.h p_type.h \
 	p_tl.h p_brw.h p.h
 $(OUTDIR)/p_dir$(O): p_dir.c ckcdeb.h ckoker.h ckclib.h ckocon.h p_type.h \
 	p_dir.h
+$(OUTDIR)/cknker.coff: cknker.rc
 
 # Minor utilities
 $(OUTDIR)/telnet$(O): telnet.c
