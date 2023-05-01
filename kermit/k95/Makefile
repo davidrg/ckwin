@@ -25,17 +25,17 @@
 # for function pointers and moving the cast from the lvalue to the rvalue
 # when GetProcAddress is called.
 
-# TODO: X/Y/Z Modem (p95.dll)
 # TODO: DES/CAST (k95crypt.dll)
 # TODO: SSL
 # TODO: SSH
+# TODO: remove -w and -Wno-implicit-function-declaration from CFLAGS
 
 DEFINES=-DNO_SSL -DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-D_WIN32_WINNT=0x0400 -DK95BUILD=K95 -DNT -DWINVER=0x0400 -DOS2 \
        	-DDYNAMIC -DKANJI -DNETCONN -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET \
        	-DRLOGCODE -DZLIB -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DNEWFTP \
        	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DOPENSSL_097 -DNO_SSL_KRB5 \
-       	-DNOCKXYZ -DNOSSH -DCK_HAVE_INTPTR_T
+       	-DNOSSH -DCK_HAVE_INTPTR_T -DXYZMODEM
 
 KUIDEFINES=-DSTRICT -D_WINDOWS -DSCRIPTTERM -DOS2TEST -DKUI -DK95G -DCK_WIN
 
@@ -142,12 +142,18 @@ iksdnt:
 	echo "========== Build IKSDNT =========="
 	$(MAKE) w32iksdnt OUTDIR=iksdnt INC="-I."
 
-w32k95g: $(OUTDIR)/k95g.exe
+$(OUTDIR)/p95.dll:
+	echo "========== Build P95 =========="
+	$(MAKE) -C ../p95 -f Makefile.mingw
+	copy ..\p95\p95.dll $(OUTDIR)\p95.dll
+
+w32k95g: $(OUTDIR)/k95g.exe $(OUTDIR)/p95.dll
 
 # k95crypt.dll
 w32console: $(OUTDIR)/cknker.exe  $(OUTDIR)/telnet.exe $(OUTDIR)/rlogin.exe \
 			$(OUTDIR)/k95d.exe    $(OUTDIR)/textps.exe $(OUTDIR)/ctl3dins.exe \
-	        $(OUTDIR)/iksdsvc.exe $(OUTDIR)/iksd.exe   $(OUTDIR)/se.exe
+	        $(OUTDIR)/iksdsvc.exe $(OUTDIR)/iksd.exe   $(OUTDIR)/se.exe \
+	        $(OUTDIR)/p95.dll
 
 w32iksdnt: $(OUTDIR)/iksdnt.exe
 

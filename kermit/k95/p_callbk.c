@@ -679,7 +679,7 @@ r_open_func(path,length,date,mode,f_left,b_left,zconv,zmanag,ztrans,offset)
     extern char * ofn2, fspec[];
     extern int  fspeclen;
 #ifdef DYNAMIC
-    extern CHAR * srvcmd;
+    extern char * srvcmd;
 #else /* DYNAMIC */
     extern CHAR srvcmd[];
 #endif /* DYNAMIC */

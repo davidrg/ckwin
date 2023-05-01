@@ -1,0 +1,118 @@
+# P95 Makefile for GCC/MinGW
+#
+# Requires:
+#   - nothing
+#
+# This makefile is provided to enable CKW developers to work from and test on
+# a Linux/UNIX host using GCC and WINE. While this toolchain is regularly
+# exercised via CI, the builds themselves are rarely tested.
+#
+# To build for OS/2 using GCC (EMX), see makefile
+# To build for OS/2 or Windows normally, see p95.mak
+#
+
+P_SRCS = pdll_common.c   pdll_crc.c      pdll_dev.c      pdll_global.c \
+         pdll_main.c     pdll_omalloc.c  pdll_error.c    pdll_r.c \
+         pdll_ryx.c      pdll_rz.c       pdll_s.c        pdll_syx.c \
+         pdll_sz.c       pdll_tcpipapi.c pdll_x_global.c pdll_z.c \
+         pdll_z_global.c pdll_exeio.c
+
+P_OBJS = pdll_common.obj   pdll_crc.obj      pdll_global.obj pdll_main.obj \
+         pdll_omalloc.obj  pdll_error.obj    pdll_r.obj      pdll_ryx.obj \
+         pdll_rz.obj       pdll_s.obj        pdll_syx.obj    pdll_sz.obj \
+         pdll_tcpipapi.obj pdll_x_global.obj pdll_z.obj      pdll_dev.obj \
+         pdll_z_global.obj pdll_exeio.obj
+
+SRCS = $(P_SRCS)
+OBJS = $(P_OBJS)
+INC = -I../k95
+
+# Pretty sure only wsock32 is needed
+LIBS = -lwsock32
+#-lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 \
+#        -ladvapi32 -lshell32 -lrpcrt4 -lrpcns4  -lwinmm
+
+DEFINES = -DCK_HAVE_INTPTR_T -DOS2 -DNT -DCK_ANSIC -DXYZ_DLL -DWIN32=1 -DCK_ANSIC
+
+LDFLAGS=-s -shared -Wl,--subsystem,windows
+CFLAGS=-O2 -funsigned-char
+
+%.obj: %.c
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(INC) -c -o $@ $*.c
+
+p95.dll: $(OBJS) p95.coff
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+p95.coff: p95.rc
+	windres -I. -o $@ $<
+
+pdll_common.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h \
+                 pdll_os2incl.h  pdll_error.h  ../k95/p.h  pdll_tcpipapi.h \
+                 pdll_modules.h  pdll_async.h  pdll_pipe.h pdll_socket.h \
+                 pdll_global.h   pdll_main.h   pdll_common.c
+
+pdll_crc.obj: ../k95/p_type.h pdll_crc.c
+
+pdll_dev.obj: ../k95/p_type.h pdll_dev.h    pdll_os2incl.h  pdll_error.h \
+              ../k95/p.h      pdll_common.h pdll_tcpipapi.h pdll_modules.h \
+              pdll_async.h    pdll_pipe.h   pdll_socket.h   pdll_dev.c
+
+pdll_global.obj: ../k95/p_type.h ../k95/p.h pdll_global.c
+
+pdll_main.obj: ../k95/p_type.h pdll_common.h pdll_dev.h      pdll_os2incl.h \
+               pdll_error.h    ../k95/p.h    pdll_tcpipapi.h pdll_modules.h \
+               pdll_async.h    pdll_pipe.h   pdll_socket.h   pdll_defs.h \
+               pdll_global.h   pdll_ryx.h    pdll_rz.h       pdll_syx.h \
+               pdll_x_global.h pdll_sz.h     pdll_z.h        pdll_z_global.h \
+               pdll_main.c
+
+pdll_omalloc.obj: ../k95/p_type.h pdll_error.h ../k95/p.h    pdll_omalloc.c
+
+pdll_error.obj: ../k95/p_type.h pdll_global.h ../k95/p.h pdll_main.h \
+                pdll_common.h   pdll_error.c
+
+pdll_r.obj: ../k95/p_type.h pdll_common.h  pdll_defs.h     pdll_global.h \
+            ../k95/p.h      pdll_omalloc.h pdll_x_global.h pdll_z_global.h \
+            pdll_modules.h  pdll_r.c
+
+pdll_ryx.obj: ../k95/p_type.h pdll_common.h  pdll_crc.h     pdll_defs.h \
+              pdll_dev.h      pdll_os2incl.h pdll_error.h   ../k95/p.h \
+              pdll_tcpipapi.h pdll_modules.h pdll_async.h   pdll_pipe.h \
+              pdll_socket.h   pdll_global.h  pdll_omalloc.h pdll_r.h \
+              pdll_x_global.h pdll_ryx.c
+
+pdll_rz.obj: ../k95/p_type.h pdll_common.h  pdll_defs.h pdll_dev.h \
+             pdll_os2incl.h  pdll_error.h   ../k95/p.h  pdll_tcpipapi.h \
+             pdll_modules.h  pdll_async.h   pdll_pipe.h pdll_socket.h \
+             pdll_global.h   pdll_omalloc.h pdll_r.h    pdll_z.h \
+             pdll_z_global.h pdll_rz.c
+
+pdll_s.obj: ../k95/p_type.h pdll_global.h ../k95/p.h    pdll_s.c
+
+pdll_syx.obj: ../k95/p_type.h pdll_common.h   pdll_crc.h    pdll_defs.h \
+              pdll_dev.h      pdll_os2incl.h  pdll_error.h  ../k95/p.h \
+              pdll_tcpipapi.h pdll_modules.h  pdll_async.h  pdll_pipe.h \
+              pdll_socket.h   pdll_omalloc.h  pdll_global.h pdll_s.h \
+              pdll_syx.h      pdll_x_global.h pdll_syx.c
+
+pdll_sz.obj: ../k95/p_type.h  pdll_common.h   pdll_defs.h   pdll_dev.h \
+             pdll_os2incl.h   pdll_error.h    ../k95/p.h    pdll_tcpipapi.h \
+             pdll_modules.h   pdll_async.h    pdll_pipe.h   pdll_socket.h \
+             pdll_global.h    pdll_omalloc.h  pdll_s.h      pdll_z.h \
+             pdll_z_global.h  pdll_sz.c
+
+pdll_tcpipapi.obj: ../k95/p_type.h pdll_error.h ../k95/p.h pdll_modules.h \
+                   pdll_tcpipapi.c
+
+pdll_exeio.obj: ../k95/p_type.h pdll_common.h ../k95/p.h pdll_global.h \
+                pdll_modules.h  pdll_exeio.c
+
+pdll_x_global.obj: ../k95/p_type.h pdll_x_global.c
+
+pdll_z.obj: ../k95/p_type.h pdll_common.h  pdll_crc.h   pdll_defs.h \
+            pdll_dev.h      pdll_os2incl.h pdll_error.h ../k95/p.h \
+            pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h \
+            pdll_socket.h   pdll_global.h  pdll_z.h     pdll_z_global.h \
+            pdll_z.c
+
+pdll_z_global.obj: ../k95/p_type.h pdll_z_global.c
