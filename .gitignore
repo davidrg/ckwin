@@ -294,3 +294,6 @@ ckvioc.c
 ckvfio.c
 ckvcvt.c
 kermit/k95/ca_certs.pem
+
+# These are the outputs from the mingw resource compiler
+*.coff
