@@ -25,7 +25,7 @@ P_OBJS = pdll_common.obj   pdll_crc.obj      pdll_global.obj pdll_main.obj \
 
 SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
-INC = -I../k95
+INC =
 
 # Pretty sure only wsock32 is needed
 LIBS = -lwsock32
@@ -35,7 +35,7 @@ LIBS = -lwsock32
 DEFINES = -DCK_HAVE_INTPTR_T -DOS2 -DNT -DCK_ANSIC -DXYZ_DLL -DWIN32=1 -DCK_ANSIC
 
 LDFLAGS=-s -shared -Wl,--subsystem,windows
-CFLAGS=-O2 -funsigned-char
+CFLAGS=-O2 -funsigned-char -I../k95
 
 %.obj: %.c
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(INC) -c -o $@ $*.c

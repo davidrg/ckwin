@@ -25,17 +25,17 @@
 # for function pointers and moving the cast from the lvalue to the rvalue
 # when GetProcAddress is called.
 
-# TODO: DES/CAST (k95crypt.dll)
-# TODO: SSL
+# TODO: Telnet DES/CAST (k95crypt.dll)
 # TODO: SSH
 # TODO: remove -w and -Wno-implicit-function-declaration from CFLAGS
 
-DEFINES=-DNO_SSL -DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
+DEFINES=-DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-D_WIN32_WINNT=0x0400 -DK95BUILD=K95 -DNT -DWINVER=0x0400 -DOS2 \
        	-DDYNAMIC -DKANJI -DNETCONN -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET \
-       	-DRLOGCODE -DZLIB -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DNEWFTP \
-       	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DOPENSSL_097 -DNO_SSL_KRB5 \
-       	-DNOSSH -DCK_HAVE_INTPTR_T -DXYZMODEM
+       	-DRLOGCODE -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DNEWFTP \
+       	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DNO_SSL_KRB5 \
+       	-DNOSSH -DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP
+# -DZLIB : Only if built with zlib
 
 KUIDEFINES=-DSTRICT -D_WINDOWS -DSCRIPTTERM -DOS2TEST -DKUI -DK95G -DCK_WIN
 
@@ -57,6 +57,20 @@ KUILIBS=$(LIBS) -lcomctl32 -lcomdlg32
 
 RC=windres
 RCFLAGS=
+
+# Temporary hack to let this makefile work on windows
+# TODO: Find a better alternative?
+COPY=cp
+RM=rm
+
+INC=-I.
+
+ifeq "$(OPENSSL)" ""
+  DEFINES:=$(DEFINES) -DNO_SSL
+else
+  LIBS:=$(LIBS) -L$(OPENSSL) -llibcrypto -llibssl
+  INC:=$(INC) -I$(OPENSSL)/include
+endif
 
 O=.obj
 
@@ -122,30 +136,31 @@ OBJS =  $(OUTDIR)/ckcmai$(O)  $(OUTDIR)/ckcfns$(O)  $(OUTDIR)/ckcfn2$(O) \
 all: console iksdnt k95g
 
 clean:
-	rm win95/*
-	rm nt/*
-	rm iksdnt/*
+ifeq "$(RM)" "rm"
+	$(RM) nt/*
+	$(RM) iksdnt/*
+	$(RM) win95/*
+else
+	$(RM) /Q nt\*.*
+	$(RM) /Q iksdnt\*.*
+	$(RM) /Q win95\*.*
+endif
 
 #mkdir -p win95
 k95g:
 	echo "========== Build GUI =========="
-	$(MAKE) w32k95g OUTDIR=win95 INC="-I. -Ikui" DEFINES="$(DEFINES) $(KUIDEFINES)"
+	$(MAKE) w32k95g OUTDIR=win95 INC="-Ikui $(INC)" DEFINES="$(DEFINES) $(KUIDEFINES)"
 
 #mkdir -p nt
 console:
 	echo "========== Build Console =========="
 
-	$(MAKE) w32console OUTDIR=nt INC="-I."
+	$(MAKE) w32console OUTDIR=nt INC="$(INC)"
 
 #mkdir -p iksdnt
 iksdnt:
 	echo "========== Build IKSDNT =========="
-	$(MAKE) w32iksdnt OUTDIR=iksdnt INC="-I."
-
-$(OUTDIR)/p95.dll:
-	echo "========== Build P95 =========="
-	$(MAKE) -C ../p95 -f Makefile.mingw
-	copy ..\p95\p95.dll $(OUTDIR)\p95.dll
+	$(MAKE) w32iksdnt OUTDIR=iksdnt INC="$(INC)"
 
 w32k95g: $(OUTDIR)/k95g.exe $(OUTDIR)/p95.dll
 
@@ -156,6 +171,19 @@ w32console: $(OUTDIR)/cknker.exe  $(OUTDIR)/telnet.exe $(OUTDIR)/rlogin.exe \
 	        $(OUTDIR)/p95.dll
 
 w32iksdnt: $(OUTDIR)/iksdnt.exe
+
+p95: $(OUTDIR)/p95.dll
+
+$(OUTDIR)/p95.dll: ../p95/p95.dll
+ifeq "$(COPY)" "cp"
+	$(COPY) ../p95/p95.dll $(OUTDIR)/p95.dll
+else
+	$(COPY) ..\p95\p95.dll $(OUTDIR)\p95.dll
+endif
+
+../p95/p95.dll:
+	echo "========== Build P95 =========="
+	$(MAKE) -C ../p95 -f Makefile.mingw
 
 $(OUTDIR)/cknker.exe: $(OBJS) $(OUTDIR)/cknker.coff
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
