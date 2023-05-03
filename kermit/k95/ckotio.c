@@ -131,7 +131,7 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
  * and though the Win32 APIs it relies on have been around since Windows 2000,
  * though building with Visual C++ 2017 (1910) fails with unresovled external
  * symbol so we'll only do this on Visual C++ 2019 or newer */
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
 #else
 /* Anything older than Visual C++ 2019 we won't bother trying to detect

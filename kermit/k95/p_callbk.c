@@ -40,9 +40,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
-#include <sys\utime.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/utime.h>
 #include <share.h>
 #include <time.h>
 #include <ctype.h>

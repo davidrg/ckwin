@@ -26,6 +26,7 @@ P_OBJS = pdll_common.obj   pdll_crc.obj      pdll_global.obj pdll_main.obj \
 SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
 INC =
+RC = windres
 
 # Pretty sure only wsock32 is needed
 LIBS = -lwsock32
@@ -44,7 +45,7 @@ p95.dll: $(OBJS) p95.coff
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 p95.coff: p95.rc
-	windres -I. -o $@ $<
+	$(RC) -I. -o $@ $<
 
 pdll_common.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h \
                  pdll_os2incl.h  pdll_error.h  ../k95/p.h  pdll_tcpipapi.h \
