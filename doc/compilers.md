@@ -427,7 +427,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>❔</td>
     <td>✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
-    <td>❔</td> <!-- PTY -->
+    <td>❌</td> <!-- PTY -->
     <td>❔</td> <!-- SSH -->
     <td>✅</td> <!-- NTLM/Auth -->
     <td>✅</td> <!-- TAPI -->

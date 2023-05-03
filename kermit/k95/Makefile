@@ -26,16 +26,19 @@
 # when GetProcAddress is called.
 
 # TODO: Telnet DES/CAST (k95crypt.dll)
-# TODO: SSH
-# TODO: remove -w and -Wno-implicit-function-declaration from CFLAGS
+# TODO: SSH - figure out how to build this
+# TODO: dist target
 
 DEFINES=-DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-D_WIN32_WINNT=0x0400 -DK95BUILD=K95 -DNT -DWINVER=0x0400 -DOS2 \
        	-DDYNAMIC -DKANJI -DNETCONN -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET \
        	-DRLOGCODE -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DNEWFTP \
        	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DNO_SSL_KRB5 \
-       	-DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP -DCK_CONPTY
-# -DZLIB : Only if built with zlib
+       	-DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP
+# -DZLIB : Only if built with zlib. Probably not actually used so doesn't matter.
+# -DCK_CONPTY : PTY support on Windows 10+, doesn't currently build with MinGW
+# SRP, Kerberos: Currently requires Visual C++ or OpenWatcom due to lvalue casts.
+#				 Not used anymore due to out-of-date dependencies so doesn't matter.
 
 KUIDEFINES=-DSTRICT -D_WINDOWS -DSCRIPTTERM -DOS2TEST -DKUI -DK95G -DCK_WIN
 

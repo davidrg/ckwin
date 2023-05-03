@@ -1213,7 +1213,7 @@ jobs:
 
       - name: Cache Dependencies
         uses: actions/cache@v3.0.11
-        id: cache-deps
+        id: cache-dependencies
         with:
           path: |
             ${{github.workspace}}\openssl
@@ -1222,7 +1222,7 @@ jobs:
           key: deps-openssl-${{env.OPENSSL_VERSION}}
 
       - name: Build OpenSSL
-        if: steps.cache-deps.outputs.cache-hit != 'true'
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
         shell: bash
         env:
           CXX: /usr/bin/x86_64-w64-mingw32-c++
@@ -1240,7 +1240,6 @@ jobs:
           make
 
       - name: Build
-        if: steps.cache-deps.outputs.cache-hit != 'true'
         shell: bash
         env:
           CXX: /usr/bin/x86_64-w64-mingw32-c++
