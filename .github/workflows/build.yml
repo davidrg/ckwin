@@ -1249,7 +1249,6 @@ jobs:
           cd kermit/k95
           make RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
       - name: Make Distribution
-        if: steps.cache-deps.outputs.cache-hit != 'true'
         shell: bash
         run: |
           mkdir ckwin

@@ -421,6 +421,20 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>❔</td> <!-- Dialer -->
     <td>2022-08-01 build tested, targeting 32bit win32</td> <!-- Notes -->
 </tr>
+<tr>
+    <td>MinGW</td>
+    <td>x86</td>
+    <td>❔</td>
+    <td>✅</td> <!-- Free -->
+    <td>✅</td> <!-- Tested -->
+    <td>❔</td> <!-- PTY -->
+    <td>❔</td> <!-- SSH -->
+    <td>✅</td> <!-- NTLM/Auth -->
+    <td>✅</td> <!-- TAPI -->
+    <td>❌</td> <!-- Dialer -->
+    <td>Limited support for development purposes.
+    </td> <!-- Notes -->
+</tr>
 </table>
 
 ## Building with the Windows NT SDK

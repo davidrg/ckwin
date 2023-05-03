@@ -34,7 +34,7 @@ DEFINES=-DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-DDYNAMIC -DKANJI -DNETCONN -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET \
        	-DRLOGCODE -DNETFILE -DONETERMUPD -DLIBDES -DCRYPT_DLL -DNEWFTP \
        	-DNO_DNS_SRV -DNO_KERBEROS -DNO_SRP -DNO_SSL_KRB5 \
-       	-DNOSSH -DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP
+       	-DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP
 # -DZLIB : Only if built with zlib
 
 KUIDEFINES=-DSTRICT -D_WINDOWS -DSCRIPTTERM -DOS2TEST -DKUI -DK95G -DCK_WIN
@@ -71,6 +71,15 @@ ifeq "$(OPENSSL)" ""
 else
   LIBS:=$(LIBS) -L$(OPENSSL) -llibcrypto -llibssl
   INC:=$(INC) -I$(OPENSSL)/include
+endif
+
+# TODO: This hasn't been tested (need to figure out
+# 	    how to build libssh with mingw)
+ifeq "$(LIBSSH)" ""
+	DEFINES:=$(DEFINES) -DNOSSH
+else
+	LIBS:=$(LIBS) -L$(LIBSSH)/build/src -llibssh
+    INC:=$(INC) -I$(LIBSSH)/include
 endif
 
 O=.obj
