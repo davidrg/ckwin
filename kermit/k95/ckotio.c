@@ -126,6 +126,7 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #endif /* _WIN32_WINNT_WINBLUE */
 
 #ifdef NT
+#ifndef __WATCOMC__
 #if !defined(_MSC_VER) || _MSC_VER >= 1920
 /* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
  * and though the Win32 APIs it relies on have been around since Windows 2000,
@@ -133,12 +134,16 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
  * symbol so we'll only do this on Visual C++ 2019 or newer */
 #include <versionhelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
-#else
+#else /* _MSC_VER */
 /* Anything older than Visual C++ 2019 we won't bother trying to detect
  * Windows 8.1 or newer - if you're building for a modern version of windows
  * you really should be using a modern compiler. */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
-#endif
+#endif /* _MSC_VER */
+#else /* __WATCOMC__ */
+/* OpenWatcom doesn't have versionhelpers.h */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif /* __WATCOMC__ */
 #endif /* NT */
 
 /* Version herald(s) */
