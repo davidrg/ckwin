@@ -62,6 +62,7 @@ RCFLAGS=
 # TODO: Find a better alternative?
 COPY=cp
 RM=rm
+MKDIR=mkdir -p
 
 INC=-I.
 
@@ -149,17 +150,19 @@ endif
 #mkdir -p win95
 k95g:
 	echo "========== Build GUI =========="
+	$(MKDIR) win95
 	$(MAKE) w32k95g OUTDIR=win95 INC="-Ikui $(INC)" DEFINES="$(DEFINES) $(KUIDEFINES)"
 
 #mkdir -p nt
 console:
 	echo "========== Build Console =========="
-
+	$(MKDIR) nt
 	$(MAKE) w32console OUTDIR=nt INC="$(INC)"
 
 #mkdir -p iksdnt
 iksdnt:
 	echo "========== Build IKSDNT =========="
+	$(MKDIR) iksdnt
 	$(MAKE) w32iksdnt OUTDIR=iksdnt INC="$(INC)"
 
 w32k95g: $(OUTDIR)/k95g.exe $(OUTDIR)/p95.dll
@@ -296,32 +299,32 @@ $(OUTDIR)/ckuscr$(O): ckuscr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckcsig.h ckcnet.h ckctel.h
 $(OUTDIR)/ckuusr$(O): ckuusr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h \
-	cknwin.h ckowin.h ckntap.h kui\ikui.h
+	cknwin.h ckowin.h ckntap.h kui/ikui.h
 $(OUTDIR)/ckuus2$(O): ckuus2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h \
 	ckctel.h
 $(OUTDIR)/ckuus3$(O): ckuus3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h \
 	ckntap.h ckoreg.h ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h \
-	ckuath.h kui\ikui.h
+	ckuath.h kui/ikui.h
 $(OUTDIR)/ckuus4$(O): ckuus4.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h \
 	ckocon.h ckoetc.h ckntap.h ckuath.h ck_ssl.h ckoreg.h ckoetc.h
 $(OUTDIR)/ckuus5$(O): ckuus5.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h \
-	ck_ssl.h ckossl.h kui\ikui.h
+	ck_ssl.h ckossl.h kui/ikui.h
 $(OUTDIR)/ckuus6$(O): ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckntap.h ckcnet.h ckctel.h ckcsym.h ckcxla.h ckocon.h \
 	ckodir.h
 $(OUTDIR)/ckuus7$(O): ckuus7.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckucmd.h ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h \
 	ckodir.h ckokey.h ckokvb.h cknwin.h ckowin.h ckntap.h ckcuni.h ckntap.h \
-	ckuath.h ck_ssl.h kui\ikui.h
+	ckuath.h ck_ssl.h kui/ikui.h
 $(OUTDIR)/ckuusx$(O): ckuusx.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckuusr.h ckonbi.h ckocon.h cknwin.h ckowin.h ckntap.h ckcnet.h ckctel.h \
-	kui\ikui.h
+	kui/ikui.h
 $(OUTDIR)/ckuusy$(O): ckuusy.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
-	ckuusr.h ckucmd.h ckcnet.h ckctel.h ck_ssl.h kui\ikui.h
+	ckuusr.h ckucmd.h ckcnet.h ckctel.h ck_ssl.h kui/ikui.h
 $(OUTDIR)/ckuxla$(O): ckuxla.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcxla.h \
 	ckuxla.h
 $(OUTDIR)/ckclib$(O): ckclib.c ckcsym.h ckcdeb.h ckoker.h ckclib.h ckcasc.h
@@ -354,14 +357,14 @@ $(OUTDIR)/ckosftp$(O): ckosftp.c ckoker.h ckclib.h ckosftp.h ckosftp.c
 $(OUTDIR)/ckozli$(O): ckozli.c ckcdeb.h ckoker.h ckozli.h
 $(OUTDIR)/ckocon$(O): ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckcnet.h ckctel.h ckonbi.h ckokey.h ckokvb.h ckuusr.h \
-	cknwin.h ckowin.h ckcuni.h kui\ikui.h
+	cknwin.h ckowin.h ckcuni.h kui/ikui.h
 $(OUTDIR)/ckoco2$(O): ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckonbi.h ckopcf.h ckuusr.h ckokey.h ckokvb.h ckcuni.h \
-	kui\ikui.h
+	kui/ikui.h
 $(OUTDIR)/ckoco3$(O): ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h \
 	ckoi31.h ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-    ckcnet.h ckctel.h kui\ikui.h ckossh.h
+    ckcnet.h ckctel.h kui/ikui.h ckossh.h
 $(OUTDIR)/ckoco4$(O): ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h \
 	ckokvb.h ckuusr.h ckcasc.h ckokey.h ckokvb.h
 $(OUTDIR)/ckoco5$(O): ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h
@@ -369,7 +372,7 @@ $(OUTDIR)/ckoetc$(O): ckoetc.c ckcdeb.h ckoker.h ckclib.h ckoetc.h
 $(OUTDIR)/ckoetc2$(O): ckoetc2.c ckcdeb.h ckoker.h ckclib.h ckoetc.h
 $(OUTDIR)/ckokey$(O): ckokey.c ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcker.h \
 	ckuusr.h ckctel.h ckocon.h ckokey.h ckokvb.h ckcxla.h ckuxla.h ckcuni.h \
-	kui\ikui.h
+	kui/ikui.h
 $(OUTDIR)/ckomou$(O): ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h \
 	ckokvb.h ckuusr.h
 $(OUTDIR)/ckoreg$(O): ckoreg.c ckcdeb.h ckoker.h ckclib.h ckcker.h
@@ -386,7 +389,7 @@ $(OUTDIR)/ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h \
 $(OUTDIR)/ckotio$(O): ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h \
 	ckodir.h ckoker.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckoslp.h ckcsig.h \
 	ckop.h   ckcuni.h ckowin.h ckcnet.h ckctel.h ckoreg.h ckntap.h cknwin.h \
-	kui\ikui.h
+	kui/ikui.h
 $(OUTDIR)/ckowys$(O): ckowys.c ckowys.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h ckcuni.h ckokey.h ckokvb.h ckctel.h
 $(OUTDIR)/ckodg$(O):  ckodg.c  ckodg.h  ckcdeb.h ckoker.h ckclib.h ckcker.h \
