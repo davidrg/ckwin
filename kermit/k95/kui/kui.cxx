@@ -8,7 +8,7 @@
 #include "ikcmd.h"
 #include "ikextern.h"
 
-KFileStatus* filestatus = 0;    // global file status
+KFileStatus* filestatusdlg = 0;    // global file status
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -494,7 +494,7 @@ Bool Kui::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_GOTO_FILETRANSFER_WINDOW:
         {
-            if( !filestatus && terminal ) {
+            if( !filestatusdlg && terminal ) {
                 // repost the first message that triggered the create
                 // because it gets discarded for some reason...
                 // probably DialogBox() in KFileStatus
@@ -503,13 +503,13 @@ Bool Kui::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
                         , wParam, lParam );
 
                 terminal->show();
-                filestatus = new KFileStatus( kglob );
-                filestatus->createWin( terminal );
-                filestatus->show();
+                filestatusdlg = new KFileStatus( kglob );
+                filestatusdlg->createWin( terminal );
+                filestatusdlg->show();
                 break;
             }
 
-            filestatus->setProperty( (UINT)wParam, lParam );
+            filestatusdlg->setProperty( (UINT)wParam, lParam );
 
             switch( wParam )
             {

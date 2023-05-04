@@ -1195,3 +1195,130 @@ jobs:
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7
+
+  ##############################################################################
+  # Cross-compile for 64bit Windows from Linux with MinGW64                    #
+  ##############################################################################
+  # Not for release builds. Just to ensure GCC/MinGW compatibility doesn't get
+  # broken accidentally.
+  #
+  Build-MinGW64-Linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install MinGW-w64
+        run: sudo apt install -y g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64
+
+      - name: Cache Dependencies
+        uses: actions/cache@v3.0.11
+        id: cache-dependencies
+        with:
+          path: |
+            ${{github.workspace}}\openssl
+            ${{github.workspace}}\libssh
+            ${{github.workspace}}\zlib
+          key: deps-openssl-${{env.OPENSSL_VERSION}}
+
+      - name: Build OpenSSL
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          CXX: /usr/bin/x86_64-w64-mingw32-c++
+          CC: /usr/bin/x86_64-w64-mingw32-gcc
+          RC: /usr/bin/x86_64-w64-mingw32-windres
+        run: |
+          mkdir -p openssl
+          cd openssl
+          wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          tar zxf openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          rm openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          cd openssl-${{env.OPENSSL_VERSION}}
+          perl Configure mingw64
+          make depend
+          make
+
+      - name: Build
+        shell: bash
+        env:
+          CXX: /usr/bin/x86_64-w64-mingw32-c++
+          CC: /usr/bin/x86_64-w64-mingw32-gcc
+        run: |
+          cd kermit/k95
+          make RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
+      - name: Make Distribution
+        shell: bash
+        run: |
+          mkdir ckwin
+          cd ckwin
+          mkdir -p docs/manual
+          mkdir -p keymaps
+          mkdir -p public
+          mkdir -p scripts
+          mkdir -p users
+          
+          # Collect binaries
+          mv ../kermit/k95/nt/*.exe ./
+          mv ../kermit/k95/nt/*.dll ./
+          mv ../kermit/k95/win95/*.exe ./
+          cp ../openssl/openssl-${{env.OPENSSL_VERSION}}/*.dll ./
+          # cp ../libssh/libssh-${{env.LIBSSH_VERSION}}/build/src/*.dll ./
+          mv cknker.exe k95.exe
+          
+          # And other files
+          cp ../kermit/k95/cknker.exe.manifest k95.exe.manifest
+          cp ../kermit/k95/k95g.exe.manifest ./
+          cp ../kermit/k95/k95d.cfg ./
+          cp ../kermit/k95/k95.ini ./
+          cp ../kermit/k95/k95custom.ini ./
+          cp ../kermit/k95/welcome.txt ./
+          cp ../kermit/k95/hostmode.bat ./
+          cp ../COPYING ./
+          [ -f "../openssl/openssl-${{env.OPENSSL_VERSION}}/LICENSE.txt" ] && cp ../openssl/openssl-${{env.OPENSSL_VERSION}}/LICENSE.txt COPYING.openssl
+          [ -f "../openssl/openssl-${{env.OPENSSL_VERSION}}/LICENSE" ] && cp ../openssl/openssl-${{env.OPENSSL_VERSION}}/LICENSE COPYING.openssl
+          # cp ../libssh/libssh-${{env.LIBSSH_VERSION}}/COPYING COPYING.libssh
+          # cp ../doc/ssh-readme.md ssh-readme.txt
+          
+          # Documentation
+          cp ../doc/manual/ckwin.htm docs/manual/ckwin.htm
+          cp ../kermit/k95/hostmode.txt docs/
+          
+          # Keymaps
+          cp ../kermit/k95/vt220.ksc keymaps/
+          cp ../kermit/k95/keycodes.txt keymaps/
+          cp ../kermit/k95/keymaps-readme.txt keymaps/readme.txt
+          
+          # Public
+          cp ../kermit/k95/hostuser.txt public/
+          
+          # Scripts
+          cp ../kermit/k95/apage.ksc scripts/
+          cp ../kermit/k95/autotel.ksc scripts/
+          cp ../kermit/k95/iksdpy.ksc scripts/
+          cp ../kermit/k95/login.ksc scripts/
+          cp ../kermit/k95/host.ksc scripts/
+          cp ../kermit/k95/hostcom.ksc scripts/
+          cp ../kermit/k95/hostmdm.ksc scripts/
+          cp ../kermit/k95/hostmode.ksc scripts/
+          cp ../kermit/k95/hosttcp.ksc scripts/
+          cp ../kermit/k95/npage.ksc scripts/
+          cp ../kermit/k95/recover.ksc scripts/
+          cp ../kermit/k95/review.ksc scripts/
+          cp ../kermit/k95/rgrep.ksc scripts/
+          cp ../kermit/k95/host.cfg scripts/
+          cp ../kermit/k95/scripts-readme.txt scripts/readme.txt
+          
+          # Users
+          cp ../kermit/k95/hostmode-greeting.txt users/greeting.txt
+          cp ../kermit/k95/hostmode-help.txt users/hostmode.txt
+          
+          # CA Certs
+          wget -O ca_certs.pem https://curl.se/ca/cacert.pem
+          wget -O ca_certs.license https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ckwin-mingw64-cross
+          path: ${{ github.workspace }}/ckwin
+          if-no-files-found: error

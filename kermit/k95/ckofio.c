@@ -491,6 +491,91 @@ static char guestpass[GUESTPASS_LEN] = "";
 
 _PROTOTYP(char * whoami, (void));
 
+#ifdef NT
+typedef BOOL (_stdcall *pGetDiskFreeSpaceEx_t)
+        ( LPCTSTR lpDirectoryName,                 // directory name
+          PULARGE_INTEGER lpFreeBytesAvailable,    // bytes available to caller
+          PULARGE_INTEGER lpTotalNumberOfBytes,    // bytes on disk
+          PULARGE_INTEGER lpTotalNumberOfFreeBytes // free bytes on disk
+          );
+typedef DWORD (WINAPI *p_GetLongPathNameA_t)(
+    LPCSTR lpFileName,
+    LPSTR lpBuffer,
+    DWORD cchBuffer
+    );
+typedef DWORD (WINAPI *p_GetShortPathNameA_t)(
+    LPCSTR lpszLongPath,
+    LPSTR lpszShortPath,
+    DWORD cchBuffer
+    );
+typedef BOOL (WINAPI * p_CopyFileExA_t)(
+        LPCSTR lpExistingFileName,
+        LPCSTR lpNewFileName,
+#if !defined(_MSC_VER) || _MSC_VER > 1010
+        LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+#else
+          /* The Platform SDK included in Visual C++ 4.1
+           * and earlier doesn't include CopyFileExA so
+           * no defninition for LPPROGRESS_ROUTINE. We never
+           * pass a value other than NULL so its real type
+           * is probably irrelevant.*/
+        LPVOID lpProgressRoutine OPTIONAL,
+#endif
+        LPVOID lpData OPTIONAL,
+        LPBOOL pbCancel OPTIONAL,
+        DWORD dwCopyFlags);
+typedef BOOL (WINAPI * p_CreateHardLinkA_t)(LPCSTR lpFileName,
+        LPCSTR lpExistingFileName,
+        LPSECURITY_ATTRIBUTES lpSecurityAttributes
+);
+typedef BOOL (WINAPI * p_CreateEnvironmentBlock_t)(void **, HANDLE, BOOL);
+typedef BOOL (WINAPI * p_DestroyEnvironmentBlock_t)(void *);
+
+#ifndef PROFILEINFO
+#define PI_NOUI 1                       // Prevents displaying of profile error messages.
+#define PI_APPLYPOLICY 2                // Applies a Windows NT 4.0-style policy.
+
+typedef struct _PROFILEINFOA {
+    DWORD       dwSize;                 // Set to sizeof(PROFILEINFO) before calling
+    DWORD       dwFlags;                // See flags above
+    LPSTR       lpUserName;             // User name (required)
+    LPSTR       lpProfilePath;          // Roaming profile path (optional, can be NULL)
+    LPSTR       lpDefaultPath;          // Default user profile path (optional, can be NULL)
+    LPSTR       lpServerName;           // Validating domain controller name in netbios format (optional, can be NULL but group NT4 style policy won't be applied)
+    LPSTR       lpPolicyPath;           // Path to the NT4 style policy file (optional, can be NULL)
+    HANDLE      hProfile;               // Filled in by the function.  Registry key handle open to the root.
+} PROFILEINFOA, FAR * LPPROFILEINFOA;
+#define PROFILEINFO PROFILEINFOA
+#define LPPROFILEINFO LPPROFILEINFOA
+#endif /* PROFILEINFO */
+
+typedef BOOL (WINAPI * p_LoadUserProfileA_t)(HANDLE, PROFILEINFO *);
+typedef BOOL (WINAPI * p_UnloadUserProfileA_t)(HANDLE, HANDLE);
+typedef BOOL (WINAPI * p_DuplicateTokenEx_t)(HANDLE hExistingToken,
+        DWORD dwDesiredAccess,
+        LPSECURITY_ATTRIBUTES lpTokenAttributes,
+        SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+        TOKEN_TYPE TokenType,
+        PHANDLE phNewToken);
+
+#ifdef CK_LOGIN
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetUserGetInfo_t)(
+        LPWSTR, LPWSTR, DWORD, LPBYTE *);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetGetDCName_t)(
+        LPCWSTR, LPCWSTR, LPBYTE *);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetApiBufferFree_t)(
+        LPVOID );
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetUserGetLocalGroups_t)(
+        LPCWSTR, LPCWSTR, DWORD, DWORD, LPBYTE *,
+        DWORD, LPDWORD, LPDWORD);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetUserGetGroups_t)(
+        LPCWSTR, LPCWSTR, DWORD, LPBYTE *,
+        DWORD, LPDWORD, LPDWORD);
+typedef NET_API_STATUS (NET_API_FUNCTION *p_NetGroupGetInfo_t)(
+        LPCWSTR, LPCWSTR, DWORD, LPBYTE);
+#endif /* CK_LOGIN */
+#endif
+
 /*  Z K S E L F  --  Kill Self: log out own job, if possible.  */
 
 int
@@ -1880,14 +1965,9 @@ zdskspace(int drive) {
     DWORD spc, bps, fc, c ;
     char rootpath[4] ;
     int gle;
-    BOOL (_stdcall *pGetDiskFreeSpaceEx)
-        ( LPCTSTR lpDirectoryName,                 // directory name
-          PULARGE_INTEGER lpFreeBytesAvailable,    // bytes available to caller
-          PULARGE_INTEGER lpTotalNumberOfBytes,    // bytes on disk
-          PULARGE_INTEGER lpTotalNumberOfFreeBytes // free bytes on disk
-          )=NULL;
+    pGetDiskFreeSpaceEx_t pGetDiskFreeSpaceEx=NULL;
     ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
-    (FARPROC) pGetDiskFreeSpaceEx = GetProcAddress( GetModuleHandle("kernel32.dll"),
+    pGetDiskFreeSpaceEx = (pGetDiskFreeSpaceEx_t)GetProcAddress( GetModuleHandle("kernel32.dll"),
                                           "GetDiskFreeSpaceExA");
 
     if (drive)
@@ -2532,11 +2612,7 @@ zclosf(filnum) int filnum; {
 
 #ifdef NT
 static HANDLE hKernel = INVALID_HANDLE_VALUE;
-static DWORD (WINAPI *p_GetLongPathNameA)(
-    LPCSTR lpFileName,
-    LPSTR lpBuffer,
-    DWORD cchBuffer
-    ) = NULL;
+static p_GetLongPathNameA_t p_GetLongPathNameA = NULL;
 
 DWORD
 ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
@@ -2545,8 +2621,8 @@ ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_GetLongPathNameA =
-                GetProcAddress( hKernel, "GetLongPathNameA" );
+            p_GetLongPathNameA =
+                (p_GetLongPathNameA_t)GetProcAddress( hKernel, "GetLongPathNameA" );
     }
 
     if ( !p_GetLongPathNameA ) {
@@ -2563,11 +2639,7 @@ ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
     }
 }
 
-static DWORD (WINAPI *p_GetShortPathNameA)(
-    LPCSTR lpszLongPath,
-    LPSTR lpszShortPath,
-    DWORD cchBuffer
-    ) = NULL;
+static p_GetShortPathNameA_t p_GetShortPathNameA = NULL;
 
 DWORD GetShortPathNameC(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuffer);
 
@@ -2576,8 +2648,8 @@ DWORD ckGetShortPathName(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuf
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_GetShortPathNameA =
-                GetProcAddress( hKernel, "GetShortPathNameA" );
+            p_GetShortPathNameA =
+                (p_GetShortPathNameA_t)GetProcAddress( hKernel, "GetShortPathNameA" );
     }
 
     if ( !p_GetShortPathNameA ) {
@@ -4188,22 +4260,7 @@ zcopy(source,destination) char *source, *destination; {
     int len;
 #ifdef NT
     BOOL bCancel = 0;
-    static BOOL (WINAPI * p_CopyFileExA)(LPCSTR lpExistingFileName,
-                                          LPCSTR lpNewFileName,
-#if _MSC_VER > 1010
-                                          LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
-#else
-                              /* The Platform SDK included in Visual C++ 4.1
-                               * and earlier doesn't include CopyFileExA so
-                               * no defninition for LPPROGRESS_ROUTINE. We never
-                               * pass a value other than NULL so its real type
-                               * is probably irrelevant.*/
-                                          LPVOID lpProgressRoutine OPTIONAL,
-#endif
-                                          LPVOID lpData OPTIONAL,
-                                          LPBOOL pbCancel OPTIONAL,
-                                          DWORD dwCopyFlags
-                                          )=NULL;
+    static p_CopyFileExA_t p_CopyFileExA=NULL;
 #endif /* NT */
 
     if (!source) source = "";
@@ -4282,8 +4339,8 @@ zcopy(source,destination) char *source, *destination; {
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_CopyFileExA =
-                GetProcAddress( hKernel, "CopyFileExA" );
+            p_CopyFileExA =
+                (p_CopyFileExA_t)GetProcAddress( hKernel, "CopyFileExA" );
     }
 
     if ( p_CopyFileExA ) {
@@ -4337,18 +4394,15 @@ zlink(source,destination) char *source, *destination; {
 #ifdef NT
     BOOL bCancel = 0;
 #endif /* NT */
-    static BOOL (WINAPI * p_CreateHardLinkA)(LPCSTR lpFileName,
-                                             LPCSTR lpExistingFileName,
-                                             LPSECURITY_ATTRIBUTES lpSecurityAttributes
-                                             )=NULL;
+    static p_CreateHardLinkA_t p_CreateHardLinkA=NULL;
     static HANDLE hKernel = INVALID_HANDLE_VALUE;
 
     if ( !p_CreateHardLinkA ) {
         if (hKernel == INVALID_HANDLE_VALUE)
             hKernel = LoadLibrary("kernel32.dll");
         if (hKernel != INVALID_HANDLE_VALUE)
-            (FARPROC) p_CreateHardLinkA =
-                GetProcAddress( hKernel, "CreateHardLinkA" );
+            p_CreateHardLinkA =
+                (p_CreateHardLinkA_t)GetProcAddress( hKernel, "CreateHardLinkA" );
     }
 
     if ( !p_CreateHardLinkA )
@@ -5902,36 +5956,14 @@ static DWORD PrimaryGroupId;
 CHAR * pReferenceDomainName = NULL;
 static CHAR * pPDCName = NULL;
 
-#ifndef PROFILEINFO
-#define PI_NOUI 1                       // Prevents displaying of profile error messages.
-#define PI_APPLYPOLICY 2                // Applies a Windows NT 4.0-style policy.
-
-typedef struct _PROFILEINFOA {
-    DWORD       dwSize;                 // Set to sizeof(PROFILEINFO) before calling
-    DWORD       dwFlags;                // See flags above
-    LPSTR       lpUserName;             // User name (required)
-    LPSTR       lpProfilePath;          // Roaming profile path (optional, can be NULL)
-    LPSTR       lpDefaultPath;          // Default user profile path (optional, can be NULL)
-    LPSTR       lpServerName;           // Validating domain controller name in netbios format (optional, can be NULL but group NT4 style policy won't be applied)
-    LPSTR       lpPolicyPath;           // Path to the NT4 style policy file (optional, can be NULL)
-    HANDLE      hProfile;               // Filled in by the function.  Registry key handle open to the root.
-} PROFILEINFOA, FAR * LPPROFILEINFOA;
-#define PROFILEINFO PROFILEINFOA
-#define LPPROFILEINFO LPPROFILEINFOA
-#endif /* PROFILEINFO */
 PROFILEINFO profinfo = { sizeof profinfo, 0, 0, 0, 0, 0, 0 };
 VOID      * pEnvBlock = NULL;
 static HINSTANCE hUserEnv=NULL, hAdvApi=NULL;
-static BOOL (WINAPI * p_CreateEnvironmentBlock)(void **, HANDLE, BOOL)=NULL;
-static BOOL (WINAPI * p_DestroyEnvironmentBlock)(void *)=NULL;
-static BOOL (WINAPI * p_LoadUserProfileA)(HANDLE, PROFILEINFO *)=NULL;
-static BOOL (WINAPI * p_UnloadUserProfileA)(HANDLE, HANDLE)=NULL;
-static BOOL (WINAPI * p_DuplicateTokenEx)(HANDLE hExistingToken,
-					   DWORD dwDesiredAccess,
-					   LPSECURITY_ATTRIBUTES lpTokenAttributes,
-					   SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-					   TOKEN_TYPE TokenType,
-					   PHANDLE phNewToken)=NULL;
+static p_CreateEnvironmentBlock_t p_CreateEnvironmentBlock=NULL;
+static p_DestroyEnvironmentBlock_t p_DestroyEnvironmentBlock=NULL;
+static p_LoadUserProfileA_t p_LoadUserProfileA=NULL;
+static p_UnloadUserProfileA_t p_UnloadUserProfileA=NULL;
+static p_DuplicateTokenEx_t p_DuplicateTokenEx=NULL;
 
 BOOL GetTextualSid(
     PSID pSid,            // binary Sid
@@ -6712,14 +6744,14 @@ zvuser(username) char *username; {
         if ( !hUserEnv )
             hUserEnv = LoadLibrary("userenv.dll");
         if ( hUserEnv ) {
-            (FARPROC) p_CreateEnvironmentBlock =
-                GetProcAddress( hUserEnv, "CreateEnvironmentBlock" );
-            (FARPROC) p_DestroyEnvironmentBlock =
-                GetProcAddress( hUserEnv, "DestroyEnvironmentBlock" );
-            (FARPROC) p_LoadUserProfileA =
-                GetProcAddress( hUserEnv, "LoadUserProfileA" );
-            (FARPROC) p_UnloadUserProfileA =
-                GetProcAddress( hUserEnv, "UnloadUserProfileA" );
+            p_CreateEnvironmentBlock =
+                (p_CreateEnvironmentBlock_t)GetProcAddress( hUserEnv, "CreateEnvironmentBlock" );
+            p_DestroyEnvironmentBlock =
+                (p_DestroyEnvironmentBlock_t)GetProcAddress( hUserEnv, "DestroyEnvironmentBlock" );
+            p_LoadUserProfileA =
+                (p_LoadUserProfileA_t)GetProcAddress( hUserEnv, "LoadUserProfileA" );
+            p_UnloadUserProfileA =
+                (p_UnloadUserProfileA_t)GetProcAddress( hUserEnv, "UnloadUserProfileA" );
         }
     }
 
@@ -7074,8 +7106,8 @@ zvpass(passwd) char *passwd; {
 		    if ( !hAdvApi )
 			hAdvApi = LoadLibrary("advapi32.dll");
 		    if ( hAdvApi ) {
-			(FARPROC) p_DuplicateTokenEx =
-			    GetProcAddress( hAdvApi, "DuplicateTokenEx" );
+			p_DuplicateTokenEx =
+			    (p_DuplicateTokenEx_t)GetProcAddress( hAdvApi, "DuplicateTokenEx" );
 		    }
 		}
 
@@ -7489,20 +7521,12 @@ zvlogout() {
 /* From Peter Runestig */
 
 static HINSTANCE hNetApi32=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetUserGetInfo)( LPWSTR, LPWSTR, DWORD, LPBYTE *)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetGetDCName)(LPCWSTR, LPCWSTR, LPBYTE *)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetApiBufferFree)( LPVOID ) = NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetUserGetLocalGroups)(LPCWSTR, LPCWSTR, DWORD, DWORD, LPBYTE *,
-                                             DWORD, LPDWORD, LPDWORD)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetUserGetGroups)(LPCWSTR, LPCWSTR, DWORD, LPBYTE *,
-                                             DWORD, LPDWORD, LPDWORD)=NULL;
-static NET_API_STATUS
-(NET_API_FUNCTION *p_NetGroupGetInfo)(LPCWSTR, LPCWSTR, DWORD, LPBYTE)=NULL;
+static p_NetUserGetInfo_t p_NetUserGetInfo=NULL;
+static p_NetGetDCName_t p_NetGetDCName=NULL;
+static p_NetApiBufferFree_t p_NetApiBufferFree = NULL;
+static p_NetUserGetLocalGroups_t p_NetUserGetLocalGroups=NULL;
+static p_NetUserGetGroups_t p_NetUserGetGroups=NULL;
+static p_NetGroupGetInfo_t p_NetGroupGetInfo=NULL;
 
 
 static int
@@ -7512,12 +7536,12 @@ LoadNetApi32()
         debug(F110,"LoadNetApi32","loading netapi32.dll",0);
         hNetApi32 = LoadLibrary( "netapi32.dll" );
         if ( hNetApi32 ) {
-            (FARPROC) p_NetUserGetInfo = GetProcAddress( hNetApi32, "NetUserGetInfo" );
-            (FARPROC) p_NetApiBufferFree = GetProcAddress( hNetApi32, "NetApiBufferFree" );
-            (FARPROC) p_NetGetDCName = GetProcAddress( hNetApi32, "NetGetDCName" );
-            (FARPROC) p_NetUserGetLocalGroups = GetProcAddress( hNetApi32, "NetUserGetLocalGroups" );
-            (FARPROC) p_NetUserGetGroups = GetProcAddress( hNetApi32, "NetUserGetGroups" );
-            (FARPROC) p_NetGroupGetInfo = GetProcAddress( hNetApi32, "NetGroupGetInfo" );
+            p_NetUserGetInfo = (p_NetUserGetInfo_t)GetProcAddress( hNetApi32, "NetUserGetInfo" );
+            p_NetApiBufferFree = (p_NetApiBufferFree_t)GetProcAddress( hNetApi32, "NetApiBufferFree" );
+            p_NetGetDCName = (p_NetGetDCName_t)GetProcAddress( hNetApi32, "NetGetDCName" );
+            p_NetUserGetLocalGroups = (p_NetUserGetLocalGroups_t)GetProcAddress( hNetApi32, "NetUserGetLocalGroups" );
+            p_NetUserGetGroups = (p_NetUserGetGroups_t)GetProcAddress( hNetApi32, "NetUserGetGroups" );
+            p_NetGroupGetInfo = (p_NetGroupGetInfo_t)GetProcAddress( hNetApi32, "NetGroupGetInfo" );
 
             if ( !p_NetUserGetInfo || !p_NetApiBufferFree || !p_NetGetDCName ||
                  !p_NetUserGetLocalGroups || !p_NetUserGetGroups || !p_NetGroupGetInfo )

@@ -282,7 +282,6 @@ ckcdebu.h
 ckuker.nr
 ckustr.sed
 ckutiox.c
-kermit/k95/makefile
 
 # These files belong to C-Kermit for OpenVMS,
 ckvvms.h
@@ -295,3 +294,6 @@ ckvioc.c
 ckvfio.c
 ckvcvt.c
 kermit/k95/ca_certs.pem
+
+# These are the outputs from the mingw resource compiler
+*.coff

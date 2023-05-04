@@ -47,7 +47,8 @@ extern int rpackets, spackets, spktl, rpktl, what ;
 #ifdef XYZ_DLL
 #ifdef OS2
 static HMODULE dll_handle;
-U32 (* _System p_transfer)(P_CFG *) = NULL;
+typedef U32 (* _System p_transfer_t)(P_CFG *);
+p_transfer_t p_transfer = NULL;
 #endif /* OS2 */
 
 #define PINBUFSIZE 8192
@@ -67,7 +68,7 @@ load_p_dll(void) {
         debug(F101,"load_p_dll - Unable to load module: rc","",rc);
         return rc;
     }
-    (FARPROC) p_transfer = GetProcAddress( dll_handle, "p_transfer" ) ;
+    p_transfer = (p_transfer_t)GetProcAddress( dll_handle, "p_transfer" ) ;
     if ( !p_transfer )
     {
         rc = GetLastError() ;
@@ -260,8 +261,9 @@ available_func( U32 * available )
 int
 pxyz(int sstate) {
     extern struct ck_p ptab[] ;
-    extern int ttyfd, protocol, mdmtyp, fncact, binary, moving, sendmode,
+    extern int protocol, mdmtyp, fncact, binary, moving, sendmode,
       prefixing, carrier, local, fdispla, nfils, parity, ttprty;
+    extern CK_TTYFD_T ttyfd;
     extern int network;
 #ifndef NOLOCAL
     extern term_io;
@@ -278,7 +280,7 @@ pxyz(int sstate) {
 #ifdef NT
     extern int owwait, maxow ;  /* overlapped writes wait for return ? */
 #endif /* NT */
-    extern int nzxpand(char *,int) ;
+    extern int nzxpand(CHAR *,int) ;
     extern int znext( char *) ;
 #ifdef CK_TMPDIR
     extern char * dldir ;

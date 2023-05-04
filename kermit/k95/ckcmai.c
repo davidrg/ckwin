@@ -2950,7 +2950,18 @@ ckcmai(argc,argv) int argc; char **argv;
 #ifdef MAC                              /* Macintosh */
 int
 main (void)
-#else
+#else                                   /* K-95 */
+#ifdef OS2
+#ifdef KUI
+#define MAINISVOID
+void
+Main( int argc, char ** argv )
+#else /* KUI */
+#define MAINISVOID
+VOID
+main(argc,argv) int argc; char **argv;
+#endif /* KUI */
+#else  /* Not K95 */
 #ifdef __GNUC__                         /* GCC compiler */
 int
 main(argc,argv) int argc; char **argv;
@@ -2968,24 +2979,13 @@ main(argc,argv) int argc; char **argv;
 #ifdef STRATUS                          /* Stratus VOS */
 int
 main(argc,argv) int argc; char **argv;
-#else                                   /* K-95 */
-#ifdef OS2
-#ifdef KUI
-#define MAINISVOID
-void
-Main( int argc, char ** argv )
-#else /* KUI */
-#define MAINISVOID
-VOID
-main(argc,argv) int argc; char **argv;
-#endif /* KUI */
-#else  /* Not K95 */
+#else
 MAINTYPE                                /* All others... */
 main(argc,argv) int argc; char **argv;
-#endif /* OS2 */
 #endif /* STRATUS */
 #endif /* __DECC */
 #endif /* __GNUC__ */
+#endif /* OS2 */
 #endif /* MAC */
 #endif /* aegis */
 

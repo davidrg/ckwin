@@ -73,7 +73,7 @@ which may be useful for new users.
 
 For everything else, consult the [C-Kermit Documentation](https://www.kermitproject.org/ckbindex.html).
 
-If you previously used Kermit 95 and would like to know whats changed, see the
+If you previously used Kermit 95 and would like to know what's changed, see the
 [C-Kermit for Windows Change Log](doc/changes.md) as well as 
 
 New Features
@@ -108,7 +108,8 @@ Additionally, a number of new features have been added:
 * Compiler support has been extended down to Visual C++ 2.0 and all the way up
   to Visual C++ 2022 fixing a number of issues along the way. This enables
   proper support for the latest versions of windows, as well as the second
-  oldest 32bit version - Windows NT 3.50
+  oldest 32bit version - Windows NT 3.50. Support has also been added for
+  OpenWatcom (targeting both Windows and OS/2) and MinGW.
 * PTYs are also supported on Windows 10+ now via the `pty` command. For example,
   `pty cmd.exe` will open the Windows shell inside C-Kermit and from there you can
   run any windows console tool. Note that Kermit file transfers are not supported
@@ -124,7 +125,7 @@ Additionally, a number of new features have been added:
   via custom DLLs which are loaded with the `set network type dll` command.
 * Mouse wheel support and terminal mouse reporting have been implemented
 * Support for 64bit Windows (x86-64, Itanium, ARM64)
-* A selection of other bugs fixed
+* A selection of other bugs fixed and other minor features added
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.
 
@@ -156,8 +157,13 @@ Compiling
 ---------
 
 To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
-You'll need at least Visual C++ 1.0 32-bit or newer, or OpenWatcom 1.9+. To 
-build with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+Visual C++ 2019 is strongly recommended, but any released 32bit or 64bit version
+*should* work (with certain features automatically excluded on older compilers).
+To build with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+
+There is also limited support for compiling with OpenWatcom 1.9+ and MinGW. For
+OpenWatcom, just follow the normal build instructions above. For cross-compiling
+from Linux, see the [MinGW Build Instructions](doc/mingw-building.md).
 
 To build C-Kermit for OS/2 using OpenWatcom, see the
 [OS/2 Build Instructions](doc/os2-building.md).

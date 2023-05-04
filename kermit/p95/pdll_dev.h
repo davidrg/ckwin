@@ -39,6 +39,12 @@
 #include "pdll_modules.h"
 #ifdef __EMX__
 #define _Inline extern inline
+#else
+#ifdef NT
+#ifdef __GNUC__
+#define _Inline static
+#endif /* __GNUC__ */
+#endif /* NT */
 #endif
 
 #pragma pack(1)

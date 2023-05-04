@@ -13,8 +13,8 @@ BOOL
 APIENTRY KFlStatDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     Bool ret = FALSE;
-    if( filestatus )
-        ret = filestatus->message( hDlg, message, wParam, lParam );
+    if( filestatusdlg )
+        ret = filestatusdlg->message( hDlg, message, wParam, lParam );
 
     return (BOOL)ret;
 }
@@ -51,7 +51,7 @@ KFileStatus::KFileStatus( K_GLOBAL* kg )
     progress = new KProgress();
 
     // global file status object!
-    filestatus = this;
+    filestatusdlg = this;
 }
 
 /*------------------------------------------------------------------------
@@ -76,7 +76,7 @@ KFileStatus::~KFileStatus()
     }
     delete errors;
 
-    filestatus = 0;
+    filestatusdlg = 0;
 }
 
 /*------------------------------------------------------------------------

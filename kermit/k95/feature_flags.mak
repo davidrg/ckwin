@@ -357,6 +357,7 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODEBUG
 #   On by default
 #   Turn off with: -DNOCKXYZ
 #   Requires: An external library ('P')
+# TODO: Test internal XYZ (NOCKXYZ and XYZMODEM undefined)
 !if "$(CKF_XYZ)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) XYZMODEM
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOCKXYZ

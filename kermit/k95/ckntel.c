@@ -24,6 +24,7 @@
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 #include "cknwin.h"
+#include "ckntapi.h"    /* TAPI function typedefs */
 
 extern int cktapi ;
 extern struct keytab * tapilinetab, * tapilocationtab ;
@@ -35,22 +36,18 @@ extern char * termessage ;
 
 int tapiopen = 0 ;
 
-LONG (WINAPI *cklineInitialize)(LPHLINEAPP, HINSTANCE, LINECALLBACK, LPCSTR, LPDWORD ) = NULL ;
-LONG (WINAPI *cklineNegotiateAPIVersion)(HLINEAPP, DWORD, DWORD, DWORD, LPDWORD, LPLINEEXTENSIONID) = NULL ;
-LONG (WINAPI *cklineGetDevCaps)(HLINEAPP, DWORD, DWORD, DWORD, LPLINEDEVCAPS) = NULL ;
-LONG (WINAPI *cklineShutdown)(HLINEAPP) = NULL ;
-LONG (WINAPI *cklineOpen)(HLINEAPP, DWORD, LPHLINE, DWORD, DWORD, DWORD, DWORD, DWORD,
-                  LPLINECALLPARAMS) = NULL ;
-LONG (WINAPI *cklineMakeCall)(HLINE hLine, LPHCALL lphCall, LPCSTR lpszDestAddress,
-                      DWORD dwCountryCode, LPLINECALLPARAMS const lpCallParams) = NULL ;
-LONG (WINAPI *cklineDial)(HCALL hCall, LPCSTR lpszDestAddress, DWORD dwCountryCode) = NULL ;
-LONG (WINAPI *cklineDrop)(HCALL hCall, LPCSTR lpsUserUserInfo, DWORD dwSize) = NULL ;
-LONG (WINAPI *cklineClose)(HLINE hLine) = NULL ;
-LONG (WINAPI *cklineGetID)(HLINE hLine, DWORD dwAddressID, HCALL hCall,
-                   DWORD dwSelect, LPVARSTRING lpDeviceID, LPCSTR lpszDeviceClass) = NULL ;
-LONG (WINAPI *cklineGetTranslateCaps)( HLINEAPP hLineApp, DWORD,
-                                       LPLINETRANSLATECAPS lpLineTranslateCaps) = NULL ;
-LONG (WINAPI *cklineSetCurrentLocation)( HLINE hLine, DWORD dwLocationID ) = NULL ;
+cklineInitialize_t cklineInitialize = NULL ;
+cklineNegotiateAPIVersion_t cklineNegotiateAPIVersion = NULL ;
+cklineGetDevCaps_t cklineGetDevCaps = NULL ;
+cklineShutdown_t cklineShutdown = NULL ;
+cklineOpen_t cklineOpen = NULL ;
+cklineMakeCall_t cklineMakeCall = NULL ;
+cklineDial_t cklineDial = NULL ;
+cklineDrop_t cklineDrop = NULL ;
+cklineClose_t cklineClose = NULL ;
+cklineGetID_t cklineGetID = NULL ;
+cklineGetTranslateCaps_t cklineGetTranslateCaps = NULL ;
+cklineSetCurrentLocation_t cklineSetCurrentLocation = NULL ;
 
 int cktapiunload(void)
 {
@@ -71,73 +68,73 @@ int cktapiload(void)
       return FALSE;
    }
 
-   if (((FARPROC) cklineInitialize = GetProcAddress( hLib, "lineInitialize" )) == NULL )
+   if ((cklineInitialize = (cklineInitialize_t)GetProcAddress( hLib, "lineInitialize" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineNegotiateAPIVersion = GetProcAddress( hLib, "lineNegotiateAPIVersion" )) == NULL )
+   if ((cklineNegotiateAPIVersion = (cklineNegotiateAPIVersion_t)GetProcAddress( hLib, "lineNegotiateAPIVersion" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineGetDevCaps = GetProcAddress( hLib, "lineGetDevCaps" )) == NULL )
+   if ((cklineGetDevCaps = (cklineGetDevCaps_t)GetProcAddress( hLib, "lineGetDevCaps" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineShutdown = GetProcAddress( hLib, "lineShutdown" )) == NULL )
+   if ((cklineShutdown = (cklineShutdown_tGetProcAddress( hLib, "lineShutdown" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineOpen = GetProcAddress( hLib, "lineOpen" )) == NULL )
+   if ((cklineOpen = (cklineOpen_t)GetProcAddress( hLib, "lineOpen" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineMakeCall = GetProcAddress( hLib, "lineMakeCall" )) == NULL )
+   if ((cklineMakeCall = (cklineMakeCall_t)GetProcAddress( hLib, "lineMakeCall" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineDial = GetProcAddress( hLib, "lineDial" )) == NULL )
+   if ((cklineDial = (cklineDial_t)GetProcAddress( hLib, "lineDial" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineDrop = GetProcAddress( hLib, "lineDrop" )) == NULL )
+   if ((cklineDrop = (cklineDrop_t)GetProcAddress( hLib, "lineDrop" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineClose = GetProcAddress( hLib, "lineClose" )) == NULL )
+   if ((cklineClose = (cklineClose_t)GetProcAddress( hLib, "lineClose" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineGetID = GetProcAddress( hLib, "lineGetID" )) == NULL )
+   if ((cklineGetID = (cklineGetID_t)GetProcAddress( hLib, "lineGetID" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineGetTranslateCaps = GetProcAddress( hLib, "lineGetTranslateCaps" )) == NULL )
+   if ((cklineGetTranslateCaps = (cklineGetTranslateCaps_t)GetProcAddress( hLib, "lineGetTranslateCaps" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
       return FALSE;
    }
-   if (((FARPROC) cklineSetCurrentLocation = GetProcAddress( hLib, "lineSetCurrentLocation" )) == NULL )
+   if ((cklineSetCurrentLocation = (cklineSetCurrentLocation_t)GetProcAddress( hLib, "lineSetCurrentLocation" )) == NULL )
    {
       rc = GetLastError() ;
       debug(F111, "cktapiload LoadLibrary failed","tapi32",rc) ;
