@@ -51,25 +51,6 @@
 #define BETATEST
 #endif  /* BETATEST */
 
-/* Moved here from ckcfnp.h 3 May 2023 */
-/* NEW PROTOTYPE FOR MAIN() ADDED 02 MAY 2023 */
-
-#ifndef MAINNAME
-#ifdef OS2ORWINDOWS
-#define MAINNAME Main
-#else
-#define MAINNAME main
-#endif /* OS2ORWINDOWS */
-#endif /* MAINNAME */
-
-#ifdef MAINISVOID
-/* This is a leftover from original Macintosh */
-typedef VOID MAINTYPE;
-#else
-typedef int MAINTYPE;
-/* if any other types are needed add them here */
-#endif /* MAINISVOID */
-
 /* Now that WTMP and Syslog are "deprecated" don't include them by default */
 
 #ifndef DOWTMP                          /* Unless explicitly requested */
@@ -837,6 +818,30 @@ typedef int MAINTYPE;
 #define OS2ORWINDOWS
 #endif /* OS2ORWINDOWS */
 #endif /* OS2ORWIN32 */
+
+/* Moved here from ckcfnp.h 3 May 2023 */
+/* NEW PROTOTYPE FOR MAIN() ADDED 02 MAY 2023 */
+
+#ifndef MAINNAME
+#ifdef OS2ORWINDOWS
+#define MAINISVOID
+#ifdef KUI
+#define MAINNAME Main
+#else /* not KUI */
+#define MAINNAME main
+#endif /* KUI */
+#else /* not OS/2 or Windows */
+#define MAINNAME main
+#endif /* OS2ORWINDOWS */
+#endif /* MAINNAME */
+
+#ifdef MAINISVOID
+/* This is a leftover from original Macintosh */
+typedef VOID MAINTYPE;
+#else
+typedef int MAINTYPE;
+/* if any other types are needed add them here */
+#endif /* MAINISVOID */
 
 #include <stdio.h>			/* Begin by including this. */
 #include <ctype.h>			/* and this. */
