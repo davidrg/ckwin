@@ -1,7 +1,10 @@
 /*
   ckcfnp.h, new to C-Kermit 10.0 as of 23 March 2023.
 
-  Includes prototypes for functions that previously were not prototyped.
+    Frank da Cruz
+    Most recent update: 3 May 2023
+
+  Prototypes for functions that previously were not prototyped.
   Used only for ANSI-C builds in which __STDC__ is defined.
   ckcfnp.h must be included in each C source file as the LAST #include.
   Prototype format: return-type function-name ( arguments );
@@ -10,10 +13,33 @@
   If more than one argument, the type of each, separated by commas.
   The argument names are omitted; K&R second edition says:
   "Parameter names need not agree (and) are optional".
+
+  Note: Functions that *were* already prototyped are scattered
+  throughout the ck*.c and ck*.h files using a macro _PROTOTYP; I'm
+  not changing those, they've been working just fine on both K&R and
+  ANSI builds for decades, they coexist with this file, and we don't
+  "fix what ain't broke".
 */
+#ifndef CKCFNP_H
+#define CKCFNP_H
+
 #ifndef NOANSI
 #ifdef __STDC__
 #ifdef CK_ANSIC
+/*
+  #include ckcker.h was added 27 April 2023 because certain builds (like
+  "inux+ssl") were failing.  ckcker.h defines data types and other symbols
+  referenced in this file.  It should be included by every module before
+  including this one.  But just in case there's an omission, including it 
+  here too does no harm because ckcker.h protects itself against multiple
+  inclusion.  ckcdeb.h added 3 may 2023, because the mainname definition was
+  moved from here (where non-ansi builds would never see it) to ckcdeb.h.
+*/
+#include "ckcdeb.h"
+#include "ckcker.h"
+
+/* Prototype for main()/Main() */
+MAINTYPE MAINNAME( int argc, char ** argv ); 
 
 /* PROTOTYPES ADDED 11-14 April 2023... */
 
@@ -23,35 +49,6 @@ VOID newerrmsg ( char * );
 char * getdm ( int );
 
 /* PROTOTYPES ADDED 26 March 2023... */
-
-/* This does not account for many old OS's that declared main() differently */
-/* main() return type varies among Unix, OS/2, Windows, and other OS's... */
-#ifdef UNIX
-int main ( int argc, char ** argv ); /* Unix and others */
-#else /* UNIX */
-
-#ifndef MAINTYPE
-#define MAINTYPE int
-#endif  /* MAINTYPE */
-
-#ifdef OS2                              /* IBM OS/2 */
-
-#ifdef KUI
-#define MAINISVOID
-void
-Main( int argc, char ** argv );
-
-#else /* KUI */
-
-#define MAINISVOID                      /* Windows */
-VOID
-main( int argc, char ** argv );
-#endif /* KUI */
-
-#else /* OS2 */
-MAINTYPE main ( int argc, char ** argv ); /* Unix and others */
-#endif  /* OS2 */
-#endif  /* UNIX */
 
 void docmdline( void * );
 void failcmdline( void * );
@@ -542,3 +539,4 @@ void ztime( char ** );
 #endif /* CK_ANSIC */
 #endif /* __STDC__ */
 #endif /* NOANSI   */
+#endif /* CKCFNP_H */

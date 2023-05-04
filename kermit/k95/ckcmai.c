@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "16 Apr 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230416"          /* Keep them in sync */
-/* Sun Apr 16 15:33:36 2023 */
+#define EDITDATE  "03 May 2023"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20230503"          /* Keep them in sync */
+/* Wed May  3 13:20:37 2023 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -1821,7 +1821,7 @@ void
 initxlist( void )
 #else
 VOID
-initxlist();
+initxlist()
 #endif /* CK_ANSIC */
 {
     extern char * sndexcept[], * rcvexcept[];
@@ -2985,80 +2985,26 @@ if not eq {\\v(authstate)} {valid} { remote login ",
 #endif /* NETCONN */
 
 /*
-  main()...
+  main()...    What is its name and what does it return?
 
-  If you get complaints about "main: return type is not blah",
-  define MAINTYPE on the CC command line, e.g. "CFLAGS=-DMAINTYPE=blah"
-  (where "blah" is int, long, or whatever).
+  03 May 2023: This is a major restructuring of the main routine declaration.
+  All the complicated multilevel #ifdefs that have been here for decades
+  were moved to the new C-Kermit 10.0 prototypes header, ckcfnp.h, which
+  #defines MAINNAME and typedefs MAINTYPE.
 
-  If the complaint is "Attempt to return a value from a function of type void"
-  then add -DMAINISVOID.
+  If when building C-Kermit you get a complaint about main()'s return type,
+  edit MAINTYPE section ckcfnp.h.
+
+  If you get "Attempt to return a value from a function of type void" then 
+  add -DMAINISVOID to the make command line.
 */
-#ifndef MAINTYPE
-#ifndef MAINISVOID
-#define MAINTYPE int
-#endif /* MAINISVOID */
-#endif /* MAINTYPE */
-
-#ifdef MAINISVOID
-#ifndef MAINTYPE
-#define MAINTYPE void
-#endif /* MAINTYPE */
-#endif /* MAINISVOID */
-
-#ifdef aegis                            /* Apollo Aegis */
-/* On the Apollo, intercept main to insert a cleanup handler */
-int
-ckcmai(argc,argv) int argc; char **argv;
-#else
-#ifdef MAC                              /* Original Macintosh */
-int
-main (void)
-#else
-#ifdef __GNUC__                         /* GCC compiler */
+MAINTYPE
 #ifdef CK_ANSIC
-int
-main( int argc, char ** argv )
+MAINNAME( int argc, char ** argv )
 #else
-main(argc,argv) int argc; char **argv;
+MAINNAME( argc, argv ) int argc; char **argv;
 #endif /* CK_ANSIC */
-#else
-#ifdef __DECC                           /* DEC Alpha with DEC C compiler */
-#ifdef __ALPHA
-int
-main(argc,argv) int argc; char **argv;
-#else                                   /* DEC C compiler, not Alpha */
-#define MAINISVOID
-VOID
-main(argc,argv) int argc; char **argv;
-#endif  /* __ALPHA */
-#else
-#ifdef STRATUS                          /* Stratus VOS */
-int
-main(argc,argv) int argc; char **argv;
-#else                                   /* K-95 */
-#ifdef OS2
-#ifdef KUI
-#define MAINISVOID
-void
-Main( int argc, char ** argv )
-#else /* KUI */
-#define MAINISVOID
-VOID
-main(argc,argv) int argc; char **argv;
-#endif /* KUI */
-#else  /* Not K95 */
-MAINTYPE                                /* All others... */
-main(argc,argv) int argc; char **argv;
-#endif /* OS2 */
-#endif /* STRATUS */
-#endif /* __DECC */
-#endif /* __GNUC__ */
-#endif /* MAC */
-#endif /* aegis */
-
-/* main */ {
-
+{
     char *p;
 
 #ifndef NOSETKEY

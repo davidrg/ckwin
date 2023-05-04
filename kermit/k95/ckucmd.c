@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 10.0.181, 11 Apr 2023";
+char *cmdv = "Command package 10.0.183, 03 May 2023";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -10,7 +10,7 @@ char *cmdv = "Command package 10.0.181, 11 Apr 2023";
   Author: Frank da Cruz (fdc@columbia.edu),
   Formerly of Columbia University Academic Information Systems, New York City.
   Since 1 July 2011, Open Source Kermit Project.
-  Most recent update: Fri Oct 14 13:44:53 2022
+  Most recent update: Tue May  2 19:18:22 2023
 
   Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
@@ -1817,7 +1817,7 @@ int
 #ifdef CK_ANSIC
 cmdir( char * xhlp, char * xdef, char ** xp, xx_strp f )
 #else
-cmdir(xhlp,xdef,xp,f) char *xhlp, *xdef, char **xp, xx_strp f;
+cmdir(xhlp,xdef,xp,f) char *xhlp; char *xdef; char **xp; xx_strp f;
 #endif /* CK_ANSIC */
 {
     int wild;

@@ -1192,7 +1192,7 @@ _PROTOTYP(int slotdir, (char *, char *));
 
 _PROTOTYP( int input, (void) );
 _PROTOTYP( int inibufs, (int, int) );
-_PROTOTYP( int makebuf, (int, int, CHAR [], struct pktinfo *) );
+/* _PROTOTYP( int makebuf, (int, int, CHAR [], struct pktinfo *) ); */
 _PROTOTYP( int mksbuf, (int) );
 _PROTOTYP( int mkrbuf, (int) );
 _PROTOTYP( int spack, (char, int, int, CHAR *) );
@@ -1425,7 +1425,7 @@ struct urldata {
     int    nopts;               /* number of options */
     struct urlopt opt[MAX_URL_OPTS];   /* options */
 };
-_PROTOTYP(int urlparse, (char *, struct urldata *));
+/* _PROTOTYP(int urlparse, (char *, struct urldata *)); */
 #endif /* CK_URL */
 
 #endif /* CKCKER_H */

@@ -1,4 +1,4 @@
-char * cklibv = "C-Kermit library, 10.0.062, 26 Mar 2023";
+char * cklibv = "C-Kermit library, 10.0.063, 02 May 2023";
 
 #define CKCLIB_C
 
@@ -3028,7 +3028,7 @@ void
 setword(int n, char * s, int len)
 #else
 VOID
-setword(n,s,len) int n, char * s, int len; 
+setword(n,s,len) int n; char * s; int len; 
 #endif /* CK_ANSIC */
 {
     register char * p;

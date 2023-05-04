@@ -11590,6 +11590,9 @@ initoptlist() {
 #ifdef OS2ORVMS
     makestr(&(optlist[noptlist++]),"OS2ORVMS");
 #endif /* OS2ORVMS */
+#ifdef OS2ORWINDOWS
+    makestr(&(optlist[noptlist++]),"OS2ORWINDOWS");
+#endif /* OS2ORWINDOWS */
 #ifdef OS2ORUNIX
     makestr(&(optlist[noptlist++]),"OS2ORUNIX");
 #endif /* OS2ORUNIX */
@@ -12339,6 +12342,7 @@ initoptlist() {
 #ifdef CK_CONPTY
     makestr(&(optlist[noptlist++]),"CK_CONPTY");
 #endif  /* CK_CONPTY */
+
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }

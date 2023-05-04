@@ -1,8 +1,8 @@
-char *cksslv = "SSL/TLS support, 10.0.237, 01 Dec 2022";
+char *cksslv = "SSL/TLS support, 10.0.238 03 May 2023";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -130,6 +130,7 @@ ck_ssleay_is_installed()
 #include "ckotcp.h"
 #endif /* OS2ONLY */
 
+#include "ckuusr.h"                     /* struct mtab */
 #include "ckcfnp.h"                     /* Prototypes */
 
 #ifdef SSLDLL

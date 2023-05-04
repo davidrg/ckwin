@@ -14,7 +14,7 @@
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last update:
-    Fri Apr 14 14:53:40 2023
+    Tue May  2 19:09:58 2023
 */
 
 /*
@@ -11051,7 +11051,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 
 #ifndef NODIAL
       case FN_PNCVT: {                  /* Convert phone number */
-          extern char * pncvt( char * );
+          extern char * pncvt();
           failed = 0;
           p = pncvt(bp[0]);
           if (!p) p = "";

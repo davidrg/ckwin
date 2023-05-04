@@ -1,8 +1,8 @@
 /*  C K C D E B . H  */
 
 /*
-  For recent additions search below for "2021" and "2022".
-  Most recent update: Tue Dec 13 07:09:09 2022
+  For recent additions search below for "2021" and "2022" and "2023".
+  Most recent update: Wed May  3 19:29:18 2023
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -29,7 +29,7 @@
     The Kermit Project, Bronx NY (2011-present)
     Changes from David Goodwin for Windows and OS/2 (2022)
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -50,6 +50,25 @@
 #ifndef BETATEST
 #define BETATEST
 #endif  /* BETATEST */
+
+/* Moved here from ckcfnp.h 3 May 2023 */
+/* NEW PROTOTYPE FOR MAIN() ADDED 02 MAY 2023 */
+
+#ifndef MAINNAME
+#ifdef OS2ORWINDOWS
+#define MAINNAME Main
+#else
+#define MAINNAME main
+#endif /* OS2ORWINDOWS */
+#endif /* MAINNAME */
+
+#ifdef MAINISVOID
+/* This is a leftover from original Macintosh */
+typedef VOID MAINTYPE;
+#else
+typedef int MAINTYPE;
+/* if any other types are needed add them here */
+#endif /* MAINISVOID */
 
 /* Now that WTMP and Syslog are "deprecated" don't include them by default */
 
@@ -811,6 +830,13 @@
 #define OS2ORVMS
 #endif /* OS2ORVMS */
 #endif /* OS2 */
+
+/* C-Kermit for Windows can now be 64-bit so OS2ORWIN32 is a misnomer */
+#ifdef OS2ORWIN32
+#ifndef OS2ORWINDOWS
+#define OS2ORWINDOWS
+#endif /* OS2ORWINDOWS */
+#endif /* OS2ORWIN32 */
 
 #include <stdio.h>			/* Begin by including this. */
 #include <ctype.h>			/* and this. */
