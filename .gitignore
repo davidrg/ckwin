@@ -282,7 +282,6 @@ ckcdebu.h
 ckuker.nr
 ckustr.sed
 ckutiox.c
-kermit/k95/makefile
 kermit/k95/android.mk
 kermit/k95/android.txt
 kermit/k95/ckermit.ini
@@ -303,4 +302,8 @@ ckvker.com
 ckvker.hlp
 ckvker.mms
 ckvold.com
+
 kermit/k95/ca_certs.pem
+
+# These are the outputs from the mingw resource compiler
+*.coff

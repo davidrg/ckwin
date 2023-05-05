@@ -224,7 +224,9 @@ extern int (*xl_tx[MAXTXSETS+1])();
 #endif /* CK_ANSIC */
 extern struct x_to_unicode * txrinfo[MAXTXSETS+1];
 
+#ifndef NT
 _PROTOTYP(int ck_isunicode, (void));
+#endif
 
 _PROTOTYP(int utf8_to_ucs2, (CHAR, USHORT **));
 _PROTOTYP(int ucs2_to_utf8, (USHORT, CHAR **));

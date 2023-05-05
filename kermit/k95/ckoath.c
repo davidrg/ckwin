@@ -3321,15 +3321,23 @@ static int
 static void
 (KRB5_CALLCONV_C  *p_k4_des_fixup_key_parity) P((Block))=NULL;
 
+typedef int   (*libdes_random_key_t)(Block);
+typedef void  (*libdes_random_seed_t)(Block);
+typedef int   (*libdes_key_sched_t)(Block, Schedule);
+typedef void  (*libdes_ecb_encrypt_t)(Block, Block, Schedule, int);
+typedef int   (*libdes_string_to_key_t)(char *, Block);
+typedef int   (*libdes_fixup_key_parity_t)(Block);
+typedef int   (*libdes_pcbc_encrypt_t)(Block, Block, long, Schedule, Block, int);
+
 #ifdef LIBDES
 #ifdef CRYPT_DLL
-int   (*libdes_random_key)(Block)=NULL;
-void  (*libdes_random_seed)(Block)=NULL;
-int   (*libdes_key_sched)(Block, Schedule)=NULL;
-void  (*libdes_ecb_encrypt)(Block, Block, Schedule, int)=NULL;
-int   (*libdes_string_to_key)(char *, Block)=NULL;
-int   (*libdes_fixup_key_parity)(Block)=NULL;
-int   (*libdes_pcbc_encrypt)(Block, Block, long, Schedule, Block, int)=NULL;
+libdes_random_key_t libdes_random_key=NULL;
+libdes_random_seed_t libdes_random_seed=NULL;
+libdes_key_sched_t libdes_key_sched=NULL;
+libdes_ecb_encrypt_t libdes_ecb_encrypt=NULL;
+libdes_string_to_key_t libdes_string_to_key=NULL;
+libdes_fixup_key_parity_t libdes_fixup_key_parity=NULL;
+libdes_pcbc_encrypt_t libdes_pcbc_encrypt=NULL;
 #else /* CRYPT_DLL */
 int   libdes_random_key(Block);
 void  libdes_random_seed(Block);
@@ -3552,21 +3560,37 @@ ck_des_pcbc_encrypt(Block input, Block output, long length,
 #endif /* CK_DES */
 
 #ifdef CRYPT_DLL
-static int  (*p_crypt_dll_init)(struct _crypt_dll_init *)=NULL;
-static int  (*p_encrypt_parse)(unsigned char *, int)=NULL;
-static void (*p_encrypt_init)(kstream,int)=NULL;
-static int  (*p_encrypt_session_key)(Session_Key *, int)=NULL;
-static int  (*p_encrypt_dont_support)(int)=NULL;
-static void (*p_encrypt_send_request_start)(void)=NULL;
-static int  (*p_encrypt_request_start)(void)=NULL;
-static int  (*p_encrypt_send_request_end)(void)=NULL;
-static void (*p_encrypt_send_end)(void)=NULL;
-static void (*p_encrypt_send_support)(void)=NULL;
-static int  (*p_encrypt_is_encrypting)(void)=NULL;
-static int  (*p_encrypt_is_decrypting)(void)=NULL;
-static int  (*p_get_crypt_table)(struct keytab ** pTable, int * pN)=NULL;
-static int  (*p_des_is_weak_key)(Block)=NULL;
-static char * (*p_crypt_dll_version)()=NULL;
+typedef int  (*p_crypt_dll_init_t)(struct _crypt_dll_init *);
+typedef int  (*p_encrypt_parse_t)(unsigned char *, int);
+typedef void (*p_encrypt_init_t)(kstream,int);
+typedef int  (*p_encrypt_session_key_t)(Session_Key *, int);
+typedef int  (*p_encrypt_dont_support_t)(int);
+typedef void (*p_encrypt_send_request_start_t)(void);
+typedef int  (*p_encrypt_request_start_t)(void);
+typedef int  (*p_encrypt_send_request_end_t)(void);
+typedef void (*p_encrypt_send_end_t)(void);
+typedef void (*p_encrypt_send_support_t)(void);
+typedef int  (*p_encrypt_is_encrypting_t)(void);
+typedef int  (*p_encrypt_is_decrypting_t)(void);
+typedef int  (*p_get_crypt_table_t)(struct keytab ** pTable, int * pN);
+typedef int  (*p_des_is_weak_key_t)(Block);
+typedef char * (*p_crypt_dll_version_t)();
+
+static p_crypt_dll_init_t p_crypt_dll_init=NULL;
+static p_encrypt_parse_t p_encrypt_parse=NULL;
+static p_encrypt_init_t p_encrypt_init=NULL;
+static p_encrypt_session_key_t p_encrypt_session_key=NULL;
+static p_encrypt_dont_support_t p_encrypt_dont_support=NULL;
+static p_encrypt_send_request_start_t p_encrypt_send_request_start=NULL;
+static p_encrypt_request_start_t p_encrypt_request_start=NULL;
+static p_encrypt_send_request_end_t p_encrypt_send_request_end=NULL;
+static p_encrypt_send_end_t p_encrypt_send_end=NULL;
+static p_encrypt_send_support_t p_encrypt_send_support=NULL;
+static p_encrypt_is_encrypting_t p_encrypt_is_encrypting=NULL;
+static p_encrypt_is_decrypting_t p_encrypt_is_decrypting=NULL;
+static p_get_crypt_table_t p_get_crypt_table=NULL;
+static p_des_is_weak_key_t p_des_is_weak_key=NULL;
+static p_crypt_dll_version_t p_crypt_dll_version=NULL;
 
 int
 ck_encrypt_parse(unsigned char * s, int n)
@@ -3696,47 +3720,47 @@ crypt_install_funcs(char * name, void * func)
 {
 #ifdef NT
     if ( !strcmp(name,"encrypt_parse") )
-        (FARPROC) p_encrypt_parse = (FARPROC) func;
+        p_encrypt_parse = (p_encrypt_parse_t) func;
     else if ( !strcmp(name,"encrypt_init") )
-        (FARPROC) p_encrypt_init = (FARPROC) func;
+        p_encrypt_init = (p_encrypt_init_t) func;
     else if ( !strcmp(name,"encrypt_session_key") )
-        (FARPROC) p_encrypt_session_key = (FARPROC) func;
+        p_encrypt_session_key = (p_encrypt_session_key_t) func;
     else if ( !strcmp(name,"encrypt_dont_support") )
-        (FARPROC) p_encrypt_dont_support = (FARPROC) func;
+        p_encrypt_dont_support = (p_encrypt_dont_support_t) func;
     else if ( !strcmp(name,"encrypt_send_request_start") )
-        (FARPROC) p_encrypt_send_request_start = (FARPROC) func;
+        p_encrypt_send_request_start = (p_encrypt_send_request_start_t) func;
     else if ( !strcmp(name,"encrypt_request_start") )
-        (FARPROC) p_encrypt_request_start = (FARPROC) func;
+        p_encrypt_request_start = (p_encrypt_request_start_t) func;
     else if ( !strcmp(name,"encrypt_send_request_end") )
-        (FARPROC) p_encrypt_send_request_end = (FARPROC) func;
+        p_encrypt_send_request_end = (p_encrypt_send_request_end_t) func;
     else if ( !strcmp(name, "encrypt_send_end") )
-        (FARPROC) p_encrypt_send_end = (FARPROC) func;
+        p_encrypt_send_end = (p_encrypt_send_end_t) func;
     else if ( !strcmp(name,"encrypt_send_support") )
-        (FARPROC) p_encrypt_send_support = (FARPROC) func;
+        p_encrypt_send_support = (p_encrypt_send_support_t) func;
     else if ( !strcmp(name,"encrypt_is_encrypting") )
-        (FARPROC) p_encrypt_is_encrypting = (FARPROC) func;
+        p_encrypt_is_encrypting = (p_encrypt_is_encrypting_t) func;
     else if ( !strcmp(name,"encrypt_is_decrypting") )
-        (FARPROC) p_encrypt_is_decrypting = (FARPROC) func;
+        p_encrypt_is_decrypting = (p_encrypt_is_decrypting_t) func;
     else if ( !strcmp(name,"get_crypt_table") )
-        (FARPROC) p_get_crypt_table = (FARPROC) func;
+        p_get_crypt_table = (p_get_crypt_table_t) func;
     else if ( !strcmp(name,"des_is_weak_key") )
-        (FARPROC) p_des_is_weak_key = (FARPROC) func;
+        p_des_is_weak_key = (p_des_is_weak_key_t) func;
     else if ( !strcmp(name,"libdes_random_key") )
-        (FARPROC) libdes_random_key = (FARPROC) func;
+        libdes_random_key = (libdes_random_key_t) func;
     else if ( !strcmp(name,"libdes_random_seed") )
-        (FARPROC) libdes_random_seed = (FARPROC) func;
+        libdes_random_seed = (libdes_random_seed_t) func;
     else if ( !strcmp(name,"libdes_key_sched") )
-        (FARPROC) libdes_key_sched = (FARPROC) func;
+        libdes_key_sched = (libdes_key_sched_t) func;
     else if ( !strcmp(name,"libdes_ecb_encrypt") )
-        (FARPROC) libdes_ecb_encrypt = (FARPROC) func;
+        libdes_ecb_encrypt = (libdes_ecb_encrypt_t) func;
     else if ( !strcmp(name,"libdes_string_to_key") )
-        (FARPROC) libdes_string_to_key = (FARPROC) func;
+        libdes_string_to_key = (libdes_string_to_key_t) func;
     else if ( !strcmp(name,"libdes_fixup_key_parity") )
-        (FARPROC) libdes_fixup_key_parity = (FARPROC) func;
+        libdes_fixup_key_parity = (libdes_fixup_key_parity_t) func;
     else if ( !strcmp(name,"libdes_pcbc_encrypt") )
-        (FARPROC) libdes_pcbc_encrypt = (FARPROC) func;
+        libdes_pcbc_encrypt = (libdes_pcbc_encrypt_t) func;
     else if ( !strcmp(name,"crypt_dll_version") )
-        (FARPROC) p_crypt_dll_version = (FARPROC) func;
+        p_crypt_dll_version = (p_crypt_dll_version_t) func;
 #else /* NT */
     if ( !strcmp(name,"encrypt_parse") )
         p_encrypt_parse = (PFN*) func;
@@ -3878,8 +3902,8 @@ ck_crypt_loaddll( void )
         debug(F101, "K95 Crypt LoadLibrary failed","",rc) ;
         return(0);
     } else {
-        if (((FARPROC) p_crypt_dll_init =
-              GetProcAddress( hCRYPT, "crypt_dll_init" )) == NULL )
+        if ((p_crypt_dll_init =
+              (p_crypt_dll_init_t)GetProcAddress( hCRYPT, "crypt_dll_init" )) == NULL )
         {
             rc = GetLastError() ;
             debug(F111,"K95 Crypt GetProcAddress failed","crypt_dll_init",rc);
@@ -4023,8 +4047,10 @@ HINSTANCE hSSPI = NULL;
 NTLM is not supported on non-windows platforms
 #endif /* NT */
 
+typedef PSecurityFunctionTable (*p_SSPI_InitSecurityInterface_t)(void);
+
 static int sspi_dll_loaded = 0;
-static PSecurityFunctionTable (*p_SSPI_InitSecurityInterface)(void)=NULL;
+static p_SSPI_InitSecurityInterface_t p_SSPI_InitSecurityInterface=NULL;
 static PSecurityFunctionTable p_SSPI_Func = NULL;
 CredHandle hNTLMCred = { 0, 0 };
 static TimeStamp  NTLMTimeStampCred;
@@ -4166,8 +4192,8 @@ ck_sspi_loaddll( void )
 
     /* when we define UNICODE we must load the Unicode version of this function */
 
-    if (((FARPROC) p_SSPI_InitSecurityInterface =
-          GetProcAddress( hSSPI, "InitSecurityInterfaceA" )) == NULL )
+    if ((p_SSPI_InitSecurityInterface =
+          (p_SSPI_InitSecurityInterface_t)GetProcAddress( hSSPI, "InitSecurityInterfaceA" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "NTLM GetProcAddress failed",

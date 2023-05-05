@@ -42,17 +42,23 @@ char   *kstrdup(const char *str);
 #define strupr _strupr
 #define close _close
 #ifndef __WATCOMC__
+#ifndef __GNUC__
 #define stat _stat
+#endif /* __GNUC__ */
 #define fileno _fileno
+#ifndef __GNUC__
 #define fstat _fstat
 #define ftime _ftime
+#endif /* __GNUC__ */
 #define getpid _getpid
 #endif /* __WATCOMC__ */
 #define sys_errlist _sys_errlist
 #define unlink _unlink
 #define write _write
 #define creat _creat
+#ifndef __GNUC__
 #define utime _utime
+#endif /* __GNUC__ */
 #define mktemp _mktemp
 #define strnicmp _strnicmp
 #define read _read

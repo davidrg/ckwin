@@ -28,6 +28,12 @@
 
 /* EXE Input/Output communication routines as inline functions */
 
+#ifdef NT
+#ifdef __GNUC__
+#define _Inline static
+#endif /* __GNUC__ */
+#endif /* NT */
+
 _Inline U32 exe_connect(void)
 {
    /* Connection to be established by EXE */

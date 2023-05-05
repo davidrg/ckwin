@@ -41,7 +41,8 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 #endif /* CKT_NT35_OR_31 */
 #endif
 
-#if _MSC_VER < 1300
+#ifndef __GNUC__
+#if defined(_MSC_VER) && _MSC_VER < 1300
 typedef unsigned long ULONG_PTR;
 #endif /* _MSC_VER < 1300 */
 
@@ -52,6 +53,7 @@ typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef unsigned long DWORD_PTR, *PDWORD_PTR;
 #endif /* _WIN64 */
 #endif
+#endif /* __GCC__ */
 
 #ifdef CKT_NT35_OR_31
 /* Windows NT 3.1 and 3.50 don't have ShowWindowAsync - use ShowWindow instead */
@@ -495,7 +497,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_QUERYENDSESSION:
         debug(F111,"MainWndProc","WM_QUERYENDSESSION",msg);
         result = TRUE;
-#if _MSC_VER > 1010
+#if !defined(_MSC_VER) || _MSC_VER > 1010
         if ( lparam & ENDSESSION_LOGOFF ) {
 #else
         /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
@@ -512,7 +514,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
     case WM_ENDSESSION:
         debug(F111,"MainWndProc","WM_ENDSESSION",msg);
-#if _MSC_VER > 1010
+#if !defined(_MSC_VER) || _MSC_VER > 1010
         if ( wparam && (lparam & ENDSESSION_LOGOFF) ) {
 #else
         /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
@@ -1797,7 +1799,7 @@ EditStreamCallback(DWORD_PTR dwCookie,
 
 static EDITSTREAM EditStream = { 0, 0, EditStreamCallback };
 
-#if _MSC_VER <= 1020
+#if defined(_MSC_VER) && _MSC_VER <= 1020
 /* Visual C++ 4.2 and earlier don't know about these. They require Rich Edit
  * 2.0 or newer */
 #ifndef EM_AUTOURLDETECT

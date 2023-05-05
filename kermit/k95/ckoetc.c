@@ -87,8 +87,7 @@ unsigned char ibuf[MAXELENGTH+1];
 unsigned char ebuf[MAXELENGTH+MAXELENGTH+5];
 unsigned char dbuf[MAXELENGTH+1];
 
-CHAR *
-ck_oox(s, key) char * s; char * key; {
+char * ck_oox(char * s, char * key)  {
 
     unsigned long left, right;
     unsigned int i, k, l, n;

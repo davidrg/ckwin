@@ -2138,7 +2138,7 @@ extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(CHAR);
 extern struct keytab tcstab[];
 extern int ntcs;
 #endif /* COMMENT */
-extern int maxow, maxow_usr; owwait;    /* Overlapped I/O variables */
+extern int maxow, maxow_usr, owwait;    /* Overlapped I/O variables */
 #endif /* NT */
 #endif /* OS2 */
 
