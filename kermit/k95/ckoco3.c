@@ -12815,7 +12815,7 @@ vtcsi(void)
             ansiext = TRUE ;
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
             goto LB2000;
-        case '>':               /* Heath/Zenith/AnnArbor extension */
+        case '>':               /* Heath/Zenith/AnnArbor/xterm extension */
             zdsext = TRUE ;
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
             goto LB2000;
@@ -17743,7 +17743,29 @@ vtcsi(void)
                      }
                      }
                 }
-                else {
+                else if (zdsext) { /* Heath/Zenith/AnnArbor/xterm extension */
+                    switch ( pn[1] ) {
+                        case 2: {
+                            /* xterm - set one or more features of the title
+                             * modes (XTSMTITLE) */
+                            switch ( pn[2] ) {
+                                case 0: /* Set window/icon labels using hexadecimal */
+                                    break;
+                                case 1: /* Query window/icon labels using hexadecimal */
+                                    break;
+                                case 2: /* Set window/icon labels using UTF-8. */
+                                    break;
+                                case 3: /* Query window/icon labels using UTF-8. */
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                } else {
                     switch ( pn[1] ) {
                     case 24:    /* DECSLPP - Set screen height */
                     case 25:
