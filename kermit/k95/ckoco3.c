@@ -17871,7 +17871,16 @@ vtcsi(void)
                         break;
                     case 21: /* Report Window Label */
                         break;
-                    case 18: /* Report size of Window in chars */
+                    case 18: { /* Report size of Window in chars */
+                        char buf[20];
+                        int width, height;
+
+                        width = VscrnGetWidth(vmode);
+                        height = VscrnGetHeight(vmode);
+
+                        sprintf(buf, "%c8;%d;%dt", _CSI, height, width);
+                        sendchars(buf, strlen(buf));
+
                         break;
                     case 14: /* Report size of Window in pixels */
                         break;
