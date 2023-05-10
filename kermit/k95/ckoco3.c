@@ -13630,7 +13630,7 @@ vtcsi(void)
                         /* pn[1] contains new color */
                         if ( !sgrcolors )
                             break;
-                        borderattribute = sgrcols[pn[1]%10];
+                        borderattribute = sgrcols[pn[1]%8];
                         setborder();
                     }
                     else if ( ISBA80(tt_type_mode) ) {
@@ -16342,7 +16342,7 @@ vtcsi(void)
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 30;
                             else
-                                l = sgrcols[pn[j] - 30];
+                                l = sgrcols[(pn[j] - 30)%8];
                             if (decscnm) {
                                 i = (attribute & 0x8F);
                                 attribute = (i | ((l << 4)));
@@ -16415,7 +16415,7 @@ vtcsi(void)
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 40;
                             else
-                                l = sgrcols[pn[j] - 40];
+                                l = sgrcols[(pn[j] - 40)%8];
                             if (!decscnm) {
                                 i = (attribute & 0x8F);
                                 attribute = (i | ((l << 4)));
@@ -16518,7 +16518,7 @@ vtcsi(void)
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 90;
                             else
-                                l = sgrcols[pn[j] - 90];
+                                l = sgrcols[(pn[j] - 90)%8];
                             l += 8;     /* 8th bit high */
                             if (decscnm
 #ifdef COMMENT
@@ -16578,7 +16578,7 @@ vtcsi(void)
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 100;
                             else
-                                l = sgrcols[pn[j] - 100];
+                                l = sgrcols[(pn[j] - 100)%8];
                             l += 8;     /* 8th bit high */
                             if (!decscnm
 #ifdef COMMENT
