@@ -7688,6 +7688,8 @@ defaultkeymap( int terminal ) {
         return defvt100km(terminal);
     case TT_BEOS:
         return defbetermkm( terminal );
+    case TT_XTERM:  /* TODO: What should the default xterm keymap be? */
+        return defvtpckm( terminal );
     case TT_LINUX:
         return deflinuxkm( terminal );
     case TT_SCOANSI:
@@ -7700,10 +7702,14 @@ defaultkeymap( int terminal ) {
         return defannarbor( terminal );
     case TT_VT220:
     case TT_VT320:
+    case TT_VT420:
+    case TT_VT520:
     case TT_WY370:
         return defvt200km( terminal );
     case TT_VT220PC:
     case TT_VT320PC:
+    case TT_VT420PC:
+    case TT_VT520PC:
         return defvtpckm( terminal );
     case TT_97801:
         return defsnikm( terminal );

@@ -461,12 +461,14 @@ extern int send_c1_usr ;                /* User default for send_c1 */
   * 13 - Local editing
     15 - Technical character set
   * 16 - Locator device port
+  ? 17 - Terminal state interrogation (is this an xterm extension??)
   * 18 - Windowing Capability
   * 19 - Dual sessions
   * 21 - Horizontal Scrolling
     22 - Color
     23 - Greek
   * 24 - Turkish
+  ? 28 - Rectangular editing (is this an xterm extension??)
     42 - ISO Latin-2
     44 - PC Term
     45 - Soft-key mapping
@@ -509,10 +511,12 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "WY370", {"WYSE-370","WYSE370","WY350",NULL},"[?63;1;2;6;8;9;15;44c",  /* WYSE 370 (same as VT320) */
     "97801", {"SNI-97801",NULL},                "[?62;1;2;6;8;9;15;44c",  /* Sinix 97801 */
     "AAA", { "ANNARBOR", "AMBASSADOR",NULL}, "11;00;00", /* Ann Arbor Ambassador */
-#ifdef COMMENT
-    "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
-    "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
-#endif /* COMMENT */
+
+    "VT420",   {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
+    "VT420PC", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 w/ PC keyboard*/
+    "VT525",   {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
+    "VT525PC", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 w/ PC keyboard*/
+
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
@@ -520,6 +524,16 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "ADM5",   {NULL}, "", /* LSI ADM 5 */
     "VTNT",   {NULL},                           "",                       /* Microsoft NT VT */
     "IBM3101",{"I3101",NULL},   ""                       /* IBM 31xx */
+#ifdef CK_XTERM_EMULATION
+    ,"XTERM",  {NULL},                             "[?64;1;2;6;8;9;15;22c",                    /* XTerm */
+    /* TODO: Xterm also supports (as of 2023-05-08):
+     *   16;	Locator port
+     *   17;	Terminal state interrogation
+     *   18;	User windows
+     *   21;	Horizontal scrolling
+     *   28 	Rectangular editing
+     * */
+#endif
 };
 int max_tt = TT_MAX;                    /* Highest terminal type */
 
@@ -12900,12 +12914,14 @@ vtcsi(void)
             } else 
             /* ANSI.SYS save cursor position */
             if ( ISANSI(tt_type_mode) ||
-                IS97801(tt_type_mode))
+                IS97801(tt_type_mode) ||
+                ISXTERM(tt_type_mode))
                 savecurpos(VTERM,0);
             break;
         case 'u': /* ANSI.SYS restore cursor position */
             if ( ISANSI(tt_type_mode) ||
-                IS97801(tt_type_mode))
+                IS97801(tt_type_mode) ||
+                ISXTERM(tt_type_mode))
                 restorecurpos(VTERM,0);
             break;
         case 'U': /* SCO ANSI Reset Initial Screen */
@@ -13210,7 +13226,7 @@ vtcsi(void)
                     }
                     break;
                 case 'r':       /* DECCARA - Change Attr in Rect Area */
-                    if ( ISVT420(tt_type_mode) )
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode))
                     {
                         int w, h, x, y, z;
                         /*
@@ -13333,7 +13349,7 @@ vtcsi(void)
                     }
                     break;
                 case 't':       /* DECRARA - Reverse Attr in Rect Area */
-                    if ( ISVT420(tt_type_mode) )
+                    if ( ISVT420(tt_type_mode)  || ISXTERM(tt_type_mode))
                     {
                         int w, h, x, y, z;
                         /*
@@ -13443,7 +13459,7 @@ vtcsi(void)
                     }
                     break;
                 case 'v':       /* DECCRA - Copy Rect Area */
-                    if ( ISVT420( tt_type_mode) )
+                    if ( ISVT420( tt_type_mode) || ISXTERM(tt_type_mode))
                     {
                         USHORT * data = NULL;
                         int w, h, x, y;
@@ -13505,7 +13521,7 @@ vtcsi(void)
                     }
                     break;
                 case 'x':       /* DECFRA - Fill Rect Area */
-                    if ( ISVT420(tt_type_mode) ) {
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ) {
                         /* pn[1] - fill char                 */
                         /* pn[2] - top-line border default=1 */
                         /* pn[3] - left-col border default=1 */
@@ -13530,7 +13546,7 @@ vtcsi(void)
                     }
                     break;
                 case 'z':       /* DECERA - Erase Rect Area */
-                    if ( ISVT420(tt_type_mode) ) {
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ) {
                         /* pn[1] - top-line border default=1 */
                         /* pn[2] - left-col border default=1 */
                         /* pn[3] - bot-line border default=Height */
@@ -13552,7 +13568,7 @@ vtcsi(void)
                     }
                     break;
                 case '{':       /* DECSERA - Selective Erase Rect Area */
-                    if ( ISVT420(tt_type_mode) ) {
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ) {
                         /* pn[1] - top-line border default=1 */
                         /* pn[2] - left-col border default=1 */
                         /* pn[3] - bot-line border default=Height */
@@ -13579,7 +13595,7 @@ vtcsi(void)
                 achar = (escnext<=esclast)?escbuffer[escnext++]:0;
                 switch (achar) {
                 case 'x':       /* DECSACE - Select Attribute Change Extent */
-                    if ( ISVT420(tt_type_mode) )
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) )
                     {
                         /*
                          * 0 - DECCARA or DECRARA affect the stream of character
@@ -14004,7 +14020,8 @@ vtcsi(void)
                     if ( ISHFT(tt_type_mode) ||
                          ISLINUX(tt_type_mode) ||
                          ISQANSI(tt_type_mode) ||
-                         ISANSI(tt_type_mode)) {
+                         ISANSI(tt_type_mode) ||
+                         ISXTERM(tt_type_mode)) {
                         if ( pn[1] < 1 || pn[1] > VscrnGetWidth(VTERM) )
                             break;
                         lgotoxy(VTERM,pn[1],wherey[VTERM]);
@@ -14218,7 +14235,8 @@ vtcsi(void)
                         case 9: /* DECINLM - Interlace */
                             /* XTERM - Send Mouse X & Y on button press */
 #ifdef OS2MOUSE
-                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                    ISXTERM(tt_type_mode)) {
                                 /* The linux console terminal, as well as many
                                  * other terminal emulators, implement XTERM
                                  * mouse tracking */
@@ -14830,7 +14848,8 @@ vtcsi(void)
                            case 9: /* DECINLM - Interlace */
                                /* XTERM - Don't Send Mouse X&Y on button press */
 #ifdef OS2MOUSE
-                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode)) {
+                               if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                       ISXTERM(tt_type_mode)) {
                                    /* The linux console terminal, as well as many
                                     * other terminal emulators, implement XTERM
                                     * mouse tracking */
@@ -18251,7 +18270,7 @@ vtcsi(void)
                 achar = (escnext<=esclast)?escbuffer[escnext++]:0;
                 switch (achar) {
                 case '~':
-                    if ( ISVT420(tt_type_mode) ) {
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ) {
                         /* DECDC - Delete Column */
                         viocell cell ;
                         cell.c = SP ;
@@ -18273,7 +18292,7 @@ vtcsi(void)
                     }
                     break;
                 case '}':
-                    if ( ISVT420(tt_type_mode) ) {
+                    if ( ISVT420(tt_type_mode) || ISXTERM(tt_type_mode) ) {
                         /* DECIC - Insert Column */
                         viocell cell ;
                         cell.c = SP ;
