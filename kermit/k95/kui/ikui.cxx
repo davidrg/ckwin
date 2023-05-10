@@ -234,6 +234,13 @@ KuiSetTerminalRunMode(int x)
     }
 }
 
+int KuiGetTerminalRunMode() {
+    long ret = GetWindowLong(kui->getTerminal()->hwnd(), GWL_STYLE);
+
+    if (ret & WS_MINIMIZE) return 2;
+    return 1;
+}
+
 int
 KuiFileDialog(char * title, char * def, char * result, int rlen,
                   BOOL downloadButton, BOOL openFile)
