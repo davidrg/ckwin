@@ -12936,8 +12936,14 @@ vtcsi(void)
                 break;
             }
             break;
-        case '$':
-            achar = (escnext<=esclast)?escbuffer[escnext++]:0;
+        case '$': {/* These things below should probably only appear in a DCS string */
+            int acharTmp = (escnext <= esclast) ? escbuffer[escnext + 1] : 0;
+            if (acharTmp != '}' && acharTmp != '-' && acharTmp != '~') {
+                /* Next character isn't something we handle here - skip ahead */
+                goto LB2003;
+            }
+
+            achar = (escnext <= esclast) ? escbuffer[escnext++] : 0;
             switch (achar) {
             case '}':
                 /* DECSASD - Select Active Status Display */
@@ -12950,6 +12956,7 @@ vtcsi(void)
                 break;
             }
             break;
+        }
         case 'S':
             if ( private && ISAIXTERM(tt_type_mode) ) {
                 /* Show Status Line */
