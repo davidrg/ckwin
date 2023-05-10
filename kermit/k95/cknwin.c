@@ -1539,6 +1539,10 @@ gui_win_run_mode(int x)
     return(1);
 }
 
+int gui_get_win_run_mode() {
+    return KuiGetTerminalRunMode();
+}
+
 int
 gui_file_dialog(char * preface, char * prompt, int fc,
                 char * def, char * result, int rlength)

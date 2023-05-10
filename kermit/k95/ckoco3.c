@@ -18033,6 +18033,15 @@ vtcsi(void)
                         }
                         break;
                     case 11: /* Report state of Window (normal/iconified) */
+#ifdef KUI
+                        char buf[20];
+                        if (gui_get_win_run_mode() == 2) {
+                            sprintf(buf, "%c%dt", _CSI, 2); /* Iconified */
+                        } else {
+                            sprintf(buf, "%c%dt", _CSI, 1); /* Not iconified */
+                        }
+                        sendchars(buf, strlen(buf));
+#endif
                         break;
                     }
                 }
