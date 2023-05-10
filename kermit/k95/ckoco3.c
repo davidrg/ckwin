@@ -6254,7 +6254,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     vtnt_index = 0;
     vtnt_read  = VTNT_MIN_READ;
 
-    /* Disable y active mouse reporting modes */
+    /* Disable any active mouse reporting modes */
     mouse_reporting_mode &= ~(MOUSEREPORTING_ACTIVE | MOUSEREPORTING_UNSUPPORTED);
 
     dokverb(VTERM,K_ENDSCN);
