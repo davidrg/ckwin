@@ -16157,8 +16157,14 @@ vtcsi(void)
 
                             /* 8 - 12 are ANSI X3.64 */
                         case 8: /* Turn on INVISIBLE */
-                        case 9: /* Turn on INVISIBLE (QANSI) */
                             attrib.invisible = TRUE; /* see wrtch */
+                                break;
+                        case 9:
+                            if (ISXTERM(tt_type_mode)) { /* ECMA-48 3rd edition */
+                                /* TODO: XTERM: crossed-out characters */
+                            } else { /* Turn on INVISIBLE (QANSI) */
+                                attrib.invisible = TRUE; /* see wrtch */
+                            }
                             break;
 
                         case 10:  /* Select Primary font */
@@ -16276,11 +16282,15 @@ vtcsi(void)
                                     charset(cs94,'U',&G[i]);
                             }
 
-                        case 21: /* Set Normal Intensity */
-                            if (attrib.bold)
-                                attrib.bold = FALSE;
-                            if (attrib.dim)
-                                attrib.dim = FALSE;
+                        case 21:
+                            if (ISXTERM(tt_type_mode)) { /* ECMA-48 3rd */
+                                /* TODO: XTERM: Doubly-underlined */
+                            } else { /* Set Normal Intensity */
+                                if (attrib.bold)
+                                    attrib.bold = FALSE;
+                                if (attrib.dim)
+                                    attrib.dim = FALSE;
+                            }
                             break;
                         case 22: /* Turn BOLD Off */
                             if (attrib.bold)
@@ -16322,10 +16332,18 @@ vtcsi(void)
                             attrib.reversed = FALSE;
                             break;
                         case 28:/* Turn INVISIBLE Off */
-                        case 29:/* QANSI */
                             if (!attrib.invisible)
                                 break;
-                            attrib.invisible = FALSE;
+                                attrib.invisible = FALSE;
+                                break;
+                        case 29:
+                            if (ISXTERM(tt_type_mode)) {
+                                /* TODO: XTERM: Not corssed-out (ECMA-48 3rd) */
+                            } else { /* QANSI - Turn INVISIBLE off */
+                                if (!attrib.invisible)
+                                    break;
+                                attrib.invisible = FALSE;
+                            }
                             break;
 
                         case 30: /* Colors */
@@ -16384,6 +16402,7 @@ vtcsi(void)
                         case 38:  /* enable underline option */
                             break;
                         case 39:  /* disable underline option */
+                            /* TODO: XTERM: Set foreground color to default, ECMA-48 */
                             /* Supported by SCO ANSI */
                             /* QANSI - restore fg color saved with */
                             /* CSI = Pn F                          */
@@ -16455,6 +16474,7 @@ vtcsi(void)
                             }
                             break;
                         case 49:
+                            /* TODO: XTERM: Set background color to default, ECMA-48 */
                             /* Supported by SCO ANSI */
                             /* QANSI - restore bg color saved with */
                             /* CSI = Pn G                          */
@@ -16504,7 +16524,7 @@ vtcsi(void)
                                 */
                                 break;
                             }
-                        case 90: /* Colors */
+                        case 90: /* Bright Colors (aixterm?) */
                         case 91:
                         case 92:
                         case 93:
@@ -16563,7 +16583,10 @@ vtcsi(void)
                                     }
                                 }
                             break;
-                        case 100:
+                        case 100: /* TODO: For aixterm and perhaps others, these should set
+                                   * bright foreground/background colours (
+                            /* TODO: rxvt: set forground and background to default
+                             * Aixterm (and probably others): set background to black */
                         case 101:
                         case 102:
                         case 103:
