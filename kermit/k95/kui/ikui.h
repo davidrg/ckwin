@@ -67,6 +67,7 @@ void KuiSetTerminalResizeMode(int);
 int  KuiGetTerminalResizeMode(void);
 void KuiSetTerminalRunMode(int);
 int KuiGetTerminalRunMode();
+void KuiGetTerminalMaximisedSize(BOOL inChars, int* width, int* height);
 #define STATUS_CMD_TERM   0
 #define STATUS_LOCUS      1
 #define STATUS_PROTO      2

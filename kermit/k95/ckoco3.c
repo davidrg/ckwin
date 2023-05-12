@@ -17971,12 +17971,32 @@ vtcsi(void)
                                 break;
                         }
                     }
-                    case 15: /* Report size of the screen in pixels */
+                    case 15: { /* Report size of the screen in pixels */
+                        int w, h;
+                        char buf[30];
+                        KuiGetTerminalMaximisedSize(FALSE, &w, &h);
+
+                        if (w < 50000 && h < 50000) { /* Limit response length */
+                            sprintf(buf, "%c5;%d;%dt", _CSI, h, w);
+                            sendchars(buf, strlen(buf));
+                        }
                         break;
+                    }
                     case 16: /* Report xterm character cell size in pixels */
                         break;
-                    case 19: /* Report the size of the screen in characters */
+                    case 19: { /* Report the size of the screen in characters */
+#ifdef KUI
+                        int w, h;
+                        char buf[30];
+                        KuiGetTerminalMaximisedSize(TRUE, &w, &h);
+
+                        if (w < 50000 && h < 50000) { /* Limit response length */
+                            sprintf(buf, "%c9;%d;%dt", _CSI, h, w);
+                            sendchars(buf, strlen(buf));
+                        }
+#endif
                         break;
+                    }
                     case 20: /* Report Icon Label */
                         break;
                     case 21: /* Report Window Label */
