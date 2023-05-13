@@ -522,8 +522,10 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
     "ADM3A",  {NULL}, "", /* LSI ADM 3A */
     "ADM5",   {NULL}, "", /* LSI ADM 5 */
-    "VTNT",   {NULL},                           "",                       /* Microsoft NT VT */
+    "VTNT",   {NULL},                           ""                        /* Microsoft NT VT */
+#ifdef COMMENT
     "IBM3101",{"I3101",NULL},   ""                       /* IBM 31xx */
+#endif
 #ifdef CK_XTERM_EMULATION
     ,"XTERM",  {NULL},                             "[?64;1;2;6;8;9;15;22c",                    /* XTerm */
     /* TODO: Xterm also supports (as of 2023-05-08):

@@ -1068,8 +1068,12 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_ADM3A   43       /*    LSI ADM 3A */
 #define     TT_ADM5    44		/*    LSI ADM 5 */
 #define     TT_VTNT    45       /*    Microsoft NT Virtual Terminal */
-#define     TT_IBM3101 46       /*    IBM 3101 - not implemented */
-#define     TT_XTERM   47       /*    xterm! */
+
+#ifdef CK_XTERM_EMULATION
+#define     TT_XTERM   46       /*    xterm! */
+#else
+#define     TT_XTERM   97       /*    xterm! */
+#endif
 
 /* TODO: Graphics!
  *  -> This would be Windows/KUI only - no way of supporting it in
@@ -1094,6 +1098,7 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_MAX   TT_VTNT
 #endif /* CK_XTERM_EMULATION */
 
+#define     TT_IBM3101 98       /*    IBM 3101 - not implemented */
 #define     TT_TEK40 99	/*    Tektronix 401x */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
