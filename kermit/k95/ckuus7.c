@@ -13,7 +13,8 @@
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 14 April 2023 (ANSI function declarations and prototypes)
+    Last big update: 14 April 2023 (ANSI function declarations and prototypes)
+    Last update: 5 May 2023 (change semicolon to comma in extern statement)
 */
 
 /*

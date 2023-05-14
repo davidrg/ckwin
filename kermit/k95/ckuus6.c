@@ -4583,13 +4583,13 @@ dogrep() {
     char * arrayname = "";              /* Name of array */
     int arraynum = -1;                  /* Numeric identifier of array */
     int arrayslot = 1;                  /* Array element number */
-    char *rp1 = "";                     /* Result Part 1 (filename) */
-    char *rp2 = "";                     /* Result Part 2 (line number) */
-    char *rp3 = "";                     /* Result Part 3 (a matching line */
     char macroname[CKMAXPATH+1];        /* Macro name buffer */
     char macrodef[CKMAXPATH+1];         /* Macro definition buffer */
 #endif /* NOSPL */
 
+    char *rp1 = "";                     /* Result Part 1 (filename) */
+    char *rp2 = "";                     /* Result Part 2 (line number) */
+    char *rp3 = "";                     /* Result Part 3 (a matching line */
 /*
   gr_noli produces no result listings, arrays, or macros;
   if simply sets the SUCCESS or FAILURE code of the GREP command.
@@ -4895,11 +4895,12 @@ dogrep() {
     debug(F101,"GREP gr_nums","",gr_nums);
     debug(F101,"GREP gr_nobk","",gr_nobk);
     debug(F101,"GREP gr_noma","",gr_noma);
+#ifndef NOSPL
     debug(F101,"GREP gr_macr","",gr_macr);
+#endif /* NOSPL */
     debug(F101,"GREP gr_name","",gr_name);
     debug(F101,"GREP gr_coun","",gr_coun);
     debug(F101,"GREP gr_noli","",gr_noli);
-    debug(F101,"GREP gr_noli","",gr_macr);
     debug(F101,"GREP wild","",wild);
 
     while (1) {                         /* Loop for each file */
@@ -5000,6 +5001,7 @@ dogrep() {
                 rp3 = line;
                 if (cmd_rows > 0 && cmd_cols > 0)
                   sline += (len / cmd_cols) + 1;
+#ifndef NOSPL
                 if (array) {
                     char tmpstr[10000];
                     int tmplen;
@@ -5031,6 +5033,7 @@ dogrep() {
                     debug(F110,"GREP tmpstr","",tmpstr);
                     makestr(&(ap[arrayslot++]),tmpstr);
                 } else {
+#endif  /* NOSPL */
                     debug(F100,"GREP printing line","",0);
                     if (wild) {
                         if ((int)strlen(rp2))
@@ -5046,7 +5049,9 @@ dogrep() {
                     if (sline > cmd_rows - 3) {
                         if (!askmore()) { goto xgrep; } else { sline = 0; }
                     }
+#ifndef NOSPL
                 }
+#endif  /* NOSPL */
                 debug(F100,"GREP X5","",0);
                 debug(F101,"GREP X5 mc","",mc);
                 debug(F101,"GREP X5 dispmode","",dispmode);

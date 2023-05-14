@@ -16,6 +16,7 @@
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Update: Fri Dec  2 07:26:48 2022 (changes for XYZMODEM internal)
     Update: Wed Apr 12 15:40:01 2023 (ansified 19 function definitions)
+    Update: Sat May  6 13:01:37 2023 (explicit declaration of initproto)
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -3466,9 +3467,6 @@ static int sexptrunc = 0;		/* Flag to force all results to int */
 #include <math.h>                       /* Floating-point functions */
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
-_PROTOTYP( char * fpformat, (CKFLOAT, int, int) );
-_PROTOTYP( CKFLOAT ckround, (CKFLOAT, int, char *, int) );
-
 extern char math_pi[];                  /* Value of Pi */
 extern int sexpecho;                    /* SET SEXPRESSION ECHO value */
 extern char * sexpval;                  /* Last top-level S-Expression value */
@@ -4068,7 +4066,13 @@ dosexp(s) char *s;
                         fpresult -= fpj;
                     }
 #ifdef FNFLOAT
-                    if (result != fpresult) fpflag++;
+                /*
+                  This gets warnings with some old compilers such as HP C
+                  76.3.  CKFLOAT should be 'double', fpresult is CK_OFF_T,
+                  which is a long integer.  Casting fpresults to (CKFLOAT)
+                  makes no difference.  The warning appears nowhere else.
+                */
+                    if ((CKFLOAT)result != fpresult) fpflag++;
 #endif	/* FNFLOAT */
                     s2 = (fpflag && !sexptrunc) ?
 			fpformat(fpresult,0,0) : ckfstoa(result);
@@ -6956,6 +6960,16 @@ setproto() {                            /* Select a file transfer protocol */
     char s4[XPCMDLEN+1], s5[XPCMDLEN+1], s6[XPCMDLEN+1], s7[XPCMDLEN+1];
     char * p1 = s1, * p2 = s2, *p3 = s3;
     char * p4 = s4, * p5 = s5, *p6 = s6, *p7 = s7;
+    /*
+      initproto() is prototyped in ckcfnp.h but for some reason when doing
+      a -DNOSPL build we get "warning: implicit declaration of function
+      'initproto'", referring to an invocation of it in this routine.  This
+      extern statement silences the warning.  - fdc 6 May 2023
+    */
+#ifdef CK_ANSIC
+    extern VOID
+     initproto( int,char *,char *,char *,char *,char *,char *,char * );
+#endif  /* CK_ANSIC */
 
 #ifdef XYZ_INTERNAL
     extern int p_avail;

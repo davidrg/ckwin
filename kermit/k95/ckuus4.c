@@ -11051,7 +11051,6 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 
 #ifndef NODIAL
       case FN_PNCVT: {                  /* Convert phone number */
-          extern char * pncvt();
           failed = 0;
           p = pncvt(bp[0]);
           if (!p) p = "";

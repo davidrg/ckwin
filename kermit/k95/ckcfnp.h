@@ -28,7 +28,7 @@
 #ifdef CK_ANSIC
 /*
   #include ckcker.h was added 27 April 2023 because certain builds (like
-  "inux+ssl") were failing.  ckcker.h defines data types and other symbols
+  "linux+ssl") were failing.  ckcker.h defines data types and other symbols
   referenced in this file.  It should be included by every module before
   including this one.  But just in case there's an omission, including it 
   here too does no harm because ckcker.h protects itself against multiple
@@ -37,9 +37,16 @@
 */
 #include "ckcdeb.h"
 #include "ckcker.h"
+#include "ckucmd.h"
 
 /* Prototype for main()/Main() */
 MAINTYPE MAINNAME( int argc, char ** argv ); 
+
+/* PROTOTYPES ADDED 6 May 2023... */
+
+#ifdef CK_AUTHENTICATION
+int show_auth( int );
+#endif /* CK_AUTHENTICATION */
 
 /* PROTOTYPES ADDED 11-14 April 2023... */
 
@@ -63,14 +70,19 @@ char * getsysid( char * );
 int getsysix( char * );
 int isabsolute( char * path );
 int is_a_tty( int );
-int mlook( struct mtab [], char *, int );
 void initxlist ( void );
 void initflow ( void );
 void makever ( void );
 void dourl ( void );
 int getiobs ( void );
+
+#ifndef NOSPL
+/* struct mtab [] exists only if NOSPL isn't defined */
+int mlook( struct mtab [], char *, int );
 int mxlook( struct mtab [], char *, int );
 int mxxlook ( struct mtab [], char *, int );
+#endif /* NOSPL */
+
 int savhistory (char *, int);
 char * ckltoa ( long );
 char * ckultoa ( unsigned long );
@@ -308,17 +320,16 @@ int isword( int );
 int keepalive( int, int );
 int litcmd( char **, char **dest, int );
 int lkup( char * );
+#ifndef NOLOCAL
 int locate_srv_dns( char *, char *, char *, struct sockaddr **, int * );
+#endif /* NOLOCAL */
 int locate_txt_rr( char *, char *, char ** );
 int lookup( struct keytab [], char *, int, int * );
 int makebuf( int, int, CHAR [], struct pktinfo * );
 int matchname( char *, int, int );
 int mkrbuf( int );
 int mksbuf( int );
-int mlook( struct mtab [], char *, int );
 int msleep( int );
-int mxlook( struct mtab [], char *, int );
-int mxxlook( struct mtab [], char *, int );
 int nack( int );
 int netinc( int );
 int netopen( char *, int *, int );
@@ -446,7 +457,9 @@ int zvuser( char * );
 int zxcmd( int, char * );
 int zxin( int, char *, int );
 int zzstring( char *, char **, int * );
+#ifndef NOLOCAL
 long dologshow( int );
+#endif  /* NOLOCAL */
 long hextoulong( char *, int );
 long mjd( char * );
 long pty_cleanup( char *, int, int );
@@ -481,7 +494,9 @@ void fatal( char * );
 void fatal2( char *, char * );
 void freelocal( int );
 void freerpkt( int );
+#ifndef NOLOCAL
 void fxdinit( int );
+#endif /* NOLOCAL */
 void init_termbuf( int );
 void initial( FILE *, FILE * );
 void initmdm( int );
@@ -522,7 +537,7 @@ void shods( char * );
 void shokeycode( int, int );
 #else
 void shokeycode( int );
-#endif
+#endif /* OS2 */
 void shostrdef( CHAR * );
 void shotcs( int, int );
 void tn_debug( char * );

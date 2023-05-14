@@ -6194,7 +6194,12 @@ static int smg_inited = 0;              /* flag if smg initialized */
 #define wrefresh(cursrc) touchwin(scr)
 
 static void
-move(row, col) int row, col; {
+#ifdef CK_ANSIC
+move(int row, int col)
+#else
+move(row, col) int row; int col;
+#endif /* CK_ANSIC */
+{
     /* Change from 0-based for curses to 1-based for SMG */
     if (!smg_open)
       return;
@@ -6384,7 +6389,7 @@ int
 #ifdef CK_ANSIC
 ck_curpos(int row, int col)
 #else
-ck_curpos(row, col) int row, int col;
+ck_curpos(row, col) int row; int col;
 #endif  /* CK_ANSIC */
  {
     debug(F111,"VMS smg ck_curpos",ckitoa(row),col);

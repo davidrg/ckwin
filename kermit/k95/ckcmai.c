@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "03 May 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230503"          /* Keep them in sync */
-/* Wed May  3 13:20:37 2023 */
+#define EDITDATE  "09 May 2023"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20230509"          /* Keep them in sync */
+/* Tue May  9 14:03:56 2023 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -61,8 +61,8 @@ char *ck_s_test = "Beta";
 char *ck_s_tver = "09/Windows-04";
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
-char *ck_s_test = "Pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "09";			/* Test version number */
+char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "09";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -103,9 +103,9 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
   Macintosh), just C-Kermit for each platform (except the original Mac).
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "403";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.403";           /* eXtended version string */
-long  ck_l_ver = 1000403L;              /* C-Kermit version number */
+char *ck_s_edit = "404";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.404";           /* eXtended version string */
+long  ck_l_ver = 1000404L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
@@ -277,7 +277,7 @@ ACKNOWLEDGMENTS:
    Ian Beckwith, Debian Project
    Nelson Beebe, U of Utah
    Gerry Belanger, Cognitronics
-   Edward Berner,
+   Edward Berner
    Karl Berry, UMB
    Mark Berryman, SAIC
    Dean W Bettinger, SUNY
@@ -321,7 +321,7 @@ ACKNOWLEDGMENTS:
    Nick Efthymiou
    Paul Eggert, Twin Sun, Inc., El Segundo, CA
    Bernie Eiben, DEC
-   Peter Eichhorn, Assyst International
+   Peter Eichhorn, Assyst International, Munich, Germany
    Kristoffer Eriksson, Peridot Konsult AB, Oerebro, Sweden
    John R. Evans, IRS, Kansas City
    Glenn Everhart, RCA Labs
@@ -336,7 +336,7 @@ ACKNOWLEDGMENTS:
    Chuck Fuller, Westinghouse Corporate Computer Services
    Andy Fyfe, Caltech
    Christine M. Gianone, Columbia U
-   David Goodwin, NZ,
+   David Goodwin, NZ
    John Gilmore, UC Berkeley
    Madhusudan Giyyarpuram, HP
    Rainer Glaschick, Siemens AG, Paderborn
@@ -367,7 +367,7 @@ ACKNOWLEDGMENTS:
    Ron Heiby, Technical Systems Division, Motorola Computer Group
    Steve Hemminger, Tektronix
    Christian Hemsing, RWTH Aachen, Germany (OS-9)
-   Randolph Herber, US DOE,
+   Randolph Herber, US DOE
    Andrew Herbert, Monash Univ, Australia
    Marcus Herbert, Germany
    Mike Hickey, ITI
@@ -386,6 +386,7 @@ ACKNOWLEDGMENTS:
    Eric F Jones, AT&T
    Luke Jones, AT&T
    Peter Jones, U of Quebec Montreal
+   Steven M Jones, the Living Computer Museum
    Phil Julian, SAS Institute
    Peter Kabal, U of Quebec
    Mic Kaczmarczik, U of Texas at Austin
@@ -423,6 +424,7 @@ ACKNOWLEDGMENTS:
    Tor Lillqvist, Helsinki U, Finland
    David-Michael Lincke, U of St Gallen, Switzerland
    Robert Lipe (for SCO makefile entries & advice)
+   Dr. Eberhard W Lisse, Namibia
    Dean Long
    Mike Long, Analog Devices, Norwood MA
    Kevin Lowey, U of Saskatchewan (OS/2)
@@ -487,7 +489,7 @@ ACKNOWLEDGMENTS:
    Stew Rubenstein, Harvard U (VMS)
    Gerhard Rueckle, FH Darmstadt, Fb. E/Automatisierungstechnik
    John Santos, EG&H
-   Mark Sapiro,
+   Mark Sapiro
    Bill Schilit, Columbia U
    Ulli Schlueter, RWTH Aachen, Germany (OS-9, etc)
    Michael Schmidt, U of Paderborn, Germany
@@ -512,7 +514,7 @@ ACKNOWLEDGMENTS:
    Fred Smith, Merk / Computrition
    Richard S Smith, Cal State
    Tim Sneddon
-   Bernard Spil,
+   Bernard Spil
    Ryan Stanisfer, UNT
    Bertil Stenstroem, Stockholm University Computer Centre (QZ), Sweden
    James Sturdevant, CAP GEMENI AMERICA, Minneapolis
@@ -2017,7 +2019,7 @@ docmdline(threadinfo) VOID * threadinfo;
 #ifdef CK_ANSIC
 void ikslogin ( void )
 #else
-VOID iksolgin (  )
+VOID ikslogin (  )
 #endif /* CK_ANSIC */
 {
     if (sstelnet

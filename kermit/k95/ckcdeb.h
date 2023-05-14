@@ -2,7 +2,7 @@
 
 /*
   For recent additions search below for "2021" and "2022" and "2023".
-  Most recent update: Wed May  3 19:29:18 2023
+  Most recent update: Fri May  5 15:32:58 2023
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
