@@ -282,6 +282,11 @@ ckcdebu.h
 ckuker.nr
 ckustr.sed
 ckutiox.c
+kermit/k95/android.mk
+kermit/k95/android.txt
+kermit/k95/ckermit.ini
+kermit/k95/ckpker.mak
+kermit/k95/ckubs2.mak
 
 # These files belong to C-Kermit for OpenVMS,
 ckvvms.h
@@ -293,6 +298,11 @@ ckvioc.h
 ckvioc.c
 ckvfio.c
 ckvcvt.c
+ckvker.com
+ckvker.hlp
+ckvker.mms
+ckvold.com
+
 kermit/k95/ca_certs.pem
 
 # These are the outputs from the mingw resource compiler

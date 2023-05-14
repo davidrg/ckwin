@@ -4,11 +4,11 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Thu May 12 12:36:22 2022
+    Thu Feb 16 15:57:01 2023
 */
 #ifndef CKUUSR_H
 #define CKUUSR_H
@@ -2050,6 +2050,7 @@ struct stringint {			/* String and (wide) integer */
 #define XZRMD 23	/* rmdir */
 #define XZXIT 24	/* Exit */
 #define XZCDU 25        /* CDUP */
+#define XZSTA 26        /* Status (fdc 2023-02-16) */
 
 /* SET INPUT command parameters */
 
@@ -2881,9 +2882,6 @@ _PROTOTYP( int incvar, (char *, CK_OFF_T, int) );
 _PROTOTYP( int ckdial, (char *, int, int, int, int) );
 _PROTOTYP( int hmsg, (char *) );
 _PROTOTYP( int hmsga, (char * []) );
-_PROTOTYP( int mlook, (struct mtab [], char *, int) );
-_PROTOTYP( int mxlook, (struct mtab [], char *, int) );
-_PROTOTYP( int mxxlook, (struct mtab [], char *, int) );
 _PROTOTYP( int prtopt, (int *, char *) );
 _PROTOTYP( CHAR rfilop, (char *, char) );
 _PROTOTYP( int setcc, (char *, int *) );

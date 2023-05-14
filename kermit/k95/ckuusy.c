@@ -12,13 +12,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2014,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Most recent update:
-    Sun Feb 23 09:39:28 2014
+    Fri Apr 14 14:37:46 2023 (function prototypes and declations)
 */
 #include "ckcdeb.h"
 
@@ -51,6 +51,38 @@ static int xx_ftp( char *, char * );
 extern struct _kui_init kui_init;
 #endif /* KUI */
 #endif /* OS2 */
+
+/*
+  ckcfnp.c: new to C-Kermit 1.0.  Prototypes for functions used in
+  multiple modules.  This header file should be included only after
+  all others that define symbols or typedefs needed for the prototypes.
+*/
+#include "ckcfnp.h"
+
+/* Prototypes for static functions used only in this module */
+#ifdef CK_ANSIC
+#ifdef USE_CL_INT
+/*
+  Clang 16 wrongly says cl_int() has prototype.
+  But it does have a prototype and it has an ANSI function declaration.
+  In Clang 17 this will be a fatal error and C-Kermit can't be built any more.
+  cl_int() is for trapping Ctrl-C before C-Kermit enters its command parser.
+  Let's see if we can live without it - fdc, Fri Apr 14 14:35:16 2023
+*/  
+static SIGTYP cl_int( int );            /* SIGTYP is typdef'd in ckcdeb.h */
+#endif /* USE_CL_INT */
+static int pmsg( char * );
+static int fmsg( char * );
+#ifdef TNCODE
+static int dotnarg( char );
+#endif /* TNCODE */
+#ifdef RLOGCODE
+static int dorlgarg( char x );
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+static int dossharg(char x);
+#endif /* SSHBUILTIN */
+#endif /* CK_ANSIC */
 
 extern int inserver, fncnv, f_save, xfermode;
 #ifdef PATTERNS
@@ -151,16 +183,6 @@ extern unsigned char NetBiosAdapter;
 #undef XFATAL
 #endif /* XFATAL */
 
-#ifdef TNCODE
-_PROTOTYP(static int dotnarg, (char x) );
-#endif /* TNCODE */
-#ifdef RLOGCODE
-_PROTOTYP(static int dorlgarg, (char x) );
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-_PROTOTYP(static int dossharg, (char x) );
-#endif /* SSHBUILTIN */
-
 int haveftpuid = 0;			/* Have FTP user ID */
 static int have_cx = 0;			/* Have connection */
 
@@ -178,10 +200,27 @@ extern int nmdm, telephony;
 extern struct keytab mdmtab[];
 extern int usermdm, dialudt;
 #endif /* NODIAL */
-_PROTOTYP(static int pmsg, (char *) );
-_PROTOTYP(static int fmsg, (char *) );
-static int pmsg(s) char *s; { printf("%s\n", s); return(0); }
-static int fmsg(s) char *s; { fatal(s); return(0); }
+
+static int
+#ifdef CK_ANSIC
+pmsg( char *s )
+#else
+pmsg(s) char *s;
+#endif /* CK_ANSIC */
+{
+    printf("%s\n", s); return(0);
+}
+
+static int
+#ifdef CK_ANSIC
+fmsg( char *s )
+#else
+fmsg(s) char *s;
+#endif /* CK_ANSIC */
+{
+    fatal(s); return(0);
+}
+
 #define XFATAL(s) return(what==W_COMMAND?pmsg(s):fmsg(s))
 #else
 #define XFATAL fatal
@@ -253,7 +292,12 @@ struct urldata g_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 */
 
 int
-urlparse(s,url) char *s; struct urldata * url; {
+#ifdef CK_ANSIC
+urlparse( char *s, struct urldata * url )
+#else
+urlparse(s,url) char *s; struct urldata * url;
+#endif /* CK_ANSIC */
+{
     char * p = NULL, * urlbuf = NULL;
     int x;
 
@@ -500,7 +544,12 @@ char * arghlp[128];                     /* Argument for option */
 int optact[128];                        /* Action-option flag */
 
 VOID
-fatal2(msg1,msg2) char *msg1, *msg2; {
+#ifdef CK_ANSIC
+fatal2( char *msg1, char *msg2 )
+#else
+fatal2(msg1,msg2) char *msg1, *msg2;
+#endif /* CK_ANSIC */
+{
     char buf[256];
     if (!msg1) msg1 = "";
     if (!msg2) msg2 = "";
@@ -513,22 +562,38 @@ fatal2(msg1,msg2) char *msg1, *msg2; {
       fatal((char *)buf);
 }
 
+#ifdef USE_CL_INT
+/*
+  cl_int() ("command-line interrupt") is for trapping Ctrl-C as
+  C-Kermit executes any command-line options before entering its
+  command parser.  But cl_int() generates an inexplicable
+  "non-prototype" warning by Clang 15 that will turn into a fatal
+  error in Clang C2x.  Look, here's the prototype right here, in which
+  SIGTYP is typedef'd appropriately in ckcdeb.h, which has already
+  been processed above.  fdc - Fri Apr 14 14:51:22 2023
+*/
 static SIGTYP
 #ifdef CK_ANSI
-cl_int(int dummy)
+cl_int( int dummy )               /* Command-line interrupt handler */
 #else /* CK_ANSI */
-cl_int(dummy) int dummy;
+cl_int( dummy ) int dummy;
 #endif /* CK_ANSI */
-{					/* Command-line interrupt handler */
+{
     doexit(BAD_EXIT,1);
     SIGRETURN;
 }
+#endif /* USE_CL_INT */
 
 #ifdef NEWFTP
 extern int ftp_action, ftp_cmdlin;
 
 static int
-xx_ftp(host, port) char * host, * port; {
+#ifdef CK_ANSIC
+xx_ftp( char * host, char * port ) 
+#else
+xx_ftp(host, port) char * host, * port;
+#endif /* CK_ANSIC */
+{
 #ifdef CK_URL
     extern int haveurl;
 #endif /* CK_URL */
@@ -720,7 +785,9 @@ cmdlin() {
     action = 0;
     cflg = 0;
 
+#ifdef USE_CL_INT
     signal(SIGINT,cl_int);
+#endif /* USE_CL_INT */
 
 /* Here we handle different "Command Line Personalities" */
 
@@ -2373,7 +2440,12 @@ iniopthlp() {
 
 #ifndef NOICP
 int
-doxarg(s,pre) char ** s; int pre; {
+#ifdef CK_ANSIC
+doxarg( char ** s, int pre )
+#else
+doxarg(s,pre) char ** s; int pre;
+#endif /* CK_ANSIC */
+{
 #ifdef IKSD
 #ifdef CK_LOGIN
     extern int ckxsyslog, ckxwtmp, ckxanon;

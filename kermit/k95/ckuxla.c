@@ -4,6 +4,10 @@
 #include "ckcker.h"
 #include "ckucmd.h"
 #include "ckcxla.h"
+#include "ckcxla.h"
+#include "ckuusr.h"
+#include "ckcnet.h"                     /* struct sockaddr */
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef CK_ANSIC
 /* prototypes for static functions - fdc 30 November 2022 */
@@ -17,7 +21,7 @@ static int jpnxkt( int, int[] );
 #endif /* NOXFER */
 
 #ifndef NOCSETS
-char *xlav = "Character Set Translation 10.0.044, 23 Sep 2022";
+char *xlav = "Character Set Translation 10.0.045, 15 Apr 2023";
 
 /*  C K U X L A  */
 
@@ -26,7 +30,7 @@ char *xlav = "Character Set Translation 10.0.044, 23 Sep 2022";
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -5342,7 +5346,12 @@ static int jpncnt;			/* Byte count for Japanese */
 static int jpnlst;			/* Last status (for JIS7) */
 
 static int
-jpnxas(a, obuf) int a; int obuf[]; { /* Translate ASCII to local file code */
+#ifdef CK_ANSIC
+jpnxas( int a, int obuf[] )   /* Translate ASCII to local file code */
+#else
+    jpnxas(a, obuf) int a; int obuf[];
+#endif /* CK_ANSIC */
+{
     int r;
 
     r = 0;
@@ -5373,7 +5382,12 @@ jpnxas(a, obuf) int a; int obuf[]; { /* Translate ASCII to local file code */
 }
 
 static int
-jpnxkt(a, obuf) int a; int obuf[]; {
+#ifdef CK_ANSIC
+jpnxkt( int a, int obuf[] )
+#else
+jpnxkt(a, obuf) int a; int obuf[];
+#endif /* CK_ANSIC */
+{
 /* Translate JIS X 201 Katakana to local code */
 
     int r;
@@ -5400,7 +5414,12 @@ jpnxkt(a, obuf) int a; int obuf[]; {
 }
 
 static int
-jpnxkn(ibuf, obuf) int ibuf[], obuf[]; {
+#ifdef CK_ANSIC
+jpnxkn( int ibuf[], int obuf[] )
+#else
+jpnxkn(ibuf, obuf) int ibuf[], obuf[];
+#endif /* CK_ANSIC */
+{
     /* Translate JIS X 0208 Kanji to local code */
     int c1, c2;
     int r;
@@ -7215,7 +7234,12 @@ int nxls = (sizeof(xls) / sizeof(CHAR *));
   zero otherwise.
 */
 int
-cs_is_nrc(x) int x; {
+#ifdef CK_ANSIC
+cs_is_nrc( int x )
+#else
+cs_is_nrc(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifdef UNICODE
     if (x == TX_J201R || x == TX_DECSPEC || x == TX_DECTECH
         || txrinfo[x] == NULL)
@@ -7238,7 +7262,12 @@ cs_is_nrc(x) int x; {
   graphics; zero otherwise.
 */
 int
-cs_is_std(x) int x; {
+#ifdef CK_ANSIC
+cs_is_std( int x )
+#else
+cs_is_std(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifdef UNICODE
     if (!txrinfo[x])			/* Even more safety */
       return(0);
@@ -7265,7 +7294,12 @@ cs_is_std(x) int x; {
 }
 
 int
-cs_size(x) int x; {
+#ifdef CK_ANSIC
+cs_size( int x )
+#else
+cs_size(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifdef UNICODE
     if (!txrinfo[x])
       return(128);
@@ -7356,7 +7390,12 @@ cs_size(x) int x; {
     xut = UCS to TCS
 */
 VOID
-setxlatype(tcs, fcs) int tcs, fcs; {
+#ifdef CK_ANSIC
+setxlatype( int tcs, int fcs )
+#else
+setxlatype(tcs, fcs) int tcs, fcs;
+#endif /* CK_ANSIC */
+{
 #ifdef UNICODE
     xfu = NULL;				/* Unicode <-> TCS/FCS functions */
     xtu = NULL;
@@ -7422,7 +7461,12 @@ setxlatype(tcs, fcs) int tcs, fcs; {
 
 #ifdef UNICODE
 VOID
-initxlate(csin, csout) int csin, csout; {
+#ifdef CK_ANSIC
+initxlate( int csin, int csout )
+#else
+initxlate(csin, csout) int csin, csout;
+#endif /* CK_ANSIC */
+{
     xfu = NULL;
     xtu = NULL;
     xuf = NULL;

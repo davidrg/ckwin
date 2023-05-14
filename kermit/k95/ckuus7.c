@@ -9,11 +9,12 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: 23 September 2022
+    Last big update: 14 April 2023 (ANSI function declarations and prototypes)
+    Last update: 5 May 2023 (change semicolon to comma in extern statement)
 */
 
 /*
@@ -32,6 +33,7 @@
 #include "ckuusr.h"                     /* User interface symbols */
 #include "ckucmd.h"
 #include "ckclib.h"
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef VMS
 #ifndef TCPSOCKET
@@ -2147,7 +2149,12 @@ extern int maxow, maxow_usr, owwait;    /* Overlapped I/O variables */
 /*  S E T O N  --  Parse on/off (default on), set parameter to result  */
 
 int
-seton(prm) int *prm; {
+#ifdef CK_ANSIC
+seton( int *prm )
+#else
+seton(prm) int *prm;
+#endif /* CK_ANSIC */
+{
     int x, y;
     if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
     if ((x = cmcfm()) < 0) return(x);
@@ -2164,7 +2171,12 @@ struct keytab onoffaut[] = {
 };
 
 int
-setonaut(prm) int *prm; {
+#ifdef CK_ANSIC
+setonaut( int *prm )
+#else
+setonaut(prm) int *prm;
+#endif /* CK_ANSIC */
+{
     int x, y;
     if ((y = cmkey(onoffaut,3,"","auto",xxstring)) < 0) return(y);
     if ((x = cmcfm()) < 0) return(x);
@@ -2180,7 +2192,12 @@ setonaut(prm) int *prm; {
  Returns -9 on failure, after printing a message, or 1 on success.
 */
 int
-setnum(prm,x,y,max) int x, y, *prm, max; {
+#ifdef CK_ANSIC
+setnum( int *prm, int x, int y, int max )
+#else
+setnum(prm,x,y,max) int x, y, *prm, max;
+#endif /* CK_ANSIC */
+{
     debug(F101,"setnum","",y);
     if (y == -3) {
         printf("\n?Value required\n");
@@ -2208,7 +2225,12 @@ setnum(prm,x,y,max) int x, y, *prm, max; {
   are any parse errors, they are returned, otherwise on success 1 is returned.
 */
 int
-setcc(dflt,var) char *dflt; int *var; {
+#ifdef CK_ANSIC
+setcc( char *dflt, int *var )
+#else
+setcc(dflt,var) char *dflt; int *var;
+#endif /* CK_ANSIC */
+{
     int x, y;
     unsigned int c;
     char *hlpmsg = "Control character,\n\
@@ -2531,12 +2553,13 @@ static struct keytab purgtab[] = {      /* PURGE command switches */
 };
 static int npurgtab = sizeof(purgtab)/sizeof(struct keytab);
 
-
-
-
-
 int
-bkupnum(s,i) char * s; int *i; {
+#ifdef CK_ANSIC
+bkupnum( char * s, int *i )
+#else
+bkupnum(s,i) char * s; int *i;
+#endif /* CK_ANSIC */
+{
     int k = 0, pos = 0;
     char * p = NULL, *q;
     *i = pos;
@@ -3118,7 +3141,12 @@ dopurge() {                             /* Do the PURGE command */
 #ifndef NOXFER
 #ifndef NOLOCAL
 int
-doxdis(which) int which; {		/* 1 = Kermit, 2 = FTP */
+#ifdef CK_ANSIC
+doxdis( int which )                     /* 1 = Kermit, 2 = FTP */
+#else
+doxdis(which) int which;
+#endif /* CK_ANSIC */
+{
     extern int nolocal;
     int x, y = 0, z;
 #ifdef NEWFTP
@@ -3192,7 +3220,12 @@ doxdis(which) int which; {		/* 1 = Kermit, 2 = FTP */
 #endif /* NOXFER */
 
 int
-setfil(rmsflg) int rmsflg; {
+#ifdef CK_ANSIC
+setfil( int rmsflg )
+#else
+setfil(rmsflg) int rmsflg;
+#endif /* CK_ANSIC */
+{
 #ifdef COMMENT
     extern int en_del;
 #endif /* COMMENT */
@@ -3855,7 +3888,12 @@ static int nputenvs = -1;		/* Pointer into array */
   can be made dynamic, we can recycle entries with the same name, etc.
 */
 int
-doputenv(s1, s2) char * s1; char * s2; {
+#ifdef CK_ANSIC
+doputenv( char * s1, char * s2 )
+#else
+doputenv(s1, s2) char * s1; char * s2;
+#endif /* CK_ANSIC */
+{
     char * s, * t = tmpbuf;		/* Create or alter environment var */
 
     if (nputenvs == -1) {		/* Table not used yet */
@@ -4037,7 +4075,12 @@ getiact() {
 
 #ifndef NOCSETS
 VOID
-setlclcharset(x) int x; {
+#ifdef CK_ANSIC
+setlclcharset( int x )
+#else
+setlclcharset(x) int x;
+#endif /* CK_ANSIC */
+{
     int i;
     tcsl = y;                   /* Local character set */
 #ifdef OS2
@@ -4052,7 +4095,12 @@ setlclcharset(x) int x; {
 }
 
 VOID
-setremcharset(x, z) int x, z; {
+#ifdef CK_ANSIC
+setremcharset( int x, int z )
+#else
+setremcharset(x, z) int x, z;
+#endif /* CK_ANSIC */
+{
     int i;
 
 #ifdef KUI
@@ -4188,7 +4236,12 @@ setremcharset(x, z) int x, z; {
 #endif /* NOCSETS */
 
 VOID
-setcmask(x) int x; {
+#ifdef CK_ANSIC
+setcmask( int x )
+#else
+setcmask(x) int x;
+#endif /* CK_ANSIC */
+{
     if (x == 7) {
         cmask = 0177;
     } else if (x == 8) {
@@ -4202,7 +4255,12 @@ setcmask(x) int x; {
 
 #ifdef CK_AUTODL
 VOID
-setautodl(x,y) int x,y; {
+#ifdef CK_ANSIC
+setautodl( int x, int y )
+#else
+setautodl(x,y) int x,y;
+#endif /* CK_ANSIC */
+{
     autodl = x;
     adl_ask = y;
 #ifdef KUI      
@@ -6571,7 +6629,12 @@ or Enter to restore default definition",
 
 #ifndef NOXFER
 int                                     /* SET SEND/RECEIVE */
-setsr(xx, rmsflg) int xx; int rmsflg; {
+#ifdef CK_ANSIC
+setsr( int xx, int rmsflg )
+#else
+setsr(xx, rmsflg) int xx; int rmsflg;
+#endif /* CK_ANSIC */
+{
     if (xx == XYRECV)
       ckstrncpy(line,"Parameter for inbound packets",LINBUFSIZ);
     else
@@ -7351,7 +7414,12 @@ or type carriage return to confirm the command";
    -9 on failure (bad indirection), after printing error message.
 */
 int
-remtxt(p) char ** p; {
+#ifdef CK_ANSIC
+remtxt( char ** p )
+#else
+remtxt(p) char ** p;
+#endif /* CK_ANSIC */
+{
     int i, x, bpos, ppos;
     char c, *s, *q;
 
@@ -7467,7 +7535,12 @@ remtxt(p) char ** p; {
 }
 
 int
-plogin(xx) int xx; {
+#ifdef CK_ANSIC
+plogin( int xx )
+#else
+plogin(xx) int xx;
+#endif /* CK_ANSIC */
+{
     char *p1 = NULL, *p2 = NULL, *p3 = NULL;
     int psaved = 0, rc = 0;
 #ifdef CK_RECALL
@@ -7583,7 +7656,12 @@ plogin(xx) int xx; {
 #ifdef OS2
 #ifndef NOLOCAL
 int
-dormt(xx) int xx; {
+#ifdef CK_ANSIC
+dormt( int xx )
+#else
+dormt(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int rc = 0;
     extern int term_io;
     int term_io_sav = term_io;
@@ -7600,14 +7678,27 @@ dormt(xx) int xx; {
 
 
 int
+#ifdef CK_ANSIC
+xxdormt( int xx )
+#else
 xxdormt(xx) int xx;
+#endif /* CK_ANSIC */
 #else /* NOLOCAL */
 int
+#ifdef CK_ANSIC
+dormt( int xx )
+#else
 dormt(xx) int xx;
+#endif /* CK_ANSIC */
 #endif /* NOLOCAL */
 #else /* OS2 */
 int
+#ifdef CK_ANSIC
+dormt( int xx )
+#else
 dormt(xx) int xx;
+#endif /* CK_ANSIC */
+
 #endif /* OS2 */
 {                                       /* REMOTE commands */
     int x, y, retcode;
@@ -8016,6 +8107,12 @@ dormt(xx) int xx;
         retcode = sstate = rfilop(s, (char)(xx == XZMKD ? 'm' : 'd'));
         break;
 
+      case XZSTA:                       /* Status - new 2023 */
+        if ((x = remcfm()) < 0) return(x);
+        sstate = setgen('Q',"","","");
+        retcode = 0;
+        break;
+
       case XZXIT:                       /* Exit */
         if ((x = remcfm()) < 0) return(x);
         sstate = setgen('X',"","","");
@@ -8288,7 +8385,12 @@ setpadp() {
 
 #ifndef NOXFER
 int
-setat(rmsflg) int rmsflg; {
+#ifdef CK_ANSIC
+setat( int rmsflg )
+#else
+setat(rmsflg) int rmsflg;
+#endif /* CK_ANSIC */
+{
     int xx;
     if ((y = cmkey(attrtab,natr,"File Attribute packets","",xxstring)) < 0)
       return(y);
@@ -8720,7 +8822,12 @@ lunet(s) char *s;
 /*  C L S C O N N X  --  Close connection  */
 
 int
-clsconnx(ask) int ask; {
+#ifdef CK_ANSIC
+clsconnx( int ask )
+#else
+clsconnx(ask) int ask;
+#endif /* CK_ANSIC */
+{
     int x, rc = 0;
 #ifdef NEWFTP
     extern int ftpget, ftpisopen();
@@ -8816,7 +8923,12 @@ clsconnx(ask) int ask; {
 }
 
 int
-clskconnx(x) int x; {                   /* Close Kermit connection only */
+#ifdef CK_ANSIC
+clskconnx( int x )                  /* Close Kermit connection only */
+#else
+clskconnx(x) int x;
+#endif /* CK_ANSIC */
+{
     int t, rc;                          /* (not FTP) */
 #ifdef NEWFTP
     extern int ftpget;
@@ -8856,7 +8968,12 @@ char * sshtmpcmd = NULL;
 /* c x _ f a i l  --  Common error exit routine for cx_net, cx_line */
 
 int
-cx_fail(msg, text) int msg; char * text; {
+#ifdef CK_ANSIC
+cx_fail( int msg, char * text )
+#else
+cx_fail(msg, text) int msg; char * text;
+#endif /* CK_ANSIC */
+{
     makestr(&slmsg,text);		/* For the record (or GUI) */
     if (msg)				/* Not GUI, not quiet, etc */
       printf("?%s\n",text);		/* Print error message */
@@ -10322,8 +10439,11 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
     fc == 0 to just make the connection, 1 to also CONNECT (e.g. "telnet").
 */
 int
-setlin(xx, zz, fc) 
-    int xx, zz, fc; 
+#ifdef CK_ANSIC
+setlin( int xx, int zz, int fc ) 
+#else
+setlin(xx, zz, fc) int xx, zz, fc; 
+#endif /* CK_ANSIC */
 {
     extern char pwbuf[], * g_pswd;
     extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
@@ -11675,7 +11795,18 @@ static char * fopnargs[] = {            /* Mode combinations for fopen() */
 static int nfopnargs = sizeof(fopnargs) / sizeof(char *);
 
 char *                                  /* Error messages */
-ckferror(n) int n; {
+#ifdef CK_ANSIC
+
+#else
+
+#endif /* CK_ANSIC */
+
+#ifdef CK_ANSIC
+ckferror( int n )
+#else
+ckferror(n) int n;
+#endif /* CK_ANSIC */
+{
     switch (n) {
       case FX_NER: return("No error");
       case FX_SYS: return(ck_errstr());
@@ -11708,7 +11839,12 @@ ckferror(n) int n; {
     <  0 on failure: A negative FX_xxx error code (ckcker.h).
 */
 int
-z_open(name, flags) char * name; int flags; {
+#ifdef CK_ANSIC
+z_open( char * name, int flags )
+#else
+z_open(name, flags) char * name; int flags;
+#endif /* CK_ANSIC */
+{
     int i, n;
     FILE * t;
     char * mode;
@@ -11869,7 +12005,12 @@ z_open(name, flags) char * name; int flags; {
 }
 
 int
-z_close(channel) int channel; {         /* Close file on given channel */
+#ifdef CK_ANSIC
+z_close( int channel )               /* Close file on given channel */
+#else
+z_close(channel) int channel;
+#endif /* CK_ANSIC */
+{
     int x;
     FILE * t;
     if (!z_inited)                      /* Called before any files are open? */
@@ -11913,7 +12054,12 @@ z_close(channel) int channel; {         /* Close file on given channel */
     negative FX_xxx error code on failure.
 */
 int
-z_out(channel,s,length,flags) int channel, flags, length; char * s; {
+#ifdef CK_ANSIC
+z_out( int channel, char * s, int length, int flags )
+#else
+z_out(channel,s,length,flags) int channel, flags, length; char * s;
+#endif /* CK_ANSIC */
+{
     FILE * t;
     int x, n;
     char c = '\0';
@@ -11991,9 +12137,13 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s; {
     A terminating NUL is deposited after the last byte that was read.
 */
 int
+#ifdef CK_ANSIC
+z_in( int channel, char * s, int buflen, int length, int flags )
+#else
 z_in(channel,s,buflen,length,flags)
  int channel, buflen, length, flags; char * s;
-/* z_in */ {
+#endif /* CK_ANSIC */
+{
     int i, j, x;
     FILE * t;
     char * p;
@@ -12121,7 +12271,12 @@ z_in(channel,s,buflen,length,flags)
 }
 
 int
-z_flush(channel) int channel; {         /* Flush output channel */
+#ifdef CK_ANSIC
+z_flush( int channel )                  /* Flush output channel */
+#else
+z_flush(channel) int channel;
+#endif /* CK_ANSIC */
+{
     FILE * t;
     int x;
     if (!z_inited)                      /* Regular checks */
@@ -12261,7 +12416,12 @@ z_line(channel,pos) int channel; CK_OFF_T pos; /* (seek to given position) */
 }
 
 char *
-z_getname(channel) int channel; {       /* Return name of file on channel */
+#ifdef CK_ANSIC
+z_getname( int channel )          /* Return name of file on channel */
+#else
+z_getname(channel) int channel;
+#endif /* CK_ANSIC */
+{
     FILE * t;
     if (!z_inited) {
         z_error = FX_NOP;
@@ -12283,7 +12443,12 @@ z_getname(channel) int channel; {       /* Return name of file on channel */
 }
 
 int
-z_getmode(channel) int channel; {       /* Return OPEN modes of channel */
+#ifdef CK_ANSIC
+z_getmode( int channel )            /* Return OPEN modes of channel */
+#else
+z_getmode(channel) int channel;
+#endif /* CK_ANSIC */
+{
     FILE * t;                           /* 0 if file not open */
 #ifndef NOSTAT
 #ifdef NT
@@ -12315,8 +12480,14 @@ z_getmode(channel) int channel; {       /* Return OPEN modes of channel */
 }
 
 CK_OFF_T
-z_getpos(channel) int channel; {        /* Get file pointer position */
-    FILE * t;                           /* on this channel */
+#ifdef CK_ANSIC
+z_getpos( int channel )
+#else
+z_getpos(channel) int channel;
+#endif /* CK_ANSIC */
+{
+    /* Get file pointer position on this channel */
+    FILE * t;
     CK_OFF_T x;
     if (!z_inited)
       return(z_error = FX_NOP);
@@ -12331,8 +12502,14 @@ z_getpos(channel) int channel; {        /* Get file pointer position */
 }
 
 CK_OFF_T
-z_getline(channel) int channel; {       /* Get current line number */
-    FILE * t;                           /* in file on this channel */
+#ifdef CK_ANSIC
+z_getline( int channel )
+#else
+z_getline(channel) int channel;
+#endif /* CK_ANSIC */
+{
+    /* Get current line number  in file on this channel */
+    FILE * t;                       
     CK_OFF_T rc;
     if (!z_inited)
       return(z_error = FX_NOP);
@@ -12348,8 +12525,14 @@ z_getline(channel) int channel; {       /* Get current line number */
 }
 
 int
-z_getfnum(channel) int channel; {       /* Get file number / handle */
-    FILE * t;                           /* for file on this channel */
+#ifdef CK_ANSIC
+z_getfnum( int channel )
+#else
+z_getfnum(channel) int channel;
+#endif /* CK_ANSIC */
+{
+    /* Get file number / handle for file on this channel */
+    FILE * t;
     if (!z_inited)
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
@@ -12367,7 +12550,13 @@ z_getfnum(channel) int channel; {       /* Get file number / handle */
   Later we can speed them up by building little indexes.
 */
 CK_OFF_T
-z_count(channel, what) int channel, what; { /* Count bytes or lines in file */
+#ifdef CK_ANSIC
+z_count( int channel, int what )
+#else
+z_count(channel, what) int channel, what;
+#endif /* CK_ANSIC */
+{ 
+    /* Count bytes or lines in file */
     FILE * t;
     int i, x;
     CK_OFF_T pos, count = (CK_OFF_T)0;
@@ -12503,7 +12692,12 @@ static char blanks[] = "\040\040\040\040"; /* Some blanks for formatting */
 static char * seek_target = NULL;
 
 int
-dofile(op) int op; {                    /* Do the FILE command */
+#ifdef CK_ANSIC
+dofile( int op )                        /* Do the FILE command */
+#else
+dofile(op) int op;
+#endif /* CK_ANSIC */
+{
     char vnambuf[VNAML];                /* Buffer for variable names */
     char *vnp = NULL;                   /* Pointer to same */
     char zfilnam[CKMAXPATH+2];
@@ -13397,7 +13591,12 @@ dofile(op) int op; {                    /* Do the FILE command */
 #ifndef NOSETKEY
 /* Save Key maps and in OS/2 Mouse maps */
 int
-savkeys(name,disp) char * name; int disp; {
+#ifdef CK_ANSIC
+savkeys( char * name, int disp )
+#else
+savkeys(name,disp) char * name; int disp;
+#endif /* CK_ANSIC */
+{
     char *tp;
     static struct filinfo xx;
     int savfil, i, j, k;
@@ -13833,12 +14032,13 @@ _PROTOTYP(int savscrbk, (int, char *, int));
 #endif /* NOLOCAL */
 #endif /* OS2 */
 
-#ifdef CK_RECALL
-_PROTOTYP(int savhistory, (char *, int));
-#endif /* CK_RECALL */
-
 int
-dosave(xx) int xx; {
+#ifdef CK_ANSIC
+dosave( int xx )
+#else
+dosave(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x, y = 0, disp;
     char * s = NULL;
     extern struct keytab disptb[];
@@ -13944,7 +14144,12 @@ dosave(xx) int xx; {
   with no echoing or entry into recall buffer.
 */
 int
-readtext(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
+#ifdef CK_ANSIC
+readtext( char * prmpt, char * buffer, int bufsiz )
+#else
+readtext(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz;
+#endif /* CK_ANSIC */
+{
 #ifdef CK_RECALL
     extern int on_recall;               /* Around Password prompting */
 #endif /* CK_RECALL */
@@ -14006,7 +14211,12 @@ readtext(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
 /* the recall buffer or being echo'd.                           */
 
 int
-readpass(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz; {
+#ifdef CK_ANSIC
+readpass( char * prmpt, char * buffer, int bufsiz )
+#else
+readpass(prmpt, buffer, bufsiz) char * prmpt; char * buffer; int bufsiz;
+#endif /* CK_ANSIC */
+{
     int x;
 #ifdef NOICP
     if (!prmpt) prmpt = "";

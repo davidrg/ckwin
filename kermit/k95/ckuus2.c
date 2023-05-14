@@ -8,7 +8,7 @@
       Secure Endpoints Inc., New York City
     David Goodwin, New Zealand.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -18,6 +18,7 @@
                   12 Nov 2022 (converted four function help strings to arrays).
                   02 Dec 2022 (changed ssh v2 macs list in windows "help ssh").
                   03 Dec 2022 (fixed misplaced definition of cr_year).
+                  12 Apr 2023 (ANSI-ize function definitions)
 
   This module contains HELP command and other long text strings.
 
@@ -52,6 +53,7 @@
 #endif /* OS2 */
 
 #ifdef CK_ANSIC
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 static int dohfile( int );              /* Prototype for static func */
 #endif /* CK_ANSIC */
 
@@ -278,7 +280,7 @@ char *newstxt[] = {
 "  https://www.kermitproject.org/ (Kermit Project home page)",
 "  https://www.kermitproject.org/ckermit.html (C-Kermit home page)",
 #ifdef BETATEST
-"  https://www.kermitproject.org/ckupdates.html (Beta test progress)",
+"  https://www.kermitproject.org/ckupdates.html (C-Kermit change log)",
 "  https://www.kermitproject.org/ck10devbuilds.html (Beta test builds table)",
 #endif /* BETATEST */
 " ",
@@ -634,7 +636,7 @@ static char * hmffileinfo[] = {
 "  &a = array designator for results (required)",
 "  Returns a number:",
 "     0: File not found or not accessible or bad arguments;",
-"    >0: The number of attributes returned in the array, normally 7 or 8",
+"    >0: The number of attributes returned in the array, normally 7, 8, or 9",
 " 1. The file's name",
 " 2. The full path of the directory where the file resides",
 " 3. The file's modification date-time yyyymmdd hh:mm:ss",
@@ -1917,12 +1919,15 @@ static char *hmxxgrep[] = {
 "  \"grep something *.txt\" lists all lines in all *.txt files that contain",
 "  the word \"something\", but \"grep ^something *.txt\" lists only the lines",
 "  that START with \"something\".  The command succeeds if any of the given",
-"  files contained any lines that match the pattern, otherwise it fails.",
+"  files contains any lines that match the pattern, otherwise it fails.",
 #ifdef UNIXOROSK
 "  Synonym: FIND.",
 #else
 "  Synonym: GREP.",
 #endif /* UNIXOROSK */
+" ",
+"Only one filespec can be given.  To search multiple files that can't",
+"be represented by a wildcard use {file1,file2,file3,...} (in braces).",
 " ",
 "File selection options:",
 "  /NOBACKUPFILES",
@@ -4922,6 +4927,8 @@ static char *hxxdef[] = {
 "  if the definition includes any variable or function references, their",
 "  names are included, rather than their values (compare with ASSIGN).  If",
 "  the definition is omitted, then the named variable or macro is undefined.",
+"  If a variable of the same name already exists, its value is replaced by",
+"  the new value.",
 " ",
 "A typical macro definition looks like this:",
 " ",
@@ -6375,7 +6382,12 @@ static char * hxxf_wr[] = {
 };
 
 static int
-dohfile(cx) int cx; {
+#ifdef CK_ANSIC
+dohfile( int cx )
+#else
+dohfile(cx) int cx;
+#endif /* CK_ANSIC */
+{
     extern struct keytab fctab[];
     extern int nfctab;
     int x;
@@ -6423,7 +6435,12 @@ dohfile(cx) int cx; {
 #endif /* CKCHANNELIO */
 
 int
-dohlp(xx) int xx; {
+#ifdef CK_ANSIC
+dohlp( int xx )
+#else
+dohlp(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x,y;
 
     debug(F101,"DOHELP xx","",xx);
@@ -7610,7 +7627,12 @@ default: {
 /*  H M S G  --  Get confirmation, then print the given message  */
 
 int
-hmsg(s) char *s; {
+#ifdef CK_ANSIC
+hmsg( char *s )
+#else
+hmsg(s) char *s;
+#endif /* CK_ANSIC */
+{
     int x;
     if ((x = cmcfm()) < 0) return(x);
     printf("\n%s\n\n",s);
@@ -7620,7 +7642,12 @@ hmsg(s) char *s; {
 #ifdef NOHELP
 
 int                                     /* Print an array of lines, */
-hmsga(s) char *s[]; {                   /* cheap version. */
+#ifdef CK_ANSIC
+hmsga( char *s[] )                      /* cheap version. */
+#else
+hmsga(s) char *s[];
+#endif /* CK_ANSIC */
+{
     int i;
     if ((i = cmcfm()) < 0) return(i);
     printf("\n");                       /* Start off with a blank line */
@@ -7634,7 +7661,12 @@ hmsga(s) char *s[]; {                   /* cheap version. */
 #else /* NOHELP not defined... */
 
 int                                     /* Print an array of lines, */
-hmsga(s) char *s[]; {                   /* pausing at end of each screen. */
+#ifdef CK_ANSIC
+hmsga( char *s[] )                      /* cheap version. */
+#else
+hmsga(s) char *s[];
+#endif /* CK_ANSIC */
+{
     extern int hmtopline;               /* (This should be a parameter...) */
     int x, y, i, j, k, n;
     if ((x = cmcfm()) < 0) return(x);
@@ -10303,7 +10335,12 @@ static char * hsetiks[] = {
 /*  D O H S E T  --  Give help for SET command  */
 
 int
-dohset(xx) int xx; {
+#ifdef CK_ANSIC
+dohset( int xx ) 
+#else
+dohset(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x;
 
     if (xx == -3) return(hmsga(hmhset));
@@ -11020,7 +11057,12 @@ static char * hfsplit[] = {
 /*  D O H F U N C  --  Give help for a function  */
 
 int
-dohfunc(xx) int xx; {
+#ifdef CK_ANSIC
+dohfunc( int xx )
+#else
+dohfunc(xx) int xx;
+#endif /* CK_ANSIC */
+{
     /* int x; */
     if (xx == -3) {
         return(hmsga(hmxxfunc));
@@ -14759,7 +14801,12 @@ static char *hrset[] = {
 "  Kermit if it were in interactive mode.", "" };
 
 int
-dohrmt(xx) int xx; {
+#ifdef CK_ANSIC
+dohrmt( int xx )
+#else
+dohrmt(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x;
     if (xx == -3) return(hmsga(hmhrmt));
     if (xx < 0) return(xx);

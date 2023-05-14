@@ -1,4 +1,4 @@
-char *cktelv = "Telnet support, 10.0.282, 30 Nov 2022";
+char *cktelv = "Telnet support, 10.0.283, 16 Apr 2003";
 #define CKCTEL_C
 
 int sstelnet = 0;                       /* Do server-side Telnet negotiation */
@@ -18,11 +18,11 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
     Telnet KERMIT support by Jeffrey Altman
     Other contributions as indicated in the code.
 
-  Copyright (C) 1985, 2021,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Latest update: 27 Jan 2022
+    Latest update: 16 April 2023 (ANSI function declarations)
 */
 
 /*
@@ -210,6 +210,10 @@ int tn_env_flg = 0;
 #endif /* NOSIGWINCH */
 #endif /* COMMENT */
 
+#include "ckuusr.h"
+#include "ckucmd.h"
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
+
 #ifdef CK_ANSIC
 static int tn_outst( int );             /* fdc - 30 November 2022 */
 #endif /* CK_ANSIC */
@@ -278,7 +282,12 @@ telopt_mode(opt) int opt; {
 #endif /* TELOPT_MACRO */
 
 static int
-tn_outst(notquiet) int notquiet; {
+#ifdef CK_ANSIC
+tn_outst( int notquiet )
+#else
+tn_outst(notquiet) int notquiet;
+#endif /* CK_ANSIC */
+{
     int outstanding = 0;
     int x = 0;
 #ifdef CK_ENCRYPTION
@@ -737,7 +746,12 @@ tn_push() {
    Returns 1 if command was sent, 0 if not, -1 on error.
 */
 int
-tn_sopt(cmd,opt) int cmd, opt; {        /* TELNET SEND OPTION */
+#ifdef CK_ANSIC
+tn_sopt( int cmd, int opt )             /* TELNET SEND OPTION */
+#else
+tn_sopt(cmd,opt) int cmd, opt;
+#endif /* CK_ANSIC */
+{
     CHAR buf[5];
     char msg[128];
     int rc;
@@ -819,7 +833,12 @@ tn_sopt(cmd,opt) int cmd, opt; {        /* TELNET SEND OPTION */
 /* Returns 1 if command was sent, 0 if not, -1 on error */
 
 int
-tn_ssbopt(opt,sub,data,len) int opt, sub; CHAR * data; int len; {
+#ifdef CK_ANSIC
+tn_ssbopt( int opt, int sub, CHAR * data, int len )
+#else
+tn_ssbopt(opt,sub,data,len) int opt, sub; CHAR * data; int len;
+#endif /* CK_ANSIC */
+{
     CHAR buf[256];
     int n,m,rc;
 
@@ -3422,7 +3441,12 @@ tn_hex(buf, buflen, data, datalen)
 }
 
 VOID
-tn_debug(s) char *s; {
+#ifdef CK_ANSIC
+tn_debug( char *s )
+#else
+tn_debug(s) char *s;
+#endif /* CK_ANSIC */
+{
 #ifdef NOLOCAL
     return;
 #else /* NOLOCAL */
@@ -3496,7 +3520,12 @@ tn_debug(s) char *s; {
 */
 #ifdef IKS_OPTION
 int
-tn_siks(cmd) int cmd; {         /* TELNET SEND IKS SUB */
+#ifdef CK_ANSIC
+tn_siks( int cmd )                      /* TELNET SEND IKS SUB */
+#else
+tn_siks(cmd) int cmd;
+#endif /* CK_ANSIC */
+{
     CHAR buf[8];
 #ifndef NOXFER
     extern CHAR mystch;                 /* Outgoing Start of Packet Char */
