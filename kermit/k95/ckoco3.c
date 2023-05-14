@@ -17974,6 +17974,7 @@ vtcsi(void)
                         }
                     }
                     case 15: { /* Report size of the screen in pixels */
+#ifdef KUI
                         int w, h;
                         char buf[30];
                         KuiGetTerminalMaximisedSize(FALSE, &w, &h);
@@ -17982,6 +17983,7 @@ vtcsi(void)
                             sprintf(buf, "%c5;%d;%dt", _CSI, h, w);
                             sendchars(buf, strlen(buf));
                         }
+#endif /* KUI */
                         break;
                     }
                     case 16: /* Report xterm character cell size in pixels */
