@@ -18056,7 +18056,7 @@ vtcsi(void)
                             /* Report xterm window position */
                         }
                         break;
-                    case 11: /* Report state of Window (normal/iconified) */
+                    case 11: { /* Report state of Window (normal/iconified) */
 #ifdef KUI
                         char buf[20];
                         if (gui_get_win_run_mode() == 2) {
@@ -18067,6 +18067,7 @@ vtcsi(void)
                         sendchars(buf, strlen(buf));
 #endif
                         break;
+                    }
                     }
                 }
                 break;
