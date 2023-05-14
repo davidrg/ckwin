@@ -12815,7 +12815,7 @@ vtcsi(void)
             ansiext = TRUE ;
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
             goto LB2000;
-        case '>':               /* Heath/Zenith/AnnArbor extension */
+        case '>':               /* Heath/Zenith/AnnArbor/xterm extension */
             zdsext = TRUE ;
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
             goto LB2000;
@@ -17743,7 +17743,29 @@ vtcsi(void)
                      }
                      }
                 }
-                else {
+                else if (zdsext) { /* Heath/Zenith/AnnArbor/xterm extension */
+                    switch ( pn[1] ) {
+                        case 2: {
+                            /* xterm - set one or more features of the title
+                             * modes (XTSMTITLE) */
+                            switch ( pn[2] ) {
+                                case 0: /* Set window/icon labels using hexadecimal */
+                                    break;
+                                case 1: /* Query window/icon labels using hexadecimal */
+                                    break;
+                                case 2: /* Set window/icon labels using UTF-8. */
+                                    break;
+                                case 3: /* Query window/icon labels using UTF-8. */
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                } else {
                     switch ( pn[1] ) {
                     case 24:    /* DECSLPP - Set screen height */
                     case 25:
@@ -17814,6 +17836,8 @@ vtcsi(void)
                         break;
                     case 6: /* Lower Window */
                         break;
+                    case 7: /* Refresh the xterm window */
+                        break;
                     case 8: /* Size window in characters (Y=Pn[2],X=Pn[3]) */
                         /* 0 means leave that dimension alone */
                         if ( k < 2 || pn[2] == 0 && pn[3] == 0 )
@@ -17845,15 +17869,93 @@ vtcsi(void)
 #endif /* TCPSOCKET */
                         }
                         break;
+                    case 9: {
+                        switch (pn[2]) {
+                            case 0: /* Restore maximized window. */
+                                break;
+                            case 1: /* Maximize window (i.e., resize to screen size) */
+                                break;
+                            case 2: /* Maximize window vertically */
+                                break;
+                            case 3: /* Maximize window horizontally */
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    }
+                    case 10: {
+                        switch ( pn[2]) {
+                            case 0: /* Undo full-screen mode */
+                                break;
+                            case 1: /* Change to full-screen */
+                                break;
+                            case 2: /* Toggle full-screen */
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    case 15: /* Report size of the screen in pixels */
+                        break;
+                    case 16: /* Report xterm character cell size in pixels */
+                        break;
+                    case 19: /* Report the size of the screen in characters */
+                        break;
                     case 20: /* Report Icon Label */
                         break;
                     case 21: /* Report Window Label */
                         break;
-                    case 18: /* Report size of Window in chars */
+                    case 22: { /* xterm: Save icon and window title on stack */
+                        switch (pn[2]) {
+                            case 0: /* save icon and window. */
+                                break;
+                            case 1: /* save icon */
+                                break;
+                            case 2: /* save title */
+                                break;
+                            default:
+                                break;
+                        }
                         break;
+                    }
+                    case 23: /* xterm: Restore title and/or window from stack */
+                        switch (pn[2]) {
+                            case 0: /* restore icon and window. */
+                                break;
+                            case 1: /* restore icon */
+                                break;
+                            case 2: /* restore title */
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case 18: { /* Report size of Window in chars */
+                        char buf[20];
+                        int width, height;
+
+                        width = VscrnGetWidth(vmode);
+                        height = VscrnGetHeight(vmode);
+
+                        sprintf(buf, "%c8;%d;%dt", _CSI, height, width);
+                        sendchars(buf, strlen(buf));
+
+                        break;
+                    }
                     case 14: /* Report size of Window in pixels */
+                        if (pn[2] == 2) {
+                            /* Report xterm window size in pixels */
+                        } else {
+                            /* Report xterm text area size in pixels */
+                        }
                         break;
                     case 13: /* Report position of Window in pixels */
+                        if (pn[2] == 2) {
+                            /* Report xterm text-area position */
+                        } else {
+                            /* Report xterm window position */
+                        }
                         break;
                     case 11: /* Report state of Window (normal/iconified) */
                         break;

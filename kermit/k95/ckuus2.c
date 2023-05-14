@@ -360,7 +360,7 @@ char *introtxt[] = {
 "   - Telnet sessions",
 #endif /* TNCODE */
 #ifdef SSHBUILTIN
-"   - SSH v1 and v2 connections",
+"   - SSH v2 connections",
 #else
 #ifdef ANYSSH
 "   - SSH connections via external agent",
