@@ -47,10 +47,10 @@
 
 !message Processing feature flags...
 
-# Network Connections are always supported. We only put it here because
-# the Watcom nmake clone can't handle empty macros so we need *something* here.
-#ENABLED_FEATURES = Network-Connections
-#ENABLED_FEATURE_DEFS = -DNETCONN
+# These features are deprecated and gone from UNIX, but they're still supported
+# just fine on NT and OS/2 with no plans for deprecation.
+ENABLED_FEATURES = SYSLOG
+ENABLED_FEATURE_DEFS = -DDOSYSLOG -DDOARROWKEYS
 
 #DISABLED_FEATURES =
 #DISABLED_FEATURE_DEFS =
