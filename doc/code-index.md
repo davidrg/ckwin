@@ -385,51 +385,50 @@ Some of these should probably be included in the distribution, some are just not
 Some of this is likely old junk that can be deleted, some of it may be unfinished features 
 or utilities that aren't enabled. Further investigation required for all of it.
 
-| Filename            | Title                                                    | Notes                                                                                                          |
-|---------------------|----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ckcb64.c            |                                                          | Looks like a base64 implementation form IBM. Appears unused                                                    |
-| ckcfil.h            |                                                          | No longer used, replaced with ckcker.h                                                                         |
-| ckctox.c            |                                                          | Appears unused                                                                                                 |
-| ckcvar.c            |                                                          | Appears unusued                                                                                                |
-| ckcvar.h            |                                                          | Appears unusued                                                                                                |
-| ckczli.c            |                                                          | Looks like just an example app from zlib. Appears unused                                                       |
-| ckuuid.c            |                                                          | Test program for C-Kermit's uid-managing code                                                                  |
-| ck_old.ico          |                                                          |                                                                                                                |
-| eklogin.c           | eklogin stub for Kermit 95                               |                                                                                                                |
-| findfile.c          |                                                          | Sample code from Microsoft? "C find file functions"                                                            |
-| fneval.c            |                                                          | An email?                                                                                                      |
-| ftime.bat           |                                                          | ? junk probably                                                                                                |
-| geterm.c            |                                                          | ? junk probably                                                                                                |
-| GetUserInfo.c       |                                                          | ? junk probably                                                                                                |
-| iksdc.c             |                                                          | ? Maybe an OS/2 version of iksd.exe - doesn't appear to be used                                                |
-| k2dc.c              |                                                          | k2dc.exe - maybe an OS/2 variant of k95d.exe?                                                                  |
-| k95dial3.ico        |                                                          |                                                                                                                |
-| keystuff.c          |                                                          | Probably junk - keyboard test program?                                                                         |
-| klogin.c            | Klogin stub for Kermit 95                                | doesn't appear to be used                                                                                      |
-| listcomx.c          |                                                          | Probably junk - program to list serial ports?                                                                  |
-| match.ksc           |                                                          | Probably junk                                                                                                  |
-| mkiksd.bat          |                                                          | old windows build script - iksd                                                                                |
-| mkkui.bat           |                                                          | old windows build script - KUI                                                                                 |
-| mknt-noiksd.bat     |                                                          | old windows build script - everything but k95g.exe and iksd                                                    |
-| mksrczip.bat        |                                                          | builds a zip of the CKW source code - probably junk                                                            |
-| mnem.dat            |                                                          | No idea - junk probably                                                                                        |
-| mnem.syms           |                                                          | No idea - junk probably                                                                                        |
-| modems.ipf          |                                                          | Source for a book or manual: C-Kermit's Modem Support                                                          |
-| modetst.c           |                                                          | Probably junk - program to get OS/2 console mode                                                               |
-| print.c             |                                                          | Probably Junk - sample code for to send binary data to a printer on windows                                   |
-| prof.bat            |                                                          | Probably junk - script for profiling cknker.exe with some tool                                                 |
-| prof2.bat           |                                                          | Probably junk - script for profiling cknker.exe with some tool                                                 |
-| ptest.c             |                                                          | Probably junk - a printer test app for windows                                                                 |
-| rcmd.c              |                                                          | Probably junk. Code from BSD. Appears unused.                                                                  |
-| rlogind.c           |                                                          | Probably junk. Code from BSd. Appears unused.                                                                  |
-| setup.mak           |                                                          | Probably junk. Makefile for setup.exe which I think can be built by the main makefile now                      |
-| srpfltr.c           |                                                          | Probably junk - appears unusued                                                                                |
-| srpw95pp.reg        |                                                          | Maybe junk - registry entries for some SRP thing                                                               |
-| startk95.c          |                                                          | Example code: how to start CKW from another Win32 application                                                  |
-| stub.c              | Stub for Kermit 95                                       | Example code I guess - for building things like the telnet stub                                                |
-| timesync.c          | "timesync stuff for leash"                               | Probably old Kerberos junk. Appears unused.                                                                    |
-| trim.c              | Trim trailing whitespace from file lines and/or untabify | Utility program. Appears unusued (not built by any makefile)                                                   |
-| url.c               |                                                          | Probably junk - appears unused                                                                                 |
-| vttime.c            |                                                          | Probably junk - appears unused. Program to set the clock on a VT series terminal based on the system time.     |
-| wtest.def           | C-Kermit for Windows NT Test                             | Almost certainly junk. Module definition file for test.exe, the source code for which does not exist.          |
-| zip.sh              |                                                          | Script used to create the original Kermit 95 open source source release. Junk at this point, its done its job. |
+| Filename       | Title                                                    | Notes                                                                                                          |
+|----------------|----------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ckcb64.c       |                                                          | Looks like a base64 implementation form IBM. Appears unused                                                    |
+| ckcfil.h       |                                                          | No longer used, replaced with ckcker.h                                                                         |
+| ckctox.c       |                                                          | Appears unused                                                                                                 |
+| ckcvar.c       |                                                          | Appears unusued                                                                                                |
+| ckcvar.h       |                                                          | Appears unusued                                                                                                |
+| ckczli.c       |                                                          | Looks like just an example app from zlib. Appears unused                                                       |
+| ckuuid.c       |                                                          | Test program for C-Kermit's uid-managing code                                                                  |
+| ck_old.ico     |                                                          |                                                                                                                |
+| eklogin.c      | eklogin stub for Kermit 95                               |                                                                                                                |
+| findfile.c     |                                                          | Sample code from Microsoft? "C find file functions"                                                            |
+| fneval.c       |                                                          | An email?                                                                                                      |
+| ftime.bat      |                                                          | ? junk probably                                                                                                |
+| geterm.c       |                                                          | ? junk probably                                                                                                |
+| GetUserInfo.c  |                                                          | ? junk probably                                                                                                |
+| iksdc.c        |                                                          | ? Maybe an OS/2 version of iksd.exe - doesn't appear to be used                                                |
+| k2dc.c         |                                                          | k2dc.exe - maybe an OS/2 variant of k95d.exe?                                                                  |
+| k95dial3.ico   |                                                          |                                                                                                                |
+| keystuff.c     |                                                          | Probably junk - keyboard test program?                                                                         |
+| klogin.c       | Klogin stub for Kermit 95                                | doesn't appear to be used                                                                                      |
+| listcomx.c     |                                                          | Probably junk - program to list serial ports?                                                                  |
+| match.ksc      |                                                          | Probably junk                                                                                                  |
+| mkiksd.bat     |                                                          | old windows build script - iksd                                                                                |
+| mkkui.bat      |                                                          | old windows build script - KUI                                                                                 |
+| mksrczip.bat   |                                                          | builds a zip of the CKW source code - probably junk                                                            |
+| mnem.dat       |                                                          | No idea - junk probably                                                                                        |
+| mnem.syms      |                                                          | No idea - junk probably                                                                                        |
+| modems.ipf     |                                                          | Source for a book or manual: C-Kermit's Modem Support                                                          |
+| modetst.c      |                                                          | Probably junk - program to get OS/2 console mode                                                               |
+| print.c        |                                                          | Probably Junk - sample code for to send binary data to a printer on windows                                   |
+| prof.bat       |                                                          | Probably junk - script for profiling cknker.exe with some tool                                                 |
+| prof2.bat      |                                                          | Probably junk - script for profiling cknker.exe with some tool                                                 |
+| ptest.c        |                                                          | Probably junk - a printer test app for windows                                                                 |
+| rcmd.c         |                                                          | Probably junk. Code from BSD. Appears unused.                                                                  |
+| rlogind.c      |                                                          | Probably junk. Code from BSd. Appears unused.                                                                  |
+| setup.mak      |                                                          | Probably junk. Makefile for setup.exe which I think can be built by the main makefile now                      |
+| srpfltr.c      |                                                          | Probably junk - appears unusued                                                                                |
+| srpw95pp.reg   |                                                          | Maybe junk - registry entries for some SRP thing                                                               |
+| startk95.c     |                                                          | Example code: how to start CKW from another Win32 application                                                  |
+| stub.c         | Stub for Kermit 95                                       | Example code I guess - for building things like the telnet stub                                                |
+| timesync.c     | "timesync stuff for leash"                               | Probably old Kerberos junk. Appears unused.                                                                    |
+| trim.c         | Trim trailing whitespace from file lines and/or untabify | Utility program. Appears unusued (not built by any makefile)                                                   |
+| url.c          |                                                          | Probably junk - appears unused                                                                                 |
+| vttime.c       |                                                          | Probably junk - appears unused. Program to set the clock on a VT series terminal based on the system time.     |
+| wtest.def      | C-Kermit for Windows NT Test                             | Almost certainly junk. Module definition file for test.exe, the source code for which does not exist.          |
+| zip.sh         |                                                          | Script used to create the original Kermit 95 open source source release. Junk at this point, its done its job. |
