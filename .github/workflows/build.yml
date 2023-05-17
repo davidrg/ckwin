@@ -1065,6 +1065,52 @@ jobs:
           call mk.bat
           
           call mkdist.bat
+          
+          echo Building Misc stuff...
+          call mkiksd.bat
+          call mkkui.bat
+          
+          mkdir dist-misc
+          move *.exe dist-misc
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          VCT2003: ${{ github.workspace }}\VCT2003
+
+      - name: Full Build Non-standard configs
+        if: matrix.legacy_dependencies == 'no'
+        run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+          
+          set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
+          set srp_root_override=${{ github.workspace }}\srp-2.1.2
+          
+          call setenv.bat
+          
+          REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
+          REM (though apparently you can get the required import library for
+          REM dynamic linking from the .NET SDK 1.1)
+          set CKB_STATIC_CRT=yes
+          
+          cd kermit\k95
+          
+          echo Cleaning...
+          call clean.bat
+          
+          echo Building iksdnt...
+          call mkiksd.bat
+          
+          echo Building kui...
+          call mkkui.bat
+          
+          mkdir dist-misc
+          move *.exe dist-misc
         shell: cmd
         working-directory: ${{ github.workspace }}
         env:
@@ -1077,17 +1123,26 @@ jobs:
           python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
         working-directory: ${{ github.workspace }}\kermit\k95\dist                  
           
-      - name: Prepare Artifact
+      - name: Prepare Artifacts
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
         run: |
           move dist ${{ github.workspace }}\ckwin
+          move dist-misc ${{ github.workspace }}\ckwin-extra
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         if: matrix.legacy_dependencies == 'no'
         with:
           name: ckwin-vc7.1-x86
           path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        if: matrix.legacy_dependencies == 'no'
+        with:
+          name: ckwin-vc7.1-x86
+          path: ${{ github.workspace }}\ckwin-extra
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact
