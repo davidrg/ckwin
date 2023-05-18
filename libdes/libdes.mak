@@ -122,6 +122,11 @@ COMMON_CFLAGS = /MT
 COMMON_CFLAGS = /ML
 !endif
 
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64 -DCK_HAVE_INTPTR_T
+!endif
+
 !IF  "$(CFG)" == "Release"
 CFLAGS=$(CFLAGS) /O2 /D "NDEBUG"
 

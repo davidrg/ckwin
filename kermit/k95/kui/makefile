@@ -102,6 +102,11 @@ CFLAGS = $(CFLAGS) /GA
 !endif
 !endif
 
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+CFLAGS = $(CFLAGS) /Ap64
+!endif
+
 !else
 # Debugging options
 

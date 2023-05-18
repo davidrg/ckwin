@@ -124,7 +124,7 @@ Additionally, a number of new features have been added:
 * Network DLLs are also fixed. You can now add support for additional protocols
   via custom DLLs which are loaded with the `set network type dll` command.
 * Mouse wheel support and terminal mouse reporting have been implemented
-* Support for 64bit Windows (x86-64, Itanium, ARM64)
+* Support for 64bit Windows (x86-64, Itanium, ARM64, AXP64)
 * A selection of other bugs fixed and other minor features added
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.
