@@ -1141,7 +1141,7 @@ jobs:
         uses: actions/upload-artifact@v3.1.1
         if: matrix.legacy_dependencies == 'no'
         with:
-          name: ckwin-vc7.1-x86
+          name: ckwin-vc7.1-x86-extra
           path: ${{ github.workspace }}\ckwin-extra
           if-no-files-found: error
           retention-days: 7
