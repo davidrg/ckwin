@@ -915,7 +915,8 @@ jobs:
             ${{github.workspace}}\libdes\des
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
-          key: libdes+libsrp+openssl-1.0.1u-ver2
+            ${{github.workspace}}\superlat
+          key: libdes+libsrp+openssl-1.0.1u-ver2+superlat
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
@@ -942,7 +943,7 @@ jobs:
           cd ..
           cd ..
         
-          # Get and unpack libdes`
+          # Get and unpack libdes
           cd libdes
           wget ${{env.LIBDES}} -outfile libdes.tar.gz
           7z x libdes.tar.gz
@@ -964,9 +965,28 @@ jobs:
           7z x openssl.tar.gz
           7z x openssl.tar
           
-          # todo: kerberos for windows
+          # todo: kerberos for windows 2.6.0
           
-          # todo: superlat          
+          # SuperLAT Headers
+          mkdir superlat
+          cd superlat
+          wget https://web.archive.org/web/20000929005919if_/http://www.meridian.com:80/slatfio.zip -outfile slatfio.zip
+          7z x slatfio.zip
+          mkdir include
+          cd include
+          copy ..\TESTSVC\LATIOC.H
+          copy ..\TESTSVC\NETTYPES.H
+          copy ..\TESTSVC\NTDDTDI.H
+          copy ..\TESTSVC\PACKOFF.H
+          copy ..\TESTSVC\PACKON.H
+          copy ..\TESTSVC\TDI.H
+          copy ..\TESTSVC\TIHDR.H
+          cd ..
+          Remove-Item -Recurse -Force TESTSVC
+          Remove-Item -Recurse -Force CONN
+          del README.1ST
+          del slatfio.zip
+          cd ..
           
           # Install perl modules required by OpenSSL build
           cpan -i Text::Template
