@@ -842,9 +842,9 @@ jobs:
           REM Check outputs
           set MISSING_BUILD_RESULTS=
           for %%y in (${{env.OS2_BUILD_OUTPUTS}}) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
+            if not exist %%y echo Build result not found: %%y
+            if not exist %%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist %%y set FAILED=yes
           )
 
           if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
