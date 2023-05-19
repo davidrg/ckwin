@@ -253,7 +253,7 @@ jobs:
         
         REM Check outputs
         set MISSING_BUILD_RESULTS=
-        for %%y in (${{STANDARD_BUILD_OUTPUTS}}) do (
+        for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
           if not exist dist\%%y echo Build result not found: %%y
           if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
           if not exist dist\%%y set FAILED=yes
@@ -509,7 +509,7 @@ jobs:
           
           echo Check outputs...
           set MISSING_BUILD_RESULTS=
-          for %%y in (${{STANDARD_BUILD_OUTPUTS}}) do (
+          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
             if not exist dist\%%y echo Build result not found: %%y
             if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist\%%y set FAILED=yes
@@ -841,7 +841,7 @@ jobs:
           
           REM Check outputs
           set MISSING_BUILD_RESULTS=
-          for %%y in (${{OS2_BUILD_OUTPUTS}}) do (
+          for %%y in (${{env.OS2_BUILD_OUTPUTS}}) do (
             if not exist dist\%%y echo Build result not found: %%y
             if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist\%%y set FAILED=yes
@@ -1118,7 +1118,7 @@ jobs:
           REM Check outputs
           set MISSING_BUILD_RESULTS=
           REM ctl3dins.exe
-          for %%y in (${{STANDARD_BUILD_OUTPUTS}}) do (
+          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
             if not exist dist\%%y echo Build result not found: %%y
             if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist\%%y set FAILED=yes
@@ -1236,7 +1236,7 @@ jobs:
           
           REM Check outputs
           set MISSING_BUILD_RESULTS=
-          for %%y in (${{STANDARD_BUILD_OUTPUTS}}) do (
+          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
           if not exist dist\%%y echo Build result not found: %%y
           if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
           if not exist dist\%%y set FAILED=yes
