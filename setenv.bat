@@ -53,7 +53,11 @@ REM Stanford SRP - Optional SRP Authentication for Telnet and FTP connections
 REM Extract srp-2.1.2.tar.gz to the following location:
 set srp_root=%root%\srp
 
-REM Kerberos for Windows, support for which probably hasn't been built since 2002
+REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
+REM    target\bin\i386\rel\wshelp32.dll
+REM    target\lib\ie86\rel\wshload.lib
+REM    athena\wshelper\include\wshelper.h
+REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
 set k4w_root=%root%\kerberos\kfw-2.2-beta-2
 
 REM ============================================================================
@@ -280,6 +284,7 @@ if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
 REM OpenSSL
+set CKF_OPENSSL_VERSION=not found
 if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :nossl
 set CKF_SSL=no
@@ -297,13 +302,16 @@ if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS%
 
 REM OpenSSL 3.0.x
 if exist %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-3%CKB_OPENSSL_SUFFIX%.dll
+if exist %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll set CKF_OPENSSL_VERSION=3.x
 
 REM OpenSSL 1.1.x
 if exist %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-1_1%CKB_OPENSSL_SUFFIX%.dll
+if exist %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll set CKF_OPENSSL_VERSION=1.1.x
 
 REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_OPENSSL_VERSION=0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
@@ -363,9 +371,22 @@ if not exist %k4w_root%\target\lib\i386\rel\wshload.lib echo Kerberos for Window
 if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nok4w
 echo Found Kerberos for Windows (K4W)
 set CKF_K4W=yes
-set INCLUDE=$INCLUDE%;%k4w_root%\athena\wshelper\include
-set INCLUDE=$INCLUDE%;%k4w_root%\athena\auth\krb5\src\include
+set INCLUDE=%INCLUDE%;%k4w_root%\athena\wshelper\include
+set INCLUDE=%INCLUDE%;%k4w_root%\athena\auth\krb5\src\include
 set lib=%lib%;%k4w_root%\target\lib\i386\rel
+if "%CKF_K4W_SSL%" == "" set CKF_K4W_SSL=no
+if "%CKF_OPENSSL_VERSION%" neq "0.9.8 or 1.0.x" set CKF_K4W_SSL=unsupported
+
+REM TODO: K4W also needs the MFC DLLs
+
+set K4WBINS=%k4w_root%\target\bin\i386\rel
+set CK_K4W_DIST_FILES="%K4WBINS%\comerr32.dll" "%K4WBINS%\gssapi32.dll" "%K4WBINS%\k524init.exe" "%K4WBINS%\kclnt32.dll"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\klist.exe" "%K4WBINS%\krb524.dll" "%K4WBINS%\krb5_32.dll"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\krbv4w32.dll" "%K4WBINS%\leash32.exe" "%K4WBINS%\leash32.hlp"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\leashw32.dll" "%K4WBINS%\ms2mit.exe" "%K4WBINS%\wshelp32.dll"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\kdestroy.exe" "%K4WBINS%\kinit.exe" "%K4WBINS%\krbcc32s.exe"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\krbcc32.dll" "%K4WBINS%\leash32.chm" "%K4WBINS%\xpprof32.dll"
+for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
 
@@ -650,7 +671,7 @@ if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
-set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS%
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES%
 
 echo -----------------------------
 echo.
@@ -667,13 +688,13 @@ echo    %CK_DIST_DLLS%
 echo.
 echo Optional Dependencies:
 echo     zlib: %CKF_ZLIB%
-echo  OpenSSL: %CKF_SSL%
+echo  OpenSSL: %CKF_SSL% (Version: %CKF_OPENSSL_VERSION%)
 echo   libssh: %CKF_SSH%
 echo     zinc: %CKF_ZINC%
 echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo      SRP: %CKF_SRP%
-echo      K4W: %CKF_K4W%
+echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%)
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

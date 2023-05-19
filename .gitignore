@@ -274,6 +274,9 @@ srp*/README
 srp*/README.NIS
 srp*/README.WIN32
 
+# Kerberos distribution files
+kerberos/*
+
 # These files belong to C-Kermit for UNIX so we don't want to accidentally
 # commit them when we're updating shared code.
 ckufio.c

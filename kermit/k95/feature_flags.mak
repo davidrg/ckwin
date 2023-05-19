@@ -243,6 +243,15 @@ CKF_K4W=no
 !if "$(CKF_K4W)" == "yes"
 # Nothing required - its on by default.
 ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
+
+# SSL-ified Kerberos 5 requires OpenSSL older than 1.1.0
+!if "$(CKF_K4W_SSL)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos+SSL
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos+SSL
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL_KRB5
+!endif
+
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_KERBEROS
