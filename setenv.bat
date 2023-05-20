@@ -273,6 +273,7 @@ REM Look for optional dependencies in the manual-build locations
 REM ------------------------------------------------------------
 
 REM zlib:
+echo.
 if "%CKF_ZLIB%" == "no" echo Skipping check for ZLIB
 if "%CKF_ZLIB%" == "no" goto :nozlib
 set CKF_ZLIB=no
@@ -284,6 +285,7 @@ if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
 REM OpenSSL
+echo.
 set CKF_OPENSSL_VERSION=not found
 if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :nossl
@@ -319,6 +321,7 @@ if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_D
 :nossl
 
 REM libssh:
+echo.
 if "%CKF_SSH%" == "no" echo Skipping check for libssh
 if "%CKF_SSH%" == "no" goto :nossh
 set CKF_SSH=no
@@ -330,6 +333,7 @@ if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.
 :nossh
 
 REM libdes:
+echo.
 if "%CKF_LIBDES%" == "no" echo Skipping check for libdes
 if "%CKF_LIBDES%" == "no" goto :nolibdes
 set CKF_LIBDES=no
@@ -343,6 +347,7 @@ if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
 :nolibdes
 
 REM Stanford SRP
+echo.
 if "%CKF_SSL%" == "no" echo Skipping check for SRP (OpenSSL is required but not available)
 if "%CKF_SSL%" == "no" set CKF_SRP=no
 if "%CKF_SSL%" == "no" goto :nosrp
@@ -364,21 +369,47 @@ set CK_SRP_DIST_DLLS=%srp_root%\win32\libsrp_openssl\Release\srp.dll %srp_root%\
 :nosrp
 
 REM Kerberos for Windows
+echo.
+set CKF_K4W_WSHELPER=no
 if "%CKF_K4W%" == "no" echo Skipping check for K4W
 if "%CKF_K4W%" == "no" goto :nok4w
 set CKF_K4W=no
-if not exist %k4w_root%\target\lib\i386\rel\wshload.lib echo Kerberos for Windows (K4W) not found.
-if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nok4w
-echo Found Kerberos for Windows (K4W)
-set CKF_K4W=yes
-set INCLUDE=%INCLUDE%;%k4w_root%\athena\wshelper\include
-set INCLUDE=%INCLUDE%;%k4w_root%\athena\auth\krb5\src\include
-set lib=%lib%;%k4w_root%\target\lib\i386\rel
 if "%CKF_K4W_SSL%" == "" set CKF_K4W_SSL=no
+
+REM Check kerberos compiled from source
+set CK_KRB_INCLUDE=%k4w_root%\athena\auth\krb5\src\include
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\kerberosIV\krb.h
+if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
+
+REM Check kerberos SDK
+set CK_KRB_INCLUDE=%k4w_root%\inc\krb5
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\kerberosIV\krb.h
+if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
+
+REM No Kerberos :(
+echo Kerberos for Windows not found.
+echo Kerberos root is:
+dir /B %k4w_root%
+goto :nok4w
+
+:havekerberos
+echo Found Kerberos for Windows (K4W)
+echo Include: %CK_KRB_INCLUDE%
+set CKF_K4W=yes
+set INCLUDE=%INCLUDE%;%CK_KRB_INCLUDE%
+REM set lib=%lib%;%k4w_root%\target\lib\i386\rel
 if "%CKF_OPENSSL_VERSION%" neq "0.9.8 or 1.0.x" set CKF_K4W_SSL=unsupported
 
-REM TODO: K4W also needs the MFC DLLs
+echo Searching for Kerberos wshload (for DNS-SRV support)...
+if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nowshload
+echo Found wshload, enabling DNS-SRV
+set CKF_K4W_WSHELPER=yes
+set INCLUDE=%INCLUDE%;%k4w_root%\athena\wshelper\include
+:nowshload
 
+REM Dist the kerberos binaries if we're building against a from-source thing.
+REM if we're building against an SDK then the user can just use the associated
+REm installer to get this stuff on their system.
 set K4WBINS=%k4w_root%\target\bin\i386\rel
 set CK_K4W_DIST_FILES="%K4WBINS%\comerr32.dll" "%K4WBINS%\gssapi32.dll" "%K4WBINS%\k524init.exe" "%K4WBINS%\kclnt32.dll"
 set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\klist.exe" "%K4WBINS%\krb524.dll" "%K4WBINS%\krb5_32.dll"
@@ -386,6 +417,7 @@ set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\krbv4w32.dll" "%K4WBINS%\le
 set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\leashw32.dll" "%K4WBINS%\ms2mit.exe" "%K4WBINS%\wshelp32.dll"
 set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\kdestroy.exe" "%K4WBINS%\kinit.exe" "%K4WBINS%\krbcc32s.exe"
 set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\krbcc32.dll" "%K4WBINS%\leash32.chm" "%K4WBINS%\xpprof32.dll"
+REM TODO: also need the MFC DLLs
 for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
@@ -394,6 +426,7 @@ REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
 REM --------------------------------------------------------------
 
+echo.
 echo Attempting to identify compiler (this may take a moment)...
 
 REM Now figure out what compiler we're using - we need to find this out so we'll
@@ -694,7 +727,7 @@ echo     zinc: %CKF_ZINC%
 echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo      SRP: %CKF_SRP%
-echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%)
+echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%)
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running
