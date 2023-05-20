@@ -845,14 +845,14 @@ jobs:
           cd kermit\k95
           call mkos2.bat
           
-          dir
+          call mkdist-os2.bat
           
           REM Check outputs
           set MISSING_BUILD_RESULTS=
           for %%y in (${{env.OS2_BUILD_OUTPUTS}}) do (
-            if not exist %%y echo Build result not found: %%y
-            if not exist %%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist %%y set FAILED=yes
+            if not exist dist-os2\%%y echo Build result not found: %%y
+            if not exist dist-os2\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist dist-os2\%%y set FAILED=yes
           )
 
           if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
@@ -877,13 +877,6 @@ jobs:
           call mkos2.bat
         shell: cmd
         working-directory: ${{ github.workspace }}
-        env:
-          ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
-      - name: Make Kermit\2 Distribution
-        run: mkdist-os2.bat
-        shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
