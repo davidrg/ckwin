@@ -1119,7 +1119,7 @@ jobs:
           REM Check outputs
           set MISSING_BUILD_RESULTS=
           REM ctl3dins.exe
-          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
+          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
             if not exist dist\%%y echo Build result not found: %%y
             if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist\%%y set FAILED=yes
@@ -1133,6 +1133,26 @@ jobs:
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
+
+      - name: Check additional legacy outputs
+        if: matrix.legacy_dependencies == 'yes'
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95
+        run: |
+          REM Check outputs
+          set MISSING_BUILD_RESULTS=
+          REM TODO: srp-tconf.exe srp-passwd.exe
+          REM TODO: Kerberos bits
+          for %%y in (k95crypt.dll) do (
+            if not exist dist\%%y echo Build result not found: %%y
+            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist dist\%%y set FAILED=yes
+          )
+
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing legacy build outputs: %MISSING_BUILD_RESULTS%
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
+          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
+
 
       - name: HTMLise Markdown Docs
         run: |
