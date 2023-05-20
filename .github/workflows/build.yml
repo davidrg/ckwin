@@ -966,7 +966,7 @@ jobs:
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\superlat
-          key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver1
+          key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver2
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
@@ -1018,10 +1018,11 @@ jobs:
           del *.gz
                    
           # and kerberos for windows 2.6.0 (pre-built with Visual C++ 2003 Professional)
+          cd kerberos
           wget https://ftp.zx.net.nz/pub/dev/lib/kfw/kfw-2.6-final-vc2003.zip -outfile kfw-2.6-final-vc2003.zip
-          
           7z x *.zip
           del *.zip
+          cd ..
           
           # SuperLAT Headers
           mkdir superlat
