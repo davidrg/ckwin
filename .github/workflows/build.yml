@@ -961,12 +961,12 @@ jobs:
           path: |
             ${{github.workspace}}\srp-2.1.2
             ${{github.workspace}}\openssl-1.0.1u
-            ${{github.workspace}}\kerberos
+            ${{github.workspace}}\kerberos\kfw-2.6-final
             ${{github.workspace}}\libdes\des
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\superlat
-          key: libdes+libsrp+openssl-1.0.1u+superlat-ver1
+          key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver1
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
@@ -1014,8 +1014,14 @@ jobs:
           wget https://www.openssl.org/source/old/1.0.1/openssl-1.0.1u.tar.gz -outfile openssl.tar.gz
           7z x openssl.tar.gz
           7z x openssl.tar
+          del *.tar
+          del *.gz
                    
-          # todo: kerberos for windows 2.6.0
+          # and kerberos for windows 2.6.0 (pre-built with Visual C++ 2003 Professional)
+          wget https://ftp.zx.net.nz/pub/dev/lib/kfw/kfw-2.6-final-vc2003.zip -outfile kfw-2.6-final-vc2003.zip
+          
+          7z x *.zip
+          del *.zip
           
           # SuperLAT Headers
           mkdir superlat
