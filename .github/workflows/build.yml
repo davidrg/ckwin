@@ -1270,6 +1270,9 @@ jobs:
           Set INCLUDE=%VCT2003%\include
           Set LIB=%VCT2003%\lib\ia64
           
+          REM Build with Kerberos 2.6.0
+          set k4w_root_override=%root%\kerberos\kfw-2.6-final\src
+          
           call setenv.bat
 
           cd libdes
