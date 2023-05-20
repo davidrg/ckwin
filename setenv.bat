@@ -371,19 +371,25 @@ set CK_SRP_DIST_DLLS=%srp_root%\win32\libsrp_openssl\Release\srp.dll %srp_root%\
 REM Kerberos for Windows
 echo.
 set CKF_K4W_WSHELPER=no
-if "%CKF_K4W%" == "no" echo Skipping check for K4W
+set CKF_K4W_KRB4=no
+if "%CKF_K4W%" == "no" echo Skipping check for KFW
 if "%CKF_K4W%" == "no" goto :nok4w
 set CKF_K4W=no
 if "%CKF_K4W_SSL%" == "" set CKF_K4W_SSL=no
 
-REM Check kerberos compiled from source
+REM Check kerberos compiled from source (ca 2.6)
 set CK_KRB_INCLUDE=%k4w_root%\athena\auth\krb5\src\include
-echo Searching for Kerberos: %CK_KRB_INCLUDE%\kerberosIV\krb.h
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
 if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
 
-REM Check kerberos SDK
+REM Check kerberos SDK (ca 3.2.2)
 set CK_KRB_INCLUDE=%k4w_root%\inc\krb5
-echo Searching for Kerberos: %CK_KRB_INCLUDE%\kerberosIV\krb.h
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
+if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
+
+REM Check KFW 4.x SDK
+set CK_KRB_INCLUDE=%k4w_root%\include\krb5
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
 if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
 
 REM No Kerberos :(
@@ -393,17 +399,21 @@ dir /B %k4w_root%
 goto :nok4w
 
 :havekerberos
-echo Found Kerberos for Windows (K4W)
+echo Found Kerberos for Windows (KFW)
 echo Include: %CK_KRB_INCLUDE%
 set CKF_K4W=yes
 set INCLUDE=%INCLUDE%;%CK_KRB_INCLUDE%
-REM set lib=%lib%;%k4w_root%\target\lib\i386\rel
 if "%CKF_OPENSSL_VERSION%" neq "0.9.8 or 1.0.x" set CKF_K4W_SSL=unsupported
+
+echo Checking for Kerberos IV support...
+if exist %CK_KRB_INCLUDE%\KerberosIV\krb.h set CKF_K4W_KRB4=yes
+if exist %CK_KRB_INCLUDE%\KerberosIV\krb.h echo Found Kerberos IV support.
 
 echo Searching for Kerberos wshload (for DNS-SRV support)...
 if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nowshload
 echo Found wshload, enabling DNS-SRV
 set CKF_K4W_WSHELPER=yes
+set lib=%lib%;%k4w_root%\target\lib\i386\rel
 set INCLUDE=%INCLUDE%;%k4w_root%\athena\wshelper\include
 :nowshload
 
@@ -727,7 +737,7 @@ echo     zinc: %CKF_ZINC%
 echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo      SRP: %CKF_SRP%
-echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%)
+echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%, KRB4: %CKF_K4W_KRB4%)
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

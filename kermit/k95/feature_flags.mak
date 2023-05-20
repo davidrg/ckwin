@@ -236,13 +236,19 @@ CKF_K4W=no
 !endif
 
 # MIT Kerberos for Windows:
-#   On by default
+#   Turn on with: -DCK_KERBEROS -DKRB5 -DKRB4 -DKRB524
 #   Turn off with: -DNO_KERBEROS
 #   Requires: An antique version of MIT Kerberos for Windows.
 #      OR: Rework this to use Heimdal Kerberos
 !if "$(CKF_K4W)" == "yes"
-# Nothing required - its on by default.
 ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_KERBEROS -DKRB5
+
+# Kerberos IV support isn't available in Kerberos for Windows 4.x and newer.
+!if "$(CKF_K4W_KRB4)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos-IV
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DKRB4 -DKRB524
+!endif
 
 # SSL-ified Kerberos 5 requires OpenSSL older than 1.1.0
 !if "$(CKF_K4W_SSL)" == "yes"
