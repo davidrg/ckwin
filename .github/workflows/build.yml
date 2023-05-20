@@ -30,7 +30,7 @@ env:
   # ctl3dins.exe is not currently included but perhaps should be.
   STANDARD_BUILD_OUTPUTS: k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll
   # And these are what we currently expect from standard builds for OS/2
-  OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telpetpm.exe textps.exe
+  OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telnetpm.exe textps.exe
 
 jobs:
   ##############################################################################
