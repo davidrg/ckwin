@@ -1239,7 +1239,10 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\vct2003
-          key: vct2003+psdk2003sp1+libdes
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+          key: vct2003+psdk2003sp1+libdes-v2
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003 + libdes
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
         run: |
