@@ -33,6 +33,12 @@ env:
   OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telpetpm.exe textps.exe
 
 jobs:
+  ##############################################################################
+  # Build with Visual C++ 14.x (2015/2017/2019/2022)                           #
+  ##############################################################################
+  # This includes the latest compilers available (2022), plus the most recent 
+  # capable of still targeting Windows XP (2017). All support x86, x86-64, ARM32
+  # and ARM64.
   Build-VisualCxx:
     runs-on: windows-latest
     strategy:
