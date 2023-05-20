@@ -380,17 +380,17 @@ if "%CKF_K4W_SSL%" == "" set CKF_K4W_SSL=no
 REM Check kerberos compiled from source (ca 2.6)
 set CK_KRB_INCLUDE=%k4w_root%\athena\auth\krb5\src\include
 echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
-if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
+if exist "%CK_KRB_INCLUDE%\krb5.h" goto :havekerberos
 
 REM Check kerberos SDK (ca 3.2.2)
 set CK_KRB_INCLUDE=%k4w_root%\inc\krb5
 echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
-if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
+if exist "%CK_KRB_INCLUDE%\krb5.h" goto :havekerberos
 
 REM Check KFW 4.x SDK
-set CK_KRB_INCLUDE=%k4w_root%\include\krb5
+set CK_KRB_INCLUDE=%k4w_root%\include
 echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
-if exist %CK_KRB_INCLUDE%\kerberosIV\krb.h goto :havekerberos
+if exist "%CK_KRB_INCLUDE%\krb5.h" goto :havekerberos
 
 REM No Kerberos :(
 echo Kerberos for Windows not found.
@@ -406,11 +406,13 @@ set INCLUDE=%INCLUDE%;%CK_KRB_INCLUDE%
 if "%CKF_OPENSSL_VERSION%" neq "0.9.8 or 1.0.x" set CKF_K4W_SSL=unsupported
 
 echo Checking for Kerberos IV support...
-if exist %CK_KRB_INCLUDE%\KerberosIV\krb.h set CKF_K4W_KRB4=yes
-if exist %CK_KRB_INCLUDE%\KerberosIV\krb.h echo Found Kerberos IV support.
+if exist "%CK_KRB_INCLUDE%\KerberosIV\krb.h" set CKF_K4W_KRB4=yes
+if exist "%CK_KRB_INCLUDE%\KerberosIV\krb.h" echo Found Kerberos IV support.
 
+REM This will only work when KFW is built from source (wshload isn't included
+REM in any of the SDKs)
 echo Searching for Kerberos wshload (for DNS-SRV support)...
-if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nowshload
+if not exist "%k4w_root%\target\lib\i386\rel\wshload.lib" goto :nowshload
 echo Found wshload, enabling DNS-SRV
 set CKF_K4W_WSHELPER=yes
 set lib=%lib%;%k4w_root%\target\lib\i386\rel
