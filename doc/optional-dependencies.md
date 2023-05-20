@@ -48,6 +48,10 @@ Normally everything is arranged into directories as follows:
 ```
  ckwin\
    - setenv.bat
+   - kerberos\
+     - kfw-2.6-final\src
+       - Kerberos for Windows source code (athena, doc, scripts)
+     - build26.bat
    - kermit\
      - k95\
        - C-Kermit for windows source code
@@ -183,6 +187,49 @@ on [this page](https://web.archive.org/web/20010830141239/http://www.meridian.co
 To actually use SuperLAT support, you'll need a licensed copy of the SuperLAT
 product. This has not been commercially available or supported since 
 31 December 2000 so is probably extremely difficult to find today.
+
+## Building with Kerberos Support
+
+C-Kermit for Windows is known to build with Kerberos for Windows version 2.6.0,
+the last version to support Windows 95. Other versions in the 2.6.x series are
+likely to work.
+
+Kermit 95 was built with Kerberos for Windows version 2.2-beta2 so there is a
+good chance building with versions as old as that will work too, though this has
+not been tested in over 20 years.
+
+### Kerberos for Windows 2.6.0
+
+And likely the rest of the 2.6.x series.
+
+#### Requirements
+* Visual C++ 6.0 or newer, with the August 2001 or newer Platform SDK. 
+  Visual C++ 2002 and 2003 seem to satisfy this requirement fine 
+* A selection of UNIX tools in your PATH: perl, sed, gawk, cat and rm. 
+  Strawberry perl seems fine, and the rest can come from GnuWin32.
+
+#### Build
+The build scripts need to be patched as the distributed versions rely on some
+headers and tools that don't appear to be available outside of MIT. To automate
+this (and the rest of the build), a script is p[r]
+
+To build:
+1. Download the source code for desired Kerberos for Windows release, eg
+   [Version 2.6.0](https://web.mit.edu/kerberos/dist/historic.html#KFW2.6)
+   (kfw-2.6-src-final.zip)
+2. Extract the zip file inside the kerberos directory, creating
+   \kerberos\kfw-2.6-final\src
+3. Add the following to your PATH: perl, sed, gawk, cat and rm
+4. CD into the src directory and run ..\..\build26.bat
+
+Example:
+```
+cd kerberos
+wget https://web.mit.edu/kerberos/dist/kfw/2.6/kfw-2.6/kfw-2.6-src-final.zip
+unzip kfw-2.6-src-final.zip
+cd kfw-2.6-final\src
+..\..\build26.bat
+```
 
 ## Building with Older OpenSSL Versions
 If you want to build with older **_INSECURE_** versions of OpenSSL for some
