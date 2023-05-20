@@ -845,6 +845,8 @@ jobs:
           cd kermit\k95
           call mkos2.bat
           
+          dir
+          
           REM Check outputs
           set MISSING_BUILD_RESULTS=
           for %%y in (${{env.OS2_BUILD_OUTPUTS}}) do (
