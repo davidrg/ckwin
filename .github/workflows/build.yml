@@ -1122,6 +1122,7 @@ jobs:
           
           set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
           set srp_root_override=${{ github.workspace }}\srp-2.1.2
+          set k4w_root_override=${{ github.workspace }}\kerberos\kfw-2.6-final\src
   
           call setenv.bat
           
@@ -1269,9 +1270,6 @@ jobs:
           REM which is also on here - we only want it for cvtres.exe.
           Set INCLUDE=%VCT2003%\include
           Set LIB=%VCT2003%\lib\ia64
-          
-          REM Build with Kerberos 2.6.0
-          set k4w_root_override=%root%\kerberos\kfw-2.6-final\src
           
           call setenv.bat
 

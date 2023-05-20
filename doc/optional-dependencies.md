@@ -204,7 +204,9 @@ And likely the rest of the 2.6.x series.
 
 #### Requirements
 * Visual C++ 6.0 or newer, with the August 2001 or newer Platform SDK. 
-  Visual C++ 2002 and 2003 seem to satisfy this requirement fine 
+  Visual C++ 2002 and 2003 seem to satisfy this requirement fine
+* Microsoft HTML Help compiler is required. This should be available on the
+  Visual C++ CD, or you can [download it from Microsoft](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/htmlhelp/microsoft-html-help-downloads)
 * A selection of UNIX tools in your PATH: perl, sed, gawk, cat and rm. 
   Strawberry perl seems fine, and the rest can come from GnuWin32.
 
@@ -219,7 +221,8 @@ To build:
    (kfw-2.6-src-final.zip)
 2. Extract the zip file inside the kerberos directory, creating
    \kerberos\kfw-2.6-final\src
-3. Add the following to your PATH: perl, sed, gawk, cat and rm
+3. Add the following to your PATH: perl, sed, gawk, cat, rm and the HTML Help
+   compiler
 4. CD into the src directory and run ..\..\build26.bat
 
 Example:
