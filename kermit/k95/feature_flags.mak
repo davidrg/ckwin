@@ -242,7 +242,7 @@ CKF_K4W=no
 #      OR: Rework this to use Heimdal Kerberos
 !if "$(CKF_K4W)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_KERBEROS -DKRB5
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_KERBEROS -DKRB5 -DHAVE_GSSAPI
 
 # Kerberos IV support isn't available in Kerberos for Windows 4.x and newer.
 !if "$(CKF_K4W_KRB4)" == "yes"

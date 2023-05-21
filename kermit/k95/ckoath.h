@@ -1041,6 +1041,12 @@ int ck_krb524_convert_creds_kdc(krb5_context context, krb5_creds *v5creds,
 #define gss_display_name         ck_gss_display_name
 #define gss_get_mic              ck_gss_get_mic
 
+#define gss_mech_krb5            ck_gss_mech_krb5
+#define gss_mech_krb5_old        ck_gss_mech_krb5_old
+#define gss_mech_krb5_v2         ck_gss_mech_krb5_v2
+#define gss_nt_krb5_name         ck_gss_nt_krb5_name
+#define gss_nt_krb5_principal    ck_gss_nt_krb5_principal
+
 unsigned long ck_gss_release_buffer
     ( unsigned long *, gss_buffer_t );
 unsigned long ck_gss_seal(unsigned long *, gss_ctx_id_t, int, int,
