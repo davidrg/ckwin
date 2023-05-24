@@ -1227,13 +1227,16 @@ jobs:
         # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
-      - name: Cache VCT2003
+      - name: Cache VCT2003+libdes
         uses: actions/cache@v3.0.11
         id: cache-vct2003
         with:
           path: |
             ${{github.workspace}}\vct2003
-          key: vct2003+psdk2003sp1+libdes
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+          key: vct2003+psdk2003sp1+libdes+v2
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003 + libdes
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
         run: |
