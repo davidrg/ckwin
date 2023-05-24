@@ -18,8 +18,8 @@ Major features include:
 
 To get the latest most stable release as well as other news and information, 
 visit the [C-Kermit for Windows Beta website](https://www.kermitproject.org/ckw10beta.html).
-This software is currently based on C-Kermit version 10.0 Pre-Beta.08 of
-12-DEC-2022 and is available under the 3-clause BSD license.
+This software is currently based on C-Kermit version 10.0 Beta.09 of
+9-MAY-2023 and is available under the 3-clause BSD license.
 
 ![Screenshot](doc/screenshot-w10.png)
 
@@ -124,7 +124,7 @@ Additionally, a number of new features have been added:
 * Network DLLs are also fixed. You can now add support for additional protocols
   via custom DLLs which are loaded with the `set network type dll` command.
 * Mouse wheel support and terminal mouse reporting have been implemented
-* Support for 64bit Windows (x86-64, Itanium, ARM64)
+* Support for 64bit Windows (x86-64, Itanium, ARM64, AXP64)
 * A selection of other bugs fixed and other minor features added
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.

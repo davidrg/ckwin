@@ -1,8 +1,8 @@
 /*  C K C D E B . H  */
 
 /*
-  For recent additions search below for "2021" and "2022".
-  Most recent update: Tue Dec  6 06:55:11 2022
+  For recent additions search below for "2021" and "2022" and "2023".
+  Most recent update: Fri May  5 15:32:58 2023
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -29,7 +29,7 @@
     The Kermit Project, Bronx NY (2011-present)
     Changes from David Goodwin for Windows and OS/2 (2022)
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -811,6 +811,37 @@
 #define OS2ORVMS
 #endif /* OS2ORVMS */
 #endif /* OS2 */
+
+/* C-Kermit for Windows can now be 64-bit so OS2ORWIN32 is a misnomer */
+#ifdef OS2ORWIN32
+#ifndef OS2ORWINDOWS
+#define OS2ORWINDOWS
+#endif /* OS2ORWINDOWS */
+#endif /* OS2ORWIN32 */
+
+/* Moved here from ckcfnp.h 3 May 2023 */
+/* NEW PROTOTYPE FOR MAIN() ADDED 02 MAY 2023 */
+
+#ifndef MAINNAME
+#ifdef OS2ORWINDOWS
+#define MAINISVOID
+#ifdef KUI
+#define MAINNAME Main
+#else /* not KUI */
+#define MAINNAME main
+#endif /* KUI */
+#else /* not OS/2 or Windows */
+#define MAINNAME main
+#endif /* OS2ORWINDOWS */
+#endif /* MAINNAME */
+
+#ifdef MAINISVOID
+/* This is a leftover from original Macintosh */
+typedef VOID MAINTYPE;
+#else
+typedef int MAINTYPE;
+/* if any other types are needed add them here */
+#endif /* MAINISVOID */
 
 #include <stdio.h>			/* Begin by including this. */
 #include <ctype.h>			/* and this. */
@@ -7055,10 +7086,45 @@ typedef unsigned long DWORD_PTR;
 #else /* CK_HAVE_INTPTR_T */
 #define CK_TTYFD_T int
 #endif /* CK_HAVE_INTPTR_T */
+#else /* OS2 */
+/* Not on Windows or OS/2? its just an int */
+#define CK_TTYFD_T int
 #endif /* OS2 */
 
 
 #include "ckclib.h"
+
+#ifdef COMMENT
+/*
+  This was a first attempt to prototypes for over 400 functions that never had
+  them before, which are needed now since compilers like Clang complains about
+  every single function that does not have prototype, and claims this will be
+  a fatal error in a forthcoming release.  The new prototypes are in the new
+  header file ckcfnp.h: 436 of them to start.  But the prototypes need to know
+  about typedefs that haven't been made yet, since ckcdeb.h is #included
+  before the other headers where that happened.  I thought maybe I could
+  include them here, but it was a rabbit hole.  The only way to insure the
+  prototypes work without messing everything else up is to put "#include
+  ckcfnp.h" in every single Kermit module AFTER what was the last #include.
+  - fdc, 23 March 2023
+*/
+#ifndef NOANSI
+#ifdef __STDC__
+#ifdef CK_ANSIC                     /* New C-Kermit 10.0 Beta.09 */
+#include "ckucmd.h"                 /* For typedefs */
+#include "ckcnet.h"                 /* For typedefs */
+#include "ckuath.h"                 /* For typedefs */
+#include "ckucmd.h"                 /* For typedefs */
+#include "ckcker.h"                 /* For typedefs */
+#include "ckuusr.h"                 /* For typedefs */
+#include "ckctel.h"                 /* For typedefs */
+#include "ckcfnp.h"                 /* Prototypes for all functions */
+/* ckcsig.h */
+/* ckusig.h */
+#endif /* CK_ANSIC */
+#endif /* __STDC__ */
+#endif /* NOANSI */
+#endif /* COMMENT */
 
 /* End of ckcdeb.h */
 #endif /* CKCDEB_H */

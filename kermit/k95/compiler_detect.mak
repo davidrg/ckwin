@@ -99,9 +99,10 @@ COMPILER_VERSION = 7.0 (Visual Studio .net 2002)
 # Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
 
 # Version number suggests its Visual C++ 7.0 but its from 1999, two years before the
-# final release of Visual C++ 7.0. So its probably closer to Visual C++ 6 in features.
+# final release of Visual C++ 7.0. So its probably closer to Visual C++ 6 in features,
+# though its close enough to Visual C++ 7.0 for our purposes.
 
-MSC_VER = 120
+MSC_VER = 130
 COMPILER_VERSION = 64bit Windows 2000 for DEC Alpha SDK
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 12.0" > nul] == 0)

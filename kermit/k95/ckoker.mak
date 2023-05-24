@@ -167,6 +167,11 @@ INCLUDE = $(INCLUDE);ow\;
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
 !endif
 
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
+!endif
+
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
 # Starting with Visual C++ 2012, the default subsystem version is set to 6.0
 # which makes the generated binaries invalid on anything older than Windows

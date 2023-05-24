@@ -15,6 +15,7 @@
 #include	<sys/time.h>
 #include	<pwd.h>
 #include	<utmp.h>
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 /*
  * These should probably be placed in an include file.  If you add anything

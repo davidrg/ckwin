@@ -11,11 +11,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _SIZE_T_DEFINED
 #ifdef _WIN64
 typedef unsigned __int64 size_t;
 #else  /* _WIN64 */
 typedef unsigned int size_t;
 #endif  /* _WIN64 */
+#define _SIZE_T_DEFINED
+#endif /* _SIZE_T_DEFINED */
 
 /* Like malloc, but calls fatal() if out of memory. */
 void   *kmalloc(size_t size);

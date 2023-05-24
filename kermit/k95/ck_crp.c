@@ -1,8 +1,8 @@
-char *ckcrpv = "Encryption Engine, 10.0.120, 26 Sep 2022";
+char *ckcrpv = "Encryption Engine, 10.0.121, 23 Mar 2023";
 /*
   C K _ C R P . C  -  Cryptography for C-Kermit"
 
-  Copyright (C) 1998, 2022,
+  Copyright (C) 1998, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -3797,6 +3797,8 @@ des3_ofb64_decrypt(data)
 #ifdef  __STDC__
 #include <stdlib.h>
 #endif
+
+#include "ckcfnp.h"                     /* Prototypes */
 
 /*
  * cast.h

@@ -10,11 +10,13 @@
       Secure Endpoints Inc., New York City
     David Goodwin, New Zealand
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Fri Dec  2 07:26:48 2022 (changes for XYZMODEM internal)
+    Update: Fri Dec  2 07:26:48 2022 (changes for XYZMODEM internal)
+    Update: Wed Apr 12 15:40:01 2023 (ansified 19 function definitions)
+    Update: Sat May  6 13:01:37 2023 (explicit declaration of initproto)
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -2181,7 +2183,12 @@ int ndests =  (sizeof(desttab) / sizeof(struct keytab));
   cx == 2 means a directory path list
 */
 static int
-parsdir(cx) int cx; {
+#ifdef CK_ANSIC
+parsdir( int cx )
+#else
+parsdir(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int i, x, y, dd;                    /* Workers */
     int nxdir;
     char *s;
@@ -2509,7 +2516,12 @@ static int nq3yesno = (sizeof(q3yesno) / sizeof(struct keytab));
 /* Ask question, get yes/no answer */
 
 int
-getyesno(msg, flags) char * msg; int flags; {
+#ifdef CK_ANSIC
+getyesno( char * msg, int flags )
+#else
+getyesno(msg, flags) char * msg; int flags;
+#endif /* CK_ANSIC */
+{
 #ifdef CK_RECALL
     extern int on_recall;               /* around Password prompting */
 #endif /* CK_RECALL */
@@ -3454,9 +3466,7 @@ static int sexptrunc = 0;		/* Flag to force all results to int */
 
 #define SXMLEN 64                       /* Macro arg list initial length */
 #include <math.h>                       /* Floating-point functions */
-
-_PROTOTYP( char * fpformat, (CKFLOAT, int, int) );
-_PROTOTYP( CKFLOAT ckround, (CKFLOAT, int, char *, int) );
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 extern char math_pi[];                  /* Value of Pi */
 extern int sexpecho;                    /* SET SEXPRESSION ECHO value */
@@ -3488,7 +3498,12 @@ shosexp() {
 
 
 static char *
-sexpdebug(s) char * s; {
+#ifdef CK_ANSIC
+sexpdebug( char * s )
+#else
+sexpdebug(s) char * s;
+#endif /* CK_ANSIC */
+{
     /* For debugging -- includes recursion depth in each debug entry */
     static char buf[64];
     ckmakmsg(buf,64,"dosexp[",ckitoa(sexpdep),"] ",s);
@@ -3502,7 +3517,12 @@ sexpdebug(s) char * s; {
 static char sxroundbuf[32];		/* For ROUND result */
 
 char *
-dosexp(s) char *s; {                    /* s = S-Expression */
+#ifdef CK_ANSIC
+dosexp( char *s )                       /* s = S-Expression */
+#else
+dosexp(s) char *s;
+#endif /* CK_ANSIC */
+{
     extern struct mtab *mactab;         /* Macro table */
     extern int maclvl, nmac;
     extern char *mrval[];
@@ -4047,7 +4067,13 @@ dosexp(s) char *s; {                    /* s = S-Expression */
                         fpresult -= fpj;
                     }
 #ifdef FNFLOAT
-                    if (result != fpresult) fpflag++;
+                /*
+                  This gets warnings with some old compilers such as HP C
+                  76.3.  CKFLOAT should be 'double', fpresult is CK_OFF_T,
+                  which is a long integer.  Casting fpresults to (CKFLOAT)
+                  makes no difference.  The warning appears nowhere else.
+                */
+                    if ((CKFLOAT)result != fpresult) fpflag++;
 #endif	/* FNFLOAT */
                     s2 = (fpflag && !sexptrunc) ?
 			fpformat(fpresult,0,0) : ckfstoa(result);
@@ -4927,7 +4953,12 @@ dologend() {                            /* Write record to connection log */
 /* otherwise 0 */
 
 long
-dologshow(fc) int fc; {                 /* SHOW (current) CONNECTION */
+#ifdef CK_ANSIC
+dologshow( int fc )                    /* SHOW (current) CONNECTION */
+#else
+dologshow(fc) int fc;
+#endif /* CK_ANSIC */
+{
     long d1, d2, t1, t2 = 0, prev;
     char c, buf1[32], buf2[32], * info[32], * p, * s;
     char * xlogbuf, xbuf[CXLOGBUFL+1];
@@ -5198,7 +5229,12 @@ dolognet() {
   Parse a DIAL-related string, stripping enclosing braces, if any.
 */
 static int
-dialstr(p,msg) char **p; char *msg; {
+#ifdef CK_ANSIC
+dialstr( char **p, char *msg )
+#else
+dialstr(p,msg) char **p; char *msg;
+#endif /* CK_ANSIC */
+{
     int x;
     char *s;
 
@@ -5211,7 +5247,12 @@ dialstr(p,msg) char **p; char *msg; {
 }
 
 VOID
-initmdm(x) int x; {
+#ifdef CK_ANSIC
+initmdm( int x )
+#else
+initmdm(x) int x;
+#endif /* CK_ANSIC */
+{
     MDMINF * p;
     int m;
 
@@ -5495,7 +5536,12 @@ setmodem() {                            /* SET MODEM */
 }
 
 static int                              /* Set DIAL command options */
-setdial(y) int y; {
+#ifdef CK_ANSIC
+setdial( int y )
+#else
+setdial(y) int y;
+#endif /* CK_ANSIC */
+{
     int x = 0, z = 0;
     char *s = NULL;
 
@@ -6880,8 +6926,12 @@ _PROTOTYP(static int protofield, (char *, char *, char *));
 _PROTOTYP(static int setproto, (void));
 
 static int
-protofield(current, help, px) char * current, * help, * px; {
-
+#ifdef CK_ANSIC
+protofield(char * current, char * help, char * px )
+#else
+protofield(current, help, px) char * current, * help, * px;
+#endif /* CK_ANSIC */
+{
     char *s, tmpbuf[XPCMDLEN+1];
     int x;
 
@@ -6911,6 +6961,16 @@ setproto() {                            /* Select a file transfer protocol */
     char s4[XPCMDLEN+1], s5[XPCMDLEN+1], s6[XPCMDLEN+1], s7[XPCMDLEN+1];
     char * p1 = s1, * p2 = s2, *p3 = s3;
     char * p4 = s4, * p5 = s5, *p6 = s6, *p7 = s7;
+    /*
+      initproto() is prototyped in ckcfnp.h but for some reason when doing
+      a -DNOSPL build we get "warning: implicit declaration of function
+      'initproto'", referring to an invocation of it in this routine.  This
+      extern statement silences the warning.  - fdc 6 May 2023
+    */
+#ifdef CK_ANSIC
+    extern VOID
+     initproto( int,char *,char *,char *,char *,char *,char *,char * );
+#endif  /* CK_ANSIC */
 
 #ifdef XYZ_INTERNAL
     extern int p_avail;
@@ -7176,7 +7236,12 @@ int nprnswi =  (sizeof(prntab) / sizeof(struct keytab)) - 1;
 #endif /* PRINTSWI */
 
 static int
-setprinter(xx) int xx; {
+#ifdef CK_ANSIC
+setprinter( int xx )  
+#else
+setprinter(xx) int xx;
+#endif /* CK_ANSIC */
+{
     int x, y;
     char * s;
     char * defname = NULL;
@@ -9130,7 +9195,11 @@ setgui() {
 #endif /* KUI */
 
 VOID
+#ifdef CK_ANSIC
+setexitwarn( int x )
+#else
 setexitwarn(x) int x; 
+#endif /* CK_ANSIC */
 {
     xitwarn = x;
 #ifdef KUI
@@ -9140,7 +9209,12 @@ setexitwarn(x) int x;
 
 #ifndef NOLOCAL
 VOID
-setdebses(x) int x; {
+#ifdef CK_ANSIC
+setdebses( int x )
+#else
+setdebses(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifdef OS2
     if ((debses != 0) && (x == 0))	/* It was on and we turned it off? */
       os2debugoff();			/* Fix OS/2 coloration */
@@ -9160,7 +9234,12 @@ setdebses(x) int x; {
    0: success
 */
 int
-doprm(xx,rmsflg) int xx, rmsflg; {
+#ifdef CK_ANSIC
+doprm(int xx, int rmsflg)
+#else
+doprm(xx,rmsflg) int xx, rmsflg;
+#endif /* CK_ANSIC */
+{
     int i = 0, x = 0, y = 0, z = 0;
     long zz = 0L;
     char *s = NULL, *p = NULL;
@@ -13712,7 +13791,12 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
   Argument x is used to differentiate the EXIT command from SET LINE / HOST.
 */
 int
-hupok(x) int x; {                       /* Returns 1 if OK, 0 if not OK */
+#ifdef CK_ANSIC
+hupok( int x )                      /* Returns 1 if OK, 0 if not OK */
+#else
+hupok(x) int x;
+#endif /* CK_ANSIC */
+{
     int y, z = 1;
     extern int exithangup;
 #ifdef VMS

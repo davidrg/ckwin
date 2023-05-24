@@ -5693,7 +5693,7 @@ static int inlret ;
 static CHAR * inldest, inleol, inlstart ;
 static int inlmax, inlturn ;
 
-static int
+int
 ckcgetc(int dummy) {
     return ttinc(1);
 }
@@ -5703,7 +5703,7 @@ ckcgetc(int dummy) {
 /*
   blah blah
 */
-ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
+int ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
     extern int xfrcan, xfrchr, xfrnum;  /* Defined in ckcmai.c */
     extern int priority;
     int x=0, c=0, ccn=0;

@@ -24,6 +24,7 @@ if not exist dist\users\NUL mkdir dist\users
 move *.exe dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
+copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest

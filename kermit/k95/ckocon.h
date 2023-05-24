@@ -563,7 +563,7 @@ _PROTOTYP(void setmargins, (int, int));
 _PROTOTYP(void strinsert, (char *, char *));
 _PROTOTYP(void wrtch, (unsigned short));
 _PROTOTYP(int sendescseq, (CHAR *));
-_PROTOTYP(static int ckcgetc, (int));
+/*_PROTOTYP(static int ckcgetc, (int));*/
 _PROTOTYP(void cwrite, (unsigned short));
 _PROTOTYP(int concooked, (void));
 _PROTOTYP(int conraw, (void));
