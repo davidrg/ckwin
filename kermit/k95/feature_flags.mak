@@ -331,16 +331,23 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 
 
 # Telnet encryption option (DES, CAST)
-#   Turn on with: -DCRYPT_DLL
+#   Turn on with: -DCRYPT_DLL (external, via k95crypt.dll)
+#             or: -DCK_DES -DCK_CAST -DCK_ENCRYPTION
 #   Requires: libdes
 #     OR: reworking to use OpenSSL instead
 #   Turn off with: -DNO_ENCRYPTION
 !if "$(CKF_CRYPTDLL)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption CryptDLL
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCRYPT_DLL -DLIBDES
+CKF_INTERNAL_CRYPT=no
+!else
+!if "$(CKF_INTERNAL_CRYPT)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption InternalCrypt
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_DES -DCK_CAST -DCK_ENCRYPTION -DLIBDES
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) TelnetEncryptionOption CryptDLL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
+!endif
 !endif
 
 # If beta-test mode hasn't been explicitly turned off then assume its on.
