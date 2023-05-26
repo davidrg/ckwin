@@ -853,6 +853,12 @@ OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
         p_common$(O) p_tl$(O) p_dir$(O)
 !endif
 
+# Internal cryptography (instead of k95crypt.dll)
+!if "$(CKF_INTERNAL_CRYPT)" == "yes"
+OBJS = $(OBJS) ck_crp.obj ckclib.obj ck_des.obj
+LIBS = $(LIBS) libdes.lib
+KUILIBS = $(KUILIBS) libdes.lib
+!endif
 
 #OUTDIR = \kui\win95
 KUIOBJS = \
