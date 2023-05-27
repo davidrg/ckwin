@@ -177,9 +177,12 @@ jobs:
       if: (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       run: |
-        dir tools\
-        msiexec /i tools\kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK
+        cd tools
+        dir
+        msiexec /i kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK
+        echo %ERRORLEVEL%
         dir C:\Program Files\MIT\
+        echo %ERRORLEVEL%
         
 
       # No zlib for ARM - it fails at the link step:
