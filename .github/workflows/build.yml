@@ -179,15 +179,10 @@ jobs:
       run: |
         cd tools
         dir
-        msiexec /i kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK
+        msiexec /i kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK 
         echo %ERRORLEVEL%
-        dir "C:\Program Files\"
-        dir "C:\Program Files (x86)\"
-        dir "C:\Program Files\MIT\"
-        dir "C:\Program Files (x86)\MIT\"
+        echo An error level of 3010 above is ok - that just means the installer wants a reboot.
         dir "C:\Program Files\MIT\Kerberos\"
-        dir "C:\Program Files (x86)\MIT\Kerberos\"
-        echo %ERRORLEVEL%
         
 
       # No zlib for ARM - it fails at the link step:
