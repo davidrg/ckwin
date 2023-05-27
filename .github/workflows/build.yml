@@ -181,12 +181,12 @@ jobs:
         dir
         msiexec /i kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK
         echo %ERRORLEVEL%
-        dir C:\Program Files\
-        dir C:\Program Files (x86)\
-        dir C:\Program Files\MIT\
-        dir C:\Program Files (x86)\MIT\
-        dir C:\Program Files\MIT\Kerberos\
-        dir C:\Program Files (x86)\MIT\Kerberos\
+        dir "C:\Program Files\"
+        dir "C:\Program Files (x86)\"
+        dir "C:\Program Files\MIT\"
+        dir "C:\Program Files (x86)\MIT\"
+        dir "C:\Program Files\MIT\Kerberos\"
+        dir "C:\Program Files (x86)\MIT\Kerberos\"
         echo %ERRORLEVEL%
         
 
