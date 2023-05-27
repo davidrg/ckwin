@@ -165,7 +165,6 @@ echo Targeting 64bit Windows
 
 REM These libraries aren't supported for 64bit targets - force them off
 set CKF_SRP=no
-set CKF_K4W=no
 set CKF_SUPERLAT=no
 goto :bitcheckdone
 
