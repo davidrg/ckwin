@@ -174,13 +174,9 @@ jobs:
       # Install Kerberos for Windows SDK. Only availbale for x86 and x86-64 at
       # this time.
     - name: Install Kerberos for Windows
-      if: (matrix.arch == 'x86' || matrix.arch == 'x86-64')
+      if: (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
-      run: |
-        msiexec /i tools\kfw.msi /norestart /qn ADDLOCAL=ALL
-        dir "C:\program files\MIT\"
-        dir "C:\program files\MIT\Kerberos\"
-        dir "C:\program files\MIT\Kerberos\include"
+      run: msiexec /i tools\kfw.msi /norestart /qn ADDLOCAL=ALL
 
       # No zlib for ARM - it fails at the link step:
       #   link -nologo -debug -incremental:no -opt:ref -def:./win32/zlib.def -dll -implib:zdll.lib  -out:zlib1.dll -base:0x5A4C0000 adler32.obj compress.obj crc32.obj deflate.obj gzclose.obj gzlib.obj gzread.obj  gzwrite.obj infback.obj inflate.obj inftrees.obj inffast.obj trees.obj uncompr.obj zutil.obj  zlib1.res
@@ -188,7 +184,7 @@ jobs:
       #   LINK : fatal error LNK1355: invalid base address 0x5A4C0000; ARM64 image cannot have base address below 4GB
       # See bug: https://github.com/madler/zlib/issues/325
     - name: Build zlib
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
@@ -236,7 +232,7 @@ jobs:
         nmake           
 
     - name: Build libssh (x86/x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x86-64')
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
