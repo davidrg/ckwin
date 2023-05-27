@@ -178,7 +178,8 @@ jobs:
       shell: cmd
       run: |
         dir tools\
-        msiexec /i tools\kfw.msi /norestart /qn ADDLOCAL=ALL
+        msiexec /i tools\kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK
+        dir C:\Program Files\MIT\
         
 
       # No zlib for ARM - it fails at the link step:
