@@ -1364,9 +1364,9 @@ jobs:
         id: cache-dependencies
         with:
           path: |
-            ${{github.workspace}}\openssl
-            ${{github.workspace}}\libssh
-            ${{github.workspace}}\zlib
+            ${{github.workspace}}/openssl
+            ${{github.workspace}}/libssh
+            ${{github.workspace}}/zlib
           key: deps-openssl-${{env.OPENSSL_VERSION}}
 
       - name: Build OpenSSL
