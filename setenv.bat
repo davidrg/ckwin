@@ -58,6 +58,9 @@ REM    target\bin\i386\rel\wshelp32.dll
 REM    target\lib\ie86\rel\wshload.lib
 REM    athena\wshelper\include\wshelper.h
 REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
+REM
+REM You can also point this at the root directory for the Kerberos for Windows
+REM 3.x or 4.x SDK.
 set k4w_root=%root%\kerberos\kfw-2.2-beta-2
 
 REM ============================================================================
