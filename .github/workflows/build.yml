@@ -171,11 +171,16 @@ jobs:
         cpan -i Text::Template
       shell: powershell
 
+      # Install Kerberos for Windows SDK. Only availbale for x86 and x86-64 at
+      # this time.
     - name: Install Kerberos for Windows
+      if: (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: cmd
       run: |
         msiexec  /i tools\kfw.msi /norestart /qn
         dir "C:\program files\MIT\"
+        dir "C:\program files\MIT\Kerberos\"
+        dir "C:\program files\MIT\Kerberos\include"
 
       # No zlib for ARM - it fails at the link step:
       #   link -nologo -debug -incremental:no -opt:ref -def:./win32/zlib.def -dll -implib:zdll.lib  -out:zlib1.dll -base:0x5A4C0000 adler32.obj compress.obj crc32.obj deflate.obj gzclose.obj gzlib.obj gzread.obj  gzwrite.obj infback.obj inflate.obj inftrees.obj inffast.obj trees.obj uncompr.obj zutil.obj  zlib1.res
