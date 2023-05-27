@@ -177,6 +177,7 @@ jobs:
       if: (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       run: |
+        dir tools\
         msiexec /i tools\kfw.msi /norestart /qn ADDLOCAL=ALL
         dir C:\Program Files\MIT
 
