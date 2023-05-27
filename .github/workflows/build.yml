@@ -177,7 +177,7 @@ jobs:
       if: (matrix.arch == 'x86' || matrix.arch == 'x86-64')
       shell: cmd
       run: |
-        msiexec  /i tools\kfw.msi /norestart /qn
+        msiexec /i tools\kfw.msi /norestart /qn ADDLOCAL=ALL
         dir "C:\program files\MIT\"
         dir "C:\program files\MIT\Kerberos\"
         dir "C:\program files\MIT\Kerberos\include"
