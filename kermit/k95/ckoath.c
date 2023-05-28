@@ -5947,6 +5947,12 @@ ck_krb5_loaddll_eh( void )
 #endif /* KRB5 */
 }
 
+#ifdef _WIN64
+#define KRB_DLL_SUFFIX "64"
+#else
+#define KRB_DLL_SUFFIX "32"
+#endif /* _WIN64 */
+
 int
 ck_krb4_loaddll( void )
 {
@@ -5962,15 +5968,15 @@ ck_krb4_loaddll( void )
 #ifdef NT
     HINSTANCE hLEASH;
 
-    if ( !(hKRB4_32 = LoadLibrary("KRBV4W32")) ) {
+    if ( !(hKRB4_32 = LoadLibrary("KRBV4W" KRB_DLL_SUFFIX)) ) {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRBV4W32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRBV4W" KRB_DLL_SUFFIX,rc) ;
         ck_krb4_loaddll_eh();
     }
     if ( !hKRB4_32 &&
-         !(hKRB4_32 = LoadLibrary("KRB4_32"))) {
+         !(hKRB4_32 = LoadLibrary("KRB4_" KRB_DLL_SUFFIX))) {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRB4_32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRB4_" KRB_DLL_SUFFIX,rc) ;
         ck_krb4_loaddll_eh();
     }
     if (hKRB4_32) {
@@ -6573,8 +6579,8 @@ ck_krb5_loaddll( void )
 
 #ifdef NT
     HINSTANCE hLEASH = NULL;
-    
-    hKRB5_32 = LoadLibrary("KRB5_32") ;
+
+    hKRB5_32 = LoadLibrary("KRB5_" KRB_DLL_SUFFIX) ;
     if ( !hKRB5_32 ) {
         /* Try Cygnus Solutions version */
         hKRB5_32 = LoadLibrary("LIBKRB5");
@@ -6583,7 +6589,7 @@ ck_krb5_loaddll( void )
     if ( !hKRB5_32 )
     {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRB5_32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRB5_" KRB_DLL_SUFFIX,rc) ;
     }
 
 #ifdef KRB524_CONV
@@ -6655,11 +6661,11 @@ ck_krb5_loaddll( void )
     }
     else {
         debug(F100,"Kerberos V support provided by MIT","",0);
-        hCOMERR32 = LoadLibrary("COMERR32") ;
+        hCOMERR32 = LoadLibrary("COMERR" KRB_DLL_SUFFIX) ;
         if ( !hCOMERR32 )
         {
             rc = GetLastError() ;
-            debug(F111, "Kerberos LoadLibrary failed","COMERR32",rc) ;
+            debug(F111, "Kerberos LoadLibrary failed","COMERR" KRB_DLL_SUFFIX,rc) ;
             load_error = 1;
         }
         if (((FARPROC) p_com_err =
@@ -8456,7 +8462,7 @@ ck_krb5_loaddll( void )
     }
 
     /* Initialize Kerberos 5 ticket options based upon MIT Leash selections */
-    hLEASH = LoadLibrary("LEASHW32");
+    hLEASH = LoadLibrary("LEASHW" KRB_DLL_SUFFIX);
     if ( hLEASH )
     {
         DWORD (* pLeash_get_default_lifetime)(void);
@@ -9374,7 +9380,7 @@ ck_gssapi_loaddll()
 #ifdef NT
     hGSSAPI = LoadLibrary("GSSKRB5");
     if ( !hGSSAPI )
-        hGSSAPI = LoadLibrary("GSSAPI32");
+        hGSSAPI = LoadLibrary("GSSAPI" KRB_DLL_SUFFIX);
     if ( !hGSSAPI )
         return(0);
 
