@@ -175,9 +175,12 @@ jobs:
         cd ..
         
         # Get KFW
+        echo Get KFW...
         if ("${{matrix.arch}}" -eq "x86") {
+          echo x86 platform: ${{env.KFW_x86}}
           wget ${{env.KFW_x86}} -outfile kfw.msi
         } else {
+          echo x86-64 platform: ${{env.KFW_x86}}
           wget ${{env.KFW_x86_64}} -outfile kfw.msi
         }
         
@@ -196,7 +199,7 @@ jobs:
         cd tools
         dir
         msiexec /i kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK 
-        echo %ERRORLEVEL%
+        echo KFW install completed with error level: %ERRORLEVEL%
         echo An error level of 3010 above is ok - that just means the installer wants a reboot.
         dir "C:\Program Files\MIT\Kerberos\"
         
