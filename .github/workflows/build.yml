@@ -194,14 +194,18 @@ jobs:
       # this time.
     - name: Install Kerberos for Windows
       if: (matrix.arch == 'x86' || matrix.arch == 'x64')
-      shell: cmd
+      shell: powershell
       run: |
         cd tools
         dir
         msiexec /i kfw.msi /quiet /qn /norestart ADDLOCAL=feaKfwSDK 
         echo KFW install completed with error level: %ERRORLEVEL%
         echo An error level of 3010 above is ok - that just means the installer wants a reboot.
-        dir "C:\Program Files\MIT\Kerberos\"
+        if ("${{matrix.arch}}" -eq "x86") {
+          dir "C:\Program Files (x86)\MIT\Kerberos\"
+        } else {
+          dir "C:\Program Files\MIT\Kerberos\"
+        }
         
 
       # No zlib for ARM - it fails at the link step:
@@ -272,7 +276,11 @@ jobs:
         cd libssh\${{env.LIBSSH_VERSION}}-gssapi
         patch -p1 < ..\win32-gssapi.patch
         cd build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
+        if ("${{matrix.arch}}" -eq "x86") {
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="C:\Program Files (x86)\MIT\Kerberos"
+        } else {
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
+        }
         nmake
 
       # 32bit ARM doesn't get libssh as version 0.10.3 gets link errors there:
@@ -299,7 +307,8 @@ jobs:
       ##########################################################################
     - name: Full Build
       run: |
-        set k4w_root_override=C:\Program Files\MIT\Kerberos
+        if "${{matrix.arch}}" == "x64" set k4w_root_override=C:\Program Files\MIT\Kerberos
+        if "${{matrix.arch}}" == "x86" set k4w_root_override=C:\Program Files (x86)\MIT\Kerberos
         
         call ..\setenv.bat
         cd p95
