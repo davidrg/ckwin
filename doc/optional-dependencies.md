@@ -129,7 +129,7 @@ If you want OpenSSL to work on versions of windows older than Vista, add the
 
 For libssh you need to the following specifying the correct OPENSSL_ROOT_DIR and ZLIB_ROOT:
 ```
-cd libssh\0.9.6
+cd libssh\0.10.3
 mkdir build
 cd build
 cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1q\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.12\
@@ -140,6 +140,36 @@ cd ..\..\..\
 Note that this does not build libssh with GSSAPI support. If you're building
 libssh 0.10.x and want DSA support (ssh-dss), add `-DWITH_DSA=ON` to the end
 of the cmake command.
+
+#### Building with GSSAPI (Kerberos) support
+
+Libssh does not currently support GSSAPI on windows, though only a very
+minor change is required to make it work: A single `#define` needs to be added
+to the top of `gssapi.c` to ensure the correct version of the winsock header is
+included, and the `FindGSSAPI.cmake` CMake module needs to be adjusted so it can
+find the MIT Kerberos for Windows SDK.
+
+These changes are available in the form of a convenient patch: 
+`libssh/win32-gssapi.patch`
+
+To build with GSSAPI support:
+```
+cd libssh\0.10.3
+patch -p1 < ..\win32-gssapi.patch
+mkdir build
+cd build
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1q\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.12\ -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
+nmake
+cd ..\..\..\
+```
+
+Remember to add `-DWITH_DSA=ON` if you still need DSA (ssh-dss) support.
+
+*Note:* The resulting ssh.dll will depend on gssapi64.dll (or gssapi32.dll for a
+32bit build) meaning it won't work on any systems that don't have MIT Kerberos
+for Windows installed. If you're distributing your build to end-users who may or
+may not need Kerberos support it may be best to produce two builds of libssh, one
+with GSSAPI support and one without.
 
 ## Building with Telnet Encryption Option (DES and CAST) Support
 In addition to SSL/TLS secured telnet, C-Kermit for Windows also optionally

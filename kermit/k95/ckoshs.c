@@ -1002,12 +1002,12 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
         rc = ssh_userauth_none(state->session, NULL);
         if (rc == SSH_AUTH_SUCCESS) return rc;
     }
-    /* TODO: GSS API
-    if (methods & SSH_AUTH_METHOD_GSSAPI
+
+    if (methods & SSH_AUTH_METHOD_GSSAPI_MIC
             && state->parameters->allow_gssapi_auth && !*canceled) {
-        // TODO: rc = ssh_userauth_gssapi(...);
+        rc = ssh_userauth_gssapi(state->session);
         if (rc == SSH_AUTH_SUCCESS) return rc;
-    }   */
+    }
     if (methods & SSH_AUTH_METHOD_PUBLICKEY
             && state->parameters->allow_pubkey_auth && !*canceled) {
         no_auth_methods = FALSE;
@@ -1037,6 +1037,7 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
         printf("The server supports: ");
         if (methods & SSH_AUTH_METHOD_PUBLICKEY) printf("publickey ");
         if (methods & SSH_AUTH_METHOD_INTERACTIVE) printf("keyboard-interactive ");
+        if (methods & SSH_AUTH_METHOD_GSSAPI_MIC) printf("gssapi-mic ");
         if (methods & SSH_AUTH_METHOD_PASSWORD) printf("password ");
         printf("\n");
     }

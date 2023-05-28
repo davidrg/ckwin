@@ -103,8 +103,8 @@ bits that couldn't be open sourced at the time:
   isn't included by default at this time.
 * The Telnet Encryption Option (DES/CAST) is supported again, not that anyone
   should be using it today if they care about security.
-* Kerberos V is supported again though this doesn't include Kerberos support in
-  the SSH client (yet). To use Kerberos authentication in CKW you must 
+* Kerberos V is supported again (including GSSAPI support in the SSH client). To
+  use Kerberos authentication in CKW you must
   [Download and Install Kerberos for Windows from MIT](http://web.mit.edu/kerberos/dist/index.html),
   it is not bundled with CKW like it was with kermit 95. If you need Kerberos IV
   you can build CKW from source against an older version of the KFW SDK (2.x or
@@ -139,8 +139,8 @@ A full [Change Log](doc/changes.md) is available and updated for major releases.
 The following features supported by Kermit 95 v2.1.3 remain unavailable in
 C-Kermit for Windows at this time:
 
-* SSH port forwarding, X11 forwarding, GSSAPI/Kerberos authentication and a few
-  other features have not been implemented yet - ticket #44 is tracking these.
+* SSH port forwarding, X11 forwarding, and a few other features have not been
+  implemented yet - ticket #44 is tracking these.
 * SSH v1 support will not return as this is not supported by libssh anymore.
 * SSH/SSL/TLS on Windows versions prior to Windows XP SP3 will likely not return
   as OpenSSL no longer supports these older versions of Windows or the compilers

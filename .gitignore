@@ -237,7 +237,6 @@ kermit/dialer/dist*
 # Dependencies
 openssl/
 zlib/
-libssh/
 redist/
 zinc/
 libdes/des/*
