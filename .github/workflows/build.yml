@@ -130,7 +130,6 @@ jobs:
         cd ..
         
         # Get and unpack libssh
-        mkdir libssh
         cd libssh
         wget ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz -outfile libssh-${{env.LIBSSH_VERSION}}.tar.xz
         7z x libssh-${{env.LIBSSH_VERSION}}.tar.xz
