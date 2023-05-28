@@ -190,15 +190,33 @@ product. This has not been commercially available or supported since
 
 ## Building with Kerberos Support
 
-C-Kermit for Windows is known to build with Kerberos for Windows version 2.6.0,
-the last version to support Windows 95. Other versions in the 2.6.x series are
-likely to work.
+C-Kermit for Windows is known to build with Kerberos for Windows version 2.6.0
+(the last version to support Windows 95) and newer. If you need Kerberos IV
+support, use KFW 2.x or 3.x - KFW 4.x is Kerberos V only.
 
 Kermit 95 was built with Kerberos for Windows version 2.2-beta2 so there is a
 good chance building with versions as old as that will work too, though this has
 not been tested in over 20 years.
 
-### Kerberos for Windows 2.6.0
+### Kerberos for Windows 3.x, 4.x
+
+The Kerberos for Windows SDK is sufficient. This won't give you DNS-SRV support
+as that currently relies on a library that isn't included in the SDK.
+
+All you've got to do is download and install/unzip the KFW SDK then point
+`setenv.bat` at the KFW SDK directory (where the lib and include/inc 
+subdirectories are).
+
+You can do this by either editing `setenv.bat` and updating the `k4w_root`
+variable, or you can set the `k4w_root_override` environment variable before
+invoking setenv.bat. For example:
+
+```batch
+C:\dev\ckwin> set k4w_root_override=C:\Program Files\MIT\Kerberos
+C:\dev\ckwin> setenv.bat
+```
+
+### Kerberos for Windows 2.6.0 - from source (provides DNS-SRV support)
 
 And likely the rest of the 2.6.x series.
 
