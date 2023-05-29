@@ -186,7 +186,7 @@ jobs:
           echo x86-64 platform: ${{env.KFW_x86}}
           wget ${{env.KFW_x86_64}} -outfile kfw.msi
         }
-        start /wait msiexec /a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\kfw
+        start-process msiexec -argumentlist "/a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\kfw" -wait
         dir ${{github.workspace}}\kerberos\kfw
         cd ..
         
@@ -264,7 +264,7 @@ jobs:
         cd libssh\${{env.LIBSSH_VERSION}}-gssapi
         patch -p1 < ..\win32-gssapi.patch
         cd build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="${{github.workspace}}\kerberos\kfw\"
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="${{github.workspace}}\kerberos\kfw\Kerberos"
         nmake
 
       # 32bit ARM doesn't get libssh as version 0.10.3 gets link errors there:
@@ -291,7 +291,7 @@ jobs:
       ##########################################################################
     - name: Full Build
       run: |
-        set k4w_root_override=${{github.workspace}}\kerberos\kfw
+        set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
         
         call ..\setenv.bat
         cd p95
