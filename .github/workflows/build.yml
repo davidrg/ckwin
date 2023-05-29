@@ -186,7 +186,7 @@ jobs:
           echo x86-64 platform: ${{env.KFW_x86}}
           wget ${{env.KFW_x86_64}} -outfile kfw.msi
         }
-        msiexec /a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\kfw
+        start /wait msiexec /a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\kfw
         dir ${{github.workspace}}\kerberos\kfw
         cd ..
         
