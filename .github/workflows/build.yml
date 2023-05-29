@@ -99,6 +99,7 @@ jobs:
           ${{github.workspace}}\libdes\Release
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
+          ${{github.workspace}}\kerberos\kfw
         key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+kfw+ver2
 
     - name: Get dependencies
@@ -186,8 +187,7 @@ jobs:
           wget ${{env.KFW_x86_64}} -outfile kfw.msi
         }
         msiexec /a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\kfw
-        dir
-        del *.msi
+        dir ${{github.workspace}}\kerberos\kfw
         cd ..
         
         cd ..          
