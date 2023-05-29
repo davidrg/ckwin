@@ -259,7 +259,7 @@ jobs:
 
     - name: Build GSSAPI-enabled libssh (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
-      shell: powershell
+      shell: cmd
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}-gssapi
         patch -p1 < ..\win32-gssapi.patch
