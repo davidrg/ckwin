@@ -186,7 +186,7 @@ jobs:
           wget ${{env.KFW_x86_64}} -outfile kfw.msi
         }
         msiexec /a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\kfw
-        dir /w
+        dir
         del *.msi
         cd ..
         
