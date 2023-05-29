@@ -1376,6 +1376,13 @@ static krb5_error_code (KRB5_CALLCONV *p_krb5_auth_con_setuseruserkey)
         krb5_auth_context,
         krb5_keyblock *))=NULL;
 
+#ifdef KRB5_BETATEST
+/* WARNING: The signature for krb5_get_profile has changed in KFW 4.x.
+ * The parameters are now (krb5_context, profile_t **)
+ *
+ * The three functions here are only used in one place in ckuath that is only
+ * ever called when KRB5_BETATEST is defined, which it never is.
+ * */
 static krb5_error_code (KRB5_CALLCONV *p_krb5_get_profile)
     P((krb5_context, profile_t *))=NULL;
 
@@ -1384,6 +1391,7 @@ static long (KRB5_CALLCONV *p_profile_get_relation_names)
 
 static long (KRB5_CALLCONV *p_profile_get_subsection_names)
     P((profile_t profile, const char **names, char ***ret_names))=NULL;
+#endif /* KRB5_BETATEST */
 
 static void (KRB5_CALLCONV *p_krb5_free_keyblock_contents)
 P((krb5_context, krb5_keyblock FAR *))=NULL;
@@ -1501,11 +1509,12 @@ static krb5_error_code (KRB5_CALLCONV * p_krb5_kt_end_seq_get)
 static krb5_error_code (KRB5_CALLCONV_C * p_krb5_build_principal)
     (krb5_context, krb5_principal *, unsigned int, krb5_const char *, ...)=NULL;
 
-
+#ifdef KRB524_CONV
 static int (KRB5_CALLCONV_C *p_krb524_init_ets)(krb5_context context)=NULL;
 static int (KRB5_CALLCONV_C *p_krb524_convert_creds_kdc)(krb5_context context, 
                                                          krb5_creds *v5creds,
                                                          CREDENTIALS *v4creds)=NULL;
+#endif /* KRB524_CONV */
 
 const char *
 ck_error_message(errcode_t ec)
@@ -2805,6 +2814,7 @@ ck_krb5_auth_con_setuseruserkey( krb5_context context,
         return(-1);
 }
 
+#ifdef KRB5_BETATEST
 krb5_error_code
 ck_krb5_get_profile(krb5_context context, profile_t * profile)
 {
@@ -2831,6 +2841,7 @@ ck_profile_get_subsection_names(profile_t profile, const char **names, char ***r
     else
         return(-1);
 }
+#endif /* KRB5_BETATEST */
 
 void ck_krb5_free_keyblock_contents(krb5_context context, krb5_keyblock * keyblock)
 {
@@ -3254,6 +3265,7 @@ krb5_error_code ck_krb5_build_principal(krb5_context context,
         return(-1);
 }
 
+#ifdef KRB524_CONV
 int 
 ck_krb524_init_ets(krb5_context context)
 {
@@ -3273,6 +3285,7 @@ ck_krb524_convert_creds_kdc(krb5_context context,
     else
         return(-1);
 }
+#endif /* KRB524_CONV */
 #endif /* KRB5 */
 
 #ifdef CK_DES
@@ -5886,10 +5899,13 @@ ck_krb5_loaddll_eh( void )
     p_krb5_rd_priv                  = NULL;
     p_krb5_mk_priv                  = NULL;
     p_krb5_auth_con_setuseruserkey  = NULL;
+
+#ifdef KRB5_BETATEST
     p_krb5_get_profile              = NULL;
 
     p_profile_get_subsection_names = NULL;
     p_profile_get_relation_names   = NULL;
+#endif /* KRB5_BETATEST */
 
     p_k95_k5_principal_to_localname = NULL;
     p_k95_k5_userok = NULL;
@@ -5924,10 +5940,18 @@ ck_krb5_loaddll_eh( void )
     p_krb5_kt_end_seq_get     = NULL;
     p_krb5_build_principal    = NULL;
 
+#ifdef KRB524_CONV
     p_krb524_init_ets         = NULL;
     p_krb524_convert_creds_kdc = NULL;
+#endif /* KRB524_CONV */
 #endif /* KRB5 */
 }
+
+#ifdef _WIN64
+#define KRB_DLL_SUFFIX "64"
+#else
+#define KRB_DLL_SUFFIX "32"
+#endif /* _WIN64 */
 
 int
 ck_krb4_loaddll( void )
@@ -5944,15 +5968,15 @@ ck_krb4_loaddll( void )
 #ifdef NT
     HINSTANCE hLEASH;
 
-    if ( !(hKRB4_32 = LoadLibrary("KRBV4W32")) ) {
+    if ( !(hKRB4_32 = LoadLibrary("KRBV4W" KRB_DLL_SUFFIX)) ) {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRBV4W32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRBV4W" KRB_DLL_SUFFIX,rc) ;
         ck_krb4_loaddll_eh();
     }
     if ( !hKRB4_32 &&
-         !(hKRB4_32 = LoadLibrary("KRB4_32"))) {
+         !(hKRB4_32 = LoadLibrary("KRB4_" KRB_DLL_SUFFIX))) {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRB4_32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRB4_" KRB_DLL_SUFFIX,rc) ;
         ck_krb4_loaddll_eh();
     }
     if (hKRB4_32) {
@@ -6555,8 +6579,8 @@ ck_krb5_loaddll( void )
 
 #ifdef NT
     HINSTANCE hLEASH = NULL;
-    
-    hKRB5_32 = LoadLibrary("KRB5_32") ;
+
+    hKRB5_32 = LoadLibrary("KRB5_" KRB_DLL_SUFFIX) ;
     if ( !hKRB5_32 ) {
         /* Try Cygnus Solutions version */
         hKRB5_32 = LoadLibrary("LIBKRB5");
@@ -6565,9 +6589,10 @@ ck_krb5_loaddll( void )
     if ( !hKRB5_32 )
     {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRB5_32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRB5_" KRB_DLL_SUFFIX,rc) ;
     }
 
+#ifdef KRB524_CONV
     hKRB524 = LoadLibrary("KRB524") ;
     if ( !hKRB524 )
     {
@@ -6589,6 +6614,7 @@ ck_krb5_loaddll( void )
                    "krb524_convert_creds_kdc",rc);
         }
     }
+#endif /* KRB524_CONV */
 
     if ( hKRB5_32 != NULL ) {
     if ( cygnus ) {
@@ -6635,11 +6661,11 @@ ck_krb5_loaddll( void )
     }
     else {
         debug(F100,"Kerberos V support provided by MIT","",0);
-        hCOMERR32 = LoadLibrary("COMERR32") ;
+        hCOMERR32 = LoadLibrary("COMERR" KRB_DLL_SUFFIX) ;
         if ( !hCOMERR32 )
         {
             rc = GetLastError() ;
-            debug(F111, "Kerberos LoadLibrary failed","COMERR32",rc) ;
+            debug(F111, "Kerberos LoadLibrary failed","COMERR" KRB_DLL_SUFFIX,rc) ;
             load_error = 1;
         }
         if (((FARPROC) p_com_err =
@@ -7389,6 +7415,8 @@ ck_krb5_loaddll( void )
                    "krb5_auth_con_setuseruserkey",rc) ;
             load_error = 1;
         }
+
+#ifdef KRB5_BETATEST
         if (((FARPROC) p_krb5_get_profile =
               GetProcAddress( hKRB5_32, "krb5_get_profile" )) == NULL )
         {
@@ -7396,6 +7424,7 @@ ck_krb5_loaddll( void )
             debug(F111, "Kerberos GetProcAddress failed",
                    "krb5_get_profile",rc) ;
         }
+#endif
 
         if (((FARPROC) p_krb5_free_keyblock_contents =
               GetProcAddress( hKRB5_32, "krb5_free_keyblock_contents" )) == NULL )
@@ -7595,6 +7624,7 @@ ck_krb5_loaddll( void )
         }
     }
 
+#ifdef KRB5_BETATEST
     hPROFILE = LoadLibrary("XPPROF32") ;
     if ( hPROFILE ) {
         if (((FARPROC) p_profile_get_relation_names =
@@ -7612,6 +7642,7 @@ ck_krb5_loaddll( void )
                    "profile_get_subsection_names",rc) ;
         }
     }
+#endif /* KRB5_BETATEST */
 #else /* NT */
     exe_path = GetLoadPath();
     len = get_dir_len(exe_path);
@@ -8224,11 +8255,15 @@ ck_krb5_loaddll( void )
             debug(F111,"Kerberos V GetProcAddress failed","krb5_auth_con_setuseruserkey",rc);
             load_error = 1;
         }
+
+#ifdef KRB5_BETATEST
         if (rc = DosQueryProcAddr(hKRB5_32,0,"krb5_get_profile",
                                    (PFN*)&p_krb5_get_profile))
         {
             debug(F111,"Kerberos V GetProcAddress failed","krb5_get_profile",rc);
         }
+#endif
+
         if (rc = DosQueryProcAddr(hKRB5_32,0,"krb5_free_keyblock_contents",
                                    (PFN*)&p_krb5_free_keyblock_contents))
         {
@@ -8367,6 +8402,8 @@ ck_krb5_loaddll( void )
     }
 
     exe_path = GetLoadPath();
+
+#ifdef KRB5_BETATEST
     len = get_dir_len(exe_path);
     if ( len + strlen("XPPROF32") + 4 > sizeof(path) )
         return(0);
@@ -8391,6 +8428,7 @@ ck_krb5_loaddll( void )
             debug(F111,"Kerberos V GetProcAddress failed","profile_get_subsection_names",rc);
         }
     }
+#endif /* KRB5_BETATEST */
 #endif /* NT */
 
     if ( deblog ) {
@@ -8424,7 +8462,7 @@ ck_krb5_loaddll( void )
     }
 
     /* Initialize Kerberos 5 ticket options based upon MIT Leash selections */
-    hLEASH = LoadLibrary("LEASHW32");
+    hLEASH = LoadLibrary("LEASHW" KRB_DLL_SUFFIX);
     if ( hLEASH )
     {
         DWORD (* pLeash_get_default_lifetime)(void);
@@ -9342,7 +9380,7 @@ ck_gssapi_loaddll()
 #ifdef NT
     hGSSAPI = LoadLibrary("GSSKRB5");
     if ( !hGSSAPI )
-        hGSSAPI = LoadLibrary("GSSAPI32");
+        hGSSAPI = LoadLibrary("GSSAPI" KRB_DLL_SUFFIX);
     if ( !hGSSAPI )
         return(0);
 

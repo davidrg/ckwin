@@ -3067,6 +3067,9 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* NO_SSL */
 #endif /* _M_PPC */
 #ifndef NO_KERBEROS
+#ifndef CK_KERBEROS
+/* If neither CK_KERBEROS nor NO_KERBEROS were defined on the command line
+ * then just enable everything */
 #define CK_KERBEROS
 #define KRB4
 #define KRB5
@@ -3081,6 +3084,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 #endif /* _M_ALPHA */
 #endif /* _M_PPC */
 #endif /* NT */
+#endif /* CK_KERBEROS */
 #endif /* NO_KERBEROS */
 #ifndef NO_SRP
 #define CK_SRP

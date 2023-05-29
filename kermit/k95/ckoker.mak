@@ -735,7 +735,8 @@ LIBS = $(LIBS) libsrp.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
        winmm.lib mpr.lib advapi32.lib winspool.lib
 
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 LIBS = $(LIBS) wshload.lib
 !endif
 
@@ -767,8 +768,8 @@ KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
 KUILIBS = $(KUILIBS) srp.lib
 !endif
 
-# MIT Kerberos for Windows
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 KUILIBS = $(KUILIBS) wshload.lib
 !endif
 
@@ -791,8 +792,8 @@ LIBS = $(LIBS) $(SSL_LIBS)
 LIBS = $(LIBS) srp.lib
 !endif
 
-# MIT Kerberos for Windows
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 LIBS = $(LIBS) wshload.lib
 !endif
 
