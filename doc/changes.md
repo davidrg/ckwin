@@ -45,7 +45,11 @@ Also included are a selection of minor enhancements, features and bugfixes.
   * `CSI 1 8 ; Ps ; Ps t` - get text area size in characters (xterm)
   * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
     escape sequence would incorrectly minimise the window
-* A sample IKSD initialisation script is now included in the distribution 
+* A sample IKSD initialisation script is now included in the distribution
+* The "show features" command now includes the availability (or lack of) DECnet,
+  SuperLAT and PTY support. Some of these are optional features for custom
+  builds only and others may or may not be present depending on the compiler
+  used.
 
 ### Source Changes
 * Fixed build failure with Visual C++ 2017

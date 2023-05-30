@@ -12654,6 +12654,23 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* IKSD */
 
+#ifdef OS2
+#ifdef DECNET
+    printf(" DECnet (Pathworks) LAT/CTERM support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* DECNET */
+#endif /* OS2 */
+
+#ifdef NT
+#ifdef SUPERLAT
+    printf(" SuperLAT/TES32 support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* SUPERLAT */
+#endif /* NT */
+
+
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     printf("Major optional features not included:\n");
@@ -12987,13 +13004,13 @@ printf("NOWTMP not defined\n");
     flag = 1;
 #endif /* CK_REDIR */
 
-#ifdef UNIX
+#ifdef WIN32ORUNIX
 #ifndef NETPTY
     printf(" No pseudoterminal control\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* NETPTY */
-#endif /* UNIX */
+#endif /* WIN32ORUNIX */
 
 #ifndef CK_RESEND
     printf(" No RESEND command\n");
@@ -13026,6 +13043,22 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* IKSD */
+
+#ifdef OS2
+#ifndef DECNET
+    printf(" No DECnet (Pathworks) LAT/CTERM support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* DECNET */
+#endif /* OS2 */
+
+#ifdef NT
+#ifndef SUPERLAT
+    printf(" No SuperLAT/TES32 support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* SUPERLAT */
+#endif /* NT */
 
     if (flag == 0) {
         printf(" None\n");
