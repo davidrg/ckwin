@@ -21,6 +21,7 @@ Also included are a selection of minor enhancements, features and bugfixes.
 * GSSAPI authentication in the SSH client (requires MIT Kerberos for Windows,
   see ssh-readme for more information)
 * Updated to C-Kermit 10 Beta.09
+* Updated to libssh 0.10.5
 
 ### Fixed Bugs
 * Fixed crash on startup under Crossover on MacOS and Wine on Linux
