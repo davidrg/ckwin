@@ -9,7 +9,7 @@ Kermit Project website: http://www.kermitproject.org.
 Major features include:
  * More than [40 terminal emulations](#supported-terminal-emulations)
  * Virtual Terminal connections over SSH, Telnet (including TLS support), 
-   rlogin, modem, serial port and pty
+   rlogin, modem, serial port, named pipe and pty
  * Scriptable file transfer via Kermit, X/Y/Z Modem, HTTP, HTTPS, FTP and FTPS protocols
  * International character set translation
  * Pathworks supported for LAT and CTERM Virtual Terminal connections. 
