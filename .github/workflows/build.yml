@@ -434,6 +434,7 @@ jobs:
           
           cd openssl\${{env.OPENSSL_VERSION}}
           perl Configure VC-WIN64I
+          perl configdata.pm --dump
           
           REM The perl configure script doesn't work quite right for cross-compiling to IA64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
