@@ -18,7 +18,7 @@ env:
   OPENSSL_VERSION: 1.1.1s
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
-  LIBSSH_VERSION: 0.10.3
+  LIBSSH_VERSION: 0.10.5
   # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
