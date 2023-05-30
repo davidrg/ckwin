@@ -3,6 +3,65 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
+## C-Kermit for Windows 10.0b9 beta 5 - Coming Soon
+This release mostly focused on porting the codebase to 64bit Windows - x86-64,
+ARM64, Itanium and even the never publicly relased 64bit Windows 2000 for Alpha.
+Also included are a selection of minor enhancements, features and bugfixes.
+
+### New Features
+* Builds for 64bit Windows
+  * x86-64
+  * ARM64
+  * Itanium
+* Build for ARM32
+* Added TLS SNI support for the http and telnet clients
+* The old hostmode and other scripts are now included in the distribution with
+  no substantial changes since Kermit 95.
+* Kerberos V support has returned (Kerberos IV support can be built from source)
+* GSSAPI authentication in the SSH client (requires MIT Kerberos for Windows,
+  see ssh-readme for more information)
+* Updated to C-Kermit 10 Beta.09
+
+### Fixed Bugs
+* Fixed crash on startup under Crossover on MacOS and Wine on Linux
+* Fixed `show terminal` command showing autodownload as being "on" when it was
+  actually set to "ask"
+* Fixed receiving files with an as-name that includes a path using UNIX 
+  separators failing when autodownload is set to "ask" in the GUI version of CKW
+  (receiving a file sent as `send foo.txt C:/temp/foo.txt` now works)
+* Fixed CKW for modern Windows (XP SP3+) not setting modified time on received
+  files
+* Fixed entering plane-1 unicode values via Alt+n crashing the application (this
+  bug was inherited from Kermit 95)
+* Fixed SSH bugs:
+  * anonymous SSH (userauth none) doesn't work
+  * buffer not flushed on logout
+  * fixed some (but not all) occurrances of a server disconnect not being
+    detected
+
+### Minor Enhancements and other changes
+* The sample k95custom.ini file now sets autodownload to "on" rather than "ask"
+* New escape sequences in the terminal emulator
+  * `CSI 1 8 ; Ps ; Ps t` - get text area size in characters (xterm)
+  * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
+    escape sequence would incorrectly minimise the window
+* A sample IKSD initialisation script is now included in the distribution 
+
+### Source Changes
+* Fixed build failure with Visual C++ 2017
+* Fixed build failure with Visual C++ 4.1 and 4.2
+* Fixed some reported build errors with Visual C++ 4.0 RISC Edition. MIPS should
+  now build fine with TAPI disabled, PowerPC may also need debug logging turned
+  off (`set CKF_DEBUG=no`). No one has tried building the dialer yet.
+* Fixed build issues with the DEC Alpha compiler in the NT 3.50 SDK. The linker
+  supplied in the SDK is not compatbile however.
+* Ported to 64bit Windows
+* Added support for building for 64bit Windows on the DEC Alpha (AXP64 target)
+* Ported the core of the application to MinGW (GCC)
+* Added support for Visual C++ 1.0/1.1 32-bit edition
+* Ported to Windows NT 3.10 but there are currently unresolved bugs (networking
+  is broken for one)
+
 ## C-Kermit for Windows 10.0b8 beta 4 - 15 December 2022
 This release is mostly a collection of minor improvements and bug fixes as I
 have been unexpectedly busy since the prior release resulting in the schedule
