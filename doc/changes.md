@@ -8,6 +8,33 @@ This release mostly focused on porting the codebase to 64bit Windows - x86-64,
 ARM64, Itanium and even the never publicly relased 64bit Windows 2000 for Alpha.
 Also included are a selection of minor enhancements, features and bugfixes.
 
+### Things to be aware of when upgrading
+
+This release corrects some issues with the DEFAULT template which the Dialer
+creates automatically on first run. The auto-created template has bad colour
+values for colours 1 through 9 resulting in blue appearing green, etc (terminal
+sessions that should have a blue background will have a green one). The correct
+values are in the table below - these should be applied to the DEFAULT template 
+as well as any other connections or templates you've created via the 
+*GUI Settings* page:
+
+| Colour        | Red | Green | Blue |
+|---------------|-----|-------|------|
+| 1 - blue      | 0   | 0     | 127  |
+| 2 - green     | 0   | 127   | 0    |
+| 3 - cyan      | 0   | 127   | 127  |
+| 4 - red       | 127 | 0     | 0    |
+| 5 - magenta   | 127 | 0     | 127  |
+| 6 - brown     | 127 | 127   | 0    |
+| 7 - lightgray | 192 | 192   | 192  |
+| 8 - darkgray  | 127 | 127   | 127  |
+| 9 - lightblue | 0   | 0     | 255  |
+
+If you have Kermit 95 installed this bug likely doesn't affect you - while the
+Kermit 95 dialer has this bug too, Kermit 95 shipped with 
+`C:\ProgramData\Kermit 95\dialinf.dat` which contains a DEFAULT template
+containing the correrect values.
+
 ### New Features
 * Builds for 64bit Windows
   * x86-64
@@ -40,6 +67,11 @@ Also included are a selection of minor enhancements, features and bugfixes.
   * fixed some (but not all) occurrances of a server disconnect not being
     detected
 * `set syslog` works again - this was accidentally removed in beta 4.
+* The colours in the dialer *GUI Settings* for the DEFAULT template
+  automatically created when first run were completely wrong. This bug affected
+  Kermit 95 as well but most users wouldn't have seen it as the shipped 
+  dialinf.dat included a DEFAULT with the correct settings (along with a
+  selection of other templates).
 
 ### Minor Enhancements and other changes
 * The sample k95custom.ini file now sets autodownload to "on" rather than "ask"
