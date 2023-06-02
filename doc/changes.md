@@ -30,10 +30,16 @@ as well as any other connections or templates you've created via the
 | 8 - darkgray  | 127 | 127   | 127  |
 | 9 - lightblue | 0   | 0     | 255  |
 
-If you have Kermit 95 installed this bug likely doesn't affect you - while the
-Kermit 95 dialer has this bug too, Kermit 95 shipped with 
+The default logfile names in the *Log File Settings* page should also start with
+the `\` character - by default in prior versions they started with an invalid 
+non-printable character. In Kermit 95 the defaults did not start with 
+\v(appdata) so you may wish to just remove this prefix entirely instead of
+correcting the first character.
+
+If you have Kermit 95 installed these bugs likely doesn't affect you - while the
+Kermit 95 dialer has them too, Kermit 95 shipped with 
 `C:\ProgramData\Kermit 95\dialinf.dat` which contains a DEFAULT template
-containing the correrect values.
+containing the correct values.
 
 ### New Features
 * Builds for 64bit Windows
@@ -72,6 +78,9 @@ containing the correrect values.
   Kermit 95 as well but most users wouldn't have seen it as the shipped 
   dialinf.dat included a DEFAULT with the correct settings (along with a
   selection of other templates).
+* The default log file names in the *Log File Settings* page for the DEFAULT
+  template automatically created when first run begin with an invalid
+  non-printable chracter instad of '\'. This bug affected Kermit 95 as well.
 
 ### Minor Enhancements and other changes
 * The sample k95custom.ini file now sets autodownload to "on" rather than "ask"

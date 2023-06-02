@@ -149,16 +149,16 @@ KD_LIST_ITEM::KD_LIST_ITEM():
     _script[0] = '\0';
     _log_debug = 0;
     _log_debug_append = 0;
-    strcpy(_log_debug_fname,"\v(appdata)debug.log");
+    strcpy(_log_debug_fname,"\\v(appdata)debug.log");
     _log_session = 0;
     _log_session_append = 0;
-    strcpy(_log_session_fname,"\v(appdata)session.log");
+    strcpy(_log_session_fname,"\\v(appdata)session.log");
     _log_packet = 0;
     _log_packet_append = 0;
-    strcpy(_log_packet_fname,"\v(appdata)packet.log");
+    strcpy(_log_packet_fname,"\\v(appdata)packet.log");
     _log_transaction = 0;
     _log_transaction_append = 0;
-    strcpy(_log_transaction_fname,"\v(appdata)transact.log");
+    strcpy(_log_transaction_fname,"\\v(appdata)transact.log");
 
     _use_mdm_speed = 1;
     _use_mdm_flow = 1;
