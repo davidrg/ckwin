@@ -28,7 +28,7 @@ instructions should do the job.
 This has been tested against the following versions:
 * zlib 1.2.13
 * OpenSSL 1.1.1s
-* libssh 0.9.6, 0.10.1, 0.10.3
+* libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
 * Visual C++ (2022 community edition works, or for Windows XP compatibility use 2019)
@@ -65,8 +65,8 @@ Normally everything is arranged into directories as follows:
      - des\
        - files & directories from the libdes distribution
    - libssh\
-     - 0.9.6\
-       - files & directories from libssh 0.9.6
+     - 0.10.5\
+       - files & directories from libssh 0.10.5
    - superlat\
      - include\
        - SuperLAT header files
@@ -129,7 +129,7 @@ If you want OpenSSL to work on versions of windows older than Vista, add the
 
 For libssh you need to the following specifying the correct OPENSSL_ROOT_DIR and ZLIB_ROOT:
 ```
-cd libssh\0.10.3
+cd libssh\0.10.5
 mkdir build
 cd build
 cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1q\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.12\
@@ -154,7 +154,7 @@ These changes are available in the form of a convenient patch:
 
 To build with GSSAPI support:
 ```
-cd libssh\0.10.3
+cd libssh\0.10.5
 patch -p1 < ..\win32-gssapi.patch
 mkdir build
 cd build
