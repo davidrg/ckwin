@@ -74,7 +74,8 @@ which may be useful for new users.
 For everything else, consult the [C-Kermit Documentation](https://www.kermitproject.org/ckbindex.html).
 
 If you previously used Kermit 95 and would like to know what's changed, see the
-[C-Kermit for Windows Change Log](doc/changes.md) as well as 
+[C-Kermit for Windows Change Log](doc/changes.md) as well as the C-Kermit 9.0
+and 10.0 changelogs
 
 New Features
 ------------

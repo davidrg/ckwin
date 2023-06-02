@@ -38,6 +38,7 @@ Also included are a selection of minor enhancements, features and bugfixes.
   * buffer not flushed on logout
   * fixed some (but not all) occurrances of a server disconnect not being
     detected
+* `set syslog` works again - this was accidentally removed in beta 4.
 
 ### Minor Enhancements and other changes
 * The sample k95custom.ini file now sets autodownload to "on" rather than "ask"
@@ -65,6 +66,11 @@ Also included are a selection of minor enhancements, features and bugfixes.
 * Added support for Visual C++ 1.0/1.1 32-bit edition
 * Ported to Windows NT 3.10 but there are currently unresolved bugs (networking
   is broken for one)
+* SRP support is now available as a custom build option. You'll need quite an
+  old and insecure version of OpenSSL (1.0.1u works) and an old compiler too
+  (Visual C++ 2003 works)
+* DES/CAST crypto can now be statically linked into k95.exe/k95g.exe/iksdnt.exe
+  instead of being delivered as a shared dll (k95crypto.dll)
 
 ## C-Kermit for Windows 10.0b8 beta 4 - 15 December 2022
 This release is mostly a collection of minor improvements and bug fixes as I
