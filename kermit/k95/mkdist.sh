@@ -41,7 +41,7 @@ cp ../cknker.exe.manifest k95.exe.manifest
 cp ../k95g.exe.manifest ./
 cp ../k95d.cfg ./
 cp ../k95.ini ./
-cp ../k95custom.ini ./
+cp ../k95custom.ini ./k95custom.sample
 cp ../welcome.txt ./
 cp ../hostmode.bat ./
 cp ../../../COPYING ./

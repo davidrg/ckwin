@@ -40,9 +40,10 @@ copy k95d.cfg dist
 
 REM The following would go in "C:\ProgramData\Kermit 95" if installed:
 copy k95.ini dist
-copy k95custom.ini dist
+copy k95custom.ini dist\k95custom.sample
 copy welcome.txt dist
 copy hostmode.bat dist
+REM (k95custom.sample should be renamed to k95custom.ini upon installation)
 
 @echo Copy runtime libraries
 if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist
