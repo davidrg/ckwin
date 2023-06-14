@@ -18,17 +18,18 @@ values are in the table below - these should be applied to the DEFAULT template
 as well as any other connections or templates you've created via the 
 *GUI Settings* page:
 
-| Colour        | Red | Green | Blue |
-|---------------|-----|-------|------|
-| 1 - blue      | 0   | 0     | 127  |
-| 2 - green     | 0   | 127   | 0    |
-| 3 - cyan      | 0   | 127   | 127  |
-| 4 - red       | 127 | 0     | 0    |
-| 5 - magenta   | 127 | 0     | 127  |
-| 6 - brown     | 127 | 127   | 0    |
-| 7 - lightgray | 192 | 192   | 192  |
-| 8 - darkgray  | 127 | 127   | 127  |
-| 9 - lightblue | 0   | 0     | 255  |
+<table>
+<tr><th>Colour       </th><th>Red</th><th>Green</th><th>Blue</th></tr>
+<tr><td>1 - blue     </td><td>0  </td><td>0    </td><td>127 </td></tr>
+<tr><td>2 - green    </td><td>0  </td><td>127  </td><td>0   </td></tr>
+<tr><td>3 - cyan     </td><td>0  </td><td>127  </td><td>127 </td></tr>
+<tr><td>4 - red      </td><td>127</td><td>0    </td><td>0   </td></tr>
+<tr><td>5 - magenta  </td><td>127</td><td>0    </td><td>127 </td></tr>
+<tr><td>6 - brown    </td><td>127</td><td>127  </td><td>0   </td></tr>
+<tr><td>7 - lightgray</td><td>192</td><td>192  </td><td>192 </td></tr>
+<tr><td>8 - darkgray </td><td>127</td><td>127  </td><td>127 </td></tr>
+<tr><td>9 - lightblue</td><td>0  </td><td>0    </td><td>255 </td></tr>
+</table>
 
 The default logfile names in the *Log File Settings* page should also start with
 the `\` character - by default in prior versions they started with an invalid 
