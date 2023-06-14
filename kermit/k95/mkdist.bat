@@ -28,7 +28,7 @@ copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
-del dist\ctl3dins.exe
+REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
 move dist\ckwart.exe .\
 
 if "%CKF_XYZ%" == "no" goto :nop
