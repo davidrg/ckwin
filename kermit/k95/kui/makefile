@@ -170,8 +170,8 @@ $(OUTDIR)\$(PROJ).EXE: $(OUTDIR) $(KUIOBJS) $(OUTDIR)\$(PROJ).res
 $(OUTDIR)\$(PROJ).res: $(PROJ).rc $(RC_DEP)
     rc $(RCFLAGS) $(RCDEFINES) /fo$(OUTDIR)\$(PROJ).res $(PROJ).rc
 
-.c{$(OUTDIR)}.obj: 
+.c{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<
 
-.cxx{$(OUTDIR)}.obj: 
+.cxx{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<
