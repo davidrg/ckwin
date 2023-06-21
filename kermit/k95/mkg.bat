@@ -1,19 +1,20 @@
 @echo off
+setlocal
 @echo ==== Build K95G.EXE ====
 SET KERMITDIR=..
 SET OUTDIR=.\win95
 SET NODEBUG=1
 SET PLATFORM=NT
 cd kui
-nmake /e || exit /B %errorlevel%
+%MAKE% /e /f makefile || exit /B %errorlevel%
 cd ..
-UNSET NODEBUG
+REM UNSET NODEBUG
 SET OUTDIR=.\kui\win95
 SET K95BUILD=K95
 move kui\win95\ck*.obj . > nul
 move kui\win95\p_*.obj . > nul
 del ckcmai.obj ckuus5.obj
-nmake /nologo /e /f ckoker.mak k95g
+%MAKE% /nologo /e /f ckoker.mak k95g
 move *.obj kui\win95 > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build

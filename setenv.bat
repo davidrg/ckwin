@@ -63,6 +63,10 @@ REM You can also point this at the root directory for the Kerberos for Windows
 REM 3.x or 4.x SDK.
 set k4w_root=%root%\kerberos\kfw-2.2-beta-2
 
+REM Make program must be something sufficiently compatible with nmake 1.40 (Visual C++ 1.1). Jom is recommended
+REM for doing parallel builds.
+set make=nmake
+
 REM ============================================================================
 REM ================== No changes required beyond this point ===================
 REM ============================================================================
@@ -224,6 +228,7 @@ if not "%libssh_build_override%"=="" set libssh_build=%libssh_build_override%
 if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
 if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
+if not "%make_override%"=="" set make=%make_override%
 
 REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
 REM is what we get when we do "set LIB=%LIB%;C:\somewhere" when LIB starts out
