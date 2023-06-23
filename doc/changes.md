@@ -98,6 +98,15 @@ containing the correct values.
   user files from being accidentally overwritten when upgrading. The default
   k95.ini will now rename k95custom.sample to k95custom.ini if it can't find
   an existing k95custom.ini in any of the usual locations.
+* Improvements to the terminal status line:
+  * Increasing the window width now gives more space to the hostname and protocol
+    fields
+  * If the hostname and protocol text are too long to fit, the exit text 
+    ("Command: Alt-X" by default) is hidden to make room
+  * Maximum length for exit text increased from 20 to 30 characters (where there 
+    is room to display it)
+  * When there is sufficient room available an extra two columns of padding is
+    inserted between the exit text and the hostname to match the other fields
 
 ### Source Changes
 * Fixed build failure with Visual C++ 2017
