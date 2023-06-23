@@ -118,6 +118,9 @@ containing the correct values.
   (Visual C++ 2003 works)
 * DES/CAST crypto can now be statically linked into k95.exe/k95g.exe/iksdnt.exe
   instead of being delivered as a shared dll (k95crypto.dll)
+* Building with jom (or any other sufficiently compatible nmake clone) instead
+  of nmake is now supported for Visual C++ builds. Just `set make=jom.exe` to
+  make better use of multicore systems.
 
 ## C-Kermit for Windows 10.0b8 beta 4 - 15 December 2022
 This release is mostly a collection of minor improvements and bug fixes as I

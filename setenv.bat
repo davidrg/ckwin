@@ -509,7 +509,13 @@ goto :unsupported
 REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
 set CK_COMPILER_NAME=OpenWatcom
 set ZINCBUILD=ow19
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
+set CKF_LIBDES=unsupported
 set CKB_9X_COMPATIBLE=yes
+
+REM For openwatcom we have to use its nmake clone
+set MAKE=nmake
 
 REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
 REM path so the dialer can find them.
