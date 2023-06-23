@@ -101,7 +101,7 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CFLAGS=/nologo /W3 /D "WIN32" /D "_WINDOWS" /D MSDOS=1 \
-	/Fp"$(INTDIR)\libdes.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+	/Fp"$(INTDIR)\libdes.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /c
 
 #
 
@@ -110,7 +110,13 @@ CFLAGS=/nologo /W3 /D "WIN32" /D "_WINDOWS" /D MSDOS=1 \
 # /GX   - Enable C++ Exception Handling (same as /EHsc)
 
 !if ($(MSC_VER) < 140)
-CFLAGS=$(CFLAGS) /GX /YX
+CFLAGS=$(CFLAGS) /GX
+
+# Jom runs multiple instances of cl in parallel which causes issues with PCH locking.
+!if "$(ISJOM)" == "no"
+CFLAGS=$(CFLAGS) /YX
+!endif
+
 !else
 CFLAGS=$(CFLAGS) /EHsc
 !endif
