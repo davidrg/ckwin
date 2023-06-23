@@ -130,16 +130,12 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64 -DCK_HAVE_INTPTR_T
 !IF  "$(CFG)" == "Release"
 CFLAGS=$(CFLAGS) /O2 /D "NDEBUG"
 
-!if ($(MSC_VER) < 140)
-#CFLAGS=$(CFLAGS) /ML
+
 !if "$(CKB_STATIC_CRT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
-COMMON_CFLAGS = /ML
-!endif
-!else
-CFLAGS=$(CFLAGS) /MD
+COMMON_CFLAGS = /MD
 !endif
 
 
@@ -147,20 +143,17 @@ CPP_OBJS=.\Release/
 !ELSE
 CFLAGS=$(CFLAGS) /Z7 /Od /D "_DEBUG"
 
-!if ($(MSC_VER) < 140)
-#CFLAGS=$(CFLAGS) /MLd
 !if "$(CKB_STATIC_CRT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MTd
 !else
-COMMON_CFLAGS = /MLd
-!endif
-!else
-CFLAGS=$(CFLAGS) /MDd
+COMMON_CFLAGS = /MDd
 !endif
 
 CPP_OBJS=.\Debug/
 !ENDIF
+
+CFLAGS=$(CFLAGS) $(COMMON_CFLAGS)
 
 CPP_SBRS=.
 BSC32=bscmake.exe
