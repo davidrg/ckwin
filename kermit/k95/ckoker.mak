@@ -204,10 +204,16 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
 CFLAG_GF=
 !endif
 
-COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
+
+# Jom runs multiple instances of cl in parallel which causes problems with PCH locking.
+# So only generate PCH files when nmake instead of jom.
+!if "$(ISJOM)" == "no"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /YX
+!endif
 
 !if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
