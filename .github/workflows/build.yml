@@ -178,12 +178,11 @@ jobs:
         cd ..
         
         # Get and unpack JOM
-        cd tools
         mkdir jom
         cd jom
         wget ${{env.JOM}} -outfile jom.zip
         7z x jom.zip
-        cd ..
+        del *.zip
         cd ..
         
         # Get KFW
@@ -502,11 +501,12 @@ jobs:
           cd ..          
         
           # Get and unpack JOM
-          cd tools
+          cd ${{github.workspace}}\tools
           mkdir jom
           cd jom
           wget ${{env.JOM}} -outfile jom.zip
           7z x jom.zip
+          del *.zip
           cd ..
           cd ..
           
@@ -1025,7 +1025,8 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\vct2003
-          key: vct2003+psdk2003sp1
+            ${{github.workspace}}\jom
+          key: vct2003+psdk2003sp1+jom
 
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
@@ -1035,6 +1036,15 @@ jobs:
           Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
           Remove-Item VCT2003+PSDK2003+cvtres.7z
           Remove-Item VCT2003\Bin\Cvtres.exe
+          
+          # Get and unpack JOM
+          mkdir jom
+          cd jom
+          wget ${{env.JOM}} -outfile jom.zip
+          7z x jom.zip
+          del *.zip
+          cd ..
+
         shell: powershell
 
       - name: Cache legacy dependencies
@@ -1051,7 +1061,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\superlat
             ${{github.workspace}}\tools
-          key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver2+jom1
+          key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver2
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
@@ -1075,15 +1085,6 @@ jobs:
           dir
           cd nasm
           dir
-          cd ..
-          cd ..
-        
-          # Get and unpack JOM
-          cd tools
-          mkdir jom
-          cd jom
-          wget ${{env.JOM}} -outfile jom.zip
-          7z x jom.zip
           cd ..
           cd ..
         
@@ -1155,7 +1156,7 @@ jobs:
           Set LIB=%VCT2003%\lib
           set CKB_STATIC_CRT=yes
           
-          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set PATH=%PATH%;${{github.workspace}}\jom
           set MAKE=jom
           
           cd libdes
@@ -1224,7 +1225,7 @@ jobs:
   
           call setenv.bat
           
-          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set PATH=%PATH%;${{github.workspace}}\jom
           set MAKE=jom
           
           REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
@@ -1363,6 +1364,7 @@ jobs:
           cd jom
           wget ${{env.JOM}} -outfile jom.zip
           7z x jom.zip
+          del *.zip
           cd ..
           cd ..
           
