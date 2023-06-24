@@ -27,7 +27,7 @@ instructions should do the job.
 
 This has been tested against the following versions:
 * zlib 1.2.13
-* OpenSSL 1.1.1s
+* OpenSSL 1.1.1u
 * libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
@@ -59,8 +59,8 @@ Normally everything is arranged into directories as follows:
      - 1.2.12\
        - files & directories from zlib 1.1.12
    - openssl\
-     - 1.1.1s\
-       - files & directories from openssl 1.1.1s
+     - 1.1.1t\
+       - files & directories from openssl 1.1.1t
    - libdes\
      - des\
        - files & directories from the libdes distribution
@@ -98,7 +98,7 @@ from CPAN with: `cpan -i Text::Template`
 Then you can build OpenSSL with the following (adjusting the zlib include path
 as necessary):
 ```
-cd openssl\1.1.1s
+cd openssl\1.1.1t
 perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.12
 nmake
 cd ..\..\
