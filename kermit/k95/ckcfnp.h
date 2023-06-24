@@ -2,7 +2,7 @@
   ckcfnp.h, new to C-Kermit 10.0 as of 23 March 2023.
 
     Frank da Cruz
-    Most recent update: 3 May 2023
+    Most recent update: 12 May 2023
 
   Prototypes for functions that previously were not prototyped.
   Used only for ANSI-C builds in which __STDC__ is defined.
@@ -30,14 +30,16 @@
   #include ckcker.h was added 27 April 2023 because certain builds (like
   "linux+ssl") were failing.  ckcker.h defines data types and other symbols
   referenced in this file.  It should be included by every module before
-  including this one.  But just in case there's an omission, including it 
-  here too does no harm because ckcker.h protects itself against multiple
+  including this one.  But just in case there's an omission, including it here
+  too does no harm because the ck*.h files protect themselves against multiple
   inclusion.  ckcdeb.h added 3 may 2023, because the mainname definition was
   moved from here (where non-ansi builds would never see it) to ckcdeb.h.
+  ckuusr.h added 12 May 2023 for MINIX / ckucon.c / struct m[x,xx]tab.
 */
 #include "ckcdeb.h"
 #include "ckcker.h"
 #include "ckucmd.h"
+#include "ckuusr.h"
 
 /* Prototype for main()/Main() */
 MAINTYPE MAINNAME( int argc, char ** argv ); 

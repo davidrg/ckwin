@@ -17,8 +17,9 @@ int cmdsrc() { return(0); }
     Update: Oct 10-11 2022 (fdc and sms)
     Update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
     Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
-    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
     Update: Apr 14 2023 (ANSI function declarations and prototypes)
+    Update: May 16 2023 (Jeff Johnson fix for iksd.conf diagnostic)
+    Update: May 16 2023 (Jeff Johnson fix for \v(startup) vs \v(exedir))
 
   Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
@@ -2548,6 +2549,12 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag;
 #endif /* DEBUG */
     {
         int i = 0; char *s = s2; char prev = '\0'; char c = '\0';
+        /*
+          Next line from Jeff Johnson, to fix garbled message when iksd.conf
+          has an invalide line that is shorter than a previous line that is
+          valid - 16 May 2023
+        */
+        memset(lasttakeline, '\0', sizeof(char)*TMPBUFSIZ+1); 
         while (*s) {   /* Save beginning of this command for error messages */
             c = *s++;
             if (c == '\n' || c == '\r') c = SP;
@@ -12435,7 +12442,7 @@ printf("NOWTMP not defined\n");
         char mebuf[2046];            /* Show Kermit's own pathname and size */
         char * s;
         char * mestring = 
-"\\v(startup)\\v(name), size: \\fsize(\\v(startup)\\v(name))";
+"\\v(exedir)\\v(name), size: \\fsize(\\v(exedir)\\v(name))";
         int mysize = 2046;
         int x = 0;
         s = mebuf;

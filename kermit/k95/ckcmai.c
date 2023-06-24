@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "09 May 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230509"          /* Keep them in sync */
-/* Tue May  9 14:03:56 2023 */
+#define EDITDATE  "23 Jun 2023"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20230623"          /* Keep them in sync */
+/* Fri Jun 23 10:48:35 2023 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -61,8 +61,8 @@ char *ck_s_test = "Beta";
 char *ck_s_tver = "09/Windows-04";
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
-char *ck_s_test = "Beta";		/* "Dev","Alpha","Beta","RC", or "" */
-char *ck_s_tver = "09";                 /* Test version number */
+char *ck_s_test = "pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_tver = "10";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -209,6 +209,7 @@ char *copyright[] = {
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
+" ",
 "Portions Copyright (C) 1990, Massachusetts Institute of Technology.",
 #ifdef CK_ENCRYPTION
 "Portions Copyright (C) 1991, 1993 Regents of the University of California.",
@@ -1630,16 +1631,9 @@ cc_clean();                             /* This can't be right? */
 #endif /* NOCCTRAP */
 
 #ifdef TIMEH
-#ifdef MULTINET /*AGN 27-Oct-2021 time.h and Multinet clash*/
-/*    Under Multinet, the 5th parameter to select() */
-/*    is a "void" and not a "struct timeval", so */
-/*    use the Multinet include file instead */
-#include "multinet_root:[multinet.include.sys]time.h"
-#else
 /* This had to be added for NetBSD 6.1 - it might have "effects" elsewhere */
 /* Tue Sep  3 17:03:42 2013 */
 #include <time.h>
-#endif /* MULTINET */
 #endif /* TIMEH */
 
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
