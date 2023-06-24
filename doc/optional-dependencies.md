@@ -5,7 +5,7 @@ these but if you don't have them some features (like built-in SSH) will be
 unavailable. These are:
 
 * [zlib](https://zlib.net/)
-* [OpenSSL](https://www.openssl.org/) 0.9.8 - 3.0.x
+* [OpenSSL](https://www.openssl.org/) 0.9.8 - 3.1.x
 * [libssh](https://www.libssh.org/) 0.9.x, 0.10.x
 * libdes 4.01
 
@@ -27,7 +27,7 @@ instructions should do the job.
 
 This has been tested against the following versions:
 * zlib 1.2.13
-* OpenSSL 1.1.1s
+* OpenSSL 1.1.1t, 3.0.8, 3.1.1
 * libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
