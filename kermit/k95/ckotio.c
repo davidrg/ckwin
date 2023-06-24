@@ -125,19 +125,26 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define _WIN32_WINNT_WINBLUE 0x0603
 #endif /* _WIN32_WINNT_WINBLUE */
 
-#if _MSC_VER >= 1920
+#ifdef NT
+#ifndef __WATCOMC__
+#if !defined(_MSC_VER) || _MSC_VER >= 1920
 /* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
  * and though the Win32 APIs it relies on have been around since Windows 2000,
  * though building with Visual C++ 2017 (1910) fails with unresovled external
  * symbol so we'll only do this on Visual C++ 2019 or newer */
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
-#else
+#else /* _MSC_VER */
 /* Anything older than Visual C++ 2019 we won't bother trying to detect
  * Windows 8.1 or newer - if you're building for a modern version of windows
  * you really should be using a modern compiler. */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
-#endif
+#endif /* _MSC_VER */
+#else /* __WATCOMC__ */
+/* OpenWatcom doesn't have versionhelpers.h */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif /* __WATCOMC__ */
+#endif /* NT */
 
 /* Version herald(s) */
 
@@ -258,6 +265,15 @@ extern int inserver, local;
 #ifdef CHAR
 #undef CHAR
 #endif /* CHAR */
+
+#ifdef NT
+#ifdef __GNUC__
+/* We're building with char being unsigned by default, but GCC
+ * still considers 'unsigned char' and 'char' to be different
+ * types so... */
+#define CHAR unsigned char
+#endif
+#endif
 
 /*
  Variables available to outside world:
@@ -4241,7 +4257,7 @@ le_inbuf( void ) {
 }
 
 int
-le_putstr( char * s )
+le_putstr( CHAR * s )
 {
     int rc = 0;
     if ( s && s[0] )
@@ -4250,7 +4266,7 @@ le_putstr( char * s )
 }
 
 int
-le_puts( char * s, int n )
+le_puts( CHAR * s, int n )
 {
     int rc = 0 ;
     int i = 0;
@@ -4280,7 +4296,7 @@ le_puts( char * s, int n )
 }
 
 int
-le_putchar( char ch ) {
+le_putchar( CHAR ch ) {
     int rc = 0 ;
 
     RequestLocalEchoMutex( SEM_INDEFINITE_WAIT ) ;
@@ -4522,6 +4538,7 @@ ttchk() {
     return(count);
 }
 
+static int rdch(int timo);
 
 /*  T T X I N  --  Get n characters from tty input buffer  */
 
@@ -4811,7 +4828,7 @@ getOverlappedIndex( int serial ) {
 }
 
 #ifndef __WATCOMC__
-#if _MSC_VER <= 1010
+#if defined(_MSC_VER) && _MSC_VER <= 1010
 /* Visual C++ 4.1 and earlier lack this macro */
 #define HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
 #endif /* _MSC_VER <= 1010 */
@@ -4916,7 +4933,7 @@ freeOverlappedComplete( int serial ) {
 */
 
 int
-ttxout(char *s, int n) {
+ttxout(CHAR *s, int n) {
     int rc = 0, i=0 ;
 #ifndef NOLOCAL
     extern int tt_pacing;               /* output pacing */
@@ -5676,7 +5693,7 @@ static int inlret ;
 static CHAR * inldest, inleol, inlstart ;
 static int inlmax, inlturn ;
 
-static int
+int
 ckcgetc(int dummy) {
     return ttinc(1);
 }
@@ -5686,7 +5703,7 @@ ckcgetc(int dummy) {
 /*
   blah blah
 */
-ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
+int ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
     extern int xfrcan, xfrchr, xfrnum;  /* Defined in ckcmai.c */
     extern int priority;
     int x=0, c=0, ccn=0;
@@ -6098,7 +6115,6 @@ ttinl(CHAR *dest, int max, int timo, CHAR eol, CHAR start, int turn) {
 /* or -3 if session limit has expired,                                     */
 /* or -4 if something or other...                                          */
 
-int rdch(int timo);
 int
 ttinc(int timo) {
     int m, i=0, j=0;

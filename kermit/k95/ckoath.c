@@ -1376,6 +1376,13 @@ static krb5_error_code (KRB5_CALLCONV *p_krb5_auth_con_setuseruserkey)
         krb5_auth_context,
         krb5_keyblock *))=NULL;
 
+#ifdef KRB5_BETATEST
+/* WARNING: The signature for krb5_get_profile has changed in KFW 4.x.
+ * The parameters are now (krb5_context, profile_t **)
+ *
+ * The three functions here are only used in one place in ckuath that is only
+ * ever called when KRB5_BETATEST is defined, which it never is.
+ * */
 static krb5_error_code (KRB5_CALLCONV *p_krb5_get_profile)
     P((krb5_context, profile_t *))=NULL;
 
@@ -1384,6 +1391,7 @@ static long (KRB5_CALLCONV *p_profile_get_relation_names)
 
 static long (KRB5_CALLCONV *p_profile_get_subsection_names)
     P((profile_t profile, const char **names, char ***ret_names))=NULL;
+#endif /* KRB5_BETATEST */
 
 static void (KRB5_CALLCONV *p_krb5_free_keyblock_contents)
 P((krb5_context, krb5_keyblock FAR *))=NULL;
@@ -1501,11 +1509,12 @@ static krb5_error_code (KRB5_CALLCONV * p_krb5_kt_end_seq_get)
 static krb5_error_code (KRB5_CALLCONV_C * p_krb5_build_principal)
     (krb5_context, krb5_principal *, unsigned int, krb5_const char *, ...)=NULL;
 
-
+#ifdef KRB524_CONV
 static int (KRB5_CALLCONV_C *p_krb524_init_ets)(krb5_context context)=NULL;
 static int (KRB5_CALLCONV_C *p_krb524_convert_creds_kdc)(krb5_context context, 
                                                          krb5_creds *v5creds,
                                                          CREDENTIALS *v4creds)=NULL;
+#endif /* KRB524_CONV */
 
 const char *
 ck_error_message(errcode_t ec)
@@ -2805,6 +2814,7 @@ ck_krb5_auth_con_setuseruserkey( krb5_context context,
         return(-1);
 }
 
+#ifdef KRB5_BETATEST
 krb5_error_code
 ck_krb5_get_profile(krb5_context context, profile_t * profile)
 {
@@ -2831,6 +2841,7 @@ ck_profile_get_subsection_names(profile_t profile, const char **names, char ***r
     else
         return(-1);
 }
+#endif /* KRB5_BETATEST */
 
 void ck_krb5_free_keyblock_contents(krb5_context context, krb5_keyblock * keyblock)
 {
@@ -3254,6 +3265,7 @@ krb5_error_code ck_krb5_build_principal(krb5_context context,
         return(-1);
 }
 
+#ifdef KRB524_CONV
 int 
 ck_krb524_init_ets(krb5_context context)
 {
@@ -3273,6 +3285,7 @@ ck_krb524_convert_creds_kdc(krb5_context context,
     else
         return(-1);
 }
+#endif /* KRB524_CONV */
 #endif /* KRB5 */
 
 #ifdef CK_DES
@@ -3321,15 +3334,23 @@ static int
 static void
 (KRB5_CALLCONV_C  *p_k4_des_fixup_key_parity) P((Block))=NULL;
 
+typedef int   (*libdes_random_key_t)(Block);
+typedef void  (*libdes_random_seed_t)(Block);
+typedef int   (*libdes_key_sched_t)(Block, Schedule);
+typedef void  (*libdes_ecb_encrypt_t)(Block, Block, Schedule, int);
+typedef int   (*libdes_string_to_key_t)(char *, Block);
+typedef int   (*libdes_fixup_key_parity_t)(Block);
+typedef int   (*libdes_pcbc_encrypt_t)(Block, Block, long, Schedule, Block, int);
+
 #ifdef LIBDES
 #ifdef CRYPT_DLL
-int   (*libdes_random_key)(Block)=NULL;
-void  (*libdes_random_seed)(Block)=NULL;
-int   (*libdes_key_sched)(Block, Schedule)=NULL;
-void  (*libdes_ecb_encrypt)(Block, Block, Schedule, int)=NULL;
-int   (*libdes_string_to_key)(char *, Block)=NULL;
-int   (*libdes_fixup_key_parity)(Block)=NULL;
-int   (*libdes_pcbc_encrypt)(Block, Block, long, Schedule, Block, int)=NULL;
+libdes_random_key_t libdes_random_key=NULL;
+libdes_random_seed_t libdes_random_seed=NULL;
+libdes_key_sched_t libdes_key_sched=NULL;
+libdes_ecb_encrypt_t libdes_ecb_encrypt=NULL;
+libdes_string_to_key_t libdes_string_to_key=NULL;
+libdes_fixup_key_parity_t libdes_fixup_key_parity=NULL;
+libdes_pcbc_encrypt_t libdes_pcbc_encrypt=NULL;
 #else /* CRYPT_DLL */
 int   libdes_random_key(Block);
 void  libdes_random_seed(Block);
@@ -3552,21 +3573,37 @@ ck_des_pcbc_encrypt(Block input, Block output, long length,
 #endif /* CK_DES */
 
 #ifdef CRYPT_DLL
-static int  (*p_crypt_dll_init)(struct _crypt_dll_init *)=NULL;
-static int  (*p_encrypt_parse)(unsigned char *, int)=NULL;
-static void (*p_encrypt_init)(kstream,int)=NULL;
-static int  (*p_encrypt_session_key)(Session_Key *, int)=NULL;
-static int  (*p_encrypt_dont_support)(int)=NULL;
-static void (*p_encrypt_send_request_start)(void)=NULL;
-static int  (*p_encrypt_request_start)(void)=NULL;
-static int  (*p_encrypt_send_request_end)(void)=NULL;
-static void (*p_encrypt_send_end)(void)=NULL;
-static void (*p_encrypt_send_support)(void)=NULL;
-static int  (*p_encrypt_is_encrypting)(void)=NULL;
-static int  (*p_encrypt_is_decrypting)(void)=NULL;
-static int  (*p_get_crypt_table)(struct keytab ** pTable, int * pN)=NULL;
-static int  (*p_des_is_weak_key)(Block)=NULL;
-static char * (*p_crypt_dll_version)()=NULL;
+typedef int  (*p_crypt_dll_init_t)(struct _crypt_dll_init *);
+typedef int  (*p_encrypt_parse_t)(unsigned char *, int);
+typedef void (*p_encrypt_init_t)(kstream,int);
+typedef int  (*p_encrypt_session_key_t)(Session_Key *, int);
+typedef int  (*p_encrypt_dont_support_t)(int);
+typedef void (*p_encrypt_send_request_start_t)(void);
+typedef int  (*p_encrypt_request_start_t)(void);
+typedef int  (*p_encrypt_send_request_end_t)(void);
+typedef void (*p_encrypt_send_end_t)(void);
+typedef void (*p_encrypt_send_support_t)(void);
+typedef int  (*p_encrypt_is_encrypting_t)(void);
+typedef int  (*p_encrypt_is_decrypting_t)(void);
+typedef int  (*p_get_crypt_table_t)(struct keytab ** pTable, int * pN);
+typedef int  (*p_des_is_weak_key_t)(Block);
+typedef char * (*p_crypt_dll_version_t)();
+
+static p_crypt_dll_init_t p_crypt_dll_init=NULL;
+static p_encrypt_parse_t p_encrypt_parse=NULL;
+static p_encrypt_init_t p_encrypt_init=NULL;
+static p_encrypt_session_key_t p_encrypt_session_key=NULL;
+static p_encrypt_dont_support_t p_encrypt_dont_support=NULL;
+static p_encrypt_send_request_start_t p_encrypt_send_request_start=NULL;
+static p_encrypt_request_start_t p_encrypt_request_start=NULL;
+static p_encrypt_send_request_end_t p_encrypt_send_request_end=NULL;
+static p_encrypt_send_end_t p_encrypt_send_end=NULL;
+static p_encrypt_send_support_t p_encrypt_send_support=NULL;
+static p_encrypt_is_encrypting_t p_encrypt_is_encrypting=NULL;
+static p_encrypt_is_decrypting_t p_encrypt_is_decrypting=NULL;
+static p_get_crypt_table_t p_get_crypt_table=NULL;
+static p_des_is_weak_key_t p_des_is_weak_key=NULL;
+static p_crypt_dll_version_t p_crypt_dll_version=NULL;
 
 int
 ck_encrypt_parse(unsigned char * s, int n)
@@ -3696,47 +3733,47 @@ crypt_install_funcs(char * name, void * func)
 {
 #ifdef NT
     if ( !strcmp(name,"encrypt_parse") )
-        (FARPROC) p_encrypt_parse = (FARPROC) func;
+        p_encrypt_parse = (p_encrypt_parse_t) func;
     else if ( !strcmp(name,"encrypt_init") )
-        (FARPROC) p_encrypt_init = (FARPROC) func;
+        p_encrypt_init = (p_encrypt_init_t) func;
     else if ( !strcmp(name,"encrypt_session_key") )
-        (FARPROC) p_encrypt_session_key = (FARPROC) func;
+        p_encrypt_session_key = (p_encrypt_session_key_t) func;
     else if ( !strcmp(name,"encrypt_dont_support") )
-        (FARPROC) p_encrypt_dont_support = (FARPROC) func;
+        p_encrypt_dont_support = (p_encrypt_dont_support_t) func;
     else if ( !strcmp(name,"encrypt_send_request_start") )
-        (FARPROC) p_encrypt_send_request_start = (FARPROC) func;
+        p_encrypt_send_request_start = (p_encrypt_send_request_start_t) func;
     else if ( !strcmp(name,"encrypt_request_start") )
-        (FARPROC) p_encrypt_request_start = (FARPROC) func;
+        p_encrypt_request_start = (p_encrypt_request_start_t) func;
     else if ( !strcmp(name,"encrypt_send_request_end") )
-        (FARPROC) p_encrypt_send_request_end = (FARPROC) func;
+        p_encrypt_send_request_end = (p_encrypt_send_request_end_t) func;
     else if ( !strcmp(name, "encrypt_send_end") )
-        (FARPROC) p_encrypt_send_end = (FARPROC) func;
+        p_encrypt_send_end = (p_encrypt_send_end_t) func;
     else if ( !strcmp(name,"encrypt_send_support") )
-        (FARPROC) p_encrypt_send_support = (FARPROC) func;
+        p_encrypt_send_support = (p_encrypt_send_support_t) func;
     else if ( !strcmp(name,"encrypt_is_encrypting") )
-        (FARPROC) p_encrypt_is_encrypting = (FARPROC) func;
+        p_encrypt_is_encrypting = (p_encrypt_is_encrypting_t) func;
     else if ( !strcmp(name,"encrypt_is_decrypting") )
-        (FARPROC) p_encrypt_is_decrypting = (FARPROC) func;
+        p_encrypt_is_decrypting = (p_encrypt_is_decrypting_t) func;
     else if ( !strcmp(name,"get_crypt_table") )
-        (FARPROC) p_get_crypt_table = (FARPROC) func;
+        p_get_crypt_table = (p_get_crypt_table_t) func;
     else if ( !strcmp(name,"des_is_weak_key") )
-        (FARPROC) p_des_is_weak_key = (FARPROC) func;
+        p_des_is_weak_key = (p_des_is_weak_key_t) func;
     else if ( !strcmp(name,"libdes_random_key") )
-        (FARPROC) libdes_random_key = (FARPROC) func;
+        libdes_random_key = (libdes_random_key_t) func;
     else if ( !strcmp(name,"libdes_random_seed") )
-        (FARPROC) libdes_random_seed = (FARPROC) func;
+        libdes_random_seed = (libdes_random_seed_t) func;
     else if ( !strcmp(name,"libdes_key_sched") )
-        (FARPROC) libdes_key_sched = (FARPROC) func;
+        libdes_key_sched = (libdes_key_sched_t) func;
     else if ( !strcmp(name,"libdes_ecb_encrypt") )
-        (FARPROC) libdes_ecb_encrypt = (FARPROC) func;
+        libdes_ecb_encrypt = (libdes_ecb_encrypt_t) func;
     else if ( !strcmp(name,"libdes_string_to_key") )
-        (FARPROC) libdes_string_to_key = (FARPROC) func;
+        libdes_string_to_key = (libdes_string_to_key_t) func;
     else if ( !strcmp(name,"libdes_fixup_key_parity") )
-        (FARPROC) libdes_fixup_key_parity = (FARPROC) func;
+        libdes_fixup_key_parity = (libdes_fixup_key_parity_t) func;
     else if ( !strcmp(name,"libdes_pcbc_encrypt") )
-        (FARPROC) libdes_pcbc_encrypt = (FARPROC) func;
+        libdes_pcbc_encrypt = (libdes_pcbc_encrypt_t) func;
     else if ( !strcmp(name,"crypt_dll_version") )
-        (FARPROC) p_crypt_dll_version = (FARPROC) func;
+        p_crypt_dll_version = (p_crypt_dll_version_t) func;
 #else /* NT */
     if ( !strcmp(name,"encrypt_parse") )
         p_encrypt_parse = (PFN*) func;
@@ -3878,8 +3915,8 @@ ck_crypt_loaddll( void )
         debug(F101, "K95 Crypt LoadLibrary failed","",rc) ;
         return(0);
     } else {
-        if (((FARPROC) p_crypt_dll_init =
-              GetProcAddress( hCRYPT, "crypt_dll_init" )) == NULL )
+        if ((p_crypt_dll_init =
+              (p_crypt_dll_init_t)GetProcAddress( hCRYPT, "crypt_dll_init" )) == NULL )
         {
             rc = GetLastError() ;
             debug(F111,"K95 Crypt GetProcAddress failed","crypt_dll_init",rc);
@@ -4023,8 +4060,10 @@ HINSTANCE hSSPI = NULL;
 NTLM is not supported on non-windows platforms
 #endif /* NT */
 
+typedef PSecurityFunctionTable (*p_SSPI_InitSecurityInterface_t)(void);
+
 static int sspi_dll_loaded = 0;
-static PSecurityFunctionTable (*p_SSPI_InitSecurityInterface)(void)=NULL;
+static p_SSPI_InitSecurityInterface_t p_SSPI_InitSecurityInterface=NULL;
 static PSecurityFunctionTable p_SSPI_Func = NULL;
 CredHandle hNTLMCred = { 0, 0 };
 static TimeStamp  NTLMTimeStampCred;
@@ -4166,8 +4205,8 @@ ck_sspi_loaddll( void )
 
     /* when we define UNICODE we must load the Unicode version of this function */
 
-    if (((FARPROC) p_SSPI_InitSecurityInterface =
-          GetProcAddress( hSSPI, "InitSecurityInterfaceA" )) == NULL )
+    if ((p_SSPI_InitSecurityInterface =
+          (p_SSPI_InitSecurityInterface_t)GetProcAddress( hSSPI, "InitSecurityInterfaceA" )) == NULL )
     {
         rc = GetLastError() ;
         debug(F111, "NTLM GetProcAddress failed",
@@ -5860,10 +5899,13 @@ ck_krb5_loaddll_eh( void )
     p_krb5_rd_priv                  = NULL;
     p_krb5_mk_priv                  = NULL;
     p_krb5_auth_con_setuseruserkey  = NULL;
+
+#ifdef KRB5_BETATEST
     p_krb5_get_profile              = NULL;
 
     p_profile_get_subsection_names = NULL;
     p_profile_get_relation_names   = NULL;
+#endif /* KRB5_BETATEST */
 
     p_k95_k5_principal_to_localname = NULL;
     p_k95_k5_userok = NULL;
@@ -5898,10 +5940,18 @@ ck_krb5_loaddll_eh( void )
     p_krb5_kt_end_seq_get     = NULL;
     p_krb5_build_principal    = NULL;
 
+#ifdef KRB524_CONV
     p_krb524_init_ets         = NULL;
     p_krb524_convert_creds_kdc = NULL;
+#endif /* KRB524_CONV */
 #endif /* KRB5 */
 }
+
+#ifdef _WIN64
+#define KRB_DLL_SUFFIX "64"
+#else
+#define KRB_DLL_SUFFIX "32"
+#endif /* _WIN64 */
 
 int
 ck_krb4_loaddll( void )
@@ -5918,15 +5968,15 @@ ck_krb4_loaddll( void )
 #ifdef NT
     HINSTANCE hLEASH;
 
-    if ( !(hKRB4_32 = LoadLibrary("KRBV4W32")) ) {
+    if ( !(hKRB4_32 = LoadLibrary("KRBV4W" KRB_DLL_SUFFIX)) ) {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRBV4W32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRBV4W" KRB_DLL_SUFFIX,rc) ;
         ck_krb4_loaddll_eh();
     }
     if ( !hKRB4_32 &&
-         !(hKRB4_32 = LoadLibrary("KRB4_32"))) {
+         !(hKRB4_32 = LoadLibrary("KRB4_" KRB_DLL_SUFFIX))) {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRB4_32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRB4_" KRB_DLL_SUFFIX,rc) ;
         ck_krb4_loaddll_eh();
     }
     if (hKRB4_32) {
@@ -6529,8 +6579,8 @@ ck_krb5_loaddll( void )
 
 #ifdef NT
     HINSTANCE hLEASH = NULL;
-    
-    hKRB5_32 = LoadLibrary("KRB5_32") ;
+
+    hKRB5_32 = LoadLibrary("KRB5_" KRB_DLL_SUFFIX) ;
     if ( !hKRB5_32 ) {
         /* Try Cygnus Solutions version */
         hKRB5_32 = LoadLibrary("LIBKRB5");
@@ -6539,9 +6589,10 @@ ck_krb5_loaddll( void )
     if ( !hKRB5_32 )
     {
         rc = GetLastError() ;
-        debug(F111, "Kerberos LoadLibrary failed","KRB5_32",rc) ;
+        debug(F111, "Kerberos LoadLibrary failed","KRB5_" KRB_DLL_SUFFIX,rc) ;
     }
 
+#ifdef KRB524_CONV
     hKRB524 = LoadLibrary("KRB524") ;
     if ( !hKRB524 )
     {
@@ -6563,6 +6614,7 @@ ck_krb5_loaddll( void )
                    "krb524_convert_creds_kdc",rc);
         }
     }
+#endif /* KRB524_CONV */
 
     if ( hKRB5_32 != NULL ) {
     if ( cygnus ) {
@@ -6609,11 +6661,11 @@ ck_krb5_loaddll( void )
     }
     else {
         debug(F100,"Kerberos V support provided by MIT","",0);
-        hCOMERR32 = LoadLibrary("COMERR32") ;
+        hCOMERR32 = LoadLibrary("COMERR" KRB_DLL_SUFFIX) ;
         if ( !hCOMERR32 )
         {
             rc = GetLastError() ;
-            debug(F111, "Kerberos LoadLibrary failed","COMERR32",rc) ;
+            debug(F111, "Kerberos LoadLibrary failed","COMERR" KRB_DLL_SUFFIX,rc) ;
             load_error = 1;
         }
         if (((FARPROC) p_com_err =
@@ -7363,6 +7415,8 @@ ck_krb5_loaddll( void )
                    "krb5_auth_con_setuseruserkey",rc) ;
             load_error = 1;
         }
+
+#ifdef KRB5_BETATEST
         if (((FARPROC) p_krb5_get_profile =
               GetProcAddress( hKRB5_32, "krb5_get_profile" )) == NULL )
         {
@@ -7370,6 +7424,7 @@ ck_krb5_loaddll( void )
             debug(F111, "Kerberos GetProcAddress failed",
                    "krb5_get_profile",rc) ;
         }
+#endif
 
         if (((FARPROC) p_krb5_free_keyblock_contents =
               GetProcAddress( hKRB5_32, "krb5_free_keyblock_contents" )) == NULL )
@@ -7569,6 +7624,7 @@ ck_krb5_loaddll( void )
         }
     }
 
+#ifdef KRB5_BETATEST
     hPROFILE = LoadLibrary("XPPROF32") ;
     if ( hPROFILE ) {
         if (((FARPROC) p_profile_get_relation_names =
@@ -7586,6 +7642,7 @@ ck_krb5_loaddll( void )
                    "profile_get_subsection_names",rc) ;
         }
     }
+#endif /* KRB5_BETATEST */
 #else /* NT */
     exe_path = GetLoadPath();
     len = get_dir_len(exe_path);
@@ -8198,11 +8255,15 @@ ck_krb5_loaddll( void )
             debug(F111,"Kerberos V GetProcAddress failed","krb5_auth_con_setuseruserkey",rc);
             load_error = 1;
         }
+
+#ifdef KRB5_BETATEST
         if (rc = DosQueryProcAddr(hKRB5_32,0,"krb5_get_profile",
                                    (PFN*)&p_krb5_get_profile))
         {
             debug(F111,"Kerberos V GetProcAddress failed","krb5_get_profile",rc);
         }
+#endif
+
         if (rc = DosQueryProcAddr(hKRB5_32,0,"krb5_free_keyblock_contents",
                                    (PFN*)&p_krb5_free_keyblock_contents))
         {
@@ -8341,6 +8402,8 @@ ck_krb5_loaddll( void )
     }
 
     exe_path = GetLoadPath();
+
+#ifdef KRB5_BETATEST
     len = get_dir_len(exe_path);
     if ( len + strlen("XPPROF32") + 4 > sizeof(path) )
         return(0);
@@ -8365,6 +8428,7 @@ ck_krb5_loaddll( void )
             debug(F111,"Kerberos V GetProcAddress failed","profile_get_subsection_names",rc);
         }
     }
+#endif /* KRB5_BETATEST */
 #endif /* NT */
 
     if ( deblog ) {
@@ -8398,7 +8462,7 @@ ck_krb5_loaddll( void )
     }
 
     /* Initialize Kerberos 5 ticket options based upon MIT Leash selections */
-    hLEASH = LoadLibrary("LEASHW32");
+    hLEASH = LoadLibrary("LEASHW" KRB_DLL_SUFFIX);
     if ( hLEASH )
     {
         DWORD (* pLeash_get_default_lifetime)(void);
@@ -9316,7 +9380,7 @@ ck_gssapi_loaddll()
 #ifdef NT
     hGSSAPI = LoadLibrary("GSSKRB5");
     if ( !hGSSAPI )
-        hGSSAPI = LoadLibrary("GSSAPI32");
+        hGSSAPI = LoadLibrary("GSSAPI" KRB_DLL_SUFFIX);
     if ( !hGSSAPI )
         return(0);
 

@@ -167,6 +167,11 @@ INCLUDE = $(INCLUDE);ow\;
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
 !endif
 
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
+!endif
+
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
 # Starting with Visual C++ 2012, the default subsystem version is set to 6.0
 # which makes the generated binaries invalid on anything older than Windows
@@ -199,10 +204,16 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
 CFLAG_GF=
 !endif
 
-COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
+
+# Jom runs multiple instances of cl in parallel which causes problems with PCH locking.
+# So only generate PCH files when nmake instead of jom.
+!if "$(ISJOM)" == "no"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /YX
+!endif
 
 !if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
@@ -730,7 +741,8 @@ LIBS = $(LIBS) libsrp.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
        winmm.lib mpr.lib advapi32.lib winspool.lib
 
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 LIBS = $(LIBS) wshload.lib
 !endif
 
@@ -762,8 +774,8 @@ KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
 KUILIBS = $(KUILIBS) srp.lib
 !endif
 
-# MIT Kerberos for Windows
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 KUILIBS = $(KUILIBS) wshload.lib
 !endif
 
@@ -786,8 +798,8 @@ LIBS = $(LIBS) $(SSL_LIBS)
 LIBS = $(LIBS) srp.lib
 !endif
 
-# MIT Kerberos for Windows
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 LIBS = $(LIBS) wshload.lib
 !endif
 
@@ -847,6 +859,12 @@ OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
         p_common$(O) p_tl$(O) p_dir$(O)
 !endif
 
+# Internal cryptography (instead of k95crypt.dll)
+!if "$(CKF_INTERNAL_CRYPT)" == "yes"
+OBJS = $(OBJS) ck_crp.obj ckclib.obj ck_des.obj
+LIBS = $(LIBS) libdes.lib
+KUILIBS = $(KUILIBS) libdes.lib
+!endif
 
 #OUTDIR = \kui\win95
 KUIOBJS = \
@@ -1289,7 +1307,7 @@ ckusig$(O):	ckusig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcne
                 ckuusr.h ckonet.h ckcsig.h ckocon.h
 ckosyn$(O):     ckosyn.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckocon.h ckuusr.h ckntap.h
 ckothr$(O): ckothr.c ckocon.h ckcsym.h ckcasc.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcsig.h
-ckntap$(O): ckntap.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckntap.h cknwin.h ckowin.h ckuusr.h ckucmd.h ckowin.h
+ckntap$(O): ckntap.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckntap.h cknwin.h ckowin.h ckuusr.h ckucmd.h ckowin.h ckntapi.h
 ckoreg$(O): ckoreg.c ckcdeb.h ckoker.h ckclib.h ckcker.h
 cknalm$(O): cknalm.c cknalm.h
 cknwin$(O): cknwin.c cknwin.h ckowin.h ckcdeb.h ckoker.h ckclib.h ckntap.h ckocon.h

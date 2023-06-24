@@ -10,4 +10,6 @@
 @del /Q %src_base%\nt\*.*
 @del /Q %src_base%\ntd\*.*
 @del /Q %src_base%\kui\win95\*.*
+@del /Q %src_base%\iksd\*.*
 @del /Q %src_base%\os2\*.*
+

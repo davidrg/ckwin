@@ -30,6 +30,12 @@
 
 #ifdef XYZ_DLL
 
+#ifdef NT
+#ifdef __GNUC__
+#define _Inline static
+#endif /* __GNUC__ */
+#endif /* NT */
+
 _Inline U32 async_connected(void) {
 
   static APIRET rc=0;

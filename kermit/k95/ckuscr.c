@@ -3,12 +3,12 @@
 
 #ifndef NOICP
 #ifndef NOSCRIPT
-char *loginv = "Script Command, 10.0.032, 23 Sep 2022";
+char *loginv = "Script Command, 10.0.033, 15 Apr 2023";
 
 /*  C K U S C R  --  expect-send script implementation  */
 
 /*
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -45,6 +45,7 @@ char *loginv = "Script Command, 10.0.032, 23 Sep 2022";
 #include "ckuusr.h"
 #include "ckcnet.h"
 #include "ckcsig.h"
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 _PROTOTYP( VOID flushi, (void) );
 _PROTOTYP( static VOID myflsh, (void) );
@@ -523,8 +524,12 @@ outseq() {
 /*  L O G I N  --  (historical misnomer) Execute the SCRIPT command */
 
 int
-dologin(cmdstr) char *cmdstr; {
-
+#ifdef CK_ANSIC
+dologin( char *cmdstr )
+#else
+dologin(cmdstr) char *cmdstr;
+#endif /* CK_ANSIC */
+{
 #ifdef OS2
 #ifdef NT
     SIGTYP (* savealm)(int);		/* Save incoming alarm function */

@@ -17,7 +17,9 @@
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 1                       ICON                    "cknker.ico"
+#ifndef __GNUC__
 "MINICON"               ICON                    "cknker.ico"
+#endif
 2                       ICON                    "cknker.ico"
 #ifndef COMPILER_OWCL
 3                       ICON                    "k95g.ico"

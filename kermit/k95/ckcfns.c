@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 10.0.243, 23 Sep 2022";
+char *fnsv = "C-Kermit functions, 10.0.244, 14 Apr 2023";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -11,7 +11,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Columbia University Academic Information Systems, New York City (1974-2011)
   The Kermit Project, Bronx NY (2011-????)
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -92,6 +92,10 @@ _PROTOTYP( int zzstring, (char *, char **, int *) );
 #include <os2.h>
 #endif /* OS2ONLY */
 #endif /* OS2 */
+
+#include "ckucmd.h"
+#include "ckuusr.h"
+#include "ckcfnp.h"                     /* Prototypes */
 
 /* Externals from ckcmai.c */
 
@@ -1616,7 +1620,12 @@ kgetm(
   current character because of repeat-count lookahead.
 */
 int
-lslook(b) unsigned int b; {		/* Locking Shift Lookahead */
+#ifdef CK_ANSIC
+lslook( unsigned int b )		/* Locking Shift Lookahead */
+#else
+lslook(b) unsigned int b;
+#endif /* CK_ANSIC */
+{
     int i;
     if (zincnt < 3)			/* If not enough chars in buffer, */
       return(1);			/* force shift-state switch. */
@@ -1662,7 +1671,12 @@ static int nleft = 0;
   See getpkt() for more detailed commentary.
 */
 static int
-bgetpkt(bufmax) int bufmax; {
+#ifdef CK_ANSIC
+bgetpkt( int bufmax )
+#else
+bgetpkt(bufmax) int bufmax;
+#endif /* CK_ANSIC */
+{
     register CHAR rt = t, rnext;
     register CHAR *dp, *odp, *p1, *p2;
     register int x = 0, a7;
@@ -1898,7 +1912,12 @@ bgetpkt(bufmax) int bufmax; {
 #endif /* CKTUNING */
 
 VOID
-dofilcrc(c) int c; {			/* Accumulate file crc */
+#ifdef CK_ANSIC
+dofilcrc( int c )                       /* Accumulate file crc */
+#else
+dofilcrc(c) int c;
+#endif /* CK_ANSIC */
+{
     long z;
     z = crc16 ^ (long)c;
     crc16 = (crc16 >> 8) ^
@@ -2569,7 +2588,12 @@ xgnbyte(tcs,fcs,fn) int tcs, fcs, (*fn)();
 static int uflag = 0;
 
 int
-getpkt(bufmax,xlate) int bufmax, xlate; { /* Fill one packet buffer */
+#ifdef CK_ANSIC
+getpkt( int bufmax, int xlate )         /* Fill one packet buffer */
+#else
+getpkt(bufmax,xlate) int bufmax, xlate;
+#endif /* CK_ANSIC */
+{
     register CHAR rt = t, rnext = NUL;	  /* Register shadows of the globals */
     register CHAR *dp, *odp, *odp2, *p1, *p2; /* pointers... */
     register int x;			/* Loop index. */
@@ -3051,7 +3075,12 @@ int epktrcvd = 0, epktsent = 0;
   Returns -1 on failure (e.g. to create packet buffers), 0 on success.
 */
 int
-tinit(flag) int flag; {
+#ifdef CK_ANSIC
+tinit( int flag )
+#else
+tinit(flag) int flag;
+#endif /* CK_ANSIC */
+{
     int x;
 #ifdef CK_TIMERS
     extern int rttflg;
@@ -3167,7 +3196,12 @@ pktinit() {				/* Initialize packet sequence */
 /*  R I N I T  --  Respond to S or I packet  */
 
 VOID
-rinit(d) CHAR *d; {
+#ifdef CK_ANSIC
+rinit( CHAR *d )
+#else
+rinit(d) CHAR *d;
+#endif /* CK_ANSIC */
+{
     char *tp = NULL;
     ztime(&tp);
     tlog(F110,"Transaction begins",tp,0L); /* Make transaction log entry */
@@ -3409,7 +3443,12 @@ CK_OFF_T ofn1len = (CK_OFF_T)0;
 int opnerr;				/* Flag for open error */
 
 int					/* Returns success ? 1 : 0 */
-rcvfil(n) char *n; {
+#ifdef CK_ANSIC
+rcvfil( char *n )
+#else
+rcvfil(n) char *n;
+#endif /* CK_ANSIC */
+{
     extern int en_cwd;
     int i, skipthis;
     char * n2;
@@ -4042,7 +4081,12 @@ Please confirm output file specification or supply an alternative:";
    -5 if RENAME-TO: failed
 */
 int
-reof(f,yy) char *f; struct zattr *yy; {
+#ifdef CK_ANSIC
+reof( char *f, struct zattr *yy )
+#else
+reof(f,yy) char *f; struct zattr *yy;
+#endif /* CK_ANSIC */
+{
     extern char * rcv_move, * rcv_rename;
     extern int o_isopen;
     int rc = 0;				/* Return code */
@@ -4232,7 +4276,12 @@ reot() {
   Returns 1 on success, 0 on failure.
 */
 int
-sfile(x) int x; {
+#ifdef CK_ANSIC
+sfile( int x )
+#else
+sfile(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifdef pdp11
 #define PKTNL 64
 #else
@@ -4854,7 +4903,12 @@ sdata() {
 /* Code common to both seof() and sxeof() */
 
 int
-szeof(s) CHAR *s; {
+#ifdef CK_ANSIC
+szeof( CHAR *s )
+#else
+szeof(s) CHAR *s;
+#endif /* CK_ANSIC */
+{
     int x;
     lsstate = 0;			/* Cancel locking-shift state */
     if (!s) s = (CHAR *)"";
@@ -4883,7 +4937,12 @@ szeof(s) CHAR *s; {
 }
 
 int
-seof(x) int x; {
+#ifdef CK_ANSIC
+seof( int x )
+#else
+seof(x) int x;
+#endif /* CK_ANSIC */
+{
     char * s;
 /*
   ckcpro.c, before calling seof(), sets window size back to 1 and then calls
@@ -4907,7 +4966,12 @@ seof(x) int x; {
   get the next packet number.
 */
 int
-sxeof(x) int x; {
+#ifdef CK_ANSIC
+sxeof( int x )
+#else
+sxeof(x) int x;
+#endif /* CK_ANSIC */
+{
     char * s;
     s = x ? "D" : "";
     if (nxtpkt() < 0)			/* Get next pkt number and buffer */
@@ -5121,7 +5185,12 @@ rpar() {
   Kermit's S or I packet, or its ACK to my S or I packet.
 */
 int
-spar(s) CHAR *s; {			/* Set parameters */
+#ifdef CK_ANSIC
+spar( CHAR *s )                         /* Set parameters */
+#else
+spar(s) CHAR *s;
+#endif /* CK_ANSIC */
+{
     int x, y, lpsiz, biggest;
     extern int rprmlen, lastspmax;
     extern struct sysdata sysidlist[];
@@ -5926,7 +5995,12 @@ static long nfiles  =  0;
 static CK_OFF_T nbytes  =  0;
 
 int
-sndstring(p) char * p; {
+#ifdef CK_ANSIC
+sndstring( char * p )
+#else
+sndstring(p) char * p;
+#endif /* CK_ANSIC */
+{
 #ifndef NOSERVER
     nfils = 0;				/* No files, no lists. */
     xflg = 1;				/* Flag we must send X packet. */
@@ -5950,7 +6024,12 @@ static char *nmx[] =  { "Disabled", "Disabled", "Enabled", "Enabled" };
 #endif /* IKSD */
 
 static char *
-xnm(x) int x; {
+#ifdef CK_ANSIC
+xnm( int x )
+#else
+xnm(x) int x;
+#endif /* CK_ANSIC */
+{
 #ifdef IKSD
     if (inserver)
       return(nmx[x]);
@@ -6219,7 +6298,12 @@ nxttype(
 /*  S N D T Y P -- TYPE a file to remote client */
 
 int
-sndtype(file) char * file; {
+#ifdef CK_ANSIC
+sndtype( char * file )
+#else
+sndtype(file) char * file;
+#endif /* CK_ANSIC */
+{
 #ifndef NOSERVER
     char name[CKMAXPATH+1];
 
@@ -6493,7 +6577,12 @@ nxtdir(
 /*  S N D D I R -- send directory listing  */
 
 int
-snddir(spec) char * spec; {
+#ifdef CK_ANSIC
+snddir( char * spec )
+#else
+snddir(spec) char * spec;
+#endif /* CK_ANSIC */
+{
 #ifndef NOSERVER
     char * p = NULL, name[CKMAXPATH+1];
     int t = 0, rc = 0;
@@ -6728,7 +6817,12 @@ nxtdel(
 /*  S N D D E L  --  Send delete message  */
 
 int
-snddel(spec) char * spec; {
+#ifdef CK_ANSIC
+snddel( char * spec )
+#else
+snddel(spec) char * spec;
+#endif /* CK_ANSIC */
+{
 #ifndef NOSERVER
     char name[CKMAXPATH+1];
 #ifdef OS2
@@ -6854,7 +6948,12 @@ sndwho(who) char * who; {
   2 on success if a CD Message file is to be sent.
 */
 int
-cwd(vdir) char *vdir; {
+#ifdef CK_ANSIC
+cwd( char *vdir )
+#else
+cwd(vdir) char *vdir;
+#endif /* CK_ANSIC */
+{
     char *cdd, *dirp;
 
     vdir[xunchar(*vdir) + 1] = '\0';	/* Terminate string with a null */
@@ -6891,7 +6990,12 @@ cwd(vdir) char *vdir; {
 /*  Command string is formed by concatenating the two arguments.  */
 
 int
-syscmd(prefix,suffix) char *prefix, *suffix; {
+#ifdef CK_ANSIC
+syscmd( char *prefix, char *suffix )
+#else
+syscmd(prefix,suffix) char *prefix, *suffix;
+#endif /* CK_ANSIC */
+{
     extern int i_isopen;
 #ifndef NOPUSH
     char *cp;
@@ -6935,7 +7039,12 @@ syscmd(prefix,suffix) char *prefix, *suffix; {
 /*  Returns 1 on success, 0 on failure.  */
 
 int
-remset(s) char *s; {
+#ifdef CK_ANSIC
+remset( char *s )
+#else
+remset(s) char *s;
+#endif /* CK_ANSIC */
+{
     extern int c_save, en_del;
     int len, i, x, y;
     char *p;
@@ -7148,7 +7257,12 @@ remset(s) char *s; {
 /* Adjust packet length based on number of window slots and buffer size */
 
 int
-adjpkl(pktlen,slots,bufsiz) int pktlen, slots, bufsiz; {
+#ifdef CK_ANSIC
+adjpkl( int pktlen, int slots, int bufsiz )
+#else
+adjpkl(pktlen,slots,bufsiz) int pktlen, slots, bufsiz;
+#endif /* CK_ANSIC */
+{
     if (protocol != PROTO_K) return(pktlen);
     debug(F101,"adjpkl len","",pktlen);
     debug(F101,"adjpkl slots","",slots);

@@ -1,14 +1,16 @@
-char *ckathv = "Authentication, 10.0.243, 04 Dec 2022";
+char *ckathv = "Authentication, 10.0.244, 04 May 2023";
 /*
   C K U A T H . C  --  Authentication for C-Kermit
 
-  Copyright (C) 1999, 2022,
+  Copyright (C) 1999, 2032,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
     Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
+    Latest update: Tue Dec 13 07:10:21 2022 (David Goodwin for CKW)
+
 */
 /*
  * Additional copyrights included with affected code.
@@ -12799,6 +12801,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <sys/stat.h>
 #include <time.h>
 #define Time_t time_t
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 void
 XauDisposeAuth (auth)
@@ -12859,7 +12862,7 @@ XauFileName ()
 
 static int
 binaryEqual (a, b, len)
-char   *a, *b;
+const char   *a, *b;
 int    len;
 {
     while (len--)
