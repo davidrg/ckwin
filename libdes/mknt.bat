@@ -1,5 +1,7 @@
 @echo off
 
+if not "%make%"=="" set make=nmake
+
 %make% /f libdes.mak CFG="Release"
 
 if "%CKF_LIBDES%" == "yes" goto :havelibdes
