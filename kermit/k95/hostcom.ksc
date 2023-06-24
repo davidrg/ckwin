@@ -1,11 +1,64 @@
-; Sample host mode operation for dialin connections.
+; Kermit 95 host mode for direct serial connections.
+;
 
-:loop
-set modem telebit  ; Replace this appropriately for your configuration
-set port 1         ; ditto
-set speed 38400    ; ditto
-set flow rts/cts   ; ditto
-answer
+; The following code was added to accomodate the new Windows multi-user
+; friendly directory layouts introduced with version 1.1.21.  We have
+; check several locations for the directories that hostmode uses and
+; create them in \v(appdata) if the do not exist at all.
+
+if directory \v(exedir)USERS {
+    asg _hostroot \v(exedir)
+    forward FOUNDDIRS
+}
+if directory \v(startup)INCOMING {
+    asg _hostroot \v(startup)
+    forward FOUNDDIRS
+}
+
+if directory \v(appdata)USERS {
+    asg _hostroot \v(appdata)
+}
+
+:FOUNDDIRS
+
+asg _configfile \freplace(\m(_hostroot)host.cfg,/,\\)
+
+def MAKEVAR2 if def \%2 _assign \%1 \%2, else _assign \%1
+
+def MAKEVAR -
+  if = \findex(=,\%1,1) 0 end, -
+  asg \%9 _\freplace(\%1,=,\32), -
+  makevar2 \%9
+
+open read \m(_configfile)
+if fail forward noconfig
+while true { read \%a, if fail break, makevar \%a }
+
+:NOCONFIG
+
+set modem type none
+xif def _commport { -
+  set port \m(_commport),-
+  if fail stop 1 "\m(_commport)" - Invalid port -
+}
+xif def _comspeed { -
+  set speed \m(_comspeed), -
+  if fail stop 1 "\m(_comspeed)" - Invalid speed -
+}
+if not eq "\v(connection)" "serial" -
+  fail stop 1 -
+  "\v(line)" - Inappropriate connection type: "\v(connection)"
+
+set carrier off
+set flow rts/cts
 take host.ksc
-hangup
-goto loop
+;
+; There's no point in looping on direct connections, since you are probably
+; in the same room with both computers and can set up the connection any
+; time you want it.  Since we don't wait on carrier, issuing the prompt when
+; there is nothing on the other end results in lost data, "getty babble", or
+; worse.
+;
+;; goto loop
+
+end

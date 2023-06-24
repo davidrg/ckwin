@@ -28,6 +28,7 @@ char *ckusigv = "Signal support, 10.0.100, 23 Sep 2022";
 #include <setjmp.h>
 #endif /* NT */
 #include "ckcsig.h"
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef NOCCTRAP
 extern ckjmpbuf cmjbuf;

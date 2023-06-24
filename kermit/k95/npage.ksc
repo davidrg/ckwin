@@ -1,0 +1,89 @@
+# n u m p a g e  --  Send a numeric page or dial a beeper
+#
+# Arguments:
+# 1. Phone number
+# 2. Optional message (omit for beepers)
+#
+# Redials automatically in case of busy signal (if modem supports "@").
+# K95 1.1.19 required
+#
+# Notes:
+# . Accurate reporting of success or failure and the automatic redialing
+#   feature require a modem that supports the "Wait for Answer" dial
+#   modifier "@".
+# . Once the dial string is given to the modem, it is up to the modem to
+#   do its job and report accurately whether it succeeded.  Experiments
+#   with assorted modems give mixed results.  For example, "@" doesn't work
+#   with some modems unless the phone rings at least 2 or 3 times before
+#   picking up.
+#
+# Author: F. da Cruz, Columbia University, 16 April 1999.
+
+local result debug device modem poundsign speed ; Local variables
+
+if < \v(xversion) 1119 stop 1 K95 1.1.19 required 
+
+if not def \%1 stop 1 Usage: \%0: phone-number [ numeric-message ]
+
+; Get configuration parameters from environment variables. if any -- remove
+; this section if you'd rather hard-wire the parameters into the script.
+
+.speed := \$(SPEED)                  ; Port speed
+.redials := \$(REDIAL_LIMIT)         ; Number of times to redial if busy
+.pause := \$(REDIAL_PAUSE)           ; How long to pause between redials (sec)
+
+; Local parameters...
+
+.debug = 0                           ; (*) Change to 1 for debugging
+.poundsign = 1                       ; (*) Change to 0 if "#" not required
+if not def modem .modem = usr        ; (*) Change to match your modem
+if not def device .device = /dev/cua ; (*) Change to your dialout device
+if not def speed .speed = 2400       ; (*) Port speed - change if necessary
+if not def redials .redials = 20     ; (*) Change according to local laws!
+if not def pause .pause = 1          ; (*) Change according to local laws!
+
+if \m(debug) {                       ; Echo parameters...
+    echo { Number:      "\%1"}
+    echo { Message:     "\%2"} 
+    echo { Device:      "\m(device)"}
+    echo { Speed:       "\m(speed)"}
+    echo { Modem:       "\m(modem)"}
+    echo { Redials:     "\m(redials)"}
+    echo { Pause:       "\m(pause)"}
+    echo { Poundsign:   "\m(poundsign)"}
+}
+set tapi line
+if fail stop 1 {Error: Can't open TAPI device}
+def on_exit hangup                   ; In case of Ctrl-C
+set exit warning off                 ; In case of misconfigured modem
+set speed \m(speed)                  ; Set the desired speed
+
+; Form the dial string...
+
+if def \v(dm_wa) {                   ; Have wait-For-Answer dial modifier
+    asg \%1 \%1\v(dm_wa)\%2          ; Insert it between number and message
+    set dial retries \m(redials)     ; Adjust to local laws and regulations
+    set dial interval \m(pause)      ; Ditto (see comments above)
+} else if def \%2 {                  ; No Wait-For-Answer but message given
+    asg \%1 {\%1\frepeat(\v(dm_lp,5))\%2} ; Insert "long pause" before message
+    set dial retries 0               ; No automatic redialing
+    if \m(debug) {
+	echo { WARNING: This modem is not well-suited for paging.}
+	echo { Busy signals are not detected and failure is not reported.}
+	echo { Automatic redialing disabled.}
+    }
+}   
+; Supply "#" at end of message if required and missing...
+
+if ( def \%2 && \m(poundsign) && not eq "\fright(\%2,1)" "#" ) {
+    asg \%1 \%1#                     ; if it was not there already
+}
+if \m(debug) {
+    echo { Dial string: "\%1"}       ; Show the final dial string
+    set dial display on              ; Watch computer/modem dialog
+}
+pdial \%1                            ; Dial the number but don't expect carrier
+.result := \v(status)                ; Remember PDIAL result
+if \m(debug) echo { Dial status: "\v(dialstatus)"}
+pause 2                              ; Give modem time to catch up
+end \m(result)                       ; Set exit code from PDIAL result

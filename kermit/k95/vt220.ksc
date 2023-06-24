@@ -1,4 +1,4 @@
-; File: VT220.INI
+; File: VT220.KSC
 ; 
 ; Extended Keyboard definitions for Kermit 95.
 ; Works with any VT terminal type: VT52, VT100, VT102, VT220, or VT320. 
@@ -18,8 +18,7 @@ end 1 \v(cmdfile) only works with Kermit 95 on Windows 95 and Windows NT.
 echo Executing \v(cmdfile) for full VT220 key mappings...
 if eq "" "\v(xversion)" forward GO	; 1.1.5 and later
 echo
-echo NOTE: VT220.INI is not needed in Kermit 95 1.1.5 and later.
-echo See UPDATES.DOC for details.
+echo NOTE: VT220.KSC is not needed in Kermit 95 1.1.5 and later.
 echo
 set mskermit keycodes off
 
@@ -127,4 +126,4 @@ set key \2423 \KdecF18     ; F18                Alt-F8           Top Rank F key
 set key \2424 \KdecF19     ; F19                Alt-F9           Top Rank F key
 set key \2425 \KdecF20     ; F20                Alt-F10          Top Rank F key
 
-end ; of VT220.INI
+end ; of VT220.KSC

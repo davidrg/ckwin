@@ -62,6 +62,6 @@ private:
 
 };
 
-extern KFileStatus* filestatus;
+extern KFileStatus* filestatusdlg;
 
 #endif

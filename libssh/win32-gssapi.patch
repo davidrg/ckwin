@@ -1,0 +1,47 @@
+diff --git a/cmake/Modules/FindGSSAPI.cmake b/cmake/Modules/FindGSSAPI.cmake
+index d227d8dd..9e44a242 100644
+--- a/cmake/Modules/FindGSSAPI.cmake
++++ b/cmake/Modules/FindGSSAPI.cmake
+@@ -106,6 +106,27 @@ if (UNIX)
+     endif()
+ endif (UNIX)
+ 
++# Only support MIT Kerberos for Windows on Windows
++if (WIN32)
++    set(GSSAPI_FLAVOR_MIT TRUE)
++    set(GSSAPI_INCLUDE_DIR ${GSSAPI_ROOT_DIR}\\include)
++
++    # TODO: Need to detect CPU architecture too (ARM, ARM64), though that
++    #       relies on MIT Kerberos for Windows actually gaining support for
++    #       something other than x86
++    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
++        # 64 bits
++        set(GSSAPI_LIBRARIES ${GSSAPI_ROOT_DIR}\\lib\\amd64\\gssapi64.lib
++                ${GSSAPI_ROOT_DIR}\\lib\\amd64\\krb5_64.lib
++                ${GSSAPI_ROOT_DIR}\\lib\\amd64\\comerr64.lib)
++    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
++        # 32 bits
++        set(GSSAPI_LIBRARIES ${GSSAPI_ROOT_DIR}\\lib\\i386\\gssapi32.lib
++                ${GSSAPI_ROOT_DIR}\\lib\\i386\\krb5_32.lib
++                ${GSSAPI_ROOT_DIR}\\lib\\i386\\comerr32.lib)
++    endif()
++endif (WIN32)
++
+ find_path(GSSAPI_INCLUDE_DIR
+     NAMES
+         gssapi.h
+diff --git a/src/gssapi.c b/src/gssapi.c
+index 96586021..5f04fd7f 100644
+--- a/src/gssapi.c
++++ b/src/gssapi.c
+@@ -19,6 +19,10 @@
+  * MA 02111-1307, USA.
+  */
+ 
++/* Prevents windows.h from including winsock.h before we're able to include
++ * winsock2.h resulting in build errors */
++#define WIN32_LEAN_AND_MEAN
++
+ #include "config.h"
+ 
+ #include <stdio.h>

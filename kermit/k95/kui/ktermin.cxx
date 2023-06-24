@@ -557,7 +557,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_QUERYENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
         done = TRUE;
-#if _MSC_VER > 1010
+#if !defined(_MSC_VER) || _MSC_VER > 1010
         if ( lParam & ENDSESSION_LOGOFF ) {
 #else
         /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown
@@ -574,7 +574,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_ENDSESSION:
         debug(F111,"KTerminal::message","WM_QUERYENDSESSION",msg);
-#if _MSC_VER > 1010
+#if !defined(_MSC_VER) || _MSC_VER > 1010
         if ( wParam && (lParam & ENDSESSION_LOGOFF) ) {
 #else
         /* Visual C++ <= 4.1: lparam == TRUE on logoff, FALSE on shutdown

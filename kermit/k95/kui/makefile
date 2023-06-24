@@ -102,6 +102,11 @@ CFLAGS = $(CFLAGS) /GA
 !endif
 !endif
 
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+CFLAGS = $(CFLAGS) /Ap64
+!endif
+
 !else
 # Debugging options
 
@@ -165,8 +170,8 @@ $(OUTDIR)\$(PROJ).EXE: $(OUTDIR) $(KUIOBJS) $(OUTDIR)\$(PROJ).res
 $(OUTDIR)\$(PROJ).res: $(PROJ).rc $(RC_DEP)
     rc $(RCFLAGS) $(RCDEFINES) /fo$(OUTDIR)\$(PROJ).res $(PROJ).rc
 
-.c{$(OUTDIR)}.obj: 
+.c{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<
 
-.cxx{$(OUTDIR)}.obj: 
+.cxx{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<

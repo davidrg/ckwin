@@ -13,6 +13,9 @@ copy of Visual C++ 6.0 SP6. OpenWatcom 1.9 is also supported but due to a lack
 of support for CTRL3D32 in that compiler the resulting application will look 
 like something from Windows 3.1.
 
+If you're using MinGW, see [Building with MinGW](mingw-building.md) - the
+content below only applies to Visual C++ and OpenWatcom.
+
 ## Build Environment
 
 Firstly put the source code somewhere convenient. Where ever you put it, you 

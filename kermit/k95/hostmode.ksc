@@ -5,6 +5,33 @@
 ; Date: December 1995 - January 1996
 ; Updated February 1997 for OS/2
 ; Updated June 1997 for TAPI
+; Setting of MAXUSERS fixed, December 1997.
+; Recommendations of J.v.Jena jvjena@cs.tu-berlin.de incorporated, March 2000
+; Corrections to _k95program and location of default host.cfg file, Apr 6, 2000
+; More of same plus conversion to modern syntax, fdc, 6 July 2001.
+;
+; Uses of hostmode.bat:
+; 
+; - hostmode.bat makes the following assumptions:
+;   an empty setting for the CFG variable (default) uses host.cfg
+;   in the SCRIPTS subdirectory.
+; 
+; - A nonempty string as CFG value specifies a different subdirectory.
+;   If this subdirectory does not already exist, it is created and
+;   host.cfg is copied to it from the SCRIPTS subdirectory.  You can change
+;   and save this configuration.
+; 
+; - Thus you can have different HOSTxxxx.BAT files that specify different
+;   CFG values to pick up different configurations.
+;
+; Use of shortcuts to [scripts]/hostmode.ksc:
+; 
+; - Assuming the .ksc extension is registered by k95regtl,
+;   create a shortcut for every needed hostmode configuration.
+;   Set the work directory in the properties contextmenu of the
+;   new shortcut to an existing directory. Host.cfg will be put
+;   there.  If you leave the work directory unchanged you get the
+;   default behavior (host.cfg in the scripts directory).
 ;
 undef _config_changed
 undef _userdb_changed
@@ -12,59 +39,135 @@ undef _userdb_locked
 undef _userdb_loaded
 undef _current_user
 undef _current_id
-	
-define _k95program k95
-if eq "\v(system)" "OS/2" define _k95program k2
 
-; Any built-in CLS command will override this...
-def CLS write screen \27[H\27[2J
+if < \v(xversion) 1120 stop 1 K95 1.1.20 or later required.
 
-def UNLOCK -
-  if exist \m(_lockfile) delete \m(_lockfile), -
-  undef _userdb_locked
+asg _k95program \freplace(\v(exedir)k95.exe,/,\\)
+asg _k95d_program \freplace(\v(exedir)k95d.exe,/,\\)
+if eq "\v(system)" "OS/2" asg _k95program \freplace(\v(exedir)k2.exe,/,\\)
 
-def LOCK -
-  if def _userdb_locked end 1,-
-  xif exist \m(_lockfile) { -
-    echo LOCKFILE \m(_lockfile) in use by:, -
-    type \m(_lockfile), -
-    end 2 -
-  }, -
-  open write \m(_lockfile),-
-  if fail end 3,-
-  writeln file PROPRIETOR,-
-  if fail end 4,-
-  close write,-
-  if fail end 5,-
-  def _userdb_locked 1,-
-  end 0
+; CLS is built in now.
+; def CLS write screen \27[H\27[2J
 
+def UNLOCK {
+    if exist \m(_lockfile) delete \m(_lockfile)
+    undef _userdb_locked
+}
+
+def LOCK {
+    if def _userdb_locked end 1
+    if exist \m(_lockfile) {
+	echo LOCKFILE \m(_lockfile) in use by:
+	type \m(_lockfile)
+	end 2
+    }
+    open write \m(_lockfile)
+    if fail end 3
+    writeln file PROPRIETOR
+    if fail end 4
+    close write
+    if fail end 5
+    def _userdb_locked 1
+    end 0
+}
 def HOLDSCREEN echo, getc \%9 {Press Enter to continue: }, goto \%1
 
 def MAKEVAR2 _assign \%1 \%2
 
-def MAKEVAR -
-  if = \findex(=,\%1,1) 0 end, -
-  asg \%9 _\freplace(\%1,=,\32), -
-  makevar2 \%9
+def MAKEVAR {
+    if = \findex(=,\%1,1) 0 end
+    asg \%9 _\freplace(\%1,=,\32)
+    makevar2 \%9
+}
+
+; The following code was added to accomodate the new Windows multi-user
+; friendly directory layouts introduced with version 1.1.21.  We have
+; check several locations for the directories that hostmode uses and
+; create them in \v(appdata) if the do not exist at all.
+
+if exist \v(common)SCRIPTS/hostmode.ksc {
+   asg _hostscripts \v(common)
+}
+
+if exist \v(appdata)SCRIPTS/hostmode.ksc {
+   asg _hostscripts \v(appdata)
+}
+
+if directory \v(exedir)USERS {
+    asg _hostroot \v(exedir)
+    forward FOUNDDIRS
+}
+if directory \v(startup)INCOMING {
+    asg _hostroot \v(startup)
+    forward FOUNDDIRS
+}
+
+if directory \v(appdata)INCOMING {
+    asg _hostroot \v(appdata)
+    forward FOUNDDIRS
+}
+
+cls
+echo {Could not find necessary hostmode dirs, creating them...}
+if not directory \v(appdata)USERS if not exist \v(appdata)USERS {
+   mkdir \v(appdata)USERS
+}
+if not directory \v(appdata)PUBLIC if not exist \v(appdata)PUBLIC {
+   mkdir \v(appdata)PUBLIC
+}
+if not directory \v(appdata)INCOMING if not exist \v(appdata)INCOMING {
+   mkdir \v(appdata)INCOMING
+}
+if not directory \v(appdata)LOGS if not exist \v(appdata)LOGS {
+   mkdir \v(appdata)LOGS
+}
+if not directory \v(appdata)TMP if not exist \v(appdata)TMP {
+   mkdir \v(appdata)TMP
+}
+
+if not exist \v(appdata)USERS/hostmode.txt {
+   copy \m(_hostscripts)USERS/*.TXT \v(appdata)USERS
+}
+
+if not exist \v(appdata)PUBLIC/hostuser.txt {
+   copy \m(_hostscripts)PUBLIC/*.TXT \v(appdata)PUBLIC
+}
+
+echo
+echo {Directories created in \v(appdata)...}
+asg _hostroot \v(appdata)
+holdscreen FOUNDDIRS
+
+:FOUNDDIRS
 
 asg _maxusers 100 ; In case there is no config file
 
-def _haveconfig 0
-if eq \v(system) UNIX asg _configfile host.cfg
-else asg _configfile \freplace(\v(startup)scripts/host.cfg,/,\\)
+def _haveconfig 0         ; Have not found config file yet
+asg _configfile host.cfg  ; Use config file in current directory
 echo STARTING...
-echo Configuration file = \m(_configfile)
-xif not exist \m(_configfile) { -
-  ec NOT FOUND - using default configuration, -
-  sleep 3, -
-  forward NOCONFIG -
+if not exist \m(_hostroot)\m(_configfile) {
+    if not exist \m(_hostscripts)scripts/host.cfg {
+	ec File \m(_configfile) not found - using built-in configuration
+        sleep 3
+        forward NOCONFIG
+    }
+
+    if exist \m(_hostscripts)scripts/host.cfg {
+        xecho COPYING \m(_hostscripts)scripts/host.cfg to \m(_hostroot)...
+        copy \m(_hostscripts)scripts/host.cfg \m(_hostroot)
+        if fail {
+           echo FAILED
+           forward NOCONFIG
+        }
+        echo OK
+    }
 }
-open read \m(_configfile)
-xif fail { forward NOCONFIG }
+echo Configuration file = \m(_hostroot)\m(_configfile)
+open read \m(_hostroot)\m(_configfile)
+if fail forward NOCONFIG
 def _haveconfig 1
 echo Loading configuration...
-while true { read \%a, if fail break, makevar \%a }
+while true { read aline, if fail break, makevar \m(aline) }
 
 :NOCONFIG
 sleep 1
@@ -72,90 +175,97 @@ sleep 1
 dcl \&u[\m(_maxusers)]
 if not def _lockfile asg _lockfile \m(_usertree)/USERS.LCK
 
-define SAVEUSERDB -
-  if exist \fdef(_userbak) del \fdef(_userbak),-
-  rename \fdef(_userfile) \fdef(_userbak),-
-  if fail echo {Warning - Failure to back up user database},-
-  open write \fdef(_userfile),-
-  xif fail { echo Can't open \fdef(_userfile), holdscreen LBL_9 },-
-  for \%i 1 \&u[0] 1 { -
-    writeln file \&u[\%i], -
-    xif fail { -
-      ec, ec Error writing record \%i to \fdef(_userfile),-
-      ec Old version preserved as \fdef(_userbak),-
-      break -
-    },-
-  },-
-  close write,-
-  asg \%9 \v(status),-
-  UNLOCK,-
-  echo,-
-  if not = \%9 0 echo {WARNING - Failed to close \fdef(_userfile)},-
-  else echo {\fdef(_userfile) saved: \&u[0] records},-
-  undef _userdb_changed,-
-  undef _userdb_loaded,-
-  undef _current_user,-
-  end \%9
+define SAVEUSERDB {
+    if exist \fdef(_userbak) del \fdef(_userbak)
+    rename \fdef(_userfile) \fdef(_userbak)
+    if fail echo {Warning - Failure to back up user database}
+    open write \fdef(_userfile)
+    if fail {
+	echo Failed to open \fdef(_userfile)
+        holdscreen LBL_9
+    }
+    for \%i 1 \&u[0] 1 {
+	writeln file \&u[\%i]
+	if fail {
+	    ec, ec Error writing record \%i to \fdef(_userfile)
+	    ec Old version preserved as \fdef(_userbak)
+	    break
+	}
+    }
+    close write
+    asg \%9 \v(status)
+    UNLOCK
+    echo
+    if not = \%9 0 echo {WARNING - Failed to close \fdef(_userfile)}
+    else echo {\fdef(_userfile) saved: \&u[0] records}
+    undef _userdb_changed
+    undef _userdb_loaded
+    undef _current_user
+    end \%9
+}
 
-define SAVECONFIG -
-  asg \%8 \freplace(\m(_configfile),\\,/),-
-  asg \%9 \freplace(\%8,.CFG,.BAK),-
-  if exist \%9 delete \%9,-
-  rename \%8 \%9,-
-  if fail echo WARNING - Failed to back up "\%8" to "\%9",-
-  open write \m(_configfile),-
-  xif fail { echo Failed to open \v(_configfile), end 1 },-
-  writeln file SESSIONS=\m(_sessions),-
-  writeln file MAXUSERS=\m(_maxusers),-
-  writeln file INACTIVITY=\m(_inactivity),-
-  writeln file LOGINTIME=\m(_logintime),-
-  writeln file HOSTPORT=\m(_hostport),-
-  writeln file COMMPORT=\m(_commport),-
-  writeln file COMSPEED=\m(_comspeed),-
-  writeln file MODEM=\m(_modem),-
-  writeln file ANONOK=\m(_anonok),-
-  writeln file LOGGING=\m(_logging),-
-  writeln file DLINCOMING=\m(_dlincoming),-
-  writeln file MSGMAX=\m(_msgmax),-
-  writeln file PROTOCOL=\m(_protocol),-
-  writeln file XFERMODE=\m(_xfermode),-
-  writeln file OWNER={\m(_owner)},-
-  writeln file HERALD={\m(_herald)},-
-  writeln file PUBLIC=\m(_public),-
-  writeln file INCOMING=\fdef(_incoming),-
-  writeln file LOGDIR=\fdef(_logdir),-
-  writeln file USERTREE=\fdef(_usertree),-
-  writeln file TMPDIR=\fdef(_tmpdir),-
-  writeln file USERFILE=\fdef(_userfile),-
-  writeln file GREETING=\fdef(_greeting),-
-  writeln file HELPFILE=\fdef(_helpfile),-
-  writeln file MSGFILE=\fdef(_msgfile),-
-  close write,-
-  if success def _config_changed,-
-  else end 1
+define SAVECONFIG {
+    asg \%8 \freplace(\m(_hostroot)\m(_configfile),\\,/)
+    asg \%9 \freplace(\%8,.CFG,.BAK)
+    if exist \%9 delete \%9
+    rename \%8 \%9
+    if fail echo WARNING - Failed to back up "\%8" to "\%9"
+    open write \m(_hostroot)\m(_configfile)
+    if fail { echo Failed to open \m(_configfile), end 1 }
+    writeln file SESSIONS=\m(_sessions)
+    writeln file MAXUSERS=\m(_maxusers)
+    writeln file INACTIVITY=\m(_inactivity)
+    writeln file LOGINTIME=\m(_logintime)
+    writeln file HOSTPORT=\m(_hostport)
+    writeln file COMMPORT={\m(_commport)}
+    writeln file COMSPEED=\m(_comspeed)
+    writeln file MODEM=\m(_modem)
+    writeln file ANONOK=\m(_anonok)
+    writeln file LOGGING=\m(_logging)
+    writeln file DLINCOMING=\m(_dlincoming)
+    writeln file MSGMAX=\m(_msgmax)
+    writeln file PROTOCOL=\m(_protocol)
+    writeln file XFERMODE=\m(_xfermode)
+    writeln file OWNER={\m(_owner)}
+    writeln file HERALD={\m(_herald)}
+    writeln file PUBLIC=\m(_public)
+    writeln file INCOMING=\fdef(_incoming)
+    writeln file LOGDIR=\fdef(_logdir)
+    writeln file USERTREE=\fdef(_usertree)
+    writeln file TMPDIR=\fdef(_tmpdir)
+    writeln file USERFILE=\fdef(_userfile)
+    writeln file GREETING=\fdef(_greeting)
+    writeln file HELPFILE=\fdef(_helpfile)
+    writeln file MSGFILE=\fdef(_msgfile)
+    close write
+    if success def _config_changed
+    else end 1
+}
 
 ; SPLIT and GETFIELDS are for parsing user database records
 ;
-def SPLIT -
-  asg \%9 \findex(_,\%1),-
-  asg _LEFT \fbreak(\%1,_),-
-  asg _RIGHT \fsubstr(\%1,\%9+1)
+def SPLIT {
+    asg \%9 \findex(_,\%1)
+    asg _LEFT \fbreak(\%1,_)
+    asg _RIGHT \fsubstr(\%1,\%9+1)
+}
 
-def GETFIELDS -
-  split {\%1}, -
-  asg U_ID \m(_LEFT), -
-  split {\m(_RIGHT)}, -
-  asg U_PW \m(_LEFT), -
-  split {\m(_RIGHT)}, -
-  asg U_PR \m(_LEFT), -
-  split {\m(_RIGHT)}, -
-  asg U_NM \m(_LEFT), -
-  split {\m(_RIGHT)}, -
-  asg U_AD \m(_LEFT), -
-  split {\m(_RIGHT)}, -
-  asg U_TP \m(_LEFT), -
-  split {\m(_RIGHT)}, -
-  asg U_EM \m(_LEFT)
+def GETFIELDS {
+    split {\%1}
+    asg U_ID \m(_LEFT)
+    split {\m(_RIGHT)}
+    asg U_PW \m(_LEFT)
+    split {\m(_RIGHT)}
+    asg U_PR \m(_LEFT)
+    split {\m(_RIGHT)}
+    asg U_NM \m(_LEFT)
+    split {\m(_RIGHT)}
+    asg U_AD \m(_LEFT)
+    split {\m(_RIGHT)}
+    asg U_TP \m(_LEFT)
+    split {\m(_RIGHT)}
+    asg U_EM \m(_LEFT)
+}
 
 :BEGIN ; Program execution starts here...
 
@@ -169,7 +279,7 @@ asg _myspeed \v(speed)
 asg _mymodem \v(modem)
 
 set exit warning off			; Now deassign all comm devices
-set port
+close
 
 :LOOP
 asg _userbak \freplace(\m(_userfile),.DAT,.BAK)
@@ -193,7 +303,11 @@ echo {11 - Exit}
 echo
 ask \%a {Your choice: }
 if not def \%a goto loop
-xif not num \%a { ec "\%a" - Not a number, sleep 1, goto loop }
+if not num \%a {
+    ec "\%a" - Not a number
+    sleep 1
+    goto loop
+}
 if > \%a 0 if not > \%a 11 forward LBL_\%a
 echo "\%a" - out of range
 sleep 1
@@ -210,7 +324,11 @@ echo { 4 - Return to main menu}
 echo
 ask \%a {Your choice: }
 if not def \%a goto LBL_1
-xif not num \%a { ec "\%a" - not a number, sleep 1, goto LBL_1 }
+if not num \%a {
+    ec "\%a" - not a number
+    sleep 1
+    goto LBL_1
+}
 if > \%a 0 if not > \%a 4 forward START_\%a
 echo "\%a" - out of range
 sleep 1
@@ -235,22 +353,23 @@ if success saveconfig
 
 :START_1B
 if eq "\v(system)" "WIN32" forward S1BWIN32
-xif not eq "\v(system)" "OS/2" {-
-  echo Sorry - so far this only works for Windows 95/NT and OS/2..., -
-  holdscreen LOOP -
+if not eq "\v(system)" "OS/2" {
+    echo Sorry - so far this only works for Windows 95/NT and OS/2...
+    holdscreen LOOP
 }
-xif > \m(_sessions) 1 {
-  echo To start a TCP/IP host mode listener in OS/2 please follow the, -
-  echo instructions in OS2K95.DOC., -
-  holdscreen LOOP -
+if > \m(_sessions) 1 {
+    echo To start a TCP/IP host mode listener in OS/2 please follow the
+    echo instructions in DOCS\MANUAL\OS2K95.HTML.
+    holdscreen LOOP
 }
-run start k2 \v(startup)scripts/hosttcp.ksc
+run start \m(_k95program) \m(_hostscripts)scripts/hosttcp.ksc
 goto loop
 
 :S1BWIN32
 if > \m(_sessions) 1 -
- run start k95d \m(_hostport) "take \v(startup)scripts/host.ksc, exit"
-else run start \m(_k95program) \v(startup)scripts/hosttcp.ksc
+ run start -
+  \m(_k95d_program) \m(_hostport) "take \m(_hostscripts)scripts/host.ksc, exit"
+else run start \m(_k95program) \m(_hostscripts)scripts/hosttcp.ksc
 goto loop
 
 :START_2
@@ -258,6 +377,9 @@ cls
 echo
 if not eq "\m(_commport)" "" forward START_2B
 echo COMMPORT not configured.
+getok {Use TAPI (Windows modem device)? }
+if success { asg _commport tapi, asg _modem tapi, goto start_2b }
+
 echo
 echo The following settings were made in your K-95 initialization file:
 echo
@@ -276,7 +398,7 @@ holdscreen LOOP
 :START_2B
 echo Starting Kermit 95 host mode...
 echo Will wait for a call on port \m(_commport).
-echo Speed: \m(_comspeed)
+if def _comspeed echo Speed: \m(_comspeed)
 echo Modem: \m(_modem)
 
 :START_2C
@@ -288,7 +410,7 @@ getok {Configuration has changed - do you want to save it first? (y/n) }
 if success saveconfig
 
 :START_2D
-run start \m(_k95program) \freplace(\v(startup)scripts/hostmdm.ksc,/,\\)
+run start \m(_k95program) \freplace(\m(_hostscripts)scripts/hostmdm.ksc,/,\\)
 goto LOOP
 
 :START_3
@@ -325,13 +447,16 @@ echo
 echo Using direct connection on \m(_commport) at \m(_comspeed) bps.
 echo
 echo Starting Kermit 95 host mode...
-run start \m(_k95program) \freplace(\v(startup)scripts/hostcom.ksc,/,\\)
+run start \m(_k95program) \freplace(\m(_hostscripts)scripts/hostcom.ksc,/,\\)
 
 :START_4
 goto loop
 
 :LBL_2 ; View configuration
-xif = \m(_haveconfig) 0 { echo Can't find configuration file, holdscreen LOOP }
+if = \m(_haveconfig) 0 {
+    echo Can't find configuration file
+    holdscreen LOOP
+}
 echo
 echo SESSIONS=\m(_sessions)
 echo MAXUSERS=\m(_maxusers)
@@ -377,11 +502,11 @@ asg _protocol kermit                  ; Default file transfer protocol
 asg _xfermode binary                  ; Default file transfer mode
 asg _owner THE PROPRIETOR             ; Substitute your name, company name, etc
 asg _herald Welcome to K-95 Host Mode ; 
-asg _public   \v(startup)PUBLIC       ; Directory that users can get files from
-asg _incoming \v(startup)INCOMING     ; Directory that users can send file to
-asg _logdir   \v(startup)LOGS         ; Directory for host-mode logs
-asg _usertree \v(startup)USERS        ; Root of user directory tree
-asg _tmpdir   \v(startup)TMP          ; Directory for temp files
+asg _public   \m(_hostroot)PUBLIC     ; Directory that users can get files from
+asg _incoming \m(_hostroot)INCOMING   ; Directory that users can send file to
+asg _logdir   \m(_hostroot)LOGS       ; Directory for host-mode logs
+asg _usertree \m(_hostroot)USERS      ; Root of user directory tree
+asg _tmpdir   \m(_hostroot)TMP        ; Directory for temp files
 asg _userfile \m(_usertree)/USERS.DAT ; User database file
 asg _greeting \m(_usertree)/GREETING.TXT ; Message/greeting text filename
 asg _helpfile \m(_usertree)/HOSTMODE.TXT ; Host-mode help file
@@ -405,7 +530,7 @@ if not numeric \%a goto CFA
 getok { MAXUSERS=\%a, OK? (y/n): }
 if fail goto CFA
 asg _config_changed 1
-asg _sessions \%a
+asg _maxusers \%a
 
 :CF1
 ask \%a { Inactivity limit, seconds [\m(_inactivity)]: }
@@ -432,10 +557,8 @@ asg _commport \%a
 :CF4
 ask \%a { Speed of \m(_commport) [\m(_comspeed)]: }
 if not def \%a goto CF5
-if < 0 \findex(:\%a:,:14400:19200:38400:28800:57600:115200:) -
-  forward CF4A
-if < 0 \findex(:\%a:,:230400:1200:2400:9600:300:600:1800:4800:) -
-  forward CF4A
+if < 0 \findex(:\%a:,:14400:19200:38400:28800:57600:115200:) forward CF4A
+if < 0 \findex(:\%a:,:230400:1200:2400:9600:300:600:1800:4800:) forward CF4A
 echo "\%a" - Unknown speed
 goto CF4
 :CF4A
@@ -449,7 +572,10 @@ if not def \%a forward CF6
 getok { MODEM=\%a, OK? (y/n): }
 if fail goto CF5
 set modem type \%a
-xif fail { echo "\%a" - Unknown modem type, goto CF5 }
+if fail {
+    echo "\%a" - Unknown modem type
+    goto CF5
+}
 asg _config_changed 1
 asg _modem \%a
 :CF6
@@ -472,7 +598,10 @@ asg _msgmax \%a
 ask \%a { Default file transfer protocol [\m(_protocol)]: }
 if not def \%a forw CF9
 set protocol \%a
-xif fail { echo "\%a" - Bad protocol, goto CF8 }
+if fail {
+    echo "\%a" - Bad protocol
+    goto CF8
+}
 getok { PROTOCOL=\%a, OK? (y/n): }
 if fail goto CF8
 asg _config_changed 1
@@ -645,10 +774,10 @@ echo \%a
 if def _userdb_loaded echo Users:             \&u[0]
 echo \%b
 echo
-xif exist \fdef(_userfile) { -
-echo { 1 - Load user database} -
-} else { -
-echo { 1 - Create user database} -
+if exist \fdef(_userfile) {
+    echo { 1 - Load user database}
+} else {
+    echo { 1 - Create user database}
 }
 echo { 2 - Display user database}
 echo { 3 - Look up a user / set current user}
@@ -661,7 +790,7 @@ echo { 9 - Return to main menu}
 echo
 ask \%a {Your choice: }
 if not def \%a goto LBL_9
-xif not num \%a { ec "\%a" - not a number, holdscreen LBL_9 }
+if not num \%a { ec "\%a" - not a number, holdscreen LBL_9 }
 if > \%a 0 if not > \%a 9 forward USER_\%a
 echo "\%a" - out of range
 holdscreen LBL_9
@@ -680,14 +809,14 @@ holdscreen LBL_9
 
 :USER_LOAD
 lock
-xif fail { echo Sorry - can't lock user database., holdscreen LBL_9 }
+if fail { echo Sorry - can't lock user database., holdscreen LBL_9 }
 open read \fdef(_userfile)
-xif fail { echo {Can't open \fdef(_userfile)}, unlock, goto loop }
+if fail { echo {Can't open \fdef(_userfile)}, unlock, goto loop }
 asg \&u[0] 0
-for \%i 1 \m(_maxusers) 1 { -
-  read \&u[\%i], -
-  if fail break, -
-  increment \&u[0] -
+for \%i 1 \m(_maxusers) 1 {
+    read \&u[\%i]
+    if fail break
+    increment \&u[0]
 }
 close read
 def _userdb_loaded 1
@@ -697,18 +826,19 @@ holdscreen LBL_9
 
 :USER_CREATE_DB ; Create database
 open write \fdef(_userfile)
-xif fail { echo Can't create \fdef(_userfile), holdscreen LBL_9 }
+if fail { echo Can't create \fdef(_userfile), holdscreen LBL_9 }
 close write
-xif fail { echo Can't close \fdef(_userfile), holdscreen LBL_9 }
+if fail { echo Can't close \fdef(_userfile), holdscreen LBL_9 }
 asg _userdb_loaded 1
 asg \&u[0] 0
 echo \fdef(_userfile) created, now use "Add" to create user IDs.
 holdscreen LBL_9
 
 :USER_8
-xif not exist \m(_lockfile) { -
-  ec, ec Lock not found., -
-  holdscreen LBL_9 -
+if not exist \m(_lockfile) {
+    ec
+    ec Lock not found.
+    holdscreen LBL_9
 }
 dir \m(_lockfile)
 echo
@@ -722,7 +852,7 @@ holdscreen LBL_9
 goto LOOP
 
 :USER_2
-xif not def _userdb_loaded { ec User database not loaded, forward user_2x }
+if not def _userdb_loaded { ec User database not loaded, forward user_2x }
 echo \&u[0] user(s) in \fdef(_userfile).
 if def _userdb_changed echo Changes have not been saved.
 else echo No changes have been made.
@@ -732,22 +862,25 @@ for \%i 1 \&u[0] 1 { echo \%i. \&u[\%i] }
 holdscreen LBL_9
 
 :USER_3 ; Look up a user
-xif not def _userdb_loaded { -
-  ec, ec User database not loaded, holdscreen LBL_9 }
-xif < \&u[0] 1 { ec, ec No users in database, holdscreen LBL_9 }
+if not def _userdb_loaded {
+    ec
+    ec User database not loaded
+    holdscreen LBL_9
+}
+if < \&u[0] 1 { ec, ec No users in database, holdscreen LBL_9 }
 echo
 echo
 ask \%u {User ID or name to look up: }
 asg _current_user
-for \%i 1 \&u[0] 1 { -
-  getfields {\&u[\%i]},-
-  xif eq "\m(U_ID)" "\%u" { asg _current_user \%i, break } -
+for \%i 1 \&u[0] 1 {
+    getfields {\&u[\%i]}
+    if eq "\m(U_ID)" "\%u" { asg _current_user \%i, break }
 }
-xif not def _current_user { -
-  ec \%u - Not found, -
-  holdscreen LBL_9 -
-} else { -
-  ec \%u = user \m(_current_user) -
+if not def _current_user {
+    ec \%u - Not found
+    holdscreen LBL_9
+} else {
+    ec \%u = user \m(_current_user)
 }
 getfields {\&u[\m(_current_user)]}
 asg _current_id \m(U_ID)
@@ -762,22 +895,25 @@ ec Email:     \m(U_EM)
 holdscreen LBL_9
 
 :USER_4 ; Add a new user
-xif not def _userdb_loaded { ec, ec User database not loaded, holdscr LBL_9 }
+if not def _userdb_loaded { ec, ec User database not loaded, holdscr LBL_9 }
 ec
 ec
 ask \%u {User ID: }
 if not def \%u goto LBL_9
-for \%i 1 \&u[0] 1 { -
-   split \&u[\%i], -
-   xif eq "\%u" "\m(_LEFT)" { -
-     echo User "\%u" already exists.,-
-     holdscr LBL_9 -
-  } -
+for \%i 1 \&u[0] 1 {
+     split \&u[\%i]
+     if eq "\%u" "\m(_LEFT)" {
+	 echo User "\%u" already exists.
+	 holdscr LBL_9
+    }
 }
 :USER_PW
 ask \%p {Password for \%u: }
 ask \%q {Retype password: }
-xif not eq "\%p" "\%q" { ec Passwords do not match - please try again., goto USER_PW }
+if not eq "\%p" "\%q" {
+   echo Passwords do not match - please try again.
+   goto USER_PW
+}
 :USER_PR
 echo
 echo Enter privilege level...
@@ -787,10 +923,13 @@ echo { 2 = Allowed to give DOS commands}
 echo { 3 = 1 and 2}
 echo
 undef \%x
-while not def \%x { -
-  ask \%x {Privilege level (0-2): } -
+while not def \%x {
+    ask \%x {Privilege level (0-2): }
 }
-xif not numeric \%x { ec Please enter a digit: 0 thru 3., goto USER_PR }
+if not numeric \%x {
+    ec Please enter a digit: 0 thru 3.
+    goto USER_PR
+}
 echo Privilege level for \%u: \%x
 getok {OK? }
 if fail goto USER_PR
@@ -823,7 +962,7 @@ saveuserdb
 holdscreen LBL_9
 
 :USER_5 ; Remove a user
-xif not def _userdb_loaded { ec, ec User database not loaded, holdscr LBL_9 }
+if not def _userdb_loaded { ec, ec User database not loaded, holdscr LBL_9 }
 if def _current_user forward USER_REMOVE
 echo No current user, please use Lookup to select a user to remove.
 holdscreen LBL_9
@@ -832,10 +971,13 @@ echo
 echo Current user is \m(_current_id):
 echo \&u[\m(_current_user)]
 getok {OK to remove? }
-xif fail { ec \m(_current_id) not removed, holdscreen LBL_9 }
+if fail {
+    ec \m(_current_id) not removed
+    holdscreen LBL_9
+}
 decrement \&u[0]
-for \%i \m(_current_user) \&u[0] 1 { -
-  asg \&u[\%i] \&u[\%i+1]  -
+for \%i \m(_current_user) \&u[0] 1 {
+     asg \&u[\%i] \&u[\%i+1]
 }
 echo
 echo User \m(_current_id) removed.
@@ -860,24 +1002,24 @@ ec Name:      \m(U_NM)
 ec
 asg \%p \m(U_PW)
 getok {Change this user's password? }
-xif fail { echo Password not changed, forward U6_PR }
+if fail { echo Password not changed, forward U6_PR }
 :PASS_AGAIN
 ec
 ask \%p {New password:    }
 ask \%q {Retype password: }
-xif not eq "\%p" "\%q" { -
-  ec Passwords do not match - please try again.,-
-  goto PASS_AGAIN -
+if not eq "\%p" "\%q" {
+    ec Passwords do not match - please try again.
+    goto PASS_AGAIN
 }
 getok {Change \m(U_ID)'s password to "\%p"? }
-xif fail { echo Password not changed, forward U6_PR }
+if fail { echo Password not changed, forward U6_PR }
 echo Password changed.
 asg _userdb_changed 1
 :U6_PR
 asg \%x \m(U_PR)
 echo \m(U_ID)'s privilege level = \m(U_PR)
 getok {Change it? }
-xif fail { echo Privilege not changed, forward USER_XX }
+if fail { echo Privilege not changed, forward USER_XX }
 :U6LOOP
 echo
 echo Enter privilege level...
@@ -887,10 +1029,10 @@ echo { 2 = Allowed to give DOS commands}
 echo { 3 = 1 and 2}
 echo
 undef \%x
-while not def \%x { -
-  ask \%x {Privilege level (0-2): } -
+while not def \%x {
+    ask \%x {Privilege level (0-2): }
 }
-xif not numeric \%x { ec Please enter a digit: 0 thru 3., goto U6LOOP }
+if not numeric \%x { ec Please enter a digit: 0 thru 3., goto U6LOOP }
 echo Privilege level for \m(U_ID): \%x
 getok {OK? }
 if fail goto U6LOOP
@@ -899,30 +1041,29 @@ asg _userdb_changed 1
 :USER_XX
 if def _userdb_changed -
 asg \&u[\m(_current_user)] -
-\m(U_ID)_\f.oox(\%p)_\%x_\m(U_NM)_\m(U_AD)_\m(U_TP)_\m(U_EM)
+  \m(U_ID)_\f.oox(\%p)_\%x_\m(U_NM)_\m(U_AD)_\m(U_TP)_\m(U_EM)
 holdscreen lbl_9
 
 :LBL_10 ; Help
-xif not exist \v(startup)docs/hostmode.doc { -
-  echo, echo "\v(startup)docs/hostmode.doc" not found, -
-  holdscreen LOOP -
+if not exist \m(_usertree)hostmode.txt {
+    echo, echo "\m(_usertree)hostmode.txt" not found
+    holdscreen LOOP
 }
-run notepad \freplace(\v(startup)docs\\hostmode.doc,/,\\)
+run notepad \freplace(\m(_usertree)hostmode.txt,/,\\)
 goto loop
 
 :LBL_11 ; Exit
-
 if not def _config_changed if not def _userdb_changed forward exit
 echo
-xif def _config_changed { -
-  echo Configuration is changed.,-
-  getok {Do you want to save it? },-
-  if success saveconfig -
+if def _config_changed {
+    echo Configuration is changed.
+    getok {Do you want to save it? }
+    if success saveconfig
 }
-xif def _userdb_changed { -
-  echo User database is changed.,-
-  getok {Do you want to save it? },-
-  if success saveuserdb -
+if def _userdb_changed {
+    echo User database is changed.
+    getok {Do you want to save it? }
+    if success saveuserdb
 }
 :EXIT
 unlock
@@ -954,7 +1095,7 @@ else asg \%f \m(_usertree)/\%u.MSG
 echo Opening \%f...
 sleep 1
 open append \%f
-xif fail { echo Can't open message file \%f, forw msgend }
+if fail { echo Can't open message file \%f, forw msgend }
 writeln file Date: \v(date) \v(time)
 writeln file To: \%u
 writeln file From: \m(_owner)
@@ -962,7 +1103,7 @@ writeln file Subject: \%s
 writeln file
 for \%i 1 \%n 1 { writeln file \&a[\%i] }
 close write
-xif fail { echo Can't close message file \%f, goto msgend }
+if fail { echo Can't close message file \%f, goto msgend }
 
 :MSGEND
 dcl \&a[0]

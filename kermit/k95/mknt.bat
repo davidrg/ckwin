@@ -5,7 +5,7 @@ SET K95BUILD=K95
 if not exist nt\NUL mkdir nt
 move nt\*.obj . > nul
 del ckcmai.obj ckuus5.obj
-nmake /nologo /e /f ckoker.mak msvc
+%MAKE% /nologo /e /f ckoker.mak msvc
 move *.obj nt  > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build

@@ -114,7 +114,7 @@ private:    // this section is for performance
     int maxCursorCount;
     int blinkInterval;
 
-#if _MSC_VER < 1300
+#if defined(_MSC_VER) && _MSC_VER < 1300
     UINT timerID;
 #else
     UINT_PTR timerID;

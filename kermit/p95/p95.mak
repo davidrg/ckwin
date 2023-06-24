@@ -142,8 +142,10 @@ LIBS = $(LIBS) ucrt.lib vcruntime.lib
 .c.obj:
 	$(CC) $(CFLAGS) $(CFLAGSO) /Fo$@ $<
 
+# To generate debug info, add $(CFLAGSD) to CFLAGS
+
 CC = cl
-CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1 /Zi
+CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
 CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
@@ -186,9 +188,14 @@ CFLAGS = $(CFLAGS) -DCKT_NT35_OR_31
 CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
 !endif
 
-!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
+!if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
 # OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
+!endif
+
+!if "$(TARGET_CPU)" == "AXP64"
+# This compiler is capable of targeting AXP64, so add the build flag to do that.
+CFLAGS = $(CFLAGS) /Ap64
 !endif
 
 !if ($(MSC_VER) < 140)
