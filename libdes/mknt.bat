@@ -1,6 +1,6 @@
 @echo off
 
-if not "%make%"=="" set make=nmake
+if "%make%"=="" set make=nmake
 
 %make% /f libdes.mak CFG="Release"
 
