@@ -27,7 +27,7 @@ instructions should do the job.
 
 This has been tested against the following versions:
 * zlib 1.2.13
-* OpenSSL 1.1.1s
+* OpenSSL 1.1.1t, OpenSSL 3.0.9
 * libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
