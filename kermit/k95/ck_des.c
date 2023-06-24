@@ -11,6 +11,7 @@
 
   Author:
   Jeffrey E Altman (jaltman@secure-endpoints.com)
+  Last update: 13 December 2022 David Goodwin.
 */
 
 /*
@@ -34,8 +35,15 @@
 #include <des/des.h>
 #endif
 
+#include "ckucmd.h"                     /* xx_strp */
+#include "ckcfnp.h"                     /* Prototypes */
+
 /* This is required by ckclib.c and normally defined in ckuus4.c */
+#ifdef CRYPT_DLL
 int fp_digits = 0;		      /* Digits of floating point precision */
+#else
+extern int fp_digits;
+#endif /* CRYPT_DLL */
 
 int
 libdes_random_key(des_cblock B)
@@ -82,6 +90,7 @@ libdes_pcbc_encrypt(des_cblock *input, des_cblock *output, long length,
     des_pcbc_encrypt(input,output,length,schedule,ivec,enc);
 }
 
+#ifdef CRYPT_DLL
 void
 libdes_dll_init(struct _crypt_dll_init * init)
 {
@@ -94,4 +103,5 @@ libdes_dll_init(struct _crypt_dll_init * init)
     init->p_install_funcs("libdes_pcbc_encrypt",libdes_pcbc_encrypt);
 
 }
+#endif /* CRYPT_DLL */
 #endif /* LIBDES */

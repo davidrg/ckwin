@@ -33,7 +33,11 @@
 
 #ifdef NT
 #ifndef APIRET
+#ifndef __GNUC__
 #define APIRET DWORD
+#else
+#define APIRET unsigned __LONG32
+#endif /* __GNUC__ */
 #endif /* APIRET */
 #ifndef SEM_INDEFINITE_WAIT
 #define SEM_INDEFINITE_WAIT INFINITE
@@ -153,7 +157,9 @@ typedef int bool;
 #else
 #ifndef __BOOL_DEFINED
 #ifndef __WATCOMC__
+#ifndef __GNUC__
 typedef int bool;
+#endif
 #endif
 #endif
 #endif
@@ -554,8 +560,8 @@ _PROTOTYP(void setcursormode, (void));
 _PROTOTYP(void setmargins, (int, int));
 _PROTOTYP(void strinsert, (char *, char *));
 _PROTOTYP(void wrtch, (unsigned short));
-_PROTOTYP(int sendescseq, (char *));
-_PROTOTYP(int ckcgetc, (int));
+_PROTOTYP(int sendescseq, (CHAR *));
+/*_PROTOTYP(static int ckcgetc, (int));*/
 _PROTOTYP(void cwrite, (unsigned short));
 _PROTOTYP(int concooked, (void));
 _PROTOTYP(int conraw, (void));
@@ -572,7 +578,7 @@ _PROTOTYP( APIRET CloseClipboardServer, (void) ) ;
 _PROTOTYP( PCHAR  GetTextFromClipboardServer, (void) ) ;
 _PROTOTYP( BOOL   PutTextToClipboardServer, ( PCHAR ) ) ;
 
-_PROTOTYP( BOOL   IsConnectMode, ( void ) ) ;
+_PROTOTYP( static BOOL IsConnectMode, ( void ) ) ;
 _PROTOTYP( void   SetConnectMode, ( BOOL, int ) ) ;
 _PROTOTYP( void   getcmdcolor, ( void ) ) ;
 _PROTOTYP( unsigned char ComputeColorFromAttr, (int, unsigned char, unsigned short));
@@ -747,7 +753,7 @@ extern int  learnst;
 
 extern int ConnectMode;
 #ifdef NT
-_inline
+static _inline
 #else
 #ifdef __WATCOMC__
 inline

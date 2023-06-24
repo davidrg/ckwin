@@ -14,7 +14,7 @@
 
 // Visual C++ 6.0 for-loop scope bug workaround (_MSC_VER 1300 is Visual C++ 7 
 // which behaves properly)
-#if _MSC_VER < 1300
+#if defined(_MSC_VER) && _MSC_VER < 1300
 #define for if (0) {} else for
 #endif
 

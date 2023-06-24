@@ -1,7 +1,7 @@
 /*  C K C U N I . H  --  Unicode/Terminal character-set translations  */
 
 /*
-  Copyright (C) 1999, 2022,
+  Copyright (C) 1999, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -11,6 +11,8 @@
       The Kermit Project, New York City.
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+  Most recent update:
+    Fri May  5 16:25:43 2023
 */
 
 /* Terminal character sets */
@@ -224,7 +226,9 @@ extern int (*xl_tx[MAXTXSETS+1])();
 #endif /* CK_ANSIC */
 extern struct x_to_unicode * txrinfo[MAXTXSETS+1];
 
+#ifndef NT
 _PROTOTYP(int ck_isunicode, (void));
+#endif /* NT */
 
 _PROTOTYP(int utf8_to_ucs2, (CHAR, USHORT **));
 _PROTOTYP(int ucs2_to_utf8, (USHORT, CHAR **));

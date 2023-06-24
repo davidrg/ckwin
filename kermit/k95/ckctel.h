@@ -1086,7 +1086,9 @@ typedef struct xauth {
     char            *data;
 } Xauth;
 
-#include   <stdio.h>
+#include <stdio.h>
+#include "ckuusr.h"
+#include "ckcfnp.h"
 
 /* from X.h */
 #define FamilyInternet          0

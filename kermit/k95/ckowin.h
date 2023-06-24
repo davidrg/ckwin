@@ -16,7 +16,7 @@ extern HAB hab;
 #endif
 
 #ifdef NT
-_PROTOTYP( void DialerSend, ( UINT, LPARAM ) ) ;
+_PROTOTYP( static void DialerSend, ( UINT, LPARAM ) ) ;
 #else
 _PROTOTYP( void DialerSend, ( UINT, LONG ) ) ;
 #endif
@@ -41,7 +41,7 @@ _PROTOTYP( void DialerSend, ( UINT, LONG ) ) ;
 #define OPT_TAPI_SHUTDOWN           14004
 
 #ifdef NT
-__inline void
+static __inline void
 DialerSend(UINT message, LPARAM lparam)
 {
     if ( StartedFromDialer )

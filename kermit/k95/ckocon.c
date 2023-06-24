@@ -172,10 +172,10 @@ int tn_bold = 0;                        /* TELNET negotiation bold */
 int esc_exit = 0;                       /* Escape back = exit */
 char * esc_msg;
 
-long waittime;                          /* Timeout on CTS during CONNECT */
+extern long waittime;                   /* Timeout on CTS during CONNECT */
 #define INTERVAL 100L
 
-char termessage[MAXTERMCOL];
+extern char termessage[MAXTERMCOL];
 #ifdef CK_APC
 extern int apcactive;                   /* Application Program Command (APC) */
 #endif /* CK_APC */
@@ -220,10 +220,10 @@ char usertext[(MAXTERMCOL) + 1];        /* Status line and its parts */
 char statusline[MAXTERMCOL + 1];
 char exittext[(20) + 1];
 #define HLPTXTLEN 41
-char helptext[HLPTXTLEN];
+char helptext[HLPTXTLEN];   /* HLPTXTLEN also defined in ckoco3.c */
 char filetext[(20) + 1];
 #define HSTNAMLEN 41
-char hostname[HSTNAMLEN];
+char hostname[HSTNAMLEN];   /* HSTNAMLEN also defined in ckoco3.c */
 
 #ifdef NT
 CK_CURSORINFO crsr_command={88,0,8,1};
@@ -282,8 +282,8 @@ extern int tt_idleact;
 extern int tt_timelimit;
 static time_t keypress_t=0;             /* Time of last keypress */
 static time_t idlesnd_t=0;              /* Time of last idle send */
-int escstate ;
-int marginbot;                       /* Bottom of same, 1-based */
+extern int escstate ;
+extern int marginbot;                   /* Bottom of same, 1-based */
 int tt_async = 0;                       /* asynchronous connect mode? */
 int col_init = 0, row_init = 0;
 /*

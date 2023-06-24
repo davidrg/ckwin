@@ -16,7 +16,7 @@
 #define VER_PLATFORM_WIN32_WINDOWS      1
 #endif
 
-#if _MSC_VER == 900
+#if defined(_MSC_VER) && _MSC_VER == 900
 /* Visual C++ 2.0 */
 #define CRT_DLL "msvcrt20.dll"
 #else

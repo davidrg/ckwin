@@ -1,12 +1,12 @@
 #include "ckcsym.h"
-char *connv = "CONNECT Command for UNIX:select(), 10.0.142, 23 Sep 2022";
+char *connv = "CONNECT Command for UNIX:select(), 10.0.143, 15 Apr 2023";
 
 /*  C K U C N S  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -53,6 +53,7 @@ char *connv = "CONNECT Command for UNIX:select(), 10.0.142, 23 Sep 2022";
 #include "ckcker.h"			/* Kermit things */
 #include "ckucmd.h"			/* For xxesc() prototype */
 #include "ckcnet.h"			/* Network symbols */
+#include "ckuusr.h"
 #ifndef NOCSETS
 #include "ckcxla.h"			/* Character set translation */
 #endif /* NOCSETS */
@@ -119,6 +120,8 @@ struct timeval {
 #ifdef CK_AUTHENTICATION
 #include "ckuath.h"                     /* fdc 2021-12-17 */
 #endif /* CK_AUTHENTICATION */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 /* Internal function prototypes */
 
@@ -754,7 +757,12 @@ ckcputf() {				/* Dump the console output buffer */
   CJK sets along with UTF-8 and the rest.
 */
 int
-ckcputc(c) int c; {
+#ifdef CK_ANSIC
+ckcputc( int c )
+#else
+ckcputc(c) int c;
+#endif /* CK_ANSIC */
+{
     int x;
 
     *obp++ = c & 0xff;			/* Deposit the character */
@@ -778,7 +786,12 @@ ckcputc(c) int c; {
   so a pointer to this function can be passed to tn_doop().
 */
 int
-ckcgetc(dummy) int dummy; {
+#ifdef CK_ANSIC
+ckcgetc( int dummy )
+#else
+ckcgetc(dummy) int dummy;
+#endif /* CK_ANSIC */
+{
     int c, n;
 #ifdef CK_SSL
     extern int ssl_active_flag, tls_active_flag;
@@ -995,7 +1008,12 @@ kbdread(void * param) {
 
 #ifdef CKLEARN
 static VOID
-learnchar(c) int c; {			/* Learned script keyboard character */
+#ifdef CK_ANSIC
+learnchar( int c )			/* Learned script keyboard character */
+#else
+learnchar(c) int c;
+#endif /* CK_ANSIC */
+{
     int cc;
     char xbuf[8];
 

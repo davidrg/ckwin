@@ -1,0 +1,120 @@
+;*****************************************************************************;
+; CAPSLOCK.INI - Toggle non-alphabetic chars that are incorrrectly shifted    ;
+; by Windows 95.  Should be run from K95CUSTOM.INI.                           ;
+;                                                                             ;
+; By Maxwell Evarts of The Kermit Project with profuse help from Jeff Altman. ;
+;                                                                             ;
+; ** IMPORTANT NOTE ** - This script assumes that you start K95 and go into   ;
+; terminal emulation with Caps Lock *OFF*.  If you don't things will be       ;
+; kind of confusing and backwards.  Hey, it's a workaround :-)                ;
+;                                                                             ;
+; NOTES: Only for Windows 95 - Not needed Windows NT.                         ;
+;   Not needed in version 1.1.5 unless you SET WIN95 KEYBOARD TRANSPARENT.    ;
+;   Probably only works for the US keyboard and driver anyway.                ;
+;                                                                             ;
+;*****************************************************************************;
+;
+; Define the _tocapslock macro which basically just flip-flops the definitions
+; of all the non-alphabetic keys, like the top row numbers and symbols and
+; the other symbols like {} [], etc....  Then it redefines the Caps Lock key
+; itself so that it calls the opposing macro _fromcapslock, and goes back into
+; terminal mode.
+
+define _tocapslock { -
+  set key \33  \49,-
+  set key \49  \33,-
+  set key \64  \50,-
+  set key \50  \64,-
+  set key \35  \51,-
+  set key \51  \35,-
+  set key \36  \52,-
+  set key \52  \36,-
+  set key \37  \53,-
+  set key \53  \37,-
+  set key \94  \54,-
+  set key \54  \94,-
+  set key \38  \55,-
+  set key \55  \38,-
+  set key \42  \56,-
+  set key \56  \42,-
+  set key \40  \57,-
+  set key \57  \40,-
+  set key \41  \48,-
+  set key \48  \41,-
+  set key \95  \45,-
+  set key \45  \95,-
+  set key \43  \61,-
+  set key \61  \43,-
+  set key \124 \92,-
+  set key \92  \124,-
+  set key \123 \91,-
+  set key \91  \123,-
+  set key \125 \93,-
+  set key \93  \125,-
+  set key \58  \59,-
+  set key \59  \58,-
+  set key \34  \39,-
+  set key \39  \34,-
+  set key \60  \44,-
+  set key \44  \60,-
+  set key \62  \46,-
+  set key \46  \62,-
+  set key \63  \47,-
+  set key \47  \63,-
+  set key \276 \K_fromcapslock,-
+  connect -
+}
+
+; _fromcapslock is the mirror image of _tocapslock...
+
+define _fromcapslock { -
+  set key \33  \33,-
+  set key \49  \49,-
+  set key \64  \64,-
+  set key \50  \50,-
+  set key \35  \35,-
+  set key \51  \51,-
+  set key \36  \36,-
+  set key \52  \52,-
+  set key \37  \37,-
+  set key \53  \53,-
+  set key \94  \94,-
+  set key \54  \54,-
+  set key \38  \38,-
+  set key \55  \55,-
+  set key \42  \42,-
+  set key \56  \56,-
+  set key \40  \40,-
+  set key \57  \57,-
+  set key \41  \41,-
+  set key \48  \48,-
+  set key \95  \95,-
+  set key \45  \45,-
+  set key \43  \43,-
+  set key \61  \61,-
+  set key \124 \124,-
+  set key \92  \92,-
+  set key \123 \123,-
+  set key \91  \91,-
+  set key \125 \125,-
+  set key \93  \93,-
+  set key \58  \58,-
+  set key \59  \59,-
+  set key \34  \34,-
+  set key \39  \39,-
+  set key \60  \60,-
+  set key \44  \44,-
+  set key \62  \62,-
+  set key \46  \46,-
+  set key \63  \63,-
+  set key \47  \47,-
+  set key \276 \K_tocapslock,-
+  connect -
+}
+
+; Make the initial state be that the Caps Lock key executes _tocapslock on the
+; assumption that Caps Lock is off when we start out.
+
+set key \276 \K_tocapslock
+
+end 0

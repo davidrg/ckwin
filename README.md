@@ -9,7 +9,7 @@ Kermit Project website: http://www.kermitproject.org.
 Major features include:
  * More than [40 terminal emulations](#supported-terminal-emulations)
  * Virtual Terminal connections over SSH, Telnet (including TLS support), 
-   rlogin, modem, serial port and pty
+   rlogin, modem, serial port, named pipe and pty
  * Scriptable file transfer via Kermit, X/Y/Z Modem, HTTP, HTTPS, FTP and FTPS protocols
  * International character set translation
  * Pathworks supported for LAT and CTERM Virtual Terminal connections. 
@@ -18,8 +18,8 @@ Major features include:
 
 To get the latest most stable release as well as other news and information, 
 visit the [C-Kermit for Windows Beta website](https://www.kermitproject.org/ckw10beta.html).
-This software is currently based on C-Kermit version 10.0 Pre-Beta.08 of
-12-DEC-2022 and is available under the 3-clause BSD license.
+This software is currently based on C-Kermit version 10.0 Beta.09 of
+9-MAY-2023 and is available under the 3-clause BSD license.
 
 ![Screenshot](doc/screenshot-w10.png)
 
@@ -73,8 +73,9 @@ which may be useful for new users.
 
 For everything else, consult the [C-Kermit Documentation](https://www.kermitproject.org/ckbindex.html).
 
-If you previously used Kermit 95 and would like to know whats changed, see the
-[C-Kermit for Windows Change Log](doc/changes.md) as well as 
+If you previously used Kermit 95 and would like to know what's changed, see the
+[C-Kermit for Windows Change Log](doc/changes.md) as well as the C-Kermit 9.0
+and 10.0 changelogs
 
 New Features
 ------------
@@ -103,12 +104,19 @@ bits that couldn't be open sourced at the time:
   isn't included by default at this time.
 * The Telnet Encryption Option (DES/CAST) is supported again, not that anyone
   should be using it today if they care about security.
+* Kerberos V is supported again (including GSSAPI support in the SSH client). To
+  use Kerberos authentication in CKW you must
+  [Download and Install Kerberos for Windows from MIT](http://web.mit.edu/kerberos/dist/index.html),
+  it is not bundled with CKW like it was with kermit 95. If you need Kerberos IV
+  you can build CKW from source against an older version of the KFW SDK (2.x or
+  3.x).
 
 Additionally, a number of new features have been added:
 * Compiler support has been extended down to Visual C++ 2.0 and all the way up
   to Visual C++ 2022 fixing a number of issues along the way. This enables
   proper support for the latest versions of windows, as well as the second
-  oldest 32bit version - Windows NT 3.50
+  oldest 32bit version - Windows NT 3.50. Support has also been added for
+  OpenWatcom (targeting both Windows and OS/2) and MinGW.
 * PTYs are also supported on Windows 10+ now via the `pty` command. For example,
   `pty cmd.exe` will open the Windows shell inside C-Kermit and from there you can
   run any windows console tool. Note that Kermit file transfers are not supported
@@ -123,8 +131,8 @@ Additionally, a number of new features have been added:
 * Network DLLs are also fixed. You can now add support for additional protocols
   via custom DLLs which are loaded with the `set network type dll` command.
 * Mouse wheel support and terminal mouse reporting have been implemented
-* Support for 64bit Windows (x86-64, Itanium, ARM64)
-* A selection of other bugs fixed
+* Support for 64bit Windows (x86-64, Itanium, ARM64, AXP64)
+* A selection of other bugs fixed and other minor features added
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.
 
@@ -132,15 +140,12 @@ A full [Change Log](doc/changes.md) is available and updated for major releases.
 The following features supported by Kermit 95 v2.1.3 remain unavailable in
 C-Kermit for Windows at this time:
 
-* SSH port forwarding, X11 forwarding and a few other features have not been
+* SSH port forwarding, X11 forwarding, and a few other features have not been
   implemented yet - ticket #44 is tracking these.
 * SSH v1 support will not return as this is not supported by libssh anymore.
 * SSH/SSL/TLS on Windows versions prior to Windows XP SP3 will likely not return
   as OpenSSL no longer supports these older versions of Windows or the compilers
   required to target them.
-* Kerberos: Formerly provided by Kerberos for Windows, last updated back in 2007.
-  Work should be done to support Heimdal Kerberos which seems to be more 
-  up-to-date. See ticket #31 for more information.
 * SRP: Formerly provided by the Stanford SRP distribution, now unmaintained for
   over a decade it is not compatible with any supported version of OpenSSL. 
   Its still buildable if really needed but not included in any standard builds.
@@ -148,16 +153,21 @@ C-Kermit for Windows at this time:
   to ever include SRP support as standard again, but it would probably be a lot 
   of work to switch - see ticket #32 for more information
 
-Code to support Kerberos for Windows, Stanford SRP and old versions of OpenSSL
-still exists and should still work if there is some need for these features 
-despite the known security issues.
+Code to support Stanford SRP and old versions of OpenSSL still exists and should
+still work if there is some need for these features despite the known security 
+issues.
 
 Compiling
 ---------
 
 To build C-Kermit for Windows, see the [Build Instructions](doc/building.md).
-You'll need at least Visual C++ 1.0 32-bit or newer, or OpenWatcom 1.9+. To 
-build with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+Visual C++ 2019 is strongly recommended, but any released 32bit or 64bit version
+*should* work (with certain features automatically excluded on older compilers).
+To build with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+
+There is also limited support for compiling with OpenWatcom 1.9+ and MinGW. For
+OpenWatcom, just follow the normal build instructions above. For cross-compiling
+from Linux, see the [MinGW Build Instructions](doc/mingw-building.md).
 
 To build C-Kermit for OS/2 using OpenWatcom, see the
 [OS/2 Build Instructions](doc/os2-building.md).

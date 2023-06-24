@@ -249,6 +249,20 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td></td> <!-- Notes -->
 </tr>
 <tr>
+    <td>January 2000 Platform SDK</td>
+    <td>Alpha 64bit (AXP64)</td> <!-- Yes, a 64bit DEC Alpha app for 64bit Windows on the DEC Alpha -->
+    <td>64bit Windows 2000 for DEC Alpha</td>
+    <td>✅</td> <!-- Free: Was available for public download from microsoft -->
+    <td>❌</td> <!-- Tested -->
+    <td>❌</td> <!-- PTY -->
+    <td>❌</td> <!-- SSH -->
+    <td>✅</td> <!-- NTLM/Auth -->
+    <td>✅</td> <!-- TAPI -->
+    <td>❔</td> <!-- Dialer -->
+    <td>Code builds fine. Finding a 64bit version of Windows for
+        the DEC Alpha to run it on is another matter entirely.</td> <!-- Notes -->
+</tr>
+<tr>
     <td rowspan="2">Visual C++ 6.0 SP6</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
@@ -421,9 +435,26 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>❔</td> <!-- Dialer -->
     <td>2022-08-01 build tested, targeting 32bit win32</td> <!-- Notes -->
 </tr>
+<tr>
+    <td>MinGW</td>
+    <td>x86</td>
+    <td>❔</td>
+    <td>✅</td> <!-- Free -->
+    <td>✅</td> <!-- Tested -->
+    <td>❌</td> <!-- PTY -->
+    <td>❔</td> <!-- SSH -->
+    <td>✅</td> <!-- NTLM/Auth -->
+    <td>✅</td> <!-- TAPI -->
+    <td>❌</td> <!-- Dialer -->
+    <td>Limited support for development purposes.
+    </td> <!-- Notes -->
+</tr>
 </table>
 
 ## Building with the Windows NT SDK
+
+Some versions of the Platform SDK include a compiler. Sometimes that compiler
+is usable for building CKW, sometimes it is not.
 
 ### Windows NT 3.1
 The version of nmake included in the Win32 SDK Final Edition is too old to build
@@ -439,3 +470,22 @@ statically link (set CKB_STATIC_CRT=yes)
 As found on the *Microsoft Solutions Development Kit*, the only compiler or linker 
 included is for the Alpha platform and is at a similar level to Visual C++ 1.0 32bit
 (MSC 8.0). The compiler works but the linker does not.
+
+### January 2000 Platform SDK
+
+The January 2000 Platform SDK includes a very early version of Visual C++ 2002
+calling itself `Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499`.
+This compiler is capable of targeting both regular 32bit Alpha NT and
+the never released internal only 64bit Windows 2000 port (AXP64).
+
+This is likely both the final publicly released version of Visual C++ for the
+Alpha, and the oldest publicly released version of Visual C++ for targeting
+64bit Windows.
+
+When built with this SDK, the build system will default to targeting AXP64.
+The build should complete without problems but the resulting binaries can not
+be run on any publicly released version of Windows.
+
+While the compiler in this SDK is capable of doing 32bit builds, the Platform
+SDK headers have some issues (complains about size_t being redefined) and the
+required import libraries are not present.

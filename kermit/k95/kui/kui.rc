@@ -352,12 +352,12 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Via the Web"
         BEGIN
-                MENUITEM "The Kermit Project"  ID_WEB_KERMIT
-                MENUITEM "C-Kermit for Windows Website" ID_WEB_K95
-                MENUITEM "News"      ID_WEB_NEWS
-//                MENUITEM "Kermit 95 Patches"   ID_WEB_PATCH
-                MENUITEM "Technical Support"   ID_WEB_SUPPORT
-                MENUITEM "FAQ" ID_WEB_FAQ
+                MENUITEM "The Kermit Project",  ID_WEB_KERMIT
+                MENUITEM "C-Kermit for Windows Website", ID_WEB_K95
+                MENUITEM "News",      ID_WEB_NEWS
+//                MENUITEM "Kermit 95 Patches",   ID_WEB_PATCH
+                MENUITEM "Technical Support",   ID_WEB_SUPPORT
+                MENUITEM "FAQ", ID_WEB_FAQ
         END
         MENUITEM SEPARATOR
         MENUITEM "About",                      ID_HELP_ABOUT
@@ -459,12 +459,12 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Via the Web"
         BEGIN
-                MENUITEM "The Kermit Project"  ID_WEB_KERMIT
-                MENUITEM "C-Kermit for Windows Website" ID_WEB_K95
-                MENUITEM "News"      ID_WEB_NEWS
-//                MENUITEM "Kermit 95 Patches"   ID_WEB_PATCH
-                MENUITEM "Technical Support"   ID_WEB_SUPPORT
-                MENUITEM "FAQ" ID_WEB_FAQ
+                MENUITEM "The Kermit Project",  ID_WEB_KERMIT
+                MENUITEM "C-Kermit for Windows Website", ID_WEB_K95
+                MENUITEM "News",      ID_WEB_NEWS
+//                MENUITEM "Kermit 95 Patches",   ID_WEB_PATCH
+                MENUITEM "Technical Support",   ID_WEB_SUPPORT
+                MENUITEM "FAQ", ID_WEB_FAQ
         END
         MENUITEM SEPARATOR
         MENUITEM "About",                      ID_HELP_ABOUT
@@ -559,12 +559,14 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICONK95             ICON    DISCARDABLE     "k95a.ico"
+#ifndef __GNUC__
 "MINICON"               ICON    DISCARDABLE     "k95a.ico"
 #ifndef COMPILER_OWCL
 IDI_ICON2   	        ICON	DISCARDABLE		"k95g.ico"
 IDI_ICON3		        ICON	DISCARDABLE		"k95f.ico"
 #endif
 4                       ICON    DISCARDABLE     "k95a.ico"
+#endif /* __GNUC__ */
 
 /////////////////////////////////////////////////////////////////////////////
 //

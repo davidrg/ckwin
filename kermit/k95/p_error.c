@@ -43,7 +43,11 @@
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
+#ifndef __GNUC__
 #define APIRET DWORD
+#else
+#define APIRET unsigned __LONG32
+#endif
 #else
 #define INCL_DOSMISC
 #include <os2.h>

@@ -1708,7 +1708,7 @@ CloseKeyMapInitSem( void )
 
 #ifdef NT
 void
-#if _MSC_VER > 800
+#if !defined(_MSC_VER) || _MSC_VER > 800
 CALLBACK
 #else
 #ifdef __WATCOMC__

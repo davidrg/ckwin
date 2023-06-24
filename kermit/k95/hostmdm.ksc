@@ -3,13 +3,34 @@
 ;   Version 1.0, Feb 1996.
 ;   Version 2.0, Jan 1997, avoid undoing prior modem customizations.
 ;   Version 3.0, Jun 1997, adds support for TAPI.
+;   Version 4.0, Jul 2001, allow empty _commport variable, multiple configs.
 ;
 if < \v(xvers) 1112 stop 1 \v(cmdfil): K-95 1.1.12 or higher is required.
 
 local x1 x2 split
 undef x2
 
-asg _configfile \freplace(\v(startup)scripts/host.cfg,/,\\)
+; The following code was added to accomodate the new Windows multi-user
+; friendly directory layouts introduced with version 1.1.21.  We have
+; check several locations for the directories that hostmode uses and
+; create them in \v(appdata) if the do not exist at all.
+
+if directory \v(exedir)USERS {
+    asg _hostroot \v(exedir)
+    forward FOUNDDIRS
+}
+if directory \v(startup)INCOMING {
+    asg _hostroot \v(startup)
+    forward FOUNDDIRS
+}
+
+if directory \v(appdata)USERS {
+    asg _hostroot \v(appdata)
+}
+
+:FOUNDDIRS
+
+asg _configfile \freplace(\m(_hostroot)host.cfg,/,\\)
 
 def MAKEVAR2 {
     if def \%2 _assign \%1 \%2 \%3 \%4 \%5 \%6 \%7 \%8 \%9
@@ -33,25 +54,38 @@ while true { read \%a, if fail break, makevar {\%a} }
 ; Don't give a SET MODEM TYPE command if it will not change the
 ; current modem type.  If we do, it wipes out any prior customizations.
 
-xif def _modem {
-    xif not equal \v(modem) \m(_modem) {
+if def _modem {
+    if not equal \v(modem) \m(_modem) {
         set modem type \m(_modem)
         if fail stop 1 "\m(_modem)" - Invalid modem type
     }
 }
-xif def _commport {
+if def _commport {
     split \m(_commport)     ; This can be one or two words
-    set port \m(x1) \m(x2)  ; e.g. SET PORT TAPI Name_of_TAPI_Device
+    if def x2 set port \ftrim(\m(x1)) \ftrim(\m(x2))
+    else set port \m(_commport)
     if fail stop 1 "\m(_commport)" - Invalid port
+} else {
+    set tapi line
+    if fail stop 1 "\m(_commport)" - Invalid port
+    asg _commport tapi
 }
-xif def _comspeed {
+
+if def _comspeed {
     set speed \m(_comspeed)
     if fail stop 1 "\m(_comspeed)" - Invalid speed
 }
-xif not eq "\v(connection)" "serial" {
+if not eq "\v(connection)" "serial" {
     stop 1 "\v(line)" - Inappropriate connection type: "\v(connection)"
 }
+
+; Break out of loop if there is a nonrecoverable error, otherwise continue.
+
 while 1 {
     answer
-    if success take host.ksc
+    if > \v(dialstatus) 0 if < \v(dialstatus) 22 stop 1 Fatal modem error
+    if = \v(dialstatus) 0 take host.ksc
+    echo Type Ctrl-C to exit...          ; Give user a chance to cancel
+    sleep 2
 }
+

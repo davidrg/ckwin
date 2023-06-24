@@ -14,10 +14,13 @@ int cmdsrc() { return(0); }
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
-    Last update: Oct 10-11 2022 (fdc and sms)
-    Last update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
+    Update: Oct 10-11 2022 (fdc and sms)
+    Update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
+    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
+    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
+    Update: Apr 14 2023 (ANSI function declarations and prototypes)
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -91,6 +94,8 @@ extern bool cursorena[] ;
 #ifdef VMS
 #include <stat.h>
 #endif /* def VMS */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef CK_ANSIC
 /* prototypes for static functions - fdc 30 November 2022 */
@@ -2048,7 +2053,12 @@ doiksdinit() {
   -1 if there was no string to copy.
 */
 int
-getncm(s,n) char *s; int n; {
+#ifdef CK_ANSIC
+getncm( char *s, int n )
+#else
+getncm(s,n) char *s; int n;
+#endif /* CK_ANSIC */
+{
     int y = 0;				/* Character counter */
     int quote = 0;
     int kp = 0;				/* Brace up-down counter */
@@ -2183,7 +2193,12 @@ getncm(s,n) char *s; int n; {
 /*  D O M A C  --  Define and then execute a macro */
 
 int
-domac(name, def, flags) char *name, *def; int flags; {
+#ifdef CK_ANSIC
+domac( char *name, char *def, int flags )
+#else
+domac(name, def, flags) char *name, *def; int flags;
+#endif /* CK_ANSIC */
+{
     int x, m;
 #ifndef NOLOCAL
 #ifdef OS2
@@ -2244,7 +2259,12 @@ domac(name, def, flags) char *name, *def; int flags; {
 static int lpxlen = 0;
 
 int
-getnct(s,n,f,flag) char *s; int n; FILE *f; int flag; {
+#ifdef CK_ANSIC
+getnct( char *s, int n, FILE *f, int flag )
+#else
+getnct(s,n,f,flag) char *s; int n; FILE *f; int flag;
+#endif /* CK_ANSIC */
+{
     int i = 0, len = 0, buflen = 0;
     char c = NUL, cc = NUL, ccl = NUL, ccx = NUL, *s2 = NULL;
     char *lp = NULL, *lpx = NULL, *lp2 = NULL, *lp3 = NULL, *lastcomma = NULL;
@@ -2611,7 +2631,12 @@ shostack() {                            /* Dump the command stack */
 /* some huge FOR loop if it contains a syntax error. */
 
 static char *
-cmddisplay(s, cx) char * s; int cx; {
+#ifdef CK_ANSIC
+cmddisplay( char * s, int cx )
+#else
+cmddisplay(s, cx) char * s; int cx;
+#endif /* CK_ANSIC */
+{
     static char buf[80];
     if ((int)strlen(s) > 70) {
 	sprintf(buf,"%.64s...",s);	/* SAFE */
@@ -2676,7 +2701,12 @@ cmderr() {
     < 0   upon error.
 */
 int
-parser(m) int m; {
+#ifdef CK_ANSIC
+parser( int m )
+#else
+parser(m) int m;
+#endif /* CK_ANSIC */
+{
     int tfcode, xx, yy, zz;             /* Workers */
     int is_tn = 0;
     int cdlost = 0;
@@ -3561,7 +3591,12 @@ oboc(c) char c;
 /*  Routines for handling local variables -- also see popclvl().  */
 
 VOID
-freelocal(m) int m; {                   /* Free local variables */
+#ifdef CK_ANSIC
+freelocal( int m )                   /* Free local variables */
+#else
+freelocal(m) int m;
+#endif /* CK_ANSIC */
+{
     struct localvar * v, * tv;          /* at macro level m... */
     debug(F101,"freelocal level","",m);
     if (m < 0) return;
@@ -3584,7 +3619,12 @@ freelocal(m) int m; {                   /* Free local variables */
 /* Return a pointer to the definition of a user-defined variable */
 
 static char *
-vardef(s,isarray,x1,x2) char * s; int * isarray, * x1, * x2; {
+#ifdef CK_ANSIC
+vardef( char * s, int * isarray, int * x1,int * x2 )
+#else
+vardef(s,isarray,x1,x2) char * s; int * isarray, * x1, * x2;
+#endif /* CK_ANSIC */
+{
     char * p;
     char c;
     *isarray = 0;
@@ -3637,9 +3677,13 @@ vardef(s,isarray,x1,x2) char * s; int * isarray, * x1, * x2; {
     }
 }
 
-
 int
-addlocal(p) char * p; {
+#ifdef CK_ANSIC
+addlocal( char * p )
+#else
+addlocal(p) char * p;
+#endif /* CK_ANSIC */
+{
     int x, z, isarray = 0;
     char * s;
     struct localvar * v, *prev = (struct localvar *)NULL;
@@ -3689,7 +3733,12 @@ addlocal(p) char * p; {
 }
 
 int
-dolocal() {                             /* Do the LOCAL command */
+#ifdef CK_ANSIC
+dolocal( void )                         /* Do the LOCAL command */
+#else
+dolocal()
+#endif /* CK_ANSIC */
+{
     int i, x;
     char * s;
     char * list[MAXLOCALVAR+2];         /* Up to 64 variables per line */
@@ -3725,7 +3774,12 @@ dolocal() {                             /* Do the LOCAL command */
 int outesc = 1;                         /* Process special OUTPUT escapes */
 
 int
-dooutput(s, cx) char *s; int cx; {
+#ifdef CK_ANSIC
+dooutput( char *s, int cx )
+#else
+dooutput(s, cx) char *s; int cx;
+#endif /* CK_ANSIC */
+{
 #ifdef SSHBUILTIN
     extern int ssh_cas;
     extern char * ssh_cmd;
@@ -4066,7 +4120,12 @@ herald() {
 /*  G F M O D E  --  Get File (transfer) Mode  */
 
 char *
-gfmode(binary,upcase) int binary, upcase; {
+#ifdef CK_ANSIC
+gfmode( int binary, int upcase )
+#else
+gfmode(binary,upcase) int binary, upcase;
+#endif /* CK_ANSIC */
+{
     char * s;
     switch (binary) {
       case XYFT_T: s = upcase ? "TEXT" : "text"; break;
@@ -4094,7 +4153,12 @@ gfmode(binary,upcase) int binary, upcase; {
 
 #ifndef NOSPL
 static int
-isaa(s) char * s; {                     /* Is associative array */
+#ifdef CK_ANSIC
+isaa( char * s )                        /* Is associative array */
+#else
+isaa(s) char * s;
+#endif /* CK_ANSIC */
+{
     char c;
     int x;
     if (!s) s = "";
@@ -4132,7 +4196,12 @@ isaa(s) char * s; {                     /* Is associative array */
   target matches two or more keywords from the table.
 */
 int
-mlook(table,cmd,n) struct mtab table[]; char *cmd; int n; {
+#ifdef CK_ANSIC
+mlook( struct mtab table[], char *cmd, int n )
+#else
+mlook(table,cmd,n) struct mtab table[]; char *cmd; int n;
+#endif /* CK_ANSIC */
+{
     register int i;
     int v, w, cmdlen = 0;
     char c = 0, c1, * s;
@@ -4197,7 +4266,12 @@ mlook(table,cmd,n) struct mtab table[]; char *cmd; int n; {
 /* mxlook is like mlook, but an exact full-length match is required */
 
 int
-mxlook(table,cmd,n) char *cmd; struct mtab table[]; int n; {
+#ifdef CK_ANSIC
+mxlook(struct mtab table[], char * cmd, int n)
+#else
+mxlook(table,cmd,n) char *cmd; struct mtab table[]; int n;
+#endif /* CK_ANSIC */
+{
     register int i;
     int w, cmdlen = 0, one = 0;
     register char c = 0, c1, * s;
@@ -4263,7 +4337,12 @@ mxlook(table,cmd,n) char *cmd; struct mtab table[]; int n; {
 /* mxxlook is like mxlook, but case-sensitive */
 
 int
-mxxlook(table,cmd,n) char *cmd; struct mtab table[]; int n; {
+#ifdef CK_ANSIC
+mxxlook(struct mtab table[], char * cmd, int n)
+#else
+mxxlook(table,cmd,n) char *cmd; struct mtab table[]; int n;
+#endif /* CK_ANSIC */
+{
     int i, cmdlen;
     if (!cmd) cmd = "";
     if (((cmdlen = strlen(cmd)) < 1) || (n < 1)) return(-3);
@@ -4277,7 +4356,12 @@ mxxlook(table,cmd,n) char *cmd; struct mtab table[]; int n; {
 }
 
 static int
-traceval(nam, val) char * nam, * val; { /* For TRACE command */
+#ifdef CK_ANSIC
+traceval( char * nam, char * val )      /* For TRACE command */
+#else
+traceval(nam, val) char * nam, * val;
+#endif /* CK_ANSIC */
+{
     if (val)
       printf(">>> %s: \"%s\"\n", nam, val);
     else
@@ -4346,7 +4430,12 @@ varlen(nam,s) char *nam; char **s; {    /* Length of value of variable */
   the definition into the macro table.
 */
 int
-addmmac(nam,s) char *nam, *s[]; {       /* Add a multiline macro definition */
+#ifdef CK_ANSIC
+addmmac( char *nam, char *s[] ) /* Add a multiline macro definition */
+#else
+addmmac(nam,s) char *nam, *s[];
+#endif /* CK_ANSIC */
+{
     int i, x, y; char *p;
     x = 0;                              /* Length counter */
     for (i = 0; (y = (int)strlen(s[i])) > 0; i++) { /* Add up total length */
@@ -4381,8 +4470,14 @@ addmmac(nam,s) char *nam, *s[]; {       /* Add a multiline macro definition */
 }
 
 static char evalmacrobuf[TMPBUFSIZ];
+
 VOID
-evalmacroarg(p) char **p; {
+#ifdef CK_ANSIC
+evalmacroarg( char **p )
+#else
+evalmacroarg(p) char **p;
+#endif /* CK_ANSIC */
+{
     char * s = evalmacrobuf;
     int t = TMPBUFSIZ;
     (VOID) zzstring(*p,&s,&t);
@@ -4396,7 +4491,12 @@ evalmacroarg(p) char **p; {
 int mtchanged = 0;
 
 int
-addmac(nam,def) char *nam, *def; {      /* Add a macro to the macro table */
+#ifdef CK_ANSIC
+addmac( char *nam, char *def )    /* Add a macro to the macro table */
+#else
+addmac(nam,def) char *nam, *def;
+#endif /* CK_ANSIC */
+{
     int i, x, y, z, namlen, deflen, flag = 0;
     int replacing = 0, deleting = 0;
     char * p = NULL, c, *s;
@@ -4637,7 +4737,12 @@ addmac(nam,def) char *nam, *def; {      /* Add a macro to the macro table */
 }
 
 int
-xdelmac(x) int x; {                     /* Delete a macro given its index */
+#ifdef CK_ANSIC
+xdelmac( int x )                  /* Delete a macro given its index */
+#else
+xdelmac(x) int x;
+#endif /* CK_ANSIC */
+{
     int i;
     extern int tra_asg;
     if (x < 0) return(x);
@@ -4667,7 +4772,12 @@ xdelmac(x) int x; {                     /* Delete a macro given its index */
 }
 
 int
-delmac(nam,exact) char *nam; int exact; { /* Delete the named macro */
+#ifdef CK_ANSIC
+delmac( char *nam, int exact )          /* Delete the named macro */
+#else
+    delmac(nam,exact) char *nam; int exact;
+#endif /* CK_ANSIC */
+{
     int x, z;
     char *p, c;
     extern int tra_asg;
@@ -4961,7 +5071,12 @@ int popclvl() {                         /* Just close current take file. */
 
 #ifndef NOSPL
 static int
-iseom(m) char * m; {                    /* Test if at end of macro def */
+#ifdef CK_ANSIC
+iseom( char * m )                    /* Test if at end of macro def */
+#else
+iseom(m) char * m;
+#endif /* CK_ANSIC */
+{
     if (!m)
       m = "";
     debug(F111,"iseom",m,maclvl);
@@ -5019,7 +5134,12 @@ dostop() {
 /* Close the given log */
 
 int
-doclslog(x) int x; {
+#ifdef CK_ANSIC
+doclslog( int x )
+#else
+doclslog(x) int x;
+#endif /* CK_ANSIC */
+{
     int y;
     switch (x) {
 #ifdef DEBUG
@@ -5115,17 +5235,32 @@ doclslog(x) int x; {
 static int slc = 0;                     /* Screen line count */
 
 char *
-showstring(s) char * s; {
+#ifdef CK_ANSIC
+showstring( char * s )
+#else
+showstring(s) char * s;
+#endif /* CK_ANSIC */
+{
     return(s ? s : "(null)");
 }
 
 char *
-showoff(x) int x; {
+#ifdef CK_ANSIC
+showoff( int x ) 
+#else
+showoff(x) int x;
+#endif /* CK_ANSIC */
+{
     return(x ? "on" : "off");
 }
 
 char *
-showooa(x) int x; {
+#ifdef CK_ANSIC
+showooa( int x )
+#else
+showooa(x) int x;
+#endif /* CK_ANSIC */
+{
     switch (x) {
       case SET_OFF:  return("off");
       case SET_ON:   return("on");
@@ -5224,9 +5359,13 @@ VOID
 #ifdef OS2
 shokeycode(c,m) int c, m;
 #else
+#ifdef CK_ANSIC
+shokeycode( int c )
+#else
 shokeycode(c) int c;
-#endif
-/* shokeycode */ {
+#endif /* CK_ANSIC */
+#endif /* OS2 */
+{
     KEY ch;
     CHAR *s;
 #ifdef OS2
@@ -5439,7 +5578,12 @@ shokeycode(c) int c;
 #endif /* NOSETKEY */
 
 VOID
-shostrdef(s) CHAR * s; {
+#ifdef CK_ANSIC
+shostrdef( CHAR * s )
+#else
+shostrdef(s) CHAR * s;
+#endif /* CK_ANSIC */
+{
     CHAR ch;
     if (!s) s = (CHAR *)"";
     while ((ch = *s++)) {
@@ -5601,7 +5745,12 @@ sholbl() {
 #endif /* CK_LABELED */
 
 VOID
-shotcs(csl,csr) int csl, csr; {         /* Show terminal character set */
+#ifdef CK_ANSIC
+shotcs( int csl, int csr )           /* Show terminal character set */
+#else
+shotcs(csl,csr) int csl, csr;
+#endif /* CK_ANSIC */
+{
 #ifndef NOCSETS
 #ifdef OS2
 #ifndef NOTERM
@@ -6653,7 +6802,12 @@ showarray() {
 #endif /* NOSPL */
 
 int
-doshow(x) int x; {
+#ifdef CK_ANSIC
+doshow( int x )
+#else
+doshow(x) int x;
+#endif /* CK_ANSIC */
+{
     int y, z, i; long zz;
     extern int optlines;
     char *s;
@@ -8344,7 +8498,12 @@ shoatt() {
 
 #ifndef NOSPL
 int                                     /* SHOW MACROS */
-shomac(s1, s2) char *s1, *s2; {
+#ifdef CK_ANSIC
+shomac( char *s1, char *s2 )
+#else
+shomac(s1, s2) char *s1, *s2;
+#endif /* CK_ANSIC */
+{
     int x, n, pp;
     pp = 0;                             /* Parenthesis counter */
 
@@ -8775,7 +8934,12 @@ xparse() {
 }
 
 char *                                  /* Silent front end for evala() */
-evalx(s) char *s; {
+#ifdef CK_ANSIC
+evalx( char *s )
+#else
+evalx(s) char *s;
+#endif /* CK_ANSIC */
+{
     char * p;
     int t;
     t = x_ifnum;
@@ -8786,7 +8950,12 @@ evalx(s) char *s; {
 }
 
 char *
-evala(s) char *s; {
+#ifdef CK_ANSIC
+evala( char *s )
+#else
+evala(s) char *s;
+#endif /* CK_ANSIC */
+{
     CK_OFF_T v;				/* Numeric value */
     if (!s) return("");
     xerror = 0;                         /* Start out with no error */
@@ -8938,7 +9107,12 @@ dclarray(a,n) char a; int n;
 /*  X A R R A Y  -- Convert array name to array index  */
 
 int
-xarray(s) char * s; {
+#ifdef CK_ANSIC
+xarray( char * s )
+#else
+xarray(s) char * s;
+#endif /* CK_ANSIC */
+{
     char buf[8];
     int x;
     char c;
@@ -9105,7 +9279,7 @@ boundspair(s,sep,lo,hi,zz) char *s, *sep, *zz; int *lo, *hi;
 /*  A R R A Y B O U N D S  --  Parse array segment notation \&a[n:m]  */
 
 /*
-  Call with s = array reference, plus two pointers to ints.
+  Call with s = array name (like a or &a), plus two pointers to ints.
   Returns -1 on error, or array index, with the two ints set as follows:
    \&a[]     -1, -1
    \&a[3]     3, -1
@@ -9113,7 +9287,12 @@ boundspair(s,sep,lo,hi,zz) char *s, *sep, *zz; int *lo, *hi;
   The array need not be declared -- this routine is just for parsing.
 */
 int
-arraybounds(s,lo,hi) char * s; int * lo, * hi; {
+#ifdef CK_ANSIC
+arraybounds( char * s, int * lo, int * hi )
+#else
+arraybounds(s,lo,hi) char * s; int * lo, * hi;
+#endif /* CK_ANSIC */
+{
     int i, x, y, range[2];
     char zz, buf[256], * p, * q;
     char * tmp = NULL;
@@ -9154,7 +9333,12 @@ arraybounds(s,lo,hi) char * s; int * lo, * hi; {
   On failure, returns a negative number, with args n and c set to zero.
 */
 int
-arraynam(ss,c,n) char *ss; int *c; int *n; {
+#ifdef CK_ANSIC
+arraynam( char *ss, int *c, int *n )
+#else
+arraynam(ss,c,n) char *ss; int *c; int *n;
+#endif /* CK_ANSIC */
+{
     int i, y, pp, len;
     char x;
     char *s, *p, *sx, *vnp;
@@ -9259,7 +9443,12 @@ arraynam(ss,c,n) char *ss; int *c; int *n; {
 /* chkarray returns 0 or greater if array exists, negative otherwise */
 
 int
-chkarray(a,i) int a, i; {               /* Check if array is declared */
+#ifdef CK_ANSIC
+chkarray( int a, int i )              /* Check if array is declared */
+#else
+chkarray(a,i) int a, i;
+#endif /* CK_ANSIC */
+{
     int x;                              /* and if subscript is in range */
     if (a == 64) a = 96;                /* Convert atsign to grave accent */
     x = a - ARRAYBASE;                  /* Values must be in range 95-122 */
@@ -9302,7 +9491,12 @@ arrayval(a,i) int a, i; {               /* Return value of \&a[i] */
   on the way down and on the way back up.
 */
 int
-pusharray(x,z) int x, z; {
+#ifdef CK_ANSIC
+pusharray( int x, int z )
+#else
+pusharray(x,z) int x, z;
+#endif /* CK_ANSIC */
+{
     int y;
     debug(F000,"pusharray x","",x);
     debug(F101,"pusharray z","",z);
@@ -9335,7 +9529,12 @@ pusharray(x,z) int x, z; {
     2:  successful parse of an array reference, w/ID in c and subscript in i.
 */
 int
-parsevar(s,c,i) char *s; int *c, *i; {
+#ifdef CK_ANSIC
+parsevar( char *s, int *c, int *i )
+#else
+parsevar(s,c,i) char *s; int *c, *i;
+#endif /* CK_ANSIC */
+{
     char *p;
     int x,y,z;
 
@@ -9397,7 +9596,12 @@ parsevar(s,c,i) char *s; int *c, *i; {
    -1 on failure (bad variable syntax, variable not defined or not numeric).
 */
 int
-varval(s,v) char *s; CK_OFF_T *v; {
+#ifdef CK_ANSIC
+varval( char *s, CK_OFF_T *v )
+#else
+varval(s,v) char *s; CK_OFF_T *v;
+#endif /* CK_ANSIC */
+{
     char valbuf[VALN+1];                /* s is pointer to variable name */
     char name[256];
     char *p;
@@ -9434,7 +9638,12 @@ varval(s,v) char *s; CK_OFF_T *v; {
   - fdc  11 December 2022
 */
 int
-varsval(s,s2) char *s; char **s2; {
+#ifdef CK_ANSIC
+varsval( char *s, char **s2 )
+#else
+varsval(s,s2) char *s; char **s2;
+#endif /* CK_ANSIC */
+{
     char valbuf[SVALN+1];               /* s is pointer to variable name */
     char name[256];
     char *p;
@@ -9455,7 +9664,12 @@ varsval(s,s2) char *s; char **s2; {
 /* Returns -1 on failure, 0 on success */
 
 int
-incvar(s,x,z) char *s; CK_OFF_T x; int z; {  /* Increment a numeric variable */
+#ifdef CK_ANSIC
+incvar( char *s, CK_OFF_T x, int z ) /* Increment a numeric variable */
+#else
+incvar(s,x,z) char *s; CK_OFF_T x; int z;
+#endif /* CK_ANSIC */
+{
     CK_OFF_T n;				/* s is pointer to variable name */
                                         /* x is amount to increment by */
                                         /* z != 0 means add */
@@ -9477,7 +9691,12 @@ incvar(s,x,z) char *s; CK_OFF_T x; int z; {  /* Increment a numeric variable */
   Returns 0 on failure, 1 on success.
 */
 int
-dodo(x,s,flags) int x; char *s; int flags; {
+#ifdef CK_ANSIC
+dodo( int x, char *s, int flags )
+#else
+dodo(x,s,flags) int x; char *s; int flags;
+#endif /* CK_ANSIC */
+{
     int y;
     extern int tra_asg, tra_cmd; int tra_tmp; /* For TRACE */
 #ifndef NOLOCAL
@@ -9584,7 +9803,12 @@ dodo(x,s,flags) int x; char *s; int flags; {
 static char* flit = "\\flit(";
 
 int
-litcmd(src,dest,n) char **src, **dest; int n; {
+#ifdef CK_ANSIC
+litcmd( char **src, char **dest, int n )
+#else
+litcmd(src,dest,n) char **src, **dest; int n;
+#endif /* CK_ANSIC */
+{
     int bc = 0, pp = 0;
     char c, *s, *lp, *ss;
 
@@ -9687,7 +9911,12 @@ litcmd(src,dest,n) char **src, **dest; int n; {
          remainder of the string.
 */
 VOID
-xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
+#ifdef CK_ANSIC
+xwords( char *s, int max, char *list[], int flag )
+#else
+xwords(s,max,list,flag) char *s; int max; char *list[]; int flag;
+#endif /* CK_ANSIC */
+{
     char *p;
     int b, i, k, q, y, z;
     int macro = 0;
@@ -9887,7 +10116,12 @@ xwords(s,max,list,flag) char *s; int max; char *list[]; int flag; {
 /*  Note: at some point let's consolidate m_arg[][] and m_xarg[][]. */
 
 int
-doshift(n) int n; {                     /* n = shift count */
+#ifdef CK_ANSIC
+doshift( int n )                        /* n = shift count */
+#else
+doshift(n) int n;
+#endif /* CK_ANSIC */
+{
     int i, top, level;
     char /* *s, *m, */ buf[6];          /* Buffer to build scalar names */
     char * sx = tmpbuf;
@@ -9996,7 +10230,12 @@ doshift(n) int n; {                     /* n = shift count */
 #endif /* NOSPL */
 
 int
-docd(cx) int cx; {                      /* Do the CD command */
+#ifdef CK_ANSIC
+docd( int cx )                          /* Do the CD command */
+#else
+docd(cx) int cx;
+#endif /* CK_ANSIC */
+{
     int x;
     extern int server, srvcdmsg, cdactive;
     extern char * cdmsgfile[], * ckcdpath;
@@ -10242,7 +10481,12 @@ static char * optlist[NOPTLIST+1];
 static int hpos = 0;
 
 int
-prtopt(lines,s) int * lines; char *s; { /* Print an option */
+#ifdef CK_ANSIC
+prtopt( int * lines, char *s )          /* Print an option */
+#else
+prtopt(lines,s) int * lines; char *s;
+#endif /* CK_ANSIC */
+{
     int y, i;                           /* Does word wrap. */
     if (!s) s = "";
     i = *lines;
@@ -10716,6 +10960,16 @@ initoptlist() {
     makestr(&(optlist[noptlist++]),"NOVMSSHARE");
 #endif /* NOVMSSHARE */
 #endif /* VMS */
+
+#ifdef NOARROWKEYS
+    sprintf(line,"NOARROWKEYS");
+    makestr(&(optlist[noptlist++]),line);
+#endif /* NOARROWKEYS */
+
+#ifdef DOARROWKEYS
+    sprintf(line,"DOARROWKEYS");
+    makestr(&(optlist[noptlist++]),line);
+#endif /* DOARROWKEYS */
 
 #ifdef datageneral
     makestr(&(optlist[noptlist++]),"datageneral");
@@ -11336,6 +11590,9 @@ initoptlist() {
 #ifdef OS2ORVMS
     makestr(&(optlist[noptlist++]),"OS2ORVMS");
 #endif /* OS2ORVMS */
+#ifdef OS2ORWINDOWS
+    makestr(&(optlist[noptlist++]),"OS2ORWINDOWS");
+#endif /* OS2ORWINDOWS */
 #ifdef OS2ORUNIX
     makestr(&(optlist[noptlist++]),"OS2ORUNIX");
 #endif /* OS2ORUNIX */
@@ -12085,6 +12342,7 @@ initoptlist() {
 #ifdef CK_CONPTY
     makestr(&(optlist[noptlist++]),"CK_CONPTY");
 #endif  /* CK_CONPTY */
+
     debug(F101,"initoptlist noptlist","",noptlist);
     sh_sort(optlist,NULL,noptlist,0,0,0);
 }
@@ -12396,6 +12654,23 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
 #endif /* IKSD */
 
+#ifdef OS2
+#ifdef DECNET
+    printf(" DECnet (Pathworks) LAT/CTERM support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* DECNET */
+#endif /* OS2 */
+
+#ifdef NT
+#ifdef SUPERLAT
+    printf(" SuperLAT/TES32 support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* SUPERLAT */
+#endif /* NT */
+
+
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     printf("Major optional features not included:\n");
@@ -12615,7 +12890,6 @@ printf("NOWTMP not defined\n");
 #endif /* OS2 */
 #endif /* NOARROWKEYS */
 
-
 #ifdef NODIAL
     printf(" No DIAL command\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
@@ -12730,13 +13004,13 @@ printf("NOWTMP not defined\n");
     flag = 1;
 #endif /* CK_REDIR */
 
-#ifdef UNIX
+#ifdef WIN32ORUNIX
 #ifndef NETPTY
     printf(" No pseudoterminal control\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* NETPTY */
-#endif /* UNIX */
+#endif /* WIN32ORUNIX */
 
 #ifndef CK_RESEND
     printf(" No RESEND command\n");
@@ -12769,6 +13043,22 @@ printf("NOWTMP not defined\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* IKSD */
+
+#ifdef OS2
+#ifndef DECNET
+    printf(" No DECnet (Pathworks) LAT/CTERM support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* DECNET */
+#endif /* OS2 */
+
+#ifdef NT
+#ifndef SUPERLAT
+    printf(" No SuperLAT/TES32 support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+    flag = 1;
+#endif /* SUPERLAT */
+#endif /* NT */
 
     if (flag == 0) {
         printf(" None\n");

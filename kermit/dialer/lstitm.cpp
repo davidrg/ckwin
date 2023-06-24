@@ -149,16 +149,16 @@ KD_LIST_ITEM::KD_LIST_ITEM():
     _script[0] = '\0';
     _log_debug = 0;
     _log_debug_append = 0;
-    strcpy(_log_debug_fname,"\v(appdata)debug.log");
+    strcpy(_log_debug_fname,"\\v(appdata)debug.log");
     _log_session = 0;
     _log_session_append = 0;
-    strcpy(_log_session_fname,"\v(appdata)session.log");
+    strcpy(_log_session_fname,"\\v(appdata)session.log");
     _log_packet = 0;
     _log_packet_append = 0;
-    strcpy(_log_packet_fname,"\v(appdata)packet.log");
+    strcpy(_log_packet_fname,"\\v(appdata)packet.log");
     _log_transaction = 0;
     _log_transaction_append = 0;
-    strcpy(_log_transaction_fname,"\v(appdata)transact.log");
+    strcpy(_log_transaction_fname,"\\v(appdata)transact.log");
 
     _use_mdm_speed = 1;
     _use_mdm_flow = 1;
@@ -344,51 +344,84 @@ KD_LIST_ITEM::KD_LIST_ITEM():
     _startpos_auto = 1;
     _startpos_x = 0;
     _startpos_y = 0;
+
+    // Idx  Colour   R   G   B
+    // 0    Black    0   0   0
     _rgb[0][0] = 0;
     _rgb[0][1] = 0;
     _rgb[0][2] = 0;
+
+    // 1    Blue        0   0   127
     _rgb[1][0] = 0;
-    _rgb[1][1] = 128;
-    _rgb[1][2] = 0;
+    _rgb[1][1] = 0;
+    _rgb[1][2] = 127;
+
+    // 2    Green       0   127 0
     _rgb[2][0] = 0;
-    _rgb[2][1] = 128;
-    _rgb[2][2] = 128;
-    _rgb[3][0] = 128;
-    _rgb[3][1] = 0;
-    _rgb[3][2] = 0;
+    _rgb[2][1] = 127;
+    _rgb[2][2] = 0;
+
+    // 3    Cyan        0   127 127
+    _rgb[3][0] = 0;
+    _rgb[3][1] = 127;
+    _rgb[3][2] = 127;
+
+    // 4    Red         127 0   0
     _rgb[4][0] = 128;
     _rgb[4][1] = 0;
-    _rgb[4][2] = 128;
-    _rgb[5][0] = 128;
-    _rgb[5][1] = 128;
-    _rgb[5][2] = 0;
-    _rgb[6][0] = 192;
-    _rgb[6][1] = 192;
-    _rgb[6][2] = 192;
-    _rgb[7][0] = 128;
-    _rgb[7][1] = 128;
-    _rgb[7][2] = 128;
-    _rgb[8][0] = 0;
-    _rgb[8][1] = 0;
-    _rgb[8][2] = 255;
+    _rgb[4][2] = 0;
+
+    // 5    Magenta     127 0   127
+    _rgb[5][0] = 127;
+    _rgb[5][1] = 0;
+    _rgb[5][2] = 127;
+
+    // 6    Brown       127 127 0
+    _rgb[6][0] = 127;
+    _rgb[6][1] = 127;
+    _rgb[6][2] = 0;
+
+    // 7    Lightgray   192 192 192
+    _rgb[7][0] = 192;
+    _rgb[7][1] = 192;
+    _rgb[7][2] = 192;
+
+    // 8    darkgray    127 127 127
+    _rgb[8][0] = 127;
+    _rgb[8][1] = 127;
+    _rgb[8][2] = 127;
+
+    // 9    lightblue   0   0   255
     _rgb[9][0] = 0;
-    _rgb[9][1] = 255;
-    _rgb[9][2] = 0;
+    _rgb[9][1] = 0;
+    _rgb[9][2] = 255;
+
+    // 10   lightgreen  0   255 0
     _rgb[10][0] = 0;
     _rgb[10][1] = 255;
     _rgb[10][2] = 0;
+
+    // 11   lightcyan   0   255 255
     _rgb[11][0] = 0;
     _rgb[11][1] = 255;
     _rgb[11][2] = 255;
+
+    // 12   lightred    255 0   0
     _rgb[12][0] = 255;
     _rgb[12][1] = 0;
     _rgb[12][2] = 0;
+
+    // 13   lightmagenta    255 0   255
     _rgb[13][0] = 255;
     _rgb[13][1] = 0;
     _rgb[13][2] = 255;
+
+    // 14   yellow      255 255 0
     _rgb[14][0] = 255;
     _rgb[14][1] = 255;
     _rgb[14][2] = 0;
+
+    // 15   white       255 255 255
     _rgb[15][0] = 255;
     _rgb[15][1] = 255;
     _rgb[15][2] = 255;

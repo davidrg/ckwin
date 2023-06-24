@@ -1,10 +1,10 @@
 #include "ckcsym.h"
-char *dialv = "Dial Command, 10.0.164, 30 Nov 2022";
+char *dialv = "Dial Command, 10.0.165, 15 Apr 2023";
 
 /*  C K U D I A	 --  Module for automatic modem dialing. */
 
 /*
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -35,7 +35,6 @@ char *dialv = "Dial Command, 10.0.164, 30 Nov 2022";
 */
 
 /*
-
   This module calls externally defined system-dependent functions for
   communications i/o, as described in the C-Kermit Program Logic Manual:
    https://kermitproject.org/ckcplm.html
@@ -147,6 +146,8 @@ static VOID waitfor( char * );
 static int ddinc( int );
 static int dialfail( int );
 #endif /* CK_ANSIC */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 #ifdef MAC
 #define signal msignal
@@ -4452,7 +4453,12 @@ static SIGTYP (*savint)();	/* For saving interrupt handler */
 
 #ifdef CKLOGDIAL
 static VOID
-dologdial(s) char *s; {
+#ifdef CK_ANSIC
+dologdial( char *s )
+#else
+dologdial(s) char *s;
+#endif /* CK_ANSIC */
+{
     char buf2[16];
     char * r = NULL;
     int x, m, n;
@@ -4604,7 +4610,12 @@ dialint(foo) int foo;
   TCP/IP TELNET modem server.
 */
 static int
-ddinc(n) int n; {
+#ifdef CK_ANSIC
+ddinc( int n )
+#else
+ddinc(n) int n;
+#endif /* CK_ANSIC */
+{
 #ifdef TNCODE
     int c = 0;
     int done = 0;
@@ -4633,7 +4644,12 @@ ddinc(n) int n; {
 }
 
 static VOID
-ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
+#ifdef CK_ANSIC
+ttslow( char *s, int millisec )         /* Output s-l-o-w-l-y */
+#else
+ttslow(s,millisec) char *s; int millisec;
+#endif /* CK_ANSIC */
+{
 #ifdef TCPSOCKET
     extern int tn_nlm, tn_b_nlm;
 #endif /* TCPSOCKET */
@@ -4675,7 +4691,12 @@ ttslow(s,millisec) char *s; int millisec; { /* Output s-l-o-w-l-y */
  * ARE received, and in the order specified.
  */
 static VOID
-waitfor(s) char *s; {
+#ifdef CK_ANSIC
+waitfor( char *s )
+#else
+waitfor(s) char *s;
+#endif /* CK_ANSIC */
+{
     CHAR c, x;
     while ((c = *s++)) {		/* while more characters remain... */
 	do {				/* wait for the character */
@@ -4690,7 +4711,12 @@ waitfor(s) char *s; {
 }
 
 static int
-didweget(s,r) char *s, *r; {	/* Looks in string s for response r */
+#ifdef CK_ANSIC
+didweget( char *s, char *r )	/* Looks in string s for response r */
+#else
+didweget(s,r) char *s, *r;
+#endif /* CK_ANSIC */
+{
     int lr = (int)strlen(r);	/*  0 means not found, 1 means found it */
     int i;
     debug(F110,"didweget",r,0);
@@ -4759,7 +4785,12 @@ dialoc(c) char c;
 
 #ifndef NOSPL
 char *
-getdm(x) int x; {			/* Return dial modifier */
+#ifdef CK_ANSIC
+getdm( int x )                          /* Return dial modifier */
+#else
+getdm(x) int x;
+#endif /* CK_ANSIC */
+{
     MDMINF * mp;
     int m;
     int ishayes = 0;
@@ -4960,7 +4991,12 @@ getdialenv() {
 }
 
 static int
-dialfail(x) int x; {
+#ifdef CK_ANSIC
+dialfail( int x )
+#else
+dialfail(x) int x;
+#endif /* CK_ANSIC */
+{
     char * s;
 
     fail_code = x;
@@ -6436,9 +6472,17 @@ faildial(threadinfo) VOID * threadinfo;
 
 int
 #ifdef OLD_DIAL
+#ifdef CK_ANSIC
+ckdial( char *nbr )
+#else
 ckdial(nbr) char *nbr;
+#endif /* CK_ANSIC */
+#else
+#ifdef CK_ANSIC
+ckdial( char *nbr, int x1, int x2, int fc, int redial )
 #else
 ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
+#endif /* CK_ANSIC */
 #endif /* OLD_DIAL */
 /* ckdial */ {
 #define ERMSGL 100                      /* fdc 13 November 2022 (was 50) */
@@ -7108,7 +7152,12 @@ failok(threadinfo) VOID * threadinfo;
 }
 
 int
-getok(n, strict) int n, strict; {
+#ifdef CK_ANSIC
+getok( int n, int strict )
+#else
+getok(n, strict) int n, strict;
+#endif /* CK_ANSIC */
+{
     debug(F101,"getok entry n","",n);
     okstatus = 0;
     okn = n;
