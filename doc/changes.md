@@ -84,7 +84,10 @@ containing the correct values.
   non-printable chracter instad of '\'. This bug affected Kermit 95 as well.
 
 ### Minor Enhancements and other changes
-* The sample k95custom.ini file now sets autodownload to "on" rather than "ask"
+* The sample k95custom.ini file now sets:
+  * autodownload to "on" rather than "ask"
+  * resize mode to change terminal dimensions
+  * SSH heartbeat on
 * New escape sequences in the terminal emulator
   * `CSI 1 8 ; Ps ; Ps t` - get text area size in characters (xterm)
   * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
