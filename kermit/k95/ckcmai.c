@@ -58,7 +58,7 @@ char * ck_cryear = "2023"; 		/* C-Kermit copyright year */
    The Windows and non-Windows Betas happen at different times.
 */
 char *ck_s_test = "Beta";
-char *ck_s_tver = "09/Windows-04";
+char *ck_s_tver = "09/Windows-05";
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
 char *ck_s_test = "pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */

@@ -1,0 +1,28 @@
+;
+; Sample IKS configuration file.
+;
+; To install IKSD as a Windows NT service, run:
+;     iksdsvc.exe /i
+; To uninstall, run:
+;     iksdsvc.exe /u
+;
+; To try out IKSD without installing it as an NT service (or to run it on
+; Windows 9x - highly not recommended), run:
+;     iksd.exe
+;
+; For full instructions including important security details, see The manual:
+;    https://kermitproject.org/k95manual/wiksdadm.html
+;
+
+; Start off in the public directory
+cd \v(common)public
+
+; What events (if any) should be sent to the Windows NT event log
+set syslog COMMANDS
+
+; Ask IKS to keep its own file transfer log
+set iks xferlog ON
+
+; Stuff to do on login/logout
+define on_login  echo Current directory \v(dir)
+define on_logout echo logging \v(user) off the system

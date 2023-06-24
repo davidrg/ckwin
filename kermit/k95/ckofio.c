@@ -4723,7 +4723,7 @@ struct _utimbuf tp;
 #else /* NT */
 struct utimbuf tp;
 #endif /* NT */
-#endif /* __WATCOMC__
+#endif /* __WATCOMC__ */
 
 #ifdef ANYBSD
     long timezone = 0L;

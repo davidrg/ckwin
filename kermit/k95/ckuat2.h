@@ -89,11 +89,9 @@ typedef unsigned char *BlockT;
 #ifndef KRB4    /* already defined in kerberosiv/des.h */
 typedef struct des_ks_struct { Block _; } Schedule[16];
 #else /* KRB4 */
-#ifndef OS2
 #ifndef NOBLOCKDEF    /* already defined in kerberosiv/des.h */
 typedef struct des_ks_struct { Block _; } Schedule[16];
 #endif /* NOBLOCKDEF */
-#endif /* OS2 */
 #endif /* KRB4 */
 
 #define VALIDKEY(key) (key[0]|key[1]|key[2]|key[3]|key[4]|key[5]|key[6]|key[7])

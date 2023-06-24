@@ -298,7 +298,9 @@ int gettcs( int, int );
 int gettoken( FILE * );
 int getyesno( char *, int );
 int gnirts( char *, char *, int );
-int hash( char * );
+#ifndef OS2
+int hash( char * );     /* Conflicts with SRP support on Windows and OS/2 */
+#endif /* OS2 */
 int hmsg( char * );
 int hmsga( char * [] );
 int http_inc( int );

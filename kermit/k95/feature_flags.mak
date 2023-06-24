@@ -47,10 +47,10 @@
 
 !message Processing feature flags...
 
-# Network Connections are always supported. We only put it here because
-# the Watcom nmake clone can't handle empty macros so we need *something* here.
-#ENABLED_FEATURES = Network-Connections
-#ENABLED_FEATURE_DEFS = -DNETCONN
+# These features are deprecated and gone from UNIX, but they're still supported
+# just fine on NT and OS/2 with no plans for deprecation.
+ENABLED_FEATURES = SYSLOG
+ENABLED_FEATURE_DEFS = -DDOSYSLOG -DDOARROWKEYS
 
 #DISABLED_FEATURES =
 #DISABLED_FEATURE_DEFS =
@@ -110,7 +110,7 @@ CKT_NT31=yes
 CKT_NT31=yes
 !endif
 
-!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
+!if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
 # OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
 !endif
@@ -236,13 +236,36 @@ CKF_K4W=no
 !endif
 
 # MIT Kerberos for Windows:
-#   On by default
+#   Turn on with: -DCK_KERBEROS -DKRB5 -DKRB4 -DKRB524
 #   Turn off with: -DNO_KERBEROS
 #   Requires: An antique version of MIT Kerberos for Windows.
 #      OR: Rework this to use Heimdal Kerberos
 !if "$(CKF_K4W)" == "yes"
-# Nothing required - its on by default.
 ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_KERBEROS -DKRB5 -DHAVE_GSSAPI
+
+# Kerberos IV support isn't available in Kerberos for Windows 4.x and newer.
+!if "$(CKF_K4W_KRB4)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos-IV
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DKRB4 -DKRB524
+!endif
+
+# SSL-ified Kerberos 5 requires OpenSSL older than 1.1.0
+!if "$(CKF_K4W_SSL)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos+SSL
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos+SSL
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL_KRB5
+!endif
+
+!if "$(CKF_K4W_WSHELPER)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) DNS-SRV
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) DNS-SRV
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_DNS_SRV
+!endif
+
+
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_KERBEROS
@@ -331,16 +354,23 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 
 
 # Telnet encryption option (DES, CAST)
-#   Turn on with: -DCRYPT_DLL
+#   Turn on with: -DCRYPT_DLL (external, via k95crypt.dll)
+#             or: -DCK_DES -DCK_CAST -DCK_ENCRYPTION
 #   Requires: libdes
 #     OR: reworking to use OpenSSL instead
 #   Turn off with: -DNO_ENCRYPTION
 !if "$(CKF_CRYPTDLL)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption CryptDLL
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCRYPT_DLL -DLIBDES
+CKF_INTERNAL_CRYPT=no
+!else
+!if "$(CKF_INTERNAL_CRYPT)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption InternalCrypt
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_DES -DCK_CAST -DCK_ENCRYPTION -DLIBDES
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) TelnetEncryptionOption CryptDLL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
+!endif
 !endif
 
 # If beta-test mode hasn't been explicitly turned off then assume its on.
