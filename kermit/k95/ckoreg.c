@@ -28,8 +28,10 @@
 #define ISDIRSEP(c)  ((c)=='/'||(c)=='\\')
 
 #ifdef NT
+typedef LONG (WINAPI * p_RegOpenCurrentUser_t)(REGSAM samDesired, PHKEY phkResult);
+
 static HINSTANCE hAdvApi32 = NULL;
-static LONG (WINAPI * p_RegOpenCurrentUser)(REGSAM samDesired, PHKEY phkResult)=NULL;
+static p_RegOpenCurrentUser_t p_RegOpenCurrentUser=NULL;
 #endif /* NT */
 
 char *
@@ -60,8 +62,8 @@ GetAppData( int common )
                 if ( !hAdvApi32 )
                     hAdvApi32 = LoadLibrary("advapi32.dll");
                 if (hAdvApi32)
-                    (FARPROC) p_RegOpenCurrentUser =
-                        GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                    p_RegOpenCurrentUser =
+                        (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
             }
             if (p_RegOpenCurrentUser)
                 p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -170,8 +172,8 @@ GetHomeDrive(void)
                 if ( !hAdvApi32 )
                     hAdvApi32 = LoadLibrary("advapi32.dll");
                 if (hAdvApi32)
-                    (FARPROC) p_RegOpenCurrentUser =
-                        GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                    p_RegOpenCurrentUser =
+                        (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
             }
             if (p_RegOpenCurrentUser)
                 p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -239,8 +241,8 @@ GetHomePath(void)
                 if ( !hAdvApi32 )
                     hAdvApi32 = LoadLibrary("advapi32.dll");
                 if (hAdvApi32)
-                    (FARPROC) p_RegOpenCurrentUser =
-                        GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                    p_RegOpenCurrentUser =
+                        (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
             }
             if (p_RegOpenCurrentUser)
                 p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -313,8 +315,8 @@ GetPersonal(void)
             if ( !hAdvApi32 )
                 hAdvApi32 = LoadLibrary("advapi32.dll");
             if (hAdvApi32)
-                (FARPROC) p_RegOpenCurrentUser =
-                    GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                p_RegOpenCurrentUser =
+                    (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
         }
         if (p_RegOpenCurrentUser)
             p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);
@@ -386,8 +388,8 @@ GetDesktop(void)
             if ( !hAdvApi32 )
                 hAdvApi32 = LoadLibrary("advapi32.dll");
             if (hAdvApi32)
-                (FARPROC) p_RegOpenCurrentUser =
-                    GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
+                p_RegOpenCurrentUser =
+                    (p_RegOpenCurrentUser_t)GetProcAddress( hAdvApi32, "RegOpenCurrentUser");
         }
         if (p_RegOpenCurrentUser)
             p_RegOpenCurrentUser(KEY_READ,&hkCurrentUser);

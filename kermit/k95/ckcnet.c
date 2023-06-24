@@ -1,9 +1,9 @@
-char *cknetv = "Network support, 10.0.302, 06 Dec 2022";
+char *cknetv = "Network support, 10.0.303, 15 Apr 2023";
 
 /*  C K C N E T  --  Network support  */
 
 /*
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1705,7 +1705,12 @@ gettcpport() {
 #ifndef NOTCPOPTS
 #ifndef datageneral
 int
-ck_linger(sock, onoff, timo) int sock; int onoff; int timo; {
+#ifdef CK_ANSIC
+ck_linger( int sock, int onoff, int timo )
+#else
+ck_linger(sock, onoff, timo) int sock; int onoff; int timo;
+#endif /* CK_ANSIC */
+{
 /*
   The following, from William Bader, turns off the socket linger parameter,
   which makes a close() block until all data is sent.  "I don't think that
@@ -1831,7 +1836,12 @@ ck_linger(sock, onoff, timo) int sock; int onoff; int timo; {
 }
 
 int
-sendbuf(sock,size) int sock; int size; {
+#ifdef CK_ANSIC
+sendbuf( int sock, int size )
+#else
+sendbuf(sock,size) int sock; int size;
+#endif /* CK_ANSIC */
+{
 /*
   The following, from William Bader, allows changing of socket buffer sizes,
   in case that might affect performance.
@@ -1927,7 +1937,12 @@ sendbuf(sock,size) int sock; int size; {
 }
 
 int
-recvbuf(sock,size) int sock; int size; {
+#ifdef CK_ANSIC
+recvbuf( int sock, int size )
+#else
+recvbuf(sock,size) int sock; int size;
+#endif /* CK_ANSIC */
+{
 /*
   The following, from William Bader, allows changing of socket buffer sizes,
   in case that might affect performance.
@@ -2019,7 +2034,12 @@ recvbuf(sock,size) int sock; int size; {
 }
 
 int
-keepalive(sock,onoff) int sock; int onoff; {
+#ifdef CK_ANSIC
+keepalive( int sock, int onoff )
+#else
+keepalive(sock,onoff) int sock; int onoff;
+#endif /* CK_ANSIC */
+{
 #ifdef SOL_SOCKET
 #ifdef SO_KEEPALIVE
     int get_keepalive_opt;
@@ -2141,7 +2161,12 @@ keepalive(sock,onoff) int sock; int onoff; {
 }
 
 int
-dontroute(sock,onoff) int sock; int onoff; {
+#ifdef CK_ANSIC
+dontroute( int sock, int onoff )
+#else
+dontroute(sock,onoff) int sock; int onoff;
+#endif /* CK_ANSIC */
+{
 #ifdef SOL_SOCKET
 #ifdef SO_DONTROUTE
     int get_dontroute_opt;
@@ -2259,7 +2284,12 @@ dontroute(sock,onoff) int sock; int onoff; {
 }
 
 int
-no_delay(sock,onoff)  int sock; int onoff; {
+#ifdef CK_ANSIC
+no_delay( int sock, int onoff )
+#else
+no_delay(sock,onoff)  int sock; int onoff;
+#endif /* CK_ANSIC */
+{
 #ifdef SOL_SOCKET
 #ifdef TCP_NODELAY
     int get_nodelay_opt;
@@ -2628,7 +2658,12 @@ tcpsocket_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo {
   type rather than modem type.
 */
 int
-tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
+#ifdef CK_ANSIC
+tcpsrv_open( char * name, int * lcl, int nett, int timo )
+#else
+tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo;
+#endif /* CK_ANSIC */
+{
     char *p;
     int i, x;
     SOCKOPT_T on = 1;
@@ -3134,7 +3169,11 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo; {
 
 #ifdef TCPSOCKET
 char *
+#ifdef CK_ANSIC
+ckname2addr( char * name )
+#else
 ckname2addr(name) char * name;
+#endif /* CK_ANSIC */
 {
 #ifdef HPUX5
     return("");
@@ -3154,7 +3193,11 @@ ckname2addr(name) char * name;
 }
 
 char *
+#ifdef CK_ANSIC
+ckaddr2name( char * addr )
+#else
 ckaddr2name(addr) char * addr;
+#endif /* CK_ANSIC */
 {
 #ifdef HPUX5
     return("");
@@ -3458,8 +3501,12 @@ static struct servent * ckgetservice( char *, char *, char *, int );
 #endif /* CK_ANSIC */
 
 static struct servent *
+#ifdef CK_ANSIC
+ckgetservice( char *hostname, char * servicename, char * ip, int iplen )
+#else
 ckgetservice(hostname, servicename, ip, iplen)
     char *hostname; char * servicename; char * ip; int iplen;
+#endif /* CK_ANSIC */
 {
     struct servent * service = NULL;
 #ifdef CK_DNS_SRV
@@ -3570,7 +3617,12 @@ ckgetservice(hostname, servicename, ip, iplen)
 static char xxname[XXNAMELEN];
 
 int
-netopen(name, lcl, nett) char *name; int *lcl, nett; {
+#ifdef CK_ANSIC
+netopen( char *name, int *lcl, int nett )
+#else
+netopen(name, lcl, nett) char *name; int *lcl, nett;
+#endif /* CK_ANSIC */
+{
     char *p;
     int i, x, rc_inet_addr = 0, dns = 0;
 #ifdef TCPSOCKET
@@ -5834,7 +5886,12 @@ nettchk() {                             /* for reading from network */
 
 #ifndef OS2
 VOID
-nettout(i) int i; {                     /* Catch the alarm interrupts */
+#ifdef CK_ANSIC
+nettout( int i )                      /* Catch the alarm interrupts */
+#else
+nettout(i) int i;
+#endif /* CK_ANSIC */
+{
     debug(F100,"nettout caught timeout","",0);
     ttimoff();
     cklongjmp(njbuf, -1);
@@ -5887,7 +5944,12 @@ failnetinc(threadinfo) VOID * threadinfo;
 /* N E T X I N -- Input block of characters from network */
 
 int
-netxin(n,buf) int n; CHAR * buf; {
+#ifdef CK_ANSIC
+netxin( int n, CHAR * buf )
+#else
+netxin(n,buf) int n; CHAR * buf;
+#endif /* CK_ANSIC */
+{
     int len, i, j;
 #ifdef TCPIPLIB
     int rc;
@@ -5998,7 +6060,12 @@ netxin(n,buf) int n; CHAR * buf; {
 #endif /* LEBUF */
 
 int
-netinc(timo) int timo; {
+#ifdef CK_ANSIC
+netinc( int timo )
+#else
+netinc(timo) int timo;
+#endif /* CK_ANSIC */
+{
 #ifdef TCPIPLIB
     int x; unsigned char c;             /* The locals. */
 
@@ -6385,7 +6452,12 @@ netinc(timo) int timo; {
 */
 
 int
-nettol(s,n) CHAR *s; int n; {
+#ifdef CK_ANSIC
+nettol( CHAR *s, int n )
+#else
+nettol(s,n) CHAR *s; int n;
+#endif /* CK_ANSIC */
+{
 #ifdef TCPIPLIB
     int count = 0;
     int len = n;
@@ -7030,7 +7102,12 @@ net_read(fd, buf, len)
  */
 
 int
-getlocalipaddr() {
+#ifdef CK_ANSIC
+getlocalipaddr( void )
+#else
+getlocalipaddr()
+#endif /* CK_ANSIC */
+{
 #ifndef datageneral
     struct sockaddr_in l_sa;
     struct sockaddr_in r_sa;
@@ -7085,11 +7162,12 @@ getlocalipaddr() {
 }
 
 int
-getlocalipaddrs(buf,bufsz,index)
-    char * buf;
-    int    bufsz;
-    int    index;
-/* getlocalipaddrs */ {
+#ifdef CK_ANSIC
+getlocalipaddrs( char * buf, int  bufsz, int index )
+#else
+getlocalipaddrs(buf,bufsz,index) char * buf; int bufsz; int index;
+#endif /* CK_ANSIC */
+{
 #ifndef datageneral
     char localhost[256];
     struct hostent * host=NULL;
@@ -7179,7 +7257,12 @@ getlocalipaddrs(buf,bufsz,index)
 #ifdef RLOGCODE                 /* TCP/IP RLOGIN protocol support code */
 #ifdef CK_NAWS
 int
-rlog_naws() {
+#ifdef CK_ANSIC
+rlog_naws( void )
+#else
+rlog_naws()
+#endif /* CK_ANSIC */
+{
     struct rlog_naws {
         unsigned char id[4];
         unsigned short rows, cols, ypix, xpix;
@@ -7491,9 +7574,11 @@ rlog_ini(hostname, port, l_addr, r_addr)
    client.  */
 
 int 
-rlog_ctrl(cp, n)
-     unsigned char *cp;
-     int n;
+#ifdef CK_ANSIC
+rlog_ctrl( unsigned char *cp, int n )
+#else
+rlog_ctrl(cp, n) unsigned char *cp; int n;
+#endif /* CK_ANSIC */
 {
     if ((n >= 5) && (cp[2] == 'o') && (cp[3] == 'o')) {
         if (rlog_oob(&cp[4],1))
@@ -7509,7 +7594,12 @@ rlog_ctrl(cp, n)
 }
 
 static int
-rlog_oob(oobdata, count) CHAR * oobdata; int count; {
+#ifdef CK_ANSIC
+rlog_oob( CHAR * oobdata, int count )
+#else
+rlog_oob(oobdata, count) CHAR * oobdata; int count;
+#endif /* CK_ANSIC */
+{
     int i;
     int flush = 0;
 
@@ -7559,7 +7649,12 @@ rlog_oob(oobdata, count) CHAR * oobdata; int count; {
 }
 #ifndef TCPIPLIB
 static SIGTYP
-rlogoobh(sig) int sig; {
+#ifdef CK_ANSIC
+rlogoobh( int sig )
+#else
+rlogoobh(sig) int sig;
+#endif /* CK_ANSIC */
+{
 #ifdef SOLARIS
     char                                /* Or should it be char for all? */
 #else
@@ -10996,7 +11091,12 @@ http_close()
  */
 
 int
-http_tol(s,n) CHAR *s; int n; {
+#ifdef CK_ANSIC
+http_tol( CHAR *s, int n )
+#else
+http_tol(s,n) CHAR *s; int n;
+#endif /* CK_ANSIC */
+{
     int count = 0;
     int len = n;
     int try = 0;
@@ -11179,7 +11279,12 @@ http_tol(s,n) CHAR *s; int n; {
 }
 
 int
-http_inc(timo) int timo; {
+#ifdef CK_ANSIC
+http_inc( int timo )
+#else
+http_inc(timo) int timo;
+#endif /* CK_ANSIC */
+{
     int x=-1; unsigned char c;             /* The locals. */
 
     if (httpfd == -1) {
@@ -13391,12 +13496,17 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
 
 /* 1 is success, 0 is failure */
 int
+#ifdef CK_ANSIC
+locate_srv_dns(char *host, char *service, char *protocol,
+               struct sockaddr **addr_pp, int *naddrs )
+#else
 locate_srv_dns(host, service, protocol, addr_pp, naddrs)
     char *host;
     char *service;
     char *protocol;
     struct sockaddr **addr_pp;
     int *naddrs;
+#endif /* CK_ANSIC */
 {
     int nout, j, count;
     union {
@@ -13660,9 +13770,11 @@ locate_srv_dns(host, service, protocol, addr_pp, naddrs)
 #define NTOHSP(x, y) x[0] << 8 | x[1]; x += y
 
 int
-locate_txt_rr(prefix, name, retstr)
-    char *prefix, *name;
-    char **retstr;
+#ifdef CK_ANSIC
+locate_txt_rr( char *prefix, char *name, char **retstr )
+#else
+locate_txt_rr(prefix, name, retstr) char *prefix, *name; char **retstr;
+#endif /* CK_ANSIC */
 {
     union {
         unsigned char bytes[2048];
@@ -13805,6 +13917,8 @@ locate_txt_rr(prefix, name, retstr)
 static SIGTYP rlogoobh( int );
 static int rlog_oob( CHAR *, int );
 #endif /* CK_ANSIC */
+
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 int
 fwdx_create_listen_socket(screen) int screen; {

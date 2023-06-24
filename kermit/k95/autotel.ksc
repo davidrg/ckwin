@@ -1,0 +1,93 @@
+; Illustration of scripted Telnet login using K95 1.1.19.
+;
+; Optional command-line parameters:
+;  1. Hostname or address
+;  2. Username on host
+;  3. Password on host
+;
+; Parameters not supplied are prompted for.
+; Uses Telnet port only since a login dialog is assumed.
+; Write a different script for accessing non-Telnet ports.
+;
+; WARNING: This is just an illustration.  It works with most servers,
+; but is not general enough to work with all.  Prompts might be different,
+; some terminal-related escape sequences might need to be exchanged, etc.
+; See Chapter 19 of "Using C-Kermit" for details.
+;
+define badversion echo Sorry - K95 1.1.19 or later required., exit
+if not equal "\v(program)" "C-Kermit" badversion
+if < \v(xversion) 1119 badversion
+
+check network
+if fail stop 1 { Sorry, this version of Kermit does not support TCP/IP.}
+set network type tcp/ip
+if fail stop 1 { Sorry, this version of Kermit does not support TCP/IP.}
+
+while not def \%1 {                    ; If hostname/address not supplied
+    ask \%1 { Host: }                  ; prompt for one until we get it.
+    if > \fsplit(\%1) 1 {              ; Allow only one "word" here.
+        echo Just the address please.  ; E.g. no TCP port number.
+        undef \%1
+    }
+}
+if not def \%2 {                       ; If username not supplied
+    ask \%2 { User [\v(user)]: }       ; Prompt for one, but default
+    if not def \%2 assign \%2 \v(user) ; to local user ID.
+}
+set telnet environment user \%2        ; Make sure correct userid is sent
+
+; To force the remote host to issue a login (username) prompt, uncomment
+; the following command:
+;
+;;; set login userid
+
+; This script assumes that authenticated logins are not being performed
+; via Kerberos, SRP, or any other supported method.
+
+set telopt start-tls refuse            ; Do not use START_TLS option
+set telopt authentication refuse       ; Do not use AUTH option
+set telopt encrypt refuse refuse       ; Do not use ENCRYPT option
+
+echo Connecting to \%1 as user \%2...
+
+set host \%1 23 /telnet                ; Force Telnet protocol negotiations
+if fail stop 1 Can't open Telnet connection to \%1.
+
+; Prompt for password if necessary but only after connection is made
+; (because there's no point in asking for it if the connection failed).
+
+while not defined \%3 {
+    askq \%3 { Password for \%2 at \%1: }
+}
+set input echo off                     ; Don't echo scripted interactions.
+
+; Note that some Telnet servers get your user ID automatically in Telnet
+; negotiations and so only prompt for Password:, so look for both at once.
+; Also allow username prompt to be "login:" (UNIX) or "Username:" (VMS).
+; Also allow for the fact that some servers prompt "Password for <username>:",
+; whereas most others prompt just "Password:".
+;
+minput 20 login: Username: Password: {Password for \%2:}
+if fail stop 1 Timed out waiting for initial prompt: \v(inwait) sec.
+if ( = \v(minput) 1 || = \v(minput) 2 ) {
+    lineout \%2                        ; User ID required - send it.
+    minput 10 Password: {Password for \%2:}
+    if fail stop 1 Timed out waiting for Password prompt: \v(inwait) sec.
+}
+lineout \%3                            ; Send password
+undef \%3                              ; Erase password from memory
+;; set exit on-disconnect on           ; Exit automatically if connection lost.
+
+; The CONNECT command sends you online for an interactive session.  Instead
+; of CONNECT, you can substitute additional scripting for automation of any
+; interactions you would do by hand: use INPUT, OUTPUT, IF FAIL (or IF
+; SUCCESS), and other scripting commands for this.  In a common example,
+; you can start a Kermit server on the remote end and then transfer and/or
+; manage remote files from this script.
+
+connect
+
+; At this point, escaping back while the connection is open will give you
+; the K-95> command prompt unless you include additional commands below.
+
+End ; of Kermit sample Telnet script.

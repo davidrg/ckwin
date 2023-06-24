@@ -124,11 +124,31 @@ SET SSH
 
 ## Supported Authentication Methods
 
-At this time password, public key and keyboard interactive authentication are 
-implemented and work.
+At this time password, public key, gssapi-mic and keyboard interactive 
+authentication are implemented and work.
 
-There is not yet support for using ssh agents or GSSAPI (Kerberos)
-authentication but as both of these are supported by the ssh backend used by
-C-Kermit support for these may appear in a future release.
+There is not yet support for using ssh agents but as this is supported by the 
+ssh backend used by C-Kermit support for these may appear in a future release.
+
+### Using gssapi-mic (Kerberos) authentication
+
+Standard x86 and x86-64 builds of C-Kermit for Windows supporting SSH include
+two versions of the SSH backend, ssh.dll and ssh-gssapi.dll. The default SSH 
+backend, ssh.dll, *does not* support GSSAPI authentcation.
+
+To use GSSAPI authentication you must rename ssh.dll to something else, then
+rename ssh-gssapi.dll to ssh.dll:
+```
+ren ssh.dll ssh.dll.bak
+ren ssh-gssapi.dll ssh.dll
+```
+
+You must also [Download and Install Kerberos for Windows from MIT](http://web.mit.edu/kerberos/dist/index.html).
+C-Kermit for Windows will not start with the GSSAPI-supporting ssh.dll without
+this installed. If you later uninstall Kerberos for Windows you'll need to swap
+the SSH DLLs back around again.
+
+GSSAPI authenticatino is not currently supported on non-x86 builds of CKW as
+current versions of Kerberos for Windows are only availbale for x86.
 
 [^1]: https://libssh.org

@@ -72,6 +72,8 @@ _PROTOTYP( static VOID concld, (void) );
 #include "ckcxla.h"			/* Character set translation */
 #endif /* NOCSETS */
 
+#include "ckcfnp.h"                     /* Prototypes (must be last) */
+
 /* Internal function prototypes */
 
 _PROTOTYP( VOID ttflux, (void) );

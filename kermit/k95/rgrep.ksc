@@ -1,0 +1,23 @@
+# Synopsis:      Recursive "grep" (search for pattern in files).
+# Instructsions: TAKE this file, which defines the RGREP macro.
+# Usage:         rgrep {<pattern>} {<filespec>}
+# Requires:      C-Kermit 7.0 later or K95 1.1.19 or later
+# Illustrates:   Recursive directory traversal, pattern matching.
+# Author:        F. da Cruz
+#                The Kermit Project, Columbia University
+#                July 1999; Updated Feb 2000 for K95.
+#
+# Both pattern and filespec may contain metacharacters.
+#
+define RGREP {
+    local f \%n \%i \&a[]
+    if < \v(argc) 2 stop 1 Usage: \%0 pattern [ filespec ]
+    if < \v(argc) 3 .\%2 = *
+    if > \v(argc) 3 echo Warning: Extra paramaters ignored: \%3...
+    .\%n := \frfiles(\fcont(\%2),&a) ; Recursive file list
+    for \%i 1 \%n 1 {                ; For each file
+	.f := \fcont(\&a[\%i])       ; List matching lines
+	type /nopage /match:{*\%1*} /prefix:{\m(f): } \m(f)
+    }
+    echo Use Page Up (\\Kupscn) to view material that scrolled off screen...
+}

@@ -32,6 +32,9 @@
 #ifdef NT
 #define sock_errno WSAGetLastError
 #define soclose closesocket
+#ifdef __GNUC__
+#define _Inline static
+#endif /* __GNUC__ */
 #endif 
 
 _Inline void tcp_open(void) {

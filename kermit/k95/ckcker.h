@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022
+  Copyright (C) 1985, 2023
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -768,6 +768,10 @@ extern int tcp_incoming;		/* Used by ENABLE macro */
 
 /* These are from the book */
 
+#ifndef SP
+#define SP 32
+#endif  /* SP */
+
 #define tochar(ch)  (((ch) + SP ) & 0xFF )	/* Number to character */
 #define xunchar(ch) (((ch) - SP ) & 0xFF )	/* Character to number */
 #define ctl(ch)     (((ch) ^ 64 ) & 0xFF )	/* Control/Uncontrol toggle */
@@ -1188,7 +1192,7 @@ _PROTOTYP(int slotdir, (char *, char *));
 
 _PROTOTYP( int input, (void) );
 _PROTOTYP( int inibufs, (int, int) );
-_PROTOTYP( int makebuf, (int, int, CHAR [], struct pktinfo *) );
+/* _PROTOTYP( int makebuf, (int, int, CHAR [], struct pktinfo *) ); */
 _PROTOTYP( int mksbuf, (int) );
 _PROTOTYP( int mkrbuf, (int) );
 _PROTOTYP( int spack, (char, int, int, CHAR *) );
@@ -1331,11 +1335,8 @@ _PROTOTYP( VOID ckhost, (char *, int) );
 _PROTOTYP( int gettcs, (int, int) );
 _PROTOTYP( VOID getdialenv, (void) );
 _PROTOTYP( VOID setprefix, (int) );
-_PROTOTYP(VOID initproto,(int,char *,char *,char *,char *,char *,char*,char*));
 _PROTOTYP( VOID initpat, (void) );
 _PROTOTYP( VOID initcsets, (void) );
-_PROTOTYP( char * getsysid, (char *) );
-_PROTOTYP( int getsysix, (char *) );
 #ifdef CK_TIMERS
 _PROTOTYP( VOID rttinit, (void) );
 _PROTOTYP( int getrtt, (int, int) );
@@ -1424,7 +1425,7 @@ struct urldata {
     int    nopts;               /* number of options */
     struct urlopt opt[MAX_URL_OPTS];   /* options */
 };
-_PROTOTYP(int urlparse, (char *, struct urldata *));
+/* _PROTOTYP(int urlparse, (char *, struct urldata *)); */
 #endif /* CK_URL */
 
 #endif /* CKCKER_H */

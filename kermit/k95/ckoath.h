@@ -319,9 +319,14 @@ long ck_krb_rd_safe(char * in, unsigned long in_length,
 #define krb5_mk_priv                              ck_krb5_mk_priv
 #define krb5_auth_con_setuseruserkey              ck_krb5_auth_con_setuseruserkey
 #define krb5_read_message                         ck_krb5_read_message
+
+/* These three functions only exist in ckoath.c when KRB5_BETATEST is defined,
+ * which it never is in any known build configuration. These functions have
+ * build issues with KFW 4.x. */
 #define krb5_get_profile                          ck_krb5_get_profile
 #define profile_get_relation_names                ck_profile_get_relation_names
 #define profile_get_subsection_names              ck_profile_get_subsection_names
+
 #define krb5_free_keyblock_contents               ck_krb5_free_keyblock_contents
 #define krb5_c_encrypt                            ck_krb5_c_encrypt
 #define krb5_c_decrypt                            ck_krb5_c_decrypt
@@ -407,6 +412,7 @@ long ck_krb_rd_safe(char * in, unsigned long in_length,
 #define krb5_kt_end_seq_get                       ck_krb5_kt_end_seq_get
 #define krb5_build_principal                      ck_krb5_build_principal
 
+/* Only if KRB524_CONV */
 #define krb524_init_ets                           ck_krb524_init_ets
 #define krb524_convert_creds_kdc                  ck_krb524_convert_creds_kdc
 
@@ -873,6 +879,9 @@ krb5_error_code ck_krb5_read_message
         krb5_pointer,
         krb5_data *);
 
+#ifdef KRB5_BETATEST
+/* Not currently used (KRB5_BETATEST is never defined for any UNIX, Windows or
+ * OS/2 targe) */
 krb5_error_code ck_krb5_get_profile
 (krb5_context, profile_t *);
 
@@ -881,6 +890,7 @@ long ck_profile_get_relation_names
 
 long ck_profile_get_subsection_names
 (profile_t profile, const char **names, char ***ret_names);
+#endif
 
 void ck_krb5_free_keyblock_contents
 (krb5_context, krb5_keyblock FAR *);
@@ -1000,9 +1010,11 @@ krb5_error_code ck_krb5_build_principal
           krb5_const char *,krb5_const char *,krb5_const char *);
 
 #ifdef MAP_KRB4
+#ifdef KRB524_CONV
 int ck_krb524_init_ets(krb5_context context);
 int ck_krb524_convert_creds_kdc(krb5_context context, krb5_creds *v5creds,
                                 LEASH_CREDENTIALS *v4creds);
+#endif /* KRB524_CONV */
 #endif /* MAP_KRB4 */
 #endif /* MAP_KRB5 */
 
@@ -1028,6 +1040,12 @@ int ck_krb524_convert_creds_kdc(krb5_context context, krb5_creds *v5creds,
 #define gss_acquire_cred         ck_gss_acquire_cred
 #define gss_display_name         ck_gss_display_name
 #define gss_get_mic              ck_gss_get_mic
+
+#define gss_mech_krb5            ck_gss_mech_krb5
+#define gss_mech_krb5_old        ck_gss_mech_krb5_old
+#define gss_mech_krb5_v2         ck_gss_mech_krb5_v2
+#define gss_nt_krb5_name         ck_gss_nt_krb5_name
+#define gss_nt_krb5_principal    ck_gss_nt_krb5_principal
 
 unsigned long ck_gss_release_buffer
     ( unsigned long *, gss_buffer_t );

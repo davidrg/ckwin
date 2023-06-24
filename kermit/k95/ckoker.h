@@ -11,11 +11,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _SIZE_T_DEFINED
 #ifdef _WIN64
 typedef unsigned __int64 size_t;
 #else  /* _WIN64 */
 typedef unsigned int size_t;
 #endif  /* _WIN64 */
+#define _SIZE_T_DEFINED
+#endif /* _SIZE_T_DEFINED */
 
 /* Like malloc, but calls fatal() if out of memory. */
 void   *kmalloc(size_t size);
@@ -42,17 +45,23 @@ char   *kstrdup(const char *str);
 #define strupr _strupr
 #define close _close
 #ifndef __WATCOMC__
+#ifndef __GNUC__
 #define stat _stat
+#endif /* __GNUC__ */
 #define fileno _fileno
+#ifndef __GNUC__
 #define fstat _fstat
 #define ftime _ftime
+#endif /* __GNUC__ */
 #define getpid _getpid
 #endif /* __WATCOMC__ */
 #define sys_errlist _sys_errlist
 #define unlink _unlink
 #define write _write
 #define creat _creat
+#ifndef __GNUC__
 #define utime _utime
+#endif /* __GNUC__ */
 #define mktemp _mktemp
 #define strnicmp _strnicmp
 #define read _read

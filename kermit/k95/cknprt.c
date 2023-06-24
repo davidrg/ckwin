@@ -14,6 +14,10 @@
 HANDLE hPrinter=NULL;
 DWORD  dwJob=0;
 
+typedef BOOL (WINAPI * p_GetDefaultPrinter_t)( LPTSTR pszBuffer,   // printer name buffer
+LPDWORD pcchBuffer  // size of name buffer
+);
+
 int
 Win32PrtOpen( char * prtname )
 {
@@ -256,8 +260,8 @@ Win32EnumPrt( struct keytab ** pTable, struct keytab ** pTable2,
         if ( hWinSpool == INVALID_HANDLE_VALUE )
             hWinSpool = LoadLibrary("winspool.drv");
         if ( hWinSpool != INVALID_HANDLE_VALUE )
-            (FARPROC) p_GetDefaultPrinter =
-                GetProcAddress( hWinSpool, "GetDefaultPrinterA" );
+            p_GetDefaultPrinter =
+                (p_GetDefaultPrinter_t)GetProcAddress( hWinSpool, "GetDefaultPrinterA" );
     }
 
     if ( p_GetDefaultPrinter ) {
