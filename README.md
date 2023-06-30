@@ -21,7 +21,7 @@ visit the [C-Kermit for Windows Beta website](https://www.kermitproject.org/ckw1
 This software is currently based on C-Kermit version 10.0 Beta.09 of
 9-MAY-2023 and is available under the 3-clause BSD license.
 
-![Screenshot](doc/screenshot-w10.png)
+![Screenshot](doc/screenshot-w11.png)
 
 Requirements
 ------------
