@@ -55,12 +55,51 @@ jobs:
 
           New-Item ca_certs.readme
           Set-Content ca_certs.readme $readme
+          dir
         shell: powershell
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: ca_certs
-          path: ca_certs.pem ca_certs.readme
+          path: |
+            *.pem
+            *.readme
+          retention-days: 1
+
+  Prepare-Docs:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: HTMLise Markdown Docs
+        run: |
+          pip3 install markdown
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+          echo ^<body^>
+          ) > ssh-readme.html
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+          echo ^<body^>
+          ) > change-log.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> ssh-readme.html
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: markdown-docs
+          path: ssh-readme.html change-log.html
           retention-days: 1
 
   ##############################################################################
@@ -71,7 +110,7 @@ jobs:
   # and ARM64.
   Build-VisualCxx:
     runs-on: windows-latest
-    needs: Get-CACerts-Bundle
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
         arch:
@@ -391,32 +430,44 @@ jobs:
         name: ca_certs
         path: ${{ github.workspace }}\kermit\k95\dist
       
-    - name: HTMLise Markdown Docs
-      run: |
-        pip3 install markdown
-        (
-        echo ^<html^>
-        echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
-        echo ^<body^>
-        ) > ssh-readme.html
-        (
-        echo ^<html^>
-        echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
-        echo ^<body^>
-        ) > change-log.html
-        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
-        (
-        echo ^</body^>
-        echo ^</html^>
-        ) >> change-log.html
-        (
-        echo ^</body^>
-        echo ^</html^>
-        ) >> ssh-readme.html
+#    - name: HTMLise Markdown Docs
+#      run: |
+#        pip3 install markdown
+#        (
+#        echo ^<html^>
+#        echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+#        echo ^<body^>
+#        ) > ssh-readme.html
+#        (
+#        echo ^<html^>
+#        echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+#        echo ^<body^>
+#        ) > change-log.html
+#        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+#        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+#        (
+#        echo ^</body^>
+#        echo ^</html^>
+#        ) >> change-log.html
+#        (
+#        echo ^</body^>
+#        echo ^</html^>
+#        ) >> ssh-readme.html
+#      shell: cmd
+#      working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+    - name: Fetch Docs
+      uses: actions/download-artifact@v3
+      with:
+        name: markdown-docs
+        path: ${{ github.workspace }}\kermit\k95\dist
+
+    # ARM builds don't currently include SSH so don't need the SSH Readme
+    - name: Remove SSH Readme
+      if: matrix.arch == 'x64_arm'
+      run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
       shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95\dist
-      
+
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -438,6 +489,7 @@ jobs:
   # OpenSSL 1.1.1s is supported however.
   Build-PSDK71:
     runs-on: windows-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
         arch:
@@ -645,48 +697,65 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
-      - name: Fetch CA Certs bundle
-        run: |
-          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
-          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
-          
-          $readme = @"
-          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
-          under the MPL version 2.0.
-          
-          For more information and updates, see: https://curl.se/docs/caextract.html
-          "@
-          
-          New-Item ca_certs.readme
-          Set-Content ca_certs.readme $readme
-        shell: powershell
-        working-directory: ${{ github.workspace }}\kermit\k95\dist
+#      - name: Fetch CA Certs bundle
+#        run: |
+#          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+#          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+#
+#          $readme = @"
+#          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+#          under the MPL version 2.0.
+#
+#          For more information and updates, see: https://curl.se/docs/caextract.html
+#          "@
+#
+#          New-Item ca_certs.readme
+#          Set-Content ca_certs.readme $readme
+#        shell: powershell
+#        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
-      - name: HTMLise Markdown Docs
-        run: |
-          pip3 install markdown
-          (
-          echo ^<html^>
-          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
-          echo ^<body^>
-          ) > ssh-readme.html
-          (
-          echo ^<html^>
-          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
-          echo ^<body^>
-          ) > change-log.html
-          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
-          (
-          echo ^</body^>
-          echo ^</html^>
-          ) >> change-log.html
-          (
-          echo ^</body^>
-          echo ^</html^>
-          ) >> ssh-readme.html
+      - name: Fetch CA Certs bundle
+        uses: actions/download-artifact@v3
+        with:
+          name: ca_certs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+#      - name: HTMLise Markdown Docs
+#        run: |
+#          pip3 install markdown
+#          (
+#          echo ^<html^>
+#          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+#          echo ^<body^>
+#          ) > ssh-readme.html
+#          (
+#          echo ^<html^>
+#          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+#          echo ^<body^>
+#          ) > change-log.html
+#          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+#          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+#          (
+#          echo ^</body^>
+#          echo ^</html^>
+#          ) >> change-log.html
+#          (
+#          echo ^</body^>
+#          echo ^</html^>
+#          ) >> ssh-readme.html
+#        shell: cmd
+#        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      # Builds with Visual C++ 2010 don't support SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Prepare Artifact
         shell: cmd
@@ -709,7 +778,7 @@ jobs:
   # which reduces the likelihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
     runs-on: windows-latest
-
+    needs: Prepare-Docs
     steps:
     - uses: actions/checkout@v3
 
@@ -812,6 +881,18 @@ jobs:
       run: |
         move dist ${{ github.workspace }}\ckwin
         move ..\dialer\dist ${{ github.workspace }}\dialer
+
+    - name: Fetch Docs
+      uses: actions/download-artifact@v3
+      with:
+        name: markdown-docs
+        path: ${{ github.workspace }}\ckwin
+
+      # OpenWatcom builds don't include SSH so don't need the SSH Readme
+    - name: Remove SSH Readme
+      run: del ${{ github.workspace }}\ckwin\ssh-readme.html
+      shell: cmd
+
     - name: Upload CKW Artifact
       uses: actions/upload-artifact@v3.1.1
       with:
@@ -829,6 +910,7 @@ jobs:
 
   Build-OpenWatcom19-Win32-NT-legacy:
     runs-on: windows-latest
+    needs: Prepare-Docs
 
     steps:
       - uses: actions/checkout@v3
@@ -897,6 +979,18 @@ jobs:
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\ckwin
+
+        # OpenWatcom builds don't include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        run: del ${{ github.workspace }}\ckwin\ssh-readme.html
+        shell: cmd
+
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
@@ -1026,6 +1120,7 @@ jobs:
   # https://epics.anl.gov/base/msvctk.php
   Build-VCT2003-PSDK2003:
     runs-on: windows-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
         # Do a build using ancient and insecure libraries like libsrp, k4w
@@ -1314,12 +1409,31 @@ jobs:
           if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
           if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
 
+      - name: Fetch CA Certs bundle
+        if: matrix.legacy_dependencies == 'yes'
+        uses: actions/download-artifact@v3
+        with:
+          name: ca_certs
+          path: ${{ github.workspace }}\kermit\k95\dist
 
-      - name: HTMLise Markdown Docs
-        run: |
-          pip3 install markdown
-          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
-        working-directory: ${{ github.workspace }}\kermit\k95\dist                  
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      # Builds with Visual C++ 2003 include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        if: matrix.arch == 'x64_arm'
+        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        shell: cmd
+
+#      - name: HTMLise Markdown Docs
+#        run: |
+#          pip3 install markdown
+#          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
+#        working-directory: ${{ github.workspace }}\kermit\k95\dist
+#
           
       - name: Prepare Artifact
         shell: cmd
@@ -1351,6 +1465,7 @@ jobs:
   #
   Build-PSDK2003SP1-IA64:
     runs-on: windows-latest
+    needs: Prepare-Docs
 
     steps:
       - uses: actions/checkout@v3
@@ -1452,11 +1567,23 @@ jobs:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
 
-      - name: HTMLise Markdown Docs
-        run: |
-          pip3 install markdown
-          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
-        working-directory: ${{ github.workspace }}\kermit\k95\dist
+#      - name: HTMLise Markdown Docs
+#        run: |
+#          pip3 install markdown
+#          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
+#        working-directory: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      # Builds with Visual C++ 2005 don't include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        if: matrix.arch == 'x64_arm'
+        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        shell: cmd
 
       - name: Prepare Artifact
         shell: cmd
@@ -1479,6 +1606,7 @@ jobs:
   #
   Build-MinGW64-Linux:
     runs-on: ubuntu-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
 
     steps:
       - uses: actions/checkout@v3
@@ -1529,6 +1657,24 @@ jobs:
             bash ./mkdist.sh
             popd
             mv kermit/k95/ckwin ./
+
+      - name: Fetch CA Certs bundle
+        uses: actions/download-artifact@v3
+        with:
+          name: ca_certs
+          path: ${{ github.workspace }}/ckwin
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}/ckwin
+
+      # We're not currently building libssh on linux so remove the ssh readme
+      - name: Remove SSH Readme
+        run: rm ${{ github.workspace }}/ckwin/ssh-readme.html
+        shell: bash
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         with:
