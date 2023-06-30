@@ -38,6 +38,31 @@ env:
   JOM: https://download.qt.io/official_releases/jom/jom.zip
 
 jobs:
+  Get-CACerts-Bundle:
+    runs-on: windows-latest
+    steps:
+      - name: Fetch CA Certs bundle
+        run: |
+          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+
+          $readme = @"
+          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+          under the MPL version 2.0.
+
+          For more information and updates, see: https://curl.se/docs/caextract.html
+          "@
+
+          New-Item ca_certs.readme
+          Set-Content ca_certs.readme $readme
+        shell: powershell
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ca_certs
+          path: ca_certs.pem ca_certs.readme
+          retention-days: 1
+
   ##############################################################################
   # Build with Visual C++ 14.x (2015/2017/2019/2022)                           #
   ##############################################################################
@@ -46,6 +71,7 @@ jobs:
   # and ARM64.
   Build-VisualCxx:
     runs-on: windows-latest
+    needs: Get-CACerts-Bundle
     strategy:
       matrix:
         arch:
@@ -342,22 +368,28 @@ jobs:
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh.dll ssh-gssapi.dll
         
 
+#    - name: Fetch CA Certs bundle (x)
+#      run: |
+#        wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+#        wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+#
+#        $readme = @"
+#        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+#        under the MPL version 2.0.
+#
+#        For more information and updates, see: https://curl.se/docs/caextract.html
+#        "@
+#
+#        New-Item ca_certs.readme
+#        Set-Content ca_certs.readme $readme
+#      shell: powershell
+#      working-directory: ${{ github.workspace }}\kermit\k95\dist
+
     - name: Fetch CA Certs bundle
-      run: |
-        wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
-        wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
-        
-        $readme = @"
-        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
-        under the MPL version 2.0.
-        
-        For more information and updates, see: https://curl.se/docs/caextract.html
-        "@
-        
-        New-Item ca_certs.readme
-        Set-Content ca_certs.readme $readme
-      shell: powershell
-      working-directory: ${{ github.workspace }}\kermit\k95\dist
+      uses: actions/download-artifact@v3
+      with:
+        name: ca_certs
+        path: ${{ github.workspace }}\kermit\k95\dist
       
     - name: HTMLise Markdown Docs
       run: |
