@@ -1,7 +1,7 @@
 /*
   C K U A T 2 . H  --  Kerberos headers for C-Kermit
 
-  Copyright (C) 1985, 2009,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -10,6 +10,7 @@
     Kerberos IV and V intergration.
     Jeffrey E Altman (jaltman@secure-endpoints.com)
     Secure Endpoints Inc., New York City
+    Last update: 23 June 2023, David Goodwin
 */
 /*
  * Based on a concatenation of all necessary include files distributed with

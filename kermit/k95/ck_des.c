@@ -1,7 +1,7 @@
 /*
   C K _ D E S . C  -  libDES interface for Kermit 95"
 
-  Copyright (C) 1998, 2001, Trustees of Columbia University in the City of New
+  Copyright (C) 1998, 2023, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial

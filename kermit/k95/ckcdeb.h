@@ -5187,6 +5187,22 @@ struct zfnfp {
 #endif /* OS2 */
 #endif /* VMS */
 
+/* Systems that support builtin variable "exedir", use getexedir() function */
+
+#ifdef OS2
+#define HAVE_VN_EXEDIR
+#else /* def OS2 */
+#ifdef UNIX
+#define GETEXEDIR
+#define HAVE_VN_EXEDIR
+#else /* def UNIX */
+#ifdef VMS
+#define GETEXEDIR
+#define HAVE_VN_EXEDIR
+#endif /* def VMS */
+#endif /* def UNIX [else] */
+#endif /* def OS2 [else] */
+
 /* LABELED FILE options bitmask */
 
 #ifdef VMS				/* For VMS */

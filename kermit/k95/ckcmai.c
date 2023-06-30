@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "23 Jun 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230623"          /* Keep them in sync */
-/* Fri Jun 23 10:48:35 2023 */
+#define EDITDATE  "28 Jun 2023"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20230628"          /* Keep them in sync */
+/* Wed Jun 28 07:50:55 2023 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -3148,9 +3148,9 @@ MAINNAME( argc, argv ) int argc; char **argv;
 	h = homepath();
 	if (h) ckstrncpy(homedirpath,h,CKMAXPATH);
     }
-#ifdef UNIX
+#ifdef GETEXEDIR
     getexedir();                        /* Compute exedir variable */
-#endif /* UNIX */
+#endif /* def GETEXEDIR */
 
 #ifdef CKSYSLOG
 #ifdef SYSLOGLEVEL
