@@ -99,7 +99,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: markdown-docs
-          path: ssh-readme.html change-log.html
+          path: |
+            change-log.html
+            ssh-readme.html
           retention-days: 1
 
   ##############################################################################
