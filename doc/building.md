@@ -154,6 +154,37 @@ following files:
 
 All files are required for the dialer to work normally.
 
+### ctl3d32.dll Installation Procedure
+When built with Visual C++ 6.0 or older the dialer relies on ctl3d32 to get the Windows 95
+look and feel (rather than the "16bit app on Windows 95" look and feel). Ctl3d32 is not
+available for OpenWatcom or newer versions of Visual C++ so when built with these the dialer
+will have the 2D "16bit app on Windows 95" look.
+
+In order to be used ctl3d32.dll *must* be installed correctly on the users machine - it can't
+simply be distributed in the CKW folder like other DLLs. To further complicate matters, there
+are two different versions of ctl3d32 and the correct one for the users operating system must
+be installed. The ANSI version is for Windows 95/98/ME and the Unicode version is for 
+Windows NT and its descendants (including Windows Xp/7/8/10/11).
+
+You can get both versions of Ctl3d32 from your Visual C++ CD-ROM:
+
+| Visual C++ Version | ANSI (for 95/98/ME)                     | Unicode (for NT/2000/XP/Vista/7/8/10/11) |
+|--------------------|-----------------------------------------|------------------------------------------|
+| Visual C++ 6.0     | `\VC98\REDIST\ANSI\CTL3D32.DLL`         | `\VC98\REDIST\CTL3D32.DLL`               |
+| Visual C++ 5.0     | `\DEVSTUDIO\VC\REDIST\ANSI\CTL3D32.DLL` | `\DEVSTUDIO\VC\REDIST\CTL3D32.DLL`       |
+| Visual C++ 4.x     | `\MSDEV\REDIST\ANSI\CTL3D32.DLL`        | `\MSDEV\REDIST\CTL3D32.DLL`              |
+| Visual C++ 2.x     | `\MSVC20\REDIST\ANSI\CTL3D32.DLL`       | `\MSVC20\REDIST\CTL3D32.DLL`             |
+
+The appropriate version of ctl3d32.dll can be installed on the users machine using `ctl3dins.exe`
+which is produced as part of the standard CKW build procedure. This relies on having both versions of
+ctl3d32.dll present in the CKW folder alongside ctl3dins.exe. To use it, the ANSI version of ctl3d32.dll 
+must be renamed to `ctl3d95.dll` and the Unicode version to `ctl3dnt.dll`, then distribute them 
+alongside ctl3dins.exe with the rest of C-Kermit for Windows.
+
+When the user runs ctl3dins.exe if ctl3d32.dll isn't installed it will rename the appropriate
+version for the users operating system (ctl3dnt.dll or ctl3d95.dll) back to ctl3d32.dll and
+install it. If it was built with Visual C++ 2.0 it will also install msvcrt20.dll if necessary.
+
 ## Build k95cinit.exe (*very* optional)
 
 Historically Kermit 95 was, since v1.1.10, distributed with a utility called
