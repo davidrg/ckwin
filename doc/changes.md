@@ -220,7 +220,7 @@ slipping somewhat.
 
 ### Minor Enhancements and other changes:
 * Upgraded to zlib 1.2.13 fixing [CVE-2022-37434](https://nvd.nist.gov/vuln/detail/CVE-2022-37434)
-* Upgraded to openssl 1.1.1s
+* Upgraded to openssl 1.1.1u
 * The libssh version number is now included in the output of the `show ssh`
   command
 * The default k95custom.ini now sets the default browser to nothing which should
