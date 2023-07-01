@@ -79,6 +79,10 @@ extern int StartedFromDialer;
 #endif /* NT */
 #include "ckocon.h"
 #include "ckokey.h"
+#ifdef CRYPT_DLL
+/* For ck_crypt_dll_version */
+#include "ckoath.h"
+#endif
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */

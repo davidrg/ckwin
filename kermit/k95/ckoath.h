@@ -1335,4 +1335,9 @@ ntlm_reply(int how, unsigned char *data, int cnt);
 #endif /* NTLM */
 #endif /* NT */
 #endif /* MAP_NTLM */
+
+#ifdef CRYPT_DLL
+char* ck_crypt_dll_version();
+#endif /* CRYPT_DLL */
+
 #endif /* OS2 */
