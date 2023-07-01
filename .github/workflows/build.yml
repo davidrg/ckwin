@@ -1433,7 +1433,6 @@ jobs:
 
       # Builds with Visual C++ 2003 include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
-        if: matrix.arch == 'x64_arm'
         run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
         shell: cmd
 
