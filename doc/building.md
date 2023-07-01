@@ -130,7 +130,6 @@ runtime libraries should have already been copied there for you but if they
 weren't you'll need to grab `clbr19.dll mt719.dll plbr19.dll` from the watcom 
 `binnt` subdirectory.
 
-
 ## Build the Dialer (optional)
 
 To build the dialer, run `setenv.bat` as you normally would for building
@@ -219,3 +218,34 @@ required files to `\kermit\dialer\dist`
 
 If you don't have OpenZinc installed you may see a different message instructing
 you to build OpenZinc first - this will leave the current directory unchanged.
+
+# Improving build times
+
+C-Kermit for Windows uses nmake makefiles to build. nmake doesn't know how to
+schedule builds on more than one CPU so if you're building with Visual C++ on
+a computer with multiple processors you can reduce build times significantly
+by using a compatible build tool that *is* aware of multiple processors.
+
+[JOM](https://wiki.qt.io/Jom) is regularly tested with CKW and works well with
+all versions of Visual C++ (if you're building on a modern version of Windows).
+Just [Download](http://download.qt.io/official_releases/jom/jom.zip) and unzip it
+somewhere on your path, then before running `setenv.bat` run `set MAKE=jom`:
+
+```
+set PATH=%PATH%;C:\path\to\jom
+set MAKE=jom
+setenv.bat
+```
+
+You can also build recent versions of OpenSSL with JOM. Just add `-FS` to the end 
+of the Configure command and then run `jom` instead of `nmake`. For example:
+
+```
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13 -FS
+jom
+```
+
+Note that at the time of writing OpenSSL doesn't officially support JOM (see
+[this ticket](https://github.com/openssl/openssl/issues/9931)) so while it works
+fine with current released versions there is always the possibility of it breaking
+in the future.
