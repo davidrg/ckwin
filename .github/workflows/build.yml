@@ -16,7 +16,7 @@ env:
   ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 1.1.1s
-  # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
+  # Expected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
   LIBSSH_VERSION: 0.10.5
   # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
@@ -40,6 +40,7 @@ env:
   # supported if it breaks switch it to nmake
   OPENSSL_MAKE: jom
   # Any extra build flags for OpenSSL. -FS is required if using Jom.
+  # and -D"_WIN32_WINNT=0x502" is required for targeting Windows XP
   OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
 
 jobs:
@@ -417,56 +418,12 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       run: |
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh.dll ssh-gssapi.dll
-        
-
-#    - name: Fetch CA Certs bundle (x)
-#      run: |
-#        wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
-#        wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
-#
-#        $readme = @"
-#        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
-#        under the MPL version 2.0.
-#
-#        For more information and updates, see: https://curl.se/docs/caextract.html
-#        "@
-#
-#        New-Item ca_certs.readme
-#        Set-Content ca_certs.readme $readme
-#      shell: powershell
-#      working-directory: ${{ github.workspace }}\kermit\k95\dist
 
     - name: Fetch CA Certs bundle
       uses: actions/download-artifact@v3
       with:
         name: ca_certs
         path: ${{ github.workspace }}\kermit\k95\dist
-      
-#    - name: HTMLise Markdown Docs
-#      run: |
-#        pip3 install markdown
-#        (
-#        echo ^<html^>
-#        echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
-#        echo ^<body^>
-#        ) > ssh-readme.html
-#        (
-#        echo ^<html^>
-#        echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
-#        echo ^<body^>
-#        ) > change-log.html
-#        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-#        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
-#        (
-#        echo ^</body^>
-#        echo ^</html^>
-#        ) >> change-log.html
-#        (
-#        echo ^</body^>
-#        echo ^</html^>
-#        ) >> ssh-readme.html
-#      shell: cmd
-#      working-directory: ${{ github.workspace }}\kermit\k95\dist
 
     - name: Fetch Docs
       uses: actions/download-artifact@v3
@@ -711,54 +668,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
-#      - name: Fetch CA Certs bundle
-#        run: |
-#          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
-#          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
-#
-#          $readme = @"
-#          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
-#          under the MPL version 2.0.
-#
-#          For more information and updates, see: https://curl.se/docs/caextract.html
-#          "@
-#
-#          New-Item ca_certs.readme
-#          Set-Content ca_certs.readme $readme
-#        shell: powershell
-#        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Fetch CA Certs bundle
         uses: actions/download-artifact@v3
         with:
           name: ca_certs
           path: ${{ github.workspace }}\kermit\k95\dist
-
-#      - name: HTMLise Markdown Docs
-#        run: |
-#          pip3 install markdown
-#          (
-#          echo ^<html^>
-#          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
-#          echo ^<body^>
-#          ) > ssh-readme.html
-#          (
-#          echo ^<html^>
-#          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
-#          echo ^<body^>
-#          ) > change-log.html
-#          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-#          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
-#          (
-#          echo ^</body^>
-#          echo ^</html^>
-#          ) >> change-log.html
-#          (
-#          echo ^</body^>
-#          echo ^</html^>
-#          ) >> ssh-readme.html
-#        shell: cmd
-#        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Fetch Docs
         uses: actions/download-artifact@v3
@@ -1441,13 +1356,6 @@ jobs:
         run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
         shell: cmd
 
-#      - name: HTMLise Markdown Docs
-#        run: |
-#          pip3 install markdown
-#          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
-#        working-directory: ${{ github.workspace }}\kermit\k95\dist
-#
-
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
@@ -1579,12 +1487,6 @@ jobs:
         env:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
-
-#      - name: HTMLise Markdown Docs
-#        run: |
-#          pip3 install markdown
-#          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
-#        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Fetch Docs
         uses: actions/download-artifact@v3
