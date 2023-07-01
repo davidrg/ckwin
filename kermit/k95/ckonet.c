@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckonetv = "Win32 Network support, 8.0.071, 21 Apr 2004";
+char *ckonetv = "Win32 Network support, 10.0, 4 May 2023";
 #else /* NT */
 char *ckonetv = "OS/2 Network support, 8.0.071, 21 Apr 2004";
 #endif /* NT */

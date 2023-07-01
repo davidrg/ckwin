@@ -100,6 +100,8 @@ containing the correct values.
   builds only and others may or may not be present depending on the compiler
   used.
 * "show versions" now shows OS version more correctly
+* Updated the dates and version numbers for windows-specific entries in the 
+  "show versions" command
 * k95custom.ini is now distributed as k95custom.sample to prevent customised
   user files from being accidentally overwritten when upgrading. The default
   k95.ini will now rename k95custom.sample to k95custom.ini if it can't find

@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckxv = "Win32 Communications I/O, 8.0.229, 29 Dec 2005";
+char *ckxv = "Win32 Communications I/O, 10.0, 2 Jul 2023";
 #else
 char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #endif /* NT */

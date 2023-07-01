@@ -1,4 +1,4 @@
-char *cksshv = "SSH support, 10.0.0,  28 July 2022";
+char *cksshv = "SSH support, 10.0,  18 Apr 2023";
 /*
  *  C K O S S H . C --  SSH Subsystem Interface for C-Kermit
  *
