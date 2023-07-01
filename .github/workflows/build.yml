@@ -36,6 +36,11 @@ env:
   OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telnetpm.exe textps.exe
   # Use JOM instead of nmake for parallel builds
   JOM: https://download.qt.io/official_releases/jom/jom.zip
+  # Make tool for openssl builds - currently jom but as this isn't officially
+  # supported if it breaks switch it to nmake
+  OPENSSL_MAKE: jom
+  # Any extra build flags for OpenSSL. -FS is required if using Jom.
+  OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
 
 jobs:
   Get-CACerts-Bundle:
@@ -293,8 +298,8 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        jom
+        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}     
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
@@ -303,8 +308,8 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        jom
+        perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}     
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (ARM)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
@@ -313,8 +318,9 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        perl Configure VC-WIN32-ARM     
-        jom
+        perl Configure VC-WIN32-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+        
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (ARM-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
@@ -323,8 +329,8 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        perl Configure VC-WIN64-ARM     
-        jom
+        perl Configure VC-WIN64-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build libssh (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
@@ -609,13 +615,13 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
-          perl Configure VC-WIN64I
+          perl Configure VC-WIN64I ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
           
           REM The perl configure script doesn't work quite right for cross-compiling to IA64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
           sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:ia64/g" makefile
           
-          jom
+          ${{env.OPENSSL_MAKE}}
 
       - name: Build openssl (x86-64)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
@@ -627,13 +633,13 @@ jobs:
           cd openssl\${{env.OPENSSL_VERSION}}
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
-          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
+          perl Configure VC-WIN64A ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
           
           REM The perl configure script doesn't work quite right for cross-compiling to x64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
           sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:x64/g" makefile
           
-          jom
+          ${{env.OPENSSL_MAKE}}
 
       - name: Build openssl (x86)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
@@ -646,8 +652,8 @@ jobs:
           
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
-          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
-          jom
+          perl Configure VC-WIN32 ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+          ${{env.OPENSSL_MAKE}}
 
       - name: Build libdes
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
