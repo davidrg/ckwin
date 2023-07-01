@@ -1135,6 +1135,26 @@ getcpu( void )
             ckstrncat( buffer, numstr, 64 );
          }
          break;
+      case PROCESSOR_ARCHITECTURE_ALPHA64:
+          ckstrncpy( buffer, "alpha64-", 64 ) ;
+          switch ( si.wProcessorLevel ) {
+              default:
+                  _itoa( si.wProcessorLevel, numstr, 10 ) ;
+                  ckstrncat( buffer, numstr, 64 );
+          }
+          break;
+      case PROCESSOR_ARCHITECTURE_AMD64:
+          ckstrncpy( buffer, "x86-64", 64 ) ;
+          break;
+      case PROCESSOR_ARCHITECTURE_ARM:
+          ckstrncpy( buffer, "arm", 64 ) ;
+          break;
+      case PROCESSOR_ARCHITECTURE_ARM64:
+          ckstrncpy( buffer, "arm64", 64 ) ;
+          break;
+      case PROCESSOR_ARCHITECTURE_IA64:
+          ckstrncpy( buffer, "itanium", 64 ) ;
+          break;
 
       case PROCESSOR_ARCHITECTURE_UNKNOWN:
          ckstrncpy( buffer, "unknown", 64 ) ;
@@ -1614,6 +1634,7 @@ sysinit() {
 
             if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
 
+#ifndef CK_UTSNAME
             sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
                      ( osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ?
                        (osverinfo.dwMinorVersion == 0 ? "Windows 95" : "Windows 98")  :
@@ -1626,6 +1647,7 @@ sysinit() {
                      osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
                      osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
 #ifdef CK_UTSNAME
+#else /* CK_UTSNAME */
             if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
                 /* Windows 95 / 98 / ME */
                 sprintf(unm_nam, osverinfo.dwMinorVersion == 0 ? "Windows 95" :
@@ -1692,6 +1714,13 @@ sysinit() {
                      osverinfo.dwMajorVersion,
                      osverinfo.dwMinorVersion);
             sprintf(unm_ver,"(%1d)%s%s",
+                    LOWORD(osverinfo.dwBuildNumber),
+                    osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
+                    osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+            sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
+                    unm_nam,
+                    osverinfo.dwMajorVersion,
+                    osverinfo.dwMinorVersion,
                     LOWORD(osverinfo.dwBuildNumber),
                     osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
                     osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
