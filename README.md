@@ -152,10 +152,14 @@ C-Kermit for Windows at this time:
   OpenSSL includes SRP support now which is probably the way forward if CKW is 
   to ever include SRP support as standard again, but it would probably be a lot 
   of work to switch - see ticket #32 for more information
+* DNS-SRV (#205) - support for this previously came from wshelper, a part of
+  MIT Kerberos for Windows that was removed in 2018.
+* Kerberos IV support is not included in standard builds as current versions of
+  MIT Kerberos for Windows no longer support it. 
 
-Code to support Stanford SRP and old versions of OpenSSL still exists and should
-still work if there is some need for these features despite the known security 
-issues.
+Code to support Kerberos IV, Stanford SRP and old versions of OpenSSL still exists
+and should still work if there is some need for these features despite the known
+security issues.
 
 Compiling
 ---------

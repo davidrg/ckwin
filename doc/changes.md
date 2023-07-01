@@ -56,6 +56,7 @@ containing the correct values.
   see ssh-readme for more information)
 * Updated to C-Kermit 10 Beta.09
 * Updated to libssh 0.10.5
+* Updated to OpenSSL 1.1.1u
 
 ### Fixed Bugs
 * Fixed crash on startup under Crossover on MacOS and Wine on Linux
@@ -71,7 +72,7 @@ containing the correct values.
 * Fixed SSH bugs:
   * anonymous SSH (userauth none) doesn't work
   * buffer not flushed on logout
-  * fixed some (but not all) occurrances of a server disconnect not being
+  * fixed some (but not all) occurrences of a server disconnect not being
     detected
 * `set syslog` works again - this was accidentally removed in beta 4.
 * The colours in the dialer *GUI Settings* for the DEFAULT template
@@ -93,6 +94,7 @@ containing the correct values.
   * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
     escape sequence would incorrectly minimise the window
 * A sample IKSD initialisation script is now included in the distribution
+  Setup instructions are here: https://kermitproject.org/k95manual/wiksdadm.html
 * The "show features" command now includes the availability (or lack of) DECnet,
   SuperLAT and PTY support. Some of these are optional features for custom
   builds only and others may or may not be present depending on the compiler
@@ -118,7 +120,7 @@ containing the correct values.
   now build fine with TAPI disabled, PowerPC may also need debug logging turned
   off (`set CKF_DEBUG=no`). No one has tried building the dialer yet.
 * Fixed build issues with the DEC Alpha compiler in the NT 3.50 SDK. The linker
-  supplied in the SDK is not compatbile however.
+  supplied in the SDK is not compatible, however.
 * Ported to 64bit Windows
 * Added support for building for 64bit Windows on the DEC Alpha (AXP64 target)
 * Ported the core of the application to MinGW (GCC)
