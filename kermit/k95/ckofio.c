@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckzv = "Win32 File support, 8.0.187, 18 July 2004";
+char *ckzv = "Win32 File support, 10.0, 26 May 2023";
 #else /* NT */
 char *ckzv = "OS/2 File support, 8.0.187, 18 July 2004";
 #endif /* NT */

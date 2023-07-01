@@ -44,9 +44,9 @@ containing the correct values.
 
 ### New Features
 * Builds for 64bit Windows
-  * x86-64
-  * ARM64
-  * Itanium
+    * x86-64
+    * ARM64
+    * Itanium
 * Build for ARM32
 * Added TLS SNI support for the http and telnet clients
 * The old hostmode and other scripts are now included in the distribution with
@@ -56,6 +56,7 @@ containing the correct values.
   see ssh-readme for more information)
 * Updated to C-Kermit 10 Beta.09
 * Updated to libssh 0.10.5
+* Updated to OpenSSL 1.1.1u
 
 ### Fixed Bugs
 * Fixed crash on startup under Crossover on MacOS and Wine on Linux
@@ -69,10 +70,10 @@ containing the correct values.
 * Fixed entering plane-1 unicode values via Alt+n crashing the application (this
   bug was inherited from Kermit 95)
 * Fixed SSH bugs:
-  * anonymous SSH (userauth none) doesn't work
-  * buffer not flushed on logout
-  * fixed some (but not all) occurrances of a server disconnect not being
-    detected
+    * anonymous SSH (userauth none) doesn't work
+    * buffer not flushed on logout
+    * fixed some (but not all) occurrences of a server disconnect not being
+      detected
 * `set syslog` works again - this was accidentally removed in beta 4.
 * The colours in the dialer *GUI Settings* for the DEFAULT template
   automatically created when first run were completely wrong. This bug affected
@@ -85,31 +86,37 @@ containing the correct values.
 
 ### Minor Enhancements and other changes
 * The sample k95custom.ini file now sets:
-  * autodownload to "on" rather than "ask"
-  * resize mode to change terminal dimensions
-  * SSH heartbeat on
+    * autodownload to "on" rather than "ask"
+    * resize mode to change terminal dimensions
+    * SSH heartbeat on
 * New escape sequences in the terminal emulator
-  * `CSI 1 8 ; Ps ; Ps t` - get text area size in characters (xterm)
-  * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
-    escape sequence would incorrectly minimise the window
+    * `CSI 1 8 ; Ps ; Ps t` - get text area size in characters (xterm)
+    * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
+      escape sequence would incorrectly minimise the window
 * A sample IKSD initialisation script is now included in the distribution
+  Setup instructions are here: https://kermitproject.org/k95manual/wiksdadm.html
 * The "show features" command now includes the availability (or lack of) DECnet,
   SuperLAT and PTY support. Some of these are optional features for custom
   builds only and others may or may not be present depending on the compiler
   used.
+* "show versions" now shows OS version more correctly
+* Updated the dates and version numbers for windows-specific entries in the 
+  "show versions" command
 * k95custom.ini is now distributed as k95custom.sample to prevent customised
   user files from being accidentally overwritten when upgrading. The default
   k95.ini will now rename k95custom.sample to k95custom.ini if it can't find
   an existing k95custom.ini in any of the usual locations.
+* Updated the About dialog: xyzmodem and pathworks support are no longer guaranteed
+  to be missing.
 * Improvements to the terminal status line:
-  * Increasing the window width now gives more space to the hostname and protocol
-    fields
-  * If the hostname and protocol text are too long to fit, the exit text 
-    ("Command: Alt-X" by default) is hidden to make room
-  * Maximum length for exit text increased from 20 to 30 characters (where there 
-    is room to display it)
-  * When there is sufficient room available an extra two columns of padding is
-    inserted between the exit text and the hostname to match the other fields
+    * Increasing the window width now gives more space to the hostname and protocol
+      fields
+    * If the hostname and protocol text are too long to fit, the exit text 
+      ("Command: Alt-X" by default) is hidden to make room
+    * Maximum length for exit text increased from 20 to 30 characters (where there 
+      is room to display it)
+    * When there is sufficient room available an extra two columns of padding is
+      inserted between the exit text and the hostname to match the other fields
 
 ### Source Changes
 * Fixed build failure with Visual C++ 2017
@@ -118,7 +125,7 @@ containing the correct values.
   now build fine with TAPI disabled, PowerPC may also need debug logging turned
   off (`set CKF_DEBUG=no`). No one has tried building the dialer yet.
 * Fixed build issues with the DEC Alpha compiler in the NT 3.50 SDK. The linker
-  supplied in the SDK is not compatbile however.
+  supplied in the SDK is not compatible, however.
 * Ported to 64bit Windows
 * Added support for building for 64bit Windows on the DEC Alpha (AXP64 target)
 * Ported the core of the application to MinGW (GCC)

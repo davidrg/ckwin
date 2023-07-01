@@ -34,8 +34,83 @@ env:
   STANDARD_BUILD_OUTPUTS: k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll
   # And these are what we currently expect from standard builds for OS/2
   OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telnetpm.exe textps.exe
+  # Use JOM instead of nmake for parallel builds
+  JOM: https://download.qt.io/official_releases/jom/jom.zip
+  # Make tool for openssl builds - currently jom but as this isn't officially
+  # supported if it breaks switch it to nmake
+  OPENSSL_MAKE: jom
+  # Any extra build flags for OpenSSL. -FS is required if using Jom.
+  # and -D"_WIN32_WINNT=0x502" is required for targeting Windows XP
+  OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
 
 jobs:
+  Get-CACerts-Bundle:
+    runs-on: windows-latest
+    steps:
+      - name: Fetch CA Certs bundle
+        run: |
+          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
+          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
+
+          $readme = @"
+          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
+          under the MPL version 2.0.
+
+          For more information and updates, see: https://curl.se/docs/caextract.html
+          "@
+
+          New-Item ca_certs.readme
+          Set-Content ca_certs.readme $readme
+          dir
+        shell: powershell
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ca_certs
+          path: |
+            *.pem
+            *.readme
+            *.license
+          retention-days: 1
+
+  Prepare-Docs:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: HTMLise Markdown Docs
+        run: |
+          pip3 install markdown
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
+          echo ^<body^>
+          ) > ssh-readme.html
+          (
+          echo ^<html^>
+          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
+          echo ^<body^>
+          ) > change-log.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
+          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> change-log.html
+          (
+          echo ^</body^>
+          echo ^</html^>
+          ) >> ssh-readme.html
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: markdown-docs
+          path: |
+            change-log.html
+            ssh-readme.html
+          retention-days: 1
+
   ##############################################################################
   # Build with Visual C++ 14.x (2015/2017/2019/2022)                           #
   ##############################################################################
@@ -44,6 +119,7 @@ jobs:
   # and ARM64.
   Build-VisualCxx:
     runs-on: windows-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
         arch:
@@ -100,7 +176,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+kfw+ver2
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+kfw+ver2+jom2
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -175,6 +251,14 @@ jobs:
         dir
         cd ..
         
+        # Get and unpack JOM
+        mkdir jom
+        cd jom
+        wget ${{env.JOM}} -outfile jom.zip
+        7z x jom.zip
+        del *.zip
+        cd ..
+        
         # Get KFW
         echo Get KFW...
         mkdir kerberos
@@ -211,43 +295,44 @@ jobs:
 
     - name: Build openssl (x86)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
-        perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        nmake
+        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}     
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
-        perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        nmake       
+        perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}     
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (ARM)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
-        perl Configure VC-WIN32-ARM     
-        nmake
+        perl Configure VC-WIN32-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+        
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (ARM-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
-        perl Configure VC-WIN64-ARM     
-        nmake           
+        perl Configure VC-WIN64-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
+        ${{env.OPENSSL_MAKE}}
 
     - name: Build libssh (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
@@ -283,6 +368,9 @@ jobs:
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom
+        set MAKE=jom
+        
         cd libdes\
         call mknt.bat
 
@@ -292,8 +380,15 @@ jobs:
     - name: Full Build
       run: |
         set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
+        set libssh_root_override${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
         
         call ..\setenv.bat
+        
+        set PATH=%PATH%;${{github.workspace}}\tools\jom
+        set MAKE=jom
+        
         cd p95
         call mknt.bat
         cd ..\k95
@@ -323,51 +418,25 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       run: |
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh.dll ssh-gssapi.dll
-        
 
     - name: Fetch CA Certs bundle
-      run: |
-        wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
-        wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
-        
-        $readme = @"
-        ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
-        under the MPL version 2.0.
-        
-        For more information and updates, see: https://curl.se/docs/caextract.html
-        "@
-        
-        New-Item ca_certs.readme
-        Set-Content ca_certs.readme $readme
-      shell: powershell
-      working-directory: ${{ github.workspace }}\kermit\k95\dist
-      
-    - name: HTMLise Markdown Docs
-      run: |
-        pip3 install markdown
-        (
-        echo ^<html^>
-        echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
-        echo ^<body^>
-        ) > ssh-readme.html
-        (
-        echo ^<html^>
-        echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
-        echo ^<body^>
-        ) > change-log.html
-        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-        python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
-        (
-        echo ^</body^>
-        echo ^</html^>
-        ) >> change-log.html
-        (
-        echo ^</body^>
-        echo ^</html^>
-        ) >> ssh-readme.html
+      uses: actions/download-artifact@v3
+      with:
+        name: ca_certs
+        path: ${{ github.workspace }}\kermit\k95\dist
+
+    - name: Fetch Docs
+      uses: actions/download-artifact@v3
+      with:
+        name: markdown-docs
+        path: ${{ github.workspace }}\kermit\k95\dist
+
+    # ARM builds don't currently include SSH so don't need the SSH Readme
+    - name: Remove SSH Readme
+      if: matrix.arch == 'x64_arm'
+      run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
       shell: cmd
-      working-directory: ${{ github.workspace }}\kermit\k95\dist
-      
+
     - name: Prepare Artifact
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -389,6 +458,7 @@ jobs:
   # OpenSSL 1.1.1t is supported however.
   Build-PSDK71:
     runs-on: windows-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
         arch:
@@ -445,7 +515,7 @@ jobs:
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\tools
-          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes
+          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes+jom2
 
       - name: Get dependencies
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -482,6 +552,16 @@ jobs:
           dir
           cd ..
           cd ..          
+        
+          # Get and unpack JOM
+          cd ${{github.workspace}}\tools
+          mkdir jom
+          cd jom
+          wget ${{env.JOM}} -outfile jom.zip
+          7z x jom.zip
+          del *.zip
+          cd ..
+          cd ..
           
           # Install perl modules required by OpenSSL build
           cpan -i Text::Template
@@ -492,10 +572,11 @@ jobs:
         shell: cmd
         run: |
           SET PlatformToolset=100
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
-          perl Configure VC-WIN64I
+          perl Configure VC-WIN64I -D"_WIN32_WINNT=0x502"
           
           REM The perl configure script doesn't work quite right for cross-compiling to IA64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
@@ -511,7 +592,7 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
-          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
           perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
           
@@ -530,9 +611,9 @@ jobs:
           
           cd openssl\${{env.OPENSSL_VERSION}}
           
-          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
-          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
+          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502"
           nmake
 
       - name: Build libdes
@@ -541,6 +622,9 @@ jobs:
         run: |
           SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
+          
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set MAKE=jom
           
           cd libdes
           call mknt.bat
@@ -555,7 +639,11 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           echo Configure build environment...
+          set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
           call setenv.bat
+          
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set MAKE=jom
           
           echo Run Build...
           cd kermit\p95
@@ -580,48 +668,23 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
-      - name: Fetch CA Certs bundle
-        run: |
-          wget https://curl.se/ca/cacert.pem -outfile ca_certs.pem
-          wget https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt -outfile ca_certs.license
-          
-          $readme = @"
-          ca_certs.pem was exported from the Mozilla CA Certificate Store and is licensed
-          under the MPL version 2.0.
-          
-          For more information and updates, see: https://curl.se/docs/caextract.html
-          "@
-          
-          New-Item ca_certs.readme
-          Set-Content ca_certs.readme $readme
-        shell: powershell
-        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
-      - name: HTMLise Markdown Docs
-        run: |
-          pip3 install markdown
-          (
-          echo ^<html^>
-          echo ^<head^>^<title^>C-Kermit for Windows SSH Readme^</title^>^</head^>
-          echo ^<body^>
-          ) > ssh-readme.html
-          (
-          echo ^<html^>
-          echo ^<head^>^<title^>C-Kermit for Windows Change-Log^</title^>^</head^>
-          echo ^<body^>
-          ) > change-log.html
-          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
-          (
-          echo ^</body^>
-          echo ^</html^>
-          ) >> change-log.html
-          (
-          echo ^</body^>
-          echo ^</html^>
-          ) >> ssh-readme.html
+      - name: Fetch CA Certs bundle
+        uses: actions/download-artifact@v3
+        with:
+          name: ca_certs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      # Builds with Visual C++ 2010 don't support SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
         shell: cmd
-        working-directory: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Prepare Artifact
         shell: cmd
@@ -644,7 +707,7 @@ jobs:
   # which reduces the likelihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
     runs-on: windows-latest
-
+    needs: Prepare-Docs
     steps:
     - uses: actions/checkout@v3
 
@@ -747,6 +810,18 @@ jobs:
       run: |
         move dist ${{ github.workspace }}\ckwin
         move ..\dialer\dist ${{ github.workspace }}\dialer
+
+    - name: Fetch Docs
+      uses: actions/download-artifact@v3
+      with:
+        name: markdown-docs
+        path: ${{ github.workspace }}\ckwin
+
+      # OpenWatcom builds don't include SSH so don't need the SSH Readme
+    - name: Remove SSH Readme
+      run: del ${{ github.workspace }}\ckwin\ssh-readme.html
+      shell: cmd
+
     - name: Upload CKW Artifact
       uses: actions/upload-artifact@v3.1.1
       with:
@@ -764,6 +839,7 @@ jobs:
 
   Build-OpenWatcom19-Win32-NT-legacy:
     runs-on: windows-latest
+    needs: Prepare-Docs
 
     steps:
       - uses: actions/checkout@v3
@@ -832,6 +908,18 @@ jobs:
         env:
           ROOT: ${{ github.workspace }}
           WATCOM: ${{ github.workspace }}\watcom
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\ckwin
+
+        # OpenWatcom builds don't include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        run: del ${{ github.workspace }}\ckwin\ssh-readme.html
+        shell: cmd
+
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
@@ -961,6 +1049,7 @@ jobs:
   # https://epics.anl.gov/base/msvctk.php
   Build-VCT2003-PSDK2003:
     runs-on: windows-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
         # Do a build using ancient and insecure libraries like libsrp, k4w
@@ -992,7 +1081,8 @@ jobs:
         with:
           path: |
             ${{github.workspace}}\vct2003
-          key: vct2003+psdk2003sp1
+            ${{github.workspace}}\jom
+          key: vct2003+psdk2003sp1+jom
 
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
@@ -1002,6 +1092,15 @@ jobs:
           Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
           Remove-Item VCT2003+PSDK2003+cvtres.7z
           Remove-Item VCT2003\Bin\Cvtres.exe
+          
+          # Get and unpack JOM
+          mkdir jom
+          cd jom
+          wget ${{env.JOM}} -outfile jom.zip
+          7z x jom.zip
+          del *.zip
+          cd ..
+
         shell: powershell
 
       - name: Cache legacy dependencies
@@ -1017,6 +1116,7 @@ jobs:
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\superlat
+            ${{github.workspace}}\tools
           key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver2
 
       - name: Get Legacy Dependencies
@@ -1112,6 +1212,9 @@ jobs:
           Set LIB=%VCT2003%\lib
           set CKB_STATIC_CRT=yes
           
+          set PATH=%PATH%;${{github.workspace}}\jom
+          set MAKE=jom
+          
           cd libdes
           call mknt.bat
         env:
@@ -1178,6 +1281,9 @@ jobs:
   
           call setenv.bat
           
+          set PATH=%PATH%;${{github.workspace}}\jom
+          set MAKE=jom
+          
           REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
           REM (though apparently you can get the required import library for
           REM dynamic linking from the .NET SDK 1.1)
@@ -1232,13 +1338,24 @@ jobs:
           if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
           if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
 
+      - name: Fetch CA Certs bundle
+        if: matrix.legacy_dependencies == 'yes'
+        uses: actions/download-artifact@v3
+        with:
+          name: ca_certs
+          path: ${{ github.workspace }}\kermit\k95\dist
 
-      - name: HTMLise Markdown Docs
-        run: |
-          pip3 install markdown
-          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
-        working-directory: ${{ github.workspace }}\kermit\k95\dist                  
-          
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      # Builds with Visual C++ 2003 include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        shell: cmd
+
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
@@ -1269,6 +1386,7 @@ jobs:
   #
   Build-PSDK2003SP1-IA64:
     runs-on: windows-latest
+    needs: Prepare-Docs
 
     steps:
       - uses: actions/checkout@v3
@@ -1295,7 +1413,8 @@ jobs:
             ${{github.workspace}}\libdes\des
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
-          key: vct2003+psdk2003sp1+libdes+v2
+            ${{github.workspace}}\tools
+          key: vct2003+psdk2003sp1+libdes+v2+jom1
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003 + libdes
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
         run: |
@@ -1304,6 +1423,18 @@ jobs:
           Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
           Remove-Item VCT2003+PSDK2003+cvtres.7z
           Remove-Item VCT2003\Bin\Cvtres.exe
+
+          mkdir tools
+        
+          # Get and unpack JOM
+          cd tools
+          mkdir jom
+          cd jom
+          wget ${{env.JOM}} -outfile jom.zip
+          7z x jom.zip
+          del *.zip
+          cd ..
+          cd ..
           
           # Get and unpack libdes
           cd libdes
@@ -1324,6 +1455,9 @@ jobs:
           Set LIB=%VCT2003%\lib\ia64
           
           call setenv.bat
+          
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set MAKE=jom
 
           cd libdes
           call mknt.bat
@@ -1354,11 +1488,17 @@ jobs:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
 
-      - name: HTMLise Markdown Docs
-        run: |
-          pip3 install markdown
-          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
-        working-directory: ${{ github.workspace }}\kermit\k95\dist
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}\kermit\k95\dist
+
+      # Builds with Visual C++ 2005 don't include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        if: matrix.arch == 'x64_arm'
+        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        shell: cmd
 
       - name: Prepare Artifact
         shell: cmd
@@ -1381,6 +1521,7 @@ jobs:
   #
   Build-MinGW64-Linux:
     runs-on: ubuntu-latest
+    needs: [Get-CACerts-Bundle, Prepare-Docs]
 
     steps:
       - uses: actions/checkout@v3
@@ -1396,7 +1537,7 @@ jobs:
             ${{github.workspace}}/openssl
             ${{github.workspace}}/libssh
             ${{github.workspace}}/zlib
-          key: deps-openssl-${{env.OPENSSL_VERSION}}
+          key: deps-openssl-${{env.OPENSSL_VERSION}}-parallel
 
       - name: Build OpenSSL
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
@@ -1414,7 +1555,7 @@ jobs:
           cd openssl-${{env.OPENSSL_VERSION}}
           perl Configure mingw64
           make depend
-          make
+          make -j 2
 
       - name: Build
         shell: bash
@@ -1423,7 +1564,7 @@ jobs:
           CC: /usr/bin/x86_64-w64-mingw32-gcc
         run: |
           cd kermit/k95
-          make RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
+          make -j 2 RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
       - name: Make Distribution
         shell: bash
         run: |
@@ -1431,6 +1572,24 @@ jobs:
             bash ./mkdist.sh
             popd
             mv kermit/k95/ckwin ./
+
+      - name: Fetch CA Certs bundle
+        uses: actions/download-artifact@v3
+        with:
+          name: ca_certs
+          path: ${{ github.workspace }}/ckwin
+
+      - name: Fetch Docs
+        uses: actions/download-artifact@v3
+        with:
+          name: markdown-docs
+          path: ${{ github.workspace }}/ckwin
+
+      # We're not currently building libssh on linux so remove the ssh readme
+      - name: Remove SSH Readme
+        run: rm ${{ github.workspace }}/ckwin/ssh-readme.html
+        shell: bash
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         with:
