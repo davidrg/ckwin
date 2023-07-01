@@ -576,13 +576,13 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
-          perl Configure VC-WIN64I ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+          perl Configure VC-WIN64I -D"_WIN32_WINNT=0x502"
           
           REM The perl configure script doesn't work quite right for cross-compiling to IA64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
           sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:ia64/g" makefile
           
-          ${{env.OPENSSL_MAKE}}
+          nmake
 
       - name: Build openssl (x86-64)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
@@ -594,13 +594,13 @@ jobs:
           cd openssl\${{env.OPENSSL_VERSION}}
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
-          perl Configure VC-WIN64A ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+          perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
           
           REM The perl configure script doesn't work quite right for cross-compiling to x64
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
           sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:x64/g" makefile
           
-          ${{env.OPENSSL_MAKE}}
+          nmake
 
       - name: Build openssl (x86)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
@@ -613,8 +613,8 @@ jobs:
           
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
-          perl Configure VC-WIN32 ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
-          ${{env.OPENSSL_MAKE}}
+          perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502"
+          nmake
 
       - name: Build libdes
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
