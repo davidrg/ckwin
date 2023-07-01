@@ -1646,7 +1646,6 @@ sysinit() {
                      LOWORD(osverinfo.dwBuildNumber),
                      osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
                      osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
-#ifdef CK_UTSNAME
 #else /* CK_UTSNAME */
             if (osverinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) {
                 /* Windows 95 / 98 / ME */
@@ -1717,6 +1716,7 @@ sysinit() {
                     LOWORD(osverinfo.dwBuildNumber),
                     osverinfo.szCSDVersion && osverinfo.szCSDVersion[0] ? " " : "",
                     osverinfo.szCSDVersion ? osverinfo.szCSDVersion : "");
+
             sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
                     unm_nam,
                     osverinfo.dwMajorVersion,
