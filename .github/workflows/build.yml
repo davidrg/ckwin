@@ -378,6 +378,9 @@ jobs:
     - name: Full Build
       run: |
         set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
+        set libssh_root_override${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
         
         call ..\setenv.bat
         
@@ -678,6 +681,7 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           echo Configure build environment...
+          set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
           call setenv.bat
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
@@ -1442,7 +1446,7 @@ jobs:
 #          python -m markdown ${{ github.workspace }}\doc\changes.md > change-log.html
 #        working-directory: ${{ github.workspace }}\kermit\k95\dist
 #
-          
+
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
