@@ -103,6 +103,8 @@ containing the correct values.
   user files from being accidentally overwritten when upgrading. The default
   k95.ini will now rename k95custom.sample to k95custom.ini if it can't find
   an existing k95custom.ini in any of the usual locations.
+* Updated the About dialog: xyzmodem and pathworks support are no longer guaranteed
+  to be missing.
 * Improvements to the terminal status line:
     * Increasing the window width now gives more space to the hostname and protocol
       fields
