@@ -169,7 +169,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+kfw+ver2+jom1
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+libssh-${{env.LIBSSH_VERSION}}rel+nasm+xp+dsa+libdes+kfw+ver2+jom2
 
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -288,43 +288,43 @@ jobs:
 
     - name: Build openssl (x86)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
         perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        nmake
+        jom
 
     - name: Build openssl (x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
         perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502" zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}     
-        nmake       
+        jom
 
     - name: Build openssl (ARM)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
         perl Configure VC-WIN32-ARM     
-        nmake
+        jom
 
     - name: Build openssl (ARM-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-      shell: powershell
+      shell: cmd
       run: |
+        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+        echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        $env:Path += ";${{github.workspace}}\tools\nasm"
-        $env:Path
         perl Configure VC-WIN64-ARM     
-        nmake           
+        jom
 
     - name: Build libssh (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
@@ -548,7 +548,7 @@ jobs:
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\tools
-          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes+jom1
+          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes+jom2
 
       - name: Get dependencies
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -605,6 +605,7 @@ jobs:
         shell: cmd
         run: |
           SET PlatformToolset=100
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
@@ -614,7 +615,7 @@ jobs:
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
           sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:ia64/g" makefile
           
-          nmake
+          jom
 
       - name: Build openssl (x86-64)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
@@ -624,7 +625,7 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           cd openssl\${{env.OPENSSL_VERSION}}
-          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
           perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
           
@@ -632,7 +633,7 @@ jobs:
           REM it leaves the /machine flag off the link flags, so we'll just add it on ourselves.
           sed -i "s/^LDFLAGS=\/nologo.*/& \/machine:x64/g" makefile
           
-          nmake
+          jom
 
       - name: Build openssl (x86)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
@@ -643,10 +644,10 @@ jobs:
           
           cd openssl\${{env.OPENSSL_VERSION}}
           
-          set PATH=%PATH%;${{github.workspace}}\tools\nasm
+          set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
           perl Configure VC-WIN32 -D"_WIN32_WINNT=0x502" 
-          nmake
+          jom
 
       - name: Build libdes
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
