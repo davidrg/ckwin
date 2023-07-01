@@ -1631,7 +1631,7 @@ jobs:
             ${{github.workspace}}/openssl
             ${{github.workspace}}/libssh
             ${{github.workspace}}/zlib
-          key: deps-openssl-${{env.OPENSSL_VERSION}}
+          key: deps-openssl-${{env.OPENSSL_VERSION}}-parallel
 
       - name: Build OpenSSL
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
@@ -1649,7 +1649,7 @@ jobs:
           cd openssl-${{env.OPENSSL_VERSION}}
           perl Configure mingw64
           make depend
-          make
+          make -j 2
 
       - name: Build
         shell: bash
@@ -1658,7 +1658,7 @@ jobs:
           CC: /usr/bin/x86_64-w64-mingw32-gcc
         run: |
           cd kermit/k95
-          make RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
+          make -j 2 RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
       - name: Make Distribution
         shell: bash
         run: |
