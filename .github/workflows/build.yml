@@ -69,6 +69,7 @@ jobs:
           path: |
             *.pem
             *.readme
+            *.license
           retention-days: 1
 
   Prepare-Docs:
