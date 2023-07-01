@@ -1135,6 +1135,7 @@ getcpu( void )
             ckstrncat( buffer, numstr, 64 );
          }
          break;
+#ifdef PROCESSOR_ARCHITECTURE_ALPHA64
       case PROCESSOR_ARCHITECTURE_ALPHA64:
           ckstrncpy( buffer, "alpha64-", 64 ) ;
           switch ( si.wProcessorLevel ) {
@@ -1143,18 +1144,27 @@ getcpu( void )
                   ckstrncat( buffer, numstr, 64 );
           }
           break;
+#endif /* PROCESSOR_ARCHITECTURE_ALPHA64 */
+#ifdef PROCESSOR_ARCHITECTURE_AMD64
       case PROCESSOR_ARCHITECTURE_AMD64:
           ckstrncpy( buffer, "x86-64", 64 ) ;
           break;
+#endif /* PROCESSOR_ARCHITECTURE_AMD64 */
+#ifdef PROCESSOR_ARCHITECTURE_ARM
       case PROCESSOR_ARCHITECTURE_ARM:
           ckstrncpy( buffer, "arm", 64 ) ;
           break;
+#endif /* PROCESSOR_ARCHITECTURE_ARM */
+#ifdef PROCESSOR_ARCHITECTURE_ARM64
       case PROCESSOR_ARCHITECTURE_ARM64:
           ckstrncpy( buffer, "arm64", 64 ) ;
           break;
+#endif /* PROCESSOR_ARCHITECTURE_ARM64 */
+#ifdef PROCESSOR_ARCHITECTURE_IA64
       case PROCESSOR_ARCHITECTURE_IA64:
           ckstrncpy( buffer, "itanium", 64 ) ;
           break;
+#endif /* PROCESSOR_ARCHITECTURE_IA64 */
 
       case PROCESSOR_ARCHITECTURE_UNKNOWN:
          ckstrncpy( buffer, "unknown", 64 ) ;
