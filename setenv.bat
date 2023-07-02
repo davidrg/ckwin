@@ -100,7 +100,12 @@ if %errorlevel% == 0 goto :arm64
 cl 2>&1 | findstr /C:"for ARM" > nul
 if %errorlevel% == 0 goto :arm
 
-cl 2>&1 | findstr /C:"for AXP" > nul
+REM Microsoft (R) & Digital (TM) AXP C/C++ Optimizing Compiler Version 8.03.JFa
+cl 2>&1 | findstr /C:"AXP" > nul
+if %errorlevel% == 0 goto :axp
+
+REM Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
+cl 2>&1 | findstr /C:"Alpha" > nul
 if %errorlevel% == 0 goto :axp
 
 cl 2>&1 | findstr /C:"for MIPS R-Series" > nul
@@ -123,10 +128,20 @@ set CKB_TARGET_ARCH=ARM
 goto :bits32
 
 :axp
+REM Catch the 64bit compiler:
+REM Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
+cl 2>&1 | findstr /C:"13.00" > nul
+if %errorlevel% == 0 goto :axp64
+
 REM Alpha AXP Windows NT - 32bits
-REM TODO: Check
-set CKB_TARGET_ARCH=AXP
+set CKB_TARGET_ARCH=ALPHA
 goto :bits32
+
+:axp64
+REM Alpha AXP Windows 2000/XP - 64bits
+REM TODO: Check
+set CKB_TARGET_ARCH=ALPHA64
+goto :bits64
 
 :mips
 REM MIPS Windows NT - 32bits
