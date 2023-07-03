@@ -92,6 +92,11 @@ extern int k95stdout;
 #include <tapi.h>
 #include "ckntap.h"
 #endif  /* NODIAL */
+#ifndef isatty
+/* This usually isn't required as oldnames.lib handles it - except in some
+ * very old Windows SDKs where it doesn't */
+#define isatty _isatty
+#endif
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */

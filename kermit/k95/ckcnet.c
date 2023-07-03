@@ -409,6 +409,10 @@ extern char ttname[];
 #ifdef NT
 extern int winsock_version;
 char * GetLocalUser(); /* defined in ckotio.c */
+/* The NT 3.50 SDK defines try as __try */
+#ifdef try
+#undef try
+#endif
 #endif /* NT */
 
 #ifdef CK_AUTHENTICATION
