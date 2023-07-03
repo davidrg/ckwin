@@ -417,7 +417,9 @@ int ttwait( int, int );
 int ttxin( int, CHAR * );
 int untabify( char *, char *, int );
 int updslot( int );
+#ifndef NOURL
 int urlparse( char *, struct urldata * );
+#endif /* NOURL */
 int varval( char *, CK_OFF_T * );
 int window( int );
 int xarray( char * );

@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "28 Jun 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230628"          /* Keep them in sync */
-/* Wed Jun 28 07:50:55 2023 */
+#define EDITDATE  "03 Jul 2023"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20230703"          /* Keep them in sync */
+/* Mon Jul  3 07:11:13 2023 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -61,7 +61,7 @@ char *ck_s_test = "Beta";
 char *ck_s_tver = "10/Windows-05";
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
-char *ck_s_test = "pre-Beta";		/* "Dev","Alpha","Beta","RC", or "" */
+char *ck_s_test = "Beta";   /* "Dev","Alpha","pre-Beta", "Beta","RC", or "" */
 char *ck_s_tver = "10";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
