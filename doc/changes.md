@@ -54,7 +54,7 @@ containing the correct values.
 * Kerberos V support has returned (Kerberos IV support can be built from source)
 * GSSAPI authentication in the SSH client (requires MIT Kerberos for Windows,
   see ssh-readme for more information)
-* Updated to C-Kermit 10 Beta.09
+* Updated to C-Kermit 10 Beta.10
 * Updated to libssh 0.10.5
 * Updated to OpenSSL 1.1.1u
 
