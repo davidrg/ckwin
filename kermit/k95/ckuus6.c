@@ -23,6 +23,7 @@
     Mon Dec 12 05:41:18 2022 (new GREP options)
     Sat Mar 18 20:47:32 2023 (fix new GREP options, notably GREP /ARRAY)
     Wed Apr 12 19:48:13 2023 (function prototypes and declarations)
+    Mon Jul  3 07:10:28 2023 (isatty definition for very old Windows versions)
 */
 
 /* Includes */
@@ -92,6 +93,11 @@ extern int k95stdout;
 #include <tapi.h>
 #include "ckntap.h"
 #endif  /* NODIAL */
+#ifndef isatty
+/* This usually isn't required as oldnames.lib handles it - except in some
+ * very old Windows SDKs where it doesn't - David Goodwin 2 July 2023 */
+#define isatty _isatty
+#endif /* isaatty */
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */

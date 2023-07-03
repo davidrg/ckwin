@@ -14,12 +14,15 @@ int cmdsrc() { return(0); }
       The Kermit Project, New York City
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
+    Update: Jun 24 2023 (David Goodwin)
     Update: Oct 10-11 2022 (fdc and sms)
     Update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
     Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
-    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
     Update: Apr 14 2023 (ANSI function declarations and prototypes)
-
+    Update: May 16 2023 (Jeff Johnson fix for iksd.conf diagnostic)
+    Update: May 16 2023 (Jeff Johnson fix for \v(startup) vs \v(exedir))
+    Update: Jun 25 2023 (Added Clang support to SHOW FEATURES - fdc)
+    
   Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
@@ -82,7 +85,7 @@ extern int StartedFromDialer;
 #ifdef CRYPT_DLL
 /* For ck_crypt_dll_version */
 #include "ckoath.h"
-#endif
+#endif /* CRYPT_DLL */
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */
@@ -2552,6 +2555,12 @@ getnct(s,n,f,flag) char *s; int n; FILE *f; int flag;
 #endif /* DEBUG */
     {
         int i = 0; char *s = s2; char prev = '\0'; char c = '\0';
+        /*
+          Next line from Jeff Johnson, to fix garbled message when iksd.conf
+          has an invalide line that is shorter than a previous line that is
+          valid - 16 May 2023
+        */
+        memset(lasttakeline, '\0', sizeof(char)*TMPBUFSIZ+1); 
         while (*s) {   /* Save beginning of this command for error messages */
             c = *s++;
             if (c == '\n' || c == '\r') c = SP;
@@ -12058,6 +12067,9 @@ initoptlist() {
 #ifdef GNUC                             /* gcc in traditional mode */
     makestr(&(optlist[noptlist++]),"GNUC");
 #endif
+#ifdef __clang__
+    makestr(&(optlist[noptlist++]),"clang");
+#endif
 #ifdef __EGCS__                         /* egcs in ansi mode */
     makestr(&(optlist[noptlist++]),"__EGCS__");
 #endif
@@ -12439,7 +12451,7 @@ printf("NOWTMP not defined\n");
         char mebuf[2046];            /* Show Kermit's own pathname and size */
         char * s;
         char * mestring = 
-"\\v(startup)\\v(name), size: \\fsize(\\v(startup)\\v(name))";
+"\\v(exedir)\\v(name), size: \\fsize(\\v(exedir)\\v(name))";
         int mysize = 2046;
         int x = 0;
         s = mebuf;
@@ -12673,7 +12685,6 @@ printf("NOWTMP not defined\n");
     flag = 1;
 #endif /* SUPERLAT */
 #endif /* NT */
-
 
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
@@ -13112,12 +13123,16 @@ printf("NOWTMP not defined\n");
 #endif /* KTARGET */
 
 #ifdef __VERSION__
+#ifdef __clang__
+    printf("Compiler version: %s\n", __VERSION__);
+#else
 #ifdef __GNUC__
     printf("GCC version: %s\n", __VERSION__);
 #else
     printf("Compiler version: %s\n", __VERSION__);
 #endif /* __GNUC__ */
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* __clang__ */
 #endif /* __VERSION__ */
 
 #ifdef __DATE__                         /* GNU and other ANSI */

@@ -1,13 +1,13 @@
 #include "ckcsym.h"
 
-char *connv = "CONNECT Command for UNIX:fork(), 10.0.118, 26 Nov 2022";
+char *connv = "CONNECT Command for UNIX:fork(), 10.0.119, 13 May 2023";
 
 /*  C K U C O N  --  Terminal connection to remote system, for UNIX  */
 /*
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -322,7 +322,7 @@ extern USHORT (*xfu)();
 #define CEV_TRI 9			/* Trigger string */
 
 #ifdef NOESCSEQ
-#define chkaes(x) 0
+#define chkaes(x,y) 0
 #else
 /*
   As of edit 178, the CONNECT command skips past ANSI escape sequences to
@@ -409,9 +409,9 @@ extern USHORT (*xfu)();
 */
 int
 #ifdef CK_ANSIC
-chkaes(char c)
+chkaes(char c, int src)
 #else
-chkaes(c) char c;
+chkaes(c) char c; int src;
 #endif /* CK_ANSIC */
 /* chkaes */ {
 
@@ -1402,7 +1402,7 @@ concld (
 
 #ifndef NOESCSEQ
 		if (escseq)		/* If handling escape sequences */
-		  apcrc = chkaes((char)c); /* update our state */
+		  apcrc = chkaes((char)c,1); /* update our state */
 #ifdef CK_APC
 /*
   If we are handling APCs, we have several possibilities at this point:
@@ -2142,7 +2142,7 @@ conect() {
 #endif /* UNICODE */
 		    }
 		    if (escseq)
-		      apcrc = chkaes((char)c);
+		      apcrc = chkaes((char)c,0);
 #else
 		    outxbuf[0] = c;
 		    outxcount = 1;

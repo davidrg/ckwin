@@ -196,6 +196,7 @@ CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
 !if "$(TARGET_CPU)" == "AXP64"
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 CFLAGS = $(CFLAGS) /Ap64
+LDFLAGS = $(LDFLAGS) /MACHINE:ALPHA64
 !endif
 
 !if ($(MSC_VER) < 140)
