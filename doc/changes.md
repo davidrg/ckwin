@@ -3,9 +3,32 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
-## C-Kermit for Windows 10.0b9 beta 5 - Coming Soon
+## C-Kermit for Windows 10.0b10 beta 6 - coming soon
+
+### Things to be aware of when upgrading
+Nothing yet
+
+### New Features
+
+* None
+
+### Fixed Bugs
+
+* Fixed directory listings not reporting a size or modified time for files
+  requiring more than 32 bits to store the file size on Windows NT 3.51 and
+  newer. This issue will remain on NT 3.1/3.50.
+
+### Minor Enhancements and other changes
+
+* None
+
+### Source Changes
+
+* None
+
+## C-Kermit for Windows 10.0b10 beta 5 - 3 July 2023
 This release mostly focused on porting the codebase to 64bit Windows - x86-64,
-ARM64, Itanium and even the never publicly relased 64bit Windows 2000 for Alpha.
+ARM64, Itanium and even the never publicly released 64bit Windows 2000 for Alpha.
 Also included are a selection of minor enhancements, features and bugfixes.
 
 ### Things to be aware of when upgrading
