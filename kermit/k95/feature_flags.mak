@@ -205,6 +205,13 @@ CKF_SSH=no
 CKF_TAPI=no
 !endif
 
+# Disable debug logging on PowerPC to avoid link error LNK1176: TOC size limit exceeded
+# (turns out PowerPC has a maximum number of global symbols)
+!if "$(TARGET_CPU)" == "PPC"
+!message Targeting NT-PowerPC: Forcing debug logging OFF to avoid exceeding TOC size limit
+CKF_DEBUG=no
+!endif
+
 # Almost certainly won't build
 # TODO: Make it build (probably *a lot* of work)
 CKF_NT_UNICODE=no
