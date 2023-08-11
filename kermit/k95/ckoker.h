@@ -72,7 +72,9 @@ char   *kstrdup(const char *str);
  * if required.
  */
 #ifndef _OFF_T_DEFINED
-#define long off_t
+#define _OFF_T_DEFINED
+typedef long _off_t;
+typedef _off_t off_t;
 #endif
 #else
 /* _CRT_DECLARE_NONSTDC_NAMES in sufficiently new versions of Visual C++
