@@ -1,12 +1,9 @@
 C-KERMIT 10.0 DEVELOPMENT
 
-C-Kermit 10.0 Beta.07 07 December 2022
+C-Kermit 10.0 pre-Beta.10 25 June 2023
 
-See this page for a brief summary of Beta.07:
-
-  https://www.kermitproject.org/ck10beta07.html 
-
-and the C-Kermit Change Log:
+Various fixes and a great deal of "compliance" issues
+addressed.  For details see:
 
   https://www.kermitproject.org/ckupdates.html 
 

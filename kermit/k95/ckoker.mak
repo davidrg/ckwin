@@ -170,6 +170,7 @@ LDFLAGS = $(LDFLAGS) /MACHINE:X64
 !if "$(TARGET_CPU)" == "AXP64"
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
+LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
 !endif
 
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)

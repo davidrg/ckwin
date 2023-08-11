@@ -1,4 +1,4 @@
-char *ckomouv = "Mouse Support 8.0.093, 20 Oct 2002";
+char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 
 /* C K O M O U   --  Kermit mouse support for OS/2 systems */
 

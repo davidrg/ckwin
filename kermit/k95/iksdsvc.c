@@ -62,8 +62,10 @@
 #include <process.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #define strdup _strdup
 #define ltoa   _ltoa
+#define unlink _unlink
 
 #endif
 #define CONFIG_FILE "iksd.cfg"
@@ -825,9 +827,9 @@ IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     dbdir = "C:/";
 #endif /* NT */
     sprintf(dbfile,"%s\\iksd.lck",dbdir);
-    unlink(dbfile);
+    _unlink(dbfile);
     sprintf(dbfile,"%s\\iksd.db",dbdir);
-    unlink(dbfile);
+    _unlink(dbfile);
 
     if ( open_sockets(specificError) )
         return(1);

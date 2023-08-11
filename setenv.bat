@@ -36,7 +36,7 @@ set zlib_root=%root%\zlib\1.2.13
 
 REM openssl - set to the folder where the include folder and .lib and .dll files
 REM live.
-set openssl_root=%root%\openssl\1.1.1s
+set openssl_root=%root%\openssl\1.1.1u
 
 REM libssh - set to the folder where the include directory lives.
 set libssh_root=%root%\libssh\0.10.5
@@ -100,13 +100,19 @@ if %errorlevel% == 0 goto :arm64
 cl 2>&1 | findstr /C:"for ARM" > nul
 if %errorlevel% == 0 goto :arm
 
-cl 2>&1 | findstr /C:"for AXP" > nul
+REM Microsoft (R) & Digital (TM) AXP C/C++ Optimizing Compiler Version 8.03.JFa
+cl 2>&1 | findstr /C:"AXP" > nul
+if %errorlevel% == 0 goto :axp
+
+REM Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
+cl 2>&1 | findstr /C:"Alpha" > nul
 if %errorlevel% == 0 goto :axp
 
 cl 2>&1 | findstr /C:"for MIPS R-Series" > nul
 if %errorlevel% == 0 goto :mips
 
-REM TODO: PowerPC
+cl 2>&1 | findstr /C:"for PowerPC" > nul
+if %errorlevel% == 0 goto :ppc
 
 REM Yes, the 64bit Windows for Alpha compiler exists. No, you can't run its output
 REM on anything (unless you happen to work for Microsoft)
@@ -123,10 +129,20 @@ set CKB_TARGET_ARCH=ARM
 goto :bits32
 
 :axp
+REM Catch the 64bit compiler:
+REM Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
+cl 2>&1 | findstr /C:"13.00" > nul
+if %errorlevel% == 0 goto :axp64
+
 REM Alpha AXP Windows NT - 32bits
-REM TODO: Check
-set CKB_TARGET_ARCH=AXP
+set CKB_TARGET_ARCH=ALPHA
 goto :bits32
+
+:axp64
+REM Alpha AXP Windows 2000/XP - 64bits
+REM TODO: Check
+set CKB_TARGET_ARCH=ALPHA64
+goto :bits64
 
 :mips
 REM MIPS Windows NT - 32bits
@@ -560,6 +576,10 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp400mt-alpha
+if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
+
 goto :cvcdone
 
 :vc4
@@ -572,6 +592,11 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
+if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp400mt-alpha
+if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
+
 goto :cvcdone
 
 :vc5
@@ -580,12 +605,18 @@ set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp500mt-alpha
+
 goto :cvcdone
 
 :vc6
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp600mt-alpha
+
 goto :cvcdone
 
 :vc7
