@@ -60,7 +60,12 @@ char   *kstrdup(const char *str);
 #define write _write
 #define creat _creat
 #ifndef __GNUC__
+#ifndef _CRT_DECLARE_NONSTDC_NAMES
+/* _CRT_DECLARE_NONSTDC_NAMES is only defined to work around an issue in the
+ * OpenSSL 3.x headers which introduced a dependency on some non-standard
+ * types. This issue remains as of OpenSSL 3.0.10 */
 #define utime _utime
+#endif /* _CRT_DECLARE_NONSTDC_NAMES */
 #endif /* __GNUC__ */
 #define mktemp _mktemp
 #define strnicmp _strnicmp
