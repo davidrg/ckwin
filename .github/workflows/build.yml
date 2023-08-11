@@ -38,7 +38,7 @@ env:
   JOM: https://download.qt.io/official_releases/jom/jom.zip
   # Make tool for openssl builds - currently jom but as this isn't officially
   # supported if it breaks switch it to nmake
-  OPENSSL_MAKE: jom
+  OPENSSL_MAKE: nmake
   # Any extra build flags for OpenSSL. -FS is required if using Jom.
   # and -D"_WIN32_WINNT=0x502" is required for targeting Windows XP
   OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
