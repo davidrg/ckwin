@@ -27,7 +27,7 @@ instructions should do the job.
 
 This has been tested against the following versions:
 * zlib 1.2.13
-* OpenSSL 1.1.1u, 3.0.9, 3.1.1
+* OpenSSL 1.1.1v, 3.0.10, 3.1.1
 * libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
@@ -59,8 +59,10 @@ Normally everything is arranged into directories as follows:
      - 1.2.13\
        - files & directories from zlib 1.1.13
    - openssl\
-     - 1.1.1t\
-       - files & directories from openssl 1.1.1t
+     - 1.1.1v\
+       - files & directories from openssl 1.1.1v
+     - build.bat
+     - README.md
    - libdes\
      - des\
        - files & directories from the libdes distribution
@@ -119,11 +121,16 @@ If you're cross-compiling (your target architecture is not the same as the machi
 building on) you *may* get a link error in some versions of OpenSSL. This has been observed
 primarily cross-compiling from x86 to Itanium and x86-64 with Visual C++ 2010. If this
 occurs you need to open `makefile` in a text editor, find the line beginning with
-`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `machine:x64` (x86-64) to the
+`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `/machine:x64` (x86-64) to the
 end of it. Save the file and run the build again.
 
 If you want OpenSSL to work on versions of windows older than Vista, add the
 `-D"_WIN32_WINNT=0x502"` parameter to the Configure step.
+
+To help automate this a little you can try using `openssl\build.bat` which is
+[documented here](../openssl/README.nd). This script uses the C-Kermit build environment
+to figure out the appropriate target and zlib path then runs the configure and make
+step.
 
 ### 3. Building libssh
 
