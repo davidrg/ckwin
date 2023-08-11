@@ -60,10 +60,23 @@ char   *kstrdup(const char *str);
 #define write _write
 #define creat _creat
 #ifndef __GNUC__
-#ifndef _CRT_DECLARE_NONSTDC_NAMES
+#ifdef _CRT_DECLARE_NONSTDC_NAMES
 /* _CRT_DECLARE_NONSTDC_NAMES is only defined to work around an issue in the
  * OpenSSL 3.x headers which introduced a dependency on some non-standard
- * types. This issue remains as of OpenSSL 3.0.10 */
+ * types, specifically off_t. This issue remains as of OpenSSL 3.0.10.
+ *
+ * On newer versions of Visual C++, defining _CRT_DECLARE_NONSTDC_NAMES will
+ * bring in off_t along with _utime, so we don't want to define utime as _utime
+ * in that case. But on older versions of Visual C++, _CRT_DECLARE_NONSTDC_NAMES
+ * may not bring in the definition of off_t we need, so we'll define it below
+ * if required.
+ */
+#ifndef _OFF_T_DEFINED
+#define long off_t
+#endif
+#else
+/* _CRT_DECLARE_NONSTDC_NAMES in sufficiently new versions of Visual C++
+ * normally defines*/
 #define utime _utime
 #endif /* _CRT_DECLARE_NONSTDC_NAMES */
 #endif /* __GNUC__ */
