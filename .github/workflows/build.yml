@@ -130,7 +130,7 @@ jobs:
         toolset:
           - 14.0
           - 14.2
-          - 14.3
+          #- 14.3   OpenSSL 3.0.10 isn't compatible with Visual C++ 2022: https://github.com/openssl/openssl/issues/18310
         exclude:
           # No point building ARM or ARM64 targets with anything less than the latest as the latest
           # still supports the first ARM Windows.
@@ -138,14 +138,14 @@ jobs:
             toolset: 14.0
           - arch: x64_arm
             toolset: 14.1
-          - arch: x64_arm
-            toolset: 14.2
+          #- arch: x64_arm
+          #  toolset: 14.2
           - arch: x64_arm64
             toolset: 14.0
           - arch: x64_arm64
             toolset: 14.1
-          - arch: x64_arm64
-            toolset: 14.2
+          #- arch: x64_arm64
+          #  toolset: 14.2
 
     steps:
     - uses: actions/checkout@v3
