@@ -312,7 +312,10 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
 #             And also some stuff fixed
 !if "$(CKF_SSL)" == "yes"
 
-ENABLED_FEATURES = $(ENABLED_FEATURES) SSL
+# This is a workaround for a bug in the OpenSSL 3.x headers which assume off_t is
+# available. Its not required when building with OpenSSL 1.1.1 or older.
+#   https://github.com/openssl/openssl/issues/18310
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -D_CRT_DECLARE_NONSTDC_NAMES
 
 # You can optionally do this to have SSL support loaded at runtime when
 # SSLEAY32.DLL can be found. This is not compatible with OpenSSL 1.0.0 or newer
