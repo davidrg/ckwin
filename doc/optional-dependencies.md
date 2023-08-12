@@ -27,7 +27,7 @@ instructions should do the job.
 
 This has been tested against the following versions:
 * zlib 1.2.13
-* OpenSSL 1.1.1t, 3.0.8, 3.1.1
+* OpenSSL 1.1.1v, 3.0.10, 3.1.2
 * libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
@@ -56,11 +56,13 @@ Normally everything is arranged into directories as follows:
      - k95\
        - C-Kermit for windows source code
    - zlib\
-     - 1.2.12\
-       - files & directories from zlib 1.1.12
+     - 1.2.13\
+       - files & directories from zlib 1.1.13
    - openssl\
-     - 1.1.1s\
-       - files & directories from openssl 1.1.1s
+     - 3.0.10\
+       - files & directories from openssl 3.0.10
+     - build.bat
+     - README.md
    - libdes\
      - des\
        - files & directories from the libdes distribution
@@ -78,9 +80,9 @@ in any features requiring them to be automatically enabled.
 
 ### 1. Building zlib
 
-zlib is easy. Download zlib-1.1.12.tar.gz and extract it as `zlib\1.1.12`. Then:
+zlib is easy. Download zlib-1.1.13.tar.gz and extract it as `zlib\1.1.13`. Then:
 ```
-cd zlib\1.1.12
+cd zlib\1.1.13
 cmake .
 nmake -f win32\Makefile.msc
 cd ..\..\
@@ -98,8 +100,8 @@ from CPAN with: `cpan -i Text::Template`
 Then you can build OpenSSL with the following (adjusting the zlib include path
 as necessary):
 ```
-cd openssl\1.1.1s
-perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.12
+cd openssl\3.0.10
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13
 nmake
 cd ..\..\
 ```
@@ -119,11 +121,16 @@ If you're cross-compiling (your target architecture is not the same as the machi
 building on) you *may* get a link error in some versions of OpenSSL. This has been observed
 primarily cross-compiling from x86 to Itanium and x86-64 with Visual C++ 2010. If this
 occurs you need to open `makefile` in a text editor, find the line beginning with
-`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `machine:x64` (x86-64) to the
+`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `/machine:x64` (x86-64) to the
 end of it. Save the file and run the build again.
 
 If you want OpenSSL to work on versions of windows older than Vista, add the
 `-D"_WIN32_WINNT=0x502"` parameter to the Configure step.
+
+To help automate this a little you can try using `openssl\build.bat` which is
+[documented here](../openssl/README.md). This script uses the C-Kermit build environment
+to figure out the appropriate target and zlib path then runs the configure and make
+step.
 
 ### 3. Building libssh
 
@@ -132,7 +139,7 @@ For libssh you need to the following specifying the correct OPENSSL_ROOT_DIR and
 cd libssh\0.10.5
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1q\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.12\
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\3.0.10\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\
 nmake
 cd ..\..\..\
 ```
@@ -158,7 +165,7 @@ cd libssh\0.10.5
 patch -p1 < ..\win32-gssapi.patch
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1q\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.12\ -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\3.0.10\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\ -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
 nmake
 cd ..\..\..\
 ```
@@ -291,6 +298,7 @@ reason, C-Kermit for Windows still supports the following:
 * 1.0.1u of 2016-09-22 (**_INSECURE_**)
 * 1.0.2u of 2019-12-20 (**_INSECURE_** unless you pay for premium OpenSSL support)
 * 1.1.0l of 2019-09-10 (**_INSECURE_**)
+* 1.1.1v of 2023-08-01 (End of life from 11 September 2023 unless you pay for premium OpenSSL support)
 
 This is of course not recommended. But perhaps bad encryption is better than
 none at all in some situations. Or maybe you're not doing anything where
@@ -383,3 +391,15 @@ cd ..\..\
 ```
 
 This version does not build with Visual C++ 6.
+
+### OpenSSL 1.1.1v
+
+The process for this is the same as 3.0.x. Extract to `\openssl\1.1.1v`, 
+update `openssl_root` in your `setenv.bat`, then do the following
+
+```
+cd openssl\1.1.1v
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13
+nmake
+cd ..\..\
+```

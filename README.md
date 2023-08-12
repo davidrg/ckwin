@@ -18,10 +18,10 @@ Major features include:
 
 To get the latest most stable release as well as other news and information, 
 visit the [C-Kermit for Windows Beta website](https://www.kermitproject.org/ckw10beta.html).
-This software is currently based on C-Kermit version 10.0 Beta.09 of
-9-MAY-2023 and is available under the 3-clause BSD license.
+This software is currently based on C-Kermit version 10.0 Beta.10 of
+3-JUL-2023 and is available under the 3-clause BSD license.
 
-![Screenshot](doc/screenshot-w10.png)
+![Screenshot](doc/screenshot-w11.png)
 
 Requirements
 ------------
@@ -152,10 +152,14 @@ C-Kermit for Windows at this time:
   OpenSSL includes SRP support now which is probably the way forward if CKW is 
   to ever include SRP support as standard again, but it would probably be a lot 
   of work to switch - see ticket #32 for more information
+* DNS-SRV (#205) - support for this previously came from wshelper, a part of
+  MIT Kerberos for Windows that was removed in 2018.
+* Kerberos IV support is not included in standard builds as current versions of
+  MIT Kerberos for Windows no longer support it. 
 
-Code to support Stanford SRP and old versions of OpenSSL still exists and should
-still work if there is some need for these features despite the known security 
-issues.
+Code to support Kerberos IV, Stanford SRP and old versions of OpenSSL still exists
+and should still work if there is some need for these features despite the known
+security issues.
 
 Compiling
 ---------

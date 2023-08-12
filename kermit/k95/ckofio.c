@@ -1,5 +1,5 @@
 #ifdef NT
-char *ckzv = "Win32 File support, 8.0.187, 18 July 2004";
+char *ckzv = "Win32 File support, 10.0, 26 May 2023";
 #else /* NT */
 char *ckzv = "OS/2 File support, 8.0.187, 18 July 2004";
 #endif /* NT */
@@ -143,10 +143,25 @@ extern int pclose(FILE *);
 #define unlink _unlink
 #define chdir  _chdir
 #define getcwd _getcwd
+#ifndef _CRT_DECLARE_NONSTDC_NAMES
+/* _CRT_DECLARE_NONSTDC_NAMES is only defined to work around an issue in the
+ * OpenSSL 3.x headers which introduced a dependency on some non-standard
+ * types. This issue remains as of OpenSSL 3.0.10 */
 #define utime  _utime
+#endif /* _CRT_DECLARE_NONSTDC_NAMES */
 #define rmdir  _rmdir
 #define utimbuf _utimbuf
+
+#if defined(__WATCOMC__) || defined(__GNUC__) || _MSC_VER > 900
+#define stat    _stati64
+#else
+/* Visual C++ 1.0 32-bit, 2.0 and 2.2 don't have _stati64 */
+/* TODO This means that large file sizes won't be reported correclty in
+ *      directory listings when built for NT 3.1/3.50 - we'd have to define
+ *      the _stati64 struct ourselves to fix that. */
 #define stat    _stat
+#endif
+
 #ifndef SEM_INDEFINITE_WAIT
 #define SEM_INDEFINITE_WAIT INFINITE
 #endif /* SEM_INDEFINITE_WAIT */
@@ -7940,7 +7955,7 @@ zchdsk(c) int c; {
 }
 
 #ifdef NT
-long
+CK_OFF_T
 StreamSize(char * filename, char * streamname)
 {
     HANDLE hf ;
@@ -7954,7 +7969,7 @@ StreamSize(char * filename, char * streamname)
     char  stream[CKMAXPATH+1];
     int   i, diff;
     DWORD dwStreamId = 0xFFFFFFFF;
-    long  size = -1;
+    CK_OFF_T  size = -1;
 
     ckmakmsg(stream,CKMAXPATH+1,":",streamname,":$DATA",NULL);
     ANSIToUnicode(stream,wszStat,sizeof(wszStat));
@@ -7990,7 +8005,7 @@ StreamSize(char * filename, char * streamname)
                 UnicodeToANSI(wszStreamName,stream,sizeof(stream));
                 debug(F110,"StreamSize ntfs stream found",stream,0);
                 if (!_wcsicmp(wszStreamName,wszStat)) {
-                    size = (sid.Size.HighPart << 32) + sid.Size.LowPart;
+                    size = ((CK_OFF_T)sid.Size.HighPart << 32) + sid.Size.LowPart;
                     break;
                 }
             }
@@ -8168,7 +8183,7 @@ os2stat(char *path, struct stat *st) {
     debug(F111,"os2stat","rc",rc);
 #ifdef NT
     if ( stream_idx > 1 ) {
-        long size = StreamSize(local,&local[stream_idx+1]);
+        CK_OFF_T size = StreamSize(local,&local[stream_idx+1]);
         if ( size >= 0 )
             st->st_size = size;
         else

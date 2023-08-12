@@ -2,7 +2,7 @@
 
 /*
   For recent additions search below for "2021" and "2022" and "2023".
-  Most recent update: Fri May  5 15:32:58 2023
+  Most recent updates: Sat Jul  1 10:27:16 2023 (David Goodwin, fdc)
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -717,6 +717,9 @@
 #ifndef NOFORWARDX
 #define NOFORWARDX
 #endif /* NOFORWARDX */
+#ifndef NOURL             /* 1 July 2023 for -DV7MIN, -DNOTCP, -DNONET, etc */
+#define NOURL
+#endif /* NOURL */
 #endif /* NONET */
 
 #ifdef IKSDONLY
@@ -1303,7 +1306,7 @@ extern int errno;                       /* fdc 1 November 2022 */
 #endif /* OS2ORUNIX */
 #endif /* UNIX */
 
-#ifdef UNIX				/* For items common to Win32 and UNIX */
+#ifdef UNIX                           /* For items common to Win32 and UNIX */
 #ifndef WIN32ORUNIX
 #define WIN32ORUNIX
 #endif /* WIN32ORUNIX */
@@ -5186,6 +5189,22 @@ struct zfnfp {
 #endif /* __32BIT__ */
 #endif /* OS2 */
 #endif /* VMS */
+
+/* Systems that support builtin variable "exedir", use getexedir() function */
+
+#ifdef OS2
+#define HAVE_VN_EXEDIR
+#else /* def OS2 */
+#ifdef UNIX
+#define GETEXEDIR
+#define HAVE_VN_EXEDIR
+#else /* def UNIX */
+#ifdef VMS
+#define GETEXEDIR
+#define HAVE_VN_EXEDIR
+#endif /* def VMS */
+#endif /* def UNIX [else] */
+#endif /* def OS2 [else] */
 
 /* LABELED FILE options bitmask */
 
