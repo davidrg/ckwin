@@ -20,7 +20,8 @@ Nothing yet
 
 ### Minor Enhancements and other changes
 
-* None
+* Upgraded to OpenSSL 3.0.10, the current long term support release 
+  (supported until 7 September 2026)
 
 ### Source Changes
 

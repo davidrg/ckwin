@@ -59,8 +59,8 @@ Normally everything is arranged into directories as follows:
      - 1.2.13\
        - files & directories from zlib 1.1.13
    - openssl\
-     - 1.1.1v\
-       - files & directories from openssl 1.1.1v
+     - 3.0.10\
+       - files & directories from openssl 3.0.10
      - build.bat
      - README.md
    - libdes\
@@ -100,7 +100,7 @@ from CPAN with: `cpan -i Text::Template`
 Then you can build OpenSSL with the following (adjusting the zlib include path
 as necessary):
 ```
-cd openssl\1.1.1u
+cd openssl\3.0.10
 perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13
 nmake
 cd ..\..\
@@ -128,7 +128,7 @@ If you want OpenSSL to work on versions of windows older than Vista, add the
 `-D"_WIN32_WINNT=0x502"` parameter to the Configure step.
 
 To help automate this a little you can try using `openssl\build.bat` which is
-[documented here](../openssl/README.nd). This script uses the C-Kermit build environment
+[documented here](../openssl/README.md). This script uses the C-Kermit build environment
 to figure out the appropriate target and zlib path then runs the configure and make
 step.
 
@@ -139,7 +139,7 @@ For libssh you need to the following specifying the correct OPENSSL_ROOT_DIR and
 cd libssh\0.10.5
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1u\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\3.0.10\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\
 nmake
 cd ..\..\..\
 ```
@@ -165,7 +165,7 @@ cd libssh\0.10.5
 patch -p1 < ..\win32-gssapi.patch
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1u\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\ -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\3.0.10\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\ -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
 nmake
 cd ..\..\..\
 ```
@@ -298,6 +298,7 @@ reason, C-Kermit for Windows still supports the following:
 * 1.0.1u of 2016-09-22 (**_INSECURE_**)
 * 1.0.2u of 2019-12-20 (**_INSECURE_** unless you pay for premium OpenSSL support)
 * 1.1.0l of 2019-09-10 (**_INSECURE_**)
+* 1.1.1v of 2023-08-01 (End of life from 11 September 2023 unless you pay for premium OpenSSL support)
 
 This is of course not recommended. But perhaps bad encryption is better than
 none at all in some situations. Or maybe you're not doing anything where
@@ -390,3 +391,15 @@ cd ..\..\
 ```
 
 This version does not build with Visual C++ 6.
+
+### OpenSSL 1.1.1v
+
+The process for this is the same as 3.0.x. Extract to `\openssl\1.1.1v`, 
+update `openssl_root` in your `setenv.bat`, then do the following
+
+```
+cd openssl\1.1.1v
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13
+nmake
+cd ..\..\
+```
