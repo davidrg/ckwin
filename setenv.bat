@@ -577,7 +577,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKB_9X_COMPATIBLE=yes
 
-if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp400mt-alpha
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
 if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
 
 goto :cvcdone
@@ -594,7 +594,7 @@ set CKF_CRYPTDLL=no
 set CKB_9X_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
-if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp400mt-alpha
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
 if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
 
 goto :cvcdone
@@ -606,7 +606,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
 
-if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp500mt-alpha
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
 
 goto :cvcdone
 
@@ -615,7 +615,7 @@ set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
 
-if "%CKB_TARGET_ARCH%" == "AXP" set ZINCBUILD=mvcpp600mt-alpha
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
 
 goto :cvcdone
 
