@@ -28,8 +28,8 @@ Requirements
 
 C-Kermit for Windows should work on every released 32bit or 64bit version of 
 Windows [except Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164). 
-Non-x86 platforms are not actively tested due to either a lack of hardware 
-(ARM, ARM64, Itanium) or compiler licenses (Alpha, MIPS, PowerPC).
+Some non-x86 platforms (ARM, ARM64, Itanium) are not actively tested due to a 
+lack of hardware.
 
 Certain features within C-Kermit for Windows have a minimum Windows version
 requirement:

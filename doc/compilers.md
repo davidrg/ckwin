@@ -263,27 +263,23 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
         the DEC Alpha to run it on is another matter entirely.</td> <!-- Notes -->
 </tr>
 <tr>
-    <td rowspan="2">Visual C++ 6.0 SP6</td>
+    <td rowspan="2">Visual C++ 6.0</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
     <td rowspan="2">❌</td> <!-- Free -->
-    <td>✅</td> <!-- Tested -->
+    <td rowspan="2">✅</td> <!-- Tested -->
     <td rowspan="2">❌</td> <!-- PTY -->
     <td rowspan="2">❌</td> <!-- SSH -->
-    <td>✅</td> <!-- NTLM/Auth -->
-    <td>✅</td> <!-- TAPI -->
-    <td>✅</td> <!-- Dialer -->
-    <td></td> <!-- Notes -->
+    <td rowspan="2">✅</td> <!-- NTLM/Auth -->
+    <td rowspan="2">✅</td> <!-- TAPI -->
+    <td rowspan="2">✅</td> <!-- Dialer -->
+    <td>Service Pack 6 tested</td> <!-- Notes -->
 </tr>
 <tr>
     <td>Alpha</td>
     <td>Windows NT 3.51?</td>
-    <td>❌</td> <!-- Tested -->
-    <td>❔</td> <!-- NTLM/Auth -->
-    <td>❔</td> <!-- TAPI -->
-    <td>❔</td> <!-- Dialer -->
-    <td>Untested</td> <!-- Notes -->
+    <td>Service Pack 1</td> <!-- Notes -->
 </tr>
 <tr>
     <td rowspan="2">Visual C++ 5.0 (Visual Studio 97)</td>
@@ -315,34 +311,29 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
         Windows 95, 
         Win32s 1.25</td>
     <td rowspan="4">❌</td> <!-- Free -->
-    <td>✅</td> <!-- Tested -->
+    <td rowspan="4">✅</td> <!-- Tested -->
     <td rowspan="4">❌</td> <!-- PTY -->
     <td rowspan="4">❌</td> <!-- SSH -->
     <td rowspan="4">❌</td> <!-- NTLM/Auth -->
     <td>✅</td> <!-- TAPI -->
-    <td>✅</td> <!-- Dialer -->
+    <td rowspan="4">✅</td> <!-- Dialer -->
     <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td>MIPS</td>
     <td rowspan="3">Windows NT 3.51?</td>
-    <td rowspan="3">❌</td> <!-- Tested -->
     <td>❌</td> <!-- TAPI -->
-    <td>❔</td> <!-- Dialer -->
-    <td>TAPI support does not build, Dialer untested</td> <!-- Notes -->
+    <td>TAPI support does not build (compiler bug?)</td> <!-- Notes -->
 </tr>
 <tr>
     <td>PowerPC</td>
-    <td>❔</td> <!-- TAPI -->
-    <td>❔</td> <!-- Dialer -->
-    <td>Dialer untested. Unresolved linker issues may require disabling 
-        TAPI, XYZMODEM and debug logging.</td> <!-- Notes -->
+    <td>✅</td> <!-- TAPI -->
+    <td>No debug logging support due to TOC size limit.</td> <!-- Notes -->
 </tr>
 <tr>
     <td>Alpha</td>
-    <td>❔</td> <!-- TAPI -->
-    <td>❔</td> <!-- Dialer -->
-    <td>Untested but likely to work. Dialer status unknown.</td> <!-- Notes -->
+    <td>✅</td> <!-- TAPI -->
+    <td></td> <!-- Notes -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2.x, RISC Edition for Alpha/MIPS</td>
