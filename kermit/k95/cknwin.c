@@ -87,6 +87,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int);
 InitApplication(HINSTANCE);
 InitInstance(HINSTANCE, int);
 LRESULT CALLBACK MainWndProc(HWND, UINT, WPARAM, LPARAM);
+int _zshcmd(char* s, int wait);                    /* ckofio.c */
+
+#ifdef CK_TAPI
+void wintapiinit();                 /* ckntap.c */
+void wintapishutdown();             /* ckntap.c */
+#endif /* CK_TAPI */
 
 /* Application entry point */
 
@@ -229,7 +235,6 @@ void
 ckMainThread( void * param )
 {
     LPTSTR CmdLine = GetCommandLine() ;
-    HANDLE hOut, hIn ;
     char ** argv;
     int    argc = 0 ;
     int i = 0, quote = 0 ;
@@ -292,6 +297,8 @@ ckMainThread( void * param )
 #ifndef KUI
     if ( AllocConsole() )
     {
+        HANDLE hOut, hIn ;
+
         hOut = CreateFile( "CONOUT$", GENERIC_READ | GENERIC_WRITE,
                                   FILE_SHARE_READ | FILE_SHARE_WRITE,
                                   NULL,
@@ -822,7 +829,6 @@ SingleInputDialog( HINSTANCE hinst, HWND hwndOwner,
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar, i;
-    char * p;
 
     hgbl = GlobalAlloc(GMEM_ZEROINIT, 4096);
     if (!hgbl)
@@ -1097,7 +1103,6 @@ MultiInputDialog( HINSTANCE hinst, HWND hwndOwner,
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar, i, pwid;
-    char * p;
 
     hgbl = GlobalAlloc(GMEM_ZEROINIT, 4096);
     if (!hgbl)
@@ -1365,7 +1370,6 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
     LPWSTR lpwsz;
     LRESULT ret;
     int nchar, i, j;
-    char * p;
 
     hgbl = GlobalAlloc(GMEM_ZEROINIT, 8192);
     if (!hgbl)
@@ -1500,8 +1504,6 @@ VideoPopupDialog( HINSTANCE hinst, HWND hwndOwner, videopopup * vp)
 int
 gui_videopopup_dialog(videopopup * vp, int timeout)
 {
-    int i;
-
     sid_timeout = timeout;
 
     return(VideoPopupDialog(hInstance, hwndConsole, vp));
@@ -1632,8 +1634,7 @@ TextPopupDialog( HINSTANCE hinst, HWND hwndOwner, char * title, int h, int w)
     LPWORD lpw;
     LPWSTR lpwsz;
     LRESULT ret;
-    int nchar, i, j, font = 12;
-    char * p;
+    int nchar, font = 12;
 
     if ( !w ) w = 80;
     if ( !h ) h = 25;
