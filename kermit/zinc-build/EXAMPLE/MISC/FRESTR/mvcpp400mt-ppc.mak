@@ -34,7 +34,7 @@ WNT_CPP=cl
 WNT_LINK=link
 WNT_LIBRARIAN=lib
 
-WNT_CPP_OPTS= -MT -c -W3 -D_X86_=1 -DWIN32
+WNT_CPP_OPTS= -MT -c -W3 -DWIN32
 WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup
 WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup
 WNT_LIB_OPTS=/machine:PPC /subsystem:WINDOWS
@@ -53,7 +53,7 @@ W32_CPP=cl
 W32_LINK=link
 W32_LIBRARIAN=lib
 
-W32_CPP_OPTS= -MT -c -W3 -D_X86_=1 -DWIN32 -DZIL_WIN32
+W32_CPP_OPTS= -MT -c -W3 -DWIN32 -DZIL_WIN32
 W32_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup
 W32_LIB_OPTS=/machine:PPC /subsystem:WINDOWS
 
