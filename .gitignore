@@ -309,3 +309,7 @@ kermit/k95/ca_certs.pem
 
 # These are the outputs from the mingw resource compiler
 *.coff
+kermit/k95/dialer.dat
+kermit/k95/k95dial.exe.manifest
+kermit/k95/p_direct.znc
+kermit/k95/p_servic.znc
