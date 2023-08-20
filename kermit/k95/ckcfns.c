@@ -3452,7 +3452,6 @@ rcvfil(n) char *n;
     extern int en_cwd;
     int i, skipthis;
     char * n2;
-    char * dispo;
 #ifdef OS2ONLY
     char *zs, *longname, *newlongname, *pn; /* OS/2 long name items */
 #endif /* OS2ONLY */
@@ -3485,8 +3484,8 @@ rcvfil(n) char *n;
 #ifdef CALIBRATE
     calibrate = csave;
     if (dest == DEST_N) {
-	calibrate = 1;
-	cmarg2 = "CALIBRATE";
+        calibrate = 1;
+        cmarg2 = "CALIBRATE";
     }
 #endif /* CALIBRATE */
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
@@ -3494,9 +3493,9 @@ rcvfil(n) char *n;
     makestr(&prrfspec,(char *)srvcmd);	/* New preliminary filename */
 #ifdef DTILDE
     if (*srvcmd == '~') {
-	dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
-	if (*dirp != '\0')
-	  ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
+        dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
+        if (*dirp != '\0')
+          ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
     }
 #else
 #ifdef OS2

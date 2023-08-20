@@ -2766,7 +2766,6 @@ int
     chkspkt(packet) char *packet;
 #endif /* CK_ANSIC */
 {
-    int i;
     int buflen;
     int len = -1;
     CHAR chk;

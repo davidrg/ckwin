@@ -1585,6 +1585,7 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #endif /* putchar */
 #define putchar(x) Vscrnprintf("%c",x)
 #define perror(x)  Vscrnperror(x)
+void Vscrnperror( const char *str );
 #endif /* CKODIALER */
 #endif /* OS2 */
 

@@ -1149,9 +1149,16 @@ static unsigned int nout = 0;           /* Number of chars in ucbuf */
 
 static jmp_buf recvcancel;
 static jmp_buf sendcancel;
-static jmp_buf ptcancel;
+
+#ifdef NOT_USED
 static jmp_buf jcancel;
+#endif /* NOT_USED */
+
+#ifdef FTP_PROXY
+static jmp_buf ptcancel;
+
 static int ptabflg = 0;
+#endif /* FTP_PROXY */
 
 /* Protection level symbols */
 
@@ -2157,6 +2164,7 @@ strputc(c) char c;
     return(0);
 }
 
+#ifdef COMMENT
 static int
 #ifdef CK_ANSIC
 xprintc(char c)
@@ -2167,6 +2175,7 @@ xprintc(c) char c;
     printf("%c",c);
     return(0);
 }
+#endif /* COMMENT */
 
 static VOID
 #ifdef CK_ANSIC
@@ -9980,7 +9989,9 @@ static struct   sockaddr_in hisctladdr;
 static struct   sockaddr_in hisdataaddr;
 static struct   sockaddr_in data_addr;
 static int      data = -1;
+#ifdef FTP_PROXY
 static int      ptflag = 0;
+#endif /* FTP_PROXY */
 static struct   sockaddr_in myctladdr;
 
 #ifdef COMMENT
