@@ -25,7 +25,7 @@
 #undef COMMENT                /* COMMENT is defined in os2.h */
 #endif /* NT */
 #include "ckothr.h"
-
+#include "ckosyn.h"
 #ifdef NT
 #include <setjmpex.h>
 #else /* NT */
@@ -229,9 +229,6 @@ ckThreadBegin( void (*func)(void *), ULONG stacksize, void * param, BOOL manage,
 BOOL
 ckThreadKill( TID startthread )
 {
-    int found = 0 ;
-    int where = 999 ;
-    int i ;
     int myindex = 0, parentindex = 0 ;
 
     while (RequestThreadMgmtMutex(250))
