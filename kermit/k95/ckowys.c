@@ -40,6 +40,23 @@
 #include "ckowys.h"
 #include "ckctel.h"
 
+void udkreset();                /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+void setkeyclick(int);          /* ckoco3.c */
+void selclrscreen(BYTE, CHAR);  /* ckoco3.c */
+void setborder();               /* ckocon.c */
+int os2settitle(char *, int);   /* ckotio.c */
+int unhex(char);                /* ckucmd.c */
+USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
+USHORT tx_usub(USHORT);         /* ckcuni.c */
+USHORT tx_hslsub(USHORT);       /* ckcuni.c */
+
+#ifdef CK_NAWS                          /* Negotiate About Window Size */
+#ifdef RLOGCODE
+_PROTOTYP( int rlog_naws, (void) );     /* ckcnet.c */
+#endif /* RLOGCODE */
+#endif /* CK_NAWS */
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, cprint, uprint, xprint, seslog ;
@@ -47,6 +64,7 @@ extern int  insertmode, tnlm, ttmdm, decssdt, cmask;
 extern int  escstate, debses, decscnm, tt_cursor ;
 #ifdef PCTERM
 extern int tt_pcterm;
+VOID setpcterm(int);
 #endif /* PCTERM */
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_modechg ;
@@ -323,7 +341,6 @@ wyse_backtab( VOID )
 void
 wysectrl( int ch )
 {
-    int i,j;
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -798,7 +815,6 @@ void
 ApplyPageAttribute( int vmode, int x, int y, vtattrib vta )
 {
     vtattrib oldvta, prevvta ;
-    int rc ;
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     prevvta = VscrnGetVtCharAttr( vmode, x-1, y-1 ) ;
@@ -965,7 +981,7 @@ wysedefkey( int key )
 void
 wyseascii( int ch )
 {
-    int i,j,k,n,x,y,z;
+    int j,x,y,z;
     vtattrib attr ;
     viocell blankvcell;
 
@@ -2146,7 +2162,7 @@ wyseascii( int ch )
                 char keydef[256] = "" ;
                 int dir = wyinc() ;
                 int key = wyinc() ;
-                int i=0,j=0 ;
+                int i=0;
                 int keyi = -1 ;
 
                 if ( dir == '~' ) {
@@ -3066,42 +3082,42 @@ wyseascii( int ch )
                     case '2': {
                         /* Set MODEM port receive handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set Modem port RX handshaking",0);
                         break;
                     }
                     case '3': {
                         /* Set AUX port receive handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set AUX port RX handshaking",0);
                         break;
                     }
                     case '4': {
                         /* Set MODEM port transmit handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set Modem port TX handshaking",0);
                         break;
                     }
                     case '5': {
                         /* Set AUX port transmit handshaking */
                         /* hndshk */
-                        int hndshk = wyinc();
+                        /*int hndshk =*/ wyinc();
                         debug(F110,"Wyse Escape","Set AUX port TX handshaking",0);
                         break;
                     }
                     case '6': {
                         /* Set maximum data transmission speed */
                         /* maxspd */
-                        int maxspd = wyinc();
+                        /*int maxspd =*/ wyinc();
                         debug(F110,"Wyse Escape","Set Max Data TX speed",0);
                         break;
                     }
                     case '7': {
                         /* Set maximum function key transmission speed */
                         /* max */
-                        int max = wyinc() ;
+                        /*int max =*/ wyinc() ;
                         debug(F110,"Wyse Escape","Set Max Function Key TX speed",0);
                         break;
                     }
@@ -3137,7 +3153,7 @@ wyseascii( int ch )
                     case '\\': {
                         /* 325 or 160 - Select Bell Tone */
                         /* 0 off, 1 Low pitch, 2,3 High pitch */
-                        int tone = wyinc() ;
+                        /*int tone =*/ wyinc() ;
                         debug(F110,"Wyse Escape","Select Bell Tone",0);
                         if ( debses )
                             break;
@@ -4748,7 +4764,7 @@ wyseascii( int ch )
                     break;
                 case '1': {
                     /* Split screen horizontally and clear screen */
-                    int line = wyinc();
+                    /*int line =*/ wyinc();
 
                     debug(F110,"Wyse Escape","Split screen horizontally and clear screen",0);
                     if ( debses )
