@@ -241,13 +241,12 @@ Win32EnumPrt( struct keytab ** pTable, struct keytab ** pTable2,
 {
     DWORD  dwBytesNeeded;
     DWORD  dwPrtRet2;
-    DWORD  dwMaxPrt;
     LPTSTR lpName = NULL;
     DWORD  dwEnumFlags = PRINTER_ENUM_LOCAL;
     DWORD  dwLevel = 2;
     LPPRINTER_INFO_1 pPrtInfo1=NULL;
     LPPRINTER_INFO_2 pPrtInfo2=NULL;
-    int i, n, rc ;
+    int i, rc ;
     CHAR   szDefault[256]="";
     int    iDefault = -1;
 

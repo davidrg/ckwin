@@ -17,7 +17,10 @@
 #include "ckucmd.h"
 #include "ckuusr.h"
 #include "ckowin.h"
+#include "ckosyn.h"
+#include "ckocon.h"
 #include <string.h>
+#include <process.h>
 
 #include <windows.h>
 #ifndef NODIAL
@@ -34,6 +37,11 @@
 #include "ckntapi.h"            /* TAPI function typedefs */
 
 _PROTOTYP( char * cktapiErrorString, (DWORD));
+int cktapiIsModem(void);
+BOOL HandleLineErr(long lLineErr);
+int cktapidisconnect(void);
+int cktapicloseasync(void);
+int cktapidevenum(void);
 
 extern int tttapi ;                     /* is Line TAPI ? */
 extern struct keytab * tapilinetab, * tapilocationtab ;
@@ -406,7 +414,6 @@ HCALL g_hCall = (HCALL) 0;
 HLINE g_hLine = (HLINE) 0;
 extern CK_TTYFD_T ttyfd; /* this holds the HLINE hLine */
 extern int mdmtyp ;
-static int mdmtyp_sav=0;
 CHAR szModemName[256] ;
 DWORD LineDeviceId = -1;
 DWORD LineDeviceAPIVersion = 0 ;
@@ -1320,7 +1327,10 @@ DoLineCallState(
         UpdateStatusBar("Line is idle",1,0);
         if ( ttyfd != -1 && ttyfd != -2 ) {
             cktapidisconnect();
-            SetConnectMode(FALSE);
+            /* Not sure if CSX_INTERNAL is correct - previously nothing
+             * was passed at all though so it can't be more wrong than
+             * that -- DG */
+            SetConnectMode(FALSE, CSX_INTERNAL);
         }
         PostTAPIConnectSem();
         break;
@@ -1396,7 +1406,10 @@ DoLineCallState(
             }
             if ( ttyfd != -1 && ttyfd != -2 ) {
                 cktapidisconnect();
-                SetConnectMode(FALSE);
+                /* I'm not sure if CSX_HOSTDISC is correct - previously
+                 * nothing was passed at all though so it can't be less
+                 * wrong than that -- DG */
+                SetConnectMode(FALSE, CSX_HOSTDISC);
             }
             PostTAPIConnectSem() ;
             UpdateStatusBar(pszReasonDisconnected,1,0);
@@ -1529,7 +1542,9 @@ DoLineCallState(
         DWORD          dwSize     = sizeof(LINECALLINFO);
         LONG           lrc = 0;
         DWORD          dwMediaMode= LINEMEDIAMODE_UNKNOWN;
+        #ifdef BETADEBUG
         DWORD          dwNumRings = 0;
+        #endif /* BETADEBUG */
 
         UpdateStatusBar("Incoming call being offered",1,0);
         g_hCall = (HCALL) dwDevice;
@@ -2860,7 +2875,6 @@ cktapiBuildLocationTable( struct keytab ** pTable, int * pN )
    long lReturn = 0;
    DWORD dwCounter;
    LPLINELOCATIONENTRY lpLocationEntry;
-   LPLINECARDENTRY lpLineCardEntry = NULL;
    int i = 0 ;
 
    if ( *pTable )
@@ -3220,7 +3234,6 @@ cktapiFetchLocationInfoByName( char * CurrentLocation )
     long lReturn;
     DWORD dwCounter;
     LPLINELOCATIONENTRY lpLocationEntry;
-    LPLINECARDENTRY lpLineCardEntry = NULL;
 
     /* If no name specified, use Current Location */
     if ( !CurrentLocation || !CurrentLocation[0] ) {
@@ -3315,7 +3328,6 @@ cktapiFetchLocationInfoByID( int LocationID )
     long lReturn;
     DWORD dwCounter;
     LPLINELOCATIONENTRY lpLocationEntry;
-    LPLINECARDENTRY lpLineCardEntry = NULL;
 
    // First, get the TRANSLATECAPS
    do
@@ -4634,13 +4646,15 @@ cktapiSetModemSettings( LPDEVCFG lpDevCfg, LPCOMMCONFIG lpCommConfig )
     return(TRUE);
 }
 
+void cktapihangup_thr(void* unused) { cktapihangup(); }
+void cktapiclose_thr(void* unused) { cktapiclose(); }
 
 int
 cktapidisconnect( void )
 {
     int i=5;
     if ( !g_bHangingUp && !g_bClosing ) {
-        _beginthread( cktapihangup, 65535, 0 );
+        _beginthread( cktapihangup_thr, 65535, 0 );
     }
     do {
         msleep(50);
@@ -4653,7 +4667,7 @@ cktapicloseasync( void )
 {
     int i=5;
     if ( !g_bClosing ) {
-        _beginthread( cktapiclose, 65535, 0 );
+        _beginthread( cktapiclose_thr, 65535, 0 );
     }
     do {
         msleep(50);
