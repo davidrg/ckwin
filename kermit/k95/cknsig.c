@@ -47,6 +47,15 @@ extern int network;
 extern CK_TTYFD_T ttyfd;
 extern int TlsIndex ;
 
+/* These live in ckosyn.c */
+APIRET CloseCtrlCAlarmSigMuxWait(ULONG, ULONG);
+APIRET WaitCtrlCAlarmSigMuxWait(ULONG, ULONG, ULONG);
+#ifdef NT
+APIRET CreateCtrlCAlarmSigMuxWait(ULONG, ULONG, HANDLE);
+#else /* NT */
+APIRET CreateCtrlCAlarmSigMuxWait(ULONG, ULONG, HEB);
+#endif /* NT */
+
 int
 cc_execute( ckjptr(sj_buf), ck_sigfunc dofunc, ck_sigfunc failfunc ) {
     int rc = 0 ;
@@ -268,7 +277,7 @@ _PROTOTYP( SIGTYP (*savhandler), (int) );
         debug(F100,"cc_alrm_execute thread completed","",0);
         ResetSem( hevThread ) ;
     }
-    CloseCtrlCAlarmSigMuxWait(alrmindex) ;
+    CloseCtrlCAlarmSigMuxWait(ccindex, alrmindex) ;
     CloseCtrlCSem( ccindex ) ;
     CloseAlarmSigSem( alrmindex ) ;
 #ifdef NT
