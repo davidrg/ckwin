@@ -1400,7 +1400,6 @@ putclick( int kmode, char but, char alt, char ctrl, char shift, char dbl, char d
 int
 putevent( int kmode, con_event e ) {
     int rc = 0;
-    con_event evt ;
 
     switch ( e.type ) {
     case key:
@@ -1440,7 +1439,6 @@ putevent( int kmode, con_event e ) {
 int
 getevent( int kmode, con_event * evt ) {
     int rc = 0, fc = 0 ;
-    ULONG PostCount ;
 
     fc = RequestKeyStrokeMutex( kmode, SEM_INDEFINITE_WAIT ) ;
     debug(F111,"getevent","RequestKeyStrokeMutex()",fc);
@@ -1518,7 +1516,7 @@ KbdHandlerCleanup( void ) {
    resizing events */
 
 #ifndef NOLOCAL
-win32WindowEvent( int mode, WINDOW_BUFFER_SIZE_RECORD r )
+void win32WindowEvent( int mode, WINDOW_BUFFER_SIZE_RECORD r )
 {
     LONG sz ;
     extern int ttmdm, me_naws;
@@ -1558,17 +1556,19 @@ _PROTOTYP( int rlog_naws, (void) ) ;
 int
 getKeycodeFromKeyRec( KEY_EVENT_RECORD * pkeyrec, WORD * buf, int chcount )
 {
-    int c= -1, k, km ;
+    int c= -1;
     extern int ckconraw ;
-    int keycount = 1 ;
-    char ch;
-    static char keystate[256] ;
 #ifdef CKOUNI_IN
     WORD xbuf[8] ;
 #else
     CHAR xbuf[8];
 #endif
     KEY_EVENT_RECORD keyrec = *pkeyrec;
+
+#ifndef KUI
+#ifndef CKT_NT35_OR_31
+    int keycount = 1 ;
+    static char keystate[256] ;
 
     /* The following are used in Win95 only to simulate the Keyboard Layout Hotkey */
     static int altdown = 0, altup = 0, ctrlup = 0, ctrldown = 0,
@@ -1577,6 +1577,8 @@ getKeycodeFromKeyRec( KEY_EVENT_RECORD * pkeyrec, WORD * buf, int chcount )
     static HKL hkllist[64];
     static int nhkl = 0;
     static int ihkl = 0;
+#endif
+#endif
 
     /* In case the caller doesn't need to know what the dead key values are */
     if ( buf == NULL || chcount == 0 ) {
@@ -1975,7 +1977,9 @@ void
 win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
 {
     int c = -1, i;
+#ifndef KUI
     int keycount = 1 ;
+#endif /* KUI */
 #define CHCOUNT 8
 #ifdef CKOUNI_IN
     WORD buf[CHCOUNT] ;
@@ -4673,6 +4677,7 @@ mkkeyevt( KEY scancode ) {
     return evt ;
 }
 
+#ifdef COMMENT
 static con_event
 mkmacroevt( CHAR * string ) {
     con_event evt ;
@@ -4681,6 +4686,7 @@ mkmacroevt( CHAR * string ) {
     evt.macro.string = strdup(string) ;
     return evt ;
 }
+#endif /* COMMENT */
 
 
 static con_event
