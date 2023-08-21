@@ -34,6 +34,7 @@ char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 #include "ckcker.h"
 #include "ckocon.h"
 #include "ckokey.h"
+#include "ckoreg.h"
 
 #ifdef NT
 #ifndef NOSCROLLWHEEL
@@ -46,7 +47,7 @@ char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 static BOOL SelectionValid = 0 ;
 con_event mousemap[MMBUTTONMAX][MMSIZE] ;
 #ifdef NT
-static USHORT Vrow, Vcol, n, ShiftState, Event ;
+static USHORT Vrow, Vcol, Event ;
 static USHORT lastrow=0, lastcol=0 ;
 static struct {
     int state ;
@@ -463,7 +464,6 @@ mouseurl( int mode, USHORT row, USHORT col )
     extern char browsopts[];
     extern char browser[];
     char      cmd[1024]="", tmpbuf[1024]="";
-    char *s, *d;
     int rc, x=0;
 #ifdef NT
     STARTUPINFO si;
@@ -498,7 +498,7 @@ mouseurl( int mode, USHORT row, USHORT col )
 
 #ifdef NT
     if ( (GetURLType() == HYPERLINK_UNC) || !browser[0] ) {
-        if ( !Win32ShellExecute(url) )
+        if ( !Win32ShellExecute((char*)url) )
             bleep(BP_FAIL);
         debug(F111,"mouseurl ShellExecute",url,GetLastError());
     }

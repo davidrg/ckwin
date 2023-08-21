@@ -1296,7 +1296,7 @@ ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h
 cknpty$(O):     cknpty.c cknpty.h
 !endif
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
-ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
+ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h ckoreg.h
 !if "$(CKF_XYZ)" == "yes"
 ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
                 ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \

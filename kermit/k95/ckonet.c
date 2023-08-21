@@ -94,6 +94,7 @@ extern char pipename[PIPENAML+1];
 
 #ifdef NT
 #include <windows.h>
+#include <process.h>
 #define itoa _itoa
 #else /* NT */
 #define INCL_NOPM
@@ -323,8 +324,8 @@ void NetbiosListenThread(void * pArgList);
 #ifdef NT
 static HANDLE hSaveStdIn=NULL, hSaveStdOut=NULL, hSaveStdErr=NULL;
 static HANDLE hChildStdinRd=NULL, hChildStdinWr=NULL, hChildStdinWrDup=NULL,
-              hChildStdoutRd=NULL, hChildStdoutRdDup=NULL, hChildStdoutWr=NULL,
-              hInputFile=NULL, hSaveStdin=NULL, hSaveStdout=NULL;
+              hChildStdoutRd=NULL, hChildStdoutRdDup=NULL, hChildStdoutWr=NULL;
+              /*hInputFile=NULL, hSaveStdin=NULL, hSaveStdout=NULL;*/
 static SECURITY_ATTRIBUTES saAttr;
 static BOOL fSuccess;
 static PROCESS_INFORMATION procinfo ;
@@ -333,7 +334,7 @@ static STARTUPINFO         startinfo ;
 static HFILE hSaveStdIn=-1, hSaveStdOut=-1, hSaveStdErr=-1;
 static HFILE hChildStdinRd=-1, hChildStdinWr=-1, hChildStdinWrDup=-1,
              hChildStdoutRd=-1, hChildStdoutRdDup=-1, hChildStdoutWr=-1,
-             hInputFile=-1, hSaveStdin=-1, hSaveStdout=-1;
+             /*hInputFile=-1,*/ hSaveStdin=-1, hSaveStdout=-1;
 static BOOL fSuccess;
 static PID  pid=0;
 #define STILL_ACTIVE -1L
@@ -838,8 +839,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
 #ifdef NPIPE
    if ( nettype == NET_PIPE ) {
-       if ( hPipe ) {                   /* Make sure a pipe isn't open */
-           char buffer[64];
+       if ( hPipe ) {                   /* Make sure a pipe isn't open */;
 #ifdef NT
            if (PeekNamedPipe(hPipe, NULL, 0, NULL, &AvailData, NULL))
                return 0;
@@ -848,6 +848,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
            if ( rc == ERROR_BAD_PIPE || rc == ERROR_PIPE_NOT_CONNECTED )
                ttclos(0);
 #else
+           char buffer[64]
            rc = DosPeekNPipe(hPipe, buffer, sizeof(buffer),
                              &BytesRead, &AvailData, &PipeState);
            switch ( rc ) {
@@ -1243,7 +1244,6 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
    if ( nettype == NET_FILE )
    {
 #ifdef NT
-      OVERLAPPED OverLapped ;
 
       /* Create a file handle */
       ttyfd = (CK_TTYFD_T) CreateFile (name,
@@ -1275,8 +1275,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
 #ifdef NETCMD
     if ( nettype == NET_CMD  || nettype == NET_PTY ) {
-        char cmd_line[256], *cmd_exe, *args, *p;
+        char cmd_line[256];
+#ifdef COMMENT
+        char *cmd_exe, *args, *p;
         int argslen;
+#endif /* COMMENT */
 
 #ifdef NT
         cmd_line[0] = '\0' ;
@@ -1939,7 +1942,9 @@ os2_nettchk() {                         /* for reading from network */
 
 #ifdef NPIPE
     if ( nettype == NET_PIPE ) {
+#ifndef NT
         char buffer[64];
+#endif
 
         if ( pos < size )
             return size - pos ;
@@ -3532,9 +3537,9 @@ os2_nettol(s,n) char *s; int n; {
 
 #ifdef DECNET
     if ( nettype == NET_DEC ) {
-        int i ;
         if ( ttnproto == NP_LAT ) {
 #ifdef OS2ONLY
+            int i ;
             for ( rc = 0; rc < n; rc++, s++ )
                 if ( i = os2_nettoc(*s) ) {
                     return i ;
@@ -4253,8 +4258,12 @@ LoadDECTAL( void )
 void
 netinit() {
     extern int nettype;
+#ifdef DECNET
+#ifdef OS2ONLY
     char fail[256];
     HMODULE library;
+#endif /* OS2ONLY */
+#endif /* DECNET */
     extern unsigned long startflags;
 
    if (deblog) {
@@ -4534,17 +4543,12 @@ int
 tcpsocket_open( char * name, int * lcl, int nett, int timo )
 {
     int on = 1;
-    static struct servent *service, servrec;
     static struct hostent *host;
     static struct sockaddr_in saddr;
     static int saddrlen ;
     extern char myipaddr[];
     struct sockaddr_in l_addr;
     int l_slen;
-#ifdef BSDSELECT
-    fd_set rfds;
-    struct timeval tv;
-#endif
     extern int tcp_rdns;
 #ifdef CK_SSL
     int ssl_failed = 0;
@@ -5251,12 +5255,13 @@ os2_gethostname( void )
 /* SOCKS 4.2 code derived from CSTC_RELEASE 4.2 on ftp.nec.com /pub/security */
 
 static int usesocks = FALSE ;
-static int usesocksns = FALSE ;
-static int socks_usens = FALSE ;
-static struct in_addr socks_server, socks_ns, default_server ;
+static struct in_addr socks_server, socks_ns;
 static unsigned short socks_port;
+#ifdef CK_SOCKS_NS
+static int usesocksns = FALSE ;
+static struct in_addr default_server ;
 static int server_count ;
-static char * username ;
+#endif /* CK_SOCKS_NS */
 enum socks_action { deny, direct, sockd } ;
 
 char *tcp_socks_svr = NULL;             /* SOCKS Server location */
@@ -5374,7 +5379,9 @@ int SOCKS_getaddr(name, addr)
     struct in_addr  *addr;
 {
     struct hostent  *hp;
+#ifdef COMMENT
     struct netent   *np;
+#endif
 
     if (SOCKS_getquad(name, addr) != -1)
         return 0;
@@ -5429,7 +5436,6 @@ SOCKS_read_config( void )
     long    p;
     unsigned short dport;
     char    *cmdp = NULL;
-    struct  in_addr self;
     Portcmp tst;
 
     if ( confNtries ) {
@@ -5801,7 +5807,6 @@ Rconnect(int socket, struct sockaddr * name, int namelen)
     char request[100];
     char *next ;
     int packetsize ;
-    int sockret ;
     extern int ck_lcname;
 
     if (usesocks) {
