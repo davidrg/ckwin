@@ -9,6 +9,7 @@
 */
 
 #include "ckcdeb.h"
+#include "ckouni.h"
 #ifndef NOTERM
 #ifdef NT
 #include <windows.h>
@@ -84,7 +85,6 @@ avainc( int striphighbit )
 void
 avatar(void)
 {
-    int i,j;
     int ch = avainc(1) ;
 
     switch ( ch ) {
