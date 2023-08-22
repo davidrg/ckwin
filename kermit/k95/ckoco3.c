@@ -7418,7 +7418,7 @@ flipdebug() {
 
 #ifdef NETCONN
 #ifdef TCPSOCKET
-do_tn_cmd(CHAR x) {
+int do_tn_cmd(CHAR x) {
     CHAR temp[3];
 
     if (network && IS_TELNET()) { /* TELNET */

@@ -62,6 +62,7 @@ char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
 #include <string.h>
 #include <assert.h>
 #include <signal.h>
+#include <time.h>
 
 #ifdef NT
 #include <windows.h>
@@ -105,6 +106,30 @@ extern UCHAR NetBiosRemote[] ;
 #include "cknpty.h"
 #endif /* CK_CONPTY */
 #endif /* NETCMD */
+
+#ifdef CK_NAWS
+#ifdef RLOGCODE
+int rlog_naws(void);
+#endif /* RLOGCODE */
+#endif /* CK_NAWS */
+
+#ifdef NETCONN
+#ifdef TCPSOCKET
+int do_tn_cmd(CHAR);            /* ckoco3.c */
+#endif /* TCPSOCKET */
+#endif /* NETCONN */
+
+#ifdef KUI
+int gui_videopopup_dialog(videopopup *, int);   /* cknwin.c */
+#endif /* KUI */
+
+VOID resconn();                 /* ckuusr.c */
+void scrollstatusline();        /* ckoco3.c */
+void vt100key(int);             /* ckoco3.c */
+VOID learnkeyb(con_event, int); /* ckoco3.c */
+int os2settitle(char *, int);   /* ckotio.c */
+int ttgcwsz();                  /* ckocon.c */
+void VscrnForceFullUpdate();    /* ckoco2.c */
 
 /*
  *
@@ -374,7 +399,7 @@ SaveTermMode(int wherex, int wherey) {
     vt100screen.ox = wherex;
     vt100screen.oy = wherey;
     vt100screen.att = attribute;
-    vt100screen.scrncpy ;  /* not used for terminal mode */
+    /*vt100screen.scrncpy ;      not used for terminal mode */
 }
 
 /* Restore a saved screen */
@@ -719,7 +744,6 @@ cleartermscreen( BYTE vmode ) {
 
 /* POPUPHELP  --  Give help message for connect.  */
 static int helpcol, helprow;
-static int helpwidth;
 
 videopopup *
 helpstart(int w, int h, int gui) {               /* Start help window */
@@ -806,7 +830,9 @@ int
 popuperror(int mode, char * msg ) {
     videopopup * pPopup = NULL ;
     int c=0;
+#ifdef OS2ONLY
     con_event evt ;
+#endif /* OS2ONLY */
     extern int holdscreen;
 
     save_status_line();                 /* Save current status line */
@@ -1009,7 +1035,7 @@ popup_readtext(int mode, char * preface, char * prmpt, char * buffer, int buflen
             x1 = 0 ;
         }
 
-        if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 && x1 <= 255 )
+        if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 /*always true: && x1 <= 255*/ )
         {
             if ( len >= buflen - 1 ) {
                 bleep(BP_WARN);
@@ -1212,7 +1238,7 @@ popup_readpass(int mode, char * preface, char * prmpt, char * buffer, int buflen
             x1 = 0 ;
         }
 
-        if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 && x1 <= 255 )
+        if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 /* always true: && x1 <= 255 */)
         {
             if ( len >= buflen - 1 ) {
                 bleep(BP_WARN);
@@ -1349,11 +1375,7 @@ popuphelp(int mode, enum helpscreen x) {
     char line[81];
     char kn[40];
     char *s;
-    static int whichscreen = 0 ;
     con_event evt ;
-#ifdef OS2MOUSE
-    int button, event ;
-#endif /* OS2MOUSE */
 
     char *hlpmsg[] = {
         "",
@@ -2286,7 +2308,6 @@ setcursormode() {
     extern HVIO VioHandle ;
     VIOINTENSITY vi;
 #endif /* NT */
-    int cell, bottom, top;
 
     if (!GetCurType(&vci))
         crsr_command = vci;
@@ -2340,7 +2361,6 @@ restorecursormode() {
 static void
 doesc(int c) {
     int x;
-    CHAR d, temp[8];
 
     while (1) {
         if (tt_escape && c == escape) { /* Send escape character */
@@ -2695,7 +2715,7 @@ con2host(con_event evt)
 
 void
 conkbdhandler(void *pArgList) {
-    int c, cm, cx, tx, evtcnt;
+    int evtcnt;
     int prty = priority, boost = FALSE;
     con_event evt ;
     extern int Shutdown;
@@ -2876,7 +2896,6 @@ isconnect(void * unused)
 
 int
 unconect1() {
-    int x;
 
 #ifdef CKLEARN
     if (learning && learnfp)
@@ -3027,20 +3046,13 @@ unconect2() {
 
 int
 conect(int async) {
-    USHORT          len, x, y;
-    int             i, c, cm;   /* c is a character, but must be signed
-                                 * integer to pass thru -1, which is the
-                                 * modem disconnection signal, and is
-                                 * different from the character 0377 */
-    char errmsg[50], *erp, ac, bc;
+    USHORT          x, y;
+    int             i;
+    char errmsg[50], *erp;
     extern int cmdlvl,tlevel;
 #ifdef OS2MOUSE
-    int button, event ;
     extern int tt_mouse ;
 #endif /* OS2MOUSE */
-#ifdef NT
-    DWORD ExitCode ;
-#endif /* NT */
 #ifdef CK_TAPI
     extern int tttapi;
     extern int tapipass;
