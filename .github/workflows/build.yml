@@ -114,7 +114,7 @@ jobs:
   ##############################################################################
   # Build with Visual C++ 14.x (2015/2017/2019/2022)                           #
   ##############################################################################
-  # This includes the latest compilers available (2022), plus the most recent 
+  # This includes the latest compilers available (2022), plus the most recent
   # capable of still targeting Windows XP (2017). All support x86, x86-64, ARM32
   # and ARM64.
   Build-VisualCxx:
@@ -1315,6 +1315,60 @@ jobs:
           ROOT: ${{ github.workspace }}
           VCT2003: ${{ github.workspace }}\VCT2003
 
+      - name: Full Build Non-standard configs
+        run: |
+          Set PATH=%VCT2003%\bin;%PATH%
+          
+          REM Don't want to pick up headers or libraries from Visual C++ 14.0
+          REM which is also on here - we only want it for cvtres.exe.
+          Set INCLUDE=%VCT2003%\include
+          Set LIB=%VCT2003%\lib
+          
+          set openssl_root_override=${{ github.workspace }}\openssl-1.0.1u
+          set srp_root_override=${{ github.workspace }}\srp-2.1.2
+          set k4w_root_override=${{ github.workspace }}\kerberos\kfw-2.6-final\src
+          
+          call setenv.bat
+          
+          set PATH=%PATH%;${{github.workspace}}\jom
+          set MAKE=jom          
+          
+          REM The Visual C++ 2003 Toolkit can only statically link the C Runtime
+          REM (though apparently you can get the required import library for
+          REM dynamic linking from the .NET SDK 1.1)
+          set CKB_STATIC_CRT=yes
+          
+          cd kermit\k95
+          
+          echo Cleaning...
+          call clean.bat
+          
+          echo Building iksdnt...
+          call mkiksd.bat
+          
+          echo Building kui...
+          call mkkui.bat
+          
+          mkdir dist-misc
+          move *.exe dist-misc          
+          
+          REM Check outputs
+          set MISSING_BUILD_RESULTS=
+          for %%y in (cknkui.exe iksdnt.exe) do (
+            if not exist dist-misc\%%y echo Build result not found: %%y
+            if not exist dist-misc\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist dist-misc\%%y set FAILED=yes
+          )
+
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
+          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
+          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        env:
+          ROOT: ${{ github.workspace }}
+          VCT2003: ${{ github.workspace }}\VCT2003
+
       - name: Check additional legacy outputs
         if: matrix.legacy_dependencies == 'yes'
         shell: cmd
@@ -1357,6 +1411,7 @@ jobs:
         working-directory: ${{ github.workspace }}\kermit\k95
         run: |
           move dist ${{ github.workspace }}\ckwin
+          move dist-misc ${{ github.workspace }}\ckwin-extra
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         if: matrix.legacy_dependencies == 'no'
@@ -1365,12 +1420,28 @@ jobs:
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7
+      - name: Upload Artifact (extra)
+        uses: actions/upload-artifact@v3.1.1
+        if: matrix.legacy_dependencies == 'no'
+        with:
+          name: ckwin-vc7.1-x86-extra
+          path: ${{ github.workspace }}\ckwin-extra
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.1
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: ckwin-vc7.1-x86-insecure
           path: ${{ github.workspace }}\ckwin
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload Artifact (extra)
+        uses: actions/upload-artifact@v3.1.1
+        if: matrix.legacy_dependencies == 'yes'
+        with:
+          name: ckwin-vc7.1-x86-insecure-extra
+          path: ${{ github.workspace }}\ckwin-extra
           if-no-files-found: error
           retention-days: 7
 
