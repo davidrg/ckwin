@@ -1349,20 +1349,20 @@ jobs:
           echo Building kui...
           call mkkui.bat
           
+          mkdir dist-misc
+          move *.exe dist-misc          
+          
           REM Check outputs
           set MISSING_BUILD_RESULTS=
           for %%y in (cknkui.exe iksdnt.exe) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
+            if not exist dist-misc\%%y echo Build result not found: %%y
+            if not exist dist-misc\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
+            if not exist dist-misc\%%y set FAILED=yes
           )
 
           if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
           if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1          
-          
-          mkdir dist-misc
-          move *.exe dist-misc
+          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
         working-directory: ${{ github.workspace }}
         env:
