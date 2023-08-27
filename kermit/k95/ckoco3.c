@@ -350,7 +350,7 @@ extern char answerback[81];             /* answerback */
 extern char usertext[(MAXTERMCOL) + 1];        /* Status line and its parts */
 extern char statusline[MAXTERMCOL + 1];
 char hoststatusline[MAXTERMCOL + 1];
-extern char exittext[(20) + 1];
+extern char exittext[(30) + 1];     /* Used to be (20)+1, bumped to fit some longer key names */
 #define HLPTXTLEN 41
 extern char helptext[HLPTXTLEN];
 extern char filetext[(20) + 1];
@@ -12006,7 +12006,73 @@ line25(int vmode) {
     }
 
     switch ( vmode ) {
-    case VTERM:
+    case VTERM: {
+        /* Default Status line field sizes
+         * Range	Field     	Length
+         * ------   ----------- ---------------------
+         *   0- 0	padding		1
+         *   1-17	usertext	16
+         *  18-31	helptext	14
+         *  32-46	exittext	15
+         *  47-..   hostname	31-len(filetext)-1
+         *  ..-77   filetext	len(filetext)
+         *  78-79	padding		2
+         *
+         * If the hostname field is large enough, two characters of padding will be
+         * inserted into the start of it to provide better visual separation from
+         * the exittext field.
+         *
+         * If hostname and filetext are too long to fit into the space available, the
+         * exittext field is hidden and its space given over to hostname+filetext.
+         *
+         * Hostname is then truncated to a minimum of four characters before its just
+         * hidden. Filetext will also be hidden if there is insufficient room.
+         */
+
+        /* Two less than maximum (80) for some padding */
+        int right_margin = VscrnGetWidth(VTERM) - 2;
+
+        /* This field shows, by default, "Command: Alt-X". But it can
+         * show other things based on context or user customisation.
+         * Its normally 15 columns wide and starts in column 32 if visible.*/
+        BOOL show_exit_text = FALSE;
+        int exittext_field_position = 32, exittext_field_length = 0;
+
+        /* Hostname + filetext field spans columns 47 through 77 inclusive
+         * by default, though this depends on if the exittext field is visible
+         * and its length */
+        BOOL show_hostname_field = FALSE;
+        int end_field_position, end_field_length;
+        int hostname_len = 0;
+        char* hostnameCopy = 0;
+
+        int filetext_len = strlen(filetext);
+
+        if (exittext[0]) {
+            show_exit_text = TRUE;
+            exittext_field_length = 15; /* Default length for K-95 */
+
+            /* If the default length isn't long enough, increase it */
+            if (strlen(exittext) > exittext_field_length) {
+                exittext_field_length = strlen(exittext) + 1;
+            }
+        }
+
+        if (hostname[0]) {
+            show_hostname_field = TRUE;
+            hostnameCopy = strdup(hostname);
+            hostname_len = (int)strlen(hostnameCopy);
+        }
+
+        end_field_position = exittext_field_position + exittext_field_length;
+        end_field_length = right_margin - end_field_position;
+
+        if (hostname_len + filetext_len + 1 > end_field_length) {
+            show_exit_text = FALSE;
+            end_field_position = exittext_field_position;
+            end_field_length += exittext_field_length;
+        }
+
         /* build the status line */
         for (i = 0; i < MAXTERMCOL; i++)
             s[i] = ' ';
@@ -12014,37 +12080,59 @@ line25(int vmode) {
             strinsert(&s[01], usertext);    /* Leftmost item */
         if (helptext[0])
             strinsert(&s[18], helptext);
-        if (exittext[0])
-            strinsert(&s[32], exittext);
-        i = strlen(filetext);               /* How much needed for last item */
-        if (i > 0) {
-            strinsert(&s[78 - i], filetext); /* Right-justify it */
-            if (hostname[0]) {
-                i = 31 - i;                 /* Space remaining for hostname */
-                if ((int) strlen(hostname) > (i - 1)) { /* Too long? */
-                    int j;
-                    for (j = i; j > 0 && hostname[j] != ':'; j--) ;
-                    if (j > 0) {            /* Cut off ":service" if any */
-                        hostname[j] = '\0';
-                    }
-                    else {          /* Or else ... */
-                        hostname[i - 3] = '.'; /* show ellipsis */
-                        hostname[i - 2] = '.';
-                        hostname[i - 1] = '.';
-                        hostname[i] = '\0';
+
+        if (filetext_len > 0) {
+            /* Only show the filetext field if we've got enough space. It will take priority
+             * over the hostname field. */
+            if (filetext_len < end_field_length) {
+                strinsert(&s[right_margin - filetext_len], filetext); /* Right-justify it */
+            }
+
+            if (show_hostname_field) {
+                end_field_length -= filetext_len;       /* Space remaining for hostname */
+                if (hostname_len > (end_field_length - 1)) {
+                    if (end_field_length < 4) {
+                        /* Still not enough room to show it at all. Just drop it. */
+                        show_hostname_field = FALSE;
+                    } else {
+                        int j;
+                        for (j = end_field_length; j > 0 && hostnameCopy[j] != ':'; j--);
+                        if (j > 0) {            /* Cut off ":service" if any */
+                            hostnameCopy[j] = '\0';
+                        } else {          /* Or else ... */
+                            hostnameCopy[end_field_length - 3] = '.'; /* show ellipsis */
+                            hostnameCopy[end_field_length - 2] = '.';
+                            hostnameCopy[end_field_length - 1] = '.';
+                            hostnameCopy[end_field_length] = '\0';
+                        }
                     }
                 }
             }
         }
-        if (hostname[0])
-            strinsert(&s[47], hostname);
+
+        /* If we've got the space, add a bit more padding between the exittext
+         * field and the hostname field (3 characters like the other fields to
+         * provide better visual separation from the exittext field). Kermit-95
+         * only ever ensured 1 column of padding before. */
+        if (hostname_len + 2 < end_field_length) {
+            end_field_position += 2;
+        }
+
+        /* These fields are only shown if there is room for them and they contain
+         * something worth showing */
+        if (show_exit_text)
+            strinsert(&s[exittext_field_position], exittext);
+        if (show_hostname_field) {
+            strinsert(&s[end_field_position], hostnameCopy);
+            free(hostnameCopy);
+        }
 
 #ifndef KUI
         s[0]=(vscrn[vmode].hscroll==0?0xFE:0x11);
         s[pwidth-1]=((pwidth!=w&&vscrn[vmode].hscroll<w-pwidth)?0x10:0xFE);
 #endif /* KUI */
         break;
-
+    }
     case VCMD:
         for (i = 0; i < MAXTERMCOL; i++)
             s[i] = ' ';

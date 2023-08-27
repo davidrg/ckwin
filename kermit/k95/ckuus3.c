@@ -17,6 +17,7 @@
     Update: Fri Dec  2 07:26:48 2022 (changes for XYZMODEM internal)
     Update: Wed Apr 12 15:40:01 2023 (ansified 19 function definitions)
     Update: Sat May  6 13:01:37 2023 (explicit declaration of initproto)
+    Update: Sun May 14 07:38:14 2023 (HPUX10-specific adjustment)
 */
 
 /*  SET command (but much material has been split off into ckuus7.c). */
@@ -3467,6 +3468,17 @@ static int sexptrunc = 0;		/* Flag to force all results to int */
 #include <math.h>                       /* Floating-point functions */
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
+#ifndef CK_ANSIC
+#ifdef HPUX
+/*
+  HP C 76.3 on HP-UX 10 is a curious mixture of K&R (pre-ANSI) and ANSI C.
+  Even though pre-ANSI C doesn't have prototypes, if this prototype is not
+  present a warning is issued in dosexp() below.
+*/
+_PROTOTYP( char * fpformat, (CKFLOAT, int, int) );
+#endif /* HPUX */
+#endif /* CK_ANSIC */
+
 extern char math_pi[];                  /* Value of Pi */
 extern int sexpecho;                    /* SET SEXPRESSION ECHO value */
 extern char * sexpval;                  /* Last top-level S-Expression value */
@@ -4067,12 +4079,14 @@ dosexp(s) char *s;
                     }
 #ifdef FNFLOAT
                 /*
-                  This gets warnings with some old compilers such as HP C
-                  76.3.  CKFLOAT should be 'double', fpresult is CK_OFF_T,
-                  which is a long integer.  Casting fpresults to (CKFLOAT)
-                  makes no difference.  The warning appears nowhere else.
+                  This gets a "Types incompatible in conditional expression"
+                  warning in HP-UX 10 with the pre-ANSI HP C 76.3 compiler
+                  if there is no prototype for fpformat... even though
+                  pre-ANSI C does not have prototypes!  This prototype has
+                  been added above just after '#include "ckcfnp.h"' within
+                  #ifdef HPUX10..#endif.
                 */
-                    if ((CKFLOAT)result != fpresult) fpflag++;
+                    if (result != fpresult) fpflag++;
 #endif	/* FNFLOAT */
                     s2 = (fpflag && !sexptrunc) ?
 			fpformat(fpresult,0,0) : ckfstoa(result);

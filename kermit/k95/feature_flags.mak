@@ -110,7 +110,7 @@ CKT_NT31=yes
 CKT_NT31=yes
 !endif
 
-!if ($(MSC_VER) > 131) && "$(CMP)" == "VCXX"
+!if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
 # OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
 !endif
@@ -205,6 +205,13 @@ CKF_SSH=no
 CKF_TAPI=no
 !endif
 
+# Disable debug logging on PowerPC to avoid link error LNK1176: TOC size limit exceeded
+# (turns out PowerPC has a maximum number of global symbols)
+!if "$(TARGET_CPU)" == "PPC"
+!message Targeting NT-PowerPC: Forcing debug logging OFF to avoid exceeding TOC size limit
+CKF_DEBUG=no
+!endif
+
 # Almost certainly won't build
 # TODO: Make it build (probably *a lot* of work)
 CKF_NT_UNICODE=no
@@ -236,13 +243,36 @@ CKF_K4W=no
 !endif
 
 # MIT Kerberos for Windows:
-#   On by default
+#   Turn on with: -DCK_KERBEROS -DKRB5 -DKRB4 -DKRB524
 #   Turn off with: -DNO_KERBEROS
 #   Requires: An antique version of MIT Kerberos for Windows.
 #      OR: Rework this to use Heimdal Kerberos
 !if "$(CKF_K4W)" == "yes"
-# Nothing required - its on by default.
 ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_KERBEROS -DKRB5 -DHAVE_GSSAPI
+
+# Kerberos IV support isn't available in Kerberos for Windows 4.x and newer.
+!if "$(CKF_K4W_KRB4)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos-IV
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DKRB4 -DKRB524
+!endif
+
+# SSL-ified Kerberos 5 requires OpenSSL older than 1.1.0
+!if "$(CKF_K4W_SSL)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) Kerberos+SSL
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos+SSL
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL_KRB5
+!endif
+
+!if "$(CKF_K4W_WSHELPER)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) DNS-SRV
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) DNS-SRV
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_DNS_SRV
+!endif
+
+
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) Kerberos
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_KERBEROS
@@ -282,7 +312,10 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ZLIB
 #             And also some stuff fixed
 !if "$(CKF_SSL)" == "yes"
 
-ENABLED_FEATURES = $(ENABLED_FEATURES) SSL
+# This is a workaround for a bug in the OpenSSL 3.x headers which assume off_t is
+# available. Its not required when building with OpenSSL 1.1.1 or older.
+#   https://github.com/openssl/openssl/issues/18310
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -D_CRT_DECLARE_NONSTDC_NAMES
 
 # You can optionally do this to have SSL support loaded at runtime when
 # SSLEAY32.DLL can be found. This is not compatible with OpenSSL 1.0.0 or newer
@@ -331,16 +364,23 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) ConPTY
 
 
 # Telnet encryption option (DES, CAST)
-#   Turn on with: -DCRYPT_DLL
+#   Turn on with: -DCRYPT_DLL (external, via k95crypt.dll)
+#             or: -DCK_DES -DCK_CAST -DCK_ENCRYPTION
 #   Requires: libdes
 #     OR: reworking to use OpenSSL instead
 #   Turn off with: -DNO_ENCRYPTION
 !if "$(CKF_CRYPTDLL)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption CryptDLL
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCRYPT_DLL -DLIBDES
+CKF_INTERNAL_CRYPT=no
+!else
+!if "$(CKF_INTERNAL_CRYPT)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) TelnetEncryptionOption InternalCrypt
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_DES -DCK_CAST -DCK_ENCRYPTION -DLIBDES
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) TelnetEncryptionOption CryptDLL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
+!endif
 !endif
 
 # If beta-test mode hasn't been explicitly turned off then assume its on.

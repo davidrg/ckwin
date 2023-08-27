@@ -1,12 +1,20 @@
 @echo off
-@echo ==== Build CKNKER.EXE and assocaited utilities ====
+setlocal
+
+set RUN=N
+set SUFFIX=
+if [%1] == [Y] set RUN=Y
+if [%2] NEQ [] set SUFFIX=-%2
+
+@echo ==== Build CKNKER.EXE and associated utilities ====
 SET PLATFORM=NT
 SET K95BUILD=K95
-if not exist nt\NUL mkdir nt
-move nt\*.obj . > nul
+set OUTDIR=nt%SUFFIX%
+if not exist %OUTDIR%\NUL mkdir %OUTDIR%
+move %OUTDIR%\*.obj . > nul
 del ckcmai.obj ckuus5.obj
-nmake /nologo /e /f ckoker.mak msvc
-move *.obj nt  > nul
+%MAKE% /nologo /e /f ckoker.mak msvc
+move *.obj %OUTDIR%  > nul
 
 REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
 REM fails. And VC5 nmake often seems to complete successfully but report an
@@ -20,6 +28,8 @@ if not exist rlogin.exe goto :missingoutputs
 if not exist telnet.exe goto :missingoutputs
 if not exist textps.exe goto :missingoutputs
 if not exist ctl3dins.exe goto :missingoutputs
+
+if [%RUN%] == [Y] start cknker.exe
 
 goto :end
 

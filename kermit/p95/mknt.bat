@@ -1,1 +1,1 @@
-nmake -f p95.mak
+%MAKE% -f p95.mak

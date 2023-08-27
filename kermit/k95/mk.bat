@@ -1,6 +1,10 @@
 @echo Full build...
-@call mknt.bat
-@call mkg.bat
+
+set SUFFIX=
+if [%1] NEQ [] set SUFFIX=%1
+
+@call mknt.bat N %SUFFIX%
+@call mkg.bat N %SUFFIX%
 
 if not exist cknker.exe exit /b 1
 if not exist iksd.exe exit /b 1

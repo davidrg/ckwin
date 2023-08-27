@@ -1,6 +1,8 @@
 @echo off
 
-nmake /f libdes.mak CFG="Release"
+if "%make%"=="" set make=nmake
+
+%make% /f libdes.mak CFG="Release"
 
 if "%CKF_LIBDES%" == "yes" goto :havelibdes
 if exist %libdes_root%\des\des.h set CKF_LIBDES=yes

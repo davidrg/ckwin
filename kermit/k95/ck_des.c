@@ -1,7 +1,7 @@
 /*
   C K _ D E S . C  -  libDES interface for Kermit 95"
 
-  Copyright (C) 1998, 2001, Trustees of Columbia University in the City of New
+  Copyright (C) 1998, 2023, Trustees of Columbia University in the City of New
   York.  The C-Kermit software may not be, in whole or in part, licensed or
   sold for profit as a software product itself, nor may it be included in or
   distributed with commercial products or otherwise distributed by commercial
@@ -39,7 +39,11 @@
 #include "ckcfnp.h"                     /* Prototypes */
 
 /* This is required by ckclib.c and normally defined in ckuus4.c */
+#ifdef CRYPT_DLL
 int fp_digits = 0;		      /* Digits of floating point precision */
+#else
+extern int fp_digits;
+#endif /* CRYPT_DLL */
 
 int
 libdes_random_key(des_cblock B)
@@ -86,6 +90,7 @@ libdes_pcbc_encrypt(des_cblock *input, des_cblock *output, long length,
     des_pcbc_encrypt(input,output,length,schedule,ivec,enc);
 }
 
+#ifdef CRYPT_DLL
 void
 libdes_dll_init(struct _crypt_dll_init * init)
 {
@@ -98,4 +103,5 @@ libdes_dll_init(struct _crypt_dll_init * init)
     init->p_install_funcs("libdes_pcbc_encrypt",libdes_pcbc_encrypt);
 
 }
+#endif /* CRYPT_DLL */
 #endif /* LIBDES */

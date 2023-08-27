@@ -11,11 +11,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifndef _SIZE_T_DEFINED
 #ifdef _WIN64
 typedef unsigned __int64 size_t;
 #else  /* _WIN64 */
 typedef unsigned int size_t;
 #endif  /* _WIN64 */
+#define _SIZE_T_DEFINED
+#endif /* _SIZE_T_DEFINED */
 
 /* Like malloc, but calls fatal() if out of memory. */
 void   *kmalloc(size_t size);
@@ -57,7 +60,27 @@ char   *kstrdup(const char *str);
 #define write _write
 #define creat _creat
 #ifndef __GNUC__
+#ifdef _CRT_DECLARE_NONSTDC_NAMES
+/* _CRT_DECLARE_NONSTDC_NAMES is only defined to work around an issue in the
+ * OpenSSL 3.x headers which introduced a dependency on some non-standard
+ * types, specifically off_t. This issue remains as of OpenSSL 3.0.10.
+ *
+ * On newer versions of Visual C++, defining _CRT_DECLARE_NONSTDC_NAMES will
+ * bring in off_t along with _utime, so we don't want to define utime as _utime
+ * in that case. But on older versions of Visual C++, _CRT_DECLARE_NONSTDC_NAMES
+ * may not bring in the definition of off_t we need, so we'll define it below
+ * if required.
+ */
+#ifndef _OFF_T_DEFINED
+#define _OFF_T_DEFINED
+typedef long _off_t;
+typedef _off_t off_t;
+#endif
+#else
+/* _CRT_DECLARE_NONSTDC_NAMES in sufficiently new versions of Visual C++
+ * normally defines*/
 #define utime _utime
+#endif /* _CRT_DECLARE_NONSTDC_NAMES */
 #endif /* __GNUC__ */
 #define mktemp _mktemp
 #define strnicmp _strnicmp

@@ -11,7 +11,7 @@
  */
 #define VERSION_MAJOR 3
 #define VERSION_MINOR 0
-#define VERSION_REVISION 1
+#define VERSION_REVISION 5
 #ifndef VERSION_BUILD
 #define VERSION_BUILD 0
 #endif

@@ -10,6 +10,14 @@
 #       improve performance on older machines that are more likely
 #       to be running older compilers.
 
+# Check if nmake is really jom (if so we'll want to avoid some compiler flags on older
+# versions of Visual C++)
+ISJOM=no
+!if [echo $(MAKE) | findstr /C:"jom" > nul] == 0
+!Message Make appears to be jom
+ISJOM=yes
+!endif
+
 !if "$(CK_DETECT_COMPILER)" != "no"
 
 # We'll start off assuming Visual C++ and overwrite this later if
@@ -99,9 +107,10 @@ COMPILER_VERSION = 7.0 (Visual Studio .net 2002)
 # Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
 
 # Version number suggests its Visual C++ 7.0 but its from 1999, two years before the
-# final release of Visual C++ 7.0. So its probably closer to Visual C++ 6 in features.
+# final release of Visual C++ 7.0. So its probably closer to Visual C++ 6 in features,
+# though its close enough to Visual C++ 7.0 for our purposes.
 
-MSC_VER = 120
+MSC_VER = 130
 COMPILER_VERSION = 64bit Windows 2000 for DEC Alpha SDK
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 12.0" > nul] == 0)
@@ -211,7 +220,9 @@ TARGET_PLATFORM = Windows
 # We're targeting (and running on) Windows NT MIPS
 TARGET_CPU = MIPS
 
-# TODO: How do the PowerPC and Alpha compilers announce themselves?
+!ELSEIF ([cl 2>&1 | findstr /C:"for PowerPC" > nul] == 0)
+# We're targeting (and running on) Windows NT PowerPC
+TARGET_CPU = PPC
 
 !ELSEIF ([cl 2>&1 | findstr /C:"AXP" > nul] == 0)
 # Assuming Alpha - the Alpha compiler in the NT 3.50 SDK calls itself:

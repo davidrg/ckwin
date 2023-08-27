@@ -63,7 +63,7 @@ extern struct _kui_init kui_init;
 #ifdef CK_ANSIC
 #ifdef USE_CL_INT
 /*
-  Clang 16 wrongly says cl_int() has prototype.
+  Clang 16 wrongly says cl_int() has no prototype.
   But it does have a prototype and it has an ANSI function declaration.
   In Clang 17 this will be a fatal error and C-Kermit can't be built any more.
   cl_int() is for trapping Ctrl-C before C-Kermit enters its command parser.
@@ -77,10 +77,10 @@ static int fmsg( char * );
 static int dotnarg( char );
 #endif /* TNCODE */
 #ifdef RLOGCODE
-static int dorlgarg( char x );
+static int dorlgarg( char );
 #endif /* RLOGCODE */
 #ifdef SSHBUILTIN
-static int dossharg(char x);
+static int dossharg(char );
 #endif /* SSHBUILTIN */
 #endif /* CK_ANSIC */
 

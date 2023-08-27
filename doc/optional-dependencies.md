@@ -5,7 +5,7 @@ these but if you don't have them some features (like built-in SSH) will be
 unavailable. These are:
 
 * [zlib](https://zlib.net/)
-* [OpenSSL](https://www.openssl.org/) 0.9.8 - 3.0.x
+* [OpenSSL](https://www.openssl.org/) 0.9.8 - 3.1.x
 * [libssh](https://www.libssh.org/) 0.9.x, 0.10.x
 * libdes 4.01
 
@@ -27,8 +27,8 @@ instructions should do the job.
 
 This has been tested against the following versions:
 * zlib 1.2.13
-* OpenSSL 1.1.1s
-* libssh 0.9.6, 0.10.1, 0.10.3
+* OpenSSL 1.1.1v, 3.0.10, 3.1.1
+* libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
 
 And to build it all the following tools should work:
 * Visual C++ (2022 community edition works, or for Windows XP compatibility use 2019)
@@ -48,21 +48,27 @@ Normally everything is arranged into directories as follows:
 ```
  ckwin\
    - setenv.bat
+   - kerberos\
+     - kfw-2.6-final\src
+       - Kerberos for Windows source code (athena, doc, scripts)
+     - build26.bat
    - kermit\
      - k95\
        - C-Kermit for windows source code
    - zlib\
-     - 1.2.12\
-       - files & directories from zlib 1.1.12
+     - 1.2.13\
+       - files & directories from zlib 1.1.13
    - openssl\
-     - 1.1.1s\
-       - files & directories from openssl 1.1.1s
+     - 3.0.10\
+       - files & directories from openssl 3.0.10
+     - build.bat
+     - README.md
    - libdes\
      - des\
        - files & directories from the libdes distribution
    - libssh\
-     - 0.9.6\
-       - files & directories from libssh 0.9.6
+     - 0.10.5\
+       - files & directories from libssh 0.10.5
    - superlat\
      - include\
        - SuperLAT header files
@@ -74,9 +80,9 @@ in any features requiring them to be automatically enabled.
 
 ### 1. Building zlib
 
-zlib is easy. Download zlib-1.1.12.tar.gz and extract it as `zlib\1.1.12`. Then:
+zlib is easy. Download zlib-1.1.13.tar.gz and extract it as `zlib\1.1.13`. Then:
 ```
-cd zlib\1.1.12
+cd zlib\1.1.13
 cmake .
 nmake -f win32\Makefile.msc
 cd ..\..\
@@ -94,8 +100,8 @@ from CPAN with: `cpan -i Text::Template`
 Then you can build OpenSSL with the following (adjusting the zlib include path
 as necessary):
 ```
-cd openssl\1.1.1s
-perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.12
+cd openssl\3.0.10
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13
 nmake
 cd ..\..\
 ```
@@ -115,20 +121,25 @@ If you're cross-compiling (your target architecture is not the same as the machi
 building on) you *may* get a link error in some versions of OpenSSL. This has been observed
 primarily cross-compiling from x86 to Itanium and x86-64 with Visual C++ 2010. If this
 occurs you need to open `makefile` in a text editor, find the line beginning with
-`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `machine:x64` (x86-64) to the
+`LDFLAGS=/nologo` and add either `/machine:ia64` (Itanium) or `/machine:x64` (x86-64) to the
 end of it. Save the file and run the build again.
 
 If you want OpenSSL to work on versions of windows older than Vista, add the
 `-D"_WIN32_WINNT=0x502"` parameter to the Configure step.
 
+To help automate this a little you can try using `openssl\build.bat` which is
+[documented here](../openssl/README.md). This script uses the C-Kermit build environment
+to figure out the appropriate target and zlib path then runs the configure and make
+step.
+
 ### 3. Building libssh
 
 For libssh you need to the following specifying the correct OPENSSL_ROOT_DIR and ZLIB_ROOT:
 ```
-cd libssh\0.9.6
+cd libssh\0.10.5
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\1.1.1q\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.12\
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\3.0.10\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\
 nmake
 cd ..\..\..\
 ```
@@ -136,6 +147,36 @@ cd ..\..\..\
 Note that this does not build libssh with GSSAPI support. If you're building
 libssh 0.10.x and want DSA support (ssh-dss), add `-DWITH_DSA=ON` to the end
 of the cmake command.
+
+#### Building with GSSAPI (Kerberos) support
+
+Libssh does not currently support GSSAPI on windows, though only a very
+minor change is required to make it work: A single `#define` needs to be added
+to the top of `gssapi.c` to ensure the correct version of the winsock header is
+included, and the `FindGSSAPI.cmake` CMake module needs to be adjusted so it can
+find the MIT Kerberos for Windows SDK.
+
+These changes are available in the form of a convenient patch: 
+`libssh/win32-gssapi.patch`
+
+To build with GSSAPI support:
+```
+cd libssh\0.10.5
+patch -p1 < ..\win32-gssapi.patch
+mkdir build
+cd build
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=C:\path\to\ckwin\openssl\3.0.10\ -DZLIB_ROOT:PATH=C:\path\to\ckwin\zlib\1.2.13\ -DGSSAPI_ROOT_DIR="C:\Program Files\MIT\Kerberos"
+nmake
+cd ..\..\..\
+```
+
+Remember to add `-DWITH_DSA=ON` if you still need DSA (ssh-dss) support.
+
+*Note:* The resulting ssh.dll will depend on gssapi64.dll (or gssapi32.dll for a
+32bit build) meaning it won't work on any systems that don't have MIT Kerberos
+for Windows installed. If you're distributing your build to end-users who may or
+may not need Kerberos support it may be best to produce two builds of libssh, one
+with GSSAPI support and one without.
 
 ## Building with Telnet Encryption Option (DES and CAST) Support
 In addition to SSL/TLS secured telnet, C-Kermit for Windows also optionally
@@ -184,6 +225,70 @@ To actually use SuperLAT support, you'll need a licensed copy of the SuperLAT
 product. This has not been commercially available or supported since 
 31 December 2000 so is probably extremely difficult to find today.
 
+## Building with Kerberos Support
+
+C-Kermit for Windows is known to build with Kerberos for Windows version 2.6.0
+(the last version to support Windows 95) and newer. If you need Kerberos IV
+support, use KFW 2.x or 3.x - KFW 4.x is Kerberos V only.
+
+Kermit 95 was built with Kerberos for Windows version 2.2-beta2 so there is a
+good chance building with versions as old as that will work too, though this has
+not been tested in over 20 years.
+
+### Kerberos for Windows 3.x, 4.x
+
+The Kerberos for Windows SDK is sufficient. This won't give you DNS-SRV support
+as that currently relies on a library that isn't included in the SDK.
+
+All you've got to do is download and install/unzip the KFW SDK then point
+`setenv.bat` at the KFW SDK directory (where the lib and include/inc 
+subdirectories are).
+
+You can do this by either editing `setenv.bat` and updating the `k4w_root`
+variable, or you can set the `k4w_root_override` environment variable before
+invoking setenv.bat. For example:
+
+```batch
+C:\dev\ckwin> set k4w_root_override=C:\Program Files\MIT\Kerberos
+C:\dev\ckwin> setenv.bat
+```
+
+### Kerberos for Windows 2.6.0 - from source (provides DNS-SRV support)
+
+And likely the rest of the 2.6.x series.
+
+#### Requirements
+* Visual C++ 6.0 or newer, with the August 2001 or newer Platform SDK. 
+  Visual C++ 2002 and 2003 seem to satisfy this requirement fine
+* Microsoft HTML Help compiler is required. This should be available on the
+  Visual C++ CD, or you can [download it from Microsoft](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/htmlhelp/microsoft-html-help-downloads)
+* A selection of UNIX tools in your PATH: perl, sed, gawk, cat and rm. 
+  Strawberry perl seems fine, and the rest can come from GnuWin32.
+
+#### Build
+The build scripts need to be patched as the distributed versions rely on some
+headers and tools that don't appear to be available outside of MIT. To automate
+this (and the rest of the build), a script is p[r]
+
+To build:
+1. Download the source code for desired Kerberos for Windows release, eg
+   [Version 2.6.0](https://web.mit.edu/kerberos/dist/historic.html#KFW2.6)
+   (kfw-2.6-src-final.zip)
+2. Extract the zip file inside the kerberos directory, creating
+   \kerberos\kfw-2.6-final\src
+3. Add the following to your PATH: perl, sed, gawk, cat, rm and the HTML Help
+   compiler
+4. CD into the src directory and run ..\..\build26.bat
+
+Example:
+```
+cd kerberos
+wget https://web.mit.edu/kerberos/dist/kfw/2.6/kfw-2.6/kfw-2.6-src-final.zip
+unzip kfw-2.6-src-final.zip
+cd kfw-2.6-final\src
+..\..\build26.bat
+```
+
 ## Building with Older OpenSSL Versions
 If you want to build with older **_INSECURE_** versions of OpenSSL for some
 reason, C-Kermit for Windows still supports the following:
@@ -193,6 +298,7 @@ reason, C-Kermit for Windows still supports the following:
 * 1.0.1u of 2016-09-22 (**_INSECURE_**)
 * 1.0.2u of 2019-12-20 (**_INSECURE_** unless you pay for premium OpenSSL support)
 * 1.1.0l of 2019-09-10 (**_INSECURE_**)
+* 1.1.1v of 2023-08-01 (End of life from 11 September 2023 unless you pay for premium OpenSSL support)
 
 This is of course not recommended. But perhaps bad encryption is better than
 none at all in some situations. Or maybe you're not doing anything where
@@ -285,3 +391,15 @@ cd ..\..\
 ```
 
 This version does not build with Visual C++ 6.
+
+### OpenSSL 1.1.1v
+
+The process for this is the same as 3.0.x. Extract to `\openssl\1.1.1v`, 
+update `openssl_root` in your `setenv.bat`, then do the following
+
+```
+cd openssl\1.1.1v
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13
+nmake
+cd ..\..\
+```

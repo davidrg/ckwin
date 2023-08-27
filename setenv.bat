@@ -36,10 +36,10 @@ set zlib_root=%root%\zlib\1.2.13
 
 REM openssl - set to the folder where the include folder and .lib and .dll files
 REM live.
-set openssl_root=%root%\openssl\1.1.1s
+set openssl_root=%root%\openssl\1.1.1u
 
 REM libssh - set to the folder where the include directory lives.
-set libssh_root=%root%\libssh\0.10.3
+set libssh_root=%root%\libssh\0.10.5
 
 REM libssh - set to where you built libssh. This should have a subdirectory
 REM called 'src' containing ssh.dll and ssh.lib
@@ -53,8 +53,19 @@ REM Stanford SRP - Optional SRP Authentication for Telnet and FTP connections
 REM Extract srp-2.1.2.tar.gz to the following location:
 set srp_root=%root%\srp
 
-REM Kerberos for Windows, support for which probably hasn't been built since 2002
+REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
+REM    target\bin\i386\rel\wshelp32.dll
+REM    target\lib\ie86\rel\wshload.lib
+REM    athena\wshelper\include\wshelper.h
+REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
+REM
+REM You can also point this at the root directory for the Kerberos for Windows
+REM 3.x or 4.x SDK.
 set k4w_root=%root%\kerberos\kfw-2.2-beta-2
+
+REM Make program must be something sufficiently compatible with nmake 1.40 (Visual C++ 1.1). Jom is recommended
+REM for doing parallel builds.
+set make=nmake
 
 REM ============================================================================
 REM ================== No changes required beyond this point ===================
@@ -89,13 +100,19 @@ if %errorlevel% == 0 goto :arm64
 cl 2>&1 | findstr /C:"for ARM" > nul
 if %errorlevel% == 0 goto :arm
 
-cl 2>&1 | findstr /C:"for AXP" > nul
+REM Microsoft (R) & Digital (TM) AXP C/C++ Optimizing Compiler Version 8.03.JFa
+cl 2>&1 | findstr /C:"AXP" > nul
+if %errorlevel% == 0 goto :axp
+
+REM Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
+cl 2>&1 | findstr /C:"Alpha" > nul
 if %errorlevel% == 0 goto :axp
 
 cl 2>&1 | findstr /C:"for MIPS R-Series" > nul
 if %errorlevel% == 0 goto :mips
 
-REM TODO: PowerPC
+cl 2>&1 | findstr /C:"for PowerPC" > nul
+if %errorlevel% == 0 goto :ppc
 
 REM Yes, the 64bit Windows for Alpha compiler exists. No, you can't run its output
 REM on anything (unless you happen to work for Microsoft)
@@ -112,10 +129,20 @@ set CKB_TARGET_ARCH=ARM
 goto :bits32
 
 :axp
+REM Catch the 64bit compiler:
+REM Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 13.00.8499
+cl 2>&1 | findstr /C:"13.00" > nul
+if %errorlevel% == 0 goto :axp64
+
 REM Alpha AXP Windows NT - 32bits
-REM TODO: Check
-set CKB_TARGET_ARCH=AXP
+set CKB_TARGET_ARCH=ALPHA
 goto :bits32
+
+:axp64
+REM Alpha AXP Windows 2000/XP - 64bits
+REM TODO: Check
+set CKB_TARGET_ARCH=ALPHA64
+goto :bits64
 
 :mips
 REM MIPS Windows NT - 32bits
@@ -161,7 +188,6 @@ echo Targeting 64bit Windows
 
 REM These libraries aren't supported for 64bit targets - force them off
 set CKF_SRP=no
-set CKF_K4W=no
 set CKF_SUPERLAT=no
 goto :bitcheckdone
 
@@ -218,6 +244,7 @@ if not "%libssh_build_override%"=="" set libssh_build=%libssh_build_override%
 if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
 if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
+if not "%make_override%"=="" set make=%make_override%
 
 REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
 REM is what we get when we do "set LIB=%LIB%;C:\somewhere" when LIB starts out
@@ -269,6 +296,7 @@ REM Look for optional dependencies in the manual-build locations
 REM ------------------------------------------------------------
 
 REM zlib:
+echo.
 if "%CKF_ZLIB%" == "no" echo Skipping check for ZLIB
 if "%CKF_ZLIB%" == "no" goto :nozlib
 set CKF_ZLIB=no
@@ -280,6 +308,8 @@ if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
 REM OpenSSL
+echo.
+set CKF_OPENSSL_VERSION=not found
 if "%CKF_SSL%" == "no" echo Skipping check for OpenSSL
 if "%CKF_SSL%" == "no" goto :nossl
 set CKF_SSL=no
@@ -297,13 +327,16 @@ if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS%
 
 REM OpenSSL 3.0.x
 if exist %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-3%CKB_OPENSSL_SUFFIX%.dll
+if exist %openssl_root%\libcrypto-3%CKB_OPENSSL_SUFFIX%.dll set CKF_OPENSSL_VERSION=3.x
 
 REM OpenSSL 1.1.x
 if exist %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll %openssl_root%\libssl-1_1%CKB_OPENSSL_SUFFIX%.dll
+if exist %openssl_root%\libcrypto-1_1%CKB_OPENSSL_SUFFIX%.dll set CKF_OPENSSL_VERSION=1.1.x
 
 REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_OPENSSL_VERSION=0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
@@ -311,6 +344,7 @@ if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_D
 :nossl
 
 REM libssh:
+echo.
 if "%CKF_SSH%" == "no" echo Skipping check for libssh
 if "%CKF_SSH%" == "no" goto :nossh
 set CKF_SSH=no
@@ -322,6 +356,7 @@ if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.
 :nossh
 
 REM libdes:
+echo.
 if "%CKF_LIBDES%" == "no" echo Skipping check for libdes
 if "%CKF_LIBDES%" == "no" goto :nolibdes
 set CKF_LIBDES=no
@@ -335,6 +370,7 @@ if exist %libdes_root%\Debug\libdes.lib set lib=%lib%;%libdes_root%\Debug\
 :nolibdes
 
 REM Stanford SRP
+echo.
 if "%CKF_SSL%" == "no" echo Skipping check for SRP (OpenSSL is required but not available)
 if "%CKF_SSL%" == "no" set CKF_SRP=no
 if "%CKF_SSL%" == "no" goto :nosrp
@@ -356,16 +392,68 @@ set CK_SRP_DIST_DLLS=%srp_root%\win32\libsrp_openssl\Release\srp.dll %srp_root%\
 :nosrp
 
 REM Kerberos for Windows
-if "%CKF_K4W%" == "no" echo Skipping check for K4W
+echo.
+set CKF_K4W_WSHELPER=no
+set CKF_K4W_KRB4=no
+if "%CKF_K4W%" == "no" echo Skipping check for KFW
 if "%CKF_K4W%" == "no" goto :nok4w
 set CKF_K4W=no
-if not exist %k4w_root%\target\lib\i386\rel\wshload.lib echo Kerberos for Windows (K4W) not found.
-if not exist %k4w_root%\target\lib\i386\rel\wshload.lib goto :nok4w
-echo Found Kerberos for Windows (K4W)
+if "%CKF_K4W_SSL%" == "" set CKF_K4W_SSL=no
+
+REM Check kerberos compiled from source (ca 2.6)
+set CK_KRB_INCLUDE=%k4w_root%\athena\auth\krb5\src\include
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
+if exist "%CK_KRB_INCLUDE%\krb5.h" goto :havekerberos
+
+REM Check kerberos SDK (ca 3.2.2)
+set CK_KRB_INCLUDE=%k4w_root%\inc\krb5
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
+if exist "%CK_KRB_INCLUDE%\krb5.h" goto :havekerberos
+
+REM Check KFW 4.x SDK
+set CK_KRB_INCLUDE=%k4w_root%\include
+echo Searching for Kerberos: %CK_KRB_INCLUDE%\krb5.h
+if exist "%CK_KRB_INCLUDE%\krb5.h" goto :havekerberos
+
+REM No Kerberos :(
+echo Kerberos for Windows not found.
+echo Kerberos root is:
+dir /B %k4w_root%
+goto :nok4w
+
+:havekerberos
+echo Found Kerberos for Windows (KFW)
+echo Include: %CK_KRB_INCLUDE%
 set CKF_K4W=yes
-set INCLUDE=$INCLUDE%;%k4w_root%\athena\wshelper\include
-set INCLUDE=$INCLUDE%;%k4w_root%\athena\auth\krb5\src\include
+set INCLUDE=%INCLUDE%;%CK_KRB_INCLUDE%
+if "%CKF_OPENSSL_VERSION%" neq "0.9.8 or 1.0.x" set CKF_K4W_SSL=unsupported
+
+echo Checking for Kerberos IV support...
+if exist "%CK_KRB_INCLUDE%\KerberosIV\krb.h" set CKF_K4W_KRB4=yes
+if exist "%CK_KRB_INCLUDE%\KerberosIV\krb.h" echo Found Kerberos IV support.
+
+REM This will only work when KFW is built from source (wshload isn't included
+REM in any of the SDKs)
+echo Searching for Kerberos wshload (for DNS-SRV support)...
+if not exist "%k4w_root%\target\lib\i386\rel\wshload.lib" goto :nowshload
+echo Found wshload, enabling DNS-SRV
+set CKF_K4W_WSHELPER=yes
 set lib=%lib%;%k4w_root%\target\lib\i386\rel
+set INCLUDE=%INCLUDE%;%k4w_root%\athena\wshelper\include
+:nowshload
+
+REM Dist the kerberos binaries if we're building against a from-source thing.
+REM if we're building against an SDK then the user can just use the associated
+REm installer to get this stuff on their system.
+set K4WBINS=%k4w_root%\target\bin\i386\rel
+set CK_K4W_DIST_FILES="%K4WBINS%\comerr32.dll" "%K4WBINS%\gssapi32.dll" "%K4WBINS%\k524init.exe" "%K4WBINS%\kclnt32.dll"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\klist.exe" "%K4WBINS%\krb524.dll" "%K4WBINS%\krb5_32.dll"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\krbv4w32.dll" "%K4WBINS%\leash32.exe" "%K4WBINS%\leash32.hlp"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\leashw32.dll" "%K4WBINS%\ms2mit.exe" "%K4WBINS%\wshelp32.dll"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\kdestroy.exe" "%K4WBINS%\kinit.exe" "%K4WBINS%\krbcc32s.exe"
+set CK_K4W_DIST_FILES=%CK_K4W_DIST_FILES% "%K4WBINS%\krbcc32.dll" "%K4WBINS%\leash32.chm" "%K4WBINS%\xpprof32.dll"
+REM TODO: also need the MFC DLLs
+for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
 
@@ -373,6 +461,7 @@ REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
 REM --------------------------------------------------------------
 
+echo.
 echo Attempting to identify compiler (this may take a moment)...
 
 REM Now figure out what compiler we're using - we need to find this out so we'll
@@ -436,7 +525,13 @@ goto :unsupported
 REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
 set CK_COMPILER_NAME=OpenWatcom
 set ZINCBUILD=ow19
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
+set CKF_LIBDES=unsupported
 set CKB_9X_COMPATIBLE=yes
+
+REM For openwatcom we have to use its nmake clone
+set MAKE=nmake
 
 REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
 REM path so the dialer can find them.
@@ -481,6 +576,10 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
+if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
+
 goto :cvcdone
 
 :vc4
@@ -493,6 +592,11 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
+if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
+
 goto :cvcdone
 
 :vc5
@@ -501,12 +605,18 @@ set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
+
 goto :cvcdone
 
 :vc6
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
+
+if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
+
 goto :cvcdone
 
 :vc7
@@ -650,7 +760,7 @@ if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
-set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS%
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES%
 
 echo -----------------------------
 echo.
@@ -667,13 +777,13 @@ echo    %CK_DIST_DLLS%
 echo.
 echo Optional Dependencies:
 echo     zlib: %CKF_ZLIB%
-echo  OpenSSL: %CKF_SSL%
+echo  OpenSSL: %CKF_SSL% (Version: %CKF_OPENSSL_VERSION%)
 echo   libssh: %CKF_SSH%
 echo     zinc: %CKF_ZINC%
 echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo      SRP: %CKF_SRP%
-echo      K4W: %CKF_K4W%
+echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%, KRB4: %CKF_K4W_KRB4%)
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running
