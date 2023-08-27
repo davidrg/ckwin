@@ -848,7 +848,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
            if ( rc == ERROR_BAD_PIPE || rc == ERROR_PIPE_NOT_CONNECTED )
                ttclos(0);
 #else
-           char buffer[64]
+           char buffer[64];
            rc = DosPeekNPipe(hPipe, buffer, sizeof(buffer),
                              &BytesRead, &AvailData, &PipeState);
            switch ( rc ) {
@@ -1276,8 +1276,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifdef NETCMD
     if ( nettype == NET_CMD  || nettype == NET_PTY ) {
         char cmd_line[256];
+#ifdef OS2ONLY
+        char *cmd_exe, *args;
+        char *p;
+#endif
 #ifdef COMMENT
-        char *cmd_exe, *args, *p;
         int argslen;
 #endif /* COMMENT */
 

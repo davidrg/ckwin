@@ -9,7 +9,6 @@
 */
 
 #include "ckcdeb.h"
-#include "ckouni.h"
 #ifndef NOTERM
 #ifdef NT
 #include <windows.h>
@@ -23,6 +22,8 @@
 #include "ckuusr.h"
 #include "ckocon.h"
 #include "ckoava.h"
+
+_PROTOTYP(int utf8_to_ucs2, (CHAR, USHORT **));
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;

@@ -199,9 +199,9 @@ extern char exedir[CKMAXPATH];
 
 APIRET os2getpid();              /* ckotio.c */
 void prtfile(char *);            /* ckoco3.c */
-int GetUserInfo(LPSTR, LPSTR);   /* this file */
 
 #ifdef NT
+int GetUserInfo(LPSTR, LPSTR);   /* this file */
 void ntlm_logout();     /* ckoath.c */
 int ntlm_impersonate(); /* ckoath.c */
 #endif /* NT */
