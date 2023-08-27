@@ -112,7 +112,7 @@ CFLAGS = $(CFLAGS) /Ap64
 
 !MESSAGE Debugging build
 
-CFLAGS    = /c /W3 /MD /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
+CFLAGS    = /c /W3 $(RTFLAG) /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
                 /Fo$(OUTDIR)\ /I$(KERMITDIR)
 CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET -DSUPERLAT\
