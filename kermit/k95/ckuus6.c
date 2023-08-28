@@ -101,6 +101,17 @@ extern int k95stdout;
 #endif /* NT */
 #include "ckocon.h"
 #include "ckodir.h"			/* [jt] 2013/11/21 - for MAXPATHLEN */
+
+int zlink(char *,char *);               /* ckofio.c */
+int ttgcwsz();                          /* ckocon.c */
+
+int popup_readpass(int,char*,char*,char*,int,int);       /* ckocon.c */
+int popup_readtext(int,char*,char*,char*,int,int);       /* ckocon.c */
+
+#ifdef KUI
+int gui_txt_dialog(char*,char*,int,char*,int,char*,int); /* cknwin.c */
+#endif /* KUI */
+
 #endif /* OS2 */
 
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
@@ -2639,7 +2650,7 @@ ludial(s, cx) char *s; int cx;
 #endif /* CK_ANSIC */
 /* ludial */ {
 
-    int dd, n1, n2, n3, i, j, t;        /* Workers */
+    int dd, n1, n2, n3, j, t;        /* Workers */
     int olddir, newdir, oldentry, newentry;
     int pass = 0;
     int oldflg = 0;
@@ -3244,9 +3255,6 @@ dodial(cx) int cx;
             if ((cx == XXLOOK) ||
                 ((n > 1) && !quiet && !backgrd /* && dialdpy */ )) {
                 int nn = n;
-#ifndef NOSPL
-                char * p;
-#endif /* NOSPL */
                 if (cx != XXLOOK)
                   if (n > 12) nn = 12;
                 for (i = 0; i < nn; i++) {
@@ -4044,7 +4052,7 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     char ** tail = NULL;
     int * tlen = NULL;
     int tailing = 0, counting = 0;
-    int x, c, n, i, j, k = 0;
+    int x, n, i, j, k = 0;
     int number = 0, save, len, pfxlen = 0, evalpfx = 1;
 #ifdef UNICODE
     int ucsbom_sav;
@@ -4580,7 +4588,6 @@ dogrep() {
     int fline = 0, sline = 0, wild = 0, len = 0;
     int xmode = -1, scan = 0, dispmode = 0, verbatim = 0;
     char c, name[CKMAXPATH+1], outfile[CKMAXPATH+1], *p, *s, *cv = NULL;
-    char resultbuf[1026];            /* Buffer for constructing output line */
     FILE * fp = NULL;                /* File pointer for result file */
 
 #ifndef NOSPL
@@ -5091,7 +5098,6 @@ dogrep() {
 */
     if (array) {
         int i;                          /* For loop variable */
-        int low = 1;                    /* From... */
         int high = arrayslot - 1;       /* To... */
         a_dim[arraynum] = high;         /* Adjust dimension */
         makestr(&(ap[0]),ckitoa(arrayslot));
@@ -5546,8 +5552,10 @@ domydir(cx) int cx;
     int multiple = 0;
     int cmifn1 = 1, cmifn2 = 0;
     int dir_top = 0, dir_cou = 0;
+#ifdef CKSYMLINK
     int dontshowlinks = 0;
     int dontfollowlinks = 0;
+#endif /* CKSYMLINK */
     int arrayindex = -1;
     int simulate = 0;
     struct FDB sw, fi, fl;
@@ -6411,16 +6419,14 @@ domydir(cx) int cx;
             FILE * bfp = NULL;          /* Backup file pointer */
             char backupfile[CKMAXPATH+1]; /* Backup file */
 	    char tmpfile[CKMAXPATH];	/* Buffer for filename */
-	    char * tdp = tmpfile;	/* Temporary directory path */
 	    int linebufsiz = 24575;	/* Buf size for reading file lines */
 	    char * linebuf = NULL;	/* Input file buffer */
 	    char * lbp = NULL;		/* and pointer to it */
 	    char * newbuf = NULL;	/* Output file buffer */
 	    char * nbp = NULL;		/* and pointer */
 	    int bufleft = 0;		/* Space left in newbuf */
-	    int i, j, k, x, y;		/* Workers */
+	    int j, k, x;		/* Workers */
 	    int failed = 0;		/* Search string not found */
-	    char c1, c2;		/* Char for quick compare */
 
             changes = 0;                /* Change counter */
             k = 0;
@@ -6845,7 +6851,7 @@ preserving original modtime: %s %s\n",
 #endif /* CKSYMLINK */
 #endif /* UNIX */
         if (xfermod) {                  /* Show transfer mode */
-            int i, x, y;
+            int x, y;
             char * s = "";
             y = -1;
             x = scanfile(name,&y,nscanfile);
@@ -7047,11 +7053,11 @@ dodir( int cx )                         /* Do the DIRECTORY command */
 dodir(cx) int cx;
 #endif /* CK_ANSIC */
 {
-    char *dc , *msg;
-
 #ifdef OS2
     return(domydir(cx));
 #else /* OS2 */
+    char *dc , *msg;
+
     if (nopush
 #ifdef DOMYDIR                          /* Builds that domydir() by default */
         || (cx == XXDIR  || cx == XXLDIR || cx == XXWDIR ||
@@ -7359,7 +7365,10 @@ static int xmtchn = 0;
 
 int
 dodel() {                               /* DELETE */
-    int i, j, k, x;
+    int i, k, x;
+#ifdef VMS
+    int j;
+#endif /* VMS */
     int fs = 0;                         /* Need to call fileselect() */
     int len = 0;
     int bad = 0;
@@ -7848,7 +7857,6 @@ dodel() {                               /* DELETE */
 #endif /* OS2 */
 
         if (z > 0) {
-            int i;
 #ifdef OS2
             int ix = 0;
 #endif /* OS2 */
@@ -8227,7 +8235,6 @@ dofor() {                               /* The FOR command. */
     char *ap, *di;                      /* macro argument pointer */
     int pp = 0;                         /* Paren level */
     int mustquote = 0;
-    char loopvar[8], loopvar2[8];       /* \%x-style loop variable */
 
     debug(F100,"dofor entry","",0);
     for (i = 0; i < 2; i++) {
@@ -8873,7 +8880,7 @@ _PROTOTYP(int zcmpfn,(char *, char *));
 int 
 dolink() {
     /* Parse a file or a directory name */
-    int i, x, z, listing = 0, havename = 0, wild = 0, rc = 1;
+    int x, z, listing = 0, havename = 0, wild = 0, rc = 1;
     struct FDB sw, fi;
 
     cmfdbi(&sw,                         /* 2nd FDB - optional /PAGE switch */
@@ -9007,7 +9014,7 @@ dolink() {
 #ifdef ZCOPY
 int
 docopy() {
-    int i, x, listing = 0, nolist = 0, havename = 0, getval;
+    int x, listing = 0, nolist = 0, havename = 0, getval;
     char c;
     struct FDB sw, fi;
     int overwrite = OVW_ALWAYS;
@@ -9260,7 +9267,7 @@ docopy() {
 
 		char d1[20], * d2;
 		char * n1, * n2;
-		int i, skip = 0;
+		int i;
 
 		i = strlen(line);	/* Isolate source filename */
 		for (; i >= 0; i--) {
@@ -9590,7 +9597,7 @@ docopy() {
                     }
                 }
             } else if (toscreen || interpret) { /* fdc - 20220920 */
-                int i,x;
+                int i;
                 int p = 0;
                 int n = 0;
                 int linebufsize = 2000;
@@ -10018,7 +10025,6 @@ renameone(old,new,
 	    }
 	} else {			/* Replace all occurrences */
 	    int j, n = 0;		/* or a particular occurrence */
-	    char c;
 	    int x = 0;
 	    char * s0 = NULL, * s1 = NULL, * s2 = NULL;
 	    p = new;			/* Pointer to new name */
@@ -10189,7 +10195,7 @@ dorenam() {
 #endif	/* NOCSETS */
     int cset1 = 0, cset2 = 0;
 
-    int i, x, z, fn, listing = 0, havename = 0, wild = 0, rc = 1, noarg = 0;
+    int x, z, fn, listing = 0, havename = 0, wild = 0, rc = 1, noarg = 0;
     int nolist = 0, all = 0, casing = 0, replacing = 0, getval = 0, sim = 0;
     int converting = 0, collision = 0;
 
@@ -11697,7 +11703,7 @@ dogta( int cx )
 dogta(cx) int cx;
 #endif /* CK_ANSIC */
 {
-    int i, n;
+    int i;
     char c, *p,  mbuf[4];
     extern int topargc, cmdint;
     extern char ** topxarg;
@@ -11801,7 +11807,7 @@ dogoto( char *s, int cx )
 dogoto(s, cx) char *s; int cx;
 #endif /* CK_ANSIC */
 {
-    int i, j, x, y, z, bc;
+    int j, x, y, z, bc;
     int empty = 0, stopflg = 0;
     char * cmd;                         /* Name of this command */
     char tmplbl[LBLSIZ+1], *lp;	        /* Current label from command stream */
@@ -12576,7 +12582,7 @@ boolexp(cx) int cx;
 #else
 	tp = s;
 #endif /* COMMENT */
-      lexical:
+      /*lexical:*/
         x = ckstrcmp(lp,tp,-1,inpcas[cmdlvl]); /* Use longest length */
         switch (ifc) {
           case XXIFEQ:                  /* EQUAL (string comparison) */
@@ -13085,7 +13091,7 @@ boolexp(cx) int cx;
       case XXIFFU: {			/* IF FUNCTION - 2013/04/15 */
 	  extern struct keytab fnctab[];
 	  extern int nfuncs;
-	  int x, y;
+	  int y;
 
 	  y = cmkeyx(fnctab,nfuncs,"Name of function","",NULL);
 	  if (y == -1)			/* Reparse needed */
@@ -13183,7 +13189,6 @@ doif(cx) int cx;
 #endif /* CK_ANSIC */
 {
     int x, y, z; char *s, *p;
-    char *q;
 #ifdef OS2
     extern int keymac;
 #endif /* OS2 */
