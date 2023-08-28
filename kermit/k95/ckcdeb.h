@@ -5678,8 +5678,10 @@ _PROTOTYP( int zsyscmd, (char *) );
 _PROTOTYP( int zshcmd, (char *) );
 #ifdef UNIX
 _PROTOTYP( int zsetfil, (int, int) );
-_PROTOTYP( int zchkpid, (unsigned long) );
 #endif	/* UNIX */
+#ifdef OS2ORUNIX
+_PROTOTYP( int zchkpid, (unsigned long) );
+#endif /* OS2ORUNIX */
 #ifdef CKEXEC
 _PROTOTYP( VOID z_exec, (char *, char **, int) );
 #endif /* CKEXEC */

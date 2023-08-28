@@ -3054,8 +3054,12 @@ proto() {
 #endif /* TNCODE */
 #ifdef PATTERNS
     int pa_save;
-    int i;
 #endif /* PATTERNS */
+#ifdef COMMENT
+#ifdef CK_SPEED
+    int i;
+#endif /* CK_SPEED */
+#endif /* COMMENT */
     int scan_save;
 
 #ifdef PATTERNS
@@ -3467,8 +3471,12 @@ _PROTOTYP( int pxyz, (int) );
 
 #ifdef CK_XYZ
     if (protocol != PROTO_K) {		/* Non-Kermit protocol selected */
+#ifndef XYZ_INTERNAL
+#ifdef CK_REDIR
 	char tmpbuf[356];
 	int tmpbufsiz = 356;
+#endif /* CK_REDIR */
+#endif /* XYZ_INTERNAL */
 	char * s = "";
 
 #ifdef CK_TMPDIR
@@ -3684,7 +3692,7 @@ sgetinit(reget,xget) int reget, xget;
 #endif /* CK_ANSIC */
 {
     char * fs = NULL;			/* Pointer to filespec */
-    int i, n, done = 0;
+    int n, done = 0;
 #ifdef PIPESEND
     extern int usepipes, pipesend;
 #endif /* PIPESEND */

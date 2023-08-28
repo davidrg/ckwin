@@ -729,6 +729,7 @@ COMMODE_OBJ = commode.obj
 LIBS = os2386.lib rexx.lib
 
 # OpenWatcom doesn't have bigmath.lib
+#  -> this likely comes from the SRP distribution (srp\srp-1.4\cryptolib_1.1\VISUALC\BIGMATH)
 !if "$(CMP)" != "OWCL"
 LIBS = $(LIBS) bigmath.lib
 !endif
