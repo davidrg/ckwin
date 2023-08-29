@@ -593,14 +593,15 @@ jobs:
           # Ignored: android.*, ckcdebu.h, ckcnet-BEFORE-NONET-FIX.c, ckcpro.c, 
           #          ckuus5-sms.c, ckuus7-beta02.c, ckuus7-save.c, ckpker.mak
           # Maybe not required: ckuker.nr, ckustr.sed
-          cp -n cku* ../kermit/k95/
-          cp -n ckc* ../kermit/k95/
+          cp -n ../kermit/k95/cku* ./
+          cp -n ../kermit/k95/ckc* ./
           popd
         shell: bash
       - name: Build C-Kermit
         run: |
           pushd kermit/k95
           # env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make show
-          env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make linux+ssl
+          #env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make linux+ssl
+          make linux+ssl
           popd
         shell: bash
