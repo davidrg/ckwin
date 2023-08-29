@@ -599,7 +599,7 @@ jobs:
         shell: bash
       - name: Build C-Kermit
         run: |
-          pushd kermit/k95
+          pushd ckermit
           # env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make show
           #env PREFIX=${{github.workspace}}/openssl LD_LIBRARY_PATH=${{github.workspace}}/openssl/ssl/lib64:${LD_LIBRARY_PATH} make linux+ssl
           make linux+ssl
