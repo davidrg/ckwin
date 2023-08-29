@@ -545,7 +545,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install libpam-dev
+          sudo apt-get install libpam-dev openssl libssl-dev
 
         # Cache the C-Kermit code so that we're not hitting the C-Kermit website
         # for every build.
@@ -574,16 +574,16 @@ jobs:
           mv openssl-${{matrix.OPENSSL_VERSION}} ${{matrix.OPENSSL_VERSION}}
           popd
         shell: bash
-      - name: Build OpenSSL ${{matrix.openssl_version}}
-        if: steps.cache-code.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p openssl/ssl
-          pushd openssl/${{matrix.OPENSSL_VERSION}}
-          ./Configure --openssldir=${{github.workspace}}/openssl/ssl --prefix=${{github.workspace}}/openssl/ssl 
-          make
-          make install
-          popd
-        shell: bash
+      # - name: Build OpenSSL ${{matrix.openssl_version}}
+      #   if: steps.cache-code.outputs.cache-hit != 'true'
+      #   run: |
+      #     mkdir -p openssl/ssl
+      #     pushd openssl/${{matrix.OPENSSL_VERSION}}
+      #     ./Configure --openssldir=${{github.workspace}}/openssl/ssl --prefix=${{github.workspace}}/openssl/ssl 
+      #     make
+      #     make install
+      #     popd
+      #   shell: bash
       - name: Copy C-Kermit for Unix files
         run: |
           pushd ckermit
@@ -593,7 +593,8 @@ jobs:
           # Ignored: android.*, ckcdebu.h, ckcnet-BEFORE-NONET-FIX.c, ckcpro.c, 
           #          ckuus5-sms.c, ckuus7-beta02.c, ckuus7-save.c, ckpker.mak
           # Maybe not required: ckuker.nr, ckustr.sed
-          cp ckufio.c ckutio.c ckutiox.c makefile ckuker.nr ckustr.sed ../kermit/k95/
+          cp -n cku* ../kermit/k95/
+          cp -n ckc* ../kermit/k95/
           popd
         shell: bash
       - name: Build C-Kermit
