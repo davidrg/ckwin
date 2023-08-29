@@ -3458,7 +3458,7 @@ rcvfil(n) char *n;
 #ifdef DTILDE
     char *dirp;
 #endif /* DTILDE */
-    int dirflg, x, y;
+    int dirflg;
 #ifdef PIPESEND
     extern char * rcvfilter;
 #endif /* PIPESEND */
@@ -6584,7 +6584,7 @@ snddir(spec) char * spec;
 {
 #ifndef NOSERVER
     char * p = NULL, name[CKMAXPATH+1];
-    int t = 0, rc = 0;
+    int rc = 0;
     char fnbuf[CKMAXPATH+1];
 
     debug(F111,"snddir matchdot",spec,matchdot);
@@ -7045,7 +7045,7 @@ remset(s) char *s;
 #endif /* CK_ANSIC */
 {
     extern int c_save, en_del;
-    int len, i, x, y;
+    int len, x, y;
     char *p;
 
     len = xunchar(*s++);		/* Length of first field */
