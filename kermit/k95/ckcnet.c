@@ -397,6 +397,7 @@ _PROTOTYP( int rlog_naws, (void) );
 #undef COMMENT
 #endif /* NT */
 #include "ckocon.h"
+int os2socketerror(int);
 extern int tt_type, max_tt;
 extern struct tt_info_rec tt_info[];
 extern char ttname[];
@@ -407,8 +408,12 @@ extern char ttname[];
 #endif /* OS2 */
 
 #ifdef NT
+#include <limits.h>
 extern int winsock_version;
 char * GetLocalUser(); /* defined in ckotio.c */
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
 /* The NT 3.50 SDK defines try as __try */
 #ifdef try
 #undef try
@@ -3617,8 +3622,10 @@ ckgetservice(hostname, servicename, ip, iplen)
     nett - network type (value defined in ckcnet.h)
 */
 
+#ifdef COMMENT
 #define XXNAMELEN 256
 static char xxname[XXNAMELEN];
+#endif /* COMMENT */
 
 int
 #ifdef CK_ANSIC
@@ -3628,7 +3635,10 @@ netopen(name, lcl, nett) char *name; int *lcl, nett;
 #endif /* CK_ANSIC */
 {
     char *p;
-    int i, x, rc_inet_addr = 0, dns = 0;
+    int i, x, dns = 0;
+#ifdef SOLARIS
+    int rc_inet_addr = 0;
+#endif /* SOLARIS */
 #ifdef TCPSOCKET
     int isconnect = 0;
 #ifdef SO_OOBINLINE
@@ -4252,6 +4262,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     /* It makes a difference in 64-bit builds. */
     rc_inet_addr = inet_addr(namecopy);	/* Assign return code to an int */
     iax = (unsigned) rc_inet_addr;	/* and from there to whatever.. */
+    debug(F111,"netopen rc_inet_addr",namecopy,rc_inet_addr);
 #else
 #ifndef datageneral
     iax = (unsigned int) inet_addr(namecopy);
@@ -4259,7 +4270,6 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     iax = -1L;
 #endif /* datageneral */
 #endif /* SOLARIS */
-    debug(F111,"netopen rc_inet_addr",namecopy,rc_inet_addr);
     debug(F111,"netopen inet_addr",namecopy,iax);
 #endif /* INADDR_NONE */
 #endif /* INADDRX */
@@ -5178,7 +5188,10 @@ int tls_norestore = 0;
 int
 netclos() {
     static int close_in_progress = 0;
-    int x = 0, y, z;
+    int x = 0;
+#ifdef VMS
+    int y, z;
+#endif
     debug(F101,"netclos","",ttyfd);
 
 #ifdef NETLEBUF
@@ -5436,11 +5449,16 @@ nettchk() {                             /* for reading from network */
 #ifdef TCPIPLIB
     long count = 0;
     int x = 0, z;
-    long y;
+    unsigned long uy;
+#ifndef OS2
     char c;
+#endif /* OS2 */
     int rc;
 #ifdef NT
+    unsigned long ucount;
     extern int ionoblock;               /* For Overlapped I/O */
+#else
+    long y;
 #endif /* NT */
 
     debug(F101,"nettchk entry ttibn","",ttibn);
@@ -5534,17 +5552,34 @@ nettchk() {                             /* for reading from network */
                      (char *)
 #endif /* __DECC */
 #endif /* COMMENT */
+#ifdef NT
+                     &ucount
+#else
                      &count
+ #endif /* NT */
                      ) < 0) {
         debug(F101,"nettchk socket_ioctl error","",socket_errno);
         /* If the connection is gone, the connection is gone. */
         netclos();
+
+#ifdef NT
+        /* Handle FIONREAD giving us a number larger than we can handle */
+        if (ucount > INT_MAX) ucount -= INT_MAX;
+        count = ucount;
+#endif /* NT */
+
 #ifdef NT_TCP_OVERLAPPED
         /* Is there anything in the overlapped I/O buffers? */
         count += OverlappedDataWaiting();
 #endif /* NT_TCP_OVERLAPPED */
         count += ttibn;
         return(count>0?count:-1);
+    } else {
+#ifdef NT
+        /* Handle FIONREAD giving us a number larger than we can handle */
+        if (ucount > INT_MAX) ucount -= INT_MAX;
+        count = ucount;
+#endif /* NT */
     }
     debug(F101,"nettchk count","",count);
 #ifdef NT_TCP_OVERLAPPED
@@ -5645,8 +5680,13 @@ nettchk() {                             /* for reading from network */
         RequestSSLMutex(SEM_INDEFINITE_WAIT);
 #endif /* CK_SSL */
 #endif /* OS2 */
+#ifdef NT
+        uy = 1;                         /* Turn on nonblocking reads */
+        z = socket_ioctl(ttyfd,FIONBIO,&uy);
+#else
         y = 1;                          /* Turn on nonblocking reads */
         z = socket_ioctl(ttyfd,FIONBIO,&y);
+#endif /* NT */
         debug(F111,"nettchk FIONBIO","on",z);
 #ifdef OS2
 #ifdef CK_SSL
@@ -5777,8 +5817,13 @@ nettchk() {                             /* for reading from network */
         RequestSSLMutex(SEM_INDEFINITE_WAIT);
 #endif /* CK_SSL */
 #endif /* OS2 */
+#ifdef NT
+        uy = 0;                         /* Turn off nonblocking reads */
+        z = socket_ioctl(ttyfd,FIONBIO,&uy);
+#else
         y = 0;                          /* Turn off nonblocking reads */
         z = socket_ioctl(ttyfd,FIONBIO,&y);
+#endif /* NT */
         debug(F111,"nettchk FIONBIO","off",z);
 #ifdef OS2
 #ifdef CK_SSL
@@ -5954,9 +5999,11 @@ netxin( int n, CHAR * buf )
 netxin(n,buf) int n; CHAR * buf;
 #endif /* CK_ANSIC */
 {
-    int len, i, j;
+    int len;
 #ifdef TCPIPLIB
     int rc;
+#else
+    int i, j;
 #endif /* TCPIPLIB */
 
     if (ttyfd == -1) {
@@ -7118,7 +7165,6 @@ getlocalipaddr()
     GSOCKNAME_T slen = sizeof(struct sockaddr_in);
     int sock;
     int rc;
-    struct in_addr laddr;
 
     /* if still not resolved, then try second strategy */
     /* This second strategy does not work on Windows */
@@ -7394,7 +7440,6 @@ rlog_ini(hostname, port, l_addr, r_addr)
     localuser[0] = '\0';
 #ifdef NT
     {
-        char localuid[UIDBUFLEN+1];
         ckstrncpy((char *)localuser,GetLocalUser(),UIDBUFLEN);
     }
 
@@ -10411,7 +10456,10 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
 {
     char namecopy[NAMECPYL];
     char *p;
-    int i, x, dns = 0;
+    int i, dns = 0;
+#ifdef NON_BLOCK_IO
+    int x;
+#endif /* NON_BLOCK_IO */
 #ifdef TCPSOCKET
     int isconnect = 0;
 #ifdef SO_OOBINLINE
@@ -12036,8 +12084,6 @@ http_head(agent, hdrlist, user, pwd, array, local, remote, stdio)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -12226,8 +12272,6 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -12474,8 +12518,6 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -12779,8 +12821,6 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -13019,8 +13059,6 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -13307,8 +13345,6 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p, ch;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -14011,7 +14047,7 @@ fwdx_open_client_channel(channel) int channel; {
 #ifdef FWDX_UNIX_SOCK
     struct sockaddr_un saddr_un = { AF_LOCAL };
 #endif /* FWDX_UNIX_SOCK */
-    int colon, dot, display, port, sock, i, screen;
+    int display, port, sock, i, screen;
     int family;
     char buf[256], * host=NULL, * rest=NULL;
 #ifdef TCP_NODELAY
@@ -14177,11 +14213,8 @@ fwdx_server_avail() {
 #ifdef FWDX_UNIX_SOCK
     struct sockaddr_un saddr_un = { AF_LOCAL };
 #endif  /* FWDX_UNIX_SOCK */
-    int colon, dot, display, port, sock, i, screen;
+    int display, port, sock, screen;
     char buf[256], *host=NULL, *rest=NULL;
-#ifdef TCP_NODELAY
-    int on=1;
-#endif /* TCP_NODELAY */
     int family;
 
     env = getenv("DISPLAY");
@@ -14303,7 +14336,7 @@ fwdx_server_avail() {
 
 int
 fwdx_open_server_channel() {
-    int sock, ready_to_accept, sock2,channel,i;
+    int sock, ready_to_accept, sock2,channel;
 #ifdef TCP_NODELAY
     int on=1;
 #endif /* TCP_NODELAY */
@@ -14313,7 +14346,6 @@ fwdx_open_server_channel() {
     static SOCKOPT_T saddrlen;
 #endif /* UCX50 */
     struct sockaddr_in saddr;
-    char sb[8];
     extern char tn_msg[];
 #ifdef BSDSELECT
     fd_set rfds;
@@ -14329,8 +14361,6 @@ fwdx_open_server_channel() {
     } tv;
 #endif /* BELLSELECT */
 #endif /* BSDSELECT */
-    unsigned short nchannel;
-    unsigned char * p;
 
     sock = TELOPT_SB(TELOPT_FORWARD_X).forward_x.listen_socket;
 
@@ -14499,7 +14529,7 @@ int
 fwdx_write_data_to_channel(channel, data, len)
     int channel; char * data; int len;
 {
-    int sock, count, try=0, length = len, i;
+    int sock, count, length = len, i;
 
     if ( len <= 0 )
         return(0);
