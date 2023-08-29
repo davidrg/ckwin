@@ -5731,8 +5731,13 @@ nettchk() {                             /* for reading from network */
 		  RequestSSLMutex(SEM_INDEFINITE_WAIT);
 #endif /* CK_SSL */
 #endif /* OS2 */
+#ifdef NT
+         uy = 0;                         /* Turn off nonblocking reads */
+         z = socket_ioctl(ttyfd,FIONBIO,&uy);
+#else
 		  y = 0;                          /* Turn off nonblocking reads */
 		  z = socket_ioctl(ttyfd,FIONBIO,&y);
+#endif
 		  debug(F111,"nettchk FIONBIO","off",z);
 #ifdef OS2
 #ifdef CK_SSL

@@ -82,7 +82,9 @@ LONG KermitDialerID = 0;
 #include "ckoreg.h"
 #include "ckoetc.h"
 
+#ifdef NT
 DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
+#endif /* NT */
 #endif /* OS2 */
 
 #ifdef KUI
