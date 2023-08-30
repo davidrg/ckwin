@@ -69,13 +69,32 @@ extern int tt_cols[], tt_rows[], tt_szchng[], tt_status[];
 _PROTOTYP(int setprty, (void));
 extern char startupdir[], exedir[];
 extern int tt_modechg;
+int settitle();          /* ckuus7.c */
+int setdialer();         /* ckuus7.c */
+void os2debugoff();      /* ckoco3.c */
+int msktock(int);        /* ckokey.c */
+int popup_readpass(int,char*,char*,char*,int,int);  /* ckocon.c */
+int popup_readtext(int,char*,char*,char*,int,int);  /* ckocon.c */
+#ifdef NETDLL
+int netdll_load(char *); /* ckonet.c */
+#endif /* NETDLL */
+#ifndef NOLOCAL
+int setmsk();            /* ckuus7.c */
+#endif /* NOLOCAL */
 #ifdef NT
 #include <windows.h>
 #include "ckoreg.h"
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
-#endif
+#endif /* NODIAL */
+#ifdef KUI
+int get_gui_window_pos_y(); /* cknwin.c */
+int get_gui_window_pos_x(); /* cknwin.c */
+int get_gui_resize_mode();  /* cknwin.c */
+#endif /* KUI */
+int setwin95();          /* ckuus7.c */
+Win32EnumPrt(struct keytab**,struct keytab**,int*,int*); /* cknprt.c */
 #endif /* NT */
 #endif /* OS2 */
 
@@ -4145,7 +4164,7 @@ dosexp(s) char *s;
             }
             goto xdosexp;
         } else if (x == SX_QUO) {
-            int k, xx;
+            int xx;
             xx = strlen(p[2]);
             p[3] = (char *)malloc(xx+4);
             s2 = p[3];
@@ -4783,7 +4802,7 @@ dosexp(s) char *s;
             }
         }
     }
-  xxdosexp:
+  /*xxdosexp:*/
     if (line)                           /* If macro arg buffer allocated */
       free(line);                       /* free it. */
     if (mustfree) {                     /* And free local copy of split list */
@@ -4875,7 +4894,6 @@ dologend() {                            /* Write record to connection log */
 
 #ifdef LOCUS
     if (autolocus) {
-        int x = locus;
 #ifdef NEWFTP
 	debug(F101,"dologend ftpisconnected","",ftpisconnected());
         setlocus(ftpisconnected() ? 0 : 1, 1);
@@ -6441,7 +6459,7 @@ settapi() {
       case XYTAPI_LOC: {                /* TAPI LOCATION */
           extern char tapiloc[];
           extern int tapilocid;
-          int i = 0, j = 9999, k = -1;
+          int k = -1;
 
           cktapiBuildLocationTable(&tapiloctab, &ntapiloc);
           if (!tapiloctab || !ntapiloc) {
@@ -7263,14 +7281,13 @@ setprinter(xx) int xx;
 #endif /* OS2 */
 
 #ifdef BPRINT
-    char portbuf[64];
     long portspeed = 0L;
     int portparity = 0;
     int portflow = 0;
 #endif /* BPRINT */
 
 #ifdef PRINTSWI
-    int c, i, n, wild, confirmed = 0;   /* Workers */
+    int c, i, n, wild;                  /* Workers */
     int getval = 0;                     /* Whether to get switch value */
     struct stringint pv[PRN_MAX+1];    /* Temporary array for switch values */
     struct FDB sw, of, cm;              /* FDBs for each parse function */
@@ -9114,7 +9131,7 @@ setguifont() {				/* Assumes that CKFLOAT is defined! */
     extern struct keytab * term_font;
     extern struct keytab * _term_font;
     extern int tt_font, tt_font_size, ntermfont;
-    int x, y, z;
+    int x, z;
     char *s;
 
     if (ntermfont == 0)
@@ -9255,13 +9272,7 @@ doprm(xx,rmsflg) int xx, rmsflg;
 {
     int i = 0, x = 0, y = 0, z = 0;
     long zz = 0L;
-    char *s = NULL, *p = NULL;
-#ifdef OS2
-    char portbuf[64];
-    long portspeed = 0L;
-    int portparity = 0;
-    int portflow = 0;
-#endif /* OS2 */
+    char *s = NULL;
 
 #ifndef NOSETKEY
 #ifdef OS2
@@ -10170,7 +10181,7 @@ case XYCARR:                            /* CARRIER-WATCH */
 #ifdef TNCODE
     switch (xx) {                       /* Avoid long switch statements... */
       case XYTELOP: {
-          int c, n;                     /* Workers */
+          int c;                        /* Workers */
           int getval = 0;               /* Whether to get switch value */
           int tnserver = 0;             /* Client by default */
           int opt = -1;                 /* Telnet Option */
@@ -12762,7 +12773,6 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
           int kv = 0;
           extern struct krb_op_data krb_op;
 #endif /* CK_KERBEROS */
-          char * p = NULL;
           if ((x =
                cmkey(setauth,nsetauth,"authentication type","",xxstring)) < 0)
             return(x);
@@ -13912,7 +13922,9 @@ shoctl() {                              /* SHOW CONTROL-PREFIXING */
 #ifdef CK_SPEED
     int i;
 #ifdef OS2
+#ifndef UNPREFIXZERO
     int zero;
+#endif /* UNPREFIXZERO */
 #endif /* OS2 */
     printf(
 "\ncontrol quote = %d, applied to (0 = unprefixed, 1 = prefixed):\n\n",
