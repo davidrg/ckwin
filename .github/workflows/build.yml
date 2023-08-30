@@ -42,6 +42,12 @@ env:
   # Any extra build flags for OpenSSL. -FS is required if using Jom.
   # and -D"_WIN32_WINNT=0x502" is required for targeting Windows XP
   OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
+  # Where to get the latest official C-Kermit for UNIX/Linux/MacOS X from
+  # along with its version. The version is only used as a cache key to ensure
+  # we're not hammering the kermit website or fetching code thats newer than
+  # what CKW is currently based on.
+  C_KERMIT_VERSION: 10.0b10
+  C_KERMIT_CODE: https://www.kermitproject.org/ftp/kermit/test/tar/x.tar.gz
 
 jobs:
   Get-CACerts-Bundle:
@@ -1663,3 +1669,64 @@ jobs:
           name: ckwin-mingw64-cross
           path: ${{ github.workspace }}/ckwin
           if-no-files-found: error
+
+  ##############################################################################
+  # Build C-Kermit for Linux with the ckwin version of the shared modules      #
+  ##############################################################################
+  # To ensure any local changes to ckc* and cku* modules haven't accidentally
+  # broken C-Kermit on Linux, grab the latest linux code and substitute in
+  # our version of these files to check it all still builds.
+  #
+  # Note that if we get out-of-sync with C-Kermit for UNIX changes this may
+  # run into build errors.
+  #
+  # This also isn't anywhere near a perfect test. Just because this builds
+  # doesn't mean we haven't broken something on OpenVMS or Solaris or AIX
+  # or Digital UNIX or BSD or MacOS X or any number of other platforms.
+  C-Kermit-Linux-Build-Test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libpam-dev openssl libssl-dev
+
+        # Cache the C-Kermit code so that we're not hitting the C-Kermit website
+        # for every build.
+      - name: Cache code
+        uses: actions/cache@v3.0.11
+        id: cache-code
+        with:
+          path: |
+            ${{github.workspace}}/ckermit
+            ${{github.workspace}}/openssl
+          key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-r1
+      - name: Get C-Kermit ${{env.C_KERMIT_VERSION}}
+        if: steps.cache-code.outputs.cache-hit != 'true'
+        run: |
+          wget ${{ env.C_KERMIT_CODE }} -O ckermit.tar.gz
+          mkdir -p ckermit
+          pushd ckermit
+          tar -zxvf ../ckermit.tar.gz
+          popd
+          rm ckermit.tar.gz
+        shell: bash
+      - name: Copy C-Kermit for Unix files
+        run: |
+          pushd ckermit
+          cp -n ../kermit/k95/cku* ./
+          cp -n ../kermit/k95/ckc* ./
+          popd
+        shell: bash
+      - name: Build C-Kermit
+        run: |
+          pushd ckermit
+          chmod +x ckubuildlog
+          make clean
+          make linux+ssl | tee log
+          ./ckubuildlog
+          cat linux+ssl.txt
+          popd
+        shell: bash
