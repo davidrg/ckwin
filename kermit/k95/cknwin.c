@@ -605,7 +605,7 @@ MainWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 // Checks to see if the dialer (k95dial.exe) exists in the executables directory.
-BOOL DialerExists() {
+BOOL ADialerExists(BOOL lookForCM) {
 	char buf[MAX_PATH];
 	extern char exedir[CKMAXPATH];
 	char* lastCharacter;
@@ -626,7 +626,11 @@ BOOL DialerExists() {
 
 	if (*lastCharacter != '\\')
 		strcat(buf, "\\");
-	strcat(buf, "k95dial.exe");
+    if (lookForCM) {
+        strcat(buf, "cm.exe");
+    } else {
+        strcat(buf, "k95dial.exe");
+    }
 
 	// Go see if the dialer executable exists.
 	handle = FindFirstFile(buf, &findFileData);
@@ -637,6 +641,13 @@ BOOL DialerExists() {
 		FindClose(handle);
 
 	return found;
+}
+
+BOOL DialerExists()
+{
+    // Look for the Connection Manager first. If we can't find it, then
+    // look for the old Kermit 95 Dialer instead.
+    return ADialerExists(TRUE) || ADialerExists(FALSE);
 }
 
 void
@@ -699,35 +710,40 @@ StartDialer(void)
     } else {
         static char buf[512] = "start ", *p, *q;
 
-        for ( p = exedir, q = buf + 6; *p; p++, q++ ) {
-            if ( *p == '/' ) {
+        for (p = exedir, q = buf + 6; *p; p++, q++) {
+            if (*p == '/') {
                 *q = '\\';
             } else
                 *q = *p;
-            if ( *q == '\\' ) {
+            if (*q == '\\') {
                 q++;
                 *q = '\\';
             }
         }
-        for ( p = "k95dial.exe"; *p ; p++, q++ )
-            *q = *p;
-        if ( reuse ) {
-            for ( p = " -k "; *p ; p++, q++ )
+        if (ADialerExists(TRUE)) {
+            for (p = "cm.exe"; *p; p++, q++)
+                *q = *p;
+        } else {
+            for (p = "k95dial.exe"; *p; p++, q++)
+                *q = *p;
+        }
+        if (reuse) {
+            for (p = " -k "; *p; p++, q++)
                 *q = *p;
 #ifdef _WIN64
             for ( p = _ui64toa((unsigned __int64)hwndGUI, p, 10); *p ; p++, q++ )
                 *q = *p;
 #else /* _WIN64 */
-            for ( p = ckultoa((LONG) hwndGUI); *p ; p++, q++ )
+            for (p = ckultoa((LONG) hwndGUI); *p; p++, q++)
                 *q = *p;
 #endif /* _WIN64 */
             *q++ = ' ';
-            for ( p = ckultoa((LONG) GetCurrentProcessId()); *p ; p++, q++ )
+            for (p = ckultoa((LONG) GetCurrentProcessId()); *p; p++, q++)
                 *q = *p;
         }
         *q = '\0';
-        _zshcmd(buf,0);
-    }
+        _zshcmd(buf, 0);
+        }
 }
 
 HWND
