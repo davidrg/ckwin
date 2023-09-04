@@ -17,6 +17,9 @@ Nothing yet
 * Fixed directory listings not reporting a size or modified time for files
   requiring more than 32 bits to store the file size on Windows NT 3.51 and
   newer. This issue will remain on NT 3.1/3.50.
+* C-Kermit will now find the dialer correctly if C-kermit isn't started from
+  the dialer. This behaviour was broken by rebranding the Kermit 95 dialer -
+  C-Kermit looks for it by its window title.
 
 ### Minor Enhancements and other changes
 
@@ -25,7 +28,7 @@ Nothing yet
 
 ### Source Changes
 
-* None
+* Some minor changes to support a future replacement for the dialer.
 
 ## C-Kermit for Windows 10.0b10 beta 5 - 3 July 2023
 This release mostly focused on porting the codebase to 64bit Windows - x86-64,

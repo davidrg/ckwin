@@ -669,7 +669,22 @@ StartDialer(void)
         }
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
         SetForegroundWindow(hwndDialer);
-    } else if (_hwndDialer = FindWindow(NULL, "Kermit-95 Dialer")) {
+    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit for Windows Dialer")) {
+        dialerIsCKCM = FALSE;
+        StartedFromDialer = 1;
+        hwndDialer = _hwndDialer;
+        KermitDialerID = 0;
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
+        if ( reuse ) {
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
+            DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
+        }
+        ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+        SetForegroundWindow(hwndDialer);
+        StartedFromDialer = 0;
+    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit Connection Manager")) {
+        /* The new Win32 replacement for the dialer */
+        dialerIsCKCM = TRUE;
         StartedFromDialer = 1;
         hwndDialer = _hwndDialer;
         KermitDialerID = 0;

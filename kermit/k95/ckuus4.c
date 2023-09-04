@@ -72,6 +72,9 @@ _PROTOTYP(int vmsttyfd, (void) );
 int StartedFromDialer = 0;
 HWND hwndDialer = 0;
 LONG KermitDialerID = 0;
+#ifdef NT
+BOOL dialerIsCKCM = 0;
+#endif /* NT */
 #ifdef putchar
 #undef putchar
 #endif /* putchar */
