@@ -20,6 +20,8 @@ Nothing yet
 * C-Kermit will now find the dialer correctly if C-kermit isn't started from
   the dialer. This behaviour was broken by rebranding the Kermit 95 dialer -
   C-Kermit looks for it by its window title.
+* The default k95custom.ini no longer produces an error when it's run in the
+  console version of C-Kermit or in a build of C-Kermit that lacks SSH support.
 
 ### Minor Enhancements and other changes
 
