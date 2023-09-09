@@ -7,3 +7,4 @@ vc4/cm___Wi0/*
 # Visual C++ 5.0:
 vc50.idb
 *.plg
+*.opt
