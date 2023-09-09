@@ -1037,7 +1037,7 @@ BOOL CALLBACK DisconnectDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 									if (dd > 0) {
 										_sntprintf((LPTSTR)buf, 20, TEXT("%d:%02d:%02d:%02d"),
-											dd. hh, mm, ss);
+											dd, hh, mm, ss);
 									} else {
 										_sntprintf((LPTSTR)buf, 20, TEXT("%d:%02d:%02d"),
 											hh, mm, ss);
