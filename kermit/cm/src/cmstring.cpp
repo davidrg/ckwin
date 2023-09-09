@@ -25,6 +25,7 @@ typedef struct tagCMStringData {
 CMString::CMString() {
 	_data = (CMStringData*)malloc(sizeof(CMStringData));
 	ZeroMemory(_data, sizeof(CMStringData));
+
 	_data->refCount = 1;
 	_data->length = 0;
 	_data->isNull = TRUE;
@@ -41,8 +42,6 @@ CMString::CMString(LPCTSTR str) {
 	ZeroMemory(_data, sizeof(CMStringData));
 	_data->refCount = 1;
 	
-
-
 	if (str == NULL) {
 		_data->length = 0;
 		_data->isNull = TRUE;
@@ -59,7 +58,7 @@ CMString::CMString(LPCTSTR str) {
 		buf = (LPTSTR)malloc(buflen);
 		ZeroMemory(buf, buflen);
 
-		_tcsnccpy(buf, str, buflen);
+		_tcsnccpy(buf, str, len);
 
 		_data->isNull = FALSE;
 		_data->length = len;
@@ -101,7 +100,7 @@ CMString CMString::fromUtf8(char* str) {
 		buf,
 		0);
 
-	buf = (LPTSTR)malloc(lengthRequired);
+	buf = (LPTSTR)malloc(lengthRequired * sizeof(TCHAR));
 
 	MultiByteToWideChar(
 		CP_UTF8, 
@@ -139,7 +138,7 @@ CMString &CMString::operator=(const CMString &rhs) {
 	_data->refCount -= 1;
 	if (_data->refCount == 0) {
 		free(_data->string);
-		delete _data;
+		free(_data);
 	}
 
 	_data = rhs._data;
