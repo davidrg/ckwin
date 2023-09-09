@@ -931,7 +931,7 @@ void JsonProfile::setForce16bitCRC(BOOL enabled) {
 
 // ----- Serial -----
 CMString JsonProfile::line() { 
-	return getStringCached2(serial, line, CMString("COM1"));
+	return getStringCached2(serial, line, CMString(TEXT("COM1")));
 }
 void JsonProfile::setLine(CMString line) { 
 	setStringCached2(serial, line, line);
