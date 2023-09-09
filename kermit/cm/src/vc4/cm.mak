@@ -58,18 +58,18 @@ ALL : "$(OUTDIR)\cm.exe"
 
 CLEAN : 
 	-@erase ".\Release\cm.exe"
-	-@erase ".\Release\cmstring.obj"
-	-@erase ".\Release\kerm_track.obj"
+	-@erase ".\Release\util.obj"
 	-@erase ".\Release\toolbar.obj"
+	-@erase ".\Release\statusbar.obj"
 	-@erase ".\Release\new_conn.obj"
-	-@erase ".\Release\conn_props.obj"
 	-@erase ".\Release\main.obj"
+	-@erase ".\Release\kerm_track.obj"
 	-@erase ".\Release\json_profile.obj"
 	-@erase ".\Release\json_config.obj"
+	-@erase ".\Release\conn_props.obj"
 	-@erase ".\Release\conn_profile.obj"
 	-@erase ".\Release\conn_list.obj"
-	-@erase ".\Release\statusbar.obj"
-	-@erase ".\Release\util.obj"
+	-@erase ".\Release\cmstring.obj"
 	-@erase ".\Release\cm.res"
 	-@erase ".\Release\cJSON.obj"
 	-@erase ".\Release\general.obj"
@@ -101,18 +101,18 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	".\Release\cmstring.obj" \
-	".\Release\kerm_track.obj" \
+	".\Release\util.obj" \
 	".\Release\toolbar.obj" \
+	".\Release\statusbar.obj" \
 	".\Release\new_conn.obj" \
-	".\Release\conn_props.obj" \
 	".\Release\main.obj" \
+	".\Release\kerm_track.obj" \
 	".\Release\json_profile.obj" \
 	".\Release\json_config.obj" \
+	".\Release\conn_props.obj" \
 	".\Release\conn_profile.obj" \
 	".\Release\conn_list.obj" \
-	".\Release\statusbar.obj" \
-	".\Release\util.obj" \
+	".\Release\cmstring.obj" \
 	".\Release\cJSON.obj" \
 	".\Release\general.obj" \
 	".\Release\cm.res"
@@ -140,26 +140,26 @@ INTDIR=.\Debug
 ALL : "$(OUTDIR)\cm.exe"
 
 CLEAN : 
-	-@erase ".\Debug\vc40.pdb"
-	-@erase ".\Debug\vc40.idb"
 	-@erase ".\Debug\cm.exe"
-	-@erase ".\Debug\cmstring.obj"
-	-@erase ".\Debug\conn_list.obj"
-	-@erase ".\Debug\json_config.obj"
-	-@erase ".\Debug\json_profile.obj"
-	-@erase ".\Debug\conn_profile.obj"
-	-@erase ".\Debug\kerm_track.obj"
+	-@erase ".\Debug\util.obj"
+	-@erase ".\Debug\toolbar.obj"
 	-@erase ".\Debug\statusbar.obj"
 	-@erase ".\Debug\new_conn.obj"
-	-@erase ".\Debug\util.obj"
-	-@erase ".\Debug\conn_props.obj"
-	-@erase ".\Debug\toolbar.obj"
 	-@erase ".\Debug\main.obj"
+	-@erase ".\Debug\kerm_track.obj"
+	-@erase ".\Debug\json_profile.obj"
+	-@erase ".\Debug\json_config.obj"
+	-@erase ".\Debug\conn_props.obj"
+	-@erase ".\Debug\conn_profile.obj"
+	-@erase ".\Debug\conn_list.obj"
+	-@erase ".\Debug\cmstring.obj"
 	-@erase ".\Debug\cm.res"
 	-@erase ".\Debug\cJSON.obj"
 	-@erase ".\Debug\general.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
+	-@erase ".\Debug\vc40.pdb"
+	-@erase ".\Debug\vc40.idb"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -189,18 +189,18 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /incremental:yes /pdb:"$(OUTDIR)/cm.pdb" /debug /machine:I386\
  /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	".\Debug\cmstring.obj" \
-	".\Debug\conn_list.obj" \
-	".\Debug\json_config.obj" \
-	".\Debug\json_profile.obj" \
-	".\Debug\conn_profile.obj" \
-	".\Debug\kerm_track.obj" \
+	".\Debug\util.obj" \
+	".\Debug\toolbar.obj" \
 	".\Debug\statusbar.obj" \
 	".\Debug\new_conn.obj" \
-	".\Debug\util.obj" \
-	".\Debug\conn_props.obj" \
-	".\Debug\toolbar.obj" \
 	".\Debug\main.obj" \
+	".\Debug\kerm_track.obj" \
+	".\Debug\json_profile.obj" \
+	".\Debug\json_config.obj" \
+	".\Debug\conn_props.obj" \
+	".\Debug\conn_profile.obj" \
+	".\Debug\conn_list.obj" \
+	".\Debug\cmstring.obj" \
 	".\Debug\cJSON.obj" \
 	".\Debug\general.obj" \
 	".\Debug\cm.res"
@@ -228,26 +228,26 @@ INTDIR=.\cm___Win
 ALL : "$(OUTDIR)\cm.exe"
 
 CLEAN : 
-	-@erase ".\cm___Win\vc40.pdb"
-	-@erase ".\cm___Win\vc40.idb"
 	-@erase ".\cm___Win\cm.exe"
-	-@erase ".\cm___Win\json_config.obj"
-	-@erase ".\cm___Win\main.obj"
-	-@erase ".\cm___Win\cmstring.obj"
-	-@erase ".\cm___Win\conn_profile.obj"
-	-@erase ".\cm___Win\toolbar.obj"
-	-@erase ".\cm___Win\conn_props.obj"
-	-@erase ".\cm___Win\new_conn.obj"
-	-@erase ".\cm___Win\kerm_track.obj"
 	-@erase ".\cm___Win\util.obj"
-	-@erase ".\cm___Win\json_profile.obj"
-	-@erase ".\cm___Win\conn_list.obj"
+	-@erase ".\cm___Win\toolbar.obj"
 	-@erase ".\cm___Win\statusbar.obj"
+	-@erase ".\cm___Win\new_conn.obj"
+	-@erase ".\cm___Win\main.obj"
+	-@erase ".\cm___Win\kerm_track.obj"
+	-@erase ".\cm___Win\json_profile.obj"
+	-@erase ".\cm___Win\json_config.obj"
+	-@erase ".\cm___Win\conn_props.obj"
+	-@erase ".\cm___Win\conn_profile.obj"
+	-@erase ".\cm___Win\conn_list.obj"
+	-@erase ".\cm___Win\cmstring.obj"
 	-@erase ".\cm___Win\cm.res"
 	-@erase ".\cm___Win\cJSON.obj"
 	-@erase ".\cm___Win\general.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
+	-@erase ".\cm___Win\vc40.pdb"
+	-@erase ".\cm___Win\vc40.idb"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -278,18 +278,18 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /incremental:yes /pdb:"$(OUTDIR)/cm.pdb" /debug /machine:I386\
  /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	".\cm___Win\json_config.obj" \
-	".\cm___Win\main.obj" \
-	".\cm___Win\cmstring.obj" \
-	".\cm___Win\conn_profile.obj" \
-	".\cm___Win\toolbar.obj" \
-	".\cm___Win\conn_props.obj" \
-	".\cm___Win\new_conn.obj" \
-	".\cm___Win\kerm_track.obj" \
 	".\cm___Win\util.obj" \
-	".\cm___Win\json_profile.obj" \
-	".\cm___Win\conn_list.obj" \
+	".\cm___Win\toolbar.obj" \
 	".\cm___Win\statusbar.obj" \
+	".\cm___Win\new_conn.obj" \
+	".\cm___Win\main.obj" \
+	".\cm___Win\kerm_track.obj" \
+	".\cm___Win\json_profile.obj" \
+	".\cm___Win\json_config.obj" \
+	".\cm___Win\conn_props.obj" \
+	".\cm___Win\conn_profile.obj" \
+	".\cm___Win\conn_list.obj" \
+	".\cm___Win\cmstring.obj" \
 	".\cm___Win\cJSON.obj" \
 	".\cm___Win\general.obj" \
 	".\cm___Win\cm.res"
@@ -318,18 +318,18 @@ ALL : "$(OUTDIR)\cm.exe"
 
 CLEAN : 
 	-@erase ".\cm___Wi0\cm.exe"
-	-@erase ".\cm___Wi0\cmstring.obj"
-	-@erase ".\cm___Wi0\new_conn.obj"
 	-@erase ".\cm___Wi0\util.obj"
-	-@erase ".\cm___Wi0\kerm_track.obj"
-	-@erase ".\cm___Wi0\conn_list.obj"
-	-@erase ".\cm___Wi0\conn_props.obj"
-	-@erase ".\cm___Wi0\statusbar.obj"
-	-@erase ".\cm___Wi0\main.obj"
 	-@erase ".\cm___Wi0\toolbar.obj"
+	-@erase ".\cm___Wi0\statusbar.obj"
+	-@erase ".\cm___Wi0\new_conn.obj"
+	-@erase ".\cm___Wi0\main.obj"
+	-@erase ".\cm___Wi0\kerm_track.obj"
 	-@erase ".\cm___Wi0\json_profile.obj"
 	-@erase ".\cm___Wi0\json_config.obj"
+	-@erase ".\cm___Wi0\conn_props.obj"
 	-@erase ".\cm___Wi0\conn_profile.obj"
+	-@erase ".\cm___Wi0\conn_list.obj"
+	-@erase ".\cm___Wi0\cmstring.obj"
 	-@erase ".\cm___Wi0\cm.res"
 	-@erase ".\cm___Wi0\cJSON.obj"
 	-@erase ".\cm___Wi0\general.obj"
@@ -361,18 +361,18 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	".\cm___Wi0\cmstring.obj" \
-	".\cm___Wi0\new_conn.obj" \
 	".\cm___Wi0\util.obj" \
-	".\cm___Wi0\kerm_track.obj" \
-	".\cm___Wi0\conn_list.obj" \
-	".\cm___Wi0\conn_props.obj" \
-	".\cm___Wi0\statusbar.obj" \
-	".\cm___Wi0\main.obj" \
 	".\cm___Wi0\toolbar.obj" \
+	".\cm___Wi0\statusbar.obj" \
+	".\cm___Wi0\new_conn.obj" \
+	".\cm___Wi0\main.obj" \
+	".\cm___Wi0\kerm_track.obj" \
 	".\cm___Wi0\json_profile.obj" \
 	".\cm___Wi0\json_config.obj" \
+	".\cm___Wi0\conn_props.obj" \
 	".\cm___Wi0\conn_profile.obj" \
+	".\cm___Wi0\conn_list.obj" \
+	".\cm___Wi0\cmstring.obj" \
 	".\cm___Wi0\cJSON.obj" \
 	".\cm___Wi0\general.obj" \
 	".\cm___Wi0\cm.res"
@@ -423,7 +423,7 @@ LINK32_OBJS= \
 ################################################################################
 # Begin Source File
 
-SOURCE=.\util.h
+SOURCE="\ckwin-dial32\kermit\cm\src\util.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -439,33 +439,37 @@ SOURCE=.\util.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\util.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\util.cpp"
 DEP_CPP_UTIL_=\
-	".\util.h"\
+	"..\util.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\util.obj" : $(SOURCE) $(DEP_CPP_UTIL_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\util.obj" : $(SOURCE) $(DEP_CPP_UTIL_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\util.obj" : $(SOURCE) $(DEP_CPP_UTIL_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\util.obj" : $(SOURCE) $(DEP_CPP_UTIL_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -474,7 +478,7 @@ DEP_CPP_UTIL_=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\toolbar.h
+SOURCE="\ckwin-dial32\kermit\cm\src\toolbar.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -490,33 +494,37 @@ SOURCE=.\toolbar.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\toolbar.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\toolbar.cpp"
 DEP_CPP_TOOLB=\
-	".\toolbar.h"\
+	"..\toolbar.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\toolbar.obj" : $(SOURCE) $(DEP_CPP_TOOLB) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\toolbar.obj" : $(SOURCE) $(DEP_CPP_TOOLB) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\toolbar.obj" : $(SOURCE) $(DEP_CPP_TOOLB) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\toolbar.obj" : $(SOURCE) $(DEP_CPP_TOOLB) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -525,7 +533,7 @@ DEP_CPP_TOOLB=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\statusbar.h
+SOURCE="\ckwin-dial32\kermit\cm\src\statusbar.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -541,36 +549,40 @@ SOURCE=.\statusbar.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\statusbar.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\statusbar.cpp"
 DEP_CPP_STATU=\
-	".\statusbar.h"\
-	".\kerm_track.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
+	"..\statusbar.h"\
+	"..\kerm_track.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -579,7 +591,7 @@ DEP_CPP_STATU=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\resource.h
+SOURCE="\ckwin-dial32\kermit\cm\src\resource.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -595,7 +607,7 @@ SOURCE=.\resource.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\new_conn.h
+SOURCE="\ckwin-dial32\kermit\cm\src\new_conn.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -611,37 +623,41 @@ SOURCE=.\new_conn.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\new_conn.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\new_conn.cpp"
 DEP_CPP_NEW_C=\
-	".\config_file.h"\
-	".\conn_list.h"\
-	".\conn_props.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
+	"..\config_file.h"\
+	"..\conn_list.h"\
+	"..\conn_props.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\new_conn.obj" : $(SOURCE) $(DEP_CPP_NEW_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\new_conn.obj" : $(SOURCE) $(DEP_CPP_NEW_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\new_conn.obj" : $(SOURCE) $(DEP_CPP_NEW_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\new_conn.obj" : $(SOURCE) $(DEP_CPP_NEW_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -650,47 +666,51 @@ DEP_CPP_NEW_C=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\main.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\main.cpp"
 DEP_CPP_MAIN_=\
-	".\toolbar.h"\
-	".\statusbar.h"\
-	".\conn_list.h"\
-	".\conn_props.h"\
-	".\new_conn.h"\
-	".\util.h"\
-	".\ipc_messages.h"\
-	".\kerm_track.h"\
-	".\json_config.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
-	".\config_file.h"\
+	"..\toolbar.h"\
+	"..\statusbar.h"\
+	"..\conn_list.h"\
+	"..\conn_props.h"\
+	"..\new_conn.h"\
+	"..\util.h"\
+	"..\ipc_messages.h"\
+	"..\kerm_track.h"\
+	"..\json_config.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
+	"..\config_file.h"\
 	
 NODEP_CPP_MAIN_=\
-	".\dummy_config.h"\
+	"..\dummy_config.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -699,7 +719,7 @@ NODEP_CPP_MAIN_=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\kerm_track.h
+SOURCE="\ckwin-dial32\kermit\cm\src\kerm_track.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -715,36 +735,40 @@ SOURCE=.\kerm_track.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\kerm_track.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\kerm_track.cpp"
 DEP_CPP_KERM_=\
-	".\kerm_track.h"\
-	".\ipc_messages.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
+	"..\kerm_track.h"\
+	"..\ipc_messages.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -753,7 +777,7 @@ DEP_CPP_KERM_=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\json_template.h
+SOURCE="\ckwin-dial32\kermit\cm\src\json_template.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -769,7 +793,7 @@ SOURCE=.\json_template.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\json_profile.h
+SOURCE="\ckwin-dial32\kermit\cm\src\json_profile.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -785,40 +809,42 @@ SOURCE=.\json_profile.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\json_profile.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\json_profile.cpp"
 DEP_CPP_JSON_=\
-	".\json_profile.h"\
-	".\json_config.h"\
-	".\config_file.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
-	
-NODEP_CPP_JSON_=\
-	".\cJSON\cJSON.h"\
+	"..\json_profile.h"\
+	"..\cJSON\cJSON.h"\
+	"..\json_config.h"\
+	"..\config_file.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\json_profile.obj" : $(SOURCE) $(DEP_CPP_JSON_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\json_profile.obj" : $(SOURCE) $(DEP_CPP_JSON_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\json_profile.obj" : $(SOURCE) $(DEP_CPP_JSON_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\json_profile.obj" : $(SOURCE) $(DEP_CPP_JSON_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -827,7 +853,7 @@ NODEP_CPP_JSON_=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\json_config.h
+SOURCE="\ckwin-dial32\kermit\cm\src\json_config.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -843,40 +869,42 @@ SOURCE=.\json_config.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\json_config.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\json_config.cpp"
 DEP_CPP_JSON_C=\
-	".\json_config.h"\
-	".\json_profile.h"\
-	".\config_file.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
-	
-NODEP_CPP_JSON_C=\
-	".\cJSON\cJSON.h"\
+	"..\json_config.h"\
+	"..\cJSON\cJSON.h"\
+	"..\json_profile.h"\
+	"..\config_file.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\json_config.obj" : $(SOURCE) $(DEP_CPP_JSON_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\json_config.obj" : $(SOURCE) $(DEP_CPP_JSON_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\json_config.obj" : $(SOURCE) $(DEP_CPP_JSON_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\json_config.obj" : $(SOURCE) $(DEP_CPP_JSON_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -885,7 +913,7 @@ NODEP_CPP_JSON_C=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\ipc_messages.h
+SOURCE="\ckwin-dial32\kermit\cm\src\ipc_messages.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -901,7 +929,7 @@ SOURCE=.\ipc_messages.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_props.h
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -917,35 +945,39 @@ SOURCE=.\conn_props.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_props.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props.cpp"
 DEP_CPP_CONN_=\
-	".\conn_props.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
+	"..\conn_props.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\conn_props.obj" : $(SOURCE) $(DEP_CPP_CONN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\conn_props.obj" : $(SOURCE) $(DEP_CPP_CONN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\conn_props.obj" : $(SOURCE) $(DEP_CPP_CONN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\conn_props.obj" : $(SOURCE) $(DEP_CPP_CONN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -954,7 +986,7 @@ DEP_CPP_CONN_=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_profile.h
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_profile.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -970,37 +1002,41 @@ SOURCE=.\conn_profile.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_profile.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_profile.cpp"
 DEP_CPP_CONN_P=\
-	".\conn_profile.h"\
-	".\util.h"\
-	".\ipc_messages.h"\
-	".\kerm_track.h"\
-	".\cmstring.h"\
+	"..\conn_profile.h"\
+	"..\util.h"\
+	"..\ipc_messages.h"\
+	"..\kerm_track.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\conn_profile.obj" : $(SOURCE) $(DEP_CPP_CONN_P) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\conn_profile.obj" : $(SOURCE) $(DEP_CPP_CONN_P) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\conn_profile.obj" : $(SOURCE) $(DEP_CPP_CONN_P) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\conn_profile.obj" : $(SOURCE) $(DEP_CPP_CONN_P) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -1009,7 +1045,7 @@ DEP_CPP_CONN_P=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_list.h
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_list.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -1025,40 +1061,44 @@ SOURCE=.\conn_list.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_list.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_list.cpp"
 DEP_CPP_CONN_L=\
-	".\conn_list.h"\
-	".\statusbar.h"\
-	".\toolbar.h"\
-	".\kerm_track.h"\
-	".\util.h"\
-	".\config_file.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
+	"..\conn_list.h"\
+	"..\statusbar.h"\
+	"..\toolbar.h"\
+	"..\kerm_track.h"\
+	"..\util.h"\
+	"..\config_file.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\conn_list.obj" : $(SOURCE) $(DEP_CPP_CONN_L) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\conn_list.obj" : $(SOURCE) $(DEP_CPP_CONN_L) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\conn_list.obj" : $(SOURCE) $(DEP_CPP_CONN_L) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\conn_list.obj" : $(SOURCE) $(DEP_CPP_CONN_L) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -1067,7 +1107,7 @@ DEP_CPP_CONN_L=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\config_file.h
+SOURCE="\ckwin-dial32\kermit\cm\src\config_file.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -1083,7 +1123,7 @@ SOURCE=.\config_file.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\cmstring.h
+SOURCE="\ckwin-dial32\kermit\cm\src\cmstring.h"
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
@@ -1099,34 +1139,38 @@ SOURCE=.\cmstring.h
 ################################################################################
 # Begin Source File
 
-SOURCE=.\cmstring.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\cmstring.cpp"
 DEP_CPP_CMSTR=\
-	".\cmstring.h"\
-	".\util.h"\
+	"..\cmstring.h"\
+	"..\util.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\cmstring.obj" : $(SOURCE) $(DEP_CPP_CMSTR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\cmstring.obj" : $(SOURCE) $(DEP_CPP_CMSTR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\cmstring.obj" : $(SOURCE) $(DEP_CPP_CMSTR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\cmstring.obj" : $(SOURCE) $(DEP_CPP_CMSTR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
 !ENDIF 
@@ -1135,38 +1179,42 @@ DEP_CPP_CMSTR=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\cm.rc
+SOURCE="\ckwin-dial32\kermit\cm\src\cm.rc"
 DEP_RSC_CM_RC=\
-	".\toolbar1.bmp"\
-	".\logo.ico"\
+	"..\toolbar1.bmp"\
+	"..\logo.ico"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
 
 
 "$(INTDIR)\cm.res" : $(SOURCE) $(DEP_RSC_CM_RC) "$(INTDIR)"
-   $(RSC) $(RSC_PROJ) $(SOURCE)
+   $(RSC) /l 0x409 /fo"$(INTDIR)/cm.res" /i "\ckwin-dial32\kermit\cm\src" /d\
+ "NDEBUG" $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
 
 "$(INTDIR)\cm.res" : $(SOURCE) $(DEP_RSC_CM_RC) "$(INTDIR)"
-   $(RSC) $(RSC_PROJ) $(SOURCE)
+   $(RSC) /l 0x409 /fo"$(INTDIR)/cm.res" /i "\ckwin-dial32\kermit\cm\src" /d\
+ "_DEBUG" $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
 
 "$(INTDIR)\cm.res" : $(SOURCE) $(DEP_RSC_CM_RC) "$(INTDIR)"
-   $(RSC) $(RSC_PROJ) $(SOURCE)
+   $(RSC) /l 0x409 /fo"$(INTDIR)/cm.res" /i "\ckwin-dial32\kermit\cm\src" /d\
+ "_DEBUG" $(SOURCE)
 
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 
 "$(INTDIR)\cm.res" : $(SOURCE) $(DEP_RSC_CM_RC) "$(INTDIR)"
-   $(RSC) $(RSC_PROJ) $(SOURCE)
+   $(RSC) /l 0x409 /fo"$(INTDIR)/cm.res" /i "\ckwin-dial32\kermit\cm\src" /d\
+ "NDEBUG" $(SOURCE)
 
 
 !ENDIF 
@@ -1175,25 +1223,9 @@ DEP_RSC_CM_RC=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\cJSON\cJSON.h
-
-!IF  "$(CFG)" == "cm - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
-
-!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\cJSON\cJSON.c
+SOURCE="\ckwin-dial32\kermit\cm\src\cJSON\cJSON.c"
 DEP_CPP_CJSON=\
-	".\cJSON\cJSON.h"\
+	"..\cJSON\cJSON.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -1230,11 +1262,27 @@ DEP_CPP_CJSON=\
 ################################################################################
 # Begin Source File
 
-SOURCE=.\conn_props\general.cpp
+SOURCE="\ckwin-dial32\kermit\cm\src\cJSON\cJSON.h"
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\general.cpp"
 DEP_CPP_GENER=\
-	".\conn_props.h"\
-	".\conn_profile.h"\
-	".\cmstring.h"\
+	"..\conn_props.h"\
+	"..\conn_profile.h"\
+	"..\cmstring.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
