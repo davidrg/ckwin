@@ -1207,8 +1207,7 @@ BEGIN
     ID_CONNECTION_PROPERTIES 
                             "Change the selected connections properties such as hostname and terminal emulation settings"
     ID_CONNECTION_CONNECT   "Connect to the selected connection"
-    ID_OPTIONS_MINIMIZEONCONNECT 
-                            "Minimise the Connection Manager on connect"
+    ID_OPTIONS_MINIMIZEONCONNECT "Minimise the Connection Manager on connect"
     ID_HELP_ABOUT           "Show Connection Manager version information"
     ID_FILE_IMPORTCONNECTIONS "Import connections from a file"
 END

@@ -40,6 +40,7 @@ CMString::CMString() {
 CMString::CMString(LPCTSTR str) {
 	_data = (CMStringData*)malloc(sizeof(CMStringData));
 	ZeroMemory(_data, sizeof(CMStringData));
+
 	_data->refCount = 1;
 	
 	if (str == NULL) {

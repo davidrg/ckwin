@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by Script1.rc
+// Used by cm.rc
 //
 #define IDS_TB_CONNECT                  1
 #define IDS_TB_DISCONNECT               2
