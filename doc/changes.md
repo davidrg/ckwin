@@ -27,6 +27,8 @@ Nothing yet
 
 * Upgraded to OpenSSL 3.0.10, the current long term support release 
   (supported until 7 September 2026)
+* Help text for "set gui window position" updated: this command *is* supported
+  and it does work.
 
 ### Source Changes
 

@@ -730,7 +730,7 @@ static char * hmxygui[] = {
 " ",
 "SET GUI WINDOW POSITION x y",
 "  Moves the C-Kermit window to the given X,Y coordinates, pixels from top",
-"  left.  (Not yet implemented -- use command-line options to do this.)",
+"  left.",
 " ",
 "SET GUI WINDOW RESIZE-MODE { CHANGE-DIMENSIONS, SCALE-FONT }",
 "  Default is CHANGE-DIMENSIONS.",
