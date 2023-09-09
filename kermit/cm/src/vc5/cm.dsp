@@ -142,6 +142,25 @@ LINK32=link.exe
 # Name "cm - Win32 Debug"
 # Name "cm - Win32 Unicode Debug"
 # Name "cm - Win32 Unicode Release"
+# Begin Group "Connection Properties"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\conn_props.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_props.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_props\general.cpp
+# End Source File
+# End Group
+# Begin Group "cJSON"
+
+# PROP Default_Filter ""
 # Begin Source File
 
 SOURCE=..\cJSON\cJSON.c
@@ -158,29 +177,13 @@ SOURCE=..\cJSON\cJSON_Utils.c
 
 SOURCE=..\cJSON\cJSON_Utils.h
 # End Source File
-# Begin Source File
+# End Group
+# Begin Group "storage"
 
-SOURCE=..\cm.rc
-# End Source File
-# Begin Source File
-
-SOURCE=..\cmstring.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\cmstring.h
-# End Source File
+# PROP Default_Filter ""
 # Begin Source File
 
 SOURCE=..\config_file.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_list.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_list.h
 # End Source File
 # Begin Source File
 
@@ -189,22 +192,6 @@ SOURCE=..\conn_profile.cpp
 # Begin Source File
 
 SOURCE=..\conn_profile.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_props.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_props.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_props\general.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=..\ipc_messages.h
 # End Source File
 # Begin Source File
 
@@ -222,6 +209,31 @@ SOURCE=..\json_profile.cpp
 
 SOURCE=..\json_profile.h
 # End Source File
+# End Group
+# Begin Source File
+
+SOURCE=..\cm.rc
+# End Source File
+# Begin Source File
+
+SOURCE=..\cmstring.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\cmstring.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_list.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_list.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\ipc_messages.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\json_template.h
@@ -233,6 +245,10 @@ SOURCE=..\kerm_track.cpp
 # Begin Source File
 
 SOURCE=..\kerm_track.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\logo.ico
 # End Source File
 # Begin Source File
 
