@@ -116,15 +116,15 @@ static int getFieldInt(HWND hwndDlg, int id) {
 }
 
 
-static void CheckTermType(HWND hwndDlg, BOOL save) {
+static Term::TermType CheckTermType(HWND hwndDlg, BOOL save) {
+
 	HWND hwndTermType = GetDlgItem(hwndDlg, IDC_TERM_TYPE);
 
 	int idx = SendMessage(hwndTermType, LB_GETCURSEL, 0, 0);
 
 	Term::TermType existingType = profile->terminalType();
 
-	Term::TermType newType = 
-		(Term::TermType)SendMessage(
+	Term::TermType newType = (Term::TermType)SendMessage(
 			hwndTermType, LB_GETITEMDATA, idx, 0);
 
 	BOOL changed = newType != existingType;
@@ -132,12 +132,14 @@ static void CheckTermType(HWND hwndDlg, BOOL save) {
 	if (!save) {
 		setDirty(IDC_TERM_TYPE, changed);
 		TerminalFieldChanged(hwndDlg);
-		return;
+		return newType;
 	}
 
 	if (changed) {
 		profile->setTerminalType(newType);
 	}
+
+	return newType;
 }
 
 static void CheckWidth(HWND hwndDlg, BOOL save) {
@@ -172,6 +174,11 @@ static void CheckHeight(HWND hwndDlg, BOOL save) {
 	if (changed) {
 		profile->setScreenHeight(newValue);
 	}
+}
+
+static void SetHeight(HWND hwndDlg, int height) {
+	setFieldText(hwndDlg, IDC_TERM_HEIGHT, 
+		CMString::number(height));
 }
 
 static void CheckScrollback(HWND hwndDlg, BOOL save) {
@@ -248,6 +255,18 @@ static void CheckCharset(HWND hwndDlg, BOOL save) {
 	}
 }
 
+static void SetCharset(HWND hwndDlg, Charset::Charset cset) {
+	LPTSTR selectedCS = Charset::getCharsetLabel(
+				cset, TRUE);
+	if (selectedCS != NULL) {
+		SendMessage(
+			GetDlgItem(hwndDlg, IDC_TERM_CSET),
+			CB_SELECTSTRING ,
+			(WPARAM)0,
+			(LPARAM)selectedCS);
+		free(selectedCS);
+	}
+}
 
 static void CheckBits(HWND hwndDlg, BOOL save) {
 	BOOL newValue = IsDlgButtonChecked(hwndDlg, IDC_TERM_BITS_8) == BST_CHECKED;
@@ -264,6 +283,16 @@ static void CheckBits(HWND hwndDlg, BOOL save) {
 
 	if (changed) {
 		profile->setIs8Bit(newValue);
+	}
+}
+
+static void SetBits(HWND hwndDlg, BOOL is8Bit) {
+	if (is8Bit) {
+		CheckDlgButton(hwndDlg, IDC_TERM_BITS_8, BST_CHECKED);
+		CheckDlgButton(hwndDlg, IDC_TERM_BITS_7, BST_UNCHECKED);
+	} else {
+		CheckDlgButton(hwndDlg, IDC_TERM_BITS_8, BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_TERM_BITS_7, BST_CHECKED);
 	}
 }
 
@@ -335,6 +364,11 @@ static void CheckStatusLine(HWND hwndDlg, BOOL save) {
 	if (changed) {
 		profile->setStatusLineEnabled(newValue);
 	}
+}
+
+static void SetStatusLine(HWND hwndDlg, BOOL enabled) {
+	CheckDlgButton(hwndDlg, IDC_TERM_STATUS_LINE, 
+		enabled ? BST_CHECKED : BST_UNCHECKED);	
 }
 
 BOOL CALLBACK TerminalPageDlgProc(
@@ -412,7 +446,7 @@ BOOL CALLBACK TerminalPageDlgProc(
 
 			setFieldText(hwndDlg, IDC_TERM_WIDTH, CMString::number(profile->screenWidth()));
 
-			setFieldText(hwndDlg, IDC_TERM_HEIGHT, CMString::number(profile->screenHeight()));
+			SetHeight(hwndDlg, profile->screenHeight());
 
 			setFieldText(hwndDlg, IDC_TERM_SCROLLBACK, CMString::number(profile->scrollbackLines()));
 
@@ -427,22 +461,9 @@ BOOL CALLBACK TerminalPageDlgProc(
 					(LPARAM)selectedCursor);
 			
 			// Select the selected charset
-			LPTSTR selectedCS = Charset::getCharsetLabel(
-				profile->characterSet(), TRUE);
-			if (selectedCS != NULL) {
-				SendMessage(
-					GetDlgItem(hwndDlg, IDC_TERM_CSET),
-					CB_SELECTSTRING ,
-					(WPARAM)0,
-					(LPARAM)selectedCS);
-				free(selectedCS);
-			}
+			SetCharset(hwndDlg, profile->characterSet());
 
-			if (profile->is8Bit()) {
-				CheckDlgButton(hwndDlg, IDC_TERM_BITS_8, BST_CHECKED);
-			} else {
-				CheckDlgButton(hwndDlg, IDC_TERM_BITS_7, BST_CHECKED);
-			}
+			SetBits(hwndDlg, profile->is8Bit());
 
 
 			CheckDlgButton(hwndDlg, IDC_TERM_LOCAL_ECHO, 
@@ -454,8 +475,7 @@ BOOL CALLBACK TerminalPageDlgProc(
 			CheckDlgButton(hwndDlg, IDC_TERM_APC, 
 				profile->apcEnabled() ? BST_CHECKED : BST_UNCHECKED);
 
-			CheckDlgButton(hwndDlg, IDC_TERM_STATUS_LINE, 
-				profile->statusLineEnabled() ? BST_CHECKED : BST_UNCHECKED);	
+			SetStatusLine(hwndDlg, profile->statusLineEnabled());
 			
 			break;
 		}
@@ -468,7 +488,27 @@ BOOL CALLBACK TerminalPageDlgProc(
 			case IDC_TERM_TYPE:
 				{
 					if (HIWORD(wParam) == LBN_SELCHANGE) {
-						CheckTermType(hwndDlg, FALSE);
+						Term::TermType newType = CheckTermType(hwndDlg, FALSE);
+
+						Term::TermSettings settings = Term::getTermSettings(newType);
+
+						// Update settings based on terminal type defaults
+						if (settings.type != Term::TT_INVALID) {
+							if (settings.charset != Charset::CS_INVALID) {
+								SetCharset(hwndDlg, settings.charset);
+							}
+
+							SetStatusLine(hwndDlg, settings.statusLine);
+							SetBits(hwndDlg, settings.is8Bit);
+							SetHeight(hwndDlg, settings.height);
+
+							// Update dirty flags for any values that have
+							// changed
+							CheckCharset(hwndDlg, FALSE);
+							CheckStatusLine(hwndDlg, FALSE);
+							CheckBits(hwndDlg, FALSE);
+							CheckHeight(hwndDlg, FALSE);
+						}
 					}
 				}
 

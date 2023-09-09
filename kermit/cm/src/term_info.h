@@ -3,6 +3,8 @@
 
 #include <windows.h>
 
+#include "charset.h"
+
 namespace Term {
 	enum TermType {
 		TT_INVALID = 0,
@@ -57,6 +59,28 @@ namespace Term {
 		TT_XTERM = 49,		// not yet supported
 	};
 
+	// Note: number assignments are important! They match
+	//       the Win32 console colour codes used in the PROCESSINFO
+	//		 dwFillAttribute.
+	enum Color {
+		COLOR_BLACK = 0,
+		COLOR_BLUE = 1,
+		COLOR_GREEN = 2,
+		COLOR_CYAN = 3,
+		COLOR_RED = 4,
+		COLOR_MAGENTA = 5,
+		COLOR_BROWN = 6,
+		COLOR_LIGHT_GRAY = 7,
+		COLOR_DARK_GRAY = 8,
+		COLOR_LIGHT_BLUE = 9,
+		COLOR_LIGHT_GREEN = 10,
+		COLOR_LIGHT_CYAN = 11,
+		COLOR_LIGHT_RED = 12,
+		COLOR_LIGHT_MAGENTA = 13,
+		COLOR_YELLOW = 14,
+		COLOR_WHITE = 15
+	};
+
 	typedef struct tagTermInfo {
 		TermType type;
 		LPCTSTR keyword;
@@ -64,10 +88,23 @@ namespace Term {
 		int descriptionId;
 	} TermInfo;
 
+	typedef struct tagTermSettings {
+		TermType type;
+		Charset::Charset charset;
+		BOOL statusLine;
+		BOOL is8Bit;
+		int height;
+		Color termFg;
+		Color termBg;
+		Color underlineFg;
+		Color underlineBg;
+	} TermSettings;
 
 	const TermInfo* getTerminalInfos();
 
 	LPCTSTR getTermKeyword(TermType type);
+
+	TermSettings getTermSettings(TermType type);
 }
 
 #endif TERM_INFO_H

@@ -359,39 +359,39 @@ DWORD ConnectionProfile::connect(HWND parent) {
 }
 
 
-LPCTSTR colorToString(ConnectionProfile::Color c) {
+LPCTSTR colorToString(Term::Color c) {
 	switch(c) {
-	case ConnectionProfile::COLOR_BLACK:
+	case Term::COLOR_BLACK:
 		return TEXT("black");
-	case ConnectionProfile::COLOR_BLUE:
+	case Term::COLOR_BLUE:
 		return TEXT("blue");
-	case ConnectionProfile::COLOR_GREEN:
+	case Term::COLOR_GREEN:
 		return TEXT("green");
-	case ConnectionProfile::COLOR_CYAN:
+	case Term::COLOR_CYAN:
 		return TEXT("cyan");
-	case ConnectionProfile::COLOR_RED:
+	case Term::COLOR_RED:
 		return TEXT("red");
-	case ConnectionProfile::COLOR_MAGENTA:
+	case Term::COLOR_MAGENTA:
 		return TEXT("magenta");
-	case ConnectionProfile::COLOR_BROWN:
+	case Term::COLOR_BROWN:
 		return TEXT("brown");
-	case ConnectionProfile::COLOR_LIGHT_GRAY:
+	case Term::COLOR_LIGHT_GRAY:
 		return TEXT("lightgray");
-	case ConnectionProfile::COLOR_DARK_GRAY:
+	case Term::COLOR_DARK_GRAY:
 		return TEXT("dgray");
-	case ConnectionProfile::COLOR_LIGHT_BLUE:
+	case Term::COLOR_LIGHT_BLUE:
 		return TEXT("lightblue");
-	case ConnectionProfile::COLOR_LIGHT_GREEN:
+	case Term::COLOR_LIGHT_GREEN:
 		return TEXT("lightgreen");
-	case ConnectionProfile::COLOR_LIGHT_CYAN:
+	case Term::COLOR_LIGHT_CYAN:
 		return TEXT("lightcyan");
-	case ConnectionProfile::COLOR_LIGHT_RED:
+	case Term::COLOR_LIGHT_RED:
 		return TEXT("lightred");
-	case ConnectionProfile::COLOR_LIGHT_MAGENTA:
+	case Term::COLOR_LIGHT_MAGENTA:
 		return TEXT("lightmagenta");
-	case ConnectionProfile::COLOR_YELLOW:
+	case Term::COLOR_YELLOW:
 		return TEXT("yellow");
-	case ConnectionProfile::COLOR_WHITE:
+	case Term::COLOR_WHITE:
 		return TEXT("white");
 	}
 	return TEXT(""); // Should never get here.
@@ -429,7 +429,7 @@ inline BOOL ScriptWriteLine(HANDLE hFile, LPTSTR string, HWND parent) {
 }
 
 inline BOOL ScriptWriteGuiColor(HANDLE hFile, HWND parent, LPTSTR buf, 
-								ConnectionProfile::Color color, 
+								Term::Color color, 
 								RGB8BitColor colorValue) {
 
 	_sntprintf(buf, BUFFERSIZE, TEXT("  set gui rgbcolor %s %d %d %d"),
@@ -567,22 +567,22 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		OutLine(buf);
 
 		// Output all the colour definitions
-		OutColorLine(COLOR_BLACK, rgbBlack());
-		OutColorLine(COLOR_BLUE, rgbBlue());
-		OutColorLine(COLOR_GREEN, rgbGreen());
-		OutColorLine(COLOR_CYAN, rgbCyan());
-		OutColorLine(COLOR_RED, rgbRed());
-		OutColorLine(COLOR_MAGENTA, rgbMagenta());
-		OutColorLine(COLOR_BROWN, rgbBrown());
-		OutColorLine(COLOR_LIGHT_GRAY, rgbLightGray());
-		OutColorLine(COLOR_DARK_GRAY, rgbDarkGray());
-		OutColorLine(COLOR_LIGHT_BLUE, rgbLightBlue());
-		OutColorLine(COLOR_LIGHT_GREEN, rgbLightGreen());
-		OutColorLine(COLOR_LIGHT_CYAN, rgbLightCyan());
-		OutColorLine(COLOR_LIGHT_RED, rgbLightRed());
-		OutColorLine(COLOR_LIGHT_MAGENTA, rgbLightMagenta());
-		OutColorLine(COLOR_YELLOW, rgbYellow());
-		OutColorLine(COLOR_WHITE, rgbWhite());
+		OutColorLine(Term::COLOR_BLACK, rgbBlack());
+		OutColorLine(Term::COLOR_BLUE, rgbBlue());
+		OutColorLine(Term::COLOR_GREEN, rgbGreen());
+		OutColorLine(Term::COLOR_CYAN, rgbCyan());
+		OutColorLine(Term::COLOR_RED, rgbRed());
+		OutColorLine(Term::COLOR_MAGENTA, rgbMagenta());
+		OutColorLine(Term::COLOR_BROWN, rgbBrown());
+		OutColorLine(Term::COLOR_LIGHT_GRAY, rgbLightGray());
+		OutColorLine(Term::COLOR_DARK_GRAY, rgbDarkGray());
+		OutColorLine(Term::COLOR_LIGHT_BLUE, rgbLightBlue());
+		OutColorLine(Term::COLOR_LIGHT_GREEN, rgbLightGreen());
+		OutColorLine(Term::COLOR_LIGHT_CYAN, rgbLightCyan());
+		OutColorLine(Term::COLOR_LIGHT_RED, rgbLightRed());
+		OutColorLine(Term::COLOR_LIGHT_MAGENTA, rgbLightMagenta());
+		OutColorLine(Term::COLOR_YELLOW, rgbYellow());
+		OutColorLine(Term::COLOR_WHITE, rgbWhite());
 		
 
 		OutLine(TEXT("}"));

@@ -113,41 +113,41 @@ public:
 	virtual void setCursor(Cursor cur);
 
 	// ----- Terminal Colors -----
-	virtual Color terminalForegroundColor();
-	virtual void setTerminalForegroundColor(ConnectionProfile::Color c);
+	virtual Term::Color terminalForegroundColor();
+	virtual void setTerminalForegroundColor(Term::Color c);
 
-	virtual Color terminalBackgroundColor();
-	virtual void setTerminalBackgroundColor(ConnectionProfile::Color c);
+	virtual Term::Color terminalBackgroundColor();
+	virtual void setTerminalBackgroundColor(Term::Color c);
 
-	virtual Color commandForegroundColor();
-	virtual void setCommandForegroundColor(ConnectionProfile::Color c);
+	virtual Term::Color commandForegroundColor();
+	virtual void setCommandForegroundColor(Term::Color c);
 
-	virtual Color commandBackgroundColor();
-	virtual void setCommandBackgroundColor(ConnectionProfile::Color c);
+	virtual Term::Color commandBackgroundColor();
+	virtual void setCommandBackgroundColor(Term::Color c);
 
-	virtual Color statusLineForegroundColor();
-	virtual void setStatusLineForegroundColor(ConnectionProfile::Color c);
+	virtual Term::Color statusLineForegroundColor();
+	virtual void setStatusLineForegroundColor(Term::Color c);
 
-	virtual Color statusLineBackgroundColor();
-	virtual void setStatusLineBackgroundColor(ConnectionProfile::Color c);
+	virtual Term::Color statusLineBackgroundColor();
+	virtual void setStatusLineBackgroundColor(Term::Color c);
 
-	virtual Color mouseSelectionForegroundColor();
-	virtual void setMouseSelectionForegroundColor(ConnectionProfile::Color c);
+	virtual Term::Color mouseSelectionForegroundColor();
+	virtual void setMouseSelectionForegroundColor(Term::Color c);
 
-	virtual Color mouseSelectionBackgroundColor();
-	virtual void setMouseSelectionBackgroundColor(ConnectionProfile::Color c);
+	virtual Term::Color mouseSelectionBackgroundColor();
+	virtual void setMouseSelectionBackgroundColor(Term::Color c);
 
-	virtual Color popupHelpForegroundColor();
-	virtual void setPopupHelpForegroundColor(ConnectionProfile::Color c);
+	virtual Term::Color popupHelpForegroundColor();
+	virtual void setPopupHelpForegroundColor(Term::Color c);
 
-	virtual Color popupHelpBackgroundColor();
-	virtual void setPopupHelpBackgroundColor(ConnectionProfile::Color c);
+	virtual Term::Color popupHelpBackgroundColor();
+	virtual void setPopupHelpBackgroundColor(Term::Color c);
 
-	virtual Color underlineSimulationForegroundColor();
-	virtual void setUnderlineSimulationForegroundColor(ConnectionProfile::Color c);
+	virtual Term::Color underlineSimulationForegroundColor();
+	virtual void setUnderlineSimulationForegroundColor(Term::Color c);
 
-	virtual Color underlineSimulationBackgroundColor();
-	virtual void setUnderlineSimulationBackgroundColor(ConnectionProfile::Color c);
+	virtual Term::Color underlineSimulationBackgroundColor();
+	virtual void setUnderlineSimulationBackgroundColor(Term::Color c);
 
 	// ----- File Transfer -----
 	virtual FileTransferProtocol fileTransferProtocol();

@@ -621,7 +621,7 @@ void JsonProfile::setTerminalType(Term::TermType type) {
 }
 
 BOOL JsonProfile::is8Bit() { 
-	return getBool("terminal", "8bit", FALSE);
+	return getBool("terminal", "8bit", TRUE);
 }
 
 void JsonProfile::setIs8Bit(BOOL is8bit) {
@@ -661,7 +661,7 @@ void JsonProfile::setStatusLineEnabled(BOOL enabled) {
 }
 
 Charset::Charset JsonProfile::characterSet() { 
-	return (Charset::Charset)getInteger("terminal", "charset", (int)Charset::CS_UTF8);	// was: ascii
+	return (Charset::Charset)getInteger("terminal", "charset", (int)Charset::CS_8859_1);	// was: ascii
 }
 
 void JsonProfile::setCharacterSet(Charset::Charset cset) {
@@ -703,105 +703,105 @@ void JsonProfile::setCursor(Cursor cur) {
 }
 
 // ----- Terminal Colors -----
-ConnectionProfile::Color JsonProfile::terminalForegroundColor() { 
-	return (Color)getInteger("terminal", "color", "fg", (int)COLOR_LIGHT_GRAY);
+Term::Color JsonProfile::terminalForegroundColor() { 
+	return (Term::Color)getInteger("terminal", "color", "fg", (int)Term::COLOR_LIGHT_GRAY);
 }
 
-void JsonProfile::setTerminalForegroundColor(Color c) {
+void JsonProfile::setTerminalForegroundColor(Term::Color c) {
 	setInteger("terminal", "color", "fg", (int)c);
 }
 
-ConnectionProfile::Color JsonProfile::terminalBackgroundColor() {  
-	return (Color)getInteger("terminal", "color", "bg", (int)COLOR_BLUE);
+Term::Color JsonProfile::terminalBackgroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "bg", (int)Term::COLOR_BLUE);
 }
 
-void JsonProfile::setTerminalBackgroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setTerminalBackgroundColor(Term::Color c) {
 	setInteger("terminal", "color", "bg", (int)c);
 }
 
-ConnectionProfile::Color JsonProfile::commandForegroundColor() {  
-	return (Color)getInteger("terminal", "color", "cmd_fg", (int)COLOR_LIGHT_GRAY);
+Term::Color JsonProfile::commandForegroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "cmd_fg", (int)Term::COLOR_LIGHT_GRAY);
 }
 
-void JsonProfile::setCommandForegroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setCommandForegroundColor(Term::Color c) {
 	setInteger("terminal", "color", "cmd_fg", (int)c);
 }
 
 
-ConnectionProfile::Color JsonProfile::commandBackgroundColor() {  
-	return (Color)getInteger("terminal", "color", "cm_bg", (int)COLOR_BLACK);
+Term::Color JsonProfile::commandBackgroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "cm_bg", (int)Term::COLOR_BLACK);
 }
 
-void JsonProfile::setCommandBackgroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setCommandBackgroundColor(Term::Color c) {
 	setInteger("terminal", "color", "cmd_bg", (int)c);
 }
 
 
-ConnectionProfile::Color JsonProfile::statusLineForegroundColor() {  
-	return (Color)getInteger("terminal", "color", "status_fg", (int)COLOR_LIGHT_GRAY);
+Term::Color JsonProfile::statusLineForegroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "status_fg", (int)Term::COLOR_LIGHT_GRAY);
 }
 
-void JsonProfile::setStatusLineForegroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setStatusLineForegroundColor(Term::Color c) {
 	setInteger("terminal", "color", "status_fg", (int)c);
 }
 
-ConnectionProfile::Color JsonProfile::statusLineBackgroundColor() {  
-	return (Color)getInteger("terminal", "color", "status_bg", (int)COLOR_CYAN);
+Term::Color JsonProfile::statusLineBackgroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "status_bg", (int)Term::COLOR_CYAN);
 }
 
-void JsonProfile::setStatusLineBackgroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setStatusLineBackgroundColor(Term::Color c) {
 	setInteger("terminal", "color", "status_bg", (int)c);
 }
 
-ConnectionProfile::Color JsonProfile::mouseSelectionForegroundColor() { 
-	return (Color)getInteger("terminal", "color", "sel_fg", (int)COLOR_BLACK);
+Term::Color JsonProfile::mouseSelectionForegroundColor() { 
+	return (Term::Color)getInteger("terminal", "color", "sel_fg", (int)Term::COLOR_BLACK);
 }
 
-void JsonProfile::setMouseSelectionForegroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setMouseSelectionForegroundColor(Term::Color c) {
 	setInteger("terminal", "color", "sel_fg", (int)c);
 }
 
-ConnectionProfile::Color JsonProfile::mouseSelectionBackgroundColor() { 
-	return (Color)getInteger("terminal", "color", "sel_bg", (int)COLOR_YELLOW);
+Term::Color JsonProfile::mouseSelectionBackgroundColor() { 
+	return (Term::Color)getInteger("terminal", "color", "sel_bg", (int)Term::COLOR_YELLOW);
 }
 
-void JsonProfile::setMouseSelectionBackgroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setMouseSelectionBackgroundColor(Term::Color c) {
 	setInteger("terminal", "color", "sel_bg", (int)c);
 }
 
 
-ConnectionProfile::Color JsonProfile::popupHelpForegroundColor() {  
-	return (Color)getInteger("terminal", "color", "pop_fg", (int)COLOR_LIGHT_GRAY);
+Term::Color JsonProfile::popupHelpForegroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "pop_fg", (int)Term::COLOR_LIGHT_GRAY);
 }
 
-void JsonProfile::setPopupHelpForegroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setPopupHelpForegroundColor(Term::Color c) {
 	setInteger("terminal", "color", "pop_fg", (int)c);
 }
 
 
-ConnectionProfile::Color JsonProfile::popupHelpBackgroundColor() {  
-	return (Color)getInteger("terminal", "color", "pop_bg", (int)COLOR_CYAN);
+Term::Color JsonProfile::popupHelpBackgroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "pop_bg", (int)Term::COLOR_CYAN);
 }
 
-void JsonProfile::setPopupHelpBackgroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setPopupHelpBackgroundColor(Term::Color c) {
 	setInteger("terminal", "color", "pop_bg", (int)c);
 }
 
 
-ConnectionProfile::Color JsonProfile::underlineSimulationForegroundColor() {  
-	return (Color)getInteger("terminal", "color", "ul_fg", (int)COLOR_LIGHT_GRAY);
+Term::Color JsonProfile::underlineSimulationForegroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "ul_fg", (int)Term::COLOR_LIGHT_GRAY);
 }
 
-void JsonProfile::setUnderlineSimulationForegroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setUnderlineSimulationForegroundColor(Term::Color c) {
 	setInteger("terminal", "color", "ul_fg", (int)c);
 }
 
 
-ConnectionProfile::Color JsonProfile::underlineSimulationBackgroundColor() {  
-	return (Color)getInteger("terminal", "color", "ul_bg", (int)COLOR_RED);
+Term::Color JsonProfile::underlineSimulationBackgroundColor() {  
+	return (Term::Color)getInteger("terminal", "color", "ul_bg", (int)Term::COLOR_RED);
 }
 
-void JsonProfile::setUnderlineSimulationBackgroundColor(ConnectionProfile::Color c) {
+void JsonProfile::setUnderlineSimulationBackgroundColor(Term::Color c) {
 	setInteger("terminal", "color", "ul_bg", (int)c);
 }
 

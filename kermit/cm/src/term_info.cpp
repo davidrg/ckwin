@@ -55,6 +55,72 @@ static const TermInfo terminals[] = {
 	{	TT_INVALID,	0,					0,									0	},
 };
 
+// Default settings for the various terminals. The important ones are
+// character size (7bits or 8bits) and the character set.
+static const TermSettings terminalSettings[] = {
+	// Terminal		Character set			status? 8bit  lines Term Foreground		Term Bg			Underline Fg		Underline Bg
+	{	TT_ADM3A,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	// The dialer didn't have a definition for the ADM5. It seems to be a 7 bit ASCII terminal based on the manual.
+	{	TT_ADM5,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_AIXTERM,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_AAA,		Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_ANSI,	Charset::CS_TRANSP,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_AT386,	Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_AVATAR,	Charset::CS_TRANSP,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_BA80,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_BEOS,	Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_DG200,	Charset::CS_DGI,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_DG210,	Charset::CS_DGI,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_DG217,	Charset::CS_DGI,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_H19,		Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_HFT,		Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_HP2621,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_HPTERM,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_HZL1500,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_IBM31,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	// Change from the dialer: turn off the status line for linux to make it consistent with K95G (the dialer set it to on)
+	// And use UTF-8 as the charset rather than CP437 as most linux in the last 20 years will be sending unicode.
+	// And set the default background colour to black rather than blue as blue is a weird background colour for a linux console
+	// that you'll likely never encounter in the wild.
+	{	TT_LINUX,	Charset::CS_UTF8,		FALSE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_QANSI,	Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_QNX,		Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_SCOANSI,	Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_97801,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_SUN,		Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	//{	TT_TEK40,	Charset::CS_INVALID,	TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_NONE,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_TVI910,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_TVI925,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_TVI950,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VC4404,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VIP7809,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT100,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT102,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT220,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT220PC,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT320,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT320PC,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	//{	TT_VT420,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	//{	TT_VT420PC,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	//{	TT_VT520,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	//{	TT_VT520PC,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_VT52,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	// VTNT is a weird one: it just sends serialised windows console structs. Character set is treated as UTF-16 unless K95 is 
+	// running on Windows 9x. So not much point specifying a character set for it - the setting is practically ignored unless perhaps
+	// you're on Windows 95/98/ME.
+	{	TT_VTNT,	Charset::CS_INVALID,	TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_WY160,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_WY30,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_WY370,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_WY50,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_WY60,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	////{	TT_XTERM,	Charset::CS_UTF8,	TRUE,	TRUE,	24,	COLOR_BLACK,		COLOR_WHITE,	COLOR_LIGHT_GRAY,	COLOR_YELLOW	},
+	{	TT_INVALID,	Charset::CS_INVALID,	FALSE,	FALSE,	1,	COLOR_BLACK,		COLOR_BLACK,	COLOR_BLACK,		COLOR_BLACK	},
+	// Terminal		Character set			status? 8bit  lines Term Foreground		Term Background		Underline Fg		Underline Bg
+};
+
+
 const TermInfo* getTerminalInfos() {
 	return terminals;
 }
@@ -67,6 +133,19 @@ LPCTSTR getTermKeyword(TermType type) {
 	}
 
 	return NULL;
+}
+
+TermSettings getTermSettings(TermType type) {
+	for (int i = 0; terminalSettings[i].type != TT_INVALID; i++) {
+		if (terminalSettings[i].type == type) {
+			return terminalSettings[i];
+		}
+	}
+
+	// We should never get here. But just in case...
+	TermSettings inv = { TT_INVALID, Charset::CS_INVALID, FALSE, FALSE, 1, 
+		COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK };
+	return inv;
 }
 
 }

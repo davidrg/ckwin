@@ -83,28 +83,6 @@ public:
 		CUR_UNDERLINE = 2
 	};
 
-	// Note: number assignments are important! They match
-	//       the Win32 console colour codes used in the PROCESSINFO
-	//		 dwFillAttribute.
-	enum Color {
-		COLOR_BLACK = 0,
-		COLOR_BLUE = 1,
-		COLOR_GREEN = 2,
-		COLOR_CYAN = 3,
-		COLOR_RED = 4,
-		COLOR_MAGENTA = 5,
-		COLOR_BROWN = 6,
-		COLOR_LIGHT_GRAY = 7,
-		COLOR_DARK_GRAY = 8,
-		COLOR_LIGHT_BLUE = 9,
-		COLOR_LIGHT_GREEN = 10,
-		COLOR_LIGHT_CYAN = 11,
-		COLOR_LIGHT_RED = 12,
-		COLOR_LIGHT_MAGENTA = 13,
-		COLOR_YELLOW = 14,
-		COLOR_WHITE = 15
-	};
-
 	enum FileTransferProtocol {
 		FT_KERMIT = 0,
 		FT_ZMODEM = 1,
@@ -344,41 +322,41 @@ public:
 	virtual void setCursor(Cursor cur) = 0;
 
 	// ----- Terminal Colors -----
-	virtual Color terminalForegroundColor() = 0;
-	virtual void setTerminalForegroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color terminalForegroundColor() = 0;
+	virtual void setTerminalForegroundColor(Term::Color c) = 0;
 
-	virtual Color terminalBackgroundColor() = 0;
-	virtual void setTerminalBackgroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color terminalBackgroundColor() = 0;
+	virtual void setTerminalBackgroundColor(Term::Color c) = 0;
 
-	virtual Color commandForegroundColor() = 0;
-	virtual void setCommandForegroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color commandForegroundColor() = 0;
+	virtual void setCommandForegroundColor(Term::Color c) = 0;
 
-	virtual Color commandBackgroundColor() = 0;
-	virtual void setCommandBackgroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color commandBackgroundColor() = 0;
+	virtual void setCommandBackgroundColor(Term::Color c) = 0;
 
-	virtual Color statusLineForegroundColor() = 0;
-	virtual void setStatusLineForegroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color statusLineForegroundColor() = 0;
+	virtual void setStatusLineForegroundColor(Term::Color c) = 0;
 
-	virtual Color statusLineBackgroundColor() = 0;
-	virtual void setStatusLineBackgroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color statusLineBackgroundColor() = 0;
+	virtual void setStatusLineBackgroundColor(Term::Color c) = 0;
 
-	virtual Color mouseSelectionForegroundColor() = 0;
-	virtual void setMouseSelectionForegroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color mouseSelectionForegroundColor() = 0;
+	virtual void setMouseSelectionForegroundColor(Term::Color c) = 0;
 
-	virtual Color mouseSelectionBackgroundColor() = 0;
-	virtual void setMouseSelectionBackgroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color mouseSelectionBackgroundColor() = 0;
+	virtual void setMouseSelectionBackgroundColor(Term::Color c) = 0;
 
-	virtual Color popupHelpForegroundColor() = 0;
-	virtual void setPopupHelpForegroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color popupHelpForegroundColor() = 0;
+	virtual void setPopupHelpForegroundColor(Term::Color c) = 0;
 
-	virtual Color popupHelpBackgroundColor() = 0;
-	virtual void setPopupHelpBackgroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color popupHelpBackgroundColor() = 0;
+	virtual void setPopupHelpBackgroundColor(Term::Color c) = 0;
 
-	virtual Color underlineSimulationForegroundColor() = 0;
-	virtual void setUnderlineSimulationForegroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color underlineSimulationForegroundColor() = 0;
+	virtual void setUnderlineSimulationForegroundColor(Term::Color c) = 0;
 
-	virtual Color underlineSimulationBackgroundColor() = 0;
-	virtual void setUnderlineSimulationBackgroundColor(ConnectionProfile::Color c) = 0;
+	virtual Term::Color underlineSimulationBackgroundColor() = 0;
+	virtual void setUnderlineSimulationBackgroundColor(Term::Color c) = 0;
 
 	// ----- File Transfer -----
 	virtual FileTransferProtocol fileTransferProtocol() = 0;
