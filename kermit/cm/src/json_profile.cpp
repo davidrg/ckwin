@@ -86,13 +86,17 @@ void JsonProfile::setString(cJSON *json, LPCSTR name, CMString value) {
 		obj = NULL;
 	}
 
+	char* valueStr = value.toUtf8(NULL);
+
 	if (obj == NULL) {
-		// Doesn't exist - add it
-		cJSON_AddStringToObject(json, name, value.toUtf8(NULL));
+		// Doesn't exist - add it	
+		cJSON_AddStringToObject(json, name, valueStr);
 	} else {
 		// It exists - update its value.
-		cJSON_SetValuestring(obj, value.toUtf8(NULL));
+		cJSON_SetValuestring(obj, valueStr);
 	}
+
+	free(valueStr);
 }
 
 void JsonProfile::setInteger(cJSON *json, LPCSTR name, int value) {

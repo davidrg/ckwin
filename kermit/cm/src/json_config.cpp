@@ -265,9 +265,13 @@ ConnectionProfile *JsonConfigFile::createProfile(
 		_nextProfileId++;
 		setInteger(jsonFile, "next_profile_id", _nextProfileId);
 
+		char* idString = CMString::number(profile->id()).toUtf8(NULL);
+
 		cJSON_AddItemToObject(profiles, 
-			CMString::number(profile->id()).toUtf8(NULL), 
+			idString, 
 			profileJson);
+
+		free(idString);
 	}
 
 	return profile;
