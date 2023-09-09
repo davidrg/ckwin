@@ -1,5 +1,9 @@
-# Unicode debug build directory (Visual C++ 4.0)
+# Visual C++ 4.0: Unicode debug build
 vc4/cm___Win/*
 
-# Unicode release build directory (Visual C++ 4.0)
+# Visual C++ 4.0: Unicode release build
 vc4/cm___Wi0/*
+
+# Visual C++ 5.0:
+vc50.idb
+*.plg
