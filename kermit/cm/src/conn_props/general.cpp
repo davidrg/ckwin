@@ -25,34 +25,11 @@ static HWND hwndName, hwndDescription, hwndNotes, hwndDownloadDir, hwndStartDir;
 // For tracking fields that have changed
 static BOOL dirtyName, dirtyDescription, dirtyNotes, dirtyDownloadDir, dirtyStartDir;
 
-// This function checks to see if the current value in the
-// specified text field matches the supplied original value.
-BOOL textFieldChanged(HWND hwndField, LPTSTR originalValue) {
-	int buflen = 0;
-	LPTSTR buf = NULL;
-	BOOL changed = FALSE;
 
-	// Get current value
-	buflen = GetWindowTextLength(hwndField) + 1;
-
-	// allocate buffer
-	buf = (LPTSTR)malloc(buflen * sizeof(TCHAR));
-	ZeroMemory(buf, buflen * sizeof(TCHAR));
-
-	// Get current value
-	GetWindowText(hwndField, buf, buflen);
-
-	if (lstrcmp(buf, originalValue) != 0) {
-		changed = TRUE;
-	}
-
-	free(buf);
-	return changed;
-}
 
 // Call whenever a fields value is changed to toggle the
 // apply button on and off as necessary.
-void PropSheetFieldChanged(HWND hwndDlg) {
+static void GeneralFieldChanged(HWND hwndDlg) {
 	if (dirtyName || dirtyDescription || dirtyNotes || dirtyDownloadDir || dirtyStartDir) {
 		PropSheet_Changed(GetParent(hwndDlg), hwndDlg);
 	} else {
@@ -96,27 +73,27 @@ BOOL CALLBACK GeneralPageDlgProc(
 			switch(wID) {
 			case IDC_GENERAL_NAME:
 				dirtyName = textFieldChanged(hwndName, profile->name().data());
-				PropSheetFieldChanged(hwndDlg);
+				GeneralFieldChanged(hwndDlg);
 				break;
 
 			case IDC_GENERAL_DESCRIPTION:
 				dirtyDescription = textFieldChanged(hwndDescription, profile->description().data());
-				PropSheetFieldChanged(hwndDlg);
+				GeneralFieldChanged(hwndDlg);
 				break;
 
 			case IDC_GENERAL_NOTES: 
 				dirtyNotes = textFieldChanged(hwndNotes, profile->notes().data());
-				PropSheetFieldChanged(hwndDlg);
+				GeneralFieldChanged(hwndDlg);
 				break;
 
 			case IDC_GENERAL_DOWNLOAD:
 				dirtyDownloadDir = textFieldChanged(hwndDownloadDir, profile->downloadDirectory().data());
-				PropSheetFieldChanged(hwndDlg);
+				GeneralFieldChanged(hwndDlg);
 				break;
 
 			case IDC_GENERAL_START:
 				dirtyStartDir = textFieldChanged(hwndStartDir, profile->startingDirectory().data());
-				PropSheetFieldChanged(hwndDlg);
+				GeneralFieldChanged(hwndDlg);
 				break;
 
 			}

@@ -184,6 +184,19 @@
 #define IDC_GENERAL_START               1094
 #define IDC_DISCONNECT_LIST             1097
 #define IDC_DISCONNECT_ALL              1098
+#define IDC_TERM_TYPE                   1099
+#define IDC_TERM_WIDTH                  1100
+#define IDC_TERM_HEIGHT                 1101
+#define IDC_TERM_SCROLLBACK             1102
+#define IDC_TERM_SCROLLBACK_SPIN        1103
+#define IDC_TERM_CURSOR                 1104
+#define IDC_TERM_CSET                   1105
+#define IDC_TERM_BITS_7                 1106
+#define IDC_TERM_BITS_8                 1107
+#define IDC_TERM_LOCAL_ECHO             1108
+#define IDC_TERM_AUTO_WRAP              1109
+#define IDC_TERM_APC                    1110
+#define IDC_TERM_STATUS_LINE            1111
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -220,7 +233,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40035
-#define _APS_NEXT_CONTROL_VALUE         1099
+#define _APS_NEXT_CONTROL_VALUE         1112
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

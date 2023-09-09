@@ -73,6 +73,9 @@ CLEAN :
 	-@erase ".\Release\conn_list.obj"
 	-@erase ".\Release\kerm_track.obj"
 	-@erase ".\Release\cm.res"
+	-@erase ".\Release\term_info.obj"
+	-@erase ".\Release\charset.obj"
+	-@erase ".\Release\terminal.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -101,21 +104,24 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/cm.res"
+	".\Release\statusbar.obj" \
+	".\Release\conn_profile.obj" \
+	".\Release\main.obj" \
+	".\Release\cmstring.obj" \
+	".\Release\cJSON.obj" \
+	".\Release\new_conn.obj" \
+	".\Release\conn_props.obj" \
+	".\Release\json_profile.obj" \
+	".\Release\general.obj" \
+	".\Release\util.obj" \
+	".\Release\toolbar.obj" \
+	".\Release\json_config.obj" \
+	".\Release\conn_list.obj" \
+	".\Release\kerm_track.obj" \
+	".\Release\term_info.obj" \
+	".\Release\charset.obj" \
+	".\Release\terminal.obj" \
+	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -158,6 +164,9 @@ CLEAN :
 	-@erase ".\Debug\conn_props.obj"
 	-@erase ".\Debug\new_conn.obj"
 	-@erase ".\Debug\cm.res"
+	-@erase ".\Debug\term_info.obj"
+	-@erase ".\Debug\charset.obj"
+	-@erase ".\Debug\terminal.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -189,21 +198,24 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /incremental:yes /pdb:"$(OUTDIR)/cm.pdb" /debug /machine:I386\
  /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/cm.res"
+	".\Debug\main.obj" \
+	".\Debug\kerm_track.obj" \
+	".\Debug\cJSON.obj" \
+	".\Debug\conn_list.obj" \
+	".\Debug\json_config.obj" \
+	".\Debug\statusbar.obj" \
+	".\Debug\util.obj" \
+	".\Debug\general.obj" \
+	".\Debug\json_profile.obj" \
+	".\Debug\conn_profile.obj" \
+	".\Debug\cmstring.obj" \
+	".\Debug\toolbar.obj" \
+	".\Debug\conn_props.obj" \
+	".\Debug\new_conn.obj" \
+	".\Debug\term_info.obj" \
+	".\Debug\charset.obj" \
+	".\Debug\terminal.obj" \
+	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -246,6 +258,9 @@ CLEAN :
 	-@erase ".\cm___Win\json_config.obj"
 	-@erase ".\cm___Win\statusbar.obj"
 	-@erase ".\cm___Win\cm.res"
+	-@erase ".\cm___Win\term_info.obj"
+	-@erase ".\cm___Win\charset.obj"
+	-@erase ".\cm___Win\terminal.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -278,21 +293,24 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /incremental:yes /pdb:"$(OUTDIR)/cm.pdb" /debug /machine:I386\
  /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/cm.res"
+	".\cm___Win\main.obj" \
+	".\cm___Win\json_profile.obj" \
+	".\cm___Win\conn_profile.obj" \
+	".\cm___Win\cJSON.obj" \
+	".\cm___Win\kerm_track.obj" \
+	".\cm___Win\cmstring.obj" \
+	".\cm___Win\general.obj" \
+	".\cm___Win\conn_list.obj" \
+	".\cm___Win\conn_props.obj" \
+	".\cm___Win\toolbar.obj" \
+	".\cm___Win\util.obj" \
+	".\cm___Win\new_conn.obj" \
+	".\cm___Win\json_config.obj" \
+	".\cm___Win\statusbar.obj" \
+	".\cm___Win\term_info.obj" \
+	".\cm___Win\charset.obj" \
+	".\cm___Win\terminal.obj" \
+	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -333,6 +351,9 @@ CLEAN :
 	-@erase ".\cm___Wi0\toolbar.obj"
 	-@erase ".\cm___Wi0\kerm_track.obj"
 	-@erase ".\cm___Wi0\cm.res"
+	-@erase ".\cm___Wi0\term_info.obj"
+	-@erase ".\cm___Wi0\charset.obj"
+	-@erase ".\cm___Wi0\terminal.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -361,21 +382,24 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/cm.res"
+	".\cm___Wi0\util.obj" \
+	".\cm___Wi0\json_config.obj" \
+	".\cm___Wi0\conn_list.obj" \
+	".\cm___Wi0\json_profile.obj" \
+	".\cm___Wi0\conn_profile.obj" \
+	".\cm___Wi0\cmstring.obj" \
+	".\cm___Wi0\main.obj" \
+	".\cm___Wi0\cJSON.obj" \
+	".\cm___Wi0\statusbar.obj" \
+	".\cm___Wi0\conn_props.obj" \
+	".\cm___Wi0\new_conn.obj" \
+	".\cm___Wi0\general.obj" \
+	".\cm___Wi0\toolbar.obj" \
+	".\cm___Wi0\kerm_track.obj" \
+	".\cm___Wi0\term_info.obj" \
+	".\cm___Wi0\charset.obj" \
+	".\cm___Wi0\terminal.obj" \
+	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -555,6 +579,8 @@ DEP_CPP_STATU=\
 	".\..\kerm_track.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -630,6 +656,8 @@ DEP_CPP_NEW_C=\
 	".\..\conn_props.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -679,6 +707,8 @@ DEP_CPP_MAIN_=\
 	".\..\json_config.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	".\..\config_file.h"\
 	
 NODEP_CPP_MAIN_=\
@@ -741,6 +771,8 @@ DEP_CPP_KERM_=\
 	".\..\ipc_messages.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -817,6 +849,8 @@ DEP_CPP_JSON_=\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -877,6 +911,8 @@ DEP_CPP_JSON_C=\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -950,6 +986,8 @@ DEP_CPP_CONN_=\
 	".\..\conn_props.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -1008,6 +1046,8 @@ DEP_CPP_CONN_P=\
 	".\..\util.h"\
 	".\..\ipc_messages.h"\
 	".\..\kerm_track.h"\
+	"..\term_info.h"\
+	"..\charset.h"\
 	".\..\cmstring.h"\
 	
 
@@ -1071,6 +1111,8 @@ DEP_CPP_CONN_L=\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -1283,6 +1325,8 @@ DEP_CPP_GENER=\
 	".\..\conn_props.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
+	"..\charset.h"\
+	"..\term_info.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -1312,6 +1356,159 @@ DEP_CPP_GENER=\
 "$(INTDIR)\general.obj" : $(SOURCE) $(DEP_CPP_GENER) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\term_info.cpp"
+DEP_CPP_TERM_=\
+	"..\term_info.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\term_info.obj" : $(SOURCE) $(DEP_CPP_TERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\term_info.obj" : $(SOURCE) $(DEP_CPP_TERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\term_info.obj" : $(SOURCE) $(DEP_CPP_TERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\term_info.obj" : $(SOURCE) $(DEP_CPP_TERM_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\charset.cpp"
+DEP_CPP_CHARS=\
+	"..\charset.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\charset.obj" : $(SOURCE) $(DEP_CPP_CHARS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\charset.obj" : $(SOURCE) $(DEP_CPP_CHARS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\charset.obj" : $(SOURCE) $(DEP_CPP_CHARS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\charset.obj" : $(SOURCE) $(DEP_CPP_CHARS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\terminal.cpp"
+DEP_CPP_TERMI=\
+	".\..\conn_props.h"\
+	".\..\conn_profile.h"\
+	"..\term_info.h"\
+	"..\charset.h"\
+	".\..\cmstring.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\terminal.obj" : $(SOURCE) $(DEP_CPP_TERMI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\terminal.obj" : $(SOURCE) $(DEP_CPP_TERMI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\terminal.obj" : $(SOURCE) $(DEP_CPP_TERMI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\terminal.obj" : $(SOURCE) $(DEP_CPP_TERMI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\term_info.h"
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\charset.h"
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 !ENDIF 
 

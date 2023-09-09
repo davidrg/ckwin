@@ -5,6 +5,8 @@
 #include "util.h"
 #include "ipc_messages.h"
 #include "kerm_track.h"
+#include "term_info.h"
+#include "charset.h"
 
 // Maximum length for a line in a generated script
 #define BUFFERSIZE 3000
@@ -502,7 +504,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 			logAppendConnections() ? TEXT(" append") : TEXT(""));
 		OutLine(buf);	
 	}
-	if (logSessionInput) {
+	if (logSessionInput()) {
 		_sntprintf(buf, BUFFERSIZE, TEXT("log session {%s}%s"), logSessionInputFile().data(),
 			logAppendSessionInput() ? TEXT(" append") : TEXT(""));
 		OutLine(buf);
@@ -607,9 +609,9 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 	}
 
 	// Terminal settings
-	if (!terminalType().isNullOrWhiteSpace()) {
+	if (terminalType() != Term::TT_INVALID) {
 		_sntprintf(buf, BUFFERSIZE, TEXT("set terminal type %s"), 
-				terminalType());
+			Term::getTermKeyword(terminalType()));
 		OutLine(buf);
 	} else {
 		OutLine(TEXT("echo No terminal type specified\r\nstop"));
@@ -976,17 +978,17 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		// If the terminal type is at386, scoansi or ansi and the
 		// selected harset is not "transparent" then the K95 dialer
 		// appends " g1" to this command.
-		if (terminalType() == CMString(TEXT("at386"))
-			|| terminalType() == CMString(TEXT("scoansi"))
-			|| terminalType() == CMString(TEXT("ansi"))) {
+		if (terminalType() == Term::TT_AT386
+			|| terminalType() == Term::TT_SCOANSI
+			|| terminalType() == Term::TT_ANSI) {
 
-			if (characterSet() == CMString(TEXT("transparent"))) {
+			if (characterSet() == Charset::CS_TRANSP) {
 				suffix = TRUE;
 			}
 		}
 		
 		_sntprintf(buf, BUFFERSIZE, TEXT("set term remote-char %s%s"), 
-			characterSet().data(), suffix ? TEXT(" g1") : TEXT(""));
+			Charset::getCharsetKeyword(characterSet()), suffix ? TEXT(" g1") : TEXT(""));
 		OutLine(buf);
 	}
 

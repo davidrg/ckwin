@@ -69,42 +69,40 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Terminal"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Terminal Type:",IDC_STATIC,5,5,48,8
-    LISTBOX         IDC_LIST1,5,15,85,65,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+    LTEXT           "Terminal Type:",IDC_STATIC,8,8,48,8
+    LISTBOX         IDC_TERM_TYPE,8,19,81,93,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Character size",IDC_STATIC,170,85,60,40
-    CONTROL         "7 bits",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,175,95,
-                    33,10
-    CONTROL         "8 bits",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,175,110,
-                    33,10
-    GROUPBOX        "Screen",IDC_STATIC,95,5,135,75
-    LTEXT           "Width:",IDC_STATIC,100,20,22,8
-    COMBOBOX        IDC_COMBO1,141,30,50,30,CBS_DROPDOWN | CBS_SORT | 
+    GROUPBOX        "Screen",IDC_STATIC,96,7,132,77
+    LTEXT           "Width:",IDC_STATIC,104,18,22,8
+    COMBOBOX        IDC_TERM_WIDTH,144,16,46,68,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO2,141,15,50,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Columns",IDC_STATIC,196,18,28,8
+    LTEXT           "Height:",IDC_STATIC,104,34,24,8
+    COMBOBOX        IDC_TERM_HEIGHT,144,32,46,96,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Height:",IDC_STATIC,101,35,24,8
-    LTEXT           "Scrollback:",IDC_STATIC,101,50,36,8
-    EDITTEXT        IDC_EDIT1,141,45,40,14,ES_AUTOHSCROLL
-    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,181,45,
-                    11,14
-    LTEXT           "Columns",IDC_STATIC,195,20,28,8
-    LTEXT           "Lines",IDC_STATIC,195,35,18,8
-    LTEXT           "Lines",IDC_STATIC,195,50,18,8
-    LTEXT           "Cursor:",IDC_STATIC,100,65,23,8
-    COMBOBOX        IDC_COMBO3,141,60,50,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Lines",IDC_STATIC,196,34,18,8
+    LTEXT           "Scrollback:",IDC_STATIC,104,51,36,8
+    EDITTEXT        IDC_TERM_SCROLLBACK,144,48,46,14,ES_AUTOHSCROLL
+    LTEXT           "Lines",IDC_STATIC,196,51,18,8
+    LTEXT           "Cursor:",IDC_STATIC,104,66,23,8
+    COMBOBOX        IDC_TERM_CURSOR,144,64,46,56,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Local echo",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,100,47,10
-    CONTROL         "Auto wrap",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,115,48,10
-    CONTROL         "APC enabled",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,85,57,10
-    CONTROL         "Status line",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,130,49,10
-    LTEXT           "Character set:",IDC_STATIC,80,85,45,8
-    COMBOBOX        IDC_COMBO4,80,95,80,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Character set:",IDC_STATIC,96,89,45,8
+    COMBOBOX        IDC_TERM_CSET,96,100,132,112,CBS_DROPDOWNLIST | 
+                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Character size",IDC_STATIC,8,120,80,28
+    CONTROL         "7 bits",IDC_TERM_BITS_7,"Button",BS_AUTORADIOBUTTON,16,
+                    132,33,10
+    CONTROL         "8 bits",IDC_TERM_BITS_8,"Button",BS_AUTORADIOBUTTON,48,
+                    132,33,10
+    CONTROL         "Local echo",IDC_TERM_LOCAL_ECHO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,96,124,47,10
+    CONTROL         "Auto wrap",IDC_TERM_AUTO_WRAP,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,96,136,48,10
+    CONTROL         "APC enabled",IDC_TERM_APC,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,168,124,57,10
+    CONTROL         "Status line",IDC_TERM_STATUS_LINE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,168,136,49,10
 END
 
 IDD_TRANSFER DIALOG DISCARDABLE  0, 0, 235, 156
@@ -935,11 +933,11 @@ END
 
 IDD_TERMINAL DLGINIT
 BEGIN
-    IDC_COMBO3, 0x403, 5, 0
+    IDC_TERM_CURSOR, 0x403, 5, 0
 0x7546, 0x6c6c, "\000" 
-    IDC_COMBO3, 0x403, 5, 0
+    IDC_TERM_CURSOR, 0x403, 5, 0
 0x6148, 0x666c, "\000" 
-    IDC_COMBO3, 0x403, 10, 0
+    IDC_TERM_CURSOR, 0x403, 10, 0
 0x6e55, 0x6564, 0x6c72, 0x6e69, 0x0065, 
     0
 END

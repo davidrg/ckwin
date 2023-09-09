@@ -60,7 +60,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION, NULL, NULL, NULL); page++;// *
 
 	if (conType != ConnectionProfile::CT_FTP) {
-		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL, NULL, NULL, NULL); page++;
+		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL, (DLGPROC)TerminalPageDlgProc, TerminalPageProc, (LPARAM)profile); page++;
 	}
 
 	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	NULL, NULL, NULL); page++;
@@ -143,3 +143,34 @@ void CALLBACK PropSheetCallback(HWND hWnd, UINT uMsg, LPARAM lParam) {
 
 	}
 }
+
+
+// This function checks to see if the current value in the
+// specified text field matches the supplied original value.
+BOOL textFieldChanged(HWND hwndField, LPTSTR originalValue) {
+	int buflen = 0;
+	LPTSTR buf = NULL;
+	BOOL changed = FALSE;
+
+	// Get current value
+	buflen = GetWindowTextLength(hwndField) + 1;
+
+	// allocate buffer
+	buf = (LPTSTR)malloc(buflen * sizeof(TCHAR));
+	ZeroMemory(buf, buflen * sizeof(TCHAR));
+
+	// Get current value
+	GetWindowText(hwndField, buf, buflen);
+
+	if (lstrcmp(buf, originalValue) != 0) {
+		changed = TRUE;
+	}
+
+	free(buf);
+	return changed;
+}
+
+typedef struct tagDialogFieldStatus {
+	int id;
+	BOOL dirty;
+} dialogFieldStatus;

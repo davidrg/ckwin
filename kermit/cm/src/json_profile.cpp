@@ -612,12 +612,12 @@ void JsonProfile::setExitOnDisconnect(BOOL exit) {
 
 
 // ----- Terminal -----
-CMString JsonProfile::terminalType() { 
-	return getStringCached2(terminal, type, CMString(TEXT("vt320"))); // was: vt100
+Term::TermType JsonProfile::terminalType() { 
+	return (Term::TermType)getInteger("terminal", "type", (int)Term::TT_VT320); // was: vt100
 }
 
-void JsonProfile::setTerminalType(CMString type) {
-	setStringCached2(terminal, type, type);
+void JsonProfile::setTerminalType(Term::TermType type) {
+	setInteger("terminal", "type", (int)type);
 }
 
 BOOL JsonProfile::is8Bit() { 
@@ -645,7 +645,7 @@ void JsonProfile::setLocalEchoEnabled(BOOL enabled) {
 }
 
 BOOL JsonProfile::autoWrapEnabled() { 
-	return getBool("temrinal", "auto_wrap", TRUE);
+	return getBool("terminal", "auto_wrap", TRUE);
 }
 
 void JsonProfile::setAutoWrapEnabled(BOOL enabled) {
@@ -660,12 +660,12 @@ void JsonProfile::setStatusLineEnabled(BOOL enabled) {
 	JsonProfile::setBool("terminal", "status_line", enabled);
 }
 
-CMString JsonProfile::characterSet() { 
-	return getStringCached2(terminal, charset, CMString(TEXT("utf8")));	// was: ascii
+Charset::Charset JsonProfile::characterSet() { 
+	return (Charset::Charset)getInteger("terminal", "charset", (int)Charset::CS_UTF8);	// was: ascii
 }
 
-void JsonProfile::setCharacterSet(CMString cset) {
-	setStringCached2(terminal, charset, cset);
+void JsonProfile::setCharacterSet(Charset::Charset cset) {
+	setInteger("terminal", "charset", (int)cset);
 }
 
 int JsonProfile::screenWidth() { 	// shouldn't be unsigned
@@ -681,7 +681,7 @@ int JsonProfile::screenHeight() { 	// shouldn't be unsigned
 }
 
 void JsonProfile::setScreenHeight(int h) {
-	setInteger("terminal", "width", h);
+	setInteger("terminal", "height", h);
 }
 
 int JsonProfile::scrollbackLines() {  // shouldn't be unsigned
@@ -689,11 +689,13 @@ int JsonProfile::scrollbackLines() {  // shouldn't be unsigned
 }
 
 void JsonProfile::setScrollbackLines(int lines) {
-	setInteger("terminal", "width", lines);
+	setInteger("terminal", "scrollback_lines", lines);
 }
 
 ConnectionProfile::Cursor JsonProfile::cursor() { 
-	return (Cursor)getInteger("terminal", "cursor", (int)CUR_FULL);
+	int cur = getInteger("terminal", "cursor", (int)CUR_FULL);
+	if (cur < 0 || cur > CUR_UNDERLINE) return CUR_FULL;
+	return (Cursor)cur;
 }
 
 void JsonProfile::setCursor(Cursor cur) {

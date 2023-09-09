@@ -79,8 +79,8 @@ public:
 	virtual void setExitOnDisconnect(BOOL exit);
 
 	// ----- Terminal -----
-	virtual CMString terminalType();
-	virtual void setTerminalType(CMString type);
+	virtual Term::TermType terminalType();
+	virtual void setTerminalType(Term::TermType type);
 
 	virtual BOOL is8Bit(); // Rather than 7-bit
 	virtual void setIs8Bit(BOOL is8bit);
@@ -97,8 +97,8 @@ public:
 	virtual BOOL statusLineEnabled();
 	virtual void setStatusLineEnabled(BOOL enabled);
 
-	virtual CMString characterSet();
-	virtual void setCharacterSet(CMString cset);
+	virtual Charset::Charset characterSet();
+	virtual void setCharacterSet(Charset::Charset cset);
 
 	virtual int screenWidth();
 	virtual void setScreenWidth(int w);
@@ -709,8 +709,6 @@ protected:
 	CMString _cached_pty_command;
 	CMString _cached_dll_name;
 	CMString _cached_dll_params;
-	CMString _cached_terminal_type;
-	CMString _cached_terminal_charset;
 	CMString _cached_xfer_file_cset;
 	CMString _cached_xfer_cset;
 	CMString _cached_serial_line;

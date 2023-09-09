@@ -4,6 +4,8 @@
 #include <windows.h>
 
 #include "cmstring.h"
+#include "charset.h"
+#include "term_info.h"
 
 #define DEFAULT_WIN_PRINT_QUEUE TEXT("<default>")
 
@@ -308,8 +310,8 @@ public:
 	}
 
 	// ----- Terminal -----
-	virtual CMString terminalType() = 0;
-	virtual void setTerminalType(CMString type) = 0;
+	virtual Term::TermType terminalType() = 0;
+	virtual void setTerminalType(Term::TermType type) = 0;
 
 	virtual BOOL is8Bit() = 0; // Rather than 7-bit
 	virtual void setIs8Bit(BOOL is8bit) = 0;
@@ -326,8 +328,8 @@ public:
 	virtual BOOL statusLineEnabled() = 0;
 	virtual void setStatusLineEnabled(BOOL enabled) = 0;
 
-	virtual CMString characterSet() = 0;
-	virtual void setCharacterSet(CMString cset) = 0;
+	virtual Charset::Charset characterSet() = 0;
+	virtual void setCharacterSet(Charset::Charset cset) = 0;
 
 	virtual int screenWidth() = 0;
 	virtual void setScreenWidth(int w) = 0;

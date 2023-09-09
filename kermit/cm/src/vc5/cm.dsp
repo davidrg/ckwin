@@ -157,6 +157,10 @@ SOURCE=..\conn_props.h
 
 SOURCE=..\conn_props\general.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=..\conn_props\terminal.cpp
+# End Source File
 # End Group
 # Begin Group "cJSON"
 
@@ -210,6 +214,14 @@ SOURCE=..\json_profile.cpp
 SOURCE=..\json_profile.h
 # End Source File
 # End Group
+# Begin Source File
+
+SOURCE=..\charset.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\charset.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\cm.rc
@@ -273,6 +285,14 @@ SOURCE=..\statusbar.cpp
 # Begin Source File
 
 SOURCE=..\statusbar.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\term_info.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\term_info.h
 # End Source File
 # Begin Source File
 
