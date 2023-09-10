@@ -127,20 +127,31 @@ BOOL CALLBACK GeneralPageDlgProc(
 
 				// Now we have a buffer large enough for any string we
 				// encounter, go save any changes.
-				GetWindowText(hwndName, buf, buflen);
-				profile->setName(buf);
 
-				GetWindowText(hwndDescription, buf, buflen);
-				profile->setDescription(buf);
+				if (dirtyName) {
+					GetWindowText(hwndName, buf, buflen);
+					profile->setName(buf);
+				}
 
-				GetWindowText(hwndNotes, buf, buflen);
-				profile->setNotes(buf);
+				if (dirtyDescription) {
+					GetWindowText(hwndDescription, buf, buflen);
+					profile->setDescription(buf);
+				}
 
-				GetWindowText(hwndDownloadDir, buf, buflen);
-				profile->setDownloadDirectory(buf);
+				if (dirtyNotes) {
+					GetWindowText(hwndNotes, buf, buflen);
+					profile->setNotes(buf);
+				}
 
-				GetWindowText(hwndStartDir, buf, buflen);
-				profile->setStartingDirectory(buf);
+				if (dirtyDownloadDir) {
+					GetWindowText(hwndDownloadDir, buf, buflen);
+					profile->setDownloadDirectory(buf);
+				}
+
+				if (dirtyStartDir) {
+					GetWindowText(hwndStartDir, buf, buflen);
+					profile->setStartingDirectory(buf);
+				}
 				
 				
 				free(buf);
