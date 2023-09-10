@@ -23,6 +23,7 @@
 #define IDR_MENU                        103
 #define IDD_GENERAL                     107
 #define IDD_CONNECTION                  108
+#define IDD_CONNECTION_IP               108
 #define IDD_TERMINAL                    109
 #define IDD_TRANSFER                    110
 #define IDD_TELNET                      111
@@ -44,6 +45,9 @@
 #define IDR_CONTEXT_MENU                131
 #define IDD_NEW_CONNECTION              132
 #define IDD_DISCONNECT_SESSION          135
+#define IDD_CONNECTION_BASIC            136
+#define IDD_CONNECTION_CMD              137
+#define IDD_CONNECTION_SERIAL           138
 #define IDC_NAME                        1000
 #define IDC_GENERAL_NAME                1000
 #define IDC_DESCRIPTION                 1001
@@ -216,6 +220,22 @@
 #define IDC_LOGIN_FILENAME              1124
 #define IDC_LOGIN_BROWSE                1125
 #define IDC_LOGIN_SCRIPT                1126
+#define IDC_CONN_HOSTNAME               1127
+#define IDC_CONN_PROTO                  1129
+#define IDC_CONN_PORT                   1130
+#define IDC_CONN_EXIT_ON_DISCON         1131
+#define IDC_CONN_PARAM_A_LBL            1132
+#define IDC_CONN_PARAM_A                1133
+#define IDC_CONN_PARAM_B_LBL            1134
+#define IDC_CONN_PARAM_B                1135
+#define IDC_CONN_LINE                   1136
+#define IDC_CONN_SPEED                  1137
+#define IDC_CONN_FLOW                   1138
+#define IDC_CONN_PARITY                 1139
+#define IDC_CONN_STOP                   1140
+#define IDC_CONN_ERROR_CORRECTION       1141
+#define IDC_CONN_DATA_COMPRESSION       1142
+#define IDC_CONN_CARRIER_DETECT         1143
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -252,7 +272,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40035
-#define _APS_NEXT_CONTROL_VALUE         1127
+#define _APS_NEXT_CONTROL_VALUE         1144
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

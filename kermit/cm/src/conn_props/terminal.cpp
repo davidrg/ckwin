@@ -111,15 +111,6 @@ static void setFieldText(HWND hwndDlg, int id, CMString value) {
 	SetWindowText(GetDlgItem(hwndDlg, id), value.data());
 }
 
-static int getFieldInt(HWND hwndDlg, int id) {
-	LPTSTR buf[20];
-
-	HWND hwnd = GetDlgItem(hwndDlg, id);
-
-	GetWindowText(hwnd, (LPTSTR)buf, 20);
-	return _ttoi((LPCTSTR)buf);
-}
-
 
 static Term::TermType CheckTermType(HWND hwndDlg, BOOL save) {
 

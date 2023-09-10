@@ -83,19 +83,6 @@ static void FieldChanged(HWND hwndDlg) {
 	}
 }
 
-// Caller is responsible for cleaning up the returned string
-static LPTSTR getFieldText(HWND hwndDlg, int controlId) {
-	HWND hWnd = GetDlgItem(hwndDlg, controlId);
-
-	int len = GetWindowTextLength(hWnd) + 1;
-
-	LPTSTR buf = (LPTSTR)malloc(len * sizeof(TCHAR));
-	ZeroMemory(buf, len * sizeof(TCHAR));
-
-	GetWindowText(hWnd, buf, len);
-
-	return buf;
-}
 
 static void setLoginScriptFileMode(HWND hwndDlg, BOOL file) {
 

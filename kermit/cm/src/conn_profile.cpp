@@ -73,8 +73,7 @@ void ConnectionProfile::setTargetName() {
 		}
 		break;
 	case CT_DLL:
-		if (!dllName().isNullOrWhiteSpace() 
-			&& !dllParameters().isNullOrWhiteSpace()){
+		if (!dllName().isNullOrWhiteSpace()){
 
 			int len = dllName().length() + dllParameters().length() + 2;
 			_targetName = (LPTSTR)malloc(sizeof(TCHAR) * len);				

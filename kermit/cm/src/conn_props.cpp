@@ -1,5 +1,7 @@
 #include <windows.h>
 #include <commctrl.h>
+#include <tchar.h>
+#include <stdio.h>
 
 #include "conn_props.h"
 #include "resource.h"
@@ -36,6 +38,10 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	case ConnectionProfile::CT_LAT:
 	case ConnectionProfile::CT_CTERM:
 	case ConnectionProfile::CT_SERIAL:
+	case ConnectionProfile::CT_NAMED_PIPE:
+	case ConnectionProfile::CT_PTY:
+	case ConnectionProfile::CT_PIPE:
+	case ConnectionProfile::CT_DLL:
 	case ConnectionProfile::CT_SSH:
 		pageCount = 11; break; // Excluded: IDD_TELNET, IDD_FTP, IDD_TCPIP, IDD_TLS
 	case ConnectionProfile::CT_FTP:
@@ -60,13 +66,46 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page], IDD_GENERAL, (DLGPROC)GeneralPageDlgProc, GeneralPageProc, (LPARAM)profile); page++; // *
 
 	// ----- Connection -----
-	SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION, NULL, NULL, NULL); page++;// *
+
+	// The dialog resource varies by connection type to account
+	// for the different fields required.
+	switch(conType) {
+	case ConnectionProfile::CT_SSH:
+	case ConnectionProfile::CT_FTP:
+		// These just need hostname and port.
+		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_BASIC, (DLGPROC)ConnectionPageDlgProc, ConnectionPageProc, (LPARAM)profile); page++;
+		break;
+	case ConnectionProfile::CT_IP:
+		// This requires hostname, port plus a drop-down for protocol.
+		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_IP, (DLGPROC)ConnectionPageDlgProc, ConnectionPageProc, (LPARAM)profile); page++;
+		break;
+	case ConnectionProfile::CT_MODEM:
+	case ConnectionProfile::CT_SERIAL:
+		// These require a bunch of drop-downs and checkboxes to configure
+		// the serial line
+		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_SERIAL, 
+			(DLGPROC)NULL, NULL, (LPARAM)profile); page++;
+		break;
+	case ConnectionProfile::CT_LAT:
+	case ConnectionProfile::CT_CTERM:
+	case ConnectionProfile::CT_NAMED_PIPE:
+	case ConnectionProfile::CT_PTY:
+	case ConnectionProfile::CT_PIPE:
+	case ConnectionProfile::CT_DLL:
+	default:
+		// These all require either one or two text fields.
+		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_CMD, 
+			(DLGPROC)ConnectionPageDlgProc, ConnectionPageProc, (LPARAM)profile); page++;
+		break;
+	}
+
 
 	if (conType == ConnectionProfile::CT_SSH) {
 		// TODO: SSH page
 	}
 
 	if (conType == ConnectionProfile::CT_IP) {
+		
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TELNET,	NULL, NULL, NULL); page++;
 	}
 
@@ -185,7 +224,25 @@ BOOL textFieldChanged(HWND hwndField, LPTSTR originalValue) {
 	return changed;
 }
 
-typedef struct tagDialogFieldStatus {
-	int id;
-	BOOL dirty;
-} dialogFieldStatus;
+// Caller is responsible for cleaning up the returned string
+LPTSTR getFieldText(HWND hwndDlg, int controlId) {
+	HWND hWnd = GetDlgItem(hwndDlg, controlId);
+
+	int len = GetWindowTextLength(hWnd) + 1;
+
+	LPTSTR buf = (LPTSTR)malloc(len * sizeof(TCHAR));
+	ZeroMemory(buf, len * sizeof(TCHAR));
+
+	GetWindowText(hWnd, buf, len);
+
+	return buf;
+}
+
+int getFieldInt(HWND hwndDlg, int id) {
+	LPTSTR buf[20];
+
+	HWND hwnd = GetDlgItem(hwndDlg, id);
+
+	GetWindowText(hwnd, (LPTSTR)buf, 20);
+	return _ttoi((LPCTSTR)buf);
+}

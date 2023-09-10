@@ -531,6 +531,7 @@ CMString JsonProfile::hostname() {
 
 void JsonProfile::setHostname(CMString hostname) { 
 	setStringCached2(ip, host, hostname);
+	setTargetName();
 }	
 
 // If CT_SSH, CT_FTP, CT_IP
@@ -540,6 +541,7 @@ int JsonProfile::port() {
 
 void JsonProfile::setPort(int p) { 
 	setInteger("ip", "port", p);
+	setTargetName();
 }
 
 // If CT_IP
@@ -550,6 +552,7 @@ ConnectionProfile::IPProtocol JsonProfile::ipProtocol() {
 
 void JsonProfile::setIpProtocol(IPProtocol p) { 
 	setInteger("ip", "protocol", (int)p);
+	setTargetName();
 }
 
 // If CT_LAT, CT_CTERM
@@ -559,38 +562,47 @@ CMString JsonProfile::latService() {
 
 void JsonProfile::setLatService(CMString svc) {
 	setStringCached(lat_service, svc);
+	setTargetName();
 }
 
 // If CT_NAMED_PIPE
 CMString JsonProfile::namedPipeName() { 
 	return getStringCached2(named_pipe, name, CMString());
 }
+
 void JsonProfile::setNamedPipeName(CMString name) { 
 	setStringCached2(named_pipe, name, name);
+	setTargetName();
 }
 
 // If CT_NAMED_PIPE
 CMString JsonProfile::namedPipeHost() { 
 	return getStringCached2(named_pipe, host, CMString());
 }
+
 void JsonProfile::setNamedPipeHost(CMString host) { 
 	setStringCached2(named_pipe, host, host);
+	setTargetName();
 }
 
 // if CT_PTY, CT_PIPE
 CMString JsonProfile::ptyCommand() { 
 	return getStringCached(pty_command, CMString());
 }
+
 void JsonProfile::setPtyCommand(CMString command) { 
 	setStringCached(pty_command, command);
+	setTargetName();
 }
 
 // if CT_DLL
 CMString JsonProfile::dllName() { 
 	return getStringCached2(dll, name, CMString());
 }
+
 void JsonProfile::setDllName(CMString name) { 
-	setStringCached2(dll, name, name,);
+	setStringCached2(dll, name, name);
+	setTargetName();
 }
 
 // if CT_DLL
@@ -600,6 +612,7 @@ CMString JsonProfile::dllParameters() {
 
 void JsonProfile::setDllParameters(CMString params) { 
 	setStringCached2(dll, params, params);
+	setTargetName();
 }
 
 BOOL JsonProfile::exitOnDisconnect() { 

@@ -78,6 +78,7 @@ CLEAN :
 	-@erase ".\Release\term_colors.obj"
 	-@erase ".\Release\cm.res"
 	-@erase ".\Release\login.obj"
+	-@erase ".\Release\connection.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -125,6 +126,7 @@ LINK32_OBJS= \
 	".\Release\kerm_track.obj" \
 	".\Release\term_colors.obj" \
 	".\Release\login.obj" \
+	".\Release\connection.obj" \
 	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -173,6 +175,7 @@ CLEAN :
 	-@erase ".\Debug\new_conn.obj"
 	-@erase ".\Debug\cm.res"
 	-@erase ".\Debug\login.obj"
+	-@erase ".\Debug\connection.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -223,6 +226,7 @@ LINK32_OBJS= \
 	".\Debug\conn_props.obj" \
 	".\Debug\new_conn.obj" \
 	".\Debug\login.obj" \
+	".\Debug\connection.obj" \
 	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -271,6 +275,7 @@ CLEAN :
 	-@erase ".\cm___Win\term_colors.obj"
 	-@erase ".\cm___Win\cm.res"
 	-@erase ".\cm___Win\login.obj"
+	-@erase ".\cm___Win\connection.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -322,6 +327,7 @@ LINK32_OBJS= \
 	".\cm___Win\statusbar.obj" \
 	".\cm___Win\term_colors.obj" \
 	".\cm___Win\login.obj" \
+	".\cm___Win\connection.obj" \
 	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -368,6 +374,7 @@ CLEAN :
 	-@erase ".\cm___Wi0\kerm_track.obj"
 	-@erase ".\cm___Wi0\cm.res"
 	-@erase ".\cm___Wi0\login.obj"
+	-@erase ".\cm___Wi0\connection.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -415,6 +422,7 @@ LINK32_OBJS= \
 	".\cm___Wi0\toolbar.obj" \
 	".\cm___Wi0\kerm_track.obj" \
 	".\cm___Wi0\login.obj" \
+	".\cm___Wi0\connection.obj" \
 	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1610,6 +1618,49 @@ DEP_CPP_LOGIN=\
 
 
 "$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\connection.cpp"
+DEP_CPP_CONNE=\
+	".\..\conn_props.h"\
+	".\..\conn_profile.h"\
+	".\..\term_info.h"\
+	".\..\charset.h"\
+	".\..\cmstring.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\connection.obj" : $(SOURCE) $(DEP_CPP_CONNE) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\connection.obj" : $(SOURCE) $(DEP_CPP_CONNE) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\connection.obj" : $(SOURCE) $(DEP_CPP_CONNE) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\connection.obj" : $(SOURCE) $(DEP_CPP_CONNE) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 

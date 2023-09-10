@@ -155,6 +155,10 @@ SOURCE=..\conn_props.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\connection.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\general.cpp
 # End Source File
 # Begin Source File
