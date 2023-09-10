@@ -159,6 +159,9 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 
 	if (rc > 0) {
 		profile->commitChanges();
+
+		// TODO: we really should send an LVM_UPDATE to the conncetion list
+		// to let it now stuff its showing may have changed
 	}
 
 	return rc;

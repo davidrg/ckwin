@@ -80,9 +80,10 @@ void AddConnections(HWND hwnd, ConfigFile *cfg) {
 		if (profile != NULL) {
 			lvi.iImage = 0;   // TODO: Icon
 			lvi.iItem = profile->id();
-			if (!profile->name().isNullOrWhiteSpace()) {
-				lvi.pszText = profile->name().data();
-			}
+			//if (!profile->name().isNullOrWhiteSpace()) {
+			//	lvi.pszText = profile->name().data();
+			//}
+			lvi.pszText = LPSTR_TEXTCALLBACK;
 			lvi.lParam = (LPARAM)profile;
 			ListView_InsertItem(hwnd, &lvi); 
 		}
@@ -123,10 +124,10 @@ LRESULT ConnectionListViewNotify(HWND hwndListView,
 	case LVN_GETDISPINFO: {
 			LV_DISPINFO *lpdi = (LV_DISPINFO *)lParam;
 
+			ConnectionProfile *profile = (ConnectionProfile *)lpdi->item.lParam;
+
 			if(lpdi->item.iSubItem)	{
 				if(lpdi->item.mask & LVIF_TEXT)	{
-					ConnectionProfile *profile = (ConnectionProfile *)lpdi->item.lParam;
-
 					switch(lpdi->item.iSubItem) {
 					case 1:
 						if (!profile->description().isNull())
@@ -138,14 +139,16 @@ LRESULT ConnectionListViewNotify(HWND hwndListView,
 						break;
 					case 3:
 						lstrcpy(lpdi->item.pszText, 
-							   TEXT("FOO 3!"));
+							   TEXT("Unused column"));
 						break;
 
 					}
 				}
 			} else {
 				if(lpdi->item.mask & LVIF_TEXT) {
-					lstrcpy(lpdi->item.pszText, TEXT("BAR!"));
+					if (!profile->name().isNullOrWhiteSpace()) {
+						lstrcpy(lpdi->item.pszText, profile->name().data());
+					}
 				}
 
 				if(lpdi->item.mask & LVIF_IMAGE) {
