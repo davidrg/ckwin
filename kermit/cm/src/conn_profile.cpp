@@ -1023,16 +1023,16 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 
 			switch(printFlowControl()) {
 			case FC_NONE:
-				parity = TEXT("none");
+				flow = TEXT("none");
 				break;
 			case FC_XON_XOFF:
-				parity = TEXT("xon/xoff");
+				flow = TEXT("xon/xoff");
 				break;
 			case FC_RTS_CTS:
-				parity = TEXT("rts/cts");
+				flow = TEXT("rts/cts");
 				break;
 			case FC_AUTO:
-				parity = TEXT("auto");
+				flow = TEXT("auto");
 				break;
 			}
 
