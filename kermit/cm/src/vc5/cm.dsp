@@ -256,6 +256,10 @@ SOURCE=..\conn_list.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\connection_serial.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\ipc_messages.h
 # End Source File
 # Begin Source File

@@ -41,4 +41,6 @@ AppVersion GetAppVersion(HINSTANCE hInstance);
 int fromUtf8(LPSTR input, LPTSTR output, int outputSizeInChars);
 int toUtf8(LPTSTR input, LPSTR output, int outputSizeInChars);
 
+void loadSerialPortDropdown(HWND hwndDlg, int controlId);
+
 #endif /* UTIL_H */

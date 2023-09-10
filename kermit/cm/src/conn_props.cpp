@@ -84,7 +84,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 		// These require a bunch of drop-downs and checkboxes to configure
 		// the serial line
 		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_SERIAL, 
-			(DLGPROC)NULL, NULL, (LPARAM)profile); page++;
+			(DLGPROC)SerialConnectionPageDlgProc, SerialConnectionPageProc, (LPARAM)profile); page++;
 		break;
 	case ConnectionProfile::CT_LAT:
 	case ConnectionProfile::CT_CTERM:

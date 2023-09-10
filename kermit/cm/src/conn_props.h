@@ -14,7 +14,11 @@ int				getFieldInt(HWND hwndDlg, int id);
 BOOL CALLBACK	GeneralPageDlgProc(HWND, UINT, WPARAM, LPARAM);
 UINT CALLBACK	GeneralPageProc(HWND, UINT, LPPROPSHEETPAGE);
 
-// Property Sheet: CONNECTION
+// Property Sheet: CONNECTION (Serial)
+BOOL CALLBACK	SerialConnectionPageDlgProc(HWND, UINT, WPARAM, LPARAM);
+UINT CALLBACK	SerialConnectionPageProc(HWND, UINT, LPPROPSHEETPAGE);
+
+// Property Sheet: CONNECTION (all others)
 BOOL CALLBACK	ConnectionPageDlgProc(HWND, UINT, WPARAM, LPARAM);
 UINT CALLBACK	ConnectionPageProc(HWND, UINT, LPPROPSHEETPAGE);
 

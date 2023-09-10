@@ -9,6 +9,7 @@
 #include "config_file.h"
 #include "conn_list.h"
 #include "conn_props.h"
+#include "util.h"
 
 BOOL CALLBACK		NewConnectionDlgProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -119,35 +120,7 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			ComboBox_SelectString(hwndSerialSpeed, 0, TEXT("9600"));
 			
 
-			// Now try to populate the list of serial ports. This only works on NT.
-#define MAX_DATA_LEN 50
-			HKEY hKey = NULL;
-			TCHAR tempData[MAX_DATA_LEN], tempName[MAX_DATA_LEN];
-			DWORD tempDataLen = MAX_DATA_LEN, tempNameLen = MAX_DATA_LEN;
-			DWORD dwIndex = 0;
-			ZeroMemory(tempData, MAX_DATA_LEN);
-			ZeroMemory(tempName, MAX_DATA_LEN);
-
-			if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("HARDWARE\\DEVICEMAP\\SERIALCOMM"), 0, 
-							 KEY_READ, &hKey) == ERROR_SUCCESS) {
-				while (TRUE) {
-					LONG rc = RegEnumValue(hKey, dwIndex, tempName, &tempNameLen,NULL, NULL, 
-									(unsigned char*)tempData, &tempDataLen);
-
-					if (rc == ERROR_NO_MORE_ITEMS) {
-						break;
-					} 
-
-					SendMessage(hwndSerialPort,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) tempData);
-					dwIndex++;
-				}
-			} else {
-				// Couldn't find the registry key. Either no serial ports, or not on NT
-				// (95 doesn't seem to provide this info via the registry)
-
-				// We *could* brute-force it if we really cared - just try to CreateFile
-				// COM1..COM10 and if it succeeds add it to the list.
-			}
+			loadSerialPortDropdown(hDlg, IDC_NEW_CONN_SER_PORT);
 
 			return TRUE;
 		}

@@ -954,6 +954,7 @@ CMString JsonProfile::line() {
 }
 void JsonProfile::setLine(CMString line) { 
 	setStringCached2(serial, line, line);
+	setTargetName();
 }
 
 unsigned int JsonProfile::lineSpeed() { 
@@ -989,7 +990,7 @@ void JsonProfile::setStopBits(StopBits sb) {
 }
 
 BOOL JsonProfile::errorCorrection() { 
-	return getBool("serial", "error_correction", TRUE);	// TODO: Check
+	return getBool("serial", "error_correction", FALSE);
 }
 
 void JsonProfile::setErrorCorrection(BOOL enabled) {
@@ -997,7 +998,7 @@ void JsonProfile::setErrorCorrection(BOOL enabled) {
 }
 
 BOOL JsonProfile::dataCompression() { 
-	return getBool("serial", "compression", TRUE);  	// TODO: Check
+	return getBool("serial", "compression", FALSE);
 }
 
 void JsonProfile::setDataCompression(BOOL enabled) {
@@ -1005,7 +1006,7 @@ void JsonProfile::setDataCompression(BOOL enabled) {
 }
 
 BOOL JsonProfile::carrierDetection() { 
-	return getBool("serial", "carrier_detection", TRUE);	// TODO: Check
+	return getBool("serial", "carrier_detection", FALSE);
 }
 
 void JsonProfile::setCarrierDetection(BOOL enabled) {
