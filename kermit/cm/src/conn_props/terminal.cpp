@@ -46,14 +46,13 @@ typedef struct tagDialogFieldStatus {
 // Connection profile we're editing
 static ConnectionProfile *profile;
 
-static const int fieldCount = 13;
+static const int fieldCount = 12;
 
 static DialogFieldStatus fieldStatus[] = {
 	{ IDC_TERM_TYPE,			FALSE	},
 	{ IDC_TERM_WIDTH,			FALSE	},
 	{ IDC_TERM_HEIGHT,			FALSE	},
 	{ IDC_TERM_SCROLLBACK,		FALSE	},
-	{ IDC_TERM_SCROLLBACK_SPIN,	FALSE	},
 	{ IDC_TERM_CURSOR,			FALSE	},
 	{ IDC_TERM_CSET,			FALSE	},
 	{ IDC_TERM_BITS_7,			FALSE	},
@@ -476,7 +475,21 @@ BOOL CALLBACK TerminalPageDlgProc(
 				profile->apcEnabled() ? BST_CHECKED : BST_UNCHECKED);
 
 			SetStatusLine(hwndDlg, profile->statusLineEnabled());
-			
+
+			// Clean the form
+			setDirty(IDC_TERM_TYPE, FALSE);
+			setDirty(IDC_TERM_WIDTH, FALSE);
+			setDirty(IDC_TERM_HEIGHT, FALSE);
+			setDirty(IDC_TERM_SCROLLBACK, FALSE);
+			setDirty(IDC_TERM_CURSOR, FALSE);
+			setDirty(IDC_TERM_CSET, FALSE);
+			setDirty(IDC_TERM_BITS_7, FALSE);
+			setDirty(IDC_TERM_BITS_8, FALSE);
+			setDirty(IDC_TERM_LOCAL_ECHO, FALSE);
+			setDirty(IDC_TERM_AUTO_WRAP, FALSE);
+			setDirty(IDC_TERM_APC, FALSE);
+			setDirty(IDC_TERM_STATUS_LINE, FALSE);
+
 			break;
 		}
 	case WM_COMMAND: {
