@@ -140,6 +140,9 @@ BOOL CALLBACK ConnectionPageDlgProc(
 		{			
 			ConnectionProfile::ConnectionType conType = profile->connectionType();
 
+			CheckDlgButton(hwndDlg, IDC_CONN_EXIT_ON_DISCON, 
+				profile->exitOnDisconnect() ? BST_CHECKED : BST_UNCHECKED);
+
 			switch (conType) {
 			case ConnectionProfile::CT_FTP:
 			case ConnectionProfile::CT_SSH:
@@ -278,6 +281,16 @@ BOOL CALLBACK ConnectionPageDlgProc(
 			
 
 			switch(wID) {
+			case IDC_CONN_EXIT_ON_DISCON:
+				{
+					BOOL newValue = IsDlgButtonChecked(
+						hwndDlg, wID) == BST_CHECKED;
+				
+					setDirty(wID, newValue != profile->exitOnDisconnect());
+
+					FieldChanged(hwndDlg);
+				}
+				break;
 			case IDC_CONN_HOSTNAME:
 				{
 					setDirty(wID,
@@ -413,6 +426,12 @@ BOOL CALLBACK ConnectionPageDlgProc(
 			switch (pnmh->code) {
 			case PSN_APPLY:	{		// Apply or OK button clicked
 				if (isDirty()) {
+					if (isDirty(IDC_CONN_EXIT_ON_DISCON)) {
+						profile->setExitOnDisconnect(
+							IsDlgButtonChecked(
+								hwndDlg, IDC_CONN_EXIT_ON_DISCON) == BST_CHECKED);
+					}
+
 					if (isDirty(IDC_CONN_HOSTNAME)) {
 						LPTSTR buf = getFieldText(hwndDlg, IDC_CONN_HOSTNAME);
 						
