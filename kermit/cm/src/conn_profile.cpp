@@ -1364,6 +1364,10 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 			// if thats really worth doing as the algorithm is public and
 			// pretty trivial
 
+			// Note: The UI doesn't currently expose the prompt-for-password option.
+			// If it were exposed we'd have to explain to the user that its not really
+			// any more secure than just saving the password.
+
 			/*LPTSTR pass;
 
 			// TODO: Display password dialog and get result

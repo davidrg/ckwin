@@ -209,6 +209,13 @@
 #define IDC_COL_STAT_FG                 1117
 #define IDC_COL_MOU_FG                  1118
 #define IDC_COL_POP_FG                  1119
+#define IDC_LOGIN_USER                  1120
+#define IDC_LOGIN_PASS                  1121
+#define IDC_LOGIN_PROMPT                1122
+#define IDC_LOGIN_RUN_FILE              1123
+#define IDC_LOGIN_FILENAME              1124
+#define IDC_LOGIN_BROWSE                1125
+#define IDC_LOGIN_SCRIPT                1126
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -245,7 +252,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40035
-#define _APS_NEXT_CONTROL_VALUE         1120
+#define _APS_NEXT_CONTROL_VALUE         1127
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

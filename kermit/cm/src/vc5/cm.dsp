@@ -159,6 +159,14 @@ SOURCE=..\conn_props\general.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\login.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_props\term_colors.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\terminal.cpp
 # End Source File
 # End Group
@@ -285,10 +293,6 @@ SOURCE=..\statusbar.cpp
 # Begin Source File
 
 SOURCE=..\statusbar.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\term_colors.cpp
 # End Source File
 # Begin Source File
 

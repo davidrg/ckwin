@@ -75,8 +75,9 @@ CLEAN :
 	-@erase ".\Release\json_config.obj"
 	-@erase ".\Release\conn_list.obj"
 	-@erase ".\Release\kerm_track.obj"
-	-@erase ".\Release\cm.res"
 	-@erase ".\Release\term_colors.obj"
+	-@erase ".\Release\cm.res"
+	-@erase ".\Release\login.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -123,6 +124,7 @@ LINK32_OBJS= \
 	".\Release\conn_list.obj" \
 	".\Release\kerm_track.obj" \
 	".\Release\term_colors.obj" \
+	".\Release\login.obj" \
 	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -161,6 +163,7 @@ CLEAN :
 	-@erase ".\Debug\json_config.obj"
 	-@erase ".\Debug\statusbar.obj"
 	-@erase ".\Debug\util.obj"
+	-@erase ".\Debug\term_colors.obj"
 	-@erase ".\Debug\general.obj"
 	-@erase ".\Debug\json_profile.obj"
 	-@erase ".\Debug\conn_profile.obj"
@@ -169,7 +172,7 @@ CLEAN :
 	-@erase ".\Debug\conn_props.obj"
 	-@erase ".\Debug\new_conn.obj"
 	-@erase ".\Debug\cm.res"
-	-@erase ".\Debug\term_colors.obj"
+	-@erase ".\Debug\login.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -211,6 +214,7 @@ LINK32_OBJS= \
 	".\Debug\json_config.obj" \
 	".\Debug\statusbar.obj" \
 	".\Debug\util.obj" \
+	".\Debug\term_colors.obj" \
 	".\Debug\general.obj" \
 	".\Debug\json_profile.obj" \
 	".\Debug\conn_profile.obj" \
@@ -218,7 +222,7 @@ LINK32_OBJS= \
 	".\Debug\toolbar.obj" \
 	".\Debug\conn_props.obj" \
 	".\Debug\new_conn.obj" \
-	".\Debug\term_colors.obj" \
+	".\Debug\login.obj" \
 	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -264,8 +268,9 @@ CLEAN :
 	-@erase ".\cm___Win\new_conn.obj"
 	-@erase ".\cm___Win\json_config.obj"
 	-@erase ".\cm___Win\statusbar.obj"
-	-@erase ".\cm___Win\cm.res"
 	-@erase ".\cm___Win\term_colors.obj"
+	-@erase ".\cm___Win\cm.res"
+	-@erase ".\cm___Win\login.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -316,6 +321,7 @@ LINK32_OBJS= \
 	".\cm___Win\json_config.obj" \
 	".\cm___Win\statusbar.obj" \
 	".\cm___Win\term_colors.obj" \
+	".\cm___Win\login.obj" \
 	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -345,6 +351,7 @@ CLEAN :
 	-@erase ".\cm___Wi0\util.obj"
 	-@erase ".\cm___Wi0\terminal.obj"
 	-@erase ".\cm___Wi0\json_config.obj"
+	-@erase ".\cm___Wi0\term_colors.obj"
 	-@erase ".\cm___Wi0\conn_list.obj"
 	-@erase ".\cm___Wi0\json_profile.obj"
 	-@erase ".\cm___Wi0\conn_profile.obj"
@@ -360,7 +367,7 @@ CLEAN :
 	-@erase ".\cm___Wi0\toolbar.obj"
 	-@erase ".\cm___Wi0\kerm_track.obj"
 	-@erase ".\cm___Wi0\cm.res"
-	-@erase ".\cm___Wi0\term_colors.obj"
+	-@erase ".\cm___Wi0\login.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -392,6 +399,7 @@ LINK32_OBJS= \
 	".\cm___Wi0\util.obj" \
 	".\cm___Wi0\terminal.obj" \
 	".\cm___Wi0\json_config.obj" \
+	".\cm___Wi0\term_colors.obj" \
 	".\cm___Wi0\conn_list.obj" \
 	".\cm___Wi0\json_profile.obj" \
 	".\cm___Wi0\conn_profile.obj" \
@@ -406,7 +414,7 @@ LINK32_OBJS= \
 	".\cm___Wi0\charset.obj" \
 	".\cm___Wi0\toolbar.obj" \
 	".\cm___Wi0\kerm_track.obj" \
-	".\cm___Wi0\term_colors.obj" \
+	".\cm___Wi0\login.obj" \
 	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1559,6 +1567,49 @@ DEP_CPP_TERM_C=\
 
 
 "$(INTDIR)\term_colors.obj" : $(SOURCE) $(DEP_CPP_TERM_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\login.cpp"
+DEP_CPP_LOGIN=\
+	".\..\conn_props.h"\
+	".\..\conn_profile.h"\
+	".\..\cmstring.h"\
+	".\..\charset.h"\
+	".\..\term_info.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 

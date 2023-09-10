@@ -56,15 +56,15 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	ZeroMemory(psp, pageCount * sizeof(PROPSHEETPAGE));
 	ZeroMemory(&psh, sizeof(PROPSHEETHEADER));
 
+	// ----- General -----
 	SetupPropertyPage(hInstance, &psp[page], IDD_GENERAL, (DLGPROC)GeneralPageDlgProc, GeneralPageProc, (LPARAM)profile); page++; // *
+
+	// ----- Connection -----
 	SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION, NULL, NULL, NULL); page++;// *
 
-	if (conType != ConnectionProfile::CT_FTP) {
-		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL,   (DLGPROC)TerminalPageDlgProc, TerminalPageProc, (LPARAM)profile); page++;
-		SetupPropertyPage(hInstance, &psp[page], IDD_TERM_COLORS,(DLGPROC)TermColorPageDlgProc, TermColorPageProc, (LPARAM)profile); page++; // *
+	if (conType == ConnectionProfile::CT_SSH) {
+		// TODO: SSH page
 	}
-
-	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	NULL, NULL, NULL); page++;
 
 	if (conType == ConnectionProfile::CT_IP) {
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TELNET,	NULL, NULL, NULL); page++;
@@ -74,17 +74,32 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 		SetupPropertyPage(hInstance, &psp[page],  IDD_FTP,		NULL, NULL, NULL); page++;
 	}
 
+	// ----- Terminal -----
+	if (conType != ConnectionProfile::CT_FTP) {
+		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL,   (DLGPROC)TerminalPageDlgProc, TerminalPageProc, (LPARAM)profile); page++;
+		SetupPropertyPage(hInstance, &psp[page], IDD_TERM_COLORS,(DLGPROC)TermColorPageDlgProc, TermColorPageProc, (LPARAM)profile); page++; // *
+	}
+	SetupPropertyPage(hInstance, &psp[page], IDD_KEYBOARD,	NULL, NULL, NULL); page++; // *
+	// TODO: Mouse
+
+	// ----- Transfer -----
+	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	NULL, NULL, NULL); page++;
+
+	// ----- GUI -----
+	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		NULL, NULL, NULL); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS,NULL, NULL, NULL); page++; // *
+
+	// ----- Advanced stuff -----
+	SetupPropertyPage(hInstance, &psp[page], IDD_LOGIN,	(DLGPROC)LoginPageDlgProc, LoginPageProc, (LPARAM)profile); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_PRINTER,	NULL, NULL, NULL); page++; // *
+
 	if (conType == ConnectionProfile::CT_IP
 		|| conType == ConnectionProfile::CT_FTP) {
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TCPIP,	NULL, NULL, NULL); page++;
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TLS,		NULL, NULL, NULL); page++;
+		// TODO: Kerberos
 	}
 
-	SetupPropertyPage(hInstance, &psp[page], IDD_KEYBOARD,	NULL, NULL, NULL); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_LOGIN,	NULL, NULL, NULL); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_PRINTER,	NULL, NULL, NULL); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		NULL, NULL, NULL); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS,NULL, NULL, NULL); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_LOGGING,	NULL, NULL, NULL); 
 
 	// Setup the property sheet	
