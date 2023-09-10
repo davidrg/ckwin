@@ -437,38 +437,38 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Terminal Colors"
 FONT 8, "MS Sans Serif"
 BEGIN
+    LTEXT           "Foreground:",IDC_STATIC,75,5,39,8
+    LTEXT           "Background:",IDC_STATIC,148,4,42,8
     LTEXT           "Terminal screen:",IDC_STATIC,5,18,53,8
     COMBOBOX        IDC_COL_TERM_FG,76,16,68,134,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_TERM_BG,148,15,68,134,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Foreground:",IDC_STATIC,75,5,39,8
-    LTEXT           "Background:",IDC_STATIC,148,4,42,8
+    LTEXT           "Command screen:",IDC_STATIC,5,34,58,8
     COMBOBOX        IDC_COL_COMM_FG,76,32,68,119,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_STAT_FG,76,48,68,104,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_MOU_FG,76,64,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_POP_FG,76,80,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_COMM_BG,148,31,68,119,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Status line:",IDC_STATIC,5,50,36,8
+    COMBOBOX        IDC_COL_STAT_FG,76,48,68,104,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_STAT_BG,148,47,68,104,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Mouse selection:",IDC_STATIC,5,66,54,8
+    COMBOBOX        IDC_COL_MOU_FG,76,64,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_MOU_BG,148,63,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Popup help screen:",IDC_STATIC,5,82,62,8
+    COMBOBOX        IDC_COL_POP_FG,76,80,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_POP_BG,148,79,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Command screen:",IDC_STATIC,5,34,58,8
-    LTEXT           "Status line:",IDC_STATIC,5,50,36,8
+    LTEXT           "Underline simulation:",IDC_STATIC,5,98,66,8
     COMBOBOX        IDC_COL_UL_FG,76,96,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_UL_BG,148,95,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Mouse selection:",IDC_STATIC,5,66,54,8
-    LTEXT           "Popup help screen:",IDC_STATIC,5,82,62,8
-    LTEXT           "Underline simulation:",IDC_STATIC,5,98,66,8
     LTEXT           "To change the color codes assigned to these colors, see the Colors tab. Custom color codes are only available when using GUI C-Kermit.",
                     IDC_STATIC,8,112,220,18
     PUSHBUTTON      "Defaults",IDC_TERM_COLOR_DEFAULTS,178,135,50,14
