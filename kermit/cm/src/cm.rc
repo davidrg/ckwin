@@ -437,40 +437,41 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Terminal Colors"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Terminal screen:",IDC_STATIC,5,20,53,8
-    COMBOBOX        IDC_COMBO1,75,15,60,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Terminal screen:",IDC_STATIC,5,18,53,8
+    COMBOBOX        IDC_COL_TERM_FG,76,16,68,134,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO2,141,15,60,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COL_TERM_BG,148,15,68,134,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Foreground:",IDC_STATIC,75,5,39,8
-    LTEXT           "Background:",IDC_STATIC,140,5,42,8
-    COMBOBOX        IDC_COMBO3,75,30,60,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Background:",IDC_STATIC,148,4,42,8
+    COMBOBOX        IDC_COL_COMM_FG,76,32,68,119,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO4,75,45,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_STAT_FG,76,48,68,104,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO5,75,61,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_MOU_FG,76,64,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO6,75,74,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_POP_FG,76,80,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO7,141,30,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_COMM_BG,148,31,68,119,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COL_STAT_BG,148,47,68,104,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COL_MOU_BG,148,63,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO8,141,45,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_POP_BG,148,79,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO9,141,61,60,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO10,141,74,60,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Command screen:",IDC_STATIC,5,35,58,8
+    LTEXT           "Command screen:",IDC_STATIC,5,34,58,8
     LTEXT           "Status line:",IDC_STATIC,5,50,36,8
-    COMBOBOX        IDC_COMBO11,75,90,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_UL_FG,76,96,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO12,141,90,60,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COL_UL_BG,148,95,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Mouse selection:",IDC_STATIC,5,65,54,8
-    LTEXT           "Popup help screen:",IDC_STATIC,5,80,62,8
-    LTEXT           "Underline simulation:",IDC_STATIC,5,95,66,8
-    LTEXT           "To change the color codes assigned to these colors, see the GUI tab.",
-                    IDC_STATIC,5,110,225,10
+    LTEXT           "Mouse selection:",IDC_STATIC,5,66,54,8
+    LTEXT           "Popup help screen:",IDC_STATIC,5,82,62,8
+    LTEXT           "Underline simulation:",IDC_STATIC,5,98,66,8
+    LTEXT           "To change the color codes assigned to these colors, see the Colors tab. Custom color codes are only available when using GUI C-Kermit.",
+                    IDC_STATIC,8,112,220,18
+    PUSHBUTTON      "Defaults",IDC_TERM_COLOR_DEFAULTS,178,135,50,14
 END
 
 IDD_GUI DIALOG DISCARDABLE  0, 0, 235, 156
@@ -994,7 +995,7 @@ END
 
 IDD_TERM_COLORS DLGINIT
 BEGIN
-    IDC_COMBO1, 0x403, 13, 0
+    IDC_COL_TERM_FG, 0x403, 13, 0
 0x694c, 0x6867, 0x4d74, 0x6761, 0x6e65, 0x6174, "\000" 
     0
 END

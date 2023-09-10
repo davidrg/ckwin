@@ -120,6 +120,25 @@ static const TermSettings terminalSettings[] = {
 	// Terminal		Character set			status? 8bit  lines Term Foreground		Term Background		Underline Fg		Underline Bg
 };
 
+static const ColorInfo colorInfos[] = {
+	{	COLOR_BLACK,			TEXT("black"),			TEXT("Black")			},
+	{	COLOR_BLUE,				TEXT("blue"),			TEXT("Blue")			},
+	{	COLOR_GREEN,			TEXT("green"),			TEXT("Green")			},
+	{	COLOR_CYAN,				TEXT("cyan"),			TEXT("Cyan")			},
+	{	COLOR_RED,				TEXT("red"),			TEXT("Red")				},
+	{	COLOR_MAGENTA,			TEXT("magenta"),		TEXT("Magenta")			},
+	{	COLOR_BROWN,			TEXT("brown"),			TEXT("Brown")			},
+	{	COLOR_LIGHT_GRAY,		TEXT("lightgray"),		TEXT("Light Gray")		},
+	{	COLOR_DARK_GRAY,		TEXT("dgray"),			TEXT("Dark Gray")		},
+	{	COLOR_LIGHT_BLUE,		TEXT("lightblue"),		TEXT("Light Blue")		},
+	{	COLOR_LIGHT_GREEN,		TEXT("lightgreen"),		TEXT("Light Green")		},
+	{	COLOR_LIGHT_CYAN,		TEXT("lightcyan"),		TEXT("Light Cyan")		},
+	{	COLOR_LIGHT_RED,		TEXT("lightred"),		TEXT("Light Red")		},
+	{	COLOR_LIGHT_MAGENTA,	TEXT("lightmagenta"),	TEXT("Light Magenta")	},
+	{	COLOR_YELLOW,			TEXT("yellow"),			TEXT("Yellow")			},
+	{	COLOR_WHITE,			TEXT("white"),			TEXT("White")			},
+	{	COLOR_INVALID,			TEXT(""),				TEXT("")				},
+};
 
 const TermInfo* getTerminalInfos() {
 	return terminals;
@@ -146,6 +165,22 @@ TermSettings getTermSettings(TermType type) {
 	TermSettings inv = { TT_INVALID, Charset::CS_INVALID, FALSE, FALSE, 1, 
 		COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK };
 	return inv;
+}
+
+ColorInfo getColorInfo(Color color) {
+	for (int i = 0; colorInfos[i].color != COLOR_INVALID; i++) {
+		if (colorInfos[i].color == color) {
+			return colorInfos[i];
+		}
+	}
+
+	// We should never get here. But just in case...
+	ColorInfo inv = { COLOR_INVALID, TEXT(""), TEXT("") };
+	return inv;
+}
+
+const ColorInfo* getColorInfos() {
+	return colorInfos;
 }
 
 }

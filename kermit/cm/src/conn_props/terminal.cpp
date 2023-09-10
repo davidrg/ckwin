@@ -73,6 +73,12 @@ static BOOL isDirty(int id) {
 	return FALSE; // Should never happen.
 }
 
+static void cleanForm() {
+	for (int i = 0; i < fieldCount; i++ ) {
+		fieldStatus[i].dirty = FALSE;
+	}
+}
+
 static void setDirty(int id, BOOL dirty) {
 	for (int i = 0; i < fieldCount; i++ ) {
 		if (fieldStatus[i].id == id) {
@@ -477,18 +483,7 @@ BOOL CALLBACK TerminalPageDlgProc(
 			SetStatusLine(hwndDlg, profile->statusLineEnabled());
 
 			// Clean the form
-			setDirty(IDC_TERM_TYPE, FALSE);
-			setDirty(IDC_TERM_WIDTH, FALSE);
-			setDirty(IDC_TERM_HEIGHT, FALSE);
-			setDirty(IDC_TERM_SCROLLBACK, FALSE);
-			setDirty(IDC_TERM_CURSOR, FALSE);
-			setDirty(IDC_TERM_CSET, FALSE);
-			setDirty(IDC_TERM_BITS_7, FALSE);
-			setDirty(IDC_TERM_BITS_8, FALSE);
-			setDirty(IDC_TERM_LOCAL_ECHO, FALSE);
-			setDirty(IDC_TERM_AUTO_WRAP, FALSE);
-			setDirty(IDC_TERM_APC, FALSE);
-			setDirty(IDC_TERM_STATUS_LINE, FALSE);
+			cleanForm();
 
 			break;
 		}
@@ -584,6 +579,9 @@ BOOL CALLBACK TerminalPageDlgProc(
 					CheckAutoWrap(hwndDlg, TRUE);
 					CheckAPC(hwndDlg, TRUE);
 					CheckStatusLine(hwndDlg, TRUE);
+
+					// Clean the form
+					cleanForm();
 				}
 				return TRUE;
 			}

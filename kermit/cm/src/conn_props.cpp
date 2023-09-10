@@ -39,7 +39,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	case ConnectionProfile::CT_SSH:
 		pageCount = 11; break; // Excluded: IDD_TELNET, IDD_FTP, IDD_TCPIP, IDD_TLS
 	case ConnectionProfile::CT_FTP:
-		pageCount = 13; break; // Excluded: IDD_TERMINAL, IDD_TELNET
+		pageCount = 12; break; // Excluded: IDD_TERMINAL, IDD_TERM_COLORS, IDD_TELNET
 	case ConnectionProfile::CT_IP:
 		pageCount = 14; break; // Excluded: IDD_FTP
 	default:
@@ -60,7 +60,8 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION, NULL, NULL, NULL); page++;// *
 
 	if (conType != ConnectionProfile::CT_FTP) {
-		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL, (DLGPROC)TerminalPageDlgProc, TerminalPageProc, (LPARAM)profile); page++;
+		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL,   (DLGPROC)TerminalPageDlgProc, TerminalPageProc, (LPARAM)profile); page++;
+		SetupPropertyPage(hInstance, &psp[page], IDD_TERM_COLORS,(DLGPROC)TermColorPageDlgProc, TermColorPageProc, (LPARAM)profile); page++; // *
 	}
 
 	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	NULL, NULL, NULL); page++;
@@ -82,7 +83,6 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page], IDD_KEYBOARD,	NULL, NULL, NULL); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_LOGIN,	NULL, NULL, NULL); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_PRINTER,	NULL, NULL, NULL); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_TERM_COLORS,NULL, NULL, NULL); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		NULL, NULL, NULL); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS,NULL, NULL, NULL); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_LOGGING,	NULL, NULL, NULL); 

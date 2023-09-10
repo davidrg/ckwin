@@ -288,6 +288,10 @@ SOURCE=..\statusbar.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\term_colors.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\term_info.cpp
 # End Source File
 # Begin Source File

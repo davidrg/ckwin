@@ -78,7 +78,8 @@ namespace Term {
 		COLOR_LIGHT_RED = 12,
 		COLOR_LIGHT_MAGENTA = 13,
 		COLOR_YELLOW = 14,
-		COLOR_WHITE = 15
+		COLOR_WHITE = 15,
+		COLOR_INVALID = 16
 	};
 
 	typedef struct tagTermInfo {
@@ -100,11 +101,21 @@ namespace Term {
 		Color underlineBg;
 	} TermSettings;
 
+	typedef struct tagColorInfo {
+		Color color;
+		LPCTSTR keyword;
+		LPCTSTR name;
+	} ColorInfo;
+
 	const TermInfo* getTerminalInfos();
 
 	LPCTSTR getTermKeyword(TermType type);
 
 	TermSettings getTermSettings(TermType type);
+
+	ColorInfo getColorInfo(Color color);
+
+	const ColorInfo* getColorInfos();
 }
 
 #endif TERM_INFO_H

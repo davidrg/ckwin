@@ -359,42 +359,9 @@ DWORD ConnectionProfile::connect(HWND parent) {
 }
 
 
-LPCTSTR colorToString(Term::Color c) {
-	switch(c) {
-	case Term::COLOR_BLACK:
-		return TEXT("black");
-	case Term::COLOR_BLUE:
-		return TEXT("blue");
-	case Term::COLOR_GREEN:
-		return TEXT("green");
-	case Term::COLOR_CYAN:
-		return TEXT("cyan");
-	case Term::COLOR_RED:
-		return TEXT("red");
-	case Term::COLOR_MAGENTA:
-		return TEXT("magenta");
-	case Term::COLOR_BROWN:
-		return TEXT("brown");
-	case Term::COLOR_LIGHT_GRAY:
-		return TEXT("lightgray");
-	case Term::COLOR_DARK_GRAY:
-		return TEXT("dgray");
-	case Term::COLOR_LIGHT_BLUE:
-		return TEXT("lightblue");
-	case Term::COLOR_LIGHT_GREEN:
-		return TEXT("lightgreen");
-	case Term::COLOR_LIGHT_CYAN:
-		return TEXT("lightcyan");
-	case Term::COLOR_LIGHT_RED:
-		return TEXT("lightred");
-	case Term::COLOR_LIGHT_MAGENTA:
-		return TEXT("lightmagenta");
-	case Term::COLOR_YELLOW:
-		return TEXT("yellow");
-	case Term::COLOR_WHITE:
-		return TEXT("white");
-	}
-	return TEXT(""); // Should never get here.
+LPCTSTR colorToString(Term::Color color) {
+	Term::ColorInfo info = Term::getColorInfo(color);
+	return info.keyword;
 }
 
 

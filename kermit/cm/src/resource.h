@@ -117,15 +117,20 @@
 #define IDC_EDIT24                      1048
 #define IDC_COMBO8                      1049
 #define IDC_EDIT27                      1049
+#define IDC_COL_STAT_BG                 1049
 #define IDC_COMBO9                      1050
 #define IDC_EDIT30                      1050
+#define IDC_COL_MOU_BG                  1050
 #define IDC_COMBO10                     1051
 #define IDC_EDIT33                      1051
+#define IDC_COL_POP_BG                  1051
 #define IDC_COMBO11                     1052
 #define IDC_EDIT36                      1052
+#define IDC_COL_UL_FG                   1052
 #define IDC_COMBO12                     1053
 #define IDC_EDIT39                      1053
 #define IDC_BUTTON5                     1053
+#define IDC_COL_UL_BG                   1053
 #define IDC_SPIN3                       1054
 #define IDC_EDIT42                      1054
 #define IDC_BUTTON6                     1054
@@ -188,7 +193,6 @@
 #define IDC_TERM_WIDTH                  1100
 #define IDC_TERM_HEIGHT                 1101
 #define IDC_TERM_SCROLLBACK             1102
-#define IDC_TERM_SCROLLBACK_SPIN        1103
 #define IDC_TERM_CURSOR                 1104
 #define IDC_TERM_CSET                   1105
 #define IDC_TERM_BITS_7                 1106
@@ -197,6 +201,14 @@
 #define IDC_TERM_AUTO_WRAP              1109
 #define IDC_TERM_APC                    1110
 #define IDC_TERM_STATUS_LINE            1111
+#define IDC_TERM_COLOR_DEFAULTS         1112
+#define IDC_COL_TERM_FG                 1113
+#define IDC_COL_TERM_BG                 1114
+#define IDC_COL_COMM_FG                 1115
+#define IDC_COL_COMM_BG                 1116
+#define IDC_COL_STAT_FG                 1117
+#define IDC_COL_MOU_FG                  1118
+#define IDC_COL_POP_FG                  1119
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -233,7 +245,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40035
-#define _APS_NEXT_CONTROL_VALUE         1112
+#define _APS_NEXT_CONTROL_VALUE         1120
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif
