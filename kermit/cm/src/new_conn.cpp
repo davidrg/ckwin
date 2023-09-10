@@ -397,9 +397,8 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 							SetWindowText(lePort, TEXT("2105"));
 						} else if (lstrcmp(buf, CONOTHER_TELNET) == 0 || 
 								   lstrcmp(buf, CONOTHER_DEFAULT) == 0 || 
-								   lstrcmp(buf, CONOTHER_TELNET_NNEGO) == 0 || 
-								   lstrcmp(buf, CONOTHER_TELNET_SSL) == 0) {
-							// Telnet is officially on port 23. I assume the SSL and TLS ones are too
+								   lstrcmp(buf, CONOTHER_TELNET_NNEGO) == 0) {
+							// Telnet is officially on port 23.
 							SetWindowText(lePort, TEXT("23"));
 						} if (lstrcmp(buf, CONOTHER_SSL) == 0 || 
 							  lstrcmp(buf, CONOTHER_TLS) == 0) {
