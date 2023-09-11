@@ -29,6 +29,8 @@ Nothing yet
   (supported until 7 September 2026)
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
+* The default k95custom.ini now displays a message the console-mode version
+  (k95.exe) is run pointing new users to the GUI version (k95g.exe)
 
 ### Source Changes
 
