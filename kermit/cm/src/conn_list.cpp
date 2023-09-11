@@ -30,11 +30,20 @@ HWND WINAPI CreateConnectionListView(HWND hwndParent, HINSTANCE hInstance)
 
 	hwndParentWindow = hwndParent;
  
-    // Create the list view window. 
-    hwndLV = CreateWindow(WC_LISTVIEW, TEXT(""), 
-        WS_CHILD | LVS_REPORT | LVS_EDITLABELS, 
-        0, 0, CW_USEDEFAULT, CW_USEDEFAULT, 
-        hwndParent, NULL, hInstance, NULL); 
+    // Create the list view window.  
+    hwndLV = CreateWindowEx(
+		WS_EX_CLIENTEDGE,	// Extended style
+		WC_LISTVIEW,		// Class name
+		TEXT(""),			// Window name
+        WS_CHILD | LVS_REPORT | LVS_EDITLABELS,	// Window style 
+        0,					// horizontal position
+		0,					// vertical position
+		CW_USEDEFAULT,		// height
+		CW_USEDEFAULT,		// width
+        hwndParent,			// parent
+		NULL,				// menu
+		hInstance,			// application instance
+		NULL);				// window creation data
 
 	// Turn on full-row select for comctl32 v4.70 and newer
 	ListView_SetExtendedListViewStyle(hwndLV, LVS_EX_FULLROWSELECT);
