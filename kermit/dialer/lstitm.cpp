@@ -3652,7 +3652,7 @@ void KD_LIST_ITEM :: ShowContextMenu(int left, int top) {
         // item->woFlags |= _access != FTP ? WOF_NON_SELECTABLE : 0;
         // item->Information( I_CHANGED_FLAGS, NULL ) ;
     }
-    if ( _access == SSH && connector->_libeay_avail ) {
+    if ( _access == SSH && connector->_ssh_avail ) {
         edit->Add(item = new UIW_POP_UP_ITEM("SSH", MNIF_SEND_MESSAGE, BTF_NO_3D,
                                              WNF_NO_FLAGS,
                                              (ZIL_USER_FUNCTION) NULL,

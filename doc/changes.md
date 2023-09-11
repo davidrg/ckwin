@@ -22,6 +22,13 @@ Nothing yet
   C-Kermit looks for it by its window title.
 * The default k95custom.ini no longer produces an error when it's run in the
   console version of C-Kermit or in a build of C-Kermit that lacks SSH support.
+* Fixed the SSH, SSL and Kerberos options in the dialer not being available or
+  not working correctly when they should be. These options are now permanently
+  enabled whether the bundled version of C-Kermit supports these features.
+  Previously the dialer tried to load the Kerberos, OpenSSL and SSH DLLs to
+  see if they were there. This no longer works due to changing DLL names (due
+  in part to changing library versions) and the fact these DLLs are now often
+  built for 64bit while the dialer remains 32bit. 
 
 ### Minor Enhancements and other changes
 

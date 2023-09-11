@@ -939,6 +939,19 @@ K_CONNECTOR::K_CONNECTOR(void)
 #endif
         _krb4_avail = 0;
 #ifdef WIN32
+    _krb5_avail = 1;
+    _libeay_avail = 1;
+    _ssh_avail = 1;
+    /*
+     * The old method of figuring out if we have OpenSSL
+     * and LibSSH available no longer works - the OpenSSL
+     * DLL name keeps changing as we upgrade to new versions
+     * and most people are using 64bit builds of C-Kermit
+     * now which means 64bit versions of OpenSSL and LibSSH.
+     * The dialer is permanantly stuck in 32bit land which
+     * means even if we know the filename we can't
+     * LoadLibrary it.
+     *
     HINSTANCE hEAY = LoadLibrary("LIBEAY32");
     if ( hEAY ) {
         _libeay_avail = 1;
@@ -952,6 +965,7 @@ K_CONNECTOR::K_CONNECTOR(void)
          FreeLibrary(hSSH);
     } else
         hSSH = 0;
+        */
 #else
     char *exe_path;
     char * dllname = "SSLEAY2";
