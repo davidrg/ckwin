@@ -589,10 +589,18 @@ ACKNOWLEDGMENTS:
 
 #ifdef NT
 #include <windows.h>
+#include <process.h>  /* for getpid() */
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
 #endif /* NODIAL */
+
+int setOSVer();         /* ckotio.c */
+int ttgcwsz();          /* ckocon.c */
+
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
 #endif /* NT */
 
 #ifndef NOSERVER
@@ -2707,7 +2715,6 @@ makever ( )
     extern int noherald, backgrd;
     extern char * ckxsys;
     int x, y;
-    char * s;
     char * ssl;                         /* These moved from herald() */
     char * krb4;
     char * krb5;
@@ -3012,11 +3019,11 @@ MAINNAME( argc, argv ) int argc; char **argv;
     *pfha = (short) 0;                  /* No user protection fault handler */
 #endif /* datageneral */
 
+#ifdef UNIX
     int unbuf = 0;			/* nonzero for unbuffered stdout */
 
 /* setbuf has to be called on the file descriptor before it is used */
 
-#ifdef UNIX
 #ifdef NONOSETBUF			/* Unbuffered console i/o */
     unbuf++;				/* as a compile-time option */
 #endif	/* NONOSETBUF */
@@ -3340,7 +3347,6 @@ MAINNAME( argc, argv ) int argc; char **argv;
         || inserver
 #endif /* IKSD */
         ) {
-        int on = 1, x = 0;
         extern int ckxech, ttnet, ttnproto, cmdmsk;
 #ifdef SO_SNDBUF
         extern int tcp_sendbuf;
@@ -3425,14 +3431,20 @@ MAINNAME( argc, argv ) int argc; char **argv;
 #endif /* CK_AUTHENTICATION */
 
 #ifdef NON_BLOCK_IO
-        on = 1;
-        x = socket_ioctl(0,FIONBIO,&on);
-        debug(F101,"main FIONBIO","",x);
+        {
+            int on, x;
+            on = 1;
+            x = socket_ioctl(0,FIONBIO,&on);
+            debug(F101,"main FIONBIO","",x);
+        }
 #endif /* NON_BLOCK_IO */
 #ifdef SO_OOBINLINE
-        on = 1;
-        x = setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on));
-        debug(F101,"main SO_OOBINLINE","",x);
+        {
+            int on, x;
+            on = 1;
+            x = setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on));
+            debug(F101,"main SO_OOBINLINE","",x);
+        }
 #endif /* SO_OOBINLINE */
 
 #ifndef NOTCPOPTS
