@@ -265,13 +265,15 @@
 #define ID_CONTEXT_CLONE                40032
 #define ID_CONTEXT_ADD                  40033
 #define ID_CONTEXT_DISCONNECT           40034
+#define ID_CONTEXT_CREATESCRIPT         40035
+#define ID_CONNECTION_CREATESCRIPT      40036
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
-#define _APS_NEXT_COMMAND_VALUE         40035
+#define _APS_NEXT_COMMAND_VALUE         40037
 #define _APS_NEXT_CONTROL_VALUE         1144
 #define _APS_NEXT_SYMED_VALUE           103
 #endif

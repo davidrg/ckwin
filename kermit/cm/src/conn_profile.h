@@ -882,9 +882,10 @@ struct Date
 	// ===== Connection launching =====
 	virtual DWORD connect(HWND parent); // returns process Id on success
 
+	virtual BOOL writeScript(HWND parent, LPTSTR filename);
+
 protected:
 	virtual void setTargetName();
-	virtual BOOL writeScript(HWND parent, LPTSTR filename);
 
 	LPTSTR _targetName;
 

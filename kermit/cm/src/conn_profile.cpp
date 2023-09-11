@@ -503,7 +503,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 	}
 
 	// Session title
-	_sntprintf(buf, BUFFERSIZE, TEXT("set title %s"), name());
+	_sntprintf(buf, BUFFERSIZE, TEXT("set title %s"), name().data());
 	OutLine(buf);
 
 	// Command settings

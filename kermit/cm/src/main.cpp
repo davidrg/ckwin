@@ -704,6 +704,44 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 		case ID_TB_SHORTCUT:
 			break;
 
+		case ID_CONNECTION_CREATESCRIPT:
+		case ID_CONTEXT_CREATESCRIPT:
+			{
+				ConnectionProfile *profile = GetSelectedProfile(g_hwndConnectionList);
+					if (profile != NULL) {
+					// Browse for script file
+
+					OPENFILENAME ofn;
+					LPTSTR szFile[MAX_PATH];
+
+					ZeroMemory(szFile, sizeof(TCHAR) * MAX_PATH);
+					ZeroMemory(&ofn, sizeof(OPENFILENAME));
+
+					ofn.lStructSize = sizeof(OPENFILENAME);					
+					ofn.hwndOwner = hWnd;
+					ofn.lpstrFile = (LPTSTR)szFile;
+					ofn.nMaxFile = MAX_PATH;
+					ofn.lpstrFilter = TEXT("Kermit Scripts (*.ksc)\0*.KSC\0Text Files (*.txt)\0*.TXT\0All Files (*.*)\0*.*\0");
+					ofn.lpstrDefExt = TEXT("ksc");
+					ofn.nFilterIndex = 1;
+					ofn.lpstrFileTitle = NULL;
+					ofn.nMaxFileTitle = 0;
+					ofn.lpstrInitialDir = NULL;
+					ofn.lpstrTitle = TEXT("Save As Script");
+					ofn.Flags = 
+						OFN_OVERWRITEPROMPT |
+						OFN_HIDEREADONLY    ;
+	;
+					
+					// Display the Save dialog box. 
+					if (GetSaveFileName(&ofn)==TRUE) {
+						profile->writeScript(hWnd, (LPTSTR)szFile);
+					}
+				}
+
+			}
+			break;
+
 		case ID_OPTIONS_MINIMIZEONCONNECT:
 			break;
 
