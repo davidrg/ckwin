@@ -165,7 +165,7 @@ BOOL InitApplication(HINSTANCE hInstance) {
 		wcex.hInstance		= hInstance;
 		wcex.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
 		wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-		wcex.hbrBackground	= GetStockObject(WHITE_BRUSH);
+		wcex.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
 		wcex.lpszMenuName	= MAKEINTRESOURCE(IDR_MENU);
 		wcex.lpszClassName	= g_szClassName;
 
@@ -182,7 +182,7 @@ BOOL InitApplication(HINSTANCE hInstance) {
 		wc.hInstance		= hInstance;
 		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
 		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground	= GetStockObject(WHITE_BRUSH);
+		wc.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
 		wc.lpszMenuName		= MAKEINTRESOURCE(IDR_MENU);
 		wc.lpszClassName	= g_szClassName;
 
