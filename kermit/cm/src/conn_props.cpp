@@ -139,7 +139,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 		// TODO: Kerberos
 	}
 
-	SetupPropertyPage(hInstance, &psp[page], IDD_LOGGING,	NULL, NULL, NULL); 
+	SetupPropertyPage(hInstance, &psp[page], IDD_LOGGING,	NULL, NULL, NULL); page++;
 
 	// Setup the property sheet	
 	psh.dwSize		= sizeof(PROPSHEETHEADER);
