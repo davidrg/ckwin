@@ -95,7 +95,8 @@ ssh_parameters_t* ssh_parameters_new(
         int nodelay, char* proxy_command) {
     ssh_parameters_t* params;
 
-    params = malloc(sizeof(ssh_parameters_t));
+    params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
+    memset(params, 0, sizeof(ssh_parameters_t));
 
     params->hostname = NULL;
     params->port = NULL;
@@ -148,45 +149,71 @@ ssh_parameters_t* ssh_parameters_new(
     params->pty_width = pty_width;
     params->pty_height = pty_height;
 
-    /* All authentication types allowed by default */
-    params->allow_password_auth = TRUE;
-    params->allow_pubkey_auth = TRUE;
-    params->allow_kbdint_auth = TRUE;
-    params->allow_gssapi_auth = TRUE;
-    params->allow_kbdint_auth = TRUE;
-
-
     /* If the user has supplied a list of authentication types then only those
      * types specified will be allowed.*/
     if (auth_methods) {
-        /* TODO: This should be an ordered list to control which order the auth
-         *       methods are attempted in */
-        params->allow_password_auth = FALSE;
-        params->allow_pubkey_auth = FALSE;
-        params->allow_kbdint_auth = FALSE;
-        params->allow_gssapi_auth = FALSE;
+        int len, index = 0;
+        char* temp, *token;
+        char* delim = ",";
 
-        if (strstr(auth_methods, "external-keyx")) {
-            /* Not supported */
+        /*
+         * Libssh requires we try the none auth method first
+         * in order to get the list of available auth methods:
+         * https://api.libssh.org/stable/group__libssh__auth.html#ga35d44897a44b4bb3b7c01108c1812a37
+         */
+        params->authentication_methods[index] = SSH_AUTH_METHOD_NONE;
+        index++;
+
+        /* Copy the input string as strtok will modify it */
+        len = strlen(auth_methods) + 1;
+        temp = (char*)malloc(len * sizeof(char));
+        memset(temp, 0, len * sizeof(char));
+        strcpy_s(temp, len * sizeof(char),
+                 auth_methods);
+
+        token = strtok(temp, delim);
+
+        while(token != NULL && index < MAX_AUTH_METHODS) {
+            debug(F111, "sshsubsys - adding auth-method", token, index);
+
+            if (strcmp(token, "gssapi") == 0) {
+                params->authentication_methods[index] = SSH_AUTH_METHOD_GSSAPI_MIC;
+            } else if (strcmp(token, "keyboard-interactive") == 0) {
+                params->authentication_methods[index] = SSH_AUTH_METHOD_INTERACTIVE;
+            } else if (strcmp(token, "password") == 0) {
+                params->authentication_methods[index] = SSH_AUTH_METHOD_PASSWORD;
+                params->allow_password_auth = TRUE;
+            } else if (strcmp(token, "publickey") == 0) {
+                params->authentication_methods[index] = SSH_AUTH_METHOD_PUBLICKEY;
+            } else if (strcmp(token, "none") == 0) {
+                params->authentication_methods[index] = SSH_AUTH_METHOD_NONE;
+            }
+
+            if (params->authentication_methods[index] != 0) {
+                index++;
+            }
+
+            token = strtok(NULL, delim);
         }
-        if (strstr(auth_methods, "gssapi")) {
-            params->allow_gssapi_auth = TRUE;
-        }
-        if (strstr(auth_methods, "hostbased")) {
-            /* Not supported */
-        }
-        if (strstr(auth_methods, "keyboard-interactive")) {
-            params->allow_kbdint_auth = TRUE;
-        }
-        if (strstr(auth_methods, "password")) {
-            params->allow_password_auth = TRUE;
-        }
-        if (strstr(auth_methods, "publickey")) {
-            params->allow_pubkey_auth = TRUE;
-        }
-        if (strstr(auth_methods, "srp-gex-sha1")) {
-            /* Not supported */
-        }
+
+        free(temp);
+    } else {
+        /* The Kermit 95 default order was:
+         *   external-keyx, gssapi, hostbased, publickey, srp-gex-sha1,
+         *   publickey, keyboard-interactive, password, none
+         *
+         * Our default order is:
+         *   none, gssapi, publickey, keyboard-interactive, password
+         * We attempt none first as libssh may require this in order
+         * to correctly get the list of supported auth methods along
+         * with other details like the banner
+         */
+        params->authentication_methods[0] = SSH_AUTH_METHOD_NONE;
+        params->authentication_methods[1] = SSH_AUTH_METHOD_GSSAPI_MIC;
+        params->authentication_methods[2] = SSH_AUTH_METHOD_PUBLICKEY;
+        params->authentication_methods[3] = SSH_AUTH_METHOD_INTERACTIVE;
+        params->authentication_methods[4] = SSH_AUTH_METHOD_PASSWORD;
+        params->allow_password_auth = TRUE;
     }
 
     return params;
@@ -966,6 +993,20 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
     return rc;
 }
 
+void print_auth_methods(int methods, BOOL debugOnly) {
+    if (debugOnly) {
+        debug(F100, "sshsubsys - supported authentication methods:", "", 0);
+        if (methods & SSH_AUTH_METHOD_PUBLICKEY) debug(F110, "sshsubsys\t- ","publickey",0);
+        if (methods & SSH_AUTH_METHOD_INTERACTIVE) debug(F110, "sshsubsys\t- ","keyboard-interactive", 0);
+        if (methods & SSH_AUTH_METHOD_GSSAPI_MIC) debug(F110, "sshsubsys\t- ","gssapi-mic", 0);
+        if (methods & SSH_AUTH_METHOD_PASSWORD) debug(F110, "sshsubsys\t- ","password", 0);
+    } else {
+        if (methods & SSH_AUTH_METHOD_PUBLICKEY) printf("publickey ");
+        if (methods & SSH_AUTH_METHOD_INTERACTIVE) printf("keyboard-interactive ");
+        if (methods & SSH_AUTH_METHOD_GSSAPI_MIC) printf("gssapi-mic ");
+        if (methods & SSH_AUTH_METHOD_PASSWORD) printf("password ");
+    }
+}
 
 /** Attempt to authenticate the user using one of the methods supported by
  * the server.
@@ -976,7 +1017,7 @@ static int kbd_interactive_authenticate(ssh_client_state_t * state, BOOL *cancel
  *          SSH_AUTH_ERROR on a serious error.
  */
 static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
-    int methods, rc;
+    int methods = 0, rc, attemptedMethods = 0;
     BOOL no_auth_methods = TRUE;
 
     /* If the user cancels anytime during the authentication process this will
@@ -993,54 +1034,97 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
         return SSH_ERR_AUTH_ERROR;
     }
 
-    /* Get a list of available auth methods. We'll try them one after another
-     * until the server is satisfied */
-    methods = ssh_userauth_list(state->session, NULL);
+    for (int i = 0; i < MAX_AUTH_METHODS; i++) {
 
-    if (methods & SSH_AUTH_METHOD_NONE &&!*canceled) {
-        no_auth_methods = FALSE;
-        rc = ssh_userauth_none(state->session, NULL);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
+        if (!state->parameters->authentication_methods[i]) {
+            /* Out of authentication methods */
+            break;
+        }
 
-    if (methods & SSH_AUTH_METHOD_GSSAPI_MIC
-            && state->parameters->allow_gssapi_auth && !*canceled) {
-        rc = ssh_userauth_gssapi(state->session);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
-    if (methods & SSH_AUTH_METHOD_PUBLICKEY
-            && state->parameters->allow_pubkey_auth && !*canceled) {
-        no_auth_methods = FALSE;
-        rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
-    if (methods & SSH_AUTH_METHOD_INTERACTIVE
-            && state->parameters->allow_kbdint_auth && !*canceled) {
-        no_auth_methods = FALSE;
-        rc = kbd_interactive_authenticate(state, canceled);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
-    if (methods & SSH_AUTH_METHOD_PASSWORD
-            && state->parameters->allow_password_auth && !*canceled) {
-        no_auth_methods = FALSE;
-        rc = password_authenticate(state, canceled);
-        if (rc == SSH_AUTH_SUCCESS) return rc;
-    }
+        /* Check to see if the set of available auth methods has
+         * changed - some SSH servers may vary what is allowed based
+         * on past authentication steps */
+        int new_methods = ssh_userauth_list(state->session, NULL);
+        if (new_methods != methods) {
+            print_auth_methods(methods, TRUE);
+        }
+        methods = new_methods;
 
-    if (*canceled) {
-        printf("User canceled.\n");
-        return SSH_ERR_USER_CANCELED;
+        switch(state->parameters->authentication_methods[i]) {
+            case SSH_AUTH_METHOD_NONE:
+                if (methods & SSH_AUTH_METHOD_NONE) {
+                    debug(F110, "sshsubsys - Attempting auth method", "none", 0);
+                    no_auth_methods = FALSE;
+                    attemptedMethods |= SSH_AUTH_METHOD_NONE;
+                    rc = ssh_userauth_none(state->session, NULL);
+                } else {
+                    debug(F110, "sshsubsys - auth method not supported by server at this time", "none", 0);
+                }
+                break;
+            case SSH_AUTH_METHOD_PASSWORD:
+                if (methods & SSH_AUTH_METHOD_PASSWORD
+                        && state->parameters->allow_password_auth) {
+                    debug(F110, "sshsubsys - Attempting auth method", "password", 0);
+                    no_auth_methods = FALSE;
+                    attemptedMethods |= SSH_AUTH_METHOD_PASSWORD;
+                    rc = password_authenticate(state, canceled);
+                } else {
+                    debug(F110, "sshsubsys - auth method not supported by server at this time", "password", 0);
+                }
+                break;
+            case SSH_AUTH_METHOD_PUBLICKEY:
+                if (methods & SSH_AUTH_METHOD_PUBLICKEY) {
+                    debug(F110, "sshsubsys - Attempting auth method", "publickey", 0);
+                    no_auth_methods = FALSE;
+                    attemptedMethods |= SSH_AUTH_METHOD_PUBLICKEY;
+                    rc = ssh_userauth_publickey_auto(state->session, NULL, NULL);
+                } else {
+                    debug(F110, "sshsubsys - auth method not supported by server at this time", "publickey", 0);
+                }
+                break;
+            case SSH_AUTH_METHOD_INTERACTIVE:
+                if (methods & SSH_AUTH_METHOD_INTERACTIVE) {
+                    debug(F110, "sshsubsys - Attempting auth method", "interactive", 0);
+                    no_auth_methods = FALSE;
+                    attemptedMethods |= SSH_AUTH_METHOD_INTERACTIVE;
+                    rc = kbd_interactive_authenticate(state, canceled);
+                } else {
+                    debug(F110, "sshsubsys - auth method not supported by server at this time", "interactive", 0);
+                }
+                break;
+            case SSH_AUTH_METHOD_GSSAPI_MIC:
+                if (methods & SSH_AUTH_METHOD_GSSAPI_MIC) {
+                    debug(F110, "sshsubsys - Attempting auth method", "gssapi", 0);
+                    no_auth_methods = FALSE;
+                    attemptedMethods |= SSH_AUTH_METHOD_GSSAPI_MIC;
+                    rc = ssh_userauth_gssapi(state->session);
+                } else {
+                    debug(F110, "sshsubsys - auth method not supported by server at this time", "gssapi", 0);
+                }
+                break;
+        }
+
+        if (*canceled) {
+            printf("User canceled.\n");
+            return SSH_ERR_USER_CANCELED;
+        }
+
+        if (rc == SSH_AUTH_SUCCESS) {
+            /* Done! */
+            return rc;
+        }
     }
 
     if (no_auth_methods) {
         printf("No supported authentication methods!\n");
         printf("The server supports: ");
-        if (methods & SSH_AUTH_METHOD_PUBLICKEY) printf("publickey ");
-        if (methods & SSH_AUTH_METHOD_INTERACTIVE) printf("keyboard-interactive ");
-        if (methods & SSH_AUTH_METHOD_GSSAPI_MIC) printf("gssapi-mic ");
-        if (methods & SSH_AUTH_METHOD_PASSWORD) printf("password ");
+        print_auth_methods(methods, FALSE);
         printf("\n");
-    }
+    } /*else {
+        printf("Authentication failed after attempting the following methods:\n\t");
+        print_auth_methods(attemptedMethods, FALSE);
+        printf("\n");
+    }*/
 
     return rc;
 }

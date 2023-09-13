@@ -29,6 +29,10 @@ Nothing yet
   see if they were there. This no longer works due to changing DLL names (due
   in part to changing library versions) and the fact these DLLs are now often
   built for 64bit while the dialer remains 32bit. 
+* The SSH client will now check which authentication methods are allowed by
+  the server after each authentication method is attempted. This allows the
+  client to handle servers which change their list of allowed authentication
+  methods during login.
 
 ### Minor Enhancements and other changes
 
@@ -38,6 +42,11 @@ Nothing yet
   and it does work.
 * The default k95custom.ini now displays a message the console-mode version
   (k95.exe) is run pointing new users to the GUI version (k95g.exe)
+* The SSH client will now attempt authentication methods in the order specified
+  by `set ssh v2 authentication` (the list is now ordered rather than being
+  simply a list of what is allowed). The default order is: none, gssapi, 
+  public key, keyboard-interactive, password.
+
 
 ### Source Changes
 
