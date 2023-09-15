@@ -247,6 +247,10 @@ _PROTOTYP( FILE * fdopen, (int, char *) );
 _PROTOTYP( FILE * popen, (char *, char *) );
 #endif /* DCLPOPEN */
 
+#ifndef KUI
+APIRET IsVscrnDirty( int vmode );
+#endif
+
 int tt_crd = 0;                         /* Carriage return display */
 int tt_lfd = 0;                         /* Linefeed display */
 int interrupted = 0;                    /* Interrupted from keyboard flag */

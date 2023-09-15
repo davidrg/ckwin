@@ -4059,7 +4059,9 @@ dotype(file, paging, first, head, pat, width, prefix, incs, outcs, outfile, z)
     extern int ucsbom;
 #endif /* UNICODE */
 #ifdef NT
+#ifdef KUI
     int gui = 0;
+#endif /* KUI */
 #endif /* NT */
 
 #ifndef MAC

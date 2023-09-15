@@ -12472,7 +12472,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
     if (cx == XXTYP  || cx == XXCAT || cx == XXMORE ||
 	cx == XXHEAD || cx == XXTAIL) {
 	int paging = 0, havename = 0, head = 0, width = 0;
-	int height = 0, count = 0;
+	int count = 0;
 	char pfxbuf[64], * prefix = NULL;
 	char outfile[CKMAXPATH+1];
 	struct FDB sf, sw;
@@ -12483,8 +12483,11 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	extern int fileorder;
 #ifdef OS2
 #ifdef NT
+#ifdef KUI
+    int height;
 	char guibuf[128], * gui_title = NULL;
 	int  gui = 0;
+#endif /* KUI */
 #endif /* NT */
 #ifndef NOCSETS
 	extern int tcsr, tcsl;
