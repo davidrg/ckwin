@@ -17,6 +17,7 @@
 #ifndef _P_WAIT
 #define _P_WAIT P_WAIT
 #endif
+#define _spawnl spawnl
 #endif
 
 char * tn_port = NULL,
@@ -71,7 +72,7 @@ main( int argc, char **argv ) {
         return 1 ;
     constructcmdline(argv[0]) ;
     if ( ckermitarg[0] )
-        return spawnl( _P_WAIT, ckermitcmd, "k95.exe", "-C",ckermitarg, NULL ) ;
+        return _spawnl( _P_WAIT, ckermitcmd, "k95.exe", "-C",ckermitarg, NULL ) ;
     else
-        return spawnl( _P_WAIT, ckermitcmd, "k95.exe", NULL);
+        return _spawnl( _P_WAIT, ckermitcmd, "k95.exe", NULL);
 }

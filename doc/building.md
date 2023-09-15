@@ -130,7 +130,6 @@ runtime libraries should have already been copied there for you but if they
 weren't you'll need to grab `clbr19.dll mt719.dll plbr19.dll` from the watcom 
 `binnt` subdirectory.
 
-
 ## Build the Dialer (optional)
 
 To build the dialer, run `setenv.bat` as you normally would for building
@@ -153,6 +152,37 @@ following files:
 | p_servic.znc         | ?                                                              |
 
 All files are required for the dialer to work normally.
+
+### ctl3d32.dll Installation Procedure
+When built with Visual C++ 6.0 or older the dialer relies on ctl3d32 to get the Windows 95
+look and feel (rather than the "16bit app on Windows 95" look and feel). Ctl3d32 is not
+available for OpenWatcom or newer versions of Visual C++ so when built with these the dialer
+will have the 2D "16bit app on Windows 95" look.
+
+In order to be used ctl3d32.dll *must* be installed correctly on the users machine - it can't
+simply be distributed in the CKW folder like other DLLs. To further complicate matters, there
+are two different versions of ctl3d32 and the correct one for the users operating system must
+be installed. The ANSI version is for Windows 95/98/ME and the Unicode version is for 
+Windows NT and its descendants (including Windows Xp/7/8/10/11).
+
+You can get both versions of Ctl3d32 from your Visual C++ CD-ROM:
+
+| Visual C++ Version | ANSI (for 95/98/ME)                     | Unicode (for NT/2000/XP/Vista/7/8/10/11) |
+|--------------------|-----------------------------------------|------------------------------------------|
+| Visual C++ 6.0     | `\VC98\REDIST\ANSI\CTL3D32.DLL`         | `\VC98\REDIST\CTL3D32.DLL`               |
+| Visual C++ 5.0     | `\DEVSTUDIO\VC\REDIST\ANSI\CTL3D32.DLL` | `\DEVSTUDIO\VC\REDIST\CTL3D32.DLL`       |
+| Visual C++ 4.x     | `\MSDEV\REDIST\ANSI\CTL3D32.DLL`        | `\MSDEV\REDIST\CTL3D32.DLL`              |
+| Visual C++ 2.x     | `\MSVC20\REDIST\ANSI\CTL3D32.DLL`       | `\MSVC20\REDIST\CTL3D32.DLL`             |
+
+The appropriate version of ctl3d32.dll can be installed on the users machine using `ctl3dins.exe`
+which is produced as part of the standard CKW build procedure. This relies on having both versions of
+ctl3d32.dll present in the CKW folder alongside ctl3dins.exe. To use it, the ANSI version of ctl3d32.dll 
+must be renamed to `ctl3d95.dll` and the Unicode version to `ctl3dnt.dll`, then distribute them 
+alongside ctl3dins.exe with the rest of C-Kermit for Windows.
+
+When the user runs ctl3dins.exe if ctl3d32.dll isn't installed it will rename the appropriate
+version for the users operating system (ctl3dnt.dll or ctl3d95.dll) back to ctl3d32.dll and
+install it. If it was built with Visual C++ 2.0 it will also install msvcrt20.dll if necessary.
 
 ## Build k95cinit.exe (*very* optional)
 
@@ -188,3 +218,34 @@ required files to `\kermit\dialer\dist`
 
 If you don't have OpenZinc installed you may see a different message instructing
 you to build OpenZinc first - this will leave the current directory unchanged.
+
+# Improving build times
+
+C-Kermit for Windows uses nmake makefiles to build. nmake doesn't know how to
+schedule builds on more than one CPU so if you're building with Visual C++ on
+a computer with multiple processors you can reduce build times significantly
+by using a compatible build tool that *is* aware of multiple processors.
+
+[JOM](https://wiki.qt.io/Jom) is regularly tested with CKW and works well with
+all versions of Visual C++ (if you're building on a modern version of Windows).
+Just [Download](http://download.qt.io/official_releases/jom/jom.zip) and unzip it
+somewhere on your path, then before running `setenv.bat` run `set MAKE=jom`:
+
+```
+set PATH=%PATH%;C:\path\to\jom
+set MAKE=jom
+setenv.bat
+```
+
+You can also build recent versions of OpenSSL with JOM. Just add `-FS` to the end 
+of the Configure command and then run `jom` instead of `nmake`. For example:
+
+```
+perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1.2.13 -FS
+jom
+```
+
+Note that at the time of writing OpenSSL doesn't officially support JOM (see
+[this ticket](https://github.com/openssl/openssl/issues/9931)) so while it works
+fine with current released versions there is always the possibility of it breaking
+in the future.

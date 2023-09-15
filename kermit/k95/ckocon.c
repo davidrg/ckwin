@@ -1,5 +1,5 @@
 #ifdef NT
-char *connv = "Win32 CONNECT command 8.0.232, 20 Oct 2003";
+char *connv = "Win32 CONNECT command 10.0, 23 Jun 2023";
 #else /* NT */
 char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
 #endif /* NT */

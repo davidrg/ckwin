@@ -1,7 +1,7 @@
 /* C K O K E Y -- Kermit Keyboard support for OS/2 and Win32 Systems */
 
 #ifdef NT
-char *ckyv = "Win32 Keyboard I/O, 8.0.203, 30 Oct 2003";
+char *ckyv = "Win32 Keyboard I/O, 10.0, 14 Jan 2023";
 #else
 char *ckyv = "OS/2 Keyboard I/O, 8.0.203, 30 Oct 2003";
 #endif /* NT */

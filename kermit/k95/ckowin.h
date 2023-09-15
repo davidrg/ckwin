@@ -11,9 +11,11 @@
 extern int StartedFromDialer ;
 extern HWND hwndDialer ;
 extern LONG KermitDialerID ;
-#ifndef NT
+#ifdef NT
+extern BOOL dialerIsCKCM;
+#else
 extern HAB hab;
-#endif
+#endif /* NT */
 
 #ifdef NT
 _PROTOTYP( static void DialerSend, ( UINT, LPARAM ) ) ;

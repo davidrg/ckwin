@@ -72,6 +72,9 @@ _PROTOTYP(int vmsttyfd, (void) );
 int StartedFromDialer = 0;
 HWND hwndDialer = 0;
 LONG KermitDialerID = 0;
+#ifdef NT
+BOOL dialerIsCKCM = 0;
+#endif /* NT */
 #ifdef putchar
 #undef putchar
 #endif /* putchar */
@@ -692,9 +695,9 @@ struct keytab vartab[] = {
     { "errstring", VN_ERSTR, 0},        /* 192 */
     { "escape",    VN_ESC,   0},        /* 193 */
     { "evaluate",  VN_EVAL,  0},        /* 190 */
-#ifdef OS2ORUNIX
+#ifdef HAVE_VN_EXEDIR
     { "exedir",    VN_EXEDIR,0},        /* 192 */
-#endif /* OS2ORUNIX */
+#endif /* def HAVE_VN_EXEDIR */
     { "exitstatus",VN_EXIT,  0},
 #ifdef CKCHANNELIO
     { "f_count",   VN_FCOU,  0},        /* 195 */

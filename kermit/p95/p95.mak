@@ -142,8 +142,10 @@ LIBS = $(LIBS) ucrt.lib vcruntime.lib
 .c.obj:
 	$(CC) $(CFLAGS) $(CFLAGSO) /Fo$@ $<
 
+# To generate debug info, add $(CFLAGSD) to CFLAGS
+
 CC = cl
-CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1 /Zi
+CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
 CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
 #CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
@@ -194,6 +196,7 @@ CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
 !if "$(TARGET_CPU)" == "AXP64"
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 CFLAGS = $(CFLAGS) /Ap64
+LDFLAGS = $(LDFLAGS) /MACHINE:ALPHA64
 !endif
 
 !if ($(MSC_VER) < 140)

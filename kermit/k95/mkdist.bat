@@ -28,7 +28,7 @@ copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
-del dist\ctl3dins.exe
+REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
 move dist\ckwart.exe .\
 
 if "%CKF_XYZ%" == "no" goto :nop
@@ -40,9 +40,10 @@ copy k95d.cfg dist
 
 REM The following would go in "C:\ProgramData\Kermit 95" if installed:
 copy k95.ini dist
-copy k95custom.ini dist
+copy k95custom.ini dist\k95custom.sample
 copy welcome.txt dist
 copy hostmode.bat dist
+REM (k95custom.sample should be renamed to k95custom.ini upon installation)
 
 @echo Copy runtime libraries
 if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist

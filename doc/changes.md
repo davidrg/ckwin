@@ -3,6 +3,193 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
+## C-Kermit for Windows 10.0b10 beta 6 - coming soon
+
+### Things to be aware of when upgrading
+Nothing yet
+
+### New Features
+
+* None
+
+### Fixed Bugs
+
+* Fixed directory listings not reporting a size or modified time for files
+  requiring more than 32 bits to store the file size on Windows NT 3.51 and
+  newer. This issue will remain on NT 3.1/3.50.
+* C-Kermit will now find the dialer correctly if C-kermit isn't started from
+  the dialer. This behaviour was broken by rebranding the Kermit 95 dialer -
+  C-Kermit looks for it by its window title.
+* The default k95custom.ini no longer produces an error when it's run in the
+  console version of C-Kermit or in a build of C-Kermit that lacks SSH support.
+* Fixed the SSH, SSL and Kerberos options in the dialer not being available or
+  not working correctly when they should be. These options are now permanently
+  enabled whether the bundled version of C-Kermit supports these features.
+  Previously the dialer tried to load the Kerberos, OpenSSL and SSH DLLs to
+  see if they were there. This no longer works due to changing DLL names (due
+  in part to changing library versions) and the fact these DLLs are now often
+  built for 64bit while the dialer remains 32bit. 
+* The SSH client will now check which authentication methods are allowed by
+  the server after each authentication method is attempted. This allows the
+  client to handle servers which change their list of allowed authentication
+  methods during login.
+
+### Minor Enhancements and other changes
+
+* Upgraded to OpenSSL 3.0.10, the current long term support release 
+  (supported until 7 September 2026)
+* Help text for "set gui window position" updated: this command *is* supported
+  and it does work.
+* The default k95custom.ini now displays a message the console-mode version
+  (k95.exe) is run pointing new users to the GUI version (k95g.exe)
+* The SSH client will now attempt authentication methods in the order specified
+  by `set ssh v2 authentication` (the list is now ordered rather than being
+  simply a list of what is allowed). The default order is: none, gssapi, 
+  public key, keyboard-interactive, password.
+
+
+### Source Changes
+
+* Some minor changes to support a future replacement for the dialer.
+
+## C-Kermit for Windows 10.0b10 beta 5 - 3 July 2023
+This release mostly focused on porting the codebase to 64bit Windows - x86-64,
+ARM64, Itanium and even the never publicly released 64bit Windows 2000 for Alpha.
+Also included are a selection of minor enhancements, features and bugfixes.
+
+### Things to be aware of when upgrading
+
+This release corrects some issues with the DEFAULT template which the Dialer
+creates automatically on first run. The auto-created template has bad colour
+values for colours 1 through 9 resulting in blue appearing green, etc (terminal
+sessions that should have a blue background will have a green one). The correct
+values are in the table below - these should be applied to the DEFAULT template 
+as well as any other connections or templates you've created via the 
+*GUI Settings* page:
+
+<table>
+<tr><th>Colour       </th><th>Red</th><th>Green</th><th>Blue</th></tr>
+<tr><td>1 - blue     </td><td>0  </td><td>0    </td><td>127 </td></tr>
+<tr><td>2 - green    </td><td>0  </td><td>127  </td><td>0   </td></tr>
+<tr><td>3 - cyan     </td><td>0  </td><td>127  </td><td>127 </td></tr>
+<tr><td>4 - red      </td><td>127</td><td>0    </td><td>0   </td></tr>
+<tr><td>5 - magenta  </td><td>127</td><td>0    </td><td>127 </td></tr>
+<tr><td>6 - brown    </td><td>127</td><td>127  </td><td>0   </td></tr>
+<tr><td>7 - lightgray</td><td>192</td><td>192  </td><td>192 </td></tr>
+<tr><td>8 - darkgray </td><td>127</td><td>127  </td><td>127 </td></tr>
+<tr><td>9 - lightblue</td><td>0  </td><td>0    </td><td>255 </td></tr>
+</table>
+
+The default logfile names in the *Log File Settings* page should also start with
+the `\` character - by default in prior versions they started with an invalid 
+non-printable character. In Kermit 95 the defaults did not start with 
+\v(appdata) so you may wish to just remove this prefix entirely instead of
+correcting the first character.
+
+If you have Kermit 95 installed these bugs likely doesn't affect you - while the
+Kermit 95 dialer has them too, Kermit 95 shipped with 
+`C:\ProgramData\Kermit 95\dialinf.dat` which contains a DEFAULT template
+containing the correct values.
+
+### New Features
+* Builds for 64bit Windows
+    * x86-64
+    * ARM64
+    * Itanium
+* Build for ARM32
+* Added TLS SNI support for the http and telnet clients
+* The old hostmode and other scripts are now included in the distribution with
+  no substantial changes since Kermit 95.
+* Kerberos V support has returned (Kerberos IV support can be built from source)
+* GSSAPI authentication in the SSH client (requires MIT Kerberos for Windows,
+  see ssh-readme for more information)
+* Updated to C-Kermit 10 Beta.10
+* Updated to libssh 0.10.5
+* Updated to OpenSSL 1.1.1u
+
+### Fixed Bugs
+* Fixed crash on startup under Crossover on MacOS and Wine on Linux
+* Fixed `show terminal` command showing autodownload as being "on" when it was
+  actually set to "ask"
+* Fixed receiving files with an as-name that includes a path using UNIX 
+  separators failing when autodownload is set to "ask" in the GUI version of CKW
+  (receiving a file sent as `send foo.txt C:/temp/foo.txt` now works)
+* Fixed CKW for modern Windows (XP SP3+) not setting modified time on received
+  files
+* Fixed entering plane-1 unicode values via Alt+n crashing the application (this
+  bug was inherited from Kermit 95)
+* Fixed SSH bugs:
+    * anonymous SSH (userauth none) doesn't work
+    * buffer not flushed on logout
+    * fixed some (but not all) occurrences of a server disconnect not being
+      detected
+* `set syslog` works again - this was accidentally removed in beta 4.
+* The colours in the dialer *GUI Settings* for the DEFAULT template
+  automatically created when first run were completely wrong. This bug affected
+  Kermit 95 as well but most users wouldn't have seen it as the shipped 
+  dialinf.dat included a DEFAULT with the correct settings (along with a
+  selection of other templates).
+* The default log file names in the *Log File Settings* page for the DEFAULT
+  template automatically created when first run begin with an invalid
+  non-printable chracter instad of '\'. This bug affected Kermit 95 as well.
+
+### Minor Enhancements and other changes
+* The sample k95custom.ini file now sets:
+    * autodownload to "on" rather than "ask"
+    * resize mode to change terminal dimensions
+    * SSH heartbeat on
+* New escape sequences in the terminal emulator
+    * `CSI 1 8 ; Ps ; Ps t` - get text area size in characters (xterm)
+    * `CSI > Pm t` - this is now parsed and ignored, previously this xterm-specific
+      escape sequence would incorrectly minimise the window
+* A sample IKSD initialisation script is now included in the distribution
+  Setup instructions are here: https://kermitproject.org/k95manual/wiksdadm.html
+* The "show features" command now includes the availability (or lack of) DECnet,
+  SuperLAT and PTY support. Some of these are optional features for custom
+  builds only and others may or may not be present depending on the compiler
+  used.
+* "show versions" now shows OS version more correctly
+* Updated the dates and version numbers for windows-specific entries in the 
+  "show versions" command
+* k95custom.ini is now distributed as k95custom.sample to prevent customised
+  user files from being accidentally overwritten when upgrading. The default
+  k95.ini will now rename k95custom.sample to k95custom.ini if it can't find
+  an existing k95custom.ini in any of the usual locations.
+* Updated the About dialog: xyzmodem and pathworks support are no longer guaranteed
+  to be missing.
+* Improvements to the terminal status line:
+    * Increasing the window width now gives more space to the hostname and protocol
+      fields
+    * If the hostname and protocol text are too long to fit, the exit text 
+      ("Command: Alt-X" by default) is hidden to make room
+    * Maximum length for exit text increased from 20 to 30 characters (where there 
+      is room to display it)
+    * When there is sufficient room available an extra two columns of padding is
+      inserted between the exit text and the hostname to match the other fields
+
+### Source Changes
+* Fixed build failure with Visual C++ 2017
+* Fixed build failure with Visual C++ 4.1 and 4.2
+* Fixed some reported build errors with Visual C++ 4.0 RISC Edition. MIPS should
+  now build fine with TAPI disabled, PowerPC may also need debug logging turned
+  off (`set CKF_DEBUG=no`). No one has tried building the dialer yet.
+* Fixed build issues with the DEC Alpha compiler in the NT 3.50 SDK. The linker
+  supplied in the SDK is not compatible, however.
+* Ported to 64bit Windows
+* Added support for building for 64bit Windows on the DEC Alpha (AXP64 target)
+* Ported the core of the application to MinGW (GCC)
+* Added support for Visual C++ 1.0/1.1 32-bit edition
+* Ported to Windows NT 3.10 but there are currently unresolved bugs (networking
+  is broken for one)
+* SRP support is now available as a custom build option. You'll need quite an
+  old and insecure version of OpenSSL (1.0.1u works) and an old compiler too
+  (Visual C++ 2003 works)
+* DES/CAST crypto can now be statically linked into k95.exe/k95g.exe/iksdnt.exe
+  instead of being delivered as a shared dll (k95crypto.dll)
+* Building with jom (or any other sufficiently compatible nmake clone) instead
+  of nmake is now supported for Visual C++ builds. Just `set make=jom.exe` to
+  make better use of multicore systems.
+
 ## C-Kermit for Windows 10.0b8 beta 4 - 15 December 2022
 This release is mostly a collection of minor improvements and bug fixes as I
 have been unexpectedly busy since the prior release resulting in the schedule
@@ -89,7 +276,7 @@ slipping somewhat.
 
 ### Minor Enhancements and other changes:
 * Upgraded to zlib 1.2.13 fixing [CVE-2022-37434](https://nvd.nist.gov/vuln/detail/CVE-2022-37434)
-* Upgraded to openssl 1.1.1s
+* Upgraded to openssl 1.1.1u
 * The libssh version number is now included in the output of the `show ssh`
   command
 * The default k95custom.ini now sets the default browser to nothing which should

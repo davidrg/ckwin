@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -926,6 +926,10 @@ unsigned long inet_network();
 #include "multinet_root:[multinet.include.netinet]in.h"
 #include "multinet_root:[multinet.include.arpa]inet.h"
 #include "multinet_root:[multinet.include.sys]ioctl.h"
+#include "multinet_root:[multinet.include.vms]ucx$inetdef.h"
+#include "multinet_root:[multinet.include.sys]time.h"
+/*AGN 08-Jun-2023 Multinet supplies inet_aton()*/
+#define NO_DCL_INET_ATON
 
 #ifdef COMMENT
 /*

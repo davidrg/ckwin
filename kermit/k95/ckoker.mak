@@ -170,6 +170,7 @@ LDFLAGS = $(LDFLAGS) /MACHINE:X64
 !if "$(TARGET_CPU)" == "AXP64"
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
+LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
 !endif
 
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
@@ -204,10 +205,16 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
 CFLAG_GF=
 !endif
 
-COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze /YX
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
 #               /YX     Automatic .PCH
+
+# Jom runs multiple instances of cl in parallel which causes problems with PCH locking.
+# So only generate PCH files when nmake instead of jom.
+!if "$(ISJOM)" == "no"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /YX
+!endif
 
 !if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
@@ -735,7 +742,8 @@ LIBS = $(LIBS) libsrp.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib \
        winmm.lib mpr.lib advapi32.lib winspool.lib
 
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 LIBS = $(LIBS) wshload.lib
 !endif
 
@@ -767,8 +775,8 @@ KUILIBS = $(KUILIBS) ole32.lib oleaut32.lib uuid.lib
 KUILIBS = $(KUILIBS) srp.lib
 !endif
 
-# MIT Kerberos for Windows
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 KUILIBS = $(KUILIBS) wshload.lib
 !endif
 
@@ -791,8 +799,8 @@ LIBS = $(LIBS) $(SSL_LIBS)
 LIBS = $(LIBS) srp.lib
 !endif
 
-# MIT Kerberos for Windows
-!if "$(CKF_K4W)" == "yes"
+# wshelper (via wshload) is required for DNS-SRV support
+!if "$(CKF_K4W_WSHELPER)" == "yes"
 LIBS = $(LIBS) wshload.lib
 !endif
 
@@ -852,6 +860,12 @@ OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
         p_common$(O) p_tl$(O) p_dir$(O)
 !endif
 
+# Internal cryptography (instead of k95crypt.dll)
+!if "$(CKF_INTERNAL_CRYPT)" == "yes"
+OBJS = $(OBJS) ck_crp.obj ckclib.obj ck_des.obj
+LIBS = $(LIBS) libdes.lib
+KUILIBS = $(KUILIBS) libdes.lib
+!endif
 
 #OUTDIR = \kui\win95
 KUIOBJS = \

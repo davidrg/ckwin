@@ -185,7 +185,6 @@ struct keytab {				/* Keyword table */
 
 /* String preprocessing function */
 
-#ifdef COMMENT
 #ifdef CK_ANSIC				/* ANSI C */
 #ifdef M_SYSV				/* SCO Microsoft C wants no args */
 typedef int (*xx_strp)();
@@ -195,9 +194,6 @@ typedef int (*xx_strp)(char *, char **, int *);
 #else					/* Not ANSI C */
 typedef int (*xx_strp)();
 #endif /* CK_ANSIC */
-#else
-typedef int (*xx_strp)();
-#endif /* COMMENT */
 
 /* FLDDB struct */
 

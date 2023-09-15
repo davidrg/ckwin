@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 10.0.279, 16 Apr 2023";
+char *ckftpv = "FTP Client, 10.0.280, 21 Jun 2023";
 
 /*
   Authors:
@@ -329,7 +329,7 @@ struct timezone {
 
 #ifdef NT
 #include "ckoreg.h"
-#endif
+#endif  /* NT */
 
 #ifndef INADDR_NONE			/* 2010-03-29 */
 #define INADDR_NONE -1
@@ -955,9 +955,62 @@ char * ftp_apw = NULL;			/* Anonymous password */
 
 /* Definitions and typedefs needed for prototypes */
 
-#define sig_t my_sig_t
+/*
+  #define sig_t my_sig_t
+
+  I don't understand the statement above, which has been in this code going
+  back to at least C-Kermit 8.0, because my_sig_t is not defined anywhere.
+  And yet sig_t is used below with no complaint, no matter whether the the
+  above #define is commented out or not.  However, if I #define sig_t SIGTYP
+  (which is what it should be according to ckcdeb.h), all hell breaks loose.
+  Same if I replace all references to sig_t by SIGTYPE.  On the other hand, if
+  I remove the sig_t definition, there is no complaint, so where is the sig_t
+  definition coming from?  I find this in Ubuntu signal.h:
+
+    <comment> 4.4 BSD uses the name 'sig_t' for this. </comment>
+    typedef __sighandler_t sig_t;
+
+  In NetBSD I find this in sys/signal.h:
+
+    typedef    void (*sig_t)(int);
+
+  Can we really count on sig_t being defined in some nook or cranny
+  on every single Unix, VMS, and Windows system?
+
+  Jeff Altman says to use sighandler_t, which is ok on Ubuntu but 
+  not on (say) NetBSD.  So I can't do this:
+
+    #ifndef sig_t
+    #define sig_t sighandler_t
+    #endif
+
+  I think the only alternative is to leave my_sig_t undefined and then
+  see who squawks.  Since the previous 'my_sig_t' definition apparently
+  had no effect, I'm hoping there will be no change in behavior after
+  commenting it out.    -fdc Fri Jun 23 06:53:23 2023
+
+  P.S. All this is aside from the fact that signal() has long since been
+  "deprecated" in favor of sigaction(), defined in POSIX.1-1988; see:
+
+    https://man7.org/linux/man-pages/man2/signal.2.html
+    https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
+
+  but C-Kermit can't be switched over because it has to build and run on
+  pre-POSIX operating systems that don't have sigaction(0) (despite the fact
+  that C-Kermit's ckupty.c function ptyint_vhangup() calls it...  how did
+  *that* happen?).
+*/
 #define sigtype SIGTYP
+
+#ifdef CK_ANSIC
+typedef sigtype (*sig_t)(int);
+#else
 typedef sigtype (*sig_t)();
+#endif /* CK_ANSIC */
+
+/* Made this global static -fdc 21 June 2023 */
+/* It's used in many ckcftp.c routines but wasn't declared in all of them */
+static sig_t oldintr;
 
 /* Prototypes for static functions defined in ckcftp.c */
 #ifdef CK_ANSIC
@@ -9977,7 +10030,6 @@ ftpcmd(cmd,arg,lcs,rcs,vbm) char * cmd, * arg; int lcs, rcs, vbm;
 {
     char * s = NULL;
     int r = 0, x = 0, fc = 0, len = 0, cmdlen = 0, q = -1;
-    sig_t oldintr;
 
     if (ftp_deb)                        /* DEBUG */
       vbm = 1;
@@ -11169,7 +11221,6 @@ getreply(expecteof,lcs,rcs,vbm,fc) int expecteof, lcs, rcs, vbm, fc;
     int count = 0;
     int auth = 0;
     int originalcode = 0, continuation = 0;
-    sig_t oldintr;
     int pflag = 0;
     char *pt = pasv;
     char ibuf[FTP_BUFSIZ], obuf[FTP_BUFSIZ]; /* (these are pretty big...) */
@@ -13845,7 +13896,6 @@ pscancel(sig) int sig; {
 static VOID
 pswitch(flag) int flag; {
     extern int proxy;
-    sig_t oldintr;
     static struct comvars {
         int connect;
         char name[MAXHOSTNAMELEN];
@@ -13984,7 +14034,6 @@ cancelpt(sig) int sig;
 
 void
 proxtrans(cmd, local, remote, unique) char *cmd, *local, *remote; int unique; {
-    sig_t oldintr;
     int secndflag = 0, prox_type, nfnd;
     char *cmd2;
 #ifdef BSDSELECT
@@ -17734,7 +17783,6 @@ srp_decode (private, in, out, len)
 static int
 ftp_mput(argc, argv) int argc; char **argv; {
     register int i;
-    sig_t oldintr;
     int ointer;
     char *tp;
     sigtype mcancel();
@@ -17854,7 +17902,6 @@ ftp_mput(argc, argv) int argc; char **argv; {
 static int
 ftp_mget(argc, argv) int argc; char **argv; {
     int rc = -1;
-    sig_t oldintr;
     int ointer;
     char *cp, *tp, *tp2, tmpbuf[CKMAXPATH];
     sigtype mcancel();
@@ -17914,7 +17961,6 @@ ftp_mget(argc, argv) int argc; char **argv; {
 
 static int
 mdelete(argc, argv) int argc; char **argv; {
-    sig_t oldintr;
     int ointer;
     char *cp;
     sigtype mcancel();
@@ -17955,7 +18001,6 @@ mdelete(argc, argv) int argc; char **argv; {
 
 static int
 mls(argc, argv) int argc; char **argv; {
-    sig_t oldintr;
     int ointer, i;
     char *cmd, mode[1], *dest;
     sigtype mcancel();

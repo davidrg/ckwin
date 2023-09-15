@@ -4,8 +4,10 @@
 #include <windows.h>
 #include <winsock.h>
 #include <errno.h>
+#include <stdio.h>
 #define strdup _strdup
 #define ltoa   _ltoa
+#define unlink _unlink
 
 #endif
 #define CONFIG_FILE "iksd.cfg"

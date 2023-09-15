@@ -6,3 +6,4 @@ del *.map
 del *.pdb
 del *.obj
 del *.err
+del *.res
