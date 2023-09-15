@@ -206,6 +206,16 @@ void ntlm_logout();     /* ckoath.c */
 int ntlm_impersonate(); /* ckoath.c */
 #endif /* NT */
 
+#ifndef KUI
+#include "ckocon.h"
+#include "ckokey.h"
+void VscrnForceFullUpdate();    /* ckoco2.c */
+_PROTOTYP( int os2gettitle, (char *, int) );
+#ifndef NOLOCAL
+int OS2WaitForKey();
+#endif /* NOLOCAL */
+#endif /* KUI */
+
 /*
   Functions (n is one of the predefined file numbers from ckcker.h):
 

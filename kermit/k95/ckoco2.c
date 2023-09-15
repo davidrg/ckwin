@@ -951,8 +951,9 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
                      );
 #endif /* COMMENT */
 
-    if ( ModeData->col <= 0 || ModeData->row <= 0 )
-        return -1 ;
+    /* ModeData->col and ModeData->row are unsigned so can never be <= 0
+     if ( ModeData->col <= 0 || ModeData->row <= 0 )
+        return -1 ;*/
 
     rc = RequestScreenMutex( 5000 );
     if ( rc )
@@ -1065,11 +1066,11 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
         {
             rc = GetLastError() ;
             debug(F101,"Set Mode SetConsoleWindowInfo failed","",rc ) ;
-            if ( error == ERROR_INVALID_HANDLE ) {
+            /*if ( error == ERROR_INVALID_HANDLE ) {
                 debug(F101,"SetMode VioHandle","",VioHandle);
                 VioHandle = GetStdHandle( STD_OUTPUT_HANDLE );
                 debug(F101,"SetMode GetStdHandle(STD_OUTPUT_HANDLE)","",VioHandle);
-            }
+            }*/
             ReleaseScreenMutex() ;
             return 3;
         }
@@ -1089,11 +1090,11 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
         {
             rc = GetLastError() ;
             debug(F101,"SetMode SetConsoleScreenBufferSize failed","",rc ) ;
-            if ( error == ERROR_INVALID_HANDLE ) {
+            /*if ( error == ERROR_INVALID_HANDLE ) {
                 debug(F101,"SetMode VioHandle","",VioHandle);
                 VioHandle = GetStdHandle( STD_OUTPUT_HANDLE );
                 debug(F101,"SetMode GetStdHandle(STD_OUTPUT_HANDLE)","",VioHandle);
-            }
+            }*/
             ReleaseScreenMutex() ;
             return 3;
         }
@@ -3847,9 +3848,6 @@ TermScrnUpd( void * threadinfo)
     int old_tt_update ;
     int avm ;                           /* Active vmode */
     int prty = priority;
-#ifndef KUI
-    CK_VIDEOMODEINFO mi;
-#endif /* KUI */
     int incnt = 0;
 
 #ifndef ONETERMUPD

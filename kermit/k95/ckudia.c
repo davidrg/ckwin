@@ -119,11 +119,20 @@ The remaining steps are in this module:
 #ifdef NT
 #include <windows.h>
 #include <tapi.h>
+#include <time.h>
 #include "cknwin.h"
 #include "ckntap.h"
+#include "ckothr.h"
+#include "ckosyn.h"
+#ifdef CK_LOGIN
+void setntcreds();  /* ckofio.c */
+#endif /* CK_LOGIN */
 #endif /* NT */
+
 #ifdef OS2
 #include "ckowin.h"
+
+_PROTOTYP( int scriptwrtbuf, (unsigned short));
 #endif /* OS2 */
 
 #ifndef ZILOG
@@ -5296,7 +5305,11 @@ _dodial(threadinfo) VOID * threadinfo;
 	      }
 	      break;
 	    case 1: {			/* Answer */
-		long strttime = time((long *)NULL);
+#ifdef __WATCOMC__
+		long strttime = time((unsigned long *)NULL);
+#else
+        long strttime = time((long *)NULL);
+#endif /* __WATCOMC__ */
 		long diff = 0;
 		do {
 		    if (dialatmo > 0) {
@@ -5318,7 +5331,11 @@ _dodial(threadinfo) VOID * threadinfo;
 			}
 		    }
 		    if (dialatmo > 0) {
+#ifdef __WATCOMC__
+            diff = time((unsigned long *)NULL) - strttime;
+#else
 			diff = time((long *)NULL) - strttime;
+#endif /* __WATCOMC__ */
 		    }
 		} while ((dialatmo > 0) ? (diff < waitct) : 1);
 		break;
@@ -6487,7 +6504,6 @@ ckdial(nbr, x1, x2, fc, redial) char *nbr; int x1, x2, fc, redial;
 /* ckdial */ {
 #define ERMSGL 100                      /* fdc 13 November 2022 (was 50) */
     char errmsg[ERMSGL], *erp;		/* For error messages */
-    int n = F_TIME;
     char *s;
     long spdmax;
 #ifdef OS2
@@ -6991,9 +7007,6 @@ dook(threadinfo) VOID * threadinfo ;
 #endif /* CK_ANSIC */
 /* dook */ {
     CHAR c;
-#ifdef DEBUG
-    char * mdmmsg = "";
-#endif /* DEBUG */
 
     int i, x;
 #ifdef IKSD
@@ -8134,7 +8147,7 @@ mdmhup() {
     int xparity;
     int savcarr;
     extern int ttcarr;
-    char *s, *p, c;
+    char *s, c;
     MDMINF * mp = NULL;
 
     debug(F101,"mdmhup dialmhu","",dialmhu); /* MODEM-HANGUP METHOD */

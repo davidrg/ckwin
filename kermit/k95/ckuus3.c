@@ -2670,8 +2670,10 @@ uq_ok(preface,prompt,mask,help,dflt)
     int mask, dflt;
 #endif /* CK_ANSIC */
 /* uq_ok */ {
+#ifdef KUI
     int rc, len;
     char * text=NULL;
+#endif /* KUI */
 
     if (!prompt)
       return(-1);
@@ -2784,15 +2786,15 @@ uq_txt(preface,prompt,echo,help,buf,buflen,dflt,timer)
     extern int win95_popup;
 #endif /* OS2 */
 #endif /* NOLOCAL */
-    int rc; 
 
     if (buflen < 1 || !buf)
       return(0);
 #ifdef KUI
     if ( gui_dialog ) {
-        rc = gui_txt_dialog(preface,prompt,echo,buf,buflen,dflt,timer);
-        if ( rc > -1 )
+        int rc = gui_txt_dialog(preface,prompt,echo,buf,buflen,dflt,timer);
+        if ( rc > -1 ) {
             return(rc);
+        }
     /* Otherwise, the dialog could not be created.  Fallback to text mode */
     } 
 #endif /* KUI */
@@ -2851,15 +2853,16 @@ uq_mtxt(preface,help,n,field)
     extern int win95_popup;
 #endif /* OS2 */
 #endif /* NOLOCAL */
-    int i, rc;
+    int i;
 
     if (n < 1 || !field)
       return(0);
 #ifdef KUI
     if ( gui_dialog ) {
-        rc = gui_mtxt_dialog(preface, n, field);
-        if ( rc > -1 )
+        int rc = gui_mtxt_dialog(preface, n, field);
+        if ( rc > -1 ) {
             return(rc);
+        }
     /* Otherwise, the dialog could not be created.  Fallback to text mode */
     }
 #endif /* KUI */

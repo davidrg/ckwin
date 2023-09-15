@@ -54,6 +54,10 @@ char *ckyv = "OS/2 Keyboard I/O, 8.0.203, 30 Oct 2003";
 #include "ckokey.h"
 #ifdef KUI
 #include "ikui.h"
+#else
+#ifdef OS2MOUSE
+void win32MouseEvent( int mode, MOUSE_EVENT_RECORD r );     /* ckomou.c */
+#endif /* OS2MOUSE */
 #endif /* KUI */
 
 #define THRDSTKSIZ      32768
@@ -1490,7 +1494,6 @@ KbdHandlerInit( void ) {
 
 int
 KbdHandlerCleanup( void ) {
-    APIRET rc=0 ;
     int n = 0;
     if ( !tidKbdHandler )
         return(0);
@@ -1647,7 +1650,6 @@ getKeycodeFromKeyRec( KEY_EVENT_RECORD * pkeyrec, WORD * buf, int chcount )
                 altdown = altup = shiftdown = shiftup = ctrldown = ctrlup = 0;
             }
         } else {
-            HKL prevhkl = 0;
             switch ( keyrec.wVirtualKeyCode ) {
             case VK_MENU:
                 if ( altdown && shiftdown && shiftup) {
@@ -2169,7 +2171,7 @@ void
 KbdHandlerThread( void * pArgList ) {
     INPUT_RECORD k;
     DWORD count = 0;
-    int rc=0, c=0, i=0;
+    int rc=0, c=0;
     extern int StartedFromDialer ;
     extern BYTE vmode ;
     DWORD saved_mode=0;
