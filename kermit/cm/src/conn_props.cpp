@@ -118,7 +118,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 		SetupPropertyPage(hInstance, &psp[page], IDD_TERMINAL,   (DLGPROC)TerminalPageDlgProc, TerminalPageProc, (LPARAM)profile); page++;
 		SetupPropertyPage(hInstance, &psp[page], IDD_TERM_COLORS,(DLGPROC)TermColorPageDlgProc, TermColorPageProc, (LPARAM)profile); page++; // *
 	}
-	SetupPropertyPage(hInstance, &psp[page], IDD_KEYBOARD,	NULL, NULL, NULL); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_KEYBOARD,	(DLGPROC)KeyboardPageDlgProc, KeyboardPageProc, (LPARAM)profile); page++; // *
 	// TODO: Mouse
 
 	// ----- Transfer -----

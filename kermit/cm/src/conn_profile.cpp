@@ -1323,14 +1323,14 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		break;
 	}
 
-	if (defaultKeyMap()) {
-		if (additionalKeyMaps().isNullOrWhiteSpace()) {
-			OutLine(additionalKeyMaps().toCRLF().data());
-		}
-	} else if (!keymapFile().isNullOrWhiteSpace()) {
+	if (!keymapFile().isNullOrWhiteSpace()) {
 		_sntprintf(buf, BUFFERSIZE, TEXT("take {%s}"), 
 				keymapFile().data());
 		OutLine(buf);
+	}
+
+	if (!additionalKeyMaps().isNullOrWhiteSpace()) {
+		OutLine(additionalKeyMaps().toCRLF().data());
 	}
 
 	// Login parameters

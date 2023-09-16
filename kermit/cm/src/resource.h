@@ -236,6 +236,17 @@
 #define IDC_CONN_ERROR_CORRECTION       1141
 #define IDC_CONN_DATA_COMPRESSION       1142
 #define IDC_CONN_CARRIER_DETECT         1143
+#define IDC_KBD_BS_DELETE               1144
+#define IDC_KBD_BS_BS                   1145
+#define IDC_KBD_BS_CTRL_Y               1146
+#define IDC_KBD_RET_CR                  1147
+#define IDC_KBD_RET_CRLF                1148
+#define IDC_KBD_RET_LF                  1149
+#define IDC_MOU_ON                      1150
+#define IDC_MOU_OFF                     1151
+#define IDC_KBD_KM_FILENAME             1152
+#define IDC_KBD_KM_KEYMAP               1153
+#define IDC_KBD_KM_FILE_BROWSE          1154
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -274,7 +285,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40037
-#define _APS_NEXT_CONTROL_VALUE         1144
+#define _APS_NEXT_CONTROL_VALUE         1155
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

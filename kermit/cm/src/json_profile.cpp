@@ -1532,14 +1532,6 @@ void JsonProfile::setMouseEnabled(BOOL enabled) {
 	setBool("mouse", "enabled", enabled);
 }
 
-BOOL JsonProfile::defaultKeyMap() { 
-	return getBool("keyboard", "use_default", TRUE);
-}
-
-void JsonProfile::setDefaultKeyMap(BOOL enabled) {
-	setBool("keyboard", "use_default", enabled);
-}
-
 CMString JsonProfile::keymapFile() { 
 	return getStringCached2(keyboard, map_file, CMString());
 }

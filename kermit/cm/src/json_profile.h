@@ -439,9 +439,6 @@ struct Date
 	virtual BOOL mouseEnabled();	// Add a mouse tab?
 	virtual void setMouseEnabled(BOOL enabled);
 
-	virtual BOOL defaultKeyMap();
-	virtual void setDefaultKeyMap(BOOL enabled);
-
 	virtual CMString keymapFile();
 	virtual void setKeymapFile(CMString file);
 

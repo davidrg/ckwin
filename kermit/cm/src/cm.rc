@@ -335,32 +335,30 @@ CAPTION "Keyboard"
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Backspace Key Sends",IDC_STATIC,5,5,90,45
-    CONTROL         "Delete (Rubout)",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,
-                    10,15,66,10
-    CONTROL         "Ctrl-H (Backspace)",IDC_RADIO2,"Button",
+    CONTROL         "Delete (Rubout)",IDC_KBD_BS_DELETE,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,10,15,66,10
+    CONTROL         "Ctrl-H (Backspace)",IDC_KBD_BS_BS,"Button",
                     BS_AUTORADIOBUTTON,10,25,75,10
-    CONTROL         "EM (Ctrl-Y)",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,10,
-                    35,49,10
+    CONTROL         "EM (Ctrl-Y)",IDC_KBD_BS_CTRL_Y,"Button",
+                    BS_AUTORADIOBUTTON,10,35,49,10
     GROUPBOX        "Enter Key Sends",IDC_STATIC,100,5,75,45
-    CONTROL         "Carriage return",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON,
-                    105,15,62,10
-    CONTROL         "CR-LF",IDC_RADIO5,"Button",BS_AUTORADIOBUTTON,105,25,36,
-                    10
-    CONTROL         "Line Feed",IDC_RADIO6,"Button",BS_AUTORADIOBUTTON,105,
-                    35,47,10
+    CONTROL         "Carriage return",IDC_KBD_RET_CR,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,105,15,62,10
+    CONTROL         "CR-LF",IDC_KBD_RET_CRLF,"Button",BS_AUTORADIOBUTTON,105,
+                    25,36,10
+    CONTROL         "Line Feed",IDC_KBD_RET_LF,"Button",BS_AUTORADIOBUTTON,
+                    105,35,47,10
     GROUPBOX        "Mouse",IDC_STATIC,180,5,48,45
-    CONTROL         "On",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,185,15,25,10
-    CONTROL         "Off",IDC_RADIO8,"Button",BS_AUTORADIOBUTTON,185,30,25,
+    CONTROL         "On",IDC_MOU_ON,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
+                    185,15,25,10
+    CONTROL         "Off",IDC_MOU_OFF,"Button",BS_AUTORADIOBUTTON,185,30,25,
                     10
-    GROUPBOX        "Key Map",IDC_STATIC,5,55,220,95
-    CONTROL         "Default for terminal type",IDC_RADIO9,"Button",
-                    BS_AUTORADIOBUTTON,10,65,90,10
-    CONTROL         "Read from file:",IDC_RADIO10,"Button",
-                    BS_AUTORADIOBUTTON,10,80,61,10
-    EDITTEXT        IDC_EDIT1,75,75,125,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BUTTON1,205,75,15,14
-    EDITTEXT        IDC_EDIT2,75,95,145,50,ES_AUTOHSCROLL
-    LTEXT           "Additional mapping:",IDC_STATIC,10,95,62,8
+    GROUPBOX        "Additional Key Mapping",IDC_STATIC,5,55,220,95
+    LTEXT           "Read from file:",IDC_STATIC,26,72,46,8
+    EDITTEXT        IDC_KBD_KM_FILENAME,75,67,125,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_KBD_KM_FILE_BROWSE,205,67,15,14
+    LTEXT           "Additional mapping:",IDC_STATIC,10,87,62,8
+    EDITTEXT        IDC_KBD_KM_KEYMAP,75,84,145,61,ES_AUTOHSCROLL
 END
 
 IDD_LOGIN DIALOG DISCARDABLE  0, 0, 235, 156
@@ -876,6 +874,7 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 228
+        VERTGUIDE, 72
         TOPMARGIN, 7
         BOTTOMMARGIN, 149
     END
@@ -1185,7 +1184,7 @@ BEGIN
             VALUE "FileDescription", "C-Kermit Connection Manager\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
             VALUE "InternalName", "dial32\0"
-            VALUE "LegalCopyright", "Copyright © David Goodwin, 2023\0"
+            VALUE "LegalCopyright", "Copyright   David Goodwin, 2023\0"
             VALUE "OriginalFilename", "cm.exe\0"
             VALUE "ProductName", "C-Kermit for Windows\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"

@@ -159,7 +159,15 @@ SOURCE=..\conn_props\connection.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\connection_serial.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\general.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_props\keyboard.cpp
 # End Source File
 # Begin Source File
 
@@ -253,10 +261,6 @@ SOURCE=..\conn_list.cpp
 # Begin Source File
 
 SOURCE=..\conn_list.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_props\connection_serial.cpp
 # End Source File
 # Begin Source File
 

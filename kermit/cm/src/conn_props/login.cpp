@@ -7,7 +7,7 @@
 #include "../resource.h"
 
 /******************
- * SHEET: Terminal
+ * SHEET: Login
  ******************/
 
 /*

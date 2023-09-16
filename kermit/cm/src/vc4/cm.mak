@@ -80,6 +80,7 @@ CLEAN :
 	-@erase ".\Release\login.obj"
 	-@erase ".\Release\connection.obj"
 	-@erase ".\Release\connection_serial.obj"
+	-@erase ".\Release\keyboard.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -129,6 +130,7 @@ LINK32_OBJS= \
 	".\Release\login.obj" \
 	".\Release\connection.obj" \
 	".\Release\connection_serial.obj" \
+	".\Release\keyboard.obj" \
 	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -179,6 +181,7 @@ CLEAN :
 	-@erase ".\Debug\login.obj"
 	-@erase ".\Debug\connection.obj"
 	-@erase ".\Debug\connection_serial.obj"
+	-@erase ".\Debug\keyboard.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -231,6 +234,7 @@ LINK32_OBJS= \
 	".\Debug\login.obj" \
 	".\Debug\connection.obj" \
 	".\Debug\connection_serial.obj" \
+	".\Debug\keyboard.obj" \
 	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -281,6 +285,7 @@ CLEAN :
 	-@erase ".\cm___Win\login.obj"
 	-@erase ".\cm___Win\connection.obj"
 	-@erase ".\cm___Win\connection_serial.obj"
+	-@erase ".\cm___Win\keyboard.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -334,6 +339,7 @@ LINK32_OBJS= \
 	".\cm___Win\login.obj" \
 	".\cm___Win\connection.obj" \
 	".\cm___Win\connection_serial.obj" \
+	".\cm___Win\keyboard.obj" \
 	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -382,6 +388,7 @@ CLEAN :
 	-@erase ".\cm___Wi0\login.obj"
 	-@erase ".\cm___Wi0\connection.obj"
 	-@erase ".\cm___Wi0\connection_serial.obj"
+	-@erase ".\cm___Wi0\keyboard.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -431,6 +438,7 @@ LINK32_OBJS= \
 	".\cm___Wi0\login.obj" \
 	".\cm___Wi0\connection.obj" \
 	".\cm___Wi0\connection_serial.obj" \
+	".\cm___Wi0\keyboard.obj" \
 	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1714,6 +1722,49 @@ DEP_CPP_CONNEC=\
 
 
 "$(INTDIR)\connection_serial.obj" : $(SOURCE) $(DEP_CPP_CONNEC) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\keyboard.cpp"
+DEP_CPP_KEYBO=\
+	".\..\conn_props.h"\
+	".\..\conn_profile.h"\
+	".\..\cmstring.h"\
+	".\..\charset.h"\
+	".\..\term_info.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\keyboard.obj" : $(SOURCE) $(DEP_CPP_KEYBO) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\keyboard.obj" : $(SOURCE) $(DEP_CPP_KEYBO) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\keyboard.obj" : $(SOURCE) $(DEP_CPP_KEYBO) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\keyboard.obj" : $(SOURCE) $(DEP_CPP_KEYBO) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
