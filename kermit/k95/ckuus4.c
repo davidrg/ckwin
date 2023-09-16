@@ -10659,9 +10659,9 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 	  int i,j,n;
           int m;			/* For scanfile() */
 	  int dir = -1;			/* 1 = arg is a directory file */
-	  CK_OFF_T z;		    /* For file size */
+	  CK_OFF_T z;                   /* For file size */
 #ifdef UNIX
-      CK_OFF_T z2       	/* Also for file size */
+          CK_OFF_T z2;                  /* Also for file size */
 #endif /* UNIX */
 
           workbuf[0] = NUL;
