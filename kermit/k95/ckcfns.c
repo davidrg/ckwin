@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 10.0.244, 14 Apr 2023";
+char *fnsv = "C-Kermit functions, 10.0.245, 16 Sep 2023";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -3452,14 +3452,13 @@ rcvfil(n) char *n;
     extern int en_cwd;
     int i, skipthis;
     char * n2;
-    char * dispo;
 #ifdef OS2ONLY
     char *zs, *longname, *newlongname, *pn; /* OS/2 long name items */
 #endif /* OS2ONLY */
 #ifdef DTILDE
     char *dirp;
 #endif /* DTILDE */
-    int dirflg, x, y;
+    int dirflg;
 #ifdef PIPESEND
     extern char * rcvfilter;
 #endif /* PIPESEND */
@@ -3485,8 +3484,8 @@ rcvfil(n) char *n;
 #ifdef CALIBRATE
     calibrate = csave;
     if (dest == DEST_N) {
-	calibrate = 1;
-	cmarg2 = "CALIBRATE";
+        calibrate = 1;
+        cmarg2 = "CALIBRATE";
     }
 #endif /* CALIBRATE */
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
@@ -3494,9 +3493,9 @@ rcvfil(n) char *n;
     makestr(&prrfspec,(char *)srvcmd);	/* New preliminary filename */
 #ifdef DTILDE
     if (*srvcmd == '~') {
-	dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
-	if (*dirp != '\0')
-	  ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
+        dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
+        if (*dirp != '\0')
+          ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
     }
 #else
 #ifdef OS2
@@ -5743,6 +5742,29 @@ gnfile() {
 #endif /* NOMSEND */
 		    ckstrncpy(filnam,*cmlist++,CKMAXPATH+1);
 		    debug(F111,"gnfile cmlist filnam",filnam,nfils);
+#ifdef COMMENT
+/* BEGIN: NEW 6 August 2023 */
+/*
+ This doesn't work.  Suppose the client said "get /recursive foo",
+ where foo is a directory.  It cd's to foo ok, but then there is no
+ file list left.
+*/
+                    if (recursive && fileno == 1) {
+                        int itisadir = 0;
+                        itisadir = isdir(filnam); 
+                        if (itisadir) {
+                            int x;
+                            debug(F111,"gnfile zchdir",filnam,itisadir);
+                            x = zchdir(fullname);
+                            debug(F111,"gnfile zchdir result",filnam,x);
+                            fileno = 0;
+                            ckstrncpy("*",*cmlist++,CKMAXPATH+1); 
+                            continue;
+                        }
+                    }
+/* END: NEW 6 August 2023 */
+#endif  /* COMMENT */
+
 #ifndef NOMSEND
 		}
 #endif /* NOMSEND */
@@ -5888,6 +5910,14 @@ gotnam:
 		  doxlog(what,fullname,fsize,binary,1,"Skipped");
 #endif /* TLOG */
 		continue;
+/* BEGIN: NEW 6 August 2023 */
+	    } else if (filesize == (CK_OFF_T)-2) { /* It's a directory name */
+                if (recursive) {
+                    debug(F110,"gnfile zchdir",fullname,0);
+                    zchdir(fullname);
+                    return(-2);
+                }
+/* END: NEW 6 August 2023 */
 	    } else if (filesize < 0) {
 		if (filesize == (CK_OFF_T)-3) { /* Exists but not readable */
 		    debug(F100,"gnfile -3","",0);
@@ -6585,7 +6615,7 @@ snddir(spec) char * spec;
 {
 #ifndef NOSERVER
     char * p = NULL, name[CKMAXPATH+1];
-    int t = 0, rc = 0;
+    int rc = 0;
     char fnbuf[CKMAXPATH+1];
 
     debug(F111,"snddir matchdot",spec,matchdot);
@@ -7046,7 +7076,7 @@ remset(s) char *s;
 #endif /* CK_ANSIC */
 {
     extern int c_save, en_del;
-    int len, i, x, y;
+    int len, x, y;
     char *p;
 
     len = xunchar(*s++);		/* Length of first field */

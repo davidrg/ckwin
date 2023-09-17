@@ -73,8 +73,9 @@ dir_find_first(mask,search_attribute,dir_entry)
     DIR_ENTRY *dir_entry;
 #endif
 {
-
+#ifndef NT
     U32 find_count = 1;
+#endif /* Not NT */
     APIRET rc = 0;
 
 #ifdef OS2
@@ -145,7 +146,9 @@ dir_find_next(DIR_ENTRY *dir_entry)
 dir_find_next(dir_entry) DIR_ENTRY * dir_entry ;
 #endif
 {
+#ifndef NT
     U32 find_count = 1;
+#endif /* not NT */
     APIRET rc=0;
 
 #ifdef OS2

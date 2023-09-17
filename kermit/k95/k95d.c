@@ -360,11 +360,9 @@ StartKermit( SOCKET socket, char * scriptfile, int ShowCmd, SOCKET * psockdup )
 
 int
 main( int argc, char * argv[] ) {
-   char *p;
-   int i, x;
+   int i;
    int on = 1, rc = 0;
    int ready_to_accept = 0 ;
-   static struct servent *service, servrec;
    static struct hostent *host;
    static struct sockaddr_in saddr;
    static int saddrlen ;
@@ -372,7 +370,9 @@ main( int argc, char * argv[] ) {
     fd_set rfds;
     struct timeval tv;
 #endif /* BSDSELECT */
+#ifdef IBMSELECT
    int tcpsrv_fd = -1, ttyfd = -1 ;
+#endif /* IBMSELECT */
 #ifdef NT
     WSADATA data ;
     HANDLE hProcess;
@@ -541,10 +541,17 @@ main( int argc, char * argv[] ) {
          exit(7);
       }
    }
+#ifdef COMMENT
+
+    /*
+     * This code is currently unreachable due to the endless
+     * for loop above, but it probably shouldn't be.
+     */
 
 #ifdef NT
    WSACleanup() ;
 #else
 
 #endif /* NT */
+#endif /* COMMENT */
 }

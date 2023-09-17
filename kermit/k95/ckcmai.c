@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "03 Jul 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230703"          /* Keep them in sync */
-/* Mon Jul  3 07:11:13 2023 */
+#define EDITDATE  "16 Sep 2023"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20230916"          /* Keep them in sync */
+/* Sat Sep 16 15:16:18 2023 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -58,11 +58,11 @@ char * ck_cryear = "2023"; 		/* C-Kermit copyright year */
    The Windows and non-Windows Betas happen at different times.
 */
 char *ck_s_test = "Beta";
-char *ck_s_tver = "10/Windows-05";
+char *ck_s_tver = "11/Windows-05";
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
-char *ck_s_test = "Beta";   /* "Dev","Alpha","pre-Beta", "Beta","RC", or "" */
-char *ck_s_tver = "10";                 /* Test version number */
+char *ck_s_test = "pre-Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
+char *ck_s_tver = "11";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -103,9 +103,9 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
   Macintosh), just C-Kermit for each platform (except the original Mac).
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "404";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.404";           /* eXtended version string */
-long  ck_l_ver = 1000404L;              /* C-Kermit version number */
+char *ck_s_edit = "407";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.407";           /* eXtended version string */
+long  ck_l_ver = 1000407L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
@@ -589,10 +589,18 @@ ACKNOWLEDGMENTS:
 
 #ifdef NT
 #include <windows.h>
+#include <process.h>                    /* for getpid() */
 #ifndef NODIAL
 #include <tapi.h>
 #include "ckntap.h"
 #endif /* NODIAL */
+
+int setOSVer();                         /* ckotio.c */
+int ttgcwsz();                          /* ckocon.c */
+
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
 #endif /* NT */
 
 #ifndef NOSERVER
@@ -2707,7 +2715,6 @@ makever ( )
     extern int noherald, backgrd;
     extern char * ckxsys;
     int x, y;
-    char * s;
     char * ssl;                         /* These moved from herald() */
     char * krb4;
     char * krb5;
@@ -3012,11 +3019,11 @@ MAINNAME( argc, argv ) int argc; char **argv;
     *pfha = (short) 0;                  /* No user protection fault handler */
 #endif /* datageneral */
 
+#ifdef UNIX
     int unbuf = 0;			/* nonzero for unbuffered stdout */
 
 /* setbuf has to be called on the file descriptor before it is used */
 
-#ifdef UNIX
 #ifdef NONOSETBUF			/* Unbuffered console i/o */
     unbuf++;				/* as a compile-time option */
 #endif	/* NONOSETBUF */
@@ -3340,7 +3347,6 @@ MAINNAME( argc, argv ) int argc; char **argv;
         || inserver
 #endif /* IKSD */
         ) {
-        int on = 1, x = 0;
         extern int ckxech, ttnet, ttnproto, cmdmsk;
 #ifdef SO_SNDBUF
         extern int tcp_sendbuf;
@@ -3425,14 +3431,20 @@ MAINNAME( argc, argv ) int argc; char **argv;
 #endif /* CK_AUTHENTICATION */
 
 #ifdef NON_BLOCK_IO
-        on = 1;
-        x = socket_ioctl(0,FIONBIO,&on);
-        debug(F101,"main FIONBIO","",x);
+        {
+            int on, x;
+            on = 1;
+            x = socket_ioctl(0,FIONBIO,&on);
+            debug(F101,"main FIONBIO","",x);
+        }
 #endif /* NON_BLOCK_IO */
 #ifdef SO_OOBINLINE
-        on = 1;
-        x = setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on));
-        debug(F101,"main SO_OOBINLINE","",x);
+        {
+            int on, x;
+            on = 1;
+            x = setsockopt(0,SOL_SOCKET,SO_OOBINLINE,(char *)&on,sizeof(on));
+            debug(F101,"main SO_OOBINLINE","",x);
+        }
 #endif /* SO_OOBINLINE */
 
 #ifndef NOTCPOPTS

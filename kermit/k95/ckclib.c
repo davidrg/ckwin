@@ -2219,7 +2219,7 @@ ckround(fpnum,places,obuf,obuflen)
 #endif /* CK_ANSIC */
 /* ckround  */ {
     char *s, *s2, *d;
-    int i, p, len, x, n, digits;
+    int p, len, n;
     int carry = 0;
     int minus = 0;
     char buf[400];

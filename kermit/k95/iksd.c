@@ -5,6 +5,7 @@
 #include <winsock.h>
 #include <errno.h>
 #include <stdio.h>
+#include <io.h>
 #define strdup _strdup
 #define ltoa   _ltoa
 #define unlink _unlink
@@ -258,11 +259,10 @@ BOOL IsWindowsNT() {
 
 int
 main( int argc, char * argv[] ) {
-    char *p=NULL, * dbdir=NULL, dbfile[256];
-    int i, x;
+    char * dbdir=NULL, dbfile[256];
+    int i;
     int on = 1, rc = 0;
     int ready_to_accept = 0 ;
-    static struct servent *service, servrec;
     static struct hostent *host;
     static struct sockaddr_in saddr;
     static int saddrlen ;
@@ -270,7 +270,9 @@ main( int argc, char * argv[] ) {
     fd_set rfds;
     struct timeval tv;
 #endif /* BSDSELECT */
+#ifdef IBMSELECT
     int tcpsrv_fd = -1, ttyfd = -1 ;
+#endif /* IBMSELECT */
 #ifdef NT
     WSADATA data ;
     HANDLE hProcess;
@@ -428,7 +430,7 @@ main( int argc, char * argv[] ) {
          }
 
          /* Now start subprocess */
-          if ( ports[i].asocket,ports[i].k95cmd )
+          if ( ports[i].asocket && ports[i].k95cmd )
               printf("Starting IKSD with socket %d and command %s\n",ports[i].asocket,ports[i].k95cmd);
           else 
               printf("Starting IKSD with socket %d\n",ports[i].asocket);
@@ -450,9 +452,13 @@ main( int argc, char * argv[] ) {
       }
    }
 
+#ifdef COMMENT
+    /* This code isn't reachable due to the endless for loop
+     * above, but that probably shouldn't be the case */
 #ifdef NT
    WSACleanup() ;
 #else
 
 #endif /* NT */
+#endif /* COMMENT */
 }

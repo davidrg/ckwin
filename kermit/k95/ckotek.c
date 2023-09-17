@@ -118,8 +118,6 @@ tekinc(void)
 void
 tekctrl( int ch )
 {
-    int i,j;
-
     switch ( ch ) {
     case SOH:
         break;
@@ -239,10 +237,6 @@ tekctrl( int ch )
 void
 tekascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
-
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
 

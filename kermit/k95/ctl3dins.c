@@ -161,7 +161,6 @@ main( int argc, char * argv[] )
     OSVERSIONINFO osverinfo ;
 #endif
     char * srcfile = NULL;
-    char * destfile = "ctl3d32.dll";
     int    forceinstall = 0;
 
     if ( argc > 2 ) {

@@ -95,6 +95,10 @@ extern struct tt_info_rec tt_info[];
 #include "ckosyn.h"
 #endif /* OS2 */
 
+#ifdef NT
+#include <process.h>  /* for getpid() */
+#endif /* NT */
+
 #ifdef CK_NAWS                          /* Negotiate About Window Size */
 #ifdef RLOGCODE
 _PROTOTYP( int rlog_naws, (void) );
@@ -840,7 +844,7 @@ tn_ssbopt(opt,sub,data,len) int opt, sub; CHAR * data; int len;
 #endif /* CK_ANSIC */
 {
     CHAR buf[256];
-    int n,m,rc;
+    int rc;
 
     if (ttnet != NET_TCPB) return(0);   /* Must be TCP/IP */
     if (ttnproto != NP_TELNET) return(0); /* Must be telnet protocol */
@@ -1462,9 +1466,8 @@ fwdx_send_xauth_to_xserver(channel, data, len)
     /* send our own Xauth message using the real Xauth data.  And */
     /* then send any other data in the buffer.                    */
     {
-        int c, err, dpynum, scrnum, family, sb_len;
+        int dpynum, scrnum, family;
         char *display, *host = NULL, *rest = NULL;
-        unsigned char *sb, *p;
 
         /* parse the local DISPLAY env var */
         display = getenv("DISPLAY");
@@ -1968,6 +1971,7 @@ fwdx_send_data_from_channel(channel, data, len)
     return(0);
 }
 
+#ifdef COMMENT
 static unsigned char *
 #ifdef CK_ANSIC
 fwdx_add_quoted_twobyte(unsigned char *p, unsigned short twobyte)
@@ -1987,6 +1991,7 @@ fwdx_add_quoted_twobyte(p, twobyte)
         *p++ = 0xFF;
     return p;
 }
+#endif /* COMMENT */
 
 int
 #ifdef CK_ANSIC
@@ -2548,7 +2553,7 @@ tn_set_modes() {
 #endif /* CK_FORWARD_X */
 #ifdef CK_ENVIRONMENT
     {
-        int i,j;
+        int i;
         for (i = 0; i < 8; i++) {
             tn_env_uservar[i][0] = NULL;
             tn_env_uservar[i][1] = NULL;
@@ -3532,7 +3537,7 @@ tn_siks(cmd) int cmd;
 #else
     CHAR mystch = '\1';
 #endif /* NOXFER */
-    int n,m,rc;
+    int rc;
 
     if (ttnet != NET_TCPB) return(0);   /* Must be TCP/IP */
     if (ttnproto != NP_TELNET) return(0); /* Must be telnet protocol */
@@ -3634,7 +3639,7 @@ tn_sb( int opt, int * len, int (*fn)(int) )
 tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 #endif /* CK_ANSIC */
 /* tn_sb */ {
-    int c, x, y, n, m, flag;
+    int y, n, flag;
     /* if (!IS_TELNET()) return(1); */
 
     debug(F100,"Entering tn_sb()","",0);
@@ -3684,7 +3689,6 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 
 #ifdef DEBUG
             if ( deblog || tn_deb || debses ) {
-                int i;
                 ckmakmsg( tn_msg,TN_MSG_LEN,
                           "TELNET RCVD SB ",TELOPT(opt),
 			  " DATA(buffer-full) ",NULL);
@@ -4367,7 +4371,9 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 
 static char rows_buf[16] = { 0, 0 }; /* LINES Environment variable */
 static char cols_buf[16] = { 0, 0 }; /* COLUMNS Enviornment variable */
+#ifndef OS2
 static char term_buf[64] = { 0, 0 }; /* TERM Environment variable */
+#endif /* OS2 */
 
 #ifdef CK_CURSES
 #ifndef VMS
@@ -4441,7 +4447,7 @@ tn_xdoop(CHAR z, int echo, int (*fn)(int))
 tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* CK_ANSIC */
 /* tn_xdoop */ {
-    int c, x, y, n, m;
+    int c, x, y, n;
 #ifdef IKS_OPTION
     extern int server;
 #ifdef NOICP
@@ -5721,8 +5727,7 @@ tn_rnenv(sb, len) CHAR * sb; int len;
 /* tn_rnenv */ {                        /* Receive new environment */
     char varname[17];
     char value[65];
-    char * reply = 0, * s = 0;
-    int i,j,k,n;                                /* Worker. */
+    int i,j,k;                                /* Worker. */
     int type = 0; /* 0 for NONE, 1 for VAR, 2 for USERVAR, */
                   /* 3 for VALUE in progress */
 
@@ -5892,7 +5897,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
 #endif /* CK_ANSIC */
 /* tn_snenv */ {                        /* Send new environment */
     char varname[16];
-    char * reply = 0, * s = 0;
+    char * reply = 0;
     int i,j,n;                          /* Worker. */
     int type = 0;       /* 0 for NONE, 1 for VAR, 2 for USERVAR in progress */
     extern int ck_lcname;
@@ -9049,8 +9054,6 @@ tngmdm(void)
 tngmdm()
 #endif /* CK_ANSIC */
 /* tngmdm */ {
-
-    int rc = -1;
 
     debug(F110,"tngmdm","begin",0);
     if (ttnet != NET_TCPB || ttnproto != NP_TELNET)

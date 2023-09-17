@@ -1105,6 +1105,9 @@ input() {
 	    }				/* End of file-sender NAK handler */
 
             if (rsn == winlo) {		/* Not ACK, NAK, timeout, etc. */
+/* BEGIN NEW 6 August 2023 */
+                if (type == 'V')
+/* END NEW 6 August 2023 */
 		debug(F000,"input send unexpected type","",type);
 		break;
 	    }
@@ -2766,7 +2769,6 @@ int
     chkspkt(packet) char *packet;
 #endif /* CK_ANSIC */
 {
-    int i;
     int buflen;
     int len = -1;
     CHAR chk;

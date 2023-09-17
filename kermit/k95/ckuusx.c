@@ -89,6 +89,9 @@ char * tgoto (const char *, int, int);
 
 #ifdef OS2
 #include <string.h>
+#if NT
+#include <process.h>  /* for getpid() */
+#endif /* NT */
 _PROTOTYP(char * os2_gethostname, (void));
 #ifndef __WATCOMC__
 #define getpid _getpid
@@ -243,6 +246,12 @@ _PROTOTYP( FILE * fdopen, (int, char *) );
 /* popen() needs declaring because it's not declared in <stdio.h> */
 _PROTOTYP( FILE * popen, (char *, char *) );
 #endif /* DCLPOPEN */
+
+#ifdef OS2
+#ifndef KUI
+APIRET IsVscrnDirty( int vmode );
+#endif /* KUI */
+#endif /* OS2 */
 
 int tt_crd = 0;                         /* Carriage return display */
 int tt_lfd = 0;                         /* Linefeed display */
@@ -2059,7 +2068,6 @@ scanstring(s) char * s;
 {
     int x, val = -1, count = 0;		/* Workers */
     int rc = -1;			/* Return code */
-    int pv = -1;			/* Pattern-match value */
     int bytes = 0;			/* Total byte count */
 #ifdef UNICODE
     unsigned int c0, c1;		/* First 2 file bytes (for BOM) */
@@ -2067,14 +2075,12 @@ scanstring(s) char * s;
     extern int pipesend, filepeek;
 
     register int i;			/* Loop control */
-    int readsize = 0;			/* How much to read */
     int eightbit = 0;			/* Number of bytes with 8th bit on */
     int c0controls = 0;			/* C0 non-text control-char counter */
     int c0noniso = 0;			/* C0 non-ISO control-char counter */
     int c1controls = 0;			/* C1 control-character counter */
     unsigned int c;			/* Current character */
     int runmax = 0;			/* Longest run of 0 bytes */
-    int runzero = 0;			/* Run of 0 bytes */
     int pctzero = 0;			/* Percentage of 0 bytes */
     int txtcz = 0;
 
@@ -2949,7 +2955,6 @@ ckhost(vvbuf,vvlen) char * vvbuf; int vvlen;
 #else  /* Everything else - rest of this routine */
 
     char *g;
-    int havefull = 0;
 #ifdef VMS
     int x;
 #endif /* VMS */
@@ -6037,11 +6042,13 @@ ck_termset();
 #endif /* MYCURSES */
 #endif /* CK_CURSES */
 
+#ifndef OS2
 #ifdef NOTERMCAP
 static int notermcap = 1;
 #else
 static int notermcap = 0;
 #endif /* NOTERMCAP */
+#endif /* OS2 */
 
 #ifndef NODISPLAY
 CKVOID
@@ -6446,10 +6453,12 @@ ck_cleol() {
   First, some stuff we can just ignore:
 */
 
+#ifdef VMS
 static int
 touchwin(x) int x; {
     return(0);
 }
+#endif /* VMS */
 static int
 initscr() {
     return(0);
@@ -6535,7 +6544,9 @@ move(row, col) int row, col; {
 
 int
 clear() {
+#ifndef ONETERMUPD
     viocell cell;
+#endif /* ONETERMUPD*/
     move(0,0);
 #ifdef ONETERMUPD
     if (VscrnGetBufferSize(VCMD) > 0) {
@@ -6554,7 +6565,9 @@ clear() {
 
 int
 clrtoeol() {
+#ifndef ONETERMUPD
     USHORT row, col;
+#endif /* ONETERMUPD */
     viocell cell;
 
     cell.c = ' ';
@@ -7543,7 +7556,9 @@ char *s;        /* a string */
 #endif /* CK_KERBEROS */
 #endif /* RLOGCODE */
                  ) {
-		secure = 1;
+            /* You may get an "unreachable code" warning in builds with no SSL,
+             * Kerberos or SSH support. This is OK. */
+		    secure = 1;
 	    }
 	    if (secure) {
 #ifdef KUI
@@ -8767,7 +8782,9 @@ char *s;        /* a string */
 #endif /* CK_KERBEROS */
 #endif /* RLOGCODE */
                  ) {
-		secure = 1;
+            /* You may get an "unreachable code" warning in builds with no SSL,
+             * Kerberos or SSH support. This is OK. */
+		    secure = 1;
 	    }
 	    if (secure) {
                 char buf[30];
@@ -9706,7 +9723,7 @@ int
 getslot() {                             /* Find a free slot for us */
     FILE * rfp = NULL;                  /* Returns slot number (0, 1, ...) */
     char idstring[64];                  /* PID string buffer (decimal) */
-    char pidbuf[64], * s;
+    char pidbuf[64];
     int j, k, n, x, rc = -1;
     int lockfd, tries, haveslot = 0;
     int dummy;

@@ -189,10 +189,10 @@ gstring(int n) {
 char *
 getVar(unsigned int idx) {
 
-    int flags = (idx & 0xf0000000) >> 28;
+    /*int flags = (idx & 0xf0000000) >> 28;
     int type  = (idx & 0x0f000000) >> 24;
     int group = (idx & 0x00ff0000) >> 16;
-    int index = (idx & 0x0000ffff);
+    int index = (idx & 0x0000ffff);*/
     char * s;
     int i;
 

@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #define DECLED
 
@@ -102,6 +103,35 @@ extern int tcp_incoming;
 _PROTOTYP(void vtescape, (void));
 _PROTOTYP(void vt100, (unsigned short vtch));
 #endif /* NOLOCAL */
+
+#ifdef KUI
+int gui_resize_pixels(int, int);    /* cknwin.c */
+int gui_position(int, int);         /* cknwin.c */
+int gui_win_run_mode(int);          /* cknwin.c */
+int gui_resize_mode(int);           /* cknwin.c */
+#endif /* KUI */
+
+_PROTOTYP( int os2getcp, (void) );  /* ckotio.c */
+int os2settitle(char *, int);       /* ckotio.c */
+VOID seturlhl(int);                 /* ckuus7.c */
+void os2push();                     /* ckocon.c */
+void setborder();                   /* ckocon.c */
+int fc2tx(int fc);                  /* ckcuni.c */
+USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
+USHORT tx_usub(USHORT);         /* ckcuni.c */
+USHORT tx_hslsub(USHORT);       /* ckcuni.c */
+
+#ifdef OS2MOUSE
+void mouseurl(int, USHORT, USHORT); /* ckomou.c */
+#endif /* OS2MOUSE */
+
+#ifdef PCTERM
+VOID setpcterm(int);                /* ckokey.c */
+#endif /* PCTERM */
+
+#ifdef NT
+int prtcfg(HANDLE);                 /* ckotio.c */
+#endif /* NT */
 
 /*
  *
@@ -611,6 +641,8 @@ unsigned char sgrcols[8] = {
 /* White   */ 7
 };
 
+#ifdef COMMENT
+/* Not used but perhaps useful, commented out -- DG */
 static
 unsigned char isocols[8] = {
 /* Black   */ 0,
@@ -622,6 +654,7 @@ unsigned char isocols[8] = {
 /* Yellow  */ 6,
 /* White   */ 7
 };
+#endif /* COMMENT */
 
 /* Function prototypes */
 #ifndef NOTTOCI
@@ -633,7 +666,7 @@ int status_saved = -1;
 extern int os2_outesc ;                     /* Esc seq recognizer for keys... */
 
 /* BA80 Function Key Label Reader */
-static char ba80_fkey_buf[256]="", *ba80_fkey_ptr=NULL;
+static char *ba80_fkey_ptr=NULL;
 static int  ba80_fkey_read = 0;
 
 /* VTNT variables */
@@ -1666,7 +1699,9 @@ doprolog() {                            /* Output the PostScript prolog */
 void
 addchar(c) unsigned char c; {           /* Add character to line buffer */
     int i, m;
+#ifdef OS2ONLY
     int * bp;
+#endif /* OS2ONLY */
 
     if (c < SP || c == DEL) c = SP;     /* ASCII controls become spaces. */
 
@@ -2338,7 +2373,6 @@ prtfile( char * filename )
     char   buf[512];
     int    count=0;
     int turnoffprinter = FALSE ;
-    int rc = 0;
 
     debug(F110,"prtfile",filename,0);
 
@@ -2433,7 +2467,7 @@ prtline(int line, unsigned short achar) {
 /* ----------------------------------------------------------------- */
 void
 prtscreen(BYTE vmode, int top, int bot) {
-    int    i, j, first, last, ch;
+    int    i, j, ch;
     USHORT n;
     viocell cells[MAXTERMCOL];
     char    outbuf[MAXTERMCOL + 1];
@@ -2880,7 +2914,7 @@ sendchar(unsigned char c) {
    ioctl() to make sure the connection is OK.  Hopefully, this combines the
    the benefits of both methods: failure detection, buffering, flow control.
 */
-    int x, i = 0;
+    int x;
     long wait = 0;
     con_event evt ;
 
@@ -3034,7 +3068,6 @@ sendchar(unsigned char c) {
 void
 sendcharduplex(unsigned char key, int no_xlate ) {
     unsigned char csave;
-    unsigned short xkey, xkey7;
     CHAR * bytes = NULL;
     int count = 1,i=0;
 
@@ -3558,7 +3591,6 @@ sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
 */
 int
 sendescseq(CHAR *s) {
-    char c;
     unsigned char sendstr[24], * p  ;
 
     /* Handle 7-bit vs 8-bit escape sequences...*/
@@ -3852,10 +3884,8 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
 
 int
 savscrbk(mode,name,disp) int mode; char * name; int disp; {
-    char *tp;
     static struct filinfo xx;
-    int savfil, i, j, k;
-    char buf[1024];
+    int savfil;
 
     zclose(ZMFILE);
 
@@ -3867,11 +3897,10 @@ savscrbk(mode,name,disp) int mode; char * name; int disp; {
     } else savfil = zopeno(ZMFILE,name,NULL,NULL);
 
     if (savfil) {
-        int    i, j, first, last;
+        int    i, j;
         USHORT n;
         viocell cells[MAXTERMCOL];
         char    outbuf[MAXTERMCOL + 1];
-        int     turnoffprinter = FALSE ;
         ULONG   beg, top, end;
 
         beg = VscrnGetBegin(mode);
@@ -3953,9 +3982,6 @@ geterasecolor( int vmode )
 
 void
 clrscreen( BYTE vmode, CHAR fillchar ) {
-    int             y;
-    videoline *     line ;
-
     /* This function becomes really simple with the new model
        since all we do is move the top of the screen down in
        the vscrn buffer by the size of the screen.
@@ -4090,9 +4116,6 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
 
 void
 clrregion( BYTE vmode, CHAR fillchar ) {
-    int             y;
-    videoline *     line ;
-
     /* This function becomes really simple with the new model
        since all we do is move the top of the screen down in
        the vscrn buffer by the size of the screen.
@@ -4633,11 +4656,7 @@ boxrect_escape( BYTE vmode, int row, int col )
 void
 decdwl_escape(bool dwlflag) {
     videoline * line = NULL ;
-    unsigned char   linenumber=0;
-    unsigned char   newx=0;
     viocell       * cells = NULL ;
-    int             i=0;
-    char buffer[MAXTERMCOL+1] ;
 
     /* DECDWL */
     line = VscrnGetLineFromTop(VTERM,wherey[VTERM]-1) ;
@@ -6297,7 +6316,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 void
 rdcomwrtscr(void * pArgList)
 {
-    int c=0, cx=0, tx=0;
+    int c=0;
     int prty = -2;
     int prtyboost = 0;
 
@@ -6530,7 +6549,7 @@ ltorxlat( int c, CHAR ** bytes )
 int
 utorxlat( int c, CHAR ** bytes )
 {
-    unsigned short xkey, xkey7;
+    unsigned short xkey;
     static CHAR mybyte;
     int count = 1;
 
@@ -7357,7 +7376,7 @@ void
 movetoscreen(char *source, int x, int y, int len) {
    /* x and y begin at 1 */
 
-   int c,l=0 ;
+   int l=0 ;
    videoline * line = NULL ;
 
    line = VscrnGetLineFromTop(VTERM, y-1) ;
@@ -7399,7 +7418,7 @@ flipdebug() {
 
 #ifdef NETCONN
 #ifdef TCPSOCKET
-do_tn_cmd(CHAR x) {
+int do_tn_cmd(CHAR x) {
     CHAR temp[3];
 
     if (network && IS_TELNET()) { /* TELNET */
@@ -7766,7 +7785,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             {
                 popuphelp(vmode,hlp_search);
             }
-            else if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 && x1 <= 255 )
+            else if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 /*always true: && x1 <= 255*/ )
             {
                 if ( len >= 62 ) {
                     bleep(BP_WARN);
@@ -7859,7 +7878,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
     {
         char *s = searchstring ;
         int y=len,i;
-        char *xx, *xp, *xq = (char *)0;
+        char *xp, *xq = (char *)0;
         CHAR c;
 
         i = 0 ;                         /* String pattern match position */
@@ -8036,7 +8055,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
 void
 dokcompose( int mode, int ucs2 )
 {
-    int i, round=0;
+    int i;
     USHORT x[4]={SP,SP,SP,SP}, c=0;
     con_event evt;
 
@@ -8167,8 +8186,10 @@ dokcompose( int mode, int ucs2 )
 
 void
 set_kb_mode( int kb_mode ) {
+#ifdef COMMENT
     static int tcsl_sav = -1;
     int i,x;
+#endif /* COMMENT */
 
     if ( tt_kb_mode == kb_mode )
         return;
@@ -8223,7 +8244,6 @@ void
 dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table index. */
     extern int activecmd ;
     int x;
-    con_event evt ;
     char escbuf[10];                    /* For building key escape sequences */
 /*
   Items are grouped according to function, and checked approximately
@@ -9502,7 +9522,6 @@ markmode( BYTE vmode, int k )
                scrollstate[VNUM]={0,0,0,0};
     static KEY savekeys[8]={0,0,0,0,0,0,0,0};
     static MACRO savemacros[8]={0,0,0,0,0,0,0,0};
-    con_event evt ;
 
     if ( k != K_MARK_START && markmodeflag[vmode] == notmarking )
     {
@@ -9807,7 +9826,6 @@ markmode( BYTE vmode, int k )
 void
 scrollback(BYTE vmode, int k) {                 /* Keycode */
 #ifndef NOKVERBS
-    con_event evt ;
 
     /* Initialization */
 
@@ -10166,7 +10184,7 @@ dodcs( void )
     int i,k,l;
     int dcsnext = 0 ;
     char keydef[257] ; /* UDK defs can't be longer than 256 chars */
-    char c, * p ;
+    char c;
 
     /*
     we haven't coded this yet
@@ -10190,7 +10208,7 @@ dodcs( void )
         k = 1;
         goto LB4002;
     default:            /* Pn - got a number */
-      LB4001:
+      /*LB4001:*/
         {               /* Esc [ Pn...Pn x   functions */
             pn[1] = 0 ;
             while (isdigit(achar)) {            /* Get number */
@@ -10759,7 +10777,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             if ( vtnt_index < vtnt_read && vtnt_index < VTNT_BUFSZ) {
                 vtnt_buf[vtnt_index++] = ch;
                 if ( vtnt_index == VTNT_MIN_READ ) {
-                    int szchng = 0, h_vtnt, w_vtnt;
+                    int h_vtnt, w_vtnt;
+#ifdef COMMENT
+                    int szchng = 0;
+#endif /* COMMENT */
 
                     ckhexdump("VTNT MIN_READ",vtnt_buf,VTNT_MIN_READ);
 
@@ -11963,7 +11984,9 @@ line25(int vmode) {
     char *s = statusline, * mode = NULL;
     int  i;
     int numlines, linesleft ;
+#ifndef KUI
     int w = VscrnGetWidth(vmode);
+#endif /* not KUI */
 
     if ( scrollstatus[vmode] && !escapestatus[vmode] ) {
         /* we are in scrollback mode -- dynamicly update the status line */
@@ -12246,7 +12269,6 @@ ttmacro( int tt )
     extern int nttyp ;
     char macroname[24] ;
     int i, m, l, z ;
-    int szo = sizeof(struct keytab) ;
     int term_io_sav = term_io;
     term_io = 0;                        /* Disable Terminal Emulator I/O */
 
@@ -12283,7 +12305,10 @@ void
 settermtype( int x, int prompts )
 {
     static int savresetcol = 0;
-    static int savtcsr = -1, savtcsl = -1, savfcs = -1, savcp = -1;
+    static int savtcsr = -1, savtcsl = -1, savfcs = -1;
+#ifdef COMMENT
+    static int savcp = -1;
+#endif /* COMMENT */
     static int savcolor = 0;            /* Terminal color */
     static int savgrcol = 0;            /* Graphics color */
     static int savulcol = 0;            /* Underline color */
@@ -12790,13 +12815,9 @@ vtcsi(void)
     unsigned short  j;
     unsigned short  k;
     unsigned short  l;
-    unsigned char   blankcell[2];
     viocell         blankvcell ;
     int             i;
     char            tempstr[20];
-    int             fore, back;
-    int             tcs ;
-    unsigned char   des ;
 
     if ( ISH19(tt_type_mode) ) {
         /* Hold Screen Mode On */
@@ -13062,7 +13083,7 @@ vtcsi(void)
             k = 1;
             goto LB2002;
         default:  {             /* Pn - got a number */
-          LB2001:
+          /*LB2001:*/
             /* Esc [ Pn...Pn x   functions */
             pn[1] = pnumber(&achar);
             k = 1;
@@ -14347,7 +14368,7 @@ vtcsi(void)
                             break;
                         case 42: { /* DECNRCM */
                             /* Use 7-bit NRC */
-                            int tcs ;
+
                             decnrcm = TRUE ;
 #ifdef COMMENT
                             if ( G[0].national )
@@ -14961,7 +14982,7 @@ vtcsi(void)
                                break;
                            case 42: { /* DECNRCM */
                                /* 8-bit multinational char set */
-                               int tcs ;
+
                                decnrcm = FALSE ;
                                for ( i = 0 ; i < 4 ; i++ ) {
                                    G[i].designation = G[i].def_designation ;
@@ -16408,9 +16429,13 @@ vtcsi(void)
                             /* Select foreground color */
                             if ( !sgrcolors )
                                 break;
+
+                            /* Commented out to suppress unreachable code
+                             * compile warning. Not sure why the ISQANSI
+                             * branch is disabled -- DG
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 30;
-                            else
+                            else */
                                 l = sgrcols[pn[j] - 30];
                             if (decscnm) {
                                 i = (attribute & 0x8F);
@@ -16481,9 +16506,12 @@ vtcsi(void)
                             if ( !sgrcolors )
                                 break;
 
+                            /* Commented out to suppress unreachable code
+                             * compile warning. Not sure why the ISQANSI
+                             * branch is disabled -- DG
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 40;
-                            else
+                            else */
                                 l = sgrcols[pn[j] - 40];
                             if (!decscnm) {
                                 i = (attribute & 0x8F);
@@ -16584,9 +16612,12 @@ vtcsi(void)
                             /* Select foreground color (8-bit high) */
                             if ( !sgrcolors )
                                 break;
+                            /* Disabled to suppress unreachable code compile
+                             * warning. Not sure why the ISQANSI branch is
+                             * disabled -- DG
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 90;
-                            else
+                            else */
                                 l = sgrcols[pn[j] - 90];
                             l += 8;     /* 8th bit high */
                             if (decscnm
@@ -16644,9 +16675,12 @@ vtcsi(void)
                             if ( !sgrcolors )
                                 break;
 
+                            /* Commented otu to suppress unreachable code
+                             * compile warning. Not sure why the ISQANSI
+                             * branch is disabled -- DG
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 100;
-                            else
+                            else */
                                 l = sgrcols[pn[j] - 100];
                             l += 8;     /* 8th bit high */
                             if (!decscnm
@@ -18673,16 +18707,9 @@ vtcsi(void)
 void
 vtescape( void )
 {
-    unsigned short  j;
     unsigned short  k;
-    unsigned short  l;
-    unsigned char   blankcell[2];
     viocell         blankvcell ;
     int             i;
-    char            tempstr[20];
-    int             fore, back;
-    int             tcs ;
-    unsigned char   des ;
 
     /* Initialize default values */
     for (i=0;i<11;i++)
@@ -18729,7 +18756,6 @@ vtescape( void )
                       /* ASCII set designated as G0 */
                       /* G0 mapped into GL */
                       {
-                          int tcs;
                           decnrcm = FALSE ;
                           /* we treat all of the conformance levels the same    */
                           /* ISO-4873 does not specify that lower levels cannot */
@@ -19869,11 +19895,11 @@ vtescape( void )
                     goto LB3000;
                     break;
                   default:              /* Pn - got a number */
-                  LB3001:
+                  /*LB3001:*/
                     {                   /* Esc [ Pn...Pn x   functions */
                         pn[1] = pnumber(&achar);
                         k = 1;
-                      LB3002:
+                      /*LB3002:*/
                         while (achar == ';') { /* get Pn[k] */
                             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
                             k++;
@@ -19883,7 +19909,7 @@ vtescape( void )
                             pn[k] = pnumber(&achar);
                         }
                         pn[k + 1] = 1;
-                      LB3003:
+                      //*LB3003:
                         switch (achar) { /* Third level */
                           case 'i':     /* Media Copy */
                             switch (pn[1]) {
@@ -19964,7 +19990,7 @@ vtescape( void )
 /* ================================================================== */
 void
 vt100(unsigned short vtch) {
-    int             i, j;
+    int             i;
     viocell       cell ;
     int vmode = decsasd == SASD_TERMINAL ? VTERM : VSTATUS ;
 
