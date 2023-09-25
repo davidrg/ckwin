@@ -13,11 +13,6 @@ The "Tested Often" column indicates which compilers are tested regularly
 either automatically by github or through occasional manual builds. These
 compilers are highly likely to work.
 
-The RISC Editions of Visual C++ for Alpha, MIPS and PowerPC are
-generally expected to work but as this project lacks the required
-licenses these are not actively tested or supported. If you discover
-any issues on these platforms please log a bug.
-
 ARM, ARM64 and Itanium are built automatically by github actions but
 this project lacks the required hardware to actually test these builds.
 If you discover any issues please log a bug.
@@ -235,7 +230,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
         Static CRT only. Can not build dialer (no lib.exe)</td>
 </tr>
 <tr>
-    <td>Visual C++ 2002</td>
+    <td>Visual C++ 2002 Professional</td>
     <td>x86</td>
     <td>Windows NT 4, 
         Windows 95</td>
@@ -263,7 +258,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
         the DEC Alpha to run it on is another matter entirely.</td> <!-- Notes -->
 </tr>
 <tr>
-    <td rowspan="2">Visual C++ 6.0</td>
+    <td rowspan="2">Visual C++ 6.0 Professional</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
@@ -282,7 +277,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>Service Pack 1</td> <!-- Notes -->
 </tr>
 <tr>
-    <td rowspan="2">Visual C++ 5.0 (Visual Studio 97)</td>
+    <td rowspan="2">Visual C++ 5.0 (Visual Studio 97) Professional</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
@@ -304,8 +299,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>Untested</td> <!-- Notes -->
 </tr>
 <tr>
-    <td rowspan="4">Visual C++ 4.x Professional,
-    Visual C++ 4.x RISC Edition for Alpha/MIPS/PPC</td>
+    <td>Visual C++ 4.x Professional Edition</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95, 
@@ -320,6 +314,8 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td></td> <!-- Notes -->
 </tr>
 <tr>
+    <td rowspan="3">
+    Visual C++ 4.x RISC Edition</td>
     <td>MIPS</td>
     <td rowspan="3">Windows NT 3.51?</td>
     <td>❌</td> <!-- TAPI -->
@@ -336,7 +332,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td></td> <!-- Notes -->
 </tr>
 <tr>
-    <td rowspan="3">Visual C++ 2.x, RISC Edition for Alpha/MIPS</td>
+    <td>Visual C++ 2.x</td>
     <td>x86</td>
     <td>Windows NT 3.1, Win32s 1.2</td>
     <td rowspan="3">❌</td> <!-- Free -->
@@ -355,6 +351,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     </td>
 </tr>
 <tr>
+   <td rowspan="2">Visual C++ 2.x RISC Edition for Alpha/MIPS</td>
     <td>MIPS</td>
     <td rowspan="2">Windows NT 3.1?</td>
     <td rowspan="2">❌</td> <!-- Tested -->
