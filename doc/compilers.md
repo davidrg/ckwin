@@ -170,7 +170,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="2">✅</td> <!-- NTLM/Auth -->
     <td rowspan="2">✅</td> <!-- TAPI -->
     <td rowspan="2">❔</td> <!-- Dialer -->
-    <td rowspan="2"></td> <!-- Notes -->
+    <td rowspan="2">Free Platform SDK 7.1 includes this compiler and works fine.</td> <!-- Notes -->
 </tr>
 <tr>
     <td>IA64</td>
