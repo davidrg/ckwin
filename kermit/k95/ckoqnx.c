@@ -22,6 +22,9 @@
 #include "ckuusr.h"
 #include "ckocon.h"
 #include "ckoqnx.h"
+#include "ckcuni.h"
+
+void clrscreen( BYTE vmode, CHAR fillchar );     /* ckoco3.c */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -111,7 +114,7 @@ qnxattroff( void )
 void
 qnxctrl( int ch )
 {
-    int i,j,x,y;
+    int i; /*,j,x,y; */
 
     switch ( ch ) {
     case ETX:
@@ -245,8 +248,8 @@ qnxctrl( int ch )
 void
 qnxascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ;
+    /* int i,j,k,n,x,y,z;
+    vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ; */
     viocell blankvcell;
 
     if (printon && (is_xprint() || is_uprint()))

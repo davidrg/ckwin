@@ -276,6 +276,23 @@ extern int ssl_finished_messages;
 #include "ckosyn.h"
 #endif /* OS2 */
 
+#ifdef OS2
+#ifndef NOLOCAL
+_PROTOTYP(void ipadl25, (void));                /* Default status-line maker */
+#endif /* NOLOCAL */
+
+#ifdef CK_AUTHENTICATION
+int ck_security_loaddll( void );
+#endif /* CK_AUTHENTICATION */
+
+#ifdef NT
+#ifdef NTLM
+int ntlm_auth_send();                   /* ckoath.c */
+int ck_ntlm_is_valid(int query_user);   /* ckoath.c */
+#endif /* NTLM */
+#endif /* NT */
+#endif /* OS2 */
+
 /*
  * Globals
  */
@@ -377,7 +394,6 @@ static unsigned char str_data[4096] = { IAC, SB, TELOPT_AUTHENTICATION, 0,
                                         AUTHTYPE_KERBEROS_V5, };
 #define AUTHTMPBL 2048
 static char strTmp[AUTHTMPBL+1];
-static char szLocalHostName[UIDBUFLEN+1];
 static kstream g_kstream=NULL;
 
 #ifdef KRB5
@@ -1661,6 +1677,7 @@ ck_tn_decrypt( s,n ) char * s; int n;
 #endif /* ENCRYPTION */
 }
 
+#ifdef KRB5
 /*  S E N D K 5 A U T H S B
  *  Send a Kerberos 5 Authentication Subnegotiation to host and
  *  output appropriate Telnet Debug messages
@@ -1727,7 +1744,6 @@ SendK5AuthSB(type,data,len) int type; void *data; int len;
 
     /* Handle Telnet Debugging Messages */
     if (deblog || tn_deb || debses) {
-        int i;
         int deblen=p-str_data-2;
         char *s=NULL;
         int mode = AUTH_CLIENT_TO_SERVER | (auth_how & AUTH_HOW_MASK) |
@@ -1789,7 +1805,9 @@ SendK5AuthSB(type,data,len) int type; void *data; int len;
     debug(F111,"SendK5AuthSB","ttol()",rc);
     return(rc);
 }
+#endif /* KRB5 */
 
+#ifdef KRB4
 /*  S E N D K 4 A U T H S B
  *  Send a Kerberos 4 Authentication Subnegotiation to host and
  *  output appropriate Telnet Debug messages
@@ -1852,7 +1870,6 @@ SendK4AuthSB(type,data,len) int type; void *data; int len;
 
     /* Handle Telnet Debugging Messages */
     if (deblog || tn_deb || debses) {
-        int i;
         int deblen=p-str_data-2;
         char *s=NULL;
 
@@ -1898,7 +1915,9 @@ SendK4AuthSB(type,data,len) int type; void *data; int len;
     debug(F111,"SendK4AuthSB","ttol()",rc);
     return(rc);
 }
+#endif /* KRB4 */
 
+#ifdef CK_SRP
 /*  S E N D S R P A U T H S B
  *  Send a SRP Authentication Subnegotiation to host and
  *  output appropriate Telnet Debug messages
@@ -1951,7 +1970,6 @@ SendSRPAuthSB(type,data,len) int type; void *data; int len;
 
     /* Handle Telnet Debugging Messages */
     if (deblog || tn_deb || debses) {
-        int i;
         int deblen=p-str_data-2;
         char *s=NULL;
         int mode = AUTH_CLIENT_TO_SERVER | (auth_how & AUTH_HOW_MASK) |
@@ -2014,6 +2032,7 @@ SendSRPAuthSB(type,data,len) int type; void *data; int len;
 #endif
     return(rc);
 }
+#endif /* CK_SRP */
 
 #ifdef CK_ENCRYPTION
 /*
@@ -2330,6 +2349,7 @@ atok(int at) {
 static unsigned char send_list[512];
 static int  send_len = 0;
 
+#ifdef CK_SRP
 _PROTOTYP(static int auth_send, (unsigned char *parsedat, int end_sub));
 
 static int
@@ -2352,6 +2372,7 @@ auth_resend(type) int type;
     }
     return(auth_send(send_list,send_len));
 }
+#endif /* CK_SRP */
 
 static int
 #ifdef CK_ANSIC
@@ -2363,7 +2384,6 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
     static unsigned char buf[4096];
     unsigned char *pname;
     int plen;
-    int r;
     int i;
     int mode;
 #ifdef MIT_CURRENT
@@ -3083,7 +3103,6 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
         sprintf(&buf[7+length], "%c%c", IAC, SE);
 
         if (deblog || tn_deb || debses) {
-            int i;
             ckmakxmsg(tn_msg,TN_MSG_LEN,
                       "TELNET SENT SB ",TELOPT(TELOPT_AUTHENTICATION),
                       " IS ",AUTHTYPE_NAME(authentication_version)," ",
@@ -9798,7 +9817,9 @@ struct tkt_list_item {
     struct tkt_list_item * next;
 };
 
+#ifdef KRB4
 static struct tkt_list_item * k4_tkt_list = NULL;
+#endif
 
 int
 #ifdef CK_ANSIC
@@ -10306,7 +10327,9 @@ ck_krb4_getprincipal()
 #endif /* KRB4 */
 }
 
+#ifdef KRB5
 static struct tkt_list_item * k5_tkt_list = NULL;
+#endif
 
 int
 #ifdef CK_ANSIC

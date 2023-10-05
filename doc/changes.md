@@ -5,12 +5,14 @@ check the git commit log.
 
 ## C-Kermit for Windows 10.0b10 beta 6 - coming soon
 
-### Things to be aware of when upgrading
-Nothing yet
+This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
+now out of support) to OpenSSL 3.0.x. Also included are a selection of bug
+fixes and other minor enhancements. 
 
-### New Features
-
-* None
+Also in this release: official support for Windows NT on Alpha and PowerPC
+has returned after being discontinued in March 2000 and April 1998 
+respectively. And for the first time ever, C-Kermit is now supported on
+Windows NT for MIPS computers, though without TAPI support.
 
 ### Fixed Bugs
 
@@ -36,7 +38,7 @@ Nothing yet
 
 ### Minor Enhancements and other changes
 
-* Upgraded to OpenSSL 3.0.10, the current long term support release 
+* Upgraded to OpenSSL 3.0.11, the current long term support release 
   (supported until 7 September 2026)
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
@@ -47,10 +49,11 @@ Nothing yet
   simply a list of what is allowed). The default order is: none, gssapi, 
   public key, keyboard-interactive, password.
 
-
 ### Source Changes
 
 * Some minor changes to support a future replacement for the dialer.
+* Fixed over 1,000 build warnings. Some of the things warned about could lead
+  to application crashes on 64bit windows.
 
 ## C-Kermit for Windows 10.0b10 beta 5 - 3 July 2023
 This release mostly focused on porting the codebase to 64bit Windows - x86-64,

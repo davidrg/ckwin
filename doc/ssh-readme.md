@@ -34,10 +34,6 @@ automatically by C-Kermit.
 
 ## Differences From Kermit 95
 
-The `set ssh v2 authentication` command only works to turn methods on or off at 
-this time, it does not affect the order in which authentication methods are 
-attempted. This may be corrected in a future release.
-
 The GUI dialogs for the `ssh key` commands have also been adjusted a little. 
 When GUI dialogs are enabled, these commands will use a standard Windows file
 dialog rather than having you type in a full pathname if a filename was not

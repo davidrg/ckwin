@@ -1585,6 +1585,7 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #endif /* putchar */
 #define putchar(x) Vscrnprintf("%c",x)
 #define perror(x)  Vscrnperror(x)
+void Vscrnperror( const char *str );
 #endif /* CKODIALER */
 #endif /* OS2 */
 
@@ -5677,8 +5678,10 @@ _PROTOTYP( int zsyscmd, (char *) );
 _PROTOTYP( int zshcmd, (char *) );
 #ifdef UNIX
 _PROTOTYP( int zsetfil, (int, int) );
-_PROTOTYP( int zchkpid, (unsigned long) );
 #endif	/* UNIX */
+#ifdef OS2ORUNIX
+_PROTOTYP( int zchkpid, (unsigned long) );
+#endif /* OS2ORUNIX */
 #ifdef CKEXEC
 _PROTOTYP( VOID z_exec, (char *, char **, int) );
 #endif /* CKEXEC */

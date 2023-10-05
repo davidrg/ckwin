@@ -522,6 +522,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
 
     GetKeyboardState(keystate);
 
+#ifdef COMMENT      /* COMMENT A */
     if ( 0 ) {
         inpEvt.Event.KeyEvent.uChar.AsciiChar = 0;
 #ifndef NOTERM
@@ -536,6 +537,7 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
 #endif /* NOTERM */
         win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
     } else {
+#endif /* COMMENT */      /* COMMENT A */
         if ( !isWin95() ) {
             int i;
             if ( !toUnicodeLoad ) {
@@ -661,7 +663,9 @@ BOOL IKTerm::newKeyboardEvent( UINT chCharCode, LONG lKeyData, UINT keyDown, UIN
 #endif /* NOTERM */
             win32KeyEvent( vnum, inpEvt.Event.KeyEvent );
         }
+#ifdef COMMENT      /* COMMENT A */
     }
+#endif /* COMMENT */      /* COMMENT A */
     return TRUE;
 }
 

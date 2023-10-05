@@ -32,6 +32,9 @@ extern int network, nettype, ttnproto, u_binary;
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
 
+void doreset(int);              /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, uprint, cprint, xprint, seslog ;
@@ -240,7 +243,7 @@ dgint2loc( int n, char * arg1, char * arg2, char * arg3 )
 void
 dgctrl( int ch )
 {
-    int i,j;
+    int i;
 
 
     if ( !xprint ) {
@@ -539,9 +542,7 @@ dgctrl( int ch )
 void
 dgascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int i;
     char arg1, arg2, arg3, arg4, arg5;
 
     if ( escstate == ES_GOTESC )/* Process character as part of an escstate sequence */

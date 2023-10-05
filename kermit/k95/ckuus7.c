@@ -71,6 +71,17 @@
 #undef putchar
 #endif /* putchar */
 #define putchar(x) conoc(x)
+
+int popup_readpass(int,char*,char*,char*,int,int);  /* ckocon.c */
+int popup_readtext(int,char*,char*,char*,int,int);  /* ckocon.c */
+int cktomsk(int);                                   /* ckokey.c */
+int msktock(int);                                   /* ckokey.c */
+int os2settitle(char *, int);                       /* ckotio.c */
+
+#ifdef KUI
+int setguifont();                                   /* ckuus3.c */
+#endif
+
 extern int mskkeys;
 extern int mskrename;
 #endif /* OS2 */
@@ -751,7 +762,7 @@ static struct keytab rfttab[] = {       /* File types for REMOTE SET FILE */
 };
 static int nrfttyp = (sizeof(rfttab) / sizeof(struct keytab));
 
-#ifdef OS2ORUNIX
+#ifdef UNIX
 #define ZOF_BLK  0
 #define ZOF_NBLK 1
 #define ZOF_BUF  2
@@ -763,7 +774,7 @@ static struct keytab zoftab[] = {
     { "unbuffered",  ZOF_NBUF, 0 }
 };
 static int nzoftab = (sizeof(zoftab) / sizeof(struct keytab));
-#endif /* OS2ORUNIX */
+#endif /* UNIX */
 
 extern int query;                       /* Global flag for QUERY active */
 
@@ -2528,6 +2539,7 @@ dosort() {                              /* Do the SORT command */
 }
 #endif /* NOSPL */
 
+#ifdef CKPURGE
 static struct keytab purgtab[] = {      /* PURGE command switches */
     { "/after",        PU_AFT,  CM_ARG },
     { "/ask",          PU_ASK,  0 },
@@ -2570,6 +2582,7 @@ static struct keytab purgtab[] = {      /* PURGE command switches */
     { "/verbose",      PU_VERB, CM_INV }
 };
 static int npurgtab = sizeof(purgtab)/sizeof(struct keytab);
+#endif /* CKPURGE */
 
 int
 #ifdef CK_ANSIC
@@ -4043,7 +4056,7 @@ getiact() {
 
       case IDLE_OUT: {
           int c, k, n;
-          char * p, * q, * t;
+          char * p, * q;
           k = ckstrncpy(iactbuf,"output ",132);
           n = k;
           q = &iactbuf[k];
@@ -5124,7 +5137,7 @@ settrm() {
         tt_diff_upd = y;
         return(1);
     case XYTUPD: {
-        int mode, delay;
+        int mode;
         if ((mode = cmkey(scrnupd,nscrnupd,"","fast",xxstring)) < 0) {
             return(mode);
         } else {
@@ -5493,7 +5506,6 @@ settrm() {
       case XYTKEY: {                    /* SET TERMINAL KEY */
           int t, x, y;
           int clear = 0, deflt = 0;
-          int confirmed = 0;
           int flag = 0;
           int kc = -1;                  /* Key code */
           int litstr = 0;               /* Literal String? */
@@ -6068,7 +6080,6 @@ static int ndialer = 2;
 int
 setdialer(void) {
     int t, x, y;
-    int clear = 0, deflt = 0;
     int kc;                             /* Key code */
     char *s = NULL;                     /* Key binding */
 #ifndef NOKVERBS
@@ -6344,7 +6355,7 @@ setprty (
     void
 #endif /* CK_ANSIC */
 /* setprty */ ) {
-    int x, y, z;
+    int x, y;
 
     if (( y = cmkey(prtytab, nprty,
                     "priority level of terminal and communication threads",
@@ -9887,7 +9898,6 @@ cx_net(net, protocol, xhost, svc,
 	    }
 #else  /* Not VMS... */
 	    if (errno) {
-		int x;
 		debug(F111,"set host line, errno","",errno);
 		makestr(&slmsg,ck_errstr());
 		if (msg) {
@@ -10077,7 +10087,7 @@ cx_net(net, protocol, xhost, svc,
       DialerSend(OPT_KERMIT_CONNECT, 0);
 #endif /* OS2 */
 
-  xcx_net:
+  /*xcx_net:*/
 
     setflow();                          /* Set appropriate flow control */
 
@@ -10178,7 +10188,7 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
     char * device; int cx, sx, shr, flag, gui, special; 
 #endif /* CK_ANSIC */
 /* cx_serial */ {
-    int i, n, x, y, msg;
+    int y, msg;
     int _local = -1;
     char *s;
 
@@ -10331,7 +10341,6 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
 		  errno
 #endif /* VMS */
 		  ) {
-		  int x;		/* Find a safe, long buffer */
 		  makestr(&slmsg,ck_errstr());
 #ifndef VMS
 		  debug(F111,"cx_serial serial errno",slmsg,errno);
@@ -10369,7 +10378,7 @@ cx_serial(device, cx, sx, shr, flag, gui, special)
       reliable = SET_OFF;
 #endif /* NOXFER */
 
-  xcx_serial:
+  /*xcx_serial:*/
     setflow();                          /* Set appropriate flow control */
     haveline = 1;
 #ifdef CKLOGDIAL
@@ -10468,7 +10477,6 @@ setlin(xx, zz, fc) int xx, zz, fc;
     int wait;
     /* int tn_wait_sv; */
     int mynet;
-    int _local = -1;
     int c, i, haveswitch = 0;
     int haveuser = 0;
     int getval = 0;
@@ -10482,9 +10490,11 @@ setlin(xx, zz, fc) int xx, zz, fc;
 #endif /* CK_ENCRYPTION */
     int shr = 0;                        /* Share serial device */
     int confirmed = 0;                  /* Command has been entered */
-    struct FDB sw, tx, nx;
+    struct FDB sw, nx;
 #ifdef OS2
     struct FDB fl;
+#else
+    struct FDB tx;
 #endif /* OS2 */
 
     char * ss;
@@ -12162,9 +12172,8 @@ z_in(channel,s,buflen,length,flags)
  int channel, buflen, length, flags; char * s;
 #endif /* CK_ANSIC */
 {
-    int i, j, x;
+    int i, x;
     FILE * t;
-    char * p;
 
     if (!z_inited)                      /* Check everything... */
       return(z_error = FX_NOP);
@@ -12248,7 +12257,7 @@ z_in(channel,s,buflen,length,flags)
         /* putback.  It's a bit faster than real fgets() but not enough */
         /* to justify the added complexity or the risk of the ftell() and */
         /* fseek() calls failing. */
-        int k, flag = 0;
+        int j, k, flag = 0;
         CK_OFF_T pos;
         for (i = 0; !flag && i <= (length - Z_INBUFLEN); i += Z_INBUFLEN) {
             k = ((length - i) < Z_INBUFLEN) ? length - i : Z_INBUFLEN;
@@ -12319,7 +12328,7 @@ z_seek(int channel, CK_OFF_T pos)	/* Move file pointer to byte */
 z_seek(channel,pos) int channel; CK_OFF_T pos; /* (seek to given position) */
 #endif /* CK_ANSIC */
 {
-    int i, x = 0, rc;
+    int x = 0, rc;
     FILE * t;
     if (!z_inited)                      /* Check... */
       return(z_error = FX_NOP);
@@ -12349,7 +12358,7 @@ z_line(int channel, CK_OFF_T pos)           /* Move file pointer to line */
 z_line(channel,pos) int channel; CK_OFF_T pos; /* (seek to given position) */
 #endif /* CK_ANSIC */
 {
-    int i, len, x = 0;
+    int len, x = 0;
     CK_OFF_T current = (CK_OFF_T)0, prev = (CK_OFF_T)-1, old = (CK_OFF_T)-1;
     FILE * t;
     char tmpbuf[256];
@@ -12576,7 +12585,7 @@ z_count(channel, what) int channel, what;
 { 
     /* Count bytes or lines in file */
     FILE * t;
-    int i, x;
+    int x;
     CK_OFF_T pos, count = (CK_OFF_T)0;
     if (!z_inited)                      /* Check stuff... */
       return(z_error = FX_NOP);
@@ -12891,7 +12900,9 @@ dofile(op) int op;
 #endif /* VMS */
         }
 
+#ifdef UNIX
       xdofile:
+#endif /* UNIX */
         ckstrncpy(zfilnam,s,CKMAXPATH); /* Is OK - make safe copy */
         if ((x = cmcfm()) < 0)          /* Get confirmation of command */
           return(x);
@@ -13114,7 +13125,7 @@ dofile(op) int op;
             } else if (!sizeflag) {     /* Write a string */
                 len = -1;               /* So length is unspecified */
             } else {                    /* Write a block of given size */
-                int i, k, xx;
+                int i, xx;
                 if (rsize > TMPBUFSIZ) {
                     z_error = FX_OFL;
                     printf("?Buffer overflow\n");
@@ -13438,7 +13449,7 @@ dofile(op) int op;
 	  target was specified, look for it now.
 	*/
 	if (seek_target) {
-	    int flag = 0, ispat = 0, matchresult = 0;
+	    int flag = 0, matchresult = 0;
 	    while (!flag) {
 		y = z_in(n,line,LINBUFSIZ,LINBUFSIZ-1,0);
 		if (y < 0) {
@@ -14578,8 +14589,10 @@ sho_iks() {
 int
 sho_auth(cx) int cx; {
     extern int auth_type_user[], cmd_rows;
+#ifdef CK_KERBEROS
     int i;
     char * p;
+#endif /* CK_KERBEROS */
     int kv = 0, all = 0, n = 0;
 
 #ifdef IKSD

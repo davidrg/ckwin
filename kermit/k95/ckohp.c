@@ -25,6 +25,13 @@
 #include "ckotvi.h"
 #include "ckokey.h"
 
+void ApplyPageAttribute(int, int, int, vtattrib); /* ckowys.c */
+void ApplyLineAttribute(int, int, int, vtattrib); /* ckowys.c */
+void doreset(int); /* ckoco3.c */
+unsigned char charset(enum charsetsize, unsigned short, struct _vtG *); /* ckoco3.c */
+void prtline(int, unsigned short); /* ckoco3.c */
+int os2settitle(char *, int); /* ckotio.c */
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, cprint, uprint, xprint, seslog ;
@@ -146,7 +153,7 @@ hpattroff( void )
 void
 hpctrl( int ch )
 {
-    int i,j,x,y;
+    int i;
 
     switch ( ch ) {
     case ETX:
@@ -343,7 +350,7 @@ hpparam( int * num, int * alpha, int * relative )
 void
 hpascii( int ch )
 {
-    int i=0,j=0,k=0,m=0,n=0,x=0,y=0,z=0;
+    int i=0,j=0,m=0,n=0,x=0,y=0,z=0;
     vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ;
     viocell blankvcell;
     char debbuf[256]="";
@@ -2129,7 +2136,6 @@ hpascii( int ch )
             case '.':
             case '/': {
                 int ch2;
-                int len=0;
                 do {
                     if ((x = hpparam(&n,&ch2,&y)) < 0)
                         break;

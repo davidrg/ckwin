@@ -14,6 +14,7 @@
 
 #include "ckcdeb.h"             /* Typedefs, debug formats, etc */
 #include "ckcker.h"             /* Kermit definitions */
+#include "ckosyn.h"
 #include <string.h>
 #include <process.h>
 #ifdef NT
@@ -40,11 +41,10 @@ GetAppData( int common )
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
-    CHAR *lpszValueName=NULL, *env;
+    CHAR *lpszValueName=NULL;
     int i;
 
 #ifdef COMMENT
@@ -156,7 +156,6 @@ GetHomeDrive(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -224,7 +223,6 @@ GetHomePath(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -303,11 +301,10 @@ GetPersonal(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
-    CHAR *lpszValueName=NULL, *env;
+    CHAR *lpszValueName=NULL;
     int   i;
 
     if ( !isWin95() ) {
@@ -376,11 +373,10 @@ GetDesktop(void)
 #ifdef NT
     HKEY  hkCurrentUser=0;
     HKEY  hkShellKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1]="";
     DWORD dwType=0;
     DWORD dwSize=0;
-    CHAR *lpszValueName=NULL, *env;
+    CHAR *lpszValueName=NULL;
     int   i;
 
     if ( !isWin95() ) {
@@ -519,7 +515,6 @@ GetEditorCommand( void )
 {
 #ifdef NT
     HKEY  hkCommandKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1];
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -571,7 +566,6 @@ GetBrowserCommand( void )
 {
 #ifdef NT
     HKEY  hkCommandKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1];
     DWORD dwType=0;
     DWORD dwSize=0;
@@ -628,7 +622,6 @@ GetFtpCommand( void )
 {
 #ifdef NT
     HKEY  hkCommandKey=0;
-    HKEY  hkSubKey=0;
     static CHAR  lpszKeyValue[CKMAXPATH+1];
     DWORD dwType=0;
     DWORD dwSize=0;

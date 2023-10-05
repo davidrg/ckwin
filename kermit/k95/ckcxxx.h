@@ -160,7 +160,7 @@ extern int hcflg;               /* Server is doing REMOTE HOST cmd */
 extern int cxseen;              /* Flag for cancelling a file */
 extern int czseen;              /* Flag for cancelling file group */
 
-/* Client/Server items *
+/* Client/Server items */
 
 extern int srvdis;              /* SET SERVER DISPLAY value */
 extern int srvtim;              /* SET SERVER TIMEOUT value */

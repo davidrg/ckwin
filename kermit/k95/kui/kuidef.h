@@ -40,11 +40,11 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
-const char KWinClassName[] = "KERMIT95:UI";
-
-const char CmdTitle[] = "K95 Command Window";
-const char TermTitle[] = "C-Kermit Terminal Window";
-const char CServerTitle[] = "K95 Client Server Window";
+/* These have been moved to ikui.cxx to remove unused variable warnings */
+extern const char KWinClassName[]; /* = "KERMIT95:UI";*/
+extern const char CmdTitle[]; /* = "K95 Command Window";*/
+extern const char TermTitle[]; /* = "C-Kermit Terminal Window";*/
+extern const char CServerTitle[]; /* = "K95 Client Server Window";*/
 
 const uint TERMINAL_WINDOW      = 1;
 const uint COMMAND_WINDOW       = 2;

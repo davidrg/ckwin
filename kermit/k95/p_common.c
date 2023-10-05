@@ -43,6 +43,7 @@
 #include <string.h>
 #include <signal.h>
 #include <io.h>
+#include <direct.h>
 
 #ifdef OS2
 #ifdef NT
@@ -102,10 +103,10 @@ wait_for_keypress()
 #endif
 {
 
-  APIRET rc=0;
 #ifdef OS2
 #ifndef NT
-   KBDKEYINFO kki;
+  APIRET rc=0;
+  KBDKEYINFO kki;
 #endif
 #endif /* OS2 */
 

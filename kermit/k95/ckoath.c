@@ -18,6 +18,7 @@
 #include "ckucmd.h"                             /* For struct keytab */
 #include "ckcnet.h"
 #include "ckctel.h"
+#include "ckoetc.h"
 
 #ifdef CK_DES
 #ifdef CK_SSL
@@ -4072,10 +4073,8 @@ int    haveNTLMContext = 0;
 static SecBufferDesc NTLMSecBufDesc;
 SecBuffer     NTLMSecBuf[1];
 static UCHAR      NTLMBuffer[1024];
-static UCHAR      NTLMBuffer2[1024];
 static SecBufferDesc NTLMInSecBufDesc;
 static SecBuffer     NTLMInSecBuf;
-static UCHAR      NTLMInBuffer[512];
 static ULONG      NTLMContextAttrib;
 static TimeStamp  NTLMTimeStampContext;
 static SECURITY_STATUS ss = SEC_E_OK;
@@ -4267,7 +4266,9 @@ ck_ntlm_is_valid(int query_user) {
     extern int  pwflg, pwcrypt;
 
     SEC_WINNT_AUTH_IDENTITY AuthIdentity;
+#ifndef KUI
     char prompt[128];
+#endif
     char domain[128]="",name[128]="",pwd[128]="", *p;
     char localuser[128]="";
     DWORD dw;
@@ -4875,7 +4876,7 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
             AcceptSecurityContext(
 #ifdef COMMENT
                                    round == 0 ? &hNTLMCred : 0,
-#else COMMENT
+#else /* COMMENT */
                                    &hNTLMCred,
 #endif /* COMMENT */
                                    round == 2 ? &hNTLMContext : 0,
@@ -4955,7 +4956,6 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         sprintf(&buf[7+length], "%c%c", IAC, SE);       /* safe */
 
         if (deblog || tn_deb || debses) {
-            int i;
             int mode = AUTH_CLIENT_TO_SERVER | (auth_how & AUTH_HOW_MASK);
             char * s = NULL;
 
@@ -5501,8 +5501,6 @@ SSPLogonUser( LPTSTR DomainName,
 
     BOOL done = FALSE;
     DWORD cbOut, cbIn;
-    char szUser[80];
-    DWORD cbUser = 80;
     SEC_WINNT_AUTH_IDENTITY AuthIdentity;
 
     if ( !p_SSPI_Func ) {
@@ -9575,7 +9573,6 @@ int gssapi_avail() { return 0; }
 int
 ck_security_loaddll( void )
 {
-    ULONG rc = 0 ;
     extern unsigned long startflags;
 
     if ( security_dll_loaded )

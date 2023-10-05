@@ -22,6 +22,11 @@ KRegistryEdit* kreg = 0;
 
 static HANDLE hevKuiInitialized = NULL;
 
+const char KWinClassName[] = "KERMIT95:UI";
+const char CmdTitle[] = "K95 Command Window";
+const char TermTitle[] = "C-Kermit Terminal Window";
+const char CServerTitle[] = "K95 Client Server Window";
+
 void KuiWindowThread( void* param );
 
 /*------------------------------------------------------------------------

@@ -1,3 +1,6 @@
+
+#include <memory.h>
+
 /*
   Blowfish algorithm and code by Bruce Schneier, used by permission.
   Adapted & fixed by fdc, Jan 96.

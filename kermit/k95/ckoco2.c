@@ -133,6 +133,9 @@ BYTE vmode = VCMD ;
 extern int decsasd ;
 int pwidth, pheight;            /* Physical screen width, height */
 
+int ttgcwsz();                  /* ckocon.c */
+int os2settitle(char *, int);   /* ckotio.c */
+
 /*---------------------------------------------------------------------------*/
 /* ReadCellStr                                                               */
 /*---------------------------------------------------------------------------*/
@@ -948,8 +951,9 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
                      );
 #endif /* COMMENT */
 
-    if ( ModeData->col <= 0 || ModeData->row <= 0 )
-        return -1 ;
+    /* ModeData->col and ModeData->row are unsigned so can never be <= 0
+     if ( ModeData->col <= 0 || ModeData->row <= 0 )
+        return -1 ;*/
 
     rc = RequestScreenMutex( 5000 );
     if ( rc )
@@ -1062,11 +1066,11 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
         {
             rc = GetLastError() ;
             debug(F101,"Set Mode SetConsoleWindowInfo failed","",rc ) ;
-            if ( error == ERROR_INVALID_HANDLE ) {
+            /*if ( error == ERROR_INVALID_HANDLE ) {
                 debug(F101,"SetMode VioHandle","",VioHandle);
                 VioHandle = GetStdHandle( STD_OUTPUT_HANDLE );
                 debug(F101,"SetMode GetStdHandle(STD_OUTPUT_HANDLE)","",VioHandle);
-            }
+            }*/
             ReleaseScreenMutex() ;
             return 3;
         }
@@ -1086,11 +1090,11 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
         {
             rc = GetLastError() ;
             debug(F101,"SetMode SetConsoleScreenBufferSize failed","",rc ) ;
-            if ( error == ERROR_INVALID_HANDLE ) {
+            /*if ( error == ERROR_INVALID_HANDLE ) {
                 debug(F101,"SetMode VioHandle","",VioHandle);
                 VioHandle = GetStdHandle( STD_OUTPUT_HANDLE );
                 debug(F101,"SetMode GetStdHandle(STD_OUTPUT_HANDLE)","",VioHandle);
-            }
+            }*/
             ReleaseScreenMutex() ;
             return 3;
         }
@@ -1966,10 +1970,10 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
     videoline * line ;
     unsigned char cellcolor = geterasecolor(vmode);
 
-    if ( Row < 0 || Row > VscrnGetHeight(vmode)-(tt_status[vmode]?2:1) )
+    if ( Row > VscrnGetHeight(vmode)-(tt_status[vmode]?2:1) )
         return ERROR_VIO_ROW ;
 
-    if ( Col < 0 || Col > VscrnGetWidth(vmode) -1 )
+    if ( Col > VscrnGetWidth(vmode) -1 )
         return ERROR_VIO_COL ;
 
     if ( vmode == VTERM && decsasd == SASD_STATUS )
@@ -3825,7 +3829,6 @@ TermScrnUpd( void * threadinfo)
                    xho,                 /* horizontal scrolling offset */
                    xo, yo ;             /* offsets for Popup positioning */
     position cursor ;
-    char buffer[MAXTERMCOL+1] ;
     APIRET rc ;
     char * status ;
     int cursor_offset = 0 ;
@@ -3845,9 +3848,6 @@ TermScrnUpd( void * threadinfo)
     int old_tt_update ;
     int avm ;                           /* Active vmode */
     int prty = priority;
-#ifndef KUI
-    CK_VIDEOMODEINFO mi;
-#endif /* KUI */
     int incnt = 0;
 
 #ifndef ONETERMUPD
@@ -3879,7 +3879,15 @@ TermScrnUpd( void * threadinfo)
     defaultcell.a = vmode == VCMD ? colorcmd :
       (colorreset ? colornormal : defaultattribute) ;
     defaultflipcell = defaultcell ;
+    /* This commented out as it's a meaningless expression - byteswapcolors
+     * doesn't alter its parameter; it returns a value that you've got to store
+     * somewhere. There is no source control history for CKW so I've no idea why
+     * this line is here. Its it a bug? Is it really supposed to be
+     * defaultflipcell.a = byteswapcolors( defaultflipcell.a )? Or is it just
+     * some old left-over code that should have been deleted as part of some
+     * past refactoring? I have no idea.  -- DG
     byteswapcolors( defaultflipcell.a ) ;
+     */
     debug(F101,"VscrnGetWidth() ","",VscrnGetWidth(vmode) ) ;
     debug(F101,"VscrnGetDisplayHeight()","",VscrnGetDisplayHeight(vmode)) ;
     WrtNCell( defaultcell, VscrnGetWidth(vmode)  * (VscrnGetDisplayHeight(vmode)), 0, 0 ) ;
@@ -4514,6 +4522,13 @@ TermScrnUpd( void * threadinfo)
         ReleaseScreenMutex() ;
     }
 
+#ifndef ONETERMUPD
+    /*
+     * When ONETERMUPD is defined, the above loop is while(1) and contains
+     * no breaks which means it runs forever - that means all the code here
+     * is unreachable so don't try to compile it (or we get unreachable code
+     * warnings)
+     */
     StopVscrnTimer() ;
 
 #ifdef NT
@@ -4530,6 +4545,7 @@ TermScrnUpd( void * threadinfo)
     free(thecells) ;
     PostTermScrnUpdThreadDownSem();
     ckThreadEnd(threadinfo) ;
+#endif /* ONETERMUPD */
 }
 
 #ifdef PCFONTS
@@ -4673,7 +4689,6 @@ killcursor( BYTE vmode ) {
 void
 newcursor( BYTE vmode ) {
     CK_CURSORINFO vci;
-    int cell, bottom, top;
 
     debug(F100,"newcursor","",0);
     if (cursoron[vmode])                        /* It's already on */
@@ -4968,8 +4983,7 @@ Vscrnprintf (const char *format, ...) {
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
-    int i, len, rc=0;
-    char *cp;
+    int rc=0;
     va_list ap;
     static int printf_inprogress=0;
 
@@ -5048,8 +5062,7 @@ Vscrnfprintf (FILE * file, const char *format, ...) {
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
-    int i, len, rc=0;
-    char *cp;
+    int rc=0;
     va_list ap;
     static int fprintf_inprogress = 0;
 
@@ -5139,8 +5152,7 @@ Vscrnprintw (const char *format, ...) {
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
-    int i, len, rc=0;
-    char *cp;
+    int rc=0;
     va_list ap;
     static int printf_inprogress=0;
 
