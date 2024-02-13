@@ -38,7 +38,7 @@ Windows NT for MIPS computers, though without TAPI support.
 
 ### Minor Enhancements and other changes
 
-* Upgraded to OpenSSL 3.0.11, the current long term support release 
+* Upgraded to OpenSSL 3.0.13, the current long term support release 
   (supported until 7 September 2026)
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
@@ -48,6 +48,8 @@ Windows NT for MIPS computers, though without TAPI support.
   by `set ssh v2 authentication` (the list is now ordered rather than being
   simply a list of what is allowed). The default order is: none, gssapi, 
   public key, keyboard-interactive, password.
+* Binaries are now provided for Windows NT running on Alpha, MIPS and PowerPC
+  systems.
 
 ### Source Changes
 
