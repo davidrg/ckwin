@@ -8,7 +8,7 @@
       Secure Endpoints Inc., New York City
     David Goodwin, New Zealand.
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,6 +19,8 @@
                   02 Dec 2022 (changed ssh v2 macs list in windows "help ssh").
                   03 Dec 2022 (fixed misplaced definition of cr_year).
                   12 Apr 2023 (ANSI-ize function definitions)
+                  25 Jan 2024 (Added HELP REMOTE STATUS)
+                  03 Feb 2024 (Added HELP REMOTE CWD)
 
   This module contains HELP command and other long text strings.
 
@@ -7524,6 +7526,8 @@ case XXPURGE:
     return(hmsg("  RTYPE is a short form of REMOTE TYPE."));
   case XXRWHO:
     return(hmsg("  RWHO is a short form of REMOTE WHO."));
+  case XXRCDUP:
+    return(hmsg("  RCDUP is a short forms of REMOTE CDUP."));
 #endif /* NOXFER */
 
   case XXSCRN:
@@ -15002,6 +15006,24 @@ case XZXIT:
     return(hmsg("Syntax: REMOTE EXIT\n\
   Asks the Kermit server to exit.  Synonym: REXIT."));
 #endif /* NEWFTP */
+
+case XZSTA:
+    return(hmsg("Syntax: REMOTE STATUS\n\
+  Asks the remote Kermit server for information about itself.  Typically\n\
+  this would include the name and version of Kermit program,the underlying\n\
+  hardware/architecture, operating system, current directory, and the\n\
+  details of the most recent file transfer (if any)."));
+
+case XZCDU:
+#ifdef NEWFTP
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit or FTP server to change its working directory to\n\
+  the directory above it.  Synonym: RCDUP."));
+#else
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit server to change its working directory to the directory\n\
+  above it.  Synonym: RCDUP."));
+#endif  /* NEWFTP */
 
 default:
     if ((x = cmcfm()) < 0) return(x);

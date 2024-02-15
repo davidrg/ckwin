@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "16 Sep 2023"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20230916"          /* Keep them in sync */
-/* Sat Sep 16 15:16:18 2023 */
+#define EDITDATE  "06 Feb 2024"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20240206"          /* Keep them in sync */
+/* Tue Feb  6 11:41:35 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -40,7 +40,7 @@ If the version number has changed, also:
 */
 #include "ckcdeb.h"                     /* Debug & other symbols */
 
-char * ck_cryear = "2023"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2024"; 		/* C-Kermit copyright year */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
@@ -81,6 +81,7 @@ char *buildid = EDITNDATE;		/* See top */
 static char sccsid[] = "@(#)C-Kermit 10.0";
 #endif /* UNIX */
 
+int offtsize = 0;                       /* Size of OFF_T */
 /*
   As of C-Kermit 10.0, we no longer use major.minor.edit version number,
   just major.minor.
@@ -103,9 +104,9 @@ static char sccsid[] = "@(#)C-Kermit 10.0";
   Macintosh), just C-Kermit for each platform (except the original Mac).
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "407";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.407";           /* eXtended version string */
-long  ck_l_ver = 1000407L;              /* C-Kermit version number */
+char *ck_s_edit = "408";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.408";           /* eXtended version string */
+long  ck_l_ver = 1000408L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
@@ -3044,6 +3045,20 @@ MAINNAME( argc, argv ) int argc; char **argv;
     if (unbuf)
       setbuf(stdout,NULL);
 #endif	/* UNIX */
+
+    {                      /* Get OFF_T size for printf - fdc 06 Jan 2024 */
+        extern int offtsize; /* MUST be executed, which is why it's here */
+        short x1 = 1;
+        int x2 = 2;
+        long x3 = 3;
+        CK_OFF_T x4 = 4;
+        debug(F101,"sizeof short","",sizeof(x1));
+        debug(F101,"sizeof int","",sizeof(x2));
+        debug(F101,"sizeof long","",sizeof(x3));
+        debug(F101,"sizeof CK_OFF_T","",sizeof(x4));
+        offtsize = x4;
+        debug(F101,"main offtsize","",offtsize);
+    }
 
 /* Do some initialization */
 
