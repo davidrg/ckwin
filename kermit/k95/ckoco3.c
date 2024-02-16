@@ -629,16 +629,36 @@ static int f_pushed = 0, c_pushed = 0, f_popped = 0;
 
 int sgrcolors = TRUE;                   /* Process SGR Color Commands */
 
+/*
+ * The numbers below are 3-bit colour codes for the OS/2 console
+ *    +---+---+---+
+ *    | R | G | B |
+ *    +---+---+---+
+ *      1   0   0    = 4, Red
+ * See the comment in ckocon.h near swapcolors for a full description.
+ */
 static
 unsigned char sgrcols[8] = {
-/* Black   */ 0,
-/* Red     */ 4,
-/* Green   */ 2,
-/* Brown   */ 6,
-/* Blue    */ 1,
-/* Magenta */ 5,
-/* Cyan    */ 3,
-/* White   */ 7
+/* Black   */ 0,    /* 0 (index) */
+/* Red     */ 4,    /* 1 */
+/* Green   */ 2,    /* 2 */
+/* Brown   */ 6,    /* 3 */
+/* Blue    */ 1,    /* 4 */
+/* Magenta */ 5,    /* 5 */
+/* Cyan    */ 3,    /* 6 */
+/* White   */ 7     /* 7 */
+};
+
+/* Map colour code (table above) back to SGR Index */
+static unsigned char sgrindex[8] = {
+    0,
+    4,
+    2,
+    6,
+    1,
+    5,
+    3,
+    7
 };
 
 #ifdef COMMENT
