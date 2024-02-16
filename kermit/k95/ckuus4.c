@@ -4138,6 +4138,7 @@ debopn(s,disp) char *s; int disp;
         debug(F100,ckxsys,"",0);
 #endif /* OS2 */
 #endif /* MAC */
+
 #ifdef CK_UTSNAME
         if (unm_mch[0]) {
             debug(F110,"uname machine",unm_mch,0);
@@ -13270,7 +13271,7 @@ char *                                  /* Evaluate builtin variable */
 #endif /* NODIAL */
 #ifndef NOKVERBS                        /* Keyboard macro material */
     extern int keymac, keymacx;
-#endif /* NOKVERBS */
+#endif  /* NOKVERBS */
 #ifdef CK_LOGIN
     extern int isguest;
 #endif /* CK_LOGIN */

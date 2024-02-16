@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 10.0.280, 21 Jun 2023";
+char *ckftpv = "FTP Client, 10.0.281, 18 Sep 2023";
 
 /*
   Authors:
@@ -987,9 +987,9 @@ char * ftp_apw = NULL;			/* Anonymous password */
   Jeff Altman says to use sighandler_t, which is ok on Ubuntu but 
   not on (say) NetBSD.  So I can't do this:
 
-    #ifndef sig_t
-    #define sig_t sighandler_t
-    #endif
+#ifndef sig_t
+#define sig_t sighandler_t
+#endif
 
   I think the only alternative is to leave my_sig_t undefined and then
   see who squawks.  Since the previous 'my_sig_t' definition apparently

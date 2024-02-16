@@ -528,6 +528,7 @@ set ZINCBUILD=ow19
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 
 REM For openwatcom we have to use its nmake clone
@@ -545,6 +546,7 @@ set CKF_SUPERLAT=unsupported
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 goto :semisupported
 
@@ -554,6 +556,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 goto :cvcdone
 
@@ -564,6 +567,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 goto :cvcdone
 
 :vc2
@@ -575,6 +579,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
@@ -591,6 +596,7 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc

@@ -1,4 +1,4 @@
-char *cknetv = "Network support, 10.0.303, 15 Apr 2023";
+char *cknetv = "Network support, 10.0.304, 18 Sep 2023";
 
 /*  C K C N E T  --  Network support  */
 
@@ -287,8 +287,8 @@ struct timezone {
 #ifdef __WATCOMC__
 /*
   WatcomC doesn't need errno.h
-  (definitions conflict with some previous definition
-  #include <errno.h>
+  (definitions conflict with some previous definition)
+#include <errno.h>
 */
 #else
 #include <errno.h>			/* Error number symbols */
@@ -5191,7 +5191,7 @@ netclos() {
     int x = 0;
 #ifdef VMS
     int y, z;
-#endif
+#endif /* VMS */
     debug(F101,"netclos","",ttyfd);
 
 #ifdef NETLEBUF
@@ -5556,7 +5556,7 @@ nettchk() {                             /* for reading from network */
                      &ucount
 #else
                      &count
- #endif /* NT */
+#endif /* NT */
                      ) < 0) {
         debug(F101,"nettchk socket_ioctl error","",socket_errno);
         /* If the connection is gone, the connection is gone. */

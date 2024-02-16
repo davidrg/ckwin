@@ -2,7 +2,7 @@
   ckcfnp.h, new to C-Kermit 10.0 as of 23 March 2023.
 
     Frank da Cruz
-    Most recent update: 27 June 2023 (locate_srv_dns())
+    Most recent update: 5 February 2024 (remove locate_srv_dns())
 
   Prototypes for functions that previously were not prototyped.
   Used only for ANSI-C builds in which __STDC__ is defined.
@@ -324,11 +324,6 @@ int isword( int );
 int keepalive( int, int );
 int litcmd( char **, char **dest, int );
 int lkup( char * );
-#ifndef NOLOCAL
-#ifndef NOTCPIP
-int locate_srv_dns( char *, char *, char *, struct sockaddr **, int * );
-#endif /* NOTCPIP */
-#endif /* NOLOCAL */
 int locate_txt_rr( char *, char *, char ** );
 int lookup( struct keytab [], char *, int, int * );
 int makebuf( int, int, CHAR [], struct pktinfo * );
