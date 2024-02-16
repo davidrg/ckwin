@@ -50,6 +50,7 @@ Windows NT for MIPS computers, though without TAPI support.
   public key, keyboard-interactive, password.
 * Binaries are now provided for Windows NT running on Alpha, MIPS and PowerPC
   systems.
+* Upgraded to C-Kermit 10.0 Pre-Beta.11
 
 ### Source Changes
 
