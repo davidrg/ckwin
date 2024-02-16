@@ -311,10 +311,16 @@ typedef struct videobuffer_struct {
 
 /* Video Buffer IDs */
 #define VCMD    0   /* command mode */
-#define VTERM   1   /* terminal mode */
-#define VCS     2   /* client-server mode */
-#define VSTATUS 3   /* Terminal Mode Status Line */
-#define VNUM    4   /* number of video modes */
+#define VTERM_A 1   /* terminal mode - normal */
+#define VTERM_B 2   /* terminal mode - alternate buffer */
+#define VCS     3   /* client-server mode */
+#define VSTATUS 4   /* Terminal Mode Status Line */
+#define VNUM    5   /* number of video modes */
+
+#define VTERM vterm_buffer
+extern int vterm_buffer;    /* ckuus7.c */
+
+#define IS_VTERM(m) (m == VTERM_A || m == VTERM_B)
 
 /* Escape-sequence parser state definitions. */
 /* For explanation, see ckucon.c, where this code is copied from. */
@@ -450,7 +456,7 @@ _PROTOTYP( BOOL IsOS2FullScreen, (void) ) ;
 _PROTOTYP( void SmoothScroll, (void) ) ;
 _PROTOTYP( void JumpScroll, (void ) ) ;
 
-
+_PROTOTYP( void   setVTermBuffer, ( BOOL ) );
 _PROTOTYP( APIRET VscrnSelect, ( BYTE, int ) ) ;
 _PROTOTYP( APIRET VscrnURL, ( BYTE, USHORT, USHORT       ) ) ;
 _PROTOTYP( APIRET CopyVscrnToKbdBuffer, ( BYTE, int ) ) ;
@@ -466,6 +472,7 @@ _PROTOTYP( bool   VscrnIsPopup, ( BYTE) ) ;
 _PROTOTYP( void   VscrnMark, ( BYTE, LONG, SHORT, SHORT ) ) ;
 _PROTOTYP( void   VscrnUnmark, ( BYTE, LONG, SHORT, SHORT ) ) ;
 _PROTOTYP( void   VscrnUnmarkAll, ( BYTE ) ) ;
+_PROTOTYP( void   VscrnForceFullUpdate, ( void ));
 _PROTOTYP( void   shovscrn, ( void ) ) ;
 _PROTOTYP( void   markdownone, ( BYTE ) ) ;
 _PROTOTYP( void   markupone, ( BYTE ) ) ;

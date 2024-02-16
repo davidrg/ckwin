@@ -2079,7 +2079,8 @@ sysinit() {
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
     VscrnInit( VCMD ) ;
-    VscrnInit( VTERM ) ;
+    VscrnInit( VTERM_A ) ;
+    VscrnInit( VTERM_B ) ;
     /* VscrnInit( VCS ) ; */
     VscrnInit( VSTATUS ) ;
     settermtype(tt_type,1);
@@ -7701,6 +7702,8 @@ congev( int vmode, int timo ) {
     ULONG timeout = 0;
     con_event evt ;
     int tt,tr,interval,i ;
+
+    debug(F111, "congev", "vmode", vmode);
 
 #ifdef IKSD
     if ( inserver ) {

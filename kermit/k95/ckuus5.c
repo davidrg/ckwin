@@ -6035,6 +6035,7 @@ shotrm() {
     extern int wy_autopage, autoscroll, sgrcolors, colorreset, user_erasemode,
       decscnm, decscnm_usr, tt_diff_upd, tt_senddata,
       wy_blockend, marginbell, marginbellcol, tt_modechg, dgunix;
+    extern BOOL alternate_buffer_enabled;
     int lines = 0;
 #ifdef KUI
     extern CKFLOAT tt_linespacing[];
@@ -6255,7 +6256,10 @@ shotrm() {
     printf(" %19s: %-13s  %13s: %-15s\n","Debug",
            showoff(debses),"Session log", seslog? sesfil : "(none)" );
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-
+    printf(" %19s: %-13s\n","Alternate Buffer",
+           alternate_buffer_enabled ? ( VTERM == VTERM_B ? "enabled, active" : "enabled")
+                                    : (VTERM == VTERM_B ? "disabled, active" : "disabled"));
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     /* Display colors (should become SHOW COLORS) */
     {
         USHORT row, col;

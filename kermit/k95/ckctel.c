@@ -4808,10 +4808,15 @@ tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #ifndef NOLOCAL
                       if (tcp_incoming) {
 #ifdef OS2
-                          tt_cols[VTERM] = w;
-                          tt_rows[VTERM] = h;
-                          VscrnSetWidth(VTERM, w);
-                          VscrnSetHeight(VTERM, h+(tt_status[VTERM]?1:0));
+                          tt_cols[VTERM_A] = w;
+                          tt_rows[VTERM_A] = h;
+                          VscrnSetWidth(VTERM_A, w);
+                          VscrnSetHeight(VTERM_A, h+(tt_status[VTERM_A]?1:0));
+
+                          tt_cols[VTERM_B] = w;
+                          tt_rows[VTERM_B] = h;
+                          VscrnSetWidth(VTERM_B, w);
+                          VscrnSetHeight(VTERM_B, h+(tt_status[VTERM_B]?1:0));
 #else /* OS2 */
                           tt_cols = w;
                           tt_rows = h;

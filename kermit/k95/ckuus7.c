@@ -921,6 +921,7 @@ int nfntab = (sizeof(fntab) / sizeof(struct keytab));
 /* Terminal parameters table */
 static struct keytab trmtab[] = {
 #ifdef OS2
+    { "alternate-buffer", XYTALTBUF, 0 },
     { "answerback",    XYTANS,    0 },
 #endif /* OS2 */
 #ifdef CK_APC
@@ -1141,6 +1142,14 @@ struct keytab graphsettab[] = {  /* DEC VT Graphic Sets */
     { "keyboard", TT_GR_KBD, 0 }
 };
 int ngraphset = (sizeof(graphsettab) / sizeof(struct keytab));
+
+struct keytab altbufktab[] = {		/* Set TERM ALTERNATE-BUFFER */
+        { "active",    AB_ACTIVE,   CM_INV},
+        { "disabled",  AB_DISABLED, 0 },
+        { "enabled",   AB_ENABLED,  0 },
+        { "inactive",  AB_INACTIVE, CM_INV }
+};
+int naltbuf = (sizeof(altbufktab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 struct keytab adltab[] = {              /* Autodownload Options */
@@ -1358,9 +1367,9 @@ int tt_cursor_usr = 0;                  /* Users Terminal cursor type */
 int tt_cursorena_usr = 1;               /* Users Terminal cursor enabled */
 int tt_cursor_blink = 1;                /* Terminal Cursor Blink */
 int tt_answer = 0;                      /* Terminal answerback (disabled) */
-int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
-int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
-int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
+int tt_scrsize[VNUM] = {512,512,24,512,1}; /* Terminal scrollback buffer size */
+int tt_roll[VNUM] = {1,1,1,1,1};          /* Terminal roll (on) */
+int tt_rkeys[VNUM] = {1,1,1,1,1};		/* Terminal roll keys (send) */
 int tt_pacing = 0;                      /* Terminal output-pacing (none) */
 int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
@@ -1368,22 +1377,24 @@ int tt_update = 100;                    /* Terminal screen-update interval */
 int tt_updmode = TTU_FAST;              /* Terminal screen-update mode FAST */
 extern int updmode;
 #ifndef KUI
-int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
-int tt_status_usr[VNUM] = {1,1,0,0};
+int tt_status[VNUM] = {1,1,1,0,0};        /* Terminal status line displayed */
+int tt_status_usr[VNUM] = {1,1,1,0,0};
 #else  /* KUI */
 extern CKFLOAT floatval;
-CKFLOAT tt_linespacing[VNUM] = {1.0,1.0,1.0,1.0};
+CKFLOAT tt_linespacing[VNUM] = {1.0,1.0,1.0,1.0,1.0};
 #ifdef K95G
-int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
-int tt_status_usr[VNUM] = {1,1,0,0};
+int tt_status[VNUM] = {1,1,1,0,0};        /* Terminal status line displayed */
+int tt_status_usr[VNUM] = {1,1,1,0,0};
 #else /* K95G */
-int tt_status[VNUM] = {0,0,0,0};        /* Terminal status line displayed */
-int tt_status_usr[VNUM] = {0,0,0,0};
+int tt_status[VNUM] = {0,0,0,0,0};        /* Terminal status line displayed */
+int tt_status_usr[VNUM] = {0,0,0,0,0};
 #endif /* K95G */
 #endif /* KUI */
 int tt_senddata = 0;                    /* Let host read terminal data */
 extern int wy_blockend;                 /* Terminal Send Data EOB type */
 int tt_hidattr = 1;                     /* Attributes are hidden */
+int vterm_buffer = VTERM_A;             /* Which buffer VTERM is right now (normal or alternate) */
+BOOL alternate_buffer_enabled = TRUE;   /* If the alternate screen buffer is enabled */
 
 extern unsigned char colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
@@ -4422,8 +4433,10 @@ settrm() {
                 return(-9);
                 break;
             }
-            scrninitialized[VTERM] = 0;
-            VscrnInit(VTERM);
+            scrninitialized[VTERM_A] = 0;
+            VscrnInit(VTERM_A);
+            scrninitialized[VTERM_B] = 0;
+            VscrnInit(VTERM_B);
         }
         return(success = 1);
 
@@ -4500,8 +4513,9 @@ settrm() {
             return(success = 0);
         }
         if ((y = cmcfm()) < 0) return(y);
-        tt_scrsize[VTERM] = x;
-        VscrnInit(VTERM);
+        /* The alternate buffer (VTERM_B) doesn't get scrollback */
+        tt_scrsize[VTERM_A] = x;
+        VscrnInit(VTERM_A);
         return(success = 1);
 #endif /* OS2 */
 
@@ -4731,6 +4745,30 @@ settrm() {
         return(success = 1);
 
 #ifdef OS2
+      case XYTALTBUF: {                 /* SET TERMINAL ALTERNATE-BUFFER */
+          if ((x = cmkey(altbufktab,naltbuf,"Alternate Buffer setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+          switch(x) {
+            case AB_DISABLED:
+              alternate_buffer_enabled = FALSE;
+              break;
+            case AB_ENABLED:
+              alternate_buffer_enabled = TRUE;
+              break;
+            case AB_INACTIVE: {
+                vterm_buffer = VTERM_A;
+              }
+              break;
+            case AB_ACTIVE: {
+                vterm_buffer = VTERM_B;
+              }
+              break;
+          }
+        }
+        return(success = 1);
+        break;
       case XYTANS: {                    /* SET TERMINAL ANSWERBACK */
 /*
   NOTE: We let them enable and disable the answerback sequence, but we
@@ -5217,9 +5255,13 @@ settrm() {
                   SetCols(VCMD);
                   cmd_rows = y;
 
-                  tt_szchng[VTERM] = 2 ;
-                  tt_rows[VTERM] = pheight - (tt_status[VTERM]?1:0);
-                  VscrnInit(VTERM);
+                  tt_szchng[VTERM_A] = 2 ;
+                  tt_rows[VTERM_A] = pheight - (tt_status[VTERM_A]?1:0);
+                  VscrnInit(VTERM_A);
+
+                  tt_szchng[VTERM_B] = 2 ;
+                  tt_rows[VTERM_B] = pheight - (tt_status[VTERM_B]?1:0);
+                  VscrnInit(VTERM_B);
 
                   break;
 
@@ -5255,11 +5297,17 @@ settrm() {
                   cmd_rows = y;
                   cmd_cols = 80;
 
-                  marginbot = y-(tt_status[VTERM]?1:0);
-                  tt_szchng[VTERM] = 2;
-                  tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
-                  tt_cols[VTERM] = 80;
-                  VscrnInit(VTERM);
+                  marginbot = y-(tt_status[VTERM_A]?1:0);
+                  tt_szchng[VTERM_A] = 2;
+                  tt_rows[VTERM_A] = y - (tt_status[VTERM_A]?1:0);
+                  tt_cols[VTERM_A] = 80;
+                  VscrnInit(VTERM_A);
+
+                  marginbot = y-(tt_status[VTERM_B]?1:0);
+                  tt_szchng[VTERM_B] = 2;
+                  tt_rows[VTERM_B] = y - (tt_status[VTERM_B]?1:0);
+                  tt_cols[VTERM_B] = 80;
+                  VscrnInit(VTERM_B);
                   break;
               }
               tt_modechg = x;
@@ -5273,19 +5321,24 @@ settrm() {
           extern int marginbot;
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
           if ((x = cmcfm()) < 0) return(x);
-          if (y != tt_status[VTERM] || y != tt_status_usr[VTERM]) {
+          if (y != tt_status[VTERM_A] || y != tt_status_usr[VTERM_A]) {
               /* Might need to fixup the margins */
-              if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
+              if ( marginbot == VscrnGetHeight(VTERM_A)-(tt_status[VTERM_A]?1:0) )
                 if (y) {
                     marginbot--;
                 } else {
                     marginbot++;
                 }
-              tt_status_usr[VTERM] = tt_status[VTERM] = y;
+              tt_status_usr[VTERM_A] = tt_status[VTERM_A] = y;
+              tt_status_usr[VTERM_B] = tt_status[VTERM_B] = y;
               if (y) {
-                    tt_szchng[VTERM] = 2;
-                    tt_rows[VTERM]--;
-                    VscrnInit(VTERM);  /* Height set here */
+                    tt_szchng[VTERM_A] = 2;
+                    tt_rows[VTERM_A]--;
+                    VscrnInit(VTERM_A);  /* Height set here */
+
+                    tt_szchng[VTERM_B] = 2;
+                    tt_rows[VTERM_B]--;
+                    VscrnInit(VTERM_B);  /* Height set here */
 #ifdef TNCODE
                     if (TELOPT_ME(TELOPT_NAWS))
                       tn_snaws();
@@ -5299,9 +5352,13 @@ settrm() {
                       ssh_snaws();
 #endif /* SSHBUILTIN */
               } else {
-                  tt_szchng[VTERM] = 1;
-                  tt_rows[VTERM]++;
-                  VscrnInit(VTERM);     /* Height set here */
+                  tt_szchng[VTERM_A] = 1;
+                  tt_rows[VTERM_A]++;
+                  VscrnInit(VTERM_A);     /* Height set here */
+
+                  tt_szchng[VTERM_B] = 1;
+                  tt_rows[VTERM_B]++;
+                  VscrnInit(VTERM_B);     /* Height set here */
 #ifdef TNCODE
                   if (TELOPT_ME(TELOPT_NAWS))
                     tn_snaws();

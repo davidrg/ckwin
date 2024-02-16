@@ -219,6 +219,8 @@ extern int beepfreq, beeptime ;
 extern int pwidth, pheight;
 extern int win95lucida, win95hsl;
 
+extern BOOL alternate_buffer_enabled; /* ckuus7.c */
+
 /*
  * =============================variables==============================
  */
@@ -261,7 +263,8 @@ int trueitalic    = FALSE ;
 #endif /* KUI */
 
 enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
-                                                notmarking, notmarking} ;
+                                     notmarking, notmarking,
+                                     notmarking} ;
 
 extern int tn_bold;                     /* TELNET negotiation bold */
 extern int esc_exit;                    /* Escape back = exit */
@@ -297,8 +300,8 @@ extern char * keydefptr;
 extern int keymac;
 extern int keymacx ;
 
-bool scrollstatus[VNUM] = {FALSE,FALSE,FALSE,FALSE} ;
-bool escapestatus[VNUM] = {FALSE,FALSE,FALSE,FALSE} ;
+bool scrollstatus[VNUM] = {FALSE,FALSE,FALSE,FALSE,FALSE} ;
+bool escapestatus[VNUM] = {FALSE,FALSE,FALSE,FALSE,FALSE} ;
 extern int tt_idlelimit;                /* Auto-exit Connect when idle */
 extern int tt_timelimit;                /* Auto-exit Connect after time */
 extern bool flipscrnflag[] ;
@@ -315,22 +318,25 @@ extern ascreen mousescreen; /* Screen during mouse actions */
 extern unsigned char                    /* Video attribute bytes */
     attribute=NUL,                      /* Current video attribute byte */
     underlineattribute=NUL,
-    savedattribute[VNUM]={0,0,0,0},       /* Saved video attribute byte */
-    saveddefaultattribute[VNUM]={0,0,0,0},/* Saved video attribute byte */
-    savedunderlineattribute[VNUM]={0,0,0,0},/* Saved video attribute byte */
+    savedattribute[VNUM]={0,0,0,0,0},       /* Saved video attribute byte */
+    saveddefaultattribute[VNUM]={0,0,0,0,0},/* Saved video attribute byte */
+    savedunderlineattribute[VNUM]={0,0,0,0,0},/* Saved video attribute byte */
     defaultattribute=NUL,               /* Default video attribute byte */
     italicattribute=NUL,                /* Default video attribute byte */
-    saveditalicattribute[VNUM]={0,0,0,0},
+    saveditalicattribute[VNUM]={0,0,0,0,0},
     reverseattribute=NUL,
-    savedreverseattribute[VNUM]={0,0,0,0},
+    savedreverseattribute[VNUM]={0,0,0,0,0},
     graphicattribute=NUL,
-    savedgraphicattribute[VNUM]={0,0,0,0},
+    savedgraphicattribute[VNUM]={0,0,0,0,0},
     borderattribute=NUL,
-    savedborderattribute[VNUM]={0,0,0,0};
+    savedborderattribute[VNUM]={0,0,0,0,0};
 
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
-         savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-                            {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}},
+         savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0}},
          cmdattrib={0,0,0,0,0,0,0,0,0,0};
 
 extern int wherex[];                    /* Screen column, 1-based */
@@ -379,9 +385,9 @@ struct _vtG *GL = &G[0], *SSGL = NULL;   /* GL and single shift GL */
 struct _vtG *GR = &G[2];                 /* GR */
 struct _vtG *GNOW = &G[0];
 struct _vtG savedG[VNUM][4];
-struct _vtG *savedGL[VNUM] = {NULL,NULL,NULL,NULL},
-            *savedGR[VNUM] = {NULL,NULL,NULL,NULL},
-            *savedSSGL[VNUM] = {NULL,NULL,NULL,NULL} ;
+struct _vtG *savedGL[VNUM] = {NULL,NULL,NULL,NULL,NULL},
+            *savedGR[VNUM] = {NULL,NULL,NULL,NULL,NULL},
+            *savedSSGL[VNUM] = {NULL,NULL,NULL,NULL,NULL} ;
 static int  Qsaved = FALSE;              /* QANSI charset shifts */
 struct _vtG QsavedG[4],
             *QsavedGL = NULL,
@@ -406,11 +412,11 @@ bool     relcursor = FALSE;
 bool     keylock   = FALSE;
 bool     vt52graphics = FALSE;
 
-bool     saverelcursor[VNUM]={FALSE,FALSE,FALSE,FALSE},
-         saved[VNUM]={FALSE,FALSE,FALSE,FALSE};
-int      savedwrap[VNUM]={FALSE,FALSE,FALSE,FALSE} ;
-int      savedrow[VNUM] = {0,0,0,0};
-int      savedcol[VNUM] = {0,0,0,0};
+bool     saverelcursor[VNUM]={FALSE,FALSE,FALSE,FALSE,FALSE},
+         saved[VNUM]={FALSE,FALSE,FALSE,FALSE,FALSE};
+int      savedwrap[VNUM]={FALSE,FALSE,FALSE,FALSE,FALSE} ;
+int      savedrow[VNUM] = {0,0,0,0,0};
+int      savedcol[VNUM] = {0,0,0,0,0};
 
 bool     deccolm = FALSE;               /* 80/132-column mode */
 bool     decscnm = FALSE;               /* Normal/reverse screen mode */
@@ -555,7 +561,7 @@ extern int tt_roll[];                   /* Scrollback style */
 extern int tt_rows[];                   /* Screen rows */
 extern int tt_cols[];                   /* Screen columns */
        int tt_cols_usr = 80;            /* User default screen width */
-int tt_szchng[VNUM] = {1,1,1,0}; /* Screen Size Changed */
+int tt_szchng[VNUM] = {1,1,1,1,0}; /* Screen Size Changed */
 extern int cmd_rows;                    /* Screen rows */
 extern int cmd_cols;                    /* Screen columns */
 extern int tt_ctstmo;                   /* CTS timeout */
@@ -3951,7 +3957,8 @@ geterasecolor( int vmode )
             break;
         }
         /* else fall through and act as VTERM */
-    case VTERM:
+    case VTERM_A:
+    case VTERM_B:
         if ( erasemode == 0 ) {
             erasecolor = attribute ;
         }
@@ -6010,6 +6017,11 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     debug(F111,"doreset","x",x);
 
+    if (vmode == VTERM_B) {
+        vterm_buffer = VTERM_A;
+        vmode = VTERM_A;
+    }
+
     tt_type_mode = tt_type ;
 
     attribute = defaultattribute = colornormal; /* Normal colors */
@@ -6267,6 +6279,29 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 #endif /* CKLEARN */
 
     VscrnIsDirty(VTERM) ;
+}
+
+void setVTermBuffer(BOOL alternate) {
+    int nmode, omode;
+
+    if (!IS_VTERM(vmode)) {
+        /* We're in VCMD or something else. Don't do anything */
+        return;
+    }
+
+    nmode = alternate && alternate_buffer_enabled ? VTERM_B : VTERM_A;
+    omode = vmode;
+
+    if (omode == nmode) {
+        return; /* Already in the requested buffer - nothing to do */
+    }
+
+    vterm_buffer = nmode;
+
+    vmode = VTERM ;  /* VTERM is a #define for vterm_buffer */
+    VscrnIsDirty(omode);
+    VscrnForceFullUpdate();
+    VscrnIsDirty(VTERM);
 }
 
 
@@ -8251,12 +8286,13 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
 
         switch (k) {                    /* Common Kermit actions first ... */
         case K_EXIT:  /* \Kexit: */
-            if ( mode == VTERM ) {
+            if ( IS_VTERM(mode) ) {
                 if ( markmodeflag[mode] != notmarking ) {
                     markmode(mode,k);
                 }
-                else if ( tt_escape )
-                    SetConnectMode(FALSE,CSX_ESCAPE);/*   Exit from terminal emulator */
+                else if ( tt_escape ) {
+                    SetConnectMode(FALSE, CSX_ESCAPE);/*   Exit from terminal emulator */
+                }
             }
             else if ((mode == VCMD) && !(what & W_XFER)) {
                 if (
@@ -8280,7 +8316,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                 markmode(mode,k);
                 /* return ; */
             }
-            if ( mode == VTERM ) {
+            if ( IS_VTERM(mode) ) {
                 quitnow = 1;
                 strcpy(termessage, "Hangup and quit.\n");
                 SetConnectMode(0,CSX_USERDISC);
@@ -8292,7 +8328,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             return;
 
         case K_BREAK:                 /* \Kbreak */
-            if (mode == VTERM && !kbdlocked()) {
+            if (( IS_VTERM(mode) ) && !kbdlocked()) {
                 int iosav = term_io;
                 term_io = FALSE;
                 msleep(750);               /* Allow term thread to notice */
@@ -8304,7 +8340,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             os2push(); 
             return;                   /*   Push to system */
         case K_RESET:                 /* \Kreset */
-            if ( mode == VTERM )
+            if ( IS_VTERM(mode) )
               doreset(1); 
             return;         /*   Reset terminal emulator */
         case K_HELP: {        /* \Khelp */
@@ -8343,7 +8379,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
               return;   /*   Pop-up help message */
           }
           case K_PRTCTRL:               /* \Kprtscn,\Kprtctrl */
-            if ( mode == VTERM )
+            if ( IS_VTERM(mode) )
               if ( xprint ) {               /*   Toggle Printer Ctrl mode on/off */
                   xprint = FALSE;         /*   It's on, turn it off */
                   if ( !cprint && !aprint )
@@ -8356,7 +8392,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
               }
             return;
         case K_PRTAUTO:               /* \Kprtauto */
-            if ( mode == VTERM )
+            if ( IS_VTERM(mode) )
               if ( aprint ) {         /*   Toggle printer auto mode on/off */
                   setaprint(FALSE);   /*   It's on, turn it off */
                   if ( !cprint && !xprint )
@@ -8369,7 +8405,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
               }
             return;
         case K_PRTCOPY:               /* \Kprtcopy */
-            if ( mode == VTERM )
+            if ( IS_VTERM(mode) )
               if ( cprint ) {     /*   Toggle printer copy mode on/off */
                   cprint = FALSE;         /*   It's on, turn it off */
                   if ( !aprint && !xprint )
@@ -8408,13 +8444,13 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             }
             return;
         case K_NULL:                  /* \Knull */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 sendcharduplex('\0',TRUE); 
             return; /*   Send a NUL */
           case K_LBREAK:                /* \Klbreak: */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 ttsndlb(); 
@@ -8443,7 +8479,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             }
             return;
         case K_ANSWERBACK:
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
                 sendcharsduplex(answerback,strlen(answerback), FALSE) ;
             return ;
@@ -8452,49 +8488,49 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
 #ifdef NETCONN
 #ifdef TCPSOCKET
         case K_TN_SAK:
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_SAK);
             return;
         case K_TN_GA:                /* TELNET Go Ahead */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_GA);
             return;
         case K_TN_AO:                /* TELNET Abort Output */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_AO);
             return;
         case K_TN_EL:                /* TELNET Erase Line */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_EL);
             return;
         case K_TN_EC:                /* TELNET Erase Character */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_EC);
             return;
         case K_TN_AYT:                /* TELNET Are You There */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_AYT);
             return;
         case K_TN_IP:                 /* TELNET Interrupt Process */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
               if ( !kbdlocked() )
                 do_tn_cmd((CHAR) TN_IP);
             return;
         case K_TN_LOGOUT:             /* TELNET LOGOUT */
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
                 if ( !kbdlocked() ) {
                     tn_sopt(DO,TELOPT_LOGOUT);
@@ -8503,7 +8539,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             return;
         case K_TN_NAWS:               /* TELNET NAWS - Send Window Size */
 #ifdef  CK_NAWS
-            if ( mode == VTERM ||
+            if ( IS_VTERM(mode) ||
                  mode == VCMD && activecmd == XXOUT )
                 if ( !kbdlocked() ) {
                     TELOPT_SB(TELOPT_NAWS).naws.x = 0;
@@ -8615,12 +8651,12 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             return ;
 
         case K_TERMTYPE:                /* Toggle Terminal Type */
-            if ( mode == VTERM )
+            if ( IS_VTERM(mode) )
                   settermtype((tt_type+1)%(TT_MAX+1), 0);
             return ;
 
         case K_STATUS:          /* Toggle Status-Line Type */
-            if ( mode == VTERM )
+            if ( IS_VTERM(mode) )
                 setdecssdt((decssdt+1)%3);
             return ;
 
@@ -8659,7 +8695,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             return ;
 
         case K_FNKEYS:                  /* Display Function Key Labels */
-            if ( mode == VTERM ) {
+            if ( IS_VTERM(mode) ) {
                 fkeypopup(mode);
             }
             return;
@@ -8744,7 +8780,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
 #endif /* OS2MOUSE */
 
     if ( !kbdlocked() ) {
-        if ( mode == VTERM ||
+        if ( IS_VTERM(mode) ||
              mode == VCMD && activecmd == XXOUT ) {
             if (k >= K_ARR_MIN && k <= K_ARR_MAX) {
                 if ( ISDG200( tt_type_mode ) ) {
@@ -9266,7 +9302,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             return;
         }
 
-        if ( mode == VTERM ) {
+        if ( IS_VTERM(mode) ) {
             if (k == K_KB_HEB) {            /* Hebrew keyboard support... */
                 if ( tt_kb_mode == KBM_HE )
                     set_kb_mode(KBM_EN) ;
@@ -9514,8 +9550,8 @@ void
 markmode( BYTE vmode, int k )
 {
 #ifndef NOKVERBS
-    static int rollstate[VNUM]={0,0,0,0},
-               scrollstate[VNUM]={0,0,0,0};
+    static int rollstate[VNUM]={0,0,0,0,0},
+               scrollstate[VNUM]={0,0,0,0,0};
     static KEY savekeys[8]={0,0,0,0,0,0,0,0};
     static MACRO savemacros[8]={0,0,0,0,0,0,0,0};
     con_event evt ;
@@ -12022,7 +12058,8 @@ line25(int vmode) {
     }
 
     switch ( vmode ) {
-    case VTERM: {
+    case VTERM_A:
+    case VTERM_B: {
         /* Default Status line field sizes
          * Range	Field     	Length
          * ------   ----------- ---------------------
@@ -12196,20 +12233,25 @@ esc25(int h) {
 void
 settermstatus( int y )
 {
-    if ( y != tt_status[VTERM] ) {
+    if ( y != tt_status[VTERM_A] ) {
         /* might need to fixup the margins */
-        if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
+        if ( marginbot == VscrnGetHeight(VTERM_A)-(tt_status[VTERM_A]?1:0) )
             if ( y ) {
                 marginbot-- ;
             }
             else {
                 marginbot++ ;
             }
-        tt_status[VTERM] = y;
+        tt_status[VTERM_A] = y;
+        tt_status[VTERM_B] = y;
         if ( y ){
-            tt_szchng[VTERM] = 2 ;
-            tt_rows[VTERM]--;
-            VscrnInit( VTERM ) ;  /* Height set here */
+            tt_szchng[VTERM_A] = 2 ;
+            tt_rows[VTERM_A]--;
+            VscrnInit( VTERM_A ) ;  /* Height set here */
+
+            tt_szchng[VTERM_B] = 2 ;
+            tt_rows[VTERM_B]--;
+            VscrnInit( VTERM_B ) ;  /* Height set here */
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
             if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
@@ -12225,9 +12267,13 @@ settermstatus( int y )
 #endif /* TCPSOCKET */
         }
         else {
-            tt_szchng[VTERM] = 1 ;
-            tt_rows[VTERM]++;
-            VscrnInit( VTERM ) ;  /* Height set here */
+            tt_szchng[VTERM_A] = 1 ;
+            tt_rows[VTERM_A]++;
+            VscrnInit( VTERM_A ) ;  /* Height set here */
+
+            tt_szchng[VTERM_B] = 1 ;
+            tt_rows[VTERM_B]++;
+            VscrnInit( VTERM_B ) ;  /* Height set here */
 #ifdef TCPSOCKET
 #ifdef CK_NAWS
             if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
@@ -12307,7 +12353,7 @@ settermtype( int x, int prompts )
     static int savrvatt = 0;            /* Reverse attribute */
     static int savblatt = 0;            /* Blink attribute */
     static int savcmask = 0;            /* For saving terminal bytesize */
-    static int savedGset[VNUM] = {FALSE,FALSE,FALSE,FALSE};
+    static int savedGset[VNUM] = {FALSE,FALSE,FALSE,FALSE,FALSE};
 #ifndef KUI
     static int savstatus = TRUE ;
 #else
@@ -12331,9 +12377,13 @@ settermtype( int x, int prompts )
         savcolor = 0;
         savgrcol = 0 ;
         savulcol = 0 ;
-        scrninitialized[VTERM] = 0;
-        tt_status_usr[VTERM] = savstatus ;
-        settermstatus(tt_status_usr[VTERM]) ;
+        scrninitialized[VTERM_A] = 0;
+        tt_status_usr[VTERM_A] = savstatus ;
+        settermstatus(tt_status_usr[VTERM_A]) ;
+
+        scrninitialized[VTERM_B] = 0;
+        tt_status_usr[VTERM_B] = savstatus ;
+        settermstatus(tt_status_usr[VTERM_B]) ;
     }
 
     if (savcmask) {             /* Restore terminal bytesize */
@@ -12346,10 +12396,10 @@ settermtype( int x, int prompts )
         fcharset = savfcs;
         savtcsl = -1;
     }
-    if ( savedGset[VTERM] ) {
+    if ( savedGset[VTERM_A] ) {
         for ( i = 0 ; i < 4 ; i++ )
-            G[i] = savedG[VTERM][i] ;
-        savedGset[VTERM] = FALSE ;
+            G[i] = savedG[VTERM_A][i] ;
+        savedGset[VTERM_A] = FALSE ;
     }
 #ifdef COMMENT
     if (savcp > 0) {            /* Restore code page */
@@ -12386,15 +12436,19 @@ settermtype( int x, int prompts )
                 colorreset = FALSE ;
             else
                 colorreset = TRUE ;     /* Turn Reset color mode on */
-            scrninitialized[VTERM] = 0; /* To make it take effect */
+            scrninitialized[VTERM_A] = 0; /* To make it take effect */
+            scrninitialized[VTERM_B] = 0; /* To make it take effect */
 
             savstatus = tt_status_usr[VTERM] ;
             if ( ISUNIXCON(tt_type) ) {
-                tt_status_usr[VTERM] = FALSE ;
-                settermstatus( tt_status_usr[VTERM] ) ;
+                tt_status_usr[VTERM_A] = FALSE ;
+                tt_status_usr[VTERM_B] = FALSE ;
+                settermstatus( tt_status_usr[VTERM_A] ) ;
+                settermstatus( tt_status_usr[VTERM_B] ) ;
             }
 
-            VscrnInit(VTERM);           /* Reinit the screen buffer */
+            VscrnInit(VTERM_A);           /* Reinit the screen buffer */
+            VscrnInit(VTERM_B);           /* Reinit the screen buffer */
 
             savcmask = cmask;           /* Go to 8 bits */
             cmask = 0xFF;
@@ -12489,7 +12543,7 @@ settermtype( int x, int prompts )
         for ( i = 0 ; i < 4 ; i++ ) {
             savedG[VTERM][i] = G[i] ;
         }
-        savedGset[VTERM] = TRUE ;
+        savedGset[VTERM_A] = TRUE ;
 
         G[0].def_designation = G[0].designation = TX_ASCII;
         G[0].init = TRUE;
@@ -12533,7 +12587,7 @@ settermtype( int x, int prompts )
             G[i].c1   = G[i].def_c1 = TRUE ;
             G[i].init = TRUE ;
         }
-        savedGset[VTERM] = TRUE ;
+        savedGset[VTERM_A] = TRUE ;
     }
     else if ( ISQNX(tt_type) ) {
         savcmask = cmask;               /* Go to 8 bits */
@@ -12545,7 +12599,7 @@ settermtype( int x, int prompts )
 
         /* Default Character-set is CP437 */
         for ( i = 0 ; i < 4 ; i++ ) {
-            savedG[VTERM][i] = G[i] ;
+            savedG[VTERM_A][i] = G[i] ;
         }
             G[0].designation = G[0].def_designation = TX_ASCII ;
             G[0].size = G[0].def_size = cs94 ;
@@ -12559,7 +12613,7 @@ settermtype( int x, int prompts )
                 G[i].c1   = G[i].def_c1 = TRUE ;
                 G[i].init = TRUE ;
             }
-            savedGset[VTERM] = TRUE ;
+            savedGset[VTERM_A] = TRUE ;
     }
     else if ( ISQANSI(tt_type) ) {
         if ( !savcolor ) {
@@ -12582,9 +12636,10 @@ settermtype( int x, int prompts )
             savresetcol = colorreset;     /* Save Reset Color mode */
 
             colorreset = FALSE ;
-            scrninitialized[VTERM] = 0; /* To make it take effect */
+            scrninitialized[VTERM_A] = 0; /* To make it take effect */
+            scrninitialized[VTERM_B] = 0;
 
-            savstatus = tt_status_usr[VTERM] ;
+            savstatus = tt_status_usr[VTERM_A] ;
         }
 
         savcmask = cmask;               /* Go to 8 bits */
@@ -12596,7 +12651,7 @@ settermtype( int x, int prompts )
 
         /* Default Character-set is ASCII/CP437 */
         for ( i = 0 ; i < 4 ; i++ ) {
-            savedG[VTERM][i] = G[i] ;
+            savedG[VTERM_A][i] = G[i] ;
         }
         /* Set G0 */
         G[0].designation = G[0].def_designation = TX_ASCII ;
@@ -12625,7 +12680,7 @@ settermtype( int x, int prompts )
         G[3].c1   = G[3].def_c1 = FALSE ;
         G[3].national = CSisNRC(G[3].designation) ;
         G[3].init = TRUE ;
-        savedGset[VTERM] = TRUE ;
+        savedGset[VTERM_A] = TRUE ;
     }
 
     GNOW = GL = &G[0] ;
@@ -12653,7 +12708,8 @@ settermtype( int x, int prompts )
 
     updanswerbk() ;
 
-    VscrnInit(VTERM);
+    VscrnInit(VTERM_A);
+    VscrnInit(VTERM_B);
     initvik = TRUE;     /* Tell doreset() to initialize the vik table */
     doreset(1);         /* Clear screen and home the cursor */
 
@@ -12663,7 +12719,8 @@ settermtype( int x, int prompts )
     KuiSetProperty( KUI_TERM_TYPE, (intptr_t) tt_type, (intptr_t) 0 ) ;
 #endif /* KUI */
     ipadl25() ;
-    VscrnIsDirty(VTERM);
+    VscrnIsDirty(VTERM_A);
+    VscrnIsDirty(VTERM_B);
     msleep(10);
 }
 
@@ -14612,11 +14669,32 @@ vtcsi(void)
                             /* RXVT - Scroll to bottom on key press */
                             break;
                         case 1015:
-                            /* URXVT - Enable URXVT Mosue Mode */
+                            /* URXVT - Enable URXVT Mouse Mode */
 #ifdef OS2MOUSE
                            debug(F100, "URXVT mouse tracking now OFF", "", 0);
                            mouse_reporting_mode |= MOUSEREPORTING_URXVT;
 #endif
+                            break;
+                        case 1046:
+                            /* Disable switching to/from Alternate Screen Buffer, xterm */
+                            alternate_buffer_enabled = FALSE;
+
+                            /* Switch to VTERM_A if we're on VTERM_B currently */
+                            setVTermBuffer(FALSE);
+                            break;
+                        case 1047:
+                            /* Use normal screen buffer, xterm */
+                            setVTermBuffer(TRUE);
+                            break;
+                        case 1048:
+                            /* Restore cursor as in DECSC, xterm */
+                            break;
+                        case 1049:
+                            /* save cursor as in DECSC, xterm. After saving, switch
+                             * to the Normal Screen Buffer.
+                             *
+                             * Combination of 1047 and 1048 */
+                            setVTermBuffer(TRUE);
                             break;
                         default:
                             break;
@@ -15200,6 +15278,25 @@ vtcsi(void)
                                mouse_reporting_mode &= ~MOUSEREPORTING_URXVT;
 #endif
                                break;
+                            case 1046:
+                                /* xterm: Enable switching to/from Alternate Screen Buffer, xterm */
+                                alternate_buffer_enabled = TRUE;
+                                break;
+                            case 1047:
+                                /* Use alternate screen buffer, xterm */
+                                setVTermBuffer(FALSE);
+                                break;
+                            case 1048:
+                                /* TODO: Save cursor as in DECSC, xterm */
+                                break;
+                            case 1049:
+                                /* TODO: save cursor as in DECSC, xterm. After saving, switch
+                                 * to the Alternate Screen Buffer, clearing it first.
+                                 *
+                                 * Combination of 1047 and 1048 */
+
+                                setVTermBuffer(FALSE);
+                                break;
                            default:
                                break;
                            }
@@ -18010,14 +18107,20 @@ vtcsi(void)
                         if ( k < 3 )
                             pn[3] = 0 ;
                         if ( pn[2] == 0 )
-                            pn[2] = tt_rows[VTERM] ;
+                            pn[2] = tt_rows[VTERM_A] ;
                         if ( pn[3] == 0 )
-                            pn[3] = tt_cols[VTERM] ;
+                            pn[3] = tt_cols[VTERM_A] ;
                         if ( tt_modechg == TVC_ENA ) {
-                            tt_szchng[VTERM] = 1 ;
-                            tt_rows[VTERM] = pn[2] ;
-                            tt_cols[VTERM] = pn[3]%2 ? pn[3]+1 : pn[3] ;
-                            VscrnInit( VTERM ) ; /* Size is set here */
+                            tt_szchng[VTERM_A] = 1 ;
+                            tt_rows[VTERM_A] = pn[2] ;
+                            tt_cols[VTERM_A] = pn[3]%2 ? pn[3]+1 : pn[3] ;
+                            VscrnInit( VTERM_A ) ; /* Size is set here */
+
+                            tt_szchng[VTERM_B] = 1 ;
+                            tt_rows[VTERM_B] = pn[2] ;
+                            tt_cols[VTERM_B] = pn[3]%2 ? pn[3]+1 : pn[3] ;
+                            VscrnInit( VTERM_B ) ; /* Size is set here */
+
                             msleep(50);
 #ifdef TCPSOCKET    
 #ifdef CK_NAWS      

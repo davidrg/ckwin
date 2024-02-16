@@ -71,6 +71,7 @@ extern int OSVer;
 videobuffer vscrn[VNUM]  = {{0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
                             {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
                             {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
+                            {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0},
                             {0,0,0,0,0,0,{0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}};
 extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor;
@@ -1482,8 +1483,11 @@ Set132Cols( int mode )
         }
 
 
-		if (mode == VTERM)
-			VscrnSetWidth( VTERM, 132 );
+		if (IS_VTERM(mode)) {
+            VscrnSetWidth(VTERM_A, 132);
+            VscrnSetWidth(VTERM_B, 132);
+            VscrnSetHeight( mode == VTERM_A ? VTERM_B : mode, mi.row );
+        }
 		else if ( tt_modechg == TVC_ENA )
             VscrnSetWidth( mode, mi.col );
         else if ( tt_modechg == TVC_W95 )
@@ -1556,9 +1560,11 @@ Set80Cols( int mode )
                 return 1;
         }
 
-		if ( mode == VTERM )
-			VscrnSetWidth( VTERM, 80 );
-		else if ( tt_modechg == TVC_ENA )
+		if ( mode == VTERM_A || mode == VTERM_B ) {
+            VscrnSetWidth(VTERM_A, 80);
+            VscrnSetWidth(VTERM_B, 80);
+            VscrnSetHeight( mode == VTERM_A ? VTERM_B : mode, mi.row ) ;
+        } else if ( tt_modechg == TVC_ENA )
             VscrnSetWidth( mode, mi.col );
         else if ( tt_modechg == TVC_W95 )
             VscrnSetWidth( mode, 80 );
@@ -1708,7 +1714,7 @@ SetCols( int mode )
 }
 
 #ifdef OLDDIRTY
-static int isdirty[VNUM] = {0,0,0,0} ;
+static int isdirty[VNUM] = {0,0,0,0,0} ;
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -2834,9 +2840,9 @@ VscrnGetCurPos( BYTE vmode )
 }
 
 
-static viocell *        cellmem[VNUM] = { NULL, NULL, NULL, NULL } ;
-static unsigned short * attrmem[VNUM] = { NULL, NULL, NULL, NULL } ;
-static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
+static viocell *        cellmem[VNUM] = { NULL, NULL, NULL, NULL, NULL } ;
+static unsigned short * attrmem[VNUM] = { NULL, NULL, NULL, NULL, NULL } ;
+static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL, NULL } ;
 
 /*---------------------------------------------------------------------------*/
 /* VscrnSetBufferSize                                                        */
@@ -2844,7 +2850,7 @@ static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
 ULONG
 VscrnSetBufferSize( BYTE vmode, ULONG newsize )
 {
-    static ULONG oldsize[VNUM]={0,0,0,0} ;
+    static ULONG oldsize[VNUM]={0,0,0,0,0} ;
     int i ;
     videobuffer TmpScrn ;
     videoline * line ;
@@ -3864,7 +3870,8 @@ TermScrnUpd( void * threadinfo)
 
     rc = CreateVscrnTimerSem( TRUE );
     rc = CreateVscrnMuxWait(VCMD) ;
-    rc = CreateVscrnMuxWait(VTERM) ;
+    rc = CreateVscrnMuxWait(VTERM_A) ;
+    rc = CreateVscrnMuxWait(VTERM_B) ;
     rc = CreateVscrnMuxWait(VCS) ;
 
     rc = StartVscrnTimer( tt_update );
@@ -4524,7 +4531,8 @@ TermScrnUpd( void * threadinfo)
 #endif /* NT */
 
     CloseVscrnMuxWait(VCMD) ;
-    CloseVscrnMuxWait(VTERM) ;
+    CloseVscrnMuxWait(VTERM_A) ;
+    CloseVscrnMuxWait(VTERM_B) ;
     CloseVscrnMuxWait(VCS) ;
     CloseVscrnTimerSem() ;
     free(thecells) ;
@@ -4826,10 +4834,10 @@ VscrnInit( BYTE vmode )
 #endif /* KUI */
    }
 
-   if ( vmode == VTERM )
+   if ( IS_VTERM(vmode) )
    {
-      if (!scrninitialized[VTERM]) {
-          scrninitialized[VTERM] = 1;
+      if (!scrninitialized[vmode]) {
+          scrninitialized[vmode] = 1;
           attribute = defaultattribute = colornormal;
           underlineattribute = colorunderline ;
           reverseattribute = colorreverse ;
@@ -4838,10 +4846,10 @@ VscrnInit( BYTE vmode )
           borderattribute = colorborder ;
           updmode = tt_updmode ;  /* Set screen update mode */
       }
-      if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0) ||
-           VscrnGetHeight(VTERM) < 0 ||
-           marginbot > tt_rows[VTERM] )
-         marginbot = tt_rows[VTERM];
+      if ( marginbot == VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ||
+           VscrnGetHeight(vmode) < 0 ||
+           marginbot > tt_rows[vmode] )
+         marginbot = tt_rows[vmode];
    }
 
    VscrnSetWidth( vmode, tt_cols[vmode] ) ;

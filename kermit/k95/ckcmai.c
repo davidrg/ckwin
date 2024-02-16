@@ -1226,12 +1226,12 @@ int os2pm = 0;                          /* OS/2 Presentation Manager flag */
 #ifdef OS2
 #include "ckocon.h"
 #ifdef KUI
-int tt_rows[VNUM] = {24,24,25,1};       /* Rows (height) */
-int tt_cols[VNUM] = {80,80,80,80};      /* Columns (width) */
+int tt_rows[VNUM] = {24,24,24,25,1};       /* Rows (height) */
+int tt_cols[VNUM] = {80,80,80,80,80};      /* Columns (width) */
 int cmd_rows = 24, cmd_cols = 80;       /* Command/console screen dimensions */
 #else /* KUI */
-int tt_rows[VNUM] = {-1,24,25,1};       /* Rows (height) */
-int tt_cols[VNUM] = {-1,80,80,80};      /* Columns (width) */
+int tt_rows[VNUM] = {-1,24,24,25,1};       /* Rows (height) */
+int tt_cols[VNUM] = {-1,80,80,80,80};      /* Columns (width) */
 int cmd_rows = -1, cmd_cols = -1;       /* Command/console screen dimensions */
 #endif /* KUI */
 int k95stdio = 0;                       /* Stdio threads */

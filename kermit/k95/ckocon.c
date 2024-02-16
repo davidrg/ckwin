@@ -161,8 +161,8 @@ extern enum markmodes markmodeflag[VNUM] ;
 extern unsigned char     colorhelp;
 extern unsigned char     colorcmd;
 
-int     scrninitialized[VNUM] = {0,0,0} ;
-bool    scrollflag[VNUM]  = {0,0,0}, flipscrnflag[VNUM] = {0,0,0};
+int     scrninitialized[VNUM] = {0,0,0,0,0} ;
+bool    scrollflag[VNUM]  = {0,0,0,0,0}, flipscrnflag[VNUM] = {0,0,0,0,0};
 extern bool scrollstatus[] ;
 bool    viewonly = FALSE ;              /* View only terminal mode */
 int     updmode         = TTU_FAST ;    /* Fast/Smooth scrolling */
@@ -203,8 +203,8 @@ extern unsigned char                    /* Video attribute bytes */
   savedattribute,                       /* Saved video attribute byte */
   defaultattribute;                     /* Default video attribute byte */
 
-int wherex[VNUM]={1,1,1};               /* Screen column, 1-based */
-int wherey[VNUM]={1,1,1};               /* Screen row, 1-based */
+int wherex[VNUM]={1,1,1,1,1};               /* Screen column, 1-based */
+int wherey[VNUM]={1,1,1,1,1};               /* Screen row, 1-based */
 
 int ConnectMode ;
 int quitnow, hangnow, outshift, tcs, langsv;
@@ -231,8 +231,8 @@ CK_CURSORINFO crsr_command={88,0,8,1};
 CK_CURSORINFO crsr_command={-88,0,8,1};
 #endif /* NT */
 
-extern bool     cursoron[VNUM]  = {TRUE,TRUE,TRUE};       /* For speed, turn off when busy */
-extern bool     cursorena[VNUM] = {TRUE,TRUE,TRUE};       /* Cursor enabled / disabled */
+extern bool     cursoron[VNUM]  = {TRUE,TRUE,TRUE,TRUE};       /* For speed, turn off when busy */
+extern bool     cursorena[VNUM] = {TRUE,TRUE,TRUE,TRUE};       /* Cursor enabled / disabled */
 
 extern bool     printon;                /* Printer is on */
 extern bool     xprint;                 /* Controller print in progress */
@@ -705,12 +705,12 @@ cleartermscreen( BYTE vmode ) {
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             line->cells[x].c = ' ' ;
-            line->cells[x].a = vmode == VTERM ? attribute : colorcmd ;
+            line->cells[x].a = IS_VTERM(vmode) ? attribute : colorcmd ;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
     lgotoxy(vmode,1, 1);
-    if ( IsConnectMode() || vmode != VTERM )
+    if ( IsConnectMode() || !IS_VTERM(vmode))
         VscrnIsDirty(vmode);
     else {
         vt100screen.ox = vt100screen.oy = 1 ;
@@ -3404,7 +3404,7 @@ SetConnectMode( BOOL mode, int ExitCode ) {
         evt.type = error;
 
         switch ( mode ) {
-        case VTERM:
+        case TRUE:  /* was: VTERM */
             putevent(VTERM,evt);
             PostTerminalModeSem();
             ResetCommandModeSem();
@@ -3421,7 +3421,7 @@ SetConnectMode( BOOL mode, int ExitCode ) {
             KuiSetTerminalStatusText(STATUS_HW, buf);
 #endif /* KUI */
             break;
-        case VCMD:
+        case FALSE: /* was: VCMD */
             /* putevent(VCMD,evt); */
             unconect1();
             if ( tt_async ) {
@@ -3635,12 +3635,26 @@ void term_dimensions_changed(int x, int y) {
 int
 kui_setheightwidth(int x, int y)
 {
-    tt_szchng[VTERM] = (tt_status[VTERM]?2:1);
-    tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
-    tt_cols[VTERM] = x;
+    tt_szchng[VTERM_A] = (tt_status[VTERM_A]?2:1);
+    tt_rows[VTERM_A] = y - (tt_status[VTERM_A]?1:0);
+    tt_cols[VTERM_A] = x;
     tt_cols_usr = x;
-    VscrnSetWidth( VTERM, x);
-    VscrnInit( VTERM );         /* Height set here */
+    VscrnSetWidth( VTERM_A, x);
+    VscrnInit( VTERM_A );         /* Height set here */
+
+    /* Resize the alternate buffer too */
+    tt_szchng[VTERM_B] = (tt_status[VTERM_B]?2:1);
+    tt_rows[VTERM_B] = y - (tt_status[VTERM_B]?1:0);
+    tt_cols[VTERM_B] = x;
+    tt_cols_usr = x;
+    VscrnSetWidth( VTERM_B, x);
+
+    /* The alternate buffer doesn't have scrollback, so set its
+     * scrollback size to the terminal height */
+    tt_scrsize[VTERM_B] = tt_rows[VTERM_B];
+
+    VscrnInit( VTERM_B );         /* Height set here */
+
     term_dimensions_changed(x, y - (tt_status[VTERM]?1:0));
 
     tt_szchng[VCMD] = (tt_status[VCMD]?2:1);
@@ -3717,16 +3731,25 @@ os2_settermheight(int x)
 #ifdef KUI
     return(kui_setheightwidth(tt_cols[VTERM],x+(tt_status[VTERM]?1:0)));
 #else /* KUI */
-    if (x > 8192/(tt_cols[VTERM])) {
+    if (x > 8192/(tt_cols[VTERM_A])) {
         printf("\n?The max screen area is 8192 cells: %d(rows) x %d(cols) = %d cells.\n",
-                x,tt_cols[VTERM],x*(tt_cols[VTERM]));
+                x,tt_cols[VTERM_A],x*(tt_cols[VTERM_A]));
         return(0);
     }
 
-    tt_szchng[VTERM] = (tt_status[VTERM]?2:1);
-    tt_rows[VTERM] = x;
+    tt_szchng[VTERM_A] = (tt_status[VTERM_A]?2:1);
+    tt_rows[VTERM_A] = x;
+
+    tt_szchng[VTERM_B] = (tt_status[VTERM_B]?2:1);
+    tt_rows[VTERM_B] = x;
+
+    /* The alternate buffer doesn't have scrollback, so set its
+     * scrollback size to the terminal height */
+    tt_scrsize[VTERM_B] = tt_rows[VTERM_B];
+
     if (SysInited) {
-        VscrnInit( VTERM );             /* Height set here */
+        VscrnInit( VTERM_A );             /* Height set here */
+        VscrnInit( VTERM_B );             /* Height set here */
         term_dimensions_changed(tt_cols[VTERM], x);
     }
     return(1);
