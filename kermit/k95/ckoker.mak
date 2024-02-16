@@ -137,6 +137,15 @@ CL = wcl386
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
 !message  Architecture:             $(TARGET_CPU)
+!if "$(CROSS_BUILD)" == "yes"
+!if "$(CROSS_BUILD_COMPATIBLE)" == "yes"
+!message  Host Architecture:        $(HOST_CPU) (cross-compiling to compatible architecture)
+!else
+!message  Host Architecture:        $(HOST_CPU) (cross-compiling)
+!endif
+!else
+!message  Host Architecture:        $(HOST_CPU)
+!endif
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
@@ -1103,7 +1112,6 @@ k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
             /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib
         dllrname $@ CPPRMI36=CKO32RTL
 
-
 docs:   ckermit.inf
 
 # ckotel.def
@@ -1356,6 +1364,31 @@ p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_
 p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
 !endif
 
+# We're not always able to build and use WART so only do it if we're told to.
+!if "$(CKB_BUILD_WART)" == "yes"
+ckcpro.c:	ckcpro.w ckwart.exe
+#		$(MAKE) -f ckoker.mak ckwart.exe \
+#		  CC="$(CC) $(CC2)" OUT="$(OUT)" O="$(O)" OPT="$(OPT)" \
+#		  DEBUG="$(DEBUG)" CFLAGS="-DCK_ANSIC $(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+		ckwart ckcpro.w ckcpro.c
+
+ckwart$(O):     ckwart.c
+	$(CC) -c ckwart.c
+
+
+ckwart.exe: ckwart.obj $(DEF)
+	$(CC) ckwart.obj
+
+!elseif "$(CKB_USE_WART)" == "yes"
+
+!if "$(WART)" == ""
+WART=ckwart
+!endif
+
+ckcpro.c: ckcpro.w
+		$(WART) ckcpro.w ckcpro.c
+
+!endif
 
 ckopcf$(O):     ckopcf.c ckopcf.h
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DLL) -c ckopcf.c

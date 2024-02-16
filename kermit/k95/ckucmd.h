@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>
   Columbia University Kermit Project, New York City.
 
-  Copyright (C) 1985, 2022,
+  Copyright (C) 1985, 2023,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -13,8 +13,10 @@
     because they are for all platforms, not just Unix.  But "don't fix
     what ain't broke".
 
-  Last update: Sat Sep 24 14:05:17 2022 -fdc
+  Previous update: Sat Sep 24 14:05:17 2022 -fdc
     Removed redundant arrow-key #ifdefs (they only need to be in ckcdeb.h)
+  Last update: Sat Sep 23 20:19:19 2023 -fdc
+    Raised CMDBL and TMPBUFSIZ from 4092 to 16384 for SunOS 4
 */
 
 #ifndef CKUCMD_H
@@ -116,8 +118,12 @@ int vms_getchar(void);
 #ifdef BIGBUFOK
 #define CMDBL 32763
 #else
+#ifdef SUNOS4                           /* fdc 23 September 2023 */
+#define CMDBL 16384
+#else
 #define CMDBL 4092
-#endif /* OS2 */
+#endif /* SUNOS4 */
+#endif /* BIGBUFOK */
 #endif /* NOSPL */
 #endif /* CMDBL */
 

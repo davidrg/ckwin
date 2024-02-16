@@ -15,10 +15,10 @@ env:
   # So we're now fetching zlib from ftp.zx.net.nz instead.
   ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 3.0.11
+  OPENSSL_VERSION: 3.0.13
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
-  LIBSSH_VERSION: 0.10.5
+  LIBSSH_VERSION: 0.10.6
   # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
@@ -46,8 +46,10 @@ env:
   # along with its version. The version is only used as a cache key to ensure
   # we're not hammering the kermit website or fetching code thats newer than
   # what CKW is currently based on.
-  C_KERMIT_VERSION: 10.0b10
-  C_KERMIT_CODE: https://www.kermitproject.org/ftp/kermit/test/tar/x.tar.gz
+  C_KERMIT_VERSION: 10.0prebeta11
+  #C_KERMIT_CODE: https://www.kermitproject.org/ftp/kermit/test/tar/x.tar.gz
+  C_KERMIT_CODE: https://kermitproject.org/ftp/kermit/pretest/x.tar.gz
+
 
 jobs:
   Get-CACerts-Bundle:
@@ -117,6 +119,35 @@ jobs:
             ssh-readme.html
           retention-days: 1
 
+  Build-Wart:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Enable Developer Command Prompt
+        # You may pin to the exact commit or the version.
+        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        uses: ilammy/msvc-dev-cmd@v1.12.0
+        with:
+          arch: x86
+          toolset: 14.3
+      - name: Build ckwart
+        run: |
+          call ..\..\setenv.bat
+          nmake /nologo /e /f ckoker.mak ckwart.exe
+          if not exist ckwart.exe exit /b 1
+          move ckwart.exe ..\..\ckwart.exe
+        shell: cmd
+        working-directory: ${{ github.workspace }}\kermit\k95\
+        env:
+          ROOT: ${{ github.workspace }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: wart-x86
+          path: ${{ github.workspace }}\ckwart.exe
+          if-no-files-found: error
+          retention-days: 1
+
   ##############################################################################
   # Build with Visual C++ 14.x (2015/2017/2019/2022)                           #
   ##############################################################################
@@ -125,7 +156,7 @@ jobs:
   # and ARM64.
   Build-VisualCxx:
     runs-on: windows-latest
-    needs: [Get-CACerts-Bundle, Prepare-Docs]
+    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart]
     strategy:
       matrix:
         arch:
@@ -378,6 +409,13 @@ jobs:
         cd libdes\
         call mknt.bat
 
+    - name: Fetch x86 wart
+      uses: actions/download-artifact@v3
+      if: matrix.arch != 'x86' && matrix.arch != 'x64'
+      with:
+        name: wart-x86
+        path: ${{ github.workspace }}
+
       ##########################################################################
       # Build K95, K95G and other bits for redistribution                      #
       ##########################################################################
@@ -392,6 +430,13 @@ jobs:
         
         set PATH=%PATH%;${{github.workspace}}\tools\jom
         set MAKE=jom
+        
+        REM If the target arch is incompatible with the host arch, use
+        REM the x86 version of ckwart.exe which should have been placed
+        REM in the workplace previously, rather than trying to use a
+        REM version of wart built for the target architecture.
+        if "%CKB_CROSS_COMPATIBLE%" == "no" set CKB_USE_WART=yes
+        if "%CKB_CROSS_COMPATIBLE%" == "no" set WART=${{github.workspace}}\ckwart.exe
         
         cd p95
         call mknt.bat
@@ -462,7 +507,7 @@ jobs:
   # OpenSSL 1.1.1t is supported however.
   Build-PSDK71:
     runs-on: windows-latest
-    needs: [Get-CACerts-Bundle, Prepare-Docs]
+    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart]
     strategy:
       matrix:
         arch:
@@ -631,6 +676,13 @@ jobs:
           cd libdes
           call mknt.bat
 
+      - name: Fetch x86 wart
+        uses: actions/download-artifact@v3
+        if: matrix.arch == 'ia64'
+        with:
+          name: wart-x86
+          path: ${{ github.workspace }}
+
         ##########################################################################
         # Build K95, K95G and other bits for redistribution                      #
         ##########################################################################
@@ -646,6 +698,9 @@ jobs:
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           set MAKE=jom
+          
+          if "%CKB_CROSS_COMPATIBLE%" == "no" set CKB_USE_WART=yes
+          if "%CKB_CROSS_COMPATIBLE%" == "no" set WART=${{github.workspace}}\ckwart.exe
           
           echo Run Build...
           cd kermit\p95
@@ -1459,7 +1514,7 @@ jobs:
   #
   Build-PSDK2003SP1-IA64:
     runs-on: windows-latest
-    needs: Prepare-Docs
+    needs: [Prepare-Docs, Build-Wart]
 
     steps:
       - uses: actions/checkout@v3
@@ -1518,6 +1573,13 @@ jobs:
           del *.gz
           cd ..
         shell: powershell
+
+      - name: Fetch x86 wart
+        uses: actions/download-artifact@v3
+        with:
+          name: wart-x86
+          path: ${{ github.workspace }}
+
       - name: Full Build
         run: |
           Set PATH=%VCT2003%\bin\win64;%VCT2003%\bin;%PATH%
@@ -1528,6 +1590,11 @@ jobs:
           Set LIB=%VCT2003%\lib\ia64
           
           call setenv.bat
+          
+          REM Use the supplied x86 build of wart rather than building it for
+          REM itanium then fail to run it on the not-itanium build host
+          set CKB_USE_WART=yes
+          set WART=${{github.workspace}}\ckwart.exe
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           set MAKE=jom

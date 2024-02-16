@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 10.0.245, 16 Sep 2023";
+char *fnsv = "C-Kermit functions, 10.0.247, 6 Feb 2024";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -11,13 +11,14 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Columbia University Academic Information Systems, New York City (1974-2011)
   The Kermit Project, Bronx NY (2011-????)
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Fri Sep 23 15:27:55 2022
+    Updated: Fri Sep 23 15:27:55 2022
     (CR -> CK_CR and space unsigned long -> CK_OFF_T)
-
+    Last update: Fri Feb  2 15:55:27 2024
+    Implementation of REMOTE STATUS.
 */
 /*
  System-dependent primitives defined in:
@@ -168,6 +169,7 @@ extern int bigsbsiz, bigrbsiz;
 extern char *versio;
 extern char *filefile;
 extern char whoareu[], * cksysid;
+extern char *fdate;
 
 #ifndef NOSERVER
 extern int ngetpath;
@@ -6291,7 +6293,7 @@ sndhlp() {
 #ifdef IKSD
     if (inserver) {
 	sprintf((char *)(funcbuf+funclen),
-		"Internet Kermit Service (EXPERIMENTAL)\n\n");
+		"Internet Kermit Service\n\n");
 	funclen = strlen((char *)funcbuf);
     }
 #endif /* IKSD */
@@ -6300,6 +6302,147 @@ sndhlp() {
     funcstr = 1;
     srvhlpnum = 0;
     binary = XYFT_T;			/* Text mode for this. */
+    return(sinit());
+#else
+    return(0);
+#endif /* NOSERVER */
+}
+
+static int srvstatusnum = 0;
+
+static int
+nxtstatus(
+#ifdef CK_ANSIC
+       void
+#endif /* CK_ANSIC */
+       ) {
+    extern char * ck_s_xver;
+    char * filesize;
+    int x = 0;
+
+    if (funcnxt < funclen)
+      return (funcbuf[funcnxt++]);
+
+    switch (srvstatusnum++) {
+      case 0:
+        debug(F101,"nxtstatus case","",0);
+        sprintf((char *)funcbuf,
+                "    OPEN SOURCE\n    C-Kermit full version number: %s\n",
+                ck_s_xver);
+        break;
+      case 1: {
+#ifdef TCPSOCKET
+          extern char myipaddr[];
+          debug(F101,"nxtstatus case","",1);
+          if (!myipaddr[0])
+            getlocalipaddr();
+          if (myipaddr[0]) {
+              sprintf((char *)funcbuf,"    Hostname: %s (%s)\n",
+                      nvlook("host"),
+                      myipaddr);
+          } else {
+#endif /* TCPSOCKET */
+              sprintf((char *)funcbuf,"    Hostname: %s\n", nvlook("host")); 
+#ifdef TCPSOCKET
+          }
+#endif /* TCPSOCKET */
+          break;
+      }
+      case 2:
+        debug(F101,"nxtstatus case","",2);
+	sprintf((char *)funcbuf,"    Server hardware: %s (%s bits)\n",
+                nvlook("cpu"),
+                nvlook("bits"));
+        break;
+      case 3:
+        debug(F101,"nxtstatus case","",3);
+        sprintf((char *)funcbuf,"    Server operating system family: %s\n",
+                nvlook("system")); 
+        break;
+      case 4:
+        debug(F101,"nxtstatus case","",4);
+        sprintf((char *)funcbuf,"    Current directory on server: %s\n",
+                nvlook("directory"));
+        break;
+      case 5:                           /* Last file sent by server */ 
+        debug(F101,"nxtstatus case","",5);
+        if (sfspec == NULL) {           /* If there isn't one */
+            debug(F100,"nxtstatus no file sent yet","",0);
+            sprintf((char *)funcbuf,
+                    "    Last file sent by server: (none)\n");
+        } else {                        /* At least one */
+            CK_OFF_T z;                 /* Variable for file size */
+            z = zchki(sfspec);          /* Get file size */
+            filesize = ckfstoa(z);      /* convert to string for sprintf() */
+
+            /* Note: zfcdat gets the file date */
+            sprintf((char *)funcbuf,    /* Send name, size, and date-time */
+                    "    Last file sent by server:\n     %s %s %s\n",
+                    sfspec, filesize, zfcdat(sfspec));
+            debug(F100,"nxtstatus case 5 sprintf ok","",0);
+        }
+        break;
+      case 6:                           /* Last file received by server */
+        debug(F101,"nxtstatus case","",6);
+        if (rfspec == NULL) {           /* If there isn't one */
+            debug(F100,"nxtstatus no file received yet","",0);
+            sprintf((char *)funcbuf,
+                    "    Last file received by server: (none)\n");
+        } else {                        /* At least one */
+            CK_OFF_T z;                 /* Variable for file size */
+            z = zchki(rfspec);          /* Get file size */
+            filesize = ckfstoa(z);      /* convert to string for sprintf() */
+            sprintf((char *)funcbuf,    /* Send name, size, and date-time */
+                    "    Last file received by server:\n     %s %s %s\n",
+                    rfspec, filesize, zfcdat(rfspec));
+            debug(F100,"nxtstatus case 6 sprintf ok","",0);
+        }
+        break;
+      case 7: {
+          extern int maxnam;
+          debug(F101,"nxtstatus case","",7);
+          sprintf((char *)funcbuf,"    Filename length limit: %d\n", maxnam);
+          break;
+      }
+      case 8: {
+          extern int maxpath;
+          debug(F101,"nxtstatus case","",8);
+          sprintf((char *)funcbuf,
+                  "    Pathname length limit: %d\n\n", maxpath);
+          break;
+      }
+      default:
+        return(-1);
+    }
+    funcnxt = 0;
+    funclen = strlen((char *)funcbuf);
+    return(funcbuf[funcnxt++]);
+}
+
+int
+sndstatus() {                           /* REMOTE STATUS handler */
+#ifndef NOSERVER
+    extern char * ckxsys;
+
+    first = 1;                          /* Init getchx lookahead */
+    nfils = 0;				/* No files, no lists. */
+    xflg = 1;				/* Flag we must send X packet. */
+
+    ckstrncpy(cmdstr,"REMOTE STATUS",CMDSTRL); /* Data for X packet. */
+    sprintf((char *)funcbuf, "\n    SERVER: %s,%s\n", versio, ckxsys);
+    funclen = strlen((char *)funcbuf);
+#ifdef IKSD
+    if (inserver) {
+	sprintf((char *)(funcbuf+funclen),
+		"Internet Kermit Service\n\n");
+	funclen = strlen((char *)funcbuf);
+    }
+#endif /* IKSD */
+    funcstr = 1;                        /* Data input is from a function */
+    funcptr = nxtstatus;                /* Name of the function is nxtstatus */
+    funcnxt = 0;                        /* and we start at the beginning */
+    srvstatusnum = 0;
+    binary = XYFT_T;			/* Use text mode for this. */
     return(sinit());
 #else
     return(0);

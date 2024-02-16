@@ -9,12 +9,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last big update: 14 April 2023 (ANSI function declarations and prototypes)
-    Last update: 5 May 2023 (change semicolon to comma in extern statement)
+    Other updates: 5 May 2023 (change semicolon to comma in extern statement)
+    Other updates: 25 Jan 2024 (add semantics of REMOTE CDUP)
 */
 
 /*
@@ -7705,7 +7706,6 @@ dormt(xx) int xx;
     return rc;
 }
 
-
 int
 #ifdef CK_ANSIC
 xxdormt( int xx )
@@ -7758,13 +7758,29 @@ dormt(xx) int xx;
         }
         return(doprm(y,1));
     }
-
     switch (xx) {                       /* Others... */
 
       case XZCDU:
         if ((x = cmcfm()) < 0) return(x);
-        printf("?Sorry, REMOTE CDUP not supported yet\n");
-        return(-9);
+#ifdef VMS
+        s = "[-]";
+#else
+#ifdef datageneral
+        s = "^";
+#else
+        s = "..";
+#endif /* datageneral */
+#endif /* VMS */
+	rcdactive = 1;
+        sstate = setgen('C',s,s2,"");
+        retcode = 0;
+        break;
+
+      case XZSTA:                       /* Remote Status (2024) */
+        if ((x = cmcfm()) < 0) return(x);
+        sstate = setgen('Q',"","","");
+        retcode = 0;
+        break;
 
       case XZCWD:                       /* CWD (CD) */
         if ((x = cmtxt("Remote directory name","",&s,xxstring)) < 0)
@@ -7839,9 +7855,9 @@ dormt(xx) int xx;
             }
             s2 = sbuf;
         } else s2 = "";
+        debug(F110," password",s2,0);
 #endif /* DIRPWDPR */
 
-        debug(F110," password",s2,0);
 	rcdactive = 1;
         sstate = setgen('C',s,s2,"");
         retcode = 0;
@@ -8134,12 +8150,6 @@ dormt(xx) int xx;
           return(x);
         if (local) ttflui();            /* If local, flush tty input buffer */
         retcode = sstate = rfilop(s, (char)(xx == XZMKD ? 'm' : 'd'));
-        break;
-
-      case XZSTA:                       /* Status - new 2023 */
-        if ((x = remcfm()) < 0) return(x);
-        sstate = setgen('Q',"","","");
-        retcode = 0;
         break;
 
       case XZXIT:                       /* Exit */
@@ -14587,7 +14597,12 @@ sho_iks() {
 
 #ifdef CK_AUTHENTICATION
 int
-sho_auth(cx) int cx; {
+#ifdef CK_ANSIC
+sho_auth( int cx )
+#else
+sho_auth(cx) int cx;
+#endif  /* CK_ANSIC */
+{
     extern int auth_type_user[], cmd_rows;
 #ifdef CK_KERBEROS
     int i;
