@@ -16584,7 +16584,7 @@ vtcsi(void)
                              * branch is disabled -- DG
                             if ( 0 && ISQANSI(tt_type_mode) )
                                 l = pn[j] - 40;
-                            else
+                            else */
                                 l = sgrcols[pn[j] - 40];
                             if (!decscnm) {
                                 i = (attribute & 0x8F);
@@ -18189,7 +18189,7 @@ vtcsi(void)
                         sendchars(buf, strlen(buf));
 #endif
                         break;
-                    }
+                        }
                     }
                 }
                 break;
