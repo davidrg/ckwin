@@ -287,4 +287,37 @@ TARGET_CPU = x86
 
 !ENDIF
 
+# Figure out the host CPU Architecture
+HOST_CPU = $(PROCESSOR_ARCHITECTURE)
+!if "$(HOST_CPU)" == "AMD64"
+HOST_CPU = x86-64
+!endif
+
+# And if we're cross-compiling from a CPU architecture
+# other than the target.
+CROSS_BUILD = no
+!if "$(HOST_CPU)" != "$(TARGET_CPU)"
+CROSS_BUILD = yes
+!endif
+
+# And if we're cross-compiling, can we
+CROSS_BUILD_COMPATIBLE = yes
+!if "$(CROSS_BUILD)" == "yes"
+# We're cross-compiling.
+
+!if "$(HOST_CPU)" == "x86-64" && "$(TARGET_CPU)" == "x86"
+CROSS_BUILD_COMPATIBLE = yes
+
+!elseif "$(HOST_CPU)" == "ARM64" && "$(TARGET_CPU)" == "ARM"
+# TODO: Is this actually true? Do the compilers even run on these architectures?
+CROSS_BUILD_COMPATIBLE = yes
+
+!else
+# x86 can't run x86-64 code for example.
+CROSS_BUILD_COMPATIBLE = no
+
+!endif
+
+!endif
+
 !endif

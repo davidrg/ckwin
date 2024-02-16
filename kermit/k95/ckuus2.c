@@ -8,7 +8,7 @@
       Secure Endpoints Inc., New York City
     David Goodwin, New Zealand.
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,6 +19,8 @@
                   02 Dec 2022 (changed ssh v2 macs list in windows "help ssh").
                   03 Dec 2022 (fixed misplaced definition of cr_year).
                   12 Apr 2023 (ANSI-ize function definitions)
+                  25 Jan 2024 (Added HELP REMOTE STATUS)
+                  03 Feb 2024 (Added HELP REMOTE CWD)
 
   This module contains HELP command and other long text strings.
 
@@ -50,6 +52,10 @@
 #include "ckocon.h"
 #include "ckokvb.h"
 #include "ckokey.h"
+
+#ifndef NOLOCAL
+int ttgcwsz();                  /* ckocon.c */
+#endif /* NOLOCAL */
 #endif /* OS2 */
 
 #ifdef CK_ANSIC
@@ -170,6 +176,7 @@ static char *tophlp[] = {
 };
 
 #ifndef NOIKSD
+#ifdef NOHELP
 static char *tophlpi[] = {              /* Top-level help for IKSD */
 
 "Trustees of Columbia University in the City of New York.\n",
@@ -191,6 +198,7 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 "Kermit Project website, http://www.kermitproject.org/.",
 ""
 };
+#endif /* NOHELP */
 #endif /* NOIKSD */
 
 #ifndef NOHELP
@@ -7518,6 +7526,8 @@ case XXPURGE:
     return(hmsg("  RTYPE is a short form of REMOTE TYPE."));
   case XXRWHO:
     return(hmsg("  RWHO is a short form of REMOTE WHO."));
+  case XXRCDUP:
+    return(hmsg("  RCDUP is a short forms of REMOTE CDUP."));
 #endif /* NOXFER */
 
   case XXSCRN:
@@ -9662,6 +9672,8 @@ static char *hxywild[] = {
 "  used (for example) in creating backup files.",
 "" };
 #else
+#ifdef COMMENT
+/* Set wildcard-expansion is only available on UNIX */
 static char *hxywild[] = {
 "Syntax: SET WILDCARD-EXPANSION { ON, OFF }",
 "  ON (the default) means that filenames given to Kermit commands such as",
@@ -9673,6 +9685,7 @@ static char *hxywild[] = {
 "  treat each name in the list as a literal name.  See HELP WILDCARDS for",
 "  details about wildcard syntax.",
 "" };
+#endif /* COMMENT */
 #endif /* UNIX */
 
 #ifndef NOXFER
@@ -14998,6 +15011,24 @@ case XZXIT:
     return(hmsg("Syntax: REMOTE EXIT\n\
   Asks the Kermit server to exit.  Synonym: REXIT."));
 #endif /* NEWFTP */
+
+case XZSTA:
+    return(hmsg("Syntax: REMOTE STATUS\n\
+  Asks the remote Kermit server for information about itself.  Typically\n\
+  this would include the name and version of Kermit program,the underlying\n\
+  hardware/architecture, operating system, current directory, and the\n\
+  details of the most recent file transfer (if any)."));
+
+case XZCDU:
+#ifdef NEWFTP
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit or FTP server to change its working directory to\n\
+  the directory above it.  Synonym: RCDUP."));
+#else
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit server to change its working directory to the directory\n\
+  above it.  Synonym: RCDUP."));
+#endif  /* NEWFTP */
 
 default:
     if ((x = cmcfm()) < 0) return(x);

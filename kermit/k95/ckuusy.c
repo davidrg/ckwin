@@ -46,10 +46,12 @@ static int xx_ftp( char *, char * );
 
 #ifdef OS2
 #include <io.h>
+#include "ckocon.h"
 #ifdef KUI
 #include "ikui.h"
 extern struct _kui_init kui_init;
 #endif /* KUI */
+_PROTOTYP( int os2settitle, (char *, int) );
 #endif /* OS2 */
 
 /*
@@ -58,6 +60,9 @@ extern struct _kui_init kui_init;
   all others that define symbols or typedefs needed for the prototypes.
 */
 #include "ckcfnp.h"
+
+#ifdef OS2
+#endif /* OS2 */
 
 /* Prototypes for static functions used only in this module */
 #ifdef CK_ANSIC
@@ -184,7 +189,6 @@ extern unsigned char NetBiosAdapter;
 #endif /* XFATAL */
 
 int haveftpuid = 0;			/* Have FTP user ID */
-static int have_cx = 0;			/* Have connection */
 
 static char * failmsg = NULL;		/* Failure message */
 
@@ -257,10 +261,6 @@ struct keytab urltab[] = {
 };
 int nurltab = sizeof(urltab)/sizeof(struct keytab) - 1;
 
-#ifndef URLBUFLEN
-#define URLBUFLEN 1024
-#endif /* URLBUFLEN */
-static char urlbuf[URLBUFLEN];
 struct urldata g_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 
 /* u r l p a r s e  --  Parse a possible URL */
@@ -299,7 +299,9 @@ urlparse(s,url) char *s; struct urldata * url;
 #endif /* CK_ANSIC */
 {
     char * p = NULL, * urlbuf = NULL;
+#ifdef COMMENT
     int x;
+#endif /* COMMENT */
 
     if (!s || !url)
         return(0);
@@ -695,6 +697,8 @@ char * http_hlp[] = {
     ""
 };
 
+#ifdef CK_SSL
+#ifndef NOICP
 #define HT_CERTFI 0
 #define HT_OKCERT 1
 #define HT_KEY    2
@@ -710,6 +714,8 @@ static struct keytab httpztab[] = {
     { "", 0, 0 }
 };
 static int nhttpztab = sizeof(httpztab) / sizeof(struct keytab) - 1;
+#endif /* NOICP */
+#endif /* CK_SSL */
 #endif /* NOHTTP */
 
 /*  U S A G E */
@@ -877,7 +883,6 @@ cmdlin() {
 		  debug(F111,"cmdlin http xargv",*xargv,xargc);
 		  xp = *xargv+1;
 		  if (**xargv == '-') { /* Got an option */
-		      int xx;
 		      x = *(*xargv+1);	/* Get the option letter */
 		      switch (x) {
 			case 'd':	/* Debug */

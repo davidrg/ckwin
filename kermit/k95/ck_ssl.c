@@ -1,4 +1,4 @@
-char *cksslv = "SSL/TLS support, 10.0.238 03 May 2023";
+char *cksslv = "SSL/TLS support, 10.0.239 18 Sep 2023";
 /*
   C K _ S S L . C --  OpenSSL Interface for C-Kermit
 
@@ -1172,9 +1172,9 @@ int keylength;
 static void
 ssl_display_comp(SSL * ssl)
 {
-    #ifndef OPENSSL_NO_COMP
+#ifndef OPENSSL_NO_COMP
     const COMP_METHOD *method;
-    #endif
+#endif  /* OPENSSL_NO_COMP */
 
     if ( quiet )			/* fdc - Mon Nov 28 11:44:15 2005 */
         return;

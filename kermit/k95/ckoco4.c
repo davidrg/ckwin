@@ -441,7 +441,7 @@ VscrnSelect( BYTE vmode, int mode )
     while (1) {
         line = &vscrn[vmode].lines[vscrn[vmode].marktop] ;
         if ( line->markbeg != -1 && line->markshowend != -1 )
-            for ( line->markbeg ;
+            for ( /*line->markbeg*/ ;
                 line->markbeg <= line->markshowend;
                 line->markbeg++ ) {
 #ifdef NT
@@ -552,12 +552,13 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
 APIRET
 CopyClipboardToKbdBuffer( BYTE vmode )
 {
-    int i = 0 ;
     APIRET rc = -1 ;
     BYTE * hClipbrdData ;
     USHORT * pUClipbrdData = 0;
     BYTE * pClipbrdData = 0 ;
+#ifndef NT
     BYTE * pClipboard ;
+#endif /* NT */
     int use_unicode = (ck_isunicode() && !isWin95());
 
 #ifdef NT

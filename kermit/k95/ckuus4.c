@@ -84,9 +84,16 @@ BOOL dialerIsCKCM = 0;
 #endif /* CK_PID */
 #include "ckoreg.h"
 #include "ckoetc.h"
+
+#ifdef NT
+DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
+#endif /* NT */
 #endif /* OS2 */
 
 #ifdef KUI
+int get_gui_window_pos_y();
+int get_gui_window_pos_x();
+
 extern struct keytab * term_font;
 extern int ntermfont, tt_font, tt_font_size;
 #endif /* KUI */
@@ -1330,7 +1337,12 @@ findinpath(arg) char * arg;
 #endif /* DCMDBUF */
     char takepath[4096];
     char * s;
-    int x, z;
+    int x;
+#ifndef OS2
+#ifndef NOSPL
+    int z;
+#endif /* NOSPL */
+#endif /* !OS2 */
 
     /* Set up search path... */
 #ifdef OS2
@@ -1564,7 +1576,6 @@ prescan(dummy) int dummy;
 #ifdef DEBUG
     int debcount = 0;
 #endif /* DEBUG */
-    int z;
 
     if (x_prescan)                      /* Only run once */
       return;
@@ -3302,9 +3313,13 @@ xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout;
     int scrnflg = 0;
 
     int z = 1;                          /* Return code. */
-    int x, c, c2;                       /* Workers */
+    int x, c;                           /* Workers */
 #ifndef UNICODE
     int tcs;
+#else
+#ifdef COMMENT
+    int c2;
+#endif /* COMMENT */
 #endif /* UNICODE */
 
     ffc = 0L;
@@ -3702,7 +3717,9 @@ static char hompthbuf[CKMAXPATH+1] = { NUL, NUL }; /* Home directory path */
 
 char *
 homepath() {
+#ifdef UNIXOROSK
     int x;
+#endif /* UNIXOROSK */
     extern char hompthbuf[];
     extern char * myhome;
     char * h;
@@ -4121,6 +4138,7 @@ debopn(s,disp) char *s; int disp;
         debug(F100,ckxsys,"",0);
 #endif /* OS2 */
 #endif /* MAC */
+
 #ifdef CK_UTSNAME
         if (unm_mch[0]) {
             debug(F110,"uname machine",unm_mch,0);
@@ -4490,7 +4508,7 @@ shopad(n) int n; {
 VOID
 shoparc() {
     extern int reliable, stopbits, clsondisc;
-    int i; char *s;
+    char *s;
     long zz;
 
 #ifdef NEWFTP
@@ -5264,7 +5282,7 @@ shonet() {
 
 #else /* rest of this routine */
 
-    int i, n = 4;
+    int n = 4;
 
 #ifndef NODIAL
     if (nnetdir <= 1) {
@@ -6697,7 +6715,7 @@ doinput(timo,ms,mp,flags,count)
     int lastchar = 0;
     int waiting = 0;
     int imask = 0;
-    char ch, *xp, *s;
+    char *xp, *s;
     CHAR c;
 #ifndef NOLOCAL
 #ifdef OS2
@@ -7862,8 +7880,10 @@ mjd2date(mjd) long mjd;
 }
 
 #ifndef NOSPL
+#ifndef OS2
 static char ** flist = (char **) NULL;  /* File list for \fnextfile() */
 static int flistn = 0;                  /* Number of items in file list */
+#endif /* OS2 */
 
 /*
   The function return-value buffer must be global, since fneval() returns a
@@ -10634,8 +10654,6 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 	  extern int zgfs_dir, zgfs_link;
           extern char linkname[];
 	  char * tx;			/* For tilde expansion */
-#else
-	  int zgfs_dir = 0, zgfs_link = 0;
 #endif /* UNIX */
           char abuf[16], *s;
           char ** ap = NULL;
@@ -10645,7 +10663,10 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 	  int i,j,n;
           int m;			/* For scanfile() */
 	  int dir = -1;			/* 1 = arg is a directory file */
-	  CK_OFF_T z, z2;		/* For file size */
+	  CK_OFF_T z;                   /* For file size */
+#ifdef UNIX
+          CK_OFF_T z2;                  /* Also for file size */
+#endif /* UNIX */
 
           workbuf[0] = NUL;
           workbuf[1] = NUL;
@@ -10848,7 +10869,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
       case FN_FILECMP: {		/* File comparison */
 	FILE *fp1 = NULL;
 	FILE *fp2 = NULL;
-        char * s, * s1 = NULL, * s2 = NULL;
+        char * s1 = NULL, * s2 = NULL;
 #ifdef UNIX
 	char * tx;			/* For tilde expansion */
 #endif /* UNIX */
@@ -11425,8 +11446,11 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
         char fpbuf[64], * bp0;
         double dummy;
         /* int sign = 0; */
-        int i, j, places = 0;
+        int i, places = 0;
         int argcount = 1;
+#ifdef COMMENT
+        int j;
+#endif
 
         failed = 1;
         p = fnval;
@@ -12398,7 +12422,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
         goto fnend;
     }
     if (cx == FN_TOGMT) {               /* \futcdate(d1) */
-        char * d1, * dp;
+        char * dp;
         char datebuf[32];
         char d2[32];
         p = fnval;
@@ -12520,9 +12544,12 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
   Works with or without the "From: " or "Sender: " tag.
 */
     if (cx == FN_EMAIL) {
-        char c, * s = bp[0], * s2, * s3, * ap = "";
-	int k, state = 0, quote = 0, infield = 0;
-	int pc = 0;			/* For nested comments */
+        char * s = bp[0], * s2, * s3, * ap = "";
+	int k;
+#ifdef COMMENT
+    char c;
+	int quote = 0, state = 0, infield = 0 , pc = 0;	/* For nested comments */
+#endif /* COMMENT */
         if (!s) s = "";
 	if (!*s) goto xemail;
 
@@ -12670,7 +12697,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
     if (cx == FN_PICTURE) {
 	FILE *fp = NULL;
 	int c, x, w = 0, h = 0, eof = 0;
-	unsigned int i, j, k;
+	unsigned int j, k;
 	unsigned char buf[1024];
 	char abuf[16], * p, * s;
 	char ** ap = NULL;
@@ -12875,7 +12902,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 	goto fnend;
     }
     if (cx == FN_RECURSE) {
-	int t, n;
+	int n;
 	char * s;
 	fnval[0] = NUL;			/* Default result is empty string */
 	s = bp[0];			/* Check for null argument */
@@ -12935,7 +12962,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 /* Decode strings containing hex escapes */
 
     if (cx == FN_UNPCT) {		/* \fdecodehex() */
-        char *s1, *s2;
+        char *s1;
 	char *prefix;			/* Can be 1 or 2 chars */
 	char buf[3];
 	int n = 0, k;
@@ -13244,7 +13271,7 @@ char *                                  /* Evaluate builtin variable */
 #endif /* NODIAL */
 #ifndef NOKVERBS                        /* Keyboard macro material */
     extern int keymac, keymacx;
-#endif /* NOKVERBS */
+#endif  /* NOKVERBS */
 #ifdef CK_LOGIN
     extern int isguest;
 #endif /* CK_LOGIN */
@@ -14788,8 +14815,10 @@ char *                                  /* Evaluate builtin variable */
       case VN_MODL: {
 #ifdef CK_UTSNAME
           extern char unm_mod[], unm_mch[];
+#ifdef OSF32
           int y = VVBUFL - 1;
           char * s = unm_mod;
+#endif /* OSF32 */
 #endif /* CK_UTSNAME */
 #ifdef IKSD
 #ifdef CK_LOGIN

@@ -162,7 +162,9 @@ char unm_mch[80]="";
 char unm_ver[80]="";
 char unm_mod[80]="";
 #endif /* CK_UTSNAME */
+#ifdef OS2ONLY
 static char *ckxrev = "32-bit";
+#endif /* OS2ONLY */
 
 /* OS/2 system header files & related stuff */
 
@@ -243,6 +245,28 @@ int p_avail = 1 ;      /* No DLL to load - built-in */
 #endif /* VER_PLATFORM_WIN32_NT */
 #endif /* NT */
 
+int charinbuf(int);       /* ckokey.c */
+int os2settimo(int, int); /* this file */
+
+#ifndef NOTERM
+void doreset(int);      /* ckoco3.c */
+#endif /* NOTERM */
+
+#ifndef NOLOCAL
+void VscrnForceFullUpdate();    /* ckoco2.c */
+int ttgcwsz();                  /* ckocon.c */
+#endif /* NOLOCAL */
+
+#ifdef CK_SECURITY
+int ck_security_unloaddll();
+int ck_security_loaddll();
+#endif /* CK_SECURITY */
+
+#ifdef __WATCOMC__
+/* The Watcom headers (in OpenWatcom 1.9 at least) don't seem to
+ * have _tzset(), but they do have tzset()... */
+#define _tzset tzset
+#endif /* __WATCOMC__ */
 
 HKBD KbdHandle = 0 ;
 TID tidKbdHandler = (TID) 0,
@@ -439,7 +463,9 @@ static struct rdchbuf_rec {             /* Buffer for serial characters */
 int ttpush=-1;                          /* So we can perform a peek */
 
 static ULONG tcount;                    /* Elapsed time counter */
-static int conmode, consaved;
+#ifdef OS2ONLY
+static int conmode;
+#endif /* OS2ONLY */
 static int ttpmsk = 0377;               /* Parity stripping mask. */
 static char ttnmsv[DEVNAMLEN+1];
 int islocal;
@@ -531,6 +557,7 @@ static OVERLAPPED overlapped_read[30] = {
     {0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1},
     {0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1},{0L,0L,0L,0L,(HANDLE)-1}
 };
+#ifdef NEWRDCH
 static char * or_ptr[30] = {
     NULL, NULL, NULL, NULL, NULL,NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,NULL, NULL, NULL, NULL, NULL,
@@ -551,6 +578,7 @@ static int    or_read[30] = {
     0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0
 };
+#endif /* NEWRDCH */
 int nActuallyRead ;
 
 /* Lets try owwait = FALSE and see if anybody notices */
@@ -1375,12 +1403,10 @@ Win95AltGrInit( void )
 void
 Win95DisplayLocale( void )
 {
-    LCID    Locale = LOCALE_SYSTEM_DEFAULT ;
     LCTYPE  LCType = 0;
     CHAR    lpLCDATA[1024]="";
     int     cchData=1024;
     int     rc=0;
-    int     i=0;
     HKL     KBLayout=0;
     CHAR    lpLayoutName[KL_NAMELENGTH]="";
 
@@ -1548,7 +1574,6 @@ sysinit() {
     */
 #ifdef NT
     int    WinThreadInit=0;
-    DWORD mode ;
 #ifndef NOTERM
     extern int tt_attr_bug ;
 #endif /* NOTERM */
@@ -2459,9 +2484,6 @@ syscleanup() {
 
 /* Timeout handler for communication line input functions */
 
-static ckjmpbuf kbbuf;                  /* Timeout longjmp targets */
-static ckjmpbuf sjbuf;
-
 #ifndef __EMX__
 unsigned alarm(unsigned);               /* Prototype */
 #endif /* __EMX__ */
@@ -2515,10 +2537,6 @@ os2settimo(int spd, int modem)
 #ifdef CK_TAPI
     if ( tttapi && !tapipass ) {
         HANDLE hModem = NULL;
-        LPDEVCFG        lpDevCfg = NULL;
-        LPCOMMCONFIG    lpCommConfig = NULL;
-        LPMODEMSETTINGS lpModemSettings = NULL;
-        DCB *           lpDCB = NULL;
 
         hModem = GetModemHandleFromLine( (HLINE) 0 );
         if ( hModem == NULL )
@@ -2595,10 +2613,6 @@ os2settimo(int spd, int modem)
 
 int
 ttsetflow(int nflow) {
-#ifdef NT
-   DWORD mode ;
-#endif /* NT */
-
     debug(F101,"setflow","",nflow) ;
 
 #ifdef TN_COMPORT
@@ -3092,11 +3106,11 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
     char *x;
     extern char* ttyname();
     int rc=0 ;
-    U_INT action, res;
 #ifdef NT
-    int i ;
     SECURITY_ATTRIBUTES security ;
     char portname[267];
+#else
+    U_INT action, res;
 #endif
 
     debug(F111,"ttopen DEVNAMLEN","",DEVNAMLEN);
@@ -3852,7 +3866,6 @@ ttres() {                               /* Restore the tty to normal. */
 
 ttpkt(long speed, int flow, int parity) {
     extern int priority;
-    int s;
 #ifdef NT
     char * p = NULL;
 #endif /* NT */
@@ -4390,9 +4403,10 @@ le_getchar( CHAR * pch )
 /*  T T F L U I  --  Flush tty input buffer */
 
 ttflui() {
+#ifdef OS2ONLY
     char parm=0;
     long int data;
-    int i;
+#endif /* OS2ONLY */
 
     ttpush = -1;                               /* Clear the peek-ahead char */
 
@@ -4589,7 +4603,7 @@ static int rdch(int timo);
 
 int
 ttxin(int n, CHAR *buf) {
-    int i=0, j=0, k=0;
+    int i=0, j=0;
     CHAR m=0 ;
 
     m = (ttprty) ? 0177 : 0377;         /* Parity stripping mask. */
@@ -5090,10 +5104,10 @@ OverlappedWriteInit( void )
     return(0);
 }
 
+#ifdef NEWRDCH
 static int OldReadPending = FALSE ;
 static int NextReadPending = 0;
 
-#ifdef NEWRDCH
 int
 OverlappedReadInit( void )
 {
@@ -5411,7 +5425,9 @@ static int nxpacket = 0;
 
 int
 ttol(CHAR *s, int n) {
+#ifdef OS2ONLY
     UINT i;
+#endif /* OS2ONLY */
     int  rc = 0 ;
     int  charsleft;
     CHAR *chars;
@@ -5529,8 +5545,9 @@ int
 ttoc(char c) {
     int rc = 0 ;
 #ifdef NT
-    DWORD i ;
+#ifdef COMMENT
     int ow = 0 ;
+#endif /* COMMENT */
 #else /* NT */
     UINT i;
 #endif /* NT */
@@ -5622,8 +5639,10 @@ ttoc(char c) {
 #ifdef NEWTTOCI
 int
 ttoci(char c) {
+#ifdef OS2ONLY
     int x;
     BYTE i;
+#endif /* OS2ONLY */
     ULONG Data = 0L ;
 #ifdef NT
    DWORD errors ;
@@ -6571,7 +6590,9 @@ rdch(int timo /* ms */) {
 #else /* NEWRDCH */
 static int
 rdch(int timo /* ms */) {
+#ifdef OS2ONLY
     ULONG Nesting;
+#endif /* OS2ONLY */
 #ifdef NT
     COMMTIMEOUTS timeouts ;
     static int OldReadPending = FALSE ;
@@ -7418,7 +7439,7 @@ conoc(char c) {
 
 int
 conxo(int x, char *s) {
-    int i, rc;
+    int i;
 
     if ( s == NULL )
         return(-1);
@@ -7510,7 +7531,7 @@ conchk() {
 
 int
 coninc(timo) int timo; {
-    int c, rc = -1, cm;
+    int c;
     extern int what;
 #ifndef NOTERM
     extern enum markmodes markmodeflag[VNUM];
@@ -7946,7 +7967,9 @@ congks(int timo) {
 int
 conraw() {
 #ifdef NT
+#ifndef KUI
    DWORD mode ;
+#endif /* KUI */
    extern int mouseon ;
 #ifndef KUI
 #ifdef COMMENT
@@ -8180,11 +8203,13 @@ alarm_thread(VOID *args) {
         ReleaseAlarmMutex() ;
     }
 
-   /* this will never execute */
+   /* this will never execute
    running = FALSE;
    ckThreadEnd(args);
+    */
 }
 
+#ifndef NTSIG
 static void
 alarm_signal(int sig) {
     debug(F101,"alarm_signal handler","",sig) ;
@@ -8196,6 +8221,7 @@ alarm_signal(int sig) {
         KillProcess(pid);
     }
 }
+#endif /* NTSIG */
 
 unsigned
 alarm(unsigned sec) {
@@ -8923,7 +8949,7 @@ int
 ttruncmd(char * cmd)
 { /* Return: 0 = failure, 1 = success */
     extern int pexitstat;
-    int rc = 0, n;
+    int n;
 
     if (!cmd) return(0);
     if (!cmd[0]) return(0);
@@ -8959,8 +8985,7 @@ ttruncmd(char * cmd)
     {
         HANDLE hSaveStdIn, hSaveStdOut, hSaveStdErr;
         HANDLE hChildStdinRd, hChildStdinWr, hChildStdinWrDup,
-        hChildStdoutRd, hChildStdoutWr, hChildStdoutRdDup,
-        hInputFile, hSaveStdin, hSaveStdout;
+               hChildStdoutRd, hChildStdoutWr, hChildStdoutRdDup;
         SECURITY_ATTRIBUTES saAttr;
         BOOL fSuccess;
         PROCESS_INFORMATION procinfo ;
@@ -9137,7 +9162,6 @@ ttruncmd(char * cmd)
         do {
             DWORD io ;
             int  inc ;
-            unsigned char outc ;
 
             inc = ttinc( 1 ) ;
             if ( inc < -1 )
@@ -9171,7 +9195,7 @@ ttruncmd(char * cmd)
         CloseHandle( procinfo.hThread ) ;
 
         pexitstat = exitcode;
-        return (exitcode>=0 ? 1 : 0);
+        return 1; /* DWORD is unsigned : (exitcode>=0 ? 1 : 0); */
     }
     return 0;   /* Should never be reached */
 }

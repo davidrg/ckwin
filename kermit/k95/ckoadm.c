@@ -92,7 +92,6 @@ adminc(void)
 void
 admctrl( int ch )
 {
-    int i,j;
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -205,9 +204,6 @@ admctrl( int ch )
 void
 admascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);

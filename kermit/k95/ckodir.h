@@ -10,17 +10,21 @@
  *  Change of MAXPATHLEN for HPFS, October 1990
  */
 
+#define MAXNAMLEN  256
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 256
+#endif /* MAXPATHLEN */
+
+/* Some definitions in here can conflict with <direct.h>
+ * so if MAXNAMLEN and MAXPATHLEN are all we're interested in,
+ * define MAXPATHLEN_ONLY before including */
+#ifndef MAXPATHLEN_ONLY
+
 #ifdef NT
 #ifndef __WATCOMC__
 typedef unsigned short ino_t ;
 #endif /* __WATCOMC__ */
 #endif
-
-
-#define MAXNAMLEN  256
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 256
-#endif /* MAXPATHLEN */
 
 #define A_RONLY    0x01
 #define A_HIDDEN   0x02
@@ -74,3 +78,5 @@ extern void seekdir(DIR *, long);
 extern long telldir(DIR *);
 extern void closedir(DIR *);
 #define rewinddir(dirp) seekdir(dirp, 0L)
+
+#endif /* MAXPATHLEN_ONLY */

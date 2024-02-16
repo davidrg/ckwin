@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 10.0.183, 03 May 2023";
+char *cmdv = "Command package 10.0.184, 19 Sept 2023";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -1648,7 +1648,9 @@ cmofi(xhlp,xdef,xp,f) char *xhlp, *xdef, **xp; xx_strp f;
 #endif /* COMMENT */
     }
 #ifdef OS2
+#ifdef COMMENT
 o_again:
+#endif /* COMMENT */
 #endif /* OS2 */
     if (tries == 1)
 #endif /* DOCHKVAR */
@@ -1689,8 +1691,9 @@ o_again:
 	return(2);
     }
 #endif /* CK_TMPDIR */
-
-    if (strcmp(s,CTTNAM) && (zchko(s) < 0)) { /* OK to write to console */
+    /* Fixed 19 September 2023 by Piotr Kolasinski */
+    /* Previously: if (strcmp(s,CTTNAM) && (zchko(s) < 0)) */
+    if ((strcmp(s,CTTNAM) == 0) && (zchko(s) < 0)) { /* write to console OK */
 #ifdef COMMENT
 #ifdef OS2
 /*
@@ -1867,7 +1870,7 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
     long y;
     CK_OFF_T filesize;
     char *sp = NULL, *zq, *np = NULL;
-    char *sv = NULL, *p = NULL;
+    char *sv = NULL;
 #ifdef DTILDE
     char *dirp;
 #endif /* DTILDE */
@@ -2659,7 +2662,10 @@ cmifi2(xhlp,xdef,xp,wild,d,path,f,dirflg)
 		       ) {
 #ifndef NOPARTIAL
 /* Partial filename completion */
-		int j, k; char c;
+		int j, k;
+#ifndef OS2
+        char c;
+#endif /* OS2 */
 		k = 0;
 		debug(F111,"cmifi partial",filbuf,cc);
 #ifdef OS2
@@ -4010,9 +4016,8 @@ cmdelta(yy, mo, dd, hh, mm, ss, sign, dyy, dmo, ddd, dhh, dmm, dss)
 #endif /* CK_ANSIC */
 {
 /* cmdelta */
-    int zyy, zmo, zdd, zhh, zmm, zss;
     long t1, t2, t3, t4;
-    long d1 = 0, d2, d3;
+    long d1 = 0, d2;
     char datebuf[DATEBUFLEN+1];
 
 #ifdef DEBUG
@@ -4327,7 +4332,6 @@ cmcvtdate(s,t) char * s; int t;
     char * fld[8], * p = "", * p2, * p3; /* Assorted buffers and pointers  */
     char * s2, * s3;
     char * year = NULL, * month = NULL, * day = NULL;
-    char * hour = "00", * min = "00", * sec = "00";
     char datesep = 0;
     char tmpbuf[16];
     char xbuf[DATEBUFLEN+1];
@@ -4338,7 +4342,7 @@ cmcvtdate(s,t) char * s; int t;
     char daybuf[3];
     char monbuf[3];
     char yearbuf[5];
-    char timbuf[16], *tb, cc;
+    char cc;
     char * dp = NULL;			/* Result pointer */
     char * newdate = NULL;
     char * datepat = "[12][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9]";
@@ -4570,7 +4574,7 @@ cmcvtdate(s,t) char * s; int t;
     /* Handle "today", "yesterday", "tomorrow", and +/- n units */
 
     if (ckstrchr("TtYyNn",s[0])) {
-	int i, k, n, minus = 0;
+	int i, k;
 	char c;
 	long jd;
 	jd = mjd(ckdate());
@@ -5701,10 +5705,10 @@ shuffledate(p,opt) char * p; int opt;
     static char obuf[128];
     char c;
     int yy, dd, mm;
-#define MONTHBUFLEN 32
-    char monthbuf[MONTHBUFLEN];
     char * monthstring = NULL;
 #ifdef HAVE_LOCALE
+#define MONTHBUFLEN 32
+    char monthbuf[MONTHBUFLEN];
     _PROTOTYP( char * locale_monthname, (int, int) );
     extern int nolocale;
 #endif /* HAVE_LOCALE */
@@ -8425,11 +8429,10 @@ nlookup( struct keytab table[], char *word, int n, int * x )
 nlookup(table,word,n,x) char *word; struct keytab table[]; int n, *x; 
 #endif /* CK_ANSIC */
 {
-    register int i, m;
-    int v, kwdlen, wordlen = 0, matches = 0, maxlen = 0;
+    register int i;
+    int kwdlen, wordlen = 0, matches = 0, maxlen = 0;
     char * s  = word;
     int tmp = 0;
-    int tmp2 = 0;
     int firstmatch = -1;
     int lastmatch = -1;
     int lastlen = 0;

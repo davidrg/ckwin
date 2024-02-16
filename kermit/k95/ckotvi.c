@@ -45,11 +45,23 @@ extern char * udkfkeys[];
 extern int tt_senddata ;
 extern int tt_hidattr;
 
+void selclrscreen(BYTE, CHAR);  /* ckoco3.c */
+void setkeyclick(int);          /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+void setborder();               /* ckocon.c */
+USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
+USHORT tx_usub(USHORT);         /* ckcuni.c */
+USHORT tx_hslsub(USHORT);       /* ckcuni.c */
+
+#ifdef CK_NAWS                          /* Negotiate About Window Size */
 #ifdef TCPSOCKET
-#ifdef CK_NAWS
 extern int tn_snaws();
-#endif /* CK_NAWS */
 #endif /* TCPSOCKET */
+
+#ifdef RLOGCODE
+_PROTOTYP( int rlog_naws, (void) );     /* ckcnet.c */
+#endif /* RLOGCODE */
+#endif /* CK_NAWS */
 
 extern int protect ;
 extern int autoscroll ;
@@ -159,7 +171,7 @@ xltvigrph( CHAR c ) {
 void
 tvictrl( int ch )
 {
-    int i,j,x,y;
+    int x,y;
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -342,7 +354,7 @@ ApplyLineAttribute( int vmode, int x, int y, vtattrib vta )  ;
 void
 tviascii( int ch )
 {
-    int i,j,k,n,x,y,z;
+    int j,x,y;
     vtattrib attr ;
     viocell blankvcell;
 
@@ -403,7 +415,6 @@ tviascii( int ch )
                 }
                 else {
                     /* clear unprotected page to display attribute */
-                    int attr ;
                     ch = tviinc() ;
                 }
                 break;
@@ -1030,7 +1041,7 @@ tviascii( int ch )
                     break;
                 if ( ISTVI910(tt_type_mode) ) {
                     /* Display control character */
-                    int n = tviinc() ;
+                    /*int n =*/ tviinc() ;
                 }
                 else {
                     /* TVI 955 */
@@ -1924,9 +1935,9 @@ tviascii( int ch )
                 /* in 955 and 950 modes.                      */
                 char keydef[256] = "" ;
                 int key = tviinc() ;
-                int dir = tviinc() ;
                 int i = 0 ;
                 int ctrlp = 0 ;
+                /*int dir =*/ tviinc() ;
 
                 while ( (keydef[i]=tviinc()) != XEM && !ctrlp )
                     if ( keydef[i] != DLE || ctrlp ) {
@@ -2057,419 +2068,4 @@ tviascii( int ch )
     VscrnIsDirty(VTERM) ;
 }
 
-
-#ifdef COMMENT
-Article 3037 of comp.terminals:
-Path: utkcs2!darwin.sura.net!europa.asd.contel.com!uunet!comp.vuw.ac.nz
-!canterbury.ac.nz!phys169
-From: phys169@csc.canterbury.ac.nz
-Newsgroups: comp.terminals
-Subject: Televideo control code table (was Re: TVI950)
-Message-ID: <1992Apr23.112004.4789@csc.canterbury.ac.nz>
-Date: 23 Apr 92 11:20:03 +1200
-References: <1992Apr18.060736.29498@noose.ecn.purdue.edu>
-            <1992Apr22.174647.4783@csc.canterbury.ac.nz>
-Summary: Control codes/Escape sequences for TVI905 to TVI950
-Keywords: Programming TVI950, TVI910, TVI912, TVI920, TVI914, TVI924, TVI925
-Expires: 22 May 92 11:23:06 +1200
-Organization: University of Canterbury, Christchurch, New Zealand
-Lines: 224
-
-In article <1992Apr22.174647.4783@csc.canterbury.ac.nz>,
- phys169@csc.canterbury.ac.nz writes:
->
-> Hope the following is useful... NOTE that the 914/924 columns are NOT complete,
-> they take a heck of a lot of typing, but there's probably enough there to get
-> the magnitude of the difference.  I might follow up with a more complete table
-> some day.
-
-Well, there were a few mistakes in it (like ESC B), as well as the 914 & 924
-columns not being finished.  Here's an updated version, but I don't have good
-references for the TVI925 & 905, so if anyone can post corrections that would
-be very nice.  The only Televideo source for the 925 I had was a little glossy
-titled "The Value Leaders", which seems *very* wrong in places.
-
-I still might follow with tables for other popular terminals, like the Wyse and
-Qume and DG series.  The VT series has already been done by others, of course,
-but I might post my collection (including differences betweem other ANSI
-implementations, such as Heath/Zenith, TVI970 and Data General).
-
-If anyone wants to cut out the following and stick it on some anonymous ftp
-site, that is fine with me, but please keep my e-mail address on it so I can
-be told of any errors or omissions.
-
-*** CONTROL CODES FOR:          TVI950  910  912  920  914  924  925  905
-
-^E       ENQ (Send ID msg)                                   y
-^G       Beep                       y    y    y    y    y    y    y    y
-^H       Cursor Left                y    y    y    y    y    y    y    y
-^I       Tab                        y    y    y    y    y    y    y    y
-^J       Line Feed                  y    y    y    y    y    y    y    y
-^K       Cursor Up                  y    y    y    y    y    y    y    y
-^L       Cursor Right               y    y    y    y    y    y    y    y
-^M       Carriage Return            y    y    y    y    y    y    y    y
-^N       Disable ^S/^Q              y         y    y    y    y
-^O       Enable ^S/^Q               y         y    y    y    y
-^R       Enable P3<->P4             y    y              y    y
-^T       Disable P3<->P4            y    y              y    y
-^V       Cursor Down                y                   y    y    y
-^X       Clear unprot field                             y    y
-^Z       Clear Unprot.              y    y    y    y    y    y    y    y
-^^       Home                       y    y    y    y    y    y    y    y
-^_       NewLine                    y    y    y    y    y    y    y    y
-
-ESC ^B   insert Ctrl-B (STX)                            y    y
-ESC ^C   insert Ctrl-C (ETX)                            y    y
-ESC ESC  Display "EC" symbol        y
-ESC ! 1  Linelock this line         y
-ESC ! 2  Clear all locks            y
-ESC "    Unlock keyboard            y    y    y    y    y    y    y    y
-ESC #    Lock keyboard              y    y    y    y    y    y    y    y
-ESC $    Graphics mode on           y                   y    y
-ESC %    Graphics mode off          y                   y    y
-ESC &    Protect mode on            y         y    y    y    y    y    y
-ESC '    Protect mode off           y         y    y    y    y    y    y
-ESC (    W-Prot off & dim           y    dim  y    y    y    y    y    y
-ESC )    W-Prot on & bold           y    bold y    y    y    y    y    y
-ESC *    Clear all to nulls         y    y    y    y              y    ?
-ESC * 0  Clear all to nulls                             y    y
-ESC * 1  Clear all to spaces                            y    y
-ESC * 2  Clear unprot to nulls                          y    y
-ESC * 3  Clear unprot to spaces                         y    y
-ESC +    Clear unprot to ic*        y    y    y    y
-ESC ,    Clear all to dim sp        y         y    y
-ESC -    Move to page/row/col       y                        y    y
-ESC .    Toggle cursor on/off            y    y    y
-ESC . 0  Invisible cursor           y                   y    y
-ESC . 1  Blinking block cursor      y                   y    y
-ESC . 2  Steady block cursor        y         y    y    y    y
-ESC . 3  Blinking underline         y         y    y    y    y
-ESC . 4  Steady underline           y         y    y    y    y
-ESC /    Report Cursor p/r/c        y                        y    y
-ESC 0 0  Program Shift-Send key     y
-ESC 0 1  Program Send key           y
-ESC 0 @  Program Home key                                    y
-ESC 0 P  Program Send key                               y    y
-ESC 0 p  Program shift-Send key                         y    y
-ESC 0 s  Program shift-ENTER key                             y
-ESC 1    Set tab stop               y    y    y    y
-ESC 2    Clear tab stop             y    y    y    y
-ESC 3    Clear all tab stops        y    y    y    y
-ESC 4    Send unprot from BOL       y         y    y
-ESC 5    Send unprot from BOP       y         y    y
-ESC 6    Send all from BOL          y         y    y
-ESC 7    Send all from BOP          y         y    y
-ESC 8    Smooth scroll mode on      y
-ESC 8 0  Jump scroll mode on                                 y
-ESC 8 1  Smooth scroll mode on                               y
-ESC 9    Jump scroll mode on        y
-ESC :    Clear unprot to null       y                             ?    ?
-ESC ;    Clear unprot to ic*        y         y    y              ?    ?
-ESC <    Keyclick off               y                             y
-ESC < 0  Keyclick off                                   y    y
-ESC < 1  Keyclick on                                    y    y
-ESC >    Keyclick on                y                             y
-ESC =    Move to row/column         y    y    y    y    y    y    y    y
-ESC ?    Report row/column          y    y    y    y    y    y    y    y
-ESC @    Copy-print mode on         y    y              y    y    y
-ESC A    Copy-print mode off        y    y              y    y    y
-ESC B    Block mode on/conv off     y                   y    y    y
-ESC C    Conversation mode on       y                   y    y    y
-ESC D H  Half duplex, Block off     y                   y    y
-ESC D F  Full duplex, Block off     y                   y    y
-ESC E    Insert a line              y        y     y    y    y    y    y
-ESC F    Display control char            y
-ESC F    Define block of attr.                               y
-ESC F    Load status msg            ?
-ESC G 0  Reset video attributes     y    y              y    y    y    y
-ESC G 1  Blank video attribute      y    y              y    y    y    y
-ESC G 2  Blank video attribute      y    y              y    y    y    y
-ESC G 4  Blank video attribute      y    y              y    y    y    y
-ESC G 8  Blank video attribute      y    y              y    y    y    y
-ESC H    Auto scroll on/off              y
-ESC H    Define block graph. area                            y
-ESC I    Back tab                   y    y              ?    ?    y    y
-ESC J    Back page                  y                        y    y
-ESC K    Next page                  y                        y    y
-ESC L    Unformatted Print Page     y
-ESC L    Send data to hidden cursor                          y
-ESC M    Transmit terminal ID       y                   y    y
-ESC N    PageEdit mode on           y
-ESC N 0  PageEdit mode off                                   y
-ESC N 1  PageEdit mode on                                    y
-ESC O    PageEdit mode off          y
-ESC P    Print page, show next      y                             y
-ESC P 0  Print formatted page                           y    y
-ESC P 1  Print form. unprot. page                       y    y
-ESC P 3  Print formatted page                           y    y
-ESC P 4  Print unformatted page                         y    y
-ESC P 5  Print unform. unprot. page                     y    y
-ESC P 7  Print unformatted page                         y    y
-ESC Q    Insert a character         y         y    y    y    y    y    y
-ESC R    Delete the line            y         y    y    y    y    y    y
-ESC S    Send unprot message        y         y    y              y    y
-ESC S 1  Send unprot from BOL                           y    y
-ESC S 3  Send all from BOL                              y    y
-ESC S 5  Send unprot from BOP                           y    y
-ESC S 7  Send all from BOP                              y    y
-ESC S 9  Send unprot text STX->ETX                      y    y
-ESC S ;  Send text from STX to ETX                      y    y
-ESC S ?  Send form                                      y    y
-ESC T    Erase to EOL with ic*      y    y              y    y    y    y
-ESC U    Monitor mode on            y    y    y    y    y    y    y    y
-ESC V    Start self test                 y    y    y    y    y
-ESC W    Delete a character         y         y    y    y    y    y    y
-ESC X    Monitor mode off           y    y    y    y    y    y    y    y
-ESC Y    Clear to EOP with ic*      y    y    y    y    y    y    ?
-ESC Z 0  Report User line           y                   y    y    y
-ESC Z 1  Report Status line         y                   y    y    y
-ESC Z 2  Report Setup lines                                  y
-ESC [    Move to row                     y
-ESC ]    Move to column                  y
-ESC ] 0  Program unshift. edit keys                          y
-ESC ] 1  Program shifted edit keys                           y
-ESC \ 1  24 lines/logical page      y                        y
-ESC \ 2  48 lines/logical page      y                        y
-ESC \ 3  96 lines/logical page      y                        y
-ESC ^    Program answerback msg                              y
-ESC ^    Start blink attribute                y    y
-ESC _    Define scrolling region                             y
-ESC _    Start blank attribute                y    y
-ESC `    Buffered print mode on     y         y    y    y    y    ?
-ESC a    Buffered print off         y         y    y    y    y    ?
-ESC b    Screen black on white      y                   y    y
-ESC d    Screen white on black      y                   y    y
-ESC e    Load insert character      y
-ESC f    Load user line             y                        y
-ESC g    25th line is User line     y
-ESC g    Assign log. attr. to field                          y
-ESC h    25th line is Status        y
-ESC i    Field tab                  y         y    y    y    y    ?
-ESC j    Reverse linefeed           y
-ESC j    Reverse video attr.                  y    y
-ESC k    Normal background attr.              y    y
-ESC k    Local edit mode            y         y    y
-ESC k 0  Duplex edit mode                               y    y
-ESC k 1  Local edit mode                                y    y
-ESC l    Duplex Edit mode           y         y    y
-ESC l    Start underline attr.                y    y
-ESC m    End underline attr.                  y    y
-ESC n 0  Screen On                                      y    y
-ESC n 1  Screen Off                                     y    y
-ESC o 0  Logical attribute mode on                           y
-ESC o 1  Logical attribute mode on                           y
-ESC p    Report NVRAM contents                               y
-ESC q    End blink/blank                      y    y
-ESC q    Insert mode on             y
-ESC r    Insert mode off            y
-ESC s    Send message all           y         y    y              y    y
-ESC s    Define 25th line                                    y
-ESC t    Erase to EOL, nulls        y         y    y    y    y    y    ?
-ESC u    Monitor mode off           y         y    y              y    ?
-ESC v    Autopage on                y                             y
-ESC v 0  Autopage off                                        y
-ESC v 1  Autopage on                                         y
-ESC w    Autopage off               y                             y
-ESC x 0  Set field delimiter        y                        y    ?
-ESC x 1  Set line delimiter         y         y    y         y    ?
-ESC x 2  Set start prot delim.      y                        y    ?
-ESC x 3  Set end prot delimiter     y                        y    ?
-ESC x 4  Set screen delimiter       y         y    y         y    ?
-ESC y    Erase to EOP, nulls        y         y    y    y    y    ?    ?
-ESC z    Call User PROM             y
-ESC {    Set main (P3) port         y                             ?
-ESC { 0  Set main (comp) port                                y
-ESC { 1  Set printer port baud etc                           y
-ESC |    Program function keys      y                   y    y
-ESC }    Set printer (P4) port      y                        ?    ?
-ESC ~ 0  Reset terminal                                 y    y
-ESC ~ 1  Reset to factory def.                          y    y
-
-Notes:
-The TVI925 and 905 columns probably have a lot of mistakes, the other columns
-      might have a few too! (hopefully not too many)
-ESC G sets video attributes based on flags, so ESC G 6 would be reverse blink;
-      on most oldish ADM/Wyse/TVI/QVT terminals this attribute takes up one
-      character position on the screen; this is optional on some (e.g. ADM 12)
-      On the TVI914/924 they never take a space. The 914/924 allows dim to be
-      set (e.g. ESC G space is DIM, ESC G " is blink dim).
-BOL = Beginning of line
-BOP = Beginning of page
-EOL = End of line
-ic* = whatever insert character is set to, space by default. A TVI950 lets you
-      define what the space charecter is, on most other terminals it is always
-      a space (ASCII 32).
-
-Mark Aitchison, University of Canterbury, New Zealand.
-(usual disclaimers apply, plus a big E & O E).
-
-
-TVI950.CHT
-
-              Summary of TeleVideo, Inc. Model 950 ESC sequences
-              ==================================================
-
-+------------+------------+------------+------------+------------+------------+
-|SPC         |0           |@           |P           |`           |p           |
-|            |Load Send   |Extention   |Formatted   |Buff transp |            |
-|            |key  ++     |print on    |page prnt on|print on    |            |
-+------------+------------+------------+------------+------------+------------+
-|!           |1           |A           |Q           |a           |q           |
-|Line lock   |Set typwritr|Extention   |Character   |Buff transp |Insert      |
-|1=on, 2=off |column tab  |print off   |insert      |print off   |mode on     |
-+------------+------------+------------+------------+------------+------------+
-|"           |2           |B           |R           |b           |r           |
-|Keyboard    |Clear type- |Block       |Line        |Set reverse |Edit mode   |
-|unlock      |writer tab  |mode on     |delete      |background  |(replace) on|
-+------------+------------+------------+------------+------------+------------+
-|#           |3           |C           |S           |c           |s           |
-|Keyboard    |Clear all   |Ret to prev |Send unprot |Local       |Send whole  |
-|lock        |tabs        |duplex mode |message  ++ |mode on     |msg w/prot++|
-+------------+------------+------------+------------+------------+------------+
-|$           |4           |D           |T           |d           |t           |
-|Graphics    |Send unprot |Dplx mode on|Clear to EOL|Set normal  |Clear to EOL|
-|mode on     |line to crsr|H=half F=ful|w/ insrt chr|background  |with nulls  |
-+------------+------------+------------+------------+------------+------------+
-|%           |5           |E           |U           |e           |u           |
-|Graphics    |Send unprot |Line        |Monitor     |Load insert |Monitor     |
-|mode off    |page to crsr|insert      |mode on     |character   |mode exit   |
-+------------+------------+------------+------------+------------+------------+
-|&           |6           |F           |V           |f           |v           |
-|Protected   |Send all lin|            |            |Load user   |Auto page   |
-|mode on     |to curs/prot|            |            |line        |on          |
-+------------+------------+------------+------------+------------+------------+
-|'           |7           |G <d>       |W           |g           |w           |
-|Protected   |Send all pag|Set screen  |Character   |Display     |Auto page   |
-|mode off    |to curs/prot|attrib  **  |delete      |user line   |off         |
-+------------+------------+------------+------------+------------+------------+
-|(           |8           |H           |X           |h           |x           |
-|Half intens-|Smooth      |            |Monitor     |Display     |Set send    |
-|ity off     |scroll on   |            |mode off    |status line |delimters++ |
-+------------+------------+------------+------------+------------+------------+
-|)           |9           |I           |Y           |i           |y           |
-|Half intens-|Smooth      |Back        |Clr end page|Field       |Clr to end  |
-|ity on      |scroll off  |tab         |w/ insrt chr|tab         |of page/null|
-+------------+------------+------------+------------+------------+------------+
-|*           |:           |J           |Z           |j           |z           |
-|Clear page  |Clear unprot|Prev screen |Send line   |Rev line    |Execute user|
-|to nulls    |page to null|page        |0=usr,1=stat|feed        |ROM program |
-+------------+------------+------------+------------+------------+------------+
-|+           |;           |K           |[           |k           |{           |
-|Clear unprot|Clear unprot|Next screen |            |Edit keys   |Configure   |
-|page/ins chr|page/ins chr|page        |            |local       |comp port ++|
-+------------+------------+------------+------------+------------+------------+
-|,           |<           |L           |\ <d>       |l           ||           |
-|Clear page  |Keyclick    |Unformatted |Set page    |Edit keys   |Program     |
-|to half int |off         |page prnt on|length  *** |duplex      |func key  ++|
-+------------+------------+------------+------------+------------+------------+
-|-           |=           |M           |]           |m           |}           |
-|Pos cursor  |Pos cursor  |Send trminal|            |            |Configure   |
-|page row col|row col     |ID string   |            |            |prtr port ++|
-+------------+------------+------------+------------+------------+------------+
-|. <d>       |>           |N           |^           |n           |~           |
-|Set cursor  |Keyclick    |Page        |            |Screen      |            |
-|attrib  *   |on          |mode on     |            |on          |            |
-+------------+------------+------------+------------+------------+------------+
-|/           |?           |O           |_           |o           |DEL         |
-|Read cursor |Read cursor |Line        |            |Screen      |            |
-|page row col|row col     |mode on     |            |off         |            |
-+------------+------------+------------+------------+------------+------------+
-
-
-  *  '0' =off, '1' =blink block, '2' =block, '3' =blink undrln, '4' =undrlin
-
- **  '0' to '?', if bit 0 set =blank, 1 =blink, 2 =reverse, 3 =underline
-
-***  '1' =24 lines, '2' =48 lines, '3' =96 lines
-
- ++  See manual for additional details
-
-
-                    TVI 950 Switch Setting Reference Charts
-                    =======================================
-
-
-                                    TABLE 1:
-
-     S1     1     2     3     4     5     6     7     8     9    10
-         +-----------------------+-----+-----+-----------------------+
-         | Computer Baud Rate    |Data |Stop | Printer Baud Rate     |
-         |                       |Bits |Bits |                       |
-  +------+-----------------------+-----+-----+-----------------------+
-  |  Up  |        See            |  7  |  2  |        See            |
-  +------+-----------------------+-----+-----+-----------------------+
-  | Down |      TABLE 2          |  8  |  1  |      TABLE 2          |
-  +------+-----------------------+-----+-----+-----------------------+
-
-
-     S2     1     2     3     4     5     6     7     8     9    10
-         +-----+-----+-----------------+-----+-----------+-----+-----+
-         |Edit |Cursr|    Parity       |Video|Transmiss'n| Hz  |Click|
-  +------+-----+-----+-----------------+-----+-----------+-----+-----+
-  |  Up  | Dplx|Blink|      See        |GonBk|   See     | 60  | Off |
-  +------+-----+-----+-----------------+-----+-----------+-----+-----+
-  | Down |Local|St'dy|    TABLE 3      |BkonG|  CHART    | 50  | On  |
-  +------+-----+-----+-----------------+-----+-----------+-----+-----+
-
-
-                                   TABLE 2:
-
-            +-----------+-----+-----+-----+-----+-----------+
-            | Display   |  1  |  2  |  3  |  4  |   Baud    |
-            +-----------+-----+-----+-----+-----+           |
-            | Printer   |  7  |  8  |  9  | 10  |   Rate    |
-            +-----------+-----+-----+-----+-----+-----------+
-                        |  D  |  D  |  D  |  D  |   9600    |
-                        |  U  |  D  |  D  |  D  |     50    |
-                        |  D  |  U  |  D  |  D  |     75    |
-                        |  U  |  U  |  D  |  D  |    110    |
-                        |  D  |  D  |  U  |  D  |    135    |
-                        |  U  |  D  |  U  |  D  |    150    |
-                        |  D  |  U  |  U  |  D  |    300    |
-                        |  U  |  U  |  U  |  D  |    600    |
-                        |  D  |  D  |  D  |  U  |   1200    |
-                        |  U  |  D  |  D  |  U  |   1800    |
-                        |  D  |  U  |  D  |  U  |   2400    |
-                        |  U  |  U  |  D  |  U  |   3600    |
-                        |  D  |  D  |  U  |  U  |   4800    |
-                        |  U  |  D  |  U  |  U  |   7200    |
-                        |  D  |  U  |  U  |  U  |   9600    |
-                        |  U  |  U  |  U  |  U  |  19200    |
-                        +-----+-----+-----+-----+-----------+
-
-
-
-
-                                   TABLE 3:
-
-                        +-----+-----+-----+-----------+
-                        |  3  |  4  |  5  |   Parity  |
-                        +-----+-----+-----+-----------+
-                        |  X  |  X  |  D  |    None   |
-                        |  D  |  D  |  U  |     Odd   |
-                        |  D  |  U  |  U  |    Even   |
-                        |  U  |  D  |  U  |    Mark   |
-                        |  U  |  U  |  U  |   Space   |
-                        +-----+-----+-----+-----------+
-
-                                X = don't care
-
-
-
-
-                                    CHART:
-
-                        +-----+-----+-----------------+
-                        |  7  |  8  | Communication   |
-                        +-----+-----+-----------------+
-                        |  D  |  D  |  Half Duplex    |
-                        |  D  |  U  |  Full Duplex    |
-                        |  U  |  D  |     Block       |
-                        |  U  |  U  |     Local       |
-                        +-----+-----+-----------------+
-
-
-------------------------------------------------------------------------------
-
-#endif /* COMMENT */
 #endif /* NOTERM */

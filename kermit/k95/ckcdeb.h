@@ -3,6 +3,7 @@
 /*
   For recent additions search below for "2021" and "2022" and "2023".
   Most recent updates: Sat Jul  1 10:27:16 2023 (David Goodwin, fdc)
+  More recent: Sun Feb  4 20:17:33 2024 (removed prototypes for malloc())
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -399,6 +400,9 @@
 #ifndef BSD4
 #define BSD4
 #endif /* BSD4 */
+#ifndef BIGBUFOK
+#define BIGBUFOK
+#endif /* BIGBUFOK */
 #ifndef NOSETBUF
 #define NOSETBUF
 #endif /* NOSETBUF */
@@ -1585,6 +1589,7 @@ extern int Vscrnfprintf(FILE *, const char *, ...);
 #endif /* putchar */
 #define putchar(x) Vscrnprintf("%c",x)
 #define perror(x)  Vscrnperror(x)
+void Vscrnperror( const char *str );
 #endif /* CKODIALER */
 #endif /* OS2 */
 
@@ -4883,6 +4888,10 @@ extern int errno;
 
 #ifdef sparc				/* SPARC processors */
 #define BIGBUFOK
+#else
+#ifdef SUNOS                            /* fdc 23 September 2023 */
+#define BIGBUFOK
+#endif /* SUNOS41 */
 #endif /* sparc */
 
 #ifdef mips				/* MIPS processors */
@@ -5677,8 +5686,10 @@ _PROTOTYP( int zsyscmd, (char *) );
 _PROTOTYP( int zshcmd, (char *) );
 #ifdef UNIX
 _PROTOTYP( int zsetfil, (int, int) );
-_PROTOTYP( int zchkpid, (unsigned long) );
 #endif	/* UNIX */
+#ifdef OS2ORUNIX
+_PROTOTYP( int zchkpid, (unsigned long) );
+#endif /* OS2ORUNIX */
 #ifdef CKEXEC
 _PROTOTYP( VOID z_exec, (char *, char **, int) );
 #endif /* CKEXEC */
@@ -6322,6 +6333,8 @@ extern int _flsbuf(char c,FILE *stream);
 /*
   It is essential that these are declared correctly!
   Which is not always easy.  Take malloc() for instance ...
+  NOTE: there were a bunch of protypes here for malloc() here
+  before but why???  The specs come from the header files.
 */
 #ifdef PYRAMID
 #ifdef SVR4
@@ -6330,22 +6343,9 @@ extern int _flsbuf(char c,FILE *stream);
 #endif /* __STDC__ */
 #endif /* SVR4 */
 #endif /* PYRAMID */
-/*
-  Maybe some other environments need the same treatment for malloc.
-  If so, define SIZE_T_MALLOC for them here or in compiler CFLAGS.
-*/
-#ifdef SIZE_T_MALLOC
-_PROTOTYP( void * malloc, (size_t) );
-#else
-_PROTOTYP( char * malloc, (unsigned int) );
-#endif /* SIZE_T_MALLOC */
-
-_PROTOTYP( char * getenv, (char *) );
-_PROTOTYP( long atol, (char *) );
 #endif /* !MAC */
 #endif /* SUNOS41 */
 #endif /* CK_ANSILIBS */
-
 /*
   <sys/param.h> generally picks up NULL, MAXPATHLEN, and MAXNAMLEN
   and seems to present on all Unixes going back at least to SCO Xenix

@@ -420,7 +420,12 @@ CloseScreenMutex( void )
 APIRET
 CreateVscrnMutex( BOOL owned )
 {
-   int i, rc = 0 ;
+   int i;
+
+#ifndef NT
+    int rc;
+#endif /* Not NT */
+
    for ( i = 0 ; i < VNUM ; i++ )
    {
     if ( hmtxVscrn[i] )
@@ -489,7 +494,12 @@ CloseVscrnMutex( void )
 APIRET
 CreateVscrnDirtyMutex( BOOL owned )
 {
-   int i, rc ;
+   int i;
+
+#ifndef NT
+    int rc;
+#endif /* Not NT */
+
    for ( i=0; i<VNUM; i++)
    {
     if ( hmtxVscrnDirty[i] )
@@ -1867,7 +1877,12 @@ StopAlarmTimer( void )
 APIRET
 CreateVscrnTimerSem( BOOL posted )
 {
-   int i, rc = 0 ;
+   int i;
+
+#ifndef NT
+    int rc = 0;
+#endif /* Not NT */
+
    for ( i=0; i<VNUM ; i++ )
    {
     if ( hevVscrnTimer[i] )
@@ -1979,7 +1994,12 @@ CloseVscrnTimerSem( void )
 APIRET
 CreateVscrnDirtySem( BOOL posted )
 {
-   int i, rc = 0 ;
+   int i;
+
+#ifndef NT
+   int rc = 0;
+#endif /* Not NT */
+
    for ( i=0 ; i<VNUM ; i++ )
    {
     if ( hevVscrnDirty[i] )

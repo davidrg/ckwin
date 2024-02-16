@@ -137,6 +137,15 @@ CL = wcl386
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
 !message  Architecture:             $(TARGET_CPU)
+!if "$(CROSS_BUILD)" == "yes"
+!if "$(CROSS_BUILD_COMPATIBLE)" == "yes"
+!message  Host Architecture:        $(HOST_CPU) (cross-compiling to compatible architecture)
+!else
+!message  Host Architecture:        $(HOST_CPU) (cross-compiling)
+!endif
+!else
+!message  Host Architecture:        $(HOST_CPU)
+!endif
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
@@ -729,6 +738,7 @@ COMMODE_OBJ = commode.obj
 LIBS = os2386.lib rexx.lib
 
 # OpenWatcom doesn't have bigmath.lib
+#  -> this likely comes from the SRP distribution (srp\srp-1.4\cryptolib_1.1\VISUALC\BIGMATH)
 !if "$(CMP)" != "OWCL"
 LIBS = $(LIBS) bigmath.lib
 !endif
@@ -1102,7 +1112,6 @@ k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
             /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib
         dllrname $@ CPPRMI36=CKO32RTL
 
-
 docs:   ckermit.inf
 
 # ckotel.def
@@ -1235,8 +1244,8 @@ ckuusx$(O):	ckuusx.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckonb
                 ckocon.h cknwin.h ckowin.h ckntap.h ckcnet.h ckctel.h kui\ikui.h
 ckuusy$(O):	ckuusy.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckcnet.h ckctel.h \
 	        ck_ssl.h kui\ikui.h
-ckofio$(O):	ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
-                ckuusr.h ckcxla.h ck_ssl.h ckoreg.h
+ckofio$(O):	    ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
+                ckuusr.h ckcxla.h ck_ssl.h ckoreg.h ckosyn.h ckuath.h
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
 ckocon$(O):	ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h ckctel.h \
                 ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h kui\ikui.h
@@ -1259,10 +1268,10 @@ ckohzl$(O):     ckohzl.c ckohzl.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h c
                 ckcnet.h ckctel.h ckcuni.h
 ckoadm$(O):     ckoadm.c ckoadm.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h \
                 ckcnet.h ckctel.h ckcuni.h
-ckoi31$(O):     ckoi31.c ckoi31.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
+ckoi31$(O):     ckoi31.c ckoi31.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h ckcxla.h
 ckokey$(O):     ckokey.c ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcker.h ckuusr.h ckctel.h \
                 ckocon.h ckokey.h ckokvb.h ckcxla.h ckuxla.h ckcuni.h kui\ikui.h
-ckoqnx$(O):     ckoqnx.c ckoqnx.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
+ckoqnx$(O):     ckoqnx.c ckoqnx.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h ckcuni.h
 ckotek$(O): ckotek.c ckotek.h ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckokey.h ckokvb.h ckuusr.h ckcnet.h ckctel.h
 ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
@@ -1275,7 +1284,7 @@ ckotio$(O):	ckotio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoke
 !endif
 ckotvi$(O):     ckotvi.c ckotvi.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h \
                 ckctel.h ckokvb.h
-ckovc$(O):      ckovc.c  ckovc.h  ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
+ckovc$(O):      ckovc.c  ckovc.h  ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h ckcuni.h
 ckowys$(O):     ckowys.c ckowys.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h \
                 ckcuni.h ckokey.h ckokvb.h ckctel.h
 ckcnet$(O):	ckcnet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckonet.h ckotcp.h \
@@ -1296,7 +1305,7 @@ ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h
 cknpty$(O):     cknpty.c cknpty.h
 !endif
 ckoslp$(O):     ckoslp.c ckoslp.h ckcdeb.h ckoker.h ckclib.h 
-ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h
+ckomou$(O):     ckomou.c ckocon.h ckcdeb.h ckoker.h ckclib.h ckokey.h ckokvb.h ckuusr.h ckoreg.h
 !if "$(CKF_XYZ)" == "yes"
 ckop$(O):       ckop.c ckop.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
                 ckuusr.h ckcnet.h ckctel.h ckonet.h ckocon.h \
@@ -1307,8 +1316,9 @@ cknsig$(O):	cknsig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcne
 ckusig$(O):	ckusig.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h ckonet.h\
                 ckuusr.h ckonet.h ckcsig.h ckocon.h
 ckosyn$(O):     ckosyn.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckocon.h ckuusr.h ckntap.h
-ckothr$(O): ckothr.c ckocon.h ckcsym.h ckcasc.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcsig.h
-ckntap$(O): ckntap.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckntap.h cknwin.h ckowin.h ckuusr.h ckucmd.h ckowin.h ckntapi.h
+ckothr$(O): ckothr.c ckocon.h ckcsym.h ckcasc.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcsig.h ckosyn.h
+ckntap$(O): ckntap.c ckcdeb.h ckoker.h ckclib.h ckcker.h ckntap.h cknwin.h ckowin.h ckuusr.h ckucmd.h\
+            ckowin.h ckntapi.h ckosyn.h ckocon.h
 ckoreg$(O): ckoreg.c ckcdeb.h ckoker.h ckclib.h ckcker.h
 cknalm$(O): cknalm.c cknalm.h
 cknwin$(O): cknwin.c cknwin.h ckowin.h ckcdeb.h ckoker.h ckclib.h ckntap.h ckocon.h
@@ -1316,7 +1326,7 @@ cknprt$(O): cknprt.c ckcdeb.h ckoker.h ckcker.h ckucmd.h
 
 ckuath$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_ssl.h ckossl.h \
                 ckosslc.h ckuath.c ckoath.h
-ckoath$(O):     ckoath.c ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ckoath.h
+ckoath$(O):     ckoath.c ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ckoath.h ckoetc.h
 ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
@@ -1354,6 +1364,31 @@ p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_
 p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
 !endif
 
+# We're not always able to build and use WART so only do it if we're told to.
+!if "$(CKB_BUILD_WART)" == "yes"
+ckcpro.c:	ckcpro.w ckwart.exe
+#		$(MAKE) -f ckoker.mak ckwart.exe \
+#		  CC="$(CC) $(CC2)" OUT="$(OUT)" O="$(O)" OPT="$(OPT)" \
+#		  DEBUG="$(DEBUG)" CFLAGS="-DCK_ANSIC $(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+		ckwart ckcpro.w ckcpro.c
+
+ckwart$(O):     ckwart.c
+	$(CC) -c ckwart.c
+
+
+ckwart.exe: ckwart.obj $(DEF)
+	$(CC) ckwart.obj
+
+!elseif "$(CKB_USE_WART)" == "yes"
+
+!if "$(WART)" == ""
+WART=ckwart
+!endif
+
+ckcpro.c: ckcpro.w
+		$(WART) ckcpro.w ckcpro.c
+
+!endif
 
 ckopcf$(O):     ckopcf.c ckopcf.h
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DLL) -c ckopcf.c

@@ -133,6 +133,7 @@ int type_intrp = 0;
 #include "ckntap.h"			/* CK_TAPI definition */
 #endif
 #include "cknwin.h"
+#include "ckoreg.h"
 #endif /* NT */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -180,6 +181,23 @@ static int doeval( int );
 static int xdohttp(int, char *, char *, char *, char *,
  char *, char *, char *, char *, char, int );
 #endif /* CK_ANSIC */
+
+#ifdef OS2
+int ttgcwsz();                                  /* ckocon.c */
+void os2push();                                 /* ckocon.c */
+void clrboscr_escape(BYTE, CHAR);               /* ckoco3.c */
+int os2getcp(void);                             /* ckotio.c */
+#ifndef NOLOCAL
+int clear();                                    /* ckuusx.c */
+#endif /* NOLOCAL */
+#ifdef NT
+void StartDialer();                             /* cknwin.c */
+DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
+#ifdef CK_TAPI
+int dotapi();                                   /* ckuus3.c */
+#endif /* CK_TAPI */
+#endif /* NT */
+#endif /* OS2 */
 
 extern int xcmdsrc, hints, cmflgs, whyclosed;
 
@@ -2710,7 +2728,7 @@ int ntcpopt = (sizeof(tcpopt) / sizeof(struct keytab));
 
 #ifdef OS2
 /* K95 Manual Chapter Table -- Keep these two tables in sync! */
-
+#ifdef COMMENT
 static char * linktbl[] = {		/* Internal links in k95.htm */
     "#top",				/* 00 */
     "#what",				/* 01 */
@@ -2738,6 +2756,7 @@ static struct keytab chaptbl[] = {
     { "",                   0, 0 }
 };
 static int nchaptbl = (sizeof(chaptbl) / sizeof(struct keytab) - 1);
+#endif /* COMMENT */
 #endif /* OS2 */
 
 #ifndef NOXFER
@@ -4055,7 +4074,6 @@ doxsend(cx) int cx;
     struct stringint pv[SND_MAX+1];	/* Temporary array for switch values */
     struct FDB sf, sw, fl, cm;		/* FDBs for each parse function */
     int mlist = 0;			/* Flag for MSEND or MMOVE */
-    char * m;				/* For making help messages */
     extern struct keytab protos[];	/* File transfer protocols */
     extern int xfrxla, g_xfrxla, nprotos;
     extern char sndbefore[], sndafter[], *sndexcept[]; /* Selection criteria */
@@ -5702,7 +5720,7 @@ doadd(cx,fc) int cx, fc;
 #ifdef PATTERNS
     char * tmp[FTPATTERNS];
     char **p = NULL;
-    int i, j, k, n = 0, x = 0, last;
+    int i, j, n = 0, x = 0, last;
 
 #endif /* PATTERNS */
     if (cx != XXADD && cx != XXREMV) {
@@ -7268,7 +7286,6 @@ domanual() {
 		   )
 	 ) < 0)
       return(x);
-#endif /* OS2 */
 
 #ifdef UNIX
     ckmakmsg(tmpbuf,TMPBUFSIZ,"man ",s,NULL,NULL);
@@ -7285,15 +7302,18 @@ domanual() {
 	concb((char)escape);		/* Restore CBREAK mode */
 	return(success);
     }
+#endif /* OS2 */
 }
 #endif /* NOHELP */
 
 #ifndef NOHTTP
 #ifdef TCPSOCKET
+#ifdef CK_SSL
 static struct keytab sslswtab[] = {
     { "/ssl", 1, 0 },
     { "/tls", 1, 0 }
 };
+#endif /* CK_SSL */
 
 #ifndef NOURL
 struct urldata http_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
@@ -7671,7 +7691,9 @@ dohttp() {				/* HTTP */
 	      goto xhttp;
 	  }
 
+#ifdef CK_SSL
 	havehost:			/* Come here with s -> host */
+#endif /* CK_SSL */
 #ifdef CK_URL
 	  x = urlparse(s,&http_url);	/* Was a URL given? */
 	  if (x < 1) {			/* Not a URL */
@@ -8079,7 +8101,7 @@ isinternalmacro(x) int x;
        initialization is an ANSI feature" error in HP-UX 10.00.
     */
     static char * tags[] = { "_whi", "_for", "_sw_", "_if_" };
-    int i, internal = 0;
+    int internal = 0;
 
     m = mactab[x].kwd;
 
@@ -8101,7 +8123,7 @@ isinternalmacro(x) int x;
         internal = ckindex(m,"|_while|_forx|_forz|_xif|_switx|",0,0,0);
         debug(F111," internal macro","A",internal);
         if (!internal) {
-            int i, j, n, len = 0;
+            int i, n, len = 0;
             n = -1;
             for (i = 0; i < sizeof(* tags); i++) {
                 if (ckindex(tags[i],m,0,0,0)) {
@@ -8151,7 +8173,6 @@ newerrmsg(s) char *s;
     extern int tfblockstart[];
     extern int tlevel;
     int len1, len2, len3, len4, len5;
-    char * buf = errmsgbuf;
     char * takefile = getbasename(tfnam[tlevel]);
     char nbuf[20];
     char * lineno = nbuf;
@@ -8231,7 +8252,7 @@ newerrmsg(s) char *s;
 #endif  /* HAVE_SNPRINTF */
         }
     }
-  xnewerrmsg:
+  /*xnewerrmsg:*/
     /* Print the message only if it's not the same as the last one */
     if (ckstrcmp((char *)errmsgbuf,(char *)tmperrbuf,ERRMSGBUFSIZ,1)) {
         ckstrncpy((char *)errmsgbuf,(char *)tmperrbuf,ERRMSGBUFSIZ);
@@ -10244,9 +10265,11 @@ docmd(cx) int cx;
     if (cx == XXSHE			/* SHELL (system) command */
 	|| cx == XXEXEC			/* exec() */
 	) {
-	int rx = 0;
-	char * p = NULL;
-	int i /* ,n */ ;
+#ifdef CKEXEC
+    int rx = 0;
+    char * p = NULL;
+	int i;
+#endif /* CKEXEC */
 #ifdef UNIXOROSK
 	char * args[256];
 #endif /* UNIXOROSK */
@@ -10529,7 +10552,6 @@ docmd(cx) int cx;
 	extern char startupdir[],exedir[],inidir[];
 	char * keymapenv = NULL;
         char * appdata0 = NULL, *appdata1 = NULL;
-	int xx;
 #define TAKEPATHLEN 4096
 #else /* OS2 */
 #define TAKEPATHLEN 1024
@@ -12274,7 +12296,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifndef NOXMIT
     if (cx == XXTRA) {			/* TRANSMIT */
 	extern int xfrxla;
-	int i, n, xpipe = 0, xbinary = 0, xxlate = 1, xxnowait = 0, getval;
+	int n, xpipe = 0, xbinary = 0, xxlate = 1, xxnowait = 0, getval;
 	int xxecho = 0;
 	int scan = 1;
 	char c;
@@ -12450,7 +12472,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
     if (cx == XXTYP  || cx == XXCAT || cx == XXMORE ||
 	cx == XXHEAD || cx == XXTAIL) {
 	int paging = 0, havename = 0, head = 0, width = 0;
-	int height = 0, count = 0;
+	int count = 0;
 	char pfxbuf[64], * prefix = NULL;
 	char outfile[CKMAXPATH+1];
 	struct FDB sf, sw;
@@ -12461,8 +12483,11 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 	extern int fileorder;
 #ifdef OS2
 #ifdef NT
+#ifdef KUI
+    int height;
 	char guibuf[128], * gui_title = NULL;
 	int  gui = 0;
+#endif /* KUI */
 #endif /* NT */
 #ifndef NOCSETS
 	extern int tcsr, tcsl;
@@ -13648,7 +13673,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
     if (cx == XXORIE) {			/* ORIENTATION */
 	extern char * myname;
 	int i, y, n = 0;
-        char * s, *p, vbuf[32];
+        char * s, vbuf[32];
 	char * vars[16];       char * legend[16];
 
 	if ((y = cmcfm()) < 0)

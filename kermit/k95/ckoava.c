@@ -23,6 +23,8 @@
 #include "ckocon.h"
 #include "ckoava.h"
 
+_PROTOTYP(int utf8_to_ucs2, (CHAR, USHORT **));
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, uprint, cprint, xprint, seslog ;
@@ -84,7 +86,6 @@ avainc( int striphighbit )
 void
 avatar(void)
 {
-    int i,j;
     int ch = avainc(1) ;
 
     switch ( ch ) {

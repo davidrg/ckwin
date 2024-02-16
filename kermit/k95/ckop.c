@@ -57,8 +57,11 @@ p_transfer_t p_transfer = NULL;
 int
 load_p_dll(void) {
     int rc=0;
+
+#ifndef NT
     CHAR *exe_path;
     CHAR path[256];
+#endif /* NT */
 
 #ifdef NT
     dll_handle = LoadLibrary( "P95.DLL" ) ;
@@ -125,7 +128,7 @@ U32 _System
 in_func( U8 * buf, U32 len, U32 * bytes_received )
 {
     extern int network, carrier;
-    int rc, avail, read, i ;
+    int rc, avail, read;
 
     if (!network) {                     /* if not a network */
         if (carrier != CAR_OFF &&       /* && carrier-watch enabled */
@@ -296,7 +299,6 @@ pxyz(int sstate) {
     int savbin = binary ;
     char *tp;
     APIRET rc = 0;
-    int i;
 #ifdef GFTIMER
     extern float fptsecs;
 #endif /* GFTIMER */

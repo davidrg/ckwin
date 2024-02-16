@@ -44,6 +44,10 @@ char *loginv = "Script Command, 10.0.033, 15 Apr 2023";
 #include "ckcker.h"
 #include "ckuusr.h"
 #include "ckcnet.h"
+#ifdef OS2
+#include "ckosyn.h"
+#include "ckothr.h"
+#endif /* OS2 */
 #include "ckcsig.h"
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
@@ -52,6 +56,16 @@ _PROTOTYP( static VOID myflsh, (void) );
 _PROTOTYP( static int sequenc, (void) );
 _PROTOTYP( static VOID recvseq, (void) );
 _PROTOTYP( static int outseq, (void) );
+
+#ifdef OS2
+_PROTOTYP( int scriptwrtbuf, (unsigned short));
+
+#ifdef NT
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
+#endif /* NT */
+#endif /* OS2 */
 
 #ifdef MAC
 #define signal msignal

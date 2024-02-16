@@ -188,6 +188,9 @@ CKF_XYZ=no
 CKF_SRP=no
 # TODO: Figure out SRP support on OS/2 with OpenWatcom
 
+!message Turning Kerberos off - no Watcom support yet.
+CKF_K4W=no
+
 !endif
 
 !if "$(CKF_SSH)" == "yes"
@@ -223,6 +226,29 @@ CKF_DECNET=yes
 !else
 CKF_DECNET=no
 !endif
+
+# Build and use wart to generate ckcpro.c from ckcpro.w unless we're told
+# not to
+!if "$(CKB_BUILD_WART)" != "no"
+CKB_BUILD_WART=yes
+!endif
+
+# ... or unless we're targeting a CPU architecture incompatible with that of
+# the host machine.
+!if "$(CROSS_BUILD_COMPATIBLE)" == "no"
+!message Forcing build of WART off - target CPU architecture is incompatible
+!message with host architecture. To generate ckcpro.c from ckcpro.w, supply
+!message a version of ckwart.exe compatible with the host architecture and
+!message set CKB_USE_WART=yes
+CKB_BUILD_WART=no
+!endif
+
+!if "$(CKB_BUILD_WART)" == "yes"
+CKB_USE_WART=yes
+WART=ckwart
+!endif
+
+
 
 # Other features that should one day be turned on via feature flags once we
 # figure out how to build them and get any dependencies sorted out.

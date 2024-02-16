@@ -23,6 +23,7 @@
 #include "ckuusr.h"
 #include "ckocon.h"
 #include "ckoi31.h"
+#include "ckcxla.h"
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -48,7 +49,11 @@ int i31_monitor = FALSE ;
 int i31_xprint  = 0;
 int i31_lta     = CK_CR;
 
-int
+void udkreset();   /* ckoco3.c */
+void doreset(int); /* ckoco3.c */
+void clrscreen(BYTE, CHAR); /* ckoco3.c */
+
+        int
 i31inc(void)
 {
     extern int pmask, cmask;
@@ -177,7 +182,7 @@ i31rdctrl( int m, int * pa1, int * pa2, int * pa3, int * pa4, int * op )
 void
 i31ctrl( int ch )
 {
-    int i,j;
+    int i;
 
     if ( !cprint && xprint ) {
         switch ( ch ) {
@@ -380,9 +385,7 @@ i31ctrl( int ch )
 void
 i31ascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int i,j,n;
     int ch2=0, ch3=0, pa=0, pa1=0, pa2=0, pa3=0, pa4=0, op=0;
     char response[32]="";
 
