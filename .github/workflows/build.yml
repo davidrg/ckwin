@@ -1725,6 +1725,7 @@ jobs:
           pushd ckermit
           chmod +x ckubuildlog
           make clean
+          make wart
           make linux+ssl | tee log
           ./ckubuildlog
           cat linux+ssl.txt
