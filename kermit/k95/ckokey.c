@@ -950,7 +950,7 @@ getshiftstate( void ) {
 
 #define KEY_BUF_SIZE (65536 / sizeof(con_event))
 con_event Keystroke[VNUM][KEY_BUF_SIZE] ;
-int start[VNUM]={0,0,0}, end[VNUM]={0,0,0} ;
+int start[VNUM]={0,0,0,0,0}, end[VNUM]={0,0,0,0,0} ;
 
 void
 keybufinit( void ) {
@@ -1090,6 +1090,10 @@ putkey( int kmode, int k ) {
             evt.key.scancode = k ;
             debug(F111,"putkey()","evt.key.scancode",k);
         }
+
+        /* VTERM_B events go to the VTERM_A queue */
+        kmode = kmode == VTERM_B ? VTERM_A : kmode;
+
         RequestKeyStrokeMutex( kmode, SEM_INDEFINITE_WAIT ) ;
         while ( (start[kmode] - end[kmode] == 1) ||
                 ( start[kmode] == 0 && end[kmode] == KEY_BUF_SIZE - 1 ) )
@@ -1196,6 +1200,9 @@ putkverb( int kmode, int k ) {
         }
     }
 
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
+
     RequestKeyStrokeMutex( kmode, SEM_INDEFINITE_WAIT ) ;
     while ( (start[kmode] - end[kmode] == 1) ||
             ( start[kmode] == 0 && end[kmode] == KEY_BUF_SIZE - 1 ) )
@@ -1223,6 +1230,9 @@ int
 puterror( int kmode ) {
     int rc = 0, count = 0 ;
     con_event evt ;
+
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
 
     evt.type = error ;
 
@@ -1252,6 +1262,9 @@ int
 putesc( int kmode, int k ) {
     int rc = 0, count = 0 ;
     con_event evt ;
+
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
 
     evt.type = esc ;
     evt.esc.key = k & ~F_ESC ;
@@ -1283,6 +1296,9 @@ putcsi( int kmode, int k ) {
     int rc = 0, count = 0 ;
     con_event evt ;
 
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
+
     evt.type = csi ;
     evt.csi.key = k & ~F_CSI ;
 
@@ -1313,6 +1329,9 @@ putmacro( int kmode, char * s ) {
     int rc = 0, count = 0 ;
     con_event evt ;
 
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
+
     evt.type = macro ;
     evt.macro.string = strdup(s) ;
 
@@ -1342,6 +1361,9 @@ putliteral( int kmode, char * s ) {
     int rc = 0, count = 0 ;
     con_event evt ;
 
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
+
     evt.type = literal ;
     evt.literal.string = strdup(s) ;
 
@@ -1370,6 +1392,9 @@ int
 putclick( int kmode, char but, char alt, char ctrl, char shift, char dbl, char drag ) {
     int rc = 0, count = 0 ;
     con_event evt ;
+
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
 
     evt.type = mouse ;
     evt.mouse.button = but;
@@ -1404,6 +1429,9 @@ putclick( int kmode, char but, char alt, char ctrl, char shift, char dbl, char d
 int
 putevent( int kmode, con_event e ) {
     int rc = 0;
+
+    /* VTERM_B events go to the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
 
     switch ( e.type ) {
     case key:
@@ -1443,6 +1471,9 @@ putevent( int kmode, con_event e ) {
 int
 getevent( int kmode, con_event * evt ) {
     int rc = 0, fc = 0 ;
+
+    /* VTERM_B events come from the VTERM_A queue */
+    kmode = kmode == VTERM_B ? VTERM_A : kmode;
 
     fc = RequestKeyStrokeMutex( kmode, SEM_INDEFINITE_WAIT ) ;
     debug(F111,"getevent","RequestKeyStrokeMutex()",fc);
@@ -1541,6 +1572,16 @@ _PROTOTYP( int rlog_naws, (void) ) ;
          VscrnSetHeight( mode, r.dwSize.Y ) ;
          VscrnScroll( mode, UPWARD, 1, sz, sz, TRUE, SP ) ;
          cleartermscreen(mode);
+
+         if (IS_VTERM(mode)) {
+             int otherMode = mode == VTERM_A ? VTERM_B : VTERM_A;
+             sz = (VscrnGetEnd(otherMode) - VscrnGetTop(otherMode)
+                   + VscrnGetBufferSize(otherMode) + 1)%VscrnGetBufferSize(otherMode) ;
+             VscrnSetWidth( otherMode, r.dwSize.X ) ;
+             VscrnSetHeight( otherMode, r.dwSize.Y ) ;
+             VscrnScroll( otherMode, UPWARD, 1, sz, sz, TRUE, SP ) ;
+             cleartermscreen(otherMode);
+         }
 #ifdef TCPSOCKET
          if (ttmdm < 0 && TELOPT_ME(TELOPT_NAWS)) {
              tn_snaws() ;
@@ -2000,8 +2041,11 @@ win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
     printf("\n");
 #endif /* COMMENT */
 
+
+    debug(F111, "win32KeyEvent", "mode", mode);
+
 #ifdef PCTERM
-    if ( mode == VTERM ) {
+    if ( IS_VTERM(mode) ) {
         /* Ctrl-CAPSLOCK is the toggle for PCTERM */
         static int pcterm_ctrl_down = 0, pcterm_ctrl_up = 0,
                    pcterm_caps_down = 0, pcterm_caps_up = 0;
@@ -2074,6 +2118,8 @@ win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
 #endif /* PCTERM */
 
     c = getKeycodeFromKeyRec(&keyrec, (WORD *)buf, CHCOUNT);
+
+    debug(F111, "win32KeyEvent", "c", c);
 
     if ( c >= 0 ) {
 #ifdef NOSETKEY

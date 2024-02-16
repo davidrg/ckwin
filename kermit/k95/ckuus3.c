@@ -2571,7 +2571,7 @@ getyesno(msg, flags) char * msg; int flags;
         )
       return(popup_readyesno(vmode,NULL,msg,flags));
 #endif /* COMMENT */
-    if (vmode == VTERM) {
+    if (IS_VTERM(vmode)) {
         vmode = VCMD;
         VscrnIsDirty(VTERM);
         VscrnIsDirty(VCMD);

@@ -499,7 +499,7 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
         /* lcs for keyboard and rcs for sending.  Do not allow        */
         /* sendcharsduplex() to translate.                            */
 
-        if ( vmode == VTERM ) {
+        if ( IS_VTERM(vmode) ) {
             unsigned char * bytes;
             int nbytes;
 
@@ -539,7 +539,7 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
                 pData[j++] = selection[i] ;
         pData[j] = '\0';
 
-        if ( vmode == VTERM )
+        if ( IS_VTERM(vmode) )
             sendcharsduplex(pData,j,FALSE);
         else
             putkeystr( vmode, pData );
@@ -619,7 +619,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
             len = wcslen(pUClipbrdData);
             debug(F111,"Clipboard","pUClipbrdData length",len);
 
-            if ( vmode == VTERM ) {
+            if ( IS_VTERM(vmode) ) {
                 unsigned char * bytes, * buf;
                 int nbytes, bytecount=0;
 
@@ -687,7 +687,7 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                 pData[j] = '\0';
                 debug(F111,"Clipboard","pData length",j);
 
-                if ( vmode == VTERM )
+                if ( IS_VTERM(vmode) )
                     sendcharsduplex(pData,j,FALSE);
                 else
                     putkeystr( vmode, pData );
