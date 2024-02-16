@@ -243,7 +243,7 @@ CKB_BUILD_WART=yes
 CKB_BUILD_WART=no
 !endif
 
-!if "$(CBK_BUILD_WART)" == "yes"
+!if "$(CKB_BUILD_WART)" == "yes"
 CKB_USE_WART=yes
 WART=ckwart
 !endif
