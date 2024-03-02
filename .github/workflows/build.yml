@@ -424,7 +424,7 @@ jobs:
         set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
         set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
-        set libssh_root_override${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
+        set libssh_root_override=${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
         
         call ..\setenv.bat
         
