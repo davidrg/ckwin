@@ -55,6 +55,7 @@ Windows NT for MIPS computers, though without TAPI support.
 * Binaries are now provided for Windows NT running on Alpha, MIPS and PowerPC
   systems.
 * Upgraded to C-Kermit 10.0 Pre-Beta.11
+* About window (Help -> About) now includes the beta number
 
 ### Source Changes
 
