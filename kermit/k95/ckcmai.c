@@ -54,11 +54,11 @@ char * ck_cryear = "2024"; 		/* C-Kermit copyright year */
 /*
    Temporary from July 2022...
    the Windows version is currently seeing monthly beta releases.
-   As 24 June 2023 the Windows Beta is based on C-Kermit 10.0 Beta.10.
+   As 3 March 2024 the Windows Beta is based on C-Kermit 10.0 Beta.11.
    The Windows and non-Windows Betas happen at different times.
 */
 char *ck_s_test = "Beta";
-char *ck_s_tver = "11/Windows-05";
+char *ck_s_tver = "11/Windows-06";
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
 char *ck_s_test = "pre-Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
