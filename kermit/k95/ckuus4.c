@@ -5393,9 +5393,9 @@ shonet() {
 
 #ifdef SSHBUILTIN
     if (ck_ssleay_is_installed())
-        printf(" SSH V1 and V2 protocols\n");
+        printf(" SSH V2 protocol\n");
     else
-        printf(" SSH V1 and V2 protocols - not available\n");
+        printf(" SSH V2 protocol - not available\n");
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
