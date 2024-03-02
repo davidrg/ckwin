@@ -35,6 +35,10 @@ Windows NT for MIPS computers, though without TAPI support.
   the server after each authentication method is attempted. This allows the
   client to handle servers which change their list of allowed authentication
   methods during login.
+* Fixed `show network` command showing "SSH V1 and V2 protocols - not available"
+  in builds that *do* have SSH support
+* Fixed `show network` command showing "SSH V1 and V2 protocols" when SSH V1 is
+  no longer supported in C-Kermit for Windows.
 
 ### Minor Enhancements and other changes
 

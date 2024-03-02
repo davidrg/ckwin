@@ -5392,10 +5392,7 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
-    if (ck_ssleay_is_installed())
-        printf(" SSH V2 protocol\n");
-    else
-        printf(" SSH V2 protocol - not available\n");
+    printf(" SSH V2 protocol\n");
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
