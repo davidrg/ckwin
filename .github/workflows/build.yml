@@ -425,6 +425,7 @@ jobs:
         set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
         set libssh_root_override=${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
+        set libssh_build_override=%libssh_root_override%\build
         
         call ..\setenv.bat
         
