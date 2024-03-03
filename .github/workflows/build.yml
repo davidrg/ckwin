@@ -165,6 +165,7 @@ jobs:
           - x64_arm
           - x64_arm64
         toolset:
+          - v141_xp
           - 14.0
           - 14.2
           - 14.3
@@ -183,9 +184,49 @@ jobs:
             toolset: 14.1
           - arch: x64_arm64
             toolset: 14.2
+          # XP can't run on ARM or ARM64:
+          - arch: x64_arm
+            toolset: v141_xp
+          - arch: x64_arm64
+            toolset: v141_xp
 
     steps:
     - uses: actions/checkout@v3
+      # From here: https://github.com/UMSKT/UMSKT/actions/runs/6054397516/workflow
+    - name: Install v141_xp toolset
+      if: matrix.toolset == 'v141_xp'
+      run: |
+        Set-Location "C:\Program Files (x86)\Microsoft Visual Studio\Installer\"
+        $InstallPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise"
+        $componentsToAdd = @(
+          "Microsoft.VisualStudio.Component.WinXP"
+        )
+        [string]$workloadArgs = $componentsToAdd | ForEach-Object {" --add " +  $_}
+        $Arguments = ('/c', "vs_installer.exe", 'modify', '--installPath', "`"$InstallPath`"",$workloadArgs, '--quiet', '--norestart', '--nocache')
+        $process = Start-Process -FilePath cmd.exe -ArgumentList $Arguments -Wait -PassThru -WindowStyle Hidden
+        if ($process.ExitCode -eq 0)
+        {
+            Write-Host "components have been successfully added"
+            Get-ChildItem C:\ProgramData\Microsoft\VisualStudio\Packages\Microsoft.Windows.XPSupport.*
+        }
+        else
+        {
+            Write-Host "components were not installed"
+            exit 1
+        }
+    - name: Download And Install 32-bit OpenSSL 3.1.2
+      run: |
+        $installDir = "$Env:ProgramFiles\OpenSSL"
+        $installerURL = "https://slproweb.com/download/Win32OpenSSL-3_1_2.exe"
+        $installerName = "Win32OpenSSL-3_1_2.exe"
+        $installerPath = Join-Path -Path "${env:Temp}" -ChildPath "$installerName"
+        (New-Object System.Net.WebClient).DownloadFile($installerURL, $installerPath)
+
+        Remove-Item "$installDir" -Force -Recurse
+        $installerArgs = '/silent', '/sp-', '/suppressmsgboxes', "/DIR=`"$installDir`""
+        Start-Process -FilePath $installerPath -ArgumentList $installerArgs -Wait -PassThru
+      shell: powershell
+
     - name: Enable Developer Command Prompt
       # You may pin to the exact commit or the version.
       # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
