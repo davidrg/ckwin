@@ -214,18 +214,6 @@ jobs:
             Write-Host "components were not installed"
             exit 1
         }
-    - name: Download And Install 32-bit OpenSSL 3.1.2
-      run: |
-        $installDir = "$Env:ProgramFiles\OpenSSL"
-        $installerURL = "https://slproweb.com/download/Win32OpenSSL-3_1_2.exe"
-        $installerName = "Win32OpenSSL-3_1_2.exe"
-        $installerPath = Join-Path -Path "${env:Temp}" -ChildPath "$installerName"
-        (New-Object System.Net.WebClient).DownloadFile($installerURL, $installerPath)
-
-        Remove-Item "$installDir" -Force -Recurse
-        $installerArgs = '/silent', '/sp-', '/suppressmsgboxes', "/DIR=`"$installDir`""
-        Start-Process -FilePath $installerPath -ArgumentList $installerArgs -Wait -PassThru
-      shell: powershell
 
     - name: Enable Developer Command Prompt
       # You may pin to the exact commit or the version.
@@ -414,7 +402,9 @@ jobs:
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: powershell
       run: |
-        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cd libssh\${{env.LIBSSH_VERSION}}
+        if "${{matrix.toolset}}" == "v141_xp" patch -p1 ..\xp-fix.patch
+        cd build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
 
@@ -424,6 +414,7 @@ jobs:
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}-gssapi
         patch -p1 < ..\win32-gssapi.patch
+        if "${{matrix.toolset}}" == "v141_xp" patch -p1 ..\xp-fix.patch
         cd build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="${{github.workspace}}\kerberos\kfw\Kerberos"
         nmake
