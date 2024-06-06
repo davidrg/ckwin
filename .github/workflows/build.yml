@@ -129,7 +129,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.12.0
         with:
           arch: x86
-          toolset: 14.3
+          toolset: 14.3X
       - name: Build ckwart
         run: |
           call ..\..\setenv.bat
