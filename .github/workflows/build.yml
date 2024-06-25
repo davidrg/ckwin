@@ -129,7 +129,6 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.12.0
         with:
           arch: x86
-          toolset: 14.3
       - name: Build ckwart
         run: |
           call ..\..\setenv.bat
@@ -167,7 +166,7 @@ jobs:
         toolset:
           - 14.0
           - 14.2
-          - 14.3
+          - 14.4
         exclude:
           # No point building ARM or ARM64 targets with anything less than the latest as the latest
           # still supports the first ARM Windows.
