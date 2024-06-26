@@ -57,6 +57,13 @@ Windows NT for MIPS computers, though without TAPI support.
 * Upgraded to C-Kermit 10.0 Pre-Beta.11
 * About window (Help -> About) now includes the beta number
 
+### New features
+
+* Implemented the DECRQCRA VT420 escape sequence which is required by esctest2.
+  This is disabled by default due to its security risks, but can be enabled 
+  with `set terminal send-data on`. As C-Kermit doesn't currently have a VT420
+  terminal option yet, select VT320 to make use of VT420 features.
+
 ### Source Changes
 
 * Some minor changes to support a future replacement for the dialer.
