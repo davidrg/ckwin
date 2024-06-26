@@ -1065,6 +1065,7 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_MAX   TT_VTNT
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
+#define     TT_XTERM   98   /*    XTerm */
 #define     TT_TEK40 99	/*    Tektronix 401x */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
@@ -1125,6 +1126,7 @@ struct stringint {			/* String and (wide) integer */
 #define ISVTNT(x)  (x == TT_VTNT)
 #define ISADM3A(x) (x == TT_ADM3A)
 #define ISADM5(x)  (x == TT_ADM5)
+#define ISXTERM(x) (x == TT_XTERM)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
