@@ -8,6 +8,9 @@ static KAbout* kabout = 0;
 
 extern "C" {
     extern char *ck_s_ver;
+#ifdef BETATEST
+    extern char *ck_s_test, *ck_s_tver;
+#endif /* BETATEST */
 }
 
 /*------------------------------------------------------------------------
@@ -80,7 +83,11 @@ Bool KAbout::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             // Set the version string
             #define VERSION_LEN 128
             char version[VERSION_LEN];
+#ifdef BETATEST
+            _snprintf(version, VERSION_LEN, "Version %s %s.%s", ck_s_ver, ck_s_test, ck_s_tver);
+#else
             _snprintf(version, VERSION_LEN, "Version %s", ck_s_ver);
+#endif
 
             SendDlgItemMessage(hWnd, IDC_VERSION, WM_SETTEXT, 0,
                     (LPARAM) version);

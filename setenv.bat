@@ -303,7 +303,7 @@ set CKF_ZLIB=no
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
-if exist %zlib_root%\zlib.lib echo Found zlib
+if exist %zlib_root%\zlib.lib echo Found zlib: %zlib_root%\zlib.lib
 if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
@@ -321,7 +321,7 @@ if exist %openssl_root%\inc32\openssl\NUL set include=%include%;%openssl_root%\i
 REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
-if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x
+if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x: %openssl_root%\libssl.lib
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
 if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
@@ -337,7 +337,7 @@ REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_OPENSSL_VERSION=0.9.8 or 1.0.x
-if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
+if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x: %openssl_root%\out32dll\ssleay32.lib
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
@@ -351,8 +351,10 @@ set CKF_SSH=no
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
 if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
-if exist %libssh_build%\src\ssh.lib echo Found libssh
+if exist %libssh_build%\src\ssh.lib echo Found libssh: %libssh_build%\src\ssh.lib
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
+if "%CKF_SSH%" == "no" echo Could not find libssh (%libssh_build%\src\ssh.lib)
+if "%CKF_SSH%" == "no" goto :nossh
 :nossh
 
 REM libdes:
@@ -360,8 +362,9 @@ echo.
 if "%CKF_LIBDES%" == "no" echo Skipping check for libdes
 if "%CKF_LIBDES%" == "no" goto :nolibdes
 set CKF_LIBDES=no
+if not exist %libdes_root%\des\des.h echo Could not find libdes (%libdes_root%\des\des.h)
 if not exist %libdes_root%\des\des.h goto :nolibdes
-echo Found libdes
+echo Found libdes: %libdes_root%\des\des.h
 set CKF_LIBDES=yes
 set CKF_CRYPTDLL=yes
 set INCLUDE=%include%;%libdes_root%
@@ -382,7 +385,7 @@ if "%CKF_LIBDES%" == "no" goto :nosrp
 if "%CKF_SRP%" == "no" echo Skipping check for SRP
 if "%CKF_SRP%" == "no" goto :nosrp
 set CKF_SRP=no
-if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib echo Stanford SRP not found.
+if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib echo Stanford SRP not found (%srp_root%\win32\libsrp_openssl\Release\srp.lib)
 if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib goto :nosrp
 echo Found Stanford SRP
 set CKF_SRP=yes

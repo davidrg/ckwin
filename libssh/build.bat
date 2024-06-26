@@ -6,11 +6,12 @@ set CKB_LIBSSH=%1
 set CKB_OPENSSL=%2
 set CKB_ZLIB=%3
 
-set CKB_LIBSSH_ZLIB_ROOT=%root%\zlib\%CKB_ZLIB%
-if not exist %CKB_LIBSSH_ZLIB_ROOT%\zlib.h set CKB_LIBSSH_ZLIB_ROOT=%ZLIB_ROOT%
 
-set CKB_LIBSSH_OPENSSL_ROOT=%root%\openssl\%CKB_OPENSSL%
-if not exist %CKB_LIBSSH_OPENSSL_ROOT%\NUL set CKB_LIBSSH_OPENSSL_ROOT=%openssl_root%
+if "%CKB_ZLIB%" NEQ "" set CKB_LIBSSH_ZLIB_ROOT=%root%\zlib\%CKB_ZLIB%
+if "%CKB_ZLIB%" == "" set CKB_LIBSSH_ZLIB_ROOT=%ZLIB_ROOT%
+
+if "%CKB_OPENSSL%" NEQ "" set CKB_LIBSSH_OPENSSL_ROOT=%root%\openssl\%CKB_OPENSSL%
+if "%CKB_OPENSSL%" == "" set CKB_LIBSSH_OPENSSL_ROOT=%openssl_root%\
 
 if exist %CKB_OPENSSL_ZLIB_ROOT%\zlib.h set CKB_LIBSSH_ZLIB_OPT=-DZLIB_ROOT:PATH=%CKB_LIBSSH_ZLIB_ROOT%
 
@@ -18,16 +19,15 @@ echo.
 echo LibSSH Build Configuration
 echo ---------------------------
 echo LibSSH: %CKB_LIBSSH%
-echo OpenSSH: %CKB_LIBSSH_OPENSSL_ROOT%
+echo OpenSSL: %CKB_LIBSSH_OPENSSL_ROOT%
 echo zlib: %CKB_LIBSSH_ZLIB_ROOT%
 echo.
-
 pushd %root%\libssh\%CKB_LIBSSH%
 
 REM run the build!
 mkdir build
 cd build
-cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT%
+cmake .. -G "NMake Makefiles" -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% -DWITH_DSA=ON
 nmake
 cd ..
 
@@ -41,7 +41,7 @@ if exist %CKB_OPENSSL_ZLIB_ROOT%\zlib.h echo   set zlib_root_override=%CKB_OPENS
 echo   set openssl_root_override=%CKB_OPENSSL_ROOT_DIR%
 echo   set libssh_root_override=%%root%%\libssh\%CKB_LIBSSH%
 echo   set libssh_build_override=%%root%%\libssh\%CKB_LIBSSH%\build
-echo   cd %root%
+echo   cd %%root%%
 echo   setenv.bat
 echo alternatively, update setenv.bat and update the various root paths
 echo.
