@@ -6399,16 +6399,24 @@ nxtstatus(
         }
         break;
       case 7: {
-          extern int maxnam;
           debug(F101,"nxtstatus case","",7);
-          sprintf((char *)funcbuf,"    Filename length limit: %d\n", maxnam);
+#ifdef CKMAXNAM
+          sprintf((char *)funcbuf,
+                  "    Filename length limit: %d\n", CKMAXNAM);
+#else
+          *funcbuf = '\0';
+#endif /* def CKMAXNAM [else] */
           break;
       }
       case 8: {
-          extern int maxpath;
           debug(F101,"nxtstatus case","",8);
+#ifdef CKMAXPATH
           sprintf((char *)funcbuf,
-                  "    Pathname length limit: %d\n\n", maxpath);
+                  "    Pathname length limit: %d\n\n", CKMAXPATH);
+#else
+          *funcbuf = '\0';
+#endif /* def CKMAXPATH [else] */
+
           break;
       }
       default:

@@ -1007,6 +1007,16 @@ extern int tapibong;
 extern int tapiusecfg;
 #endif /* CK_TAPI */
 
+#ifdef VMS
+extern int vms_text;
+static struct keytab vmstftab[] = {            /* SET VMS_TEXT */
+    { "stream_lf", VMSTFS, 0 },
+    { "variable", VMSTFV, 0 }
+};
+int nvmstftab = (sizeof(vmstftab) / sizeof(struct keytab));
+
+#endif /* VMS */
+
 #ifndef NOPUSH
 extern int nopush;
 extern int wildena;
@@ -12011,6 +12021,14 @@ case XYDEBU:                            /* SET DEBUG { on, off, session } */
         return(success = 1);
 #endif /* NOCSETS */
 #endif /* NOXFER */
+
+#ifdef VMS
+      case XYVMSTF:                     /* VMS_TEXT */
+        if ((y = cmkey(vmstftab,nvmstftab,"VMS text-file format",
+                       "",xxstring)) < 0) return(y);
+        vms_text = y;   /* Set new text-file format value. */
+        return(y);
+#endif /* VMS */
 
 #ifndef NOPUSH
 #ifdef UNIX

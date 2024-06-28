@@ -544,10 +544,6 @@ extern char lock2[];
 #endif /* USETTYLOCK */
 #endif /* UNIX */
 
-#ifdef OS2ORUNIX
-extern int maxnam, maxpath;             /* Longest name, path length */
-#endif /* OS2ORUNIX */
-
 extern int mdmtyp, mdmsav;
 
 #ifndef NODIAL
@@ -6026,12 +6022,14 @@ shofil() {
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* DYNAMIC */
 #endif /* UNIX */
-#ifdef OS2ORUNIX
-    printf(" Longest filename:        %d\n", maxnam);
+#ifdef CKMAXNAM
+    printf(" Longest filename:        %d\n", CKMAXNAM);
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
-    printf(" Longest pathname:        %d\n", maxpath);
+#endif /* def CKMAXNAM */
+#ifdef CKMAXPATH
+    printf(" Longest pathname:        %d\n", CKMAXPATH);
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
-#endif /* OS2ORUNIX */
+#endif /* def CKMAXPATH */
 
     printf(" Last file sent:          %s\n", sfspec ? sfspec : "(none)");
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}

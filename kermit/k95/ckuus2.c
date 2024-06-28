@@ -10782,6 +10782,14 @@ case XYUNCS:
   character sets.  KEEP means to accept them anyway."));
 #endif /* NOCSETS */
 
+#ifdef VMS
+case XYVMSTF:
+    return(hmsg("Syntax: SET VMS_TEXT { STREAM_LF, VARIABLE }\n\
+  Selects the record format for text output files on VMS\n\
+  (Stream_LF (default) or Variable-length)."
+));
+#endif /* VMS */
+
 #ifdef UNIX
 case XYWILD:
     return(hmsga(hxywild));

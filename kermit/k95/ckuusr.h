@@ -1772,6 +1772,11 @@ struct stringint {			/* String and (wide) integer */
 #define XYEXTRN  135    /* SET EXTERNAL-PROTOCOL */
 #define XYVAREV  136    /* SET VARIABLE-EVALUATION */
 #define XYLOCALE 137    /* SET LOCALE */
+#ifdef VMS
+#define XYVMSTF  138    /* SET VMS_TEXT */
+#define  VMSTFS    1    /*  STREAM_LF */
+#define  VMSTFV    2    /*  VARIABLE */
+#endif /* VMS */
 
 /* End of SET commands */
 
@@ -2023,6 +2028,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOREN    72			/* SHOW RENAME */
 #define SHOLOC    73			/* SHOW LOCALE */
 #define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
+#define SHOVMSTXT 75			/* SHOW VMS_TEXT */
 
 /* REMOTE command symbols */
 

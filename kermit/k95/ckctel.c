@@ -243,9 +243,30 @@ extern int cmd_cols, cmd_rows;
 extern char namecopy[];
 extern char myipaddr[];             /* Global copy of my IP address */
 
+/* A copy of this function also appears in ck_crp.c for use by Kermit 95s
+ * telnet cryptography DLL (k95crypt.dll) */
+char *
+#ifdef CK_ANSIC
+tel_unk(int opt)                        /* "UNKNOWN-%u" string. */
+#else
+tel_unk(opt) int opt;
+#endif /* CK_ANSIC */
+{
+  /* 2024-03-27 SMS.  Added (decimal) value to "UNKNOWN" messages. */
+  static char val_str[ 20];
+  sprintf(val_str, "UNKNOWN-%u", opt);
+  return(val_str);
+}
+
 #ifndef TELOPT_MACRO
+
 int
-telopt_index(opt) int opt; {
+#ifdef CK_ANSIC
+telopt_index(int opt)
+#else
+telopt_index(opt) int opt;
+#endif /* CK_ANSIC */
+{
     if (opt >= 0 && opt <= TELOPT_STDERR)
       return(opt);
     else if (opt >= TELOPT_PRAGMA_LOGON && opt <= TELOPT_PRAGMA_HEARTBEAT)
@@ -257,32 +278,53 @@ telopt_index(opt) int opt; {
 }
 
 int
-telopt_ok(opt) int opt; {
+#ifdef CK_ANSIC
+telopt_ok(int opt)
+#else
+telopt_ok(opt) int opt;
+#endif /* CK_ANSIC */
+{
     return((opt >= TELOPT_BINARY && opt <= TELOPT_STDERR) ||
            (opt >= TELOPT_PRAGMA_LOGON && opt <= TELOPT_PRAGMA_HEARTBEAT) ||
            (opt == TELOPT_IBM_SAK));
 }
 
-CHAR *
-telopt(opt) int opt; {
+char *
+#ifdef CK_ANSIC
+telopt(int opt)
+#else
+telopt(opt) int opt;
+#endif /* CK_ANSIC */
+{
     if (telopt_ok(opt))
-      return((CHAR *)telopts[telopt_index(opt)]);
+      return(telopts[telopt_index(opt)]);
     else
-      return((CHAR *)"UNKNOWN");
+      return(tel_unk(opt));
 }
 
 int
-telopt_mode_ok(opt) int opt; {
-    return((unsigned int)(opt) <= TN_NG_MU);
+#ifdef CK_ANSIC
+telopt_mode_ok(int mode)
+#else
+telopt_mode_ok(mode) int mode;
+#endif /* CK_ANSIC */
+{
+    return (((unsigned int)mode) <= TN_NG_MU);
 }
 
-CHAR *
-telopt_mode(opt) int opt; {
-    if (telopt_mode_ok(opt))
-      return((CHAR *)telopt_modes[opt-TN_NG_RF]);
+char *                          /* Type matches ckctel.h:telopt_modes[]. */
+#ifdef CK_ANSIC
+telopt_mode(int mode)
+#else
+telopt_mode(mode) int mode;
+#endif /* CK_ANSIC */
+{
+    if (telopt_mode_ok(mode))
+      return(telopt_modes[mode-TN_NG_RF]);
     else
-      return((CHAR *)"UNKNOWN");
+      return(tel_unk(mode));
 }
+
 #endif /* TELOPT_MACRO */
 
 static int
@@ -891,7 +933,7 @@ tn_ssbopt(opt,sub,data,len) int opt, sub; CHAR * data; int len;
                      TELOPT(TELOPT_NEWENVIRON)," ",
                      sub == TELQUAL_SEND ? "SEND" :
                      sub == TELQUAL_IS ? "IS" :
-                     sub == TELQUAL_INFO ?"INFO" : "UNKNOWN" );
+                     sub == TELQUAL_INFO ?"INFO" : tel_unk(sub) );
             for (i = 0, quote = 0; i < len; i++) {
                 if (quote) {
                     sprintf(hexbuf,"%02x",data[i]); /* safe but ugly */
