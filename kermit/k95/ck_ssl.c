@@ -2684,7 +2684,11 @@ ssl_http_init(hostname) char * hostname;
 #endif /* NOHTTP */
 
 char *
+#ifdef CK_ANSIC
+ssl_get_dNSName(SSL *ssl)
+#else
 ssl_get_dNSName(ssl) SSL * ssl;
+#endif  /* CK_ANSIC */
 {
     static char *dns = NULL;
     X509 *server_cert = NULL;
@@ -2732,7 +2736,12 @@ cleanup:
 }
 
 char *
-ssl_get_commonName(ssl) SSL * ssl; {
+#ifdef CK_ANSIC
+ssl_get_commonName(SSL *ssl)
+#else
+ssl_get_commonName(ssl) SSL * ssl;
+#endif  /* CK_ANSIC */
+{
     static char name[256];
     int name_text_len;
     int err;
@@ -2761,7 +2770,11 @@ ssl_get_commonName(ssl) SSL * ssl; {
 }
 
 char *
+#ifdef CK_ANSIC
+ssl_get_issuer_name(SSL *ssl)
+#else
 ssl_get_issuer_name(ssl) SSL * ssl;
+#endif  /* CK_ANSIC */
 {
     static char name[256];
     X509 *server_cert;
@@ -2781,7 +2794,11 @@ ssl_get_issuer_name(ssl) SSL * ssl;
 }
 
 char *
+#ifdef CK_ANSIC
+ssl_get_subject_name(SSL *ssl)
+#else
 ssl_get_subject_name(ssl) SSL * ssl;
+#endif  /* CK_ANSIC */
 {
     static char name[256];
     X509 *server_cert;
@@ -3030,7 +3047,11 @@ ssl_verify_crl(int ok, X509_STORE_CTX *ctx)
 }
 
 char *
+#ifdef CK_ANSIC
+tls_userid_from_client_cert(SSL *ssl)
+#else
 tls_userid_from_client_cert(ssl) SSL * ssl;
+#endif  /* CK_ANSIC */
 {
     /* DavidG 2022-09-05: On Windows and OS/2, X509_to_user is expected to be
      * provided by a user-supplied DLL as described here:
@@ -4023,7 +4044,11 @@ ck_tn_tls_negotiate(VOID)
 }
 
 int
+#ifdef CK_ANSIC
+ck_ssl_incoming(int fd)
+#else
 ck_ssl_incoming(fd) int fd;
+#endif  /* CK_ANSIC */
 {
     /* if we are not running in debug then any error
     * stuff from SSL debug *must* not go down
@@ -4194,7 +4219,11 @@ ck_ssl_incoming(fd) int fd;
 }
 
 int
+#ifdef CK_ANSIC
+ck_ssl_outgoing(int fd)
+#else
 ck_ssl_outgoing(fd) int fd;
+#endif  /* CK_ANSIC */
 {
     int timo = 2000;
 
@@ -4371,7 +4400,11 @@ ck_ssl_outgoing(fd) int fd;
 
 #ifndef NOHTTP
 int
+#ifdef CK_ANSIC
+ck_ssl_http_client(int fd, char *hostname)
+#else
 ck_ssl_http_client(fd, hostname) int fd; char * hostname;
+#endif  /* CK_ANSIC */
 {
     int timo = 2000;
 

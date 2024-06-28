@@ -1,8 +1,8 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "06 Feb 2024"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20240206"          /* Keep them in sync */
-/* Tue Feb  6 11:41:35 2024 */
+#define EDITDATE  "5 Jun 2024"       /* Last edit date dd mmm yyyy */
+#define EDITNDATE "20240605"          /* Keep them in sync */
+/* Wed Jun  5 13:44:42 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -104,9 +104,9 @@ int offtsize = 0;                       /* Size of OFF_T */
   Macintosh), just C-Kermit for each platform (except the original Mac).
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "408";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.408";           /* eXtended version string */
-long  ck_l_ver = 1000408L;              /* C-Kermit version number */
+char *ck_s_edit = "413";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.413";           /* eXtended version string */
+long  ck_l_ver = 1000413L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
@@ -1357,6 +1357,9 @@ int deblog = 0,                         /* Debug log is open */
     dest   = DEST_D,                    /* Destination for packet data */
     zchkod = 0,                         /* zchko() should work for dirs too? */
     zchkid = 0,                         /* zchki() should work for dirs too? */
+#ifdef VMS
+    vms_text = VMSTFS,                  /* VMS text file dflt fmt: Stream_LF */
+#endif /* VMS */
 
 /* If you change this, also see struct ptab above... */
 

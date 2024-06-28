@@ -9,12 +9,14 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last updates:
+    Tue Mar 26 15:00:12 2024 (fix debug(F110,"GREP tmpstr","",tmpstr);)
+    Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
@@ -5045,7 +5047,7 @@ dogrep() {
                     } else {
                         ckmakmsg(tmpstr,tmplen,rp3,NULL,NULL,NULL);
                     }
-                    debug(F110,"GREP tmpstr","",tmpstr);
+                    debug(F110,"GREP tmpstr",tmpstr,"");
                     makestr(&(ap[arrayslot++]),tmpstr);
                 } else {
 #endif  /* NOSPL */

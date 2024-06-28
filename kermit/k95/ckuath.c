@@ -12827,8 +12827,12 @@ in this Software without prior written authorization from the X Consortium.
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 void
+#ifdef CK_ANSIC
+XauDisposeAuth (Xauth *auth)
+#else
 XauDisposeAuth (auth)
 Xauth   *auth;
+#endif  /* CK_ANSIC */
 {
     if (auth) {
         if (auth->address) (void) free (auth->address);
@@ -12884,9 +12888,13 @@ XauFileName ()
 }
 
 static int
+#ifdef CK_ANSIC
+binaryEqual (const char *a, const char *b, int len)
+#else
 binaryEqual (a, b, len)
 const char   *a, *b;
 int    len;
+#endif  /* CK_ANSIC */
 {
     while (len--)
         if (*a++ != *b++)
@@ -12899,6 +12907,15 @@ int    len;
 #endif /* R_OK */
 
 Xauth *
+#ifdef CK_ANSIC
+XauGetAuthByAddr (unsigned int family,
+                  unsigned int address_length,
+                  const char *address,
+                  unsigned int number_length,
+                  const char *number,
+                  unsigned int name_length,
+                  const char *name)
+#else
 XauGetAuthByAddr (family, address_length, address,
                           number_length, number,
                           name_length, name)
@@ -12909,6 +12926,7 @@ unsigned int    number_length;
 const char      *number;
 unsigned int    name_length;
 const char      *name;
+#endif  /* CK_ANSIC */
 {
     FILE    *auth_file;
     char    *auth_name;
@@ -12974,9 +12992,13 @@ const char      *name;
 }
 
 static int
+#ifdef CK_ANSIC
+read_short (unsigned short *shortp, FILE *file)
+#else
 read_short (shortp, file)
 unsigned short  *shortp;
 FILE            *file;
+#endif  /* CK_ANSIC */
 {
     unsigned char   file_short[2];
 
@@ -12987,10 +13009,14 @@ FILE            *file;
 }
 
 static int
+#ifdef CK_ANSIC
+read_counted_string (unsigned short *countp, char **stringp, FILE *file)
+#else
 read_counted_string (countp, stringp, file)
 unsigned short  *countp;
 char    **stringp;
 FILE    *file;
+#endif  /* CK_ANSIC */
 {
     unsigned short  len;
     char            *data;
@@ -13015,8 +13041,12 @@ FILE    *file;
 }
 
 Xauth *
+#ifdef CK_ANSIC
+XauReadAuth (FILE *auth_file)
+#else
 XauReadAuth (auth_file)
 FILE    *auth_file;
+#endif  /* CK_ANSIC */
 {
     Xauth   local;
     Xauth   *ret;
@@ -13060,9 +13090,13 @@ FILE    *auth_file;
 }
 
 static int
+#ifdef CK_ANSIC
+write_short (unsigned short s, FILE *file)
+#else
 write_short (s, file)
 unsigned short  s;
 FILE            *file;
+#endif  /* CK_ANSIC */
 {
     unsigned char   file_short[2];
 
@@ -13074,10 +13108,14 @@ FILE            *file;
 }
 
 static int
+#ifdef CK_ANSIC
+write_counted_string (unsigned short count, char *string, FILE *file)
+#else
 write_counted_string (count, string, file)
 unsigned short  count;
 char    *string;
 FILE    *file;
+#endif  /* CK_ANSIC */
 {
     if (write_short (count, file) == 0)
         return 0;
@@ -13087,9 +13125,13 @@ FILE    *file;
 }
 
 int
+#ifdef CK_ANSIC
+XauWriteAuth (FILE *auth_file, Xauth *auth)
+#else
 XauWriteAuth (auth_file, auth)
 FILE    *auth_file;
 Xauth   *auth;
+#endif  /* CK_ANSIC */
 {
     if (write_short (auth->family, auth_file) == 0)
         return 0;
@@ -13406,7 +13448,12 @@ ck_auth_init( hostname, ipaddr, username, socket )
 }
 
 void
-auth_finished(result) int result; {
+#ifdef CK_ANSIC
+auth_finished(int result)
+#else
+auth_finished(result) int result;
+#endif  /* CK_ANSIC */
+{
     extern char uidbuf[];
     extern int sstelnet;
 

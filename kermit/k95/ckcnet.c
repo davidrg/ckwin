@@ -13966,7 +13966,12 @@ static int rlog_oob( CHAR *, int );
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 int
-fwdx_create_listen_socket(screen) int screen; {
+#ifdef CK_ANSIC
+fwdx_create_listen_socket(int screen)
+#else
+fwdx_create_listen_socket(screen) int screen;
+#endif  /* CK_ANSIC */
+{
 #ifdef NOPUTENV
     return(-1);
 #else /* NOPUTENV */
@@ -14046,7 +14051,12 @@ fwdx_create_listen_socket(screen) int screen; {
 
 
 int
-fwdx_open_client_channel(channel) int channel; {
+#ifdef CK_ANSIC
+fwdx_open_client_channel(int channel)
+#else
+fwdx_open_client_channel(channel) int channel;
+#endif  /* CK_ANSIC */
+{
     char * env;
     struct sockaddr_in saddr;
 #ifdef FWDX_UNIX_SOCK
@@ -14465,7 +14475,12 @@ fwdx_open_server_channel() {
 }
 
 int
-fwdx_close_channel(channel) int channel; {
+#ifdef CK_ANSIC
+fwdx_close_channel(int channel)
+#else
+fwdx_close_channel(channel) int channel;
+#endif  /* CK_ANSIC */
+{
     int i,fd;
 
     for ( i=0; i<MAXFWDX ; i++ ) {
@@ -14531,8 +14546,12 @@ fwdx_close_all() {
 #endif /* socket_read */
 
 int
+#ifdef CK_ANSIC
+fwdx_write_data_to_channel(int channel, char *data, int len)
+#else
 fwdx_write_data_to_channel(channel, data, len)
     int channel; char * data; int len;
+#endif  /* CK_ANSIC */
 {
     int sock, count, length = len, i;
 
