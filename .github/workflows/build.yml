@@ -212,7 +212,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+rel+nasm+xp+dsa+libdes+kfw+ver3
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+rel+nasm+xp+dsa+libdes+kfw+ver4
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
