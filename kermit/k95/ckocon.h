@@ -263,7 +263,9 @@ typedef struct cell_struct {          /* to be used with VioWrtNCell() */
 #else /* CKOUNI_OUT */
     unsigned char c ;                 /* character */
 #endif /* CKOUNI_OUT */
-    unsigned char a ;                 /* attribute */
+    unsigned char a ;                 /* attribute (foreground & background
+                                       * color) - see comment further up by
+                                       * swapcolors and byteswapcolors */
 } viocell ;
 
 typedef struct videoline_struct {
