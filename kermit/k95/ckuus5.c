@@ -5353,6 +5353,7 @@ struct keytab shokeymtab[] = {
     "linux",     TT_LINUX,   0,         /* Linux */
     "qansi",     TT_QANSI,   0,         /* QNX ANSI */
     "qnx",       TT_QNX,     0,         /* QNX */
+    "regent25",  TT_REGENT25,0,         /* ADDS Regent 25 */
     "russian",   TT_KBM_RUSSIAN, 0,     /* Russian mode */
     "scoansi",   TT_SCOANSI, 0,         /* SCO ANSI */
     "sni-97801", TT_97801,   0,         /* Sinix 97801 */

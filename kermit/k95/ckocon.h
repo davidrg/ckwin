@@ -511,6 +511,7 @@ _PROTOTYP(void clrtoeoln, (BYTE,CHAR));
 _PROTOTYP(void clrbol_escape, (BYTE,CHAR));
 _PROTOTYP(void clrbos_escape, (BYTE,CHAR));
 _PROTOTYP(void clreoscr_escape, (BYTE,CHAR));
+_PROTOTYP(void clreol_escape, (BYTE,CHAR));
 _PROTOTYP(void clrline_escape, (BYTE,CHAR));
 _PROTOTYP(void clrcol_escape, (BYTE,CHAR));
 _PROTOTYP(void clrrect_escape, (BYTE, int, int, int, int, CHAR)) ;
