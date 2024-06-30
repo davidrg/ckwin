@@ -15,7 +15,7 @@ env:
   # So we're now fetching zlib from ftp.zx.net.nz instead.
   ZLIB_VERSION: 1.2.13
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 3.0.13
+  OPENSSL_VERSION: 3.0.14
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
   LIBSSH_VERSION: 0.10.6
@@ -129,7 +129,6 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.12.0
         with:
           arch: x86
-          toolset: 14.3
       - name: Build ckwart
         run: |
           call ..\..\setenv.bat
@@ -167,7 +166,7 @@ jobs:
         toolset:
           - 14.0
           - 14.2
-          - 14.3
+          - 14.4
         exclude:
           # No point building ARM or ARM64 targets with anything less than the latest as the latest
           # still supports the first ARM Windows.

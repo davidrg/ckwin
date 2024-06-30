@@ -7754,7 +7754,7 @@ dormt(xx) int xx;
 #endif /* datageneral */
 #endif /* VMS */
 	rcdactive = 1;
-        sstate = setgen('C',s,s2,"");
+        sstate = setgen('C',s,"","");
         retcode = 0;
         break;
 

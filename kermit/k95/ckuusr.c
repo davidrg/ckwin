@@ -1951,7 +1951,7 @@ struct keytab savtab[] = {
 };
 int nsav = (sizeof(savtab) / sizeof(struct keytab)) - 1;
 
-/* Parameter keyword table */
+/* Parameter keyword table (SET command) */
 
 struct keytab prmtab[] = {
     { "alarm",            XYALRM,  0 },
@@ -2352,6 +2352,9 @@ struct keytab prmtab[] = {
     { "variable-evaluation", XYVAREV, CM_INV },
 #endif	/* NOSPL */
 #endif /* NOXFER */
+#ifdef VMS
+    { "vms_text",    XYVMSTF, CM_ARG }, /* VMS Text-file Format */
+#endif /* VMS */
     { "wait",             XYSLEEP, CM_INV },
 #ifndef NOPUSH
 #ifdef UNIX
@@ -3178,6 +3181,9 @@ struct keytab shotab[] = {
 #ifndef NOFRILLS
     { "versions",      SHVER, 0 },
 #endif /* NOFRILLS */
+#ifdef VMS
+    { "vms_text",      SHOVMSTXT, 0},
+#endif /* VMS */
 #ifdef OS2
     { "vscrn",         SHVSCRN, CM_INV|CM_LOC },
 #endif /* OS2 */

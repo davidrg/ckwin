@@ -2301,7 +2301,7 @@ ckround(fpnum,places,obuf,obuflen)
 	}
     }
     if (minus) number--;                /* Back up to minus sign, if any. */
-#ifdef __alpha
+#ifdef FLT_NOT_DBL
     sscanf(number,"%f",&value);		/* Convert back to floating point */
 #else
     sscanf(number,"%lf",&value);        /* Convert back to floating point */

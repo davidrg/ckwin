@@ -150,6 +150,11 @@ extern int carrier, cdtimo, local, quiet, backgrd, bgset, sosi, xsuspend,
 extern int locus, autolocus;
 #endif /* LOCUS */
 
+#ifdef VMS
+extern int vms_text;                           /* SET VMS_TEXT */
+#endif /* VMS */
+
+
 #ifndef NOMSEND
 extern int addlist;
 #endif /* NOMSEND */
@@ -7968,6 +7973,21 @@ doshow(x) int x;
         break;
 #endif /* NOSPL */
 
+#ifdef VMS
+      char *rec_fmt;
+      case SHOVMSTXT:
+
+        if (vms_text == VMSTFS) {
+            rec_fmt = "Stream_LF";
+        } else if (vms_text == VMSTFV) {
+            rec_fmt = "Variable";
+        } else {
+            rec_fmt = "(Unknown?)";
+        }
+        printf("VMS text-file record format: %s\n", rec_fmt);
+        break;
+#endif /* VMS */
+
 #ifndef NOMSEND
       case SHSFL: {
           extern struct filelist * filehead;
@@ -11632,9 +11652,6 @@ initoptlist() {
 #ifdef VMS64BIT
     makestr(&(optlist[noptlist++]),"VMS64BIT");	/* VMS on non-VAX */
 #endif /* VMS64BIT */
-#ifdef VMSI64
-    makestr(&(optlist[noptlist++]),"VMSI64"); /* VMS on IA64 */
-#endif /* VMSI64 */
 #ifdef _POSIX_SOURCE
     makestr(&(optlist[noptlist++]),"_POSIX_SOURCE");
 #endif /* _POSIX_SOURCE */

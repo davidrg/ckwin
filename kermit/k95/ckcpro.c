@@ -7,7 +7,7 @@
 char *wartv = "Wart Version 2.17, 04 February 2024 ";
 
 char *protv =                                                     /* -*-C-*- */
-"C-Kermit Protocol Module 10.0.169, 3 Feb 2024";
+"C-Kermit Protocol Module 10.0.170, 21 Mar 2024";
 
 int kactive = 0;			/* Kermit protocol is active */
 /*
@@ -3785,7 +3785,12 @@ _PROTOTYP( int pxyz, (int) );
     1: Extended GET processed OK - wait for another.
 */
 static int
-sgetinit(reget,xget) int reget, xget; {	/* Server end of GET command */
+#ifdef CK_ANSIC
+sgetinit(int reget, int xget)
+#else
+sgetinit(reget,xget) int reget, xget; 
+#endif /* CK_ANSIC */
+{	/* Server end of GET command */
     char * fs = NULL;			/* Pointer to filespec */
     int i, n, done = 0;
 #ifdef PIPESEND
