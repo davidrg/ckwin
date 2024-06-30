@@ -1268,7 +1268,7 @@ ckohzl$(O):     ckohzl.c ckohzl.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h c
                 ckcnet.h ckctel.h ckcuni.h
 ckoadm$(O):     ckoadm.c ckoadm.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h \
                 ckcnet.h ckctel.h ckcuni.h
-ckoads$(O):     ckoads.c ckoads.h ckcdeb.h ckcker.h ckcuni.h ckocon.h ckcnet.h ckcasc.h
+ckoads$(O):     ckoads.c ckoads.h ckcdeb.h ckcker.h ckcuni.h ckocon.h ckcnet.h ckcasc.h ckuusr.h
 ckoi31$(O):     ckoi31.c ckoi31.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h ckcxla.h
 ckokey$(O):     ckokey.c ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcker.h ckuusr.h ckctel.h \
                 ckocon.h ckokey.h ckokvb.h ckcxla.h ckuxla.h ckcuni.h kui\ikui.h

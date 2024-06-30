@@ -31,6 +31,7 @@
 #include "ckocon.h"     /* For is_xprint, is_uprint, prtchar, wrtch,
  *                         VscrnIsDirty, ES_GOTESC, VTERM, debugses,
  *                         cursorleft*/
+#include "ckuusr.h"
 #include "ckoads.h"
 #ifdef NETCONN
 #ifdef TCPSOCKET
