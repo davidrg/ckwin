@@ -1,0 +1,29 @@
+diff --git a/src/misc.c.old b/src/misc.c
+index 7081f12..cd0e225 100644
+--- a/src/misc.c.old
++++ b/src/misc.c
+@@ -221,6 +221,8 @@ int ssh_is_ipaddr_v4(const char *str)
+     return 0;
+ }
+ 
++typedef NET_IFINDEX (NETIOAPI_API_ *if_nametoindex_t)(PCSTR);
++
+ int ssh_is_ipaddr(const char *str)
+ {
+     int rc = SOCKET_ERROR;
+@@ -233,10 +235,13 @@ int ssh_is_ipaddr(const char *str)
+         struct sockaddr_storage ss;
+         int sslen = sizeof(ss);
+         char *network_interface = strchr(s, '%');
++		HINSTANCE hIPHLPAPI = LoadLibrary("IPHLPAPI"); 
++		if_nametoindex_t h_if_nametoindex = (if_nametoindex_t)GetProcAddress(hIPHLPAPI, "if_nametoindex");
++
+ 
+         /* link-local (IP:v6:addr%ifname). */
+-        if (network_interface != NULL) {
+-            rc = if_nametoindex(network_interface + 1);
++        if (network_interface != NULL && h_if_nametoindex != NULL) {
++            rc = h_if_nametoindex(network_interface + 1);
+             if (rc == 0) {
+                 free(s);
+                 return 0;

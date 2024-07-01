@@ -6,13 +6,18 @@ check the git commit log.
 ## C-Kermit for Windows 10.0b10 beta 6 - coming soon
 
 This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
-now out of support) to OpenSSL 3.0.x. Also included are a selection of bug
-fixes and other minor enhancements. 
+now out of support) to OpenSSL 3.0.x, and libssh 0.10.5 to 0.10.6. Also 
+included are a selection of bug fixes and other minor enhancements. 
 
 Also in this release: official support for Windows NT on Alpha and PowerPC
 has returned after being discontinued in March 2000 and April 1998 
 respectively. And for the first time ever, C-Kermit is now supported on
 Windows NT for MIPS computers, though without TAPI support.
+
+### Things to be aware of when upgrading
+Windows XP users: current versions of libssh are no longer compatible with 
+Windows XP. See the included SSH Readme for a workaround if SSH support on
+Windows XP.
 
 ### Fixed Bugs
 
@@ -44,6 +49,7 @@ Windows NT for MIPS computers, though without TAPI support.
 
 * Upgraded to OpenSSL 3.0.14, the current long term support release 
   (supported until 7 September 2026)
+* Updated to libssh 0.10.6
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
 * The default k95custom.ini now displays a message the console-mode version

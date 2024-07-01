@@ -31,3 +31,22 @@ against the old versions configured by setenv.bat.
 
 Once you've built libssh you'll want to go and update setenv.bat to ensure the new
 version of libssh is used in the future.
+
+Windows XP Compatibility Fix
+----------------------------
+
+Libssh 0.10.6 includes a fix for 
+[CVE-2023-6004](https://nvd.nist.gov/vuln/detail/CVE-2023-6004) which introduces
+a dependency on if_nametoindex in iphlpapi.dll which is not available on 
+Windows XP. A patch is provided (`xp-fix.patch`) which corrects this issue by
+dynamically loading iphlpapi.dll and if that fails skipping the functionality
+that depends on this library. This will of course re-introduce the vulnerability
+on Windows XP which is not great.
+
+The vulnerability appears to only affect features that C-Kermit doesn't use and
+which libssh doesn't even support on Windows. So the effects of undoing the fix
+are likely not serious at the moment, but this may change in the future.
+
+If you wish to build libssh 0.10.6 with Windows XP compatibility, you can
+apply this patch by running `patch -p1 < ..\xp-fix.patch` from inside the
+libssh directory.

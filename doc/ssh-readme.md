@@ -144,7 +144,28 @@ C-Kermit for Windows will not start with the GSSAPI-supporting ssh.dll without
 this installed. If you later uninstall Kerberos for Windows you'll need to swap
 the SSH DLLs back around again.
 
-GSSAPI authenticatino is not currently supported on non-x86 builds of CKW as
-current versions of Kerberos for Windows are only availbale for x86.
+GSSAPI authentication is not currently supported on non-x86 builds of CKW as
+current versions of Kerberos for Windows are only available for x86.
+
+### Using SSH on Windows XP
+Libssh 0.10.6 includes a fix for the security vulnerability 
+[CVE-2023-6004](https://nvd.nist.gov/vuln/detail/CVE-2023-6004), but the fix 
+breaks compatibility with Windows XP. When starting C-Kermit with the included 
+ssh.dll or ssh-gssapi.dll, C-Kermit will fail to start with the error "The 
+procedure entry point if_nametoindex could not be located in the dynamic link 
+library IPHLPAPI.DLL."
+
+An alternative version of ssh.dll and ssh-gssapi.dll is provided for Windows XP
+users which removes the fix for CVE-2023-6004 restoring compatibility with
+Windows XP. These can be found in the ssh-xp subdirectory. Replacing the normal
+ssh.dll with the appropriate dll in the ssh-xp directory should prevent the
+error.
+
+CVE-2023-6004 has a low severity rating and impacts the ProxyCommand and 
+ProxyJump features which are not currently used by C-Kermit or supported on 
+Windows yet. So undoing the security fix is unlikely to cause any problems in
+practice, but still not a great idea. Where security is a concern you should
+consider upgrading to a supported version of Windows which is able to run the
+normal version of libssh.
 
 [^1]: https://libssh.org
