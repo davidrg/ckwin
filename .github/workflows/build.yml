@@ -500,8 +500,8 @@ jobs:
       run: |
         mkdir ssh-xp
         cd ssh-xp
-        copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh-xp.dll ssh-gssapi-xp.dll
-        copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build\src\ssh-xp.dll ssh-xp.dll
+        copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh-xp.dll ssh-gssapi.dll
+        copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build\src\ssh-xp.dll ssh.dll
 
     - name: Fetch CA Certs bundle
       uses: actions/download-artifact@v3
