@@ -377,7 +377,7 @@ jobs:
         nmake
         echo Libssh build done.
         
-        if "${{env.LIBSSH_VERSION}} NEQ "0.10.6" goto :end 
+        if "${{env.LIBSSH_VERSION}}" NEQ "0.10.6" goto :end 
         echo Build a patched version thats compatible with Windows XP
         mv src\ssh.dll src\ssh-standard.dll
         cd ..
