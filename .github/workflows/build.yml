@@ -383,8 +383,9 @@ jobs:
         patch -p1 < ..\xp-fix.patch
         cd build
         nmake
-        move src\ssh.dll src\ssh-xp.dll
-        move src\ssh-standard.dll src\ssh.dll
+        echo Build complete - renaming files
+        ren src\ssh.dll src\ssh-xp.dll
+        ren src\ssh-standard.dll src\ssh.dll
         :end        
 
     - name: Build GSSAPI-enabled libssh (x86/x86-64)
