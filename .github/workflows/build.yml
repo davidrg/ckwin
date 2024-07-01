@@ -399,15 +399,15 @@ jobs:
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="${{github.workspace}}\kerberos\kfw\Kerberos"
         nmake
         
-        if "${{env.LIBSSH_VERSION}} NEQ "0.10.6" goto :end 
+        if "${{env.LIBSSH_VERSION}}" NEQ "0.10.6" goto :end 
         REM Build a patched version thats compatible with Windows XP
         mv src\ssh.dll src\ssh-standard.dll
         cd ..
         patch -p1 < ..\xp-fix.patch
         cd build
         nmake
-        mv src\ssh.dll src\ssh-xp.dll
-        mv src\ssh-standard.dll src\ssh.dll
+        ren src\ssh.dll ssh-xp.dll
+        ren src\ssh-standard.dll ssh.dll
         :end
 
 
