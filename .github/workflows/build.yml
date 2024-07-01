@@ -385,8 +385,8 @@ jobs:
         cd build
         nmake
         echo Build complete - renaming files
-        ren src\ssh.dll src\ssh-xp.dll
-        ren src\ssh-standard.dll src\ssh.dll
+        ren src\ssh.dll ssh-xp.dll
+        ren src\ssh-standard.dll ssh.dll
         :end        
 
     - name: Build GSSAPI-enabled libssh (x86/x86-64)
