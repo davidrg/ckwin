@@ -498,6 +498,8 @@ jobs:
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       run: |
+        mkdir ssh-xp
+        cd ssh-xp
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh-xp.dll ssh-gssapi-xp.dll
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build\src\ssh-xp.dll ssh-xp.dll
 
