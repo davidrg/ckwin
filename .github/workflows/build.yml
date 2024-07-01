@@ -375,9 +375,10 @@ jobs:
         cd libssh\${{env.LIBSSH_VERSION}}\build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
+        echo Libssh build done.
         
         if "${{env.LIBSSH_VERSION}} NEQ "0.10.6" goto :end 
-        REM Build a patched version thats compatible with Windows XP
+        echo Build a patched version thats compatible with Windows XP
         mv src\ssh.dll src\ssh-standard.dll
         cd ..
         patch -p1 < ..\xp-fix.patch
