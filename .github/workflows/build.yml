@@ -212,7 +212,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+rel+nasm+xp+dsa+libdes+kfw+ver3
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+rel+nasm+xp+dsa+libdes+kfw+ver4
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
@@ -370,11 +370,24 @@ jobs:
 
     - name: Build libssh (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
-      shell: powershell
+      shell: cmd
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON
         nmake
+        echo Libssh build done.
+        
+        if "${{env.LIBSSH_VERSION}}" NEQ "0.10.6" goto :end 
+        echo Build a patched version thats compatible with Windows XP
+        mv src\ssh.dll src\ssh-standard.dll
+        cd ..
+        patch -p1 < ..\xp-fix.patch
+        cd build
+        nmake
+        echo Build complete - renaming files
+        ren src\ssh.dll ssh-xp.dll
+        ren src\ssh-standard.dll ssh.dll
+        :end        
 
     - name: Build GSSAPI-enabled libssh (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
@@ -385,6 +398,18 @@ jobs:
         cd build
         cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}\ -DWITH_DSA=ON -DGSSAPI_ROOT_DIR="${{github.workspace}}\kerberos\kfw\Kerberos"
         nmake
+        
+        if "${{env.LIBSSH_VERSION}}" NEQ "0.10.6" goto :end 
+        REM Build a patched version thats compatible with Windows XP
+        mv src\ssh.dll src\ssh-standard.dll
+        cd ..
+        patch -p1 < ..\xp-fix.patch
+        cd build
+        nmake
+        ren src\ssh.dll ssh-xp.dll
+        ren src\ssh-standard.dll ssh.dll
+        :end
+
 
       # 32bit ARM doesn't get libssh as version 0.10.3 gets link errors there:
       #   misc.c.obj : error LNK2019: unresolved external symbol __imp_GetUserNameA referenced in function ssh_get_local_username
@@ -467,6 +492,16 @@ jobs:
       working-directory: ${{ github.workspace }}\kermit\k95\dist
       run: |
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh.dll ssh-gssapi.dll
+
+    - name: Dist XP-patched libssh (x86/x86-64)
+      if: (matrix.arch == 'x86' || matrix.arch == 'x64') && (env.LIBSSH_VERSION == '0.10.6')
+      shell: cmd
+      working-directory: ${{ github.workspace }}\kermit\k95\dist
+      run: |
+        mkdir ssh-xp
+        cd ssh-xp
+        copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}-gssapi\build\src\ssh-xp.dll ssh-gssapi.dll
+        copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build\src\ssh-xp.dll ssh.dll
 
     - name: Fetch CA Certs bundle
       uses: actions/download-artifact@v3
