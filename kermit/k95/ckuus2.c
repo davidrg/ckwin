@@ -8209,8 +8209,14 @@ static char *hxyterm[] = {
 " ",
 #endif /* CK_XYZ */
 "SET TERMINAL AUTOPAGE { ON, OFF }",
+"  For Wyse and Televideo terminals, Autopage mode causes the cursor to move",
+"  to the top of the next page of terminal memory when it scrolls off the ",
+"  bottom of the current page. In K95, it moves the cursor to the top line ",
+"  from the bottom since K95 only supports a single page of terminal memory",
 " ",
 "SET TERMINAL AUTOSCROLL { ON, OFF }",
+"  Autoscroll mode is used on Televideo terminals when the size of a page of",
+"  terminal memory is larger than the view screen.",
 " ",
 #else /* OS2 */
 "SET TERMINAL AUTODOWNLOAD { ON, OFF, ERROR { STOP, CONTINUE } }",

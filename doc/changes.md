@@ -62,6 +62,7 @@ Windows XP.
   systems.
 * Upgraded to C-Kermit 10.0 Pre-Beta.11
 * About window (Help -> About) now includes the beta number
+* Added help text for `set terminal autopage` and `set terminal autoscroll`
 
 ### New features
 
