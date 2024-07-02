@@ -45,7 +45,7 @@ requirement:
 Supported Terminal Emulations
 -----------------------------
 
-ANSI-BBS; Avatar/0+; AT386; BeBox ANSI; Data General DASHER D200, D210; 
+ADDS Regent 25; ANSI-BBS; Avatar/0+; AT386; BeBox ANSI; Data General DASHER D200, D210; 
 Data General DASHER D217 in native and Unix modes; DEC VT52; DEC VT100, VT102, 
 VT220, VT320 with color extensions; Hazeltine 1500; Heath/Zenith 19; 
 Hewlett Packard 2621A; HPTERM; IBM HFT and AIXTERM; IBM 3151; Linux console; 
@@ -137,6 +137,7 @@ Additionally, a number of new features have been added:
 * Support for 64bit Windows (x86-64, Itanium, ARM64, AXP64)
 * Ports to new CPU architectures: MIPS, Itanium, x86-64, ARM, ARM64
 * A selection of other bugs fixed and other minor features added
+* ADDS Regent 25 Emulation
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.
 
