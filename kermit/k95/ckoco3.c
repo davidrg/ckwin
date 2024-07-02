@@ -3756,16 +3756,18 @@ cursordown(int wrap) {
                     ((ISWYSE(tt_type_mode) ||
                      ISTVI(tt_type_mode) ||
                      ISHZL(tt_type_mode) ||
-                     ISDG200(tt_type_mode)) &&
-                    !autoscroll || protect || wy_autopage) )
+                     ISDG200(tt_type_mode) ||
+                     ISREGENT25(tt_type_mode)) &&
+                    !autoscroll || protect || wy_autopage))
         {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
             lgotoxy(VTERM, wherex[VTERM], (relcursor ? margintop : 1));
-        } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) &&
-                  autoscroll && !protect)
+        } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode) || ISREGENT25(tt_type_mode)) &&
+                  autoscroll && !protect) {
             wrtch(LF);
+        }
     }
     if ( wrapit )
         wrapit = FALSE;

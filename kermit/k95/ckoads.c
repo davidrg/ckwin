@@ -46,6 +46,7 @@ extern int printon, aprint, uprint, xprint, cprint, seslog ;
 extern int escstate, debses;
 extern int wherex[], wherey[];
 extern int ttpush;
+extern int autoscroll;
 int store_ctrl = FALSE;
 extern bool crm;
 
@@ -111,15 +112,12 @@ addsctrl( int ch ) {
                  * left corner.
                  */
 
-                /* TODO: If autoscroll is off, go to top left:
-                 * lgotoxy(VTERM,1,1);
-                 */
-
-                /* If autoscroll is on, to to bottom left: */
-                h = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
-
-                lgotoxy(VTERM, 1, h);
-
+                if (autoscroll) {
+                    h = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
+                    lgotoxy(VTERM, 1, h);
+                } else {
+                    lgotoxy(VTERM,1,1);
+                }
                 break;
             }
             case STX:
@@ -173,11 +171,7 @@ addsctrl( int ch ) {
             case LF:    /* Cursor Down */
                 if ( debses )
                     break;
-                wrtch((CHAR)LF);
-
-                /* TODO: if auto-scroll is off, send the cursor up to the top
-                 *      of the screen.
-                 */
+                cursordown(0);
 
                 break;
 
