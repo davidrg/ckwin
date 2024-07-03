@@ -7589,7 +7589,34 @@ defregent25km( int tt ) {
          insertkeymap( tt, 4391, mkkeyevt(F_KVERB | K_RTARR )) || /* Right Arrow        Right Arrow      Cursor keypad */
          insertkeymap( tt, 4389, mkkeyevt(F_KVERB | K_LFARR )) || /* Left Arrow         Left Arrow       Cursor keypad */
 
-         insertkeymap( tt, 4365, mkkeyevt(CK_CR))         /* KP Enter */
+         insertkeymap( tt, 4365, mkkeyevt(CK_CR)) ||        /* KP Enter */
+
+         /*
+         Function Keys
+                TEMPORARY: The Regent 25 does not have function keys, but the
+                Regent 40, 60, 100 and 200 all do. These terminals all understand
+                the same subset of escape sequences with the main enhancements in
+                the higher end models being text attributes (underline, reverse video, etc)
+                and forms. So by giving the Regent 25 the function keys it may
+                make it a good enough subsititute for a Regent 40/60/100/200.
+         */
+         /* TODO: Support alternate EOL sequences (CR ETX, CR EOT) after STX n */
+         insertkeymap( tt, 368, mkliteralevt("\0021\x0D")) || /* F1           F1               Top F keys */
+         insertkeymap( tt, 369, mkliteralevt("\0022\x0D")) || /* F2           F2               Top F keys */
+         insertkeymap( tt, 370, mkliteralevt("\0023\x0D")) || /* F3           F3               Top F keys */
+         insertkeymap( tt, 371, mkliteralevt("\0024\x0D")) || /* F4           F4               Top F keys */
+         insertkeymap( tt, 372, mkliteralevt("\0025\x0D")) || /* F5           F5               Top F keys */
+         insertkeymap( tt, 373, mkliteralevt("\0026\x0D")) || /* F6           F6               Top F keys */
+         insertkeymap( tt, 374, mkliteralevt("\0027\x0D")) || /* F7           F7               Top F keys */
+         insertkeymap( tt, 375, mkliteralevt("\0028\x0D")) || /* F8           F8               Top F keys */
+         insertkeymap( tt, 880, mkliteralevt("\002!\x0D")) || /* SHIFT+F1     SHIFT+F1         Top F keys */
+         insertkeymap( tt, 881, mkliteralevt("\002\"\x0D"))|| /* SHIFT+F2    SHIFT+F2         Top F keys */
+         insertkeymap( tt, 882, mkliteralevt("\002#\x0D")) || /* SHIFT+F3     SHIFT+F3         Top F keys */
+         insertkeymap( tt, 883, mkliteralevt("\002$\x0D")) || /* SHIFT+F4     SHIFT+F4         Top F keys */
+         insertkeymap( tt, 884, mkliteralevt("\002%\x0D")) || /* SHIFT+F5     SHIFT+F5         Top F keys */
+         insertkeymap( tt, 885, mkliteralevt("\002&\x0D")) || /* SHIFT+F6     SHIFT+F6         Top F keys */
+         insertkeymap( tt, 886, mkliteralevt("\002'\x0D")) || /* SHIFT+F7     SHIFT+F7         Top F keys */
+         insertkeymap( tt, 887, mkliteralevt("\002(\x0D"))    /* SHIFT+F8     SHIFT+F8         Top F keys */
             )
         return -1;
     return 0;
@@ -7603,22 +7630,23 @@ defregent200km( int tt ) {
          /*
          Function Keys
          */
-         insertkeymap( tt, 368, mkliteralevt("\0021")) || /* F1           F1               Top F keys */
-         insertkeymap( tt, 369, mkliteralevt("\0022")) || /* F2           F2               Top F keys */
-         insertkeymap( tt, 370, mkliteralevt("\0023")) || /* F3           F3               Top F keys */
-         insertkeymap( tt, 371, mkliteralevt("\0024")) || /* F4           F4               Top F keys */
-         insertkeymap( tt, 372, mkliteralevt("\0025")) || /* F5           F5               Top F keys */
-         insertkeymap( tt, 373, mkliteralevt("\0026")) || /* F6           F6               Top F keys */
-         insertkeymap( tt, 374, mkliteralevt("\0027")) || /* F7           F7               Top F keys */
-         insertkeymap( tt, 375, mkliteralevt("\0028")) || /* F8           F8               Top F keys */
-         insertkeymap( tt, 880, mkliteralevt("\002!")) || /* SHIFT+F1     SHIFT+F1         Top F keys */
-         insertkeymap( tt, 881, mkliteralevt("\002\"")) || /* SHIFT+F2    SHIFT+F2         Top F keys */
-         insertkeymap( tt, 882, mkliteralevt("\002#")) || /* SHIFT+F3     SHIFT+F3         Top F keys */
-         insertkeymap( tt, 883, mkliteralevt("\002$")) || /* SHIFT+F4     SHIFT+F4         Top F keys */
-         insertkeymap( tt, 884, mkliteralevt("\002%")) || /* SHIFT+F5     SHIFT+F5         Top F keys */
-         insertkeymap( tt, 885, mkliteralevt("\002&")) || /* SHIFT+F6     SHIFT+F6         Top F keys */
-         insertkeymap( tt, 886, mkliteralevt("\002'")) || /* SHIFT+F7     SHIFT+F7         Top F keys */
-         insertkeymap( tt, 887, mkliteralevt("\002("))    /* SHIFT+F8     SHIFT+F8         Top F keys */
+         /* TODO: Support alternate EOL sequences (CR ETX, CR EOT) after STX n */
+         insertkeymap( tt, 368, mkliteralevt("\0021\x0D")) || /* F1           F1               Top F keys */
+         insertkeymap( tt, 369, mkliteralevt("\0022\x0D")) || /* F2           F2               Top F keys */
+         insertkeymap( tt, 370, mkliteralevt("\0023\x0D")) || /* F3           F3               Top F keys */
+         insertkeymap( tt, 371, mkliteralevt("\0024\x0D")) || /* F4           F4               Top F keys */
+         insertkeymap( tt, 372, mkliteralevt("\0025\x0D")) || /* F5           F5               Top F keys */
+         insertkeymap( tt, 373, mkliteralevt("\0026\x0D")) || /* F6           F6               Top F keys */
+         insertkeymap( tt, 374, mkliteralevt("\0027\x0D")) || /* F7           F7               Top F keys */
+         insertkeymap( tt, 375, mkliteralevt("\0028\x0D")) || /* F8           F8               Top F keys */
+         insertkeymap( tt, 880, mkliteralevt("\002!\x0D")) || /* SHIFT+F1     SHIFT+F1         Top F keys */
+         insertkeymap( tt, 881, mkliteralevt("\002\"\x0D"))|| /* SHIFT+F2    SHIFT+F2         Top F keys */
+         insertkeymap( tt, 882, mkliteralevt("\002#\x0D")) || /* SHIFT+F3     SHIFT+F3         Top F keys */
+         insertkeymap( tt, 883, mkliteralevt("\002$\x0D")) || /* SHIFT+F4     SHIFT+F4         Top F keys */
+         insertkeymap( tt, 884, mkliteralevt("\002%\x0D")) || /* SHIFT+F5     SHIFT+F5         Top F keys */
+         insertkeymap( tt, 885, mkliteralevt("\002&\x0D")) || /* SHIFT+F6     SHIFT+F6         Top F keys */
+         insertkeymap( tt, 886, mkliteralevt("\002'\x0D")) || /* SHIFT+F7     SHIFT+F7         Top F keys */
+         insertkeymap( tt, 887, mkliteralevt("\002(\x0D"))    /* SHIFT+F8     SHIFT+F8         Top F keys */
         )
         return -1;
     return 0;
