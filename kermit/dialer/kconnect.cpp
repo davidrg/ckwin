@@ -673,7 +673,7 @@ K_CONNECTOR::K_CONNECTOR(void)
     VtList =       (UIW_VT_LIST *) Get( LIST_ENTRIES ) ; 
 
 #ifdef WIN32
-    Information( I_SET_TEXT, "C-Kermit for Windows Dialer" ) ;
+    Information( I_SET_TEXT, "Kermit 95 Dialer" ) ;
 #else
     Information( I_SET_TEXT, "Kermit-95 for OS/2 Dialer" ) ;
 #endif /* WIN32 */

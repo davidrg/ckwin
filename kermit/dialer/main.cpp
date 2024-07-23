@@ -76,7 +76,7 @@ int UI_APPLICATION::Main(void)
         Desktop = 1;
     }
 
-    HWND hwnd = FindWindow(NULL, "C-Kermit for Windows Dialer");
+    HWND hwnd = FindWindow(NULL, "Kermit 95 Dialer");
     if ( hwnd ) {
         if ( IsIconic(hwnd) )
             ShowWindow(hwnd, SW_SHOWNORMAL);
