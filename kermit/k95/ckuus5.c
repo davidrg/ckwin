@@ -275,19 +275,12 @@ char * ikprompt = "IKSD>";
 #ifdef OS2
 /* Default prompt for OS/2 and Win32 */
 /* fdc 2013-12-06 - C-Kermit 9.0 and later is just "C-Kermit" */
+/* dg  2024-07-15 - Back to Kermit 95 on Windows and OS/2 */
 #ifdef NT
-#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
-#else
-char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] CKW> ";
-#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #else  /* NT */
-#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
-#else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-Kermit> ";
-#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */
 #else  /* OS2 */

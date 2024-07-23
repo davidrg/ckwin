@@ -46,19 +46,23 @@ char * ck_cryear = "2024"; 		/* C-Kermit copyright year */
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
 
+#ifdef OS2
+/* Kermit 95 version numbers come from here */
+#include "ckover.h"
+#endif
+
 #ifdef BETATEST
 #ifdef OS2
 #ifdef __DATE__
 #define BETADATE
 #endif /* __DATE__ */
 /*
-   Temporary from July 2022...
-   the Windows version is currently seeing monthly beta releases.
-   As 3 March 2024 the Windows Beta is based on C-Kermit 10.0 Beta.11.
-   The Windows and non-Windows Betas happen at different times.
+   Kermit 95 releases on a different schedule from C-Kermit on other
+   platforms. As 3 March 2024 the Windows Beta is based on
+   C-Kermit 10.0 Beta.11.
 */
-char *ck_s_test = "Beta";
-char *ck_s_tver = "11/Windows-06";
+char *ck_s_test = K95_TEST;
+char *ck_s_tver = K95_TEST_VER_S;
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
 char *ck_s_test = "pre-Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
@@ -111,10 +115,27 @@ char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
 
+long  ck_l_xver;
+
+#ifdef OS2
+/* Kermit 95 for Windows and OS/2 */
+char *ck_s_k95ver = K95_VERSION_MAJ_MIN_REV; /* Product-specific version string */
+long  ck_l_k95ver = K95_VERSION_L;           /* Product-specific version number */
+#ifdef IKSDONLY
+#ifdef NT
+char *ck_s_k95name = "IKS-NT";
+#else /* NT */
+char *ck_s_k95name = "IKS-OS/2";
+#endif /* NT */
+#else /* IKSDONLY */
+char *ck_s_k95name = "Kermit 95";          /* Program name */
+#endif /* IKSDONLY */
+#endif /* OS2 */
+
 #define CKVERLEN 128
 char versiox[CKVERLEN];                 /* Version string buffer  */
 char *versio = versiox;                 /* These are filled in at */
-long vernum;                            /* runtime from above.    */
+long vernum, xvernum;                   /* runtime from above.    */
 
 #define CKCMAI
 
@@ -2724,10 +2745,18 @@ makever ( )
     char * krb5;
     char * b64;
 
+#ifdef OS2
+    ck_s_xver = ck_s_k95ver;
+    ck_l_xver = ck_l_k95ver;
+    ck_s_name = ck_s_k95name;
+#else /* OS2 */
+    ck_l_xver = ck_l_ver;
+#endif /* OS2 */
+
     x = strlen(ck_s_name);
     y = strlen(ck_s_ver);
     if (y + x + 1 < CKVERLEN) {
-        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_ver,NULL);
+        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_xver,NULL);
     } else {
         ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
@@ -2760,6 +2789,7 @@ makever ( )
         ckstrncat(versio,ck_s_date,CKVERLEN);
     }
     vernum = ck_l_ver;
+    xvernum = ck_l_xver;
     debug(F110,"makever Kermit version",versio,0);
 
 #ifdef COMMENT

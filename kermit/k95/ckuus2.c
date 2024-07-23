@@ -52,6 +52,7 @@
 #include "ckocon.h"
 #include "ckokvb.h"
 #include "ckokey.h"
+#include "ckover.h"             /* This really should be ckover.h */
 
 #ifndef NOLOCAL
 int ttgcwsz();                  /* ckocon.c */
@@ -204,12 +205,8 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, the Open-Source successor to",
-#else
-"Welcome to C-Kermit for OS/2, the Open-Source successor to",
-#endif
-"Columbia University's Kermit 95 package.",
+        "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
+        "to Columbia Columbia University's Kermit 95 package."
 
 #ifdef BETATEST
 " ",
@@ -218,15 +215,14 @@ char *newstxt[] = {
 #endif /* BETATEST */
 
 " ",
-"Major new features since the final Kermit 95 release include:",
+"Major new features since the final commercial Kermit 95 release include:",
 " . Open Source Simplified 3-Clause BSD License",
 #else
 "Welcome to C-Kermit 10.0.",
 "New features since version 9.0 of 2011 include:",
 #endif /* OS2 */
 #ifdef OS2
-" . Source code!  The Windows edition of C-Kermit, formerly known",
-"   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
+" . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
 " . Up-to-date fully exportable SSH v2 client",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
@@ -305,11 +301,7 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, communication software for:",
-#else
-"Welcome to C-Kermit for OS/2, communication software for:",
-#endif
+"Welcome to Kermit 95, communication software for:",
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
@@ -1278,7 +1270,7 @@ static char *hmxxfirew[] = {
 
 #ifdef OS2
 #ifdef NT
-"C-Kermit for Windows supports SOCKS 4.2. The SOCKS Server is specified with:",
+"Kermit 95 supports SOCKS 4.2. The SOCKS Server is specified with:",
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
@@ -2183,7 +2175,7 @@ static char *hmxxkcd[] = {
 ,
 " ",
 #ifdef NT
-"    appdata       Your personal C-Kermit Windows application data directory",
+"    appdata       Your personal Kermit application data directory",
 "    common        C-Kermit's application data directory for all users",
 "    desktop       Your Windows desktop",
 #endif /* NT */
@@ -4687,7 +4679,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "  MS-KERMIT   - Program is MS-DOS Kermit",
 "  C-KERMIT    - Program is C-Kermit",
-"  WINDOWS     - Program is C-Kermit for Windows",
+"  WINDOWS     - Program is Kermit 95",
 "  GUI         - Program runs in a GUI window",
 " ",
 "  AVAILABLE CRYPTO                  - Encryption is available",
@@ -4869,12 +4861,12 @@ static char *hxxask[] = {
 #ifdef OS2
 " /POPUP",
 "  The prompt and response dialog takes place in a text-mode popup.",
-"  C-Kermit for Windows only; in other C-Kermit versions /POPUP is ignored.",
+"  Kermit 95 only; in other C-Kermit versions /POPUP is ignored.",
 " ",
 #ifdef KUI
 " /GUI",
 "  The prompt and response dialog takes place in a GUI popup.",
-"  C-Kermit for Windows only; this switch is ignored elsewhere",
+"  Kermit 95 only; this switch is ignored elsewhere",
 " ",
 #endif /* KUI */
 #endif /* OS2 */

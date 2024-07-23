@@ -822,7 +822,7 @@
 #endif /* OS2ORVMS */
 #endif /* OS2 */
 
-/* C-Kermit for Windows can now be 64-bit so OS2ORWIN32 is a misnomer */
+/* C-Kermit for Windows (Kermit 95) can now be 64-bit so OS2ORWIN32 is a misnomer */
 #ifdef OS2ORWIN32
 #ifndef OS2ORWINDOWS
 #define OS2ORWINDOWS
