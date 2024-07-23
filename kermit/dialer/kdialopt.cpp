@@ -78,9 +78,9 @@ K_DIAL_OPTIONS::K_DIAL_OPTIONS( UI_LIST * LocationList )
 	*combo + _current;
 
 #ifdef WIN32
-    Information( I_SET_TEXT, "C-Kermit for Windows Location Definitions" ) ;
+    Information( I_SET_TEXT, "Kermit 95 Location Definitions" ) ;
 #else
-    Information( I_SET_TEXT, "C-Kermit for OS/2 Location Definitions" ) ;
+    Information( I_SET_TEXT, "Kermit 95 for OS/2 Location Definitions" ) ;
 #ifdef COMMENT
     UIW_ICON * icon = (UIW_ICON *) Get( ICON_K95 ) ;
     *this - icon ;

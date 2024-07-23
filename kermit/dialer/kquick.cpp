@@ -25,9 +25,9 @@ K_QUICK::K_QUICK( KD_CONFIG * config , KD_LIST_ITEM * templ)
    _template(templ)
 {
 #ifdef WIN32
-    Information( I_SET_TEXT, "C-Kermit for Windows Quick Connect" ) ;
+    Information( I_SET_TEXT, "Kermit 95 Quick Connect" ) ;
 #else
-    Information( I_SET_TEXT, "C-Kermit for OS/2 Quick Connect" ) ;
+    Information( I_SET_TEXT, "Kermit 95 for OS/2 Quick Connect" ) ;
 #endif /* WIN32 */
 
     PopulateList(PHONE);
