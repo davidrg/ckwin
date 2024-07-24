@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 - Changing Screen Size</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Changing Terminal Screen Size</h2>
+
+This exercise shows you how to use Kermit commands to change the Terminal
+screen size, and gives you some practice in switching between the Command and
+Terminal screens, and in using Kermit commands.  We assume you already have a
+connection and are in the Terminal screen.
+
+<p>
+<ul>
+<li>Use Alt-X (hold down the Alt key, press the X key) to return to the
+Command screen.
+<p>
+<li>At the <tt>K-95&#62;</tt> prompt, type:
+<p>
+<pre>
+  set terminal height 42
+</pre>
+(or 43 for <a href="gloss.htm#g_ansi">ANSI</a> terminal types).
+By the way, you don't necessarily have to spell each word out all the way.
+After typing each letter, type ? to see what the possibilities are.  If there
+are more than one, type the next letter, and so on.  When only one possibility
+remains, type Space to go on to the next word, or type Esc or Tab to complete
+the current word automatically and go on to the next word.  Try this -- once you
+get used to it, it will make Kermit commands less intimidating.  The same
+methods work in other Kermit programs too, such as C-Kermit in UNIX or VMS,
+and MS-DOS Kermit in DOS.
+<p>
+Remember to press the Enter key to enter the command.
+<p>
+<li>At the next <tt>K-95&#62;</tt> prompt, type:
+<p>
+<pre>
+  set terminal width 132
+</pre>
+<p>
+and then press Enter.
+<p>
+<li>Type the <tt>CONNECT</tt> command (you can abbreviate it to just
+"<tt>C</tt>") and then Enter.  (HINT: You can also use Alt-X for this;
+remember, Alt-x is a "toggle" between the Command and Terminal screens.)
+</ul>
+<p>
+The Terminal screen should now be quite large (larger, perhaps than your
+monitor).  If necessary, use the Font menu to adjust the font size for a
+better fit.  (This is what the "Auto" font size should do for you
+automatically, but unfortunately it doesn't work well.)
+<p>
+Now return to the Command screen again (Alt-X) and change the size back to
+24 x 80 (or whatever it was before).  Let's use "command recall" for this:
+<p>
+<ul>
+<li>Press the Up-Arrow key (or use Ctrl-P or Ctrl-B) until you see the
+<tt>SET TERMINAL HEIGHT 42</tt> command.
+<p>
+<li>Use the Backspace key (or Ctrl-W) to erase "42" and replace it with
+"24" (for <a href="gloss.htm#g_ansi">ANSI</a> terminal types, replace
+"43" with "25").
+<p>
+<li>Press the Enter key to enter the command.
+<p>
+<li>Repeat the previous procedure to recall and change the
+<tt>SET TERMINAL WIDTH</tt> command.
+<p>
+<li>Return to the terminal screen (<tt>CONNECT</tt> or Alt-X).
+</ul>
+
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

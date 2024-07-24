@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>Kermit 95 - DEC Networking Methods</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2><a name="dec">Digital Equipment Corporation Networking Methods</h2>
+
+These are networking methods associated with Digital Equipment Corporation 
+networks and hosts.
+<p>
+<b>Contents:</b>
+<ul>
+<li><a href="#decslat">SuperLAT</a>
+<li><a href="#decpath">DECnet / PATHWORKS</a>
+<li><a href="#dectex">TES32</a>
+</ul>
+<p>
+Note: as of this writing none of the third party products described
+on this page are available for Windows 2000 or later.
+<p>
+<hr>
+<h3><a name="decslat">SuperLAT</h3>
+
+<b>Links:</b> [<a href="#decpath">Next</a>] [<a href="#dec">Index</a>]
+<p>
+
+This section applies to Windows 95 and NT only; the OS/2 version
+does not support SuperLAT, but it does support PATHWORKS via SET NETWORK 
+TYPE DECNET (see 6.4.2 and OS2K95.TXT).
+<p>
+SuperLAT(TM) is a commercial product from Meridian Technology Corporation,
+11 McBride Corporate Center Drive, Suite 250, Chesterfield MO 63005-1407 USA:
+<p><pre>
+  Email: <a href="mailto:info@meridiantc.com">info@meridiantc.com</a>
+  Web:   <a href="http://www.meridiantc.com/">http://www.meridiantc.com/</a>
+  Voice: +1 (800) INFOMTC, +1 (314) 532-7707
+  Fax:   +1 (314) 532-3242
+  BBS:   +1 (314) 532-3473
+</pre><p>
+SuperLAT provides LAT (Local Area Transport) service to Digital Equipment
+Corporation (DEC) VMS or other hosts that support it, as well as to LAT-based
+DECservers, e.g. for shared dialout modem access.  You can make SuperLAT
+connections from Kermit 95 if you have SuperLAT installed on your Windows 95
+or NT system.  The method is as follows:
+<p><pre>
+  SET NETWORK TYPE SUPERLAT
+  SET HOST <i>service-name [ password ]</i>
+</pre><p>
+where <i>service-name</i> is normally the DECnet host (node) name of the
+system you are connecting to.  It can also be a node/port combination (no
+spaces), with a (forward) slash (no spaces) separating the node and port
+designations, for example to access a specific modem port on a DECserver.  If
+the service is password-protected, you must also include a password after the
+service-name or node/port.  Examples:
+<p><pre>
+  SET HOST OOFAVAX         ; Service name
+  SET HOST OOFAVAX SECRET  ; Service name with password
+  SET HOST LATBOX/3        ; Serial Port 3 on LATBOX
+  SET HOST LATBOX/3 SECRET ; Serial Port 3 on LATBOX with password
+</pre><p>
+WARNING: Uploading files on a LAT connection is problematic due to intrinsic
+limitations of LAT buffering.  Using 90-byte packets and 1 window slot seems
+to work in most cases (tell VMS C-Kermit to "set receive packet-length 90");
+greater lengths tend to hang the VMS session.  Downloads can use any packet
+length or window size.  WARNING: Do NOT tell VMS or VMS C-Kermit to disable
+flow control.  VMS C-Kermit MUST have "set flow xon/xoff".
+
+<p>
+<hr>
+<h3><a name="decpath">DECnet / PATHWORKS</h3>
+
+<b>Links:</b> [<a href="#dectes">Next</a>] [<a href="#decslat">Prev</a>] [<a href="#dec">Index</a>]
+<p>
+
+This section applies to Windows 95, Windows NT, and OS/2.
+<p>
+PATHWORKS is a networking package for PCs available from Digital Equipment
+Corporation,
+<a href="http://www.digital.com/">http://www.digital.com/</a>.  It was also
+once known as DECNET/DOS.  Kermit has supported this networking method in OS/2
+for several years; as of version 1.1.13, K95 supports it in Windows 95 and NT
+too.  In Windows 95 and NT, Digital PATHWORKS-32 V7.0 or later is required.
+In OS/2, PATHWORKS 2.0 or higher can be used.
+<p>
+If you have PATHWORKS installed on your PC, you can use "set network type
+pathworks" and then "set host xxx", where xxx is a DECnet node name or
+address.
+<p>
+WARNING: When you give a SET HOST command, it can not be interrupted.  If the
+host is not available, it might take a long time for PATHWORKS to time out and
+return control to K95.
+<p>
+In your SET NETWORK TYPE PATHWORKS command, you can specify whether to make a
+LAT (local area) or CTERM (wide area) connection:
+<p><dl>
+<dt><tt>SET NETWORK TYPE { PATHWORKS, DECNET } [ { CTERM, LAT } ]</tt>
+<dd>Choose PATHWORKS as the network type.  DECNET is a synonym for PATHWORKS.
+If you don't specify a protocol, LAT is used.  CTERM is not available in
+Kermit/2.
+</dl>
+<p>
+So a complete sequence might be:
+<p><pre>
+  SET NETWORK TYPE PATHWORKS LAT   ; Choose PATHWORKS networking
+  SET HOST CHEMVAX                 ; Make a connection to node CHEMVAX
+  CONNECT                          ; Enter the terminal window
+</pre><p>
+If you know you have some form of LAT installed on your PC, but you don't know
+which one:
+<p><pre>
+  SET NETWORK TYPE SUPERLAT
+  IF FAIL SET NETWORK TYPE PATHWORKS LAT
+  IF FAIL END 1 Sorry - No LAT installed here.
+  SET HOST ...
+</pre>
+
+<p>
+<hr>
+<h3><a name="dectes">TES32</h3>
+
+<b>Links:</b> [<a href="#decpath">Prev</a>] [<a href="#dec">Index</a>]
+<p>
+
+This section applies to Windows 95/98/ME and NT only.  The OS/2 version
+of C-Kermit does not support TES32, and TES32 is not available (as of
+this writing) for Windows 2000.
+<p>
+The TES networking method (virtual terminal service to VMS hosts over Novell
+networks) is supported as of version 1.1.8 via SET NETWORK TYPE TES32, if you
+have the TES32 product, and the corresponding server on your VMS host.  These
+are products of InterConnections Inc / Emulex.  As of this writing, TES32 is
+available for Windows 95, but not for Windows NT.  More info at:
+<p><pre>
+  <a href="http://www.icxn.com/">http://www.icxn.com/</a>
+</pre><p>
+In fact, TES connections were also supported prior to this version, since TES
+is accessed through the same interface as SuperLAT.  TES32 is not mentioned in
+the various Dialer dialog boxes; just choose SuperLAT wherever you need to use
+TES32.  If TES32 becomes available for Windows NT and you install it on your
+NT system, Kermit 95 should be able to use it.
+
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

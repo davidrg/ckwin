@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Terminal Character Set Terminology and Mechanics</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Terminal Character Set Terminology and Mechanics</h2>
+
+A terminal might be capable of displaying multiple character sets.  These are
+chosen by the host application using mechanisms specified in
+<a href="gloss.htm#g_iso">ISO</a> Standard 2022, which are summarized here.
+
+<p>
+
+A 7-bit character is one in which the 8th (high-order) bit is zero (0).  An
+8-bit character's 8th bit is one (1).  A 7-bit character set has 128 7-bit
+characters.  An "8-bit character set" is, in fact, composed of two 7-bit
+character sets, one of them, the "left half," usually being <a
+href="gloss.htm#g_ascii">ASCII</a> (ISO 646 International Reference Version),
+while the "right half" contains the "special" characters needed for a
+particular language, region, or writing system.
+
+<p>
+
+Standard-format character (such as ASCII and the ISO Latin Alphabets), are, in
+turn, divided into Control and Graphic sections, as specified in ISO Standard
+4873.  Nonstandard character sets do not necessarily observe this convention,
+the classic example being PC code pages.  The following remarks apply only to
+standard character sets.
+
+<p>
+
+From the terminal's character-set repertoire, six sets are available at once:
+C0, C1, G0, G1, G2, and G3.  C0 and C1 each contain 32 control characters;
+G0-G3 are graphic character sets of either 94 or 96 characters each.  Specific
+graphic sets from the terminal's repertoire can be designated to G0-G3 by
+escape sequences from the host or by the Kermit 95 command:
+
+<p>
+<pre>
+  SET TERMINAL REMOTE-CHARACTER-SET <i>name {</i> G0, G1, G2, G3 <i>}</i>
+</pre>
+<p>
+
+The terminal's active character set is composed of C0 and C1 controls, plus GL
+(graphics left) and GR (graphics right).  GL tells which of the G0-G3 sets is
+used if a 7-bit graphic character arrives; GR tells which set is used if an
+8-bit graphic arrives.  Similarly, the C0 set is used when a 7-bit control
+character arrives, and C1 is used when an 8-bit control character arrives.
+
+<p>
+
+Kermit 95's startup configuration for most ISO-2022 compliant terminals (such
+as VT220/320) is: ASCII controls designated to C0, ASCII graphics to G0, ISO
+6429 controls to C1, and the 96 characters of ISO 8859-1 Latin Alphabet 1 to
+G1, G2, and G3.  GL refers to G0 and GR refers to G2.  This configuration can
+be changed with the <tt>SET<tt> </tt>TERMINAL<tt>
+</tt>REMOTE-CHARACTER-SET</tt> command or by character-set designation and
+invocation escape sequences from the host; at any moment, the current layout
+is revealed with the Kermit 95 command:
+
+<p>
+<pre>
+  SHOW CHARACTER-SETS
+</pre>
+<p>
+
+A common use for character-set switching is for displaying a combination
+of ASCII characters, accented or non-Roman letters, and line- and box-drawing
+and/or math symbol characters on the screen simultaneously.  For example,
+in the DEC VT220/320, the host application might switch among ASCII, DEC
+Multinational (for accented Roman letters), DEC Special (for line- and
+box-drawing characters), and DEC Technical (for math symbols).
+
+<p>
+
+Eight-bit character sets can be used in the 7-bit communications environment
+if the host computer supports <i>shifting</i>.  In the most common application
+of this technique, the Shift-Out (SO, Ctrl-N) control character is sent before
+any GR characters, then 8-bit characters are sent with their 8th bit removed,
+and then Shift-In (SI, Ctrl-O) is sent to change back to GL characters.  In
+other words, SO invokes G1 into GL, SI invokes G0 back to GL.  Kermit 95 obeys
+these shifting directives when they come in, and uses them automatically
+when sending characters if <tt>PARITY</tt> is not <tt>NONE</tt> and/or
+<tt>TERMINAL</tt> <tt>TERMINAL BYTESIZE</tt> is 7, or if you force it do so
+by using the ON option of the Kermit 95 command:
+
+<p>
+<pre>
+  SET TERMINAL LOCKING-SHIFT <i>{</i> ON, OFF <i>}</i>
+</pre>
+<p>
+
+Kermit 95 1.1.21 adds support for Unicode terminal emulation, in its UTF-8
+form.  Unicode is a single character set that is a superset of all the other
+character sets of the world.  In a UTF-8 terminal session, there is no
+character-set switching.  In this case ISO-2022 can be used to switch the
+terminal into UTF-8 mode, which is an "escape from ISO-2022 mode", and back
+in to ISO-2022 mode, and that's all.  While in UTF-8 mode, all characters
+come from Unicode.  Thus, for example, there are no VT100 special graphics
+for line and box drawing since Unicode has its own line- and box-drawing
+characters.  For this reason, VT100-specific applications might not work
+in UTF-8 mode, even if Kermit is emulating a VT100, and this is proper
+behavior.
+
+<p>
+
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>
+

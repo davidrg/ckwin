@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<META name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kermit 95 Fonts</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Kermit 95 Fonts</h2>
+
+Console applications such as Kermit 95 are not allowed to know anything about
+the window they are running in, nor to have any control over the font.  Thus
+there are no commands or dialog boxes with which K-95 can change the font
+itself, or save your preferred font size  (this will change in the forthcoming
+<a href="gloss.htm#g_gui">GUI</a> K-95 version).  In the meantime, you
+can use the following techniques.
+<p>
+<b>Contents:</b>
+<ul>
+<li><a><a href="#font95">Windows 95/98</a>
+<li><a><a href="#fontn5">Windows NT/2000</a>
+<li><a><a href="#fontos2">OS/2</a>
+</ul>
+
+<h3><a name="font95"><hr>Windows 95, 98, and ME</h3>
+
+The installation procedure makes a "K95" icon for you in your Kermit 95
+directory.  Open a graphical view of the Kermit 95 program directory and:
+
+<p>
+<ol>
+<li>Right-click on the K95 icon.
+<li>Choose "Create shortcut".  A shortcut icon is created.
+<li>Drag the shortcut icon to wherever you want it.
+<li>Right-click on the shortcut icon.
+<li>Choose Properties.
+<li>Click on the Font tab.
+<li>Pick the font you want.  <i>Do not choose "Auto".</i>
+<li>While you're at it, go to Misc tab and uncheck QuickEdit and Fast Pasting
+(see Bug List items <a href="k95bugs.htm#b61">61</a> and
+<a href="k95bugs.htm#b223">223</a>.
+<li>Make any other changes you want.
+<li>Click OK.
+</ol>
+<p>
+
+Now whenever you start K95 from this icon, it should come up with the font
+you have chosen.  To change the default values that Windows 95/98 uses when
+creating console windows:
+
+<p>
+<ol>
+<li>Open the folder <tt>C:\WINDOWS\SYSTEM</tt>
+<li>Right click on <tt>CONAGENT.EXE</tt>
+<li>Choose Properties
+<li>Click on the Font tab
+<li>Pick the font you want.  
+<li>Go to Misc tab and uncheck QuickEdit and Fast Pasting.
+<li>Make any other changes you want.
+<li>Click OK.
+</ol>
+
+Note that the font sizes are determined by Windows 95 and can not be changed
+via a dialog box.  The True Type font that is used may be changed by editing
+the Registry (not recommended).
+
+
+<h3><a name="fontn5"><hr>Windows NT, 2000, and XP</h3>
+
+The fonts used in the NT Console Window may be changed by editing the "Font"
+page in the Properties notebook which is accesible from the System Menu.
+The Font page lets you choose between lists of installed 
+True Type fonts and Code-Page specific <i>Raster Fonts</i>.  In addition
+to the Font name the size may also be specified.  Once saved the changes
+are remembered for future instances of the application.  
+
+<p>
+
+Windows NT ships with the Lucida Console font which contains the
+characters for Western and Eastern European languages as well as Greek 
+and Cyrillic.  Lucida Console does not contain the Euro character
+nor does it contain the characters for Hebrew and many other languages
+supported by Kermit 95.
+
+<p>
+
+Newer versions of Windows might ship with Courier New, which has about twice
+as many characters as Lucida Console, and includes Hebrew and Arabic.
+
+<p>
+
+For a frequently updated list (at least as of this writing in February 2002)
+of Unicode fonts, visit:
+
+<p><pre>
+  <a href="http://www.hclrss.demon.co.uk/unicode/fonts.html">http://www.hclrss.demon.co.uk/unicode/fonts.html</a>
+</pre><p>
+
+
+<h3><a name="fontos2"><hr>OS/2</h3>
+
+The fonts used in the OS/2 Console Window may be changed by choosing "Font
+Size ..." from the System Menu.  The "Change" button changes the font size
+for the current window only, whereas the "Save" button will change the font
+size for all future windows of this application.
+
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

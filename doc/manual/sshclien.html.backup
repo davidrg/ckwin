@@ -1,0 +1,1118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<title>The Kermit 95 SSH Client</title>
+<META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">The Kermit 95 SSH Client</a></h2>
+
+<i>Most recent update:</i>
+4 June 2002
+
+<p>
+
+<a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 1.1.21</a> and
+later (Windows version only) include Secure Shell (SSH) v1 and v2 clients, an
+FTP client (which can make secure or regular connections), and an HTTP client
+(ditto), in addition to the many connection methods and clients it had
+already.
+
+<p>
+<h3><a name="contents">CONTENTS</a></h3>
+
+<pre>
+  1. <a href="#x1">K95 SSH OVERVIEW</a>
+  2. <a href="#x2">TYPICAL SSH SESSION</a>
+  3. <a href="#x3">SSH AUTHENTICATION OPTIONS</a>
+     3.1. <a href="#x3.1">Host Authentication</a>
+     3.2. <a href="#x3.2">User Authentication</a>
+  4. <a href="#x4">KNOWN BUGS</a>
+  5. <a href="#x5">THINGS TO WATCH OUT FOR</a>
+  6. <a href="#x6">NOT IMPLEMENTED YET</a>
+  7. <a href="#x7">NEW COMMANDS FOR SSH</a>
+     7.1. <a href="#x7.1">The SSH Command</a>
+     7.2. <a href="#x7.2">The SET SSH Command</a>
+</pre>
+
+<h3><hr><a name="x1">1. K95 SSH OVERVIEW</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Next</a> ]
+
+<p>
+
+SSH was added to Kermit 95 because many sites today refuse Telnet connections
+(clear-text or secure) and accept only SSH connections.  As of version 1.2.21,
+the Windows (not OS/2) version of Kermit 95 includes SSH v1 and v2 clients:
+
+<p>
+
+<ul>
+
+<li> K95's SSH connections are based on OpenSSH 3.0.2p1, which first had to be
+converted to Windows developer tools and then was heavily customized to
+<i>(a)</i> allow connections in series; <i>(b)</i> incorporate secure
+authentication methods; <i>(c)</i> interface with the rest of K95 (settings,
+etc)
+
+<p>
+
+<li>K95 can make SSH connections to any host that has sshd for SSH 1.3,
+1.5, or 2.0.  OpenSSH does not support SSH versions 1.2 or earlier.
+
+<p>
+
+<li>Unless you force a specific SSH version when connecting (<tt>SSH</tt>
+<tt>OPEN</tt> <i>blah</i> <tt>/VERSION:1</tt>), K95 negotiates the version
+automatically.  The negotiated version is shown in the Terminal-screen status
+line, e.g. "SSH-2.0".
+
+<p>
+
+<li>As with all Kermit's other features, the SSH client is configurable
+by the user in every conceivable way (so anybody who doesn't like its
+defaults or behavior can change them) and it includes built-in
+key creation and management tools so no external "helper applications"
+are required.
+
+<p>
+
+<li>The K95 implementation of SSH has been tested in connections to
+Solaris, HP-UX 8.00 and above, Linux, OpenBSD, FreeBSD, and VMS ...
+
+</ul>
+<p>
+
+The OS/2 version of Kermit 95 does not include an SSH client because the
+OpenSSH libraries are not available for OS/2 (or at least not in a form that
+is compatible with Kermit 95).
+
+<p>
+
+Kermit's SSH connections are configured and controlled by the (new) SSH
+and SET SSH commands.  These are described by HELP SSH and HELP SET SSH
+(the HELP text is reproduced <a href="#x7">below</a>).
+
+<h3><hr><a name="x1">2. TYPICAL SSH SESSION</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x3">Next</a> ]
+[ <a href="#x1">Previous</a> ]
+<p>
+
+At the <tt>K-95&gt;</tt> prompt, simply type "ssh somehost", where
+<i>somehost</i> is the IP host name or address of the host you want to connect
+to or, if your user ID on the destination host is different from your local
+user ID, "ssh somehost /user:remoteuserid".  You might get some messages or
+questions about the hostname the first time you make a connection, for
+example:
+
+<p>
+<pre>
+  [C:\K95] K-95&gt; <u>ssh xyzcorp.com</u>
+  The authenticity of host 'xyzcorp.com' can't be established.
+  DSA key fingerprint is 85:f9:8b:cd:23:12:01:d9:cf:7a:12:cf:b5:5d:ab:60.
+  Are you sure you want to continue connecting (yes/no)?
+</pre>
+<p>
+
+but that's normal for any SSH client.  Unless you have reason to believe the
+host is an imposter, say "yes" (more about this in the <a href="#x3">next
+section</a>).  Now K95 asks you for your password, you type it into the box,
+K95 sends it over the encrypted connection, and off you go.
+
+<p>
+
+From this point, an SSH session is like any other K95 terminal session.  You
+can escape back to the prompt with Alt-X, return to the terminal screen with C
+or Alt-X, transfer files, whatever you want.  When you log out from the host,
+K95 <i>should</i> pop back to its command screen automatically, but that
+<a href="#x5">depends on the SSH server</a>.
+
+<p>
+
+A single instance of K95 presently can not manage multiple terminal sessions,
+SSH, Telnet, modem, or otherwise, but of course you can run multiple instances
+of K95.  You can, however, have an FTP session and/or an HTTP session at the
+same time as a terminal session in a single K95 instance.
+
+<h3><hr><a name="x3">3. SSH AUTHENTICATION OPTIONS</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Next</a> ]
+[ <a href="#x2">Previous</a> ]
+<p>
+
+SECTION CONTENTS
+
+<p>
+<pre>
+  3.1. <a href="#x3.1">Host Authentication</a>
+  3.2. <a href="#x3.2">User Authentication</a>
+</pre>
+<p>
+
+SSH provides security (or the illusion of it) by encrypting the session.  SSH
+can work in the absence of authentication, but it also offers several options
+for authentication, none of them particularly secure except for Kerberos 5
+GSSAPI and SRP.
+
+<h3><a name="x3.1">3.1. Host Authentication</a></h3>
+
+There are two sides to authentication:
+
+<p>
+<ol>
+<li>Is the host what it claims to be?
+<li>Is the user who s/he claims to be?
+</ol>
+<p>
+
+In its simplest form, SSH lets the user make encrypted connections without
+setting up any kind of keys or other special authentication procedures or
+files, and all the host administrator has to do is install the ssh server and
+generate host keys.  No alteration of the host login system is required.  This
+is why SSH is so popular compared to authentication methods that are more
+secure and manageable: it's easy to get started.  However, this kind of SSH
+connection does not authenticate the host to the client and it authenticates
+the client to the host only through the password file, just like an ordinary
+insecure login.  The only difference is that the session (including the
+password) is encrypted, which makes hackers do a little extra work to decode
+their sniffer logs and get your password.  The assumption is that hackers
+won't bother to do this since unencrypted passwords are easier to steal (like
+cars without steering-wheel locks), but of course this is wishful thinking.
+
+<p>
+
+The most important command to know about before you try to make an SSH
+connection is SET SSH STRICT-HOST-KEY-CHECK.  The values are ON, OFF, and ASK.
+
+<p>
+<ul>
+
+<li>ON means K95 won't make an SSH connection to a host whose public key
+is not in its known-hosts file.
+
+<li>OFF means K95 will connect to any SSH host.
+
+<li>ASK means K95 will ask you if it's OK to connect to a host whose
+key is not in its known-hosts file.  This is the default.
+
+</ul>
+<p>
+
+There are two known-hosts files for each protocol version.  A user
+file is stored in the <tt>\v(appdata)ssh</tt> directory and is
+automatically updated based upon the connections you make.  The
+system-wide known-host file is (optionally) stored in the
+<tt>\v(common)ssh</tt> directory for the operating system and is never
+updated by Kermit 95.  It is there to be maintained by the system
+administrator.
+
+<p>
+
+Your global known-hosts files are kept in a directory common to all users:
+
+<p>
+<pre>
+  SSH v1:  \v(common)ssh\known_hosts
+  SSH v2:  \v(common)ssh\known_hosts2
+</pre>
+<p>
+
+and your user-specific (and K95-specific) known-hosts files are:
+
+<p>
+<pre>
+  SSH v1:  \v(appdata)ssh\known_hosts
+  SSH v2:  \v(appdata)ssh\known_hosts2
+</pre>
+<p>
+
+(<tt>\v(appdata)</tt> is Kermit's User Application Data Directory
+variable.  The user's application data directory is located in a
+system dependent manner.  Windows 95/98/98SE/ME/NT store the application
+data with the user's profile.  Windows 2000/XP store the application
+data in the <tt>Documents and Settings</tt> directory.
+Tell K95 to "show var appdata" to see its definition.)  Thus, on Windows XP
+these files are in the SSH subdirectory of your Windows APPDATA directory, e.g.:
+
+<p>
+<pre>
+  SSH v1:  c:\Documents and Settings\username\Application Data\Kermit 95\ssh\known_hosts
+  SSH v2:  c:\Documents and Settings\username\Application Data\Kermit 95\ssh\known_hosts2
+</pre>
+<p>
+
+On Windows 98 with multi-user support, this would be:
+
+<p>
+<pre>
+  SSH v1:  c:\WINDOWS\Profiles\username\Application Data\Kermit 95\ssh\known_hosts
+  SSH v2:  c:\WINDOWS\Profiles\username\Application Data\Kermit 95\ssh\known_hosts2
+</pre>
+<p>
+
+On Windows 98 without multi-user support, this would be:
+
+<p>
+<pre>
+  SSH v1:  c:\WINDOWS\Application Data\Kermit 95\ssh\known_hosts
+  SSH v2:  c:\WINDOWS\Application Data\Kermit 95\ssh\known_hosts2
+</pre>
+<p>
+
+(<tt>\v(common)</tt> is Kermit's Common Data Directory
+variable.  The common data directory is located in a
+system dependent manner.  Windows 95/98/98SE/ME/NT store the common application
+data in the WINDOWS directory.  Windows 2000/XP stores the application
+data in the <tt>Documents and Settings\All Users</tt> directory.
+Tell K95 to "show var common" to see its definition.)
+
+<p>
+
+Each file contains a series of (long) "lines", one per host, each line
+containing the hostname and aliases and then the key in Base 64; this is the
+host's public key.  Adding a host key means appending such a line to the
+appropriate file.
+
+<p>
+
+SSH STRICT-HOST-KEY-CHECK ON gives you some assurrance that the host you have
+connected to is the one you meant to connect to.  But it also means your first
+connection to a particular host is likely to be refused.  It's the classic
+chicken-and-egg situation.  You're supposed to get host keys from a trusted
+source such as a disk or CDROM from your host administrators, but if you
+didn't, how do you get a key when it's on the very host you can't connect to
+because you don't have its key?  The possibilities include:
+
+<p>
+<ul>
+
+<li>You can make some other kind of trusted connection to it (e.g. with
+Kerberos 5 Telnet) and download the key, or:
+
+<p>
+
+<li>You can tell K95 to:
+
+<p>
+<pre>
+  SET SSH STRICT-HOST-KEY-CHECK OFF <i>(or ASK)</i>
+</pre>
+<p>
+
+and then make an SSH connection to the host, authenticate with your
+password, and then the host key is automatically retrieved and added to
+your known-hosts file, and then future connections to that host can be made
+with SSH STRICT-HOST-KEY-CHECK ON.  But of course since you have bypassed
+the host authentication process to obtain the key, future authentication
+using this key is worthless and you might as well not have have bothered.
+
+</ul>
+
+<p>
+
+You might wonder if keeping host keys is a good idea.  The advantage is the
+protection they offer against man-in-the-middle attacks and DNS spoofing (but
+not compromised hosts).  The disadvantage is that anybody who can access your
+host keys (legitimately or not) knows which hosts you access, which in itself
+might be information you'd rather not reveal, but also tells hackers which
+hosts to attack in your name.  As noted, Kermit 95 (like all other SSH
+clients) appends new host keys to your user host-key file(s).  You can delete
+these files if you wish; for example, in your K95 ON_EXIT macro definition.
+
+<h3><hr><a name="x3.2">3.2. User Authentication</a></h3>
+
+Independent of how the host is authenticated to K95, is the method by which
+K95 authenticates you to the host:
+
+<p>
+<ul>
+<li>Password
+<li>Public/Private Key Pair
+</ul>
+
+<p>
+
+<b>The default method of client authentication</b> (that is, the method that is
+used unless you have configured K95 to use any of the other methods described
+below)<b> is by prompting you locally for a password</b> and then sending it
+(encrypted) to the server.  This method requires you to type your password
+every time you log in (unlike, say, Kerberos 5, which gives you a "single
+network login").
+
+</ul>
+<p>
+
+<blockquote>
+<i>
+
+If you must use SSH to contact a particular host, <b>we recommend simple
+password authentication.</b> If this is OK with you, <a href="#x4">skip the
+rest of this section</a>; otherwise keep reading.
+
+</i>
+</blockquote>
+<p>
+
+<b>You can also use public/private key pairs</b>, whose purpose is to allow
+you to log in to the host <i>without typing your password</i>.  THIS IS
+DANGEROUS because your keys are stored on your Windows disk, where they can be
+stolen (especially easy on Windows 9x/ME PCs that are attached to the network,
+yet lack any form of file-system security).  If your key files are encrypted,
+they can be decrypted offline.  (The longer the passphrase for key-file
+encryption, the longer it takes to perform dictionary attacks against it; a
+40-character character passphrase should be considered a <i>minimum</i> but
+most people don't use such a long passphrase, so most key files are ripe for
+plucking.)
+
+<p>
+
+To use public/private key pairs you must have each host's public key
+in your PC's <tt>\v(APPDATA)\ssh\known_hosts</tt> (SSH v1) and/or
+<tt>\v(APPDATA)\ssh\known_hosts2</tt> files (SSH v2), and you must
+also upload your own public key to each host and put it in the
+appropriate place, such as <tt>~/.ssh/authorized_keys</tt> (SSH v1)
+and/or <tt>~/.ssh/authorized_keys2</tt> (SSH v2) when OpenSSH is the
+daemon.  When all the right files and keys are in the right places in
+the appropriate formats, you can log in without a password.  In order to
+determine the correct type of key to use you must know the configuration
+of the SSH daemon.  If you are not the host administrator, contact the
+appropriate administrator for assistance.  (A common error is to leave
+the permissions on the <tt>~/.ssh/</tt> directory and the files it contains
+world or group accessible.  SSH daemons refuse to use identity files that
+are accessible to anyone other than the account owner.
+
+<p>
+
+Here's an example.  I have a guest ID on a Linux machine at a remote site.  If
+I make an SSH connection to it (logging in with a password), K95's status line
+shows me the SSH server's level is 2.0.  If I want to be able to connect
+without typing a password, then <i>(1)</i> my end is already done, since K95
+added the host's public key to my known_hosts2 file the first time I made an
+SSH connection to it; but <i>(2)</i> I must add my PC's public key to my:
+
+<p>
+<pre>   
+  ~/.ssh/authorized_keys2
+</pre>
+<p>
+
+file on the host.  In this case there happened to be no such file.  So all I
+had to do was upload my public key to the host as
+<tt>~/.ssh/authorized_keys2</tt>.  But which public key?  I have three of them
+(see the SSH KEY CREATE command description below):
+
+<p>
+<pre>
+  SSH V1 RSA key:  identity.pub
+  SSH V2 DSA key:  id_dsa.pub
+  SSH V2 RSA key:  id_rsa.pub
+</pre>
+<p>
+
+Well, since the server uses SSH v2, I can ignore the <tt>identity.pub</tt>
+file, which is only for SSH v1.  So I began by uploading my
+<tt>id_dsa.pub</tt> file to my <tt>~/.ssh</tt> directory, renaming it to
+<tt>authorized_keys2</tt>, logging out, and making a new ssh connection to the
+same host.  It let me in without password, so I guessed right the first time.
+Maybe the <tt>id_rsa.pub</tt> key would have worked too, who knows -- it
+probably depends on the server.
+
+<p>
+
+But now, of course, <b>anybody who can obtain a copy of the <tt>id_dsa</tt>
+private key file from my Windows disk can log in to that host as me, without a
+password.</b> And it's easy for them to locate the host because it's listed in
+my <tt>known_hosts2</tt> file, along with all the other hosts I connect to
+with SSH v2.  So what have I accomplished?  I have pretty much left the keys
+to all my houses in the street, each key neatly labeled with the address of
+the house it unlocks.
+
+<p>
+
+So having satisfied myself that the key-exchange mechanism works as designed
+(by the SSH designers, not us), I deleted the <tt>authorized_keys2</tt> file
+from the host and I deleted all the private keys from my Windows disk.  Unlike
+Kerberos identities or X.509 certificates, <b>compromised private keys can't
+be revoked or even tracked down.</b> And unlike encrypted password
+authentication, which must be captured in its brief moment of transit, your
+key files are always available to hackers, and for that matter, to a
+potentially infinite number of them at once.
+
+<p>
+<blockquote>
+
+Note, by the way, that some SSH hosts do not support public/private key pair
+authentication at all, so every combination you try will fail.  There's no way
+to know this without the host administrator telling you, or by exhausting all
+the combinations.
+
+</blockquote>
+<p>
+
+Since public/private key-pair authentication is unsafe, K95 also supports two
+<i>secure</i> authentication methods for SSH v2 that do do not require
+public/private key pairs:
+
+<p>
+<ul>
+
+<li><a href="ftp://ftp.isi.edu/in-notes/rfc1964.txt">GSSAPI</a> (Generic
+Security Services Application Programming Interface), which hooks into the
+Kerberos 5 authentication system.
+
+<p>
+
+<li><a href="ftp://ftp.isi.edu/in-notes/rfc2945.txt">SRP</a>
+(Secure Remote Password),
+<a href="http://www-cs-students.stanford.edu/~tjw/srp/">Stanford University</a>
+
+</ul>
+<p>
+
+Of course, secure authentication for SSH clients requires <a
+href="security.html#xa1.5">modified SSH servers, which are available</a>.
+GSSAPI does not require host keys at all since Kerberos authentication is
+mutual.
+
+<p>
+
+The complete list of K95's SSH v2 authentication methods is:
+
+<p>
+<dl>
+
+<dt><tt><b>external-keyx</b></tt></dt>
+
+<dd>Use the authentication performed as a side-effect of an key
+exchange algorithm such as GSSAPI.
+<p>
+<dt><tt><b>gssapi</b></tt></dt>
+<dd>Kerberos 5 identity (requires Kerberos 5 to be installed at the
+host site and an SSH server that can authenticate your K5 identity).
+<p>
+<dt><tt><b>hostbased</b></tt></dt>
+<dd>Like Rlogin (<tt>.rhosts</tt> file, not secure)
+<p>
+<dt><tt><b>keyboard-interactive</b></tt></dt>
+<dd>Kermit prompts you locally for authentication info such as
+host password (or anything else the host might require). 
+<p>
+<dt><tt><b>password</b></tt></dt>
+<dd>Kermit prompts you locally for a single host password.
+<p>
+<dt><tt><b>publickey</b></tt></dt>
+<dd>Public/private key-pair exchange (supported but not recommended, 
+and not supported by Columbia's SSH servers).
+<p>
+<dt><tt><b>srp-gex-sha1</b></tt></dt>
+<dd>Secure Remote Password (SRP, secure; requires an SSH server on the host
+that performs SRP authentication).
+
+</dl>
+
+<h3><hr><a name="x4">4. KNOWN BUGS</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Next</a> ]
+[ <a href="#x3">Previous</a> ]
+<p>
+
+These should be fixed before the final release:
+
+<ul>
+
+<li>The result of "<tt>ssh</tt> <tt><i>hostname</i></tt>
+<tt>/command:{<i>any command ...</i>}</tt>" might be truncated.
+
+<p>
+
+<li>"show ssh" doesn't pause at the end of each screen, and it only shows
+your SET SSH (or default) values, not the current or negotiated ones.
+
+<p>
+
+<li>Sometimes when you log out from a host and K95 returns to its command
+screen, it prints the "Connection Closed" message and the prompt in the
+wrong order:
+
+<p>
+<pre>
+  [C:\K95\] K-95> Connection to blah closed.
+</pre>
+<p>
+
+</ul>
+
+<h3><hr><a name="x5">5. THINGS TO WATCH OUT FOR</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Next</a> ]
+[ <a href="#x4">Previous</a> ]
+<p>
+
+<ul>
+
+<li>K95 tries to negotiate SSH v2 by default so if you try to connect to
+an SSH V1 server, it might take a long time.  In such cases, use
+"<tt>ssh</tt> <i>host</i> <tt>/version:1</tt>" to get an immediate connection.
+
+<p>
+
+<li>Performance.  Obviously performance varies
+with your PC's memory capacity, CPU speed, and load, but the OS itself is also
+a factor.  Since the SSH code runs in a separate thread, the differing thread
+scheduling capabilities of Win9x/ME versus NT/2000/XP are significant; all
+else being equal, expect better performance in Windows NT/2000/XP.  When
+comparing Kermit's performance with other SSH clients, bear in mind that
+Kermit is likely to negotiate a stronger and therefore more CPU-intensive
+encryption method than other clients, and that Kermit does more in its
+terminal window: emulation of many terminal types, character-set conversion,
+URL highlighting, preservation of attributes for each cell, true blinking,
+file-transfer initiation detection (autoup/download), host-initiated printing,
+etc.  The effects are not noticeable on modern PCs, but might be on older,
+slower ones.
+
+<p>
+
+<li>Stairsteps.  SSH servers on some Unix systems (usually old ones but
+reportedly also some new ones too) do not translate LF to CRLF, so lines come
+out on your screen in stairstep fashion.  You can usually fix this by giving
+an "stty sane" command at the Unix host prompt, or by telling Kermit to "set
+terminal newline on".  Other SSH clients behave exactly the same way with the
+same hosts.
+
+<p>
+
+<li>Some SSH servers do not break the connection when you log out.  If you
+log out but Kermit stays in its terminal screen, use Alt-u to disconnect.
+(The same thing happens with other SSH clients.)
+
+<p>
+
+<li>SSH compression is enabled by default.  It improves performance on fast
+machines, but might slow things down when the CPU is the bottleneck,
+especially on fast LAN connections.  Compression is important, however, for
+modem connections (e.g. PPP) because the encrypted data stream can't be
+compressed by the modem.
+
+</ul>
+
+<h3><hr><a name="x6">6. NOT IMPLEMENTED YET</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Next</a> ]
+[ <a href="#x5">Previous</a> ]
+<p>
+
+<ul>
+<li>Kerberos autoget/destroy TGTs.
+<li>Telnet through SSH port forwarding.
+<li>Incoming SSH.
+<li>Integration of HTTP, RDNS, DNS SRV, etc.
+<li>SHOW SSH shows only settings, not details about current connection.
+</ul>
+
+<h3><hr><a name="x7">7. NEW COMMANDS FOR SSH</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Previous</a> ]
+<p>
+
+SECTION CONTENTS
+
+<p>
+<pre>
+  7.1. <a href="#x7.1">The SSH Command</a>
+  7.2. <a href="#x7.2">The SET SSH Command</a>
+</pre>
+<p>
+
+The remainder of this document lists K95's new SSH-related commands.  You can
+also find most of this information with K95's HELP commmand (HELP SSH,
+HELP SET SSH, etc).  Notation:
+
+<p>
+<dl>
+<dt><tt><b>BOLD</b></tt></dt>
+<dd>A keyword, to be typed literally.  Keywords can be abbreviated to any
+length that does not clash with any other keyword that can appear in the
+same place.
+<p>
+<dt><tt><i>Italics</i></tt></dt>
+<dd>A parameter, for which you would substitute an actual value.
+<p>
+<dt><tt><i>{ thing1, thing2, ... }</i></tt></dt>
+<dd>A comma-separated list inside italicized braces indicates a choice:
+pick one of the items.
+<p>
+<dt><tt><i>[ anything ]</i></tt></dt>
+<dd>Anything within italicized square brackets is optional.
+
+</dl>
+
+Many of these commands have counterparts in the
+<a href="newdial.htm#ssh">SSH Settings dialog</a>
+in the <a href="newdial.htm">new Dialer</a>.
+
+<h3><hr><a name="x7.1">7.1. The SSH Command</a></h3>
+
+<dl>
+<dt><i>Syntax:</i>
+<tt><b>SSH</b> <i>{</i> <b>ADD, AGENT, CLEAR, KEY,</b>
+<i>[</i> <b>OPEN</b> <i>]</i>, <b>V2</b> <i>} operands...</i></tt></dt>
+
+<dd>Performs the SSH-related action specified by the keyword.
+</dl>
+
+Let's look at the most important and most commonly used SSH command first:
+
+<dl>
+<dt><tt><b>SSH </b><i>[</i><b> OPEN </b><i>] host [ port ]
+[</i><b> /COMMAND:</b><i>command</i>
+<b>/USER:</b><i>username</i> <b>/PASSWORD:</b><i>passwd</i>
+<b>/VERSION:</b><i>{</i><b>1,2</b><i>}</i>
+<b>/SUBSYSTEM:</b><i>name</i>
+<b>/X11-FORWARDING:</b><i>{</i><b>ON,OFF</b><i>}&nbsp;]</i></tt></dt>
+
+<dd>This command establishes a new connection using SSH version 1 or version 2
+protocol.  The connection is made to the specified host on the SSH port (you
+can override the port by including a port name or number after the host name).
+Once the connection is established the authentication negotiations begin.  If
+the authentication is accepted, the local and remote port forwarding lists (if
+any) are used to establish the desired connection(s) and if X11 Forwarding is
+active, this results in a remote port forwarding between the X11 clients on
+the remote host and X11 Server on the local machine.  If a <tt>/COMMAND</tt>
+is provided, the command is executed on the remote host in place of your
+default shell.  
+
+<p>
+
+<i>Approximate Synonym:</i> &nbsp; <b><tt>SET HOST /NETWORK:SSH</tt></b>.
+This is exactly like SSH OPEN, except it does not enter the Terminal screen
+(unless you include the <tt>/CONNECT</tt> switch).  This allows SSH
+connections to be made in scripts, in which interactions with the host are to
+be automated.  To see how to set up an SSH-based Kermit file-transfer
+and -management service (similar to SFTP but with greater flexibility,
+functionality, friendliness, and scriptability),
+<a href="http://www.columbia.edu/kermit/skermit.html">CLICK HERE</a>.
+
+<p>
+
+If your username on the host is not the same as K95's <tt>\v(userid)</tt>
+value, you <i>must</i> include the <tt>/USER:</tt> switch to specify the
+username on the host.  You can find out K95's <tt>\(userid)</tt> value by
+typing SHOW VAR USERID at the K95 prompt.  You can set this variable globally
+with the SET LOGIN USERID command, in which case it is used for all future
+network logins until you EXIT from K95.  The <tt>/USER:</tt> switch, on the
+other hand, applies only to the command with which it is given, and leaves the
+global USERID setting alone.
+
+</dl>
+
+<p>
+
+Here are the rest of the SSH commands in alphabetical order:
+
+
+<p>
+<dl>
+<dt><tt><b>SSH ADD LOCAL-PORT-FORWARD</b> <i>local-port host port</i></tt></dt>
+
+<dd>Adds a port forwarding triplet to the local port forwarding list.  The
+triplet specifies a local port to be forwarded and the hostname / ip-address
+and port number to which the port should be forwarded from the remote host.
+Port forwarding is activated at connection establishment and continues until
+the connection is terminated.
+
+<p>
+
+<dt><tt><b>SSH ADD REMOTE-PORT-FORWARD</b>
+<i>remote-port host port</i></tt></dt>
+
+<dd>Adds a port forwarding triplet to the remote port forwarding list.  The
+triplet specifies a remote port to be forwarded and the hostname/ip-address
+and port number to which the port should be forwarded from the local machine.
+Port forwarding is activated at connection establishment and continues until
+the connection is terminated.
+
+<p>
+
+<dt><tt><b>SSH AGENT ADD </b><i>[ identity-file ]</i></tt></dt>
+
+<dd>Adds the contents of the identity-file (if any) to the SSH AGENT private
+key cache.  If no identity-file is specified, all files specified with SET SSH
+IDENTITY-FILE are added to the cache.
+
+<p>
+
+<dt><tt><b>SSH AGENT DELETE </b><i>[ identity-file ]</i></tt></dt>
+
+<dd>Deletes the contents of the identity-file (if any) from the SSH AGENT
+private key cache.  If no identity-file is specified, all files specified with
+SET SSH IDENTITY-FILE are deleted from the cache.
+
+<p>
+
+<dt><tt><b>SSH AGENT LIST </b><i>[</i><b> /FINGERPRINT </b><i>]</i></tt></dt>
+
+<dd>Lists the contents of the SSH AGENT private key cache.  If
+<tt>/FINGERPRINT</tt> is specified, the fingerprint of the private keys are
+displayed instead of the keys.
+
+<p>
+
+<dt><tt><b>SSH CLEAR LOCAL-PORT-FORWARD</b></tt></dt>
+<dd>Clears the local port forwarding list.
+
+<p>
+
+<dt><tt><b>SSH CLEAR REMOTE-PORT-FORWARD</b></tt></dt>
+<dd>Clears the remote port forwarding list.
+
+<p>
+
+<dt><tt><b>SSH KEY</b> </tt> Commands:</dt>
+<dd>The SSH KEY commands create and manage public and private key pairs
+(identities).  There are three forms of SSH keys.  Each key is stored
+in its own file:
+
+<p>
+<pre>
+   <u><i>Key Type      Private Key File          Public Key File</i>           </u>
+   v1 RSA keys   \v(appdata)ssh/identity   \v(appdata)ssh/identity.pub
+   v2 RSA keys   \v(appdata)ssh/id_rsa     \v(appdata)ssh/id_rsa.pub
+   v2 DSA keys   \v(appdata)ssh/id_dsa     \v(appdata)ssh/id_dsa.pub
+</pre>
+<p>
+
+Keys are stored using the OpenSSH keyfile format.  The private key
+files can be (optionally) protected by specifying a passphrase.  A
+passphrase is a longer version of a password.  English text provides
+no more than 2 bits of key data per character.  56-bit keys can be
+broken by a brute force attack in approximately 24 hours.  When used,
+private key files should therefore be protected by a passphrase of at
+least 40 characters (about 80 bits).
+
+<p>
+
+<dt><tt><b>SSH KEY CHANGE-PASSPHRASE </b><i>[</i><b>
+/NEW-PASSPHRASE:</b><i>passphrase</i><b>
+OLD-PASSPHRASE:</b><i>passphrase ] filename</i></tt></dt>
+
+<dd>This re-encrypts the specified private key file with a new passphrase.
+The old passphrase is required.  If the passphrases (and filename) are
+not provided Kermit prompts your for them.
+
+<p>
+
+<dt><tt><b>SSH KEY CREATE</b> <i>[</i> <b>/BITS:</b><i>bits</i><b>
+/PASSPHRASE:</b><i>passphrase</i><b>
+/TYPE:</b><i>{</i><b>V1-RSA,V2-DSA,V2-RSA</b><i>}</i><b>
+/V1-RSA-COMMENT:</b><i>comment ] filename</i></tt></dt>
+
+<dd>This command creates a new private/public key pair.  The defaults are:
+BITS:1024 and TYPE:V2-RSA.  The filename is the name of the private key file.
+The public key is created with the same name with .pub appended to it.  If a
+filename is not specified Kermit prompts you for it.  V1 RSA key files may
+have an optional comment, which is ignored for other key types.
+
+<p>
+
+<dt><tt><b>SSH KEY DISPLAY
+</b><i>[</i><b>
+/FORMAT:</b><i>{</i><b>FINGERPRINT,IETF,OPENSSH,SSH.COM</b><i>} ]
+filename</i></tt></dt>
+
+<dd>This command displays the contents of a public or private key file.
+The default format is OPENSSH.
+
+<p>
+
+<dt><tt><b>SSH KEY V1 SET-COMMENT </b><i>filename comment</i></tt></dt>
+<dd>This command replaces the comment associated with a V1 RSA key file.
+
+<p>
+
+<dt><tt><b>SSH V2 REKEY</b></tt></dt>
+<dd>Requests that an existing SSH V2 connection generate new session keys.
+
+</dl>
+
+<h3><hr><a name="x7.2">7.2. The SET SSH Command</a></h3>
+
+<dl>
+
+<dt><tt><b>SET SSH AGENT-FORWARDING
+</b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>If an authentication agent is in use, setting this value to ON results in
+the connection to the agent being forwarded to the remote computer.  The
+default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH CHECK-HOST-IP </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether the remote host's ip-address should be checked against
+the matching host key in the known_hosts file.  This can be used to determine
+if the host key changed as a result of DNS spoofing.  The default is ON.
+
+<p>
+
+<dt><tt><b>SET SSH COMPRESSION </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether compression will be used.  The default is ON.
+
+<p>
+
+<dt><tt><b>SET SSH DYNAMIC-FORWARDING
+</b><i>{</i> <b>ON, OFF</b> <i>}</i></tt></dt>
+
+<dd>Specifies whether Kermit is to act as a SOCKS4 service on port 1080 when
+connected to a remote host via SSH.  When Kermit acts as a SOCKS4 service, it
+accepts connection requests and forwards the connections through the remote
+host.  The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH GATEWAY-PORTS </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether Kermit should act as a gateway for forwarded
+connections received from the remote host.  The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH GSSAPI DELEGATE-CREDENTIALS
+</b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether Kermit should delegate GSSAPI credentials to the remote
+host after authentication.  Delegating credentials allows the credentials to
+be used from the remote host.  The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH IDENTITY-FILE</b>
+<i>filename [ filename [ ... ] ]</i></tt></dt>
+
+<dd>Specifies one or more files from which the user's authorization identities
+(private keys) are to be read when using public key authorization.  These are
+files used in addition to the default files:
+
+<p>
+<pre>
+  V1 RSA:  \v(appdata)ssh/identity
+  V2 RSA:  \v(appdata)ssh/id_rsa
+  V2 DSA:  \v(appdata)ssh/id_dsa
+</pre>
+<p>
+
+<dt><tt><b>SET SSH KERBEROS4 TGT-PASSING</b>
+<i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether Kermit should forward Kerberos 4 TGTs to the host.
+The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH KERBEROS5 TGT-PASSING
+</b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether Kermit should forward Kerberos 5 TGTs to to the host.
+The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH PRIVILEGED-PORT
+</b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether a privileged port (less than 1024) should be used
+when connecting to the host.  Privileged ports are not required except when
+using SSH V1 with Rhosts or RhostsRSA authorization.  The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH QUIET </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether all messages generated in conjunction with SSH
+protocols should be suppressed.  The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH STRICT-HOST-KEY-CHECK</b>
+<i>{</i><b> ASK, ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies how Kermit should behave if the the host key check fails.  When
+strict host key checking is OFF, the new host key is added to the
+protocol-version-specific user-known-hosts-file.  When strict host key
+checking is ON, the new host key is refused and the connection is dropped.
+When set to ASK, Kermit prompt you to say whether the new host key should be
+accepted.  The default is ASK.  Strict host key checking protects you against
+Trojan horse attacks.  It depends on you to maintain the contents of the
+known-hosts-file with current host keys.
+
+<p>
+
+<dt><tt><b>SET SSH USE-OPENSSH-CONFIG
+</b> <i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+
+<dd>Specifies whether Kermit should parse an OpenSSH configuration file after
+applying Kermit's SET SSH commands.  The configuration file would be located
+at <tt>\v(appdata)ssh/ssh_config</tt>.  The default is OFF.
+
+<p>
+
+<dt><tt><b>SET SSH V1 CIPHER
+</b><i>{</i><b> 3DES, BLOWFISH, DES </b><i>}</i></tt></dt>
+
+<dd>Specifies which cipher should be used to protect SSH version 1
+connections.  The default is 3DES.
+
+<p>
+
+<dt><tt><b>SET SSH V1 GLOBAL-KNOWN-HOSTS-FILE </b><i>filename</i></tt></dt>
+
+<dd>Specifies the location of the system-wide known-hosts file.  The
+default location depends on the operating system:
+
+<p>
+<pre>
+  Windows 95/98/98SE/ME:  %windir%\ssh_known_hosts
+  Windows NT/2000/XP:     \v(common)ssh\ssh_known_hosts
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V1 USER-KNOWN-HOSTS-FILE </b><i>filename</i></tt></dt>
+
+<dd>Specifies the location of the user-known-hosts-file.  The default
+location is:
+
+<p>
+<pre>
+  \v(appdata)ssh/known_hosts
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 AUTHENTICATION</b>
+<i>{</i><b> EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD,
+PUBKEY, SRP-GEX-SHA1 </b><i>} [ ... ]</i></tt></dt>
+
+<dd>Specifies an ordered list of SSH version 2 authentication methods to
+be used when connecting to the remote host.  The default list is:
+
+<p>
+<pre>
+  external-keyx gssapi hostbased publickey srp-gex-sha1 
+  keyboard-interactive password none
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 CIPHERS </b><i>{</i><b> 3DES-CBC, AES128-CBC, AES192-CBC,
+AES256-CBC, ARCFOUR, BLOWFISH-CBC, CAST128-CBC, RIJNDAEL128-CBC,
+RIJNDAEL192-CBC, RIJNDAEL256-CBC </b><i>}</i></tt></dt>
+<dd>Specifies an ordered list of SSH version ciphers to be used to encrypt
+the established connection.  "Rijndael" is an alias for "aes".
+The default list is:
+<p>
+<pre>
+  aes128-cbc 3des-cbc blowfish-cbc cast128-cbc arcfour aes192-cbc aes256-cbc
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE </b><i>filename</i></tt></dt>
+<dd>Specifies the location of the system-wide known-hosts file.  The
+default location depends on the operating system:
+
+<p>
+<pre>
+  Windows 95/98/98SE/ME: %windir%\ssh_known_hostss
+  Windows NT/2000/XP:    \v(common)ssh\ssh_known_hosts2
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 HOSTKEY-ALGORITHMS
+</b><i>{</i><b> SSH-DSA, SSH-RSA </b><i>}</i></tt></dt>
+<dd>Specifies an ordered list of hostkey algorithms to be used to verify
+the identity of the host.  The default list is
+
+<p>
+<pre>
+  ssh-rsa ssh-dsa
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 MACS </b><i>{</i><b>
+HMAC-MD5 HMAC-MD5-96 HMAC-RIPEMD160 HMAC-SHA1 HMAC-SHA1-96</b>
+<i>}</i></tt></dt>
+
+<dd>Specifies an ordered list of Message Authentication Code algorithms to be
+used for integrity protection of the established connection.  The default list
+is:
+
+<p>
+<pre>
+  hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96 hmac-md5-96
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 USER-KNOWN-HOSTS-FILE </b><i>filename</i></tt></dt>
+<dd>Specifies the location of the user-known-hosts file.  The default
+location is:
+
+<p>
+<pre>
+  \v(appdata)ssh/known_hosts2
+</pre>
+<p>
+
+<dt><tt><b>SET SSH VERBOSE </b><i>level</i></tt></dt>
+<dd>Specifies how many messages should be generated by the OpenSSH engine.
+The level can range from 0 to 7.  The default value is 2.
+
+<p>
+
+<dt><tt><b>SET SSH VERSION </b><i>{</i><b> 1, 2, AUTOMATIC </b><i>}</i></tt></dt>
+<dd>Specifies which SSH version should be negotiated.  The default is
+AUTOMATIC which means use version 2 if supported; otherwise to fall
+back to version 1.
+
+<p>
+
+<dt><tt><b>SET SSH X11-FORWARDING </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
+<dd>Specifies whether X Windows System Data is to be forwarded across the
+established SSH connection.  The default is OFF.  When ON, the DISPLAY
+value is either set using the SET TELNET ENV DISPLAY command or read
+from the DISPLAY environment variable.
+
+<p>
+
+<dt><tt><b>SET SSH XAUTH-LOCATION </b><i>filename</i></tt></dt>
+<dd>Specifies the location of the xauth executable (if provided with the
+X11 Server software.)
+
+</dl>
+
+<p>
+
+[ <a href="#top"><b>Top</b></a> ] 
+[ <a href="#contents"><b>Contents</b></a> ] 
+[ <a href="http://www.columbia.edu/kermit/k95.html"><b>K95 Home</b></a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html"><b>Kermit Home</b></a> ]
+<hr>
+<address>
+K95 SSH Client / The Kermit Project /
+Columbia University /
+<a href="mailto:kermit@columbia.edu">kermit@columbia.edu</a> /
+4 June 2002
+</address>
+</body>
+</html>
+

@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 - Customizing Mouse Buttons</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Customizing Mouse Buttons</h2>
+
+Mouse buttons can be "remapped" in the same way as keys.
+The command is:
+<p><pre>
+SET MOUSE BUTTON <i>number key-modifiers event definition</i>
+</pre><p>
+where:
+<p><dl>
+<dt><i>number</i>
+<dd>Is the mouse button number 1, or 2.  Or 3 if your mouse has 3 buttons.
+This denotes which button causes the event.  Normally button 1 is the left
+button.
+<p>
+<p>
+<dt><i>key-modifier</i>
+<dd>Tells which, if any, keys are held down during the mouse event.  The possibilities
+are <tt>NONE</tt>, <tt>ALT</tt>, <tt>ALT-SHIFT</tt>, <tt>CTRL</tt>,
+<tt>CTRL-ALT</tt>, <tt>CTRL-SHIFT</tt>, <tt>CTRL-ALT-SHIFT</tt>, and
+<tt>SHIFT</tt>.
+<p>
+<dt><i>event</i>
+<dd>Specifies the type of mouse event.  The possibilities are:
+<tt>CLICK</tt>,
+<tt>DOUBLE-CLICK</tt>, and
+<tt>DRAG</tt>.
+<p>
+<dt><i>definition</i>
+<dd>Is the definition for this event.
+</dl>
+Thus, for a 2-button mouse, there are 2 x 8 x 3 = 48 distinct actions
+that can be assigned, and 72 for a 3-button mouse.
+<p>
+The definition is just like a key definition: it can be a single character,
+a character string, a Kverb, or any combination.  Kermit 95 has
+<a href="kverbs.htm">hundreds of Kverbs</a>.  The following Kverbs are
+specifically mouse-oriented, but you can also assign other Kverbs to mouse
+actions:
+<p><dl>
+<dt><tt>\Kmarkcopyclip</tt>
+<dd>Marks and copies text to the Clipboard.
+<p>
+<dt><tt>\Kmarkcopyclip_noeol</tt>
+<dd>Marks and copies text to the Clipboard, discarding line terminators.
+<p>
+<dt><tt>\Kpaste</tt>
+<dd>Copies from the clipboard into the current Kermit 95 screen.
+<p>
+<dt><tt>\Kdump</tt>
+<dd>Marks and copies text to the <tt>SET PRINTER</tt> device.
+<p>
+<dt><tt>\Kmarkcopyhost</tt>
+<dd>Marks and copies text to the host.
+<p>
+<dt><tt>\Kmarkcopyhost_noeol</tt>
+<dd>Marks and copies text to the host, discarding line terminators.
+<p>
+<dt><tt>\Kmousecurpos</tt>
+<dd>Transmit <a href="arrow.htm">arrow-key</a> sequences to move terminal
+cursor to mouse position.
+<p>
+<dt><tt>\Kmouseurl</tt>
+<dd>Send URL under mouse cursor to Web browser.
+<p>
+</dl>
+<p>
+Examples:
+<p><dl>
+<dt><tt>SET MOUSE BUTTON 1 CTRL CLICK \KMOUSEURL</tt>
+<dd>This puts the "URL hot spot" function on Ctrl-Button 1 (this is the
+default assignment).
+<p>
+<dt><tt>SET MOUSE BUTTON 3 SHIFT DOUBLE-CLICK \KPASTE</tt>
+<dd>Puts "paste from Clipboard" on Button 3 Shift-Double-Click.
+</dl>
+<p>
+In addition to the built-in mouse functions, you can write your own 
+Kermit macros for processing mouse events.  Kermit 95 provides 
+three Kermit variables <tt>\v(mousecurx)</tt>, <tt>\v(mousecury)</tt>,
+and <tt>\v(select)</tt> which can be used in a macro.
+<p>
+The following macro starts the browser on the result of a drag event:
+<p><pre>
+  define myurl run start \m(browser) \v(select), if terminal-macro connect
+</pre><p>
+This can then be assigned to a mouse event with
+<p><pre>
+  SET MOUSE BUTTON Button 1 Alt Drag \kmyurl
+</pre>
+<p>
+The <tt>\v(mousecurx)</tt> and <tt>\v(mousecury)</tt> represent the position
+of the mouse click or the end of the drag event.  This can be used with
+the <tt>\fscrnstr()</tt> function to read text from the screen at that 
+location.
+<p>
+Use <tt>SHOW MOUSE</tt> to show the current mouse event assignments.
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

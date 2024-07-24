@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>CTRL2CAPS</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>CTRL2CAPS</h2>
+<h3>Ctrl / Caps-Lock Key Swapper</h3>
+<blockquote>
+<i>As of:</i> Kermit 95 2.0
+</blockquote>
+
+PC users who are accustomed to terminal keyboards often want the PC keyboard
+to have the Ctrl key where the Caps Lock key is, and Esc where Accent Grave
+is.  <tt>CTRL2CAPS.VXD</tt> can take care of this for you in Windows 95, 98,
+or ME (but not NT, 2000, or XP), but you should know there are alternatives,
+including:
+
+<p>
+<ol>
+
+<li>IBM-like keyboards from
+<a href="http://www.pckeyboard.com/customizer.html">Unicomp</a>,
+<a href="http://www.cvtinc.com/kybdfeatures.html">Avant</a>,
+<a href="http://www.pfuca.com/products/hhkb/hhkbindex.html">LinuXcare</a>,
+and elsewhere that specialize in swapping Ctrl and Caps Lock, Esc and
+Grave/Tilde, and in some cases allowing for user customizations.  The
+advantage of doing it in the keyboard itself rather than in the software means
+you don't have to change the software every time you upgrade or switch
+operating systems.
+
+<p>
+
+<li>Digital Part number LK-461-A2 from Digital Parts Source 1-800-225-5385,
+$75.00 USD: a PC-compatible version of the DEC VT 220/320/420/520 keyboard
+that has 20 function keys and Ctrl left of the 'A'.  (Digital Equipment
+Corporation has since been bought by Compaq Computer Corporation, which was
+then bought by Hewlett Packard; it is not known if they still sell this part,
+but a search of the Compaq website in early 2002 for "LK-461" turned up 60
+references.)
+
+<p>
+
+<li>Look in your Control Panel -- it might include options for key swapping.
+
+</ol>
+
+<h3><hr>CTRL2CAPS</h3>
+
+<tt>CTRL2CAPS.VXD</tt> is device driver that swaps the Caps Lock and left Ctrl
+keys on the PC keyboard in Windows 95/98/ME, for use by those who prefer to
+have the Control key just left of the A key, rather than its present placement
+on PC keyboards, which is not handy for touch typists.  (See the URL at the
+bottom of this file for a Windows NT version, as well as other utilities for
+Windows 95 and NT.)
+
+<p>
+
+Previous versions of CTRL2CAP removed the Caps Lock function from the
+keyboard completely.  The version that is included with Kermit 1.1.17 and
+later puts the Caps Lock function on the left Ctrl key (a) in case you want
+to use it, and (b) so there will be no conflict with PCTERM keyboard mode,
+which also was added in K95 1.1.17, and which needs a Caps Lock key.
+
+<h3><hr>INSTALLATION</h3>
+
+Use a text editor to add a couple lines to your SYSTEM.INI file (in Windows
+95/98 this is in the <tt>C:\WINDOWS</tt> directory).  First, to enable
+CTRl2CAP, put:
+<p><pre>
+  DEVICE=<i>path</i>/CTRL2CAP.VXD
+</pre>
+<p>
+in the [Enhanced] (or [386enh]) section, where <i>path</i> is the KEYMAPS
+subdirectory of your Kermit 95 directory.  Note: We recommend you use the
+copy in the Kermit 95 KEYMAPS directory, since this is the one that it
+patched automatically (in case corrections are needed) when new releases of
+K95 are installed.  If you copy <tt>CTRL2CAP.VXD</tt> to another directory and
+refer to the copy in <tt>SYSTEM.INI</tt>, then if a patch is later applied to
+the copy in your <tt>K95\KEYMAPS</tt> directory, it will not be reflected in
+the version you are actually running.
+<p>
+Second: CTRL2CAP also allows Escape/Accent-Grave switching.  If you want
+these keys swapped, also put:
+<p><pre>
+  [Ctrl2cap]
+  Escape=TRUE
+</pre>
+<p>
+in the <tt>SYSTEM.INI</tt> file.
+
+<h3><hr>CREDITS</h3>
+
+CTRL2CAP was written and contributed by:
+<p><blockquote>
+  Dr. Mark Russinovich<br>
+  Department of Computer and Information Science<br>
+  University of Oregon<br>
+  Eugene OR  97403<br>
+  USA<br>
+</blockquote>
+<p>
+Email: <a href="mailto: markr@numega.com"><tt>markr@numega.com</tt></a><br>
+Web: <a href="http://www.sysinternals.com/"><tt>http://www.sysinternals.com/</tt></a>
+<p>
+<hr>
+[ <i>Use your Browser's BACK button to return.</i> ]
+</body></html>

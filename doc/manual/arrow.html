@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<META name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kermit 95 - Arrow Key Summary</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Arrow Key Summary</h2>
+
+An arrow key is not a regular key that has a single
+<a href="gloss.htm#ascii"> ASCII</a> character assigned to it; there are
+no ASCII arrow characters.  Therefore arrow keys must send "escape sequences".
+Each kind of terminal is likely to use different sequences, and even on the
+same kind of terminal, an arrow key might be in different "modes", meaning 
+the same arrow key might send different sequences at different times.
+<p>
+For example, the cursor (arrow) keypad on the VT100 terminal (or above) can be
+in one of two modes: <b>cursor mode</b> and <b>application mode</b>.  These
+keys send different escape sequences depending on which mode they are in.
+When the VT terminal is turned on (and when Kermit is started), the arrow keys
+are in cursor mode.
+<p>
+By default (that is, unless you give SET KEY commands to change things),
+Kermit uses the PC keyboard arrow keys as the VT terminal arrow keys.  Each
+key has a "verb" assigned to it:
+<p>
+<pre>
+  Up arrow      \Kuparr
+  Down arrow    \Kdnarr
+  Right arrow   \Krtarr
+  Left arrow    \Klfarr
+</pre>
+<p>
+
+These verbs track the cursor keypad mode automatically, and send the
+appropriate escape sequences.  For example, for DEC VT100 and higher:
+<p>
+<pre>
+               <i>Cursor Mode   Application Mode</i>
+  \Kuparr        CSI A           SS3 A
+  \Kdnarr        CSI B           SS3 B
+  \Krtarr        CSI C           SS3 C
+  \Klfarr        CSI D           SS3 D
+</pre>
+<p>
+where CSI is ESC followed by left bracket ([) on a 7-bit connection or decimal
+155 on an 8-bit connection, and SS3 is ESC followed by O (uppercase letter O)
+on a 7-bit connection and decimal 143 on an 8-bit connection.
+<p>
+How does the cursor keypad mode change?  The host can change it by sending
+special escape sequences, or you can change it yourself by using the command:
+<p>
+<pre>
+  SET TERMINAL ARROW-KEYS <i>{</i> CURSOR, APPLICATION <i>}</i>
+</pre>
+<p>
+
+When arrow keys are not working, what could be the reason?
+<ol>
+<li>Because the application you are using on the host does not support
+arrow keys.
+<p>
+<li>Because of a terminal-type mismatch.  Different kinds of terminals send
+different escape sequences for arrow keys.
+<p>
+<li>Because the application expects the keypad to be in one mode when it
+is in the other mode.  This is a deficiency on the part of the
+application.  Applications should never <i>assume</i> which mode the cursor
+keypad is in, but rather, they should PUT the keypad in the desired
+mode, or else they should accept arrow-key codes from either mode.
+Workaround: tell Kermit to <tt>SET TERM ARROW CURSOR</tt> (or
+<tt>APPLICATION</tt>).
+<p>
+<li>Because of a character-size mismatch.  If you have been using a VMS-based
+VT220 or VT320 fullscreen application (such as EVE, ALEPH, etc), you might
+find that your arrow keys are sending 8-bit codes rather than 7-bit codes, and
+then when switching to another application like Lynx, the new application
+might not understand the 8-bit codes.  Again, this is a deficiency of the
+application.  Workaround: tell Kermit to <tt>SET TERM CONTROLS 7</tt>.
+</ol>
+<p>
+Here is a summary of the default uses of gray (cursor keypad) arrow keys in
+Kermit 95:
+<p><pre><hr>
+<i>Shift  Alt  Ctrl   Description</i><hr>
+                    Terminal arrow keys
+             X      Go to bookmark in scrollback buffer
+        X           Search in scrollback buffer
+        X    X      (unassigned)
+   X                Scroll left/right one column
+   X         X      (unassigned)
+   X    X           Scroll left/right 8 columns
+   X    X    X      Scroll all the way left or right<hr>
+</pre><p>
+
+In the Command screen, the Up and Down arrow keys can be used for command
+recall.
+<p>
+In EMACS and Word Perfect modes, the arrow keys send the appropriate
+cursor movement commands for those applications.
+
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

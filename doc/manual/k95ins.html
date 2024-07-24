@@ -1,0 +1,527 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<title>Welcome to the Kermit 95 Installation!</title>
+<META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">Welcome to the Kermit 95 Installer for Columbia University</h2>
+
+<i>K95 2.1.3 -- 1 Jan 2003</i>
+
+
+<hr>
+<p>
+<blockquote><big><b>
+
+Due to system-dependent timing issues, it is possible that
+this Web page is covering the Kermit 95 Installer's window.  If so, please
+click on the &quot;InstallShield Wizard&quot; that should be in your Task Bar
+to bring up the Installer.
+
+</b></big></blockquote>
+
+<h3><hr>Contents</h3>
+
+<big>
+<a href="#intro">Introduction</a><br>
+<a href="#patch11">1a. The 1.1.X to 2.1.3 Upgrade</a><br>
+<a href="#patch20">1b. The 2.x to 2.1.3 Upgrade</a><br>
+<a href="#install">2. The Installation</a><br>
+&nbsp;&nbsp;&nbsp;<a href="#sect2.1">2.1: Initial Dialogs</a><br>
+&nbsp;&nbsp;&nbsp;<a href="#sect2.2">2.2: Registry, Desktop and Start Menu Options</a><br>
+&nbsp;&nbsp;&nbsp;<a href="#sect2.3">2.3: Everson Mono Terminal Font</a><br>
+
+<a href="#config">3. Special Configuration</a><br>
+&nbsp;&nbsp;&nbsp;<a href="#sect3.1">3.1: CU Kerberos Configuration Files</a><br>
+&nbsp;&nbsp;&nbsp;<a href="#sect3.2">3.2: IKS Configuration File</a><br>
+<a href="#postinst">4. Where To Go From Here</a>
+</big>
+
+<h3><a name="intro"><hr>Introduction</a></h3>
+
+This document offers step-by-step advice on how to install the Kermit 95
+communications software.  Although most of this InstallShield installation
+is self-explanatory, Kermit 95 includes some advanced features that must
+be at least minimally configured to function properly.  Please leave this
+browser window open and refer to it if you are stuck on a question that the
+installation routine is asking you.
+
+<p>
+
+This document covers all the possible options you could install,
+so it is possible that if you don't install all of the components, you
+will not be prompted for information that is referenced here.
+
+<p>
+
+Also note that all of the links to additional documentation are links to The
+<a href="http://www.columbia.edu/kermit/">Kermit Project website</a>
+and therefore require an active Internet connection.
+
+<h3><a name="patch11"><hr>1. The K95 1.1 to 2.1 Upgrade</a></h3>
+
+<blockquote>
+<i>
+
+If you are installing Kermit 95 for the first time, please skip to the 
+<a href="#install">next section</a>.
+
+</i>
+</blockquote>
+<p>
+
+The Kermit 95 1.1 to 2.1 upgrade is, in fact, a full new installation;
+thus the regular installation instructions following this section apply to it,
+just as they do to a new installation.  <b>To apply the upgrade you must
+already have an older version of Kermit 95 on your computer.</b>
+
+<p>
+
+A new installation is required because to get all K95 users into the new
+directory structure, so we don't have an unsupportable parallel universe of
+old and new layouts.  The upgrade installs K95 2.1 into the new
+structure.  Your previous installation is left intact.
+
+<p>
+
+After upgrading, you will have to determine which files from your old
+installation need to be migrated to which directories in the new one.
+In the most common situations, your old Kermit 95 installation is confined
+to a single directory tree, typically rooted at <tt>C:\K95</tt>.
+In the new scheme, the data files that you have changed are stored in
+Kermit 95's "appdata" directory (as explained in the
+README file), typically:
+
+<p>
+<blockquote>
+<tt>C:\Documents&nbsp;and&nbsp;Settings\<i>username</i>\Application&nbsp;Data\Kermit&nbsp;95\</tt>
+</blockquote>
+<p>
+
+The two files that should always be moved are:
+
+<p>
+<dl>
+<dt><tt>K95CUSTOM.INI</tt></dt>
+<dd>Your Kermit 95 customization file.
+<p>
+<dt><tt>DIALUSR.DAT</tt></dt>
+<dd>Your personal Dialer database entries and customizations.
+</dl>
+<p>
+
+Plus the contents of your old K95 CERTS, CRLS, DOWNLOAD, KEYMAPS, PHONES,
+SCRIPTS, SSH, and TMP subdirectories, if any.
+
+<p>
+
+Other files might also need to be moved, including <tt>DIALORG.DAT</tt>, the
+organization wide Dialer database if your site has one, and if you use Host
+Mode, the host-mode data files and directories must be moved too.  It is
+beyond the scope of this document to cover every possibility.  Instead,
+visit:
+
+<p>
+<blockquote>
+
+<a href="http://www.columbia.edu/kermit/k95upgrade.html#migrate"><tt>http://www.columbia.edu/kermit/k95upgrade.html#migrate</tt></a>
+
+</blockquote>
+<p>
+
+for further instructions after you have upgraded to K95 2.1.
+
+<p>
+
+Once you have migrated all your files, you can remove the old K95
+installation if you wish.
+
+
+
+<h3><a name="patch20"><hr>1. The K95 2.x to 2.1.3 Upgrade</a></h3>
+
+<blockquote>
+<i>
+
+If you are installing Kermit 95 for the first time, please skip to the 
+<a href="#install">next section</a>.
+
+</i>
+</blockquote>
+<p>
+
+<p>
+
+The Kermit 95 2.1.3 upgrade requires that you have Kermit 95 2.0
+or 2.1 installed.  The 2.1.3 upgrade will simply confirm the validity and
+location of your current Kermit 95 2.x installation and then replace
+files in your Kermit 95 2.x program directory to bring it up to Kermit
+95 2.1.3.  It will also create a folder called Backups and copy any files
+that a replaced so that you can restore your 2.x installation by doing a
+Remove from Add/Remove Programs in the Control Panel.  The installer will
+transfer your existing registration information from your 2.x files.
+
+<p>
+
+If you are installing the Crypto update, you will also be given the option
+to add an association to make Kermit 95 the default program to handle
+SSH connections.
+
+<p>
+
+The 2.1.3 update also includes a newer version of the Everson Mono Terminal
+font.  The installer will give you the option to install or update this
+depending on what you did with the font during the 2.0 install.
+
+<h3><a name="install"><hr>2. The Installation</a></h3>
+
+<b><i><a name="sect2.1">2.1: Initial Dialogs</a></i></b>
+
+<p>
+
+Your Columbia University academic site license copy of Kermit 95 is preregistered.
+Thus you will not be prompted to enter any serial number.
+
+<p>
+
+The first few dialogs should be familiar if you've ever installed Windows
+applications before.  The first one that requires some extra thought and
+attention is:
+
+<p>
+
+<b>Setup Type</b>
+
+<p>
+
+Two types are offered, <b>Typical</b> and <b>Custom</b>.  If you choose the
+<b>Typical</b> option Kermit 95 is installed with its base files and also
+the files necessary to make secure connections with SSH, SSL, TLS, SRP and
+Kerberos.  There are no additional configuration questions except for where to 
+create shortcuts.
+
+<p>
+
+If you choose <b>Custom</b> you are taken to the the Select Components screen.
+The advanced Kermit 95 components listed here extend Kermit's capabilities,
+but may require some additional configuration.  You should be clear what each
+component does and that you need it before selecting any of them.
+
+<p>
+
+<b>Select Components</b>
+
+<p>
+
+Here you choose which optional components of Kermit 95 you want to install.
+Certain of the optional components require that you provide special
+configuration information so they can function properly.  Here is a list of
+the components, what they do, and any special information that you should be
+ready to provide.  <b>Note that security-related components are not included
+in the export version due to USA export law; our export license application
+is pending.</b>
+
+<p>
+<dl>
+
+<dt><b>SSH, SSL, TLS & SRP</b> (NOT INCLUDED WITH EXPORT VERSION)</dt>
+
+<dd><i>Selected by default.</i> This option installs all the necessary
+files to use Kermit 95 to create secure connections using all of the security
+protocols listed.  While the installer will not ask you for any additional
+configuration info, you will have some post-install configuration for any of
+these security protocols to work.  Instructions for using Kermit 95 as an SSH
+client <a href="http://www.columbia.edu/kermit/sshclient.html">are available
+on our web site.</a>  Look
+<a href="http://www.columbia.edu/kermit/security.html#x4">HERE</a> for details
+on using the other methods such as SRP, TLS and SSL.</dd>
+
+<p>
+
+<dt><b>SRP FTP</b> (NOT INCLUDED WITH EXPORT VERSION)</dt>
+
+<dd><i>Selected by default.</i> This options adds the cryptographic APIs
+necessary to do SRP in Kermit 95's FTP mode.</dd>
+
+<p>
+
+<dt><b>Kerberos</b> (NOT INCLUDED WITH EXPORT VERSION)</dt>
+
+<dd><b><i>IMPORTANT: It is best not to install this option if you already have
+any other Kerberos program installed.</i></b> These files are required if you
+need to make authenticated and/or encrypted connections using the Kerberos 4
+and/or 5 security protocols, <b>and</b> if you have not already installed a
+Windows-based Kerberos system (like the one from MIT).
+
+<p>
+
+If you think you may already have Kerberos support installed, first try
+installing Kermit 95 without the Kerberos option.  Then try to make a
+Kerberized telnet connection, if it does not work, you can try to use the
+Kerberos support supplied with Kermit 95.  Do this by going to the Add/Remove
+Programs Control Panel item, and clicking on Change/Remove for the K95
+program.  Then you can select the Modify option and install the Kerberos
+component.  It is important that you <b>not</b> install the Kerberos files in
+the Kermit 95 distribution unless you have to.  You may be already using a
+customized distribution that, for instance, requires the use of hardware
+smartcards for you key.  Installing additional Kerberos files in this instance
+will only confuse matters.  Best to contact your Kerberos realm administrator
+if you are uncertain about what to do.
+
+<p>
+
+If you install the Kerberos support files, the installer will also install
+the following configuration files in your default Windows directory
+(if you do not already have them):
+
+<p>
+<ul>
+<li>KRB.CON - Kerberos 4 Realm/Server mapping
+<li>KRBREALM.CON - Kerberos 4 Domain/Realm mapping
+<li>KRB5.INI - Kerberos 5 configuration file
+</ul>
+<p>
+
+These files are preconfigured for Columbia's Kerberos environment.
+
+<p>
+
+<dt><b>IKS for NT/2000/XP</b></dt>
+
+<dd><i>This component is an option only on NT/2000 or XP.</i> Selecting
+this option installs a Kermit file-transfer and management server on your
+PC.  IKS, or Internet Kermit Service, is a powerful alternative to running an
+FTP server on your PC.  It allows authenticated users (using Kermit 95's full
+range of secure authentication options) or anonymous users to connect to your
+PC to upload and download files as well as do basic file management commands
+(when authorized).  Since it is based on Kermit 95, it provides all of Kermit
+95's file collision handling options as well as access to Kermit 95's script
+langauge.  See the <a
+href="http://www.columbia.edu/kermit/wiksduser.html">user's Guide</a> and the
+<a href="http://www.columbia.edu/kermit/wiksdadmin.html">Administrator's
+Guide</a> for a better idea of what the IKS is capable of.  Because IKS is
+installed as a service and started by default, you should be aware of the
+security implications of installing it.  The installer will ask you several
+questions in order to build a basic configuration file, IKSD.KSC, for IKS.
+These questions will be covered in detail later in this document.
+
+<p>
+
+<dt><b>Historical Utils</b></dt>
+
+<dd>These standalone utilities provide functions that are now incorporated in
+the Kermit 95 program.  While they are no longer necessary, we provide them as
+an option for those who might miss them.
+
+<p>
+
+<dt><b>Hostmode</b></dt>
+
+<dd>Hostmode implements a basic BBS-like file-transfer and file-management
+system using the Kermit 95 script language.  While it is a good example of the
+power of Kermit 95's scripting capabilities, it is limited in function
+relative to the IKS which provides all the functionality of Hostmode and much,
+much more.  So it is being phased out.  If you need basic BBS-like
+functionality on Windows 95/98/ME, then you might consider using Hostmode.
+
+</dl>
+
+<b><i><a name="sect2.2">2.2: Registry, Desktop and Start Menu Options</a></i></b>
+
+<p>
+
+Next the installer asks a series of questions to get your preferences about
+how and where Kermit 95 should be added to the registry, desktop and/or Start
+Menu.  You do not need to make any changes to the registry, or add anything to
+your desktop or Start Menu if you do not want to.  These options are all to
+make Kermit 95 more convenient to use.
+
+<p>
+
+<b>Registry</b>
+
+<p>
+
+First, the installer asks about making changes to the registry.  You can
+optionally create and association between files with the extension .KSC
+(Kermit SCript Files) and the Kermit 95 program.  This allows you to simply
+double-click on a .KSC file and have it be run by the Kermit 95 program.  This
+is handy for creating a quick shortcut on your desktop to your
+commonly-accessed host systems.  And you can make Kermit 95 your default
+telnet handler.  This means that if you are browsing a site on the Web that
+provides a link that must be accessed via telnet, Kermit 95 is launched
+to make that connection.
+
+<b>Desktop and Start Menu</b>
+
+<p>
+
+Next you can to choose what shortcuts you want to create on the Desktop and on
+the Start Menu.  Then on the dialog following this, you can specify if you
+want to create the icons for All Users of the system, or just the user that is
+currently logged in.
+
+
+<p>
+
+<b><i><a name="sect2.3">2.3: Everson Mono Terminal Font</a></i></b>
+
+<p>Kermit 95 2.0 comes with a monospaced font called Everson Mono Terminal
+(EMT) that covers a wider range of languages and scripts than most other
+monospace fonts and is well-suited for use with the K95 GUI terminal emulator
+on Windows NT, 2000, or XP.  EMT's repertoire includes most of the non-Han
+characters in the Base Multilingual Plane of Unicode, including Latin,
+Cyrillic, Greek, Coptic, Arabic, Hebrew, Armenian, Georgian, Runes, Ogham,
+Canadian Syllabics, Cherokee, Math, Symbols, Line and Box Drawing
+Characters (including the new Unicode 3.1 Terminal Emulation Characters),
+Dingbats, and APL.  Not supported (besides Han) are Indic, Hangul, Ethiopic,
+Syriac, Thai, Lao, Myanmar, and Braille.</p>
+
+<p>EMT is <i>not</i> installed by default since it tends not to look good on
+Windows 95, 98, or ME due to differences in the Win9x/ME vs NT/2K/XP
+rasterizer, although the results can vary depending on whether your Windows
+system has such items as Font Smoothing or Clear Type installed or enabled,
+and also with the font size and fore- and background colors.  If you install
+EMT on Win9x/ME, K95 uses it by default, in which case you might want to
+switch to a different font, such as Courier New or Lucida Console (if
+available) in the Font menu on the K95 GUI Toolbar.  On the other hand, you
+might need it to display certain languages that you can't see in any other
+monospace font.</p>
+
+<p><b>Important Note:</b> If you are installing Kermit 95 on a Windows
+NT/2000/XP and you do not have Administrator privileges, the font will
+<b>not</b> be installed.  You must have Admin privileges to write to the Font
+directory.  In this case the font is copied to the Fonts sub directory under
+where the program files are installed, by default this would be
+<tt>C:\Program&nbsp;Files\Kermit&nbsp;95\Fonts\</tt>.  This way you can
+install it yourself once you are able to gain Admin privileges</p>
+
+<p>Everson Mono Terminal is distributed with Kermit 95. It may not be
+further distributed.  Everson fonts are available on
+at <a href="http://www.evertype.com">www.evertype.com</a>
+
+
+<h3><a name="config"><hr>3. Special Configuration</a></h3>
+
+<blockquote>
+<i>
+
+This section applies only to users who have selected the <b>Custom</b>
+install type and who are installing IKS for NT/2000/XP and/or Kerberos.
+
+</blockquote>
+</i>
+
+
+<p>
+
+<b><i><a name="sect3.1">3.1: CU Kerberos Config Files</a></i></b>
+
+<p>The Columbia University distribution comes with Kerberos configuration
+files that are preconfigured for Columbia's Kerberos environment.  These
+files are installed in your default Windows directory (e.g. C:\WINDOWS).
+If you happen to already have any of these configuration files in your
+Windows directory, the Installer will give you the option to replace your
+existing ones.  This is highly recommended to insure that Kerberos connections
+to the CU hosts work properly.  Any of the existing files that you have will be
+renamed with a &quot;.k9521&quot; extension so they are preserved.
+
+<p>If you are confident that your existing config files are correct and/or you
+have made extensive customizations to them, then you can choose not to replace them.
+If you find that your Kerberos authentication and/or encryption does not work, then 
+you may want to manually replace your existing config files with the ones provided
+in this packages.  These will be located in a CUCONFIG folder under your Application 
+Data folder.  This folder is most easily accessed from within Kermit 95 by saying:
+
+<blockquote>
+cd \v(appdata)CUCONFIG
+</blockquote>
+
+<p>For more details on Kerberos configuration in general, you can reference
+our online <a href="http://www.columbia.edu/kermit/security80.html#x4">
+document on security</a> in Kermit 95.</p>
+
+<p>
+
+<b><i><a name="sect3.2">3.2: IKS Configuration File</a></i></b>
+
+<p>
+
+If you selected the IKS file-transfer and file-management server as a
+component to install, you are prompted with the following series of questions
+that build a basic configuration file for IKS.  The file is called
+<tt>IKSD.KSC</tt> and is stored in the same directory as the program files.
+
+<ul>
+
+<li><b>Enable system logging</b> - This Yes/No question allows you to tell IKS
+whether or not you want to write events into the System Events log on NT/2000
+and XP.  These log entries are viewable with the Event Viewer under the
+Application section.  Choosing "No" writes the line SET SYSLOG NONE to the
+IKSD.KSC file.  Selecting "Yes" brings up the next dialog.
+
+<li><b>System Logging Options</b> - Here you can choose which events you would
+like to record in the System Events log.  (You won't get these options if you
+said No to the first IKS question.)
+
+<li><b>Have IKS keep it's own log of file transfers?</b> - Another Yes/No
+question; this allows you to turn on or off a log of any file transfers that
+occur between your IKS and a client PC.  This log includes detailed
+information on the time, CPS, etc. of the transfer.
+
+</ul>
+
+<p>
+
+The <tt>IKSD.KSC</tt> file create by the installer barely scratches
+the surface of the kind of customization you can accomplish with this
+file.  Please read the <a
+href="http://www.columbia.edu/kermit/wiksdadmin.html">Administrator's
+Guide</a> for more details.  The guide is a work in progress, but should
+provide enough information to do things like: allowing anonymous access,
+setting a root directory to "jail" various classes of users, do special
+configuration based on the user who logs in, etc...
+
+
+<b><i><a name="sect3.3">3.3: CU SSH Known Host files</a></i></b>
+
+<p>To make it more convenient and more secure to access Columbia hosts via
+SSH, we have provided to "Known Hosts" files that list a large number of
+CU hosts.  These two files <tt>ssh_known_hosts</tt> and <tt>ssh_known_hosts2</tt>
+and they are placed in the Shared Data directory for Kermit 95.  (This is 
+pointed to by the variable \v(common) within the Kermit 95 program.)</p>
+
+
+<h3><a name="postinst"><hr>4. Where To Go From Here</a></h3>
+
+After the installer has completed, be sure to read the README file, which
+the installer displays for you if you say yes (but only if you are not
+required to reboot after the install.)  This is important especially
+if you have used previous releases of Kermit 95, since this version moves
+things around a bit.
+
+<p>
+
+Now you should have a Kermit 95 installation with the desired features working
+as expected, which is a good staring point but there is a lot more that you
+can do to make the product more useful to you.  Begin by reading the tutorial
+and manual which you can access from the K95 Documentation icon or Start-menu
+item (if you elected to install them), or from the K95 Dialer's Help menu, or
+with the K95 <tt>MANUAL</tt> command.
+
+<p>
+
+As a final step, the installer offers to start the Dialer for you.  A good way
+to get started with K95 is with the Dialer and the K95 manual on your screen
+at the same time.  Create some connections and launch them -- it's easier than
+you might think!
+
+<p>
+<hr>
+<address>
+Kermit 95 2.1 Installer /
+The Kermit Project /
+Columbia University /
+<a href="mailto:kermit@columbia.edu"><tt>kermit@columbia.edu</tt></a> /
+24 Oct 2002
+</body>
+</html>

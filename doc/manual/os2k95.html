@@ -1,0 +1,1415 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<META name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kermit 95 - OS/2 Specifics</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>OS/2 Specifics of Kermit 95</h2>
+
+<b>CONTENTS</b><br>
+<p><ul>
+<li><a href="#os2files">Files</a>
+<li><a href="#os2diff">Differences Between OS/2 and Windows 95</a>
+<li><a href="#os2tips">Tips and Tricks</a>
+<li><a href="#os2xfer">Transferring OS/2 Files with Attributes</a>
+<li><a href="#os2xtips">File Transfer Hints and Tips</a>
+<li><a href="#os2rexx">Using REXX</a>
+<li><a href="#os2net">Network Connections</a>
+<li><a href="#os2ppp">Using Kermit/2 to Dial SLIP and PPP Connections</a>
+<li><a href="#os2socks">SOCKS 4.2 Client Support</a>
+<li><a href="#os2ntips">Networking Hints and Tips</a>
+<li><a href="#os2ra">Remote Access</a>
+<li><a href="#os2lap">Using Kermit Software Instead of Lap-Link</a>
+<li><a href="#os2util">OS/2 Kermit Utilities</a>
+<li><a href="#os2mtips">More OS/2 Hints and Tips</a>
+<li><a href="#os2port">Serial Port Performance</a>
+<li><a href="#os2dev">OS/2 Devices, Files, and Shells</a>
+<li><a href="#os2bg">Running Kermit in the Background</a>
+<li><a href="#os2freeze">Applications that Freeze</a>
+</ul>
+<p>
+
+<hr>
+
+Kermit 95 2.1 for IBM OS/2
+has all the same features as Kermit 95 for
+Windows 95/98/ME/NT/2000/XP, with the following exceptions:
+
+<p>
+<ul>
+<li>A built-in SSH client.
+<li>Kerberos security.
+<li>The ability to run in a GUI window.
+<li>Internet Kermit Server.
+<li>Windows-specific services such as TAPI (the Microsoft Telephony API),
+NTLM authentication, and VTNT terminal emulation.
+</ul>
+<p>
+
+It also has a few features that the Windows versions do not have: SLIP and PPP
+dialing, a Rexx interface, and transmission of files with full OS/2 extended
+attributes.
+
+<p>
+<blockquote>
+
+NOTE: Although Kermit 95 for OS/2 is, indeed, the OS/2 version of Kermit 95,
+in this file we refer to the Windows version of Kermit 95 as "Kermit 95"
+and to the OS/2 version as "Kermit/2" for the sake of brevity and clarity.
+
+</blockquote>
+<p>
+
+Kermit/2 replaces OS/2 C-Kermit 5A(191) of April 1995.  It is a 32-bit
+program, requiring OS/2 2.0 or later.  It comes with a GUI Presentation
+Manager Dialer (which requires OS/2 3.0 or later) to set up your connections.
+
+<p>
+<blockquote>
+
+IMPORTANT: Kermit/2 uses different keyboard keycodes than OS/2 C-Kermit.
+You will need to convert any key settings files to the new keycodes.
+This change was required in order to allow any and all key combinations
+to be mapped, and to be mapped on a per-emulation basis.  OS/2 C-Kermit
+only allowed a relatively small number of key combinations to be mapped,
+and all mappings were global.  The new scheme also allows MS-DOS Kermit
+keymaps to be imported.
+
+</blockquote>
+<p>
+
+Kermit/2 includes a large repertoire of terminal emulations, Kermit and
+XYZMODEM file transfer, a powerful cross-platform script programming language,
+built-in automatic translation of Roman, Cyrillic, Hebrew, and other character
+sets: all in a consistent package that operates uniformly over direct or
+dialed serial connections, TCP/IP Telnet or Rlogin connections, PATHWORKS, IBM
+LAN Server, or NETBIOS connections, and in a consistent way with Kermit
+programs for DOS, Windows, UNIX, VMS, and many other platforms.
+
+<p>
+Kermit/2 is miles ahead of the old OS/2 C-Kermit:
+
+<p><pre>
+			    C-Kermit 5A(191)     Kermit/2 2.1
+<p>
+  Terminal emulations:             6                    40
+  Built-in modem types:           28                    82
+  Graphical dialer and database:  No                   Yes
+  Intelligent dialing:            No                   Yes
+  Portable dialing directory:     No                   Yes
+  Integrated XYZMODEM protocol:   No                   Yes
+  Auto-up/download:               No                   Yes
+  Streaming:                      No                   Yes
+  Host mode:                      No                   Yes
+  Rlogin client:                  No                   Yes
+  URL hot spots:                  No                   Yes
+  Block structure for scripts:    No                   Yes
+  Authentication:                 No                   Yes
+  Encryption:                     No                   Yes
+  Transport Layer Security:       No                   Yes
+  HTTP script commands:           No                   Yes
+  FTP client:                     No                   Yes
+</pre>
+<p>
+
+And lots more, including significant improvements in just about every area.
+
+<p>
+
+IMPORTANT -- PLEASE READ THIS:
+
+<p>
+
+Eight years of full-time development have gone into Kermit 95.  It is not free
+software; it must be licensed.  The same goes for the OS/2 version; the terms
+for use are the same as for the Windows version.
+
+<p>
+
+However, in view of the declining importance of OS/2 in the marketplace, no
+effort has been devoted to creating OS/2-specific manuals, packaging, or
+hypertext INFO files.  This should not detract from the utility of the
+software itself.
+
+<p>
+
+Kermit/2 is documented in the <cite>Kermit 95</cite> and <cite>Using
+C-Kermit</i> manuals.  This file documents OS/2-specific differences from the
+Microsoft Windows 95 and NT releases.
+
+<p>
+<hr>
+<h3><a name="os2files">Files</h3>
+
+The files are the same as for the Windows version, except all files whose
+names start with K95 have names starting with K2 in the OS/2 version.  Also,
+there are certain platform-specific differences; for example, the Windows
+version might have some utility programs that are not needed in OS/2, and the
+OS/2 version has some fonts that can't be used in Windows.
+
+<p>
+<hr>
+<h3><a name="os2diff">Differences Between OS/2 and Windows 95</h3>
+
+The following sections describe differences between OS/2 and Windows 95
+as they affect Kermit's Terminal window.
+
+<h4>Console Only</h4>
+
+It was not possible to create both Windows and OS/2 GUI versions from common
+code.
+
+<h4>No SSH Client</h4>
+
+The OpenSSH library was not available for the native IBM OS/2 development
+environment.
+
+<h4>No Toolbar</h4>
+
+OS/2 Console Windows, unlike Windows 95, do not contain an optional toolbar.
+All functions such as window sizing, font selection, copy/paste, ... are
+performed by using the System Menu accessed by clicking on the Window
+mini-icon in the upper left hand corner.
+
+<h4>Changing the Window Font</h4>
+
+The fonts used in the OS/2 Console Window may be changed by choosing "Font
+Size ..." from the System Menu.  The "Change" button changes the font size
+for the current window only, whereas the "Save" button will change the font
+size for all future windows of this application.
+
+<h4>OS/2 Mouse Actions</h4>
+
+OS/2 Warp 4.0 Console Windows have "Mouse Actions" that supersede all of 
+the Kermit-95 mouse functions.  In order to use Kermit-95's mouse functions
+for text selection, copy to clipboard, host, or printer, or cursor 
+repositioning you must disable "Mouse Actions" by using the System Menu.
+
+<h4>Loading Alternative Fonts into Fullscreen Sessions</h4>
+
+Kermit-95 for OS/2 supports the ability to install VGA fonts into the 
+video memory of the video adapter when running in a Full Screen session.
+This is accomplished by using the SET TERMINAL FONT <font> command.
+Kermit-95 supplies fonts for:
+<p><pre>
+  CP437 - Original PC Code page
+  CP850 - "Multilingual" (Western Europe) code page
+  CP852 - Eastern Europe Roman code page (Czech, Polish, ...)
+  CP862 - Hebrew code page
+  CP866 - Cyrillic code page (Russian, Belorussian, and Ukrainian)
+</pre><p>
+The installation of these soft fonts is tricky and not guaranteed to work
+on all video adapters and with all video drivers.  And remember, it can only
+be done in a fullscreen session -- NOT in an OS/2 Window.
+
+<h4>Screen Dimensions</h4>
+
+OS/2 2.x (pre-Warp 32-bit OS/2 versions) can not create 132-column console
+screens, but it can create console screens of just about any height you want:
+30, 35, 40, etc.  In OS/2 4.0 and later, you can have any screen dimensions
+you wish.
+
+<h4>The Mouse Cursor</h4>
+
+In OS/2, if the mouse cursor is within the boundaries of the terminal screen
+or command screen, it blinks each time the screen is updated.  If this
+annoys you, just move the mouse off the Kermit/2 screen.
+
+<h4>The Keyboard</h4>
+
+On "vanilla" OS/2 systems, the keyboard should work just like in Windows 95
+and NT: Same keycodes, same behavior.  Note, however, that Kermit/2 does not
+work well with SWAPDCP (a utility floating around the net that lets you swap
+the Ctrl and Caps Lock keys, etc) -- some of the keycodes are lost; e.g.
+Esc, Ctrl-[, and Ctrl-H all appear to be the same key, with a keycode of 0.
+Use SWAPDCP at your own risk.  (Note: OS/2 C-Kermit 5A(191) and earlier worked
+with SWAPDCP only because it did not provide complete key mapping capability;
+Kermit/2 does, but since SWAPDCP loses some of the keyboard state flags,
+Kermit/2 gets incorrect information.)
+<p>
+Also, there is presently no LK450 support for Kermit/2.
+<p>
+<h4>Other features not implemented in OS/2</h4>
+The following features in Kermit 95 are not available in OS/2:
+<p><ul>
+<li>Kerberos authentication
+<li>NTLM authentication
+<li>VTNT terminal type
+<li>DNS SRV record lookups
+</ul>
+<p>
+<hr>
+<h3><a name="os2tips">Tips and Tricks</h3>
+
+When switching away from Kermit/2's terminal screen and then 
+switching back to it, certain video items might become confused: 
+<p><ul>
+<li>The cursor might be lost or misplaced 
+<li>The entire screen might be blinking (more about this below) 
+<li>The screen border might have disappeared 
+<li>Colors might have changed 
+</ul>  
+<p>
+These problems appear to be confined only to certain systems, and do not
+occur on others.  It is believed that they are related to the particular
+video adapter or driver; the problems are most commonly reported on SVGA and
+XGA systems.  You can usually work around these problems in various ways:
+<p><ul>
+<li>Use Alt-R to reset the terminal emulator 
+<li>Escape back to the prompt and CONNECT again 
+<li>Escape back to the prompt, PUSH, EXIT, and CONNECT again 
+<li>Escape back to the prompt, run MODE CO80 (or whatever), and 
+CONNECT again 
+</ul>
+<p>
+SET TERMINAL CODE-PAGE only seems to work in fullscreen sessions.  For that
+matter, the same seems to be true of OS/2's own CHCP program, so this is
+apparently an OS/2 limitation (noted in OS/2 2.1 GA).
+<p>
+SET TERMINAL CODE-PAGE (and OS/2's own CHCP program) seem to have no effect
+at all when the Hebrew NLV is installed.  The code page simply does not
+change.
+<p>
+Shift-in/Shift-Out works only if you SET TERMINAL LOCKING-SHIFT ON (except
+in the case of the DEC Technical Character Set, used for line- and box-
+drawing, etc, which is handled specially).
+<p>
+Host-directed US/UK character-set switching (ASCII 35 interpreted as number
+sign in US, Pound Sterling sign in UK) works only if you have SET TERM
+CHARACTER-SET ASCII.
+<p>
+Under certain conditions on certain systems, Kermit/2 has been observed to put
+the entire screen (or subsequent help screens) in blinking mode.  For example,
+when running in a fullscreen session, CONNECT mode active, background color is
+high-intensity, and using Alt-Esc to get to the desktop, then resuming the
+Kermit window can produce this effect; reportedly, this is caused by a bug in
+some of OS/2's video drivers.  Alt-R (reset) makes the blinking stop.  To
+avoid the problem altogether, don't use high-intensity background colors:
+DGRAY, LBLUE, LCYAN, LGREEN, LMAGENTA, LRED, WHITE, YELLOW.
+
+<p>
+<hr>
+<h3><a name="os2xfer">Transferring OS/2 Files with Attributes</h3>
+
+The SET FILE TYPE LABELED command allows OS/2 files to be transferred with
+all their extended attributes intact -- desktop material, icons, long file
+names on FAT partitions, etc.  Consult the VMS appendix of "Using C-Kermit"
+for information on labeled file transfer.
+<p>
+Briefly, the idea is that an OS/2 file can be transferred from one OS/2
+system to another with all its extended attributes intact.  It can also be
+transferred to an intermediate (non-OS/2) system for archival, and later
+transferred to another OS/2 system and restored to its original form.  An
+OS/2-specific SET FILE LABEL command is also provided for controlling how
+regular OS/2 file attributes are handled in labeled file transfers:
+<p><pre>
+  SET FILE LABEL {ARCHIVE, READ-ONLY, HIDDEN, SYSTEM, EXTENDED} {ON, OFF} 
+</pre><p>
+By default, all but ARCHIVE are ON.  All of a file's attributes are always
+transmitted; this command tells the file receiver whether to pay attention
+to them (ON) or not (OFF).  Use SHOW LABELED-FILE-INFO to display the values
+of these settings.
+
+<p>
+<hr>
+<h3><a name="os2xtips">File Transfer Hints and Tips</h3>
+
+Some communication software claims to implement sliding windows, but does so
+incorrectly.  If sliding window transfers fail, set Kermit/2's window size
+to the smallest one that works, for example:
+<p><pre>
+  SET WINDOW 1
+</pre><p>
+SET FILE COLLISION UPDATE has the following peculiarity: On FAT (i.e. DOS)
+file systems, a file's date/time is recorded with a granularity of 2
+seconds, whereas on most other kinds of file systems (UNIX, VMS, OS/2 HPFS,
+etc), it is recorded to at least the exact second.  Thus when Kermit/2
+records the timestamp of an incoming file, the "one's place" of its time is
+truncated.  If it was an odd number, therefore, it will be one second
+"older" than the date/time of the original file.  Downloading the same file
+again with SET FILE COLLISION UPDATE would result in a second, unnecessary
+transfer of the file, since the remote file would appear to be newer than
+the local file. Therefore, Kermit/2, when making this comparison, will treat
+two times as equal if (a) the local file's time is an even number, (b) the
+remote time is equal to (of course) or exactly one second greater than the
+local time, and (c) the local file system is FAT.
+
+<p>
+<hr>
+<h3><a name="os2rexx">Using REXX</h3>
+
+Kermit/2 for OS/2 has a REXX 
+programming interface consisting of the single command, REXX.  REXX 
+<command> executes the given REXX command, for example: 
+<p><pre>
+  REXX SAY "Hello"
+</pre><p>
+or: 
+<p><pre>
+  REXX RETURN "Goodbye"
+</pre><p>
+or: 
+<p><pre>
+  REXX CALL filename [ text ]
+</pre><p>
+which executes a REXX program from the given file.  The text, if any, is
+passed to the REXX program, where it is available as ARG(1).
+<p>
+A REXX command or program invoked via Kermit/2's REXX command can also
+execute Kermit/2 commands from within REXX procedures that are invoked via
+Kermit/2's REXX CALL command, by enclosing them in single quotes, for
+example:
+<p><pre>
+  'set parity none'
+  'return \v(parity)'
+  say rc
+</pre><p>
+The RETURN value from the REXX command or program is available in the
+Kermit/2 variable \v(rexx).  Set this by including a RETURN <value> command
+in your REXX command or program.
+<p>
+Q: Why would you want to use REXX from within Kermit/2? 
+<p>
+A: Many reasons: 
+<p><ul>
+<li>Easier-to-use math functions 
+<li>Running a REXX program without the overhead of starting a command shell 
+<li>Kermit/2 access to additional OS/2 specific functionality
+(e.g. create WPS objects, perform directory searches, ...)
+<li>Add your own functions to Kermit/2's script language
+</ul>
+<p>  
+There are three types of functionality provided in the Kermit/2/REXX 
+interface: 
+<p><ol>
+<li>Ability to execute a REXX command line. 
+<li>Ability to execute a REXX command file. 
+<li>Ability to call Kermit/2 commands from a REXX program that is  
+executing under Kermit/2. 
+</ol>
+<p>
+Let's say you want to execute a one-line REXX program from within
+Kermit/2. You would use the new Kermit/2 "REXX" command.  The format of the
+command is:
+<p><pre>
+  rexx rexx-command 
+</pre><p>
+where "rexx-command" is everything after the keyword REXX to the end of the
+line.  A simple example:
+<p><pre>
+  Kermit/2> <u>rexx say "hello"</u>
+</pre><p>
+executes the REXX command SAY with the parameter "hello", which prints the
+word "hello" on your screen.
+<p>
+Another example, returning a value from REXX: 
+<p><pre>
+  Kermit/2> <u>rexx return 4 * 4</u>
+</pre><p>
+the REXX command "return 4 * 4" calculates the value "16" and returns it to
+Kermit/2.  Kermit/2 stores the return value from the last REXX command in
+\v(rexx):
+<p><pre>
+  Kermit/2> <u>echo \v(rexx)</u>
+  16
+  Kermit/2>
+</pre><p>
+Let's say you want to execute a series of REXX commands, but you don't want
+to create a REXX command file:
+<p><pre>
+  Kermit/2> <u>rexx say "hello"\13 return 0</u>
+</pre><p>
+This prints the string "hello" and then returns the value "0" to
+Kermit/2. Notice that \13 (Carriage Return, Ctrl-M) was placed between the
+commands. This is necessary because REXX expects to find each command
+separated by a return character just as if it was being read from a file.
+<p>
+To execute a REXX command file, use: 
+<p><pre>
+  Kermit/2> <u>rexx call oofa.cmd</u>
+</pre><p>
+where "oofa.cmd" is the name of your REXX command file.
+<p>
+Now let's say you want to gain access to a Kermit/2 variable value from
+within a REXX program, change a Kermit/2 setting, or execute a Kermit/2
+command.  You could alter your program so it is called in separate parts
+from a Kermit/2 TAKE file or macro.  But there is a better way.  Just
+include the Kermit/2 command in your REXX program.  For example, you want to
+set Kermit's parity from within your REXX program:
+<p><pre>
+  /* Beginning of REXX program file */
+  set parity "none"
+</pre><p>
+Let's say you want to set a REXX variable to the value of a Kermit/2
+variable:
+<p><pre>
+  'return \v(parity)'
+  parity = rc
+</pre><p>
+Notice the single quotes around and the "return" command before the Kermit/2
+variable statement.  REXX passes the quoted statement to Kermit/2 for
+evaluation.  Kermit/2 interprets the command and returns to REXX the value
+of the parity variable.  This value is then stored in the REXX special
+variable RC.  RC stores the return value of all non-REXX commands.  The next
+statement assigns the value of REXX variable RC to the REXX variable parity.
+<p>
+Q:  What happens if you create a REXX program file that contains 
+    Kermit/2 commands and you try to execute it outside of the 
+    Kermit/2 environment? 
+<p>
+A:  A Syntax Error. This is because the Kermit/2 commands are only 
+    available when Kermit/2 is executing the REXX command file. 
+<p>
+Q:  Can Kermit/2 be used with REXX programming tools such as 
+    Watcom's VX-REXX? 
+<p>
+A:  Yes and No.  Kermit/2 and VX-REXX work together too.  To run a 
+    VX-REXX program from within Kermit/2, first generate a .VRM file 
+    and then invoke it with the Kermit/2 REXX CALL command.  
+    However, the VX-REXX program is not allowed to make 
+    Presentation Manager calls, because VIO applications (like Kermit/2) 
+    can't do that. 
+  
+<p>
+<hr>
+<h3><a name="os2net">Network Connections</h3>
+
+Kermit/2 for OS/2 supports the following types of network connections:
+<p><ul>
+<li>TCP/IP
+<li>DECNET
+<li>NAMED-PIPES
+<li>NETBIOS
+</ul>
+
+<h4?TCP/IP PACKAGE SUPPORT</h4>
+
+Kermit/2's TCP/IP support works with:
+<p><ul>
+<li>IBM TCP/IP 1.2.1
+<li>IBM TCP/IP 2.0
+<li>IBM OS/2 WARP TCP/IP 3.0, 4.0, 4.1
+<li>Essex Systems TCP/2 
+<li>FTP Software's PC/TCP for OS/2 
+<li>IP-Switch Vantage IP 
+</ul>
+<p>
+TCP/IP support is not yet available for Novell LAN Workplace for OS/2.  If a
+TCP/IP package includes an IBM- or TCP/2-compatible TCPIPDLL.DLL library,
+then Kermit/2 should work with it.  Support for other OS/2 TCP/IP packages
+will be added in future releases.  These can be supplied in the form of
+small DLLs that can be installed after the fact, which Kermit/2 will load
+automatically if you define the environment variable CKTCPIPDLL to indicate
+the pathname.
+<p>
+When TELNET'ing into an OS/2 system, you should set your terminal type to
+ANSI.  This is particularly important if you are going to use Kermit/2 or
+TELNET on OS/2 system to establish a second connection out from the PC that
+you have TELNET'ed into.
+<p>
+Users of IP-Switch Vantage IP may notice a brief TRANSMISSION BLOCKED
+message after typing the first character upon entering terminal mode.  The
+blocked transmission does not result in any data loss or performance
+degradation as it only occurs only on the first typed character.
+<p>
+Q:  Why use Kermit on a TCP/IP connection rather than TELNET and FTP? 
+<p>
+A:  Many reasons: Unlike TELNET, Kermit/2 can also transfer files. 
+    Kermit/2 has a script programming language, a powerful key mapping
+    facility, screen rollback, color selection, and many other amenities
+    lacking in most TELNET programs.  It also has a unique ability to
+    translate character sets, both during terminal emulation and file
+    transfer.  Many services are coming on the Internet which do not provide
+    FTP, but do provide Kermit file transfer.
+<p>
+Q:  Why is Kermit file transfer over a TCP/IP connection slower than FTP? 
+<p>
+A:  Because the Kermit program on the remote end of the connection is 
+    probably not running directly on a TCP socket, but rather running
+    underneath a TELNET server, usually on a pseudoterminal and under a
+    login shell, with the vast amounts of per-character overhead all of that
+    implies.  Also Kermit does more than FTP, especially when transferring
+    in text mode. Still, you can get reasonably fast transfer rates by using
+    large window sizes, long packets, and control-character unprefix (but
+    remember not to unprefix character 255!).
+
+<h4>Using Named Pipes</h4>
+
+Kermit/2 for OS/2 supports NAMED PIPES as an interprocess communication
+mechanism.  Named Pipes support for local processes is built into OS/2.  In
+order to use them to communicate across a local area network both computers
+must have installed Named Pipe network support software. Each computer may
+be a Client, a Server or both.  Each server on a particular network has a
+unique Named Pipe Server Name assigned as part of the Named Pipe software
+installation.
+<p>
+Kermit/2 has been tested with the following products: 
+<p><ul>
+<li>IBM WARP (LAN) Server Requester (Client) to WARP (LAN) Server (Server)
+<li>Microsoft LAN Manager Requester (Client) to LAN Manager (Server)
+<li>Novell NetWare Requester (Client) to Novell NetWare Requester (Server) 
+</ul>
+<p>  
+To have a named pipe connection connection between two Kermit programs, one
+Kermit program must be the "server" and the other must be the "client".  The
+server is the one that is started first, and which waits for a connection to
+come in from the client.  The server is started this way:
+<p><pre>
+  SET NETWORK NAMED-PIPE [ pipename ] 
+  SET HOST * 
+</pre><p>
+If the pipename is omitted from the SET NETWORK NAMED-PIPE command, a
+pipename of "kermit" is used.  "SET HOST *" means to wait for a connection
+to come in from another Kermit program.
+<p>
+Then the client makes a connection to the server: 
+<p><pre>
+  SET NETWORK NAMED-PIPE [ pipename ] 
+  SET HOST servername 
+</pre><p>
+where pipename is the pipename used by the server you want to communicate
+with (default "kermit"), and servername is the name of the server on the
+network.  If you specify a servername of "." (period), this means your own
+computer; you can set up such local connections even if you don't have Named
+Pipes network support installed, e.g.  between two copies of Kermit/2
+running in different windows.
+<p>
+Both pipename and servername are case-independent, and can contain spaces.
+<p>
+There is no particular restriction on what Kermit commands can be used on a
+named-pipe connection.  Here are some useful scenarios:
+<p><ol>
+<li>The named-pipe server is in Kermit SERVER mode.  Clients can 
+perform SEND, GET, REMOTE, FINISH, and similar commands. 
+<p>
+<li>Both Kermit programs are in CONNECT mode, allowing two network 
+users to "chat" with each other.  Each user should give the 
+following commands: 
+<p><pre>
+  set terminal echo local
+  set terminal cr-display crlf
+  connect
+</pre><p>
+</ol>
+<p>
+To close a named-pipe connection, give the HANGUP command (or the SET HOST
+command, specifying no hostname) to either the client or the server.
+<p>
+The Kermit/2 named-pipe server can also wait for a client to connect.  After
+the client disconnects, the connection will be reset to await the next
+client.  This allows for the use of kermit "server" as a pseudo-FTP site for
+those without IBM TCP/IP.
+<p>
+Note: When using Named Pipes with LAN Server or LAN Manager, only the
+machine which has the Network Server software is capable of successfully
+using the SET HOST * command.  This is because the client network requesters
+do not implement the server side of the named-pipe network redirection.
+<p>
+Novell NetWare Requester for OS/2, on the other hand, implements both the
+named-pipes client and server code on the client workstation and does not
+require the existence of a Network server to operate.
+<p>
+<h4>Using NETBIOS</h4>
+
+Kermit/2 for OS/2 supports the NETBIOS API, both the original NETBIOS 3.0 
+(NETAPI) interface and the newer NETBIOS 4.0 (ACSBNET) interface.  
+Kermit/2 has been tested with the following products: 
+<p><dl>
+<dt>NETBIOS 4.0 interface (ACSNETB.DLL): 
+<dl><dt>IBM LAN Adapter and Protocol Support (LAPS) as found in: 
+<dd>IBM Network Transport Services/2<br>
+IBM LAN Distance <br>
+IBM Communication Manager/2 <br>
+IBM LAN Server 3.x <br>
+IBM LAN Requester 3.x <br>
+IBM OS/2 WARP 3.x, 4.0
+</dl>
+<p>
+<dt>NETBIOS 3.0 interface (NETAPI.DLL): 
+<dd>Microsoft LAN Manager Requester<br>
+IBM Extended Services 1.x <br>
+IBM LAN Server 2.x Requester <br>
+Novell NetWare 2.x Requester
+</dl>
+
+<li><i>NETBIOS Client and Server</i><p>
+
+To have a NETBIOS connection connection between two Kermit programs, one
+Kermit program must the "server" and the other must be the "client".  The
+server is the one that is started first, and which waits for a connection to
+come in from the client.  The server is started this way:
+<p><pre>
+  SET NETWORK NETBIOS [ localname ] 
+  SET HOST * 
+</pre><p>
+If the localname is omitted from the SET NETWORK NETBIOS command, then if a
+HOSTNAME environment variable is defined, that is used; otherwise if a
+SYSTEMNAME environment variable is defined, that is used; otherwise "kermit"
+is used (the HOSTNAME variable is created by TCP/IP installation, SYSTEMNAME
+by DECnet PATHWORKS installation; if you don't have TCP/IP or PATHWORKS
+installed, you can add a "SET HOSTNAME=blah" or "SET SYSTEMNAME=blah"
+statement to your CONFIG.SYS file).  The localname must be unique on the
+NETBIOS network; if not, the SET NETWORK command will fail.
+<p>
+"SET HOST *" means to wait for a connection to come in from another Kermit
+program.
+<p>
+Then the client makes a connection to the server: 
+<p><pre>
+  SET NETWORK NETBIOS [ localname ] 
+  SET HOST servername 
+</pre><p>
+where localname is the new name used to identify the client Kermit session,
+and servername is the localname of the server's Kermit session.
+<p>
+The localname and servername are case-dependent, and can contain spaces.
+<p>
+There is no particular restriction on what Kermit commands can be used on a
+NETBIOS connection.  Here are some useful scenarios:
+<p><ul>
+<li>The NETBIOS server is in Kermit SERVER mode.  Clients can 
+perform SEND, GET, REMOTE, FINISH, and similar commands. 
+<p>
+<li>Both Kermit programs are in CONNECT mode, allowing two network 
+users to "chat" with each other.  Each user should give the 
+following commands: 
+<p><pre>
+  set terminal echo local
+  set terminal cr-display crlf
+  connect
+</pre><p>
+</ul>
+To close a NETBIOS connection, give the HANGUP command (or the SET HOST
+command, specifying no hostname) to either the client or the server.
+<p>
+Unlike with TCP/IP connections, the Kermit/2 NETBIOS server can wait for a
+client to connect.  After the client disconnects, the connection will be
+reset to await the next client.  This allows for the use of kermit "server"
+as a pseudo-FTP site for those without IBM TCP/IP.
+<p>
+NETBIOS is the preferred protcol to use when transfering files with MS-DOS
+Kermit or Kermit/2 for OS/2 in a peer-to-peer local area network.  NETBIOS
+is supported over most networking protocols including: Netbeui, IPX, IP, and
+LU6.2.  In addition, it has lower overhead than all other OS/2 implemented
+networking protocols.
+<p>
+
+<i><li>NETBIOS Configuration</i><p>
+
+Each Kermit/2 session requires the following resources from the NETBIOS
+provider: 1 Name, 32 Commands, and 1 session.  For example, if you wish to
+have three Kermit/2 sessions running simultaneously in Server mode, NETBIOS
+must be configured to support at least 3 Names, 96 Commands, and 3 sessions.
+<p>
+If the number of available NETBIOS commands is unavailable, NETBIOS support
+for the current Kermit/2 session will not be installed.
+<p>
+The default settings for IBM and Netware NETBIOS implementations are:
+<p><pre>
+  <i>Product	  	Config File	Sessions  Commands	Names</i>
+  Novell (IPXNB) 	NET.CFG		16	  32	        24
+  IBM NTS/2 (NETBEUI) 	PROTOCOL.INI	5	  95	        21
+</pre><p>
+The maximum settings for IBM and Netware NETBIOS implementations are:
+<p><pre>
+  <i>Product	        Config File	Sessions  Commands	Names</i>
+  Novell (IPXNB) 	NET.CFG		64	  128	        128
+  IBM NTS/2 (NETBEUI) 	PROTOCOL.INI	254	  255	        254
+</pre><p>
+The method for modifying NETBIOS resources depends on the NETBIOS product;
+it is normally done by executing the configuration program (LAPS, INSTALL,
+...) or by manually modifying the configuration files and restarting OS/2.
+<p>
+It is possible to have two or more products each providing NETBIOS services
+by running multiple NETBIOS protocol stacks.  All products which use LAPS
+may be mixed together.  And LAPS may be mixed with up to one product which
+uses the NETAPI.DLL product.  However, there are limitations.  In
+particular, you can not successfully run Novell NETBIOS support with IBM
+Extended Services.
+<p>
+The most common dual stack combination is of IBM Netbeui (LAPS) and Novell
+IPXNB (NetWare Requester).  The installation procedure for each package is
+completely ignorant of the other protocol.  The dual stack requires that the
+configuration files be manually modified with a text editor (e.g. E.EXE).
+The NETBIOS configuration is defined by statements in two files: NET.CFG and
+PROTOCOL.INI.  These files contains statements defining how many NETBIOS
+Names, Commands, and Sessions are available to each protocol stack.  The
+settings for each protocol stack must be consistent between the two files.
+<p>
+For both protocols to coexist the following section to the must be added to
+the end of the <tt>PROTOCOL.INI</tt> file:
+<p><pre>
+[NETBIOS]
+  DriverName=NETBIOS$
+  <i>virtual adapter=driver,physical adapter,sessions,commands,names
+  virtual adapter=driver,physical adapter,sessions,commands,names</i>
+  ...
+</pre><p>
+where: 
+<p><dl>
+<dt><tt><i>virtual adapter</i></tt>
+<dd>Is ADAPTER0 through ADAPTER3.  The adapter numbers must be 
+used in sequence. 
+<p>
+<dt><tt><i>driver</i></tt>
+<dd>is either ipxnb$ for Novell or netbeui$ for IBM. 
+<p>
+<dt><tt><i>physical adapter</i></tt>
+<dd>is almost always 0 since there is usually only one physical network 
+adapter in the machine. 
+<p>
+<dt><tt><i>sessions</i></tt>, <tt><i>commands</i></tt>, and <tt><i>names</i></tt> 
+<dd>Must match the settings in NET.CFG (NetWare NETBIOS section) if 
+<i>driver</i> is IPXNB$; or PROTOCOL.INI (NETBEUI section) if <i>driver</i> is 
+NETBEUI$. 
+</dl>
+<p>
+Without this additional section in PROTOCOL.INI, only IBM Netbeui will be
+available to Kermit/2.  This section defines up to 4 virtual adapters (0-3),
+each of which is assigned a specific NETBIOS protocol stack implementation.
+Kermit/2 allows you to choose which NETBIOS implementation you want to use
+by using the '-N' (note uppercase) command-line option.  To use the driver
+assigned to ADAPTER1 in the [NETBIOS] section of PROTOCOL.INI use:
+<p><pre>
+  ckermit -N 1
+</pre><p>
+The syntax of the option is: 
+<p><pre>
+  -N <i>adapter</i>
+</pre><p>
+where <i>adapter</i> is one of the virtual adapter numbers (default = 0). 
+<p>
+It is important to know which NETBIOS protocol stack you are using as both
+machines must be using the same stack type for them to successfully
+communicate.
+<p>
+The following provide examples of valid [NETBIOS] sections in PROTOCOL.INI.
+<p>
+Example 1: Both IBM and Novell NETBIOS implementations and one physical
+adapter.  Novell NETBIOS is the default.
+<p><pre>
+[NETBIOS]
+   DriverName=NETBIOS$
+   Adapter0=ipxnb$,0,48,128,16
+   Adapter1=netbeui$,0,48,255,16
+</pre><p>
+Example 2: Both IBM and Novell NETBIOS implementations and one physical
+adapter.  IBM NETBIOS is the default.
+<p><pre>
+[NETBIOS]
+   DriverName=NETBIOS$
+   Adapter0=netbeui$,0,48,255,16
+   Adapter1=ipxnb$,0,48,128,16
+</pre><p>
+Example 3: Only Novell NETBIOS implementation and one physical adapter.
+<p><pre>
+[NETBIOS]
+   DriverName=NETBIOS$
+   Adapter0=ipxnb$,0,48,128,16
+</pre><p>
+Example 4: Both IBM and Novell NETBIOS implementations and two physical
+adapters.  IBM NETBIOS is the default.  (Novell NETBIOS cannot be assigned
+to two physical adapters.)
+<p><pre>
+[NETBIOS]
+   DriverName=NETBIOS$
+   Adapter0=netbeui$,0,48,255,16
+   Adapter1=netbeui$,1,48,255,16
+   Adapter2=ipxnb$,0,48,128,16
+</pre><p>
+  
+<h4>Using DECnet PATHWORKS</h4>
+
+DECnet LAT (Local Area Transport) support works in conjunction with DEC's
+PATHWORKS For OS/2 product version 2.3 or later, which must be installed,
+and LATCALLS.DLL must be in your LIBPATH.  To make LAT connections from
+Kermit/2:
+<p><pre>
+  SET NETWORK DECNET 
+  SET HOST hostname 
+</pre><p>
+and then use all of Kermit's communication features - terminal emulation,
+file transfer, etc - in the same way you would on a serial or TCP/IP
+connection.
+<p>
+If you experience difficulties transferring files that contain 8-bit data,
+use SET PARITY SPACE and/or use shorter packets.  Reportedly, some character
+loss will occur in the underlying PATHWORKS transport, and sometimes even
+random disconnections; hopefully, this will be fixed in PATHWORKS 5.0.
+
+<h4>Using Asynchronous Communications Servers</h4>
+
+There are two methods for using remote modems accessed via LAN 
+server (asynchronous communication server): 
+<p><ol>
+<li>Map the remote port (modem) to a local port name (e.g. COM3) 
+with a NET USE command before starting Kermit, and then unmap 
+it afterwards: 
+<p><pre>
+  net use com3 \\server\modem
+  ckermit -l com3
+  net use com3 /d
+</pre><p>
+<li>Simply use the Universal Naming Convention (UNC) resource name 
+as the port name: 
+<p><pre>
+  ckermit -l \\server\modem
+</pre><p>
+</ol>
+<p>
+Because backslash (\) is a special command character, use one of the 
+following forms at the Kermit/2 prompt or in a command file or macro: 
+<p><pre>
+  set line //server/modem
+</pre><p>
+or: 
+<p><pre>
+  set line \\\\server\\modem
+</pre><p>
+or: 
+<p><pre>
+   set command quoting off
+   set line \\server\modem
+   set command quoting on
+</pre><p>
+
+<p>
+<hr>
+<h3><a name="os2ppp">Using Kermit/2 to Dial SLIP and PPP Connections</h3>
+
+Kermit/2 may be used instead of SLIPTERM/PPPTERM for starting SLIP/PPP
+connections, providing more extensive serial device and terminal emulation
+support than that included in SLIPTERM/PPPTERM.
+<p>
+Once the SLIP/PPP driver has begun execution, run Kermit/2 and select port
+SLIPCOMx or PPPCOMx as your serial port, where x is the serial port in use
+for the SLIP/PPP connection.  Kermit/2 will obtain access to the port from
+the SLIP/PPP driver and you may then use the port as necessary to log into
+your SLIP/PPP server and start a SLIP/PPP session.  All of Kermit/2's
+features and capabilities are available for use over the serial line while
+Kermit/2 has control of the serial port.  Upon exiting Kermit/2 or issuing
+SET PORT 0, the port is returned to the SLIP/PPP driver which will once
+again control the port, handling all SLIP/PPP traffic.
+<p>
+Note that Kermit/2 should not be used as part of an attachment script, which
+is started by the SLIP/PPP driver itself, but should be run as a separate
+command after the SLIP/PPP driver is started.  Should scripting be required,
+you can use Kermit scripts (including the OS/2 Kermit/2 REXX support as
+necessary) to perform the same tasks as an attachment script.
+<p>
+SLIPWAIT or PPPWAIT may be executed from a Kermit script to synchronize the
+operation of Kermit/2 and the SLIP/PPP driver.
+
+<p>
+<hr>
+<h3><a name="os2socks">SOCKS 4.2 Client Support</h3>
+
+Kermit/2 provides support for SOCKS 4.2 servers when using IBM TCP/IP 2.0,
+IBM OS/2 WARP, or a compatible protocol stack.  SOCKS is one popular means
+of implementing a firewall between a private network and the Internet.
+<p>
+Kermit/2 shares the same SOCKS environment variables as IBM Gopher.  It also
+supports the use of local SOCKS configuration files.
+<p>
+To specify the default SOCKS Server, add SET SOCKS_SERVER=<hostname> to your
+CONFIG.SYS file.
+<p>
+If you must use a SOCKS Distributed Name Server, add SET SOCKS_NS=<hostname>
+to your CONFIG.SYS file.
+<p>
+If you must use a specific <username> with your SOCKS server, be sure to add
+SET USER=<username> to your CONFIG.SYS file.  Otherwise, "os2user" will be
+used by default.
+<p>
+The SOCKS configuration file must be placed in the directory pointed to by
+the ETC environment variable as declared in your CONFIG.SYS file.  The name
+should be SOCKS.CONF.  On a FAT file system, use SOCKS.CNF.
+<p>
+The format of the lines in the SOCKS configuration file are as follows: 
+<p><ul>
+<li># comments 
+<li>deny [*=userlist] dst_addr dst_mask [op port] 
+<li>direct [*=userlist] dst_addr dst_mask [op port] 
+<li>sockd [@=serverlist] [*=userlist] dst_addr dst_mask [op port] 
+</ul>
+<p>  
+op must be one of 'eq', 'neq', 'lt', 'gt', 'le', or 'ge'. dst_addr,
+dst_mask, and port may be either numeric or name equivalents.
+<p>
+Kermit/2 ignores the [*=userlist] and [@=serverlist] fields. Matches are
+determined on a first match not a best match basis.  Addresses for which no
+match is found default to "sockd".
+<p>
+For completeness: Fields in square brackets are optional. The optional
+@=serverlist field with a 'sockd' line specifies the list of SOCKS servers
+the client should try (in the given order) instead of the default SOCKS
+server.  If the @=serverlist part is omitted, then the default SOCKS server
+is used. Commas are used in the userlist and serverlist as separators, no
+white spaces are allowed.
+
+<p>
+<hr>
+<h3><a name="os2ntips">Networking Hints and Tips</h3>
+
+The SET HOST command uses your current SET NETWORK type.  For example:
+<p><pre>
+  SET NETWORK DECNET
+  SET HOST OOFA
+</pre><p>
+will try to make a DECnet (PATHWORKS) LAT connection to DECnet node
+OOFA. However, please be aware that a SET NETWORK command will fail if the
+given type of network is not installed, or if (in the case of NETBIOS) the
+given name is already in use.  Thus a safer construction would be:
+<p><pre>
+  SET NETWORK NETBIOS OOFA
+  IF FAIL STOP 1 Can't access NETBIOS network
+  SET HOST MUPEEN
+  IF FAIL STOP 1 Can't make NETBIOS connection
+</pre><p>
+The default network type (which is used if give a SET HOST command without
+first giving a SET NETWORK command) depends on which network products you
+have installed on your OS/2 system, chosen in this order of preference:
+<p><ol>
+<li>TCP/IP 
+<li>DECnet 
+<li>Named Pipes 
+</ol><p>
+NETBIOS cannot be a default choice because it requires a user-assigned name.
+<p>
+On a TCP/IP TELNET connection, you should normally have PARITY set to NONE
+and FLOW-CONTROL also set to NONE.  If file transfer does not work with
+these settings (for example, because the remote TELNET server only gives a
+7-bit data path), use SET PARITY SPACE.  Do not use SET PARITY MARK, EVEN,
+or ODD on a TELNET connection - it interferes with TELNET protocol.
+<p>
+TELNET sessions are treated just like serial communications sessions as far
+as "terminal bytesize" and "command bytesize" are concerned.  If you need to
+view and/or enter 8-bit characters during a TELNET session, you must tell
+Kermit/2 to SET TERMINAL BYTESIZE 8, SET COMMAND BYTESIZE 8, and SET PARITY
+NONE.
+<p>
+If you SET TERMINAL DEBUG ON or SET DEBUG SESSION (same thing), TELNET
+protocol negotiations will be displayed on your screen.  But most of the
+interesting negotiations happen at the time the SET HOST or TELNET command
+is given, before CONNECT mode is entered, so you won't see them on your
+screen.  However, you can still capture them in the debug log ("log debug").
+<p>
+If you are using the RLOGIN command and are unable to make a connection,
+check the SERVICES file located in the directory assigned to the ETC
+environment variable.  Check to make sure that the first instance of "login"
+is on port number 513.  Many systems are now listing "login" on port 49
+which is incorrect.  Comment out or remove the extraneous entries if
+necessary.
+
+<p>
+<hr>
+<h3><a name="os2ra">Remote Access</h3>
+
+The recommended way to provide remote access to your OS/2 system is with
+Kermit/2 host mode (see previous section).
+<p>
+If your OS/2 system is running IBM TCP/IP TELNETD.EXE, it is also possible to
+TELNET to your OS/2 system to have a CMD session, in which you can run only
+character-mode commands and applications.
+<p>
+IBM's TELNET server provides limited functionality for emulating an OS/2 full
+screen session on a VT100 or ANSI Telnet terminal.  Due to the limitations of
+the ASCII character set not all keyboard keystrokes may be replicated across
+the Telnet session.  The OS/2 VIO programming interface used in the design of
+text applications does not map well to character based terminal devices.
+Therefore you will notice slow performance.  The optimal terminal emulation to
+use from your terminal emulator is ANSI.  You can use Kermit/2's SET TERMINAL
+TYPE ANSI command, or its SET TELNET TERMINAL-TYPE ANSI command.
+<p>
+If you run a PM application (such as "help") while TELNETed to your OS/2
+system, your session will hang because control will have been transferred to
+the real keyboard, mouse, and screen.  Similarly, if you manage to invoke
+the OS/2 critical error handler during a character-mode application (for
+example, "dir a:" when there is no diskette in the A: drive).  To avoid this
+place AUTOFAIL=YES into your CONFIG.SYS file.
+<p>
+You can run Kermit/2 in a remote TCP/IP session and tell Kermit/2 to SET
+LINE to a serial device and call up a third computer.  Thus Kermit/2 can be
+used as a modem server in the TCP/IP environment.
+<p>
+However, at present you cannot transfer files between your local Kermit
+program and Kermit/2 when TELNET'd to OS/2 due to restrictions in the OS/2
+TELNET server.
+<p>
+It is also possible to get an OS/2 CMD session on a serial connection when
+dialing into your OS/2 system if you are running a product such as OS2YOU,
+but Kermit/2 file transfer does not yet work in this environment either.
+<p>
+The Telnet server in recent versions of OS/2 (probably starting with Warp 4)
+evidently does character-set translation from CP850 to Latin1, which can
+interfere with the K95 Telnet client's screen formatting, especially if you
+are trying to use the ANSI terminal type.  Cure: Start OS/2 telnetd with the
+"-cp none" parameter.  Then "set term type ansi" in Kermit 95 should work as
+expected.  But note that function keys are not supported since they are not
+part of ANSI emulation, and in any case there is no provision for them in IBM
+telnetd.  Ditto for Alt keys, the gray keypads, etc.
+
+<p>
+<hr>
+<h3><a name="os2lap">Using Kermit Software Instead of Lap-Link</h3>
+
+Lap-Link software is typically used to synchronize the versions of files
+found on two separate computers by transfering files across either a direct
+serial port or parallel port connection.
+<p>
+Kermit/2 and MS-DOS Kermit are well designed for this task. The SET FILE
+COLLISION UPDATE command may be used to instruct Kermit/2 to only transfer
+files that are new or have changed.
+<p>
+The SEND /RECURSIVE command allows entire directory trees to be sent from one
+system to another.
+<p>
+In addition, Kermit/2's SET FILE TYPE LABELED and SET FILE LABEL {ARCHIVE,
+EXTENDED, HIDDEN, READ-ONLY, and SYSTEM} commands can be used to specify
+which file attributes including extended attributes should be transfered.
+This is particularly useful when backing up changes to an OS/2 desktop from
+one system to another.
+<p>
+With the use of a Parallel Port NDIS driver, Kermit/2 can use its network
+support to take advantage of high speed parallel port connections.  (Savant
+Software, Inc., sells parallel port drivers for OS/2 and DOS:
+floyd@savant.com, or P.O. Box 201015, Austin, TX 78720-1015.)  Just add
+either the TCP/IP or NETBIOS protocol stacks to the Parallel Port MAC in IBM
+LAPS or IBM MPTS.  Then tell Kermit/2 to SET NETWORK TCP/IP or NETBIOS
+depending on which you want to use.  Standard Lap-Link cables are supported.
+
+<p>
+<hr>
+<h3><a name="os2util">OS/2 Kermit Utilities</h3>
+
+<h4>OS/2 Kermit PM Clipboard Server</h4>
+
+Since Kermit/2 is not a PM application its ability to access the PM
+Clipboard is extremely limited.  In fact, according to IBM documentation, it
+shouldn't be possible at all.  However, OS/2 C-Kermit has by itself (since
+release 5a(190)) given users the ability to copy data into the PM Clipboard
+for use by other applications.  It also was able to retrieve data from the
+PM Clipboard whenever the data was placed there by an application using a
+type of shared memory known as GETABLE shared memory.
+<p>
+Kermit/2 ships with a utility program, "k2clip.exe". This PM Application
+when active acts as an agent for all active Kermit/2 sessions enabling
+Kermit/2 to copy and paste text data to and from the clipboard with full
+compatibility with other OS/2 PM applications (eg. TWCP and ManyClip). Now
+the \KPaste kverb can paste text data copied to the clipboard from all PM
+and Win-OS2 applications and the \KMarkCopyClip kverb will paste text into a
+ManyClip Clipboard.
+<p>
+It is recommended that users place a shadow of the Kermit/2 PM Clipboard
+Server program object into their Startup folder (located within the OS/2
+System folder.)  By doing this a single copy of the Server will be started
+each time OS/2 is loaded.  When not in use, the server uses zero CPU time
+and its memory will be paged to the swapfile.
+<p>
+<h4>IBM Telnet Replacements</h4>
+<p>
+When navigating the World Wide Web using IBM WebExplorer you may often come
+across Web links which require the use of a Telnet client.  Unfortunately,
+IBM WebExplorer does not allow you to configure it to use a Telnet client
+other than IBM TelnetPM.  This is because IBM WebExplorer must provide
+information to the Telnet client via the command line.  Therefore, it uses
+the command line format provided by IBM Telnet and IBM TelnetPM.
+<p>
+However, if you wish to use Kermit/2 as your Telnet client during your
+travels along the World Wide Web all is not lost.  Kermit/2 ships with a
+utility known as the IBM Telnet Replacement, "telnet.exe" and
+"telnetpm.exe".  The Telnet Replacement provides a command line interface
+that is identical to that provided by IBM Telnet and IBM TelnetPM.  It
+converts the command line options into a command string that is then passed
+to Kermit/2.
+<p>
+In order for this to work properly you must ensure that the Kermit/2
+directory comes before the TCPIP\BIN directory in the PATH environment
+variable.
+<p>
+To remove this option, simply delete the "telnet.exe" and "telnetpm.exe"
+files from your Kermit/2 directory.
+
+<h4>Rlogin Command-Line Executable</h4>
+
+Similar to "telnet.exe", Kermit/2 comes with "rlogin.exe".  The command
+line RLOGIN utility allows you to access hosts from the command line with
+using the LOGIN protocol instead of TELNET.
+
+<p>
+<hr>
+<h3><a name="os2mtips">More OS/2 Hints and Tips</h3>
+
+<h4>Kermit and the OS/2 Work Place Shell</h4>
+
+You can use the Program page in the Settings notebook of the Kermit/2
+program object to enter parameters that will affect the way the program
+starts. Kermit/2 does not normally need parameters when it is opened.  You
+can add Kermit/2 to the pop-up menu for a folder object (e.g. the Desktop)
+so you can start that program by selecting the choice on the pop-up
+menu. However, when you start Kermit/2, OS/2 sends any parameters to the
+program. OS/2 considers the name of a folder a parameter, so OS/2 sends the
+folder name to the program when you select a program-name choice from the
+pop-up menu.  Kermit/2 cannot accept a folder name as a parameter.  If you
+try to start Kermit/2 from the pop-up menu of a folder and the program does
+not start or displays an error message, you can stop the name of the folder
+from being sent to the program by doing the following:
+<p><ol>
+<li>Display the pop-up menu for the Kermit/2 program object that was 
+referenced when you added the Kermit/2 to the pop-up menu.  
+For example, you might have dragged the "Kermit/2 for OS/2" 
+object from the Kermit/2 folder to the Menu page of the Settings 
+notebook for the Desktop folder.  If so, display the pop-up menu 
+for "Kermit/2 for OS/2" in the Kermit/2 folder. 
+<p>
+<li>Select Open. 
+<p>
+<li>Select Settings. 
+<p>
+<li>Select the Program tab. 
+<p>
+<li>Type the following in the Parameters field: 
+<p>
+<li><tt>%</tt>
+<p>
+<li>Close the Settings notebook. 
+</ol>
+<p>
+  
+If you have updated the Dialing Directory or Services Directory to include
+entries for each of the various systems you connect to you can further
+automate the process of connecting by creating Program Objects for each
+services directory or dialing directory entry.  To create the new object:
+<p><ol>
+<li>Display the pop-up menu for the "Kermit/2 for OS/2" object in 
+the Kermit/2 folder. 
+<p>
+<li>Select Copy 
+<p>
+<li>Edit the New name field to be the name of the service (e.g. 
+xyzcorp.com). 
+<p>
+<li>Press Copy 
+<p>
+<li>Display the pop-up menu for the object you just created. 
+<p>
+<li>Select Settings 
+<p>
+<li>Type the appropriate string in the Parameters field.  For a Services 
+Directory entry type: 
+<p><pre>
+      -C "access <service_name> [Password:], connect" %
+</pre><p>
+    For a Dialing Directory entry type: 
+<p><pre>
+      -C "dial <dialing_name>, connect" %
+</pre><p>       
+</ol>
+<p>
+When double clicking on a Services Directory object you would first be
+prompted for the appropriate password prior to Kermit/2's connecting to the
+designated service.
+<p>
+The Work Place Shell provides special parameters which may be passed to
+filenames to Kermit/2.  These parameters are replaced with the filename at
+startup.  They are used for drag and drop operations or file associations.
+<p><dl>
+<dt><tt>%*</tt>
+<dd>Inserts the drive letter, path, and file name of a program into 
+the parameter list 
+<p>
+<dt><tt>%**P</tt>
+<dd>Insert drive and path information without the last backslash (\). 
+<p>
+<dt><tt>%**D</tt>
+<dd>Insert drive with ':' or UNC name. 
+<p>
+<dt><tt>%**N</tt>
+<dd>Insert file name without extension. 
+<p>
+<dt><tt>%**F</tt>
+<dd>Insert file name with extension. 
+<p>
+<dt><tt>%**E</tt>
+<dd>Insert extension without leading dot. In HPFS, the extension 
+always comes after the last dot. 
+</dl>
+
+<p>
+<hr>
+<h3><a name="os2port">Serial Port Performance</h3>
+
+Kermit/2's performance on serial connections - and the performance of any
+other OS/2 communication software program - can be improved significantly by
+using a 16550AFN communications port controller (UART) rather than an 8250,
+16450, 16550 (no A), or other unbuffered UART.  Unbuffered UARTs interrupt
+the CPU once per character, whereas a buffered UART interrupts every 8-14
+(or more) characters.  Measurements during Kermit/2 file transfer on an
+otherwise unloaded i486/50 EISA system under OS/2 show approximately 10%-25%
+CPU usage with a buffered UART and 75%-100% using an unbuffered one.  And of
+course, as with all other OS/2 applications (and OS/2 itself), a faster CPU
+and more memory also help.
+
+<p>
+<hr>
+<h3><a name="os2dev">OS/2 Devices, Files, and Shells</h3>
+
+If you refer to a disk drive that is not ready, or to a file on such a disk
+drive, the OS/2 critical error handler might pop up and require action from
+the keyboard.  This occurs during execution of commands by inferior
+processes, such as DIRECTORY, REMOTE DIRECTORY, DELETE, REMOTE DELETE, etc.
+It should not occur in file transfer operations.  The "hard error box" will
+put a halt to unattended, scripted operations, and it stops the operation of
+the Kermit/2 server if there is no human in attendance.  To work around: add
+the line " AUTOFAIL =YES" to CONFIG.SYS and reboot.  This eliminates the
+hard error box, but it applies system-wide, not just to Kermit/2.  (The
+equivalent of AUTOFAIL =YES can be set on a per-process basis and Kermit/2
+does so for itself but it can't do this for any inferior processes started
+by it.)
+<p>
+If the PUSH command, and related commands, do not work for you, check the
+definition of your OS/2 COMSPEC environment variable, i.e.  make sure it
+contains the fully-specified pathname of a valid OS/2 executable shell
+program (such as C:\OS2\CMD.EXE), and/or the named program is in your OS/2
+PATH .
+<p>
+Kermit/2 works with JP Software's 4OS2.EXE, the Hamilton csh, and any other
+replacement Command Shell.  The directory containing the shell must be
+located in the PATH in order for the replacement shell to be called
+correctly.
+
+<p>
+<hr>
+<h3><a name="os2bg">Running Kermit in the Background</h3>
+
+When Kermit is performing a long file transfer or lengthy script-based
+operation, you can have Kermit proceed with its work in the background while
+you work on something else in the foreground.
+<p>
+Out of the box, OS/2 is tuned to favor foreground applications, which is
+fine if the background applications will not be performing time-critical
+operations or be expected to perform consistent screen updates.  But Kermit
+does both, and so we need a way to tell OS/2 to let it run at a reasonable
+speed even while we do other work in the foreground.
+<p>
+There are two settings in the CONFIG.SYS file which affect how OS/2
+determines the priority of applications which are competing for CPU time and
+File I/O Services:
+<p><dl>
+<dt<PRIORITY 
+<dd>The default value is DYNAMIC, which gives a priority boost to all
+foreground applications.  This effectively reduces the priority of all
+background applications.  If you want your applications to have equal access
+to the CPU regardless of the foreground/ background status, set the value to
+ABSOLUTE.
+<p>
+<dt>PRIORITY_DISK_IO 
+<dd>The default value, YES, gives the foreground process priority service.  If
+your foreground process is performing a significant amount of disk access
+(such as a database search, compile, a long directory listing, or printing
+to the spooler) this will have a severe impact on your background file
+transfers. Try setting this this value to NO.
+</dl><p>  
+Other settings that also affect the performance of OS/2 are: 
+<p>
+<dl><dt>MAXWAIT 
+<dd>How long a process may starve before it gets a priority boost to allow it
+to gain access to the CPU.  The standard value is 3 seconds which is probably
+adequate for most users.
+<p>
+<dt>THREADS 
+<dd>How many threads may be created on a the system.  The default value is 256.
+The larger the number of threads the greater the overhead.  However,
+lowering this number might result in fewer programs being able to run
+simultaneously.  OS/2 applications, such as Kermit/2, that need to do many
+things at once (e.g. watch the keyboard and port and the mouse) use several
+threads.  Kermit/2 uses anywhere from two to eight threads depending on its
+current operating mode.  You can count the number of threads active in the
+system at a particular time by using PSTAT . Pipe the output of PSTAT to a
+file and count the number of lines in the "Process and Thread Information"
+section.  Do it under a heavy load to determine how many threads you really
+need.
+<p>
+<dt>TIMESLICE 
+<dd>The minimum and maximum amounts of time that a thread may have access to
+the CPU before yielding it to another thread. IBM recommends a maximum value
+of 125 milliseconds when using communications software (see OS/2 Command
+Reference) . Suggested setting is "32,125".
+<p>
+<dt>SWAPPATH 
+<dd>The location and original size of your swapfile (SWAPPER.DAT).  It is
+strongly recommended that you move your swapfile, if you have multiple
+drives or partitions, to the root directory of the most-used partition on
+the least-used drive. Then increase the initial size value to 4096 larger
+than you have ever seen the swapfile grow to.  After making this change to
+your CONFIG.SYS file, shutdown and reboot.  If you have moved the
+SWAPPER.DAT file to a new drive or directory, delete the file SWAPPER.DAT
+from the \OS2\SYSTEM directory on your boot drive. Next, if you placed the
+swapfile on a FAT partition, boot DOS and execute a Disk Optimizer such as
+Norton's Speedisk.exe. Optimize the disk so that the swapfile is the first
+file on the partition and is contiguous.
+</dl>
+<p>
+Disk caching is extremely important and can have a dramatic affect on the
+performance of your computer.  Disk caches in OS/2 are allocated separately
+for each type of file system: FAT , HPFS , and CDFS . When configuring your
+cache do not set the cache size to be high if you have a small amount of RAM
+(less than 16MB).  Be sure to turn on Lazy Writes.
+<p>
+If you never run DOS or Windows programs, set PROTECTONLY=YES.  This will
+give OS/2 640k more physical memory to use for your OS/2 applications.
+<p>
+For additional information on all of the above topics read the OS/2 Command
+Reference in the Information folder on your OS/2 Desktop.
+<p>
+Further information on tuning OS/2 can be found in: 
+<p><dl>
+<dt>"Stupid OS/2 Tricks" 
+<dd>from Internet: m-woo@uiuc.edu 
+<p>
+<dt>OS/2 WARP FAQ 
+<dd>from Timothy Sipples, tsipple@vnet.ibm.com 
+</dl>
+<p>
+These files and more are available from most OS/2 ftp sites, BBS, and online
+services under a variety of names.
+
+<p>
+<hr>
+<h3><a name="os2freeze">Applications that Freeze</h3>
+
+There have been isolated reports of Kermit/2 "freezing" on some systems.
+This problem is not confined to Kermit/2, and has also been observed with a
+variety of other communications software packages:
+<p><ul>
+<li>The most likely cause for freezing would be an interrupt conflict.  
+Make sure your serial ports, CD ROM drive / controller and/or SCSI 
+adapter, Soundblaster, ISA card, network adapter, etc, are all using 
+different and unique IRQs. 
+<p>
+<li>One user reported that the problem disappeared when he moved 
+his serial communication board farther away from his SCSI adapter 
+board.  This might have reduced electromagnetic interference, or 
+altered the priority of the adapters.  Sometimes, simply reseating 
+the card can help. 
+<p>
+<li>Another user (different system) made the problem go away by 
+rebooting the PC, which had been up for many weeks. 
+<p>
+<li>The problem might be caused by a poorly built or configured 
+system: noisy bus, spurious interrupts, buggy internal modems, or 
+buggy serial port driver software.  For example, one user who 
+noted that Kermit froze whenever he told it to SET PORT COM2 
+also discovered that the same thing would happen if he issued a 
+MODE COM2 command at the CMD prompt, even when this is done 
+immediately after starting the system. 
+<p>
+<li>Finally, mysterious problems like this are often cleared up by 
+installing patches (CSDs) or new releases of the software involved 
+(e.g. TCP/IP or other DLLs, serial drivers, OS/2 itself, etc). 
+</ul>  
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

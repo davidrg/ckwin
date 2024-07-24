@@ -1,0 +1,439 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>IKSD@KERMIT.COLUMBIA.EDU</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h3><a name="top">
+The Columbia University Internet Kermit Service Daemon</a></h3>
+
+<i>Most recent update:</i> 14 January 2000
+<p>
+<b>CONTENTS</b><ul>
+<li><a href="#why">WHY IKSD?</a>
+<li><a href="#csm">CLIENT/SERVER MODE</a>
+<li><a href="#iia">INTERACTIVE MODE</a>
+<li><a href="#swm">SWITCHING MODES</a>
+<li><a href="#dia">DIALUP ACCESS</a>
+<li><a href="#ttc">TIGHT COUPLING</a>
+</ul>
+<p>
+The Internet Kermit Service Daemon (IKSD) is C-Kermit 7.0 running as an
+Internet service, similar to an FTP or Telnet server.  It executes Telnet
+protocol just like a Telnet server and it transfers files like an FTP server.
+But unlike an FTP server, IKSD uses the Kermit file transfer protocol.
+<p>
+An IKSD may be accessed on TCP port 1649 using any Telnet client that allows a
+port specification and also includes Kermit protocol (and, as noted
+<a href="#dia">below</a>, it may also be accessed by traditional serial
+communication programs too).  Kermit Project clients are recommended for best
+results, but third-party commercial, shareware, or freeware clients may also
+be used.
+<p>
+To access the IKSD at the Kermit Project, instruct your Telnet client to
+make a connection to:
+<p><pre>
+  <a href="telnet://kermit.columbia.edu:kermit">kermit.columbia.edu kermit</a>
+</pre><p>
+or if that doesn't work:
+<p><pre>
+  <a href="telnet://kermit.columbia.edu:1649">kermit.columbia.edu 1649</a>
+</pre><p>
+The syntax for specifying the TCP port number varies from client to client.
+(For starters, try clicking on the link above...)
+
+<p><hr><b><a name="#why">WHY IKSD?</a></b><p>
+[<a href="#csm">Next</a>] [<a href="#top">Top</a>]<p>
+
+Why an Internet Kermit Service Daemon when there are already FTP servers?
+<ul>
+<li>Like FTP, Kermit provides a service that can be accessed from many
+different platforms with a consistent set of commands, but unlike FTP,
+these commands include programming constructions such as variables,
+arrays, looping and decision mechanisms, and local and remote procedure
+calls, thus allowing file transfer and management operations of arbitrary
+complexity to be easily automated.
+<p>
+<li>Like FTP, Kermit provides both text- and binary-mode data transfer, as
+well as file management capabilities.  But Kermit also offers numerous
+features lacking from FTP:
+<p><ol>
+<li>Kermit translates character sets.  This includes the new
+sets that include the Euro symbol (required in all of Western Europe).
+So unlike with FTP, you can send your Italian, Norwegian, Portuguese,
+Hebrew, Greek, Russian, or Japanese text from a PC to UNIX (etc) without
+turning it to gibberish (other languages too, of course).
+<p>
+<li>Filename collision options (what to do when a file arrives that has the
+same name as an existing file) like backup, rename, reject, overwrite, update
+(reject if not newer).  No transferring files needlessly when you already have
+them; no destroying important files by accident when the host sends a file
+that happens to have the same name.
+<p>
+<li>Kermit offers flexible file selection mechanisms (like "please
+send me the files whose names match this pattern, that were created
+between these two dates, that are larger than such-and-such a size but
+smaller than some other size, except don't send any files from this exception
+list, and don't bother sending any files that are older versions of the ones
+I have already").
+<p>
+<li>Preservation of timestamps and permissions.  Timestamps are what allow
+the update feature to work.  Permissions are important for security
+reasons, and also to allow executables to still be executable after transfer
+(so in UNIX, for example, you don't always have to remember to "chmod +x" a
+program or shell script after transfer before you can run it.)
+<p>
+<li>Automatic per-file text/binary mode switching.  No more "set file type
+text", transfer all your text files, then "set file type binary" and
+transfer all your binary files.
+<p>
+<li>Directory-tree transfer.  You can use Kermit to transfer a directory and
+all its files, and all its subdirectories and all their files, etc etc, not
+only between like platforms, but also from (say) a PC to UNIX or VMS, or VMS
+to UNIX, or any other combination, automatically switching between text and
+binary mode for each file, converting text-file formats and character sets
+from the source to destination platforms, yet still sending binary files
+without conversion.  This has never been possible before.
+</ol>
+<p>
+<li>Unlike FTP, Kermit supports atomic file movement, in which the source
+file, the destination file, or both can be deleted (or renamed, or moved) when
+and only when it has been transferred successfully, as part of the transfer
+operation itself.
+<p>
+<li>Unlike most FTP implementations, Kermit supports recovery of interrupted
+binary-mode transfers from the point of failure.  You can even use it to
+recover interrupted FTP transfers when FTP itself does not offer this option.
+<p>
+<li>Unlike standard FTP, Kermit can transfer data through firewalls,
+proxies, and network address translators on a single well-known port
+(unless the TCP port for the connection has been explicitly filtered).
+<p>
+<li>Unlike FTP, Kermit can transfer data across a combination of transports
+(e.g. dial-up to a terminal server and from there access IKSD on an Internet
+host).
+<p>
+<li>Unlike FTP, Kermit offers the 
+ability to drive automated tasks from the server, even when the client
+does not support them.  The server itself can be scripted.
+<p>
+<li>IKSD keeps an active-sessions database that can be monitored in realtime
+by the sysadmin to see who is logged in and what they are doing.
+<p>
+<li>Unlike traditional Kermit use over Telnet, anonymous access is possible,
+and the considerable overhead of the intervening Telnet server and
+pseudoterminal service is eliminated.  Given a Telnet client with a good
+Kermit protocol implementation, file transfer performance is about the same
+as FTP.
+</ul>
+
+<p><hr><b><a name="csm">CLIENT/SERVER MODE</a></b><p>
+[<a href="#iia">Next</a>] [<a href="#why">Prev</a>] [<a href="#top">Top</a>]<p>
+
+IKSD can be used interactively by typing commands at its prompt (just
+as you would use C-Kermit), or in client/server mode.
+<p>
+A client/server connection is possible (as far as we know) only with
+Kermit Project Telnet clients (since third-party Kermit implementations rarely
+implement features beyond the bare minimum, and therefore don't include
+client commands).  Recommended clients include:
+<p><ul>
+<li><a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> for Windows 95/98/NT and OS/2
+<li><a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a> for DOS and Windows 3.1
+<li><a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> for UNIX, VMS, VOS, OS-9, etc.
+</ul>
+If you do not have one of these, skip ahead to the <a href="#iia">next
+section</a>.
+<p>
+To make a client/server connection, tell your Telnet client to:
+<p><pre>
+  set host kermit.columbia.edu 1649     ; <i>(C-Kermit or Kermit 95)</i>
+  set port tcp kermit.columbia.edu 1649 ; <i>(MS-DOS Kermit)</i>
+</pre><p>
+Now log in to the server like this:
+<p><pre>
+  remote login <i>username password</i>
+</pre><p>  
+Since you probably don't have a Columbia user ID, you would normally supply
+"anonymous" (spelled out all the way) or "ftp" (a synonym for "anonymous")
+as the username, and your email address as the password, for example:
+<p><pre>
+  remote login anonymous ivan@abccorp.com
+  remote login ftp olga@xyzcorp.com
+</pre><p>  
+Note that you can't send any commands other than REMOTE LOGIN, REMOTE LOGOUT,
+REMOTE HELP, REMOTE EXIT, and BYE to the IKSD before you have logged in.
+Also note that when your client is C-Kermit 7.0 and later, LOGIN and
+LOGOUT may be given without the REMOTE prefix:
+<p><pre>
+  login anonymous ivan@abccorp.com
+  login ftp olga@xyzcorp.com
+</pre>
+Ditto for Kermit 95 1.1.18 Beta.
+
+<p>
+Once logged in, you are situated at the root of the /pub/ftp tree.  Use:
+<p><pre>
+  remote directory
+</pre><p>  
+for a list of directories you can access, then use "remote cd" to change to
+the desired directory, for example:
+<p><pre>
+  remote cd kermit
+</pre><p>  
+Whenever you change directories like this, you will receive an orientation
+message describing what is available in this area.  If you would like to
+disable these messages, tell your client to:
+<p><pre>
+  remote set cd-message off
+</pre><p>  
+(This command is new to C-Kermit 7.0 and K95 1.1.18).
+<p>
+To find out what commands the server will accept, type:
+<p><pre>
+  remote help
+</pre><p>  
+Consult your MS-DOS Kermit, C-Kermit, or K95 manual for detailed descriptions.
+A brief summary follows; syntax may vary according to the Kermit client.
+Shortcut R-commands (like RCD, RDIR, etc) are available in C-Kermit 7.0 and
+K95 1.1.18:
+<p><dl>
+<dt><b>[ REMOTE ] LOGIN <i>[ username [ password ] ]</i></b>
+<dd>Log in to the server.  If you don't include a username, you will be
+prompted on a separate line; ditto for the password (and in this case, the
+password will not echo).  Note: RLOGIN is not a shortcut for REMOTE LOGIN;
+RLOGIN makes a connection to the host's "login" port, just like the UNIX
+"rlogin" command; however, the REMOTE keyword is optional.
+<p>
+<dt><b>[ REMOTE ] LOGOUT</b>
+<dd>Log out from the server.  You can also use BYE or HANGUP, or (in newer
+Kermit versions) REMOTE EXIT (REXIT) or, simply, CLOSE.
+<p>
+<dt><b>GET <i>filespec</i></b>
+<dd>Ask the server to send the specified file or files.
+<p>
+<dt><b>REMOTE DIRECTORY <i>[ filespec ]</i> (RDIR)</b>
+<dd>Ask the server to send a directory listing.
+<p>
+<dt><b>REMOTE CD <i>directory</i> (RCD)</b>
+<dd>Ask the server to change to the given directory.
+<p>
+<dt><b>REMOTE PWD <i>directory</i> (RPWD)</b>
+<dd>Ask the server to display its current directory.
+<p>
+<dt><b>REMOTE HELP (RHELP)</b>
+<dd>Ask the server to list commands you can send to it.
+<p>
+<dt><b>REMOTE SET <i>parameter value</i> (RSET)</b>
+<dd>Ask the server to change the given parameter to the given value.
+Type "remote set ?" for a list of possible values.
+<p>
+<dt><b>REMOTE TYPE <i>filename</i> (RTYPE)</b> 
+<dd>Ask the server to display the given file on your screen.
+<p>
+<dt><b>FINISH</b>
+<dd>Exit client/server mode.  Follow this command by CONNECT
+to access the IKSD prompt.
+</dl>
+<p>
+The following client commands are generally <i>not</i> accepted by the IKSD
+from anonymous users:
+<dl><dt><b>SEND <i>filespec</i></b>
+<dd>(Since most users do not have write access to our file system.)
+Ditto for REMOTE DELETE, REMOTE MKDIR, REMOTE RMDIR, REMOTE COPY,
+REMOTE RENAME, etc.
+<p>
+<dt><b>REMOTE HOST <i>command</i> (RHOST)</b>
+<dd>Access to host commands is not allowed.  Ditto for REMOTE WHO (RWHO).
+<p>
+<dt><b>MAIL <i>address</i></b>
+<dd>Anonymous users may not send email.  Ditto for REMOTE PRINT (RPRINT).
+</dl>	
+
+<dl><dt><i>Example:</i>
+<dd>Suppose you want to pick up the latest C-Kermit Beta test source files from
+the Kermit Project archive on a daily basis, transferring only those that have
+changed since last time (error handing not shown).
+<p><pre>
+  set host kermit.columbia.edu 1649  ; <i>Make the connection</i>
+  remote login ftp olaf@wwwcorp.com  ; <i>Log in</i>
+  remote cd kermit/test/text         ; <i>Change to desired directory</i>
+  set file collision update          ; <i>Use update mode</i>
+  fast                               ; <i>Use fast file-transfer settings (1)</i>
+  mget makefile ck[cuw]*.[cwh]       ; <i>Get all .txt files that changed (2)</i>
+  bye                                ; <i>Log out and disconnect</i>
+</pre></dl><p>
+
+Notes:<ol><li>Fast file transfer settings are the default in C-Kermit 7.0 and
+Kermit 95.
+<p>
+<li>Patterns incorporating character lists or ranges and string
+lists are new to C-Kermit 7.0 and K-95 1.1.18.
+</ol>
+
+<p><hr><b><a name="iia">INTERACTIVE IKSD ACCESS</a></b><p>
+[<a href="#swm">Next</a>] [<a href="#csm">Prev</a>] [<a href="#top">Top</a>]<p>
+
+The IKSD can be accessed directly by your Telnet client's CONNECT command or
+terminal emulator (no particular terminal emulation is expected, needed, or
+used).  For direct access with a Kermit Project client, use a
+TELNET command rather than SET HOST (or add a CONNECT command after your SET
+HOST command).  For other clients, follow the instructions for making a Telnet
+connection.  
+<p>
+Now you should see Username and Password prompts.  Respond to them just as you
+would if logging into UNIX or VMS, e.g.:
+<p><pre>
+  Username: <u>olga</u>
+  Password: <u>secret</u>  <i>(The password does not echo)</i>
+</pre><p>
+Underlining indicates material that you type.  Press the Enter or Return
+key at the end of the underlined text.
+<p>
+If you do not have a user ID on the server system, supply a username of
+"anonymous" or "ftp", and your email address as the password:
+<p><pre>
+  Username: <u>anonymous</u>
+  Password: <u>olga@olgacorp.com</u>
+</pre><p>
+Once you have logged in successfully, you will see the IKSD interactive
+command prompt, something like:
+<p><pre>
+  (/users/olga/) IKSD&#62;
+</pre><p>
+The current directory is shown in parentheses.  For anonymous users, this
+is initially the root of the /pub/ftp tree (shown as "/"):
+<p><pre>
+  (/) IKSD&#62;
+</pre><p>
+<p>
+What you see is nothing more than C-Kermit 7.0 with its prompt set to
+say "IKSD" instead of "C-Kermit".  You can use any commands here that are
+accepted by C-Kermit 7.0, as described in the manual,
+<a href="ckb2.html"><cite>Using C-Kermit</cite></a>, as augmented by the
+C-Kermit 7.0 release notes,
+<a href="ckermi70.html"><tt>C-Kermit 7.0 update notes</a>, except that:
+<p><ul>
+<li>Access to the system is disallowed (e.g. by RUN, PUSH, REDIRECT, "!").
+<li>Secondary connections may not be made (SET HOST, TELNET, SET LINE, DIAL, etc).
+<li>Write access to the file system is disabled if you are logged in
+anonymously.
+</ul>
+<p>
+If you have no idea what to type at the IKSD prompt, try typing the word
+HELP and then pushing the Enter or Return key.
+<p>
+For file-transfer purposes, interactive-mode IKSD is like C-Kermit in remote
+mode.  If you tell it to SEND a file, you must get your client to receive it.
+All modern Kermit programs (MS-DOS Kermit 3.15 and later, C-Kermit 6.0 and
+later, and all versions of K95) support the 
+"<a href="http://www.columbia.edu/kermit/case03.html">autodownload</a>"
+feature for Kermit protocol, but you might have to enable it first with:
+<p><pre>
+  set terminal autodownload on
+</pre><p>
+(Autodownload is enabled by default in Kermit 95 and in C-Kermit 7.0; it must
+be explicitly enabled in C-Kermit 6.x and in MS-DOS Kermit.)
+<p>
+Assuming you have autodownload enabled in your client, you can initiate all
+file transfers from the IKSD prompt:<p>
+<ul>
+<li>SEND makes the client receive automatically.
+<li>GET makes the client enter server mode so it can read the GET request.
+</ul>
+and so on.  If your Telnet client does not support autodownloads, you'll need
+to give whatever commands (or menu item choices, or button pushes) are
+required to get the local end of the file transfer going.
+<p>
+Of course, you can't send files <i>to</i> the IKSD unless you have
+the appropriate write permission, which is generally lacking for anonymous
+users.
+<p>
+It is beyond the scope of this document to explain all that is possible
+at the IKSD prompt.  That is the subject of a 
+<a href="ckb2.html">622-page book</a> augmented by
+about a megabyte of online text.  In general, the best reason for using
+interactive IKSD access is that the IKSD (C-Kermit 7.0) might have
+capabilities lacking from your Telnet/Kermit client.  For example, your
+client might lack Kermit server-oriented commands like GET and REMOTE.  It
+almost certainly lacks the flexible file-selection mechanisms of C-Kermit
+7.0 unless it *is* C-Kermit 7.0.  So, for example, suppose you want to
+get a group of files matching several different patterns with a particular
+range of sizes and dates, except for a certain file you want excluded, 
+and some of them are text and others are binary, and the text files should
+have their character sets translated:
+<p><pre>
+  (/u/ivan/files/) IKSD&#62; <u>set file character-set hp-roman8</u>
+  (/u/ivan/files/) IKSD&#62; <u>set transfer character-set latin1</u>
+  (/u/ivan/files/) IKSD&#62; <u>set transfer mode automatic</u>
+  (/u/ivan/files/) IKSD&#62; <u>msend /larger-than:10000 /smaller-than:20001 -</u>
+   <u>/after:24-Dec-1998_0:00:00 /before:1-Jan-1999_0:00:00 -</u>
+   <u>/except:c123.txt /recover c*.txt x*.zip *.tar.gz </u>
+</pre><p>
+<p>
+To terminate an interactive IKSD session, type LOGOUT or EXIT at the IKSD
+prompt.
+<p>
+(Note that at some sites, the IKSD might be configured to allow only
+client/server mode.)
+
+<p><hr><b><a name="swm">SWITCHING MODES</a></b><p>
+[<a href="#dia">Next</a>] [<a href="#iia">Prev</a>] [<a href="#top">Top</a>]<p>
+
+You can switch between client/server and interactive mode whenever you like.
+To switch from client/server to interactive mode, give the following commands
+to your client:
+<p><pre>
+  finish
+  connect
+</pre>
+<p>
+To switch from interactive to client server mode, give a SERVER command at the
+IKSD prompt, then escape back to your client (or access its menus, etc).
+
+<p><hr><b><a name="dia">DIALUP ACCESS</a></b><p>
+[<a href="#ttc">Next</a>] [<a href="#swm">Prev</a>] [<a href="#top">Top</a>]<p>
+
+A striking advantage of IKSD over a traditional FTP server is that IKSD can be
+accessed by dialup as well as by Telnet connections.  This is possible when a
+terminal server may be dialed that can make a Telnet connection to the host
+where IKSD is running.  Just dial up the terminal server and ask it to make a
+Telnet connection to port 1649 on the desired host.  Everything except tight
+coupling (<a href="#ttc">next section</a>) works the same (but of course there
+might be transparency problems, which can be handled in the normal ways --
+SET PARITY, SET PREFIXING, etc).
+
+<p><hr><b><a name="ttc">TIGHT COUPLING</a></b><p>
+[<a href="#dia">Prev</a>] [<a href="#top">Top</a>]<p>
+
+Tight coupling ensures that the Kermit client and Kermit server are always
+ready to respond to each other using the proper command interface.  For
+example, if the IKSD is in server mode and you give a CONNECT command to the
+client, the IKSD presents its interactive prompt.  Conversely, if you give a
+SERVER command at the IKSD prompt, the client will return to its own command
+prompt or menu.  If you return to the local command prompt while the IKSD is
+at its interactive prompt, then any subsequent server oriented commands (SEND,
+GET, REMOTE ...) automatically put the IKSD into server mode.
+
+<p>
+
+Tight coupling relies on a new Kermit-specific Telnet protocol option.  Both
+the Telnet client and Telnet server must implement the KERMIT option.  This
+requires that Telnet be used end-to-end and prevents tight coupling on dialup
+or multi-hop connections.
+
+<p>
+
+Tight coupling requires clients that implement the new protocols.  Presently
+these include:
+<p><ul>
+<li><a href="http://www.columbia.edu/kermit/ck70.html">C-Kermit 7.0</a>
+<li>Kermit 95 1.1.19
+</ul>
+
+<p>[<a href="#top">Top</a>]<hr>
+<address>
+IKSD / Columbia University / kermit@columbia.edu / 8 Feb 2000
+</address>
+</body>
+</html>

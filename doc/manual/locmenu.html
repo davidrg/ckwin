@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>K95 Dialer - Location Definitions</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>K95 Dialer - The Location Definitions Notebook</h2>
+
+Please refer to <cite>Using C-Kermit</cite>, Chapter 5, for a thorough
+explanation of Dialing locations and procedures.
+<p>
+<blockquote>
+<img "alt=(Screen Shot of Location Definitions Dialog)"  src="locgen.gif">
+</blockquote>
+
+<h3>The General Page</h3>
+
+The current location is shown highlighted in the Location box.  Change
+locations by using the dropdown list (click on the arrow, then click on the
+desired location).  This is equivalent to using the <i>Current</i> option
+in the Locations menu.
+<p>
+<dl>
+<dt><i>To remove an entry . . .</i>
+<dd>Highlight the entry you want to remove in the
+Location field, then click on <b>Remove</b>.
+<p>
+<dt><i>To add a new entry . . .</i>
+<dd>Click <b>Add</b>.  A box pops up in which you enter the
+name for the new entry:
+<blockquote>
+<img src="newloc.gif">
+</blockquote>
+Enter the name, click on OK, then fill in the
+information on the various notebook pages.
+</dl>
+<p>
+On the remainder of the General page, enter the information for the location
+you are dialing from: country code, area code, and so on, and specify the
+dialing method (tone or pulse), as shown in the screen shot above:
+
+<dl>
+<dt><i>Country code</i>
+<dd>The numeric country code of the country you are dialing from, for example 1
+for the USA and Canada (etc).  These are listed in Table VIII-1 of <cite>Using
+C-Kermit</cite>.
+<p>
+<dt><i>Area code</i>
+<dd>The area or city code, if any, of the place you are dialing from within
+your country, for example 212 for Manhattan, New York City.
+<p>
+<dt><i>Prefix</i>
+<dd>Any prefix which must <i>always</i> be used when dialing from this
+location (normally left blank, but might be used for call-waiting override).
+<p>
+<dt><i>Suffix</i>
+<dd>Any suffix which must <i>always</i> be used when dialing from this
+location (normally left blank).
+<p>
+<dt><i>Maximum redials</i>
+<dd>The maximum number of times to automatically redial the number if it
+is busy.  <b>NOTE:</b> Automatic redialing is prohibited by law in some
+countries, and the maximum number of redials might be restricted in others.
+Be careful not to violate local laws.
+<p>
+<dt><i>Redial interval</i>
+<dd>How many seconds to wait between automatic redial attempts.  The minimum
+interval between automatic redial attempts might be specified by local law.
+<p>
+<dt><i>Timeout</i>
+<dd>The number of seconds to wait for a call to be answered before declaring
+the call to be a failure.
+<p>
+<dt><i>Dialing method</i>
+<dd>Check Tone or Pulse, as appropriate.  If you don't know, check Pulse.
+<p>
+<dt><i>Ignore Dial Tone</i>
+<dd>Check this box if your phone does not produce a dialtone recognized by
+your modem.
+</dl>
+<p>
+<hr>
+<h3>The Local Calls Page</h3>
+<blockquote>
+<img src="locloc.gif">
+</blockquote>
+<p>
+Enter any <b>Prefix</b> or <b>Suffix</b> needed for local dialing.  Normally,
+no prefix or suffix is needed, in which case you should leave these boxes
+blank.
+<p>
+The <b>Area Codes</b> box is for listing all the area codes to which calls
+from this location are local (meaning that the long-distance prefix is not
+used), but which must be dialed.  In the North American dialing region, this
+is where you handle "ten digit dialing".  Do not include your own area code in
+this list unless you must dial it (as is the case, for example, in the US
+state of Maryland).  The format for this box is zero, one, or more area codes
+separated by spaces (not commas).  An area code may also include an "exchange"
+in cases where it makes a difference.
+
+<p>
+
+The <b>Force Long Distance</b> box should be checked when local calls (that
+is, calls to your own area code, or to any of the other area codes listed in
+the Area Codes box on this page) must be dialed with the long-distance prefix.
+This is the case, for example, in France.
+
+<p>
+<blockquote>
+<i>Hint:</i> In most cases, this page can be left blank.
+</blockquote>
+<p>
+
+<hr>
+<h3>The Long Distance Calls Page</h3>
+<blockquote>
+<img src="loclong.gif">
+</blockquote>
+<p>
+
+Here you simply fill in the long-distance dialing prefix -- the digit or
+digits you dial before dialing a long distance call.  This can be a simple
+prefix like "1" in the USA or Canada (etc) or "0" in Germany or England (etc),
+or it might be an access code to a particular long-distance carrier (such as
+1010-ATT translated to digits).  It might even be an entire telephone number
+that you call in order reach your long-distance carrier (such as 1800CALLATT,
+translated to digits).
+<p>
+The long-distance suffix is normally left blank, but might be a calling-card
+number.  If you need to enter a calling card number after the phone number,
+enter it as the long-distance suffix each time you use it, and then erase it
+before exiting from the Dialer.  If you don't erase it, anybody will be able
+to walk up to your PC and find out what it is.
+
+<p>
+
+<hr>
+<h3>The International Calls Page</h3>
+<blockquote>
+<img src="locintl.gif">
+</blockquote>
+<p>
+
+International dialing prefix, such as 011 in North America, or the access code
+for your international carrier.  The suffix, if any, would typically be a
+calling card number.
+
+<p>
+
+<hr>
+<h3>The Toll-Free Calls Page</h3>
+<blockquote>
+<img src="loctf.gif">
+</blockquote>
+<p>
+
+Here you list the area codes to which calls are toll-free, such as 800,
+888, 877 (and soon 866) in North America, as well as the prefix for toll-free
+calls, such as 1 in North America.  If you use the default long distance
+carrier, this is the same as your long-distance prefix, but if you use a
+special access code for long-distance toll calls, it might be different.
+
+<p>
+
+<hr>
+<h3>The PBX Systems Page</h3>
+<blockquote>
+<img src="locpbx.gif">
+</blockquote>
+<p>
+
+This is for locations served by a Private Branch Exchange (PBX), such as
+a big company or university, where there is a difference between inside
+and outside numbers.  Usually inside numbers are dialed in a special short
+form, whereas outside numbers require an "outside line prefix".
+<p>
+PBX dialing is explained in detail in Chapter 5 of <cite>Using
+C-Kermit</cite>, pages 107-108.
+<p>
+<dl>
+<dt><i>Dialing from a PBX</i>
+<dd>Check this box if you are dialing out from a PBX (also known as PABX).
+<p>
+<dt><i>Exchange</i>
+<dd>Enter the first several (usually three) digits of your local phone number,
+as seen from outside the PBX; the leading digits that all phone numbers on the
+same PBX have in common.  If K-95 recognizes a phone number as being in the
+same country, same area code, and having the same exchange as your PBX
+exchange, then K-95 knows it's an internal call, and removes the exchange
+digits before dialing.  For example, if your PBX exchage is "876", then
+"8765432" becomes "5432" when making an internal call.
+<p>
+<dt><i>Inside-call prefix</i>
+<dd>The digit or digits you must dial to indicate that you are making an
+inside call, i.e. a call from one PBX extension to another.
+<p>
+<dt><i>Outside-line prefix</i>
+<dd>This is the prefix you must dial to get an outside line when using your
+PBX, i.e. to reach the public telephone system.
+</dl>
+
+<p>
+<hr>
+<h3>Exporting Location Definitions</h3>
+
+In the Dialer's main File menu, choose "Generate location script".  This
+creates a file called <tt>LOCATION.KSC</tt> in Kermit 95's <tt>SCRIPTS</tt>
+subdirectory.  The <tt>LOCATION.KSC</tt> file contains macro definitions for
+all your locations.  The name of each macro is "location-xxx", where xxx is
+the name of the location.  To load these definitions into Kermit 95, type
+<tt>TAKE LOCATION.KSC</tt>.  Then to execute any of these macros from the
+<tt>K-95&#62;</tt> prompt, just  type its name, e.g. "location-myoffice".
+The <tt>LOCATION.KSC</tt> file is portable and may be used with other
+C-Kermit implementations.
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

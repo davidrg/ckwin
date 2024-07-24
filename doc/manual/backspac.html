@@ -1,0 +1,457 @@
+<html><head>
+<title>Kermit FAQ - The Backspace Key</title>
+</head><body>
+
+<h2><i>My Backspace Key doesn't work!</i></b></h2>
+
+<b><i>The short answer:</i></b>
+<p>
+<ul>
+<li><a href="#termtype">Choose a terminal emulation that is supported by the host.</a>
+<li><a href="#tellhost">Inform the host of this terminal type.</a>
+</ul>
+<p>
+Then, if necessary:
+<p>
+<ul>
+<li><a href="#setkey">Make the emulator send what the host expects</a>, OR:
+<li><a href="#stty">Make the host expect what the emulator sends.</a>
+</ul>
+
+<p>
+
+<b><i>The long version:</i></b>
+
+<p>
+
+Terminal emulation lets you use your PC to make a connection to another
+computer and interact with it as if your PC were a terminal, even though
+your PC is not really a terminal and almost certainly does not have the
+same kind of keyboard as the terminal it is emulating.
+
+<p>
+
+One of the most confusing aspects of terminal emulation is making the PC keys
+do what their keytops say they do.  Many people find it quite surprising when
+the Backspace key doesn't backspace, the Arrow keys don't move the cursor, the
+Insert key doesn't insert, and so on.  In general only the letter and digit
+keys on the main keypad can be depended upon to act as their labels suggest.
+The rest, well...  each has its own story.  This is the story of the Backspace
+key.
+
+<p>
+<ul>
+<li><i>
+This discussion applies mainly to PC-based versions of Kermit:
+<a href="../k95.html">Kermit 95</a> and
+<a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a>,
+which include full key-mapping capabilities.  <a
+href="../ckermit.html">C-Kermit</a> for UNIX (including Linux, FreeBSD, AIX,
+Solaris, HP-UX, etc) has a limited key-mapping feature that allows
+backspace/delete configuration.  However, most of the discussion is general
+information that should be useful regardless of connection method and
+software.
+
+</i>
+<p>
+<li><i>Terms like "left" and "right" are used in the
+context of left-to-right writing systems like English, Russian, or Greek.  For
+right-to-left scripts like Hebrew, the directionality is reversed.</i>
+</ul>
+
+<p>
+
+First some terminology.  "Backspace" might (or might not) be the name of a
+key.  For example, it is printed on the keytop of the large key at the upper
+right of main keypad on the PC 101 keyboard.  On the DEC keyboard, the same
+key is labeled with a symbol (<tt>&#60;X]</tt>) instead
+of a word<b>.</b>&nbsp;  "Backspace" is also is the name of an ASCII control
+character (ASCII value 8), which might or might not be associated with the
+Backspace key.  "Backspace" is also an abstract concept relating to computers,
+terminals, and typewriters, having at least two distinct meanings:
+
+<p>
+
+<ul>
+
+<li>To erase the character left of the active position (cursor), and
+simultaneously move the cursor to the position previously occupied by that
+character.  This is called a <i>destructive backspace</i>.
+
+<p>
+
+<li>To move the cursor one space to the left into the same position as the
+character that was previously to its left, without erasing that character.
+This is a <i>nondestructive backspace</i>.  Nondestructive backspacing is
+usually done with the Left Arrow key, discussed
+<a href="../faq-c-arr.html#faq-c-arr">elsewhere</a>.
+
+</ul>
+
+<p>
+
+To confuse matters even further, your keyboard might have keys other than
+Backspace that suggest a destructive backspace capability.  For example, PC
+keyboads include both a "Del" and "Delete" key and one or two Left Arrow keys
+in <i>addition</i> to the Backspace key.  These are strictly for local PC
+functions and not, in general, for sending characters to the host (but of
+course in Kermit you can map them to do whatever you want).
+
+<p>
+
+To cause a <b>destructive backspace</b> operation, the terminal must send an
+appropriate code to the host, and the host must reply with appropriate
+terminal-specific codes to move the terminal's cursor and remove the unwanted
+character.  Unfortunately, different hosts and applications use different
+characters (or sequences) for destructive backspace (and of course, different
+terminals use different codes for screen formatting).  The terminal emulator,
+Kermit or otherwise, has no way of knowing what host or application you are
+using, or how it is configured, and therefore no way of knowing what to send
+when you press the Backspace key.
+
+<p>
+
+Of course, Kermit's Backspace key must send <i>something</i> &quot;out of the
+box&quot;, i.e. in the absence of specific instructions from you.  This is
+<i>default</i> backspace assignment.  Each emulation (VT100, Wyse 60,
+Televideo, etc) has an appropriate default assignment, namely what the
+corresponding key on the real terminal sends.
+
+<p>
+
+Therefore, it should be sufficient to inform the host you are connected to
+about your terminal type, and then it should expect the destructive backspace
+code that is associated with that terminal.  In practice, however, this is
+rarely enough.  In <a href="#unix">Unix(*)</a>, for example,
+the terminal driver has no connection with the terminal database, so
+setting or changing your terminal type in Unix has no effect on the characters
+it uses for destructive backspace (or other forms of editing, such as word
+and line deletion).
+
+<p>
+
+For most emulations Kermit uses one of the two most
+likely destructive backspace values, and in fact the one that is defined in
+ASCII to be destructive backspace, in most cases Rubout (RUB), also known as
+Delete (DEL), character number 127, which sometimes is displayed as
+&quot;<tt>^?</tt>&quot;.  Lest anyone believe this is a frivolous choice, we
+quote from American National Standard X3.4-1977, Section 5.1, Control
+Characters:
+
+<p>
+
+<ul>
+<li><b>0/8 BS (Backspace)</b>.  A one-active-position format effector that
+moves the position backward on the same line.
+<p>
+<li><b>7/15 DEL (Delete)</b>.  Also known as RUB (Rubout).  A character used
+primarily to erase or obliterate an erroneous or unwanted character...
+</ul>
+<p>
+
+(Certain other emulations have their own defaults.  For example Data General
+DASHER terminals use Control-Y for character deletion, because that is what
+Data General operating systems such as AOS/VS expect.)
+
+<p>
+
+What happens if the wrong choice is made?  If Delete is chosen but is not the
+host's destructive backspace character, it is likely to:
+<p>
+<ul>
+<li>Interrupt or cancel the current command (default SIGINT in many Unixes).
+<li>Be accepted as a data character and echo as "<tt>^?</tt>".
+<li>Be ignored.
+</ul>
+<p>
+
+If Backspace is chosen but is not the host's destructive backspace character,
+it is likely to:
+<p>
+<ul>
+<li>Move the cursor to the beginning of the current line (VMS).
+<li>Perform a nondestructive backspace.
+<li>Be accepted as a data character and echo as "<tt>^H</tt>".
+<li>Enter "help mode" (EMACS).
+<li>Recall the correct part of a failing command (TOPS-20).
+</ul>
+
+<p>
+
+Even when the host terminal driver uses a specific character
+such as Backspace for erasure, this does not guarantee that all applications
+also use it.  One well-known case in point is EMACS, which -- in effect --
+replaces the terminal driver with its own; in EMACS, control-characters are
+used as commands: Ctrl-H for Help, Ctrl-B for (cursor) Back, Ctrl-F for
+(cursor) Forward, etc.  If you find EMACS's key definitions disconcerting,
+you can change them, e.g.:
+<p>
+<pre>
+  (define-key global-map "\^h" 'backward-char)                 ; nondestructive
+  (define-key global-map "\^h" 'backward-delete-char-untabify) ; destructive
+</pre>
+
+<p>
+
+<hr>
+<b><a name="termtype">Select an Appropriate Terminal Emulation</a></b><p>
+
+The first step in making your Backspace key behave as expected is to choose an
+terminal emulation in Kermit that is appropriate for the computer your are
+connecting to, and then (if necessary) tell your host what kind of terminal
+Kermit is emulating.  The command for choosing a terminal emulation in Kermit
+is:
+
+<p>
+<pre>
+  SET TERMINAL TYPE <i>name</i>
+</pre>
+<p>
+Type a question mark (<tt>?</tt>) in place of the <i>name</i> to get a list
+of the available emulations.  Here are some examples:
+
+<p>
+<pre>
+  <u><i>Host Operating System</i></u>        <u><i>Terminal Type(s)</i></u>
+  (Open)VMS, RT11, RSX, ...    VT100, VT102, VT220, VT320
+  Digital Unix, Tru64, Ultrix  VT100, VT102, VT220, VT320
+  BBS's                        ANSI-BBS, AVATAR
+  AOS/VS or DG/UX              D210, D215, D217, D463, D470
+  Stratus VOS                  TVI950
+  Linux                        LINIX
+  SCO XENIX, OSR5, ODT, UNIX   SCOANSI
+  Unixware                     AT386
+  HP-UX                        HPTERM, HP2621A
+  AIX                          AIXTERM, HFT, IBM3151
+  SINIX                        SNI-97801, BA80
+  BeOS                         BETERM
+  QNX                          QNX, QANSI
+  Most other UNIX              VT100 or VT102
+  3270 protocol converters     VT100, IBM3151, Heath-19
+</pre>
+
+<p>
+
+When the most appropriate emulation is not available, most hosts also
+support VT100 and/or Wyse 50 or 60.
+
+<p>
+
+<hr>
+<b><a name="tellhost">Inform the Host of Your Terminal Type</a></b><p>
+
+The command for telling your host what terminal type you have depends on
+the host operating system and, in the case of Unix, also on the shell.
+Some examples (for the DEC VT100 terminal type):
+
+<p>
+<pre>
+  set terminal /device vt100   <i>(VMS, manual)</i>
+  set terminal /inquire        <i>(VMS, automatic)</i>
+  term vt100                   <i>(Unix if it has a 'term' command)</i>
+  export TERM=vt100            <i>(Unix ksh or bash)</i>
+  setenv TERM vt100            <i>(Unix csh)</i>
+  TERM=vt100 ; export TERM     <i>(Unix sh)</i>
+</pre>
+
+<p>
+
+After that, if the Backspace key still does not work, you have <b>two
+choices</b>:
+
+<p>
+<ul>
+<li><b>Change Kermit</b> to send what the host expects.
+<li><b>Change the host</b> to expect what Kermit sends.
+</ul>
+<p>
+
+Well, sometimes three choices.  If the Backspace key sends the DEL character
+but the host wants the Backspace character, you can type Ctrl-H (hold down the
+Ctrl key and press the "h" key) instead of using the Backspace key.
+
+<p>
+<hr>
+
+<b><a name="setkey">Changing What Kermit's Backspace Key Sends</a></b><p>
+
+Kermit's SET KEY command lets you redefine the Backspace key (or any other
+key) to send whatever you want it to send (or to take any other actions).
+
+<p>
+
+The SET KEY command has two operands: a unique identifier for a key or key
+combination, called a <i>keycode</i>, and the value or action to be assigned
+to the key, called the <i>definition</i>:
+
+<p>
+<pre>
+  set key <i>keycode</i> <i>definition</i>
+</pre>
+<p>
+
+In Kermit commands, a keycode is a number preceded by a backslash.  Keycodes
+are likely to be different for different operating systems, keyboards, and/or
+Kermit programs.  In particular:
+
+<p>
+<pre>
+  <u><i>Program</i>      </u>      <u><i>Keycode for Backspace Key</i></u>
+  MS-DOS Kermit               \270
+  Kermit 95                   \264
+</pre>
+<p>
+
+(You can find out the keycode of any key or key combination by giving the
+SHOW KEY command.  Kermit prompts you to press a key; you can press any key
+or key combination and Kermit tells you the keycode.)
+
+<p>
+
+As noted above, the characters most commonly used by terminals to send a
+destructive backspace command to a host computer are single ASCII <i>control
+characters:</i> Delete and Backspace.  Control characters are entered into SET
+KEY and other Kermit commands by their numeric ASCII value, preceded by
+backslash (which tells Kermit that these are character codes, rather than
+literal digits).  Here are the characters used for destructive backspace, in
+decreasing order of likelihood (numbers are shown in decimal):
+
+<p>
+<pre>
+  <u><i>Character Name</i>    </u>     <u><i>Alternative Name</i></u>    <u><i>ASCII value</i></u>
+  Delete (DEL)             Rubout (RUB)           127
+  Backspace (BS)           Control-H (^H)           8
+  End of Medium (EM)       Control-Y (^Y)          25
+  Number Sign (#)          Pound Sign              35
+  Cancel Character (CCH)   <i>(7-bit)</i> ESC T        27 84 
+  Cancel Character (CCH)   <i>(8-bit)</i>                148
+</pre>
+<p>
+(Number sign was used on very old Unix systems that were accessed from
+Teletype hardcopy terminals; this original Unix default is still found
+here and there.  CCH is an 8-bit (C1) control character from ISO 6429,
+which has a 7-bit coding as the sequence ESC followed by the letter T.)
+
+<p>
+
+Now let's put all this together to show the possible combinations:
+
+<p>
+<pre>
+  <u><i>Action</i>              </u>     <u><i>Kermit 95</i>        </u>      <u><i>MS-DOS Kermit</i>    </u>
+  Backspace sends DEL      set key \264 \127      set key \270 \127
+  Backspace sends BS	   set key \264 \8  	  set key \270 \8
+  Backspace sends EM	   set key \264 \25 	  set key \270 \25
+  Backspace sends '#'	   set key \264 \35 	  set key \270 \35
+  Backspace sends CCH	   set key \264 \148	  set key \270 \148
+  Backspace sends ESC T	   set key \264 \27T	  set key \270 \27T
+</pre>
+<p>
+
+Of course other arrangements are possible too.  Remember, you can assign
+any definition you want to any key or key combination.  Some people might
+prefer to have Backspace always send DEL and (say) Shift-Backspace or
+Control-Backspace always send Ctrl-H (or vice versa).  Example for K95:
+
+<p>
+<pre>
+  set key \264  \127      <i>(Kermit 95: Backspace sends DEL)</i>
+  set key \1151 \8        <i>(Kermit 95: Ctrl-Backspace sends BS)</i>
+</pre>
+
+<p>
+
+<i>Where do I put these commands?</i>  You can give SET KEY commands at the
+Kermit prompt, or you can put them in your Kermit customization file:
+<tt>MSCUSTOM.INI</tt> for MS-DOS Kermit; <tt>K95CUSTOM.INI</tt> for Kermit 95.
+
+<p>
+
+In Kermit 95, if you use the Dialer to make connections, you can also
+choose the Backspace-key action for each connection on the Keyboard
+page of the Dialer notebook for that connection.
+
+<p>
+
+<hr>
+<b><a name="stty">Changing What the Host Expects</a></b><p>
+
+In the days of real terminals, there was no way to change what a terminal's
+Backspace (or equivalent) key sent.  Therefore host operating systems such
+as <a href="#unix">Unix(*)</a> that did not require a certain kind of terminal
+for access had to provide a method for adapting to different terminals.
+
+<p>
+
+Other host operating systems (such as VMS) always expect the same character
+for destructive backspace and you can't change it; in the VMS case, you simply
+have no choice but to configure your emulator to send DEL.
+
+<p>
+
+Unix hosts, however, let you change your editing and interruption characters
+(and much else besides) with the <tt><i>stty</i></tt> command.  The
+particulars of this command vary greatly from one Unix variety to another, so
+you'll need to view the documentation by typing one of the following commands
+at the Unix shell prompt:
+
+<p>
+<pre>
+  man stty
+  info stty
+</pre>
+<p>
+
+Here are a few examples:
+
+<p>
+<pre>
+  <u>Operating System</u>   <u>View Settings</u>    <u>Change to BS </u>     <u>Change to DEL  </u>
+  Digital Unix 4.0   stty             stty erase ^h     stty erase "^?"
+  HP-UX 8.00         stty             stty erase ^h     stty erase "^?"
+  HP-UX 10.20        stty             stty erase ^h     stty erase ^?
+  IRIX 6.5           stty -a          stty erase ^h     stty erase ^?
+  Linux              stty -a          stty erase ^h     stty erase ^?
+  SCO OSR5           stty             stty erase "^H"   stty erase "^?"
+  SINIX 5.42         stty             stty erase "^h"   stty erase "^?"
+  Solaris 2.5.1      stty -a          stty erase ^h     stty erase ^?
+  SunOS 4.1          stty all         stty erase ^h     stty erase ^?
+  Ultrix 4.3         stty all         stty erase ^h     stty erase "^?"
+  Unixware 7.0       stty             stty erase ^h     stty erase ^?
+</pre>
+<p>
+Quoting requirements might vary from shell to shell (sh, ksh, bash, tcsh, etc).
+When in doubt use doublequotes as shown in many of the examples above.
+Note that in all cases above, the "<tt>^</tt>" character is "circumflex"
+or "caret", normally produced by typing Shift-6.  In other words, "<tt>^h</tt>"
+in an stty command is circumflex followed by the letter "h", not Control-H
+itself.   Also note that case might be significant in the control-character
+letter name: "h" or "H".
+
+<p>
+______________<br>
+<tt><a name="unix"><up>*</up></a></tt><small>Remember, "Unix" is a generic
+term covering dozens of specific operating systems, such as Linux, FreeBSD,
+AIX, HP-UX, Solaris, and <a href="../unix.html">lots of others</a>.</small>
+<p>
+<hr>
+<b>Links to related info</b> at other sites (likely to change or disappear at
+any time):
+<p>
+<ul>
+<li><a href="http://www.ibb.net/~anne/keyboard.html">Consistent BackSpace and
+Delete Configuration</a>
+<li><a href="http://www.tldp.org/HOWTO/Keyboard-and-Console-HOWTO-5.html">
+The Linux keyboard and console HOWTO - Backspace and Delete</a>
+<li><a href="http://www.tldp.org/HOWTO/mini/BackspaceDelete/">
+Linux Backspace/Delete mini-HOWTO</a>
+</ul>
+
+<p>
+[ <a href="../newfaq.html">Kermit FAQ</a> ] [ <a href="../ckermit.html">C-Kermit</a> ] [ <a href="../k95.html">Kermit 95</a> ] [ <a href="../mskermit.html">MS-DOS Kermit</a> ] [ <a href="../index.html">Kermit Home</a> ]
+<hr>
+<address>
+The Kermit FAQ / The Kermit Project / Columbia University / <a href="mailto:kermit@columbia.edu">kermit@columbia.edu</a> / 27 Apr 2001
+</address>
+</body>
+</html>
