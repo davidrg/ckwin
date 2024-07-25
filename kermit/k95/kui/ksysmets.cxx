@@ -24,7 +24,7 @@ void KSysMetrics::reset()
 #else
     _screenWidth = GetSystemMetrics( SM_CXVIRTUALSCREEN );
     _screenHeight = GetSystemMetrics( SM_CYVIRTUALSCREEN );
-    
+
     /* SM_CXVIRTUALSCREEN and SM_CYVIRTUALSCREEN are new to Windows 98.
      * So check for a sensible value and if we don't get one, fall back
      * to using the dimensions of the primary display */

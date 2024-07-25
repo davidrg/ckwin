@@ -17,7 +17,12 @@
 #include "kwin.hxx"
 #include "kscroll.hxx"
 
+/* MAXNUMCOL is also defined in ckocon.h */
+#if (defined(_MSC_VER) && _MSC_VER > 1400) || defined(__GNUC__)
 const int MAXNUMCOL = 512;
+#else
+const int MAXNUMCOL = 256;
+#endif
 struct _K_CLIENT_PAINT;
 struct _K_WORK_STORE;
 
