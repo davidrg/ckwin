@@ -17,7 +17,7 @@
 #include "kwin.hxx"
 #include "kscroll.hxx"
 
-const int MAXNUMCOL = 256;
+const int MAXNUMCOL = 512;
 struct _K_CLIENT_PAINT;
 struct _K_WORK_STORE;
 

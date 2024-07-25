@@ -17,8 +17,24 @@ KSysMetrics::~KSysMetrics()
 ------------------------------------------------------------------------*/
 void KSysMetrics::reset()
 {
+    /* SM_CXVIRTUALSCREEN only exists in Visual C++ 6.0 and newer */
+#ifndef SM_CXVIRTUALSCREEN
     _screenWidth = GetSystemMetrics( SM_CXSCREEN );
     _screenHeight = GetSystemMetrics( SM_CYSCREEN );
+#else
+    _screenWidth = GetSystemMetrics( SM_CXVIRTUALSCREEN );
+    _screenHeight = GetSystemMetrics( SM_CYVIRTUALSCREEN );
+    
+    /* SM_CXVIRTUALSCREEN and SM_CYVIRTUALSCREEN are new to Windows 98.
+     * So check for a sensible value and if we don't get one, fall back
+     * to using the dimensions of the primary display */
+    if (_screenWidth < 1) {
+        _screenWidth = GetSystemMetrics( SM_CXSCREEN );
+    }
+    if (_screenHeight < 1) {
+        _screenHeight = GetSystemMetrics( SM_CYSCREEN );
+    }
+#endif
 
     _vscrollWidth = GetSystemMetrics( SM_CXVSCROLL );
     _hscrollHeight = GetSystemMetrics( SM_CYHSCROLL );

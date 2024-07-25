@@ -87,7 +87,11 @@
 #endif /* min */
 
 #ifdef NT
+#ifdef KUI
+#define MAXSCRNCOL  512            /* Maximum screen columns */
+#else /* KUI */
 #define MAXSCRNCOL  256            /* Maximum screen columns */
+#endif /* KUI */
 #define MAXSCRNROW  128            /* Maximum screen rows    */
 #define MAXTERMSIZE (MAXSCRNCOL*MAXSCRNROW)
 #else /* NT */
