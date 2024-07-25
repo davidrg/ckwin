@@ -3,6 +3,7 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
+
 ## C-Kermit for Windows 10.0b10 beta 6 - coming soon
 
 This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
@@ -20,7 +21,6 @@ Windows XP. See the included SSH Readme for a workaround if SSH support on
 Windows XP.
 
 ### Fixed Bugs
-
 * Fixed directory listings not reporting a size or modified time for files
   requiring more than 32 bits to store the file size on Windows NT 3.51 and
   newer. This issue will remain on NT 3.1/3.50.
@@ -44,6 +44,11 @@ Windows XP.
   in builds that *do* have SSH support
 * Fixed `show network` command showing "SSH V1 and V2 protocols" when SSH V1 is
   no longer supported in C-Kermit for Windows.
+* Fixed not being able to resize the terminal area to greater than the primary
+  display in K95G. For example, if the window was moved on to a display that
+  was taller than the primary display and maximised the bottom of the terminal
+  screen would not be correctly rendered. This fix only applies to modern
+  versions of Windows.
 
 ### Minor Enhancements and other changes
 
@@ -63,6 +68,11 @@ Windows XP.
 * Upgraded to C-Kermit 10.0 Pre-Beta.11
 * About window (Help -> About) now includes the beta number
 * Added help text for `set terminal autopage` and `set terminal autoscroll`
+* Increased the maximum number of terminal columns from 256 to 512 in K95G.
+  This should be enough to fill a 4K display at with a 10pt font or larger.
+  As this change increases memory requirements by around 1MB whether the extra
+  columns are used or not, it has only been increased in builds targeting
+  modern PCs. Vintage PCs will still be limited to 256 columns.
 
 ### New features
 
