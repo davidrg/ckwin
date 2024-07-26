@@ -55,6 +55,7 @@ Windows XP.
 * Upgraded to OpenSSL 3.0.14, the current long term support release 
   (supported until 7 September 2026)
 * Updated to libssh 0.10.6
+* Updated to zlib 1.3.1
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
 * The default k95custom.ini now displays a message the console-mode version
