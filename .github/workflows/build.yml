@@ -9,11 +9,11 @@ on:
 
 env:
   # Expected filename: https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz
-  #ZLIB: https://zlib.net/
-  ZLIB: https://ftp.zx.net.nz/pub/dev/lib/zlib/
+  ZLIB: https://zlib.net/
+  #ZLIB: https://ftp.zx.net.nz/pub/dev/lib/zlib/
   # As of 2023-01-21 downloads from zlib.net are coming back corrupted for an unknown reason.
   # So we're now fetching zlib from ftp.zx.net.nz instead.
-  ZLIB_VERSION: 1.2.13
+  ZLIB_VERSION: 1.3.1
   # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 3.0.14
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
