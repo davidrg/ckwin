@@ -434,7 +434,7 @@ jobs:
         call mknt.bat
 
     - name: Fetch x86 wart
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       if: matrix.arch != 'x86' && matrix.arch != 'x64'
       with:
         name: wart-x86
@@ -504,13 +504,13 @@ jobs:
         copy ${{ github.workspace }}\libssh\${{env.LIBSSH_VERSION}}\build\src\ssh-xp.dll ssh.dll
 
     - name: Fetch CA Certs bundle
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ca_certs
         path: ${{ github.workspace }}\kermit\k95\dist
 
     - name: Fetch Docs
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: markdown-docs
         path: ${{ github.workspace }}\kermit\k95\dist
@@ -712,7 +712,7 @@ jobs:
           call mknt.bat
 
       - name: Fetch x86 wart
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         if: matrix.arch == 'ia64'
         with:
           name: wart-x86
@@ -762,13 +762,13 @@ jobs:
           ROOT: ${{ github.workspace }}
 
       - name: Fetch CA Certs bundle
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ca_certs
           path: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: markdown-docs
           path: ${{ github.workspace }}\kermit\k95\dist
@@ -904,7 +904,7 @@ jobs:
         move ..\dialer\dist ${{ github.workspace }}\dialer
 
     - name: Fetch Docs
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: markdown-docs
         path: ${{ github.workspace }}\ckwin
@@ -1002,7 +1002,7 @@ jobs:
           WATCOM: ${{ github.workspace }}\watcom
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: markdown-docs
           path: ${{ github.workspace }}\ckwin
@@ -1486,13 +1486,13 @@ jobs:
 
       - name: Fetch CA Certs bundle
         if: matrix.legacy_dependencies == 'yes'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ca_certs
           path: ${{ github.workspace }}\kermit\k95\dist
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: markdown-docs
           path: ${{ github.workspace }}\kermit\k95\dist
@@ -1610,7 +1610,7 @@ jobs:
         shell: powershell
 
       - name: Fetch x86 wart
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wart-x86
           path: ${{ github.workspace }}
@@ -1664,7 +1664,7 @@ jobs:
           VCT2003: ${{ github.workspace }}\VCT2003
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: markdown-docs
           path: ${{ github.workspace }}\kermit\k95\dist
@@ -1749,13 +1749,13 @@ jobs:
             mv kermit/k95/ckwin ./
 
       - name: Fetch CA Certs bundle
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ca_certs
           path: ${{ github.workspace }}/ckwin
 
       - name: Fetch Docs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: markdown-docs
           path: ${{ github.workspace }}/ckwin
