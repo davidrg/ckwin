@@ -66,7 +66,7 @@ align=center src="crownico.gif"> Kermit 95+ Version 2.1</h1>
 
 <i>
 As of Windows 10, Kermit 95 is still fully functional on all Windows
-versions with the caveats listed in <a href="/k95faq.html">HERE</a>.
+versions with the caveats listed in <a href="k95faq.html">HERE</a>.
 </i>
 
 <h3 style="border-top:1px solid grey; margin-top:12px"><i>Internet
@@ -1759,8 +1759,8 @@ The K95 Dialer keeps a database of connections, which you can modify by
 adding, removing, or changing entries.  When you want to make a connection,
 the Dialer generates a command file, or <i>script</i>, composed of Kermit
 commands (as documented in <cite>Using C-Kermit</cite>) and starts the
-<tt>K95.EXE</tt> program (Windows) or <tt>K2.EXE</tt> (OS/2), telling it to
-execute this script.
+<tt>K95.EXE</tt> or <tt>K95G.EXE</tt> program (Windows), or <tt>K2.EXE</tt>
+(OS/2), telling it to execute this script.
 
 <p>
 
@@ -2233,12 +2233,12 @@ Keyboard, Printer, Telnet policies, SSL/TLS, SSH, FTP, and so on, as described
 
 Kermit 95 comes in <i>two pieces</i>: a graphical Dialer
 (<tt>K95DIAL.EXE</tt>) and a text-based command and communications engine
-(<tt>K95.EXE</tt>).  The Dialer is a user-friendly "front end" for K95 in the
-normal Windows graphical style, complete with menus, toolbar, and numerous
-graphical dialogs.  You can use the Dialer to define all your connections, and
-after that you can access them any time you want simply by clicking on them.
-But you don't <i>have</i> to use the Dialer at all if you prefer not to, which
-might be the case if you are already an experienced user of
+(<tt>K95.EXE</tt> or <tt>K95G.EXE</tt>).  The Dialer is a user-friendly "front
+end" for K95 in the normal Windows graphical style, complete with menus,
+toolbar, and numerous graphical dialogs.  You can use the Dialer to define all
+your connections, and after that you can access them any time you want simply
+by clicking on them. But you don't <i>have</i> to use the Dialer at all if you
+prefer not to, which might be the case if you are already an experienced user of
 <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> or
 <a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a>.
 
@@ -5481,7 +5481,7 @@ If you specify a Login script in a Dialer entry, it is executed last.
 </ul>
 <p>
 
-Kermit 95 offers two kinds of connections: those provide only command-level
+Kermit 95 offers two kinds of connections: those that provide only command-level
 access from the Kermit client to the remote server:
 
 <p>
@@ -5884,7 +5884,7 @@ the Terminal screen is too small for you, just click on the little arrow
 button to open up the font-size menu to pick a bigger size.  Pick any size
 you want, even a teeny-weeny size and see the tiny little Terminal screen,
 just right for a mouse.  In Windows NT/2000/XP/etc and OS/2, use the
-Font..."  entry on the System menu.  <b>Warning:</b> If you see an "Auto
+Font..."  entry on the System menu.  <b>Warning:</b> If you see an "Auto"
 entry in the font list, do not choose it.  See <a href="k95bugs.htm#b9">Item
 9</a> in the K95 Bugs List for details.
 
@@ -6027,8 +6027,8 @@ or active <a href="#kbmode">keyboard modes</a>.
 <p>
 
 <li>Scrollback is NOT accomplished using <b>scroll bars</b>.  Console
-applications are not allowed to use scroll bars.  Scroll bar will be supported
-for scrollback in the forthcoming <a href="gloss.htm#g_gui">GUI</a>
+applications are not allowed to use scroll bars. The Scroll bar is only
+supported for scrollback in the <a href="gloss.htm#g_gui">GUI</a>
 version of K-95.
 
 </ul>
@@ -7387,7 +7387,7 @@ Armenian, Georgian, Runes, Ogham, Canadian Syllabics, Cherokee, Tibetan, Math,
 Symbols, Line and Box Drawing, Dingbats, and APL (not supported, besides Han,
 are Indic, Hangul, Ethiopic, Syriac, Thai, Lao, Myanmar, and Braille).  This
 is not a free font; it comes with Kermit 95 2.x but may not be further
-redistributed.  <a href="http://kermit.columbia.edu/glass.html#emt">CLICK
+redistributed.  <a href="glass.html#emt">CLICK
 HERE</a> for a sample.
 
 <p>
@@ -8517,7 +8517,7 @@ interpreted correctly when it is executed again.
 <p>
 
 The <tt>CONNECT</tt> command, by which you tell Kermit 95 to enter the
-Terminal screen, command accepts the following modifier switches:
+Terminal screen, accepts the following modifier switches:
 
 <p>
 <dl>
