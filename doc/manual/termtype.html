@@ -258,18 +258,22 @@ other features such as multiple pages.
 <h2><a name="restrictions"><hr>Restrictions on Terminal Emulations</h2>
 
 <ul>
-<li>Dim characters are not supported.  This is a Console-mode restriction;
-Kermit 95 substitutes bold for dim.
-<li>Only 16 colors are supported.  This is another Console limitation.
+<li>Only 16 colors are supported.
 <li>Local editing is not currently supported.
-<li>True underlining can not be done in a Console window; it is simulated
-by coloration.
-<li>True double-width and double-height characters are simulated since
-they can't be shown in a Console window.
 <li>Multiple pages are not supported.
 <li>AIXTERM and HPTERM emulations are not X servers; they are terminal types
 that support the same escape and key sequences as the X-based terminal windows
 on AIX and HP-UX, respectively.
+<li>Due to Console-mode restrictions, the following features are not supported
+    in K95.EXE, they're only available in the GUI version (K95G.EXE):
+    <ul>
+        <li>Dim characters - these are shown in bold instead
+        <li>Underlining is simulated by coloration.
+        <li>True double-width and double-height characters are simulated since
+            they can't be shown in a Console window.
+    </ul>
+</li>
+
 </ul>
 
 <p>
@@ -277,7 +281,7 @@ on AIX and HP-UX, respectively.
 The HP, Wyse, and Televideo emulations do not support the host-controlled
 status line; function-key labels are supported but not displayed in the
 status line. Function key labels can be displayed in a popup dialog using 
-the \Kfnkeys keyboard verb which is normally assigned to Alt-F..
+the \Kfnkeys keyboard verb which is normally assigned to Alt-F.
 
 <p>
 
