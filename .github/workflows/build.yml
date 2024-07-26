@@ -140,7 +140,7 @@ jobs:
         env:
           ROOT: ${{ github.workspace }}
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: wart-x86
           path: ${{ github.workspace }}\ckwart.exe
@@ -527,7 +527,7 @@ jobs:
       run: |
         move dist ${{ github.workspace }}\ckwin
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4.1.1
+      uses: actions/upload-artifact@v4
       with:
         name: ckwin-vc${{ matrix.toolset }}-${{ matrix.arch }}
         path: ${{ github.workspace }}\ckwin
@@ -784,7 +784,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: ckwin-vc10-${{ matrix.arch }}
           path: ${{ github.workspace }}\ckwin
@@ -915,14 +915,14 @@ jobs:
       shell: cmd
 
     - name: Upload CKW Artifact
-      uses: actions/upload-artifact@v4.1.1
+      uses: actions/upload-artifact@v4
       with:
         name: ckwin-ow1.9-x86
         path: ${{ github.workspace }}\ckwin
         if-no-files-found: error
         retention-days: 7
     - name: Upload Dialer Artifact
-      uses: actions/upload-artifact@v4.1.1
+      uses: actions/upload-artifact@v4
       with:
         name: dialer-ow1.9-x86
         path: ${{ github.workspace }}\dialer
@@ -1018,7 +1018,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: ckwin-ow1.9-x86-nt350
           path: ${{ github.workspace }}\ckwin
@@ -1125,7 +1125,7 @@ jobs:
           move ..\dialer\dist-os2\* dist-os2\
           move dist-os2 ${{ github.workspace }}\ckos2
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: ckos2-ow1.9-x86
           path: ${{ github.workspace }}\ckos2
@@ -1509,7 +1509,7 @@ jobs:
           move dist ${{ github.workspace }}\ckwin
           move dist-misc ${{ github.workspace }}\ckwin-extra
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'no'
         with:
           name: ckwin-vc7.1-x86
@@ -1517,7 +1517,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (extra)
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'no'
         with:
           name: ckwin-vc7.1-x86-extra
@@ -1525,7 +1525,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: ckwin-vc7.1-x86-insecure
@@ -1533,7 +1533,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (extra)
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'yes'
         with:
           name: ckwin-vc7.1-x86-insecure-extra
@@ -1681,7 +1681,7 @@ jobs:
         run: |
           move dist ${{ github.workspace }}\ckwin
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: ckwin-vc8-ia64
           path: ${{ github.workspace }}\ckwin
@@ -1766,7 +1766,7 @@ jobs:
         shell: bash
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: ckwin-mingw64-cross
           path: ${{ github.workspace }}/ckwin
