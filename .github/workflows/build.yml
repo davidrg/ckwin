@@ -212,7 +212,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+rel+nasm+xp+dsa+libdes+kfw+ver4
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+rel+nasm+xp+dsa+libdes+kfw+ver5
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
@@ -334,7 +334,13 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_VERSION}}
-        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}     
+        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+        
+        REM The linker by default marks the subsystem version too high for XP
+        REM and there isn't a way to fix that from the configure script, so
+        REM do it the hard way.
+        sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
+        
         ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (x86-64)
