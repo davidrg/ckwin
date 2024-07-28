@@ -94,7 +94,7 @@ extern int mskrename;
 #include "ck_ssl.h"
 #endif /* CK_SSL */
 #ifdef SSHBUILTIN
-#include "ckossh.h"
+#include "ckolssh.h"
 #endif /* SSHBUILTIN */
 #ifdef STRATUS                          /* Stratus Computer, Inc.  VOS */
 #ifdef putchar

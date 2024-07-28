@@ -79,7 +79,7 @@ extern UCHAR NetBiosRemote[] ;
 #endif /* KUI */
 
 #ifdef SSHBUILTIN
-#include "ckossh.h"
+#include "ckolssh.h"
 #endif
 
 #ifdef NETCONN

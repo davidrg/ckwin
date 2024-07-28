@@ -39,7 +39,7 @@
 /* Only so we can get a definition for VTERM and VNUM */
 #include "ckocon.h"
 
-#include "ckoshs.h"
+#include "ckolsshs.h"
 
 #ifdef KUI
 extern HWND hwndConsole;

@@ -44,10 +44,10 @@ char *cksshv = "SSH support, 10.0,  18 Apr 2023";
 #include <libssh/libssh.h>
 
 #include "ckcdeb.h"
-#include "ckossh.h"
+#include "ckolssh.h"
 #include "ckcker.h"
 #include "ckuusr.h"
-#include "ckoshs.h"
+#include "ckolsshs.h"
 
 
 /* Global Variables:

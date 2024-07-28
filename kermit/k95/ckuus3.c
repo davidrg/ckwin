@@ -48,7 +48,7 @@ int pwcrypt = 0;
 #ifdef OS2
 #include "ckcuni.h"
 #ifdef SSHBUILTIN
-#include "ckossh.h"
+#include "ckolssh.h"
 #endif /* SSHBUILTIN */
 #ifdef CK_NETBIOS
 #include <os2.h>

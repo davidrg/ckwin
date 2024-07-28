@@ -852,7 +852,7 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ck_crp$(O) ck_des$(O) \
 !endif
 !if ("$(CKF_SSH)" == "yes")
-        ckossh$(O) ckorbf$(O) ckoshs$(O) \
+        ckolssh$(O) ckorbf$(O) ckolsshs$(O) \
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
@@ -1254,7 +1254,7 @@ ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h c
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h ckoi31.h \
                 ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-                ckcnet.h ckctel.h kui\ikui.h ckossh.h
+                ckcnet.h ckctel.h kui\ikui.h ckolssh.h
 ckoco4$(O):     ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckcasc.h \
                 ckokey.h ckokvb.h
 ckoco5$(O):     ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h 
@@ -1332,8 +1332,8 @@ ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 
-ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
-ckoshs$(O):     ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckolssh$(O):    ckolsshs.h ckolsshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckolssh.c ckolssh.h
+ckolsshs$(O):   ckolsshs.c ckolsshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
 ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
 
 

@@ -144,7 +144,7 @@ OBJS =  $(OUTDIR)/ckcmai$(O)  $(OUTDIR)/ckcfns$(O)  $(OUTDIR)/ckcfn2$(O) \
 		$(OUTDIR)/p_common$(O) $(OUTDIR)/p_tl$(O)      $(OUTDIR)/p_dir$(O)
 
 # For SSH-enabled builds
-#OBJS = $(OBJS)  ckossh$(O) ckorbf$(O) ckoshs$(O) 
+#OBJS = $(OBJS)  ckolssh$(O) ckorbf$(O) ckolsshs$(O)
 
 all: console iksdnt k95g
 
@@ -376,7 +376,7 @@ $(OUTDIR)/ckoco2$(O): ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 $(OUTDIR)/ckoco3$(O): ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h \
 	ckoker.h ckocon.h ckokey.h ckokvb.h ckuusr.h ckowys.h ckodg.h  ckoava.h \
 	ckoi31.h ckohp.h  ckoadm.h ckohzl.h ckoqnx.h ckotvi.h ckovc.h  ckcuni.h \
-    ckcnet.h ckctel.h kui/ikui.h ckossh.h
+    ckcnet.h ckctel.h kui/ikui.h ckolssh.h
 $(OUTDIR)/ckoco4$(O): ckoco4.c ckcdeb.h ckoker.h ckclib.h ckocon.h ckokey.h \
 	ckokvb.h ckuusr.h ckcasc.h ckokey.h ckokvb.h
 $(OUTDIR)/ckoco5$(O): ckoco5.c ckcdeb.h ckoker.h ckclib.h ckocon.h
