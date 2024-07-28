@@ -49,6 +49,7 @@ Windows XP.
   was taller than the primary display and maximised the bottom of the terminal
   screen would not be correctly rendered. This fix only applies to modern
   versions of Windows.
+* Fixed included openssl.exe not working on Windows XP
 
 ### Minor Enhancements and other changes
 
