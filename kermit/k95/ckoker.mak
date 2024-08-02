@@ -45,11 +45,23 @@ LWP30INC    = $(LWP30DIR)\inc20
 
 # Base flags for all versions of Visual C++ (and OpenWatcom
 # pretending to be Visual C++)
+!if "$(DEBUG)" == "-DNDEBUG"
+# Doing a release build
 !if "$(CKB_STATIC_CRT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
 COMMON_CFLAGS = /MD
+!endif
+
+!else
+# Doing a Debug build, use the Debug CRT
+!if "$(CKB_STATIC_CRT)"=="yes"
+!message Building with statically linked native CRT as requested.
+COMMON_CFLAGS = /MTd
+!else
+COMMON_CFLAGS = /MDd
+!endif
 !endif
 
 # These options are used for all Windows .exe targets
@@ -163,8 +175,8 @@ INCLUDE = $(INCLUDE);ow\;
 
 !endif
 
-!if ($(MSC_VER) < 60)
-!error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
+!if ($(MSC_VER) < 80)
+!error Unsupported compiler version. Visual C++ 1.0 32-bit edition or newer required.
 !endif
 
 # TODO: Much of this compiler flag work should be applied to the KUI Makefile
@@ -180,6 +192,11 @@ LDFLAGS = $(LDFLAGS) /MACHINE:X64
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
 LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
+!endif
+
+!if ("$(DEBUG)" != "-DNDEBUG") && ($(MSC_VER) <= 130)
+# This debug flag is only valid on Visual C++ 6.0 and older.
+LINKFLAGS = $(LINKFLAGS) /debugtype:both
 !endif
 
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
@@ -373,7 +390,7 @@ msvcd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
