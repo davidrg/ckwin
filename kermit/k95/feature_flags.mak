@@ -266,6 +266,8 @@ CKF_SSL=no
 CKF_TELNET_ENCRYPTION=no
 CKF_SRP=no
 CKF_K4W=no
+CKF_INTERNAL_CRYPT=no
+CKF_CRYPTDLL=no
 !endif
 
 # MIT Kerberos for Windows:
