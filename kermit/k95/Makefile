@@ -141,7 +141,8 @@ OBJS =  $(OUTDIR)/ckcmai$(O)  $(OUTDIR)/ckcfns$(O)  $(OUTDIR)/ckcfn2$(O) \
 		$(OUTDIR)/ckohzl$(O)  $(OUTDIR)/ckohp$(O)   $(OUTDIR)/ckoqnx$(O) \
 		$(OUTDIR)/cknnbi$(O)  $(OUTDIR)/ckop$(O)    $(OUTDIR)/p_callbk$(O) \
 		$(OUTDIR)/p_global$(O) $(OUTDIR)/p_omalloc$(O) $(OUTDIR)/p_error$(O) \
-		$(OUTDIR)/p_common$(O) $(OUTDIR)/p_tl$(O)      $(OUTDIR)/p_dir$(O)
+		$(OUTDIR)/p_common$(O) $(OUTDIR)/p_tl$(O)   $(OUTDIR)/p_dir$(O) \
+		$(OUTDIR)/ckoads$(O)
 
 # For SSH-enabled builds
 #OBJS = $(OBJS)  ckossh$(O) ckorbf$(O) ckoshs$(O) 
@@ -416,6 +417,8 @@ $(OUTDIR)/ckovc$(O):  ckovc.c  ckovc.h  ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h
 $(OUTDIR)/ckoadm$(O): ckoadm.c ckoadm.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h ckcnet.h ckctel.h ckcuni.h
+$(OUTDIR)/ckoads$(O): ckoads.c ckoads.h ckcdeb.h ckcker.h ckcuni.h ckocon.h \
+	ckcnet.h ckcasc.h ckuusr.h
 $(OUTDIR)/ckohzl$(O): ckohzl.c ckohzl.h ckcdeb.h ckoker.h ckclib.h ckcker.h \
 	ckcasc.h ckocon.h ckuusr.h ckcnet.h ckctel.h ckcuni.h
 $(OUTDIR)/ckohp$(O):  ckohp.c  ckohp.h  ckcdeb.h ckoker.h ckclib.h ckcker.h \
