@@ -632,6 +632,11 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
+
+REM libdes won't build for Alpha64
+if "%CKB_TARGET_ARCH%" == "ALPHA64" set CKF_LIBDES=unsupported
+if "%CKB_TARGET_ARCH%" == "ALPHA64" set CKF_CRYPTDLL=no
+
 goto :cvcdone
 
 :vc71
