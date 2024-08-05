@@ -879,6 +879,19 @@ static char * hmxxssh[] = {
 "  This command replaces the comment associated with a V1 RSA key file.",
 " ",
 #endif
+#ifdef SSH_DLL
+"SSH LOAD filename",
+"  This command is only available when no SSH backend DLL was loaded on ",
+"  startup, either due to there being no compatible DLL available or due to",
+"  the loading of optional network libraries being disabled via command line",
+"  parameter. ",
+" ",
+"  This command takes one or more DLL filenames separated by a semicolon (;)",
+"  which will attempted in order. The first DLL that loads successfully will",
+"  enable all SSH commands and be used for all SSH operations until Kermit is",
+"  restarted.",
+" ",
+#endif
 "SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
 "      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
 "  This command establishes a new connection using SSH version 1 or",
@@ -912,6 +925,14 @@ static char * hmxxssh[] = {
 
 static char *hmxyssh[] = {
 #ifdef SSHBUILTIN
+#ifdef SSH_DLL
+/* Ideally we'd vary this help content based on what commands are actually
+ * available, but no easy way to do that with a static char*
+ */
+"NOTICE: Actual commands and parameters available may vary based on the ",
+"        currently loaded SSH backend. ",
+" ",
+#endif /* SSH_DLL */
 "SET SSH AGENT-FORWARDING { ON, OFF }",
 "  If an authentication agent is in use, setting this value to ON",
 "  results in the connection to the agent being forwarded to the remote",
@@ -956,7 +977,9 @@ static char *hmxyssh[] = {
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
 " ",
-#ifdef COMMENT
+#ifdef SSH_DLL
+/* These commands aren't supported by the default SSH backend, but if the
+ * backend is a DLL then some other backend might support them */
 "SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
 "  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
 "  The default is OFF.",
@@ -965,19 +988,17 @@ static char *hmxyssh[] = {
 "  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
 "  host.  The default is OFF.",
 " ",
-#endif
 "SET SSH PRIVILEGED-PORT { ON, OFF }",
 "  Specifies whether a privileged port (less than 1024) should be used",
 "  when connecting to the host.  Privileged ports are not required except",
 "  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
 "  is OFF.",
 " ",
-#ifdef COMMENT
 "SET SSH PROXY-COMMAND [ command ]",
 "  Specifies the command to be executed in order to connect to the remote",
 "  host. ",
 " ",
-#endif
+#endif /* SSH_DLL */
 "SET SSH QUIET { ON, OFF }",
 "  Specifies whether all messages generated in conjunction with SSH",
 "  protocols should be suppressed.  The default is OFF.",
@@ -999,7 +1020,7 @@ static char *hmxyssh[] = {
 "  after applying Kermit's SET SSH commands.  The configuration file",
 "  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
 " ",
-#ifdef COMMENT
+#ifdef SSH_DLL
 "SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
 "  Specifies which cipher should be used to protect SSH version 1",
 "  connections.  The default is 3DES.",
@@ -1016,7 +1037,7 @@ static char *hmxyssh[] = {
 " ",
 "    \\v(appdata)ssh/known_hosts",
 " ",
-#endif
+#endif /* SSH_DLL */
 "SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
 "    PUBKEY, NONE } [ ... ]",
 "  Specifies an ordered list of SSH version 2 authentication methods to",

@@ -33,6 +33,13 @@
 #include "ckcdeb.h"
 #include "ckorbf.h"
 
+#ifdef SSH_DLL
+int debug_logging();  /* defined in ckossh.c */
+#undef debug
+#define debug(a,b,c,d) \
+((void)(debug_logging()?dodebug(a,b,(char *)(c),(CK_OFF_T)(d)):0))
+#endif /* SSH_DLL */
+
 struct ring_buffer_t {
     char* buffer;
     size_t head;
@@ -56,6 +63,7 @@ struct ring_buffer_t {
 
 
 ring_buffer_handle_t ring_buffer_new(size_t max_length) {
+    debug(F111, "ringbuf - new", "length", max_length);
     ring_buffer_handle_t buf = malloc(sizeof(ring_buffer_t));
     buf->buffer = malloc(max_length * sizeof(char));
     if (buf->buffer == NULL) {
@@ -102,10 +110,27 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
 void ring_buffer_free(ring_buffer_handle_t buf) {
     if (buf == NULL) return;
 
-    if (buf->buffer != NULL) free(buf->buffer);
-    if (buf->mutex != NULL) CloseHandle(buf->mutex);
-    if (buf->readReady != NULL) CloseHandle(buf->readReady);
-    if (buf->writeReady != NULL) CloseHandle(buf->writeReady);
+    debug(F100, "ringbuf - free", NULL, 0);
+
+    if (buf->buffer != NULL) {
+        free(buf->buffer);
+        buf->buffer = NULL;
+    }
+    if (buf->mutex != NULL) {
+        HANDLE h = buf->mutex;
+        buf->mutex = NULL;
+        CloseHandle(h);
+    }
+    if (buf->readReady != NULL) {
+        HANDLE h = buf->readReady;
+        buf->readReady = NULL;
+        CloseHandle(h);
+    }
+    if (buf->writeReady != NULL) {
+        HANDLE h = buf->writeReady;
+        buf->writeReady = NULL;
+        CloseHandle(h);
+    }
     free(buf);
 }
 
@@ -175,21 +200,25 @@ BOOL ring_buffer_put_noset(ring_buffer_handle_t buf, char data) {
  * @param buf Buffer to set events for
  */
 void ring_buffer_set_events(ring_buffer_handle_t buf) {
-    if (buf->full) {
-        /* Buffer is now full - no longer ready to write */
-        ResetEvent(buf->writeReady);
-    } else {
-        /* Buffer has free space. If anyone was waiting to write they can do
-         * so now */
-        SetEvent(buf->writeReady);
+    if (buf->writeReady != NULL) {
+        if (buf->full) {
+            /* Buffer is now full - no longer ready to write */
+            ResetEvent(buf->writeReady);
+        } else {
+            /* Buffer has free space. If anyone was waiting to write they can do
+             * so now */
+            SetEvent(buf->writeReady);
+        }
     }
 
-    if (ring_buffer_is_empty(buf)) {
-        /* Buffer is empty - not ready for reading */
-        ResetEvent(buf->readReady);
-    } else {
-        /* If anyone was waiting for data to read, data is now available */
-        SetEvent(buf->readReady);
+    if (buf->readReady != NULL) {
+        if (ring_buffer_is_empty(buf)) {
+            /* Buffer is empty - not ready for reading */
+            ResetEvent(buf->readReady);
+        } else {
+            /* If anyone was waiting for data to read, data is now available */
+            SetEvent(buf->readReady);
+        }
     }
 }
 
@@ -208,6 +237,8 @@ BOOL ring_buffer_put(ring_buffer_handle_t buf, char data) {
 
 int ring_buffer_put_blocking(ring_buffer_handle_t buf, char data, int timeout) {
     int rc;
+
+    if (buf->writeReady == NULL) return RING_BUFFER_NO_RING_BUFFER;
 
     /* Wait for the writeReady event. This is always signalled when the buffer
      * is non-full, so we may not have to spend any time waiting. */
@@ -272,6 +303,7 @@ BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
     if (!result) return result;
 
 #ifdef COMMENT
+    if (buf->writeReady == NULL) return FALSE;
     SetEvent(buf->writeReady);
 
     if (ring_buffer_is_empty(buf)) {
@@ -289,6 +321,8 @@ BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
 
 int ring_buffer_get_blocking(ring_buffer_handle_t buf, char *data, int timeout) {
     int rc;
+
+    if (buf->readReady == NULL) return RING_BUFFER_NO_RING_BUFFER;
 
     /* Wait for the readReady event. This is always signalled when the buffer
      * is non-empty, so we may not have to spend any time waiting */
@@ -444,6 +478,11 @@ BOOL ring_buffer_consume(ring_buffer_handle_t buf, size_t length) {
 BOOL ring_buffer_lock(ring_buffer_handle_t buf, DWORD msTimeout) {
     DWORD dwWaitResult;
 
+    if (buf->mutex == NULL) {
+        debug(F100, "ringbuf mutex does not exist in ring_buffer_lock.", "", 0);
+        return FALSE;
+    };
+
     dwWaitResult = WaitForSingleObject(
             buf->mutex,
             msTimeout);
@@ -464,6 +503,10 @@ BOOL ring_buffer_lock(ring_buffer_handle_t buf, DWORD msTimeout) {
 
 
 void ring_buffer_unlock(ring_buffer_handle_t buf) {
+    if (buf->mutex == NULL) {
+        debug(F100, "ringbuf mutex does not exist in ring_buffer_unlock.", "", 0);
+        return;
+    };
     ReleaseMutex(buf->mutex);
 }
 
@@ -471,6 +514,18 @@ void ring_buffer_signal_error(ring_buffer_handle_t buf, int error) {
     if (ring_buffer_lock(buf, INFINITE)) {
         buf->error = error;
         ring_buffer_unlock(buf);
+
+        if (buf->readReady == NULL) {
+            debug(F100, "ringbuf readReady does not exist in ring_buffer_signal_error.", "", 0);
+        };
+
+        if (buf->writeReady == NULL) {
+            debug(F100, "ringbuf writeReady does not exist in ring_buffer_signal_error.", "", 0);
+        };
+
+        if (buf->readReady == NULL || buf->writeReady == NULL) {
+            return;
+        };
 
         /* Set read/write events to immediately unblock calls to the blocking
          * get/put operations */

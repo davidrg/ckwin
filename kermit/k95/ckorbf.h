@@ -43,6 +43,7 @@ typedef ring_buffer_t* ring_buffer_handle_t;
 #define RING_BUFFER_TIMEOUT 1
 #define RING_BUFFER_TRY_AGAIN 2
 #define RING_BUFFER_LOCK_ERROR 3
+#define RING_BUFFER_NO_RING_BUFFER 4
 
 /** Creates a new ring buffer. Pass to ring_buffer_free() to delete it.
  *

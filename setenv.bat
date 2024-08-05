@@ -55,7 +55,7 @@ set srp_root=%root%\srp
 
 REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
 REM    target\bin\i386\rel\wshelp32.dll
-REM    target\lib\ie86\rel\wshload.lib
+REM    target\lib\i386\rel\wshload.lib
 REM    athena\wshelper\include\wshelper.h
 REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
 REM
@@ -353,6 +353,15 @@ if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
 if exist %libssh_build%\src\ssh.lib echo Found libssh: %libssh_build%\src\ssh.lib
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
+
+if exist %libssh_build%\src\out\ssh.lib set lib=%lib%;%libssh_build%\src\out
+if exist %libssh_build%\src\out\ssh.lib echo Found libssh: %libssh_build%\src\out\ssh.lib
+if exist %libssh_build%\src\out\ssh.lib set CKF_SSH=yes
+if exist %libssh_build%\src\out\ssh.lib set lib=%lib%;%libssh_build%\src\out
+if exist %libssh_build%\src\out\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\out\ssh.dll
+if exist %libssh_build%\src\out\sshg.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshg.dll
+if exist %libssh_build%\src\out\sshx.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshx.dll
+if exist %libssh_build%\src\out\sshgx.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshgx.dll
 if "%CKF_SSH%" == "no" echo Could not find libssh (%libssh_build%\src\ssh.lib)
 if "%CKF_SSH%" == "no" goto :nossh
 :nossh

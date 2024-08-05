@@ -139,6 +139,10 @@ BOOL conpty_open = FALSE;
 #endif /* NT */
 #endif /* CK_CONPTY */
 
+#ifdef SSH_DLL
+#include "ckossh.h"
+#endif /* SSH_DLL */
+
 extern int ttnproto, tn_deb;
 #ifndef NOTERM
 extern int tt_type;
@@ -4402,6 +4406,24 @@ netinit() {
             ttyfd = -1 ;
         }
 #endif /* SUPERLAT */
+
+#ifdef SSH_DLL
+        if (deblog) {
+            printf("  SSH support..." ) ;
+            debug(F100,"SSH support...","",0);
+        }
+        if (ssh_dll_load(SSH_AUTO_DLLS, FALSE) >= 0) {
+            if (deblog) {
+                printf("OK\n") ;
+                debug(F100,"SSH OK","",0);
+            }
+        } else {
+            if (deblog) {
+                printf("Not installed\n" ) ;
+                debug(F100,"SSH not installed","",0) ;
+            }
+        }
+#endif /* SSH_DLL */
     }
 
 #ifdef TCPSOCKET

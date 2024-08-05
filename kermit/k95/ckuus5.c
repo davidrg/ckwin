@@ -398,6 +398,7 @@ extern char *cksshv;
 #ifdef SFTP_BUILTIN
 extern char *cksftpv;
 #endif /* SFTP_BUILTIN */
+#include "ckossh.h"
 #endif /* SSHBUILTIN */
 
 #ifdef TNCODE
@@ -3814,8 +3815,7 @@ dooutput(s, cx) char *s; int cx;
 #endif /* CK_ANSIC */
 {
 #ifdef SSHBUILTIN
-    extern int ssh_cas;
-    extern char * ssh_cmd;
+    const char * ssh_cmd;
 #endif /* SSHBUILTIN */
     int x, xx, y, quote;                /* Workers */
     int is_tn = 0;
@@ -3860,8 +3860,9 @@ dooutput(s, cx) char *s; int cx;
 #endif /* NOLOCAL */
     }
 #ifdef SSHBUILTIN
-    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
-         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+    ssh_cmd = ssh_get_sparam(SSH_SPARAM_CMD);
+    if ( network && nettype == NET_SSH && ssh_get_iparam(SSH_IPARAM_CAS) &&
+         ssh_cmd && !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
         if (!quiet)
             printf("?SSH Subsystem active: %s\n", ssh_cmd);
         return(0);

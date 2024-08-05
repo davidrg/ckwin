@@ -1,67 +1,71 @@
-/*  C K O S S H   --  Kermit interface to libssh Header */
+#ifndef _CKOSSH_H
+#define _CKOSSH_H
 
-/*
-  Author:  Jeffrey E Altman (jaltman@secure-endpoints.com),
-           Secure Endpoints Inc., New York City
-
-  COPYRIGHT NOTICE:
-
-  Copyright (C) 2004, Trustees of Columbia University in the City of New
-  York.  All rights reserved.
-*/
-
-#ifdef SSHBUILTIN
-extern int                              /* SET SSH variables */
-  ssh_afw,                              /* agent forwarding */
-  ssh_xfw,                              /* x-11 forwarding */
-  ssh_prp,                              /* use privileged-port? */
-  ssh_cmp,                              /* use compression? */
-  ssh_cas,                              /* command-as-subsystem? */
-  ssh_shh,                              /* quiet? */
-  ssh_ver,                              /* Version: 0 auto, 1, 2 */
-  ssh_vrb,                              /* Verbose */
-  ssh_chkip,                            /* SSH Check Host IP flag */
-  ssh_gwp,                              /* gateway ports */
-  ssh_dyf,                              /* dynamic forwarding */
-  ssh_gsd,                              /* gssapi delegate credentials */
-  ssh_k4tgt,                            /* k4 tgt passing */
-  ssh_k5tgt,                            /* k5 tgt passing */
-  ssh_shk,                              /* Strict host key */
-  ssh2_ark,                             /* Auto re-key */
-  ssh_cfg,                              /* use OpenSSH config */
-  ssh_gkx,                              /* gssapi key exchange */
-  ssh_k5_is_k4,                         /* some OpenSSH use same codes */
-  ssh_hbt,                              /* heartbeat */
-  ssh_dummy;                            /* bottom of list */
-
-char                             /* The following are to be malloc'd */
-  * ssh1_cif,                           /* v1 cipher */
-  * ssh2_cif,                           /* v2 cipher list */
-  * ssh2_mac,                           /* v2 mac list */
-  * ssh2_auth,                          /* v2 authentication list */
-  * ssh2_hka,                           /* v2 Host Key Algorithm list */
-  * ssh_hst,                            /* hostname */
-  * ssh_prt,                            /* port/service */
-  * ssh_cmd,                            /* command to execute */
-  * ssh_xal,                            /* xauth-location */
-  * ssh1_gnh,                           /* v1 global known hosts file */
-  * ssh1_unh,                           /* v1 user known hosts file */
-  * ssh2_gnh,                           /* v2 global known hosts file */
-  * ssh2_unh,                           /* v2 user known hosts file */
-  * ssh2_kex,                           /* V2 key exchange methods */
-  * ssh_pxc,                            /* Proxy Command */
-  * xxx_dummy;
-
+/* TODO: These all need to be accessed via functions, not as globals. */
 extern char * ssh_idf[32];              /* identity files */
 extern int ssh_idf_n;
 
 extern int    ssh_pf_lcl_n,
-              ssh_pf_rmt_n;
+        ssh_pf_rmt_n;
 extern struct ssh_pf ssh_pf_lcl[32];    /* Port forwarding structs */
 extern struct ssh_pf ssh_pf_rmt[32];    /* (declared in ckuusr.c) */
 
 extern int ssh_sock;                    /* SSH socket */
 
+/* Integer parameters. Set with ssh_set_iparam, get with ssh_get_iparam */
+#define SSH_IPARAM_AFW      1       /* agent forwarding */
+#define SSH_IPARAM_XFW      2       /* x11 forwarding   */
+#define SSH_IPARAM_PRP      3       /* privileged ports */
+#define SSH_IPARAM_CMP      4       /* compression */
+#define SSH_IPARAM_CAS      5       /* command as subsys */
+#define SSH_IPARAM_SHH      6       /* quiet       */
+#define SSH_IPARAM_VER      7       /* protocol version (auto,1,2) */
+#define SSH_IPARAM_VRB      8       /* Report errors */
+#define SSH_IPARAM_CHKIP    9       /* SSH Check Host IP flag */
+#define SSH_IPARAM_GWP      10      /* gateway ports */
+#define SSH_IPARAM_DYF      11      /* dynamic forwarding */
+#define SSH_IPARAM_GSD      12      /* gssapi delegate credentials */
+#define SSH_IPARAM_K4TGT    13      /* k4 tgt passing */
+#define SSH_IPARAM_K5TGT    14      /* k5 tgt passing */
+#define SSH_IPARAM_SHK      15      /* Strict host key (no, yes, ask) */
+#define SSH_IPARAM_2_ARK    16      /* Auto re-key */
+#define SSH_IPARAM_CFG      17      /* use OpenSSH config? */
+#define SSH_IPARAM_GKX      18      /* gssapi key exchange */
+#define SSH_IPARAM_K5_IS_K4 19      /* some SSH v1 use same codes */
+#define SSH_IPARAM_HBT      20      /* heartbeat (seconds) */
+
+/* String parameters. Set with ssh_set_sparam, get with ssh_get_sparam */
+#define SSH_SPARAM_1_CIF    1       /* v1 cipher */
+#define SSH_SPARAM_2_CIF    2       /* v2 cipher list */
+#define SSH_SPARAM_2_MAC    3       /* v2 mac list */
+#define SSH_SPARAM_2_AUTH   4       /* v2 authentication list */
+#define SSH_SPARAM_2_HKA    5       /* Host Key Algorithms */
+#define SSH_SPARAM_HST      6       /* hostname */
+#define SSH_SPARAM_PRT      7       /* port/service */
+#define SSH_SPARAM_CMD      8       /* command to execute */
+#define SSH_SPARAM_XAL      9       /* xauth-location */
+#define SSH_SPARAM_1_GNH    10      /* v1 global known hosts file */
+#define SSH_SPARAM_1_UNH    11      /* v1 user known hosts file */
+#define SSH_SPARAM_2_GNH    12      /* v2 global known hosts file */
+#define SSH_SPARAM_2_UNH    13      /* v2 user known hosts file */
+#define SSH_SPARAM_2_KEX    14      /* Key Exchange Methods */
+#define SSH_SPARAM_PXC      15      /* Proxy command */
+
+/* Setters and getters for the various "set ssh" options. set_ssh_sparam takes
+ * a copy of the supplied string rather than taking ownership of it.*/
+_PROTOTYP(int ssh_set_iparam,(int param, int value));
+_PROTOTYP(int ssh_get_iparam,(int param));
+_PROTOTYP(int ssh_set_sparam,(int param, const char* value));
+_PROTOTYP(const char* ssh_get_sparam,(int param));
+
+/* Getters for various global values within C-Kermit */
+_PROTOTYP(const char* ssh_get_uid,(VOID));
+_PROTOTYP(const char* ssh_get_pw,(VOID));
+_PROTOTYP(int ssh_get_nodelay_enabled,(VOID));
+_PROTOTYP(void get_current_terminal_dimensions,(int*,int*));
+_PROTOTYP(const char* get_current_terminal_type,());
+
+/* SSH Interface */
 _PROTOTYP(int ssh_open,(VOID));
 _PROTOTYP(int ssh_clos,(VOID));
 _PROTOTYP(int ssh_tchk,(VOID));
@@ -71,31 +75,114 @@ _PROTOTYP(int ssh_inc,(int));
 _PROTOTYP(int ssh_xin,(int,char *));
 _PROTOTYP(int ssh_toc,(int));
 _PROTOTYP(int ssh_tol,(char *,int));
-_PROTOTYP(VOID ssh_terminfo,(char *,int, int));
-_PROTOTYP(CONST char * ssh_errorstr,(int));
-_PROTOTYP(int ssh_ttvt,(VOID));
-_PROTOTYP(int ssh_ttpkt,(VOID));
-_PROTOTYP(int ssh_ttres,(VOID));
 _PROTOTYP(int ssh_snaws, (void));
-_PROTOTYP(int ssh_fwd_remote_port, (int port, char * host, int host_port));
+
+/* SSH Key management */
 _PROTOTYP(int sshkey_create,(char * filename, int bits, char * pp,
-                   int type, char * cmd_comment));
+                             int type, char * cmd_comment));
 _PROTOTYP(int sshkey_display_fingerprint,(char * filename, int babble));
 _PROTOTYP(int sshkey_display_public,(char * filename, char *identity_passphrase));
 _PROTOTYP(int sshkey_display_public_as_ssh2,(char * filename,char *identity_passphrase));
 _PROTOTYP(int sshkey_change_passphrase,(char * filename, char * oldpp, char * newpp));
-_PROTOTYP(int sshkey_v1_change_comment,(char * filename, char * comment, char * pp));
-_PROTOTYP(char * sshkey_default_file,(int));
-_PROTOTYP(int ssh_fwd_local_port,(int,char *,int));
-_PROTOTYP(int ssh_few_remote_port,(int,char *,int));
-_PROTOTYP(void ssh_v2_rekey,(void));
-_PROTOTYP(char * ssh_proto_ver,(void));
-_PROTOTYP(const char * ssh_impl_ver,(void));
 
+/* Port forwarding configuration */
+_PROTOTYP(int ssh_fwd_remote_port, (int port, char * host, int host_port));
+_PROTOTYP(int ssh_fwd_local_port,(int,char *,int));
+
+#ifdef SSHTEST
+_PROTOTYP(int sshkey_v1_change_comment,(char * filename, char * comment, char * pp));
+#endif /* SSHTEST */
+/*_PROTOTYP(char * sshkey_default_file,(int));*/
+_PROTOTYP(void ssh_v2_rekey,(void));
+
+/* SSH Agent */
 _PROTOTYP(int ssh_agent_delete_file,(const char *filename));
 _PROTOTYP(int ssh_agent_delete_all, (void));
 _PROTOTYP(int ssh_agent_add_file, (const char *filename));
 _PROTOTYP(int ssh_agent_list_identities,(int do_fp));
-#endif /* SSHBUILTIN */
+
+/* Information */
+_PROTOTYP(const char * ssh_proto_ver,(void));
+_PROTOTYP(const char * ssh_impl_ver,(void));
+_PROTOTYP(const char * ssh_dll_name,(void));
+_PROTOTYP(const char * ssh_dll_ver,(void));
+_PROTOTYP(int ssh_avail,(VOID));
+_PROTOTYP(void ssh_unload,(VOID));
+
+typedef struct {
+    int rc;
+    struct keytab* ktab;
+    int ktab_len;
+} ktab_ret;
+
+#define SSH_KTAB_V2_AUT         1
+#define SSH_KTAB_V2_CIPHERS     2
+#define SSH_KTAB_V2_MACS        3
+#define SSH_KTAB_HKA            4
+#define SSH_KTAB_KEX            5
+#define SSH_KTAB_V1_CIPHERS     6
+
+_PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
+
+#define SSH_FEAT_SSH_V1         1
+#define SSH_FEAT_PORT_FWD       2
+#define SSH_FEAT_X11_FWD        3
+#define SSH_FEAT_PROXY_CMD      4
+#define SSH_FEAT_OPENSSH_CONF   5
+#define SSH_FEAT_GSSAPI_DELEGAT 6
+#define SSH_FEAT_GSSAPI_KEYEX   7
+#define SSH_FEAT_ADV_KERBEROS4  8
+#define SSH_FEAT_ADV_KERBEROS5  9
+#define SSH_FEAT_AGENT_FWD      10
+#define SSH_FEAT_AGENT_MGMT     11
+#define SSH_FEAT_KEY_MGMT       12
+#define SSH_FEAT_REKEY_MANUAL   13
+#define SSH_FEAT_REKEY_AUTO     14
+#define SSH_FEAT_FROM_PRIV_PRT  15
+
+_PROTOTYP(int ssh_feature_supported,(int feature_id));
 
 
+#ifdef SSH_DLL
+typedef struct  {
+
+    /* Version 1 */
+    int version;
+    void (*p_install_funcs)(const char*, const void*);
+    void (*p_get_current_terminal_dimensions)(int* rows, int* cols);
+    const char* (*p_get_current_terminal_type)();
+    const char* (*p_ssh_get_uid)();
+    const char* (*p_ssh_get_pw)();
+    int (*p_ssh_get_nodelay_enabled)();
+    int (*p_dodebug)(int,char *,char *,CK_OFF_T);
+    int (*p_vscrnprintf)(char *, ...);
+    int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int);
+    int (*p_uq_mtxt) (char *,char **,int,struct txtbox[]);
+    int (*p_uq_ok)(char *,char *,int,char **,int);
+    int (*p_uq_file)(char *,char *,int,char **,char *,char *,int);
+	int (*p_zmkdir)(char *);
+	int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
+            char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
+            char *s10, char *s11, char *s12);
+	char* (*p_whoami)();
+	char* (*p_GetHomePath)();
+	char* (*p_GetHomeDrive)();
+    int (*p_ckstrncpy)(char * dest, const char * src, int len);
+    int (*p_debug_logging)();
+} ssh_init_parameters_t;
+
+/*
+ *  k95sshg.dll     libssh + gssapi (kerberos).
+ *  k95ssh.dll      libssh
+ *  k95sshgx.dll    libssh + gssapi (kerberos) patched for Windows XP
+ *  k95sshx.dll     libssh patched for Windows XP
+ *  k95plink.dll    PuTTYs plink as a dll - someday. perhaps.
+ */
+#define SSH_AUTO_DLLS "k95sshg.dll;k95ssh.dll;k95sshgx.dll;k95sshx.dll;k95plink.dll"
+
+_PROTOTYP(int ssh_dll_load,(const char* dll_names, int quiet));
+_PROTOTYP(int ssh_dll_unload,(int quiet));
+
+#endif /* SSH_DLL */
+
+#endif /* _CKOSSH_H */

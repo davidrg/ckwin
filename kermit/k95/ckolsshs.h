@@ -35,6 +35,11 @@
 
 #include "ckorbf.h"
 
+#ifdef SSH_DLL
+#undef debug
+#define debug(a,b,c,d) \
+((void)(debug_logging()?dodebug(a,b,(char *)(c),(CK_OFF_T)(d)):0))
+#endif /* SSH_DLL */
 
 #define SESSION_TYPE_PTY        0
 #define SESSION_TYPE_COMMAND    1
@@ -195,14 +200,15 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
-        char* hostname, char* port, int verbosity, char* command,
+        const char* hostname, char* port, int verbosity, const char* command,
         BOOL subsystem, BOOL compression, BOOL use_openssh_config,
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
-        char* user_known_hosts_file, char* global_known_hosts_file,
-        char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
-        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
-        int nodelay, char* proxy_command);
+        const char* user_known_hosts_file, const char* global_known_hosts_file,
+        const char* username, const char* password, const char* terminal_type,
+        int pty_width, int pty_height, const char* auth_methods,
+        const char* ciphers, int heartbeat, const char* hostkey_algorithms,
+        const char* macs, const char* key_exchange_methods, int nodelay,
+        const char* proxy_command);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *
