@@ -75,6 +75,8 @@ Windows XP.
   As this change increases memory requirements by around 1MB whether the extra
   columns are used or not, it has only been increased in builds targeting
   modern PCs. Vintage PCs will still be limited to 256 columns.
+* CKW no longer rejects updated OpenSSL DLLs provided the major and minor
+  versions match.
 
 ### New features
 
