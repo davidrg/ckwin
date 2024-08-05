@@ -1386,7 +1386,7 @@ cknprt$(O): cknprt.c ckcdeb.h ckoker.h ckcker.h ckucmd.h
 ckuath$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_ssl.h ckossl.h \
                 ckosslc.h ckuath.c ckoath.h
 ckoath$(O):     ckoath.c ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ckoath.h ckoetc.h
-ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h
+ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h ckossh.h
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h

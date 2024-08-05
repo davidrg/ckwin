@@ -362,7 +362,7 @@ $(OUTDIR)/ckuath$(O): ckuath.c ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h \
 $(OUTDIR)/ckoath$(O): ckoath.c ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h \
 	ckuath.h ckuat2.h ckoath.h
 $(OUTDIR)/ck_ssl$(O): ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h \
-	ckosslc.h ckossl.h
+	ckosslc.h ckossl.h ckossh.h
 $(OUTDIR)/ckossl$(O): ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 $(OUTDIR)/ckosslc$(O): ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 $(OUTDIR)/ckosftp$(O): ckosftp.c ckoker.h ckclib.h ckosftp.h ckosftp.c
