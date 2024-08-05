@@ -79,11 +79,10 @@ ck_ssh_is_installed()
     return ssh_avail();
 #else /* SSH_DLL */
     return(1)
+#endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
     return(0);
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
-    return(0);
 }
 
 int
