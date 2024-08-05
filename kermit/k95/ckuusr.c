@@ -144,7 +144,7 @@ extern int tt_scroll;
 #ifndef NOTERM
 extern tt_status[VNUM];
 #endif /* NOTERM */
-#include "ckolssh.h"
+#include "ckossh.h"
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */
@@ -2395,8 +2395,6 @@ int    ssh_pf_lcl_n = 0,
        ssh_pf_rmt_n = 0;
 struct ssh_pf ssh_pf_lcl[32] = { 0, NULL, 0 }; /* SSH Port Forwarding */
 struct ssh_pf ssh_pf_rmt[32] = { 0, NULL, 0 }; /* structs... */
-extern char * ssh_hst, * ssh_cmd, * ssh_prt;
-extern int    ssh_ver,   ssh_xfw;
 char * ssh_tmpuid = NULL, *ssh_tmpcmd = NULL, *ssh_tmpport = NULL,
      * ssh_tmpstr = NULL;
 
@@ -2427,24 +2425,34 @@ struct keytab sshopnsw[] = {
     { "/password",       SSHSW_PWD, CM_ARG },
     { "/subsystem",      SSHSW_SUB, CM_ARG },
     { "/user",           SSHSW_USR, CM_ARG },
-    { "/version",        SSHSW_VER, CM_ARG },
-    { "/x11-forwarding", SSHSW_X11, CM_ARG },
+    { "/version",        SSHSW_VER, CM_ARG },   /* SSH_FEAT_SSH_V1 */
+    { "/x11-forwarding", SSHSW_X11, CM_ARG },   /* SSH_FEAT_X11_FWD */
     { "", 0, 0 }
 };
 int nsshopnsw = (sizeof(sshopnsw) / sizeof(struct keytab)) - 1;
 
 static struct keytab sshkwtab[] = {
-    { "add",                 XSSH_ADD, 0 },
-    { "agent",               XSSH_AGT, 0 },
-    { "clear",               XSSH_CLR, 0 },
-    { "forward-local-port",  XSSH_FLP, CM_INV },
-    { "forward-remote-port", XSSH_FRP, CM_INV },
-    { "key",                 XSSH_KEY, 0 },
+    { "add",                 XSSH_ADD, 0 },         /* SSH_FEAT_PORT_FWD */
+    { "agent",               XSSH_AGT, 0 },         /* SSH_FEAT_AGENT_MGMT */
+    { "clear",               XSSH_CLR, 0 },         /* SSH_FEAT_PORT_FWD */
+    { "forward-local-port",  XSSH_FLP, CM_INV },    /* SSH_FEAT_PORT_FWD */
+    { "forward-remote-port", XSSH_FRP, CM_INV },    /* SSH_FEAT_PORT_FWD */
+    { "key",                 XSSH_KEY, 0 },         /* SSH_FEAT_KEY_MGMT */
+    { "load",                XSSH_LOAD, CM_INV },
     { "open",                XSSH_OPN, 0 },
-    /*{ "v2",                  XSSH_V2,  0 },*/
+    { "v2",                  XSSH_V2,  0 },         /* SSH_FEAT_REKEY_MANUAL */
     { "", 0, 0 }
 };
 static int nsshcmd = (sizeof(sshkwtab) / sizeof(struct keytab)) - 1;
+
+#ifdef SSH_DLL
+/* SSH Commands that are available when the SSH backend hasn't been loaded */
+static struct keytab sshloadkwtab[] = {
+    { "load",                XSSH_LOAD, 0 },
+    { "", 0, 0 }
+};
+static int nsshloadcmd = (sizeof(sshloadkwtab) / sizeof(struct keytab)) - 1;
+#endif /* SSH_DLL */
 
 static struct keytab ssh2tab[] = {
     { "rekey", XSSH2_RKE, 0 }, /* Not supported by libssh */
@@ -10815,7 +10823,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 
 #ifdef ANYSSH
     if (cx == XXSSH) {			/* SSH (Secure Shell) */
-	extern int netsave;
+	    extern int netsave;
 #ifdef SSHBUILTIN
         int k, havehost = 0, trips = 0;
         int    tmpver = -1, tmpxfw = -1;
@@ -10825,65 +10833,165 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 #endif /* SSHTEST */
         extern int mdmtyp, mdmsav, cxtype, sl_uid_saved;
         extern char * slmsg;
-	extern char uidbuf[], sl_uidbuf[];
+	    extern char uidbuf[], sl_uidbuf[];
         extern char pwbuf[], * g_pswd;
         extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
-	struct FDB sw, kw, fl;
+	    struct FDB sw, kw, fl;
         if (ssh_tmpstr)
-	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
+	        memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
         makestr(&ssh_tmpstr,NULL);
         makestr(&ssh_tmpuid,NULL);
         makestr(&ssh_tmpcmd,NULL);
         makestr(&ssh_tmpport,NULL);
 
+        /* Hide any "ssh" commands not supported by the currently loaded SSH
+         * backend */
+        for (z = 0; z < nsshcmd; z++) {
+            if ((sshkwtab[z].kwval == XSSH_ADD || sshkwtab[z].kwval == XSSH_CLR
+                || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP)
+                && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+                /* Port forwarding
+                 *   "ssh add" - adds port fowards
+                 *   "ssh clear" - clears port fowards
+                 * And these, which are already hidden by default:
+                 *   "ssh forward-local-port"
+                 *   "ssh forward-remote-port"
+                 * Possibly an unimplemented feature ("arbitrary forwarding")?
+                 */
+                sshkwtab[z].flgs = CM_INV;
+            }
+            else if (sshkwtab[z].kwval == XSSH_AGT
+                && !ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {
+                /*
+                 * "ssh agent"
+                 */
+                sshkwtab[z].flgs = CM_INV;
+            }
+            else if (sshkwtab[z].kwval == XSSH_KEY
+                && !ssh_feature_supported(SSH_FEAT_KEY_MGMT)) {
+                /*
+                 * "ssh agent"
+                 */
+                sshkwtab[z].flgs = CM_INV;
+            }
+            else if (sshkwtab[z].kwval == XSSH_V2
+                && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
+                /*
+                 * "ssh agent"
+                 */
+                sshkwtab[z].flgs = CM_INV;
+            }
+        }
+
+        /* Hide any "ssh open" arguments not supported by the currently loaded
+         * SSH backend */
+        for (z = 0; z < nsshopnsw; z++) {
+            if (sshopnsw[z].kwval == SSHSW_VER && !ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+                /*
+                 * "ssh open x /version:y" - if we don't support SSH V1 then we
+                 * only support SSH V2 so this at best does nothing. We only
+                 * hide this argument - it will still be parsed and the entered
+                 * value passed through to the SSH backend to reject if
+                 * necessary.
+                 */
+                sshopnsw[z].flgs = CM_INV;
+            }
+            else if (sshopnsw[z].kwval == SSHSW_X11 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+                /*
+                 * "ssh open x /x11-forwarding"
+                 */
+                sshopnsw[z].flgs = CM_INV;
+            }
+        }
+
         debug(F101,"SSH external parsing","",0);
 
-	cmfdbi(&kw,			/* 1st FDB - commands */
-	       _CMKEY,			/* fcode */
-	       "host [ port ],\n or action",	/* hlpmsg */
-	       "",			/* default */
-	       "",			/* addtl string data */
-	       nsshcmd,			/* addtl numeric data 1: tbl size */
-	       0,			/* addtl numeric data 2: 0 = keyword */
-	       xxstring,		/* Processing function */
-	       sshkwtab,		/* Keyword table */
-	       &fl			/* Pointer to next FDB */
-	       );
-	cmfdbi(&fl,			/* Host */
-	       _CMFLD,			/* fcode */
-	       "",			/* hlpmsg */
-	       "",			/* default */
-	       "",			/* addtl string data */
-	       0,			/* addtl numeric data 1 */
-	       0,			/* addtl numeric data 2 */
-	       xxstring,
-	       NULL,
-	       NULL
-	       );
+#ifdef SSH_DLL
+        if (!ssh_avail()) {
+            /* There is a different set of "ssh" commands available when the
+             * SSH backend hasn't been loaded.
+             */
+          	cmfdbi(&kw,			/* 1st FDB - commands */
+               _CMKEY,			/* fcode */
+               "action",	    /* hlpmsg */
+               "",			    /* default */
+               "",			    /* addtl string data */
+                nsshloadcmd,    /* addtl numeric data 1: tbl size */
+               0,			    /* addtl numeric data 2: 0 = keyword */
+               xxstring,		/* Processing function */
+               sshloadkwtab,	/* Keyword table */
+               &fl			    /* Pointer to next FDB */
+            );
+            x = cmfdb(&kw);
+            debug(F101,"SSH external cmfdb &kw","",x);
+            if (x == -3) {
+                printf("?ssh what?\n");
+                return(-9);
+            }
+            if (x < 0)
+              return(x);
+        } else {
+#endif /* SSH_DLL */
+            cmfdbi(&kw,			/* 1st FDB - commands */
+                   _CMKEY,			/* fcode */
+                   "host [ port ],\n or action",	/* hlpmsg */
+                   "",			/* default */
+                   "",			/* addtl string data */
+                   nsshcmd,			/* addtl numeric data 1: tbl size */
+                   0,			/* addtl numeric data 2: 0 = keyword */
+                   xxstring,		/* Processing function */
+                   sshkwtab,		/* Keyword table */
+                   &fl			/* Pointer to next FDB */
+                   );
+            cmfdbi(&fl,			/* Host */
+                   _CMFLD,			/* fcode */
+                   "",			/* hlpmsg */
+                   "",			/* default */
+                   "",			/* addtl string data */
+                   0,			/* addtl numeric data 1 */
+                   0,			/* addtl numeric data 2 */
+                   xxstring,
+                   NULL,
+                   NULL
+                   );
 
-	x = cmfdb(&kw);
-        debug(F101,"SSH external cmfdb &kw","",x);
-	if (x == -3) {
-	    printf("?ssh what?\n");
-	    return(-9);
-	}
-	if (x < 0)
-	  return(x);
-	havehost = 0;
-	if (cmresult.fcode == _CMFLD) {
-	    havehost = 1;
-	    ckstrncpy(line,cmresult.sresult,LINBUFSIZ); /* Hostname */
-	    cmresult.nresult = XSSH_OPN;
-	}
+
+            x = cmfdb(&kw);
+                debug(F101,"SSH external cmfdb &kw","",x);
+            if (x == -3) {
+                printf("?ssh what?\n");
+                return(-9);
+            }
+            if (x < 0)
+              return(x);
+            havehost = 0;
+            if (cmresult.fcode == _CMFLD) {
+                havehost = 1;
+                ckstrncpy(line,cmresult.sresult,LINBUFSIZ); /* Hostname */
+                cmresult.nresult = XSSH_OPN;
+            }
+#ifdef SSH_DLL
+        }
+#endif /* SSH_DLL */
+
 	switch (cmresult.nresult) {	/* SSH keyword */
+#ifdef SSH_DLL
+      case XSSH_LOAD: {     /* SSH LOAD */
+          if ((x = cmfld("SSH DLL filename","",&s,xxstring)) < 0) {
+		      return(x);
+          }
+
+          ssh_dll_load(s, FALSE);
+      }
+#endif /* SSH_DLL */
 	  case XSSH_OPN:		/* SSH OPEN */
             char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
             char* token;
-	    if (!havehost) {
-		if ((x = cmfld("Host","",&s,xxstring)) < 0)
-		  return(x);
-		ckstrncpy(line,s,LINBUFSIZ);
-	    }
+            if (!havehost) {
+                if ((x = cmfld("Host","",&s,xxstring)) < 0)
+                  return(x);
+                ckstrncpy(line,s,LINBUFSIZ);
+            }
             /* Try to handle username@hostname syntax */
             ckstrncpy(tmpline,line,LINBUFSIZ);
             token = strtok(tmpline, "@");
@@ -10994,12 +11102,16 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 			if ((x = cmfld("Text","",&s,xxstring)) < 0)
 			  return(x);
                         makestr(&ssh_tmpcmd,s);
-			ssh_cas = (cmresult.nresult == SSHSW_SUB);
+            ssh_set_iparam(SSH_IPARAM_CAS, cmresult.nresult == SSHSW_SUB);
 			break;
 		      case SSHSW_X11:
-			if ((x = cmkey(onoff,2,"","on",xxstring)) < 0)
-			  return(x);
-                        tmpxfw = x;
+                if (!ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+                  printf("\r\nX11 forwarding is not supported by the current SSH backend\r\n");
+                  return(-9);
+                }
+                if ((x = cmkey(onoff,2,"","on",xxstring)) < 0)
+			      return(x);
+                tmpxfw = x;
 			break;
 		      default:
 		        return(-2);
@@ -11028,7 +11140,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
               }
               return(success = 0);
             }
-	    makestr(&ssh_hst,line);	/* Stash everything */
+	    ssh_set_sparam(SSH_SPARAM_HST,line);	/* Stash everything */
 	    if (ssh_tmpuid) {
                 if (!sl_uid_saved) {
                     ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
@@ -11038,34 +11150,36 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		makestr(&ssh_tmpuid,NULL);
 	    }
             if (ssh_tmpport) {
-                makestr(&ssh_prt,ssh_tmpport);
+                ssh_set_sparam(SSH_SPARAM_PRT,ssh_tmpport);
                 makestr(&ssh_tmpport,NULL);
-            } else
-                makestr(&ssh_prt,NULL);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_PRT,NULL);
+            }
 
             if (ssh_tmpcmd) {
-                makestr(&ssh_cmd,brstrip(ssh_tmpcmd));
+                ssh_set_sparam(SSH_SPARAM_CMD, brstrip(ssh_tmpcmd));
                 makestr(&ssh_tmpcmd,NULL);
-            } else
-                makestr(&ssh_cmd,NULL);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_CMD, NULL);
+            }
 
             if (tmpver > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_ver_saved) {
-                    sl_ssh_ver = ssh_ver;
+                    sl_ssh_ver = ssh_get_iparam(SSH_IPARAM_VER);
                     sl_ssh_ver_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_ver = tmpver;
+                ssh_set_iparam(SSH_IPARAM_VER, tmpver);
             }
             if (tmpxfw > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_xfw_saved) {
-                    sl_ssh_xfw = ssh_xfw;
+                    sl_ssh_xfw = ssh_get_iparam(SSH_IPARAM_XFW);
                     sl_ssh_xfw_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_xfw = tmpxfw;
+                ssh_set_iparam(SSH_IPARAM_XFW, tmpxfw);
             }
 	    if (ssh_tmpstr) {
 		if (ssh_tmpstr[0]) {
@@ -11092,7 +11206,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    debug(F110,"SSH line",line,0);
 	    k = ttopen(line,&x,mdmtyp, 0);
 	    if (k < 0) {
-		printf("?Unable to connect to %s\n",ssh_hst);
+		printf("?Unable to connect to %s\n",ssh_get_sparam(SSH_SPARAM_HST));
 		mdmtyp = mdmsav;
                 slrestor();
 		return(success = 0);
@@ -11128,7 +11242,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		    int k;		/* Yes */
 		    k = mlook(mactab,"on_open",nmac); /* Look this up */
 		    if (k >= 0) {	              /* If found, */
-			if (dodo(k,ssh_hst,0) > -1)   /* set it up, */
+			if (dodo(k,ssh_get_sparam(SSH_SPARAM_HST),0) > -1)   /* set it up, */
 			  parser(1);		      /* and execute it */
 		    }
 		}
@@ -11150,6 +11264,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    return(success);
 
 	  case XSSH_CLR:
+        if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+            printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
 	    if ((y = cmkey(sshclr,nsshclr,"","", xxstring)) < 0) {
 	        if (y == -3) {
 		    printf("?clear what?\n");
@@ -11173,6 +11291,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 
 	  case XSSH_AGT: {		/* SSH AGENT */
 	      int doeach = 0;
+          if (!ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {
+            printf("\r\nAgent management is not supported by the current SSH backend\r\n");
+            return(-9);
+          }
 	      if ((y = cmkey(sshagent,nsshagent,"","",xxstring)) < 0)
 		return(y);
 	      switch (y) {
@@ -11252,6 +11374,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	      /* ssh add { local, remote } port host port */
 	      int cx, i, j, k;
 	      char * h;
+          if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+            printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+          }
 	      if ((cx = cmkey(addfwd,naddfwd,"","", xxstring)) < 0)
 		return(cx);
 	      if ((x = cmnum((cx == SSHF_LCL) ?
@@ -11304,6 +11430,11 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	      int to_port = 0;
 	      char * fw_host = NULL;
 	      int n;
+          char* ssh_hst = NULL;
+          if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+            printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+          }
               if ((x = cmnum(cmresult.nresult == XSSH_FLP ?
                               "local-port":"remote-port",
                               "",10,&li_port,xxstring)) < 0)
@@ -11312,8 +11443,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                   printf("?Out range - min: 1, max: 65535\n");
                   return(-9);
               }
-	      if ((x = cmfld("host",ssh_hst?ssh_hst:"",&s,xxstring)) < 0)
-		return(x);
+              ssh_hst = ssh_get_sparam(SSH_SPARAM_HST);
+              if ((x = cmfld("host",ssh_hst?ssh_hst:"",&s,xxstring)) < 0) {
+                return(x);
+              }
               n = ckstrncpy(tmpbuf,s,TMPBUFSIZ);
               fw_host = tmpbuf;
               if ((x = cmnum("host-port",ckuitoa(li_port),10,
@@ -11344,6 +11477,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    return(cx);
 	  switch (cx) {
 	    case XSSH2_RKE:
+          if (!ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
+            printf("\r\nManual rekeying is not supported by the current SSH backend\r\n");
+            return(-9);
+          }
 	      if ((x = cmcfm()) < 0)
 		return(x);
 #ifndef SSHTEST
@@ -11354,6 +11491,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	      return(-2);
 	  }
 	case XSSH_KEY:
+      if (!ssh_feature_supported(SSH_FEAT_KEY_MGMT)) {
+        printf("\r\nKey management is not supported by the current SSH backend\r\n");
+        return(-9);
+      }
 	  if ((cx = cmkey(sshkey,nsshkey,"","", xxstring)) < 0)
 	    return(cx);
 	  switch (cx) {
@@ -11673,6 +11814,13 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
         extern char pwbuf[], * g_pswd;
         extern int pwflg, pwcrypt, g_pflg, g_pcpt, nolocal;
 	struct FDB sw, kw, fl;
+#if SSH_DLL
+        if (!ssh_avail()) {
+            printf("\nNo SSH backend DLL loaded. SSH commands unavailable. Use the SSH LOAD command\n");
+            printf("to load a compatible SSH backend if you have one.\n");
+            return (-9);
+        }
+#endif /* SSH_DLL */
 
         if (ssh_tmpstr)
 	  memset(ssh_tmpstr,0,strlen(ssh_tmpstr));
@@ -11829,7 +11977,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                   }
                   return(success = 0);
               }
-              makestr(&ssh_hst,line);	/* Stash everything */
+              ssh_set_sparam(SSH_SPARAM_HST,line);	/* Stash everything */
               if (ssh_tmpuid) {
                   if (!sl_uid_saved) {
                       ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
@@ -11839,32 +11987,33 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                   makestr(&ssh_tmpuid,NULL);
               }
               if (ssh_tmpport) {
-                  makestr(&ssh_prt,ssh_tmpport);
+                  ssh_set_sparam(SSH_SPARAM_PRT,ssh_tmpport);
                   makestr(&ssh_tmpport,NULL);
-              } else
-                  makestr(&ssh_prt,NULL);
+              } else {
+                  ssh_set_sparam(SSH_SPARAM_PRT,NULL);
+              }
 
               /* Set the Subsystem to Kermit */
-              ssh_cas = 1;
-              makestr(&ssh_cmd,"kermit");
+              ssh_set_iparam(SSH_IPARAM_CAS, 1);
+              ssh_set_sparam(SSH_SPARAM_CMD, "kermit");
 
               if (tmpver > -1) {
 #ifndef SSHTEST
                   if (!sl_ssh_ver_saved) {
-                      sl_ssh_ver = ssh_ver;
+                      sl_ssh_ver = ssh_get_iparam(SSH_IPARAM_VER);
                       sl_ssh_ver_saved = 1;
                   }
 #endif /* SSHTEST */
-                  ssh_ver = tmpver;
+                  ssh_set_iparam(SSH_IPARAM_VER, tmpver);
               }
               /* Disable X11 Forwarding */
 #ifndef SSHTEST
               if (!sl_ssh_xfw_saved) {
-                  sl_ssh_xfw = ssh_xfw;
+                  sl_ssh_xfw = ssh_get_iparam(SSH_IPARAM_XFW);
                   sl_ssh_xfw_saved = 1;
               }
 #endif /* SSHTEST */
-              ssh_xfw = 0;
+              ssh_set_iparam(SSH_IPARAM_XFW, 0);
 
               if (ssh_tmpstr) {
                   if (ssh_tmpstr[0]) {
@@ -11890,7 +12039,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    /* Line parameter to ttopen() is ignored */
 	    k = ttopen(line,&x,mdmtyp, 0);
 	    if (k < 0) {
-		printf("?Unable to connect to %s\n",ssh_hst);
+		printf("?Unable to connect to %s\n",ssh_get_sparam(SSH_SPARAM_HST));
 		mdmtyp = mdmsav;
                 slrestor();
 		return(success = 0);
@@ -11926,7 +12075,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		    int k;		/* Yes */
 		    k = mlook(mactab,"on_open",nmac); /* Look this up */
 		    if (k >= 0) {	              /* If found, */
-			if (dodo(k,ssh_hst,0) > -1)   /* set it up, */
+			if (dodo(k,ssh_get_sparam(SSH_SPARAM_HST),0) > -1)   /* set it up, */
 			  parser(1);		      /* and execute it */
 		    }
 		}
@@ -12121,7 +12270,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                   }
                   return(success = 0);
               }
-              makestr(&ssh_hst,line);	/* Stash everything */
+              ssh_set_sparam(SSH_SPARAM_HST, line);	/* Stash everything */
               if (ssh_tmpuid) {
                   if (!sl_uid_saved) {
                       ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
@@ -12131,14 +12280,15 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                   makestr(&ssh_tmpuid,NULL);
               }
               if (ssh_tmpport) {
-                  makestr(&ssh_prt,ssh_tmpport);
+                  ssh_set_sparam(SSH_SPARAM_PRT,ssh_tmpport);
                   makestr(&ssh_tmpport,NULL);
-              } else
-                  makestr(&ssh_prt,NULL);
+              } else {
+                  ssh_set_sparam(SSH_SPARAM_PRT,NULL);
+              }
 
-              /* Set the Subsystem to Kermit */
-              ssh_cas = 1;
-              makestr(&ssh_cmd,"sftp");
+              /* Set the Subsystem to sftp */
+              ssh_set_iparam(SSH_IPARAM_CAS, 1);
+              ssh_set_sparam(SSH_SPARAM_CMD, "sftp");
 
               if (tmpver > -1) {
 #ifndef SSHTEST
@@ -12182,7 +12332,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    /* Line parameter to ttopen() is ignored */
 	    k = ttopen(line,&x,mdmtyp, 0);
 	    if (k < 0) {
-		printf("?Unable to connect to %s\n",ssh_hst);
+		printf("?Unable to connect to %s\n", ssh_get_sparam(SSH_SPARAM_HST));
 		mdmtyp = mdmsav;
                 slrestor();
 		return(success = 0);
@@ -12218,7 +12368,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		    int k;		/* Yes */
 		    k = mlook(mactab,"on_open",nmac); /* Look this up */
 		    if (k >= 0) {	              /* If found, */
-			if (dodo(k,ssh_hst,0) > -1)   /* set it up, */
+			if (dodo(k,ssh_get_sparam(SSH_SPARAM_HST),0) > -1)   /* set it up, */
 			  parser(1);		      /* and execute it */
 		    }
 		}
@@ -12254,7 +12404,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	  case SFTP_VER:
 	    if ((y = cmtxt("command parameters","",&s,xxstring)) < 0) 
 	      return(y);
-	    if (ssh_tchk() < 0 || !ssh_cas || strcmp(ssh_cmd,"sftp")) {
+	    if (ssh_tchk() < 0 || !ssh_get_iparam(SSH_IPARAM_CAS)
+            || strcmp(ssh_get_sparam(SSH_SPARAM_CMD), "sftp")) {
 		printf("?Not connected to SFTP Service\n");
 		return(success = 0);
 	    }

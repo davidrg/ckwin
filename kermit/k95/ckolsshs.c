@@ -69,30 +69,16 @@ typedef struct {
 static void close_tty_channel(ssh_client_state_t * state);
 
 
-void get_current_terminal_dimensions(int* rows, int* cols) {
-    extern int tt_rows[];                   /* Screen rows */
-    extern int tt_cols[];                   /* Screen columns */
-    extern int tt_status[VNUM];             /* Terminal status line displayed */
-
-    /* TODO: Elsewhere in K95 one is taken off the row count if the status line
-     *       is on. But this seems to produce incorrect results - it looks like
-     *       the tt_rows value already accounts for the status line. Need to
-     *       check elsewhere and confirm this. Smells like a bug somewhere.
-     **/
-    *rows = tt_rows[VTERM]; /* - (tt_status[VTERM]?1:0); */
-    *cols = tt_cols[VTERM];
-}
-
-
 ssh_parameters_t* ssh_parameters_new(
-        char* hostname, char* port, int verbosity, char* command,
+        const char* hostname, char* port, int verbosity, const char* command,
         BOOL subsystem, BOOL compression, BOOL use_openssh_config,
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
-        char* user_known_hosts_file, char* global_known_hosts_file,
-        char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
-        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
-        int nodelay, char* proxy_command) {
+        const char* user_known_hosts_file, const char* global_known_hosts_file,
+        const char* username, const char* password, const char* terminal_type,
+        int pty_width, int pty_height, const char* auth_methods,
+        const char* ciphers, int heartbeat, const char* hostkey_algorithms,
+        const char* macs, const char* key_exchange_methods, int nodelay,
+        const char* proxy_command) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
@@ -310,6 +296,8 @@ void ssh_client_free(ssh_client_t *client) {
 static ssh_client_state_t* ssh_client_state_new(ssh_parameters_t* parameters) {
     ssh_client_state_t * state;
 
+    debug(F100, "sshsubsys - ssh_client_state_new", NULL, 0);
+
     state = malloc(sizeof(ssh_client_state_t));
     state->parameters = parameters;
     state->pty_width = parameters->pty_width;
@@ -317,8 +305,10 @@ static ssh_client_state_t* ssh_client_state_new(ssh_parameters_t* parameters) {
     state->session = NULL;
     state->ttyChannel = NULL;
 
+    debug(F100, "sshsubsys - ssh_client_state_new - get term dimensions", NULL, 0);
     get_current_terminal_dimensions(&state->pty_height, &state->pty_width);
 
+    debug(F100, "sshsubsys - ssh_client_state_new - done", NULL, 0);
     return state;
 }
 
@@ -390,7 +380,7 @@ static void ssh_client_close(ssh_client_state_t* state, ssh_client_t *client,
  * @param buffer   Log message
  * @param userdata User data.
  */
-static void logging_callback(int priority, const char *function,
+void logging_callback(int priority, const char *function,
                              const char *buffer, void *userdata)
 {
     char* buf;
@@ -1611,14 +1601,18 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
 
     state = ssh_client_state_new(parameters->parameters);
     if (state == NULL) {
+        debug(F100, "sshsubsys - failed to create client state. Giving up.", NULL, 0);
         ssh_client_close(NULL, client, SSH_ERR_STATE_MALLOC_FAILED);
         return 0;
     }
 
+    debug(F100, "sshsubsys - Cleaning up.", NULL, 0);
     free(parameters); /* Don't need it anymore */
 
+    debug(F100, "sshsubsys - Set logging callback.", NULL, 0);
     ssh_set_log_callback(logging_callback);
 
+    debug(F100, "sshsubsys - init ssh client.", NULL, 0);
     state->session = ssh_new();
     if (state->session == NULL) {
         debug(F100, "sshsubsys - Failed to create SSH session", "", 0);

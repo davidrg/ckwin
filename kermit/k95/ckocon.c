@@ -123,6 +123,10 @@ int do_tn_cmd(CHAR);            /* ckoco3.c */
 int gui_videopopup_dialog(videopopup *, int);   /* cknwin.c */
 #endif /* KUI */
 
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif
+
 VOID resconn();                 /* ckuusr.c */
 void scrollstatusline();        /* ckoco3.c */
 void vt100key(int);             /* ckoco3.c */
@@ -3065,9 +3069,9 @@ conect(int async) {
     extern int quiet, tcp_incoming;
 #endif /* IKS_OPTION */
 #ifdef ANYSSH
-    extern int ssh_cas;
-    extern char * ssh_cmd;
+    const char * ssh_cmd;
 #endif /* ANYSSH */
+
 
     viewonly_sav = viewonly;
     keylocksav = keylock ;
@@ -3130,8 +3134,9 @@ conect(int async) {
             }
         }
 #ifdef SSHBUILTIN
-        if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
-             !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+        ssh_cmd = ssh_get_sparam(SSH_SPARAM_CMD);
+        if ( network && nettype == NET_SSH && ssh_get_iparam(SSH_IPARAM_CAS) &&
+             ssh_cmd && !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
             printf("?SSH Subsystem active: %s\n", ssh_cmd);
             return(0);
         }

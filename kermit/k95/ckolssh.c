@@ -1,6 +1,6 @@
-char *cksshv = "SSH support, 10.0,  18 Apr 2023";
+char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 /*
- *  C K O S S H . C --  SSH Subsystem Interface for C-Kermit
+ *  C K O L S S H . C --  LibSSH Subsystem Interface for C-Kermit
  *
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
@@ -37,8 +37,14 @@ char *cksshv = "SSH support, 10.0,  18 Apr 2023";
  * thread safe. So the code here just interacts with the SSH Subsystem via
  * a pair of ring buffers, a mutex, and a collection of events.
  *
- * The interface is described in ckoshs.h and the actual implementation
- * where all the work is done (using libssh) lives in ckoshs.c.
+ * The interface is described in ckolsshs.h and the actual implementation
+ * where all the work is done (using libssh) lives in ckolsshs.c.
+ *
+ * While libssh is supposedly OS/2-compatible, the current implementation
+ * in ckolsshs.{ch} and ckolssh.c is Windows-specific.
+ *
+ * This SSH subsystem can either be compiled into C-Kermit, or compiled
+ * as a runtime-loadable DLL (k95ssh.dll) by defining SSH_DLL at build time.
  */
 
 #include <libssh/libssh.h>
@@ -48,10 +54,12 @@ char *cksshv = "SSH support, 10.0,  18 Apr 2023";
 #include "ckcker.h"
 #include "ckuusr.h"
 #include "ckolsshs.h"
+#include "ckossh.h"
 
 
 /* Global Variables:
- *   These are all declared in ckuus3.c around like 8040
+ *   These used to be all declared in ckuus3.c around like 8040, but since
+ *   the SSH_DLL refactoring they now live here and are no longer global.
  *
  *   Typ   Name       Def     Description
  *   ----- ---------- ------- -----------------------------------------------
@@ -234,18 +242,720 @@ char *cksshv = "SSH support, 10.0,  18 Apr 2023";
  *  SSH_OPTIONS_REKEY_TIME
  */
 
+/*
+ * Keyword tables for some of the "set ssh" options - these are the tables whose
+ * values are most likely to vary from one SSH implementation to another.
+ *
+ * These used to live in ckuus3.c
+ */
+
+/*
+#define SSHA_CRS   1
+#define SSHA_DSA   2
+*/
+#define SSHA_GSS   3
+#define SSHA_HOS   4
+#define SSHA_KBD   5
+/*
+#define SSHA_K4    6
+#define SSHA_K5    7
+*/
+#define SSHA_PSW   8
+#define SSHA_PK    9
+/*
+#define SSHA_SKE  10
+#define SSHA_TIS  11
+*/
+#define SSHA_EXT  12
+#define SSHA_SRP  13
+
+static struct keytab ssh2aut[] = {      /* SET SSH V2 AUTH command table */
+        /*{ "external-keyx",      SSHA_EXT, 0 },*/
+        { "gssapi",             SSHA_GSS, 0 },  /* TODO: Hide if not supported */
+        /*{ "hostbased",          SSHA_HOS, 0 },*/
+        { "keyboard-interactive",  SSHA_KBD, 0 },
+        { "password",           SSHA_PSW, 0 },
+        { "publickey",          SSHA_PK,  0 },
+        /*{ "srp-gex-sha1",       SSHA_SRP, 0 },*/
+        { "", 0, 0 }
+};
+static int nssh2aut = (sizeof(ssh2aut) / sizeof(struct keytab)) - 1;
+
+#ifdef SSH_V1
+/*#define SSHC_3DES 1*/                     /* 3DES */
+#endif /* SSH_V1 */
+#define SSHC_3CBC 2                     /* 3DES-CBC */
+#define SSHC_A128 3                     /* AES128-CBC */
+#define SSHC_A192 4                     /* AES192-CBC */
+#define SSHC_A256 5                     /* AES256-CBC */
+/*#define SSHC_ARC4 6*/                     /* ARCFOUR */
+#ifdef SSH_V1
+#define SSHC_FISH 7                     /* BLOWFISH */
+#endif /* SSH_V1 */
+/*#define SSHC_C128 8*/                     /* CAST128-CBC */
+/*#define SSHC_BCBC 9*/                     /* BLOWFISH-CBC */
+#ifdef SSH_V1
+#define SSHC_1DES 10                    /* DES */
+#endif /* SSH_V1 */
+#define SSHC_CHPO 11                    /* chachae20-poly1305 */
+#define SSHC_A1GC 12                    /* aes128-gcm@openssh.com */
+#define SSHC_A2GC 13                    /* aes256-gcm@openssh.com */
+#define SSHC_A12C 14                    /* aes128-ctr */
+#define SSHC_A19C 15                    /* aes192-ctr */
+#define SSHC_A25C 16                    /* aes256-ctr */
+
+
+static struct keytab ssh2ciphers[] = {  /* SET SSH V2 CIPHERS command table */
+        { "3des-cbc",        SSHC_3CBC, 0 },
+        { "aes128-cbc",      SSHC_A128, 0 },
+        { "aes192-cbc",      SSHC_A192, 0 },
+        { "aes256-cbc",      SSHC_A256, 0 },
+        /*{ "arcfour",         SSHC_ARC4, 0 },
+        { "blowfish-cbc",    SSHC_FISH, 0 },
+        { "cast128-cbc",     SSHC_C128, 0 },
+        { "rijndael128-cbc", SSHC_A128, 0 },
+        { "rijndael192-cbc", SSHC_A192, 0 },
+        { "rijndael256-cbc", SSHC_A256, 0 },*/
+        { "aes128-ctr", SSHC_A12C, 0 },
+        { "aes192-ctr", SSHC_A19C, 0 },
+        { "aes256-ctr", SSHC_A25C, 0 },
+        { "aes128-gcm@openssh.com", SSHC_A1GC, 0 },
+        { "aes256-gcm@openssh.com", SSHC_A2GC, 0 },
+        { "chachae20-poly1305", SSHC_CHPO, 0 },
+        { "", 0, 0 }
+};
+static int nssh2ciphers = (sizeof(ssh2ciphers) / sizeof(struct keytab)) - 1;
+
+#ifdef SSH_V1
+/* SSH V1 support - disabled for now as libssh doesn't support it */
+static struct keytab ssh1ciphers[] = {
+    { "3des",         SSHC_3DES, 0 },
+    { "blowfish",     SSHC_FISH, 0 },
+    { "des",          SSHC_1DES, 0 },
+    { "", 0, 0 }
+};
+static int nssh1ciphers = (sizeof(ssh1ciphers) / sizeof(struct keytab)) - 1;
+#endif /* SSH_V1 */
+
+#define SSHM_SHA        1               /* HMAC-SHA1 */
+#ifdef COMMENT
+#define SSHM_SHA_96     2               /* HMAC-SHA1-96 */
+#define SSHM_MD5        3               /* HMAC-MD5 */
+#define SSHM_MD5_96     4               /* HMAC-MD5-96 */
+#define SSHM_RIPE       5               /* HMAC-RIPEMD160 */
+#endif
+#define SSHM_SHA1_ETM   6               /* hmac-sha1-etm@openssh.com */
+#define SSHM_SHA2_256   7               /* hmac-sha2-256 */
+#define SSHM_SHA2_2ETM  8               /* hmac-sha2-256-etm@openssh.com */
+#define SSHM_SHA2_512   9               /* hmac-sha2-512 */
+#define SSHM_SHA2_5ETM  10              /* hmac-sha2-512-etm@openssh.com */
+#define SSHM_NONE       11              /* none */
+
+static struct keytab ssh2macs[] = {     /* SET SSH V2 MACS command table */
+        /*
+         { "hmac-md5",       SSHM_MD5,    0 },
+         { "hmac-md5-96",    SSHM_MD5_96, 0 },
+         { "hmac-ripemd160", SSHM_RIPE,   0 },*/
+        { "hmac-sha1",      SSHM_SHA,    0 },
+        /*{ "hmac-sha1-96",   SSHM_SHA_96, 0 },*/
+        { "hmac-sha1-etm@openssh.com",      SSHM_SHA1_ETM,    0 },
+        { "hmac-sha2-256",                  SSHM_SHA2_256,    0 },
+        { "hmac-sha2-256-etm@openssh.com",  SSHM_SHA2_2ETM,    0 },
+        { "hmac-sha2-512",                  SSHM_SHA2_512,    0 },
+        { "hmac-sha2-512-etm@openssh.com",  SSHM_SHA2_5ETM,    0 },
+        { "none",                           SSHM_NONE,    0 },
+        { "", 0, 0 }
+};
+static int nssh2macs = (sizeof(ssh2macs) / sizeof(struct keytab)) - 1;
+
+#define HKA_RSA 1
+#define HKA_DSS 2
+#define HKA_EC2 3
+#define HKA_EC3 4
+#define HKA_EC5 5
+#define HKA_ED2 6
+#define HKA_S22 7
+#define HKA_S25 8
+
+static struct keytab hkatab[] = {
+        { "ecdsa-sha2-nistp256", HKA_EC2, 0, },
+        { "ecdsa-sha2-nistp384", HKA_EC3, 0, },
+        { "ecdsa-sha2-nistp521", HKA_EC5, 0, },
+        { "rsa-sha2-256", HKA_S22, 0, },
+        { "rsa-sha2-512", HKA_S25, 0, },
+        { "ssh-dss", HKA_DSS, 0, },
+        { "ssh-ed25519", HKA_ED2, 0, },
+        { "ssh-rsa", HKA_RSA, 0, },
+        { "", 0, 0 }
+};
+static int nhkatab = (sizeof(hkatab) / sizeof(struct keytab)) - 1;
+
+static struct keytab sshkextab[] = {
+        { "curve25519-sha256",              1, 0, },
+        { "curve25519-sha256@libssh.org",   2, 0, },
+        { "diffie-hellman-group1-sha1",     3, 0, },
+        { "diffie-hellman-group14-sha1",    4, 0, },
+        { "diffie-hellman-group14-sha256",  5, 0, },
+        { "diffie-hellman-group16-sha512",  6, 0, },
+        { "diffie-hellman-group18-sha512",  7, 0, },
+        { "diffie-hellman-group-exchange-sha1",   8, 0, },
+        { "diffie-hellman-group-exchange-sha256", 9, 0, },
+        { "ecdh-sha2-nistp256",             10, 0, },
+        { "ecdh-sha2-nistp384",             11, 0, },
+        { "ecdh-sha2-nistp521",             12, 0, },
+        /*{ "ext-info-c",                     13, 0, },*/
+        { "", 0, 0 }
+};
+static int nsshkextab = (sizeof(sshkextab) / sizeof(struct keytab)) - 1;
 
 /* Global variables */
-extern char uidbuf[];                   /* User ID set via /user: */
-extern char pwbuf[];                    /* Password set via /password: */
-extern int  pwflg;                      /* Password has been set */
-extern int tcp_nodelay;                 /* Enable/disable Nagle's algorithm */
+
 int ssh_sock;   /* TODO: get rid of this (unless its needed for connecting
                  *      through a proxy server?) */
+
+static int                                     /* SET SSH variables */
+    ssh_afw = 0,                          /* agent forwarding */
+    ssh_xfw = 0,                          /* x11 forwarding   */
+    ssh_prp = SET_OFF,                    /* privileged ports */
+    ssh_cmp = 1,                          /* compression */
+    ssh_cas = 0,                          /* command as subsys */
+    ssh_shh = 0,                          /* quiet       */
+    ssh_ver = 0,                          /* protocol version (auto,1,2) */
+    ssh_vrb = 2,                          /* Report errors */
+    ssh_chkip = 0,                        /* SSH Check Host IP flag */
+    ssh_gwp = 0,                          /* gateway ports */
+    ssh_dyf = 0,                          /* dynamic forwarding */
+    ssh_gsd = 0,                          /* gssapi delegate credentials */
+    ssh_k4tgt = 0,                        /* k4 tgt passing */
+    ssh_k5tgt = 0,                        /* k5 tgt passing */
+    ssh_shk = 2,                          /* Strict host key (no, yes, ask) */
+    ssh2_ark = 1,                         /* Auto re-key */
+    ssh_cfg = 0,                          /* use OpenSSH config? */
+    ssh_gkx = 1,                          /* gssapi key exchange */
+    ssh_k5_is_k4 = 1,                     /* some SSH v1 use same codes */
+    ssh_hbt = 0,                          /* heartbeat (seconds) */
+    ssh_dummy = 0;                        /* bottom of list */
+
+static char                             /* The following are to be malloc'd */
+    * ssh1_cif = NULL,                    /* v1 cipher */
+    * ssh2_cif = NULL,                    /* v2 cipher list */
+    * ssh2_mac = NULL,                    /* v2 mac list */
+    * ssh2_auth = NULL,                   /* v2 authentication list */
+    * ssh2_hka = NULL,                    /* Host Key Algorithms */
+    * ssh_hst = NULL,                     /* hostname */
+    * ssh_prt = NULL,                     /* port/service */
+    * ssh_cmd = NULL,                     /* command to execute */
+    * ssh_xal = NULL,                     /* xauth-location */
+    * ssh1_gnh = NULL,                    /* v1 global known hosts file */
+    * ssh1_unh = NULL,                    /* v1 user known hosts file */
+    * ssh2_gnh = NULL,                    /* v2 global known hosts file */
+    * ssh2_unh = NULL,                    /* v2 user known hosts file */
+    * ssh2_kex = NULL,                    /* Key Exchange Methods */
+    * ssh_pxc = NULL,                     /* Proxy command */
+    * xxx_dummy = NULL;
 
 /* Local variables */
 ssh_client_t *ssh_client = NULL;  /* Interface to the ssh subsystem */
 HANDLE hSSHClientThread = NULL;   /* SSH subsystem thread */
+
+#ifdef SSH_DLL
+
+static void (*p_get_current_terminal_dimensions)(int* rows, int* cols) = NULL;
+const char* (*p_get_current_terminal_type)() = NULL;
+const char* (*p_ssh_get_uid)();
+const char* (*p_ssh_get_pw)();
+int (*p_ssh_get_nodelay_enabled)();
+static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
+static int (*p_vscrnprintf)(char *, ...)=NULL;
+static int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int) = NULL;
+static int (*p_uq_mtxt) (char *,char **,int,struct txtbox[]) = NULL;
+int (*p_uq_ok)(char *,char *,int,char **,int) = NULL;
+int (*p_uq_file)(char *,char *,int,char **,char *,char *,int) = NULL;
+int (*p_zmkdir)(char *) = NULL;
+int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
+        char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
+        char *s10, char *s11, char *s12) = NULL;
+char* (*p_whoami)() = NULL;
+char* (*p_GetHomePath)() = NULL;
+char* (*p_GetHomeDrive)() = NULL;
+int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
+int (*p_debug_logging)() = NULL;
+
+void get_current_terminal_dimensions(int* rows, int* cols) {
+    p_get_current_terminal_dimensions(rows, cols);
+}
+
+const char* get_current_terminal_type() {
+    return p_get_current_terminal_type();
+}
+
+const char* ssh_get_uid() {
+    return p_ssh_get_uid();
+}
+
+const char* ssh_get_pw() {
+    return p_ssh_get_pw();
+}
+
+int ssh_get_nodelay_enabled() {
+    return p_ssh_get_nodelay_enabled();
+}
+
+int dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
+{
+    if ( p_dodebug )
+        return(p_dodebug(flag,s1,s2,n));
+    else
+        return(-1);
+}
+
+static char myprtfstr[4096];
+int Vscrnprintf(const char * format, ...) {
+    int i, len, rc=0;
+    char *cp;
+    va_list ap;
+
+    va_start(ap, format);
+#ifdef NT
+    rc = _vsnprintf(myprtfstr, sizeof(myprtfstr)-1, format, ap);
+#else /* NT */
+    rc = vsprintf(myprtfstr, format, ap);
+#endif /* NT */
+    va_end(ap);
+
+    if ( p_vscrnprintf )
+        return(p_vscrnprintf(myprtfstr));
+    else
+        return(-1);
+}
+
+int uq_txt(char * preface, char * prompt, int echo, char ** help, char * buf,
+       int buflen, char *dflt, int timer) {
+    return p_uq_txt(preface, prompt, echo, help, buf, buflen, dflt, timer);
+}
+
+int uq_mtxt(char * preface,char **help, int n, struct txtbox field[]) {
+    return p_uq_mtxt(preface, help, n, field);
+}
+
+int uq_ok(char * preface, char * prompt, int mask,char ** help, int dflt) {
+    return p_uq_ok(preface, prompt, mask, help, dflt);
+}
+
+int uq_file(char * preface, char * fprompt, int fc, char ** help,
+	char * dflt, char * result, int rlength) {
+    return p_uq_file(preface, fprompt, fc, help, dflt, result, rlength);
+}
+
+
+int zmkdir(char *path) {
+    return p_zmkdir(path);
+}
+
+int ckmakxmsg(char * buf, int len, char *s1, char *s2, char *s3,
+        char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
+        char *s10, char *s11, char *s12) {
+    return p_ckmakxmsg(buf, len, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
+                       s12);
+}
+
+char* whoami() {
+    return p_whoami();
+}
+
+char* GetHomePath() {
+    return p_GetHomePath();
+}
+
+char* GetHomeDrive() {
+    return p_GetHomeDrive();
+}
+
+int ckstrncpy(char * dest, const char * src, int len) {
+    return p_ckstrncpy(dest, src, len);
+}
+
+int debug_logging() {
+    return p_debug_logging();
+}
+
+
+#undef malloc
+#undef realloc
+#undef free
+#undef strdup
+
+static void
+fatal(char *msg) {
+    if (!msg) msg = "";
+
+    printf(msg);
+    exit(1);        /* Exit indicating failure */
+}
+
+void *
+kmalloc(size_t size)
+{
+    void *ptr;
+
+    if (size == 0) {
+        fatal("kmalloc: zero size");
+    }
+    ptr = malloc(size);
+    if (ptr == NULL) {
+        fatal("kmalloc: out of memory");
+    }
+    return ptr;
+}
+
+void *
+krealloc(void *ptr, size_t new_size)
+{
+    void *new_ptr;
+
+    if (new_size == 0) {
+        fatal("krealloc: zero size");
+    }
+    if (ptr == NULL)
+        new_ptr = malloc(new_size);
+    else
+        new_ptr = realloc(ptr, new_size);
+    if (new_ptr == NULL) {
+        fatal("krealloc: out of memory");
+    }
+    return new_ptr;
+}
+
+void
+kfree(void *ptr)
+{
+    if (ptr == NULL) {
+        printf("kfree: NULL pointer given as argument");
+        return;
+    }
+    free(ptr);
+}
+
+char *
+kstrdup(const char *str)
+{
+    size_t len;
+    char *cp;
+
+    if (str == NULL) {
+        fatal("kstrdup: NULL pointer given as argument");
+    }
+    len = strlen(str) + 1;
+    cp = kmalloc(len);
+    if (cp)
+        memcpy(cp, str, len);
+    return cp;
+}
+
+/*
+ * Quick macro to check if a function pointer is null and, if it is, log
+ * the event and return an error.
+ */
+#define STR(x) #x
+#define CHECK_FP(fp) if (fp == NULL) { \
+    debug(F110, "ERROR: Required function pointer is null", STR(fp), 0); \
+    return -1;}
+
+int ssh_dll_init(ssh_init_parameters_t *params) {
+    /* Store pointers to helper functions provided by K95 */
+    p_get_current_terminal_dimensions = params->p_get_current_terminal_dimensions;
+    CHECK_FP(p_get_current_terminal_dimensions)
+    p_get_current_terminal_type = params->p_get_current_terminal_type;
+    CHECK_FP(p_get_current_terminal_type)
+    p_ssh_get_uid = params->p_ssh_get_uid;
+    CHECK_FP(p_ssh_get_uid)
+    p_ssh_get_pw = params->p_ssh_get_pw;
+    CHECK_FP(p_ssh_get_pw)
+    p_ssh_get_nodelay_enabled = params->p_ssh_get_nodelay_enabled;
+    CHECK_FP(p_ssh_get_nodelay_enabled)
+    p_dodebug = params->p_dodebug;
+    CHECK_FP(p_dodebug)
+    p_vscrnprintf = params->p_vscrnprintf;
+    CHECK_FP(p_vscrnprintf)
+    p_uq_txt = params->p_uq_txt;
+    CHECK_FP(p_uq_txt)
+    p_uq_mtxt = params->p_uq_mtxt;
+    CHECK_FP(p_uq_mtxt)
+    p_uq_ok = params->p_uq_ok;
+    CHECK_FP(p_uq_ok)
+    p_uq_file = params->p_uq_file;
+    CHECK_FP(p_uq_file)
+    p_zmkdir = params->p_zmkdir;
+    CHECK_FP(p_zmkdir)
+    p_ckmakxmsg = params->p_ckmakxmsg;
+    CHECK_FP(p_ckmakxmsg)
+    p_whoami = params->p_whoami;
+    CHECK_FP(p_whoami)
+    p_GetHomePath = params->p_GetHomePath;
+    CHECK_FP(p_GetHomePath)
+    p_GetHomeDrive = params->p_GetHomeDrive;
+    CHECK_FP(p_GetHomeDrive)
+    p_ckstrncpy = params->p_ckstrncpy;
+    CHECK_FP(p_ckstrncpy)
+    p_debug_logging = params->p_debug_logging;
+    CHECK_FP(p_debug_logging)
+
+    /* And then supply pointers to all our functions to K95 */
+    params->p_install_funcs("ssh_set_iparam", ssh_set_iparam);
+    params->p_install_funcs("ssh_get_iparam", ssh_get_iparam);
+    params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
+    params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
+    params->p_install_funcs("ssh_open", ssh_open);
+    params->p_install_funcs("ssh_clos", ssh_clos);
+    params->p_install_funcs("ssh_tchk", ssh_tchk);
+    params->p_install_funcs("ssh_flui", ssh_flui);
+    params->p_install_funcs("ssh_break", ssh_break);
+    params->p_install_funcs("ssh_inc", ssh_inc);
+    params->p_install_funcs("ssh_xin", ssh_xin);
+    params->p_install_funcs("ssh_toc", ssh_toc);
+    params->p_install_funcs("ssh_tol", ssh_tol);
+    params->p_install_funcs("ssh_snaws", ssh_snaws);
+    params->p_install_funcs("ssh_proto_ver", ssh_proto_ver);
+    params->p_install_funcs("ssh_impl_ver", ssh_impl_ver);
+    params->p_install_funcs("sshkey_create", sshkey_create);
+    params->p_install_funcs("sshkey_display_fingerprint", sshkey_display_fingerprint);
+    params->p_install_funcs("sshkey_display_public", sshkey_display_public);
+    params->p_install_funcs("sshkey_display_public_as_ssh2", sshkey_display_public_as_ssh2);
+    params->p_install_funcs("sshkey_change_passphrase", sshkey_change_passphrase);
+    params->p_install_funcs("ssh_fwd_remote_port", ssh_fwd_remote_port); /* TODO */
+    params->p_install_funcs("ssh_fwd_local_port", ssh_fwd_local_port); /* TODO */
+#ifdef SSHTEST
+    params->p_install_funcs("sshkey_v1_change_comment", sshkey_v1_change_comment); /* TODO */
+#endif
+    /* params->p_install_funcs("sshkey_default_file", sshkey_default_file); */ /* TODO */
+    params->p_install_funcs("ssh_v2_rekey", ssh_v2_rekey); /* TODO */
+    params->p_install_funcs("ssh_agent_delete_file", ssh_agent_delete_file); /* TODO */
+    params->p_install_funcs("ssh_agent_delete_all", ssh_agent_delete_all); /* TODO */
+    params->p_install_funcs("ssh_agent_add_file", ssh_agent_add_file); /* TODO */
+    params->p_install_funcs("ssh_agent_list_identities", ssh_agent_list_identities); /* TODO */
+#ifdef COMMENT
+    /* Not supported: */
+    params->p_install_funcs("ssh_unload", ssh_unload);
+#endif /* COMMENT */
+    params->p_install_funcs("ssh_dll_ver", ssh_dll_ver);
+    params->p_install_funcs("ssh_get_keytab", ssh_get_keytab);
+    params->p_install_funcs("ssh_feature_supported", ssh_feature_supported);
+
+    return 0;
+}
+#endif /* SSH_DLL */
+
+int ssh_set_iparam(int param, int value) {
+    switch(param) {
+        case SSH_IPARAM_AFW:
+            ssh_afw = value;
+            break;
+        case SSH_IPARAM_XFW:
+            ssh_xfw = value;
+            break;
+        case SSH_IPARAM_PRP:
+            ssh_prp = value;
+            break;
+        case SSH_IPARAM_CMP:
+            ssh_cmp = value;
+            break;
+        case SSH_IPARAM_CAS:
+            ssh_cas = value;
+            break;
+        case SSH_IPARAM_SHH:
+            ssh_shh = value;
+            break;
+        case SSH_IPARAM_VER:
+            ssh_ver = value;
+            break;
+        case SSH_IPARAM_VRB:
+            ssh_vrb = value;
+            break;
+        case SSH_IPARAM_CHKIP:
+            ssh_chkip = value;
+            break;
+        case SSH_IPARAM_GWP:
+            ssh_gwp = value;
+            break;
+        case SSH_IPARAM_DYF:
+            ssh_dyf = value;
+            break;
+        case SSH_IPARAM_GSD:
+            ssh_gsd = value;
+            break;
+        case SSH_IPARAM_K4TGT:
+            ssh_k4tgt = value;
+            break;
+        case SSH_IPARAM_K5TGT:
+            ssh_k5tgt = value;
+            break;
+        case SSH_IPARAM_SHK:
+            ssh_shk = value;
+            break;
+        case SSH_IPARAM_2_ARK:
+            ssh2_ark = value;
+            break;
+        case SSH_IPARAM_CFG:
+            ssh_cfg = value;
+            break;
+        case SSH_IPARAM_GKX:
+            ssh_gkx = value;
+            break;
+        case SSH_IPARAM_K5_IS_K4:
+            ssh_k5_is_k4 = value;
+            break;
+        case SSH_IPARAM_HBT:
+            ssh_hbt = value;
+            break;
+        default:
+            return 1;
+    }
+    return 0;
+}
+
+int ssh_get_iparam(int param) {
+    switch(param) {
+        case SSH_IPARAM_AFW:
+            return ssh_afw;
+        case SSH_IPARAM_XFW:
+            return ssh_xfw;
+        case SSH_IPARAM_PRP:
+            return ssh_prp;
+        case SSH_IPARAM_CMP:
+            return ssh_cmp;
+        case SSH_IPARAM_CAS:
+            return ssh_cas;
+        case SSH_IPARAM_SHH:
+            return ssh_shh;
+        case SSH_IPARAM_VER:
+            return ssh_ver;
+        case SSH_IPARAM_VRB:
+            return ssh_vrb;
+        case SSH_IPARAM_CHKIP:
+            return ssh_chkip;
+        case SSH_IPARAM_GWP:
+            return ssh_gwp;
+        case SSH_IPARAM_DYF:
+            return ssh_dyf;
+        case SSH_IPARAM_GSD:
+            return ssh_gsd;
+        case SSH_IPARAM_K4TGT:
+            return ssh_k4tgt;
+        case SSH_IPARAM_K5TGT:
+            return ssh_k5tgt;
+        case SSH_IPARAM_SHK:
+            return ssh_shk;
+        case SSH_IPARAM_2_ARK:
+            return ssh2_ark;
+        case SSH_IPARAM_CFG:
+            return ssh_cfg;
+        case SSH_IPARAM_GKX:
+            return ssh_gkx;
+        case SSH_IPARAM_K5_IS_K4:
+            return ssh_k5_is_k4;
+        case SSH_IPARAM_HBT:
+            return ssh_hbt;
+    }
+    return 0;
+}
+
+void copy_set_sparam(char **dest, const char* src) {
+    if (*dest) {
+        free(*dest);
+        *dest = NULL;
+    }
+    if (src) {
+        *dest = _strdup(src);
+    }
+}
+
+int ssh_set_sparam(int param, const char* value) {
+    switch(param) {
+        case SSH_SPARAM_1_CIF:
+            break;
+        case SSH_SPARAM_2_CIF:
+            copy_set_sparam(&ssh2_cif, value);
+            break;
+        case SSH_SPARAM_2_MAC:
+            copy_set_sparam(&ssh2_mac, value);
+            break;
+        case SSH_SPARAM_2_AUTH:
+            copy_set_sparam(&ssh2_auth, value);
+            break;
+        case SSH_SPARAM_2_HKA:
+            copy_set_sparam(&ssh2_hka, value);
+            break;
+        case SSH_SPARAM_HST:
+            copy_set_sparam(&ssh_hst, value);
+            break;
+        case SSH_SPARAM_PRT:
+            copy_set_sparam(&ssh_prt, value);
+            break;
+        case SSH_SPARAM_CMD:
+            copy_set_sparam(&ssh_cmd, value);
+            break;
+        case SSH_SPARAM_XAL:
+            copy_set_sparam(&ssh_xal, value);
+            break;
+        case SSH_SPARAM_1_GNH:
+            break;
+        case SSH_SPARAM_1_UNH:
+            break;
+        case SSH_SPARAM_2_GNH:
+            copy_set_sparam(&ssh2_gnh, value);
+            break;
+        case SSH_SPARAM_2_UNH:
+            copy_set_sparam(&ssh2_unh, value);
+            break;
+        case SSH_SPARAM_2_KEX:
+            copy_set_sparam(&ssh2_kex, value);
+            break;
+        case SSH_SPARAM_PXC:
+            copy_set_sparam(&ssh_pxc, value);
+            break;
+        default:
+            return 1;
+    }
+    return 0;
+}
+
+const char* ssh_get_sparam(int param) {
+    switch(param) {
+        case SSH_SPARAM_1_CIF:
+            return NULL;
+        case SSH_SPARAM_2_CIF:
+            return ssh2_cif;
+        case SSH_SPARAM_2_MAC:
+            return ssh2_mac;
+        case SSH_SPARAM_2_AUTH:
+            return ssh2_auth;
+        case SSH_SPARAM_2_HKA:
+            return ssh2_hka;
+        case SSH_SPARAM_HST:
+            return ssh_hst;
+        case SSH_SPARAM_PRT:
+            return ssh_prt;
+        case SSH_SPARAM_CMD:
+            return ssh_cmd;
+        case SSH_SPARAM_XAL:
+            return ssh_xal;
+        case SSH_SPARAM_1_GNH:
+            return NULL;
+        case SSH_SPARAM_1_UNH:
+            return NULL;
+        case SSH_SPARAM_2_GNH:
+            return ssh2_gnh;
+        case SSH_SPARAM_2_UNH:
+            return ssh2_unh;
+        case SSH_SPARAM_2_KEX:
+            return ssh2_kex;
+        case SSH_SPARAM_PXC:
+            return ssh_pxc;
+        default:
+            return NULL;
+    }
+    return NULL;
+}
 
 
 /* Similar to "show ssh"
@@ -318,40 +1028,7 @@ static void debug_params(const char* function) {
 }
 
 
-/** Returns the current terminal type as a static string
- *
- * @return terminal type
- */
-static char* get_current_terminal_type() {
-    static char term_type[64];
-    extern int tt_type, max_tt;
-    extern struct tt_info_rec tt_info[];
-    extern char * tn_term;
 
-    term_type[0] = '\0';
-
-    if (tn_term) {
-        /* Terminal type override - set via "Set telnet terminal-type" */
-        debug(F111, "terminal type override", tn_term, 0);
-        if (*tn_term) {
-            ckstrncpy(term_type, tn_term, sizeof(term_type));
-        }
-    } else {
-        if (tt_type >= 0 && tt_type <= max_tt) {
-            ckstrncpy(term_type, tt_info[tt_type].x_name, sizeof(term_type));
-        } else {
-            debug(F101, "Invalid terminal type ID", "tt_type", tt_type);
-        }
-    }
-
-    if (!term_type[0]) {
-        /* No valid terminal type set anywhere */
-        ckstrncpy(term_type, "UNKNOWN", sizeof(term_type));
-    }
-
-    cklower(term_type);
-    return(term_type);
-}
 
 
 /** Checks that the SSH thread is alive and has not reported an error.
@@ -409,6 +1086,9 @@ int ssh_open() {
     char* user = NULL;
     int pty_height, pty_width;
     int rc;
+    const char* uidbuf;
+
+    uidbuf = ssh_get_uid();
 
     debug(F100, "ssh_open()", "", 0);
 
@@ -459,6 +1139,7 @@ int ssh_open() {
     } else {
         user = _strdup(uidbuf);
     }
+    debug(F110, "username", user, 0);
 
     /* Check if the client thread is alive. If it is we'll need a successful
      * disconnect before we can proceed. */
@@ -484,7 +1165,6 @@ int ssh_open() {
     debug(F111, "ssh_open() - get terminal dimensions", "height", pty_height);
     debug(F111, "ssh_open() - get terminal dimensions", "width", pty_width);
 
-
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
     debug(F100, "ssh_open() - construct parameters", "", 0);
@@ -501,7 +1181,7 @@ int ssh_open() {
             ssh2_unh, /* User known hosts file */
             ssh2_gnh, /* Global known hosts file*/
             user,     /* Username */
-            pwflg ? pwbuf : NULL, /* Password (if supplied) */
+            ssh_get_pw(), /* Password (if supplied) */
             get_current_terminal_type(),
             pty_width,
             pty_height,
@@ -511,7 +1191,7 @@ int ssh_open() {
             ssh2_hka,   /* Allowed host key algorithms */
             ssh2_mac,   /* Allowed MACs */
             ssh2_kex,   /* Key exchange methods */
-            tcp_nodelay,/* Enable/disable Nagle's algorithm */
+            ssh_get_nodelay_enabled(),/* Enable/disable Nagle's algorithm */
             ssh_pxc     /* Proxy Command */
             );
 
@@ -840,7 +1520,7 @@ int ssh_tol(char * buffer, int count) {
  * @param height Height (lines)
  * @param width  width (columns)
  */
-void ssh_terminfo(char * termtype, int height, int width) {
+void ssh_terminfo(const char * termtype, int height, int width) {
 
     if (ssh_client == NULL)
         return;
@@ -922,6 +1602,13 @@ const char * ssh_errorstr(int error) {
 }
 
 
+#ifdef COMMENT
+/*
+ * Not sure why these are here as they're never called anywhere. Perhaps I
+ * copied them from the previous SSH implementation, or maybe C-Kermit changes
+ * at some point removed the calls to them.
+ */
+
 /** Switching from terminal to VT mode. The CONNECT or DIAL commands might
  * be about to send printable text or escape sequences.
  *
@@ -955,6 +1642,7 @@ int ssh_ttres() {
     /* Nothing much to do here. Just return an error if we have one. */
     return get_ssh_error();
 }
+#endif
 
 
 /** Negotiate About Window Size. Let the remote host know the window dimensions
@@ -1538,19 +2226,19 @@ int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
     return SSH_ERR_OK;
 }
 
+#ifdef SSHTEST
 int sshkey_v1_change_comment(char * filename, char * comment, char * pp) {
     return SSH_ERR_NOT_IMPLEMENTED;
 }
+#endif /* SSHTEST */
 
+#ifdef COMMENT
 char * sshkey_default_file(int a) {
     return NULL; /* TODO */
 }
+#endif
 
 int ssh_fwd_local_port(int a, char *b, int c) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
-}
-
-int ssh_few_remote_port(int a, char *b, int c) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }
 
@@ -1562,7 +2250,7 @@ void ssh_v2_rekey() {
  *
  * @return "SSH-2.0"
  */
-char * ssh_proto_ver() {
+const char * ssh_proto_ver() {
     static char buf[16];
     snprintf(buf, sizeof buf, "SSH-2.0");
     return buf;
@@ -1571,7 +2259,13 @@ char * ssh_proto_ver() {
 /** Return the current SSH backend/implementation version.
  */
 const char * ssh_impl_ver() {
-    return ssh_version(0);
+    static char buf[64];
+    snprintf(buf, sizeof(buf), "libssh %s", ssh_version(0));
+    return buf;
+}
+
+const char * ssh_dll_ver() {
+    return cksshv;
 }
 
 int ssh_agent_delete_file(const char *filename) {
@@ -1588,4 +2282,73 @@ int ssh_agent_add_file(const char *filename) {
 
 int ssh_agent_list_identities(int do_fp) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+}
+
+ktab_ret ssh_get_keytab(int keytab_id) {
+    ktab_ret ret;
+    ret.rc = 0;
+
+    switch(keytab_id) {
+        case SSH_KTAB_V2_AUT: {
+            ret.ktab = ssh2aut;
+            ret.ktab_len = nssh2aut;
+            break;
+        }
+        case SSH_KTAB_V2_CIPHERS: {
+            ret.ktab = ssh2ciphers;
+            ret.ktab_len = nssh2ciphers;
+            break;
+        }
+        case SSH_KTAB_V2_MACS: {
+            ret.ktab = ssh2macs;
+            ret.ktab_len = nssh2macs;
+            break;
+        }
+        case SSH_KTAB_HKA: {
+            ret.ktab = hkatab;
+            ret.ktab_len = nhkatab;
+            break;
+        }
+        case SSH_KTAB_KEX: {
+            ret.ktab = sshkextab;
+            ret.ktab_len = nsshkextab;
+            break;
+        }
+#ifdef SSH_V1
+            case SSH_KTAB_V1_CIPHERS: {
+            ret.ktab = ssh1ciphers;
+            ret.ktab_len = nssh1ciphers;
+            break;
+        }
+#endif /* SSH_V1 */
+        default: {
+            ret.rc = -1;
+        }
+    }
+    return ret;
+}
+
+int ssh_feature_supported(int feature_id) {
+    switch(feature_id) {
+
+        case SSH_FEAT_OPENSSH_CONF:
+        case SSH_FEAT_KEY_MGMT:
+        case SSH_FEAT_REKEY_AUTO:   /* TODO: do we implement this? */
+            return TRUE;
+
+        case SSH_FEAT_SSH_V1:         /* Not supported by libssh anymore */
+        case SSH_FEAT_PROXY_CMD:      /* Not supported by libssh on windows yet */
+        case SSH_FEAT_ADV_KERBEROS4:  /* Not supported by libssh */
+        case SSH_FEAT_ADV_KERBEROS5:  /* Not supported by libssh */
+        case SSH_FEAT_REKEY_MANUAL:   /* Not supported by libssh */
+        case SSH_FEAT_FROM_PRIV_PRT:  /* Not supported by libssh */
+        case SSH_FEAT_GSSAPI_KEYEX:   /* Not supported by libssh */
+        case SSH_FEAT_PORT_FWD:       /* TODO - not implemented here yet */
+        case SSH_FEAT_X11_FWD:        /* TODO - not implemented here yet */
+        case SSH_FEAT_AGENT_FWD:      /* TODO - not implemented here yet */
+        case SSH_FEAT_GSSAPI_DELEGAT: /* TODO: can we support this ? I think so */
+        case SSH_FEAT_AGENT_MGMT:     /* TODO: can we support this ? */
+        default:
+            return FALSE;
+    }
 }

@@ -88,6 +88,11 @@ BOOL dialerIsCKCM = 0;
 #ifdef NT
 DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
 #endif /* NT */
+
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+
 #endif /* OS2 */
 
 #ifdef KUI
@@ -5388,7 +5393,12 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
+#if SSH_DLL
+    if (ssh_avail())
+        printf(" SSH V2 protocol\n");
+#else
     printf(" SSH V2 protocol\n");
+#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
@@ -6722,11 +6732,10 @@ doinput(timo,ms,mp,flags,count)
     static int cr = 0;
 #endif /* TNCODE */
     int is_tn = 0;
-#ifdef SSHBUILTIN
-    extern int ssh_cas;
-    extern char * ssh_cmd;
-#endif /* SSHBUILTIN */
     int noescseq = 0;			/* Filter escape sequences */
+#ifdef SSHBUILTIN
+    const char* ssh_cmd;
+#endif
 
     debug(F101,"input count","",count);
     debug(F101,"input flags","",flags);
@@ -6827,8 +6836,9 @@ doinput(timo,ms,mp,flags,count)
 #endif /* NOLOCAL */
 
 #ifdef SSHBUILTIN
-    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
-         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+    ssh_cmd = ssh_get_sparam(SSH_SPARAM_CMD);
+    if ( network && nettype == NET_SSH && ssh_get_iparam(SSH_IPARAM_CAS) &&
+        ssh_cmd && !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
         if (!quiet)
 	  printf("?SSH Subsystem active: %s\n", ssh_cmd);
         instatus = INP_IKS;

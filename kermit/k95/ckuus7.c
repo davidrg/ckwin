@@ -94,7 +94,7 @@ extern int mskrename;
 #include "ck_ssl.h"
 #endif /* CK_SSL */
 #ifdef SSHBUILTIN
-#include "ckolssh.h"
+#include "ckossh.h"
 #endif /* SSHBUILTIN */
 #ifdef STRATUS                          /* Stratus Computer, Inc.  VOS */
 #ifdef putchar
@@ -293,11 +293,11 @@ slrestor() {
 #endif /* TNCODE */
 #ifdef SSHBUILTIN
     if (sl_ssh_xfw_saved) {
-        ssh_xfw = sl_ssh_xfw;
+        ssh_set_iparam(SSH_IPARAM_XFW, sl_ssh_xfw);
         sl_ssh_xfw_saved = 0;
     }
     if (sl_ssh_ver_saved) {
-        ssh_ver = sl_ssh_ver;
+        ssh_set_iparam(SSH_IPARAM_VER, sl_ssh_ver);
         sl_ssh_ver_saved = 0;
     }
 #endif /* SSHBUILTIN */
@@ -9364,7 +9364,7 @@ cx_net(net, protocol, xhost, svc,
 
 #ifdef SSHBUILTIN
         if (net == NET_SSH) {
-            makestr(&ssh_hst,hostname);        /* Stash everything */
+            ssh_set_sparam(SSH_SPARAM_HST, hostname);   /* Stash everything */
             if (username) {
                 if (!sl_uid_saved) {
                     ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
@@ -9373,33 +9373,35 @@ cx_net(net, protocol, xhost, svc,
                 ckstrncpy(uidbuf,username,UIDBUFLEN);
             }
             if (srvbuf[0]) {
-                makestr(&ssh_prt,srvbuf);
-            } else
-                makestr(&ssh_prt,NULL);
+                ssh_set_sparam(SSH_SPARAM_PRT,srvbuf);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_PRT,NULL);
+            }
 
             if (command) {
-                makestr(&ssh_cmd,brstrip(command));
-                ssh_cas = param2;
-            } else
-                makestr(&ssh_cmd,NULL);
+                ssh_set_sparam(SSH_SPARAM_CMD, brstrip(command));
+                ssh_set_iparam(SSH_IPARAM_CAS, param2);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_CMD, NULL);
+            }
 
             if (param1 > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_ver_saved) {
-                    sl_ssh_ver = ssh_ver;
+                    sl_ssh_ver = ssh_get_iparam(SSH_IPARAM_VER);
                     sl_ssh_ver_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_ver = param1;
+                ssh_set_iparam(SSH_IPARAM_VER, param1);
             }
             if (param3 > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_xfw_saved) {
-                    sl_ssh_xfw = ssh_xfw;
+                    sl_ssh_xfw = ssh_get_iparam(SSH_IPARAM_XFW);
                     sl_ssh_xfw_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_xfw = param3;
+                ssh_set_iparam(SSH_IPARAM_XFW, param3);
             }
         } else                          /* NET_SSH */
 #endif /* SSHBUILTIN */
