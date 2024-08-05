@@ -167,7 +167,7 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31ONLY
 #                     newer versions of windows.
 # None of the above - Targeting NT 3.51 or newer
 
-!elseif
+!else
 
 # OS/2 gets NetBIOS support!
 CKF_NETBIOS=yes
