@@ -192,6 +192,15 @@ SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
 !endif
 
+!if ($(MSC_VER) == 80) && ("$(MSC_VER)" == "AXP")
+# The linker included with the NT 3.50 SDK for Alpha can't handle
+# K95 (complains "LINK : error LNK1155: Special symbol 'end' already defined.")
+# So to support using a newer linker that has less problems, we'll set
+# the subsystem version so the result still works on NT 3.1/3.50
+SUBSYSTEM_CONSOLE=console,3.1
+SUBSYSTEM_WIN32=windows,3.1
+!endif
+
 !if ($(MSC_VER) > 90)
 !if "$(TARGET_CPU)" != "MIPS"
 # This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)

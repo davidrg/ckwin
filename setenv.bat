@@ -571,6 +571,10 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
+
+REM As this compiler doesn't include msvcrt...
+set CKB_STATIC_CRT=yes
+
 goto :cvcdone
 
 :vc2
