@@ -1110,8 +1110,12 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
         rc -p -x1 ckopcf.res pcfonts.dll
 !endif
 
-k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib \
+k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak k95crypt.res
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj \
+	    libdes.lib \
+!if "$(PLATFORM)" != "OS2"
+	    k95crypt.res \
+!endif
 !if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
         bufferoverflowu.lib
 !endif
@@ -1467,6 +1471,9 @@ ckoker.res: ckoker.rc
 
 cknker.res: cknker.rc cknker.ico
         rc $(RCDEFINES) /fo cknker.res cknker.rc
+
+k95crypt.res: k95crypt.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95crypt.res k95crypt.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
