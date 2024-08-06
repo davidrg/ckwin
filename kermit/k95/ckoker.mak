@@ -125,6 +125,13 @@ TARGET_PLATFORM = OS/2
 CL = wcl386
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+!message MIPS Centaur compiler - forcing build with statically linked CRT.
+# /QmipsOb5000 increases the basic block threshold for optimisation
+COMMON_CFLAGS = /D_MT /QmipsOb5000
+CKB_STATIC_CRT = yes
+!endif
+
 # This turns features on and off based on set feature flags (CKF_*), the
 # platform being targeted, and the compiler currently in use.
 !include feature_flags.mak
@@ -799,10 +806,18 @@ KUILIBS = $(KUILIBS) srp.lib
 KUILIBS = $(KUILIBS) wshload.lib
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+KUILIBS = $(KUILIBS) libcmt.lib
+!endif
+
 # Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
+
+!if "$(MIPS_CENTAUR)" == "yes"
+LIBS = $(LIBS) libcmt.lib
+!endif
 
 !if "$(CKF_SSH)" == "yes"
 LIBS = $(LIBS) ssh.lib ws2_32.lib
@@ -1385,12 +1400,17 @@ ckcpro.c:	ckcpro.w ckwart.exe
 #		  DEBUG="$(DEBUG)" CFLAGS="-DCK_ANSIC $(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 		ckwart ckcpro.w ckcpro.c
 
+!if "$(MIPS_CENTAUR)" == "yes"
+WART_DEFS = /D_MT /D_MIPS_=1 /DCKT_NT31
+WART_LIBS = libcmt.lib kernel32.lib
+!endif
+
 ckwart$(O):     ckwart.c
-	$(CC) -c ckwart.c
+	$(CC) $(WART_DEFS) -c ckwart.c
 
 
 ckwart.exe: ckwart.obj $(DEF)
-	$(CC) ckwart.obj
+	$(CC) $(WART_LIBS) ckwart.obj
 
 !elseif "$(CKB_USE_WART)" == "yes"
 

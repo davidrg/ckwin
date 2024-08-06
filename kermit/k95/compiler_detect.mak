@@ -167,6 +167,16 @@ COMPILER_VERSION = 2.0
 MSC_VER = 80
 COMPILER_VERSION = 1.00 (NT 3.50 SDK, AXP)
 
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Centaur.*Version 8\.00" > nul] == 0)
+# The Win32 SDK Final Release (NT 3.1) MIPS compiler calls itself:
+# Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+
+MSC_VER = 80
+COMPILER_VERSION = 1.00 (NT 3.1 SDK, MIPS)
+
+# This compiler behaves weirdly. Flag it so we can deal with it later.
+MIPS_CENTAUR = yes
+
 !ELSEIF ([cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul] == 0)
 # This could also pick up the Win32 SDK, the final release of which calls itself:
 #   Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 8.00.3190a
@@ -218,6 +228,12 @@ TARGET_PLATFORM = Windows
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for MIPS R-Series" > nul] == 0)
 # We're targeting (and running on) Windows NT MIPS
+TARGET_CPU = MIPS
+
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Centaur.*Version 8\.00" > nul] == 0)
+# The Win32 SDK Final Release (NT 3.1) MIPS compiler calls itself:
+# Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+
 TARGET_CPU = MIPS
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for PowerPC" > nul] == 0)

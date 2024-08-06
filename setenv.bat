@@ -111,6 +111,11 @@ if %errorlevel% == 0 goto :axp
 cl 2>&1 | findstr /C:"for MIPS R-Series" > nul
 if %errorlevel% == 0 goto :mips
 
+REM Win32 SDK Final Release MIPS compiler (NT 3.1)
+REM Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+cl 2>&1 | findstr /C:"Microsoft (R) C Centaur Optimizing Compiler" > nul
+if %errorlevel% == 0 goto :mips
+
 cl 2>&1 | findstr /C:"for PowerPC" > nul
 if %errorlevel% == 0 goto :ppc
 
@@ -519,6 +524,8 @@ cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul
 if %errorlevel% == 0 goto :vc1
 cl 2>&1 | findstr /R /C:"AXP.*Version 8\.0" > nul
 if %errorlevel% == 0 goto :vc1axp
+cl 2>&1 | findstr /R /C:"C Centaur.*Version 8\.00" > nul
+if %errorlevel% == 0 goto :vc1mips
 cl 2>&1 | findstr /C:"Version 8.00" > nul
 if %errorlevel% == 0 goto :vc116
 
@@ -576,6 +583,19 @@ REM As this compiler doesn't include msvcrt...
 set CKB_STATIC_CRT=yes
 
 goto :cvcdone
+
+:vc1mips
+REM This is in the Win32 SDK Final Release (NT 3.1) compiler.
+REM Doesn't include Visual C++ libs/runtime (msvcrt)
+set CK_COMPILER_NAME=Win32 SDK Final Release (MIPS) Centaur C 8.0
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
+set CKF_LIBDES=unsupported
+set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
+set CKB_STATIC_CRT=yes
+goto :cvcdone
+
 
 :vc2
 :vc21

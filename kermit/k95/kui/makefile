@@ -11,6 +11,13 @@ RTFLAG = /MT
 RTFLAG = /MD
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+!message MIPS Centaur compiler - forcing build with statically linked CRT.
+# /QmipsOb5000 increases the basic block threshold for optimisation
+COMMON_CFLAGS = /D_MT /QmipsOb5000
+CKB_STATIC_CRT = yes
+!endif
+
 all: $(OUTDIR)\$(PROJ).exe 
 
 KUIOBJS = \

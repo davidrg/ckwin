@@ -193,6 +193,12 @@ CKF_K4W=no
 
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+!message Turning X/Y/Z MODEM support off - build errors need fixing with this compiler
+CKF_XYZ=no
+!endif
+
+
 !if "$(CKF_SSH)" == "yes"
 !message Target platform is OS/2 - forcing SSH off (not supported)
 # No built-in SSH support for OS/2 (yet)
