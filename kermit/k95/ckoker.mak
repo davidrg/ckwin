@@ -45,7 +45,7 @@ LWP30INC    = $(LWP30DIR)\inc20
 
 # Base flags for all versions of Visual C++ (and OpenWatcom
 # pretending to be Visual C++)
-!if "$(DEBUG)" == "-DNDEBUG"
+#!if "$(DEBUG)" == "-DNDEBUG"
 # Doing a release build
 !if "$(CKB_STATIC_CRT)"=="yes"
 !message Building with statically linked native CRT as requested.
@@ -54,15 +54,15 @@ COMMON_CFLAGS = /MT
 COMMON_CFLAGS = /MD
 !endif
 
-!else
+#!else
 # Doing a Debug build, use the Debug CRT
-!if "$(CKB_STATIC_CRT)"=="yes"
-!message Building with statically linked native CRT as requested.
-COMMON_CFLAGS = /MTd
-!else
-COMMON_CFLAGS = /MDd
-!endif
-!endif
+#!if "$(CKB_STATIC_CRT)"=="yes"
+#!message Building with statically linked native CRT as requested.
+#COMMON_CFLAGS = /MTd
+#!else
+#COMMON_CFLAGS = /MDd
+#!endif
+#!endif
 
 # These options are used for all Windows .exe targets
 COMMON_OPTS = /Ox
