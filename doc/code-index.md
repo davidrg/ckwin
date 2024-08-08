@@ -83,7 +83,7 @@ This code is used on both Windows and OS/2.
 | ckoath.h            | Authentication for Kermit 95                               |                                                                                                                                |
 | ckoava.c            | AVATAR Emulation                                           |                                                                                                                                |
 | ckoava.h            | Header for AVATAR Emulation                                |                                                                                                                                |
-| ckoco2.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |
+| ckoco2.c            | Kermit connect command for OS/2 systems and Windows        | VScrn functions                                                                                                                |
 | ckoco3.c            | Kermit connect command for OS/2 systems and Windows        | A lot of escape sequence processing for the terminal emulator happens in here                                                  |
 | ckoco4.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |
 | ckoco5.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |

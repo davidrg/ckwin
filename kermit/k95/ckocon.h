@@ -87,7 +87,24 @@
 #endif /* min */
 
 #ifdef NT
+#ifdef KUI
+
+#if (defined(_MSC_VER) && _MSC_VER > 1400) || defined(__GNUC__)
+/*
+ * Don't increase max columns on compilers capable of targeting older versions
+ * of windows (VC++ 2005 is the last one capable of building for 9x and NT)
+ * as they could potentially be running on more resource constrained machines.
+ *
+ * This is a bit arbitrary and a bit of a hack - someday we'll allow this
+ * maximum to be changed at runtime solving this problem properly.
+ */
+#define MAXSCRNCOL  512            /* Maximum screen columns */
+#else
 #define MAXSCRNCOL  256            /* Maximum screen columns */
+#endif
+#else /* KUI */
+#define MAXSCRNCOL  256            /* Maximum screen columns */
+#endif /* KUI */
 #define MAXSCRNROW  128            /* Maximum screen rows    */
 #define MAXTERMSIZE (MAXSCRNCOL*MAXSCRNROW)
 #else /* NT */

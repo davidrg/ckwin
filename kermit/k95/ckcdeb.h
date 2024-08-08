@@ -47,6 +47,21 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
+
+/* Some ancient MIPS compilers for Windows NT define "MIPS" which causes
+ * problems here and elsewhere. None of the windows headers depend on MIPS being
+ * defined (they all check for _MIPS_), so it's safe to just undefine it.
+ */
+#ifdef MIPS
+#ifdef OS2
+#undef MIPS     /* MIPS should never be defined when targeting OS/2 */
+#endif /* OS2 */
+#ifdef CKT_NT31
+#undef MIPS     /* MIPS should never be defined when targeting NT 3.1 */
+#endif /* CKT_NT31 */
+#endif /* MIPS */
+
+
 /* Moved here from ckcmai.c October 2022... REMOVE THIS AFTER BETA TEST! */
 #ifndef BETATEST
 #define BETATEST

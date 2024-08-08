@@ -125,6 +125,13 @@ TARGET_PLATFORM = OS/2
 CL = wcl386
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+!message MIPS Centaur compiler - forcing build with statically linked CRT.
+# /QmipsOb5000 increases the basic block threshold for optimisation
+COMMON_CFLAGS = /D_MT /QmipsOb5000
+CKB_STATIC_CRT = yes
+!endif
+
 # This turns features on and off based on set feature flags (CKF_*), the
 # platform being targeted, and the compiler currently in use.
 !include feature_flags.mak
@@ -190,6 +197,15 @@ LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
 # version to 5.1 so the generated binaries are compatible.
 SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
+!endif
+
+!if ($(MSC_VER) == 80) && ("$(MSC_VER)" == "AXP")
+# The linker included with the NT 3.50 SDK for Alpha can't handle
+# K95 (complains "LINK : error LNK1155: Special symbol 'end' already defined.")
+# So to support using a newer linker that has less problems, we'll set
+# the subsystem version so the result still works on NT 3.1/3.50
+SUBSYSTEM_CONSOLE=console,3.1
+SUBSYSTEM_WIN32=windows,3.1
 !endif
 
 !if ($(MSC_VER) > 90)
@@ -790,10 +806,18 @@ KUILIBS = $(KUILIBS) srp.lib
 KUILIBS = $(KUILIBS) wshload.lib
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+KUILIBS = $(KUILIBS) libcmt.lib
+!endif
+
 # Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
+
+!if "$(MIPS_CENTAUR)" == "yes"
+LIBS = $(LIBS) libcmt.lib
+!endif
 
 !if "$(CKF_SSH)" == "yes"
 LIBS = $(LIBS) ssh.lib ws2_32.lib
@@ -1101,8 +1125,12 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
         rc -p -x1 ckopcf.res pcfonts.dll
 !endif
 
-k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib \
+k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak k95crypt.res
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj \
+	    libdes.lib \
+!if "$(PLATFORM)" != "OS2"
+	    k95crypt.res \
+!endif
 !if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
         bufferoverflowu.lib
 !endif
@@ -1372,12 +1400,17 @@ ckcpro.c:	ckcpro.w ckwart.exe
 #		  DEBUG="$(DEBUG)" CFLAGS="-DCK_ANSIC $(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 		ckwart ckcpro.w ckcpro.c
 
+!if "$(MIPS_CENTAUR)" == "yes"
+WART_DEFS = /D_MT /D_MIPS_=1 /DCKT_NT31
+WART_LIBS = libcmt.lib kernel32.lib
+!endif
+
 ckwart$(O):     ckwart.c
-	$(CC) -c ckwart.c
+	$(CC) $(WART_DEFS) -c ckwart.c
 
 
 ckwart.exe: ckwart.obj $(DEF)
-	$(CC) ckwart.obj
+	$(CC) $(WART_LIBS) ckwart.obj
 
 !elseif "$(CKB_USE_WART)" == "yes"
 
@@ -1458,6 +1491,9 @@ ckoker.res: ckoker.rc
 
 cknker.res: cknker.rc cknker.ico
         rc $(RCDEFINES) /fo cknker.res cknker.rc
+
+k95crypt.res: k95crypt.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95crypt.res k95crypt.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
