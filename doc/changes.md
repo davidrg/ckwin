@@ -50,6 +50,8 @@ Windows XP.
   screen would not be correctly rendered. This fix only applies to modern
   versions of Windows.
 * Fixed included openssl.exe not working on Windows XP
+* Fixed paging for the "help options all" command where argument help contains
+  line breaks
 
 ### Minor Enhancements and other changes
 

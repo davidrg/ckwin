@@ -6022,7 +6022,7 @@ doxopts() {
 
 int
 dohopts() {
-    int i, n, x, y, z, all = 0, msg = 0;
+    int i, j, n, x, y, z, all = 0, msg = 0;
     char *s;
     extern char *opthlp[], *arghlp[];
     extern char * xopthlp[], * xarghlp[];
@@ -6085,6 +6085,14 @@ or the word ALL, or carriage return for an overview",
             printf("     %s\n",opthlp[i]);
             printf("     Argument: %s\n\n",arghlp[i]);
             x = 4;
+
+            /* Prevent argument help that contains line breaks (such K95s -#)
+             * from breaking paging */
+            for (j = 0; arghlp[i][j] != '\0'; j++) {
+                if (arghlp[i][j] == '\n') {
+                    n += 1;
+                }
+            }
         } else {                        /* Option without arg */
             printf(" -%c  %s%s\n",
                    (char)i, opthlp[i],
