@@ -4,7 +4,7 @@ This document covers what has changed in each release of C-Kermit for Windows
 check the git commit log.
 
 
-## C-Kermit for Windows 10.0b10 beta 6 - coming soon
+## C-Kermit for Windows 10.0b11 beta 6 - coming soon
 
 This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
 now out of support) to OpenSSL 3.0.x, and libssh 0.10.5 to 0.10.6. Also 
@@ -69,7 +69,7 @@ Windows XP.
   public key, keyboard-interactive, password.
 * Binaries are now provided for Windows NT running on Alpha, MIPS and PowerPC
   systems.
-* Upgraded to C-Kermit 10.0 Pre-Beta.11
+* Upgraded to C-Kermit 10.0 Beta.11
 * About window (Help -> About) now includes the beta number
 * Added help text for `set terminal autopage` and `set terminal autoscroll`
 * Increased the maximum number of terminal columns from 256 to 512 in K95G.
