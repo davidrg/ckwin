@@ -4,7 +4,7 @@ This document covers what has changed in each release of C-Kermit for Windows
 check the git commit log.
 
 
-## C-Kermit for Windows 10.0b11 beta 6 - coming soon
+## C-Kermit for Windows 10.0b11 beta 6 - 11 August 2024
 
 This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
 now out of support) to OpenSSL 3.0.x, and libssh 0.10.5 to 0.10.6. Also 
