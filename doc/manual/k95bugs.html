@@ -29,7 +29,7 @@ bugs have been moved to a <a href="k95fixes.html">separate file</a>.
 <p>
 If you do not have the current version of Kermit 95, please upgrade to it:
 <p><pre>
-  <a href="http://www.columbia.edu/kermit/k95patch.html">http://www.columbia.edu/kermit/k95patch.html</a>
+  <a href="https://github.com/davidrg/ckwin/releases">https://github.com/davidrg/ckwin/releases</a>
 </pre>
 <p>
 if you are experiencing bugs or problems, they might already be fixed.  Also,
@@ -46,11 +46,11 @@ of K95.
 <p>
 In this document, except where otherwise noted, the term <b>Windows 95</b> or
 <b>Windows 9x</b> refers to Windows 95, Windows 98, or Windows ME,
-but <i>not</i> to Windows NT, 2000, or XP.  Similarly, the term
+but <i>not</i> to Windows NT, 2000, or XP or newer.  Similarly, the term
 <b>Windows NT</b> also includes Windows 2000 and XP, but <i>not</i> Windows 95,
 98, or ME.
 <p>
-[ <a href="#index">Index</a> ] [ <a href="#descriptions">Bug Descriptions</a> ] [ <a href="http://www.columbia.edu/kermit/k95.html">K95 Home</a> ] [ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="#index">Index</a> ] [ <a href="#descriptions">Bug Descriptions</a> ] [ <a href="http://kermitproject.org/k95.html">K95 Home</a> ] [ <a href="http://kermitproject.org">Kermit Home</a> ]
 <hr>
 <dl><dt><b>BUG CATEGORY</b>
 <dd><tt>(M) </tt><b>Microsoft</b> Windows bug.<br>
@@ -988,6 +988,23 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b817">817. Columns can be lost if K95G window wider than physical screen</a>
 <li><tt>[+] (M)</tt> <a href="#b818">818. Ghost tool tips</a>
 <li><tt>[+] (K)</tt> <a href="#b819">819. CVTDATE function cannot process deltas with negative months</a>
+<!-- New bug IDs assigned by the open source K95 project -->
+<li><tt>[+] (K)</tt> <a href="#b820">820. Entering plane-1 unicode values causes a crash</a>
+<li><tt>[ ] (K)</tt> <a href="#b821">821. Receiving files with non-ascii names can result in garbled filenames</a>
+<li><tt>[+] (K)</tt> <a href="#b822">822. Receiving large files requiring more than 32 bits to represent their size fails immediately</a>
+<li><tt>[+] (K)</tt> <a href="#b823">823. Some applications don't resume properly after being sent to the background (linux term type)</a>
+<li><tt>[ ] (K)</tt> <a href="#b824">824. The run and browse commands leave a console window open in K95G</a>
+<li><tt>[+] (K)</tt> <a href="#b825">825. Files requiring more than 32bits to represent their size are shown as having a size of -1 by the DIRECTORY command</a>
+<li><tt>[+] (K)</tt> <a href="#b826">826. The K95G terminal screen is cleared when you first move the window</a>
+<li><tt>[+] (K)</tt> <a href="#b827">827. Making the K95G window larger in any dimension than the primary display introduces blank space</a>
+<li><tt>[+] (K)</tt> <a href="#b828">828. The SET MOUSE ACTIVATE command does not work in K95G</a>
+<li><tt>[+] (K)</tt> <a href="#b829">829. Receiving files with a specified destination fails when autodownload is set to ask</a>
+<li><tt>[ ] (K)</tt> <a href="#b830">830. Switching between command and terminal screens via the keyboard does not update the toolbar button state</a>
+
+    <!--
+    <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
+    -->
+
 </ol>
 <p>
 [ <a href="#top">Top</a> ] [ <a href="#index">Index</a> ] [ <a href="http://www.columbia.edu/kermit/k95.html">K95 Home</a> ] [ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
@@ -7822,6 +7839,115 @@ produces an incorrect year.  This is fixed in version 3.0.
     a number which was already assigned to
     <a href="#b794">#794 Dialer Database Corruption</a>. For the K95 v3.0 issue
     of the bug list, it has been cataloged as bug 819.
+
+<h3><a name="b820">820. Entering plane-1 unicode values causes a crash</a></h3>
+
+K95 allows you to enter any plane-1 unicode value by pressing Alt-n and typing
+in four digits. In K95 v2.1.3 when you enter the fourth digit the application
+crashes. This has been fixed in version 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/133">Issue #133 on Github</a>
+
+<h3><a name="b821">821. Receiving files with non-ascii names can result in garbled filenames</a></h3>
+
+Receiving a file named "Grüße" may result in a saved file called something like
+"GrÃ¼Ã\237e". There are likely two factors that contribute to this problem:
+
+<ol>
+    <li>The Kermit Protocol has
+        <a href="https://kermitproject.org/cktodolist.html#filenames">no way of
+            transmitting the encoding of a filename</a> - its just sent
+        verbatim and if the sender and receiver happen to use different
+        encodings for filenames then you end up with a mess.
+    </li>
+    <li>K95 does not call the Unicode versions of the File Open APIs on Windows,
+        so even if the filename happened arrive UCS-2 encoded we're not passing
+        a UCS-2 string to the operating system when creating the file.
+    </li>
+</ol>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/141">Issue #141 on Github</a>
+
+<h3><a name="b822">822. Receiving large files requiring more than 32 bits to represent their size fails immediately</a></h3>
+
+K95 can not handle receiving files that require more than 32 bits to represent
+their size. The transfer fails immediately with "Refused, size". Fixed in
+version 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/53">Issue #53 on Github</a>
+
+<h3><a name="b823">823. Some applications don't resume properly after being sent to the background (linux term type)</a></h3>
+
+When using the linux terminal type, some applications fail to redraw their
+interface when suspended with Ctrl+Z and then returned to the foreground
+with <tt>fg</tt>.
+
+This is caused by linux private mode sequences not following ECMA-48 rules by
+using a non-standard terminating character. Fixed in Version 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/92">Issue #92 on Github</a>
+
+<h3><a name="b824">824. The run and browse commands leave a console window open in K95G</a></h3>
+
+In K95G, when you start a GUI program with the <tt>run</tt> command, or use the
+<tt>browse</tt> command, an empty console window appears alongside the started
+application.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/114">Issue #114 on Github</a>
+
+<h3><a name="b825">825. Files requiring more than 32bits to represent their size are shown as having a size of -1 by the DIRECTORY command</a></h3>
+
+    Fixed in 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/221">Issue #221 on Github</a>
+
+<h3><a name="b826">826. The K95G terminal screen is cleared when you first move the window</a></h3>
+
+Probably related to <a href="#b663">bug 663</a>, in K95 2.1.3 the the terminal
+screen is cleared the first time you move the K95G window regardless of how
+you started it. This bug is finally squashed for good in version 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/49">Issue #49 on Github</a>
+
+<h3><a name="b827">827. Making the K95G window larger in any dimension than the primary display introduces blank space</a></h3>
+
+On a computer with multiple displays of different resolutions, in K95 2.1.3 if
+you resize the terminal window to be larger in any dimension than the primary
+display the extra area in that dimension is just white space. Fixed in version 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/187">Issue #187 on Github</a>
+
+<h3><a name="b828">828. The SET MOUSE ACTIVATE command does not work in K95G</a></h3>
+
+    Fixed in 3.0.
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/103">Issue #103 on Github</a>
+
+<h3><a name="b829">829. Receiving files with a specified destination fails when autodownload is set to ask</a></h3>
+
+Fixed in 3.0
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/166">Issue #166 on Github</a>
+
+<h3><a name="b830">830. Switching between command and terminal screens via the keyboard does not update the toolbar button state</a></h3>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/116">Issue #116 on Github</a>
+
+
+<!--
+<h3><a name="bxxx">xxx. </a></h3>
+-->
 
 <p>
 [ <a href="#top">Top</a> ] [ <a href="#index">Index</a> ] [ <a href="http://www.columbia.edu/kermit/k95.html">K95 Home</a> ] [ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
