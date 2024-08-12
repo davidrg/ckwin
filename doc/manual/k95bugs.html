@@ -8,13 +8,13 @@
 <h2>KERMIT 95 BUG LIST</h2>
 
 <p>
-The Kermit Project, Columbia University<br>
-<a href="http://www.columbia.edu/kermit/">http://www.columbia.edu/kermit/</a>
+The Kermit Project<br>
+<a href="http://kermitproject.org/">http://kermitproject.org/</a>
 <p>
 
-<i>1 January 2003</i>
+<i><!--$ver-date-->1 January 2003<!--/$ver-date--></i>
 <p>
-For: <b>Kermit 95 2.1.3</b>
+For: <b>Kermit 95 <!--$ver-full-->3.0.0 DEV<!--/$ver-full--></b>
 </center>
 <p>
 <p>
@@ -879,6 +879,115 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <pre>
   ----(Version 2.1.3)----
 </pre>
+<!-- The following integrated form newbugs.txt in 2024 -->
+<li><tt>[+] (K)</tt> <a href="#b712">712. FTP Brief-format transaction log shows wrong status</a>
+<li><tt>[+] (K)</tt> <a href="#b713">713. FTP connections always complain about 'FEAT' command</a>
+<li><tt>[+] (K)</tt> <a href="#b714">714. Problems with FTP [M]GET /RECURSIVE</a>
+<li><tt>[+] (K)</tt> <a href="#b715">715. FTP USER and similar commands don't strip quotes</a>
+<li><tt>[+] (K)</tt> <a href="#b716">716. FTP MPUT requires all filespecs to match at least one file </a>
+<li><tt>[ ] (K)</tt> <a href="#b717">717. GREP (FIND) does not allow pattern variables</a>
+<li><tt>[+] (K)</tt> <a href="#b718">718. Dialer GUI Menu/Tool/Status Bar settings don't stick</a>
+<li><tt>[+] (K)</tt> <a href="#b719">719. The K95 command parser does not handle the NUL device</a>
+<li><tt>[+] (K)</tt> <a href="#b720">720. INPUT n \fpattern(xxx) doesn't work for case-independent matches</a>
+<li><tt>[+] (K)</tt> <a href="#b721">721. MINPUT n ... \fpattern(xxx) ... doesn't work at all.</a>
+<li><tt>[+] (K)</tt> <a href="#b722">722. Associative array references not case sensitive</a>
+<li><tt>[+] (K)</tt> <a href="#b723">723. SET KEY xxx \27H erroneously lowercases the value</a>
+<li><tt>[+] (K)</tt> <a href="#b724">724. Failing FTP CD/CDUP/RMDIR does not set failure status</a>
+<li><tt>[+] (K)</tt> <a href="#b725">725. The RENAME command sometimes fails without printing an error message</a>
+<li><tt>[+] (K)</tt> <a href="#b726">726. ENABLE/DISABLE QUERY broken</a>
+<li><tt>[+] (K)</tt> <a href="#b727">727. CD command with wildcard broken</a>
+<li><tt>[+] (K)</tt> <a href="#b728">728. DIRECTORY command with multiple filespecs can list too many files</a>
+<li><tt>[ ] (M)</tt> <a href="#b729">729. Display of Plane-1-and-beyond Unicode characters</a>
+<li><tt>[+] (K)</tt> <a href="#b730">730. k95g.exe ssh://xyzcorp.com --nobars causes invalid memory reference</a>
+<li><tt>[+] (K)</tt> <a href="#b731">731. Long Read Delays when using USB Serial Ports or Modems</a>
+<li><tt>[ ] (K)</tt> <a href="#b732">732. Backspace Key setting in Dialer -> Keyboard might be ignored</a>
+<li><tt>[ ] (C)</tt> <a href="#b733">733. SET PRINTER command in Dialer-generated scripts</a>
+<li><tt>[+] (K)</tt> <a href="#b734">734. Sessions Logs are always 8-bit</a>
+<li><tt>[+] (K)</tt> <a href="#b735">735. Macros on Keys broken</a>
+<li><tt>[+] (K)</tt> <a href="#b736">736. FTP MGET might not fail when it should</a>
+<li><tt>[+] (K)</tt> <a href="#b737">737. No way to totally disable WIKSD event logging</a>
+<li><tt>[+] (K)</tt> <a href="#b738">738. OpenSSL Security holes in 0.9.7</a>
+<li><tt>[+] (K)</tt> <a href="#b739">739. Kerberos for Windows updates</a>
+<li><tt>[+] (K)</tt> <a href="#b740">740. OpenSSH Security holes</a>
+<li><tt>[+] (K)</tt> <a href="#b741">741. SEND command in Kermit function causes crash</a>
+<li><tt>[+] (K)</tt> <a href="#b742">742. Denial of Service attack against TCP/IP SET HOST * connections</a>
+<li><tt>[+] (K)</tt> <a href="#b743">743. SSL/TLS Private Key Passphrase Dialog reveals passphrase</a>
+<li><tt>[+] (K)</tt> <a href="#b744">744. Pragma Systems Terminal Server Not Supported</a>
+<li><tt>[+] (K)</tt> <a href="#b745">745. Communication devices passed to Kermit as handles are closed on exit</a>
+<li><tt>[+] (K)</tt> <a href="#b746">746. SET TCP HTTP-PROXY cannot be used with HTTP connections</a>
+<li><tt>[+] (K)</tt> <a href="#b747">747. UNC paths do not work during FTP operations</a>
+<li><tt>[ ] ( )</tt> <a href="#b748">748. Dialer QUICK Command improvements</a>
+<li><tt>[+] (K)</tt> <a href="#b749">749. Linux Character Set handling bugs</a>
+<li><tt>[ ] (K)</tt> <a href="#b750">750. XMODEM-CRC checksums are not computed properly</a>
+<li><tt>[+] (K)</tt> <a href="#b751">751. BEEP when setting window title in a terminal session</a>
+<li><tt>[+] ( )</tt> <a href="#b752">752. NEW FEATURE: SSH Debug Logging</a>
+<li><tt>[+] (K)</tt> <a href="#b753">753. Telnet AUTH vs Telnet START_TLS protocol negotiation conflicts</a>
+<li><tt>[ ] ( )</tt> <a href="#b754">754. NEW FEATURE: SSH Version 2 Protocol Automatic Rekeying</a>
+<li><tt>[+] (K)</tt> <a href="#b755">755. Extended command line options not properly processed</a>
+<li><tt>[+] (K)</tt> <a href="#b756">756. SSH URLs did not set the window title</a>
+<li><tt>[+] ( )</tt> <a href="#b757">757. NEW FEATURE: SKERMIT command</a>
+<li><tt>[+] (K)</tt> <a href="#b758">758. Process handle leak in the IKSD Service</a>
+<li><tt>[ ] ( )</tt> <a href="#b759">759. NEW FEATURE: FTP SSLv2 connections</a>
+<li><tt>[+] ( )</tt> <a href="#b760">760. NEW FEATURE: SSH Heartbeats to maintain connections through NAT/Firewalls</a>
+<li><tt>[+] ( )</tt> <a href="#b761">761. NEW FEATURE: ON_CD macro</a>
+<li><tt>[+] ( )</tt> <a href="#b762">762. NEW FEATURE: FTP MLSD parsing of extended strings</a>
+<li><tt>[ ] (K)</tt> <a href="#b763">763. SET ATTRIBUTES DATE OFF did not apply to XYZmodem file transfers</a>
+<li><tt>[+] (K)</tt> <a href="#b764">764. FTP ASCII transfers generated incorrect end of line when sending</a>
+<li><tt>[+] (K)</tt> <a href="#b765">765. Unable to specify the HTTP Agent for use in Proxy Operations</a>
+<li><tt>[ ] (K)</tt> <a href="#b766">766. Windows Registry entries containing environment variables are not processed correctly</a>
+<li><tt>[+] (K)</tt> <a href="#b767">767. Reverse DNS Lookups cannot always be disabled</a>
+<li><tt>[ ] (K)</tt> <a href="#b768">768. Directory operations fail on network mapped file systems which do not provide date information</a>
+<li><tt>[+] (K)</tt> <a href="#b769">769. IBM 3151 emulation is missing keymap assignments for some keys</a>
+<li><tt>[ ] (K)</tt> <a href="#b770">770. Dialer FTP entries did not preserve alternative port numbers</a>
+<li><tt>[+] ( )</tt> <a href="#b771">771. NEW FEATURE: Hyperlink Extensions for ANSI based terminals</a>
+<li><tt>[+] (K)</tt> <a href="#b772">772. ANSI DCS sequences containing an intermediary '$' character are improperly handled</a>
+<li><tt>[+] ( )</tt> <a href="#b773">773. NEW FEATURE: 3DES Telnet support</a>
+<li><tt>[+] (K)</tt> <a href="#b774">774. UNC paths in file transfer operations generate errors</a>
+<li><tt>[+] (K)</tt> <a href="#b775">775. SET TITLE &lt;title-string&gt; is not brace stripped</a>
+<li><tt>[ ] (K)</tt> <a href="#b776">776. MOVE-TO and RENAME-TO functionality did not work with XYZmodem transfers</a>
+<li><tt>[+] (K)</tt> <a href="#b777">777. SEND /MOVE-TO:&lt;directory&gt; fails when using Kermit protocol</a>
+<li><tt>[+] (K)</tt> <a href="#b778">778. SET TERMINAL DEBUG ON command does not work.</a>
+<li><tt>[+] (K)</tt> <a href="#b779">779. The INFORMATION sound generates no audible output</a>
+<li><tt>[+] ( )</tt> <a href="#b780">780. NEW FEATURE: DG4xx Set Cursor Type support</a>
+<li><tt>[+] (K)</tt> <a href="#b781">781. SET PRINTER command causes Kermit to crash</a>
+<li><tt>[ ] (K)</tt> <a href="#b782">782. ANSI Backtab Control Sequence (CSI Z) does not function</a>
+<li><tt>[+] ( )</tt> <a href="#b783">783. NEW FEATURE: GUI TYPE command</a>
+<li><tt>[+] (K)</tt> <a href="#b784">784. SCO SGR Set Fg/Bg sequence sets colors to black on black</a>
+<li><tt>[+] (K)</tt> <a href="#b785">785. SCO Set Function Key sequence if mis-used can corrupt the data stream</a>
+<li><tt>[+] (K)</tt> <a href="#b786">786. IBM Info Exchange commands fail randomly with SSL_R_MISSING_EXPORT_TMP_RSA_KEY error</a>
+<li><tt>[ ] (K)</tt> <a href="#b787">787. Dialer generates incomplete script when Transaction Logging is On</a>
+<li><tt>[+] (K)</tt> <a href="#b788">788. Named Pipe Network Connections are not supported on Windows</a>
+<li><tt>[+] (K)</tt> <a href="#b789">789. FTP FEAT response improperly parsed</a>
+<li><tt>[+] (K)</tt> <a href="#b790">790. SET FTP CHARACTER-SET-TRANSLATION ON displayed garbage</a>
+<li><tt>[ ] (K)</tt> <a href="#b791">791. Dialer generates incorrect FTP Connection Scripts</a>
+<li><tt>[ ] (K)</tt> <a href="#b792">792. Installer does not initialize TAPI </a>
+<li><tt>[+] (K)</tt> <a href="#b793">793. Print Selection Doesn't Work</a>
+<li><tt>[ ] (Z)</tt> <a href="#b794">794. Dialer Database Corruption</a>
+<li><tt>[+] (K)</tt> <a href="#b795">795. Printer output includes question marks instead of non-ASCII characters such as line drawing characters.</a>
+<li><tt>[+] (K)</tt> <a href="#b796">796. Titles set with --title are cleared after a connection is established</a>
+<li><tt>[ ] (K)</tt> <a href="#b797">797. Dialer generated scripts include SET LOGIN PROMPT and SET LOGIN PASSWORD commands when fields are empty</a>
+<li><tt>[+] ( )</tt> <a href="#b798">798. NEW FEATURE: --noclose command line option</a>
+<li><tt>[+] (K)</tt> <a href="#b799">799. Writing to VTxxx Status Line corrupted when display cursor on right margin</a>
+<li><tt>[+] (K)</tt> <a href="#b800">800. In key mappings, the form \K{verb} is ignored</a>
+<li><tt>[+] (K)</tt> <a href="#b801">801. SET TERMINAL IDLE-ACTION OUTPUT does not send NUL</a>
+<li><tt>[+] (K)</tt> <a href="#b802">802. Date-time differencing across years broken.</a>
+<li><tt>[+] (K)</tt> <a href="#b803">803. No way to HTTP GET a file that has metacharacters in its name.</a>
+<li><tt>[+] (K)</tt> <a href="#b804">804. Some string-matching patterns don't work</a>
+<li><tt>[+] (K)</tt> <a href="#b805">805. IF with disconnected multistatement ELSE part broken</a>
+<li><tt>[+] (K)</tt> <a href="#b806">806. REMOTE DIRECTORY response lines terminated only by LF</a>
+<li><tt>[ ] (K)</tt> <a href="#b807">807. DNS SRV records don't work with SSH</a>
+<li><tt>[+] ( )</tt> <a href="#b808">808. K95 spuriously seizes focus</a>
+<li><tt>[+] (K)</tt> <a href="#b809">809. S-Expression division broken in K95</a>
+<li><tt>[+] (K)</tt> <a href="#b810">810. GSSAPI authentication doesn't work for SSH</a>
+<li><tt>[ ] (K)</tt> <a href="#b811">811. KCD DOWNLOAD command doesn't work in Windows Vista and Windows 7</a>
+<li><tt>[ ] (K)</tt> <a href="#b812">812. Autodownload GUI Dialog needs more buttons</a>
+<li><tt>[+] (K)</tt> <a href="#b813">813. Kermit 95 and large files</a>
+<li><tt>[+] ( )</tt> <a href="#b814">814. Using K95 as a terminal emulator to Red Hat Enterprise Linux 5</a>
+<li><tt>[ ] (K)</tt> <a href="#b815">815. Incoming Ctrl-Z (SUB) character not properly displayed in VT emulation</a>
+<li><tt>[+] ( )</tt> <a href="#b816">816. 80/132 column switching and Resize Mode</a>
+<li><tt>[+] (K)</tt> <a href="#b817">817. Columns can be lost if K95G window wider than physical screen</a>
+<li><tt>[+] (M)</tt> <a href="#b818">818. Ghost tool tips</a>
+<li><tt>[+] (K)</tt> <a href="#b819">819. CVTDATE function cannot process deltas with negative months</a>
 </ol>
 <p>
 [ <a href="#top">Top</a> ] [ <a href="#index">Index</a> ] [ <a href="http://www.columbia.edu/kermit/k95.html">K95 Home</a> ] [ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
@@ -6705,12 +6814,1021 @@ window are placed into the scrollback buffer to ensure that the data will not
 be overwritten or become garbage.  This behavior has never changed, but might
 be more obvious now that the Maximize and Restore controls work.
 
+<!-- The following integrated form newbugs.txt in 2024 -->
+
+<h3><a name="b712">712. FTP Brief-format transaction log shows wrong status</a></h3>
+
+If a transfer failed, the log entry said OK; if the transfer succeeded the
+entry said FAILED.  Fixed in 2.1.3.
+
+<h3><a name="b713">713. FTP connections always complain about 'FEAT' command</a></h3>
+
+Kermit sends a FEAT command to see what features the server supports.
+However, the FEAT command itself is a relatively new addition to FTP protocol,
+so most servers don't understand it and and reply with an error message such
+as "'FEAT': Command not understood", which Kermit displays.  K95 2.1.3
+suppresses this error message unless FTP DEBUG is ON.
+
+<h3><a name="b714">714. Problems with FTP [M]GET /RECURSIVE</a></h3>
+
+FTP GET /RECURSIVE somepath/somefile didn't work and
+MGET /RECURSIVE */somedir/* downloaded the files into the current directory,
+rather than re-creating the remote directory structure.  Fixed in K95 2.1.3.
+
+<h3><a name="b715">715. FTP USER and similar commands don't strip quotes</a></h3>
+
+In most contexts there is no way to specify an FTP username that contains one
+or more spaces.  Normally this would be done by enclosing the name in
+doublequotes or braces, but the parsing code in this did not strip the
+enclosing quotes or braces before sending the username to the server.  Ditto
+for password and account.  To be fixed in version 3.0.  Workaround:
+assign the multiword values to variables and use the variables.  Example:
+
+<pre>
+assign \%u Fred Foo
+assign \%p Secret Password
+ftp user \%u \%p
+</pre>
+
+<h3><a name="b716">716. FTP MPUT requires all filespecs to match at least one file</a></h3>
+
+The command "ftp mput *.jpg *.gif *.bmp" gets a parse error and does not
+execute if any of the file specifications do not match any files.  This is
+fine for interactive sessions, but not good for scripts.  For scripts
+use something like:
+
+<pre>
+ftp mput *.jpg
+ftp mput *.gif
+ftp mput *.tif
+</pre>
+
+or:
+
+<pre>ftp mput *.{jpg,gif,tif}</pre>
+
+or:
+
+<pre>ftp mput "{*.jpg,*.gif,*.tif}"</pre>
+
+Type HELP WILDCARDS for more information about the syntax.  Fixed in 2.1.3,
+which allows FTP MPUT commands to contain filenames or patterns that do not
+match any files, and the command will simply skip over them and still transfer
+any files that do match, and will fail only if no files match at all, or if
+any of the transfers fail.
+
+<h3><a name="b717">717. GREP (FIND) does not allow pattern variables</a></h3>
+
+The GREP (FIND, SEARCH) command does not expand pattern variables; it takes
+the pattern literally.  To be fixed in the next release.  Workaround:
+
+<pre>
+define mygrep {
+local xx
+assign xx {
+find \%1 \%2
+if fail end 1
+}
+do xx
+if fail end 1
+}
+</pre>
+
+and then use MGREP instead of GREP.
+
+<h3><a name="b718">718. Dialer GUI Menu/Tool/Status Bar settings don't stick</a></h3>
+Any changes to the Menu Bar, Tool Bar, or Status Bar check boxes
+in the Dialer's GUI Settings page are not saved when you exit from the
+Dialer.
+
+<p>Workaround: After checking or unchecking the GUI-page boxes as desired,
+click OK on the GUI page, then click Shortcut on the Dialer's Toolbar, then
+launch the connection from the shortcut rather than from the Dialer entry.
+
+<p>This is fixed in the next release.
+
+<h3><a name="b719">719. The K95 command parser does not handle the NUL device</a></h3>
+
+Using NUL (or NUL: or NUL.anything) in a Kermit command in place of a
+filename does not always have the expected effect.  Instead, the command tends
+to fail with "?file not found".
+
+This is fixed in version 3.0.
+
+<h3><a name="b720">720. INPUT n \fpattern(xxx) doesn't work for case-independent matches</a></h3>
+
+Fixed in version 3.0.
+
+<h3><a name="b721">721. MINPUT n ... \fpattern(xxx) ... doesn't work at all.</a></h3>
+
+The MINPUT command does not handle patterns.  Fixed in version 3.0.
+
+<h3><a name="b722">722. Associative array references not case sensitive</a></h3>
+
+Fixed in version 3.0.
+
+<h3><a name="b723">723. SET KEY xxx \27H erroneously lowercases the value</a></h3>
+
+Any SET KEY command in which the first character of the definition was
+backslash quantity, and the ONLY character after the backslash quantity
+was an uppercase letter, e.g. "set key \1234 \27H", would erroneously
+lowercase the letter.  Fixed in version 3.0.
+
+<h3><a name="b724">724. Failing FTP CD/CDUP/RMDIR does not set failure status</a></h3>
+
+FTP CD, FTP CDUP, and FTP RMDIR did not set the failure status when they
+failed, thus IF FAILURE or IF SUCCESS tests after these commands did not
+work when they failed.  Fixed in version 3.0.
+
+<h3><a name="b725">725. The RENAME command sometimes fails without printing an error message</a></h3>
+
+Fixed in version 3.0.
+
+<h3><a name="b726">726. ENABLE/DISABLE QUERY broken</a></h3>
+
+ENABLE QUERY or DISABLE QUERY always give a parse error.  Fixed in 3.0.
+
+<h3><a name="b727">727. CD command with wildcard broken</a></h3>
+
+For example, "cd a*" when only directory name begins with "a".
+Fixed in 3.0.
+
+<h3><a name="b728">728. DIRECTORY command with multiple filespecs can list too many files</a></h3>
+
+Example: "directory a b c" lists all files whose names END WITH a, b,
+or c, rather than the files whose names ARE a, b, or c.  Fixed in version 3.0.
+
+<h3><a name="b729">729. Display of Plane-1-and-beyond Unicode characters</a></h3>
+
+At present, Kermit 95 can not display Unicode characters beyond Plane
+0, i.e. whose code values have more than 16 significant bits.
+Examples include Gothic, Old Italic, and Vietnamese Nom.  This
+limitation is due to the lack of support in the Windows operating
+system for glyphs beyond Plane 0.
+
+<h3><a name="b730">730. k95g.exe ssh://xyzcorp.com --nobars causes invalid memory reference</a></h3>
+
+Fixed in version 3.0.
+
+<h3><a name="b731">731. Long Read Delays when using USB Serial Ports or Modems</a></h3>
+
+K95's device ReadIntervalTimeout parameter is set to MAXDWORD, the
+intention being for the read to return immediately after the first
+byte(s) arrive.  But serial port drivers differ in their
+interpretation of the serial port character-read timeout parameters.
+When a serial port or modem uses the USB bus rather than the PCI bus,
+this can result in a 500 second delay between reads unless the buffer
+is filled.  This is fixed in version 3.0.
+
+<h3><a name="b732">732. Backspace Key setting in Dialer -> Keyboard might be ignored</a></h3>
+
+If you have a SET KEY \127 xxx command in your K95.INI, K95SITE.INI,
+or K95CUSTOM.INI file, this overrides the Backspace Key setting in the
+Dialer's Keyboard Settings page, even though the Dialer script is
+executed AFTER the INI file.  <!--Fixed in the next release.-->
+
+<!-- The K95 side of the fix is perhaps the "set dialer backspace" command,
+     not sure if our version of the dialer currently uses it though -->
+
+<h3><a name="b733">733. SET PRINTER command in Dialer-generated scripts</a></h3>
+
+One user reported that it takes a long time to make a connection from
+the Dialer, and traced the problem to the SET PRINTER command that is
+included in every Dialer connection script.  The SET PRINTER command
+queries Windows for a list of printers, and in this case, the query
+was taking a very long time.  The user deleted the default printer and
+recreated it, and the problem went away.
+
+<h3><a name="b734">734. Sessions Logs are always 8-bit</a></h3>
+
+Session logs always record the 8th bit of each character, even when
+PARITY is not NONE, and/or even when TERMINAL BYTESIZE is 7.  In these
+cases the 8th bit should be stripped (unless SET SESSION-LOG DEBUG is
+in effect).  To be fixed in a future release.  In the meantime you can
+use:
+
+<pre>
+SET TERMINAL BYTESIZE 7
+SET PRINTER /FILE:name-for-log-file
+SET TERMINAL PRINT AUTO
+</pre>
+
+to create a 7-bit session log.
+
+<h3><a name="b735">735. Macros on Keys broken</a></h3>
+
+In versions 1.1.21 through 2.1.3, when a SET [TERMINAL] KEY definition
+includes a macro invocation, then pressing the key while in the
+Terminal screen returns to the command screen (and in some cases might
+also fail to execute the macro).  A workaround would be to:
+
+<pre>
+define myconnect connect /synchronous
+; (make the connection with SET PORT, DIAL, or SET HOST)
+if success do myconnect
+</pre>
+
+This is fixed in version 3.0.
+
+<h3><a name="b736">736. FTP MGET might not fail when it should</a></h3>
+
+When SET FTP ERROR-ACTION is QUIT and a file in an MGET sequence
+fails, Kermit just goes on to the next file, rather than quitting and
+failing.  This is fixed in version 3.0.
+
+<h3><a name="b737">737. No way to totally disable WIKSD event logging</a></h3>
+
+One message written to the event log prior to the processing of the
+IKSD.KSC file; thus even if IKSD.KSD says "no logging", log records
+will accumulate.  It is unclear at the current time when this will
+occur.  There is also known to be a handle leak in IKSDSVC.EXE which
+can result in system instability.  This is fixed in version 3.0.
+
+<h3><a name="b738">738. OpenSSL Security holes in 0.9.7</a></h3>
+
+Version 2.1.2 of Kermit 95 ships with OpenSSL 0.9.7 which contains
+known security holes.  These holes have been fixed in subsequent
+releases.  The current release at the time of 2.1.2 was 0.9.7f.
+Fixed in Kermit 95 3.0.
+
+<h3><a name="b739">739. Kerberos for Windows updates</a></h3>
+
+Version 2.1.2 of Kermit 95 ships with an outdated version of MIT
+Kerberos for Windows which does not support AES encryption and
+contains interoperability problems with the Microsoft Windows Active
+Directory implementation of Kerberos and MIT Kerberos 5 Release 1.3.x.
+Version 3.0 upgrades to the latest version of MIT Kerberos for Windows
+which should resolve these issues
+
+<p>Kermit itself has been improved to support new Microsoft Kerberos
+functionality including new encryption types as well as use of the
+Kerberos tickets stored in the Microsoft Logon Session Kerberos cache.
+
+<h3><a name="b740">740. OpenSSH Security holes</a></h3>
+
+Version 2.1.2 of Kermit 95 ships with OpenSSH 3.5 support containing
+known security holes.  The OpenSSH support in the next release of Kermit
+95 2.x will be updated to OpenSSH 3.6.1 with extensions for SRP and GSSAPI
+Kerberos.
+
+<p>Kermit 95 Version 3.0 includes an entirely new SSH implementation which
+resolves all past security issues. SRP security is no longer supported.
+
+<h3><a name="b741">741. SEND command in Kermit function causes crash</a></h3>
+
+A SEND command embedded in a macro and executed as a function with
+\Fexecute(macro) would cause K95 to crash.  This is fixed in version 3.0.
+
+<h3><a name="b742">742. Denial of Service attack against TCP/IP SET HOST * connections</a></h3>
+
+Incoming TCP/IP connections did not provide for timeouts enabling a
+remote attacker to perform a denial of service attack against K95
+configured to accept incoming connections.  This is fixed in version 3.0.
+
+<h3><a name="b743">743. SSL/TLS Private Key Passphrase Dialog reveals passphrase</a></h3>
+
+The passphrase dialog for private keys accessed during SSL/TLS
+connection attempts does not obscure the passphrase input.  This is
+fixed in version 3.0.
+
+<h3><a name="b744">744. Pragma Systems Terminal Server Not Supported</a></h3>
+
+Kermit 95 has supported being used as a Kermit protocol engine under
+the Pragma Systems Telnet and SSH daemons but not the Terminal Server
+product.  This is fixed in 3.0.
+
+<h3><a name="b745">745. Communication devices passed to Kermit as handles are closed on exit</a></h3>
+
+Starting in 3.0, if a communication device is passed to
+Kermit 95 for use via an already existing HANDLE, the default for the
+SET EXIT HANGUP command will be OFF.
+
+<h3><a name="b746">746. SET TCP HTTP-PROXY cannot be used with HTTP connections</a></h3>
+
+Support for using HTTP Proxy connections for HTTP connections has
+been added to version 3.0.
+
+<h3><a name="b747">747. UNC paths do not work during FTP operations</a></h3>
+
+Support for using UNC paths with FTP operations has been added to version 3.0.
+
+<h3><a name="b748">748. Dialer QUICK Command improvements</a></h3>
+
+The dialer QUICK command <!--did-->does not allow connections to be based on
+existing template and <!--could-->can not be saved for later use.  <!--The next
+release supports the use of templates in the QUICK command and allows
+the command to be used as a poor man's CLONE.-->
+
+<h3><a name="b749">749. Linux Character Set handling bugs</a></h3>
+
+There are bugs in the handling of the Linux Character Set.  These have
+been fixed in version 3.0.
+
+<h3><a name="b750">750. XMODEM-CRC checksums are not computed properly</a></h3>
+
+The XMODEM-CRC checksum computations <!--were-->are not performed properly in
+all instances.  <!--This has been fixed in the next release.-->
+
+<h3><a name="b751">751. BEEP when setting window title in a terminal session</a></h3>
+
+An inadvertant beep was produced when a SET TITLE control sequence was
+received from the host.  This is fixed in version 3.0.
+
+<h3><a name="b752">752. NEW FEATURE: SSH Debug Logging</a></h3>
+
+Version 3.0 supports the ability to log debugging messages to the
+debug.log file to assist in diagnosing connection problems.
+
+<h3><a name="b753">753. Telnet AUTH vs Telnet START_TLS protocol negotiation conflicts</a></h3>
+
+A protocol message sequencing error could occur when connecting to
+some hosts which support both the AUTH and START_TLS Telnet protocol
+options.  This is fixed in version 3.0.
+
+<h3><a name="b754">754. NEW FEATURE: SSH Version 2 Protocol Automatic Rekeying</a></h3>
+
+SET SSH V2 AUTO-REKEY {ON, OFF} has been added to version 3.0 to
+support automatic rekeying of long lasting ssh version 2 connections.
+
+<h3><a name="b755">755. Extended command line options not properly processed</a></h3>
+
+When using a mixture of Extended command line options the even
+numbered options would be misinterpretted as multi-valued switches.
+This would produce very odd and unexpected results.  This is fixed in
+version 3.0.
+
+<h3><a name="b756">756. SSH URLs did not set the window title</a></h3>
+
+When starting K95 from a command line with an SSH URL or via a browser
+using an SSH URL, the title of the K95 window would not be properly
+set to the host name.  This is fixed in version 3.0.
+
+<h3><a name="b757">757. NEW FEATURE: SKERMIT command</a></h3>
+
+The SKERMIT ssh subsystem functionality now has its own shortcut
+command.  No longer is it necessary to enter
+
+<pre>
+SET NETWORK TYPE SSH
+SET HOST host /SUBSYSTEM:SKERMIT
+</pre>
+
+instead
+
+<pre>
+SKERMIT host
+</pre>
+
+is all that is required.  This is available in version 3.0.
+
+<h3><a name="b758">758. Process handle leak in the IKSD Service</a></h3>
+
+A process handle leak in the IKSD Service could cause Windows to be
+unable to start subsequent processes and/or become very sluggish.
+This is fixed in version 3.0.
+
+<h3><a name="b759">759. NEW FEATURE: FTP SSLv2 connections</a></h3>
+
+K95 follows the specification for FTP AUTH SSL and FTP AUTH TLS and
+does not support the antiquated SSLv2 protocol on FTP connections.
+Unfortunately, not everyone else follows the specification.  A new command
+
+<pre>
+SET FTP BUG USE_SSL_V2 {ON, OFF}
+</pre>
+
+has been added to allow SSLv2 to be used with servers that won't
+negotiate SSLv3 or TLSv1.  This is available in version 3.0 only when
+compiled against OpenSSL 1.0.2 as newer versions of OpenSSL exclude SSLv2
+support.
+
+<h3><a name="b760">760. </a></h3>
+
+A new command
+
+<pre>
+SET SSH HEARTBEAT-INTERVAL &lt;seconds&gt;
+</pre>
+
+has been added to the next release to allow the SSH to be maintained
+during long idle periods.  This is similar to the
+
+<pre>
+SET TERMINAL IDLE-ACTION TELNET-NOP
+SET TERMINAL IDLE-TIMEOUT &lt;seconds&gt;
+</pre>
+
+which can be used to preserve TELNET connections without actually
+sending data to the host applications.
+
+<h3><a name="b761">761. NEW FEATURE: ON_CD macro</a></h3>
+
+A new auto-execute macro, ON_CD, can be defined in version 3.0.
+This macro is executed whenever a change directory operation occurs
+either due to a CD command or a Kermit protocol operation.
+
+<h3><a name="b762">762. NEW FEATURE: FTP MLSD parsing of extended strings</a></h3>
+<h3><a name="b763">763. SET ATTRIBUTES DATE OFF did not apply to XYZmodem file transfers</a></h3>
+
+<!--In the next release the SET ATTRIBUTES DATE OFF command can be used to
+ignore the actual date information of the file and instead use the
+current date/time information as the file is sent or received.-->
+
+The SET ATTRIBUTES DATE OFF command should be able to be used to ignore
+the actual date information of the file and instead use the current date/time
+information as the file is sent or received
+
+<h3><a name="b764">764. FTP ASCII transfers generated incorrect end of line when sending</a></h3>
+
+FTP SEND file transfers of ASCII files to Unix or MacOSX hosts produce
+the wrong end of line marker.  This has been fixed in version 3.0.
+
+<h3><a name="b765">765. </a></h3>
+
+Firewalls often filter HTTP requests based upon the Agent tag in the
+HTTP headers.  The Agent tag is supposed to indicate the requesting
+application.  To allow Kermit to pretend to be Netscape, Mozilla or
+Internet Explorer a new
+
+<pre>
+SET TCP HTTP-PROXY /AGENT:&lt;agent-string&gt;
+</pre>
+
+option has been added.  This is available in version 3.0.
+
+<h3><a name="b766">766. Windows Registry entries containing environment variables are not processed correctly</a></h3>
+
+Windows Registry entries containing environment variables should have
+the environment variables expanded before use.  This is important for
+roaming profiles and the locations of network available applications.
+<!--The next release of Kermit 95 will properly expand this registry
+strings.-->
+
+<h3><a name="b767">767. Reverse DNS Lookups cannot always be disabled</a></h3>
+
+There are some circumstances in the SET HOST operation in which
+reverse dns lookups are not always disabled by SET TCP
+REVERSE-DNS-LOOKUP OFF.  This is fixed in version 3.0.
+
+<h3><a name="b768">768. Directory operations fail on network mapped file systems which do not provide date information</a></h3>
+
+Some networked mapped file systems do not provide attribute
+information for directory entries.  This causes the Microsoft C
+Runtime Library stat() command to fail.  <!--The next version of Kermit 95
+replaces all calls to C Runtime Library file routines with new
+functionality implemented solely using the Win32 API.-->
+
+<h3><a name="b769">769. IBM 3151 emulation is missing keymap assignments for some keys</a></h3>
+
+The IBM 3151 emulation was missing kverbs for the Home and BackTab
+keys.  The I31_F21 kverb would send the output of the F11 key.  These
+have been fixed in version 3.0.
+
+<h3><a name="b770">770. Dialer FTP entries did not preserve alternative port numbers</a></h3>
+
+When the connection type is FTP, the port number is not entered into
+the appropriate field when editing.  This means that editing an
+existing entry which requires an alternate port will lose the
+alternate port if the GENERAL page is edited and saved.  <!--This is fixed
+in the next release.-->
+
+<h3><a name="b771">771. NEW FEATURE: Hyperlink Extensions for ANSI based terminals</a></h3>
+
+Hyperlink Extension for Terminals based on
+ANSI X3.64-1979/ISO-6429/ECMA-048
+
+<p>The hyperlink extension utilizes the Device Control Sequence (DCS) to
+implement both URL and UNC hyperlinks within the terminal session with
+the equivalent of the HTML HREF tag:
+
+<pre>
+&lt;a href="http:/host/path?parameters�&gt;Click Here&lt;/a&gt;
+</pre>
+
+In an HREF tag, only the "Click Here" string is visible to the end
+user. Clicking on any character in the string will result in the
+execution of the URL. The DCS equivalent to the HREF tag is:
+
+<pre>
+&lt;DCS&gt; Pn + m &lt;link string&gt; &lt;ST&gt;
+</pre>
+
+where:
+<ul>
+<li>&lt;DCS&gt; is either the 8-bit DCS control or the 7-bit sequence
+<li>&lt;ESC&gt; P &lt;ST&gt; is either the 8-bit ST control or the 7-bit sequence
+<li>&lt;ESC&gt; \ Pn is one of three parameters: <ul>
+    <li>0 � terminate the hyperlink attribute
+    <li>1 � activate a URL hyperlink attribute
+    <li>2 � activate a UNC hyperlink attribute
+    </ul>
+<li>&lt;link string&gt; is the link text which may optionally be surrounded
+    in double quotes.
+</ul>
+
+Here is an example of how this extension is used to specify a URL
+hyperlink associated with a text string displayed to the end user:
+
+<pre>
+&lt;DCS&gt;1+m"http://www.kermitproject.org"&lt;ST&gt;Kermit Home Page&lt;DCS&gt;0+m&lt;ST&gt;
+</pre>
+
+When this string is received by a supporting terminal emulator, at the
+present only Kermit 95 3.0.0 or higher, a hyperlink character
+attribute is defined. This character attribute behaves identically to
+a Select Graphic Rendition (SGR) character attribute such as Bold,
+Underline, or Reverse.  Terminal emulators which do not support this
+extension would only display the contents of the display string. An
+example of a UNC hyperlink follows:
+
+<pre>
+&lt;DCS&gt;2+m"\\server\path\document.pdf"&lt;ST&gt;Acrobat Document&lt;DCS&gt;0+m&lt;ST&gt;
+</pre>
+
+The hyperlink attribute can be combined with SGR sequences to specify
+display attributes for the hyperlink:
+<pre>
+&lt;DCS&gt;1+m"http://www.cdaero.com"&lt;ST&gt;&lt;CSI&gt;4mCD Aero Home &lt;CSI&gt;24m&lt;DCS&gt;0+m&lt;ST&gt;
+</pre>
+In the above sequence a URL hyperlink is specified in combination with
+the Underline SGR sequence. The display text is therefore displayed
+with an underline. When the display text is printed the underline and
+URL hyperlink attributes are removed. This behavior could also have
+been obtained with the sequence:
+<pre>
+&lt;DCS&gt;1+m"http://www.cdaero.com"&lt;ST&gt;&lt;CSI&gt;4mCD Aero Home&lt;CSI&gt;0m
+</pre>
+This is because the SGR 0 sequence means to clear all character
+display attributes. Only one hyperlink attribute may be specified at a
+time. Therefore, sequences of the following form are also valid:
+
+<pre>
+&lt;DCS&gt;1+m"http://www.cdaero.com/index.html"&lt;ST&gt;Web
+&lt;DCS&gt;2+m �\\server\public_html\index.html�&lt;ST&gt;UNC&lt;DCS&gt;0+m&lt;ST&gt;
+</pre>
+In this sequence the URL hyperlink is replaced by a UNC hyperlink and
+then hyperlink attributes are disabled. Kermit 95 3.0.0 will display
+with an associated hyperlink according to the values specified with
+the command:
+
+<pre>
+SET TERMINAL URL-HIGHLIGHT ON &lt;attribute list&gt;
+</pre>
+Where &lt;attribute list&gt; is one or more of: BLINK, BOLD, DIM, INVISIBLE,
+ITALIC, NORMAL, REVERSE, and UNDERLINED. The default is BOLD for the
+console version and BOLD UNDERLINED for the gui version. This
+extension is supported in the following terminal types: AIXTERM,
+ANNARBOR, ANSI-BBS, AT386, AVATAR/0+, BETERM, HFT, LINUX, QANSI,
+SCOANSI, SNI-97801, SUN, VT220, VT220PC, VT320, VT320PC, WY370.
+
+<h3><a name="b772">772. ANSI DCS sequences containing an intermediary '$' character are improperly handled</a></h3>
+
+the processing of all sequences with intermediate character '$' fell
+through to sequences with intermediate character '|'.  This could have
+done very bad things to the values assigned to DEC UDKs.  This has
+been fixed in version 3.0
+
+<h3><a name="b773">773. NEW FEATURE: 3DES Telnet support</a></h3>
+
+Add SET TELNET BUG AUTH-KRB5-DES which defaults to ON.  When OFF, 3DES
+encryption may be used with KRB5 Telnet authentication.  This is added 3.0.
+
+<h3><a name="b774">774. UNC paths in file transfer operations generate errors</a></h3>
+
+This bug is fixed by the same code changes as number 768.
+
+<h3><a name="b775">775. SET TITLE &lt;title-string&gt; is not brace stripped</a></h3>
+
+In version 3.0, braces or doublequotes may be safely placed
+surrounding the title string.  They will be stripped off before the
+window title is applied.
+
+<h3><a name="b776">776. MOVE-TO and RENAME-TO functionality did not work with XYZmodem transfers</a></h3>
+
+The MOVE-TO and RENAME-TO functions were never implemented for
+XYZmodem.  <!--This support has been added to the next release for both
+SEND and RECEIVE operations.--> Support needs to be added for both SEND
+    and RECEIVE operations.
+
+
+<h3><a name="b777">777. SEND /MOVE-TO:&lt;directory&gt; fails when using Kermit protocol</a></h3>
+
+The SEND /MOVE-TO: switch was broken.  It incorrectly overwrote the file
+name with the directory name.  This caused a fatal error during the file
+transfer.  This is fixed in 3.0.
+
+<h3><a name="b778">778. SET TERMINAL DEBUG ON command does not work.</a></h3>
+
+The command does not work but the keyboard verb \KDebug which is mapped to
+Alt-D does.  This is fixed in version 3.0.
+
+<h3><a name="b779">779. The INFORMATION sound generates no audible output</a></h3>
+
+The wrong system sound was being called for BEEP INFORMATION or events
+which produce an informational tone.  This has been fixed in version 3.0.
+
+<h3><a name="b780">780. NEW FEATURE: DG4xx Set Cursor Type support</a></h3>
+
+The DG4xx Set Cursor Type sequence &lt;RS&gt; F Q &lt;type&gt; is now implemented for
+Data General terminals and many other DG4xx sequences are now parsed even
+if we do nothing with them.  This prevents unwanted characters from
+disrupting the display layout when 400 series commands are sent to 200
+series terminals.
+
+<h3><a name="b781">781. SET PRINTER command causes Kermit to crash</a></h3>
+
+A SET PRINTER command on a machine without any Windows Printer queues
+would attempt to allocate zero bytes of memory and cause the program to
+crash.  This is fixed in version 3.0.
+
+<h3><a name="b782">782. ANSI Backtab Control Sequence (CSI Z) does not function</a></h3>
+
+The ANSI control sequence CSI Z is supposed to be equivalent to
+CSI 1 Z.  Unfortunately, it is interpreted since 1.1.21 as CSI 0 Z
+which results in the Backtab functionality being disabled.  This is
+fixed in version 3.0.
+
+<h3><a name="b783">783. NEW FEATURE: GUI TYPE command</a></h3>
+
+A new function /GUI option on the TYPE command allows the generated
+output of the TYPE command to be displayed in a GUI text box
+
+<h3><a name="b784">784. SCO SGR Set Fg/Bg sequence sets colors to black on black</a></h3>
+
+The SCO sequence   <tt>CSI 2 ; &lt;fg&gt; ; &lt;bg&gt; m</tt> sets the fg and bg
+colors to black instead of the specified values.  This is fixed
+in version 3.0.
+
+<h3><a name="b785">785. SCO Set Function Key sequence if mis-used can corrupt the data stream</a></h3>
+
+The SCO set function key sequence    <tt>ESC Q &lt;fn&gt; &lt;quote&gt; .... &lt;quote&gt;</tt>
+breaks the ANSI X3.64 parsing rules.  This can result in data being lost if
+the sequence  <tt>ESC Q</tt>   is sent to the terminal without properly specifying
+the &lt;fn&gt; and &lt;quote&gt; characters.  As of version 3.0, if &lt;fn&gt; is an
+invalid character the specified character will be pushed back onto the data
+stream and reparsed in case the ESC Q was mistakenly used.  Under normal
+circumstances ESC Q would be treated as the PU1 STRING sequence introducer.
+
+<h3><a name="b786">786. IBM Info Exchange commands fail randomly with SSL_R_MISSING_EXPORT_TMP_RSA_KEY error</a></h3>
+
+This is a bug in the OpenSSL library used to provide SSL/TLS support
+in Kermit 95.  While the IBM Info Exchange service no longer exists, the bug
+that once affected it should be fixed in version 3.0
+
+<h3><a name="b787">787. Dialer generates incomplete script when Transaction Logging is On</a></h3>
+
+When transaction logging is turned on, the dialer generates an
+incomplete SET TRANSACTION-LOG command.  This either results in
+a warning or a fatal script execution depending on the state of
+SET TAKE ERROR.  <!--This is fixed in the next release.-->
+
+
+<h3><a name="b788">788. Named Pipe Network Connections are not supported on Windows</a></h3>
+
+In version 3.0, Named Pipe connections (both client and
+server side) have been added.  Client side named pipe connections
+can be used in conjunction with VMWare and other hypervisors to
+allow K95 to be used either as a terminal connected to a serial
+tty (redirected to a named pipe) or for use in logging syslog
+output on the host system.
+
+<h3><a name="b789">789. FTP FEAT response improperly parsed</a></h3>
+
+The response to the FTP FEAT command is used to determine
+which features the FTP server supports.  Kermit improperly
+parsed this response resulting in the FTP client functionality
+being improperly configured.  This is fixed in version 3.0.
+
+<h3><a name="b790">790. SET FTP CHARACTER-SET-TRANSLATION ON displayed garbage</a></h3>
+
+When SET FTP CHARACTER-SET-TRANSLATION ON is set, Kermit 95
+would output FTP server responses to the screen in the wrong
+byteorder.  This would result in output appearing to be unreadable.
+This is fixed in version 3.0.
+
+<h3><a name="b791">791. Dialer generates incorrect FTP Connection Scripts</a></h3>
+
+The dialer generates FTP connection scripts which use the
+FTP OPEN /USER /PASSWORD plus SET FTP AUTOLOGIN ON which is
+not a safe script operation since the failure state of the
+FTP OPEN command does not indicate whether the login succeeded.
+Instead, FTP USER and SET FTP AUTOLOGIN OFF should be used.
+In addition, commands entered into the Login Script page textbox
+were not included in the generated script.  <!--These errors are
+fixed in the next release.-->
+
+<h3><a name="b792">792. Installer does not initialize TAPI</a></h3>
+
+Kermit 95 requires that the Telephony API (TAPI) be configured
+for the machine for all users of the machine.  The Telephony
+subsystem is configured using the Phone and Modems Options
+control panel.  If TAPI has not been configured, TAPI will
+attempt to prompt the user for configuration data the first time
+the subsystem is activated by an application.  If the user
+account under which the application is started does not have the
+necessary privileges to make changes to the local machine
+configuration (they are not Administrator), the application which
+uses TAPI will fail to start properly.  In the case of Kermit 95,
+this means that while the Kermit 95 GUI Window (or console
+window) may open properly, the application will be unusable for
+about two minutes until the TAPI subsystem fails.  The fact that
+the TAPI subsystem is left unconfigured after the Kermit 95
+installation should be considered a bug in the Kermit 95
+installer.  The installer really should query TAPI to force the
+configuration of the machine.
+
+
+<h3><a name="b793">793. Print Selection Doesn't Work</a></h3>
+
+Ctrl-Shift-Drag events are not recognized by K95.  Therefore the
+Select-and-Print operation that is assigned by default to Mouse Button 1
+Ctrl-Shift-Drag is inoperative.  Fixed in version 3.0.  Workaround:
+Drag the mouse over the desired text WITHOUT Shift and Ctrl pressed.  Then,
+before releasing the mouse button, press the Ctrl and Shift keys.  Then
+release the mouse button, then release the keys.
+
+<h3><a name="b794">794. Dialer Database Corruption</a></h3>
+
+The Dialer database can be damaged in various ways, mostly by bugs in the C++
+Class libraries that were used to build the Dialer.  Many of these bugs have
+been worked around in version 2.1.3, so if you are running an earlier
+version, you should upgrade to 2.1.3:
+
+<pre>http://www.columbia.edu/kermit/k95upgrade.html</pre>
+
+<p>A significant re-write of the Class Libraries took place after 2.1.3 was
+released to make them compatible with the latest Microsoft development
+tools.  These changes were to be incorporated into the next K95 release,
+but were lost in the intervening years and the dialer that ships with Kermit 95
+version 3.0 is based on the K95 2.1.2 dialer. Meanwhile, in 2.1.3 a corrupted entry
+in a .DAT file (if it cannot be corrected automatically) will cause the user
+to notified of the problem,
+specifying the entry that was damaged and indicating that the entry will be
+deleted.  Meanwhile, Kermit 95 creates an automatic backup each time the
+.DAT file is edited.  The backups are located in the same directory as the
+.DAT file, which varies according to your OS version and installation
+choices; see the K95 README file for details:
+
+<pre>http://www.columbia.edu/kermit/k95readme.html</pre>
+
+<p>and have filenames ending in .BK1, .BK2, .BK3, etc.  To restore from a
+backup, move or rename your corrupted DIALUSR.DAT for possible future
+analysis, and copy the latest backup to DIALUSR.DAT.  If that one is corrupt
+too, repeat the process going back through the previous backup copies.
+
+<p>As of Kermit 95 version 3.0, the dialer (based on the code from K95 2.1.2)
+is no longer under active development and only receiving occasional bug fixes
+where the fix is easy. This is because the Class libraries that were used to
+build the Dialer are no longer supported by the original vendor and haven't
+received any updates in over 20 years rendering them incompatible with modern
+compilers and increasingly out of place on modern Windows.
+
+<p>The long-term focus now is to eventually build a from-scratch replacement
+for the dialer that does not suffer from these problems.
+
+<h3><a name="b795">795. Printer output includes question marks instead of non-ASCII characters such as line drawing characters.</a></h3>
+
+There is a bug in the SET PRINTER /CHARACTER-SET: processing which
+will always cause the printer character set to be assigned the value
+of "Danish ASCII".  This bug will cause all non-ASCII characters to
+be printed as question marks.  The only work around is to not issue
+a /CHARACTER-SET command which will leave the value at the default
+which happens to be Code Page 437.  Unfortunately, the dialer always
+issues a /CHARACTER-SET command and there is no work around for that.
+This is fixed version 3.0.
+
+
+<h3><a name="b796">796. Titles set with --title are cleared after a connection is established</a></h3>
+
+The behavior of --title should be the same as "SET TITLE".  The
+work around is to use the form -C "set title text".  This is fixed
+in version 3.0.
+
+<h3><a name="b797">797. Dialer generated scripts include SET LOGIN PROMPT and SET LOGIN PASSWORD commands when fields are empty</a></h3>
+
+Dialer generated connection scripts include SET LOGIN PROMPT and
+SET LOGIN PASSWORD commands when the fields are empty.  This can
+break the use of the standard login.ksc script.  There is no
+work around.  <!--This is fixed in the next release.-->
+
+<h3><a name="b798">798. NEW FEATURE: --noclose command line option</a></h3>
+
+This new feature for the GUI version allows the [x] button and
+File-&gt;Exit menu item to be disabled.  This has been added in
+version 3.0.
+
+
+<h3><a name="b799">799. Writing to VTxxx Status Line corrupted when display cursor on right margin</a></h3>
+
+If the VTxxx writable status line is in use, if the display cursor
+is located at the right margin, text written to the Status line will
+be inappropriately line wrapped.  There is no work around.  This
+is fixed in version 3.0.
+
+<h3><a name="b800">800. In key mappings, the form \K{verb} is ignored</a></h3>
+
+When assigning key mappings, it is often necessary to surround
+the verb name in braces to avoid parsing collisions.  For example,
+
+<pre>SET KEY key \40\Kverb\41</pre>
+
+is mapped to the key as
+
+<pre>(\Kverb)</pre>
+
+which will be output to the host as "(" because "verb)" is not a
+valid verb name.  There are two work arounds.  You can map the
+key definition as either:
+
+<pre>
+\\40\Kverb\\41
+\40\{Kverb}\41
+</pre>
+
+This is fixed in version 3.0.
+
+<h3><a name="b801">801. SET TERMINAL IDLE-ACTION OUTPUT does not send NUL</a></h3>
+
+Bug, fixed in version 3.0.
+
+<h3><a name="b802">802. Date-time differencing across years broken.</a></h3>
+
+Bug, fixed in version 3.0.
+
+<h3><a name="b803">803. No way to HTTP GET a file that has metacharacters in its name.</a></h3>
+
+Fixed in version 3.0
+
+<h3><a name="b804">804. Some string-matching patterns don't work</a></h3>
+
+Patterns containing * followed by an [abc] or [a-z] selection construction
+could fail under some conditions.  Certain other patterns could cause Kermit
+to go into an infinite loop.  Fixed in version 3.0.
+
+<h3><a name="b805">805. IF with disconnected multistatement ELSE part broken</a></h3>
+
+IF-ELSE statements of the form:
+
+<pre>
+IF condition {
+statement
+statement
+...
+}
+ELSE {
+statement
+statement
+...
+}
+</pre>
+
+do not work.  Workaround: put the ELSE after the closing bracket of the IF
+group: "} ELSE {".  Fixed in version 3.0.
+
+<h3><a name="b806">806. REMOTE DIRECTORY response lines terminated only by LF</a></h3>
+
+These lines should be terminated by CRLF.  Fixed in version 3.0.
+
+<h3><a name="b807">807. DNS SRV records don't work with SSH</a></h3>
+
+Bug: The SRV lookup only occurs if you explicitly specify a service name.
+If you enter your connection as "ssh hostname ssh" it will work.
+
+<h3><a name="b808">808. K95 spuriously seizes focus</a></h3>
+
+If Kermit 95 is started in such a way that its window would be wider or
+taller than the physical screen size at the configured resolution, Windows
+will pop the K95 window into focus because it "needs attention".  This can
+happen if K95 is in the background, or indeed, even when it is in the
+foreground but displaying a dialog box (e.g. for the SSH password).  A quick
+workaround is to maximize the K95 window, which forces K95 to adjust the
+font size to the screen size and resolution.  The real solution is to set
+the monitor to a higher resolution (if possible), or else to use a smaller
+font size and/or smaller screen dimensions (rows and/or columns).
+
+<h3><a name="b809">809. S-Expression division broken in K95</a></h3>
+
+An S-Expression like (/ a b) causes a fatal error if the magnitude of b
+is less than one.  This bug was fixed in C-Kermit shortly after K95 2.1.3
+was released.  The fix is in K95 version 3.0.  Workaround:
+replace (/ a b) with \ffpdiv(a,b).
+
+<h3><a name="b810">810. GSSAPI authentication doesn't work for SSH</a></h3>
+
+GSSAPI changed after K95 2.1.3 was released; there is presently no way
+to authenticate with K95 2.1.3 against modern versions of GSSAPI.
+This is fixed in version 3.0.
+
+<h3><a name="b811">811. KCD DOWNLOAD command doesn't work in Windows Vista and Windows 7</a></h3>
+
+Apparently the Windows API for finding the user's Download directory
+changed since Windows XP.  Workaround: SET FILE DOWNLOAD-DIRECTORY
+will populate the \v(download) variable and allow KCD DOWNLOAD to work.
+
+<h3><a name="b812">812. Autodownload GUI Dialog needs more buttons</a></h3>
+
+The default TERMINAL AUTODOWNLOAD setting for K95 is ASK, which causes a
+dialog to pop up for each file, giving you the opportunity to say OK or No
+to accept or refuse the file.  This is not good when downloading a large
+group of files.  There should also be buttons for "Yes to all", "No to all".
+There should also be a note in the box to the effect that these dialogs
+could be suppressed, if desired, by adding SET TERMINAL AUTODOWNLOAD ON to
+K95CUSTOM.INI or in the Actions-&gt;Autodownload menu (change the setting
+from Ask to On).
+
+<h3><a name="b813">813. Kermit 95 and large files</a></h3>
+
+Experimentation has shown that, although K95 is not supposed to be capable
+of transferring large files (longer than about 2GB), it can indeed send and
+receive them successfully.  However the file transfer display is wrong --
+the numbers, the progress bar, the percent done, since K95 2.1.3 does not
+support long integers (well, it does, but in the Windows C compiler with
+which K95 was built, sizeof(long) == sizeof(int) == 4).  Similarly any
+post-transfer statistics and transaction logging will also have nonsensical
+numbers. This has been fixed in version 3.0.
+
+<h3><a name="b814">814. Using K95 as a terminal emulator to Red Hat Enterprise Linux 5</a></h3>
+
+K95's default terminal emulation is vt320, which is well understood by
+RHEL5.  However, by default (or perhaps always) certain RHEL applications
+write to the terminal in Unicode UTF-8, such as gcc 4.1.2, which outputs
+filenames in warning messages in "smart quotes" that are encoded in UTF-8.
+K95 supports UTF-8, but not as its default terminal character set, so when
+the first error or warning message comes out, the screen goes blank, because
+the multibyte Unicode character happens to be the same as a VT320 8-bit
+escape sequence.  This is not a bug, just a surprise.  Simply choose "utf8"
+in the character set box on the toolbar, or "set terminal character-set
+utf8".
+
+<h3><a name="b815">815. Incoming Ctrl-Z (SUB) character not properly displayed in VT emulation</a></h3>
+
+The Ctrl-Z character, SUB, ASCII 26 (decimal) is supposed to be displayed
+as a reverse question mark in VT320 emulation but it is not displayed at
+all.  Reportedly this causes major discomfort when using the VMS TPU editor.
+There doesn't seem to be a workaround for this.
+
+<h3><a name="b816">816. 80/132 column switching and Resize Mode</a></h3>
+
+Clarification: At present, the command
+
+<pre>SET GUI WINDOW RESIZE-MODE { SCALE-FONT, CHANGE-DIMENSION }</pre>
+
+applies only when changing the window size by dragging an edge or corner
+with the mouse.  It does not affect (for example) host-directed switching
+between 80 and 132 columns in VT100/200/300 emulation.
+
+
+<h3><a name="b817">817. Columns can be lost if K95G window wider than physical screen</a></h3>
+
+In the GUI version of K95 (K95G.EXE), if the combination of font size and
+number of columns produces a window that would be wider than the physical
+screen, the columns that would extend beyond the right edge of the physical
+screen are lost.  There is no horizontal scrolling feature to access them.
+To avoid this effect, you must use a font-size/terminal-width combination
+that fits on the physical screen.  Another workaround is also possible:
+
+<ol>
+<li> Create an 80-column K95G window with the desired font and point size.
+<li> Use the mouse to make the font narrower by dragging the right edge
+of the window leftwards.
+<li> Give a SET TERMINAL WIDTH command to change to the desired number
+of columns.
+</ol>
+Note: the Console version does support a form of horizontal scrolling,
+as described here: <a href="scroll.html">scroll.html</a>
+
+<h3><a name="b818">818. Ghost tool tips</a></h3>
+
+I don't know if this is a bug in Kermit 95 or in Windows, but in Vista and
+probably also Windows 7, when you bring K95 to the front by clicking in its
+main screen, a ghost tool tip from the previous application is floating on
+the Kermit screen.  It can be removed by clicking on it or by moving the
+mouse off the screen and back on.  (Later I found that the same thing
+happens between two other applications with K95 not involved; it's annoying,
+but it's not Kermit.)
+
+<h3><a name="b819">819. CVTDATE function cannot process deltas with negative months</a></h3>
+
+The CVTDATE function cannot process a delta with negative months.
+For example,
+
+<pre>
+echo \fcvtdate(20050121 - 2 month)
+</pre>
+
+produces an incorrect year.  This is fixed in version 3.0.
+
+<p>This bug was previously erroneously cataloged in newbugs.txt as number 794,
+    a number which was already assigned to
+    <a href="#b794">#794 Dialer Database Corruption</a>. For the K95 v3.0 issue
+    of the bug list, it has been cataloged as bug 819.
+
 <p>
 [ <a href="#top">Top</a> ] [ <a href="#index">Index</a> ] [ <a href="http://www.columbia.edu/kermit/k95.html">K95 Home</a> ] [ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
 <hr>
 <address>
-Kermit 95 Bug List / Columbia University / kermit@columbia.edu /
-1 January 2003
+Kermit 95 Bug List
+<!--$ver-date-->1 January 2003<!--/$ver-date-->
 </address>
 </body>
 </html>
