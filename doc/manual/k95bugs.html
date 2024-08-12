@@ -7302,7 +7302,7 @@ implement both URL and UNC hyperlinks within the terminal session with
 the equivalent of the HTML HREF tag:
 
 <pre>
-&lt;a href="http:/host/path?parameters�&gt;Click Here&lt;/a&gt;
+&lt;a href="http:/host/path?parameters"&gt;Click Here&lt;/a&gt;
 </pre>
 
 In an HREF tag, only the "Click Here" string is visible to the end
@@ -7318,9 +7318,9 @@ where:
 <li>&lt;DCS&gt; is either the 8-bit DCS control or the 7-bit sequence
 <li>&lt;ESC&gt; P &lt;ST&gt; is either the 8-bit ST control or the 7-bit sequence
 <li>&lt;ESC&gt; \ Pn is one of three parameters: <ul>
-    <li>0 � terminate the hyperlink attribute
-    <li>1 � activate a URL hyperlink attribute
-    <li>2 � activate a UNC hyperlink attribute
+    <li>0 - terminate the hyperlink attribute
+    <li>1 - activate a URL hyperlink attribute
+    <li>2 - activate a UNC hyperlink attribute
     </ul>
 <li>&lt;link string&gt; is the link text which may optionally be surrounded
     in double quotes.
@@ -7364,7 +7364,7 @@ time. Therefore, sequences of the following form are also valid:
 
 <pre>
 &lt;DCS&gt;1+m"http://www.cdaero.com/index.html"&lt;ST&gt;Web
-&lt;DCS&gt;2+m �\\server\public_html\index.html�&lt;ST&gt;UNC&lt;DCS&gt;0+m&lt;ST&gt;
+&lt;DCS&gt;2+m"\\server\public_html\index.html"&lt;ST&gt;UNC&lt;DCS&gt;0+m&lt;ST&gt;
 </pre>
 In this sequence the URL hyperlink is replaced by a UNC hyperlink and
 then hyperlink attributes are disabled. Kermit 95 3.0.0 will display
