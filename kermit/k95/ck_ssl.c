@@ -56,6 +56,10 @@ $NetBSD: patch-ab,v 1.8 2020/04/08 15:22:07 rhialto Exp $
 #include <inet.h>
 #endif /* DEC_TCPIP */
 
+#ifdef SSH_DLL
+#include "ckossh.h"
+#endif /* SSH_DLL */
+
 #ifdef OS2
 extern char exedir[];
 #ifdef NT
@@ -70,24 +74,15 @@ static int ssl_installed = 1;
 int
 ck_ssh_is_installed()
 {
-#ifdef CK_SSL
 #ifdef SSHBUILTIN
-#ifdef SSLDLL
-#ifdef NT
-    extern HINSTANCE hCRYPTO;
-#else /* NT */
-    extern HMODULE hCRYPTO;
-#endif /* NT */
-    debug(F111,"ck_ssh_is_installed","hCRYPTO",hCRYPTO);
-    return(ssl_installed && (hCRYPTO != NULL));
-#else /* SSLDLL */
-    return(ssl_installed);
-#endif /* SSLDLL */
+#ifdef SSH_DLL
+    return ssh_avail();
+#else /* SSH_DLL */
+    return(1);
+#endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
     return(0);
 #endif /* SSHBUILTIN */
-#endif /* CK_SSL */
-    return(0);
 }
 
 int

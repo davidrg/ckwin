@@ -65,7 +65,14 @@ COMMON_CFLAGS = /MD
 #!endif
 
 # These options are used for all Windows .exe targets
+!if "$(CKF_DEV_CHECKS)" == "yes"
+# Enable extra runtime checks. These only work with a debug build and
+# Visual C++ 2002 and newer
+COMMON_CFLAGS = /RTCsu
+!else
 COMMON_OPTS = /Ox
+!endif
+
 # These are:
 # /GA     Optimise for Windows Application (ignored by OpenWatcom)
 # /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
@@ -271,6 +278,9 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 !endif
 
 RCDEFINES=$(RC_FEATURE_DEFS) /dCOMPILER_$(CMP)
+!if "$(SSH_LIB)" == ""
+SSH_LIB = ssh.lib
+!endif
 
 #---------- Compiler targets:
 #
@@ -377,6 +387,35 @@ msvc:
     PLATFORM="NT" \
     NOLINK="/c" \
     LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
+
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+msvc-sshdll:
+	$(MAKE) -f ckoker.mak win32sshdll \
+	CC="cl /nologo" \
+    CC2="" \
+    OUT="-Fe" O=".obj" \
+    OPT="$(COMMON_OPTS)" \
+    DEBUG="-DNDEBUG" \
+    DLL="" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    LDFLAGS="" \
+    PLATFORM="NT" \
+    NOLINK="/c" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
+msvc-sshdlld:
+	$(MAKE) -f ckoker.mak win32sshdll \
+	CC="cl /nologo" \
+    CC2="" \
+    OUT="-Fe" O=".obj" \
+    OPT="$(COMMON_OPTS)" \
+    DEBUG="-DNDEBUG" \
+    DLL="" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    LDFLAGS="" \
+    PLATFORM="NT" \
+    NOLINK="/c" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /OPT:REF" DEF="cknker.def"
+!endif
 
 # release version
 msvc-iksd:
@@ -795,8 +834,8 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
 # vdmdbg.lib
-!if "$(CKF_SSH)" == "yes"
-KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
+!if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
+KUILIBS = $(KUILIBS) $(SSH_LIB) ws2_32.lib
 !endif
 
 !if "$(CKF_SSL)" == "yes"
@@ -832,12 +871,12 @@ KUILIBS = $(KUILIBS) libcmt.lib
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
 
-!if "$(MIPS_CENTAUR)" == "yes"
-LIBS = $(LIBS) libcmt.lib
+!if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
+LIBS = $(LIBS) $(SSH_LIB) ws2_32.lib
 !endif
 
-!if "$(CKF_SSH)" == "yes"
-LIBS = $(LIBS) ssh.lib ws2_32.lib
+!if "$(MIPS_CENTAUR)" == "yes"
+LIBS = $(LIBS) libcmt.lib
 !endif
 
 !if "$(CKF_SSL)" == "yes"
@@ -893,7 +932,10 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ck_crp$(O) ck_des$(O) \
 !endif
 !if ("$(CKF_SSH)" == "yes")
-        ckossh$(O) ckorbf$(O) ckoshs$(O) \
+        ckossh$(O) \
+!if ("$(CKF_DYNAMIC_SSH)" != "yes")
+        ckolssh$(O) ckorbf$(O) ckolsshs$(O) \
+!endif
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
@@ -957,6 +999,11 @@ win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe 
 !if "$(CKF_CRYPTDLL)" == "yes"
     k95crypt.dll \
 !endif
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+!if "$(CKF_SSH_BACKEND)" != "no"
+    k95ssh.dll nullssh.dll \
+!endif
+!endif
 # These likely require an old version of SRP (perhaps pre-1.7?) to build. They
 # appear to just be versions of utilities that come with SRP likely modified to
 # load the SSL DLL dynamically like K95 did - not really something we care much
@@ -964,6 +1011,10 @@ win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe 
 #!if "$(CKF_SRP)" == "yes"
 #       srp-passwd.exe srp-tconf.exe
 #!endif
+
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+win32sshdll: k95ssh.dll
+!endif
 
 win32md: mdnker.exe
 
@@ -1152,6 +1203,13 @@ k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak k95crypt.re
         bufferoverflowu.lib
 !endif
 
+nullssh.dll: ckonssh.obj ckoker.mak
+	link /dll /debug /def:nullssh.def /out:$@ ckonssh.obj
+
+k95ssh.dll: ckolssh.obj ckolsshs.obj ckorbf.obj k95ssh.res ckoker.mak
+	link /dll /debug /def:k95ssh.def /out:$@ ckolssh.obj ckolsshs.obj \
+	    ckorbf.obj k95ssh.res $(SSH_LIB) ws2_32.lib
+
 k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
 	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
             /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib
@@ -1263,18 +1321,20 @@ ckudia$(O):	ckudia.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckucmd.h ckuus
 ckuscr$(O):	ckuscr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckcsig.h ckcnet.h \
                 ckctel.h
 ckuusr$(O):	ckuusr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h cknwin.h \
-	          ckowin.h ckntap.h kui\ikui.h
+		    ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h cknwin.h ckossh.h \
+	        ckowin.h ckntap.h kui\ikui.h
 ckuus2$(O):	ckuus2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h
 ckuus3$(O):	ckuus3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h ckoreg.h \
-          ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h
+          ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h \
+          ckossh.h
 ckuus4$(O):	ckuus4.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h ckocon.h \
+		  ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h ckocon.h ckossh.h \
 	      ckoetc.h ckntap.h ckuath.h ck_ssl.h ckoreg.h ckoetc.h
 ckuus5$(O):	ckuus5.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-                ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h ck_ssl.h ckossl.h kui\ikui.h
+            ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h ck_ssl.h ckossl.h \
+            ckossh.h kui\ikui.h
 ckuus6$(O):	ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckntap.h \
                 ckcnet.h ckctel.h
 !if "$(PLATFORM)" == "OS2"
@@ -1282,18 +1342,19 @@ ckuus6$(O):	ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucm
 
 !endif
 ckuus7$(O):	ckuus7.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h ckodir.h \
-                  ckokey.h ckokvb.h cknwin.h ckowin.h ckntap.h ckcuni.h \
-                  ckntap.h ckuath.h ck_ssl.h kui\ikui.h
+		    ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h ckodir.h \
+            ckokey.h ckokvb.h cknwin.h ckowin.h ckntap.h ckcuni.h ckossh.h \
+            ckntap.h ckuath.h ck_ssl.h kui\ikui.h
 ckuusx$(O):	ckuusx.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckonbi.h \
                 ckocon.h cknwin.h ckowin.h ckntap.h ckcnet.h ckctel.h kui\ikui.h
 ckuusy$(O):	ckuusy.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckcnet.h ckctel.h \
-	        ck_ssl.h kui\ikui.h
+	        ck_ssl.h ckossh.h kui\ikui.h
 ckofio$(O):	    ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckuusr.h ckcxla.h ck_ssl.h ckoreg.h ckosyn.h ckuath.h
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
-ckocon$(O):	ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h ckctel.h \
-                ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h kui\ikui.h
+ckocon$(O):	    ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h \
+                ckctel.h ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h ckossh.h \
+                kui\ikui.h
 ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckonbi.h ckopcf.h ckuusr.h ckokey.h ckokvb.h ckcuni.h kui\ikui.h
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
@@ -1338,8 +1399,8 @@ ckcftp$(O):     ckcftp.c ckcdeb.h ckoker.h ckcasc.h ckcker.h ckucmd.h ckuusr.h c
                 ckcxla.h ckuath.h ck_ssl.h ckoath.h ckoreg.h
 ckctel$(O):	ckctel.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckctel.h ckcnet.h ckocon.h ck_ssl.h \
                 ckossl.h ckosslc.h
-ckonet$(O):	ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
-                ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h ckowin.h ckuath.h \
+ckonet$(O):	    ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
+                ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h ckowin.h ckuath.h ckossh.h \
                 ck_ssl.h ckossl.h ckosslc.h
 !if "$(PLATFORM)" == "NT"
 cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
@@ -1372,15 +1433,18 @@ cknprt$(O): cknprt.c ckcdeb.h ckoker.h ckcker.h ckucmd.h
 ckuath$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_ssl.h ckossl.h \
                 ckosslc.h ckuath.c ckoath.h
 ckoath$(O):     ckoath.c ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ckoath.h ckoetc.h
-ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h
+ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h ckossh.h
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 
-ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
-ckoshs$(O):     ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckolssh$(O):    ckolsshs.h ckolsshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckolssh.c ckolssh.h ckossh.h
+ckolsshs$(O):   ckolsshs.c ckolsshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
 ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
 
+ckossh$(O):     ckossh.c ckossh.h ckcdeb.h ckuusr.h ckcker.h ckocon.h ckoreg.h
+
+ckonssh$(O):    ckonssh.c ckossh.h ckcdeb.h
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
@@ -1393,7 +1457,6 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 ck_des$(O):     ck_des.c
 !if "$(PLATFORM)" == "OS2"
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
-
 !endif
 
 # X/Y/Z Modem support (3rd-party library)
@@ -1508,6 +1571,9 @@ ckoker.res: ckoker.rc
 
 cknker.res: cknker.rc cknker.ico
         rc $(RCDEFINES) /fo cknker.res cknker.rc
+
+k95ssh.res: k95ssh.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95ssh.res k95ssh.rc
 
 k95crypt.res: k95crypt.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95crypt.res k95crypt.rc

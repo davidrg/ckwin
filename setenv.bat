@@ -55,7 +55,7 @@ set srp_root=%root%\srp
 
 REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
 REM    target\bin\i386\rel\wshelp32.dll
-REM    target\lib\ie86\rel\wshload.lib
+REM    target\lib\i386\rel\wshload.lib
 REM    athena\wshelper\include\wshelper.h
 REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
 REM
@@ -358,7 +358,16 @@ if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
 if exist %libssh_build%\src\ssh.lib echo Found libssh: %libssh_build%\src\ssh.lib
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
-if "%CKF_SSH%" == "no" echo Could not find libssh (%libssh_build%\src\ssh.lib)
+
+if exist %libssh_build%\src\out\ssh.lib set lib=%lib%;%libssh_build%\src\out
+if exist %libssh_build%\src\out\ssh.lib echo Found libssh: %libssh_build%\src\out\ssh.lib
+if exist %libssh_build%\src\out\ssh.lib set CKF_SSH=yes
+if exist %libssh_build%\src\out\ssh.lib set lib=%lib%;%libssh_build%\src\out
+if exist %libssh_build%\src\out\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\out\ssh.dll
+if exist %libssh_build%\src\out\sshg.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshg.dll
+if exist %libssh_build%\src\out\sshx.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshx.dll
+if exist %libssh_build%\src\out\sshgx.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshgx.dll
+if "%CKF_SSH%" == "no" echo Could not find libssh (%libssh_build%\src\ssh.lib or %libssh_build%\src\out\ssh.lib)
 if "%CKF_SSH%" == "no" goto :nossh
 :nossh
 
@@ -479,11 +488,15 @@ set CK_COMPILER_NAME=unknown
 set ZINCBUILD=
 set CKF_ZINC=no
 set BUILD_ZINC=no
+set CKB_9X_COMPATIBLE=no
+set CKB_XP_COMPATIBLE=no
 
 REM We can't look at OpenWatcoms help output for a version number because it
 REM waits for input ("Press any key to continue:"), so we'll just detect it by
 REM the presence of its environment variables.
 if exist %WATCOM%\binnt\wcl386.exe goto :watcomc
+cl 2>&1 | findstr /C:"Version 19.4" > nul
+if %errorlevel% == 0 goto :vc144
 cl 2>&1 | findstr /C:"Version 19.3" > nul
 if %errorlevel% == 0 goto :vc143
 cl 2>&1 | findstr /C:"Version 19.2" > nul
@@ -540,6 +553,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 REM For openwatcom we have to use its nmake clone
 set MAKE=nmake
@@ -568,6 +582,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc1axp
@@ -608,6 +623,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
 if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
@@ -625,6 +641,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
@@ -638,6 +655,7 @@ set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
 
@@ -647,6 +665,7 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
 
@@ -656,6 +675,7 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 REM libdes won't build for Alpha64
 if "%CKB_TARGET_ARCH%" == "ALPHA64" set CKF_LIBDES=unsupported
@@ -666,51 +686,67 @@ goto :cvcdone
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
 set CKB_9X_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc9
 set CK_COMPILER_NAME=Visual C++ 2008 (9.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc10
 set CK_COMPILER_NAME=Visual C++ 2010 (10.0)
 set ZINCBUILD=mvcpp10
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc11
 set CK_COMPILER_NAME=Visual C++ 2012 (11.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc12
 set CK_COMPILER_NAME=Visual C++ 2013 (12.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc140
 set CK_COMPILER_NAME=Visual C++ 2015 (14.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc141
 set CK_COMPILER_NAME=Visual C++ 2017 (14.1)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc142
 set CK_COMPILER_NAME=Visual C++ 2019 (14.2)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
+
+REM Visual C++ 2022 and newer are not suitable for targeting XP.
 
 :vc143
 set CK_COMPILER_NAME=Visual C++ 2022 (14.3)
+set CKF_SUPERLAT=unsupported
+goto :cvcdone
+
+:vc144
+set CK_COMPILER_NAME=Visual C++ 2022 17.10+ (14.4)
 set CKF_SUPERLAT=unsupported
 goto :cvcdone
 

@@ -28,7 +28,7 @@ instructions should do the job.
 This has been tested against the following versions:
 * zlib 1.2.13
 * OpenSSL 1.1.1v, 3.0.10, 3.1.1
-* libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5
+* libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5, 0.10.6
 
 And to build it all the following tools should work:
 * Visual C++ (2022 community edition works, or for Windows XP compatibility use 2019)
@@ -67,8 +67,8 @@ Normally everything is arranged into directories as follows:
      - des\
        - files & directories from the libdes distribution
    - libssh\
-     - 0.10.5\
-       - files & directories from libssh 0.10.5
+     - 0.10.6\
+       - files & directories from libssh 0.10.6
    - superlat\
      - include\
        - SuperLAT header files
@@ -170,13 +170,122 @@ nmake
 cd ..\..\..\
 ```
 
-Remember to add `-DWITH_DSA=ON` if you still need DSA (ssh-dss) support.
+Remember to add `-DWITH_DSA=ON` if you still need DSA (ssh-dss) support
+(requires libssh 0.10.x or older).
 
 *Note:* The resulting ssh.dll will depend on gssapi64.dll (or gssapi32.dll for a
 32bit build) meaning it won't work on any systems that don't have MIT Kerberos
 for Windows installed. If you're distributing your build to end-users who may or
 may not need Kerberos support it may be best to produce two builds of libssh, one
 with GSSAPI support and one without.
+
+#### Building the easy way
+
+To make things easier, a batch file is provided (`libssh\build.bat`) which is
+[documented here](../libssh/README.md). This batch fly.ile supports applying
+patches to enable GSSAPI and (for 0.10.6) Windows XP support
+
+#### Building with Dynamic SSH support
+
+C-Kermit for Windows can optionally be built to load its SSH backend from a DLL
+on startup. This means that:
+
+* If LibSSH can't be found or can't be loaded for some reason, C-Kermit can
+  still start up with SSH features disabled
+* Multiple SSH backends can be provided (eg, with and without GSSAPI/Kerberos 
+  support) and C-Kermit will use the first one that loads successfully. This
+  saves the user having to swap around Kerberos and non-Kerberos (or Windows XP
+  and non-Windows XP) versions of LibSSH manual
+* Alternative SSH backends possibly not based on LibSSH could be provided by the
+  user 
+* C-Kermit run without SSH support by starting it with the `-#2` command line
+  argument (disable loading of optional network DLLs) and SSH can then be loaded
+  later when needed with the `ssh load` command.
+
+To build with Dynamic SSH support, run `set CKF_DYNAMIC_SSH=yes` after running
+`setenv.bat`. If you'd also like to disable building of the LibSSH backend DLLs,
+run `set CKF_SSH_BACKEND=no`. If you'd like to build your own SSH backend using
+something other than libssh, see `ckonssh.c` for a starting point (this is a
+"null" backend that implements all the required APIs but otherwise does 
+nothing).
+
+Normally the C-Kermit build process will build a single SSH backend, 
+`k95ssh.dll`, linked against ssh.dll. If you'd like to build multiple backends
+against different variants of LibSSH (such as one with GSSAPI support and one 
+without) then LibSSH needs to be built with different library names, and you
+need to do the same with C-Kermits SSH backend.
+
+To Build LibSSH in this way, do something like the following:
+```
+build /C /R /M out /W libssh-0.10.6
+build /C /R /M out /W /N g /G /K C:\dev\ckwin\kerberos\kfw41 libssh-0.10.6
+build /C /R /M out /X /N x libssh-0.10.6
+build /C /R /M out /X /N gx /G /K C:\dev\ckwin\kerberos\kfw41 libssh-0.10.6
+```
+
+Where:
+
+* The `/M out` parameter moves the build artifacts (`ssh.dll` and `ssh.lib`) into
+  the `out` subdirectory
+* The `/N` parameter (eg, `/N gx`) adds a suffix (eg, `gx`) to the built
+  artifacts resulting in, for example, `sshgx.dll` and `sshgx.lib`
+* The `/X` parameter applies the Windows XP patch, while the `/W` parameter
+  removes it if it was previously applied
+* The `/G` parameter applies the GSSAPI patch if needed
+* The `/K` parameter specifies the path to the Kerberos for Windows SDK
+
+The result of running the four libssh builds above is:
+
+| DLL name  | LIB name  | GSSAPI | XP  | Description                                                        |
+|-----------|-----------|--------|-----|--------------------------------------------------------------------|
+| ssh.dll   | ssh.lib   | no     | no  | For Vista and newer, no GSSAPI, no GSSAPI support                  |
+| sshg.dll  | sshg.lib  | yes    | no  | For Vista and newer, requires Kerberos for Windows to be installed |
+| sshx.dll  | sshx.lib  | no     | yes | For Windows XP, no GSSAPI support.                                 |
+| sshgx.dll | sshgx.lib | yes    | yes | For Windows XP, requires Kerberos for Windows to be installed      |
+
+These are the four variants of libssh that C-Kermit ships with. As a result,
+`setenv.bat` will detect them automatically as long as they're placed in the
+`out` directory (`/M out`), and the script for building the distribution will
+pick them up automatically.
+
+Only the standard backend using `ssh.dll` (`k95ssh.dll`) is built by default. To
+build the other three, you need to do something like the following (or run 
+`mksshdll-all.bat`):
+
+```
+del k95ssh*.dll
+del k95ssh.res
+
+REM Windows Vista and newer, GSSAPI-enabled (sshg.dll, k95sshg.dll)
+set SSH_LIB=sshg.lib
+set CKF_SSH_DLL_VARIANT=g
+call mksshdll.bat
+ren k95ssh.dll k95sshg.dll
+del k95ssh.res
+
+REM Windows XP only, not GSSAPI-enabled (sshx.dll, k95sshx.dll)
+set SSH_LIB=sshx.lib
+set CKF_SSH_DLL_VARIANT=x
+call mksshdll.bat
+ren k95ssh.dll k95sshx.dll
+del k95ssh.res
+
+REM Windows XP only, GSSAPI-enabled (sshgx.dll, k95sshgx.dll)
+set SSH_LIB=sshgx.lib
+set CKF_SSH_DLL_VARIANT=gx
+call mksshdll.bat
+ren k95ssh.dll k95sshgx.dll
+del k95ssh.res
+
+REM Windows Vista and newer, not GSSAPI-enabled (ssh.dll, k95ssh.dll)
+set SSH_LIB=ssh.lib
+set CKF_SSH_DLL_VARIANT=
+REM built as part of the regular build process
+```
+
+Here we're specifying which variant of libssh to build against (the `SSH_LIB`
+environment variable), while the `CKF_SSH_DLL_VARIANT` environment variable
+adds a string to the resulting DLLs description.
 
 ## Building with Telnet Encryption Option (DES and CAST) Support
 In addition to SSL/TLS secured telnet, C-Kermit for Windows also optionally
@@ -403,3 +512,5 @@ perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=C:\path\to\ckwin\zlib\1
 nmake
 cd ..\..\
 ```
+
+This version does not build with Visual C++ 6.

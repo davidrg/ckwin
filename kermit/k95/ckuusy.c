@@ -52,6 +52,9 @@ static int xx_ftp( char *, char * );
 extern struct _kui_init kui_init;
 #endif /* KUI */
 _PROTOTYP( int os2settitle, (char *, int) );
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 #endif /* OS2 */
 
 /*
@@ -1408,15 +1411,14 @@ cmdlin() {
 
 #ifdef SSHBUILTIN
       if (howcalled == I_AM_SSH) {	/* If I was called as SSH... */
-          extern char * ssh_hst, * ssh_cmd, * ssh_prt;
 	  debug(F100,"ssh personality","",0);
 #ifdef CK_URL
 	  if (haveurl) {
-              makestr(&ssh_hst,g_url.hos);
-              makestr(&ssh_prt,g_url.svc);
-	      ckstrncpy(ttname,ssh_hst,TTNAMLEN+1);
+              ssh_set_sparam(SSH_SPARAM_HST, g_url.hos);
+              ssh_set_sparam(SSH_SPARAM_PRT,g_url.svc);
+	          ckstrncpy(ttname,ssh_get_sparam(SSH_SPARAM_HST),TTNAMLEN+1);
               ckstrncat(ttname,":",TTNAMLEN+1);
-              ckstrncat(ttname,ssh_prt,TTNAMLEN+1);
+              ckstrncat(ttname,ssh_get_sparam(SSH_SPARAM_PRT),TTNAMLEN+1);
           }
 	  else 
 #endif /* CK_URL */
@@ -1455,7 +1457,7 @@ cmdlin() {
                       }
                   } else {			/* No dash must be hostname */
                       ckstrncpy(ttname,*xargv,TTNAMLEN+1);
-                      makestr(&ssh_hst,ttname);
+                      ssh_set_sparam(SSH_SPARAM_HST, ttname);
                       debug(F110,"cmdlin ssh host",ttname,0);
 #ifndef NOICP
 #ifndef NODIAL
@@ -1483,7 +1485,7 @@ cmdlin() {
 			  nhcount = 0;
                       if (nhcount == 1) { /* Still OK, so make substitution */
                           ckstrncpy(ttname,nh_p[0],TTNAMLEN+1);
-                          makestr(&ssh_hst,ttname);
+                          ssh_set_sparam(SSH_SPARAM_HST, ttname);
                           debug(F110,"cmdlin lunet substitution",ttname,0);
                       }
 #endif /* NODIAL */
@@ -1493,7 +1495,7 @@ cmdlin() {
                           xargv++;
                           ckstrncat(ttname,":",TTNAMLEN+1);
                           ckstrncat(ttname,*xargv,TTNAMLEN+1);
-                          makestr(&ssh_prt,*xargv);
+                          ssh_set_sparam(SSH_SPARAM_PRT,*xargv);
                           debug(F110,"cmdlin telnet host2",ttname,0);
                       }
 #ifdef COMMENT
@@ -1505,7 +1507,7 @@ cmdlin() {
                           if (nh_px[0][0]) {
                               ckstrncat(ttname,":",TTNAMLEN+1);
                               ckstrncat(ttname,nh_px[0][0],TTNAMLEN+1);
-                              makestr(&ssh_prt,nh_px[0][0]);
+                              ssh_set_sparam(SSH_SPARAM_PRT,nh_px[0][0]);
                           }
                       }
 
