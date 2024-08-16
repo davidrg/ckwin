@@ -78,7 +78,7 @@ ck_ssh_is_installed()
 #ifdef SSH_DLL
     return ssh_avail();
 #else /* SSH_DLL */
-    return(1)
+    return(1);
 #endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
     return(0);
