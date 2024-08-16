@@ -1534,7 +1534,14 @@ ssl_once_init()
     if (OPENSSL_VERSION_NUMBER > SSLeay()
          || ((OPENSSL_VERSION_NUMBER ^ SSLeay()) & COMPAT_VERSION_MASK)
 #ifdef OS2
+/* DG 2024-08-05: Not sure what the point of this was. Presumably the goal was
+ *    to prevent updated OpenSSL libraries from being used, though why you'd
+ *    want to do that I'm not sure. Might have been to do with how Kermit 95s
+ *    SSH code was built way back in the early 2000s I guess. Today Kermit 95s
+ *    use of OpenSSL is largely the same as how C-Kermit uses it on other
+ *    platforms so I don't see any reason to treat it differently here.
          || ckstrcmp(OPENSSL_VERSION_TEXT,(char *)SSLeay_version(SSLEAY_VERSION),-1,1)
+*/
 #endif /* OS2 */
          ) {
         ssl_installed = 0;
