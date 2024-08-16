@@ -10984,7 +10984,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
           ssh_dll_load(s, FALSE);
       }
 #endif /* SSH_DLL */
-	  case XSSH_OPN:		/* SSH OPEN */
+	  case XSSH_OPN: {		/* SSH OPEN */
             char tmpline[LINBUFSIZ], tmpline2[LINBUFSIZ];
             char* token;
             if (!havehost) {
@@ -11288,7 +11288,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		return(-2);
 	    }
             return(success = 1);	/* or whatever */
-
+      }
 	  case XSSH_AGT: {		/* SSH AGENT */
 	      int doeach = 0;
           if (!ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {

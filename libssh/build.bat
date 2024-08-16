@@ -183,8 +183,10 @@ REM run the build!
 mkdir build
 cd build
 cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON
+if %errorlevel% neq 0 exit /b %errorlevel%
 if "%CKB_CLEAN%" == "yes" nmake clean
 nmake
+if %errorlevel% neq 0 exit /b %errorlevel%
 if "%CKB_MOVE%" == "" goto :skiprename
 cd src
 ren ssh.lib ssh%CKB_NAMED%.lib
@@ -192,6 +194,7 @@ ren ssh.exp ssh%CKB_NAMED%.exp
 ren ssh.pdb ssh%CKB_NAMED%.pdb
 mkdir %CKB_MOVE%
 move /Y ssh%CKB_NAMED%.* %CKB_MOVE%\
+if %errorlevel% neq 0 exit /b %errorlevel%
 cd ..
 :skiprename
 cd ..

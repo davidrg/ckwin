@@ -62,8 +62,12 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 WIN32_VERSION=0x0400
 
 !if "$(CMP)" == "OWCL"
-# No built-in SSH support for OpenWatcom (yet)
-CKF_SSH=no
+# No built-in SSH support for OpenWatcom (yet), so if SSH support has been
+# requested, turn Dynamic SSH on.
+!if "$(CKF_SSH)" == "yes"
+CKF_DYNAMIC_SSH=yes
+CKF_SSH_BACKEND=no
+!endif
 !endif
 
 !if ($(MSC_VER) >= 192)
@@ -193,17 +197,19 @@ CKF_K4W=no
 
 !endif
 
+!if "$(CKF_SSH)" == "yes"
+!message Target platform is OS/2 - switching off built-in SSH (not supported)
+!message and turning on Dynamic SSH instead.
+# No built-in SSH support for OS/2 (yet), but Dynamic SSH should work if a
+# backend for it is built someday.
+CKF_DYNAMIC_SSH=yes
+CKF_SSH_BACKEND=no
+!endif
+!endif
+
 !if "$(MIPS_CENTAUR)" == "yes"
 !message Turning X/Y/Z MODEM support off - build errors need fixing with this compiler
 CKF_XYZ=no
-!endif
-
-
-!if "$(CKF_SSH)" == "yes"
-!message Target platform is OS/2 - forcing SSH off (not supported)
-# No built-in SSH support for OS/2 (yet)
-CKF_SSH=no
-!endif
 !endif
 
 !if "$(TARGET_CPU)" == "MIPS"
