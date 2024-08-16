@@ -519,24 +519,31 @@ jobs:
         
         REM Vista+, GSSAPI-enabled
         set SSH_LIB=sshg.lib
+        set CKF_SSH_DLL_VARIANT=g
         call mksshdll.bat
         ren k95ssh.dll k95sshg.dll
+        del k95ssh.res
         
         if "%CKB_XP_COMPATIBLE%" NEQ "yes" goto :noxp
         REM XP only, no-GSSAPI
         set SSH_LIB=sshx.lib
+        set CKF_SSH_DLL_VARIANT=x
         call mksshdll.bat
         ren k95ssh.dll k95sshx.dll
+        del k95ssh.res
         
         REM XP, GSSAPI-enabled
         set SSH_LIB=sshgx.lib
+        set CKF_SSH_DLL_VARIANT=gx
         call mksshdll.bat
         ren k95ssh.dll k95sshgx.dll
+        del k95ssh.res
         
         :noxp
         REM Vista+, no-GSSAPI
         REM built as part of the regular build (mk.bat)
         set SSH_LIB=ssh.lib
+        set CKF_SSH_DLL_VARIANT=
         
         :build_main
         call mk.bat

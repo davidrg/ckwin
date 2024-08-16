@@ -1,5 +1,5 @@
 /*
- *  C K O LNS S H . C --  Null Subsystem Interface for Kermit 95
+ *  C K O N S S H . C --  Null Subsystem Interface for Kermit 95
  *
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *

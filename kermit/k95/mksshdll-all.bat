@@ -1,25 +1,24 @@
-set CKF_SSH_DLL_VARIANT=
-del k95ssh.dll
-del k95ssh.res
-call mksshdll.bat
-move k95ssh.dll dist\k95ssh.dll
+del k95ssh*.dll
 
 set CKF_SSH_DLL_VARIANT=g
-del k95ssh.dll
+set SSH_LIB=sshg.lib
 del k95ssh.res
 call mksshdll.bat
-move k95ssh.dll dist\k95sshg.dll
+move k95ssh.dll k95sshg.dll
 
 set CKF_SSH_DLL_VARIANT=x
-del k95ssh.dll
+set SSH_LIB=sshx.lib
 del k95ssh.res
 call mksshdll.bat
-move k95ssh.dll dist\k95sshx.dll
+move k95ssh.dll k95sshx.dll
 
 set CKF_SSH_DLL_VARIANT=gx
-del k95ssh.dll
+set SSH_LIB=sshgx.lib
 del k95ssh.res
 call mksshdll.bat
-move k95ssh.dll dist\k95sshgx.dll
+move k95ssh.dll k95sshgx.dll
 
 set CKF_SSH_DLL_VARIANT=
+set SSH_LIB=ssh.lib
+del k95ssh.res
+call mksshdll.bat
