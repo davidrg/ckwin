@@ -24,7 +24,7 @@ Kermit 95.
 
 To get the latest most stable release as well as other news and information, 
 visit the [Kermit 95 Beta website](https://www.kermitproject.org/ckw10beta.html).
-This software is currently based on C-Kermit version 10.0 Pre-Beta.11 of
+This software is currently based on C-Kermit version 10.0 Beta.11 of
 29-JUN-2024 and is available under the 3-clause BSD license.
 
 ![Screenshot](doc/screenshot-w11.png)

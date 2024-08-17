@@ -56,6 +56,10 @@ $NetBSD: patch-ab,v 1.8 2020/04/08 15:22:07 rhialto Exp $
 #include <inet.h>
 #endif /* DEC_TCPIP */
 
+#ifdef SSH_DLL
+#include "ckossh.h"
+#endif /* SSH_DLL */
+
 #ifdef OS2
 extern char exedir[];
 #ifdef NT
@@ -70,24 +74,15 @@ static int ssl_installed = 1;
 int
 ck_ssh_is_installed()
 {
-#ifdef CK_SSL
 #ifdef SSHBUILTIN
-#ifdef SSLDLL
-#ifdef NT
-    extern HINSTANCE hCRYPTO;
-#else /* NT */
-    extern HMODULE hCRYPTO;
-#endif /* NT */
-    debug(F111,"ck_ssh_is_installed","hCRYPTO",hCRYPTO);
-    return(ssl_installed && (hCRYPTO != NULL));
-#else /* SSLDLL */
-    return(ssl_installed);
-#endif /* SSLDLL */
+#ifdef SSH_DLL
+    return ssh_avail();
+#else /* SSH_DLL */
+    return(1);
+#endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
     return(0);
 #endif /* SSHBUILTIN */
-#endif /* CK_SSL */
-    return(0);
 }
 
 int
@@ -1539,7 +1534,14 @@ ssl_once_init()
     if (OPENSSL_VERSION_NUMBER > SSLeay()
          || ((OPENSSL_VERSION_NUMBER ^ SSLeay()) & COMPAT_VERSION_MASK)
 #ifdef OS2
+/* DG 2024-08-05: Not sure what the point of this was. Presumably the goal was
+ *    to prevent updated OpenSSL libraries from being used, though why you'd
+ *    want to do that I'm not sure. Might have been to do with how Kermit 95s
+ *    SSH code was built way back in the early 2000s I guess. Today Kermit 95s
+ *    use of OpenSSL is largely the same as how C-Kermit uses it on other
+ *    platforms so I don't see any reason to treat it differently here.
          || ckstrcmp(OPENSSL_VERSION_TEXT,(char *)SSLeay_version(SSLEAY_VERSION),-1,1)
+*/
 #endif /* OS2 */
          ) {
         ssl_installed = 0;

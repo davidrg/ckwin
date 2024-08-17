@@ -445,19 +445,25 @@ Some versions of the Platform SDK include a compiler. Sometimes that compiler
 is usable for building CKW, sometimes it is not.
 
 ### Windows NT 3.1
-The version of nmake included in the Win32 SDK Final Edition is too old to build
-CKW. The SDK also lacks link.exe. Both of these will need to be obtained from
-Visual C++ 1.0 32bit edition (or newer) or the makefile adjusted to be compatible
-with link32.exe.
+Building with this SDK *is* supported, but you also require some parts from
+Visual C++ as the included nmake.exe is too old and the SDK doesn't include
+link.exe (instead it has link32.exe which is incompatible). When using a newer
+link.exe, you may also need to grab cvtres.exe (link.exe version 3.0 from
+Visual C++ 4.0 is incompatible with the version of cvtres.exe included in the
+NT 3.1 SDK, possibly earlier versions of link.exe might be ok.)
 
-The SDK also does not include the Visual C++ runtime libraries so you may need to
-statically link (set CKB_STATIC_CRT=yes)
+Both the MIPS and i386 compilers should be correctly detected and configured
+to statically link against the C runtime and set the subsystem version to 3.1.
 
 ### Windows NT 3.50
 
 As found on the *Microsoft Solutions Development Kit*, the only compiler or linker 
 included is for the Alpha platform and is at a similar level to Visual C++ 1.0 32bit
-(MSC 8.0). The compiler works but the linker does not.
+(MSC 8.0). The compiler works but the linker does not, so you'll need a newer
+linker from Visual C++ 2.0 or 4.0. You may also need an updated cvtres.exe.
+
+This Alpha cmopiler should be correctly detected and configured to statically
+link against the C runtime and set the subsystem version to 3.1.
 
 ### January 2000 Platform SDK
 

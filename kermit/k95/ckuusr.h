@@ -2721,6 +2721,7 @@ struct stringint {			/* String and (wide) integer */
 #define XSSH_KEY 6
 #define XSSH_CLR 7
 #define XSSH_AGT 8
+#define XSSH_LOAD 9
 
 #ifdef COMMENT
 #define SSHKT_1R   0			/* SSH KEY TYPE symbols */

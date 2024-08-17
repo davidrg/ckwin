@@ -1,8 +1,13 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "5 Jun 2024"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20240605"          /* Keep them in sync */
-/* Wed Jun  5 13:44:42 2024 */
+#ifdef COMMENT
+#define EDITDATE  "8 Aug 2024"       /* Last edit date dd mmm yyyy */
+#else
+#define EDITDATE  "2024/08/08"       /* Last edit date ISO format */
+#endif  /* COMMENT */
+
+#define EDITNDATE "20240808"          /* Keep them in sync */
+/* Thu Aug  8 12:25:04 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -13,7 +18,7 @@ FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
   . Change the 3 dates just above;
   . Change ck_cryear = "xxxx"; (copyright year) just below, if necessary;
   . For test versions change ck_s_test and ck_s_tver (below) appropriately:
-     Dev, Alpha, Beta, or RC (Release Candidate);
+     Dev, Alpha, Pre-Beta, Beta, or RC (Release Candidate);
   . Change makefile CKVER and BUILDID definitions and timestamp at top.
 
 If the version number has changed, also:
@@ -65,7 +70,7 @@ char *ck_s_test = K95_TEST;
 char *ck_s_tver = K95_TEST_VER_S;
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
-char *ck_s_test = "pre-Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
+char *ck_s_test = "Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
 char *ck_s_tver = "11";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
@@ -108,9 +113,9 @@ int offtsize = 0;                       /* Size of OFF_T */
   Macintosh), just C-Kermit for each platform (except the original Mac).
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "413";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.413";           /* eXtended version string */
-long  ck_l_ver = 1000413L;              /* C-Kermit version number */
+char *ck_s_edit = "414";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.414";           /* eXtended version string */
+long  ck_l_ver = 1000414L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */

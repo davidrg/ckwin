@@ -22,6 +22,7 @@ if not exist dist\users\NUL mkdir dist\users
 
 @echo Move build outputs...
 move *.exe dist
+move k95ssh*.dll dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
 copy iksd.ksc dist\iksd.ksc.sample

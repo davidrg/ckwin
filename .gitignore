@@ -275,6 +275,7 @@ srp*/README.WIN32
 
 # Kerberos distribution files
 kerberos/kfw-*
+kerberos/kfw41
 
 # These files belong to C-Kermit for UNIX so we don't want to accidentally
 # commit them when we're updating shared code.
@@ -313,3 +314,4 @@ kermit/k95/dialer.dat
 kermit/k95/k95dial.exe.manifest
 kermit/k95/p_direct.znc
 kermit/k95/p_servic.znc
+/kerberos/kfw41
