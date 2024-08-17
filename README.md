@@ -17,11 +17,20 @@ Major features include:
    Can optionally be built with SuperLAT support as well (not enabled by
    default)
 
-From 2013 until mid-2024 this project was developed under the name
+From 2013 until August 2024 this project was developed under the name
 *C-Kermit for Windows* but the decision has been made to switch back to the
-original name, Kermit 95, to reduce confusion. If you see references to
-"C-Kermit for Windows" around the place know that it refers to the open-source
-Kermit 95. 
+original name, Kermit 95, for the next release (beta 7) to reduce confusion
+(plus it's a shorter name and works better on OS/2). The current release
+(beta 6) is still called "C-Kermit for Windows".
+
+As this code is currently "Pre-Beta 7", all material here now refers to
+"Kermit 95" rather than "C-Kermit for Windows" - know that these are just
+two names for the same program. 
+
+<!--
+If you see references to "C-Kermit for Windows", "CKW" or "CKWIN" around the 
+place know that it refers to the open-source Kermit 95.
+-->
 
 To get the latest most stable release as well as other news and information, 
 visit the [Kermit 95 Beta website](https://www.kermitproject.org/ckw10beta.html).
