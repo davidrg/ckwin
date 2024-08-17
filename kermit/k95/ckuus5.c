@@ -17,7 +17,7 @@ int cmdsrc() { return(0); }
     Update: Jun 24 2023 (David Goodwin)
     Update: Oct 10-11 2022 (fdc and sms)
     Update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
-    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
+    Update: Dec 13 2022 (David Goodwin - missing break + K95 arrow keys)
     Update: Apr 14 2023 (ANSI function declarations and prototypes)
     Update: May 16 2023 (Jeff Johnson fix for iksd.conf diagnostic)
     Update: May 16 2023 (Jeff Johnson fix for \v(startup) vs \v(exedir))

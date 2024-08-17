@@ -22,10 +22,10 @@
 //
 
 #ifndef VERSION_PRODUCT_SHORT
-#define VERSION_PRODUCT_SHORT "CKW"
+#define VERSION_PRODUCT_SHORT "K95"
 #endif
 #ifndef VERSION_PRODUCT
-#define VERSION_PRODUCT "C-Kermit for Windows"
+#define VERSION_PRODUCT "Kermit 95"
 #endif
 
 VS_VERSION_INFO VERSIONINFO

@@ -57,7 +57,7 @@ REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
 REM    target\bin\i386\rel\wshelp32.dll
 REM    target\lib\i386\rel\wshload.lib
 REM    athena\wshelper\include\wshelper.h
-REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
+REM Kermit 95 was last built with v2.2-beta2. K95 is known to work with 2.6.0.
 REM
 REM You can also point this at the root directory for the Kerberos for Windows
 REM 3.x or 4.x SDK.
@@ -182,7 +182,7 @@ REM due to lack of C99 support. Force it off.
 set CKF_SSH=no
 
 REM Also no ZLIB support on Itanium (couldn't get it to easily
-REM cross-compile) - not that CKW actually uses zlib for anything.
+REM cross-compile) - not that K95 actually uses zlib for anything.
 set CKF_ZLIB=no
 goto :bits64
 
@@ -235,10 +235,10 @@ if exist %root%\superlat\include\latioc.h set ckinclude=%ckinclude%;%root%\super
 :nosuperlat
 
 REM This and everything else is windows-specific.
-set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
+set k95include=%ckinclude%;%root%\kermit\k95\kui
 
 REM Set include path for targeting Windows.
-set include=%include%;%ckwinclude%
+set include=%include%;%k95include%
 
 REM Handle path overrides. These are to allow the build server to override any
 REM hard-coded definitions in here without having to modify.
@@ -558,7 +558,7 @@ set CKB_XP_COMPATIBLE=yes
 REM For openwatcom we have to use its nmake clone
 set MAKE=nmake
 
-REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
+REM OpenWatcom doesn't include TAPI headers to we bundle them with K95. Add them to the include
 REM path so the dialer can find them.
 set include=%include%;%root%\kermit\k95\ow
 goto :cvcdone
@@ -756,7 +756,7 @@ REM requires Windows NT 3.5x or 4.0 (2000 and newer are unsupported)
 :unsupported
 echo.
 echo -- Unsupported compiler: %CK_COMPILER_NAME% --
-echo C-Kermit for Windows has not been tested with this compiler and may not build.
+echo Kermit 95 has not been tested with this compiler and may not build.
 echo.
 goto :cvcend
 

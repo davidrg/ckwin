@@ -595,7 +595,7 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
 # issues (see: https://libunicows.sourceforge.net/) so using Opencow
 # (https://opencow.sourceforge.net/) may be more desirable.
 #
-# Note that CKW will *NOT* actually build with this option enabled at this time.
+# Note that K95 will *NOT* actually build with this option enabled at this time.
 # Work still needs to be done to:
 #   - Adjust all GetProcAddress calls to get either the A or W version of an API
 #     depending on if CK_NT_UNICODE is defined (UNICODE can't be relied on as

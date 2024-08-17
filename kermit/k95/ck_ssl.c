@@ -3059,7 +3059,7 @@ tls_userid_from_client_cert(ssl) SSL * ssl;
      * provided by a user-supplied DLL as described here:
      *   http://www.columbia.edu/kermit/security70.html#x3.1.4
      * This DLL would normally be loaded in ckossl.c (search for X5092UID) but
-     * at the moment that only happens when CKW is built with SSLDLL. SSLDLL is
+     * at the moment that only happens when K95 is built with SSLDLL. SSLDLL is
      * only compatible with OpenSSL 0.9.x so in practice X509_to_user is never
      * available. It wouldn't be hard to make it work without SSLDLL if needed.
      */

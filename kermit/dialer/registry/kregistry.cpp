@@ -65,7 +65,7 @@ Event( const UI_EVENT & event )
         break;
     case DOCS_START_MENU:
         success = CreateDocAssociations();
-        success &= CreateShortcut("C-Kermit for Windows Manual",
+        success &= CreateShortcut("Kermit 95 Manual",
                                    "docs\\manual\\ckwin.htm",0,2,0,0, FALSE);
         /*
         success &= CreateShortcut("Read Me!","docs\\manual\\readme.htm",0,2,0,0);

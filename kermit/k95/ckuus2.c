@@ -7416,7 +7416,7 @@ Makes a connection through the program whose command line is given. Example:\n\
 #ifdef NETPTY
 #ifdef NT
 case XXPTY:
-    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    /* For windows ConPTY support - run any windows text mode app inside K95 */
     return(hmsg("Syntax: PTY [ command ]\n\
 Runs the specified command in a pseudoterminal. Example:\n\
 \n pty cmd.exe"));

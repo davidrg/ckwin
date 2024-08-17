@@ -4303,7 +4303,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
     ZIL_ICHAR *p;
     K_LOCATION * location = (K_LOCATION *) _location_list.Current();
 
-    sprintf(buf,"; C-Kermit for Windows Dialer Generated Script - Version %d.%d\n",
+    sprintf(buf,"; Kermit 95 Dialer Generated Script - Version %d.%d\n",
              kd_major,kd_minor);
     OUTFILE(buf);
 
@@ -6575,7 +6575,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
             OUTFILE(BuildOutFileStr(buf, "", tmp));
         }
 
-        /* The following is no longer supported as of C-Kermit for Windows:
+        /* The following is no longer supported as of Kermit 95 v3.0:
          *   external-keyx, srp-gex-sha1, hostbased
          * sprintf(buf,"set ssh v2 authentication %s%s%s%s%s%s%s\n",
                  entry->_ssh2_auth_external_keyx ? "external-keyx " : "",
@@ -6592,7 +6592,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
                 entry->_ssh2_auth_keyboard_interactive ? "keyboard-interactive " : "");
         OUTFILE(buf);
 
-        /* Changes for C-Kermit for Windows (from Kermit 95 v2.1):
+        /* Changes for Kermit 95 v3.0 (v2.1):
          * Removed: blowfish-cbc, cast128-cbc, arcfour
          * Retained (for now): aes128-cbc, 3des-cbc, aes192-cbc, aes256-cbc
          * New: aes128-ctr              aes256-gcm@openssh.com
@@ -6643,7 +6643,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
                  entry->_ssh2_hka_dss ? "ssh-dss " : ""); /* Deprecated */
         OUTFILE(buf);
 
-        /* New in C-Kermit for Windows */
+        /* New in v3.0 */
         /* TODO: Build a UI to configure this
          *  Until then we'll comment out the command so as to not override the
          *  defaults */
@@ -8025,7 +8025,7 @@ void K_CONNECTOR::UpdateStatusLine( ZIL_UINT32 UpdateName )
 #define SHORTCUTDEBUG
 
 #define K95_APPID "Kermit.Script"
-#define K95_APPID_DEFAULT "C-Kermit for Windows Script"
+#define K95_APPID_DEFAULT "Kermit 95 Script"
 #define K95_MIME  "application/kermit"
 #define K95_MIME_PATH  "MIME\\Database\\Content Type\\application/kermit"
 

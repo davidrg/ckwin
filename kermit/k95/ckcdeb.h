@@ -837,7 +837,7 @@
 #endif /* OS2ORVMS */
 #endif /* OS2 */
 
-/* C-Kermit for Windows (Kermit 95) can now be 64-bit so OS2ORWIN32 is a misnomer */
+/* Kermit 95 can now be 64-bit so OS2ORWIN32 is a misnomer */
 #ifdef OS2ORWIN32
 #ifndef OS2ORWINDOWS
 #define OS2ORWINDOWS
@@ -3175,7 +3175,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 #ifdef COMMENT

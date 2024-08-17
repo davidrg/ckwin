@@ -42,8 +42,8 @@ K_CONNECTOR  *connector = NULL ;
 UIW_TOOL_BAR *toolbar = NULL ;
 UID_TIMER * timer = NULL ;
 
-/* Dialer 1.37 = Final Kermit 95 release
- * Dialer 1.38 = First proper release for C-Kermit for Windows (10.0 beta 4)
+/* Dialer 1.37 = Final Kermit 95 release? (either 2.1.2 or 2.1.3)
+ * Dialer 1.38 = Kermit 95 3.0 (open source)
  */
 ZIL_UINT8 kd_major = 1, kd_minor = 38;
 

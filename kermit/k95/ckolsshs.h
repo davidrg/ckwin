@@ -1,4 +1,4 @@
-/* C-Kermit for Windows SSH Subsystem
+/* Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,13 +135,13 @@ typedef struct {
 
     /* Events raised by C-Kermit to signal conditions to the SSH thread */
     HANDLE disconnectEvent;   /* Disconnect requested by C-Kermit */
-    HANDLE ptySizeChangedEvent; /* CKW Terminal size changed. Store new values
+    HANDLE ptySizeChangedEvent;   /* K95 Terminal size changed. Store new values
                                    * in pty_height and pty_width */
     HANDLE flushEvent; /* Flush requested by C-Kermit */
     HANDLE breakEvent; /* Send break requested by C-Kermit */
-    HANDLE dataArrivedEvent; /* CKW has put data in the input buffer to be sent */
+    HANDLE dataArrivedEvent; /* K95 has put data in the input buffer to be sent */
 
-    /* CKW has consumed data from the output buffer. Only raised when the
+    /* K95 has consumed data from the output buffer. Only raised when the
      * output buffer transitions from full to less than full in case the
      * network has more data waiting but couldn't do anything with it because of
      * a full buffer */

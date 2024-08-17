@@ -1,6 +1,6 @@
 /* A simple ring-buffer implementation for the SSH Subsystem.
  *
- * C-Kermit for Windows SSH Subsystem
+ * Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without

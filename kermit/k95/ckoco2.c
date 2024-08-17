@@ -3881,7 +3881,7 @@ TermScrnUpd( void * threadinfo)
     defaultflipcell = defaultcell ;
     /* This commented out as it's a meaningless expression - byteswapcolors
      * doesn't alter its parameter; it returns a value that you've got to store
-     * somewhere. There is no source control history for CKW so I've no idea why
+     * somewhere. There is no source control history for K95 so I've no idea why
      * this line is here. Its it a bug? Is it really supposed to be
      * defaultflipcell.a = byteswapcolors( defaultflipcell.a )? Or is it just
      * some old left-over code that should have been deleted as part of some

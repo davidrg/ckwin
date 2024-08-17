@@ -1,9 +1,9 @@
-# C-Kermit for Windows Makefile for GCC
+# Kermit 95 Makefile for GCC
 #
 # Requires:
 #	- nothing
 #
-# This makefile is provided to enable CKW developers to work from and test on
+# This makefile is provided to enable K95 developers to work from and test on
 # a Linux/UNIX host using GCC and WINE. While this toolchain is regularly
 # exercised via CI, the builds themselves are rarely tested.
 #

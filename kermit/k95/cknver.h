@@ -13,8 +13,8 @@
 #define VERSION_BUILD 0
 #endif
 #define VERSION_YEAR "2024"
-#define VERSION_PRODUCT "C-Kermit for Windows"
-#define VERSION_PRODUCT_SHORT "CKW"
+#define VERSION_PRODUCT "Kermit 95"
+#define VERSION_PRODUCT_SHORT "K95"
 
 /* Version number with just the major and minor numbers */
 #define APP_VERSION_MAJ_MIN STR(VERSION_MAJOR) "." STR(VERSION_MINOR)

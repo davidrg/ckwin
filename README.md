@@ -1,10 +1,11 @@
-Kermit 95
-====================
+Kermit 95 (C-Kermit for Windows)
+================================
 
 This is Kermit 95, the Windows and OS/2 port of C-Kermit from the Kermit Project.
 Kermit 95 was formerly a commercial product of Columbia University from 1994 
-to 2011 and since 2013 has been developed under the 3-clause BSD license. For 
-more information on Kermit, visit the Kermit Project website: http://www.kermitproject.org.
+to 2011 (versions up to 2.1.3) and since 2013 has been developed under the 
+3-clause BSD license. For more information on Kermit, visit the Kermit Project 
+website: http://www.kermitproject.org.
 
 Major features include:
  * More than [40 terminal emulations](#supported-terminal-emulations)
@@ -20,7 +21,7 @@ From 2013 until mid-2024 this project was developed under the name
 *C-Kermit for Windows* but the decision has been made to switch back to the
 original name, Kermit 95, to reduce confusion. If you see references to
 "C-Kermit for Windows" around the place know that it refers to the open-source
-Kermit 95.
+Kermit 95. 
 
 To get the latest most stable release as well as other news and information, 
 visit the [Kermit 95 Beta website](https://www.kermitproject.org/ckw10beta.html).
@@ -127,7 +128,7 @@ Additionally, a number of new features have been added:
   oldest 32bit version - Windows NT 3.50. Support has also been added for
   OpenWatcom (targeting both Windows and OS/2) and MinGW.
 * PTYs are also supported on Windows 10+ now via the `pty` command. For example,
-  `pty cmd.exe` will open the Windows shell inside C-Kermit and from there you can
+  `pty cmd.exe` will open the Windows shell inside Kermit 95 and from there you can
   run any windows console tool. Note that Kermit file transfers are not supported
   via this mechanism as Windows PTYs are not transparent. There may also be some
   minor terminal emulation glitches as windows slots a terminal emulator in 
@@ -183,7 +184,7 @@ There is also limited support for compiling with OpenWatcom 1.9+ and MinGW. For
 OpenWatcom, just follow the normal build instructions above. For cross-compiling
 from Linux, see the [MinGW Build Instructions](doc/mingw-building.md).
 
-To build C-Kermit for OS/2 using OpenWatcom, see the
+To build Kermit 95 for OS/2 (Kermit/2) using OpenWatcom, see the
 [OS/2 Build Instructions](doc/os2-building.md).
 
 ### Making Changes

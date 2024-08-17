@@ -1,6 +1,6 @@
-# CKW Build Flags
+# K95 Build Flags
 
-The CKW build system will automatically try to turn on all features the current
+The K95 build system will automatically try to turn on all features the current
 compiler and available 3rd party libraries will support. If you'd like to turn
 off some features that would otherwise be on automatically, or otherwise
 customise the build you can set a few environment variables before running
