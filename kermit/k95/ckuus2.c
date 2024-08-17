@@ -224,9 +224,14 @@ char *newstxt[] = {
 #ifdef OS2
 " . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
+" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0"
 " . Up-to-date fully exportable SSH v2 client",
+" . Up-to-date TLS support for http, ftp and telnet",
+" . PTY support on Windows 10 version 1809 and newer",
+" . Now available as a 64bit application (x86-64, ARM64, Itanium)",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
 "    (see HELP SET MOUSE for details)",
+" . X10, X11, URXVT and SGR mouse reporting",
 #endif /* OS2 */
 #ifndef OS2
 #ifdef COMMENT
