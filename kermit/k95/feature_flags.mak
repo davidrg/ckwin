@@ -171,6 +171,23 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31ONLY
 #                     newer versions of windows.
 # None of the above - Targeting NT 3.51 or newer
 
+# These compatibility flags are decided by setenv.bat based on the compiler in
+# use. They're mostly used in resource scripts to decide on the icon to use.
+# 9X Compatible implies NT and XP compatible
+!if "$(CKB_9X_COMPATIBLE)" == "yes"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_9X_COMPATIBLE
+!endif
+
+# But NT compatible does not imply 9X or XP compatible (it could be a RISC build)
+!if "$(CKB_NT_COMPATIBLE)" == "yes"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT_COMPATIBLE
+!endif
+
+# And XP compatible does not imply 9X or NT compatible (compiler could be too new)
+!if "$(CKB_XP_COMPATIBLE)" == "yes"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_XP_COMPATIBLE
+!endif
+
 !else
 
 # OS/2 gets NetBIOS support!

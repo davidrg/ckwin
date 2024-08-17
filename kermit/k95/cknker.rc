@@ -14,6 +14,19 @@
 // Icon
 //
 
+/*
+ * The modern icon (cknker.ico) doesn't render properly on Windows 9x and NT,
+ * so there we'll use the old K95 1.x icon.
+ */
+#ifdef CKT_9X_COMPATIBLE
+#define VINTAGE_ICON
+#else /* CKT_9X_COMPATIBLE */
+#ifdef CKT_NT_COMPATIBLE
+#define VINTAGE_ICON
+#endif /* CKT_NT_COMPATIBLE */
+#endif /* CKT_9X_COMPATIBLE */
+
+#ifndef VINTAGE_ICON
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 1                       ICON                    "cknker.ico"
@@ -21,11 +34,16 @@
 "MINICON"               ICON                    "cknker.ico"
 #endif
 2                       ICON                    "cknker.ico"
-#ifndef COMPILER_OWCL
 3                       ICON                    "k95g.ico"
 4                       ICON                    "k95f.ico"
-#endif
 5                       ICON                    "cknker.ico"
+#else
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+1                       ICON                    "k95g.ico"
+2                       ICON                    "k95f.ico"
+3                       ICON                    "cknker.ico"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //

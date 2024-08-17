@@ -556,6 +556,19 @@ END
 // Icon
 //
 
+/*
+ * The modern icon (k95a.ico) doesn't render properly on Windows 9x and NT,
+ * so there we'll use the old K95 1.x icon.
+ */
+#ifdef CKT_9X_COMPATIBLE
+#define VINTAGE_ICON
+#else /* CKT_9X_COMPATIBLE */
+#ifdef CKT_NT_COMPATIBLE
+#define VINTAGE_ICON
+#endif /* CKT_NT_COMPATIBLE */
+#endif /* CKT_9X_COMPATIBLE */
+
+#ifndef VINTAGE_ICON
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICONK95             ICON    DISCARDABLE     "k95a.ico"
@@ -567,6 +580,11 @@ IDI_ICON3		        ICON	DISCARDABLE		"k95f.ico"
 #endif
 4                       ICON    DISCARDABLE     "k95a.ico"
 #endif /* __GNUC__ */
+#else /* VINTAGE_ICON */
+IDI_ICONK95 	        ICON	DISCARDABLE		"k95g.ico"
+IDI_ICON1		        ICON	DISCARDABLE		"k95f.ico"
+IDI_ICON2               ICON    DISCARDABLE     "k95a.ico"
+#endif /* VINTAGE_ICON */
 
 /////////////////////////////////////////////////////////////////////////////
 //

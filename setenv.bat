@@ -489,6 +489,7 @@ set ZINCBUILD=
 set CKF_ZINC=no
 set BUILD_ZINC=no
 set CKB_9X_COMPATIBLE=no
+set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 
 REM We can't look at OpenWatcoms help output for a version number because it
@@ -553,6 +554,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 REM For openwatcom we have to use its nmake clone
@@ -572,6 +574,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 goto :semisupported
 
 :vc1
@@ -582,6 +585,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
@@ -593,6 +597,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
+set CKB_NT_COMPATIBLE=yes
 
 REM As this compiler doesn't include msvcrt...
 set CKB_STATIC_CRT=yes
@@ -609,6 +614,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_STATIC_CRT=yes
+set CKB_NT_COMPATIBLE=yes
 goto :cvcdone
 
 
@@ -623,6 +629,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
@@ -641,6 +648,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
@@ -655,6 +663,7 @@ set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
@@ -665,6 +674,7 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
@@ -675,6 +685,7 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 REM libdes won't build for Alpha64
@@ -686,12 +697,14 @@ goto :cvcdone
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
