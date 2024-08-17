@@ -51,17 +51,17 @@ Event( const UI_EVENT & event )
         success = DeleteAssociations();
         break;
     case DIALER_SHORTCUT:
-        success = CreateShortcut("C-Kermit Dialer","k95dial.exe",1,0,1,0);
+        success = CreateShortcut("Kermit 95 Dialer","k95dial.exe",1,0,1,0);
         break;
     case K95_SHORTCUT:
-        success = CreateShortcut("C-Kermit","k95g.exe",1,0,5,0);
+        success = CreateShortcut("Kermit 95","k95g.exe",1,0,5,0);
         break;
     case DIALER_START_MENU:
-        success = CreateShortcut("C-Kermit Dialer","k95dial.exe",0,1,1,0);
+        success = CreateShortcut("Kermit 95 Dialer","k95dial.exe",0,1,1,0);
         break;
     case K95_START_MENU:
-        success = CreateShortcut("C-Kermit","k95g.exe",0,1,5,0);
-        success &= CreateShortcut("C-Kermit (console)","k95.exe",0,1,5,0);
+        success = CreateShortcut("Kermit 95","k95g.exe",0,1,5,0);
+        success &= CreateShortcut("Kermit 95 (console)","k95.exe",0,1,5,0);
         break;
     case DOCS_START_MENU:
         success = CreateDocAssociations();
@@ -168,7 +168,7 @@ CreateLink(LPSTR lpszPathObj, LPSTR lpszPathLink, LPSTR lpszDesc,
 }
 
 #define K95_APPID "Kermit.Script"
-#define K95_APPID_DEFAULT "C-Kermit Script"
+#define K95_APPID_DEFAULT "Kermit 95 Script"
 #define K95_MIME  "application/kermit"
 #define K95_MIME_PATH  "MIME\\Database\\Content Type\\application/kermit"
 
@@ -776,7 +776,7 @@ CreateShortcut( ZIL_ICHAR * username, ZIL_ICHAR * exename,
         }
         RegCloseKey( hkCommandKey );
 
-        strcat(lpszStartMenu,"\\C-Kermit");
+        strcat(lpszStartMenu,"\\Kermit 95");
         mkdir(lpszStartMenu);
         if ( StartMenu == 2 ) {
             strcat(lpszStartMenu,"\\Documentation");
