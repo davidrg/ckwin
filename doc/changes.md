@@ -3,6 +3,31 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
+## C-Kermit for Windows 10.0b11 beta 7 - TBD
+
+### Things to be aware of when upgrading
+Nothing yet
+
+### New features
+* The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
+  to load the backend DLL provided the `-#2` command line argument has not been
+  supplied. If no SSH backend gets loaded, you can load one manually with the new
+  `ssh load` command. This allows CKW to load the appropriate backend automatically
+  based on operating system (Windows XP or not) and presence of MIT Kerberos for
+  Windows. This removes the need to manually shuffle around ssh.dll variants, and
+  also means that alternative SSH backends not based on libssh can now be supported
+  should anyone want to build one, opening the door to SSH on vintage windows or
+  OS/2 systems.  
+
+### Minor Enhancements and other changes
+None yet
+
+### Fixed bugs
+None yet
+
+### Other Source Changes
+None yet
+
 
 ## C-Kermit for Windows 10.0b11 beta 6 - 11 August 2024
 
