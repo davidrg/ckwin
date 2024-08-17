@@ -74,8 +74,8 @@ versions with the caveats listed in <a href="k95faq.html">HERE</a>.
 -->
 
 <h3 style="border-top:1px solid grey; margin-top:12px"><i>Internet
- and Modem Communications for Windows 95/98/ME/NT/2000/XP/Vista/7/8/10<br>
-&nbsp;from The Kermit Project, Columbia University, New York City</i></h3>
+ and Modem Communications for 32bit and 64bit Windows and OS/2<br>
+&nbsp;from The Kermit Project</i></h3>
 <blockquote>
 <i>Manual by:</i> Christine M. Gianone, Frank da Cruz, and Jeffrey Altman<br>
 <i>Software by:</i> Jeffrey Altman, Frank da Cruz, Thomas Wu, and Max Evarts<br>
@@ -213,16 +213,15 @@ Edition</cite></a> for C-Kermit 8.0
 <h2 id="welcome">Welcome . . .</h2>
 
 <b>. . .</b> to <b>Kermit 95</b>, communications software for Microsoft
-Windows 95/98/ME/NT/2000/XP/Vista/7/8/10 and IBM OS/2,
-brought to you by Columbia University's
-<a href="http://www.columbia.edu/kermit/">Kermit Project</a> -- connecting
-the world's computers together since 1981.
+Windows 95/98/ME/NT/2000/XP/Vista/7/8/10/11 and IBM OS/2,
+brought to you by <a href="http://kermitproject.org/">The Kermit Project</a>
+-- connecting the world's computers together since 1981.
 
 <p>
 
 Kermit 95 is built from the file-transfer and scripting portions of C-Kermit
-("The world's most portable communications software") plus custom
-Windows-specific modules for serial and network communications, keyboard and
+("The world's most portable communications software") plus custom Windows and
+OS/2-specific modules for serial and network communications, keyboard and
 mouse handling, terminal emulation, and system service access, plus its own
 point-and-click graphical connection manager ("Dialer").
 
@@ -364,7 +363,7 @@ Visit the Kermit Project Website at
 
 <big><big>K</big></big>ermit 95, "K-95" for short (and "K95" for shorter), is
 a full-featured, high-performance, native, 32-bit communications software
-package for Microsoft Windows 95/98/ME/NT/2000/XP and OS/2 offering:
+package for 32bit and 64bit versions of Microsoft Windows and IBM OS/2 offering:
 
 <p>
 <ul>
@@ -470,7 +469,7 @@ versions are the same; the following table summarizes the differences:
 <tr>
 <th>Feature
 <th>GUI<br>
-Win9x/ME/NT/2000/XP
+NT 3.51/95 or newer
 <th>Console<br>
 Win9x/ME
 <th>Console<br>
@@ -585,17 +584,9 @@ Kermit program, like MS-DOS Kermit or UNIX C-Kermit, as documented in
 <h3 id="c1diff"><a name="x1.2">1.2.</a>
 Platform Differences</h3>
 
-Kermit 95 is available for Windows 95, 98, ME, NT, 2000, XP, and later, up
-through at least Windows 11.  However, as of 2023 Kermit 95 is slated to be
-replaced <a href="ckw10beta.html">C-Kermit 10.0 for Windows</a> (CKW)
-which is a massively updated release of K95, with it's name changed to
-reflect what it really is and always has been: a version of
-<a href="ckermit.html">C-Kermit</a> tailored for a particular computer and
-operating system.
-
-<p>
-
-In the Console version, differences among these platforms include:
+Kermit 95 is available for all 32bit or 64bit versions of Windows except
+for Windows NT 3.10. In the Console version, differences among these platforms
+include:
 <p>
 <dl>
 <dt><i>Windows 95</i>
@@ -612,7 +603,7 @@ way a DOS program, and never has been.
 <dt><i>Windows NT</i>
 <dt><i>Windows 2000</i>
 <dt><i>Windows XP</i>
-<dd>Windows NT 4.0 or later is required.  The display is
+<dd>Windows NT 3.50 or later is required.  The display is
 Unicode-based and so different character sets, languages, and writing systems
 can be mixed on the same screen.
 
@@ -633,9 +624,28 @@ is no Toolbar on the Kermit 95 window; use the System menu instead.
 </dl>
 <p>
 
-The GUI version of K95 2.x has the same appearance and feature set on
-all Windows versions, Windows 95 through Windows 11.
+The GUI version of K95 has the same appearance and feature set on all Windows
+versions except for Windows NT 3.50 where it is missing the toolbar
+and some GUI dialogs.
 
+Regardless of GUI or Console version, the following features have a minimum
+Windows version requirement:
+<dl>
+<dt><i>Ptys</i>
+<dd>Running other Windows console-mode applications inside of Kermit 95s
+    terminal emulator requires at least Windows 10 version 1809. Note that file
+    transfers (Kermit or X/Y/Z-Modem protocols) are not supported through PTYs
+    on Windows.
+<dt><i>SSH</i>
+<dt><i>SSL/TLS</i></dt>
+<dd>Making connections secured with SSH or SSL/TLS is only supported on
+    Windows XP SP3 or newer at this time.</dd>
+<dt><i>TAPI</i>
+<dd>TAPI requires at least Windows 95 or Windows NT 4.0. It is also not
+    available on MIPS Windows NT at this time.</dd>
+</dl>
+
+<!-- This section is new to the web version -->
 <h4 id="startingk95">Starting Kermit 95</h4>
 
 Once installed, Kermit 95 can be started from the <a href="#dialer">Dialer</a>,
