@@ -12012,8 +12012,9 @@ z_open(name, flags) char * name; int flags;
     }
 #ifdef NT
 #ifdef O_SEQUENTIAL
-    if (t)                              /* Caching hint for NT */
+    if (t) {                            /* Caching hint for NT */
       _setmode(_fileno(t),O_SEQUENTIAL);
+    }
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
 
