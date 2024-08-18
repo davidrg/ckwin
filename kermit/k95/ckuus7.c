@@ -12000,6 +12000,7 @@ z_open(name, flags) char * name; int flags;
     }
 #endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
+    debug(F111, "z_open File open call finished", "t", t);
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);
 #ifdef EMFILE
@@ -12010,6 +12011,7 @@ z_open(name, flags) char * name; int flags;
 	z_file[n] = NULL;
         return(z_error = (errno ?  FX_SYS : FX_UNK)); /* Return error code */
     }
+    debug(F100, "z_open File open call succeeded I guess", NULL, 0);
 #ifdef NT
 #ifdef O_SEQUENTIAL
     if (t) {                            /* Caching hint for NT */
@@ -12020,6 +12022,7 @@ z_open(name, flags) char * name; int flags;
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
 
+    debug(F100, "z_open Finishing up", NULL, 0);
     z_nopen++;                          /* Open, count it. */
     z_file[n]->z_fp = t;		/* Stash the file pointer */
     z_file[n]->z_flags = flags;		/* and the flags */
