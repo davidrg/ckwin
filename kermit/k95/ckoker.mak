@@ -187,11 +187,11 @@ CKB_STATIC_CRT = yes
 # Standard windows headers from MinGW that don't come with OpenWatcom:
 INCLUDE = $(INCLUDE);ow\;
 
-!endif
+!endif   # EndIf CMP == OWCL
 
 !if ($(MSC_VER) < 80)
 !error Unsupported compiler version. Visual C++ 1.0 32-bit edition or newer required.
-!endif
+!endif   # EndIf MSC_VER < 80
 
 # TODO: Much of this compiler flag work should be applied to the KUI Makefile
 #       too
@@ -200,18 +200,18 @@ INCLUDE = $(INCLUDE);ow\;
 # then tell the linker we're targeting x86-64
 !if "$(TARGET_CPU)" == "x86-64"
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
-!endif
+!endif  # EndIf TARGET_CPU == x86-64
 
 !if "$(TARGET_CPU)" == "AXP64"
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
 LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
-!endif
+!endif  # EndIf TARGET_CPU == AXP64
 
 !if ("$(DEBUG)" != "-DNDEBUG") && ($(MSC_VER) <= 130)
 # This debug flag is only valid on Visual C++ 6.0 and older.
 LINKFLAGS = $(LINKFLAGS) /debugtype:both
-!endif
+!endif  # EndIf DEBUG != -DNDEBUG and MSC_VER <= 130
 
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
 # Starting with Visual C++ 2012, the default subsystem version is set to 6.0
@@ -221,23 +221,57 @@ LINKFLAGS = $(LINKFLAGS) /debugtype:both
 # version to 5.1 so the generated binaries are compatible.
 SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
-!endif
+!endif  # EndIf MSC_VER >= 170 and MSC_VER <= 192
 
-!if ($(MSC_VER) == 80) && ("$(MSC_VER)" == "AXP")
+!if ($(MSC_VER) == 80) && ("$(TARGET_CPU)" == "AXP")
 # The linker included with the NT 3.50 SDK for Alpha can't handle
 # K95 (complains "LINK : error LNK1155: Special symbol 'end' already defined.")
 # So to support using a newer linker that has less problems, we'll set
 # the subsystem version so the result still works on NT 3.1/3.50
 SUBSYSTEM_CONSOLE=console,3.1
 SUBSYSTEM_WIN32=windows,3.1
-!endif
+!endif  # EndIf MSC_VER == 80 and TARGET_CPU == AXP
 
 !if ($(MSC_VER) > 90)
 !if "$(TARGET_CPU)" != "MIPS"
 # This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
 COMMON_OPTS = $(COMMON_OPTS) /GA
-!endif
-!endif
+!endif  # EndIf TARGET_CPU != MIPS
+!endif  # EndIf MSC_VER > 90
+
+# PDB Generation Stuff
+
+!if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
+!message Make is JOM and compiler is older than Visual C++ 2013. Can't reliably
+!message synchronise writes to a PDB file with this compiler. Disabling PDB
+!message generation. override with: set CKB_MAKE_PDB=yes but you may get build
+!message errors.
+CKB_MAKE_PDB=no
+!endif  # EndIf MSC_VER < 180 and ISJOM == yes and CKB_MAKE_PDB != yes
+
+!if "$(CKB_MAKE_PDB)" != "no"
+# Lets see if we can make a PDB file! This requires Visual C++ 4.0 or newer.
+!if ($(MSC_VER) > 90)
+!message Enabling PDB generation
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Zi
+LDDEBUG = $(LDDEBUG) /DEBUG /INCREMENTAL:NO /OPT:REF
+
+# /OPT:ICF is new in Visual C++ 5.0
+!if ($(MSC_VER) >= 110)
+LDDEBUG = $(LDDEBUG) /OPT:ICF
+!endif  # EndIf MSC_VER >= 110
+
+# /FS is required to synchronise writes to a PDB when doing parallel builds with
+# something like JOM. It was introduced in Visual C++ 2013.
+!if ($(MSC_VER) >= 180)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
+!endif  # EndIf MSC_VER >= 180
+
+!endif  # EndIf MSC_VER > 90
+!endif  # EndIf CKB_MAKE_PDB != no
+
+# End PDB Generation Stuff
 
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
@@ -246,13 +280,13 @@ COMMON_OPTS = $(COMMON_OPTS) /GA
 # /GX- is new in Visual C++ 2.0
 !if ($(MSC_VER) > 80)
 COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
-!endif
+!endif  # EndIf MSC_VER > 80
 
 !if ($(MSC_VER) < 100)
 # Visual C++ 2.0 and 1.0 32-bit edition don't support these flags, so don't
 # use them.
 CFLAG_GF=
-!endif
+!endif  # EndIf MSC_VER < 100
 
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # These are:    /Ze     Enable extensions (default)
@@ -263,19 +297,19 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # So only generate PCH files when nmake instead of jom.
 !if "$(ISJOM)" == "no"
 COMMON_CFLAGS = $(COMMON_CFLAGS) /YX
-!endif
+!endif  # EndIf ISJOM == no
 
 !if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
 COMMON_OPTS = $(COMMON_OPTS) /G5
-!endif
+!endif  # EndIf TARGET_CPU == x86
 
-!else
+!else  # Else MSC_VER < 140
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
-!endif
+!endif  # EndIf MSC_VER < 140
 
-!endif
+!endif  # EndIf PLATFORM  == NT
 
 RCDEFINES=$(RC_FEATURE_DEFS) /dCOMPILER_$(CMP)
 !if "$(SSH_LIB)" == ""
@@ -386,7 +420,7 @@ msvc:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF $(LDDEBUG)" DEF="cknker.def"
 
 !if "$(CKF_DYNAMIC_SSH)" == "yes"
 msvc-sshdll:
@@ -540,7 +574,7 @@ k95gd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /MAP /DEBUG /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -555,7 +589,7 @@ k95g:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32) $(LDDEBUG)" \
 	DEF="cknker.def"
 
 ################### OS/2 TARGETS ###################
