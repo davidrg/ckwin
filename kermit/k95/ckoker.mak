@@ -68,7 +68,7 @@ COMMON_CFLAGS = /MD
 !if "$(CKF_DEV_CHECKS)" == "yes"
 # Enable extra runtime checks. These only work with a debug build and
 # Visual C++ 2002 and newer
-COMMON_CFLAGS = /RTCsu
+COMMON_CFLAGS = $(COMMON_CFLAGS) /RTCsu
 !else
 COMMON_OPTS = /Ox
 !endif
