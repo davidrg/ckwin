@@ -522,6 +522,7 @@ jobs:
         set CKF_SSH_DLL_VARIANT=g
         call mksshdll.bat
         ren k95ssh.dll k95sshg.dll
+        ren k95ssh.pdb k95sshg.pdb
         del k95ssh.res
         
         if "%CKB_XP_COMPATIBLE%" NEQ "yes" goto :noxp
@@ -530,6 +531,7 @@ jobs:
         set CKF_SSH_DLL_VARIANT=x
         call mksshdll.bat
         ren k95ssh.dll k95sshx.dll
+        ren k95ssh.pdb k95sshx.pdb
         del k95ssh.res
         
         REM XP, GSSAPI-enabled
@@ -537,6 +539,7 @@ jobs:
         set CKF_SSH_DLL_VARIANT=gx
         call mksshdll.bat
         ren k95ssh.dll k95sshgx.dll
+        ren k95ssh.pdb k95sshgx.pdb
         del k95ssh.res
         
         :noxp
