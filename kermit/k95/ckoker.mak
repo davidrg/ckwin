@@ -254,6 +254,34 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
 CFLAG_GF=
 !endif
 
+!if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
+!message Make is JOM and compiler is older than Visual C++ 2013. Can't reliably
+!message synchronise writes to a PDB file with this compiler. Disabling PDB
+!message generation. override with: set CKB_MAKE_PDB=yes but you may get build
+!message errors.
+CKB_MAKE_PDB=no
+!endif
+
+!if "$(CKB_MAKE_PDB)" != "no"
+# Lets see if we can make a PDB file! This requires Visual C++ 4.0 or newer.
+!if ($(MSC_VER) > 90)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Zi
+LINKFLAGS = $(LINKFLAGS) /DEBUG /INCREMENTAL:NO /OPT:REF
+
+# /OPT:ICF is new in Visual C++ 5.0
+!if ($(MSC_VER) >= 110)
+LINKFLAGS = $(LINKFLAGS) /OPT:ICF
+!endif
+
+# /FS is required to synchronise writes to a PDB when doing parallel builds with
+# something like JOM. It was introduced in Visual C++ 2013.
+!if ($(MSC_VER) >= 180)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
+!endif
+
+!endif
+!endif
+
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # These are:    /Ze     Enable extensions (default)
 #               /GX-    Enable C++ Exception handling (same as /EHs /EHc)
@@ -540,7 +568,7 @@ k95gd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /MAP /DEBUG /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -551,11 +579,11 @@ k95g:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /Zi /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /incremental:no /DEBUG /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 ################### OS/2 TARGETS ###################
