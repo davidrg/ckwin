@@ -12013,13 +12013,16 @@ z_open(name, flags) char * name; int flags;
     }
     debug(F100, "z_open File open call succeeded I guess", NULL, 0);
 #ifdef NT
-#ifdef O_SEQUENTIAL
+    debug(F100, "z_open we have NT", NULL, 0);
+//#ifdef O_SEQUENTIAL
+    debug(F100, "z_open we have O_SEQUENTIAL", NULL, 0);
     if (t) {                            /* Caching hint for NT */
         int fn = _fileno(t);
         debug(F101, "z_open setmode for fileno", NULL, fn);
+        debug(F101, "z_open O_SEQUENTIAL", NULL, O_SEQUENTIAL);
         _setmode(fn,O_SEQUENTIAL);
     }
-#endif /* O_SEQUENTIAL */
+//#endif /* O_SEQUENTIAL */
 #endif /* NT */
 
     debug(F100, "z_open Finishing up", NULL, 0);
