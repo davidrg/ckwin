@@ -11890,6 +11890,12 @@ z_open(name, flags) char * name; int flags;
         if (!mode[0])                   /* Check for illegal combinations */
           return(z_error = FX_BOM);
     }
+
+#ifdef NT
+    ckstrncat(mode,"S",8); /* S is also known as _O_SEQUENTIAL */
+    debug(F110, "z_open fopen", mode, 0);
+#endif /* NT */
+
     if (!z_inited) {                /* If file structs not inited */
         debug(F101,"z_open z_maxchan 1","",z_maxchan);
 #ifdef UNIX
@@ -12010,12 +12016,22 @@ z_open(name, flags) char * name; int flags;
 	z_file[n] = NULL;
         return(z_error = (errno ?  FX_SYS : FX_UNK)); /* Return error code */
     }
+#ifdef COMMENT
+    /*
+     * 2024-08-19 DavidG: This started crashing on Windows 11 in CKW Beta 6. The
+     * call to setmode seems ok, it just doesn't like O_SEQUENTIAL anymore. Not
+     * sure if this is something unsupported now, or if its a bug in the CRT.
+     * For some reason I've not looked into too closely I'm not even getting
+     * O_SEQUENTIAL defined on my local PC, while its clearly there on the
+     * Gitub build agents.
+     */
 #ifdef NT
 #ifdef O_SEQUENTIAL
     if (t)                              /* Caching hint for NT */
       _setmode(_fileno(t),O_SEQUENTIAL);
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
+#endif /* COMMENT */
 
     z_nopen++;                          /* Open, count it. */
     z_file[n]->z_fp = t;		/* Stash the file pointer */

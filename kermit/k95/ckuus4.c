@@ -14205,23 +14205,25 @@ char *                                  /* Evaluate builtin variable */
                 p++;
             }
             p = vvbuf;
+
 #ifndef VMS
-            if (p > vvbuf) {          /* Directory termination character */
-                  c =
+            c =
 #ifdef MAC
-                      ':'
+                    ':'
 #else
 #ifdef datageneral
-                      ':'
+                    ':'
 #else
 #ifdef STRATUS
-                      '>'
+                    '>'
 #else
-                      '/'
+                    '/'
 #endif /* STRATUS */
 #endif /* datageneral */
 #endif /* MAC */
-                      ;
+            ;
+
+            if (p > vvbuf) {          /* Directory termination character */
                   if (*(p-1) != c) {    /* Add it to the end of the */
                       *p++ = c;         /* string if it was not already */
                       *p = NUL;         /* there */
