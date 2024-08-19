@@ -7742,6 +7742,8 @@ gotojump( int vmode )
     return;
 }
 
+#define SEARCHSTRING_LEN    63
+
 BOOL
 search( BYTE vmode, BOOL forward, BOOL prompt )
 {
@@ -7750,7 +7752,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
 #else
    extern int inpcas[] ;
 #endif /* DCMDBUF */
-   static char searchstring[63] = "" ;
+   static char searchstring[SEARCHSTRING_LEN] = "" ;
    CHAR x1;
    con_event evt ;
    int line = 1 ;
@@ -7807,7 +7809,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
             else if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 /*always true: && x1 <= 255*/ )
             {
-                if ( len >= 62 ) {
+                if ( len >= SEARCHSTRING_LEN - 1 ) {
                     bleep(BP_WARN);
                 }
                 else {
@@ -7817,7 +7819,11 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
             else if ( x1 == 8 || x1 == 127 )
             {
-                searchstring[len-1] = '\0' ;
+                if (len - 1 < 0) {
+                    bleep(BP_WARN);
+                } else {
+                    searchstring[len-1] = '\0' ;
+                }
             }
             else if ( x1 == 13 )
             {
