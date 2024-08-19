@@ -11870,6 +11870,10 @@ z_open(name, flags) char * name; int flags;
     int i, n;
     FILE * t;
     char * mode;
+#ifdef NT
+    char * modetemp;
+    int modelen;
+#endif
     debug(F111,"z_open",name,flags);
     if (!name) name = "";               /* Check name argument */
     if (!name[0])
@@ -11892,8 +11896,14 @@ z_open(name, flags) char * name; int flags;
     }
 
 #ifdef NT
-    ckstrncat(mode,"S",8); /* S is also known as _O_SEQUENTIAL */
-    debug(F110, "z_open fopen", mode, 0);
+    /*
+     * Take a copy of the mode string and append the 'S' sequential read file
+     * caching hint (_O_SEQUENTIAL). We'll free this copy after the call to
+     * fopen later.
+     */
+    modetemp = mode;
+    mode = malloc(10);
+    ckmakmsg(mode, 10, modetemp, "S", NULL, NULL);
 #endif /* NT */
 
     if (!z_inited) {                /* If file structs not inited */
@@ -12006,6 +12016,9 @@ z_open(name, flags) char * name; int flags;
     }
 #endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
+#ifdef NT
+    free(mode);     /* This is a copy of the original mode string */
+#endif /* NT */
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);
 #ifdef EMFILE
