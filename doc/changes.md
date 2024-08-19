@@ -23,7 +23,8 @@ Nothing yet
 None yet
 
 ### Fixed bugs
-None yet
+* Fix `fopen` causing a crash. This issue seems to have come in some recent 
+  version of the Microsoft C Runtime.
 
 ### Other Source Changes
 None yet
