@@ -1,0 +1,443 @@
+;
+; K-95 mkdocs script: Updates version numbers dates in the Kermit 95 manual
+; to match those of the K-95 build running this script, updates last-modified
+; times within files to match the files last modified time, and updates file
+; timestamps to match the git commit.
+;
+; This is most certainly *not* the best way to achieve this. A shell script
+; and sed would run much faster and be simpler, but K-95 is a windows program
+; and we can't really rely on having things like sed available. One thing we
+; *can* rely on having is K-95, so thats why we're using it to the job.
+;
+; Strings to update in .htm and .html files are marked with tags such as below:
+;	<!--$ver$-->3.0 DEV<!--/$ver$-->
+; Multiple such tags may appear in a line, but each tag may only appear once
+; in a line. So this is valid:
+;   <!--$ver$-->3.0 DEV<!--/$ver$--> <!--$ver-date$-->1 January 2003<!--/$ver-date$-->
+; But this is invalid:
+;   <!--$ver$-->3.0 DEV<!--/$ver$--> <!--$ver$-->3.0 DEV<!--/$ver$-->
+;
+; Available tags are:
+;	$ver$				The short Kermit 95 version number: Major.Minor BetaNumber
+;						If run with a release build of Kermit 95 there won't be a
+;						beta number. If the dev-mode parameter is set to True, then
+;						the format is changed to: Major.Minor DEV
+;
+;	$ver-full$			The full version number: Major.Minor.Revision BetaNumber
+;						If run with a release build of Kermit 95 there won't be a
+;						beta number. If the dev-mode parameter is set to True, then
+;						the format is changed to: Major.Minor.REvision DEV
+;
+;	$ver-date$			The Kermit 95 build date
+;
+;	$ver-short-date$	Like $ver-date$ but with the month shortened to three characters
+;
+;	$last-update$		The last modified time for the file, or the timestamp of
+;						the last commit to modify the file if run inside a git repo
+;
+; For development builds, run:
+;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual true false true
+; For release builds, run:
+;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual
+; For a dry run (don't actually write/copy any files):
+;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual true true
+;
+; You should make sure that you're running this script with the version
+; of Kermit 95 that matches the documentation! Either put your dist directory
+; first in the path, or specify the path to K-95 explicitly - eg:
+;	dist\k95.exe + doc\mkdocs.ksc doc\manual doc\manual
+;
+; For best performance, use the console version (k95.exe) - using the GUI
+; version (k95g.exe) tends to be much slower due to having to open a new
+; temporary console window to run git in for each file.
+;
+
+local ver_maj_min ver_full ver_long_date ver_date file_last_modified touch_date
+
+; ============================================================================
+; Output usage
+
+def USAGE {
+    echo {K95 mkdocs script}
+    xecho {Usage: mkdocs.ksc input-directory output-directory}
+    echo { [touch-files] [dry-run] [dev-mode] }
+    echo {}
+	echo {Where:}
+	echo {  input-directory     Source documentation directory, preferably in git}
+	echo {  output-directory    Destination directory for updated files}
+	echo {  touch-files         true to update file modified times (default), false to leave as-is}
+	echo {  dry-run             true to do a dry-run, false to process (default) }
+	echo {  dev-mode            true to mark as development version, }
+	echo {                      false to mark as release version (default)}
+    exit 0
+}
+
+; ============================================================================
+; Process command line arguments
+
+; input and output directories are required.
+if not defined \%1 usage
+if not defined \%2 usage
+
+.src := \Fcontents(\%1)
+.dest := \Fcontents(\%2)
+
+.touch_files := true
+.dry_run := false
+.dev := false
+
+if defined \%3 .touch_files := \%3
+if defined \%4 .dry_run := \%4
+if defined \%5 .dev := \%5
+
+; ============================================================================
+; This extracts the version from the herald which is not very nice and won't
+; tolerate major or minor version numbers greater than 9 or revisions greater
+; than 99.
+
+.touch_date := {}
+
+.ver_full := \v(herald)
+.ver_end := \Findex({,},\m(ver_full),0)
+.ver_len := \Feval(\m(ver_end) - 11)
+.ver_full := \Fsubstring(\m(ver_full),11,\m(ver_len))
+
+.ver_date_start := \Feval(\m(ver_end) + 2)
+
+;echo Full Ver String: \m(ver_full)
+
+.ver_len := \Findex({ },\m(ver_full),0)
+.ver_maj_min_rev := \Fsubstring(\m(ver_full),1,\m(ver_len))
+.ver_maj_min_rev := \Ftrim(\m(ver_maj_min_rev), { })
+
+;echo Major.Minor.Revision version string: \m(ver_maj_min_rev)
+
+; Currently we assume the Major and Minor version numbers are only 0-9
+; while the revision can be 0-99
+.ver_maj_min := \Fsubstring(\m(ver_full),1,3)
+
+;echo Major.Minor version string: \m(ver_maj_min)
+
+if \m(dev) {
+	.ver_maj_min := \m(ver_maj_min) DEV
+	.ver_full := \m(ver_maj_min_rev) DEV
+}
+
+; Aug 17 2024
+; 12345678
+
+.ver_date := \Fsubstring(\v(herald),\m(ver_date_start),11)
+;.ver_date := {Aug 5 2024}
+;echo Ver-Date: \m(ver_date)
+.ver_month := \Fsubstring(\m(ver_date),1,3)
+.ver_day := \Ftrim(\Fsubstring(\m(ver_date),5,2))
+
+.year_idx := \Findex({ },\m(ver_date),5)
+
+.ver_year := \Ftrim(\Fsubstring(\m(ver_date),\Feval(\Findex({ },\m(ver_date),5)+1),4))
+
+;echo Day: \m(ver_day)
+;echo Month: \m(ver_month)
+;echo Year: \m(ver_year)
+
+.ver_date := \m(ver_day) \m(ver_month) \m(ver_year)
+
+switch \m(ver_month) {
+	:Jan, .ver_month := January, break
+	:Feb, .ver_month := February, break
+	:Mar, .ver_month := March, break
+	:Apr, .ver_month := April, break
+	:May, .ver_month := May, break
+	:Jun, .ver_month := June, break
+	:Jul, .ver_month := July, break
+	:Aug, .ver_month := August, break
+	:Sep, .ver_month := September, break
+	:Oct, .ver_month := October, break
+	:Nov, .ver_month := November, break
+	:Dec, .ver_month := December, break
+}
+
+.ver_long_date := \m(ver_day) \m(ver_month) \m(ver_year)
+
+; ============================================================================
+; Date Utility Functions
+
+define short_month_to_number {
+	switch \%1 {
+		:Jan, assign return 01, break
+		:Feb, assign return 02, break
+		:Mar, assign return 03, break
+		:Apr, assign return 04, break
+		:May, assign return 05, break
+		:Jun, assign return 06, break
+		:Jul, assign return 07, break
+		:Aug, assign return 08, break
+		:Sep, assign return 09, break
+		:Oct, assign return 10, break
+		:Nov, assign return 11, break
+		:Dec, assign return 12, break
+	}
+	return 0
+}
+
+; Convert either the Gits RFC2822 style date (eg, Mon, 19 Aug 2024 19:41:25 +1200)
+; or the \Fdate format (eg 20240819 20:54:26) to the format required by TOUCH
+;
+;  Parameters
+;	  	1  The date to convert
+;		2  The date format:
+;				0 Fdate
+;				1 Git
+define date_to_touch_date {
+	local x \&a
+
+	if = \%2 0 {
+		; Convert \Fdate format
+		.touch_date := \Fsubstring(\%1,1,4):\Fsubstring(\%1,5,2):\Fsubstring(\%1,7,2):\Fsubstring(\%1,10,8)
+	} else {
+		; Convert git format
+		def \%a
+		.x := \Fsplit(\%1,&a)
+
+		; Convert month to a number
+		short_month_to_number \&a[3]
+		assign \&a[3] \v(return)
+
+		.touch_date := \&a[4]:\&a[3]:\&a[2]:\&a[5]:\&a[6]:\&a[7]
+	}
+}
+
+; ============================================================================
+; Functions to update the value between two tags.
+
+define find_tag_start {
+	local line tag idx
+	.line := \Fcontents(\%1)
+	.tag := \%2
+
+	.idx := \findex(\m(tag),\m(line))
+
+	; Tag not found.
+	if = \m(idx) 0 return -1
+
+	; Found the tag. Now find the closing comment.
+	.idx := \findex({-->},\m(line),\m(idx))
+
+	; Closing comment not found.
+	if = \m(idx) 0 return -1;
+
+	return \Feval(\m(idx) + 3)
+}
+
+define find_tag_end {
+	local line tag idx len
+	.line := \Fcontents(\%1)
+	.tag := /\%2
+	.len := \Flength(\m(line))
+
+	.idx := \frindex(\m(tag),\m(line))
+
+	; Tag not found.
+	if = \m(idx) 0 return -1
+
+	; Found the tag. Now find the opening comment.
+	.idx := \frindex({<!--},\m(line),\Feval(\m(len) - \m(idx)))
+
+	; Opening comment not found.
+	if = \m(idx) 0 return -1;
+
+	return \Feval(\m(idx) - 1)
+}
+
+define update_tag {
+	local line tag value start_idx start end_idx end
+
+	.line := \Fcontents(\%1)
+	.tag := \%2
+	.value := \Fcontents(\%3)
+
+	find_tag_start \m(line) \m(tag)
+	.start_idx := \v(return)
+
+	; Tag not found.
+	if = -1 \m(start_idx) {
+		return \m(line)
+		;.upd_line := \m(line)
+		;return
+	}
+
+	find_tag_end \m(line) \m(tag)
+	.end_idx := \v(return)
+
+	; Tag not found
+	if = -1 \m(end_idx) {
+		return \m(line)
+		;.upd_line := \m(line)
+		;return
+	}
+
+	.start := \Fsubstring(\m(line),1,\Feval(\m(start_idx)-1))
+	.end := \Fsubstring(\m(line),\Feval(\m(end_idx)+1), \Feval(\Flength(\m(line)) - \m(end_idx)))
+
+	return \m(start)\m(value)\m(end)
+	;.upd_line := \m(line)
+}
+
+; ============================================================================
+; Function to update tags in a single file
+
+def process_file {
+	local file_in file_out file_last_modified grepresult setdate getdate format
+
+	.file_in := \%1
+	.file_out := \%2
+	.setdate := \%3
+	.getdate := 0
+
+	;echo File \m(file_in) ---> \m(file_out)
+
+	; ============================================================================
+	; Get file modified date only if required (its a slow operation)
+
+	if \m(setdate) {
+		.getdate := 1
+	}
+
+	undefine grepresult
+	grep /verbatim /macro:grepresult $last-update$ \m(file_in)
+	if != \Flength(\m(grepresult)) 0 {
+		.getdate := 1
+	}
+
+	if = \m(getdate) 1 {
+		.file_date := \Fdate(\m(file_in))
+		.git_date := \Fcommand(git log -1 --pretty="format:%cD" \m(file_in) 2> nul)
+
+		; Convert to the format required by Touch
+		if = \flength(\m(git_date)) 0 {
+			date_to_touch_date {\m(file_date)} 0
+			.file_last_modified := \m(file_date)
+		}
+		else {
+			date_to_touch_date {\m(git_date)} 1
+			.file_last_modified := \m(git_date)
+		}
+	}
+
+	; ============================================================================
+	; Open the file and start reading
+
+	fopen /read \%i \m(file_in)
+
+	fopen /write \%o \m(file_out)
+
+	while true {
+		undef line
+		fread /line \%i line
+		if fail break
+
+		update_tag \m(line) $ver$ {\m(ver_maj_min)}
+		.line := \v(return)
+
+		update_tag \m(line) $ver-full$ {\m(ver_full)}
+		.line := \v(return)
+
+		update_tag \m(line) $ver-date$ {\m(ver_long_date)}
+		.line := \v(return)
+
+		update_tag \m(line) $ver-short-date$ {\m(ver_date)}
+		.line := \v(return)
+
+		update_tag \m(line) $last-update$ {\m(file_last_modified)}
+		.line := \v(return)
+
+		;echo \m(line)
+		fwrite /line \%o \m(line)
+	}
+
+	fclose \%i
+	fclose \%o
+
+	if \m(setdate) {
+		; Touch file to restore modified date - either to the date we got from
+		; git, or the date it had before.
+		touch /modtime:\m(touch_date) \m(file_out)
+	}
+}
+
+; ============================================================================
+; Output replacements
+
+echo
+echo Replacements:
+echo . Ver: \m(ver_maj_min)
+echo . Ver-Full: \m(ver_full)
+echo . Ver-Date: \m(ver_long_date)
+echo . Ver-Date-Short: \m(ver_date)
+echo
+
+; ============================================================================
+; Process files
+
+; Make sure the src directory uses forward slashes
+.src := \Freplace(\m(src),\\,/)
+
+; Make sure the dest directory has a trailing slash and uses forward slashes
+.dest := \Freplace(\m(dest),\\,/)
+if neq "\Fsubstring(\m(dest),\flength(\m(dest)),1)" "/" {
+	.dest := \m(dest)/
+}
+
+array declare f
+
+dir /array:f /files \m(src)
+
+mkdir \m(dest)
+
+echo Processing \fdim(&f) files...
+
+.\%x = 1
+while <= \%x \fdim(&f) {
+	.idx := \Fsearch(*.{htm,html},\&f[\%x])
+
+	.src_file := \&f[\%x]
+	.dst_file := \m(dest)\Fbasename(\&f[\%x])
+	.src_date := \Fdate(\m(src_file))
+
+	if = \m(idx) 1 {
+		echo \%x. UPDATE  \m(src_file)  ---> \m(dst_file)
+		if \m(dry_run) {
+			echo process_file \m(src_file) \m(dst_file) \m(touch_files)
+		} else {
+				 process_file \m(src_file) \m(dst_file) \m(touch_files)
+		}
+	}
+	else {
+		echo \%x. COPY    \m(src_file)  ---> \m(dst_file)
+
+		if \m(dry_run) {
+			echo copy /overwrite:always \m(src_file) \m(dst_file)
+		} else {
+			     copy /overwrite:always \m(src_file) \m(dst_file)
+		}
+
+		if \m(touch_files) {
+			; Try with git first, in RFC2822 style: Mon, 19 Aug 2024 19:41:25 +1200
+			.gitdate := \Fcommand(git log -1 --pretty="format:%cD" \m(src_file) 2> nul)
+
+			; Convert to the format required by Touch
+			if = \flength(\m(gitdate)) 0 date_to_touch_date {\m(src_date)} 0
+			else date_to_touch_date {\m(gitdate)} 1
+
+			if \m(dry_run) {
+				echo touch /modtime:\m(touch_date) \m(dst_file)
+			} else {
+				     touch /modtime:\m(touch_date) \m(dst_file)
+			}
+		}
+	}
+	increment \%x
+}
+
+echo Done
+exit
