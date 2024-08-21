@@ -31,292 +31,6 @@ const UI_HELP_CONTEXT HELP_SET_TLS                  = 0x0022; // SSL/TLS
 const UI_HELP_CONTEXT HELP_TOOLBAR                  = 0x000F; // Toolbar Buttons
 #endif
 
-#if defined(USE_WINDOW_SITE_REGISTRATION)
-const ZIL_NUMBERID ICON_K95                         = 0x0002;
-const ZIL_NUMBERID PROMPT_NAME                      = 0x0003;
-const ZIL_NUMBERID PROMPT_COMPANY                   = 0x0004;
-const ZIL_NUMBERID PROMPT_SERIAL                    = 0x0005;
-const ZIL_NUMBERID BUTTON_OK                        = 0x0006;
-const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0007;
-const ZIL_NUMBERID BUTTON_HELP                      = 0x0008;
-const ZIL_NUMBERID FIELD_NAME                       = 0x0009;
-const ZIL_NUMBERID FIELD_COMPANY                    = 0x000A;
-const ZIL_NUMBERID FIELD_PRODUCT                    = 0x000B;
-const ZIL_NUMBERID PROMPT_LICENSE_COUNT             = 0x000C;
-const ZIL_NUMBERID INT_LICENSE_COUNT                = 0x000D;
-const ZIL_NUMBERID INT_SERIAL                       = 0x000E;
-const ZIL_NUMBERID FIELD_VERSION                    = 0x000F;
-#endif
-
-#if defined(USE_WINDOW_REGISTRATION)
-const ZIL_NUMBERID ICON_K95                         = 0x0001;
-const ZIL_NUMBERID PROMPT_NAME                      = 0x0002;
-const ZIL_NUMBERID PROMPT_COMPANY                   = 0x0003;
-const ZIL_NUMBERID PROMPT_SERIAL                    = 0x0004;
-const ZIL_NUMBERID BUTTON_OK                        = 0x0005;
-const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0006;
-const ZIL_NUMBERID BUTTON_HELP                      = 0x0007;
-const ZIL_NUMBERID FIELD_NAME                       = 0x0008;
-const ZIL_NUMBERID FIELD_COMPANY                    = 0x0009;
-const ZIL_NUMBERID FIELD_SERIAL                     = 0x000A;
-#endif
-
-#if defined(USE_WINDOW_QUICK)
-const ZIL_NUMBERID QUICK_ICON_K95                   = 0x0002;
-const ZIL_NUMBERID GROUP_CONNECT                    = 0x0003;
-const ZIL_NUMBERID RADIO_DIALUP                     = 0x0004;
-const ZIL_NUMBERID RADIO_NETWORK                    = 0x0005;
-const ZIL_NUMBERID RADIO_SUPERLAT                   = 0x0006;
-const ZIL_NUMBERID RADIO_SSH                        = 0x0007;
-const ZIL_NUMBERID RADIO_FTP                        = 0x0008;
-const ZIL_NUMBERID PROMPT_HOST_PHONE                = 0x0009;
-const ZIL_NUMBERID FIELD_HOST_PHONE                 = 0x000A;
-const ZIL_NUMBERID COMBO_QUICK                      = 0x000F;
-const ZIL_NUMBERID LIST_QUICK                       = 0x0010;
-const ZIL_NUMBERID BUTTON_QUICK_OK                  = 0x000B;
-const ZIL_NUMBERID BUTTON_QUICK_CANCEL              = 0x000C;
-const ZIL_NUMBERID BUTTON_QUICK_HELP                = 0x000D;
-const ZIL_NUMBERID FIELD_14                         = 0x000E;
-#endif
-
-#if defined(USE_WINDOW_PASSWORD)
-const ZIL_NUMBERID FIELD_5                          = 0x0005;
-const ZIL_NUMBERID PROMPT_PASSWORD                  = 0x0001;
-const ZIL_NUMBERID FIELD_PASSWORD                   = 0x0002;
-const ZIL_NUMBERID BUTTON_OK                        = 0x0003;
-const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0004;
-#endif
-
-#if defined(USE_WINDOW_NEW_MODEM)
-const ZIL_NUMBERID FIELD_5                          = 0x0005;
-const ZIL_NUMBERID PROMPT_NAME                      = 0x0001;
-const ZIL_NUMBERID FIELD_NAME                       = 0x0002;
-const ZIL_NUMBERID BUTTON_OK                        = 0x0003;
-const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0004;
-#endif
-
-#if defined(USE_WINDOW_NEW_LOCATION)
-const ZIL_NUMBERID FIELD_5                          = 0x0005;
-const ZIL_NUMBERID PROMPT_NAME                      = 0x0001;
-const ZIL_NUMBERID FIELD_NAME                       = 0x0002;
-const ZIL_NUMBERID BUTTON_OK                        = 0x0003;
-const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0004;
-#endif
-
-#if defined(USE_WINDOW_NETWORK_DIR_FILES)
-const ZIL_NUMBERID ICON_K95                         = 0x0008;
-const ZIL_NUMBERID CHECKBOX_USE_NET_DIRS            = 0x0002;
-const ZIL_NUMBERID PROMPT_NETWORK_DIRS              = 0x0003;
-const ZIL_NUMBERID FIELD_NETWORK_DIR_NAMES          = 0x0004;
-const ZIL_NUMBERID BUTTON_NETWORK_OK                = 0x0005;
-const ZIL_NUMBERID BUTTON_NETWORK_CANCEL            = 0x0006;
-const ZIL_NUMBERID BUTTON_NETWORK_HELP              = 0x0007;
-#endif
-
-#if defined(USE_WINDOW_MODEM_CONFIG)
-const ZIL_NUMBERID FIELD_65                         = 0x0041;
-const ZIL_NUMBERID PROMPT_INIT                      = 0x0001;
-const ZIL_NUMBERID PROMPT_DIAL_MODE_PROMPT          = 0x0003;
-const ZIL_NUMBERID PROMPT_COMP_ON                   = 0x0004;
-const ZIL_NUMBERID PROMPT_COMP_OFF                  = 0x0005;
-const ZIL_NUMBERID PROMPT_EC_ON                     = 0x0006;
-const ZIL_NUMBERID PROMPT_EC_OFF                    = 0x0007;
-const ZIL_NUMBERID PROMPT_AA_ON                     = 0x0008;
-const ZIL_NUMBERID PROMPT_AA_OFF                    = 0x0009;
-const ZIL_NUMBERID PROMPT_SPEAK_ON                  = 0x000A;
-const ZIL_NUMBERID PROMPT_SPEAK_OFF                 = 0x000B;
-const ZIL_NUMBERID PROMPT_VOL1                      = 0x000C;
-const ZIL_NUMBERID PROMPT_VOL2                      = 0x000D;
-const ZIL_NUMBERID PROMPT_VOL3                      = 0x000E;
-const ZIL_NUMBERID PROMPT_HUP                       = 0x000F;
-const ZIL_NUMBERID PROMPT_HWFC                      = 0x0010;
-const ZIL_NUMBERID PROMPT_SWFC                      = 0x0011;
-const ZIL_NUMBERID PROMPT_NOFC                      = 0x0012;
-const ZIL_NUMBERID PROMPT_PULSE                     = 0x0013;
-const ZIL_NUMBERID PROMPT_TONE                      = 0x0014;
-const ZIL_NUMBERID PROMPT_ESCAPE                    = 0x0015;
-const ZIL_NUMBERID PROMPT_MAX_SPEED                 = 0x0016;
-const ZIL_NUMBERID FIELD_INIT                       = 0x0017;
-const ZIL_NUMBERID FIELD_DIAL_MODE                  = 0x0018;
-const ZIL_NUMBERID FIELD_DIAL_PROMPT                = 0x0019;
-const ZIL_NUMBERID FIELD_DIAL_STR                   = 0x001A;
-const ZIL_NUMBERID FIELD_DC_ON                      = 0x001B;
-const ZIL_NUMBERID FIELD_DC_OFF                     = 0x001C;
-const ZIL_NUMBERID FIELD_EC_ON                      = 0x001D;
-const ZIL_NUMBERID FIELD_EC_OFF                     = 0x001E;
-const ZIL_NUMBERID FIELD_AA_ON                      = 0x001F;
-const ZIL_NUMBERID FIELD_AA_OFF                     = 0x0020;
-const ZIL_NUMBERID FIELD_PULSE                      = 0x002A;
-const ZIL_NUMBERID FIELD_TONE                       = 0x002B;
-const ZIL_NUMBERID FIELD_IGNORE_DIALTONE            = 0x003F;
-const ZIL_NUMBERID FIELD_SP_ON                      = 0x0021;
-const ZIL_NUMBERID FIELD_SP_OFF                     = 0x0022;
-const ZIL_NUMBERID FIELD_VOL1                       = 0x0023;
-const ZIL_NUMBERID FIELD_VOL2                       = 0x0024;
-const ZIL_NUMBERID FIELD_VOL3                       = 0x0025;
-const ZIL_NUMBERID FIELD_HUP                        = 0x0026;
-const ZIL_NUMBERID FIELD_HWFC                       = 0x0027;
-const ZIL_NUMBERID FIELD_SWFC                       = 0x0028;
-const ZIL_NUMBERID FIELD_NOFC                       = 0x0029;
-const ZIL_NUMBERID COMBO_MAX_SPEED                  = 0x002E;
-const ZIL_NUMBERID LIST_MAX_SPEED                   = 0x002F;
-const ZIL_NUMBERID FIELD_ESCAPE                     = 0x002C;
-const ZIL_NUMBERID PROMPT_DIAL_STR                  = 0x002D;
-const ZIL_NUMBERID GROUP_CAPABILITIES               = 0x0033;
-const ZIL_NUMBERID CHECK_AT                         = 0x0034;
-const ZIL_NUMBERID CHECK_V25                        = 0x0035;
-const ZIL_NUMBERID CHECK_SB                         = 0x0036;
-const ZIL_NUMBERID CHECK_EC                         = 0x0037;
-const ZIL_NUMBERID CHECK_DC                         = 0x0038;
-const ZIL_NUMBERID CHECK_HW                         = 0x0039;
-const ZIL_NUMBERID CHECK_SW                         = 0x003A;
-const ZIL_NUMBERID CHECK_KS                         = 0x003B;
-const ZIL_NUMBERID CHECK_TB                         = 0x003C;
-const ZIL_NUMBERID BUTTON_MDM_CFG_OK                = 0x0030;
-const ZIL_NUMBERID BUTTON_MDM_CFG_CANCEL            = 0x0031;
-const ZIL_NUMBERID BUTTON_MDM_CFG_HELP              = 0x0032;
-const ZIL_NUMBERID PROMPT_DIAL_MODE                 = 0x003D;
-const ZIL_NUMBERID PROMPT_IGNORE_DIALTONE           = 0x0040;
-#endif
-
-#if defined(USE_WINDOW_MODEMS)
-const ZIL_NUMBERID FIELD_33                         = 0x0002;
-const ZIL_NUMBERID COMBO_NAME                       = 0x0003;
-const ZIL_NUMBERID LIST_NAME                        = 0x0004;
-const ZIL_NUMBERID PROMPT_MODEM_NAME                = 0x0005;
-const ZIL_NUMBERID BUTTON_ADD                       = 0x0006;
-const ZIL_NUMBERID BUTTON_REMOVE                    = 0x0007;
-const ZIL_NUMBERID PROMPT_TYPE                      = 0x0008;
-const ZIL_NUMBERID COMBO_TYPE                       = 0x0009;
-const ZIL_NUMBERID LIST_TYPE                        = 0x000A;
-const ZIL_NUMBERID BUTTON_MODIFY                    = 0x000B;
-const ZIL_NUMBERID PROMPT_PORT                      = 0x000C;
-const ZIL_NUMBERID COMBO_PORT                       = 0x000D;
-const ZIL_NUMBERID LIST_PORT                        = 0x000E;
-const ZIL_NUMBERID CHECK_ERROR_CORRECTION           = 0x000F;
-const ZIL_NUMBERID COMBO_SPEED                      = 0x0010;
-const ZIL_NUMBERID LIST_SPEED                       = 0x0011;
-const ZIL_NUMBERID CHECK_COMPRESSION                = 0x0012;
-const ZIL_NUMBERID COMBO_FLOW                       = 0x0013;
-const ZIL_NUMBERID LIST_FLOW                        = 0x0014;
-const ZIL_NUMBERID CHECK_CARRIER                    = 0x0015;
-const ZIL_NUMBERID COMBO_PARITY                     = 0x0016;
-const ZIL_NUMBERID LIST_PARITY                      = 0x0017;
-const ZIL_NUMBERID CHECK_SPEED_MATCHING             = 0x0018;
-const ZIL_NUMBERID CHECK_SPEAKER                    = 0x0019;
-const ZIL_NUMBERID SLIDER_VOLUME                    = 0x001A;
-const ZIL_NUMBERID BUTTON_MODEM_OK                  = 0x001B;
-const ZIL_NUMBERID BUTTON_MODEM_CANCEL              = 0x001C;
-const ZIL_NUMBERID BUTTON_MODEM_HELP                = 0x001D;
-const ZIL_NUMBERID PROMPT_SPEED                     = 0x001E;
-const ZIL_NUMBERID PROMPT_FLOW                      = 0x001F;
-const ZIL_NUMBERID PROMPT_PARITY                    = 0x0020;
-const ZIL_NUMBERID PROMPT_VOLUME                    = 0x0021;
-const ZIL_NUMBERID PROMPT_HIGH                      = 0x0022;
-const ZIL_NUMBERID PROMPT_STOP_BITS                 = 0x0023;
-const ZIL_NUMBERID COMBO_STOPBITS                   = 0x0024;
-const ZIL_NUMBERID LIST_STOPBITS                    = 0x0025;
-#endif
-
-#if defined(USE_WINDOW_LOG)
-const ZIL_NUMBERID FIELD_1                          = 0x0001;
-const ZIL_NUMBERID FIELD_2                          = 0x0002;
-const ZIL_NUMBERID FIELD_3                          = 0x0003;
-const ZIL_NUMBERID FIELD_4                          = 0x0004;
-const ZIL_NUMBERID FIELD_5                          = 0x0005;
-const ZIL_NUMBERID FIELD_6                          = 0x0006;
-const ZIL_NUMBERID FIELD_7                          = 0x0007;
-const ZIL_NUMBERID FIELD_8                          = 0x0008;
-const ZIL_NUMBERID FIELD_9                          = 0x0009;
-const ZIL_NUMBERID BUTTON_LOG_OK                    = 0x000A;
-const ZIL_NUMBERID BUTTON_LOG_HELP                  = 0x000B;
-#endif
-
-#if defined(USE_WINDOW_LOCATION)
-const ZIL_NUMBERID ICON_K95                         = 0x0001;
-const ZIL_NUMBERID STATUS_OPTIONS                   = 0x0002;
-const ZIL_NUMBERID BUTTON_OPTIONS_OK                = 0x0003;
-const ZIL_NUMBERID BUTTON_OPTIONS_CANCEL            = 0x0004;
-const ZIL_NUMBERID NOTEBOOK_DIAL_OPTIONS            = 0x0005;
-const ZIL_NUMBERID FIELD_4096                       = 0x1000;
-const ZIL_NUMBERID FIELD_4097                       = 0x1001;
-const ZIL_NUMBERID FIELD_4098                       = 0x1002;
-const ZIL_NUMBERID FIELD_4099                       = 0x1003;
-const ZIL_NUMBERID FIELD_4100                       = 0x1004;
-const ZIL_NUMBERID FIELD_4101                       = 0x1005;
-const ZIL_NUMBERID PAGE_GENERAL                     = 0x000C;
-const ZIL_NUMBERID COMBO_LOCATION                   = 0x000D;
-const ZIL_NUMBERID LIST_LOCATION                    = 0x000E;
-const ZIL_NUMBERID BUTTON_LOCATION_ADD              = 0x000F;
-const ZIL_NUMBERID PROMPT_COUNTRY_CODE              = 0x0010;
-const ZIL_NUMBERID BUTTON_LOCATION_REMOVE           = 0x0011;
-const ZIL_NUMBERID FIELD_COUNTRY_CODE               = 0x0012;
-const ZIL_NUMBERID PROMPT_AREA_CODE                 = 0x0013;
-const ZIL_NUMBERID FIELD_AREA_CODE                  = 0x0014;
-const ZIL_NUMBERID PROMPT_DIALING_P                 = 0x0015;
-const ZIL_NUMBERID PROMPT_DIALING_S                 = 0x0016;
-const ZIL_NUMBERID FIELD_DIALING_P                  = 0x0017;
-const ZIL_NUMBERID GROUP_DIALING_PROC_METHOD        = 0x0018;
-const ZIL_NUMBERID RADIO_DIALING_PROC_METHOD_TONE   = 0x0019;
-const ZIL_NUMBERID RADIO_DIALING_PROC_METHOD_PULSE  = 0x001A;
-const ZIL_NUMBERID FIELD_DIALING_S                  = 0x001B;
-const ZIL_NUMBERID PROMPT_REDIALS                   = 0x001C;
-const ZIL_NUMBERID INTEGER_REDIALS                  = 0x001D;
-const ZIL_NUMBERID PROMPT_INTERVAL                  = 0x001E;
-const ZIL_NUMBERID INTEGER_INTERVAL                 = 0x001F;
-const ZIL_NUMBERID PROMPT_TIMEOUT                   = 0x0020;
-const ZIL_NUMBERID INTEGER_TIMEOUT                  = 0x0021;
-const ZIL_NUMBERID PROMPT_LOCATION                  = 0x0022;
-const ZIL_NUMBERID BUTTON_DIAL_HELP_GENERAL         = 0x0023;
-const ZIL_NUMBERID CHECK_IGNORE_DIALTONE            = 0x1006;
-const ZIL_NUMBERID PAGE_LOCAL                       = 0x0024;
-const ZIL_NUMBERID PROMPT_LA_PREFIX                 = 0x0025;
-const ZIL_NUMBERID PROMPT_LA_SUFFIX                 = 0x0026;
-const ZIL_NUMBERID FIELD_LOCAL_LA_P                 = 0x0027;
-const ZIL_NUMBERID FIELD_LOCAL_LA_S                 = 0x0028;
-const ZIL_NUMBERID PROMPT_LOCAL_AREA_CODE_LIST      = 0x0029;
-const ZIL_NUMBERID FIELD_LOCAL_AC_LIST              = 0x002A;
-const ZIL_NUMBERID BUTTON_DIAL_HELP_LA              = 0x002B;
-const ZIL_NUMBERID CHECK_FORCE_LD                   = 0x002C;
-const ZIL_NUMBERID PAGE_LONG_DIST                   = 0x002D;
-const ZIL_NUMBERID PROMPT_LD_PREFIX                 = 0x002E;
-const ZIL_NUMBERID PROMPT_LD_SUFFIX                 = 0x002F;
-const ZIL_NUMBERID FIELD_LOCAL_LD_P                 = 0x0030;
-const ZIL_NUMBERID FIELD_LOCAL_LD_S                 = 0x0031;
-const ZIL_NUMBERID BUTTON_DIAL_HELP_LD              = 0x0032;
-const ZIL_NUMBERID PAGE_INTERNATIONAL               = 0x0033;
-const ZIL_NUMBERID PROMPT_INTL_PREFIX               = 0x0034;
-const ZIL_NUMBERID PROMPT_INTL_SUFFIX               = 0x0035;
-const ZIL_NUMBERID FIELD_INTL_P                     = 0x0036;
-const ZIL_NUMBERID FIELD_INTL_S                     = 0x0037;
-const ZIL_NUMBERID BUTTON_DIAL_HELP_INTL            = 0x0038;
-const ZIL_NUMBERID PAGE_TOLL_FREE                   = 0x0039;
-const ZIL_NUMBERID PROMPT_TOLL_FREE_PREFIX          = 0x003A;
-const ZIL_NUMBERID FIELD_TOLL_FREE_PREFIX           = 0x003B;
-const ZIL_NUMBERID PROMPT_TOLL_FREE_AREA_CODES      = 0x003C;
-const ZIL_NUMBERID FIELD_TOLLFREE                   = 0x003D;
-const ZIL_NUMBERID BUTTON_DIAL_HELP_TF              = 0x003E;
-const ZIL_NUMBERID PAGE_PBX                         = 0x003F;
-const ZIL_NUMBERID CHECK_LOCALE_PBX                 = 0x0040;
-const ZIL_NUMBERID FIELD_PBX_EXCH                   = 0x0041;
-const ZIL_NUMBERID FIELD_PBX_IN                     = 0x0042;
-const ZIL_NUMBERID FIELD_PBX_OUT                    = 0x0043;
-const ZIL_NUMBERID PROMPT_INSIDE_PREFIX             = 0x0044;
-const ZIL_NUMBERID PROMPT_OUTSIDE_PREFIX            = 0x0045;
-const ZIL_NUMBERID PROMPT_EXCHANGE                  = 0x0046;
-const ZIL_NUMBERID BUTTON_DIAL_HELP_PBX             = 0x0047;
-#endif
-
-#if defined(USE_WINDOW_DIAL_DIR_FILES)
-const ZIL_NUMBERID ICON_K95                         = 0x0008;
-const ZIL_NUMBERID CHECKBOX_USE_DIAL_DIRS           = 0x0002;
-const ZIL_NUMBERID PROMPT_FILENAMES                 = 0x0003;
-const ZIL_NUMBERID FIELD_DIAL_DIR_NAMES             = 0x0004;
-const ZIL_NUMBERID BUTTON_DIALDIR_OK                = 0x0005;
-const ZIL_NUMBERID BUTTON_DIALDIR_CANCEL            = 0x0006;
-const ZIL_NUMBERID BUTTON_DIALDIR_HELP              = 0x0007;
-#endif
-
 #if defined(USE_WINDOW_APPLICATIONS)
 const ZIL_NUMBERID FIELD_1                          = 0x0001;
 const ZIL_NUMBERID BUTTON_APPL_OK                   = 0x1044;
@@ -1102,6 +816,292 @@ const ZIL_NUMBERID STATUS_TIME                      = 0x00B8;
 const ZIL_NUMBERID STATUS_PROMPT                    = 0x00B9;
 const ZIL_NUMBERID STATUS_NAME                      = 0x00BA;
 const ZIL_NUMBERID LIST_ENTRIES                     = 0x00BB;
+#endif
+
+#if defined(USE_WINDOW_SITE_REGISTRATION)
+const ZIL_NUMBERID ICON_K95                         = 0x0002;
+const ZIL_NUMBERID PROMPT_NAME                      = 0x0003;
+const ZIL_NUMBERID PROMPT_COMPANY                   = 0x0004;
+const ZIL_NUMBERID PROMPT_SERIAL                    = 0x0005;
+const ZIL_NUMBERID BUTTON_OK                        = 0x0006;
+const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0007;
+const ZIL_NUMBERID BUTTON_HELP                      = 0x0008;
+const ZIL_NUMBERID FIELD_NAME                       = 0x0009;
+const ZIL_NUMBERID FIELD_COMPANY                    = 0x000A;
+const ZIL_NUMBERID FIELD_PRODUCT                    = 0x000B;
+const ZIL_NUMBERID PROMPT_LICENSE_COUNT             = 0x000C;
+const ZIL_NUMBERID INT_LICENSE_COUNT                = 0x000D;
+const ZIL_NUMBERID INT_SERIAL                       = 0x000E;
+const ZIL_NUMBERID FIELD_VERSION                    = 0x000F;
+#endif
+
+#if defined(USE_WINDOW_REGISTRATION)
+const ZIL_NUMBERID ICON_K95                         = 0x0001;
+const ZIL_NUMBERID PROMPT_NAME                      = 0x0002;
+const ZIL_NUMBERID PROMPT_COMPANY                   = 0x0003;
+const ZIL_NUMBERID PROMPT_SERIAL                    = 0x0004;
+const ZIL_NUMBERID BUTTON_OK                        = 0x0005;
+const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0006;
+const ZIL_NUMBERID BUTTON_HELP                      = 0x0007;
+const ZIL_NUMBERID FIELD_NAME                       = 0x0008;
+const ZIL_NUMBERID FIELD_COMPANY                    = 0x0009;
+const ZIL_NUMBERID FIELD_SERIAL                     = 0x000A;
+#endif
+
+#if defined(USE_WINDOW_QUICK)
+const ZIL_NUMBERID QUICK_ICON_K95                   = 0x0002;
+const ZIL_NUMBERID GROUP_CONNECT                    = 0x0003;
+const ZIL_NUMBERID RADIO_DIALUP                     = 0x0004;
+const ZIL_NUMBERID RADIO_NETWORK                    = 0x0005;
+const ZIL_NUMBERID RADIO_SUPERLAT                   = 0x0006;
+const ZIL_NUMBERID RADIO_SSH                        = 0x0007;
+const ZIL_NUMBERID RADIO_FTP                        = 0x0008;
+const ZIL_NUMBERID PROMPT_HOST_PHONE                = 0x0009;
+const ZIL_NUMBERID FIELD_HOST_PHONE                 = 0x000A;
+const ZIL_NUMBERID COMBO_QUICK                      = 0x000F;
+const ZIL_NUMBERID LIST_QUICK                       = 0x0010;
+const ZIL_NUMBERID BUTTON_QUICK_OK                  = 0x000B;
+const ZIL_NUMBERID BUTTON_QUICK_CANCEL              = 0x000C;
+const ZIL_NUMBERID BUTTON_QUICK_HELP                = 0x000D;
+const ZIL_NUMBERID FIELD_14                         = 0x000E;
+#endif
+
+#if defined(USE_WINDOW_PASSWORD)
+const ZIL_NUMBERID FIELD_5                          = 0x0005;
+const ZIL_NUMBERID PROMPT_PASSWORD                  = 0x0001;
+const ZIL_NUMBERID FIELD_PASSWORD                   = 0x0002;
+const ZIL_NUMBERID BUTTON_OK                        = 0x0003;
+const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0004;
+#endif
+
+#if defined(USE_WINDOW_NEW_MODEM)
+const ZIL_NUMBERID FIELD_5                          = 0x0005;
+const ZIL_NUMBERID PROMPT_NAME                      = 0x0001;
+const ZIL_NUMBERID FIELD_NAME                       = 0x0002;
+const ZIL_NUMBERID BUTTON_OK                        = 0x0003;
+const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0004;
+#endif
+
+#if defined(USE_WINDOW_NEW_LOCATION)
+const ZIL_NUMBERID FIELD_5                          = 0x0005;
+const ZIL_NUMBERID PROMPT_NAME                      = 0x0001;
+const ZIL_NUMBERID FIELD_NAME                       = 0x0002;
+const ZIL_NUMBERID BUTTON_OK                        = 0x0003;
+const ZIL_NUMBERID BUTTON_CANCEL                    = 0x0004;
+#endif
+
+#if defined(USE_WINDOW_NETWORK_DIR_FILES)
+const ZIL_NUMBERID ICON_K95                         = 0x0008;
+const ZIL_NUMBERID CHECKBOX_USE_NET_DIRS            = 0x0002;
+const ZIL_NUMBERID PROMPT_NETWORK_DIRS              = 0x0003;
+const ZIL_NUMBERID FIELD_NETWORK_DIR_NAMES          = 0x0004;
+const ZIL_NUMBERID BUTTON_NETWORK_OK                = 0x0005;
+const ZIL_NUMBERID BUTTON_NETWORK_CANCEL            = 0x0006;
+const ZIL_NUMBERID BUTTON_NETWORK_HELP              = 0x0007;
+#endif
+
+#if defined(USE_WINDOW_MODEM_CONFIG)
+const ZIL_NUMBERID FIELD_65                         = 0x0041;
+const ZIL_NUMBERID PROMPT_INIT                      = 0x0001;
+const ZIL_NUMBERID PROMPT_DIAL_MODE_PROMPT          = 0x0003;
+const ZIL_NUMBERID PROMPT_COMP_ON                   = 0x0004;
+const ZIL_NUMBERID PROMPT_COMP_OFF                  = 0x0005;
+const ZIL_NUMBERID PROMPT_EC_ON                     = 0x0006;
+const ZIL_NUMBERID PROMPT_EC_OFF                    = 0x0007;
+const ZIL_NUMBERID PROMPT_AA_ON                     = 0x0008;
+const ZIL_NUMBERID PROMPT_AA_OFF                    = 0x0009;
+const ZIL_NUMBERID PROMPT_SPEAK_ON                  = 0x000A;
+const ZIL_NUMBERID PROMPT_SPEAK_OFF                 = 0x000B;
+const ZIL_NUMBERID PROMPT_VOL1                      = 0x000C;
+const ZIL_NUMBERID PROMPT_VOL2                      = 0x000D;
+const ZIL_NUMBERID PROMPT_VOL3                      = 0x000E;
+const ZIL_NUMBERID PROMPT_HUP                       = 0x000F;
+const ZIL_NUMBERID PROMPT_HWFC                      = 0x0010;
+const ZIL_NUMBERID PROMPT_SWFC                      = 0x0011;
+const ZIL_NUMBERID PROMPT_NOFC                      = 0x0012;
+const ZIL_NUMBERID PROMPT_PULSE                     = 0x0013;
+const ZIL_NUMBERID PROMPT_TONE                      = 0x0014;
+const ZIL_NUMBERID PROMPT_ESCAPE                    = 0x0015;
+const ZIL_NUMBERID PROMPT_MAX_SPEED                 = 0x0016;
+const ZIL_NUMBERID FIELD_INIT                       = 0x0017;
+const ZIL_NUMBERID FIELD_DIAL_MODE                  = 0x0018;
+const ZIL_NUMBERID FIELD_DIAL_PROMPT                = 0x0019;
+const ZIL_NUMBERID FIELD_DIAL_STR                   = 0x001A;
+const ZIL_NUMBERID FIELD_DC_ON                      = 0x001B;
+const ZIL_NUMBERID FIELD_DC_OFF                     = 0x001C;
+const ZIL_NUMBERID FIELD_EC_ON                      = 0x001D;
+const ZIL_NUMBERID FIELD_EC_OFF                     = 0x001E;
+const ZIL_NUMBERID FIELD_AA_ON                      = 0x001F;
+const ZIL_NUMBERID FIELD_AA_OFF                     = 0x0020;
+const ZIL_NUMBERID FIELD_PULSE                      = 0x002A;
+const ZIL_NUMBERID FIELD_TONE                       = 0x002B;
+const ZIL_NUMBERID FIELD_IGNORE_DIALTONE            = 0x003F;
+const ZIL_NUMBERID FIELD_SP_ON                      = 0x0021;
+const ZIL_NUMBERID FIELD_SP_OFF                     = 0x0022;
+const ZIL_NUMBERID FIELD_VOL1                       = 0x0023;
+const ZIL_NUMBERID FIELD_VOL2                       = 0x0024;
+const ZIL_NUMBERID FIELD_VOL3                       = 0x0025;
+const ZIL_NUMBERID FIELD_HUP                        = 0x0026;
+const ZIL_NUMBERID FIELD_HWFC                       = 0x0027;
+const ZIL_NUMBERID FIELD_SWFC                       = 0x0028;
+const ZIL_NUMBERID FIELD_NOFC                       = 0x0029;
+const ZIL_NUMBERID COMBO_MAX_SPEED                  = 0x002E;
+const ZIL_NUMBERID LIST_MAX_SPEED                   = 0x002F;
+const ZIL_NUMBERID FIELD_ESCAPE                     = 0x002C;
+const ZIL_NUMBERID PROMPT_DIAL_STR                  = 0x002D;
+const ZIL_NUMBERID GROUP_CAPABILITIES               = 0x0033;
+const ZIL_NUMBERID CHECK_AT                         = 0x0034;
+const ZIL_NUMBERID CHECK_V25                        = 0x0035;
+const ZIL_NUMBERID CHECK_SB                         = 0x0036;
+const ZIL_NUMBERID CHECK_EC                         = 0x0037;
+const ZIL_NUMBERID CHECK_DC                         = 0x0038;
+const ZIL_NUMBERID CHECK_HW                         = 0x0039;
+const ZIL_NUMBERID CHECK_SW                         = 0x003A;
+const ZIL_NUMBERID CHECK_KS                         = 0x003B;
+const ZIL_NUMBERID CHECK_TB                         = 0x003C;
+const ZIL_NUMBERID BUTTON_MDM_CFG_OK                = 0x0030;
+const ZIL_NUMBERID BUTTON_MDM_CFG_CANCEL            = 0x0031;
+const ZIL_NUMBERID BUTTON_MDM_CFG_HELP              = 0x0032;
+const ZIL_NUMBERID PROMPT_DIAL_MODE                 = 0x003D;
+const ZIL_NUMBERID PROMPT_IGNORE_DIALTONE           = 0x0040;
+#endif
+
+#if defined(USE_WINDOW_MODEMS)
+const ZIL_NUMBERID FIELD_33                         = 0x0002;
+const ZIL_NUMBERID COMBO_NAME                       = 0x0003;
+const ZIL_NUMBERID LIST_NAME                        = 0x0004;
+const ZIL_NUMBERID PROMPT_MODEM_NAME                = 0x0005;
+const ZIL_NUMBERID BUTTON_ADD                       = 0x0006;
+const ZIL_NUMBERID BUTTON_REMOVE                    = 0x0007;
+const ZIL_NUMBERID PROMPT_TYPE                      = 0x0008;
+const ZIL_NUMBERID COMBO_TYPE                       = 0x0009;
+const ZIL_NUMBERID LIST_TYPE                        = 0x000A;
+const ZIL_NUMBERID BUTTON_MODIFY                    = 0x000B;
+const ZIL_NUMBERID PROMPT_PORT                      = 0x000C;
+const ZIL_NUMBERID COMBO_PORT                       = 0x000D;
+const ZIL_NUMBERID LIST_PORT                        = 0x000E;
+const ZIL_NUMBERID CHECK_ERROR_CORRECTION           = 0x000F;
+const ZIL_NUMBERID COMBO_SPEED                      = 0x0010;
+const ZIL_NUMBERID LIST_SPEED                       = 0x0011;
+const ZIL_NUMBERID CHECK_COMPRESSION                = 0x0012;
+const ZIL_NUMBERID COMBO_FLOW                       = 0x0013;
+const ZIL_NUMBERID LIST_FLOW                        = 0x0014;
+const ZIL_NUMBERID CHECK_CARRIER                    = 0x0015;
+const ZIL_NUMBERID COMBO_PARITY                     = 0x0016;
+const ZIL_NUMBERID LIST_PARITY                      = 0x0017;
+const ZIL_NUMBERID CHECK_SPEED_MATCHING             = 0x0018;
+const ZIL_NUMBERID CHECK_SPEAKER                    = 0x0019;
+const ZIL_NUMBERID SLIDER_VOLUME                    = 0x001A;
+const ZIL_NUMBERID BUTTON_MODEM_OK                  = 0x001B;
+const ZIL_NUMBERID BUTTON_MODEM_CANCEL              = 0x001C;
+const ZIL_NUMBERID BUTTON_MODEM_HELP                = 0x001D;
+const ZIL_NUMBERID PROMPT_SPEED                     = 0x001E;
+const ZIL_NUMBERID PROMPT_FLOW                      = 0x001F;
+const ZIL_NUMBERID PROMPT_PARITY                    = 0x0020;
+const ZIL_NUMBERID PROMPT_VOLUME                    = 0x0021;
+const ZIL_NUMBERID PROMPT_HIGH                      = 0x0022;
+const ZIL_NUMBERID PROMPT_STOP_BITS                 = 0x0023;
+const ZIL_NUMBERID COMBO_STOPBITS                   = 0x0024;
+const ZIL_NUMBERID LIST_STOPBITS                    = 0x0025;
+#endif
+
+#if defined(USE_WINDOW_LOG)
+const ZIL_NUMBERID FIELD_1                          = 0x0001;
+const ZIL_NUMBERID FIELD_2                          = 0x0002;
+const ZIL_NUMBERID FIELD_3                          = 0x0003;
+const ZIL_NUMBERID FIELD_4                          = 0x0004;
+const ZIL_NUMBERID FIELD_5                          = 0x0005;
+const ZIL_NUMBERID FIELD_6                          = 0x0006;
+const ZIL_NUMBERID FIELD_7                          = 0x0007;
+const ZIL_NUMBERID FIELD_8                          = 0x0008;
+const ZIL_NUMBERID FIELD_9                          = 0x0009;
+const ZIL_NUMBERID BUTTON_LOG_OK                    = 0x000A;
+const ZIL_NUMBERID BUTTON_LOG_HELP                  = 0x000B;
+#endif
+
+#if defined(USE_WINDOW_LOCATION)
+const ZIL_NUMBERID ICON_K95                         = 0x0001;
+const ZIL_NUMBERID STATUS_OPTIONS                   = 0x0002;
+const ZIL_NUMBERID BUTTON_OPTIONS_OK                = 0x0003;
+const ZIL_NUMBERID BUTTON_OPTIONS_CANCEL            = 0x0004;
+const ZIL_NUMBERID NOTEBOOK_DIAL_OPTIONS            = 0x0005;
+const ZIL_NUMBERID FIELD_4096                       = 0x1000;
+const ZIL_NUMBERID FIELD_4097                       = 0x1001;
+const ZIL_NUMBERID FIELD_4098                       = 0x1002;
+const ZIL_NUMBERID FIELD_4099                       = 0x1003;
+const ZIL_NUMBERID FIELD_4100                       = 0x1004;
+const ZIL_NUMBERID FIELD_4101                       = 0x1005;
+const ZIL_NUMBERID PAGE_GENERAL                     = 0x000C;
+const ZIL_NUMBERID COMBO_LOCATION                   = 0x000D;
+const ZIL_NUMBERID LIST_LOCATION                    = 0x000E;
+const ZIL_NUMBERID BUTTON_LOCATION_ADD              = 0x000F;
+const ZIL_NUMBERID PROMPT_COUNTRY_CODE              = 0x0010;
+const ZIL_NUMBERID BUTTON_LOCATION_REMOVE           = 0x0011;
+const ZIL_NUMBERID FIELD_COUNTRY_CODE               = 0x0012;
+const ZIL_NUMBERID PROMPT_AREA_CODE                 = 0x0013;
+const ZIL_NUMBERID FIELD_AREA_CODE                  = 0x0014;
+const ZIL_NUMBERID PROMPT_DIALING_P                 = 0x0015;
+const ZIL_NUMBERID PROMPT_DIALING_S                 = 0x0016;
+const ZIL_NUMBERID FIELD_DIALING_P                  = 0x0017;
+const ZIL_NUMBERID GROUP_DIALING_PROC_METHOD        = 0x0018;
+const ZIL_NUMBERID RADIO_DIALING_PROC_METHOD_TONE   = 0x0019;
+const ZIL_NUMBERID RADIO_DIALING_PROC_METHOD_PULSE  = 0x001A;
+const ZIL_NUMBERID FIELD_DIALING_S                  = 0x001B;
+const ZIL_NUMBERID PROMPT_REDIALS                   = 0x001C;
+const ZIL_NUMBERID INTEGER_REDIALS                  = 0x001D;
+const ZIL_NUMBERID PROMPT_INTERVAL                  = 0x001E;
+const ZIL_NUMBERID INTEGER_INTERVAL                 = 0x001F;
+const ZIL_NUMBERID PROMPT_TIMEOUT                   = 0x0020;
+const ZIL_NUMBERID INTEGER_TIMEOUT                  = 0x0021;
+const ZIL_NUMBERID PROMPT_LOCATION                  = 0x0022;
+const ZIL_NUMBERID BUTTON_DIAL_HELP_GENERAL         = 0x0023;
+const ZIL_NUMBERID CHECK_IGNORE_DIALTONE            = 0x1006;
+const ZIL_NUMBERID PAGE_LOCAL                       = 0x0024;
+const ZIL_NUMBERID PROMPT_LA_PREFIX                 = 0x0025;
+const ZIL_NUMBERID PROMPT_LA_SUFFIX                 = 0x0026;
+const ZIL_NUMBERID FIELD_LOCAL_LA_P                 = 0x0027;
+const ZIL_NUMBERID FIELD_LOCAL_LA_S                 = 0x0028;
+const ZIL_NUMBERID PROMPT_LOCAL_AREA_CODE_LIST      = 0x0029;
+const ZIL_NUMBERID FIELD_LOCAL_AC_LIST              = 0x002A;
+const ZIL_NUMBERID BUTTON_DIAL_HELP_LA              = 0x002B;
+const ZIL_NUMBERID CHECK_FORCE_LD                   = 0x002C;
+const ZIL_NUMBERID PAGE_LONG_DIST                   = 0x002D;
+const ZIL_NUMBERID PROMPT_LD_PREFIX                 = 0x002E;
+const ZIL_NUMBERID PROMPT_LD_SUFFIX                 = 0x002F;
+const ZIL_NUMBERID FIELD_LOCAL_LD_P                 = 0x0030;
+const ZIL_NUMBERID FIELD_LOCAL_LD_S                 = 0x0031;
+const ZIL_NUMBERID BUTTON_DIAL_HELP_LD              = 0x0032;
+const ZIL_NUMBERID PAGE_INTERNATIONAL               = 0x0033;
+const ZIL_NUMBERID PROMPT_INTL_PREFIX               = 0x0034;
+const ZIL_NUMBERID PROMPT_INTL_SUFFIX               = 0x0035;
+const ZIL_NUMBERID FIELD_INTL_P                     = 0x0036;
+const ZIL_NUMBERID FIELD_INTL_S                     = 0x0037;
+const ZIL_NUMBERID BUTTON_DIAL_HELP_INTL            = 0x0038;
+const ZIL_NUMBERID PAGE_TOLL_FREE                   = 0x0039;
+const ZIL_NUMBERID PROMPT_TOLL_FREE_PREFIX          = 0x003A;
+const ZIL_NUMBERID FIELD_TOLL_FREE_PREFIX           = 0x003B;
+const ZIL_NUMBERID PROMPT_TOLL_FREE_AREA_CODES      = 0x003C;
+const ZIL_NUMBERID FIELD_TOLLFREE                   = 0x003D;
+const ZIL_NUMBERID BUTTON_DIAL_HELP_TF              = 0x003E;
+const ZIL_NUMBERID PAGE_PBX                         = 0x003F;
+const ZIL_NUMBERID CHECK_LOCALE_PBX                 = 0x0040;
+const ZIL_NUMBERID FIELD_PBX_EXCH                   = 0x0041;
+const ZIL_NUMBERID FIELD_PBX_IN                     = 0x0042;
+const ZIL_NUMBERID FIELD_PBX_OUT                    = 0x0043;
+const ZIL_NUMBERID PROMPT_INSIDE_PREFIX             = 0x0044;
+const ZIL_NUMBERID PROMPT_OUTSIDE_PREFIX            = 0x0045;
+const ZIL_NUMBERID PROMPT_EXCHANGE                  = 0x0046;
+const ZIL_NUMBERID BUTTON_DIAL_HELP_PBX             = 0x0047;
+#endif
+
+#if defined(USE_WINDOW_DIAL_DIR_FILES)
+const ZIL_NUMBERID ICON_K95                         = 0x0008;
+const ZIL_NUMBERID CHECKBOX_USE_DIAL_DIRS           = 0x0002;
+const ZIL_NUMBERID PROMPT_FILENAMES                 = 0x0003;
+const ZIL_NUMBERID FIELD_DIAL_DIR_NAMES             = 0x0004;
+const ZIL_NUMBERID BUTTON_DIALDIR_OK                = 0x0005;
+const ZIL_NUMBERID BUTTON_DIALDIR_CANCEL            = 0x0006;
+const ZIL_NUMBERID BUTTON_DIALDIR_HELP              = 0x0007;
 #endif
 
 #if defined(USE_DERIVED_OBJECTS)
