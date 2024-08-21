@@ -3,7 +3,7 @@
 <head>
 <META name="viewport" content="width=device-width, initial-scale=1.0">
 <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<title>Kermit 95 Manual for K95 Version <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--></title>
+<title>Kermit 95 Manual for K95 Version $!ver-full$</title>
 <META http-equiv="Content-Style-Type" content="text/css">
 <LINK REL=STYLESHEET TYPE="text/css" HREF="kermit.css">
 <LINK REL="shortcut icon" href="favicon.ico" >
@@ -1104,10 +1104,12 @@ affecting Kermit 95 as of the release that you have.
 
 <p>
 
-If you are on the Internet, also look at the
-<a href="/k95/newbugs.txt">
-<tt>newbugs.txt</tt></a> file, which contains descriptions of problems
-discovered since the most recent release.
+If you are on the Internet (and have a modern browser handy), also look at the
+<!-- NOTE: The above URL has a replacement parameter at the end so won't be
+           valid unless this document has been processed with mkdocs.ksc  -->
+<a href="https://github.com/davidrg/ckwin/issues?q=is%3Aissue+label%3Abug+created%3A%3E%3D$!ver-date-iso$">
+Github Issue Tracker</a> which contains descriptions of problems discovered
+since this release.
 
 <p>
 
@@ -1126,6 +1128,14 @@ Kermit 95 FAQ:
 and the Kermit Project's general Technical Support page:
 <pre>
   <a href="http://kermitproject.org/support.html">http://kermitproject.org/support.html</a>
+</pre>
+And you can also ask a question on Kermit 95s Github Discussions page:
+<pre>
+    <a href="https://github.com/davidrg/ckwin/discussions">https://github.com/davidrg/ckwin/discussions</a>
+</pre>
+Or post on Kermits Usenet Newsgroup, though traffic tends to be very low these days:
+<pre>
+    <a href="news:comp.protocols.kermit.misc">comp.protocols.kermit.misc</a>
 </pre>
 <p>
 
