@@ -566,11 +566,11 @@ char *introtxt[] = {
 
 #ifdef NT
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K-95> prompt:",
 #else
 #ifdef OS2
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K/2> prompt:",
 #else
 " ",
 "To return from a terminal connection to the C-Kermit prompt:",
@@ -8394,7 +8394,7 @@ static char *hxyterm[] = {
 #ifdef OS2
 #ifdef KUI
 "SET TERMINAL FONT <facename> <height>",
-"  Specifies the font to be used in the C-Kermit terminal window.  The font",
+"  Specifies the font to be used in the Kermit window.  The font",
 "  is determined by the choice of a facename and a height measured in Points.",
 "  The available facenames are those installed in the Font Control Panel.",
 " ",
