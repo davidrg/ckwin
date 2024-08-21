@@ -1555,7 +1555,7 @@ example showing how to use this information is presented in
 
 SSL/TLS (Secure Sockets Layer / Transport Layer Security) is the 
 protocol used to secure HTTP, SMTP, and other Internet applications.
-See the <a href="security.htm#x5.4">C-Kermit
+See the <a href="security.html#x5.4">C-Kermit
 Reference Section 5.4</a> for an introduction to SSL/TLS.
 
 To make a secure HTTP connection, you need:
@@ -1566,7 +1566,7 @@ To make a secure HTTP connection, you need:
 built in).  Type "check ssl" at the Kermit prompt to make sure you have it.
 <li>A secure server to connect to.
 <li>The CA Root Certificate used to authenticate the server to the client.
-(see <a href="security.htm#x15">Section 15</a> of the security reference
+(see <a href="security.html#x15">Section 15</a> of the security reference
 for an introduction to certificates).
 
 </ol>
@@ -1648,7 +1648,7 @@ An HTTP connection is made with the HTTP OPEN command:
 <dd>If <tt>/SSL</tt> or <tt>/TLS</tt> switches are included (these are
 synonyms), or if the service is HTTPS or the port is 443, a secure connection
 is attempted using the current authentication settings; see HELP SET
-AUTHENTICATION for details (<a href="security.htm#x6.2">Section 6.2</a> of
+AUTHENTICATION for details (<a href="security.html#x6.2">Section 6.2</a> of
 the security reference).  If the no
 <tt>/SSL</tt> or <tt>/TLS</tt> switch is included but the port is 443 or the
 service is HTTPS, a secure connection is attempted.  If an <tt>/SSL</tt> or
@@ -1895,7 +1895,7 @@ FTP clients (and its previous interface to them):
 
 <li>Any of Kermit's built-in <a href="security.html">security methods</a> can
 be used to establish and conduct secure FTP sessions with <a
-href="security.htm#servers">FTP servers that support these methods</a>.
+href="security.html#servers">FTP servers that support these methods</a>.
 (Security modules can be subject to export restrictions.)
 
 <p>
@@ -1915,7 +1915,7 @@ includes both the file's name and (for text files only) its contents.
 
 <p>
 
-<li>All of C-Kermit's <a href="ckermi70.htm#x1.5.4">
+<li>All of C-Kermit's <a href="ckermi70.html#x1.5.4">
 file-selection mechanisms</a> are available: size, date,
 name patterns and lists, exception lists, etc.
 
@@ -3550,7 +3550,7 @@ links, endless loops, etc.
 <p>
 <dt><tt><b>/EXCEPT:</b><i>pattern</i></tt></dt>
 <dd>Exception list -- don't send files whose names match the given pattern.
-See <a href="ckermi70.htm#x1.5.4">Section 1.5.4</a>
+See <a href="ckermi70.html#x1.5.4">Section 1.5.4</a>
 of the <a href="ckermi70.html">C-Kermit 7.0 Update Notes</a>
 for details.  If you want to exclude a directory from a recursive
 <tt>[M]PUT</tt>, use <tt>/EXCEPT:{dirname/*}</tt>.
@@ -3917,7 +3917,7 @@ differently.</font>
 be done by the client (Kermit), but in this case it is not based on a file
 scan (since there is no way for Kermit prescan a server file), but rather
 on the filename, using C-Kermit 7.0
-<a href="ckermi70.htm#x4.3">filename patterns</a>.
+<a href="ckermi70.html#x4.3">filename patterns</a>.
 
 <p>
 
@@ -4062,7 +4062,7 @@ usually <tt>\v(filename)</tt> or <tt>\v(filenumber)</tt>.  Example:
 </pre><p>
 This gets all "<tt>.c</tt>" files and stores them with "</tt>.new</tt>"
 appended to their names.
-See the <a href="ckermi70.htm#x4.1">C-Kermit 7.0 Update Notes</a>
+See the <a href="ckermi70.html#x4.1">C-Kermit 7.0 Update Notes</a>
 for details.
 <p>
 <dt><tt><b>/COMMAND</b></tt></dt>
@@ -4071,7 +4071,7 @@ input of a command, rather than to a file.  The command name is the as-name
 from the GET command or the /AS-NAME argument.  If you need to refer to the
 incoming file's name in the command, use <tt>\v(filename)</tt>.  See the
 description of the regular Kermit 
-<a href="ckermi70.htm#x4.2.2">GET /COMMAND</a>
+<a href="ckermi70.html#x4.2.2">GET /COMMAND</a>
 command for details and examples.
 <p>
 <dt><tt><b>/QUIET</b></tt></dt>
@@ -4091,7 +4091,7 @@ The <b>file selection</b> switches are:
 <dd>Exception list for MGET; skip downloading any file whose name matches
 any of the given patterns (when using the second format, up to 
 <font color="red">64</font> patterns may be specified).
-<a href="ckermi70.htm#x1.5.4">CLICK HERE</a> for syntax details.
+<a href="ckermi70.html#x1.5.4">CLICK HERE</a> for syntax details.
 <p>
 <dt><tt><b>/SMALLER-THAN:</b><i>number</i></tt></dt>
 <dd>Download only files whose size is smaller than the given number of bytes
@@ -4262,7 +4262,7 @@ text must contain variables; for GET it can be a literal string.  The
 <p>
 causes each file that is successfully downloaded to have "<tt>.ok</tt>"
 appended to its name.  For details see
-<a href="ckermi70.htm#x4.1">Section 4.1</a> of the
+<a href="ckermi70.html#x4.1">Section 4.1</a> of the
 <a href="ckermi70.html">C-Kermit 7.0 Update Notes</a>.
 
 <p>
@@ -11344,7 +11344,7 @@ For a Linux-based Telnet Com-Port server, click the Srdird link:
 There are lots of faulty Kermit protocol implementations out there, found
 mainly in 3rd-party products ranging from communications software packages
 to file-transfer functions imbedded within devices.  This topic is covered
-<a href="ckermi70.htm#x4.22">HERE</a> for C-Kermit 7.0, but C-Kermit 8.0
+<a href="ckermi70.html#x4.22">HERE</a> for C-Kermit 7.0, but C-Kermit 8.0
 adds some additional tricks.
 <p>
 <dl>

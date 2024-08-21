@@ -180,8 +180,8 @@ Edition</cite></a> for C-Kermit 9.0
 <li><a href="sshclien.html">SSH Client Reference</a>
 <li><a href="security.html">Kermit Security Reference</a>
 <li><a href="telnet.html">Telnet Client Reference</a>
-<li><a href="http://kermitproject.org/ckermit80.htm#ftp">FTP Client Reference</a>
-<li><a href="http://kermitproject.org/ckermit80.htm#x2.2">HTTP Client Reference</a>
+<li><a href="http://kermitproject.org/ckermit80.html#ftp">FTP Client Reference</a>
+<li><a href="http://kermitproject.org/ckermit80.html#x2.2">HTTP Client Reference</a>
 <li><a href="wiksd.html">Windows Internet Kermit Service Overview</a>
 <li><a href="wiksduse.html">Windows Internet Kermit Service User Guide</a>
 <li><a href="wiksdadm.html">Windows Internet Kermit Service Administrator Guide</a>
@@ -423,7 +423,7 @@ some examples:
 <li>The VMS shell (DCL)
 <li>An IBM mainframe through a 3270 protocol converter
 <li>All sorts of other minicomputers and mainframes
-<li>A Bulletin Board System (<a href="gloss.htm#g_bbs">BBS</a>)
+<li>A Bulletin Board System (<a href="gloss.html#g_bbs">BBS</a>)
 <li>Text-based library catalog and circulation systems
 <li>Certain commercial information services
 <li>Most TCP service ports (Telnet, Rlogin, SSH, etc)
@@ -1799,7 +1799,7 @@ from the main (white) window.
 <b>References:</b>
 
 <ul>
-<li>K95 Tutorial: <a href="k95tutor.htm#dialer">The K95 Dialer</a>
+<li>K95 Tutorial: <a href="k95tutor.html#dialer">The K95 Dialer</a>
 </ul>
 <p>
 
@@ -1865,7 +1865,7 @@ The status bar is "read-only."
 Directly beneath the Title Bar is the Menu Bar, with a series of menu items:
 the familiar File, Options, and Help menus, plus K95-specific items for
 defining and switching dialing locations and devices and (in Windows only)
-quick access to your <a href="gloss.htm#g_tapi">TAPI</a> configuration.
+quick access to your <a href="gloss.html#g_tapi">TAPI</a> configuration.
 
 <p>
 <b>The File Menu</b>
@@ -1886,7 +1886,7 @@ you a way to exit from the Dialer:
 <dd>This brings a submenu that lets you choose Dialing or Network.  These in
 turn bring up a <a href="#dialdir">dialog box</a> in which you can list the
 names of dialing or network directory files.  These are
-<a href="gloss.htm#g_plain">plain-text</a> ASCII files
+<a href="gloss.html#g_plain">plain-text</a> ASCII files
 where K-95 looks up phone numbers or network addresses when you give names for
 them in the Dialing directory, instead of giving just the number or net
 address.  Dialing directory files are explained in <cite>Using
@@ -2011,7 +2011,7 @@ The Modems menu item has only one option, <b>Change</b>.  When you choose it,
 the Modem Definitions dialog appears.  This lets you select or define a
 dialout device.  The Name field is a dropdown list containing the modem
 devices known to Kermit 95.  In Windows, these are initially the same as the
-<a href="gloss.htm#g_tapi">TAPI</a> devices (from the Modems item in the
+<a href="gloss.html#g_tapi">TAPI</a> devices (from the Modems item in the
 Control Panel), but you can add, delete, and change the definitions as you
 like.  All of your TAPI devices are imported into the Kermit 95's modem
 definitions whenever you start the Dialer.
@@ -2094,11 +2094,11 @@ simply uncheck this box and multiple numbers will be dialed in the order they
 are encountered in the phone lists.  See Chapter 5 of <cite>Using
 C-Kermit</cite>, for details.
 <p>
-<dt><a href="gloss.htm#g_tapi">TAPI</a> modem dialing
+<dt><a href="gloss.html#g_tapi">TAPI</a> modem dialing
 <dd>(Windows only) When checked, K-95 allows the Windows Telephony API
 (TAPI) to do the dialing.  When unchecked, K-95 does the dialing itself.
 <p>
-<dt><a href="gloss.htm#g_tapi">TAPI</a> phone number conversions.
+<dt><a href="gloss.html#g_tapi">TAPI</a> phone number conversions.
 <dd>(Windows only) When checked, K-95 allows TAPI to process the telephone
 number prior to dialing.  When unchecked, K-95 uses its own dialing rules,
 which are, in general, more flexible and configurable.
@@ -2146,7 +2146,7 @@ clicking on it again in the Taskbar.
 
 <dt><b>The TAPI Menu</b>
 <dd><i>Windows only, except Windows NT 3.x</i>.  This menu gives you access to
-the Windows <a href="gloss.htm#g_tapi">TAPI</a> configuration dialogs:
+the Windows <a href="gloss.html#g_tapi">TAPI</a> configuration dialogs:
 <p>
 <dl>
 <dt><i>Dialing Properties</i>
@@ -2827,7 +2827,7 @@ Directory Files dialog box:
 Check Use Dialing Directories and enter the names of one or more files into
 the Filename(s) text box, separating multiple filenames by spaces (not
 commas).  Use full paths to eliminate any confusion.  Feel free to make use
-of K95's various <a href="readme.htm#x9">path variables</a> to stand for
+of K95's various <a href="readme.html#x9">path variables</a> to stand for
 Windows long pathnames.
 
 <p>
@@ -2838,7 +2838,7 @@ rather than Dialing in the <b>File..Directories</b> menu.
 <h4 id="ipaddresses"><i>About Network Addresses</i></h4>
 
 Internet services are reached not with a phone number, but with an IP
-(Internet Protocol) <a href="gloss.htm#g_host">host</a> name, usually a series
+(Internet Protocol) <a href="gloss.html#g_host">host</a> name, usually a series
 of words or acronyms or abbreviations connected by dots, such as:
 
 <pre>
@@ -2941,7 +2941,7 @@ Directory, if you have one.  The advantage, as with dialing, is that you
 can specify alternative addresses for the same network service, so if one of
 them is unavailable, K-95 tries the next, and so on.  An additional advantage
 is that network directory entry names act like nicknames for hosts outside
-your own domain, that <a href="gloss.htm#g_dns">DNS</a> could not resolve,
+your own domain, that <a href="gloss.html#g_dns">DNS</a> could not resolve,
 or might take a long time to resolve.
 
 <h4 id="whatnext"><i>What Next?</i></h4>
@@ -2994,13 +2994,13 @@ anywhere, adding many features to those of the original terminal:
 <li>Keyboard macros
 <li>Mouse actions including copy-and-paste, cursor positioning, URL hot spots
 <li>Detailed control over screen dimensions, coloration, etc.
-<li>Ability to handle different <a href="gloss.htm#g_host">host</a> character
+<li>Ability to handle different <a href="gloss.html#g_host">host</a> character
 sets
 </ul>
 <p>
 
 Kermit 95 emulates about 40 different kinds of terminals;
-<a href="termtype.htm#ttlist">CLICK HERE</a> for a complete list.
+<a href="termtype.html#ttlist">CLICK HERE</a> for a complete list.
 
 <p>
 
@@ -3047,7 +3047,7 @@ If you don't know what terminal type to choose, follow these guidelines:
 </ul>
 <p>
 
-Note that you probably have some choices on the <a href="gloss.htm#g_host">
+Note that you probably have some choices on the <a href="gloss.html#g_host">
 host</a> too.  In UNIX, for
 example, you can select from many different terminal types (those supported by
 the UNIX termcap or terminfo mechanisms) by setting your TERM environment
@@ -3100,10 +3100,10 @@ handles wrapping itself.
 
 <dt><b>APC Enabled</b>
 
-<dd> <a href="gloss.htm#g_apc">APC</a> is an escape sequence that can be used
+<dd> <a href="gloss.html#g_apc">APC</a> is an escape sequence that can be used
 when Kermit 95 is emulating a VT100 or higher (or any other terminal based on
 the ANSI X3.64-1979 standard), which contains Kermit commands to be executed.
-APCs allow the <a href="gloss.htm#g_host">host</a> application to "do things"
+APCs allow the <a href="gloss.html#g_host">host</a> application to "do things"
 on your PC, so this can be a security risk if you are not familiar with or do
 not trust the application.  You should not check this box without first
 reading page 278 of <cite>Using C-Kermit</cite>.
@@ -3114,7 +3114,7 @@ reading page 278 of <cite>Using C-Kermit</cite>.
 
 <dd>This tells K-95 whether to receive files automatically (without your
 telling it to) when a Kermit or Zmodem send is initiated on the <a
-href="gloss.htm#g_host">host</a>.  When this box is not checked, you must
+href="gloss.html#g_host">host</a>.  When this box is not checked, you must
 "escape back" and give a RECEIVE command, and then re-CONNECT when the
 transfer finishes.  (When Kermit protocol is selected, this box also governs
 the ability of Kermit 95 to <i>send</i> files automatically when the other
@@ -3123,7 +3123,7 @@ Kermit program is given a GET command.)
 <p>
 
 <dt><b>Status Line</b>
-<dd>For <a href="gloss.htm#g_ansi">non-ANSI</a>
+<dd>For <a href="gloss.html#g_ansi">non-ANSI</a>
 terminal types, K-95 shows a status line at the bottom of the
 terminal screen that gives some information about the current state of the
 terminal emulator.  Uncheck this box if you don't want to see it; in some
@@ -3143,7 +3143,7 @@ the incoming file.
 <dd>Character sets are explained in detail in <cite>Using C-Kermit</cite>.  If
 you are not concerned about accented or non-Roman letters, skip this part.  In
 most cases, you can use any character set on the <a
-href="gloss.htm#g_host">host</a> that has the same repertoire as your PC code
+href="gloss.html#g_host">host</a> that has the same repertoire as your PC code
 page, even if the encoding is different.  Just pick its name from the
 Character Set scroll box.  More about character sets in <a
 href="#c7charsets">Chapter 7</a>.
@@ -3168,7 +3168,7 @@ underlying video drivers and hardware.  The most widely supported sizes are:
   42 &#215; 80
   49 &#215; 80
 </pre>
-As noted, <a href="gloss.htm#g_ansi">ANSI</a> terminal types add an extra line
+As noted, <a href="gloss.html#g_ansi">ANSI</a> terminal types add an extra line
 by eliminating the status line.  In this case the common dimensions are:
 <pre>
   25 &#215; 80
@@ -3318,7 +3318,7 @@ href="#transfer">Chapter 8</a> for details).
 
 <p>
 
-<dt><b>Unprefix <a href="gloss.htm#g_ctrlchar">Control Characters</a></b>
+<dt><b>Unprefix <a href="gloss.html#g_ctrlchar">Control Characters</a></b>
 
 <dd>See <cite>Using C-Kermit</cite> Chapter 12 for a thorough explanation or
 <a href="#transfer">Chapter 8</a> of this manual for an overview.
@@ -3467,10 +3467,10 @@ for direct serial connections.
 <dt><b>Line</b>
 
 <dd>For Dial-Up connections this box is informational only.  It displays the
-name of the <a href="gloss.htm#g_tapi">TAPI</a> modem device or physical COM
+name of the <a href="gloss.html#g_tapi">TAPI</a> modem device or physical COM
 port associated with the Kermit 95 modem that is highlighted in the Modem box,
 and is grayed out because you can't change it here. For Direct Serial
-Connections this box is used to choose the <a href="gloss.htm#g_tapi">TAPI</a>
+Connections this box is used to choose the <a href="gloss.html#g_tapi">TAPI</a>
 modem device or physical COM port to be used when making the connection.
 
 </dl>
@@ -3909,7 +3909,7 @@ text character used on the FTP server's file system.
 </dl>
 <p>
 
-<a href="http://kermit.columbia.edu/ckermit80.htm#x3">CLICK HERE</a> for further information on K95's FTP
+<a href="http://kermit.columbia.edu/ckermit80.html#x3">CLICK HERE</a> for further information on K95's FTP
 client.
 
 <h4 id="c5tcp"><a name="x5.8">5.8. The TCP/IP Page</h4>
@@ -3938,7 +3938,7 @@ application protocols:
 <dt><b>Use Default IP Address on Local Machine</b>
 <dt><b>My IP Address</b>
 
-<dd>Most computers are assigned only one <a href="gloss.htm#g_ipaddr">IP
+<dd>Most computers are assigned only one <a href="gloss.html#g_ipaddr">IP
 address</a>, and so the box is checked by default.  If your PC has two or more
 IP addresses -- for example, because it has two network adapters (or, say, one
 Ethernet and one Dialup Networking) -- and Kermit is unable to connect to your
@@ -4050,7 +4050,7 @@ authenticating and the network of computers that accept those credentials.
 <p>
 <dt><b>Auto-Get Ticket Granting Ticket</b>
 
-<dd>A Kerberos Ticket Granting Ticket (<a href="gloss.htm#g_tgt">TGT</a>) is
+<dd>A Kerberos Ticket Granting Ticket (<a href="gloss.html#g_tgt">TGT</a>) is
 presented by Kermit 95 to the Kerberos server to receive the Service Ticket
 necessary to authenticate you to the host.  A TGT is normally retrieved when
 you login to the computer, but you can also get one by using a Kerberos Ticket
@@ -4169,7 +4169,7 @@ the ciphers that can be used to secure the connection.  When this field is
 left blank, Kermit 95 negotiates all non-anonymous ciphers.  An anonymous
 cipher is one that does not require the presentation of a certificate.  A list
 of cipher tags and how they are used is given in the
-<a href="security.htm#x6.2.3">reference material</a>.
+<a href="security.html#x6.2.3">reference material</a>.
 
 <p>
 <dt><b>Client Certificate File</b>
@@ -4311,7 +4311,7 @@ HOST or SET PORT command.
 
 <p>
 
-Key map files are <a href="gloss.htm#g_plain">plain-text</a> files that you can
+Key map files are <a href="gloss.html#g_plain">plain-text</a> files that you can
 read and edit, consisting of a series of <tt>SET</tt> <tt>KEY</tt> or
 <tt>SET</tt> <tt>TERMINAL</tt> <tt>KEY</tt> commands, as explained in
 <a href="#terminal">Chapter 7</a>.
@@ -4471,7 +4471,7 @@ Send Form Feed box.  Sometimes this is necessary to force out the last or
 only page of the print job.  Or, if something other than a formfeed is needed,
 enter it into the End-of-Job String box using regular Kermit notation for
 strings (backslash notation for
-<a href="gloss.htm#g_ctrlchar">control characters</a>, etc).
+<a href="gloss.html#g_ctrlchar">control characters</a>, etc).
 <p>
 Sometimes print jobs can be sent in such a way that each line or page becomes
 a separate print job on your PC.  For example, if the host intersperses print
@@ -4657,7 +4657,7 @@ Kermit 95 at the same time.
 <b>References:</b>
 <ul>
 <li><cite>Using C-Kermit</cite>
-<li>K95 Tutorial: <a href="k95tutor.htm#command">The Command Interface</a>
+<li>K95 Tutorial: <a href="k95tutor.html#command">The Command Interface</a>
 </ul>
 
 <p>
@@ -4764,7 +4764,7 @@ the moment).  This means that K-95 expects you type a command.  The command to
 return to the Terminal screen is <tt>CONNECT</tt>; type <tt>CONNECT</tt> (or
 just the letter <tt>C</tt>) and then press the Enter key.  Or . . .  Use Alt-x
 again, since in fact, Alt-x acts as a
-"<a href="gloss.htm#g_toggle">toggle</a>" to switch back and forth between the
+"<a href="gloss.html#g_toggle">toggle</a>" to switch back and forth between the
 Command and Terminal screens.
 
 <p>
@@ -4874,7 +4874,7 @@ obvious from its drab appearance:
 <p>
 <ul>
 <li>You can use the
-<a href="scroll.htm#scrvert">Page Up and Page Down keys</a>
+<a href="scroll.html#scrvert">Page Up and Page Down keys</a>
 to scroll back and forth in it.
 <li>You can select a color scheme for it, distinct from the terminal window.
 <li>Commands can be recalled using the Up and Down Arrow keys.
@@ -5112,7 +5112,7 @@ directory, whereas in DOS it prints the name of the current directory.  Unlike
 in DOS, a disk letter can be included in K95's CD command.  Use PWD to display
 the current directory.  K95 also has a BACK command to return to the previous
 directory, and KCD to change to various symbolically named directories, like
-DESKTOP (more about this in the <a href="readme.htm#x9.1">README file</a>).
+DESKTOP (more about this in the <a href="readme.html#x9.1">README file</a>).
 Type HELP CD at the Kermit command prompt for more information.
 
 <p>
@@ -5514,7 +5514,7 @@ If you specify a Login script in a Dialer entry, it is executed last.
 <p>
 <ul>
 <li><a href="k95gui.html">Kermit 95 2.x GUI Features</a>
-<li>K95 Tutorial: <a href="k95tutor.htm#terminal">Terminal Sessions</a>
+<li>K95 Tutorial: <a href="k95tutor.html#terminal">Terminal Sessions</a>
 <li><cite>Using C-Kermit</cite>, Chapter 8.
 <li>Background: <a href="termem.html">What Is Terminal Emulation</a>?
 <li>Background: <a href="iso2022.html">Terminal Character-Set Terminology and Mechanics</a>
@@ -5721,7 +5721,7 @@ Unicode fonts such as Lucida Console and Courier New.
 <p>
 
 The most important point to remember about terminal emulation is that the
-emulator (Kermit 95) and the <a href="gloss.htm#g_host">host</a>
+emulator (Kermit 95) and the <a href="gloss.html#g_host">host</a>
 must agree about the terminal type.  For example, if Kermit 95 is
 emulating a VT100, the host must know that you are using a VT100.
 
@@ -5755,7 +5755,7 @@ of the SET TERMINAL TYPE command in the Command screen:
 Whenever you set or change terminal types, Kermit 95 loads a complete <a
 href="#keymap">key map</a> for the selected terminal (so the Arrow, Function,
 and other special keys send the expected sequences), and sets up the
-appropriate responses for incoming <a href="gloss.htm#g_escseq">escape
+appropriate responses for incoming <a href="gloss.html#g_escseq">escape
 sequences</a>.
 
 <p>
@@ -5807,7 +5807,7 @@ and agreement is achieved.
 
 <p>
 
-<li>Certain <a href="gloss.htm#g_bbs"><b>BBS</b></a>s might try to "autosense"
+<li>Certain <a href="gloss.html#g_bbs"><b>BBS</b></a>s might try to "autosense"
 your terminal type by sending a series of escape sequences and checking the
 responses.
 
@@ -5944,7 +5944,7 @@ Note, however, that there are (or should be) no scroll bars.
 <dd>
 
 In the GUI version, K95G, you can change the font and the font size on the
-Toolbar, <a href="k95gui.htm#x13">CLICK HERE</a> for details.  Font changes
+Toolbar, <a href="k95gui.html#x13">CLICK HERE</a> for details.  Font changes
 made in K95G's Toolbar are remembered from session to session.
 
 <p>
@@ -6069,22 +6069,23 @@ paragraphs, just as you can in the Console version:
 
 <p>
 
-Use the <a href="scroll.htm#scrvert">Page Up</a> key to go up one screen page
-and the <a href="scroll.htm#scrvert">Page Down</a> key to go down one screen
+Use the <a href="scroll.html#scrvert">Page Up</a> key to go up one screen page
+and the <a href="scroll.html#scrvert">Page Down</a> key to go down one screen
 page.  If you keep pressing the Page Up key, you'll go farther and farther
 back in time, until you reach the top of K-95's "scrollback buffer".  "Buffer"
 is one of those techo words; it means "a place to put things."  The scrollback
 buffer is only so big, so when it fills up the oldest material is discarded
 off the top.  The default size is 512 lines.  You can specify a different size
 in the Dialer -- see <a href="#dialer">Chapter 4</a> -- or with the <a
-href="setterm.htm#t_scroll"><tt>SET TERMINAL SCROLLBACK</tt></a> command.
+href="setterm.html#t_scroll"><tt>SET TERMINAL SCROLLBACK</tt></a> command.
 
 <p>
 
 You can go straight to the top of the scrollback buffer by pressing the
-<a href="scroll.htm#scrnvrt">Home</a>
+<a href="scroll.html#scrnvrt">Home</a>
 key</b>.  You can go straight to the "bottom" (i.e. Back to the Present) by
-pressing the <a href="scroll.htm#scrvert">End</a> key.
+pressing the <a href="scroll.html#scrvert">End</a> key.
+
 
 <p>
 
@@ -6099,7 +6100,7 @@ or active <a href="#kbmode">keyboard modes</a>.
 
 <li>Scrollback is NOT accomplished using <b>scroll bars</b>.  Console
 applications are not allowed to use scroll bars. The Scroll bar is only
-supported for scrollback in the <a href="gloss.htm#g_gui">GUI</a>
+supported for scrollback in the <a href="gloss.html#g_gui">GUI</a>
 version of K-95.
 
 </ul>
@@ -6167,7 +6168,7 @@ about them.
 <p>
 
 The normal size for a terminal screen is <b>24 lines</b> with <b>80
-characters</b> in each line (25 x 80 in <a href="gloss.htm#g_ansi">ANSI</a>
+characters</b> in each line (25 x 80 in <a href="gloss.html#g_ansi">ANSI</a>
 emulations).  These are the dimensions of most real terminals, and most
 computers and services expect your screen to be this size.
 
@@ -6364,7 +6365,7 @@ Kermit 95 1.1.21 and later also support the rather rare combination of
 <p>
 
 The SET SERIAL command, which also lets you choose the number of stop bits,
-is documented <a href="http://kermit.columbia.edu/ckermit70.htm#x2.10">HERE</a>.
+is documented <a href="http://kermit.columbia.edu/ckermit70.html#x2.10">HERE</a>.
 
 <h3 id="c7color">Color Schemes</h3>
 
@@ -6697,7 +6698,7 @@ material to a file, for example:
 <p>
 
 The <tt>SET PRINTER</tt> command has numerous other options and uses.
-<a href="printer.htm#prtsum">CLICK HERE</a> for a complete description.
+<a href="printer.html#prtsum">CLICK HERE</a> for a complete description.
 
 <p>
 
@@ -6734,7 +6735,7 @@ And you can also print with the mouse.  That's covered
 <p>
 
 Printing orders can also be sent by the other computer
-(<a href="gloss.htm#g_host">host</a>) to K-95, instead
+(<a href="gloss.html#g_host">host</a>) to K-95, instead
 of by you.  An example would be if you were using the popular Pine e-mail
 software in your Terminal window.  You press the Y key when it shows in the
 menu; for example, to print an e-mail message you are reading.  This sends a
@@ -6780,7 +6781,7 @@ Examples of VT100-terminal-specific host-initiated print actions follow.
 Other terminal types use different sequences.  Don't panic, just show this
 page to whoever is responsible for the application in question, so they can
 see how to configure it to let you use it with your PC printer
-(<tt>&#60;ESC&#62;</tt> stands for the <a href="gloss.htm#g_ascii">ASCII</a>
+(<tt>&#60;ESC&#62;</tt> stands for the <a href="gloss.html#g_ascii">ASCII</a>
 Escape character, decimal code 27):
 
 <p>
@@ -6806,9 +6807,9 @@ formfeed after every print-screen operation.
 <p>
 <dt><i>Begin transparent printing</i>
 <dd>All characters, including
-<a href="gloss.htm#g_escseq">escape sequences</a>
+<a href="gloss.html#g_escseq">escape sequences</a>
 and
-<a href="gloss.htm#g_ctrlchar">control characters</a>, that
+<a href="gloss.html#g_ctrlchar">control characters</a>, that
 come in the communication device are sent straight to the printer, instead
 of to the screen.  Escape sequence:  <tt>&#60;ESC&#62;[5i</tt>
 <p>
@@ -6915,7 +6916,7 @@ using the regular methods (Ctrl-V, Paste from the Edit menu), and text that
 you copy in other applications, or in Kermit 95 itself, can be pasted into
 Kermit 95.  If you paste into Kermit 95's Terminal window (e.g. with
 Shift-Insert), the text is transmitted to the
-<a href="gloss.htm#g_host">host</a> as if you had typed it.
+<a href="gloss.html#g_host">host</a> as if you had typed it.
 
 <p>
 
@@ -6982,7 +6983,7 @@ corresponding arrow-key sequence had been used).
 
 <dt><b>URL Hot Spots -- the Web Browser Connection</b>
 
-<dd>Whenever you see a <a href="gloss.htm#g_url">URL</a> in the Terminal or
+<dd>Whenever you see a <a href="gloss.html#g_url">URL</a> in the Terminal or
 Command screen, you can Ctrl-click Button 1 on it to ask your Web browser to
 visit it.  <a href="url.gif">URLs that Kermit recognizes are highlighted</a>
 so you can spot them easily.  You can also Ctrl-click on non-highlighted text
@@ -7079,7 +7080,7 @@ The Ctrl, Alt, Shift, and (if any) Alt-Gr keys are <i>modifier keys</i>, which
 href="#c7pcterm">PCTERM</a> keyboard mode), but which must be held down when
 pressing other keys (such as letters, digits, Function keys, etc) to modify
 their value or function.  Caps Lock is a "sticky" modifier key that is not
-held down, but which <a href="gloss.htm#g_toggle">toggles</a> the shift state
+held down, but which <a href="gloss.html#g_toggle">toggles</a> the shift state
 of the letter keys.
 
 <p>
@@ -7282,12 +7283,12 @@ To do this, Kermit 95 must know:
 
 <li>Which character set you are using in the window where Kermit 95 is
 running.  This might be a PC code page like CP437, a Windows code page like
-CP1251, or (in Windows NT only) <a href="gloss.htm#g_unicode">Unicode</a>.
+CP1251, or (in Windows NT only) <a href="gloss.html#g_unicode">Unicode</a>.
 This is the <i>local character set</i>.
 
 <p>
 
-<li>Which character set the <a href="gloss.htm#g_host">host</a> is using,
+<li>Which character set the <a href="gloss.html#g_host">host</a> is using,
 called the <i>remote character set</i>.
 
 </ul>
@@ -7364,14 +7365,14 @@ Kermit 95 which Console code page is in use.
 In Windows NT/2000/XP/etc, and on any Windows version with the GUI version
 of K95, it is possible to display characters from many different writing
 systems on the same screen at once, since the console screen is <a
-href="gloss.htm#g_unicode">Unicode</a> based, but when using the Console
+href="gloss.html#g_unicode">Unicode</a> based, but when using the Console
 version of K95 in Windows 95/98/ME (and in OS/2), where the console uses a
 regular PC code page, only the characters from that code page can be
 displayed.
 
 <p>
 
-To enter the "special" (non-<a href="gloss.htm#g_ascii">ASCII</a>)
+To enter the "special" (non-<a href="gloss.html#g_ascii">ASCII</a>)
 characters of your language or locale, just use the regular methods for
 switching your keyboard between US mode and the mode for your locale,
 and when it is in your national mode, use your normal methods for character
@@ -7757,8 +7758,8 @@ Some of these limitations might be lifted in future releases.
 <ul>
 <li><cite>Using C-Kermit</cite>, Chapter 16.
 <li><a href="iso2022.html">Terminal Character-Set Terminology and Mechanics</a>
-<li><a href="compose.htm#l1compose">Latin-1 Compose-Key Table</a>.
-<li><a href="compose.htm#l2compose">Latin-2 Compose-Key Table</a>.
+<li><a href="compose.html#l1compose">Latin-1 Compose-Key Table</a>.
+<li><a href="compose.html#l2compose">Latin-2 Compose-Key Table</a>.
 <li><a href="cyrillic.html">Cyrillic Terminal Emulation</a>.
 <li><a href="hebrew.html">Hebrew Terminal Emulation</a>.
 </ul>
@@ -7781,7 +7782,7 @@ European languages that use the Roman alphabet.
 
 In the world of character sets, these are called the "Latin-1" and "Latin-2"
 languages, because all of the accented and special letters used in these
-languages can be found in <a href="gloss.htm#g_iso">ISO</a> Latin Alphabets 1
+languages can be found in <a href="gloss.html#g_iso">ISO</a> Latin Alphabets 1
 and 2 (listed in <cite>Using C-Kermit</cite>, Table VII-4, pages 560-563).
 
 <p>
@@ -8062,8 +8063,8 @@ Now every time you hold down Alt and press the A key, K-95 sends "X".
 
 <p>
 To assign a
-<a href="gloss.htm#g_ctrlchar">control character</a>, such as Ctrl-C, to a
-key, you have to use its numeric <a href="gloss.htm#g_ascii">ASCII</a> code
+<a href="gloss.html#g_ctrlchar">control character</a>, such as Ctrl-C, to a
+key, you have to use its numeric <a href="gloss.html#g_ascii">ASCII</a> code
 preceded by a backslash.  Ctrl-C is ASCII code 3, so to assign this to Alt-A:
 
 <p>
@@ -8093,7 +8094,7 @@ keys.  Here is how you would do it.  Return to the Command screen first.  Then:
 But let's not stop there.  You can also assign sequences of characters to a
 single keystroke.  Here we assign the word "exit" followed by a carriage
 return (CR, the control character that is normally sent when you press the
-Enter key, <a href="gloss.htm#g_ascii">ASCII</a> code 13) to the F10 key:
+Enter key, <a href="gloss.html#g_ascii">ASCII</a> code 13) to the F10 key:
 
 <p>
 <pre>
@@ -8488,7 +8489,7 @@ mode or, if the desired action is in the K95G Actions menu, use the mouse.
 <p>
 
 Ctrl-CapsLock is the "standard"
-<a href="gloss.htm#g_toggle">toggle</a> for PCTERM, and it is used on terminals
+<a href="gloss.html#g_toggle">toggle</a> for PCTERM, and it is used on terminals
 (such as the VT520 or Wyse with PC Keyboard) that support PCTERM.  Remember,
 however, that when you press the Ctrl key, a "Ctrl Down" code is sent to the
 host before K95 sees the CapsLock-Down event that toggles it out of PCTERM.
@@ -8640,7 +8641,7 @@ Other automation features for the Terminal screen include:
 <dt><i>Execution of Kermit Commands Sent by the Host</i>
 
 <dd>In VT100 and higher emulation, Application Program Command
-(<a href="gloss.htm#g_apc">APC</a>) sequences are assumed to contain Kermit
+(<a href="gloss.html#g_apc">APC</a>) sequences are assumed to contain Kermit
 commands.  These are executed if you have enabled this feature in Kermit 95
 (normally it is disabled for security reasons).  APCs are described in detail
 <cite>Using C-Kermit</cite>, pages 278-279.
@@ -8680,7 +8681,7 @@ The original format of this escape sequence was:
 where P1 through P9 are one or more (up to 9) parameters, separated by
 semicolons, and <tt>&#60;CSI&#62;</tt>
 is <tt>&#60;ESC&#62; [</tt> (<tt>&#60;ESC&#62;</tt> is the
-<a href="gloss.htm#g_ascii">ASCII</a> Escape character),
+<a href="gloss.html#g_ascii">ASCII</a> Escape character),
 or its 8-bit equivalent.
 
 <p>
@@ -8737,7 +8738,7 @@ We've already shown you several different ways to capture material from the
 computer or service you are connected to, most of them involving redirection of
 printer material to a file, and then using various buttons and keys to cause
 screens, or parts of them, to be printed or saved.  Those methods all result in
-<a href="gloss.htm#g_plain">plain text</a>
+<a href="gloss.html#g_plain">plain text</a>
 being printed or recorded.  That is, they show what was on the screen
 after the terminal emulator put it there, and they do not show any special
 effects.
@@ -8745,8 +8746,8 @@ effects.
 <p>
 
 But sometimes it is desirable to capture exactly what the other computer sent:
-<a href="gloss.htm#g_ctrlchar">control characters</a>,
-<a href="gloss.htm#g_escseq">escape sequences</a>, and all.  This is often
+<a href="gloss.html#g_ctrlchar">control characters</a>,
+<a href="gloss.html#g_escseq">escape sequences</a>, and all.  This is often
 needed for troubleshooting.  For example, you might want to report
 a suspected terminal emulator malfunction <!--to
 <a href=mailto:kermit-support@columbia.edu>kermit-support@columbia.edu</a>-->.
@@ -8828,7 +8829,7 @@ graphically.
 
 <p>
 
-The session debugging feature can be <a href="gloss.htm#g_toggle">toggled</a>
+The session debugging feature can be <a href="gloss.html#g_toggle">toggled</a>
 on and off while in the Terminal screen with <b>Alt-D</b> (or whichever other
 key the <tt>\Kdebug</tt> verb is assigned to).  In K95G, you can turn
 debugging on and off in the Actions menu.  When debugging is in effect, the
@@ -8852,7 +8853,7 @@ code page, but using reversed underline color.
 <li>Escape sequences are shown in reverse video.
 <p>
 <li>All other characters are shown as is.  This means that characters 32-126
-are shown as normal <a href="gloss.htm#g_ascii">ASCII</a> graphics; 160-255
+are shown as normal <a href="gloss.html#g_ascii">ASCII</a> graphics; 160-255
 are shown as 8-bit graphics in the current code page.
 </ul>
 <p>
@@ -8895,7 +8896,7 @@ Normally K95 refreshes the entire screen every 100 milliseconds, i.e. 10 times
 per second.  This provides good overall throughput, which is always a tradeoff
 between <i>(a)</i> responsiveness to keystrokes, and <i>(b)</i> speed of
 displaying large amounts of scrolling text. You can change the balance and the
-frequency with the <a href="setterm.htm#sttupd"><tt>SET TERMINAL
+frequency with the <a href="setterm.html#sttupd"><tt>SET TERMINAL
 SCREEN-UPDATE</tt></a> command, which chooses the mechanism used for screen
 updating and the update frequency.
 
@@ -8938,7 +8939,7 @@ once each.
 <p>
 
 You can override K95's screen optimization strategy with the <a
-href="setterm.htm#sttopt"><tt>SET TERMINAL SCREEN-OPTIMIZATION</tt></a>
+href="setterm.html#sttopt"><tt>SET TERMINAL SCREEN-OPTIMIZATION</tt></a>
 command.  Optimization is <tt>ON</tt> by default except in Windows 9x/ME when
 the screen width is not 80 or the height is not 25, 43, or 50.  <tt>OFF</tt>
 means don't optimize; repaint the entire screen at every refresh interval.
@@ -8992,7 +8993,7 @@ them.  But they don't come without a cost.  That's the tradeoff.
 <p>
 <b>References:</b>
 <ul>
-<li>K95 Tutorial: <a href="k95tutor.htm#transfer">File Transfer</a>
+<li>K95 Tutorial: <a href="k95tutor.html#transfer">File Transfer</a>
 <li><cite>Using C-Kermit</cite>, Chapters 9-16.
 <li><a href="http://kermit.columbia.edu/ckermit70.html">Updates to <cite>Using C-Kermit, 2nd Edition</cite></a>
 <li><a href="pipes.html">File Transfer Pipes and Filters</a>.
@@ -9018,9 +9019,9 @@ As of version 1.1.21, Kermit 95 includes built-in FTP and HTTP clients.
 This chapter does not discuss them; rather, it discusses the file-transfer
 methods (Kermit, XYZMODEM) that can be used within a terminal-emulation
 session.  For complete details about K95's FTP client,
-see <a href="http://kermit.columbia.edu/ckermit80.htm#x3">Section 3</a> of the
+see <a href="http://kermit.columbia.edu/ckermit80.html#x3">Section 3</a> of the
 <a href="http://kermit.columbia.edu/ckermit80.html">C-Kermit 8.0 Update Notes</a>.  For HTTP, see
-<a href="http://kermit.columbia.edu/ckermit80.htm#x2.2">Section 2.2</a> of the same document.
+<a href="http://kermit.columbia.edu/ckermit80.html#x2.2">Section 2.2</a> of the same document.
 
 </i>
 </blockquote>
@@ -9136,7 +9137,7 @@ Lucky you, this section has been removed.  As of version 1.1.21, K95
 detects whether each file is text or binary when uploading, switches
 to the appropriate mode automatically, and informs its Kermit partner on
 the other end of the connection of the transfer mode for each file.
-For details see <a href="http://kermit.columbia.edu/ckermit80.htm#x4">Section 4</a> of the
+For details see <a href="http://kermit.columbia.edu/ckermit80.html#x4">Section 4</a> of the
 <a href="http://kermit.columbia.edu/ckermit80.html">C-Kermit 8.0 Update Notes</a>.
 
 <p>
@@ -9580,7 +9581,7 @@ must be covered here.
 A <b>Windows text file</b> can be encoded in one of three ways:
 <p><dl>
 
-<dt><i>An <a href="gloss.htm#g_oem">OEM</a> Code Page:</i>
+<dt><i>An <a href="gloss.html#g_oem">OEM</a> Code Page:</i>
 
 <dd>Also known as PC code pages or DOS code pages.  These are used in Console
 ("MS-DOS Command") windows and in programs like EDIT that run in these
@@ -9603,10 +9604,10 @@ Code Pages.  They usually have 4-digit numbers, as in CP1250.
 <dt><i>Unicode:</i>
 
 <dd>Microsoft Word and certain other applications might also be able to
-handle documents with <a href="gloss.htm#g_unicode">Unicode</a> (ISO 10646)
-encoding in <a href="gloss.htm#g_ucs">UCS-2</a> or
-<a href="gloss.htm#g_utf8">UTF-8</a> format.  (Unicode file transfer is
-discussed in <a href="http://kermit.columbia.edu/ckermit70.htm#x6.6">Section 6.6</a> of the
+handle documents with <a href="gloss.html#g_unicode">Unicode</a> (ISO 10646)
+encoding in <a href="gloss.html#g_ucs">UCS-2</a> or
+<a href="gloss.html#g_utf8">UTF-8</a> format.  (Unicode file transfer is
+discussed in <a href="http://kermit.columbia.edu/ckermit70.html#x6.6">Section 6.6</a> of the
 C-Kermit 7.0 Update Notes.)
 
 </dl>
@@ -9768,7 +9769,7 @@ somewhat more for uncompressed binary files such as program executables.
 <p>
 
 Here's the deal: the Kermit protocol normally converts and prefixes
-<a href="gloss.htm#g_ctrlchar">control characters</a>
+<a href="gloss.html#g_ctrlchar">control characters</a>
 rather than sending them "bare" in a packet, because they might interfere with
 the transfer, or hang up your connection, or worse.  This sort of disaster was
 commonplace in the micro-to-mainframe world where Kermit grew up.  But it's a
@@ -9853,7 +9854,7 @@ automation techniques, and character sets.
 In the years since publication of the 2nd Edition of <cite>Using
 C-Kermit</cite>, a great deal has been added.  The new features are documented
 in <a href="http://kermit.columbia.edu/ckermit70.html">Updates to <cite>Using C-Kermit, 2nd
-Edition</cite></a>.  <a href="http://kermit.columbia.edu/ckermit70.htm#x4">Section 4</a> of that file
+Edition</cite></a>.  <a href="http://kermit.columbia.edu/ckermit70.html#x4">Section 4</a> of that file
 covers file transfer and management.  Some highlights include:
 
 <p>
@@ -9928,7 +9929,7 @@ subprocesses to handle them.
 
 For a thorough presentation of Kermit's script programming language, refer to
 Chapters 17-19 of <cite>Using C-Kermit</cite> and
-<a href="http://kermit.columbia.edu/ckermit70.htm#x7">Section 7</a> of The C-Kermit 7.0 Supplement.
+<a href="http://kermit.columbia.edu/ckermit70.html#x7">Section 7</a> of The C-Kermit 7.0 Supplement.
 
 <p>
 
@@ -10295,7 +10296,7 @@ come in, and so on.  If SESSIONS is greater than 1, we use a special
 sessions.
 <blockquote>
 IMPORTANT: Only Microsoft TCP/IP allows multiple sessions.  If you have FTP
-Software OnNet-32 or Trumpet <a href="gloss.htm#g_winsock"> Winsock</a>, you
+Software OnNet-32 or Trumpet <a href="gloss.html#g_winsock"> Winsock</a>, you
 must set SESSIONS to 1 because the <tt>K95D.EXE</tt> program cannot pass the
 socket handles of incoming sessions to the K95 processes that it starts.
 </blockquote>
@@ -11178,7 +11179,7 @@ would result in its full evaluation, giving undesired results like:
 </pre>
 <p>
 
-Windows and OS/2, at the <a href="gloss.htm#g_api">API</a> level, can accept
+Windows and OS/2, at the <a href="gloss.html#g_api">API</a> level, can accept
 forward slash (/) as well as backslash (\) as a directory separator, and
 therefore so can self-contained Kermit 95 commands such as SEND, MKDIR, etc,
 that take filenames or directory names.  Unfortunately, however, Windows

@@ -29,7 +29,7 @@ color black white" for black letters on a white background.
 <dt><tt><a name="trmtyp">SET TERMINAL TYPE <i>{</i> ANSI, TTY, VT52, VT100, VT102, VT220, VT320, ... <i>}</i></tt>
 <dd>  Choose the type of terminal that Kermit should emulate in the Terminal
 window.  <a href="termtype.html">CLICK HERE</a> for a complete list.  If you
-choose an <a href="gloss.htm#g_ansi">ANSI</a> type, the appropropriate
+choose an <a href="gloss.html#g_ansi">ANSI</a> type, the appropropriate
 coloration, character set, and screen size are chosen for you automatically.
 <p>
 <dt><tt>SET TERMINAL ANSWERBACK <i>{</i> OFF, ON, <i>}</i></tt>
@@ -57,7 +57,7 @@ must spell <tt>UNSAFE-MESSAGE</tt> all the way out -- no abbreviations.
 <p>
 <dt><tt>SET TERMINAL APC <i>{</i> OFF, ON, UNCHECKED <i>}</i></tt>
 <dd>Controls execution of Application Program Commands
-(<a href="gloss.htm#apc">APC</a>s)
+(<a href="gloss.html#apc">APC</a>s)
 sent by the host while
 Kermit-95's terminal screen is active.  ON allows execution of "safe"
 commands and disallows obviously dangerous commands such as <tt>DELETE</tt>,
@@ -90,7 +90,7 @@ intensity of the background color.  If you turn <tt>BLINK</tt> <tt>OFF</tt>
 while <tt>UNDERLINE</tt> is <tt>ON</tt>, then, because <tt>BLINK</tt> is now
 represented by reversing the intensity of the background color, blink and
 underline would look the same, so <tt>UNDERLINE</tt> reverts to <tt>OFF</tt>.
-(This will be remedied in the <a href="gloss.htm#g_gui">full-GUI</a> version,
+(This will be remedied in the <a href="gloss.html#g_gui">full-GUI</a> version,
 where true underlining can be done.)
 </blockquote>
 <p>
@@ -437,7 +437,7 @@ default is OFF.
 is connected to, and assign it to one of the tables
 <a href="iso2022.html">G0 through G3</a>, or
 to <tt>ALL</tt> four of them.  By default,
-<a href="gloss.htm#g_ascii">ASCII</a> is assigned to G0, any other
+<a href="gloss.html#g_ascii">ASCII</a> is assigned to G0, any other
 national 7-bit set is assigned to <tt>ALL</tt>, and any 8-bit set is assigned
 to G1, G2, and G3.  The host switches among G0,G1,G2,G3 by setting the 8th bit
 of a character to 0 or 1, or with Shift-In/Shift-Out, or with escape
@@ -530,8 +530,8 @@ instructs Kermit 95 to send the actual data.
 <dt><tt>SET TERMINAL SEND-END-OF-BLOCK <i>{</i> CRLF_ETX  US_CR <i>}</i></tt>
 <dd>Specifies the characters to use as end of line and end of block indicators
 when sending data to the host.  The default is <tt>US_CR</tt>.  The options
-are combinations of names of <a href="gloss.htm#g_ascii">ASCII</a>
-<a href="gloss.htm#g_ctrlchar">control characters</a>.
+are combinations of names of <a href="gloss.html#g_ascii">ASCII</a>
+<a href="gloss.html#g_ctrlchar">control characters</a>.
 <p>
 <dt><tt>SET TERMINAL SGR-COLORS <i>{</i> ON, OFF <i>}</i></tt>
 <dd>SGR means Set Graphic Rendition.  It is the name of the 
