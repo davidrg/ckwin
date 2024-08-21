@@ -11,17 +11,73 @@ Command line options are operands given on the shell command line used
 to start a program, such as K95, that can be processed by the program
 after it starts.  For example:
 <p><pre>
-  k95 -Y -l com2 -b 57600
+  C:\> <u>k95 -Y -l com2 -b 57600</u>
 </pre><p>
-each letter preceded by a dash is an option.  Some options (like "-l" and
-"-b") take operands (like "com1" or "57600"), others (like "-Y") don't.
+Each letter preceded by a dash is an option. Command-line options are
+case-sensitive; "-s" is different from "-S". Some options (like "-l" and "-b")
+take arguments (like "com1" or "57600"), others (like "-Y") don't. When an
+option does not require an argument it can be bundled with other options:
+<p><pre>
+  C:\> <u>k95 -Qis oofa.exe</u>
+</pre><p>
+<p>If an option contains spaces, it must be enclosed in doublequotes:
+<p><pre>
+   C:\> <u>k95.exe -s "filename with spaces"</u>
+</pre>
+<p>When any "action options" are included on the command line (such as <tt>-s</tt>
+    to send a file), Kermit exits after executing its command-line options.
+    If -S is included, or no action options were given, Kermit enters its
+    interactive command parser and issues its prompt.
+
+<p>Exceptions to the rules:
+<ul>
+<li>If the first command-line option is a filename, Kermit executes commands
+    from the file.  Additional command-line options can follow the filename.
+<li>The special option "=" (equal sign) or "--" (double hyphen) means to
+    treat the rest of the command line as data, rather than commands; this
+    data is placed in the argument vector array, \&@[], along with the other
+    items on the command line, and also in the top-level \%1..\%9 variables.
+<li>A similar option "+" (plus sign) means: the name of a Kermit script
+    file follows.  This file is to be executed, and its name assigned to \%0
+    and \&_[0].  All subsequent command-line arguments are to be ignored by
+    Kermit but made available to the script as \%1, \%2, ..., as well as
+    in the argument-vector arrays.  The initialization file is not executed
+    automatically in this case.
+<li>The -s option can accept multiple filenames, separated by spaces.
+<li>the -j and -J options allow an optional second argument, the TCP port
+    name or number.
+</ul>
+
+<p>To get help on all available command-line options, including those which
+are not documented here, type <tt><u>help options all</u></tt> at the Kermit 95 prompt,
+or type <tt><u>help option x</u></tt> to get help for option x.</p>
+
+<p> Kermit also offers a selection of "extended command-line" options.
+These begin with two dashes, followed by a keyword, and then, if the option
+has arguments, a colon (:) or equal sign (=) followed by the argument.
+Unlike single-letter options, extended option keywords aren't case-sensitive,
+and they can be abbreviated to any length that still distinguishes them from
+other extended-option keywords.  Example:
+<p><pre>
+   C:\> <u>k95.exe --banner:oofa.txt</u>
+</pre>
+<p>which designates the file oofa.txt to be printed upon startup, rather than
+the built-in banner (greeting) text.  To obtain a list of available
+extended options, type <tt><u>help extended-options ?</u></tt>.
+To get help about all extended options, type <tt><u>help extended-options</u></tt>.
+To get help about a particular extended option, type
+<tt><u>help extended-option xxx</tt></u>, where "xxx" is the option keyword.
+</p>
+
 <p>
-Command line options are documented in <cite>Using C-Kermit</cite>,
+Command line options are documented in
+<a href="https://www.kermitproject.org/usingckermit.html"><cite>Using C-Kermit</cite></a>,
 Appendix I, augmented by the
 <a href="ckermi70.html">C-Kermit 7.0 Updates</a> and
-<a href="ckermi80.html">C-Kermit 8.0 Updates</a> 
+<a href="ckermi80.html">C-Kermit 8.0 Updates</a> and
+<a href="ckermi90.html">C-Kermit 9.0 Updates</a> and
 documents.
-This section lists options that are specific to K95.
+This section lists only those options that are specific to K95.
 <p>
 <dl>
 <dt><tt>-l _<i>number</i></tt>

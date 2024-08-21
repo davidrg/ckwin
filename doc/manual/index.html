@@ -673,11 +673,11 @@ in Windows 7 and later &mdash;
 <p>
 
 To start K95 from a command window (such as CMD.EXE or PowerShell), type
-"start <i>path</i>\k95.exe", where <i>path</i> is where the Kermit 95
+"start <i>path</i>\k95g.exe", where <i>path</i> is where the Kermit 95
 is stored; for example:
 
 <blockquote>
-start "C:\Program Files (x86)\Kermit 95 2.1\k95g.exe"
+start "C:\Program Files\Kermit 95\k95g.exe"
 </blockquote>
 
 (note that k95g.exe is the GUI version; k95.exe is the console version).
@@ -694,17 +694,20 @@ purpose for this section is presenting K95's command-line options:
 configuration or action commands that you can give in the same command
 that you start K95 with.
 
-Command-line options are given after the program name in the system
-command that you use to start Kermit (in this and the following examples,
-"start k95g.exe" should be replaced by the appropiate command as
+Command-line options are given after the program name
+in the system command that you use to start Kermit (in this and the following
+examples, "start k95g.exe" should be replaced by the appropriate command as
 explained just above, e.g. 'start "K95 GUI.lnk"'):
 
 <blockquote>
  start k95g.exe -i -s oofa.exe
 </blockquote>
 
-tells Kermit to send (-s) the file oofa.exe in binary (-i) mode.
+tells Kermit to send (-s) the file oofa.exe in binary (-i) mode. For more
+details on Kermit 95s command line options, see <a href="cmdline.html">Command
+line reference</a>.
 
+<!--
 <p>
 
 Command-line options are case-sensitive; "-s" is different from "-S".
@@ -1074,6 +1077,8 @@ The following extended options are available:
    start K95G window maximized.
 </pre>
 </div>
+
+-->
 
 <h3 id="techsupport">Technical Support</h3>
 
