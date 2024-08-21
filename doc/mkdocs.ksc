@@ -32,8 +32,17 @@
 ;
 ;	$ver-short-date$	Like $ver-date$ but with the month shortened to three characters
 ;
+;	$ver-date-iso$		Like $ver-date$ but ISO8601 style: YYYY-MM-DD
+;
 ;	$last-update$		The last modified time for the file, or the timestamp of
 ;						the last commit to modify the file if run inside a git repo
+;
+; An alternative format is also available for these tags:
+;	$!ver$
+; This will be replaced completely by the tags value. $!ver$ won't appear in
+; the output at all, but unlike the other format it *will* be visible in the
+; input document. This is for places where the other format is unsuitable.
+; For example, in the title tag or in a url or other HTML attribute
 ;
 ; For development builds, run:
 ;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual true false true
@@ -51,8 +60,15 @@
 ; version (k95g.exe) tends to be much slower due to having to open a new
 ; temporary console window to run git in for each file.
 ;
+;
+; TODO: We also need single replacement values that can be used where
+;       comments aren't allowed - such as within strings or the title tag.
+; Replacements needed:
+;   $!ver-full$             Same as $ver-full$  - for index.html <title> tag
+;   $!ver-date-iso$         Eg 2023-07-05       - For github issues links at line 1110
+;
 
-local ver_maj_min ver_full ver_long_date ver_date file_last_modified touch_date
+local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modified touch_date
 
 ; ============================================================================
 ; Output usage
@@ -89,6 +105,56 @@ if not defined \%2 usage
 if defined \%3 .touch_files := \%3
 if defined \%4 .dry_run := \%4
 if defined \%5 .dev := \%5
+
+; ============================================================================
+; Date Utility Functions
+
+define short_month_to_number {
+echo short_month_to_number \%1
+	switch \%1 {
+		:Jan, return 01, break
+		:Feb, return 02, break
+		:Mar, return 03, break
+		:Apr, return 04, break
+		:May, return 05, break
+		:Jun, return 06, break
+		:Jul, return 07, break
+		:Aug, return 08, break
+		:Sep, return 09, break
+		:Oct, return 10, break
+		:Nov, return 11, break
+		:Dec, return 12, break
+	}
+	echo No match, return 0
+	return 0
+}
+
+; Convert either the Gits RFC2822 style date (eg, Mon, 19 Aug 2024 19:41:25 +1200)
+; or the \Fdate format (eg 20240819 20:54:26) to the format required by TOUCH
+;
+;  Parameters
+;	  	1  The date to convert
+;		2  The date format:
+;				0 Fdate
+;				1 Git
+define date_to_touch_date {
+	local x \&a
+
+	if = \%2 0 {
+		; Convert \Fdate format
+		.touch_date := \Fsubstring(\%1,1,4):\Fsubstring(\%1,5,2):\Fsubstring(\%1,7,2):\Fsubstring(\%1,10,8)
+	} else {
+		; Convert git format
+		def \%a
+		.x := \Fsplit(\%1,&a)
+
+		; Convert month to a number
+		short_month_to_number \&a[3]
+		assign \&a[3] \v(return)
+
+		.touch_date := \&a[4]:\&a[3]:\&a[2]:\&a[5]:\&a[6]:\&a[7]
+	}
+}
 
 ; ============================================================================
 ; This extracts the version from the herald which is not very nice and won't
@@ -142,6 +208,9 @@ if \m(dev) {
 
 .ver_date := \m(ver_day) \m(ver_month) \m(ver_year)
 
+short_month_to_number \m(ver_month)
+.ver_month_num := \v(return)
+
 switch \m(ver_month) {
 	:Jan, .ver_month := January, break
 	:Feb, .ver_month := February, break
@@ -157,55 +226,11 @@ switch \m(ver_month) {
 	:Dec, .ver_month := December, break
 }
 
-.ver_long_date := \m(ver_day) \m(ver_month) \m(ver_year)
+.ver_long_date := \m(ver_day) \m(ver_month_num) \m(ver_year)
 
-; ============================================================================
-; Date Utility Functions
+.ver_date_iso := \m(ver_year)-\m(ver_month_num)-\m(ver_day)
 
-define short_month_to_number {
-	switch \%1 {
-		:Jan, assign return 01, break
-		:Feb, assign return 02, break
-		:Mar, assign return 03, break
-		:Apr, assign return 04, break
-		:May, assign return 05, break
-		:Jun, assign return 06, break
-		:Jul, assign return 07, break
-		:Aug, assign return 08, break
-		:Sep, assign return 09, break
-		:Oct, assign return 10, break
-		:Nov, assign return 11, break
-		:Dec, assign return 12, break
-	}
-	return 0
-}
 
-; Convert either the Gits RFC2822 style date (eg, Mon, 19 Aug 2024 19:41:25 +1200)
-; or the \Fdate format (eg 20240819 20:54:26) to the format required by TOUCH
-;
-;  Parameters
-;	  	1  The date to convert
-;		2  The date format:
-;				0 Fdate
-;				1 Git
-define date_to_touch_date {
-	local x \&a
-
-	if = \%2 0 {
-		; Convert \Fdate format
-		.touch_date := \Fsubstring(\%1,1,4):\Fsubstring(\%1,5,2):\Fsubstring(\%1,7,2):\Fsubstring(\%1,10,8)
-	} else {
-		; Convert git format
-		def \%a
-		.x := \Fsplit(\%1,&a)
-
-		; Convert month to a number
-		short_month_to_number \&a[3]
-		assign \&a[3] \v(return)
-
-		.touch_date := \&a[4]:\&a[3]:\&a[2]:\&a[5]:\&a[6]:\&a[7]
-	}
-}
 
 ; ============================================================================
 ; Functions to update the value between two tags.
@@ -283,11 +308,20 @@ define update_tag {
 	;.upd_line := \m(line)
 }
 
+define replace_tag {
+	.line := \Fcontents(\%1)
+	.tag := \%2
+	.value := \%3
+
+	return \Freplace(\m(line),\m(tag),\m(value))
+}
+
 ; ============================================================================
 ; Function to update tags in a single file
 
 def process_file {
 	local file_in file_out file_last_modified grepresult setdate getdate format
+	define \%9
 
 	.file_in := \%1
 	.file_out := \%2
@@ -336,6 +370,7 @@ def process_file {
 		fread /line \%i line
 		if fail break
 
+		; Update two-part tags (<!--$foo$-->value here<!--/$foo$-->
 		update_tag \m(line) $ver$ {\m(ver_maj_min)}
 		.line := \v(return)
 
@@ -348,8 +383,31 @@ def process_file {
 		update_tag \m(line) $ver-short-date$ {\m(ver_date)}
 		.line := \v(return)
 
+		update_tag \m(line) $ver-date-iso$ {\m(ver_date_iso)}
+		.line := \v(return)
+
 		update_tag \m(line) $last-update$ {\m(file_last_modified)}
 		.line := \v(return)
+
+		; Update one-part tags ($!foo$)
+		replace_tag \m(line) $!ver$ {\m(ver_maj_min)}
+		.line := \v(return)
+
+		replace_tag \m(line) $!ver-full$ {\m(ver_full)}
+		.line := \v(return)
+
+		replace_tag \m(line) $!ver-date$ {\m(ver_long_date)}
+		.line := \v(return)
+
+		replace_tag \m(line) $!ver-short-date$ {\m(ver_date)}
+		.line := \v(return)
+
+		replace_tag \m(line) $!ver-date-iso$ {\m(ver_date_iso)}
+		.line := \v(return)
+
+		replace_tag \m(line) $!last-update$ {\m(file_last_modified)}
+		.line := \v(return)
+
 
 		;echo \m(line)
 		fwrite /line \%o \m(line)
@@ -374,6 +432,7 @@ echo . Ver: \m(ver_maj_min)
 echo . Ver-Full: \m(ver_full)
 echo . Ver-Date: \m(ver_long_date)
 echo . Ver-Date-Short: \m(ver_date)
+echo . Ver-Date-ISO: \m(ver_date_iso)
 echo
 
 ; ============================================================================
