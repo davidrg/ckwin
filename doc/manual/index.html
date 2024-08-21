@@ -4976,14 +4976,19 @@ are special:
 
 <p>
 <ol>
-<li>If the RUN command starts a GUI program, a new window is created.  If
+<li>In K95.EXE, If the RUN command starts a GUI program, a new window is created.  If
 it starts a text-mode (console) program or DOS shell command, it is executed
-in Kermit's window.
+in Kermit's window. In K95G.EXE, the RUN command always creates a new window.
+    If the RUN command starts a GUI program, it may additionally create an
+    empty console window which will remain open for as long as the GUI program
+    is running (this is a <a href="k95bugs.html#b824">long-standing bug</a>).
+    <!-- BUG #114 / 824-->
 
 <p>
 
 <li>K95, like all other Kermit programs, waits for the command to complete
-before issuing its prompt or executing its next command.  What happens next
+before issuing its prompt or executing its next command. In K95G.EXE, when the
+command completes its window closes immediately. In K95.EXE, what happens next
 depends on Kermit's command level:
 
 <p>
@@ -5031,10 +5036,27 @@ the associated application.  For example:
   K-95&gt; <u>run clouds.jpg</u>        ; Displays a photograph
   K-95&gt; <u>run office.ksc</u>        ; New copy of K95 executes this script
 </pre>
+<p>
+
+<li>On Windows 10 version 1809 and newer, K95 supports Pseudoterminals (PTYs) allowing you
+    to run Windows console applications within K95s terminal emulator. For best
+    results, set your terminal type to Linux or VT320, then:
+<p>
+<pre>
+  K-95&gt; <u>pty cmd</u>                   ; Open the windows console
+  K-95&gt; <u>pty powershell</u>            ; Open powershell
+  K-95&gt; <u>run cmd /c dir && pause</u>   ; Run a "DOS" command (dir) then wait for a key press
+</pre>
+<p>
+<p> Note that as PTYs are a type of connection, trying to switch back to connect
+    mode after the command has finished will cause Kermit to "reconnect" which in
+    this case really means running the command again! So if the command is
+    something you wouldn't want to run accidentally (like deleting a file), you
+    might not want to run it via a PTY.
 </ol>
 <p>
 
-This last property is especially handy on terminal connections.  For example,
+This fourth property is especially handy on terminal connections.  For example,
 suppose somebody sent a <tt>.DOC</tt> (Microsoft Word) enclosure to your
 Unix-based host e-mail account, where you can't read it.  You save the
 enclosure on your Unix disk, download it with Kermit, and then just tell K95
