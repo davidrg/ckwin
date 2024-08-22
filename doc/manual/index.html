@@ -8900,7 +8900,7 @@ course, the colors and highlighting are lost.
 
 Due to the wide variety of PC video adapters and Windows and OS/2 drivers
 for them, and numerous other factors, there can be no single screen update
-strategy that works best for everyone.  Therefore Kermit 95 includes commands
+strategy that works best for everyone.  Therefore, Kermit 95 includes commands
 to let you choose and tune the screen update method.
 
 <p>
@@ -8912,7 +8912,7 @@ have several components:
 <p><ol>
 <li>Delays in the connection itself;
 <li>Operating system process and thread scheduling;
-<li>The Console Agent <tt>CONAGENT.EXE</tt> (if using Windows 95/98/ME);
+<li>The Console Agent <tt>CONAGENT.EXE</tt> (if using K95.EXE on Windows 95/98/ME);
 <li>Value-added features like URL highlighting and autodownload.
 <li>K95's own screen update algorithm.
 </ol>
@@ -8929,12 +8929,14 @@ updating and the update frequency.
 <p>
 
 A smaller interval might produce snappier echoing, but probably at the
-expense of scrolling speed. SMOOTH forces screen refresh with every
-incoming character, and so turns the balance to totally favor fast echoing.
+expense of scrolling speed. SMOOTH (only available in K95.EXE) forces screen
+refresh with every incoming character, and so turns the balance to totally
+favor fast echoing.
 
 <p>
 
-Kermit 95 normally optimizes screen updates by writing only those cells that
+The Console version of Kermit 95 (K95.EXE) normally optimizes screen updates
+by writing only those cells that
 changed in situations where it knows this is safe.  It appears to be safe in
 Windows NT/2000/XP/etc and OS/2 (all versions, all screen sizes), and in
 Windows 95 if the screen size is 80 by 25, 43, or 50; with any other
@@ -8964,7 +8966,7 @@ once each.
 
 <p>
 
-You can override K95's screen optimization strategy with the <a
+You can override K95.EXE's screen optimization strategy with the <a
 href="setterm.html#sttopt"><tt>SET TERMINAL SCREEN-OPTIMIZE</tt></a>
 command.  Optimization is <tt>ON</tt> by default except in Windows 9x/ME when
 the screen width is not 80 or the height is not 25, 43, or 50.  <tt>OFF</tt>
