@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Terminal Emulation</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Terminal Emulation - What Is It?</h2>
+
+Years ago, before the PC revolution, people used <b>terminals</b> to interact
+directly with computers (they also submitted batch jobs on decks of punched
+cards or rolls of paper tape, but that's another story).  A terminal has a
+keyboard, a display, and a communication port.  The earliest terminals were
+Teletypes (in wide use since the late 1920s), a kind of communicating
+typewriter.  <i>(What's a typewriter?)</i> By the mid-1970s, most terminals
+had video displays (like a PC monitor) instead of printing on paper.
+Typically many terminals were connected to one large computer, which all the
+users shared; this was called timesharing.  Well-known timesharing systems
+included MULTICS, UNIX, RSTS/E, TOPS-10, TENEX, TOPS-20, AOS/VS, VMS, VOS,
+VM/CMS, and TSO; some of these are long gone, others are still popular today.
+
+<p>
+<b>Video terminals</b> did more than simply display incoming letters, digits,
+and punctuation, as a typewriter would.  They also included formatting
+capabilities allowing for host-directed cursor positioning, erasing,
+highlighting, printing, coloration, forms-filling, and so forth.  The
+formatting was accomplished by embedding <a href="gloss.html#g_escseq">escape
+sequences</a> in the data 
+stream.  Of course, every kind of terminal used different different escape
+sequences, and over the years escape sequences became more powerful and
+complex.
+
+<p>
+
+Meanwhile, <b>special keys</b> began to appear on terminal keyboards: arrow
+keys, function keys, editing keys, and so on.  Unlike the regular typewriter
+keys (letters, digits, punctuation), these keys did not have a one-to-one
+correspondence to the <a href="gloss.html#g_ascii">ASCII</a> character set,
+which does not include arrows, functions, and the like, so each terminal
+vendor assigned differing and incompatible escape sequences to them.
+
+<p>
+
+The phrase <b>terminal emulation</b> applies to software on a personal
+computer that does what a specific real terminal would do:
+
+<ol>
+
+<li>It maps terminal keys to PC keys.
+
+<li>When you press a key, it sends what the corresponding terminal key would
+send.
+
+<li>It displays incoming characters on the screen.
+
+<li>It responds to incoming escape sequences as the real terminal would.
+
+</ol>
+
+Point 1 is important because very few terminals have the same keyboard as
+a PC.  The number of keys might be different, the keys might be labeled
+differently, and keys that are labeled the same way might have different
+placement.  For this reason, no single mapping (of say, VT220 to PC) will
+please everybody.  Thus most terminal emulators give you a way to
+<i>change</i> the mapping to suit your preferences.
+
+<p>
+<hr>
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

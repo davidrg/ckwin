@@ -1,0 +1,164 @@
+<html><head>
+<title>K95 GUI Screen Shots</title>
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">K95 GUI Screen Shots</a></h2>
+
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+
+<p>
+
+<img src="glass2.gif">
+
+<p>
+
+This graphic illustrates how Kermit 95, given a sufficiently populated
+monospaced font (such as <a href="http://www.monotype.com">Agfa Monotype</a>
+Andale Mono 64 WT J, shown here), can display text in many languages and
+writing systems in a terminal session.  The quality of the display and the
+appearance of each character, of course, depend on the font and your screen
+resolution.  Kermit's host character set in this case is UTF-8 (a form of
+<a href="http://www.unicode.org">Unicode</a>), which is the only character set
+capable of encompassing such a comprehensive repertoire.  Notes:
+
+<p>
+<ul>
+
+<li>Anglo-Saxon is written in both Latin letters and Runes.
+
+<p>
+
+<li>The Arabic and Hebrew phrases are backwards -- in terminal-based
+communication, management of bidirectionality is the responsibility of the
+host application (the application used in the example is simply the Unix 'cat'
+command, which is not BIDI-aware).  See below for a Hebrew-aware
+host-based application.
+
+<p>
+
+<li>The Hindi example includes some combining characters, which Kermit 95
+does not presently handle.  These are shown in separate cells.  We plan to
+support combining sequences in a future release.
+
+<p>
+
+<li>The Chinese, Japanese, and Korean examples are cramped because this is a
+monospace font.  In future K95 releases, we hope to devise a method for
+displaying CJK characters in doublewidth.
+
+<p>
+
+<li>The Armenian letters are rather diminutive and have their descenders cut
+off; that's a characteristic of this font.  The Georgian descenders are also
+slightly clipped.  See the final example on this page for better renderings of
+Armenian and Georgian.
+
+</ul>
+<p>
+
+For comparison, here is a screen shot with a different font, Courier New,
+which comes standard on most Microsoft operating systems, and can be
+<a href="http://www.microsoft.com/truetype/fontpack/">downloaded from
+Microsoft</a> in case you don't have it: 
+
+<p>
+
+<img alt="Screen shot" src="courier.gif">
+
+<p>
+
+As you can see, the repertoire is smaller.  
+
+<a name="aleph">Now, for Right-to-Left languages:</a>
+
+<p>
+
+<img alt="Screen shot" src="hebrew1.gif">
+
+<p>
+
+This is a shot of the English/Hebrew/Yiddish bibliographic system called ALEPH
+from Hebrew University of Jerusalem, which runs on VMS with DEC VT terminal
+emulation, using ISO 2022 character-set designation and invocation sequences
+to switch between ASCII and the ISO 8859-8 Latin/Hebrew alphabet (shown as
+"hebrew-iso" in the character-set selection combo box).  Here Kermit 95
+converts between the host encoding and the native Unicode encoding on Windows.
+The main page is in English with a Hebrew subheading.  Entering "?/HEB"
+switches to Hebrew mode:
+
+<p>
+
+<img alt="Screen shot" src="hebrew2.gif">
+
+<p>
+
+in which we have a Hebrew menu and search screens, and where typing Hebrew
+letters (which can be done with the regular Windows Hebrew keyboard driver or
+with Kermit's built-in Hebrew keyboard mode) echoes from right to left (and
+Roman from left to right), all under control of the host application, which
+works by positioning each character on the screen with escape sequences.
+
+
+<p>
+
+<a name="keyboard">As to <i>typing</i></a>
+Unicode characters at the keyboard . . . &nbsp; &nbsp;
+Keyboard input methods are evolving and changing all the time.  Clearly, no
+single keyboard can be expected to have all the characters of all the world's
+writing systems; thus many fancy schemes are devised to allow (for example)
+input of Chinese characters on a Roman keyboard.  There is, however, a very
+straightfoward (if not especially convenient) method for entering any
+character, illustrated here:
+
+<p>
+
+<img alt="Screen shot" src="kucs2.gif">
+
+<p>
+
+Kermit 95 has always had a Compose key (Alt-C by default), usable for
+composing accented Roman characters.  Now it also has a Unicode key (assigned
+by default to Alt-N, also accessible from the Actions menu).  When you press
+the Unicode key, you get a mini-dialog in the status line, in which you may
+type exactly 4 hexadecimal digits (0-9, a-f, case of letters doesn't matter),
+which denote a Unicode character in the Base Multilingual Plane.  Kermit
+converts this to whatever character set is in use on the host and sends the
+result.  Of course you need a Unicode code chart to know which codes
+correspond to what characters.  For this you can use
+<a href="http://www.unicode.org/unicode/uni2book/aboutbook.html">The Unicode
+Standard</a> itself (a book) or the online material at the
+<a href="http://www.unicode.org">Unicode Consortium</a>.
+The screen shot was produced by pressing Alt-N to enter Unicode Compose mode
+and then Alt-H to get context-sensitive help.
+
+<p>
+
+<a name="emt">Finally</a>, here's a shot of the original sample text using the
+new <a href="http://www.evertype.com">Everson Mono Terminal</a> font that is
+packaged with K95 2.0:
+
+<p>
+
+<img alt="Screen shot" src="evermont.gif">
+
+<p>
+
+Note that the Hindi, Chinese, and Korean are missing; the Japanese shows only
+Kana (no Kanji), but the rest is there, including the Runes, Armenian, and
+Georgian missing from Courier New.  The spacing is a bit looser than Courier
+or Andale Mono (hence no descenders are clipped) and the effect lighter.
+
+<p>
+
+[ <a href="k95.html"><b>K95 Home</b></a> ]
+[ <a href="index.html"><b>Kermit Home</b></a> ]
+[ <a href="http://www.unicode.org"><b>Unicode Consortium</b></a> ]
+<hr>
+<address>
+K95 Screen Shot / The Kermit Project /
+Columbia University /
+<a href="mailto:kermit@columbia.edu">kermit@columbia.edu</a> /
+24 October 2002
+</address>
+</body>
+</html>

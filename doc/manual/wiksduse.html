@@ -1,0 +1,1463 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Windows Internet Kermit Service - User Guide</title>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">
+<tt>Windows Internet Kermit Service - User Guide</tt></a></a></h2>
+
+[ <a href="#contents">Contents</a> ]
+[ <a href="http://www.columbia.edu/kermit/wiksdadmin.html">
+WIKSD Admin Guide</a> ]
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+
+<p>
+
+<b>ABSTRACT:</b> How to use the <b>Windows Internet Kermit Service:</b>
+a standards-compliant File Transfer and
+Management Shell for Windows NT, 2000, and XP from the
+<a href="http://www.columbia.edu/kermit/">Kermit Project at Columbia
+University</a>, available in free and secure versions.
+
+<p>
+
+<tt>&nbsp;&nbsp;</tt>
+<i>As of Kermit 95 version:</i>  <b>2.0</b><br>
+<tt>&nbsp;&nbsp;</tt>
+<i>This file last updated:</i><b>
+4 June 2002
+</b> &nbsp; (New York City time)
+<p>
+
+IF YOU ARE READING A PLAIN-TEXT version of this document, 
+it is a plain-text dump of a Web page.  You can visit the original (and
+possibly more up-to-date) Web page here:
+
+<p>
+<pre>
+  <a href="http://www.columbia.edu/kermit/wiksduser.html">http://www.columbia.edu/kermit/wiksduser.html</a>
+</pre>
+
+
+<h3><a name="contents"><hr>CONTENTS</a></h3>
+
+<pre>
+  1. <a href="#x1"><b>INTRODUCTION</b></a>
+  2. <a href="#x2"><b>INTERACTIVE USE</b></a>
+     2.1. <a href="#x2.1"><b>K95 as a Windows Shell</b></a>
+     2.2. <a href="#x2.2"><b>How to Enter K95 Commands</b></a>
+     2.3. <a href="#x2.3"><b>How to Edit K95 Commands</b></a>
+     2.4. <a href="#x2.4"><b>Recalling Previous Commands</b></a>
+     2.5. <a href="#x2.5"><b>Cancelling a Command in Progress</b></a>
+     2.6. <a href="#x2.6"><b>Special Characters in Commands</b></a>
+     2.7. <a href="#x2.7"><b>Multi-Purpose Fields</b></a>
+     2.8. <a href="#x2.8"><b>Screen Formatting</b></a>
+     2.9. <a href="#x2.9"><b>Lots of Features</b></a>
+  3. <a href="#x3"><b>TRANSFERRING FILES</b></a>
+     3.1. <a href="#x3.1"><b>Sending Files from IKSD to Your Computer</b></a>
+     3.2. <a href="#x3.2"><b>Sending Files from Your Computer to IKSD</b></a>
+  4. <a href="#x4"><b>CLIENT/SERVER</b></a>
+  5. <a href="#x5"><b>AUTOMATION</b></a>
+  6. <a href="#x5"><b>APPLICATIONS AND EXAMPLES</b></a>
+</pre>
+
+<h3><a name="x1"><hr>1. INTRODUCTION</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x1">Next</a> ]
+<p>
+
+<b>The Windows Internet Kermit Service Daemon (WIKSD) for Windows NT, 2000,
+and XP</b> from the <a href="http://www.columbia.edu/kermit/index.html">Kermit
+Project</a> at Columbia University lets anybody with a suitable Telnet client
+make connections and log in to an Internet-connected Windows PC and download,
+upload, and manage files.  WIKSD is a self-contained, user-friendly, text-mode
+file-transfer and -management shell that can be accessed by Telnet using
+either clear-text or secure authentication methods.  Here are the kinds of
+things that WIKSD can do (within your logged-in access rights):
+
+<p>
+<ul>
+<li>Transfer files to and from your Telnet client
+(if your Telnet client supports Kermit protocol), including:
+<ul>
+<li>Automatic text/binary mode switching
+<li>Recursive directory traversal
+<li>Recovery of interrupted transfers
+<li>Atomic file movement
+<li>Text-file record-format and character-set conversion
+<li>File timestamp preservation and update mode
+</ul>
+<li>Produce directory listings
+<li>Display (TYPE) file contents or pieces of files
+<li>Search files for strings or patterns
+<li>Copy, rename, and delete files
+<li>Select files for transfer, deletion, etc, using flexible criteria
+<li>Change directories
+<li>Create and delete directories
+<li>Open, close, read, and write files
+<li>Perform arithmetic (integer, floating-point, date/time)
+<li>Convert text-file character sets
+<li>Execute programs written in the Kermit language to automate all the above
+<li>Act as a server to IKSD-aware clients
+</ul>
+
+<p>
+
+Thus automation is possible through any combination of server-side and
+client-side scripts.  IKSD-aware clients (such as <a
+href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> and <a
+href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a>) can even make
+remote procedure calls, pass variables back and forth, etc.
+
+<p>
+
+Here are the kinds of things WIKSD does <b><i>not</i></b> do:
+
+<p>
+<ul>
+<li>Execute "DOS" (Windows Command Window) commands
+<li>Run external programs
+<li>Let you at the Windows shell
+<li>Show you what the PC's real screen looks like
+<li>Make connections to other computers
+<li>Act as a terminal emulator
+<li>Act as a gateway, router, or proxy server
+</ul>
+
+<p>
+
+Thus <b>WIKSD fills the same role as an FTP server</b>, but with some
+important differences:
+
+<p>
+<ul>
+<li>It uses Kermit protocol rather than FTP protocol, and therefore
+has more features, flexibility, and power than an FTP server;
+<a href="http://www.columbia.edu/kermit/iksd.html#x1">CLICK HERE</a>
+for details.
+<li>You can interact with it directly if you wish.
+<li>Complex or repetitive tasks can be automated.
+</ul>
+
+<p>
+
+
+<b>WIKSD is not available for Windows 95, 98, or ME</b> for security reasons
+and because those operating systems do not support background services.
+
+<p>
+
+WIKSD is a specially configured version of <a
+href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> (K95).  As such,
+it has most of the same commands as Kermit 95 itself, as well as its cousins
+<a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> on UNIX,
+VMS, and other platforms, and <a
+href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a> on DOS
+and Windows 3.x.  Internet Kermit servers are also available for UNIX, such as
+<a href="http://www.columbia.edu/kermit/cuiksd.html">THIS ONE</a> at the
+Kermit Project.
+
+<p>
+
+The rest of this document explains how to make connections to WIKSD and how to
+use them.  For further information, you can also consult:
+
+<p>
+
+<dl>
+<dt>The WIKSD Administrator's Guide</dt>
+<dd><a href="http://www.columbia.edu/kermit/wiksdadmin.html">
+<tt>http://www.columbia.edu/kermit/wiksdadmin.html</tt></a>
+<p>
+<dt>The Unix-based Kermit Project IKSD User Guide</dt>
+<dd><a href="http://www.columbia.edu/kermit/cuiksd.html">
+<tt>http://www.columbia.edu/kermit/cuiksd.html</tt></a>
+<p>
+<dt>The Unix IKSD Administrator Guide</dt>
+<dd><a href="http://www.columbia.edu/kermit/iksd.html">
+<tt>http://www.columbia.edu/kermit/iksd.html</tt></a>
+<p>
+<dt>The Kermit Home Page</dt>
+<dd><a href="http://www.columbia.edu/kermit/index.html">
+<tt>http://www.columbia.edu/kermit/index.html</tt></a>
+<p>
+<dt>The Kermit 95 Home Page</dt>
+<dd><a href="http://www.columbia.edu/kermit/k95.html">
+<tt>http://www.columbia.edu/kermit/k95.html</tt></a>
+<p>
+<dt>The Kermit 95 Tutorial</dt>
+<dd><a href="http://www.columbia.edu/kermit/k95tutor.html">
+<tt>http://www.columbia.edu/kermit/k95tutor.html</tt></a>
+<p>
+<dt>The C-Kermit Home Page</dt>
+<dd><a href="http://www.columbia.edu/kermit/ckermit.html">
+<tt>http://www.columbia.edu/kermit/ckermit.html</tt></a>
+<p>
+<dt>The C-Kermit Tutorial</dt>
+<dd><a href="http://www.columbia.edu/kermit/ckututor.html">
+<tt>http://www.columbia.edu/kermit/ckututor.html</tt></a>
+<p>
+<dt>The Kermit Script Library</dt>
+<dd><a href="http://www.columbia.edu/kermit/scriptlib.html">
+<tt>http://www.columbia.edu/kermit/scriptlib.html</tt></a>
+<p>
+<dt>Kermit Manuals</dt>
+<dd><a href="http://www.columbia.edu/kermit/manuals.html">
+<tt>http://www.columbia.edu/kermit/manuals.html</tt></a>
+
+</dl>
+
+<h3><a name="x2"><hr>2. INTERACTIVE USE</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x3">Next</a> ]
+[ <a href="#x1">Previous</a> ]
+<p>
+
+WIKSD can be accessed from any Telnet client that lets you specify TCP
+port 1649 (the "kermit" service, assigned by the Internet Assigned Numbers
+Authority, IANA):
+
+<p>
+<pre>
+  telnet olga.xyzcorp.com 1649
+</pre>
+<p>
+
+But for reasons that will emerge shortly, some Telnet programs make better
+WIKSD clients than others.  The ideal Telnet client for this purpose:
+
+<p>
+<ul>
+<li>Includes a Kermit file-transfer protocol implementation
+<li>Supports Kermit protocol autoupload and autodownload
+<li>Supports the Telnet Kermit Option (<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">RFC2839</a>)
+</ul>
+<p>
+
+Late-model Kermit programs (K95 and C-Kermit) also include an IKSD command,
+which is the same as the TELNET command, but chooses port 1649 ("kermit")
+rather than port 23 ("telnet"):
+
+<p>
+<pre>
+  iksd olga.xyzcorp.com
+</pre>
+<p>
+
+If you are using C-Kermit or Kermit 95 as your client, and you are making
+a connection to a server where you must log in with a different user ID
+than the one on your client, use one of the following forms:
+
+<p>
+<dl>
+<dt><tt>telnet /user:olaf olga.xyzcorp.com 1649</tt></dt>
+<dd>Specifies the User ID in a switch to the TELNET command.
+<p>
+
+<dt><tt>telnet /user:olaf olga.xyzcorp.com kermit</tt></dt>
+<dd>Same as the previous example but using the service name "kermit"
+rather than the port number 1649.  This works if "kermit" is listed in
+your local TCP services file.  If it doesn't work, you'll have to use
+the port number.
+<p>
+
+<dt><tt>iks /user:olaf olga.xyzcorp.com</tt></dt>
+<dd>Same as previous, but using IKSD command instead of TELNET,
+which makes a connection to the Kermit Service port (1649)
+instead of the Telnet port (23).
+<p>
+
+<dt><tt>iks /user: olga.xyzcorp.com</tt></dt>
+<dd>Same as previous, but here we tell Kermit to use a blank User ID,
+which forces a User ID prompt so you can enter it from the keyboard.
+<p>
+
+<dt><tt>iks /user:anonymous olga.xyzcorp.com</tt></dt>
+<dd>Makes an anonymous connection to the Kermit Service, if the service
+has been configured to allow it.
+
+</dl>
+<p>
+
+All of the forms shown above give you an interactive terminal session to
+the IKSD command processor.  If you want make a scripted and/or client/server
+connection, use the "set host" command, explained in
+<a href="#x4">Section 4</a> and <a href="#x5">Section 5</a>.
+
+<p>
+
+Once you make the connection, you receive Username: prompt (if the username was
+not already sent ahead) and a Password: prompt.  If the owner of the PC has
+furnished you with an ID, use it.  If not, you can try a user name of
+"anonymous" (and use your email address as the password).  Anonymous logins
+are permitted at the discretion of the PC owner.  Example (the parts you type
+are <u>underlined</u>):
+
+<p>
+<pre>
+  Username: <u>anonymous</u>           <i>(To log in anonymously)</i>
+  Password: <u>olaf@abccorp.com</u>    <i>(Supply your email address as password)</i>
+</pre>
+<p>
+
+When logging in as a real user, the security of the login depends on your
+client and the configuration of the server.  In the worst case, your password
+is sent in the clear over the Internet (as it would be with a regular Telnet
+connection):
+
+<p>
+<pre>
+  Username: <u>olga</u>                <i>(Type user ID, then press Return or Enter)</i>
+  Password: <u>secret</u>              <i>(Password doesn't echo)</i>
+</pre>
+<p>
+
+In the best case, the login is secured by protocols such as Kerberos 4,
+Kerberos 5, TLS, SRP, or (Windows-to-Windows connections) NTLM.  Consult the
+documentation of your Telnet client to find out if it supports the same forms
+of security that the server offers, and if so, how to use them.  When secure
+methods are used, you might not need to supply your username or password.
+WIKSD tells which security methods it has available if you give it the SHOW
+AUTHENTICATION command.  Ditto for K95 and C-Kermit clients.  Security is
+covered in <a href="http://www.columbia.edu/kermit/security.html">a separate
+document</a>.
+
+<p>
+<blockquote>
+<i>
+
+<b>NOTE:</b> When you log in as a real user, your <tt>K95CUSTOM.INI</tt> is
+executed.  Certain K95 commands are not accepted by WIKSD, so you should
+structure your <tt>K95CUSTOM.INI</tt> file not to execute them if K95 is
+acting as WIKSD.  <a href="wiksd.html">CLICK HERE</a> for details.
+
+</i>
+</blockquote>
+<p>
+
+The owner of the server PC also decides which directories you can access and
+what access rights you have.  If you log in to WIKSD as a real user in Windows
+NT, 2000, or XP, your initial current directory is the "home folder" from
+your user profile, and you have all the same access rights you would have if
+you had logged in any other way.  The PC owner has the ability (and the
+right) to log your activities in the NT Event Log to any desired level of
+detail.
+
+<p>
+
+To log out from WIKSD, give any of the following commands: LOGOUT, EXIT,
+or QUIT.  Or simply have your Telnet client close the connection.
+
+<p>
+
+While logged in, you are presented with the Kermit 95's IKSD prompt, similar to
+the "DOS" or Command prompt:
+
+<p>
+<pre>
+  [C:\OLGA\] IKSD&gt;
+</pre>
+<p>
+
+(your current disk and directory are shown in brackets).
+
+<p>
+
+K95 (as WIKSD) offers a wide range of file management and transfer functions
+in a friendly and helpful interactive command-line interface.  Like the
+Windows Command window:
+
+<p>
+<ul>
+
+<li>K95 prints a prompt and waits for you to type a command.
+
+<li>K95's default prompt shows the current directory.
+
+<li>Commands are English verbs like HELP, COPY, and DELETE, or well-known
+"computer verbs" like CD (Change Directory) and MKDIR (Make a Directory).
+
+<li>Commands can include multiple "fields" separated by spaces.
+
+<li>Commands can have "switches" (modifiers).
+
+<li>Commands can be edited before execution.
+
+<li>Commands are executed when you press the Return or Enter key.
+
+<li>Commands can be executed from a file.
+</ul>
+<p>
+
+Unlike the Windows Command window:
+
+<p>
+<ul>
+
+<li>K95 has built-in help text for each command (e.g. "help copy").
+
+<li>K95 lets you abbreviate commands.
+
+<li>K95 gives you context-sensitive help about each field of each command
+if you type "<tt>?</tt>" (question mark).
+
+<li>K95 completes keywords and filenames automatically if you type Esc or Tab.
+
+<li>K95 lets you recall previous commands.
+
+<li>K95 lets you define and execute macros.
+
+<li>In fact, K95 includes a whole programming language, complete with
+built-in and user-defined variables, arrays, and functions,
+decision-making, loops, and all the rest.
+
+</ul>
+<p>
+
+And:
+
+<p>
+<ul>
+
+<li>K95 lets you transfer files.
+
+</ul>
+
+<h3><a name="x2.1"><hr>2.1. K95 as a Windows Shell</a></h3>
+
+Let's begin by looking at K95 as an alternative to the Windows Command shell.
+How does it stack up against the regular Command Window?  First, note that K95
+does not offer system management commands, disk formatting, and so on.  These
+should be used only from the PC's real keyboard and screen by the PC's owner.
+Second, it cannot be used for starting or running external programs; this is
+mainly for security reasons.
+
+<p>
+<blockquote>
+<i>
+
+The term "DOS" (Disk Operating System) is used in this document to refer to
+the text-mode command-and-prompt interface and command repertoire of the
+Windows Command Window.  The proper name for this window varies from one
+Windows release to the next ("MS-DOS Prompt", "Console Window", "Command
+Window", etc), but the usage and command repertoire is about the same, with
+certain differences (e.g. to delete a directory tree, one shell might have
+no command at all, another might use DELTREE, and still another might use
+DEL /S).
+
+</i>
+</blockquote>
+<p>
+
+Here is a side-by-side comparison keyed on common DOS commands, DOS on the
+left, K95 on the right.  Slanted square brackets enclose optional fields.
+Italic words are parameters that you would replace by actual values, for
+example "<i>disk-letter</i>" might be replaced by "<tt>C</tt>".  In case you
+are wondering why Kermit commands are not identical to DOS commands, it's
+because <i>(a)</i> Kermit runs on many platforms, not just Windows, and tries
+to maintain common syntax in all versions, and <i>(b)</i> Kermit predates
+both DOS and Windows.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  <i>disk-letter</i>:                   CD <i>disk-letter</i>:
+  CD <i>directory</i>                   CD <i>[[disk</i>:<i>][directory]]</i>
+  CD                             PWD
+  <i>(none)</i>                         BACK
+</pre>
+<p>
+
+Notes: In K95, CD given with no operand returns to the default or home
+directory, whereas in DOS it prints the name of the current directory.  Unlike
+in DOS, a disk letter can be included in K95's CD command.  Use PWD to display
+the current directory.  K95 also has a BACK command to return to the previous
+directory.  Type HELP CD at the <tt>IKSD&gt;</tt> prompt for more information.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  CHKDSK <i>[disk-letter]</i>           SPACE <i>[disk-letter]</i>
+</pre>
+<p>
+
+Note: K95's SPACE command doesn't check the disk; it shows how much
+space is used and free without checking the disk.  CHKDSK is a true DOS
+command, not available in most Windows shells.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  COPY <i>[options]</i> <i>source dest</i>     COPY <i>[options]</i> <i>source dest</i>
+</pre>
+<p>
+
+Notes: K95 COPY has more options, including some you might not expect,
+like for Base64 encoding and decoding, byte-swapping, etc.  K95 also has
+a TRANSLATE command, which is like COPY, but it converts the file's
+character set.  HELP COPY and HELP TRANSLATE for more information.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  DATE                           DATE [<i>date</i>]
+</pre>
+<p>
+
+Notes: K95 DATE does not set the date, it only shows it (and the time).  If
+you give it a date or time or date-time operand (in almost any format), it
+gives it back to you in standard format.  It can also be used to do date/time
+arithmetic, e.g. "date 1 january 2002 +1000days".  HELP DATE for details.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  DEL <i>[options]</i> <i>filespec</i>         DELETE <i>[options]</i> <i>filespec</i>
+  DELTREE <i>[options]</i> <i>filespec</i>     DELETE /TREE <i>[options]</i> <i>filespec</i>
+</pre>
+<p>
+
+Note: K95 DELETE has more options, including file selection by date and/or
+size, exception lists, etc.  It can also delete selected or all files
+recursively (i.e. down through subdirectories), and therefore also stands
+in for DELTREE.  HELP DELETE for details.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  DIR <i>[options]</i> [<i>filespec</i>]       DIRECTORY <i>[options]</i> [<i>filespec</i>]
+</pre>
+<p>
+
+Note: K95 DIRECTORY has many more options, including selection options,
+listing options, sorting options, and (like DOS DIR /S) can operate
+recursively.  HELP DIRECTORY to read about all the options.
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  EXIT                           EXIT <i>[ status [ message ] ]</i>
+  FIND <i>[options]</i> "<i>string</i>" <i>file</i>   FIND <i>[options]</i> "<i>string</i>" <i>file</i> 
+  MORE <i>file</i>                      MORE <i>[options]</i> <i>file</i>
+  PRINT <i>[options]</i> <i>file</i>           PRINT <i>[options]</i> <i>file</i>
+  PROMPT <i>string</i>                  SET PROMPT <i>string</i>
+  RENAME <i>source</i> <i>dest</i>             RENAME <i>[options]</i> <i>source</i> <i>dest</i>
+  MKDIR <i>directory</i>                MKDIR <i>directory</i>
+  RMDIR <i>directory</i>                RMDIR <i>directory</i>
+  TIME                           DATE [<i>date-and/or-time</i>]
+  TYPE <i>file</i>                      TYPE <i>[options]</i> <i>file</i>
+  <i>(none)</i>                         HEAD <i>[options]</i> <i>file</i>
+  <i>(none)</i>                         TAIL <i>[options]</i> <i>file</i>
+</pre>
+<p>
+
+Note: K95 TYPE has numerous options, governing paging, selection of lines,
+and even character-set translation.  The K95 FIND command also searches for
+patterns, not just literal strings, and has many options, including recursive
+(subdirectory) searches, and can also be invoked as GREP (as in UNIX) or
+SEARCH (as in VMS).  Type HELP for any of these commands (or any other command)
+for a description of the syntax and purpose of the command.
+
+<p>
+
+K95 also has all the capabilities of DOS Batch (in the following list,
+<i>commands</i> means one or more commands, separated by commas):
+
+<p>
+<pre>
+  <u>Windows Command</u>                <u>K95 Command</u>
+  CALL <i>file [ parameters ]</i>       TAKE <i>file [ parameters ]</i>
+  ECHO <i>text</i>                      ECHO <i>text</i>
+  FOR <i>var</i> IN <i>set</i> DO <i>command</i>      FOR <i>var init final increment</i> { <i>commands</i> }
+  GOTO <i>label</i>                     GOTO <i>label</i>
+  IF <i>condition command</i>           IF <i>condition</i> { <i>commands</i> } ELSE { <i>commands</i> }
+  PAUSE <i>seconds</i>                  PAUSE <i>seconds-or-time-of-day</i>
+  REM                            COMMENT or ; or #
+  SHIFT                          SHIFT <i>[ number ]</i>
+  <i>(none)</i>                         WHILE <i>condition</i> { <i>commands</i> }
+  <i>(none)</i>                         SWITCH <i>v</i> { <i>case-statements</i> }
+</pre>
+<p>
+
+Plus lots more (command recall, keyword abbreviation, filename and keyword
+completion, context-sensitive help, etc, plus the substantive features of IKSD
+itself, which are the topic of the rest of this document).
+
+<h3><a name="x2.2"><hr>2.2. How to Enter K95 Commands</a></h3>
+
+<blockquote>
+<i>
+
+The demo server listed in this section, <tt>iks.kermit.columbia.edu</tt>,
+is not in service yet; therefore this section is for future reference only.
+
+</i>
+</blockquote>
+<p>
+
+Let's illustrate some of K95's basic features in a real session.  Use your
+favorite Telnet client to make a connection to the public Windows Internet
+Kermit Service at the Kermit Project (the parts you type are
+<u>underlined</u>):
+
+<p>
+<pre>
+  <u>telnet iks.kermit.columbia.edu 1649</u>
+</pre>
+<p>
+<pre>
+  Username: <u>anonymous</u>
+  Password: <u>myname@myhost.com</u>
+</pre>
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt;
+</pre>
+<p>
+
+The last line is the prompt.  The current disk and directory appear in
+brackets on the left margin, and "<tt>IKSD&gt;</tt>" tells you that you're
+talking to an Internet Kermit Service Daemon and it's waiting for a command
+from your keyboard.  Begin by typing "help" (and then pressing the Enter or
+Return key):
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>help</u>
+
+  IKS-NT 1.99 Dev.01, 1 Jan 2002, Copyright (C) 1995, 2002,
+  Trustees of Columbia University in the City of New York.
+
+  Type INTRO   for a brief introduction to the Kermit Command screen.
+  Type VERSION for version and copyright information.
+  Type HELP    followed by a command name for help about a specific command.
+  Type NEWS    for news about new features.
+  Type SUPPORT to learn how to get technical support.
+  Press ?      (question mark) at the prompt, or anywhere within a command,
+               for a menu (context-sensitive help, menu on demand).
+</pre>
+<p>
+
+Type "intro" (and then press the Enter or Return key).  Now you get a brief
+introduction to the available commands.  Since the introduction is longer 
+than your screen, K95 pauses at the end of each screenful to give you a chance
+to read it, and gives you the prompt:
+
+<p>
+<pre>
+  more? (Y or space-bar for yes, N for no)
+</pre>
+<p>
+
+This occurs whenever K95 produces a long listing.  As the prompt says, press
+the Space Bar or the Y key to continue to the next screenful, or the N (or Q)
+key to quit and return to the prompt.  You can also press G (meaning "Go")
+to show all the rest without pausing.
+
+<h4>2.2.1. Getting Help for Individual Commands</h4>
+
+The INTRO listing mentions various commands.  Pick one and type a HELP
+command for it (remember to press the Enter or Return key after the last
+word in the command), for example:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>help directory</u>
+</pre>
+<p>
+
+This shows the kind of help text you can get for each command.  "help" and
+"directory" are called keywords.  K95 lets you abbreviate keywords as much as
+you want, as long as the abbreviation does not conflict with any other
+keywords that are valid in the same position.  In this case you could use "he
+dir", or even "h dir" ("h" is a special abbreviation for "help", even though
+several other commands begin with "h").
+
+<h4>2.2.2. Help and Completion for Command Fields</h4>
+
+Now let's explore K95's context-sensitive help feature.  At the prompt, press
+the ? (question-mark) key (on most keyboards this requires also holding down
+the Shift key):
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>?</u> Command, one of the following:
+   add           directory     increment     pwd           space
+   apc           disable       input         query         statistics
+   array         do            intro         quit          status
+   ...
+</pre>
+<p>
+
+(many more are shown).  These are K95's commands.  You can type HELP for any
+of them.  But first, let's explore the "?" feature:
+
+<p>
+<ul>
+
+<li>Press the "d" key, then "?".  Note how only the commands that start with
+"d" are listed.  Also note that after they are listed, you get the prompt and
+the "d" back, so you can continue from where you left off.
+
+<p>
+
+<li>Press the "i" key, then "?".  Now the commands that start with "di"
+are listed, and you get your "di" keystrokes back so you don't have to
+repeat them.
+
+<p>
+
+<li>Press the space bar and see what happens.  This illustrates that command
+fields are delimited by spaces, and you terminated this field too soon,
+since more than one command starts with "di" -- K95 doesn't know which
+one you want.
+
+<p>
+
+<li>At the new prompt, type "dir" and then press the Space Bar.  This time
+there is no complaint because only one command starts with "dir".
+
+<p>
+
+<li>Now press "?" to see what can come next.  Here you see a number of options,
+and you also find out you can type a file specification.  Or for that
+matter, you can press the Return or Enter key to start the command.  In
+other words, you can type DIR, then zero or more options, and then an
+optional file specification.  Here are some examples of legal DIRECTORY
+commands:
+
+<p>
+<pre>
+  directory                        <i>List all files and directories</i>
+  dir                              <i>Ditto - you can abbreviate</i>
+  dir *.txt                        <i>All files whose names end with ".txt"</i>
+  dir /directories                 <i>List all directories</i>
+  dir /directories a*              <i>List all directories starting with "a"</i>
+  dir /files /reverse              <i>List all files in reverse order</i>
+  dir /files /reverse *.c          <i>Ditto but only those ending with ".c"</i>
+</pre>
+<p>
+
+<li>At a new prompt, type "di" and then press the Esc or Tab key.  K95 beeps
+(rings the bell) at you to indicate that "di" is ambiguous in this field.
+Now type "r" and press Esc or Tab again.  See how K95 completes the word
+"directory" and supplies a space, positioning you at the next field.  This
+feature is called completion.  It works for both keywords and filenames.
+
+</ul>
+<p>
+
+K95's question-mark feature also works in filename fields.  If you type a
+question mark when Kermit wants you to type a filename:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>take ?</u> Commands from file, one of the following:
+</pre>
+<p>
+
+it lists the files in the current directory.  If you type part of a filename
+and then question mark, K95 lists files that match the part you typed so far:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>take abc?</u>
+</pre>
+<p>
+
+This lists all files whose names start with "abc" (see 
+<a href="#x2.7">Section 2.7</a> for more about file lists).
+
+<p>
+
+Using Tab (or Esc) and Question Mark, you can easily feel your way through all
+of K95's commands.  With some practice, you can fly through any command with
+minimum effort and keystrokes.  If you make a mistake, you receive an
+informative, context-sensitive error message.
+
+<h3><a name="x2.3"><hr>2.3. How to Edit K95 Commands</a></h3>
+
+K95 includes a simple command editor that uses Control characters.  You
+produce a Control character by holding down the Ctrl or Control key on your
+keyboard and then pressing a letter key.  For example, to type Ctrl-A, hold
+down the Ctrl key, press the A key, and then let go of both keys.
+
+<p>
+
+The K95 command-editing keys are:
+
+<p>
+<pre>
+  Backspace:  Erases the character left of the cursor.
+  Delete:     Same as Backspace.
+  Ctrl-H:     Same as Backspace.
+  Ctrl-W:     Erases the "word" left of the cursor.
+  Ctrl-U:     Erases back to the prompt.
+</pre>
+<p>
+
+There is no way to edit the "inside" of a command; you can only
+remove letters or words from the right.  You can't use Arrow, Function, or
+Editing keys (such as Insert, Home, etc) to edit K95 commands.
+
+<h3><a name="x2.4"><hr>2.4. Recalling Previous Commands</a></h3>
+
+K95 remembers the last 10 commands you have entered (you can increase this
+number with SET COMMAND RECALL-BUFFER-SIZE <i>n</i>, where <i>n</i> is any
+number).
+
+<p>
+
+To recall the previous command, type Ctrl-P ("P" for Previous) or Ctrl-B
+("Back").  This displays the previous command at the prompt as if you had
+typed it.  If you press the Enter or Return key, it is executed.  You can use
+Ctrl-W or Backspace/Ctrl-H to edit it, or Ctrl-U to get back to the prompt.
+
+<p>
+
+To recall the command before the previous command, type Ctrl-P twice.  And
+so on.  If you go back too far, you can use Ctrl-N ("Next") to move forwards.
+
+<p>
+
+The REDO command executes the most recent command that begins with the given
+text, e.g. "redo dir" re-executes your most recent "dir" command.
+
+<p>
+
+SHOW HISTORY displays the command recall buffer.
+
+<h3><a name="x2.5"><hr>2.5. Cancelling a Command in Progress</a></h3>
+
+Ctrl-C should cancel any command in progress (i.e. after you have entered it
+by pressing the Enter or Ctrl-C key).  If one Ctrl-C doesn't do it, try two
+or three.
+
+<h3><a name="x2.6"><hr>2.6. Special Characters in Commands</a></h3>
+
+In the cross-platform Kermit command language, the backslash (<tt>\</tt>)
+character is not taken literally, but indicates that whatever follows is to be
+treated specially.  This lets you enter characters in commands that normally
+are used for other purposes, such as control characters or question marks.  It
+is also the basis for string substitution, macro processing, and script
+programming.
+
+<p>
+
+But Windows uses backslash in file specifications, to separate directory
+names from file names and from each other, e.g.:
+
+<p>
+<pre>
+  C:\WINDOWS\SYSTEM\CONAGENT.EXE
+</pre>
+<p>
+
+So to enter Windows filenames that contain backslashes at the Kermit command
+prompt, you must either double them:
+
+<p>
+<pre>
+  C:\\WINDOWS\\SYSTEM\\CONAGENT.EXE
+</pre>
+<p>
+
+or else use "forward slash" instead:
+
+<p>
+<pre>
+  C:/WINDOWS/SYSTEM/CONAGENT.EXE
+</pre>
+<p>
+
+(Under certain circumstances, K95 might recognize a single backslash in a
+file or directory name as a directory separator -- in fact, it goes to
+extraordinary lengths to "guess" whether you intend a single backslash to be
+a directory separator or a variable- or function-introducer -- but since it
+can't read your mind, it's best to use forward slash or double backslash
+to eliminate all ambiguity.)
+
+<p>
+
+Another character to watch out for is Space.  Spaces are used by Kermit (and
+all other command languages) to delimit fields within a command.  Since
+Kermit is a file-transfer and management program, many of its commands
+include filename fields.  But some Windows directory and file names contain
+spaces, e.g.:
+
+<p>
+<pre>
+  C:\Program Files\Microsoft Office\Microsoft Photo Editor.lnk
+</pre>
+<p>
+
+To refer to any such file at the Windows Command ("DOS") prompt, you must
+enclose its name in doublequotes:
+
+<p>
+<pre>
+  dir "C:\Program Files\Microsoft Office\Microsoft Photo Editor.lnk"
+</pre>
+<p>
+
+The same is true for Kermit.  Example: Suppose a file is called "My File" and
+you want to make a copy of it called "Your File".  You might expect:
+
+<p>
+<pre>
+  copy My File Your File
+</pre>
+<p>
+
+to work, but it doesn't, not in K95, and not at the Windows command prompt
+either: how is the command parser supposed to know where one name ends and
+the next one begins?  Quoting is required:
+
+<p>
+<pre>
+  copy "My File" "Your File"
+</pre>
+<p>
+
+<h3><a name="x2.7"><hr>2.7. Multi-Purpose Fields</a></h3>
+
+Many of K95's commands accept optional "switches", which are keywords that
+start with "<tt>/</tt>" ("forward slash"), for example:
+
+<p>
+<pre>
+  delete /list *.*
+</pre>
+<p>
+
+meaning "delete all files in the current directory and list their names as
+you delete them".  But since the switches are optional, and you can give
+any number of them, K95 must also be prepared to let you type a filename
+instead of a switch.
+
+<p>
+
+If you type "delete ?", the response is:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>del ?</u> File specification;
+   or switch, one of the following:
+   /all       /directories   /larger-than: /noheading    /recursive
+   /after:    /dotfiles      /list         /nolist       /simulate
+   /ask       /except:       /noask        /not-after:   /smaller-than:
+   /before:   /heading       /nodotfiles   /not-before:  /summary
+  [C:\GUEST\] IKSD&gt; del 
+</pre>
+<p>
+
+In other words, the available switches are listed.  But what if you want to
+get a list of the filenames instead of a list of the available switches?  Use
+this trick:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <tt>del ./?</tt> File(s) to delete, one of the following:
+    (files are listed)
+</pre>
+<p>
+
+In other words, type "<tt>./</tt>" before the question mark, which means
+"current directory" (remember, we use forward slash as a directory separator
+in K95, not backslash).  You could also type any other notation to let K95
+know you want a file list, such as a disk letter ("<tt>delete</tt>
+<tt>c:?</tt>"), or any directory path ("<tt>del</tt> <tt>subdir/?</tt>",
+"<tt>del</tt> <tt>d:/tmp/?</tt>", etc) -- anything that does not begin with a
+slash (<tt>/</tt>), so it won't look like a switch.
+
+<h3><a name="x2.8"><hr>2.8. Screen Formatting</a></h3>
+
+WIKSD does no screen formatting at all: No clearing the screen, no cursor
+positioning, no sending escape sequences.  Your Telnet client does not need to
+emulate any particular kind of terminal to use the Internet Kermit service.
+
+<h3><a name="x2.9"><hr>2.9. Lots of Features</a></h3>
+
+Kermit's file management features and other commands are many and varied;
+it would (and does) require a thick book to describe them all.  If you would
+like to have a copy of the book (<cite>Using C-Kermit</cite>), purchase a copy
+of K95 yourself, or the book
+<a href="http://www.columbia.edu/kermit/ck60manual.html"><cite>Using
+C-Kermit</cite></a>.  Visit the 
+<a href="http://www.columbia.edu/kermit/">Kermit website</a> for details.
+
+<p>
+
+Many of the commands have to do with file transfer (discussed in <a
+href="#x3">Section 3</a>) or script programming (<a href="#x4">Section 4</a>).
+
+<p>
+
+Others have to do with customization.  Chief among these are the SET and
+SHOW commands.  The SET command is used to set preferences, and the SHOW
+command displays current settings.  If you don't like how something works,
+chances are you can change it.  Type "help set" and "help show" for an
+introduction.
+
+<p>
+
+Using just the information presented so far, you should be able make a
+connection to a Windows-based Internet Kermit server and perform all the
+file management tasks you could do in DOS, but more easily, since you always
+have help text, menu-on-demand, command recall, and keyword/filename
+completion at your fingertips.
+
+<p>
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+
+<h3><a name="x3"><hr>3. TRANSFERRING FILES</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Next</a> ]
+[ <a href="#x2">Previous</a> ]
+<p>
+
+WIKSD / K95 is not just a DOS shell replacement; it can also transfer files
+over your Telnet connection using the Kermit protocol For this you need a
+Telnet client that includes a Kermit protocol implementation, and for best
+results it should also include Kermit autodownload and autoupload capability,
+as well as the Telnet Kermit Option
+(<a href="ftp://ftp.isi.edu/in-notes/rfc2840.txt">RFC2840</a>).  Examples:
+
+<p>
+<pre>
+  <u>Autoup/download</u>   <u>Telnet Kermit Option</u>
+       Yes                  Yes            <i><a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> (Unix, VMS, etc)</i>
+       Yes                  Yes            <i><a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> (Windows and OS/2)</i>
+       Yes                  No             <i><a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a> (DOS and Windows 3.x)</i>
+       No                   No             <i>Most other Telnet clients</i>
+</pre>
+<p>
+
+Depending on the capabilities of your Telnet client and your access rights
+to the host PC, you can send or receive text or binary files in any mixture,
+singly or in groups.
+
+<p>
+
+If your Telnet client does not support Kermit protocol at all, the rest of
+this section is of no use to you.  If it is not from the Kermit Project, it
+might support the Kermit protocol, but not well.  Obviously, for best results
+we recommend a Kermit Project client, in which the protocol is
+full-featured and fast, and we can support both ends of the connection.
+
+<h3><a name="x3.1"><hr>3.1. Sending Files from IKSD to Your Computer</a></h3>
+
+To send (or "download") a file from IKSD to your computer, simply give a SEND
+command at the IKSD prompt for the desired file:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; send oofa.txt
+</pre>
+<p>
+
+Hint: "send" can be abbreviated "s", even though other commands start with
+the letter S:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; s oofa.txt
+</pre>
+<p>
+
+Don't worry about text or binary mode -- K95 figures it out automatically.
+If you want to force text or binary mode, however, you can use the /TEXT or
+/BINARY switch:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; send /text oofa.txt
+  [C:\GUEST\] IKSD&gt; send /binary oofa.zip
+</pre>
+<p>
+
+Of course you can also send files from other disks or directories that you
+have access to:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; send d:/tmp/oofa.txt
+</pre>
+<p>
+
+What happens next depends on your Telnet client.  If it supports autodownload,
+the transfer begins automatically.  Otherwise, you have to take whatever
+action your client requires to make it receive a file with Kermit protocol,
+and after the transfer is complete, you might have to tell your client to
+return to its terminal screen.
+
+<p>
+
+If you want to send a group of files, you can use "wildcards" in the file
+name, which are special characters such as "<tt>*</tt>" that match patterns in
+each file's name.  The "<tt>*</tt>" character is most commonly used; it means
+"match any sequence of zero or more characters except period or slash".  So to
+send all the files from the current directory, use:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>send *.*</u>
+</pre>
+<p>
+
+To send all the files whose names end with ".txt", use:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>send *.txt</u>
+</pre>
+<p>
+
+To send all the files whose names start with "a" and end with ".zip" in
+all subdirectories of the current directory, use
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>send */a*.zip</u>
+</pre>
+<p>
+
+and so on.  Lots of other wildcard possibilities are available too; type
+"help wildard" at the <tt>IKSD&gt;</tt> prompt for details.
+
+<p>
+
+Wildcards give you one way of selecting files out of a group, but there are
+others too.  You can get an idea by typing "<tt>send</tt> <tt>?</tt>" at the
+<tt>IKSD&gt;</tt> prompt to get a list of the available SEND options:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>send ?</u> Filename, or switch, one of the following:
+   /after:     /delete        /listfile:    /not-before:  /recursive
+   /array:     /dotfiles      /mail:        /pathnames:   /rename-to:
+   /as-name:   /except:       /move-to:     /print:       /smaller-than:
+   /before:    /filter:       /nobackup     /protocol:    /starting-at:
+   /binary     /filenames:    /nodotfiles   /quiet        /subject:
+   /command    /larger-than:  /not-after:   /recover      /text
+  [C:\GUEST\] IKSD&gt; send 
+</pre>
+<p>
+
+Of course you can use "help send" to get the details.  As you can see, it
+is possible to construct a rather complex download, e.g. of all files whose
+names match a certain pattern, but only if they are a certain size, and/or
+were created before and/or after a certain date, and so on, and you can even
+include an exception list.
+
+<p>
+
+Also, in case you want to send several files whose names can't be selected
+by wildcards, you can use the MSEND command, which lets you give a list
+of filenames to send:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>msend oofa.txt ../tmp/foo.zip *.c *.h</u>
+</pre>
+<p>
+
+Note that the names are separated by spaces, not commas.
+
+<p>
+
+Don't worry about text- versus binary-mode tranfers; K95 automatically sends
+each file in the appropriate mode.
+
+<h3><a name="x3.2"><hr>3.2. Sending Files from Your Computer to IKSD</a></h3>
+
+Uploading files to IKSD can be just as easy, but that depends on your Telnet
+client.  If it is Kermit 95 or C-Kermit,
+then just give a GET command to IKSD:
+
+<p>
+<pre>
+  [C:\GUEST\] IKSD&gt; <u>get oofa.txt</u>
+</pre>
+<p>
+
+and your client sends the requested file or files automatically, each in the
+appropriate mode (text or binary).  As with SEND, there is a wide range of
+options, which you can see by typing "<tt>get</tt> <tt>?</tt>" or
+"<tt>help</tt> <tt>get</tt>".
+
+<p>
+
+For other clients, it's a bit more complicated:
+
+<p>
+<ol type="a">
+
+<li>Tell IKSD to RECEIVE.  This makes it passively wait for your Telnet
+client to send a file.
+
+<p>
+
+<li>Go back to your client's user interface ("escape back" or use its menu or
+toolbar or whatever other method is provided) and tell it to send the desired
+file or files in the required mode (text or binary) using Kermit protocol.
+
+<p>
+
+<li>After the transfer is finished, instruct your client to go back to its
+terminal screen if necessary.
+
+</ol>
+
+<p>
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+
+<h3><a name="x4"><hr>4. CLIENT/SERVER</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Next</a> ]
+[ <a href="#x3">Previous</a> ]
+
+<p>
+
+Until now, we've treated WIKSD as an interactive shell.  There's another way
+to use it, in which you interact only with your client, similar to the way you
+would use an FTP client.  Obviously we can't document every client on earth,
+so in this section we'll stick with our own:
+<a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a>,
+<a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a>, and to some
+extent <a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS
+Kermit</a>.  No other Telnet clients are known (at this writing) to support
+<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">RFC2839</a> and
+<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">2840</a>.
+
+<p>
+
+When you make a client/server connection to an Internet Kermit service,
+your client does not enter its terminal screen, but rather stays in its
+command screen, and once connected, you simply give commands to your client;
+it passes them on to the server, which executes them and relays the result
+back to your client.  To create such a connection, use the SET HOST command,
+rather than the TELNET or IKSD command:
+
+<p>
+<pre>
+  set host iks.kermit.columbia.edu kermit   <i>(or 1649)</i>
+</pre>
+<p>
+
+Authentication details are omitted, since they vary depending on the type
+of security, if any, negotiated between client and server.  If, for example,
+you are in the same Kerberos realm as the server, and have a Kerberos identity
+in that realm, you are connected without supplying a username or password
+if you already have a ticket; otherwise you are prompted for them locally.
+
+<p>
+
+In the absence of any negotiated secure authentication methods, the client
+command for logging in is REMOTE LOGIN (or simply LOGIN in K95 and C-Kermit):
+
+<p>
+<pre>
+  remote login <i>myusername mypassword</i>
+</pre>
+<p>
+
+If you omit the username and password from the <i>[</i> REMOTE <i>]</i> LOGIN
+command, you are prompted for them separately, and the password does not echo:
+
+<p>
+<pre>
+  <u>remote login</u>
+  Username: <u>ivan</u>
+  Password: <u>             </u>
+</pre>
+<p>
+
+Once logged in, you can use SEND to upload files, GET to download them, and
+use the REMOTE command for assorted file management tasks:
+
+<p>
+<pre>
+  REMOTE CD <i>[ directory ]</i>        (RCD)     <i>Change server directory</i>
+  REMOTE PWD                     (RPWD)    <i>Print working server directory</i>
+  REMOTE DIRECTORY <i>[ filespec ]</i>  (RDIR)    <i>Get a listing of server-side files</i>
+  REMOTE DELETE <i>[ filespec ]</i>     (RDEL)    <i>Delete files on the server</i>
+  REMOTE TYPE <i>[ filespec ]</i>       (RTYPE)   <i>Type (display) a server file</i>
+  REMOTE COPY <i>[ file1 file2 ]</i>    (RCOPY)   <i>Make a copy of a server file</i>
+  REMOTE RENAME <i>[ file1 file2 ]</i>  (RREN)    <i>Rename a server file</i>
+  REMOTE MKDIR <i>[ directory ]</i>     (RMKD)    <i>Create a directory on the server</i>
+  REMOTE RMDIR <i>[ directory ]</i>     (RRMD)    <i>Remove a directory on the server</i>
+</pre>
+<p>
+
+and so on.  Advanced usage includes REMOTE ASSIGN, REMOTE QUERY, and forth, to
+set and query server variables and call server-based procedures.  When you are
+finished with the server, use the LOGOUT, BYE, CLOSE, or HANGUP command to
+disconnect.
+
+<p>
+
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+
+<h3><a name="x5"><hr>5. AUTOMATION</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Next</a> ]
+[ <a href="#x4">Previous</a> ]
+
+<p>
+
+The Kermit script language is built naturally upon its interactive command
+language.  A simple example of a script program is a file containing a series
+of Kermit commands.  If you tell Kermit to TAKE the file, it executes the
+commands that are in it.  However, for a program to be generally useful, it
+needs to operate on a variety of data -- e.g. to transfer different files at
+different times -- and so there needs to be a way to pass "parameters" to
+programs.  Programs generally also need to make decisions based on the
+outcomes of the actions it takes, and they also often need to do something
+repetitively.  Such programs require variables, control structures, grouping
+and scoping rules, arrays and other data structures, arithmetic, functions for
+processing strings and converting data, and so forth.  K95 (WIKSD) has all of
+those, but it's beyond the scope of this short introduction to explain them;
+they are explained at length in the published manuals.  The main thing to note
+here is that you can script your client to control the server (assuming your
+client is scriptable) or you can script the server itself, or any combination
+you can think of.  For example, if you have write access to a directory on the
+IKSD, you can upload script programs to it and have it execute them.  Or... a
+client-side script can send a macro definition to the server and have it
+execute the macro and return its result in a variable for further local
+processing.
+
+<p>
+
+You can find a Kermit script programming tutorial and lots of sample
+scripts here:
+
+<p>
+<pre>
+  <a href="http://www.columbia.edu/kermit/ckscripts.html">http://www.columbia.edu/kermit/ckscripts.html</a>
+</pre>
+
+<p>
+
+<b>Scripted sessions with IKSD are especially easy</b>, because everything is
+done with client-side commands -- there are no INPUT/OUTPUT sequences, no
+"screen scraping", etc.  Matters become complicated when security is involved,
+since the script writer must know in advance exactly what forms of security
+are supported -- or required -- by the server, and what procedures and
+paramaters are involved to make a securely authenticated encrypted session.
+
+<p>
+
+Assuming an insecure version of WIKSD (such as the free IKSDNT program),
+here is an outline of a scripted session:
+
+<p>
+<pre>
+  set host xyzcorp.com kermit        ; Substitute the host of your choice
+  if fail exit 1 Connection failed   ; Make sure connection worked
+  remote login myuserid mypassword   ; Log in
+  if fail exit 1 Login failed
+  ; <i>(file-transfer and -management commands here)</i>
+  bye
+</pre>
+<p>
+
+Obviously it's a bad idea to put passwords in files, so instead you can have
+the script prompt the user when the script starts:
+
+<p>
+<pre>
+  undefine pass	
+  while not defined pass {
+      askq pass { Password: }
+  }
+  set host xyzcorp.com kermit        ; Substitute the host of your choice
+  if fail exit 1 Connection failed   ; Make sure connection worked
+  remote login myuserid \m(pass)     ; Log in
+  if fail exit 1 Login failed
+  ; <i>(file-transfer and -management commands here)</i>
+  bye
+</pre>
+<p>
+
+In case you have a security-capable Kermit client and a security-capable
+server, but you want to make a non-secure clear-text connection (e.g. on a
+local switched network, and/or for experimenting with script features without
+first having to become a security and cryptography expert), you can give
+the following commands to your client to disable its security features:
+
+<p>
+<dl>
+
+<dt><tt>SET TELOPT AUTH REFUSED</tt></dt>
+
+<dd>This tells the client not to request any form of Telnet authentication and
+to refuse it if offered by the server.  This prevents (for example) possible
+NTLM username / password popups, which wait for a response from the operator,
+thus halting progress of the script.
+
+<p>
+
+<dt><tt>SET AUTHENTICATION TLS VERIFY OFF</tt></dt>
+
+<dd>This tells the client not to require certification of the host's
+authenticity.  This eliminates certain kinds of prompts that are given for
+your own protection, but which can halt the progress of a script, such as:
+<p>
+<pre>
+  Warning: Server didn't provide a certificate, continue? (Y/N)
+</pre>
+<p>
+
+Use this command if the client and the server both support TLS security, but
+the required certificates are lacking (or, to put it another way, if you don't
+know what TLS is, but you get the above message, use this command to suppress
+it).  This allows you to make an encrypted connection, but without assurrance
+that the host you are connecting to is the on you think it is.
+
+</dl>
+
+<p>
+
+<i>(More to be filled in . . . )</i>
+
+<p>
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+
+<h3><a name="x6"><hr>6. APPLICATIONS AND EXAMPLES</a></h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Previous</a> ]
+
+<p>
+
+<i>(To be filled in . . . )</i>
+
+<p>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+<hr>
+<address>
+Windows Internet Kermit Service - User Guide /
+The Kermit Project / Columbia University /
+4 June 2002
+</address></body></html>

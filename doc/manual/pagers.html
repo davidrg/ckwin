@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit Software and Pagers</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<b>C-Kermit</b> UNIX, VMS, etc:
+<blockquote>
+<a href="http://www.columbia.edu/kermit/ckermit.html">http://www.columbia.edu/kermit/ckermit.html</a>
+</blockquote>
+and <b>Kermit 95</b> for Windows 9x/NT/2000/XP:
+<blockquote>
+<a href="http://www.columbia.edu/kermit/k95.html">http://www.columbia.edu/kermit/k95.html</a>
+</blockquote>
+can dial <b>beepers</b> and can send both <b>numeric pages</b> and
+<b>alphanumeric pages</b>.
+Pagers can be dialed not only through a modem that is connected
+to a serial port on the computer where Kermit is running, but also through
+modems mounted on TCP/IP "reverse terminal servers".
+
+<p>
+<hr>
+<b>Beepers</b> and <b>numeric pagers</b> are dialed using a special form of
+the DIAL command that does not require the call to be answered with a carrier
+signal.  Example:
+<pre>
+  set modem hangup-method modem-command ; (if necessary)
+  set modem type usrobotics  ; Substitute actual modem type
+  set line /dev/ttyS0        ; Substitute actual device name
+  set speed 2400             ; Try other speeds if you want
+  pdial 7654321@             ; Substitute actual phone number
+  clear dial-status
+  hangup
+</pre>
+(this dials a beeper), or to dial a numeric pager and leave a message,
+as above but:
+<pre>
+  pdial 7654321@123456#
+</pre>
+<p>
+The SET MODEM HANGUP-METHOD tells Kermit how to make your modem hang up
+the phone call.  In C-Kermit 7.0 and earlier, the default hangup method
+is MODEM-COMMAND, meaning "pause 1 sec, send +++, pause one sec, send
+ATH0 and carriage return".  Starting with C-Kermit 8.0, the default
+method is RS232-SIGNAL, meaning the computer should turn off the port's DTR
+(Data Terminal Ready) signal for half a second.  If one of these doesn't
+work, try the other.
+
+<p>
+
+If your modem does not support the "wait for quiet answer" feature (@),
+you can use commas to force a pause:
+<pre>
+  pdial 7654321,,,,123456#
+</pre>
+<p>
+However, in this case, the modem will say OK even if the line is busy, and
+therefore Kermit has no way of knowing if the call succeeded or failed (and
+therefore automatic redialing in case of failure will not work).
+
+<p>
+
+In case you're not familiar with Kermit's automation features, here's how
+to turn the above procedure into a script that you can run with a single
+command from the shell prompt.  CD to some directory that's in your PATH
+and that you have write access to and create a file called <tt>ring</tt>
+(or any other name you wish) that looks something like this:
+
+<p>
+<pre>
+  #!/usr/local/bin/kermit +
+  if ( < 2 \v(argc) ) exit 1 Usage: \%0: phone-number [ message ]
+  set modem hangup-method modem-command
+  set modem type usrobotics
+  set line /dev/ttyS0
+  set speed 2400
+  pdial \%1@\%2
+  if fail exit 1
+  exit 0
+</pre>
+<p>
+
+<tt>\%1</tt> and <tt>\%2</tt> are the command-line parameters.
+The top line must specify the path of the 
+<a href="http://www.columbia.edu/kermit/ckermit.html">Kermit executable</a>.
+<p>
+Now give the file execute permission:
+<p>
+<pre>
+  chmod +x ring
+</pre>
+<p>
+Now you can use it to dial any number, just as if it were a regular Unix
+command:
+<p>
+<pre>
+  ring 7654321            <i>(Just dials the number)</i>
+  ring 7654321 1234567    <i>(Dials the number and then leaves a message)</i>
+</pre>
+<p>
+
+<i>Test numeric paging applications thoroughly.</i>  They work only as well as
+your modem, and most modems were not designed with paging in mind.
+For a fully elaborated numeric paging script,
+<a href="ckscripts.html#page">CLICK HERE</a>.
+
+
+<p>
+<hr>
+<b>Alphanumeric pages</b> can be sent in various ways:
+<p>
+<ol>
+<li>By making a voice call to your paging service and dictating the message.
+<li>By sending email to your paging service.
+<li>By dialing your paging service with a modem and carrying on an interactive
+dialog.
+<li>By dialing your paging service and executing a standardized error checking
+and correcting protocol to send the page.
+</ol>
+
+Option (1) is not well suited to automation; option (2) is little help if your
+network is down (which might be why you wanted to send the page in the first
+place); the problem with option (3) is that the format and sequencing of the
+dialog is not standardized, so different scripts are needed at different times
+with different services.
+
+<p>
+
+Option (4) is implemented by a C-Kermit script that implements the Telocator
+Alphanumeric Protocol (TAP) of the <a href="http://www.pcia.com"> Personal
+Communications Industry Association</a>, also known as IXO, a standardized
+protocol that performs
+error detection and correction to ensure the page is sent correctly.
+As with other kinds of modem calls, automatic redialing is supported in the
+case of busy signals, etc, and the dialing directory may be used -- allowing
+the same pager number to be dialed from different areas or countries without
+having to enter different phone numbers for each calling location.
+
+<p>
+
+For Alpha pages, Kermit's script language allows the page to be retried (and
+redialed if necessary) until it is acknowledged, to ensure the page has been
+sent, and sent correctly.  Pages may be sent "by hand" or from an automated
+or scheduled procedure such as a cron job in UNIX, or by any sort of shell
+or other script, for example one that monitors the system, applications, or
+network, and needs to notify the appropriate personnel in case a fault is
+detected.
+
+<p>
+
+To see the TAP/IXO alpha paging script, <a href="ckscripts.html#page">CLICK HERE</a>.
+
+<p>
+
+By the way, it is important to note that most paging services act as if they
+were designed to receive calls only from 1200-bps modems, such as the Hayes
+1200.  Many of them seem not to work (communicate) at all when called from a
+modern error-correcting, data-compressing modem; the initial negotations
+confuse them hopelessly.  Therefore, when using Kermit to send pages, you
+must tell Kermit what kind of modem you actually have so it knows how to give
+it the "error-correction off" and "compression off" commands prior to placing
+the call.  In other words, if you have (say) a Megahertz Xjack 56K modem,
+don't tell Kermit you have a Hayes 1200 -- tell it what you really have.
+
+<p>
+
+And be sure to follow the paging service's instructions as to speed and
+parity.
+
+<p>
+
+Other Kermit programs, such as MS-DOS Kermit for DOS and Windows 3.x, can
+be scripted to send beeps or numeric pages;
+see the <a href="faq.html">Kermit FAQ</a>,
+<a href="faq.html#faq-c-npg">item 16</a>, for details.
+
+<p>
+<b>Links:</b>
+<ul>
+<li><a href="ckermit.html">C-Kermit 7.0</a>
+<li><a href="ckscripts.html">C-Kermit Scripts Library</a>
+<li><a href="index.html">Kermit Project Home Page</a></ul><hr>
+<address>
+Kermit and Pagers / Columbia University / kermit@columbia.edu / 2 April 2002
+</address>
+</body>
+</html>

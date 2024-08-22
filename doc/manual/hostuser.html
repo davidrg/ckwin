@@ -1,0 +1,470 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html>
+<body bgcolor="#ffffff" text="#000000">
+<pre>
+KERMIT 95 HOST MODE USER'S GUIDE
+
+  Copyright (C) 1996, 2002, Frank da Cruz and Christine M. Gianone.
+  All rights reserved.
+
+Creation: February 8, 1996.
+Most recent update: 2 April 2002
+
+Applies to:
+  Kermit 95 1.1.3 or later,
+  Host Mode script version 1.00.
+  Microsoft Windows 95, 98, ME, NT, 2000, or XP, or IBM OS/2.
+
+CONTENTS
+
+  1. GETTING CONNECTED
+  2. LOGGING IN
+  3. THE HOST MENU
+  4. DIRECTORIES
+  5. COMMANDS
+  6. CD PRIVILEGE
+  7. DOS PRIVILEGE
+  8. POSTSCRIPT: WHY CAN'T I HAVE AN INTERACTIVE REMOTE DOS SESSION?
+
+INTRODUCTION
+
+Kermit 95 host mode is like a mini BBS running on a Windows 95 or Windows NT
+system that you can connect to using your communication software so you can:
+
+ . Upload and download files using Kermit, ZMODEM, or other protocols
+ . Receive messages from and leave messages for the PC owner
+ . Execute certain types of DOS commands
+
+Real Kermit software is recommended: Kermit 95, MS-DOS Kermit, VMS C-Kermit,
+UNIX C-Kermit, etc:
+
+ . VT100 or ANSI emulation is required
+ . Kermit file transfer protocol is recommended
+ . Kermit server mode is required when Kermit protocol is selected
+ . "set terminal apc on" is recommended for automatic up- and downloads
+ . "set server display on" is recommended so you can monitor uploads
+ . "set term byte 8" and "set term char cp437" recommended
+ . A scrollback feature is needed on certain occasions
+
+The Kermit 95 host is a PC running Windows 95 or NT and Kermit 95 in "host
+mode".  A username and password must have been set up for you in advance by
+the owner of the PC (the "proprietor") or else the proprietor must have
+configured the Kermit 95 host to allow anonymous logins, in which case you
+can use "guest" as the username, and supply anything at all as your
+password.
+
+1. GETTING CONNECTED
+
+You can make either a dialup or a Telnet connection to a Kermit 95 host,
+depending on how the proprietor set it up.  To make a dialup connection,
+simply dial the number given to you by the proprietor and then enter your
+terminal emulator, for example (in Kermit-95, MS-DOS Kermit, or C-Kermit):
+
+  set terminal apc on
+  dial 5551234
+  connect
+
+NOTE: "apc" is the VTxxx Application Program Command escape sequence which
+is recognized by Kermit 95, MS-DOS Kermit, and C-Kermit.  It is this feature
+that allows host mode to initiate uploads and downloads automatically
+without you having to "escape back" and give commands to your local Kermit
+program.  Read about APC in the KERMIT.UPD or CKERMIT.UPD file that comes
+with your Kermit software.
+
+As with all dialup connections, make sure you have an adequate method of
+flow control (preferable RTS/CTS hardware flow control) enabled, or else
+characters are very likely to be lost in both directions.
+
+To make a Telnet connection, tell your Kermit client software to "telnet
+&#60;hostname&#62; &#60;socket-number&#62;".  The &#60;hostname&#62; is the TCP/IP hostname of the
+proprietor's PC, and the &#60;socket-number&#62; is a number, usually 3000, given to
+you by the proprietor.  So, assuming that host mode is running on a PC whose
+IP hostname is pc.oofa.com, and it is listening for a connection on TCP port
+3000, you would connect to by giving the following commands to your own Kermit
+software:
+
+  set terminal apc on
+  telnet pc.oofa.com 3000
+
+2. LOGGING IN
+
+When you first connect to Kermit 95 host mode, the screen contains:
+
+  K-95 Login
+
+  Username: _
+
+Type your username, using the backspace key for editing if necessary, and then
+press the Enter or Return key.  Then the Password: prompt appears.  As you
+type your password, each character is echoed as an asterisk (*).
+
+  NOTE: On a Telnet connection, if characters are echoing twice on your
+  screen, return to your terminal program and instruct it to disable local
+  echoing.  (In most cases this should not be necessary.)
+
+If the username / password combination is not valid, the message "Access
+denied" is displayed and you get two more chances to log in.  If you fail to
+log in successfully after three tries, the connection is closed and hung up.
+
+3. THE HOST MENU
+
+After a successful login, you might see a greeting or news message from the PC
+owner.  After reading these texts, you are prompted to "Press any key to
+continue" and after you do so, you are placed in your personal directory and
+the main menu appears:
+
+                   Welcome to K-95 Host Mode
+
+                   Current directory: D:/K95/USERS/OLGA
+                   Protocol: Kermit, Transfer mode: binary
+
+                   Choices:
+
+                    1 - Change protocol
+                    2 - Change transfer mode
+                    3 - Change directory
+                    4 - List files
+                    5 - Download files
+                    6 - Upload files
+                    7 - View a file
+                    8 - Delete files
+                    9 - Read messages
+                   10 - Leave a message
+                   11 - Change password
+                   12 - Help
+                   13 - Logout
+               (*) 14 - Execute a DOS command
+
+                   Enter choice: _
+
+                   Last command: OK
+
+(*) Item 14 appears only if your user ID has been equipped with the
+    necessary privilege.
+
+The "Last command" line tells whether your most recent command succeeded
+or failed.
+
+If anonymous logins are permitted, guest users are placed in the PUBLIC
+directory.  Guest logins do not have a personal directory.
+
+4. DIRECTORIES
+
+Each user has access to three directories:
+
+ 1. Your own personal directory.  This directory has the same name as your
+    username.  You may upload to and download from this directory.  Other
+    host-mode users do not have access to your personal directory.
+    (Anonymous GUEST logins have no personal directory.)
+
+ 2. The PUBLIC directory.  All host-mode users may download files from this
+    directory, but may not upload to it or modify it in any other way.
+    This directory is used by the PC owner for distributing files to users.
+
+ 3. The INCOMING directory.  All host-mode users may upload files to this
+    directory.  Thus, different users can share files through this directory
+    without intervention from the PC owner.
+
+In addition, privileged users can also access other directories; see the
+section on CD PRIVILEGES below.
+
+5. COMMANDS
+
+The menu choices are as follows.  To choose a menu item, enter its number and
+then press the Enter or Return key.
+
+1 - Change protocol
+
+    The current file transfer protocol is shown on the main screen, just
+    above the menu.  This menu option lets you change it.  The choices are
+    Kermit, ZMODEM, YMODEM, YMODEM-G, and XMODEM.  Make sure your client
+    software is set up to use the same protocol.
+
+2 - Change transfer mode    
+
+    The current default transfer mode, text or binary, is shown above the
+    menu.  Use this option to change it.
+
+3 - Change directory
+
+    Displays a menu with the choices "Your own home directory", "The PUBLIC
+    directory", and "The INCOMING directory", and allows you to choose one,
+    or to return to the main menu without changing anything.
+
+4 - List files
+
+    Displays a listing of the current directory on your screen.  If the
+    listing is longer than your screen, naturally, it scrolls off the top.
+    The presumption is that your client software has a scrollback feature.
+    At the end of the file, your are instructed to "Press any key to
+    continue", at which point the file disappears and the main menu comes
+    back (but even after this happens you should still be able to scroll
+    back to the directory listing).
+
+5 - Download a file
+  
+    Prompts you for a filename.  If the file exists in the current PC host
+    directory, it is sent to you in the current transfer mode using the
+    current protocol.  The transfer happens automatically if the protocol is
+    Kermit and your client program supports Kermit's APC mechanism and has
+    it enabled, OR if your client program supports Kermit or ZMODEM
+    automatic downloading (as Kermit 95 does).  Otherwise you will see a
+    message instructing you to start your end of the transfer, which you
+    should do using whatever method is required by your terminal program.
+
+2 - Upload a file
+  
+    Works only if the current directory is your own private directory or the
+    INCOMING directory.  Prompts you for a filename.  If the file exists and
+    is accessible on your computer, it is sent using the current protocol
+    and whatever transfer mode, text or binary, your client software is
+    set up for.
+
+    The transfer happens automatically if the protocol is Kermit and your
+    client program supports Kermit's APC mechanism and has it enabled AND if
+    your client program can enter Kermit server mode.  Otherwise you will
+    see a message instructing you to start your end of the transfer.  If the
+    file is sent containing a pathname, the pathname is stripped to ensure
+    that the file is stored in the host PC's current directory and not
+    somewhere else.
+
+7 - View a file
+
+    Prompts you for a filename.  If the file exists in the current directory
+    and is readable, it is displayed on your screen in the same manner as a
+    directory listing.  Use scrollback, if necessary, to view any portions
+    that scrolled off the screen.
+
+8 - Delete a file
+
+    Deletes a file on the Kermit 95 host PC.  This is permitted only in
+    your own private directory.  Prompts you for the filename.
+    
+9 - Read messages
+
+    If you have one or more messages from the PC owner, the main menu says
+    "Message(s) waiting...".  Use this menu option to read them.  After
+    reading, you can keep, delete, move, or download the messages.
+
+10 - Leave a message
+
+    Leave a message for the proprietor (sorry, there is presently no way to
+    send a message to another user).  The message is automatically
+    timestamped and your username is shown as the sender.  You are prompted
+    for a subject.  Then may type zero or more lines of text as the message
+    body.  To include a blank line, for example between paragraphs, type at
+    least one space.  When you are finished, enter a period (.) alone on a
+    line.  At that point, you can choose whether to send or cancel the
+    message.  If you choose to send it, it is sent to the proprietor's
+    message file and a message appears immediately on the proprietor's screen
+    announcing that you have sent a message, and listing its subject.  So
+    sending a message with only a subject and no body is a handy way to get
+    the proprietor's attention (if s/he is sitting at the host PC).
+
+11 - Change password
+
+    Use this option to change your password.  You are prompted for your old
+    password as a safety precaution.  If you enter it correctly, then you
+    are prompted for the new password, and then you are asked to enter it
+    again to guard against typing errors.
+
+12 - Help
+
+    Displays a brief help text.
+
+13 - Logout
+
+    Logs you out from host mode and hangs up the connection.
+
+14 - Execute a DOS command
+
+    This option is available only to users who have been granted this
+    privilege by the proprietor, as it allows more or less unrestricted
+    access to the proprietor's PC.  If you do not have DOS privilege, this
+    item does not appear on the menu.  See section on PRIVILEGES below.
+
+In any dialog, as when you are being prompted for a menu item or a filename,
+the following special characters can be used for editing and control:
+
+    Backspace - Erase the rightmost character
+    Delete    - Erase the rightmost character
+    Ctrl-H    - Erase the rightmost character
+    Ctrl-U    - Erase all the characters typed so far, back to the prompt
+    Ctrl-C    - Return immediately to the main menu
+    Ctrl-L    - Refresh the screen
+
+Ctrl-C cannot be used during the login dialog.
+
+6. CD PRIVILEGE
+
+If the proprietor has granted you "CD Privilege", this allows you to change
+your current directory (CD) to any directory on the PC and therefore to
+upload and download files to/from any directory, to delete files in any
+directory, and to view the contents of any directory.  If you have CD
+Privilege, you will see an item 4 in the Change Directory menu:
+
+      Choices:
+
+      1 - My home directory (read/write only by me)
+      2 - The PUBLIC directory (everybody can read it)
+      3 - The INCOMING directory (everybody can write)
+      4 - A specific directory
+      5 - Return to main menu
+
+If you don't have CD Privilege, item 4 does not appear and you are
+restricted to your personal directory plus the PUBLIC and INCOMING
+directories.
+
+7. DOS PRIVILEGE
+
+DOS privilege allows you to execute DOS commands.  DOS privilege also
+implicitly includes CD privilege, since you can refer to any disk or
+directory in a DOS command.  If you have DOS privilege, item 14 - "Execute a
+DOS command" appears in the main menu.
+
+This menu choice does not give you a DOS prompt.  Rather, it lets you send a
+command to the K95 host to be passed to DOS for execution in the context of
+your current directory.  The K95 host does not and can not enforce any kinds
+of restrictions or safety measures on these commands.
+
+You should only enter DOS commands that:
+
+ 1. Require absolutely no input from the PC keyboard or mouse.
+
+ 2. Write their output in text mode on the DOS screen and then
+    exit immediately.
+
+If you enter a DOS command that might possibly require input from the PC
+keyboard (example: a COPY command might result in "Overwrite existing file
+(Yes/No/All)?") or a command that starts a GUI program, or a command that
+starts an interactive program such as a text editor, your session will
+become stuck and you will have to hang up.  This is a limitation of DOS;
+input cannot be redirected reliably, and output can be redirected only if it
+is the "standard output" of a text-mode DOS program or command.
+
+Your DOS command may be entered in the normal way without the output
+redirection symbol ("&#62;"), in which case the command's output is displayed on
+your screen; if the output scrolls off the top of your screen, use the
+scrollback feature of your terminal program to view the earlier material.
+
+If your DOS command includes the "&#62;" symbol to redirect the command's output
+to a file, then you can use the Download or View options from the main menu
+to download or view the resulting file afterwards.
+
+Examples of unsafe DOS commands (not a complete list):
+
+  time       (because it prompts for a new time)
+  date       (because it prompts for a new date)
+  copy       (because it might prompt for permission to overwrite a file)
+  delete     (because it might prompt "Are you sure (Y/N)?")
+  dir /p     (because it prompts "Press any key to continue")
+  more       (because it prompts "-- More --")
+  move       (because it might prompt for permission to overwrite a file)
+  deltree    (because it prompts for permission to proceed)
+  chkdsk     (because it might prompt for permission to fix a disk)
+  qbasic     (because it is an interactive program)
+  edit       (because it is an interactive program)
+  help       (because it is an interactive program)
+  notepad    (because it is an interactive program and a GUI program)
+
+Plus any command at all that might reference a disk that is not ready,
+resulting in the familiar "Abort, Retry, Fail?" prompt.
+
+Examples of safe DOS commands (assuming they do not reference a disk that
+is not ready, and not a complete list, and with no guarantees):
+
+  echo
+  fc
+  find  
+  mem
+  rename
+  dir        (without /P, but possibly with other switches)
+  mkdir
+  rmdir
+  set
+  copy /Y    (suppresses prompt)
+  move /Y    (suppresses prompt)
+  deltree /Y (suppresses prompt)
+  start      (without /W switch)
+  xxx /?     (prints help text for DOS command xxx)
+
+Plus any command that starts a DOS text-mode program that meets the "safe"
+requirements given above.  For example, many of the GNU UNIX utilities like
+grep, wc, etc, that have been ported to Windows 95 and NT, or (in most cases)
+the Microsoft "nmake" or "cl" programs that are used for compiling C
+programs, and probably other compilers too, at least when invoked with the
+appropriate command-line options (example: the Microsoft Help compiler will
+run without requiring any interaction when given the /E and /C switches).
+
+NOTES:
+
+ 1. The "Last command" status for DOS commands will not necessarily be
+    correct, since DOS does not accurately report the status back to the
+    Kermit 95 host.
+
+ 2. If you make a mistake in a DOS command, the error message is not
+    displayed for you.  Instead, it comes out on the host PC's screen.
+    That's another DOS feature.  Similarly if a command is entered correctly,
+    but fails; for example, "rmdir oofa" will fail if the "oofa" directory is
+    not empty, but you won't see the error message.
+
+ 3. CD, when given as a DOS command with arguments, has no effect.  To change
+    disks or directories, use the "Change directory" item in the main menu.
+
+
+8. POSTSCRIPT: WHY CAN'T I HAVE AN INTERACTIVE REMOTE DOS SESSION?
+
+Unlike multiuser operating systems such as UNIX and VMS, Windows and DOS
+were not designed to be used remotely.  The DOS/Windows user is expected to
+be sitting at the PC, looking at the PC's monitor, and controlling the PC
+physically with the keyboard, mouse, and possibly other input devices.
+
+Many DOS commands REQUIRE input from the PC's physical keyboard or mouse,
+and the input source can not be redirected.  Even if they could be,
+PC-specific keys or combinations that are required in certain situations,
+such as F-keys, Alt-key combinations, arrow and editing keys, etc, can not
+be represented by ordinary characters such as sent by a terminal or Telnet
+program.
+
+In the other direction, output is not always the simple writing of text to
+"standard output", but often involves manipulation of internal video buffers,
+calls to the graphical shell, or otherwise non-redirectable writes to the PC
+console (screen, speaker, etc).  All of this is in contrast to text-based
+operating systems like UNIX or VMS, which are designed from the beginning to
+allow sessions to come from anywhere and to be redirected in any desired
+manner.
+
+Gaining the commonly-desired sort of remote access to a Windows-based PC
+("I want to use my work PC from my home PC, just as if I was at work")
+requires not a Telnet server or a "host mode", but rather an elaborate
+special-purpose Windows-specific "remote access" product that traps key
+events, mouse actions, video-buffer manipulations, etc, and which necessarily
+restricts access to only Windows-based clients, or clients that can emulate
+the Windows environment.  Remote access products for Windows 95 and NT cost
+in $150-200 range, require lots of disk space, and you need one (generally
+the SAME one) for each end.  Furthermore the host PC can only support one
+remote access session at a time, so if you want multiple clients to access
+your PC-based services simultaneously, you'll need multiple host PCs.
+Examples of remote access products include LapLink for Windows 95,
+pcAnywhere-32, and Remotely Possible/32.
+
+Kermit 95's host mode grants a more limited type of access, but to a much
+wider variety of clients -- any computer that can run a simple VT100 or ANSI
+terminal emulation program: a DOS PC, a UNIX workstation, a Macintosh, an
+Apple II, a central computer running UNIX, VMS, VOS, or AOS/VS, and so on,
+and multiple host sessions can be active simultaneously on a single PC.
+Therefore Kermit 95's host mode is a good approach for PC owners who need to
+provide remote access to a diverse assortment of clients with a minimum of
+overhead, for the primary purpose of downloading and/or uploading of files
+within a secure framework, rather than for letting remote users run
+Windows-based applications.
+
+If your needs exceed Kermit 95's range of services, you should investigate
+either a remote access product, which makes a "Windows clone" of your system
+for one client at a time, or a full-fledged BBS system that provides a wider
+range of services, usually restricted to text mode, to a potentially large
+number of simultaneous users, generally at rather high cost.
+
+(End of HOSTUSER.TXT)
+</pre>
+</body></html>
