@@ -1,0 +1,63 @@
+.TH PCPRINT LOCAL 
+.SH NAME
+pcprint \- print on local PC printer
+.SH SYNOPSIS
+pcprint file [file ...]
+.SH DESCRIPTION
+.I pcprint
+allows you to print data from the UNIX system on a printer which is
+connected to your terminal or PC.  The terminal must be a DEC VT102,
+VT200 series, or VT300 series, or compatible, or your PC must be running
+software that emulates one of these terminals, and the emulation must
+include the "transparent print" feature.  For example, MS-DOS Kermit 2.31 or
+later may be used on the IBM PC or PS/2.
+
+While pcprint is active, text sent to your screen is redirected to the local
+printer by the terminal or PC's internal mechanisms.  These are triggered
+when the special escape sequence "ESC [ 5 i" is received, and are deactivated
+when "ESC [ 4 i" is received.  These sequences are sent by pcprint.
+.RE
+.SH INVOCATION OPTIONS
+.TP
+.B pcprint
+lets you type from the keyboard directly to your printer.
+.TP
+.B pcprint file
+prints the UNIX file on your printer.  "file" may be a single file,
+a list of files, or a wildcard file specification.  If more than one file
+is specified, they are not separated on the printout (but see below).
+.TP
+.B pcprint < file
+prints the UNIX file on your printer.  If more than one file is specified,
+only the first one is printed.
+.TP
+.B command | pcprint
+The standard output of any UNIX command may be piped to pcprint.
+.PP
+The pcprint program may also be used with the UNIX "pr" command to produce
+paginated listings.  For example:
+
+  pr -f *.c | pcprint
+
+will print all your C programs with page headings containing the date and
+time, filename, and page number, with formfeeds inserted between each page.
+
+.SH SEE ALSO
+pr(1)
+.sp 1.0v
+Gianone, Christine M., "Using MS-DOS Kermit", Digital Press, 1992.
+
+.SH AUTHOR
+Christine Gianone, Columbia University, March 1989.
+
+.SH BUGS
+Interruption of pcprint may leave your PC in printing mode.
+
+If you run pcprint from a terminal or PC that does not have a printer
+attached, or with a printer that is not turned on, the terminal or PC may
+become stuck waiting for the printer to become ready.
+
+When using MS-DOS Kermit, enter the key combination Alt-= (hold down the
+Alt key and press the equals key) to reset the terminal emulator if your
+PC becomes stuck for any of these reasons.
+

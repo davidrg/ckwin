@@ -14,7 +14,7 @@ REM if not exist dist\certs\NUL mkdir dist\certs
 REM if not exist dist\crls\NUL mkdir dist\crls
 if not exist dist\keymaps\NUL mkdir dist\keymaps
 REM if not exist dist\phones\NUL mkdir dist\phones
-REM if not exist dist\printer\NUL mkdir dist\printer
+if not exist dist\printer\NUL mkdir dist\printer
 if not exist dist\public\NUL mkdir dist\public
 if not exist dist\scripts\NUL mkdir dist\scripts
 REM if not exist dist\ssh\NUL mkdir dist\ssh
@@ -99,6 +99,7 @@ REM Generate the default keymap. This will fail if we're cross-compiling for an
 REM architecture incompatible with this machine so skip it in that case.
 if "%CKB_CROSS_COMPATIBLE%" == "no" goto :skipkm
 cd dist
+echo Generate default.ksc...
 k95.exe -Y -# 127 -C "save keymap keymaps/default.ksc,exit" > NUL:
 cd ..
 :skipkm
@@ -116,10 +117,16 @@ REM     textps.txt
 REM         Documentation for the textps utility
 REM     readme.txt
 REM         Document describing the contents of this directory
+@echo Copy printer files...
+set CK_DIST_PRINTER=pcprint.sh pcprint.man pcprint.com pcaprint.sh textps.txt
+REM TODO: readme.txt
+for %%I in (%CK_DIST_PRINTER%) do copy %%I dist\printer\
+copy printer-readme.txt dist\printer\readme.txt
 
 REM PUBLIC directory
 @echo Copy public files...
 set CK_DIST_PUBLIC=hostuser.txt
+REM TODO: iksd.txt
 for %%I in (%CK_DIST_PUBLIC%) do copy %%I dist\public\
 
 REM SCRIPTS directory
@@ -136,3 +143,28 @@ REM USERS directory
 @echo Copy User files...
 copy hostmode-greeting.txt dist\users\greeting.txt
 copy hostmode-help.txt dist\users\hostmode.txt
+
+REM Install layout on Windows NT
+REM $(user)\AppData\Kermit 95\:
+REM     Certs\ - empty
+REM     Crls\ - empty
+REM     Keymaps\ - empty
+REM     Phones\ - empty
+REM     Scripts\ - empty
+REM     Ssh\ - empty
+REM     Dialusr.dat
+REM All Users\AppData\Kermit 95\:
+REM     Certs\ - empty
+REM     Crls\ - empty
+REM     Keymaps\  -- dist\keymaps
+REM     phones\  -- now empty, previously had phone and network directories for services that no longer exist
+REM     printer\  -- dist\printer
+REM     public\  -- dist\public     (hostuser.txt, iksd.txt)
+REM     scripts\  -- dist\scripts
+REM     users\  -- dist\users
+REM     cacerts.pem
+REM     dialinf.dat
+REM     hostmode.bat
+REM     k95.ini
+REM     k95custom.ini
+REM     k95site.ini
