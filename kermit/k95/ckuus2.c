@@ -8081,12 +8081,12 @@ static char *hxymouse[] = {
 "   Disabled: Applications can not request mouse reports and reports will not",
 "             be sent.",
 "    Enabled: Applications can request mouse reports. Reports will only be ",
-"             sent for mouse events that have no action in C-Kermit. To ",
+"             sent for mouse events that have no action in Kermit 95. To ",
 "             allow an event (eg, Ctrl+Click) to be reported, map it to ",
 "             \\Kignore. For example: set mouse button 1 ctrl click \\Kignore",
 "   Override: Applications can request mouse reports. All mouse events will",
 "             be sent to the remote application regardless of what action it",
-"             is set to perform in C-Kermit. For example, if right mouse",
+"             is set to perform in Kermit 95. For example, if right mouse",
 "             click is set to \\Kpaste this won't occur when an application",
 "             requests mouse reporting - instead the right click will be sent",
 "             to the application.",
@@ -9661,11 +9661,15 @@ static char *hxymacr[] = {
 static char *hmxyprm[] = {
 "Syntax: SET PROMPT [ text ]",
 " ",
+#ifdef OS2
+"Prompt text for this program, normally 'K-95>'.  May contain backslash",
+#else
 #ifdef MAC
 "Prompt text for this program, normally 'Mac-Kermit>'.  May contain backslash",
 #else
 "Prompt text for this program, normally 'C-Kermit>'.  May contain backslash",
 #endif /* MAC */
+#endif /* OS2 */
 "codes for special effects.  Surround by { } to preserve leading or trailing",
 #ifdef OS2
 "spaces.  If text omitted, prompt reverts to K-95>.  Prompt can include",
