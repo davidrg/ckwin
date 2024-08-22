@@ -98,6 +98,22 @@ of the mouse click or the end of the drag event.  This can be used with
 the <tt>\fscrnstr()</tt> function to read text from the screen at that 
 location.
 <p>
+In addition to remapping mouse buttons, you can configure the mouse wheel
+in much the same way with:
+<p><pre>
+SET MOUSE WHEEL <i>direction key-modifiers definition</i>
+</pre><p>
+Where <i>direction</i> is either <tt>UP</tt> or <tt>DOWN</tt>. The rest is
+the same as for mouse buttons. Examples:
+<p><dl>
+  <dt><tt>SET MOUSE WHEEL UP CTRL \KUPONE</tt>
+  <dd>This makes the mouse wheel scroll up one screen when Ctrl is held down
+  <p>
+  <dt><tt>SET MOUSE WHEEL DOWN CTRL \KUPONE</tt>
+  <dd>This makes the mouse wheel scroll down one screen when Ctrl is held down
+</dl>
+
+<p>
 Use <tt>SHOW MOUSE</tt> to show the current mouse event assignments.
 <p>
 <i>Click <b>Back</b> on your Browser's Toolbar to return.</i>

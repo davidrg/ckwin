@@ -6890,6 +6890,8 @@ copied to a file, printed, or passed to a macro for processing.
 <li>You can click on a <a href="gloss.html">URL</a> to visit it in your
 Web browser.
 
+<li>You can send mouse click and scroll events to the remote host
+
 <li>The mouse buttons are "remappable", and you can assign any functions
 (<a href="kverbs.html">kverbs</a> or macros) to them you like.
 
@@ -7036,6 +7038,24 @@ other computer to display (e.g. TYPE, "cat") the file, then copy it with the
 mouse into the Clipboard, then paste it wherever you want it.
 
 <p>
+
+<dt><b>Mouse Reporting</b></dt>
+<dd>K95 can send mouse events (clicking, dragging, and scrolling) to compatible
+    applications running on the remote host, a feature known as
+    <em>Mouse Reporting</em>. This allows you to interaction with terminal
+    applications much as you would a regular GUI application. This behaviour
+    only occurs when it's enabled in K95 (which it is by default), an
+    application requests it, and by default only mouse events not assigned to
+    some action within K95 are sent to the remote application.
+
+<p> If you'd instead like applications on the remote host to be able to take
+    over your mouse entirely when they need it, you can switch to the
+    <em>Override</em> mouse reporting mode with <tt>SET MOUSE REPORTING
+    OVERRIDE</tt>. This will cause all mouse events to be sent to the remote
+    application instead of doing their assigned action within Kermit. To switch
+    it back to the default, the command is <tt>SET MOUSE REPORTING ENABLED</tt>.
+    If you'd rather turn off Mouse Reporting entirely, you can do that with
+    <tt>SET MOUSE REPORTING DISABLED</tt>.
 
 <dt><b>Customizing the Mouse</b></dt>
 
