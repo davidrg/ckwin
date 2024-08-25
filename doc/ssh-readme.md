@@ -109,8 +109,9 @@ set ssh v2 key-exchange-methods {CURVE25519-SHA256,
 ```
 
 ### Removed Commands and Options
-The following SSH commands and options have been removed because they are
-obsolete and not supported by libssh:
+The following SSH commands and options are obsolete and not supported by 
+libssh, so they have now been hidden and will just return an error when 
+entered.
 
 ```
 set ssh version 1
@@ -132,17 +133,11 @@ and just return an error when entered.
 
 ```
 SSH [OPEN] /X11-FORWARDING: {on,off}
-SSH ADD
-    LOCAL-PORT-FORWARD local-port host port
-    REMOTE-PORT-FORWARD remote-port host port
 SSH AGENT    
     ADD identity-file
     DELETE identity-file
     LIST
         /FINGERPRINT
-SSH CLEAR
-    LOCAL-PORT-FORWARD
-    REMOTE-PORT-FORWARD
 SET SSH
     AGENT-FORWARDING {ON,OFF}
     CHECK-HOST-IP {ON,OFF}

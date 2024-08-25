@@ -2391,10 +2391,6 @@ int nscntab = (sizeof(scntab) / sizeof(struct keytab)); /* How many */
 
 #ifdef ANYSSH				/* SSH command table */
 #ifdef SSHBUILTIN
-int    ssh_pf_lcl_n = 0,
-       ssh_pf_rmt_n = 0;
-struct ssh_pf ssh_pf_lcl[32] = { 0, NULL, 0 }; /* SSH Port Forwarding */
-struct ssh_pf ssh_pf_rmt[32] = { 0, NULL, 0 }; /* structs... */
 char * ssh_tmpuid = NULL, *ssh_tmpcmd = NULL, *ssh_tmpport = NULL,
      * ssh_tmpstr = NULL;
 
@@ -11264,30 +11260,36 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	    return(success);
 
 	  case XSSH_CLR:
-        if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
-            printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
-            return(-9);
-        }
-	    if ((y = cmkey(sshclr,nsshclr,"","", xxstring)) < 0) {
-	        if (y == -3) {
-		    printf("?clear what?\n");
-		    return(-9);
-		}
-	        return(y);
-	    }
-	    if ((x = cmcfm()) < 0)
-	      return(x);
-	    switch (y) {
-	      case SSHC_LPF:
-                ssh_pf_lcl_n = 0;
-		break;
-	      case SSHC_RPF:
-		ssh_pf_rmt_n = 0;
-		break;
-	      default:
-		return(-2);
-	    }
-            return(success = 1);	/* or whatever */
+          if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+              printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+              return(-9);
+          }
+	      if ((y = cmkey(sshclr,nsshclr,"","", xxstring)) < 0) {
+	          if (y == -3) {
+		          printf("?clear what?\n");
+		          return(-9);
+		      }
+	          return(y);
+	      }
+
+          /* TODO: A switch to apply these changes to any active connection
+           *       rather than only affecting future connections
+           */
+
+	      if ((x = cmcfm()) < 0) {
+              return(x);
+          }
+	      switch (y) {
+	          case SSHC_LPF:
+                  ssh_fwd_clear_local_ports(FALSE);
+		          break;
+	          case SSHC_RPF:
+                  ssh_fwd_clear_remote_ports(FALSE);
+                  break;
+	          default:
+		         return(-2);
+	      }
+          return(success = 1);	/* or whatever */
       }
 	  case XSSH_AGT: {		/* SSH AGENT */
 	      int doeach = 0;
@@ -11370,106 +11372,176 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		  return(-2);
 	      }
 	  }
+#ifdef COMMENT
 	  case XSSH_ADD: {		/* SSH ADD */
 	      /* ssh add { local, remote } port host port */
 	      int cx, i, j, k;
 	      char * h;
+
           if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
             printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
             return(-9);
           }
-	      if ((cx = cmkey(addfwd,naddfwd,"","", xxstring)) < 0)
-		return(cx);
-	      if ((x = cmnum((cx == SSHF_LCL) ?
+
+	      if ((cx = cmkey(addfwd,naddfwd,"","", xxstring)) < 0) {
+		    return(cx);
+          }
+
+          if ((x = cmnum((cx == SSHF_LCL) ?
 			     "Local port number" : "Remote port number",
-			     "",10,&j,xxstring)) < 0)
-		return(x);
-	      if ((x = cmfld("Host","",&s,xxstring)) < 0)
-		return(x);
+			     "",10,&j,xxstring)) < 0) {
+		    return(x);
+          }
+
+	      if ((x = cmfld("Host","",&s,xxstring)) < 0) {
+		    return(x);
+          }
+
 	      makestr(&h,s);
-	      if ((x = cmnum("Port","",10,&k,xxstring)) < 0)
-		return(x);
-	      if ((x = cmcfm()) < 0)
-		return(x);
+
+	      if ((x = cmnum("Port","",10,&k,xxstring)) < 0) {
+		    return(x);
+          }
+
+          if ((x = cmcfm()) < 0) {
+		    return(x);
+          }
 
 	      switch(cx) {
-		case SSHF_LCL:
-		   if (ssh_pf_lcl_n == 32) {
-		       printf(
-"?Maximum number of local port forwardings already specified\n"
-			     );
-		       free(h);
-		       return(success = 0);
-		  }
-		  ssh_pf_lcl[ssh_pf_lcl_n].p1 = j;
-		  makestr(&(ssh_pf_lcl[ssh_pf_lcl_n].host),h);
-		  makestr(&h,NULL);
-		  ssh_pf_lcl[ssh_pf_lcl_n].p2 = k;
-		  ssh_pf_lcl_n++;
-		  break;
-		case SSHF_RMT:
-		  if (ssh_pf_rmt_n == 32) {
-		      printf(
-"?Maximum number of remote port forwardings already specified\n"
-			    );
-		      free(h);
-		      return(success = 0);
-		  }
-		  ssh_pf_rmt[ssh_pf_rmt_n].p1 = j;
-		  makestr(&(ssh_pf_rmt[ssh_pf_rmt_n].host),h);
-		  makestr(&h,NULL);
-		  ssh_pf_rmt[ssh_pf_rmt_n].p2 = k;
-		  ssh_pf_rmt_n++;
+            case SSHF_LCL:
+		        if (ssh_pf_lcl_n == 32) {
+		            printf("?Maximum number of local port forwardings already "
+                           "specified\n");
+		            free(h);
+		            return(success = 0);
+		        }
+		        ssh_pf_lcl[ssh_pf_lcl_n].p1 = j;
+		        makestr(&(ssh_pf_lcl[ssh_pf_lcl_n].host),h);
+		        makestr(&h,NULL);
+		        ssh_pf_lcl[ssh_pf_lcl_n].p2 = k;
+		        ssh_pf_lcl_n++;
+		        break;
+		    case SSHF_RMT:
+		        if (ssh_pf_rmt_n == 32) {
+		            printf("?Maximum number of remote port forwardings already "
+                           "specified\n");
+		            free(h);
+		            return(success = 0);
+		        }
+		        ssh_pf_rmt[ssh_pf_rmt_n].p1 = j;
+		        makestr(&(ssh_pf_rmt[ssh_pf_rmt_n].host),h);
+		        makestr(&h,NULL);
+		        ssh_pf_rmt[ssh_pf_rmt_n].p2 = k;
+		        ssh_pf_rmt_n++;
 	      }
 	      return(success = 1);
 	  }
-	  /* Not supporting arbitrary forwarding yet */
+#endif /* COMMENT */
+      case XSSH_ADD:        /* SSH ADD { LOCAL, REMOTE } */
 	  case XSSH_FLP:		/* SSH FORWARD-LOCAL-PORT */
 	  case XSSH_FRP: {		/* SSH FORWARD-REMOTE-PORT */
 	      int li_port = 0;
 	      int to_port = 0;
 	      char * fw_host = NULL;
-	      int n;
+	      int n, rc;
           char* ssh_hst = NULL;
+          BOOL local = FALSE;
+
+          /*
+           * In K95 2.1.3, the way to add ports was:
+           *    SSH ADD { LOCAL, REMOTE }
+           * These only took effect at connection establishment - you couldn't
+           * add a new forwarding to an already established connection. The
+           *    SSH { FORWARD-LOCAL-PORT, FORWARD-REMOTE-PORT }
+           * commands are present in the K95 2.1.3 codebase for adding forwards
+           * to established connections but they were invisible and didn't do
+           * anything besides parse parameters unless SSH_TEST was defined.
+           *
+           * Here we're just treating
+           *    SSH { FORWARD-LOCAL-PORT, FORWARD-REMOTE-PORT }
+           * as a synonym for
+           *    SSH ADD { LOCAL, REMOTE }
+           * and eventually will allow adding forwards to established
+           * connections using either command.
+           */
+
+
           if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
             printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
             return(-9);
           }
-              if ((x = cmnum(cmresult.nresult == XSSH_FLP ?
-                              "local-port":"remote-port",
-                              "",10,&li_port,xxstring)) < 0)
-                  return(x);
-              if (li_port < 1 || li_port > 65535) {
-                  printf("?Out range - min: 1, max: 65535\n");
-                  return(-9);
+
+          switch(cmresult.nresult) {
+              case XSSH_ADD: {
+                  int cx;
+                  if ((cx = cmkey(addfwd,naddfwd,"","", xxstring)) < 0) {
+                      return(cx);
+                  }
+                  local = cx == SSHF_LCL;
+                  break;
               }
-              ssh_hst = ssh_get_sparam(SSH_SPARAM_HST);
-              if ((x = cmfld("host",ssh_hst?ssh_hst:"",&s,xxstring)) < 0) {
-                return(x);
+              case XSSH_FLP: {
+                  local = TRUE;
+                  break;
               }
-              n = ckstrncpy(tmpbuf,s,TMPBUFSIZ);
-              fw_host = tmpbuf;
-              if ((x = cmnum("host-port",ckuitoa(li_port),10,
-                              &to_port,xxstring)) < 0)
-                  return(x);
-              if (to_port < 1 || to_port > 65535) {
-                  printf("?Out range - min: 1, max: 65535\n");
-                  return(-9);
+              case XSSH_FRP: {
+                  local = FALSE;
+                  break;
               }
-	      if ((x = cmcfm()) < 0)
-		return(x);
-	      switch (cmresult.nresult) {
-                case XSSH_FLP:	/* SSH FORWARD-LOCAL-PORT */
-#ifndef SSHTEST
-                  ssh_fwd_local_port(li_port,fw_host,to_port);
-#endif /* SSHTEST */
-		  return(success = 1);
-		case XSSH_FRP:	/* SSH FORWARD-REMOTE-PORT */
-#ifndef SSHTEST
-                  ssh_fwd_remote_port(li_port,fw_host,to_port);
-#endif /* SSHTEST */
-		  return(success = 1);
-	      }
+
+          }
+
+          if ((x = cmnum(local ?
+                          "local-port":"remote-port",
+                          "",10,&li_port,xxstring)) < 0) {
+              return(x);
+          }
+
+          if (li_port < 1 || li_port > 65535) {
+              printf("?Out range - min: 1, max: 65535\n");
+              return(-9);
+          }
+          ssh_hst = ssh_get_sparam(SSH_SPARAM_HST);
+
+          if ((x = cmfld("host",ssh_hst?ssh_hst:"",&s,xxstring)) < 0) {
+              return(x);
+          }
+
+          n = ckstrncpy(tmpbuf,s,TMPBUFSIZ);
+          fw_host = tmpbuf;
+
+          if ((x = cmnum("host-port",ckuitoa(li_port),10,
+                          &to_port,xxstring)) < 0) {
+              return(x);
+          }
+
+          if (to_port < 1 || to_port > 65535) {
+              printf("?Out range - min: 1, max: 65535\n");
+              return(-9);
+          }
+
+	      if ((x = cmcfm()) < 0) {
+              return(x);
+          }
+
+          /* TODO: Either a switch to make it apply immediately (last parameter
+           *       on ssh_fwd_*_port = TRUE), or have the currently hidden
+           *       "SSH FORWARD-*" commands do this.
+           */
+
+          if (local) {
+              /* SSH FORWARD-LOCAL-PORT local-port host port
+               * SSH ADD LOCAL-PORT-FORWARD local-port host port
+               */
+              rc = ssh_fwd_local_port("localhost", li_port,fw_host,to_port, FALSE);
+              if (rc != 0) return(success = 0);
+          } else {
+              /* SSH FORWARD-REMOTE-PORT remote-port host port
+               * SSH ADD REMOTE-PORT-FORWARD remote-port host port
+               */
+              rc = ssh_fwd_remote_port("localhost", li_port,fw_host,to_port, FALSE);
+              if (rc != 0) return(success = 0);
+          }
 	      return(success = 1);
 	  }
 	case XSSH_V2:		/* SSH V2 */
