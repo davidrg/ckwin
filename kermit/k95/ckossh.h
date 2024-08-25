@@ -5,12 +5,53 @@
 extern char * ssh_idf[32];              /* identity files */
 extern int ssh_idf_n;
 
-extern int    ssh_pf_lcl_n,
-        ssh_pf_rmt_n;
-extern struct ssh_pf ssh_pf_lcl[32];    /* Port forwarding structs */
-extern struct ssh_pf ssh_pf_rmt[32];    /* (declared in ckuusr.c) */
-
 extern int ssh_sock;                    /* SSH socket */
+
+#ifndef SSH_PF_T
+#define SSH_PF_T
+/* Note: This also exists in ckolsshs.h */
+#define SSH_PORT_FORWARD_NULL       0
+#define SSH_PORT_FORWARD_LOCAL      1
+#define SSH_PORT_FORWARD_REMOTE     2
+#define SSH_PORT_FORWARD_INVALID   99       /* Invalid entry / free for re-use */
+typedef struct ssh_port_forward {
+    /* Type of port forward. One of:
+     *  SSH_PORT_FORWARD_LOCAL      Local (Direct) port forward
+     *  SSH_PORT_FORWARD_REMOTE     Remote (Reverse) port forward
+     *  SSH_PORT_FORWARD_INVALID    Empty list entry. Can be overwritten with a
+     *                              new entry. Should otherwise be skipped over
+     *  SSH_PORT_FORWARD_NULL       End of list marker
+     *  */
+    int type;
+
+    /* For remote (reverse) forwards: address on the server to bind to.
+     * Use NULL to bind ot all addresses.
+     *
+     * For local (direct) forwards: the address/host name for the servers
+     * logs.
+     * */
+    char* address;
+
+    /* This is the port that listens for new connections. Its either on the
+     * local host (Local/Direct forwarding) or the remote host (Remote/Reverse
+     * forwarding.
+     *
+     * For Remote/Reverse forwarding, you can set this to 0 to allow the server
+     * to choose the port.
+     * */
+    int port;
+
+    /* This is the host and port that connections will be made to when
+     * something makes a connection to port 1. For Local (Direct) forwarding,
+     * it's something accessible to the remote host, and for Remote (Reverse)
+     * forwarding it's something accessible to the local host. */
+    char* hostname;
+    int host_port;
+} ssh_port_forward_t;
+#endif /* SSH_PF_T */
+
+#define SSH_ERR_TOO_MANY_FORWARDS 1
+#define SSH_ERR_DUPLICATE_PORT_FWD 2
 
 /* Integer parameters. Set with ssh_set_iparam, get with ssh_get_iparam */
 #define SSH_IPARAM_AFW      1       /* agent forwarding */
@@ -86,8 +127,11 @@ _PROTOTYP(int sshkey_display_public_as_ssh2,(char * filename,char *identity_pass
 _PROTOTYP(int sshkey_change_passphrase,(char * filename, char * oldpp, char * newpp));
 
 /* Port forwarding configuration */
-_PROTOTYP(int ssh_fwd_remote_port, (int port, char * host, int host_port));
-_PROTOTYP(int ssh_fwd_local_port,(int,char *,int));
+_PROTOTYP(int ssh_fwd_remote_port, (char* address, int port, char * host, int host_port, BOOL apply));
+_PROTOTYP(int ssh_fwd_local_port,(char* address, int port,char * host, int host_port, BOOL apply));
+_PROTOTYP(int ssh_fwd_clear_remote_ports,(BOOL apply));
+_PROTOTYP(int ssh_fwd_clear_local_ports,(BOOL apply));
+_PROTOTYP(const ssh_port_forward_t* ssh_fwd_get_ports,());
 
 #ifdef SSHTEST
 _PROTOTYP(int sshkey_v1_change_comment,(char * filename, char * comment, char * pp));
@@ -139,6 +183,7 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 #define SSH_FEAT_REKEY_MANUAL   13
 #define SSH_FEAT_REKEY_AUTO     14
 #define SSH_FEAT_FROM_PRIV_PRT  15
+#define SSH_FEAT_DYN_PORT_FWD   16
 
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 

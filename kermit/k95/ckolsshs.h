@@ -78,6 +78,54 @@
 #define SSH_ERR_BUFFER_CONSUME_FAILED -24 /* Failed to consume processed data from a ring buffer */
 #define SSH_ERR_BUFFER_WRITE_FAILED -25 /* Writing to a buffer failed, data has been lost */
 #define SSH_ERR_THREAD_STATE_UNKNOWN -26 /* SSH thread failed to start or fail in a reasonable time. State is now unknown */
+#define SSH_ERR_LISTEN_SOCKET_CREATE_FAILED -27 /* Failed to create listen socket for direct forward */
+#define SSH_ERR_DIRECTFWD_GETADDRINFO_FAILED -28 /* Call to getaddrinfo failed while setting up direct forward server */
+#define SSH_ERR_DIRECTFWD_BIND_FAILED -29 /* Call to bind failed while setting up direct forward server */
+#define SSH_ERR_DIRECTFWD_LISTEN_FAILED -30 /* Call to listen failed while setting up direct forward server */
+#define SSH_ERR_MUTEX_TIMEOUT -31       /* Timeout waiting for mutext */
+
+#ifndef SSH_PF_T
+#define SSH_PF_T
+/* Copied from ckossh.h */
+#define SSH_PORT_FORWARD_NULL       0
+#define SSH_PORT_FORWARD_LOCAL      1
+#define SSH_PORT_FORWARD_REMOTE     2
+#define SSH_PORT_FORWARD_INVALID   99       /* Invalid entry / free for re-use */
+typedef struct ssh_port_forward {
+    /* Type of port forward. One of:
+     *  SSH_PORT_FORWARD_LOCAL      Local (Direct) port forward
+     *  SSH_PORT_FORWARD_REMOTE     Remote (Reverse) port forward
+     *  SSH_PORT_FORWARD_INVALID    Empty list entry. Can be overwritten with a
+     *                              new entry. Should otherwise be skipped over
+     *  SSH_PORT_FORWARD_NULL       End of list marker
+     *  */
+    int type;
+
+    /* For remote (reverse) forwards: address on the server to bind to.
+     * Use NULL to bind ot all addresses.
+     *
+     * For local (direct) forwards: the address/host name for the servers
+     * logs.
+     * */
+    char* address;
+
+    /* This is the port that listens for new connections. Its either on the
+     * local host (Local/Direct forwarding) or the remote host (Remote/Reverse
+     * forwarding.
+     *
+     * For Remote/Reverse forwarding, you can set this to 0 to allow the server
+     * to choose the port.
+     * */
+    int port;
+
+    /* This is the host and port that connections will be made to when
+     * something makes a connection to port 1. For Local (Direct) forwarding,
+     * it's something accessible to the remote host, and for Remote (Reverse)
+     * forwarding it's something accessible to the local host. */
+    char* hostname;
+    int host_port;
+} ssh_port_forward_t;
+#endif /* SSH_PF_T */
 
 #define MAX_AUTH_METHODS 10
 
@@ -119,10 +167,11 @@ typedef struct {
      * the password auth option. */
     BOOL allow_password_auth;
 
+    const ssh_port_forward_t *port_forwards;
+
     /* TODO: When agent, X11, and other port forwarding is added
      *      all forwarding should be forced off/cleared when host key
-     *      verification fails and strict host key checking is set to no.
-     */
+     *      verification fails and strict host key checking is set to no. */
 } ssh_parameters_t;
 
 
@@ -158,6 +207,9 @@ typedef struct {
     char* error_message; /* An error message, if any */
     int pty_height, pty_width; /* For sending terminal size changes to the SSH thread */
 
+    HANDLE forwards_mutex;           /* Guards the list of ssh_forward_t */
+    struct ssh_forward *forwards;         /* Linked list of SSH forwarding config */
+    HANDLE forwardingConfigChanged;
 } ssh_client_t;
 
 
@@ -208,7 +260,7 @@ ssh_parameters_t* ssh_parameters_new(
         int pty_width, int pty_height, const char* auth_methods,
         const char* ciphers, int heartbeat, const char* hostkey_algorithms,
         const char* macs, const char* key_exchange_methods, int nodelay,
-        const char* proxy_command);
+        const char* proxy_command, const ssh_port_forward_t *port_forwards);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

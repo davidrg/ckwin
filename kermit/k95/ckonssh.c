@@ -414,6 +414,9 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("sshkey_change_passphrase", sshkey_change_passphrase);
     params->p_install_funcs("ssh_fwd_remote_port", ssh_fwd_remote_port);
     params->p_install_funcs("ssh_fwd_local_port", ssh_fwd_local_port);
+    params->p_install_funcs("ssh_fwd_clear_remote_ports", ssh_fwd_clear_remote_ports);
+    params->p_install_funcs("ssh_fwd_clear_local_ports", ssh_fwd_clear_local_ports);
+    params->p_install_funcs("ssh_fwd_get_ports", ssh_fwd_get_ports);
 #ifdef SSHTEST
     params->p_install_funcs("sshkey_v1_change_comment", sshkey_v1_change_comment);
 #endif
@@ -844,8 +847,68 @@ int ssh_snaws() {
     return 0;
 }
 
-int ssh_fwd_remote_port(int port, char * host, int host_port) {
+/** Add a new Reverse (remote) port forward for future connections. This is
+ * called by the following commands:
+ *    SSH ADD REMOTE-PORT-FORWARD
+ *    SSH FORWARD-REMOTE-PORT
+ *
+ * @param address Address the remote SSH server should listen on (reserved for
+ *          future use)
+ * @param port Port the remote SSH server will listen on
+ * @param host Host connetions will be made to (on the client side)
+ * @param host_port Port connections will be made to (on the client side)
+ * @param apply Add the forwarding to any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_remote_port(char* address, int port, char * host, int host_port, BOOL apply)
+{
     return 0;
+}
+
+/** Add a new Direct (local) port forward for future connections. This is
+ * called by the following commands:
+ *    SSH ADD LOCAL-PORT-FORWARD
+ *    SSH FORWARD-LOCAL-PORT
+ *
+ * @param address Address the remote SSH server should listen on (reserved for
+ *          future use)
+ * @param port Port K95 will listen on for new connections
+ * @param host Host connetions will be made to from the server
+ * @param host_port port connections will be made to from the server
+ * @param apply Add the new forwarding to any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_local_port(char* address, int port, char * host, int host_port, BOOL apply) {
+    return 0;
+}
+
+/** Clears all remote port forwards for future SSH sessions
+ *
+ * @param apply Also stop forwarding all remote ports in any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_clear_remote_ports(BOOL apply) {
+
+    return 0;
+}
+
+/** Clears all local port forwards for future SSH sessions
+ *
+ * @param apply Also stop forwarding all  ports in any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_clear_local_ports(BOOL apply) {
+
+    return 0;
+}
+
+/** Gets all forwarded ports. The final entry in the list has a type of
+ * SSH_PORT_FORWARD_NULL.
+ *
+ * @returns List of forwarded ports, or NULL on error or empty list
+ */
+const ssh_port_forward_t* ssh_fwd_get_ports() {
+    return NULL;
 }
 
 /** Creates an SSH key pair
@@ -906,10 +969,6 @@ char * sshkey_default_file(int a) {
     return NULL; /* TODO */
 }
 #endif
-
-int ssh_fwd_local_port(int a, char *b, int c) {
-    return 0;
-}
 
 /** Manually re-key the SSH connection
  */

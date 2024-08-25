@@ -48,7 +48,7 @@ struct ring_buffer_t {
     BOOL full;
     HANDLE mutex;
 
-    /* Error is set by ring_buffer_signal_error. If it is non-zerot then all
+    /* Error is set by ring_buffer_signal_error. If it is non-zero then all
      * waiting calls to ring_buffer_put_bocking and ring_buffer_get_blocking
      * will fail immediately. */
     int error;
@@ -81,7 +81,7 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
             FALSE,  /* initially not owned */
             NULL);  /* unnamed */
     if (buf->mutex == NULL) {
-        debug(F100, "Failed to create mutex for rinbug", "", 0);
+        debug(F100, "Failed to create mutex for ringbuf", "", 0);
         free(buf->buffer);
         free(buf);
         return NULL;
@@ -112,23 +112,30 @@ void ring_buffer_free(ring_buffer_handle_t buf) {
 
     debug(F100, "ringbuf - free", NULL, 0);
 
-    if (buf->buffer != NULL) {
-        free(buf->buffer);
-        buf->buffer = NULL;
+    /* Let anyone waiting on the ring buffer know its about to go away */
+    ring_buffer_signal_error(buf, RING_BUFFER_NO_RING_BUFFER);
+
+    /* And make sure we have exclusive access before we go deleting things */
+    if (ring_buffer_lock(buf, INFINITE)) {
+        if (buf->buffer != NULL) {
+            free(buf->buffer);
+            buf->buffer = NULL;
+        }
+        if (buf->readReady != NULL) {
+            HANDLE h = buf->readReady;
+            buf->readReady = NULL;
+            CloseHandle(h);
+        }
+        if (buf->writeReady != NULL) {
+            HANDLE h = buf->writeReady;
+            buf->writeReady = NULL;
+            CloseHandle(h);
+        }
     }
+
     if (buf->mutex != NULL) {
         HANDLE h = buf->mutex;
         buf->mutex = NULL;
-        CloseHandle(h);
-    }
-    if (buf->readReady != NULL) {
-        HANDLE h = buf->readReady;
-        buf->readReady = NULL;
-        CloseHandle(h);
-    }
-    if (buf->writeReady != NULL) {
-        HANDLE h = buf->writeReady;
-        buf->writeReady = NULL;
         CloseHandle(h);
     }
     free(buf);
@@ -321,6 +328,8 @@ BOOL ring_buffer_get(ring_buffer_handle_t buf, char *data) {
 
 int ring_buffer_get_blocking(ring_buffer_handle_t buf, char *data, int timeout) {
     int rc;
+
+    if (buf == NULL) return RING_BUFFER_NO_RING_BUFFER;
 
     if (buf->readReady == NULL) return RING_BUFFER_NO_RING_BUFFER;
 
@@ -532,4 +541,8 @@ void ring_buffer_signal_error(ring_buffer_handle_t buf, int error) {
         SetEvent(buf->readReady);
         SetEvent(buf->writeReady);
     }
+}
+
+HANDLE ring_buffer_get_ready_read_event(ring_buffer_handle_t buf) {
+    return buf->readReady;
 }

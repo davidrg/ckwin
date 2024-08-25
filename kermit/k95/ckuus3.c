@@ -8109,10 +8109,6 @@ char * ssh_tmp[32] = {                  /* Temp identity file list */
 };
 int ssh_idf_n = 0;
 
-extern int    ssh_pf_lcl_n,
-              ssh_pf_rmt_n;
-extern struct ssh_pf ssh_pf_lcl[32];    /* Port forwarding structs */
-extern struct ssh_pf ssh_pf_rmt[32];    /* (declared in ckuusr.c) */
 #endif /* SSHBUILTIN */
 
 #ifdef SFTP_BUILTIN
@@ -8150,25 +8146,70 @@ shossh() {
     }
     printf(" ssh check-host-ip:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CHKIP)));
     printf(" ssh compression:                 %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CMP)));
-    if (ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+    if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
         printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_get_iparam(SSH_IPARAM_DYF)));
-        if (ssh_pf_lcl[0].p1 && ssh_pf_lcl[0].host && ssh_pf_lcl[0].p2) {
-          printf(" ssh forward-local-port:          %d %s %d\n",
-                 ssh_pf_lcl[0].p1, ssh_pf_lcl[0].host, ssh_pf_lcl[0].p2);
-          for ( n=1;n<ssh_pf_lcl_n;n++ )
-            printf("                       :          %d %s %d\n",
-                   ssh_pf_lcl[n].p1, ssh_pf_lcl[n].host, ssh_pf_lcl[n].p2);
-        } else
-          printf(" ssh forward-local-port:          (none)\n");
-        if (ssh_pf_rmt[0].p1 && ssh_pf_rmt[0].host && ssh_pf_rmt[0].p2) {
-          printf(" ssh forward-remote-port:         %d %s %d\n",
-                 ssh_pf_rmt[0].p1, ssh_pf_rmt[0].host, ssh_pf_rmt[0].p2);
-          for ( n=1;n<ssh_pf_rmt_n;n++ )
-            printf("                        :         %d %s %d\n",
-                   ssh_pf_rmt[n].p1, ssh_pf_rmt[n].host, ssh_pf_rmt[n].p2);
-        } else {
-          printf(" ssh forward-remote-port:         (none)\n");
+    }
+    if (ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+        /* This is a combined array of local and remote port forwards in no
+         * particular order, so we've got to iterate through it twice if we
+         * want to output them separately. The array is terminated with an
+         * entry that has its type set to SSH_PORT_FORWARD_NULL.
+         */
+        ssh_port_forward_t* fwd = ssh_fwd_get_ports();
+
+        if (fwd != NULL) {
+            int i = 0;
+            BOOL no_forwards = TRUE;
+
+            /* Output local port forwards */
+            while (fwd->type != SSH_PORT_FORWARD_NULL) {
+                if (fwd->type == SSH_PORT_FORWARD_LOCAL) {
+                    no_forwards = FALSE;
+                    if (i == 0) {
+                        printf(" ssh forward-local-port:          %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    } else {
+                        printf("                       :          %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    }
+                    i++;
+                }
+
+                fwd++;
+            }
+
+            if (no_forwards) {
+                printf(" ssh forward-local-port:          (none)\n");
+            }
+
+            /* Back to the start of the list for the next trip around */
+            fwd = ssh_fwd_get_ports();
+            i = 0;
+            no_forwards = TRUE;
+
+            /* Output remote port forwards */
+            while (fwd->type != SSH_PORT_FORWARD_NULL) {
+                if (fwd->type == SSH_PORT_FORWARD_REMOTE) {
+                    no_forwards = FALSE;
+                    if (i == 0) {
+                        printf(" ssh forward-remote-port:         %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    } else {
+                        printf("                        :         %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    }
+                    i++;
+                }
+
+                fwd++;
+            }
+
+            if (no_forwards) {
+                printf(" ssh forward-remote-port:         (none)\n");
+            }
         }
+    }
+    if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
         printf(" ssh gateway-ports:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_GWP)));
     }
     if (ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
@@ -8292,8 +8333,8 @@ dosetssh() {
             sshtab[z].flgs = CM_INV;
         }
         else if ((sshtab[z].kwval == SSH_DYF || sshtab[z].kwval == SSH_GWP)
-            && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
-            /* Port Forwarding
+            && !ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+            /* Dynamic Port Forwarding
              * "set ssh dynamic-forwarding"
              * "set ssh gateway-ports"
              */
@@ -8388,7 +8429,7 @@ dosetssh() {
 
 #ifdef SSHBUILTIN
       case SSH_AFW:                     /* Agent-forwarding */
-        if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+        if (!ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
             printf("\r\nAgent forwarding is not supported by the current SSH "
                    "backend\r\n");
             return(-9);
@@ -8403,14 +8444,14 @@ dosetssh() {
         return(success = set_ssh_iparam_on(SSH_IPARAM_CMP));
 
       case SSH_DYF:                     /* Dynamic Forwarding */
-        if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
-            printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+        if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+            printf("\r\nDynamic port forwarding is not supported by the current SSH backend\r\n");
             return(-9);
         }
         return(success = set_ssh_iparam_on(SSH_IPARAM_DYF));
 
       case SSH_GWP:                     /* Gateway ports */
-        if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+        if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
             printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
             return(-9);
         }
