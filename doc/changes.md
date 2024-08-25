@@ -9,6 +9,11 @@ check the git commit log.
 Nothing yet
 
 ### New features
+* SSH Port forwarding (tunneling) is now supported again in both
+  the Direct/Local and Reverse/Remote forms. You can add forwards before
+  establishing a connection with `SSH ADD { local, remote }` and remove all
+  forwards of a given type with `SSH CLEAR { local, remote }`. These commands
+  don't yet have any effect on an already established SSH connection.
 * The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
   to load the backend DLL provided the `-#2` command line argument has not been
   supplied. If no SSH backend gets loaded, you can load one manually with the new

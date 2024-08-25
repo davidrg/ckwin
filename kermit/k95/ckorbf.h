@@ -218,4 +218,12 @@ void ring_buffer_signal_error(ring_buffer_handle_t buf, int error);
  */
 void ring_buffer_get_error(ring_buffer_handle_t buf);
 
+/** Gets an event that will be set whenever data is written to the
+ * ring buffer.
+ *
+ * @param buf Buffer to get an event for
+ * @return An event
+ */
+HANDLE ring_buffer_get_ready_read_event(ring_buffer_handle_t buf);
+
 #endif /* CKWIN_RINGBUF_H */

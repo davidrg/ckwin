@@ -127,17 +127,17 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
  *          value is saved in ssh_ver. 0=auto.
  *      /SUBSYSTEM:name
  *      TODO /X11-FORWARDING: {on,off}
- *   TODO: SSH ADD
- *      TODO: LOCAL-PORT-FORWARD local-port host port
- *      TODO: REMOTE-PORT-FORWARD remote-port host port
+ *   SSH ADD
+ *      LOCAL-PORT-FORWARD local-port host port
+ *      REMOTE-PORT-FORWARD remote-port host port
  *   TODO: SSH AGENT
  *      TODO: ADD identity-file
  *      TODO: DELETE identity-file
  *      TODO: LIST
  *          TODO: /FINGERPRINT
- *  TODO: SSH CLEAR
- *      TODO: LOCAL-PORT-FORWARD
- *      TODO: REMOTE-PORT-FORWARD
+ *  SSH CLEAR
+ *      LOCAL-PORT-FORWARD
+ *      REMOTE-PORT-FORWARD
  *   SSH KEY
  *      CHANGE-PASSPHRASE
  *          /NEW-PASSPHRASE:passphrase
@@ -454,6 +454,25 @@ static char                             /* The following are to be malloc'd */
     * ssh_pxc = NULL,                     /* Proxy command */
     * xxx_dummy = NULL;
 
+/* The SSH subsystem actually tracks port forwards with a linked list so it has
+ * no particular limit on the number it will support, but we need to be able to
+ * track these things separately from the SSH subsystem to allow them to be set
+ * up before the connection is made, and for now a simple array is easier than
+ * a linked list.
+ *
+ * Why 65?
+ *  Because Kermit 95 2.1.3 allowed 32 local forwardings and 32 remote
+ *  forwardings, so a limit of 64 means all previously valid set of forwardings
+ *  will sill be valid here. And one more to terminate the list makes 65.
+ */
+#define MAX_PORT_FORWARDS 65
+
+/*
+ * Array of port forwards. The array is null-terminated (the last entry has
+ * type set to SSH_PORT_FORWARD_NULL) to make passing it around easier.
+ */
+static ssh_port_forward_t *port_forwards = NULL;
+
 /* Local variables */
 ssh_client_t *ssh_client = NULL;  /* Interface to the ssh subsystem */
 HANDLE hSSHClientThread = NULL;   /* SSH subsystem thread */
@@ -722,8 +741,11 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("sshkey_display_public", sshkey_display_public);
     params->p_install_funcs("sshkey_display_public_as_ssh2", sshkey_display_public_as_ssh2);
     params->p_install_funcs("sshkey_change_passphrase", sshkey_change_passphrase);
-    params->p_install_funcs("ssh_fwd_remote_port", ssh_fwd_remote_port); /* TODO */
-    params->p_install_funcs("ssh_fwd_local_port", ssh_fwd_local_port); /* TODO */
+    params->p_install_funcs("ssh_fwd_remote_port", ssh_fwd_remote_port);
+    params->p_install_funcs("ssh_fwd_local_port", ssh_fwd_local_port);
+    params->p_install_funcs("ssh_fwd_clear_remote_ports", ssh_fwd_clear_remote_ports);
+    params->p_install_funcs("ssh_fwd_clear_local_ports", ssh_fwd_clear_local_ports);
+    params->p_install_funcs("ssh_fwd_get_ports", ssh_fwd_get_ports);
 #ifdef SSHTEST
     params->p_install_funcs("sshkey_v1_change_comment", sshkey_v1_change_comment); /* TODO */
 #endif
@@ -1029,8 +1051,6 @@ static void debug_params(const char* function) {
 
 
 
-
-
 /** Checks that the SSH thread is alive and has not reported an error.
  *
  * @return Error status or 0 if everything is ok.
@@ -1192,7 +1212,8 @@ int ssh_open() {
             ssh2_mac,   /* Allowed MACs */
             ssh2_kex,   /* Key exchange methods */
             ssh_get_nodelay_enabled(),/* Enable/disable Nagle's algorithm */
-            ssh_pxc     /* Proxy Command */
+            ssh_pxc,    /* Proxy Command */
+            port_forwards /* Direct and Reverse port forward config */
             );
 
     if (user) free(user);
@@ -1257,13 +1278,22 @@ int ssh_clos() {
                         "error", "", GetLastError());
             return SSH_ERR_UNSPECIFIED;
         } else {
+            ssh_client_t *temp;
             debug(F100, "ssh_clos() - thread terminated. Cleaning up...", "", 0);
             /* SSH Client thread has stopped. It should have already cleaned up
              * all the things it was responsible for, now it's our turn. */
             CloseHandle(hSSHClientThread);
             hSSHClientThread = NULL;
-            ssh_client_free(ssh_client);
+
+            temp = ssh_client;
             ssh_client = NULL;
+
+            if (ring_buffer_lock(temp->inputBuffer, INFINITE)) {
+                if (ring_buffer_lock(temp->outputBuffer, INFINITE)) {
+                    ssh_client_free(ssh_client);
+                }
+            }
+
             return SSH_ERR_NO_ERROR;
         }
     } else {
@@ -1292,6 +1322,11 @@ int ssh_tchk() {
      * is whatever is in the threads output buffer */
 
     if (ring_buffer_lock(ssh_client->outputBuffer, 0)) {
+        if (ssh_client == NULL) {
+            debug(F100, "ssh_tchk - error: no instance!", "", 0);
+            return SSH_ERR_NO_INSTANCE;
+        }
+
         rc = ring_buffer_length(ssh_client->outputBuffer);
         ring_buffer_unlock(ssh_client->outputBuffer);
     } else {
@@ -1332,8 +1367,9 @@ int ssh_tchk() {
  * @return 0 on success, < 0 on error
  */
 int ssh_flui() {
-    if (ssh_client == NULL)
+    if (ssh_client == NULL) {
         return SSH_ERR_NO_INSTANCE;
+    }
 
     if (!SetEvent(ssh_client->flushEvent)) {
         debug(F100, "ssh_flui() - failed to signal flush event!", "", 0);
@@ -1430,6 +1466,11 @@ int ssh_xin(int count, char * buffer) {
     }
 
     if(ring_buffer_lock(ssh_client->outputBuffer, 0)) {
+        if (ssh_client == NULL) {
+            debug(F100, "ssh_xin - no instance", "", 0);
+            return SSH_ERR_NO_INSTANCE;
+        }
+
         buffer_length = ring_buffer_length(ssh_client->outputBuffer);
         debug(F101, "ssh_xin - bytes available", "", buffer_length);
         rc = ring_buffer_read(ssh_client->outputBuffer, buffer, count);
@@ -1501,6 +1542,11 @@ int ssh_tol(char * buffer, int count) {
         return SSH_ERR_NO_INSTANCE;
 
     if (ring_buffer_lock(ssh_client->inputBuffer, 0)) {
+        if (ssh_client == NULL) {
+            debug(F100, "ssh_tol - error: no instance!", "", 0);
+            return SSH_ERR_NO_INSTANCE;
+        }
+
         rc = ring_buffer_write(ssh_client->inputBuffer, buffer, count);
         ring_buffer_unlock(ssh_client->inputBuffer);
         if (!SetEvent(ssh_client->dataArrivedEvent)) {
@@ -1663,9 +1709,188 @@ int ssh_snaws() {
 }
 
 
-int ssh_fwd_remote_port(int port, char * host, int host_port)
+static int ssh_fwd_port(int type, char* address, int port, char* host, int host_port, BOOL apply) {
+    /* Search for a free port forwarding entry */
+    if (port_forwards == NULL) {
+        /* Array doesn't exist yet. Create it. */
+        port_forwards = malloc(sizeof(ssh_port_forward_t) * MAX_PORT_FORWARDS);
+        memset(port_forwards, 0, sizeof(ssh_port_forward_t) * MAX_PORT_FORWARDS);
+    }
+
+    /* Validate the forwarding request - port number must be unique for all
+     * forwardings of the same kind */
+    for (int i = 0; i < MAX_PORT_FORWARDS; i++) {
+        if (type == SSH_PORT_FORWARD_LOCAL &&
+            port_forwards[i].type == type &&
+            port_forwards[i].port == port) {
+
+            printf("?Error: a local port forwarding already exists on port %d\n", port);
+            return SSH_ERR_DUPLICATE_PORT_FWD;
+        } else if (type == SSH_PORT_FORWARD_REMOTE &&
+            port_forwards[i].type == type &&
+            port_forwards[i].port == port) {
+
+            printf("?Error: a remote port forwarding already exists on port %d\n", port);
+            return SSH_ERR_DUPLICATE_PORT_FWD;
+        }
+    }
+
+
+    /* Add the new forwarding to the list. Not <= MAX_PORT_FORWARDS as we want
+     * to leave one entry at the end fo the array with its type set to
+     * SSH_PORT_FORWARD_NULL to mark the end of the array */
+    for (int i = 0; i < MAX_PORT_FORWARDS; i++) {
+        if (port_forwards[i].type == SSH_PORT_FORWARD_NULL ||
+            port_forwards[i].type == SSH_PORT_FORWARD_INVALID) {
+
+            port_forwards[i].type = type;
+            port_forwards[i].port = port;
+            port_forwards[i].hostname = _strdup(host);
+            port_forwards[i].host_port = host_port;
+
+            /* For direct (local) forwardings, this just appears in the server
+             * logs at the moment, but in the future it should specify the
+             * local interface to listen on for new connections
+             *
+             * For reverse (remote) forwardings, this is the server address to
+             * bind on. It should be either a specific address (like localhost
+             * I guess), or NULL to listen on all addresses.
+             */
+            port_forwards[i].address = _strdup(address);
+
+            if (apply) {
+                /* TODO: If the SSH connection is currently active, add it to
+                 *       the connection */
+            }
+
+            return SSH_ERR_NO_ERROR;
+        }
+    }
+
+    /* TODO: While we're out of space to store the port forwarding, we could
+     *       still add it to an active SSH session if there is one. We'd want
+     *       to notify the user its only a temporary forwarding though and that
+     *       they'll have to add it again if they close and re-open the SSH
+     *       session. Such forwardings also wouldn't be able to appear in the
+     *       "show ssh" screen unless we switched to using a linked list to
+     *       return forwarding config to K95.
+     */
+
+    /* The list of port forwards is full */
+    printf("?Error: Maximum number of port forwardings already specified\n");
+    return SSH_ERR_TOO_MANY_FORWARDS;
+}
+
+/** Add a new Reverse (remote) port forward for future connections. This is
+ * called by the following commands:
+ *    SSH ADD REMOTE-PORT-FORWARD
+ *    SSH FORWARD-REMOTE-PORT
+ *
+ * @param address Address the remote SSH server should listen on (reserved for
+ *          future use)
+ * @param port Port the remote SSH server will listen on
+ * @param host Host connetions will be made to (on the client side)
+ * @param host_port Port connections will be made to (on the client side)
+ * @param apply Add the forwarding to any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_remote_port(char* address, int port, char * host, int host_port, BOOL apply)
 {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+    return ssh_fwd_port(SSH_PORT_FORWARD_REMOTE, address, port, host, host_port, apply);
+}
+
+/** Add a new Direct (local) port forward for future connections. This is
+ * called by the following commands:
+ *    SSH ADD LOCAL-PORT-FORWARD
+ *    SSH FORWARD-LOCAL-PORT
+ *
+ * @param address Address the remote SSH server should listen on (reserved for
+ *          future use)
+ * @param port Port K95 will listen on for new connections
+ * @param host Host connetions will be made to from the server
+ * @param host_port port connections will be made to from the server
+ * @param apply Add the new forwarding to any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_local_port(char* address, int port, char * host, int host_port, BOOL apply) {
+    return ssh_fwd_port(SSH_PORT_FORWARD_LOCAL, address, port, host, host_port, apply);
+}
+
+/** Clears all remote port forwards for future SSH sessions
+ *
+ * @param apply Also stop forwarding all remote ports in any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_clear_remote_ports(BOOL apply) {
+
+    /* Clear out all SSH_PORT_FORWARD_REMOTE entries*/
+    for (int i = 0; i < MAX_PORT_FORWARDS; i++) {
+        if (port_forwards[i].type == SSH_PORT_FORWARD_REMOTE) {
+
+            if (apply) {
+                /* TODO: Also remove from the active connection (if any) */
+            }
+
+            port_forwards[i].type = SSH_PORT_FORWARD_INVALID;
+            port_forwards[i].port = 0;
+            port_forwards[i].host_port = 0;
+
+            if (port_forwards[i].hostname != NULL) {
+                free(port_forwards[i].hostname);
+                port_forwards[i].hostname = NULL;
+            }
+
+            if (port_forwards[i].address != NULL) {
+                free(port_forwards[i].address);
+                port_forwards[i].address = NULL;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/** Clears all local port forwards for future SSH sessions
+ *
+ * @param apply Also stop forwarding all  ports in any active SSH session
+ * @returns 0 on success
+ */
+int ssh_fwd_clear_local_ports(BOOL apply) {
+    /* Clear out all SSH_PORT_FORWARD_LOCAL entries*/
+    for (int i = 0; i < MAX_PORT_FORWARDS; i++) {
+        if (port_forwards[i].type == SSH_PORT_FORWARD_LOCAL) {
+
+            if (apply) {
+                /* TODO: Also remove from the active connection (if any) */
+            }
+
+            port_forwards[i].type = SSH_PORT_FORWARD_INVALID;
+            port_forwards[i].port = 0;
+            port_forwards[i].host_port = 0;
+
+            if (port_forwards[i].hostname != NULL) {
+                free(port_forwards[i].hostname);
+                port_forwards[i].hostname = NULL;
+            }
+
+            if (port_forwards[i].address != NULL) {
+                free(port_forwards[i].address);
+                port_forwards[i].address = NULL;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/** Gets all forwarded ports. The final entry in the list has a type of
+ * SSH_PORT_FORWARD_NULL.
+ *
+ * @returns List of forwarded ports, or NULL on error or empty list
+ */
+const ssh_port_forward_t* ssh_fwd_get_ports() {
+
+    return port_forwards;
 }
 
 /* These live in ckoreg.c */
@@ -2238,10 +2463,6 @@ char * sshkey_default_file(int a) {
 }
 #endif
 
-int ssh_fwd_local_port(int a, char *b, int c) {
-    return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
-}
-
 void ssh_v2_rekey() {
     /* TODO */
 }
@@ -2331,8 +2552,9 @@ ktab_ret ssh_get_keytab(int keytab_id) {
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
 
-        case SSH_FEAT_OPENSSH_CONF:
-        case SSH_FEAT_KEY_MGMT:
+        case SSH_FEAT_OPENSSH_CONF: /* Configuration via openssh config file */
+        case SSH_FEAT_KEY_MGMT:     /* SSH key creation, etc */
+        case SSH_FEAT_PORT_FWD:     /* Local and remote port forwarding */
         case SSH_FEAT_REKEY_AUTO:   /* TODO: do we implement this? */
             return TRUE;
 
@@ -2343,7 +2565,7 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_REKEY_MANUAL:   /* Not supported by libssh */
         case SSH_FEAT_FROM_PRIV_PRT:  /* Not supported by libssh */
         case SSH_FEAT_GSSAPI_KEYEX:   /* Not supported by libssh */
-        case SSH_FEAT_PORT_FWD:       /* TODO - not implemented here yet */
+        case SSH_FEAT_DYN_PORT_FWD:   /* Requires a SOCKS server implementation */
         case SSH_FEAT_X11_FWD:        /* TODO - not implemented here yet */
         case SSH_FEAT_AGENT_FWD:      /* TODO - not implemented here yet */
         case SSH_FEAT_GSSAPI_DELEGAT: /* TODO: can we support this ? I think so */
