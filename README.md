@@ -1,10 +1,12 @@
-C-Kermit for Windows
-====================
+Kermit 95 (C-Kermit for Windows)
+================================
 
-This is C-Kermit for Windows and OS/2. It is a free and open source version of the
-program formerly known as Kermit-95, a commercial product of Columbia
-University from 1994 to 2011. For more information on Kermit, visit the
-Kermit Project website: http://www.kermitproject.org.
+This is the free and open source version of Kermit 95, formerly a commercial
+product of Columbia University from 1994 to 2011. It was for a few years known
+as *C-Kermit for Windows* but the decision has been made to [switch back to the
+original more well-known name starting with Beta 7](https://kermitproject.org/ckw10beta.html#ckwname). 
+For more information on Kermit, visit the Kermit Project website: 
+http://www.kermitproject.org.
 
 Major features include:
  * More than [40 terminal emulations](#supported-terminal-emulations)
