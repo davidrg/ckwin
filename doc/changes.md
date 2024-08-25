@@ -540,10 +540,31 @@ K95 v2.1.3, and changes for the SSH subsystem don't apply to CKW as CKW uses an
 entirely new SSH implementation.
 
 ## Previous Kermit 95 releases
- * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html)
- * [1.1.17 to 1.1.20 Change Log](https://web.archive.org/web/20010405154138/http://www.columbia.edu/kermit/k95news.html)
- * [1.1.16 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/8jaYcOv0cvo/m/Er5rCyp_xG8J)
- * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ)
- * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J)
- * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html)
- * 1.1.1 Changes - ?
+Change logs going back to the release of the first version in October 1995 (1.1)
+
+ * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html) - 2 April 2002 to 21 January 2003
+ * [1.1.20 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/gpLy0vTV1Ug/m/hHFQqajRe98J) - 4 April 2000 ([k95news](https://web.archive.org/web/20010405154138/http://www.columbia.edu/kermit/k95news.html))
+ * [1.1.19 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/uN9G8fp84nY/m/53HTzJvYQdgJ) - 17 February 2000
+ * 1.1.18 - Internal CU release
+ * [1.1.17 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/0mZIfP_LspA/m/cqLPWLsJiFYJ) - 21 June 1998
+ * [1.1.16 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/8jaYcOv0cvo/m/Er5rCyp_xG8J) - 8 April 1998
+ * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ) - 3 October 1997
+ * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J) - 25 September 1997
+ * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 24 July 1996 to 24 June 1997
+ * [1.1.6 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/Yb8oikR0uuQ/m/kVDydxVQKT4J) - 18 July 1996
+ * [1.1.5 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/L9wpCZEBw4Q/m/Y89bIR-wp3UJ) - 2 July 1996
+ * [1.1.2 to 1.1.4 Change Log (down the bottom)](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 18 December 1995 to 7 March 1996
+ * 1.1.1 - 3 November 1995:
+   * Attempts to remove preloaded entries from Dialer caused a crash
+   * Alphabetization of Dialer entries fixed not to be case-sensitive
+   * Download directory specification in Dialer no longer ignored
+   * Dial prefix no longer also treated as dial suffix by Dialer
+   * Kermit BBS Dialer entry fixed to have Backspace key send Backspace
+   * Range checking of various numbers by Dialer fixed
+   * SET MODEM commands in K95CUSTOM.INI no longer ignored
+   * Improved search technique for command files
+   * Accuracy of Dialer status line online timer improved
+   * ZMODEM downloads fixed to work when FILE COLLISION is BACKUP or RENAME
+   * ZMODEM transfers fixed to work over various types of TELNET connections
+   * Faster detection of lost connections during file transfer
+ * 1.1 - First Release - 2 October 1995 
