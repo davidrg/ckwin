@@ -33,7 +33,9 @@ Nothing yet
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
   version of the Microsoft C Runtime.
 * Fix hitting backspace in an empty search-in-buffer crashing
-
+* Fix `pty dir` (or trying to run anything else that isn't a valid program)
+  causing a crash
+* 
 ### Other Source Changes
 None yet
 
