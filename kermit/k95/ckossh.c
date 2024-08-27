@@ -45,6 +45,7 @@ char *cksshv = "SSH-DLL support, 10.0,  28 July 2024";
 #include "ckcker.h"
 #include "ckocon.h"
 #include "ckoreg.h"
+#include "ckctel.h"
 
 /* Various global variables owned by the rest of C-Kermit */
 extern char uidbuf[];                   /* User ID set via /user: */
@@ -138,6 +139,16 @@ const char* get_current_terminal_type() {
 inline
 int debug_logging() {
     return deblog;
+}
+
+unsigned char* get_display() {
+    return tn_get_display();
+}
+
+int parse_displayname(char *displayname, int *familyp, char **hostp,
+                      int *dpynump, int *scrnump, char **restp) {
+    return fwdx_parse_displayname(displayname, familyp, hostp,
+                                  dpynump, scrnump, restp);
 }
 
 #ifdef SSH_DLL
@@ -417,6 +428,8 @@ int ssh_load(char* dllname) {
     init_params.p_GetHomeDrive = GetHomeDrive;
     init_params.p_ckstrncpy = ckstrncpy;
     init_params.p_debug_logging = debug_logging;
+    init_params.p_get_display = tn_get_display;                  /* ckctel.c */
+    init_params.p_parse_displayname = fwdx_parse_displayname;    /* ckctel.c */
 
     /* Initialise! */
     rc = init(&init_params);

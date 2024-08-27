@@ -133,7 +133,6 @@ libssh will or will not support. At this time all of these commands are hidden
 and just return an error when entered.
 
 ```
-SSH [OPEN] /X11-FORWARDING: {on,off}
 SSH AGENT    
     ADD identity-file
     DELETE identity-file
@@ -148,7 +147,6 @@ SET SSH
     PRIVILEGED-PORT {ON,OFF}
     QUIET {ON,OFF}
     V2 AUTO-REKEY {ON,OFF}
-    X11-FORWARDING {ON, OFF}
     XAUTH-LOCATION filename
 ```
 
