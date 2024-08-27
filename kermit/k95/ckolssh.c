@@ -56,6 +56,9 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 #include "ckolsshs.h"
 #include "ckossh.h"
 
+/* for FamilyLocal, FamilyInternet, etc */
+#include "ckctel.h"
+
 
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
@@ -126,7 +129,7 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
  *          Just reports an error if version is 1 (SSH-1 not supported)
  *          value is saved in ssh_ver. 0=auto.
  *      /SUBSYSTEM:name
- *      TODO /X11-FORWARDING: {on,off}
+ *      /X11-FORWARDING: {on,off}
  *   SSH ADD
  *      LOCAL-PORT-FORWARD local-port host port
  *      REMOTE-PORT-FORWARD remote-port host port
@@ -189,7 +192,7 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
  *          Report Errors - Verbosity Level. Range 0-7. Value stored in ssh_vrb
  *      VERSION {2, AUTOMATIC}
  *          value is saved in ssh_ver. 0=auto.
- *      TODO: X11-FORWARDING {ON, OFF}
+ *      X11-FORWARDING {ON, OFF}
  *          SET TELNET ENV DISPLAY is used to set the DISPLAY value
  *      TODO: XAUTH-LOCATION filename
  */
@@ -201,8 +204,6 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 /* More TODO:
  *  - TODO: Other Settings
  *  - TODO: How do we know /command: has finished? EOF?
- *  - TODO: X11 Forwarding
- *  - TODO: Other forwarding
  *  - TODO: Build libssh with GSSAPI, pthreads and kerberos
  *          https://github.com/jwinarske/pthreads4w
  *  - TODO: Deal with flush
@@ -212,6 +213,38 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
  *  - TODO: HTTP Proxying - this was something the previous implementaiton could
  *          handle?
   * - TODO: deal with changing terminal type after connect ? (K95 doesn't)
+ */
+
+
+/* The TO-DO list from the Kermit 95 2.1.3 SSH module:
+  . Kerberos 4 and 5 Auto-get/auto-destroy support
+
+  . Improve the debugging info to the debug log
+
+  . listen to SET TCP REVERSE-DNS-LOOKUPS
+
+  . listen to SET TCP DNS-SRV-RECORDS
+
+  . make SET TELNET ENV DISPLAY more portable or SSH equivalent
+
+  . SET SSH V2 AUTO-REKEY functionality
+
+  . Implement service name processing in apply_kermit_settings()
+
+  . add \f...()'s to process the .ssh\... key files (pub, priv, host)
+
+  . document using Kermit file transfer to upload a public key identity
+    file and append it to the authorized_keys file on the host
+
+  . all strings are to be tranmitted as UTF-8. (username, passphrase, ...)
+    need to examine what conversions are necessary.
+
+  . do not close the SSH connection when the terminal session stops
+    leave it open until an SSH CLOSE command is given.  This will allow
+    port forwarding and additional terminal sessions to be created on top
+    of the SSH connection.
+
+  . Incoming SSH connections SET HOST *
  */
 
 /* ==== LibSSH Settings ====
@@ -499,6 +532,9 @@ char* (*p_GetHomePath)() = NULL;
 char* (*p_GetHomeDrive)() = NULL;
 int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
 int (*p_debug_logging)() = NULL;
+unsigned char* (*p_get_display)() = NULL;
+int (*p_parse_displayname)(char *displayname, int *familyp, char **hostp,
+                        int *dpynump, int *scrnump, char **restp) = NULL;
 
 void get_current_terminal_dimensions(int* rows, int* cols) {
     p_get_current_terminal_dimensions(rows, cols);
@@ -598,6 +634,15 @@ int debug_logging() {
     return p_debug_logging();
 }
 
+unsigned char* get_display() {
+    return p_get_display();
+}
+
+int parse_displayname(char *displayname, int *familyp, char **hostp,
+                        int *dpynump, int *scrnump, char **restp) {
+    return p_parse_displayname(displayname, familyp, hostp,
+                               dpynump, scrnump, restp);
+}
 
 #undef malloc
 #undef realloc
@@ -718,6 +763,10 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     CHECK_FP(p_ckstrncpy)
     p_debug_logging = params->p_debug_logging;
     CHECK_FP(p_debug_logging)
+    p_get_display = params->p_get_display;
+    CHECK_FP(p_get_display)
+    p_parse_displayname = params->p_parse_displayname;
+    CHECK_FP(p_get_display)
 
     /* And then supply pointers to all our functions to K95 */
     params->p_install_funcs("ssh_set_iparam", ssh_set_iparam);
@@ -765,6 +814,11 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
 
     return 0;
 }
+#else
+/* These live in ckossh.c */
+unsigned char* get_display();
+int parse_displayname(char *displayname, int *familyp, char **hostp,
+                      int *dpynump, int *scrnump, char **restp);
 #endif /* SSH_DLL */
 
 int ssh_set_iparam(int param, int value) {
@@ -1108,6 +1162,10 @@ int ssh_open() {
     int rc;
     const char* uidbuf;
 
+    /* X11 forwarding details */
+    int display_number = 0, screen_number = 0;
+    char *x11_host = NULL;
+
     uidbuf = ssh_get_uid();
 
     debug(F100, "ssh_open()", "", 0);
@@ -1185,6 +1243,43 @@ int ssh_open() {
     debug(F111, "ssh_open() - get terminal dimensions", "height", pty_height);
     debug(F111, "ssh_open() - get terminal dimensions", "width", pty_width);
 
+    if (ssh_xfw) {
+        unsigned char* display = get_display();
+        char *rest = NULL;
+        int family;
+
+        debug(F110, "ssh_open() DISPLAY", display, 0);
+
+        if (parse_displayname(display, &family, &x11_host, &display_number, &screen_number, &rest)) {
+            /* We don't support unix domain sockets. Change it to the IP
+             * loopback interface and hope it works. */
+            if (family == FamilyLocal) {
+                debug(F100, "ssh_open() - display proto is local, converting to IP", NULL, 0);
+                family = FamilyInternet;
+                if (x11_host)  {
+                    free(x11_host);
+                    x11_host = NULL;
+                }
+
+                x11_host = malloc(strlen("localhost") + 1);
+
+                if (x11_host) {
+                    strcpy(x11_host, "localhost");
+                } else {
+                    ssh_xfw = FALSE;    /* Can't connect to the specified display */
+                }
+            }
+
+            debug(F110, "ssh_open() Host & display number", x11_host, display_number);
+
+        } else {
+            debug(F100, "ssh_open() failed to parse DISPLAY, disabling forwarding", NULL, 0);
+            ssh_xfw = FALSE;
+        }
+
+        if (rest) free(rest);
+    }
+
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
     debug(F100, "ssh_open() - construct parameters", "", 0);
@@ -1213,10 +1308,18 @@ int ssh_open() {
             ssh2_kex,   /* Key exchange methods */
             ssh_get_nodelay_enabled(),/* Enable/disable Nagle's algorithm */
             ssh_pxc,    /* Proxy Command */
-            port_forwards /* Direct and Reverse port forward config */
+            port_forwards,  /* Direct and Reverse port forward config */
+            ssh_xfw,        /* Forward X11 */
+            x11_host,       /* Host to forward X11 too */
+            display_number, /* X11 display number */
+            ssh_xal         /* Xauth location */
             );
 
     if (user) free(user);
+    if (x11_host) {
+        free(x11_host);
+        x11_host = NULL;
+    }
 
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
@@ -1226,6 +1329,7 @@ int ssh_open() {
     /* This will be used to communicate with the SSH subsystem. It has
      * ring buffers, mutexes, semaphores, et. *WE* own this and must free it
      * on disconnect. */
+    debug(F100, "ssh_open() - create client", NULL, 0);
     ssh_client = ssh_client_new();
     if (ssh_client == NULL) {
         debug(F100, "ssh_open() - failed to construct client struct", "", 0);
@@ -2555,6 +2659,7 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_OPENSSH_CONF: /* Configuration via openssh config file */
         case SSH_FEAT_KEY_MGMT:     /* SSH key creation, etc */
         case SSH_FEAT_PORT_FWD:     /* Local and remote port forwarding */
+        case SSH_FEAT_X11_FWD:      /* X11 forwarding */
         case SSH_FEAT_REKEY_AUTO:   /* TODO: do we implement this? */
             return TRUE;
 
@@ -2566,7 +2671,7 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_FROM_PRIV_PRT:  /* Not supported by libssh */
         case SSH_FEAT_GSSAPI_KEYEX:   /* Not supported by libssh */
         case SSH_FEAT_DYN_PORT_FWD:   /* Requires a SOCKS server implementation */
-        case SSH_FEAT_X11_FWD:        /* TODO - not implemented here yet */
+        case SSH_FEAT_X11_XAUTH:      /* TODO - not implemented here yet */
         case SSH_FEAT_AGENT_FWD:      /* TODO - not implemented here yet */
         case SSH_FEAT_GSSAPI_DELEGAT: /* TODO: can we support this ? I think so */
         case SSH_FEAT_AGENT_MGMT:     /* TODO: can we support this ? */

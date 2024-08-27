@@ -1117,12 +1117,15 @@ static char *hmxyssh[] = {
 "SET SSH X11-FORWARDING { ON, OFF }",
 "  Specifies whether X Windows System Data is to be forwarded across the",
 "  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
-"  value is either set using the SET TELNET ENV DISPLAY command or read",
-"  from the DISPLAY environment variable.",
+"  value is set using the SET TELNET ENV DISPLAY command.",
 " ",
+#ifdef COMMENT
+/* While this command existed in K95 2.1.3, it was never actually implemented
+ * there. */
 "SET SSH XAUTH-LOCATION filename",
 "  Specifies the location of the xauth executable (if provided with the",
 "  X11 Server software.)",
+#endif /* COMMENT */
 #else  /* SSHBUILTIN */
 "Syntax: SET SSH COMMAND command",
 "  Specifies the external command to be used to make an SSH connection.",

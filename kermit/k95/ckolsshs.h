@@ -169,9 +169,10 @@ typedef struct {
 
     const ssh_port_forward_t *port_forwards;
 
-    /* TODO: When agent, X11, and other port forwarding is added
-     *      all forwarding should be forced off/cleared when host key
-     *      verification fails and strict host key checking is set to no. */
+    BOOL forward_x;             /* Forward X11 ? */
+    char* x11_host;             /* Host where the X server is running */
+    int x11_display;            /* X11 display number */
+    char* xauth_location;       /* Xauth location (filename) */
 } ssh_parameters_t;
 
 
@@ -249,6 +250,10 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param key_exchange_methods Comma-separated list of key exchange methods
  * @param nodelay Set to disable Nagle's algorithm
  * @param proxy_command Set the command to be executed in order to connect to server
+ * @param forward_x Forward X11
+ * @param display_host Host running the X11 server
+ * @param display_number X11 display number
+ * @param xauth_location Xauth location
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -260,7 +265,9 @@ ssh_parameters_t* ssh_parameters_new(
         int pty_width, int pty_height, const char* auth_methods,
         const char* ciphers, int heartbeat, const char* hostkey_algorithms,
         const char* macs, const char* key_exchange_methods, int nodelay,
-        const char* proxy_command, const ssh_port_forward_t *port_forwards);
+        const char* proxy_command, const ssh_port_forward_t *port_forwards,
+        BOOL forward_x, const char* display_host, int display_number,
+        const char* xauth_location);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

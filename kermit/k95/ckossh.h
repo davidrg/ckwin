@@ -184,6 +184,7 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 #define SSH_FEAT_REKEY_AUTO     14
 #define SSH_FEAT_FROM_PRIV_PRT  15
 #define SSH_FEAT_DYN_PORT_FWD   16
+#define SSH_FEAT_X11_XAUTH      17
 
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 
@@ -214,6 +215,22 @@ typedef struct  {
 	char* (*p_GetHomeDrive)();
     int (*p_ckstrncpy)(char * dest, const char * src, int len);
     int (*p_debug_logging)();
+
+    /* Returns a statically allocated string containing the currently
+     * configured X11 display
+     */
+    unsigned char* (*p_get_display)();
+
+    /* Utility function for parsing the display name. Result is returned
+     * via:
+     *   *familyp   - protocol family (FamilyInternet, FamilyLocal, FamilyDECnet)
+     *   **hostp    - host string
+     *   *dpynump   - Display number
+     *   *scrnump   - Screen number
+     *   **restp    - Anything else at the end
+     */
+    int (*p_parse_displayname)(char *displayname, int *familyp, char **hostp,
+                        int *dpynump, int *scrnump, char **restp);
 } ssh_init_parameters_t;
 
 /*
