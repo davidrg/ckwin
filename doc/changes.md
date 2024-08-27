@@ -27,7 +27,7 @@ Nothing yet
   OS/2 systems.  
 
 ### Minor Enhancements and other changes
-None yet
+* All executables (*.exe, *.dll) now have proper versioninfo resources
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
