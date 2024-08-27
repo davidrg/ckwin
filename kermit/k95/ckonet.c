@@ -1351,6 +1351,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                     size, cmd_line, &procinfo, &hChildStdinWrDup, &hChildStdoutRdDup)) {
                 conpty_open = TRUE;
                 fSuccess = TRUE;
+            } else {
+                conpty_open = FALSE;
+                fSuccess = FALSE;
             }
         } else {
             conpty_open = FALSE;
@@ -2133,7 +2136,8 @@ os2_nettchk() {                         /* for reading from network */
 #ifdef NETCMD
     if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
-        if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
+        if (procinfo.hProcess == NULL ||
+                WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
             ttclos(0);
             return(-1);
         }
