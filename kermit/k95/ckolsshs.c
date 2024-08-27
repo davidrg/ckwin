@@ -33,6 +33,8 @@
 #include <process.h>
 #include <time.h>
 #include <Ws2tcpip.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "ckcdeb.h"
 #include "ckcker.h"
@@ -145,7 +147,9 @@ ssh_parameters_t* ssh_parameters_new(
         int pty_width, int pty_height, const char* auth_methods,
         const char* ciphers, int heartbeat, const char* hostkey_algorithms,
         const char* macs, const char* key_exchange_methods, int nodelay,
-        const char* proxy_command, const ssh_port_forward_t *port_forwards) {
+        const char* proxy_command, const ssh_port_forward_t *port_forwards,
+        BOOL forward_x, const char* display_host, int display_number,
+        const char* xauth_location) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
@@ -270,6 +274,13 @@ ssh_parameters_t* ssh_parameters_new(
         params->allow_password_auth = TRUE;
     }
 
+    if (forward_x && display_host != NULL) {
+        params->forward_x = forward_x;
+        params->x11_host = _strdup(display_host);
+        params->x11_display = display_number;
+        params->xauth_location = _strdup(xauth_location);
+    }
+
     return params;
 }
 
@@ -285,8 +296,10 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->global_known_hosts_file);
     if (parameters->username)
         free(parameters->username);
-    if (parameters->password)
+    if (parameters->password) {
+        SecureZeroMemory(parameters->password, sizeof(parameters->password));
         free(parameters->password);
+    }
     if (parameters->terminal_type)
         free(parameters->terminal_type);
     if (parameters->allowed_ciphers)
@@ -299,6 +312,10 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->key_exchange_methods);
     if (parameters->proxy_command)
         free(parameters->proxy_command);
+    if (parameters->x11_host)
+        free(parameters->x11_host);
+    if (parameters->xauth_location)
+        free(parameters->xauth_location);
 
     free(parameters);
 }
@@ -685,9 +702,11 @@ static int verify_known_host(ssh_client_state_t * state) {
                  *      Agent forwarding is disabled to avoid trojan horses.
                  */
 
-                /* TODO: If X11 forwarding, error:
-                 *      X11 forwarding is disabled to avoid trojan horses.
-                 */
+                if (state->parameters->forward_x) {
+                    strncat(msg, "X11 forwarding is disabled to avoid trojan horses.\n",
+                            sizeof(msg) - strlen(msg) - 1);
+                    state->parameters->forward_x = FALSE;
+                }
 
                 /* Check if we were asked to forward any ports */
                 if (state->parameters->port_forwards != NULL) {
@@ -849,6 +868,9 @@ static int password_authenticate(ssh_client_state_t * state, BOOL *canceled) {
             /* Password has already been supplied. Try that */
             debug(F100, "sshsubsys - Using pre-entered password", "", 0);
             ckstrncpy(password,state->parameters->password,sizeof(password));
+            SecureZeroMemory(state->parameters->password, sizeof(state->parameters->password));
+            free(state->parameters->password);
+            state->parameters->password = NULL;
             ok = TRUE;
         } else {
             snprintf(prompt, sizeof(prompt), "%s%.30s@%.128s's password: ",
@@ -868,7 +890,7 @@ static int password_authenticate(ssh_client_state_t * state, BOOL *canceled) {
         }
 
         rc = ssh_userauth_password(state->session, NULL, password);
-        memset(password, 0, strlen(password));
+        SecureZeroMemory(password, sizeof(password));
         if (rc == SSH_AUTH_SUCCESS) {
             debug(F100, "sshsubsys - Password login succeeded", "", 0);
             ssh_string_free_char(user);
@@ -1251,6 +1273,10 @@ static int authenticate(ssh_client_state_t * state, BOOL *canceled) {
 static int open_tty_channel(ssh_client_state_t * state) {
     int rc = 0;
 
+    if (state->ttyChannel != NULL) {
+        return SSH_OK; /* already open */
+    }
+
     debug(F100, "sshsubsys - Opening SSH tty channel", "", 0);
 
     state->ttyChannel = ssh_channel_new(state->session);
@@ -1402,6 +1428,11 @@ static int configure_session(ssh_client_state_t * state) {
     int rc = SSH_ERR_OK;
     int verbosity = SSH_LOG_PROTOCOL;
 
+    /* TODO: ssh_channel_callbacks_struct
+     *   Can we make use of the channel_data_function and channel_eof_function
+     *   callbacks to handle initiating copies to the various ring buffers?
+     *   And channel_close_function to handle tidying up forwardings?
+     * */
     static struct ssh_callbacks_struct cb = {
             .auth_function = auth_prompt
     };
@@ -1993,6 +2024,39 @@ static int start_forward_server(ssh_forward_t *fwd,
     return rc;
 }
 
+
+
+/** Starts X11 forwarding on the tty channel.
+ *
+ * @param state Client state
+ * @return 0 on success.
+ */
+static int start_X11_forwarding(ssh_client_state_t *state) {
+    char *proto = NULL, *cookie = NULL;
+    int rc;
+
+    rc = open_tty_channel(state);
+    if (rc != SSH_OK) {
+        printf("Failed to open tty channel for X11 forwarding!\n");
+    }
+
+    /* TODO: Call xauth (if specified) to get the proto and cookie.
+     *      (K95 2.1.3 never actually did this, despite having an xauth
+     *      location setting)
+     */
+
+    rc = ssh_channel_request_x11(
+            state->ttyChannel,
+            0,      /* Only one X11 app will be redirected? No. */
+            proto,  /* X11 authentication protocol. NULL to use MIT-MAGIC-COOKIE-1. */
+            cookie, /* X11 authentication cookie. NULL to generate a random one. */
+            0);     /* Screen number */
+    if (rc != SSH_OK) {
+        printf("X11 forwarding request failed: %d\n", rc);
+    }
+    return rc;
+}
+
 /** Reads any available data from a port forwarding Channel and writes it to
  * the output ring buffer to be consumed by the thread handling that
  * connection.
@@ -2437,6 +2501,139 @@ static void accept_direct_forwarding_connections(
 }
 
 
+/** Creates a new connection to something on the client network using
+ * the details specified in the supplied fwd (localHost, localPort).
+ * If successful, the connection is added to the fwds list of connections
+ * and a new thread is launched to service it.
+ *
+ * This is called when setting up new incoming remote forward connections, and
+ * new X11 connections.
+ *
+ * @param channel SSH channel to create a new TCP/IP connection for
+ * @param fwd ssh_forward_t to create a new TCP/IP connection for
+ * @param clientState Client state.
+ */
+static void create_local_connection(ssh_channel channel,
+                                    ssh_forward_t *fwd,
+                                    ssh_client_state_t *clientState) {
+    struct addrinfo *result = NULL,
+            *ptr = NULL,
+            hints;
+    char* peer_address = NULL;
+    int port = 0, peer_port = 0, iResult=0;
+    char localPort[32];
+    ssh_forward_connection_t *con, *conNode;
+    ssh_fwd_thread_params_t *threadParams;
+    SOCKET sock = INVALID_SOCKET;
+
+    /* Setup hints */
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;          /* IPv4 address family */
+    /* Use AF_INET6 for IPv6, or PF_UNSPEC for either */
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    /* Resolve server address & port */
+    snprintf(localPort, 32, "%d", fwd->localPort);
+    iResult = getaddrinfo(fwd->localHost, localPort, &hints, &result);
+
+    if ( iResult != 0 ) {
+        /* Fail! */
+
+        debug(F101, "sshsubsys - getaddrinfo failed with error", NULL, iResult);
+        ssh_channel_send_eof(channel);
+        ssh_channel_free(channel);
+        return;
+    }
+
+    /* Walk through the list of addresses until we find one we can use
+     * to connect to the local host and port */
+    for(ptr=result; ptr != NULL ;ptr=ptr->ai_next) {
+
+        /* Create socket */
+        sock = socket(ptr->ai_family,
+                      ptr->ai_socktype,
+                      ptr->ai_protocol);
+
+        if (sock == INVALID_SOCKET) {
+            debug(F101, "sshsubsys - failed to create socket",
+                  NULL, WSAGetLastError());
+            ssh_channel_send_eof(channel);
+            ssh_channel_free(channel);
+            break;
+        }
+
+        // Connect to server.
+        iResult = connect( sock, ptr->ai_addr, (int)ptr->ai_addrlen);
+        if (iResult == SOCKET_ERROR) {
+            /* Failed to connect with this socket - try the next */
+            closesocket(sock);
+            sock = INVALID_SOCKET;
+            return;
+        }
+        break;
+    }
+
+    freeaddrinfo(result);
+
+    if (sock == INVALID_SOCKET) {
+        debug(F100, "sshsubsys - reverse/x11 fwd connect failed", NULL, 0);
+        ssh_channel_send_eof(channel);
+        ssh_channel_free(channel);
+        return;
+    }
+
+    debug(F101, "sshsubsys - new reverse/x11 forward connected on socket",
+          NULL, sock);
+
+    /* Create a new connection instance */
+    /* New connection! */
+    con = malloc(sizeof(ssh_forward_connection_t));
+    con->next = NULL;
+    con->channel = channel;
+    con->outputBuffer = NULL;
+    con->inputBuffer = NULL;
+    con->state = SSH_FWD_STATE_OPEN;
+
+    con->disconnectEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    /* Add the connection to the list */
+    if (fwd->connections == NULL) {
+        fwd->connections = con;
+    } else {
+        conNode = fwd->connections;
+        while (conNode->next != NULL) {
+            conNode = conNode->next;
+        }
+        conNode->next = con;
+    }
+
+    /* Set up the I/O buffers */
+    con->outputBuffer = ring_buffer_new(1024*1024);
+    con->inputBuffer = ring_buffer_new(1024*1024);
+
+    /* The socket */
+    con->socket = sock;
+
+    /* Then launch a thread to handle the socket */
+    debug(F100, "sshsubsys - new remote/x11 fwd connection, launch thread", NULL, 0);
+    threadParams = malloc(sizeof(ssh_fwd_thread_params_t));
+    threadParams->socket = con->socket;
+    threadParams->outputBuffer = con->inputBuffer;
+    threadParams->inputBuffer = con->outputBuffer;
+    threadParams->readyRead = clientState->forwardingReadyRead;
+    threadParams->disconnectEvent = con->disconnectEvent;
+    con->thread = (HANDLE)_beginthreadex(
+            NULL,           /* Security info */
+            65536,          /* Stack size */
+            ssh_forwarding_connection_thread,     /* Start address */
+            (void *)threadParams,   /* Arg list */
+            0,              /* init flags - start immediately */
+            NULL            /* Thread identifier */
+    );
+}
+
+
 /** Accepts any pending reverse forwarding connections
  *
  * @param clientState Client state we're accepting connections for
@@ -2451,15 +2648,8 @@ static void accept_reverse_forwarding_connections(
 
     do {
         char* peer_address = NULL;
-        int port = 0, peer_port = 0, iResult=0;
-        ssh_forward_connection_t *con, *conNode;
-        ssh_fwd_thread_params_t *threadParams;
-        SOCKET sock = INVALID_SOCKET;
+        int port = 0, peer_port = 0;
         ssh_forward_t *fwd = client->forwards;
-        struct addrinfo *result = NULL,
-                *ptr = NULL,
-                hints;
-        char localPort[32];
 
         channel = ssh_channel_open_forward_port(
                 clientState->session,
@@ -2489,113 +2679,55 @@ static void accept_reverse_forwarding_connections(
             fwd++;
         }
 
-        /* TODO: Try to open a connection to the local host and port */
-        /* Setup hints */
-        ZeroMemory(&hints, sizeof(hints));
-        hints.ai_family = AF_INET;          /* IPv4 address family */
-        /* Use AF_INET6 for IPv6, or PF_UNSPEC for either */
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = IPPROTO_TCP;
-
-        /* Resolve server address & port */
-        snprintf(localPort, 32, "%d", fwd->localPort);
-        iResult = getaddrinfo(fwd->localHost, localPort, &hints, &result);
-
-        if ( iResult != 0 ) {
-            /* Fail! */
-
-            debug(F101, "sshsubsys - getaddrinfo failed with error", NULL, iResult);
+        if (fwd == NULL) {
+            debug(F100, "sshsubsys - warning! Could not find forwarding "
+                        "connection for received direct forwarding request. "
+                        "Rejecting request.", NULL, 0);
             ssh_channel_send_eof(channel);
             ssh_channel_free(channel);
             continue;
         }
 
-        /* Walk through the list of addresses until we find one we can use
-         * to connect to the local host and port */
-        for(ptr=result; ptr != NULL ;ptr=ptr->ai_next) {
+        create_local_connection(channel, fwd, clientState);
 
-            /* Create socket */
-            sock = socket(ptr->ai_family,
-                          ptr->ai_socktype,
-                          ptr->ai_protocol);
+    } while (channel != NULL);
+}
 
-            if (sock == INVALID_SOCKET) {
-                debug(F101, "sshsubsys - failed to create socket",
-                      NULL, WSAGetLastError());
-                ssh_channel_send_eof(channel);
-                ssh_channel_free(channel);
-                break;
-            }
 
-            // Connect to server.
-            iResult = connect( sock, ptr->ai_addr, (int)ptr->ai_addrlen);
-            if (iResult == SOCKET_ERROR) {
-                /* Failed to connect with this socket - try the next */
-                closesocket(sock);
-                sock = INVALID_SOCKET;
-                continue;
-            }
-            break;
+/** Accepts any waiting inbound X11 forwarding connections
+ *
+ * @param clientState Clientstate
+ * @param client Client
+ * @param fwd Forwarding with X server connection details (LocalHost, LocalPort)
+ *            to which the new connection will be added
+ */
+static void accept_x11_forwarding_connections(
+        ssh_client_state_t *clientState,
+        ssh_client_t *client,
+        ssh_forward_t *fwd) {
+    ssh_channel channel = NULL;
+    debug(F100, "sshsubsys - checking for incoming X11 connections", NULL, 0);
+
+    do {
+        int port = 0, iResult=0;
+        ssh_forward_connection_t *con, *conNode;
+        ssh_fwd_thread_params_t *threadParams;
+        SOCKET sock = INVALID_SOCKET;
+        ssh_forward_t *fwd = client->forwards;
+        struct addrinfo *result = NULL,
+                *ptr = NULL,
+                hints;
+        char localPort[32];
+
+        channel = ssh_channel_accept_x11(clientState->ttyChannel, 0);
+
+        if (channel == NULL) {
+            return; /* no pending connections */
         }
 
-        freeaddrinfo(result);
+        debug(F100, "sshsubsys - got X11 forwarding request", NULL, 0);
 
-        if (sock == INVALID_SOCKET) {
-            debug(F100, "sshsubsys - reverse forward connect failed", NULL, 0);
-            ssh_channel_send_eof(channel);
-            ssh_channel_free(channel);
-            continue;
-        }
-
-        debug(F101, "sshsubsys - new reverse forward connected on socket",
-              NULL, sock);
-
-        /* Create a new connection instance */
-        /* New connection! */
-        con = malloc(sizeof(ssh_forward_connection_t));
-        con->next = NULL;
-        con->channel = channel;
-        con->outputBuffer = NULL;
-        con->inputBuffer = NULL;
-        con->state = SSH_FWD_STATE_OPEN;
-
-        con->disconnectEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-        /* Add the connection to the list */
-        if (fwd->connections == NULL) {
-            fwd->connections = con;
-        } else {
-            conNode = fwd->connections;
-            while (conNode->next != NULL) {
-                conNode = conNode->next;
-            }
-            conNode->next = con;
-        }
-
-        /* Set up the I/O buffers */
-        con->outputBuffer = ring_buffer_new(1024*1024);
-        con->inputBuffer = ring_buffer_new(1024*1024);
-
-        /* The socket */
-        con->socket = sock;
-
-        /* Then launch a thread to handle the socket */
-        debug(F100, "sshsubsys - new remote fwd connection, launch thread", NULL, 0);
-        threadParams = malloc(sizeof(ssh_fwd_thread_params_t));
-        threadParams->socket = con->socket;
-        threadParams->outputBuffer = con->inputBuffer;
-        threadParams->inputBuffer = con->outputBuffer;
-        threadParams->readyRead = clientState->forwardingReadyRead;
-        threadParams->disconnectEvent = con->disconnectEvent;
-        con->thread = (HANDLE)_beginthreadex(
-                NULL,           /* Security info */
-                65536,          /* Stack size */
-                ssh_forwarding_connection_thread,     /* Start address */
-                (void *)threadParams,   /* Arg list */
-                0,              /* init flags - start immediately */
-                NULL            /* Thread identifier */
-        );
-
+        create_local_connection(channel, fwd, clientState);
     } while (channel != NULL);
 }
 
@@ -2640,6 +2772,126 @@ static void free_fwd_connection(ssh_forward_connection_t *conn) {
         debug(F100, "sshsubsys - WARNING: SSH forwarding connection thread "
                     "failed to terminate in reasonable timeframe. Resources "
                     "will be leaked!", NULL, 0);
+    }
+}
+
+
+static void configure_forwarding(ssh_client_state_t *state,
+                                 ssh_client_t *client) {
+    /* This is set to false if host key verification fails and strict host key
+     * checking is set to NO.
+     */
+    if (state->forwarding_ok) {
+
+        /* Set up local and remote port forwards */
+        if (state->parameters->port_forwards != NULL &&
+            state->parameters->port_forwards[0].type != 0) {
+            debug(F100, "sshsubsys - Configuring forwarded ports..", "", 0);
+
+            if (ssh_forwarding_lock(client, 2000)) {
+                const ssh_port_forward_t *fwd = state->parameters->port_forwards;
+                while (fwd->type != SSH_PORT_FORWARD_NULL) {
+                    if (fwd->type == SSH_PORT_FORWARD_LOCAL) {
+                        int rc;
+                        ssh_forward_t *fwdNode;
+
+                        fwdNode = add_ssh_direct_forward(
+                                client,
+                                fwd->hostname,
+                                fwd->host_port,
+                                fwd->address,
+                                fwd->port,
+                                INFINITE
+                        );
+
+                        if (fwdNode == NULL) {
+                            continue; /* Failed to configure port forward */
+                        }
+
+                        rc = start_forward_server(fwdNode, state);
+
+                        if (rc != SSH_ERR_NO_ERROR) {
+                            /* Failed to start listening */
+                            debug(F100, "sshsubsys - forwarding entry state set "
+                                        "to error", NULL, 0);
+                            continue;
+                        }
+                    } else if (fwd->type == SSH_PORT_FORWARD_REMOTE) {
+                        int rc;
+                        ssh_forward_t *fwdNode;
+
+                        fwdNode = add_ssh_reverse_forward(
+                                client,
+                                fwd->address,  /* Server address to listen on */
+                                fwd->port,     /* Server port to listen on */
+                                fwd->hostname,  /* Local host to forward to */
+                                fwd->host_port, /* Local port to forward to */
+                                INFINITE
+                        );
+
+                        if (fwdNode == NULL) {
+                            continue; /* Failed to configure port forward */
+                        }
+
+                        /* Start listening. No need to acquire the config
+                         * mutex here as nothing else will be messing with
+                         * it yet.*/
+                        rc = start_forward_server(fwdNode, state);
+                        if (rc != SSH_OK) {
+                            debug(F100, "sshsubsys - failed to start reverse "
+                                        "forward server", NULL, 0);
+                        }
+                    }
+
+                    fwd++;
+                }
+                ssh_forwarding_unlock(client);
+            }
+        }
+
+        /* Set up Agent forwarding */
+        /* TODO */
+    }
+}
+
+static void setup_x11_forwarding(ssh_client_state_t *state,
+                                 ssh_client_t *client) {
+    /* Set up X11 tunnel */
+    if (state->forwarding_ok &&
+        state->parameters->forward_x &&
+        state->parameters->x11_host != NULL) {
+
+
+        /* Add an entry to the forwards list so we have a way of
+         * tracking connections to the local X server */
+        ssh_forward_t *fwd = malloc(sizeof(ssh_forward_t));
+        fwd->next = NULL;
+        fwd->state = SSH_FWD_STATE_PENDING;
+        fwd->connections = NULL;
+
+        fwd->type = SSH_FWD_TYPE_X11;
+        fwd->remoteHost = NULL;
+        fwd->remotePort = 0;
+        fwd->localHost = _strdup(state->parameters->x11_host);
+        fwd->localPort = 6000 + state->parameters->x11_display;
+
+        if (client->forwards == NULL) {
+            client->forwards = fwd;
+        } else {
+            /* Find the last entry in the list */
+            ssh_forward_t * node = client->forwards;
+            while (node->next != NULL) {
+                node = node->next;
+            }
+            node->next = fwd;
+        }
+
+        if (start_X11_forwarding(state) == SSH_OK) {
+            fwd->state = SSH_FWD_STATE_OPEN;
+        } else {
+            fwd->state = SSH_FWD_STATE_ERROR;
+            state->parameters->forward_x = FALSE;
+        }
     }
 }
 
@@ -2709,83 +2961,13 @@ static int connect_ssh(ssh_client_state_t* state, ssh_client_t *client) {
 
     debug(F100, "sshsubsys - Authentication succeeded", "", 0);
 
-    /* This is set to false if host key verification fails and strict host key
-     * checking is set to NO.
-     */
-    if (state->forwarding_ok) {
+    /* Setup direct and reverse forwarding if its been requested */
+    configure_forwarding(state, client);
 
-        /* Set up local and remote port forwards */
-        if (state->parameters->port_forwards != NULL &&
-            state->parameters->port_forwards[0].type != 0) {
-            debug(F100, "sshsubsys - Configuring forwarded ports..", "", 0);
 
-            if (ssh_forwarding_lock(client, 2000)) {
-                const ssh_port_forward_t *fwd = state->parameters->port_forwards;
-                while (fwd->type != SSH_PORT_FORWARD_NULL) {
-                    if (fwd->type == SSH_PORT_FORWARD_LOCAL) {
-                        int rc;
-                        ssh_forward_t *fwdNode;
-
-                        fwdNode = add_ssh_direct_forward(
-                                client,
-                                fwd->hostname,
-                                fwd->host_port,
-                                fwd->address,
-                                fwd->port,
-                                INFINITE
-                        );
-
-                        if (fwdNode == NULL) {
-                            continue; /* Failed to configure port forward */
-                        }
-
-                        rc = start_forward_server(fwdNode, state);
-
-                        if (rc != SSH_ERR_NO_ERROR) {
-                            /* Failed to start listening */
-                            debug(F100, "sshsubsys - forwarding entry state set "
-                                        "to error", NULL, 0);
-                            continue;
-                        }
-                    } else if (fwd->type == SSH_PORT_FORWARD_REMOTE) {
-                        int rc;
-                        ssh_forward_t *fwdNode;
-
-                        fwdNode = add_ssh_reverse_forward(
-                                client,
-                                fwd->address,  /* Server address to listen on */
-                                fwd->port,     /* Server port to listen on */
-                                fwd->hostname,  /* Local host to forward to */
-                                fwd->host_port, /* Local port to forward to */
-                                INFINITE
-                                );
-
-                        if (fwdNode == NULL) {
-                            continue; /* Failed to configure port forward */
-                        }
-
-                        /* Start listening. No need to acquire the config
-                         * mutex here as nothing else will be messing with
-                         * it yet.*/
-                        rc = start_forward_server(fwdNode, state);
-                        if (rc != SSH_OK) {
-                            debug(F100, "sshsubsys - failed to start reverse "
-                                        "forward server", NULL, 0);
-                        }
-                    }
-
-                    fwd++;
-                }
-                ssh_forwarding_unlock(client);
-            }
-        }
-
-        /* Set up X11 tunnel */
-        /* TODO */
-
-        /* Set up Agent forwarding */
-        /* TODO */
-    }
+    /* Setup X11 forwarding. What the libssh documentation fails to mention
+     * is that this must be done *before* the session is started */
+    setup_x11_forwarding(state, client);
 
     debug(F100, "sshsubsys - Starting session...", "", 0);
     if (state->parameters->session_type == SESSION_TYPE_SUBSYSTEM) {
@@ -3086,7 +3268,8 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
             while (fwdNode != NULL) {
                 debug(F101, "sshsubsys - process fwd", NULL, xx);
 
-                if (fwdNode->state == SSH_FWD_STATE_PENDING) {
+                if (fwdNode->state == SSH_FWD_STATE_PENDING
+                    && fwdNode->type == SSH_FWD_TYPE_DIRECT) {
                     int rc;
 
                     /* This forward is not setup yet - it was probably added
@@ -3126,6 +3309,9 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
                     if (fwdNode->type == SSH_FWD_TYPE_DIRECT) {
                         debug(F101, "sshsubsys - fwd state open, accept connections", NULL, xx);
                         accept_direct_forwarding_connections(state, client, fwdNode);
+                    } else if (fwdNode->type == SSH_FWD_TYPE_X11) {
+                        debug(F101, "sshsubsys - X11 forwarding open, accept connections", NULL, xx);
+                        accept_x11_forwarding_connections(state, client, fwdNode);
                     }
 
                     /* Then handle communications for each active connection */
@@ -3220,6 +3406,11 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
                             fwdNode->remotePort
                             );
                     /* TODO: Do we need to check for SSH_AGAIN and retry? */
+                } else if (fwdNode->type == SSH_FWD_TYPE_X11) {
+                    /* There doesn't appear to be a way to stop X11 forwarding
+                     * short of perhaps closing the associated channel (the tty
+                     * channel)
+                     */
                 }
 
                 /* Then close all existing connections */

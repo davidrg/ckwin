@@ -264,6 +264,9 @@ char* (*p_GetHomePath)() = NULL;
 char* (*p_GetHomeDrive)() = NULL;
 int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
 int (*p_debug_logging)() = NULL;
+unsigned char* (*p_get_display)() = NULL;
+int (*p_parse_displayname)(char *displayname, int *familyp, char **hostp,
+                        int *dpynump, int *scrnump, char **restp) = NULL;
 
 void get_current_terminal_dimensions(int* rows, int* cols) {
     p_get_current_terminal_dimensions(rows, cols);
@@ -362,6 +365,16 @@ int debug_logging() {
     return p_debug_logging();
 }
 
+unsigned char* get_display() {
+    return p_get_display();
+}
+
+int parse_displayname(char *displayname, int *familyp, char **hostp,
+                        int *dpynump, int *scrnump, char **restp) {
+    return p_parse_displayname(displayname, familyp, hostp,
+                               dpynump, scrnump, restp);
+}
+
 /** Called by Kermit 95 when the DLL is loaded. This should make
  * the DLL ready for use by storing copies of all the needed
  * utility functions supplied by Kermit 95, and supplying to
@@ -388,6 +401,8 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     p_GetHomeDrive = params->p_GetHomeDrive;
     p_ckstrncpy = params->p_ckstrncpy;
     p_debug_logging = params->p_debug_logging;
+    p_get_display = params->p_get_display;
+    p_parse_displayname = params->p_parse_displayname;
 
     params->p_install_funcs("ssh_set_iparam", ssh_set_iparam);
     params->p_install_funcs("ssh_get_iparam", ssh_get_iparam);
@@ -506,7 +521,11 @@ kstrdup(const char *str)
         memcpy(cp, str, len);
     return cp;
 }
-
+#else
+/* These live in ckossh.c */
+unsigned char* get_display();
+int parse_displayname(char *displayname, int *familyp, char **hostp,
+                      int *dpynump, int *scrnump, char **restp);
 #endif /* SSH_DLL */
 
 /** Sets an integer parameter

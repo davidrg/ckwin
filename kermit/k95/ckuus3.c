@@ -8015,7 +8015,7 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
     { "verbose",                 SSH_VRB,  0 },
     { "version",                 SSH_VER,  0 },     /* SSH_FEAT_SSH_V1 */
     { "x11-forwarding",          SSH_XFW,  0 },     /* SSH_FEAT_X11_FWD */
-    { "xauth-location",          SSH_XAL,  0 },     /* SSH_FEAT_X11_FWD */
+    { "xauth-location",          SSH_XAL,  0 },     /* SSH_FEAT_X11_XAUTH */
 #else
 #ifdef SSHCMD
     { "command",                 SSH_CMD,  0 },
@@ -8246,8 +8246,13 @@ shossh() {
                );
     }
     if (ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+        extern char* tn_env_disp;   /* ckctel.c */
         printf(" ssh x11-forwarding:              %s\n",showooa(ssh_get_iparam(SSH_IPARAM_XFW)));
-        printf(" ssh xauth-location:              %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_XAL)));
+        printf(" ssh x11-forwarding display:      %s\n",showstring(tn_env_disp));
+        /* TODO: Show the display - tn_env_disp */
+        if (ssh_feature_supported(SSH_FEAT_X11_XAUTH)) {
+            printf(" ssh xauth-location:              %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_XAL)));
+        }
     }
 
     if (ssh_feature_supported(SSH_FEAT_SSH_V1)) {
@@ -8325,13 +8330,13 @@ dosetssh() {
              */
             sshtab[z].flgs = CM_INV;
         }
-        else if ((sshtab[z].kwval == SSH_XFW || sshtab[z].kwval == SSH_XAL)
-            && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+        else if ((sshtab[z].kwval == SSH_XFW && !ssh_feature_supported(SSH_FEAT_X11_FWD))
+            || (sshtab[z].flgs = CM_INV  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
             /*
              * "set ssh x11-forwarding" and "set ssh xauth-location" commands.
              */
-            sshtab[z].flgs = CM_INV;
         }
+        // sshtab[z].kwval == SSH_XAL
         else if ((sshtab[z].kwval == SSH_DYF || sshtab[z].kwval == SSH_GWP)
             && !ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
             /* Dynamic Port Forwarding

@@ -80,6 +80,9 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #include "ckocon.h"
 extern int tt_type, max_tt;
 extern struct tt_info_rec tt_info[];
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 #endif /* OS2 */
 #endif /* NOTERM */
 
@@ -1051,6 +1054,9 @@ tn_get_display()
     /* explicitedly requested we try to send one via X-Display Location */
     /* But do not send a string at all if FORWARD_X is in use.          */
 
+    /* Note that in Kermit 95 this is also used for X11 forwarding      */
+    /* over SSH                                                         */
+
     /* if (!IS_TELNET()) return(0); */
 
     debug(F110,"tn_get_display() myipaddr",myipaddr,0);
@@ -1073,8 +1079,14 @@ tn_get_display()
     }
     else
 #endif /* CK_ENVIRONMENT */
-        if (TELOPT_ME(TELOPT_XDISPLOC) ||
-              TELOPT_U(TELOPT_FORWARD_X)) {
+        if ((TELOPT_ME(TELOPT_XDISPLOC) ||
+              TELOPT_U(TELOPT_FORWARD_X))
+#if OS2
+#ifdef SSHBUILTIN
+            || (IS_SSH() && ssh_get_iparam(SSH_IPARAM_XFW))
+#endif   /* SSHBUILTIN */
+#endif   /* OS2 */
+              ) {
         ckmakmsg(tmploc,256,myipaddr,":0.0",NULL,NULL);
         disp = tmploc;
     }
