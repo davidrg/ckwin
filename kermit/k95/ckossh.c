@@ -189,6 +189,8 @@ typedef int (*p_ssh_fwd_remote_port_t)(char*, int, char *, int, BOOL);
 typedef int (*p_ssh_fwd_local_port_t)(char*, int,char *,int, BOOL);
 typedef int (*p_ssh_fwd_clear_local_ports_t)(BOOL);
 typedef int (*p_ssh_fwd_clear_remote_ports_t)(BOOL);
+typedef int (*p_ssh_fwd_remove_remote_port_t)(int, BOOL);
+typedef int (*p_ssh_fwd_remove_local_port_t)(int, BOOL);
 typedef ssh_port_forward_t* (*p_ssh_fwd_get_ports_t)();
 #ifdef SSHTEST
 typedef int (*p_sshkey_v1_change_comment_t)(char *, char *, char *);
@@ -230,6 +232,8 @@ static p_ssh_fwd_remote_port_t p_ssh_fwd_remote_port = NULL;
 static p_ssh_fwd_local_port_t p_ssh_fwd_local_port = NULL;
 static p_ssh_fwd_clear_remote_ports_t p_ssh_fwd_clear_remote_ports = NULL;
 static p_ssh_fwd_clear_local_ports_t p_ssh_fwd_clear_local_ports = NULL;
+static p_ssh_fwd_remove_remote_port_t p_ssh_fwd_remove_remote_port = NULL;
+static p_ssh_fwd_remove_local_port_t p_ssh_fwd_remove_local_port = NULL;
 static p_ssh_fwd_get_ports_t p_ssh_fwd_get_ports = NULL;
 #ifdef SSHTEST
 static p_sshkey_v1_change_comment_t p_sshkey_v1_change_comment = NULL;  /* TODO */
@@ -323,6 +327,10 @@ void ssh_install_func(const char* function, const void* p_function) {
         p_ssh_fwd_clear_remote_ports = F_CAST(p_ssh_fwd_clear_remote_ports_t) p_function;
     else if ( !strcmp(function,"ssh_fwd_clear_local_ports") )
         p_ssh_fwd_clear_local_ports = F_CAST(p_ssh_fwd_clear_local_ports_t) p_function;
+    else if ( !strcmp(function,"ssh_fwd_remove_remote_port") )
+        p_ssh_fwd_remove_remote_port = F_CAST(p_ssh_fwd_remove_remote_port_t) p_function;
+    else if ( !strcmp(function,"ssh_fwd_remove_local_port") )
+        p_ssh_fwd_remove_local_port = F_CAST(p_ssh_fwd_remove_local_port_t) p_function;
     else if ( !strcmp(function,"ssh_fwd_get_ports") )
         p_ssh_fwd_get_ports = F_CAST(p_ssh_fwd_get_ports_t) p_function;
 #ifdef SSHTEST
@@ -494,6 +502,8 @@ int ssh_dll_unload(int quiet) {
     p_ssh_fwd_local_port = NULL;
     p_ssh_fwd_clear_remote_ports = NULL;
     p_ssh_fwd_clear_local_ports = NULL;
+    p_ssh_fwd_remove_remote_port = NULL;
+    p_ssh_fwd_remove_local_port = NULL;
     p_ssh_fwd_get_ports = NULL;
 #ifdef SSHTEST
     p_sshkey_v1_change_comment = NULL;  /* TODO */
@@ -887,6 +897,38 @@ int ssh_fwd_clear_remote_ports(BOOL apply) {
 int ssh_fwd_clear_local_ports(BOOL apply) {
     if (p_ssh_fwd_clear_local_ports)
         return p_ssh_fwd_clear_local_ports(apply);
+
+    /* optional feature not available */
+
+    return -1;
+}
+
+ /** Remove a single reverse/remote port forward.
+ *
+ * @param port Reverse port forward to remove
+ * @param apply Also remove the port forward from any active session. Does not
+ *      close any established connections.
+ * @return 0 on success
+ */
+int ssh_fwd_remove_remote_port(int port, BOOL apply) {
+        if (p_ssh_fwd_remove_remote_port)
+        return p_ssh_fwd_remove_remote_port(port, apply);
+
+    /* optional feature not available */
+
+    return -1;
+}
+
+/** Remove a single direct/local port forward.
+ *
+ * @param port Direct port forward to remove
+ * @param apply Also remove the port forward from any active session. Does not
+ *      close any established connections.
+ * @return 0 on success
+ */
+int ssh_fwd_remove_local_port(int port, BOOL apply) {
+    if (p_ssh_fwd_remove_local_port)
+        return p_ssh_fwd_remove_local_port(port, apply);
 
     /* optional feature not available */
 

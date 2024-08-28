@@ -91,6 +91,16 @@ SSH LOAD filename
   enable all SSH commands and be used for all SSH operations until Kermit is
   restarted.
 
+SSH REMOVE LOCAL-PORT-FORWARD local-port
+  Removes the local port forward with the specified local-port from
+  the local port forwarding list. This has no effect on any active 
+  connection.
+
+SSH REMOVE REMOTE-PORT-FORWARD remote-port",
+  Removes the remote port forward with the specified remote-port from
+  the remote port forwarding list. This has no effect on any active
+  connection.
+
 set ssh v2 key-exchange-methods {CURVE25519-SHA256,
      CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,
      DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256,

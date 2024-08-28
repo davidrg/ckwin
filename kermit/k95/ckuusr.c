@@ -2416,6 +2416,13 @@ static struct keytab sshclr[] = {
 };
 static int nsshclr = (sizeof(sshclr) / sizeof(struct keytab)) - 1;
 
+static struct keytab sshrem[] = {
+    { "local-port-forward",  SSHR_LPF, 0 },
+    { "remote-port-forward", SSHR_RPF, 0 },
+    { "", 0, 0 }
+};
+static int nsshrem = (sizeof(sshrem) / sizeof(struct keytab)) - 1;
+
 struct keytab sshopnsw[] = {
     { "/command",        SSHSW_CMD, CM_ARG },
     { "/password",       SSHSW_PWD, CM_ARG },
@@ -2436,6 +2443,7 @@ static struct keytab sshkwtab[] = {
     { "key",                 XSSH_KEY, 0 },         /* SSH_FEAT_KEY_MGMT */
     { "load",                XSSH_LOAD, CM_INV },
     { "open",                XSSH_OPN, 0 },
+    { "remove",              XSSH_REM, 0 },         /* SSH_FEAT_PORT_FWD */
     { "v2",                  XSSH_V2,  0 },         /* SSH_FEAT_REKEY_MANUAL */
     { "", 0, 0 }
 };
@@ -10844,7 +10852,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
          * backend */
         for (z = 0; z < nsshcmd; z++) {
             if ((sshkwtab[z].kwval == XSSH_ADD || sshkwtab[z].kwval == XSSH_CLR
-                || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP)
+                || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP
+                || sshkwtab[z].kwval == XSSH_REM)
                 && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
                 /* Port forwarding
                  *   "ssh add" - adds port fowards
@@ -11285,6 +11294,46 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 		          break;
 	          case SSHC_RPF:
                   ssh_fwd_clear_remote_ports(FALSE);
+                  break;
+	          default:
+		         return(-2);
+	      }
+          return(success = 1);	/* or whatever */
+      }
+      case XSSH_REM: {
+          int port;
+
+          if (!ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+              printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+              return(-9);
+          }
+	      if ((y = cmkey(sshrem,nsshrem,"","", xxstring)) < 0) {
+	          if (y == -3) {
+		          printf("?remove what?\n");
+		          return(-9);
+		      }
+	          return(y);
+	      }
+
+          if ((x = cmnum((cx == SSHR_LPF) ?
+			     "Local port number" : "Remote port number",
+			     "",10,&port,xxstring)) < 0) {
+		    return(x);
+          }
+
+          /* TODO: A switch to apply these changes to any active connection
+           *       rather than only affecting future connections
+           */
+
+	      if ((x = cmcfm()) < 0) {
+              return(x);
+          }
+	      switch (y) {
+	          case SSHR_LPF:
+                  ssh_fwd_remove_local_port(port, FALSE);
+		          break;
+	          case SSHR_RPF:
+                  ssh_fwd_remove_remote_port(port, FALSE);
                   break;
 	          default:
 		         return(-2);

@@ -131,6 +131,8 @@ _PROTOTYP(int ssh_fwd_remote_port, (char* address, int port, char * host, int ho
 _PROTOTYP(int ssh_fwd_local_port,(char* address, int port,char * host, int host_port, BOOL apply));
 _PROTOTYP(int ssh_fwd_clear_remote_ports,(BOOL apply));
 _PROTOTYP(int ssh_fwd_clear_local_ports,(BOOL apply));
+_PROTOTYP(int ssh_fwd_remove_remote_port,(int port, BOOL apply));
+_PROTOTYP(int ssh_fwd_remove_local_port,(int port, BOOL apply));
 _PROTOTYP(const ssh_port_forward_t* ssh_fwd_get_ports,());
 
 #ifdef SSHTEST

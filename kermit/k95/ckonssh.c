@@ -431,6 +431,8 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_fwd_local_port", ssh_fwd_local_port);
     params->p_install_funcs("ssh_fwd_clear_remote_ports", ssh_fwd_clear_remote_ports);
     params->p_install_funcs("ssh_fwd_clear_local_ports", ssh_fwd_clear_local_ports);
+    params->p_install_funcs("ssh_fwd_remove_remote_port", ssh_fwd_remove_remote_port);
+    params->p_install_funcs("ssh_fwd_remove_local_port", ssh_fwd_remove_local_port);
     params->p_install_funcs("ssh_fwd_get_ports", ssh_fwd_get_ports);
 #ifdef SSHTEST
     params->p_install_funcs("sshkey_v1_change_comment", sshkey_v1_change_comment);
@@ -920,6 +922,24 @@ int ssh_fwd_clear_local_ports(BOOL apply) {
 
     return 0;
 }
+
+/** Remove a single reverse/remote port forward.
+ *
+ * @param port Reverse port forward to remove
+ * @param apply Also remove the port forward from any active session. Does not
+ *      close any established connections.
+ * @return 0 on success
+ */
+int ssh_fwd_remove_remote_port(int port, BOOL apply);
+
+/** Remove a single direct/local port forward.
+ *
+ * @param port Direct port forward to remove
+ * @param apply Also remove the port forward from any active session. Does not
+ *      close any established connections.
+ * @return 0 on success
+ */
+int ssh_fwd_remove_local_port(int port, BOOL apply);
 
 /** Gets all forwarded ports. The final entry in the list has a type of
  * SSH_PORT_FORWARD_NULL.

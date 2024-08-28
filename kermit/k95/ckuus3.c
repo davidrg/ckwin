@@ -8246,7 +8246,7 @@ shossh() {
                );
     }
     if (ssh_feature_supported(SSH_FEAT_X11_FWD)) {
-        extern char* tn_env_disp;   /* ckctel.c */
+        extern char tn_env_disp[64];   /* ckctel.c */
         printf(" ssh x11-forwarding:              %s\n",showooa(ssh_get_iparam(SSH_IPARAM_XFW)));
         printf(" ssh x11-forwarding display:      %s\n",showstring(tn_env_disp));
         /* TODO: Show the display - tn_env_disp */

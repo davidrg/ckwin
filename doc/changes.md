@@ -14,6 +14,9 @@ Nothing yet
   establishing a connection with `SSH ADD { local, remote }` and remove all
   forwards of a given type with `SSH CLEAR { local, remote }`. These commands
   don't yet have any effect on an already established SSH connection.
+* New command to allow removing individual port forwards (`SSH REMOVE 
+  { local, remote }`) - previously Kermit 95 only had commands to remove *all*
+  forwarded ports of a given type.
 * X11 forwarding is back. Turn on with `SET SSH X11 ON`, and set your display
   with `SET TELNET ENV DISPLAY`
 * The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
