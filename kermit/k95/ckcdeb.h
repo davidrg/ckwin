@@ -1926,7 +1926,9 @@ int mac_fclose();
 #ifndef NODIAL
 #ifndef CK_TAPI
 #ifdef NT
+#ifndef NOTAPI
 #define CK_TAPI
+#endif /* NOTAPI */
 #endif /* NT */
 #endif /* CK_TAPI */
 #endif /* NODIAL */

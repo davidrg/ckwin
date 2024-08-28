@@ -70,12 +70,12 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 #undef COMMENT
 #else /* NT */
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
 #define APIRET ULONG
 extern int DialerHandle;
 extern int StartedFromDialer;

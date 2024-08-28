@@ -179,10 +179,10 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 #else /* NT */
 #define INCL_VIO
 #define INCL_WINERRORS

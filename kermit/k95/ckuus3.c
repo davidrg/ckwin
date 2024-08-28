@@ -84,10 +84,10 @@ int setmsk();            /* ckuus7.c */
 #ifdef NT
 #include <windows.h>
 #include "ckoreg.h"
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 #ifdef KUI
 int get_gui_window_pos_y(); /* cknwin.c */
 int get_gui_window_pos_x(); /* cknwin.c */

@@ -23,15 +23,14 @@
 #include <process.h>
 
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
-#endif
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 
-#ifdef CK_TAPI
+
 #include "ckntap.h"             /* Kermit Telephony */
 #include "cknwin.h"
 #include "ckntapi.h"            /* TAPI function typedefs */

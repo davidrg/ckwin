@@ -97,11 +97,11 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #ifdef NT
 #include <windows.h>
 #include <commctrl.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #ifdef CK_TAPI
 int TAPIAvail = 0 ;   /* is TAPI Installed */
@@ -9901,9 +9901,9 @@ void
 DisplayCommProperties(HANDLE h)
 {
     COMMPROP *     lpCommProp = NULL;
-#ifndef NODIAL
+#ifdef CK_TAPI
     LPMODEMDEVCAPS lpModemDevCaps = NULL;
-#endif
+#endif /* CK_TAPI */
     int rc=0;
 
     /* leave enough room for provider specific information */
@@ -10065,7 +10065,7 @@ DisplayCommProperties(HANDLE h)
     printf("  Current Tx Queue   = %d (bytes)\n",lpCommProp->dwCurrentTxQueue);
     printf("  Current Rx Queue   = %d (bytes)\n",lpCommProp->dwCurrentRxQueue);
 
-#ifndef NODIAL
+#ifdef CK_TAPI
     if ( lpCommProp->dwProvSubType == PST_MODEM && lpCommProp->wcProvChar[0]) {
         lpModemDevCaps = (LPMODEMDEVCAPS) lpCommProp->wcProvChar;
         printf("Modem Device Capabilities:\n");
@@ -10179,7 +10179,7 @@ DisplayCommProperties(HANDLE h)
         printf("  Max DCE Rate           = %d (bits/second)\n",
                 lpModemDevCaps->dwMaxDCERate);
     }
-#endif /* NODIAL */
+#endif /* CK_TAPI */
     printf("\n");
     free(lpCommProp);
     return;

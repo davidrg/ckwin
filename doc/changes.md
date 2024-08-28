@@ -35,7 +35,8 @@ Nothing yet
 * Fix hitting backspace in an empty search-in-buffer crashing
 * Fix `pty dir` (or trying to run anything else that isn't a valid program)
   causing a crash
-* 
+* Fixed POTS modem support not being available on NT 3.50
+
 ### Other Source Changes
 None yet
 

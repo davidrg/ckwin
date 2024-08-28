@@ -118,10 +118,14 @@ The remaining steps are in this module:
 
 #ifdef NT
 #include <windows.h>
+#ifdef CK_TAPI
 #include <tapi.h>
+#endif /* CK_TAPI */
 #include <time.h>
 #include "cknwin.h"
+#ifdef CK_TAPI
 #include "ckntap.h"
+#endif /* CK_TAPI */
 #include "ckothr.h"
 #include "ckosyn.h"
 #ifdef CK_LOGIN

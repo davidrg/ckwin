@@ -128,10 +128,10 @@ int type_intrp = 0;
 #else
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"			/* CK_TAPI definition */
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #include "ckoreg.h"
 #endif /* NT */

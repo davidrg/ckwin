@@ -11,18 +11,16 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 
 #include <windows.h>
 #include <process.h>
-#ifndef NODIAL
-#include <tapi.h>
-#endif
 #include <commctrl.h>
 #include "ckcdeb.h"
 #include "ckcker.h"
 #include "ckcasc.h"
 #include "cknwin.h"
 #include "ckowin.h"
-#ifndef NODIAL
+#ifdef CK_TAPI
+#include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "ckocon.h"
 #include "ckuusr.h"
 #include "ckokey.h"

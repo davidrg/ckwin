@@ -66,10 +66,10 @@ char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
 
 #ifdef NT
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #ifdef KUI
 #include "kui/ikui.h"

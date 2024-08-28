@@ -596,10 +596,10 @@ ACKNOWLEDGMENTS:
 #ifdef NT
 #include <windows.h>
 #include <process.h>                    /* for getpid() */
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 
 int setOSVer();                         /* ckotio.c */
 int ttgcwsz();                          /* ckocon.c */
