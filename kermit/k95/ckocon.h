@@ -419,7 +419,9 @@ _PROTOTYP( USHORT VscrnWrtCharStrAtt, ( BYTE vmode, PCH CharStr, USHORT Length,
                          USHORT Row, USHORT Column, PBYTE Attr ) ) ;
 _PROTOTYP( USHORT VscrnWrtUCS2StrAtt, ( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                                         USHORT Row, USHORT Column, PBYTE Attr ) ) ;
+#ifndef KUI
 _PROTOTYP( void   TermScrnUpd, ( void * ) ) ;
+#endif /* ! KUI */
 
 _PROTOTYP( videoline * VscrnGetLineFromTop, ( BYTE, SHORT ) ) ;
 _PROTOTYP( videoline * VscrnGetLine, ( BYTE, SHORT ) ) ;

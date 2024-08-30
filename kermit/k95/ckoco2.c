@@ -3813,11 +3813,13 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     return(retval);
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* TermScrnUpd                                                               */
 /*---------------------------------------------------------------------------*/
 #define URLMINCNT 4096
 #define NEW_EXCLUSIVE 1
+
 void
 TermScrnUpd( void * threadinfo)
 {
@@ -4547,6 +4549,7 @@ TermScrnUpd( void * threadinfo)
     ckThreadEnd(threadinfo) ;
 #endif /* ONETERMUPD */
 }
+#endif /* ! KUI */
 
 #ifdef PCFONTS
 APIRET
