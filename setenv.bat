@@ -129,7 +129,7 @@ goto :bits32
 
 :arm
 REM 32bit ARM (Windows RT)
-REM TODO: Check
+set CKB_OPENSSL_SUFFIX=-arm
 set CKB_TARGET_ARCH=ARM
 goto :bits32
 
