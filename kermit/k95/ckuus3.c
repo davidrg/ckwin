@@ -14189,8 +14189,12 @@ dorexx() {
     int x, y;
     char *rexxcmd;
 
-        if ((x = cmtxt("Rexx command","",&rexxcmd,xxstring)) < 0)
-          return(x);
+    if ((x = cmtxt("Rexx command","",&rexxcmd,xxstring)) < 0)
+      return(x);
+
+    /* No REXX command? Don't try to run the REXX command (doing so causes
+     * Regina REXX to crash) */
+    if (strlen(rexxcmd) == 0) return(success = 0);
 
 #ifdef IKSD
     if (inserver) {

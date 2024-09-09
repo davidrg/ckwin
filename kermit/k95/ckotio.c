@@ -190,12 +190,20 @@ static char *ckxrev = "32-bit";
 #define INCL_DOSDATETIME
 #define INCL_DOSNMPIPES
 #include <os2.h>        /* This pulls in a whole load of stuff */
+#undef COMMENT
+#endif /* NT */
+
 #ifdef CK_REXX
+
+#ifdef NT
+/* Regina REXX wants to typedef char to CHAR, but we already do that */
+#define CHAR_TYPEDEFED
+#define USHORT_TYPEDEFED
+#endif
+
 #define  INCL_REXXSAA
 #include <rexxsaa.h>
 #endif /* CK_REXX */
-#undef COMMENT
-#endif /* NT */
 
 #include "ckowin.h"
 #include "ckcuni.h"
@@ -9590,7 +9598,11 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
     debug(F110,"os2rexx: procedure",rexxcmd,0);
     return_code = RexxStart( 0,   /* no program arguments */
                              0,   /* null argument list   */
+#ifdef NT
+                            "Kermit 95 REXX Command",
+#else
                             "Kermit for OS/2 REXX Command",
+#endif
                                                /* default program name */
                             Instore, /* rexx procedure to interpret */
                             "CKermit",         /* default address name */
@@ -9600,15 +9612,26 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
                             &retstr);           /* returned result */
 
     debug(F111,"os2rexx: returns",RXSTRPTR(retstr),return_code);
+    debug(F111,"os2rexx: retstr",RXSTRPTR(retstr),RXSTRLEN( retstr ));
     if ( !return_code && RXSTRLEN( retstr ) < rexxbuflen ) {
-        ckstrncpy( rexxbuf, RXSTRPTR(retstr), RXSTRLEN( retstr ) );
+        ckstrncpy( rexxbuf, RXSTRPTR(retstr), rexxbuflen );
+        debug(F110,"os2rexx: rexxbuf",rexxbuf,0);
         retval = 0 ;                    /* Success */
     } else {
         rexxbuf[0] = '\0' ;
         retval = 1 ;                    /* Failure */
     }
-    if (RXSTRPTR(retstr) != return_buffer)
-      DosFreeMem(RXSTRPTR(retstr));
+    if (RXSTRPTR(retstr) != return_buffer) {
+        if (RXSTRPTR(retstr) != NULL) {
+#ifdef NT
+            free(RXSTRPTR(retstr));
+#else
+            DosFreeMem(RXSTRPTR(retstr));
+#endif
+        }
+    }
+
+    printf("\n");
 
     return retval ;
 }
