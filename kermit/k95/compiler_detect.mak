@@ -43,6 +43,11 @@ COMPILER_VERSION = Visual C++ 7.0 compatible
 MSC_VER = 120
 COMPILER_VERSION = Digital Mars C/C++
 
+!ELSEIF ([cl 2>&1 | findstr /C:"Version 19.4" > nul] == 0)
+# Visual C++ 14.3 (Visual Studio 2022)
+MSC_VER = 194
+COMPILER_VERSION = 14.4 (Visual Studio 2022)
+
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 19.3" > nul] == 0)
 # Visual C++ 14.3 (Visual Studio 2022)
 MSC_VER = 193

@@ -50,7 +50,10 @@ env:
   C_KERMIT_VERSION: 10.0prebeta11
   #C_KERMIT_CODE: https://www.kermitproject.org/ftp/kermit/test/tar/x.tar.gz
   C_KERMIT_CODE: https://kermitproject.org/ftp/kermit/pretest/x.tar.gz
-
+  # Grab it from ftp.zx.net.nz as its normally distributed via sourceforge
+  # with its annoying interstitial advertising page
+  REGINA_VER: 3.9.6
+  REGINA_REXX: https://ftp.zx.net.nz/pub/dev/rexx/regina/3.9.6/regina396.zip
 
 jobs:
   Get-CACerts-Bundle:
@@ -212,7 +215,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+ver4
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
@@ -302,6 +305,19 @@ jobs:
         
         # Install perl modules required by OpenSSL build
         cpan -i Text::Template
+        
+        # Get Regina REXX
+        mkdir rexx
+        cd rexx
+        mkdir regina
+        cd regina
+        wget ${{env.REGINA_REXX}} -outfile regina.zip
+        7z x regina.zip
+        del regina.zip
+        dir
+        cd ..
+        cd ..
+
       shell: powershell
 
       # No zlib for ARM - it fails at the link step:
@@ -472,6 +488,78 @@ jobs:
         cd libdes\
         call mknt.bat
 
+    - name: Build Regina REXX (x86)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+      shell: cmd
+      run: |
+        set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+        set PLATFORM=x86
+        
+        cd %REGINA_SRCDIR%
+        
+        nmake -f makefile.win.vc
+        if not exist regina.dll exit /b 1
+        
+        mkdir include
+        cd include
+        copy ..\rexxsaa.h
+        cd ..
+        mkdir lib
+        cd lib
+        copy ..\regina.lib
+        cd ..
+
+    - name: Build Regina REXX (x86-64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
+      shell: cmd
+      run: |
+        set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+        set PLATFORM=x64
+        
+        cd %REGINA_SRCDIR%
+        
+        nmake -f makefile.win.vc
+        if not exist regina.dll exit /b 1
+        
+        mkdir include
+        cd include
+        copy ..\rexxsaa.h
+        cd ..
+        mkdir lib
+        cd lib
+        copy ..\regina.lib
+        cd ..
+
+#    TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
+#          an incompatible target architecture:
+#
+#	.\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
+#      NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
+#              This version of %1 is not compatible with the version of Windows
+#              you're running. Check your computer's system information and then
+#              contact the software publisher.
+#
+#    - name: Build Regina REXX (arm64)
+#      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+#      shell: cmd
+#      run: |
+#        set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+#        set PLATFORM=arm64
+#
+#        cd %REGINA_SRCDIR%
+#
+#        nmake -f makefile.win.vc
+#        if not exist regina.dll exit /b 1
+#
+#        mkdir include
+#        cd include
+#        copy ..\rexxsaa.h
+#        cd ..
+#        mkdir lib
+#        cd lib
+#        copy ..\regina.lib
+#        cd ..
+
     - name: Fetch x86 wart
       uses: actions/download-artifact@v4
       if: matrix.arch != 'x86' && matrix.arch != 'x64'
@@ -489,11 +577,18 @@ jobs:
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
         set libssh_root_override=${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
         set libssh_build_override=%libssh_root_override%\build
+        set rexx_root_override=${{github.workspace}}\rexx\regina\
         
         call ..\setenv.bat
         
         set PATH=%PATH%;${{github.workspace}}\tools\jom
         set MAKE=jom
+        
+        REM Don't make PDBs as it causes intermittent problems with JOM that
+        REM /FS *should* solve, but seemingly doesn't.
+        REM TODO: Take another look at this sometime and see if we can fix it
+        REM       properly.
+        set CKB_MAKE_PDB=no
         
         REM If the target arch is incompatible with the host arch, use
         REM the x86 version of ckwart.exe which should have been placed

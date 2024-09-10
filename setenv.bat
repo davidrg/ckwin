@@ -488,7 +488,7 @@ if exist %rexx_root%\lib\regina.lib set CKB_REXX_DYNAMIC=yes
 if exist %rexx_root%\lib\rexx.lib set CKB_REXX_STATIC=yes
 
 if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_STATIC=no
-if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_DIST_DLLS=%rexx_root%\regina.dll
+if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_DIST_DLLS=%rexx_root%\regina.dll %rexx_root%\regutil.dll %rexx_root%\en.mtb
 if "%CKB_REXX_DYNAMIC%" == "yes" set REXX_LIB=regina.lib
 if "%CKB_REXX_DYNAMIC%" == "yes" goto :haverex
 
@@ -504,6 +504,12 @@ set CKF_REXX=no
 set INCLUDE=%INCLUDE%;%rexx_root%\include\
 set LIB=%LIB%;%rexx_root%\lib\
 set CKF_REXX=yes
+
+REM Additional files from the Regina REXX distribution that we *could* include
+REM if we wanted to. They're not required for K95 to function at all. If we
+REM had a installer, these would be an optional "Additional Regina REXX components"
+REM feature.
+set CKF_REGINA_EXTRA=%rexx_root%\regina.exe %rexx_root%\rexx.exe %rexx_root%\rxqueue.exe %rexx_root%\rxstack.exe %rexx_root%\de.mtb %rexx_root%\es.mtb %rexx_root%\no.mtb %rexx_root%\pl.mtb %rexx_root%\pt.mtb %rexx_root%\sv.mtb %rexx_root%\tr.mtb
 
 if "%CKB_REXX_DYNAMIC%" == "yes" echo Found REXX (Dynamic)
 if "%CKB_REXX_STATIC%" == "yes" echo Found REXX (Static)
