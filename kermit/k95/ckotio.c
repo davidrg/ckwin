@@ -9529,6 +9529,66 @@ get_os2_vers() {
 extern char * mrval[] ;
 extern int maclvl ;
 
+#ifdef NT
+LONG APIENTRY os2rexx_exit_handler(
+        LONG ExitNumber,
+        LONG Subfunction,
+        PEXIT ParamBlock
+        ) {
+
+    debug(F111, "os2rexx_exit_handler", "ExitNumber", ExitNumber);
+    debug(F111, "os2rexx_exit_handler", "Subfunction", Subfunction);
+
+    switch(ExitNumber) {
+        case RXSIO: {
+            switch(Subfunction) {
+                case RXSIOSAY:
+                    {
+                        RXSIOSAY_PARM *param;
+                        RXSTRING sayString;
+
+                        param = (RXSIOSAY_PARM*)ParamBlock;
+                        sayString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(sayString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(sayString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(sayString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - say", buf, 0);
+
+                                printf("%s", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
+                case RXSIOTRC:
+                case RXSIOTRD:
+                case RXSIODTR:
+                case RXSIOTLL:
+                default:
+                    return RXEXIT_NOT_HANDLED;
+                    break;
+            }
+        }
+        break;
+    case RXFNC:
+        /* TODO: Handle RexxUtil Console I/O functions */
+    default:
+        return RXEXIT_NOT_HANDLED;
+        break;
+    }
+}
+
+#endif /* NT */
+
 /* This is the CkCommand/CKermit function handler.  It is an undocumented  */
 /* Kermit feature.  Do not remove this code.                             */
 
@@ -9590,10 +9650,30 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
     RXSTRING  Instore[2] ; /* Instorage rexx procedure */
     RXSTRING  retstr  ;  /* program return value    */
     int       retval  ;  /* os2rexx return value    */
+    RXSYSEXIT exits[2];  /* Exit handlers */
 
     MAKERXSTRING( Instore[0], rexxcmd, strlen(rexxcmd) ) ;
     MAKERXSTRING( Instore[1], 0, 0 ) ;
     MAKERXSTRING( retstr, return_buffer, sizeof(return_buffer) ) ;
+
+#ifdef NT
+    /*
+     * Register an exit handler so that "say" works. This is NT only
+     * for now as I'm not sure if it is required on OS/2 at all.
+     */
+
+    RexxRegisterExitExe( "CKExitHandler",
+#ifdef RX_WEAKTYPING
+                        (PFN) os2rexx_exit_handler,
+#else
+                        os2rexx_exit_handler,
+#endif
+                        NULL );     /* User Area */
+
+    exits[0].sysexit_name = "CKExitHandler";
+    exits[0].sysexit_code = RXSIO;
+    exits[1].sysexit_code = RXENDLST;
+#endif /* NT */
 
     debug(F110,"os2rexx: procedure",rexxcmd,0);
     return_code = RexxStart( 0,   /* no program arguments */
@@ -9607,7 +9687,11 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
                             Instore, /* rexx procedure to interpret */
                             "CKermit",         /* default address name */
                             RXFUNCTION,         /* calling as a function */
+#ifdef NT
+                            exits,              /* Exit handlers */
+#else
                             0,                  /* no exits used */
+#endif /* NT */
                             &rc,                /* converted return code */
                             &retstr);           /* returned result */
 
