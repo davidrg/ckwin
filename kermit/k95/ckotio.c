@@ -9561,7 +9561,7 @@ LONG APIENTRY os2rexx_exit_handler(
 
                                 debug(F110, "os2rexx_exit_handler - say", buf, 0);
 
-                                printf("%s", buf);
+                                printf("%s\n", buf);
                                 free(buf);
                             }
                         }
