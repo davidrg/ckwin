@@ -495,6 +495,12 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom
         set MAKE=jom
         
+        REM Don't make PDBs as it causes intermittent problems with JOM that
+        REM /FS *should* solve, but seemingly doesn't.
+        REM TODO: Take another look at this sometime and see if we can fix it
+        REM       properly.
+        set CKB_MAKE_PDB=no
+        
         REM If the target arch is incompatible with the host arch, use
         REM the x86 version of ckwart.exe which should have been placed
         REM in the workplace previously, rather than trying to use a
