@@ -51,6 +51,7 @@ Nothing yet
 * Fix `pty dir` (or trying to run anything else that isn't a valid program)
   causing a crash
 * Fixed POTS modem support not being available on NT 3.50
+* Fixed OpenSSL libraries not being included in the ARM32 distribution
 
 ### Other Source Changes
 None yet
