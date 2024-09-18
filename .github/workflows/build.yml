@@ -467,14 +467,16 @@ jobs:
         call build.bat /M out /N gx /G /C /R /X ${{env.LIBSSH_VERSION}}    
 
       # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
+      # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
     - name: Build libssh (arm32)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
         nmake
 
+      # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
     - name: Build libssh (arm64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
       shell: powershell
