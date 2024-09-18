@@ -235,11 +235,13 @@ jobs:
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
         # Figure out what OPENSSL version we're using
-        $openssl_url = "https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz"
+        $openssl_version = "${{env.OPENSSL_VERSION}}"
         if ("${{matrix.arch}}" -eq "x64_arm" -Or "${{matrix.arch}}" -eq "x64_arm64") {
           echo "Targeting Windows on ARM, using OpenSSL ${{env.OPENSSL_ARM_VERSION}}"
-          $openssl_url = "https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_ARM_VERSION}}/openssl-${{env.OPENSSL_ARM_VERSION}}.tar.gz"
+          $openssl_version = "${{env.OPENSSL_ARM_VERSION}}"
         }
+        
+        $openssl_url = "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/openssl-${openssl_version}.tar.gz"
         
         # Get and unpack zlib
         mkdir zlib
@@ -257,10 +259,10 @@ jobs:
         
         # Get and unpack openssl
         cd openssl
-        wget $openssl_url -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
-        7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
-        7z x openssl-${{env.OPENSSL_VERSION}}.tar
-        ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+        wget $openssl_url -outfile openssl-${openssl_version}.tar.gz
+        7z x openssl-${openssl_version}.tar.gz
+        7z x openssl-${openssl_version}.tar
+        ren openssl-${openssl_version} ${openssl_version}
         del *.tar 
         del *.gz
         cd ..
@@ -393,7 +395,7 @@ jobs:
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
-        cd openssl\${{env.OPENSSL_VERSION}}
+        cd openssl\${{env.OPENSSL_ARM_VERSION}}
         perl Configure VC-WIN32-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
         ${{env.OPENSSL_MAKE}}
@@ -404,7 +406,7 @@ jobs:
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
-        cd openssl\${{env.OPENSSL_VERSION}}
+        cd openssl\${{env.OPENSSL_ARM_VERSION}}
         perl Configure VC-WIN64-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
         ${{env.OPENSSL_MAKE}}
 
@@ -607,6 +609,11 @@ jobs:
         set libssh_root_override=${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
         set libssh_build_override=%libssh_root_override%\build
         set rexx_root_override=${{github.workspace}}\rexx\regina\
+        
+        REM We're currently using a different version of Openssl on ARM Windows
+        REM as the current LTS release isn't compatible.
+        if "${{matrix.arch}}" == "x64_arm" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
+        if "${{matrix.arch}}" == "x64_arm64" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
         
         call ..\setenv.bat
         
