@@ -15,7 +15,7 @@ env:
   # so we switched fetching zlib from ftp.zx.net.nz instead. As of 2024-08-16 it seems to be
   # fine, so we've switched back to zlib.net.
   ZLIB_VERSION: 1.3.1
-  # Expected filename: https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
+  # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 3.0.15
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
@@ -235,7 +235,7 @@ jobs:
         
         # Get and unpack openssl
         cd openssl
-        wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+        wget https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
         7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
         7z x openssl-${{env.OPENSSL_VERSION}}.tar
         ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
@@ -768,7 +768,7 @@ jobs:
         run: |         
           # Get and unpack openssl
           cd openssl
-          wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
           7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
           7z x openssl-${{env.OPENSSL_VERSION}}.tar
           ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
@@ -1893,7 +1893,7 @@ jobs:
         run: |
           mkdir -p openssl
           cd openssl
-          wget https://www.openssl.org/source/openssl-${{env.OPENSSL_VERSION}}.tar.gz
+          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz
           tar zxf openssl-${{env.OPENSSL_VERSION}}.tar.gz
           rm openssl-${{env.OPENSSL_VERSION}}.tar.gz
           cd openssl-${{env.OPENSSL_VERSION}}
