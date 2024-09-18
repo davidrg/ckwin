@@ -152,6 +152,7 @@ Additionally, a number of new features have been added:
 * Mouse wheel support and terminal mouse reporting have been implemented
 * Support for 64bit Windows (x86-64, Itanium, ARM64, AXP64)
 * Ports to new CPU architectures: MIPS, Itanium, x86-64, ARM, ARM64
+* REXX is now supported on Windows as well as OS/2
 * A selection of other bugs fixed and other minor features added
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.
