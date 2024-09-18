@@ -27,7 +27,13 @@ Nothing yet
   Windows. This removes the need to manually shuffle around ssh.dll variants, and
   also means that alternative SSH backends not based on libssh can now be supported
   should anyone want to build one, opening the door to SSH on vintage windows or
-  OS/2 systems.  
+  OS/2 systems.
+* REXX support has been extended to x86 systems running Windows XP or newer. This
+  was previously an OS/2-only feature. You can now run REXX scripts and commands
+  from the K95 command mode with the `rexx` command, and REXX scripts run from 
+  K95 can execute any Kermit 95 command by enclosing the K95 command in single
+  quotes (eg, `'set parity none'`). For full details, see the REXX section of
+  the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx.
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
