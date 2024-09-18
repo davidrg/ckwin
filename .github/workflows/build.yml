@@ -497,7 +497,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
         nmake
 
       # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
@@ -506,7 +506,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
         nmake        
 
     - name: Build libdes
