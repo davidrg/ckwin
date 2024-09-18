@@ -168,23 +168,35 @@ jobs:
           - x64_arm
           - x64_arm64
         toolset:
+          - 14.0
           - 14.2
           - 14.4
         exclude:
-          # No point building ARM or ARM64 targets with anything less than the latest as the latest
-          # still supports the first ARM Windows.
-          - arch: x64_arm
-            toolset: 14.0
+          # ARM32 must be built with 14.0 as it was the last release a redist
+          # was shipped for.
           - arch: x64_arm
             toolset: 14.1
           - arch: x64_arm
             toolset: 14.2
+          - arch: x64_arm
+            toolset: 14.3
+          - arch: x64_arm
+            toolset: 14.4
+          # No point in building ARM64 targets with anything but the latest as
+          # the latest hasn't dropped any windows support yet.
           - arch: x64_arm64
             toolset: 14.0
           - arch: x64_arm64
             toolset: 14.1
           - arch: x64_arm64
             toolset: 14.2
+          # No point building x86, x86-64 and arm64 with 14.0
+          - arch: x64_arm64
+            toolset: 14.0
+          - arch: x86
+            toolset: 14.0
+          - arch: x64
+            toolset: 14.0
 
     steps:
     - uses: actions/checkout@v4
