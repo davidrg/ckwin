@@ -31,6 +31,7 @@
 #   CKF_TAPI       yes        Modem dialing support
 #   CKF_RICHEDIT   yes        Rich Edit control support
 #   CKF_TOOLBAR    yes        Include the toolbar
+#   CKF_REXX       no         REXX support
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
@@ -627,4 +628,11 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
 !if "$(CKF_NT_UNICODE)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) Windows-Unicode
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_NT_UNICODE -DUNICODE -D_UNICODE
+!endif
+
+!if "$(CKF_REXX)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) REXX
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) REXX
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOREXX
 !endif

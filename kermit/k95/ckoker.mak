@@ -316,6 +316,10 @@ RCDEFINES=$(RC_FEATURE_DEFS) /dCOMPILER_$(CMP)
 SSH_LIB = ssh.lib
 !endif
 
+!if "$(REXX_LIB)" == ""
+REXX_LIB = rexx.lib
+!endif
+
 #---------- Compiler targets:
 #
 # To build: "[dn]make <target>"
@@ -872,6 +876,10 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 KUILIBS = $(KUILIBS) $(SSH_LIB) ws2_32.lib
 !endif
 
+!if "$(CKF_REXX)" == "yes"
+KUILIBS = $(KUILIBS) $(REXX_LIB)
+!endif
+
 !if "$(CKF_SSL)" == "yes"
 KUILIBS = $(KUILIBS) $(SSL_LIBS)
 !endif
@@ -907,6 +915,10 @@ LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
 
 !if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
 LIBS = $(LIBS) $(SSH_LIB) ws2_32.lib
+!endif
+
+!if "$(CKF_REXX)" == "yes"
+LIBS = $(LIBS) $(REXX_LIB)
 !endif
 
 !if "$(MIPS_CENTAUR)" == "yes"

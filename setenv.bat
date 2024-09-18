@@ -63,6 +63,11 @@ REM You can also point this at the root directory for the Kerberos for Windows
 REM 3.x or 4.x SDK.
 set k4w_root=%root%\kerberos\kfw-2.2-beta-2
 
+REM Regina REXX. We expect to find in here:
+REM     \lib\rexx.lib or ( \lib\regina.lib and \regina.dll )
+REM     \include\rexxsaa.h
+set rexx_root=%root%\rexx\regina396w32
+
 REM Make program must be something sufficiently compatible with nmake 1.40 (Visual C++ 1.1). Jom is recommended
 REM for doing parallel builds.
 set make=nmake
@@ -249,6 +254,7 @@ if not "%libssh_build_override%"=="" set libssh_build=%libssh_build_override%
 if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
 if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
+if not "%rexx_root_override%"=="" set rexx_root=%rexx_root_override%
 if not "%make_override%"=="" set make=%make_override%
 
 REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
@@ -473,6 +479,42 @@ REM TODO: also need the MFC DLLs
 for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
+echo Searching for REXX...
+set CKF_REXX=no
+if not exist %rexx_root%\include\rexxsaa.h echo Can't find rexxsaa.h
+if not exist %rexx_root%\include\rexxsaa.h goto :norex
+
+if exist %rexx_root%\lib\regina.lib set CKB_REXX_DYNAMIC=yes
+if exist %rexx_root%\lib\rexx.lib set CKB_REXX_STATIC=yes
+
+if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_STATIC=no
+if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_DIST_DLLS=%rexx_root%\regina.dll %rexx_root%\regutil.dll %rexx_root%\en.mtb
+if "%CKB_REXX_DYNAMIC%" == "yes" set REXX_LIB=regina.lib
+if "%CKB_REXX_DYNAMIC%" == "yes" goto :haverex
+
+if "%CKB_REXX_STATIC%" == "yes" set REXX_LIB=rexx.lib
+if "%CKB_REXX_STATIC%" == "yes" goto :haverex
+
+REM We have the header, but we couldn't find the static or dynamic link
+REM library, so we don't have enough for REX support
+echo Couldn't find rexx.lib or regina.lib.
+set CKF_REXX=no
+
+:haverex
+set INCLUDE=%INCLUDE%;%rexx_root%\include\
+set LIB=%LIB%;%rexx_root%\lib\
+set CKF_REXX=yes
+
+REM Additional files from the Regina REXX distribution that we *could* include
+REM if we wanted to. They're not required for K95 to function at all. If we
+REM had a installer, these would be an optional "Additional Regina REXX components"
+REM feature.
+set CKF_REGINA_EXTRA=%rexx_root%\regina.exe %rexx_root%\rexx.exe %rexx_root%\rxqueue.exe %rexx_root%\rxstack.exe %rexx_root%\de.mtb %rexx_root%\es.mtb %rexx_root%\no.mtb %rexx_root%\pl.mtb %rexx_root%\pt.mtb %rexx_root%\sv.mtb %rexx_root%\tr.mtb
+
+if "%CKB_REXX_DYNAMIC%" == "yes" echo Found REXX (Dynamic)
+if "%CKB_REXX_STATIC%" == "yes" echo Found REXX (Static)
+
+:norex
 
 REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
@@ -847,7 +889,7 @@ if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
-set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES%
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS%
 
 echo -----------------------------
 echo.
@@ -856,6 +898,9 @@ echo    %include%
 echo.
 echo Library path set to:
 echo    %lib%
+echo.
+echo DIST DLLs set to:
+echo    %CK_DIST_DLLS%
 echo.
 echo Compiler: %CK_COMPILER_NAME%
 echo.
@@ -871,6 +916,8 @@ echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo      SRP: %CKF_SRP%
 echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%, KRB4: %CKF_K4W_KRB4%)
+if "%CKF_REXX%" == "yes" echo     REXX: %CKF_REXX% (%REXX_LIB%)
+if "%CKF_REXX%" == "no" echo     REXX: %CKF_REXX%
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

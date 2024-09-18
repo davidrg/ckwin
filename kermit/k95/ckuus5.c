@@ -13074,13 +13074,11 @@ printf("NOWTMP not defined\n");
 #endif /* OS2MOUSE */
 
 #ifdef OS2
-#ifndef NT
 #ifndef CK_REXX
     printf(" No REXX script language interface\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_REXX */
-#endif /* NT */
 #endif /* OS2 */
 
 #ifndef IKSD

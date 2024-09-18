@@ -3736,9 +3736,6 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef OS2PM				/* Presentation Manager */
 #undef OS2PM
 #endif /* OS2PM */
-#ifdef CK_REXX				/* Rexx */
-#undef CK_REXX
-#endif /* CK_REXX */
 #endif /* NT */
 #endif /* OS2 */
 

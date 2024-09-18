@@ -66,6 +66,8 @@ if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist\COPYING
 if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
 :nossl
 
+if exist dist\regina.dll copy %rexx_root%\COPYING-LIB dist\COPYING.regina
+
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 copy hostmode.txt dist\docs\
