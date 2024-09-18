@@ -33,7 +33,10 @@ Nothing yet
   from the K95 command mode with the `rexx` command, and REXX scripts run from 
   K95 can execute any Kermit 95 command by enclosing the K95 command in single
   quotes (eg, `'set parity none'`). For full details, see the REXX section of
-  the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx.
+  the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx. The
+  REXX implementation is the current Regina REXX release. regutil.dll is included
+  but note that the Console I/O Routines it provides are not currently compatible 
+  with K95.
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
