@@ -1,12 +1,12 @@
-C_Kermit for Windows Key Maps:
+Kermit 95 Key Maps:
 
 KEYCODES.TXT
-  A complete listing of the keycodes for C-Kermit for Windows. These are the
+  A complete listing of the keycodes for Kermit 95. These are the
   codes that are used in the SET KEY command. MS-DOS kermit should use the
   same key codes.
 
 DEFAULT.KSC
-  This is a complete listing of C-Kermit for Windows' default key map, showing
+  This is a complete listing of Kermit 95s default key map, showing
   both global and default assignments for each terminal type. If this file is
   missing or you'd like to re-create it, it is generated with the following
   command:
@@ -14,7 +14,7 @@ DEFAULT.KSC
   This starts a minimal C-Kermit without running default scripts, then saves
   the keymap to a file.
 
-The following may also be present if this build of C-Kermit for Windows is
+The following may also be present if this build of Kermit 95 is
 capable of running on Windows 9x. If they're not, or you'd like a copy
 anyway, they're available from here:
     https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/k95/

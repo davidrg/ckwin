@@ -1,7 +1,7 @@
-# Building C-Kermit for Windows with MinGW
+# Building Kermit 95 for Windows with MinGW
 
-There is limited support for building CKW using the MinGW toolchain. This support is
-provided primarily to allow deveopment under Linux without having to run a compiler
+There is limited support for building K95 using the MinGW toolchain. This support is
+provided primarily to allow development under Linux without having to run a compiler
 under a Virtual Machine. As a result there aren't any automatic build configuration 
 or distribution scripts provided, just the minimum required to build the core 
 application.
@@ -48,7 +48,7 @@ perl Configure mingw64
 make depend
 make
 
-# Build CKWIN
+# Build K95
 cd ../kermit/k95
 make RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-3.0.8/
 ```
@@ -61,7 +61,7 @@ Assuming everything builds OK, you should end up with the following directories:
 | Directory           | Contents                                                  |
 |---------------------|-----------------------------------------------------------|
 | `/kermit/k95/nt`    | Console utilities (cknker.exe, telnet.exe, k95d.exe, etc) |
-| `/kermit/k95/win95` | The GUI version of CKW (k95g.exe)                         |
+| `/kermit/k95/win95` | The GUI version of K95 (k95g.exe)                         |
 | `kermit/k95/iksdnt` | IKSD Service                                              |
 
 The X/Y/Z-MODEM library, p95.dll, will be copied into both 

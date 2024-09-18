@@ -14,14 +14,16 @@
 
 #include <winver.h>
 
-/////////////////////////////////////////////////////////////////////////////
+#include "cknver.h"
+
+////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,0,0
- PRODUCTVERSION 3,0,0,0
+ FILEVERSION RC_FILE_VERSION
+ PRODUCTVERSION RC_PROD_VERSION
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -36,15 +38,15 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "X/Y/Z MODEM library for Kermit 95\0"
+            VALUE "Comments", "ctl3d and vcrt install utility for " K95_VERSION_PRODUCT_SHORT "\0"
             VALUE "CompanyName", "The Kermit Project\0"
-            VALUE "FileDescription", """P"" X/Y/Z MODEM Library for Windows\0"
-            VALUE "FileVersion", "3, 0, 0, 0\0"
-            VALUE "InternalName", "Script1\0"
-            VALUE "LegalCopyright", "Copyright \251 1995 Jyrki Salmi, Online Solutions Oy (www.online.fi)\0"
-            VALUE "OriginalFilename", "p95.dll\0"
-            VALUE "ProductName", "Kermit 95\0"
-            VALUE "ProductVersion", "3, 0, 0, 0\0"
+            VALUE "FileDescription", "ctl3d and vcrt install utility\0"
+            VALUE "FileVersion", RC_FILE_VERSION_STR
+            VALUE "InternalName", "ctl3dins\0"
+            VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013-" K95_VERSION_YEAR " The Kermit Project contributors.\0"
+            VALUE "OriginalFilename", "ctl3dins\0"
+            VALUE "ProductName", K95_VERSION_PRODUCT "\0"
+            VALUE "ProductVersion", RC_PROD_VERSION_STR
         END
     END
     BLOCK "VarFileInfo"
@@ -61,18 +63,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE DISCARDABLE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE DISCARDABLE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE DISCARDABLE
 BEGIN
     "\r\n"
     "\0"
@@ -91,4 +93,3 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-

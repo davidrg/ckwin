@@ -12189,7 +12189,7 @@ line25(int vmode) {
             strinsert(&s[01],usertext);
         else
             strinsert(&s[01],
-            "CKW Command Screen | Help: Alt-H | Terminal: CONNECT or Alt-X ");
+            "K95 Command Screen | Help: Alt-H | Terminal: CONNECT or Alt-X ");
         break;
     default:
         s = "";

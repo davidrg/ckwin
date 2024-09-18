@@ -6329,7 +6329,7 @@ netinc(timo) int timo;
                  * ttchk() > 0 telnet suddenly works!
                  *
                  * So maybe there is some bug in the NT 3.1 Winsock
-                 * implementation? Or is CKW doing something that NT 3.1 doesn't
+                 * implementation? Or is K95 doing something that NT 3.1 doesn't
                  * like?
                  *
                  * problem is, the API ttchk() relies on (FIONREAD) is slow and

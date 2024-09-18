@@ -52,6 +52,7 @@
 #include "ckocon.h"
 #include "ckokvb.h"
 #include "ckokey.h"
+#include "ckover.h"             /* This really should be ckover.h */
 
 #ifndef NOLOCAL
 int ttgcwsz();                  /* ckocon.c */
@@ -204,12 +205,8 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, the Open-Source successor to",
-#else
-"Welcome to C-Kermit for OS/2, the Open-Source successor to",
-#endif
-"Columbia University's Kermit 95 package.",
+        "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
+        "to Columbia Columbia University's Kermit 95 package."
 
 #ifdef BETATEST
 " ",
@@ -218,19 +215,23 @@ char *newstxt[] = {
 #endif /* BETATEST */
 
 " ",
-"Major new features since the final Kermit 95 release include:",
+"Major new features since the final commercial Kermit 95 release include:",
 " . Open Source Simplified 3-Clause BSD License",
 #else
 "Welcome to C-Kermit 10.0.",
 "New features since version 9.0 of 2011 include:",
 #endif /* OS2 */
 #ifdef OS2
-" . Source code!  The Windows edition of C-Kermit, formerly known",
-"   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
+" . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
+" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0"
 " . Up-to-date fully exportable SSH v2 client",
+" . Up-to-date TLS support for http, ftp and telnet",
+" . PTY support on Windows 10 version 1809 and newer",
+" . Now available as a 64bit application (x86-64, ARM64, Itanium)",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
 "    (see HELP SET MOUSE for details)",
+" . X10, X11, URXVT and SGR mouse reporting",
 #endif /* OS2 */
 #ifndef OS2
 #ifdef COMMENT
@@ -305,11 +306,7 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, communication software for:",
-#else
-"Welcome to C-Kermit for OS/2, communication software for:",
-#endif
+"Welcome to Kermit 95, communication software for:",
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
@@ -569,11 +566,11 @@ char *introtxt[] = {
 
 #ifdef NT
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K-95> prompt:",
 #else
 #ifdef OS2
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K/2> prompt:",
 #else
 " ",
 "To return from a terminal connection to the C-Kermit prompt:",
@@ -1312,7 +1309,7 @@ static char *hmxxfirew[] = {
 
 #ifdef OS2
 #ifdef NT
-"C-Kermit for Windows supports SOCKS 4.2. The SOCKS Server is specified with:",
+"Kermit 95 supports SOCKS 4.2. The SOCKS Server is specified with:",
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
@@ -2217,7 +2214,7 @@ static char *hmxxkcd[] = {
 ,
 " ",
 #ifdef NT
-"    appdata       Your personal C-Kermit Windows application data directory",
+"    appdata       Your personal Kermit application data directory",
 "    common        C-Kermit's application data directory for all users",
 "    desktop       Your Windows desktop",
 #endif /* NT */
@@ -4721,7 +4718,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "  MS-KERMIT   - Program is MS-DOS Kermit",
 "  C-KERMIT    - Program is C-Kermit",
-"  WINDOWS     - Program is C-Kermit for Windows",
+"  WINDOWS     - Program is Kermit 95",
 "  GUI         - Program runs in a GUI window",
 " ",
 "  AVAILABLE CRYPTO                  - Encryption is available",
@@ -4903,12 +4900,12 @@ static char *hxxask[] = {
 #ifdef OS2
 " /POPUP",
 "  The prompt and response dialog takes place in a text-mode popup.",
-"  C-Kermit for Windows only; in other C-Kermit versions /POPUP is ignored.",
+"  Kermit 95 only; in other C-Kermit versions /POPUP is ignored.",
 " ",
 #ifdef KUI
 " /GUI",
 "  The prompt and response dialog takes place in a GUI popup.",
-"  C-Kermit for Windows only; this switch is ignored elsewhere",
+"  Kermit 95 only; this switch is ignored elsewhere",
 " ",
 #endif /* KUI */
 #endif /* OS2 */
@@ -7437,7 +7434,7 @@ Makes a connection through the program whose command line is given. Example:\n\
 #ifdef NETPTY
 #ifdef NT
 case XXPTY:
-    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    /* For windows ConPTY support - run any windows text mode app inside K95 */
     return(hmsg("Syntax: PTY [ command ]\n\
 Runs the specified command in a pseudoterminal. Example:\n\
 \n pty cmd.exe"));
@@ -8097,12 +8094,12 @@ static char *hxymouse[] = {
 "   Disabled: Applications can not request mouse reports and reports will not",
 "             be sent.",
 "    Enabled: Applications can request mouse reports. Reports will only be ",
-"             sent for mouse events that have no action in C-Kermit. To ",
+"             sent for mouse events that have no action in Kermit 95. To ",
 "             allow an event (eg, Ctrl+Click) to be reported, map it to ",
 "             \\Kignore. For example: set mouse button 1 ctrl click \\Kignore",
 "   Override: Applications can request mouse reports. All mouse events will",
 "             be sent to the remote application regardless of what action it",
-"             is set to perform in C-Kermit. For example, if right mouse",
+"             is set to perform in Kermit 95. For example, if right mouse",
 "             click is set to \\Kpaste this won't occur when an application",
 "             requests mouse reporting - instead the right click will be sent",
 "             to the application.",
@@ -8410,7 +8407,7 @@ static char *hxyterm[] = {
 #ifdef OS2
 #ifdef KUI
 "SET TERMINAL FONT <facename> <height>",
-"  Specifies the font to be used in the C-Kermit terminal window.  The font",
+"  Specifies the font to be used in the Kermit window.  The font",
 "  is determined by the choice of a facename and a height measured in Points.",
 "  The available facenames are those installed in the Font Control Panel.",
 " ",
@@ -9677,11 +9674,15 @@ static char *hxymacr[] = {
 static char *hmxyprm[] = {
 "Syntax: SET PROMPT [ text ]",
 " ",
+#ifdef OS2
+"Prompt text for this program, normally 'K-95>'.  May contain backslash",
+#else
 #ifdef MAC
 "Prompt text for this program, normally 'Mac-Kermit>'.  May contain backslash",
 #else
 "Prompt text for this program, normally 'C-Kermit>'.  May contain backslash",
 #endif /* MAC */
+#endif /* OS2 */
 "codes for special effects.  Surround by { } to preserve leading or trailing",
 #ifdef OS2
 "spaces.  If text omitted, prompt reverts to K-95>.  Prompt can include",

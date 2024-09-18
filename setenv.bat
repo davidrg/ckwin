@@ -57,7 +57,7 @@ REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
 REM    target\bin\i386\rel\wshelp32.dll
 REM    target\lib\i386\rel\wshload.lib
 REM    athena\wshelper\include\wshelper.h
-REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
+REM Kermit 95 was last built with v2.2-beta2. K95 is known to work with 2.6.0.
 REM
 REM You can also point this at the root directory for the Kerberos for Windows
 REM 3.x or 4.x SDK.
@@ -182,7 +182,7 @@ REM due to lack of C99 support. Force it off.
 set CKF_SSH=no
 
 REM Also no ZLIB support on Itanium (couldn't get it to easily
-REM cross-compile) - not that CKW actually uses zlib for anything.
+REM cross-compile) - not that K95 actually uses zlib for anything.
 set CKF_ZLIB=no
 goto :bits64
 
@@ -235,10 +235,10 @@ if exist %root%\superlat\include\latioc.h set ckinclude=%ckinclude%;%root%\super
 :nosuperlat
 
 REM This and everything else is windows-specific.
-set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
+set k95include=%ckinclude%;%root%\kermit\k95\kui
 
 REM Set include path for targeting Windows.
-set include=%include%;%ckwinclude%
+set include=%include%;%k95include%
 
 REM Handle path overrides. These are to allow the build server to override any
 REM hard-coded definitions in here without having to modify.
@@ -489,6 +489,7 @@ set ZINCBUILD=
 set CKF_ZINC=no
 set BUILD_ZINC=no
 set CKB_9X_COMPATIBLE=no
+set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 
 REM We can't look at OpenWatcoms help output for a version number because it
@@ -553,12 +554,13 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 REM For openwatcom we have to use its nmake clone
 set MAKE=nmake
 
-REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
+REM OpenWatcom doesn't include TAPI headers to we bundle them with K95. Add them to the include
 REM path so the dialer can find them.
 set include=%include%;%root%\kermit\k95\ow
 goto :cvcdone
@@ -572,6 +574,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 goto :semisupported
 
 :vc1
@@ -582,6 +585,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
@@ -593,6 +597,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
+set CKB_NT_COMPATIBLE=yes
 
 REM As this compiler doesn't include msvcrt...
 set CKB_STATIC_CRT=yes
@@ -609,6 +614,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_STATIC_CRT=yes
+set CKB_NT_COMPATIBLE=yes
 goto :cvcdone
 
 
@@ -623,6 +629,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
@@ -641,6 +648,7 @@ set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
@@ -655,6 +663,7 @@ set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
@@ -665,6 +674,7 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
@@ -675,6 +685,7 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
 REM libdes won't build for Alpha64
@@ -686,12 +697,14 @@ goto :cvcdone
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
@@ -756,7 +769,7 @@ REM requires Windows NT 3.5x or 4.0 (2000 and newer are unsupported)
 :unsupported
 echo.
 echo -- Unsupported compiler: %CK_COMPILER_NAME% --
-echo C-Kermit for Windows has not been tested with this compiler and may not build.
+echo Kermit 95 has not been tested with this compiler and may not build.
 echo.
 goto :cvcend
 

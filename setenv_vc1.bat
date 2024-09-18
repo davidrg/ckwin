@@ -3,7 +3,7 @@ REM Environment setup script for Visual C++ 1.0 32-bit Edition on Windows NT 3.1
 REM ----------------------------------------------------------------------------
 REM   Use this script to setup a build environment on Windows NT 3.1 using
 REM   Visual C++ 1.0 32-bit edition. This is the minimum compiler and nmake
-REM   version supported by C-Kermit for Windows - versions of the Win32 SDK
+REM   version supported by Kermit 95 - versions of the Win32 SDK
 REM   older than Visual C++ 1.0 32-bit edition do not work currently.
 REM 
 

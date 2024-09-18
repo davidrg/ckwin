@@ -115,7 +115,7 @@ REM PRINTER directory
 REM originally contained:
 REM     pcaprint.sh, pcprint.com, pcprint.man, pcprint.sh
 REM         Utilities for printing from a unix or VMS host to a local printer
-REM         via CKW
+REM         via K95
 REM     textps.txt
 REM         Documentation for the textps utility
 REM     readme.txt
@@ -134,7 +134,7 @@ for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
 copy scripts-readme.txt dist\scripts\readme.txt
 
 REM SSH directory
-REM Empty directory in K-95, location not used by CKW SSH subsystem
+REM Empty directory in K-95, location not used by the new K95 SSH subsystem
 
 REM USERS directory
 @echo Copy User files...

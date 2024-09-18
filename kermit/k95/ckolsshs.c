@@ -1,4 +1,4 @@
-/* C-Kermit for Windows SSH Subsystem
+/* Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1629,7 +1629,7 @@ int ssh_tty_write(ssh_client_state_t* state, ssh_client_t *client) {
                               rc);
                         /* This should never happen and there is not much
                          * we can do if it does. The ring buffer is now
-                         * inconsistent with what we have delivered to CKW.
+                         * inconsistent with what we have delivered to K95.
                          * We should probably drop the connection.*/
 
                         rc = SSH_ERR_BUFFER_CONSUME_FAILED;

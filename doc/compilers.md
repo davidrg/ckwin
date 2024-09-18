@@ -1,10 +1,10 @@
 # Compiler Support
 
-C-Kermit for Windows should build with all released 32bit or better 
+Kermit 95 should build with all released 32bit or better 
 versions of Microsoft Visual C++ as well as 32bit versions of 
 OpenWatcom 1.9. For the best security, always use the most recent
 compiler you can. Support for older compilers remains for those wishing 
-to build C-Kermit for vintage Windows systems, the security situation of 
+to build Kermit 95 for vintage Windows systems, the security situation of 
 which is well known.
 
 The table below outlines which compilers you can use to target which
@@ -347,7 +347,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
         and would likely have some non-functional TAPI/modem-dialing stuff may be visible if it did. 
         Targets NT 3.50 and 3.10 by default. To target NT 3.50 only (no runtime
         checks for NT 3.50-only APIs), set <tt>set CKT_NT35=no</tt> before building.
-        CKW still has known issues when actually running on NT 3.1.
+        K95 still has known issues when actually running on NT 3.1.
     </td>
 </tr>
 <tr>
@@ -442,7 +442,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 ## Building with the Windows NT SDK
 
 Some versions of the Platform SDK include a compiler. Sometimes that compiler
-is usable for building CKW, sometimes it is not.
+is usable for building K95, sometimes it is not.
 
 ### Windows NT 3.1
 Building with this SDK *is* supported, but you also require some parts from

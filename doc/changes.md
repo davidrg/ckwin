@@ -3,7 +3,10 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
-## C-Kermit for Windows 10.0b11 beta 7 - TBD
+## Kermit 95 v3.0 beta 7 - TBD
+
+As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name
+it carried from 1995 through to 2013.
 
 ### Things to be aware of when upgrading
 Nothing yet
@@ -20,7 +23,7 @@ Nothing yet
 * X11 forwarding is back. Turn on with `SET SSH X11 ON`, and set your display
   with `SET TELNET ENV DISPLAY`
 * The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
-  to load the backend DLL provided the `-#2` command line argument has not been
+  load the backend DLL provided the `-#2` command line argument has not been
   supplied. If no SSH backend gets loaded, you can load one manually with the new
   `ssh load` command. This allows CKW to load the appropriate backend automatically
   based on operating system (Windows XP or not) and presence of MIT Kerberos for

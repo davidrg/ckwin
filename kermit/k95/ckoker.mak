@@ -1118,19 +1118,19 @@ test.exe: test.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ test.obj cknker.res $(LIBS) 
 <<
 
-telnet.exe: telnet.obj $(DEF) ckoker.mak
+telnet.exe: telnet.obj telnet.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ telnet.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ telnet.obj telnet.res $(LIBS)
 <<
 
-rlogin.exe: rlogin.obj $(DEF) ckoker.mak
+rlogin.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ rlogin.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ rlogin.obj rlogin.res $(LIBS)
 <<
 
-se.exe: se.obj $(DEF) ckoker.mak
+se.exe: se.obj se.res $(DEF) ckoker.mak
        link.exe @<<
-       $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
+       $(LINKFLAGS) /OUT:$@ se.obj se.res $(LIBS)
 <<
 
 k2dc.exe: k2dc.obj $(DEF) ckoker.mak
@@ -1154,19 +1154,19 @@ otextps.exe: textps.obj $(DEF) ckoker.mak
       	$(CC) $(CC2) /B"$(LINKFLAGS)" textps.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
 !endif
 
-k95d.exe: k95d.obj $(DEF) ckoker.mak
+k95d.exe: k95d.obj k95d.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ k95d.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ k95d.obj k95d.res $(LIBS)
 <<
 
-ctl3dins.exe: ctl3dins.obj $(DEF) ckoker.mak
+ctl3dins.exe: ctl3dins.obj ctl3dins.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ ctl3dins.obj $(LIBS) VERSION.LIB
+       $(LINKFLAGS) /OUT:$@ ctl3dins.obj ctl3dins.res $(LIBS) VERSION.LIB
 <<
 
-textps.exe: textps.obj $(DEF) ckoker.mak
+textps.exe: textps.obj textps.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ textps.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ textps.obj textps.res $(LIBS)
 <<
 
 #       ckoker.msb  -- no idea what this is
@@ -1301,16 +1301,16 @@ srp-passwd.exe: srp-passwd.obj getopt.obj ckosslc.obj ckoker.mak
 !endif
 !endif
         
-iksdsvc.exe: iksdsvc.obj ckoker.mak
+iksdsvc.exe: iksdsvc.obj iksdsvc.res ckoker.mak
 !if "$(PLATFORM)" == "OS2"
 !else if "$(PLATFORM)" == "NT"
-	link /debug /out:$@ iksdsvc.obj $(LIBS)
+	link /debug /out:$@ iksdsvc.obj iksdsvc.res $(LIBS)
 !endif
         
-iksd.exe: iksd.obj ckoker.mak
+iksd.exe: iksd.obj iksd.res ckoker.mak
 !if "$(PLATFORM)" == "OS2"
 !else if "$(PLATFORM)" == "NT"
-	link /debug /out:$@ iksd.obj $(LIBS)
+	link /debug /out:$@ iksd.obj iksd.res $(LIBS)
 !endif
         
 
@@ -1337,7 +1337,7 @@ rlogin$(O):	rlogin.c
 textps$(O):     textps.c
 
 ckcmai$(O):	ckcmai.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h \
-                ckuusr.h ckonet.h ckcsig.h ckocon.h ckntap.h ckocon.h ck_ssl.h ckossl.h
+                ckuusr.h ckonet.h ckcsig.h ckocon.h ckntap.h ckocon.h ck_ssl.h ckossl.h ckover.h
 ckcmdb$(O):     ckcmdb.c ckcsym.h ckcdeb.h ckoker.h
 ckclib$(O):     ckclib.c ckcsym.h ckcdeb.h ckoker.h ckclib.h ckcasc.h
 ckcfns$(O):	ckcfns.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcxla.h ckuxla.h \
@@ -1358,7 +1358,7 @@ ckuusr$(O):	ckuusr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucm
 		    ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h cknwin.h ckossh.h \
 	        ckowin.h ckntap.h kui\ikui.h
 ckuus2$(O):	ckuus2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h
+		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h ckover.h
 ckuus3$(O):	ckuus3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h ckoreg.h \
           ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h \
@@ -1611,6 +1611,30 @@ k95ssh.res: k95ssh.rc cknver.h
 
 k95crypt.res: k95crypt.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95crypt.res k95crypt.rc
+
+ctl3dins.res: ctl3dins.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo ctl3dins.res ctl3dins.rc
+
+iksd.res: iksd.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo iksd.res iksd.rc
+
+iksdsvc.res: iksdsvc.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo iksdsvc.res iksdsvc.rc
+
+k95d.res: k95d.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95d.res k95d.rc
+
+telnet.res: telnet.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo telnet.res telnet.rc
+
+rlogin.res: rlogin.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo rlogin.res rlogin.rc
+
+se.res: se.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo se.res se.rc
+
+textps.res: textps.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo textps.res textps.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc

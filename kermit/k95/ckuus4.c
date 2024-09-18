@@ -488,7 +488,7 @@ extern int frecl;
 #endif /* VMS */
 
 extern CK_OFF_T ffc, tfc, tlci, tlco;
-extern long filcnt, rptn, speed,  ccu, ccp, vernum;
+extern long filcnt, rptn, speed,  ccu, ccp, vernum, xvernum;
 
 #ifndef NOSPL
 extern char fspec[], myhost[];
@@ -13465,9 +13465,8 @@ char *                                  /* Evaluate builtin variable */
         sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
-      /* C-Kermit 10.0... no more product-specific version numbers */
       case VN_XVNUM:                    /* Product-specific version number */
-        sprintf(vvbuf,"%ld",vernum);    /* SAFE */
+        sprintf(vvbuf,"%ld",xvernum);    /* SAFE */
         return(vvbuf);
 
       case VN_FULLVER:                  /* Full version number (edit 400) */
@@ -14415,10 +14414,6 @@ char *                                  /* Evaluate builtin variable */
 
     switch(y) {
       case VN_XPROG:
-#ifndef COMMENT
-/* C-Kermit 9.0 and later for Windows and OS/2 is just C-Kermit */
-        return("C-Kermit");
-#else
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
@@ -14432,7 +14427,6 @@ char *                                  /* Evaluate builtin variable */
 #else
         return("C-Kermit");
 #endif /* OS2 */
-#endif /* COMMENT */
 
       case VN_EDITOR:
 #ifdef NOFRILLS

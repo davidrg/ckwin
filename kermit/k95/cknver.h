@@ -1,29 +1,20 @@
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef CKNVER_H
+#define CKNVER_H
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
+#include "ckover.h"
 
 /*
- * These are the internal version numbers used by C-Kermit for Windows to make
- * it a bit easier to tell different builds sharing the same C-Kermit base
- * apart (assuming this file is kept up-to-date).
+ * Version numbers used in Windows Resource Files
  */
-#define VERSION_MAJOR 3
-#define VERSION_MINOR 0
-#define VERSION_REVISION 5
-#ifndef VERSION_BUILD
-#define VERSION_BUILD 0
-#endif
-#define VERSION_YEAR "2024"
-#define VERSION_PRODUCT "C-Kermit for Windows"
-#define VERSION_PRODUCT_SHORT "CKW"
+#define K95_VERSION_YEAR "2024"
+#define K95_VERSION_PRODUCT "Kermit 95"
+#define K95_VERSION_PRODUCT_SHORT "K95"
 
 /* Version number with just the major and minor numbers */
-#define APP_VERSION_MAJ_MIN STR(VERSION_MAJOR) "." STR(VERSION_MINOR)
+#define APP_VERSION_MAJ_MIN STR(K95_VERSION_MAJOR) "." STR(K95_VERSION_MINOR)
 
 /* Version number with major, minor and revision */
-#define APP_VERSION_STR APP_VERSION_MAJ_MIN "." STR(VERSION_REVISION)
+#define APP_VERSION_STR APP_VERSION_MAJ_MIN "." STR(K95_VERSION_REVISION)
 
 
 /*
@@ -31,18 +22,18 @@
  */
 
 /* File version (comma separated), all components */
-#define RC_FILE_VERSION VERSION_MAJOR,VERSION_MINOR,VERSION_REVISION,\
-    VERSION_BUILD
+#define RC_FILE_VERSION K95_VERSION_MAJOR,K95_VERSION_MINOR,K95_VERSION_REVISION,\
+    K95_VERSION_BUILD
 
 /* File version (comma separated) string, all components */
-#define RC_FILE_VERSION_STR STR(VERSION_MAJOR) ", " STR(VERSION_MINOR) ", " \
-    STR(VERSION_REVISION) ", " STR(VERSION_BUILD) "\0"
+#define RC_FILE_VERSION_STR STR(K95_VERSION_MINOR) ", " STR(K95_VERSION_MINOR) ", " \
+    STR(K95_VERSION_REVISION) ", " STR(K95_VERSION_BUILD) "\0"
 
 /* Product version (comma separated), all components */
 #define RC_PROD_VERSION RC_FILE_VERSION
 
 /* Product version (comma separated) string, major & minor only */
-#define RC_PROD_VERSION_STR APP_VERSION_MAJ_MIN "\0"
+#define RC_PROD_VERSION_STR K95_VERSION_MAJ_MIN "\0"
 
-#endif // VERSION_H
+#endif // CKNVER_H
 

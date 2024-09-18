@@ -77,9 +77,9 @@ clean:
 # ----- Windows NT ----------------------------------------------------------
 winnt: k95regtl.exe
 
-k95regtl.exe: main.obn kregistry.obn registry.obn
+k95regtl.exe: main.obn kregistry.obn registry.obn k95regtl.res
 	$(WNT_LINK) $(WNT_LINK_OPTS) -out:k95regtl.exe $(WNT_OBJS) \
-    main.obn kregistry.obn registry.obn $(WNT_LIBS)
+    main.obn kregistry.obn registry.obn k95regtl.res $(WNT_LIBS)
 
 k95regtl.res: k95regtl.rc k95f.ico
     rc -v -fo k95regtl.res k95regtl.rc

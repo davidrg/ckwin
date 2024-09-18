@@ -9,7 +9,7 @@ char *ckathv = "Authentication, 10.0.244, 04 May 2023";
 
     Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
-    Latest update: Tue Dec 13 07:10:21 2022 (David Goodwin for CKW)
+    Latest update: Tue Dec 13 07:10:21 2022 (David Goodwin for K95)
 
 */
 /*
