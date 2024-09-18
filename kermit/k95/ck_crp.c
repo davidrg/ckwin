@@ -95,6 +95,22 @@ static char * tmpstring = NULL;
 #ifdef CRYPT_DLL
 int cmd_quoting = 0;
 
+#ifdef OS2
+/* Copied from ckctel.c */
+char *
+#ifdef CK_ANSIC
+tel_unk(int opt)                        /* "UNKNOWN-%u" string. */
+#else
+tel_unk(opt) int opt;
+#endif /* CK_ANSIC */
+{
+  /* 2024-03-27 SMS.  Added (decimal) value to "UNKNOWN" messages. */
+  static char val_str[ 20];
+  sprintf(val_str, "UNKNOWN-%u", opt);
+  return(val_str);
+}
+#endif /* OS2 */
+
 #ifndef TELOPT_MACRO
 int
 telopt_index(opt) int opt; {

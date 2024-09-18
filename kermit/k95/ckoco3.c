@@ -629,16 +629,36 @@ static int f_pushed = 0, c_pushed = 0, f_popped = 0;
 
 int sgrcolors = TRUE;                   /* Process SGR Color Commands */
 
+/*
+ * The numbers below are 3-bit colour codes for the OS/2 console
+ *    +---+---+---+
+ *    | R | G | B |
+ *    +---+---+---+
+ *      1   0   0    = 4, Red
+ * See the comment in ckocon.h near swapcolors for a full description.
+ */
 static
 unsigned char sgrcols[8] = {
-/* Black   */ 0,
-/* Red     */ 4,
-/* Green   */ 2,
-/* Brown   */ 6,
-/* Blue    */ 1,
-/* Magenta */ 5,
-/* Cyan    */ 3,
-/* White   */ 7
+/* Black   */ 0,    /* 0 (index) */
+/* Red     */ 4,    /* 1 */
+/* Green   */ 2,    /* 2 */
+/* Brown   */ 6,    /* 3 */
+/* Blue    */ 1,    /* 4 */
+/* Magenta */ 5,    /* 5 */
+/* Cyan    */ 3,    /* 6 */
+/* White   */ 7     /* 7 */
+};
+
+/* Map colour code (table above) back to SGR Index */
+static unsigned char sgrindex[8] = {
+    0,
+    4,
+    2,
+    6,
+    1,
+    5,
+    3,
+    7
 };
 
 #ifdef COMMENT
@@ -7722,6 +7742,8 @@ gotojump( int vmode )
     return;
 }
 
+#define SEARCHSTRING_LEN    63
+
 BOOL
 search( BYTE vmode, BOOL forward, BOOL prompt )
 {
@@ -7730,7 +7752,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
 #else
    extern int inpcas[] ;
 #endif /* DCMDBUF */
-   static char searchstring[63] = "" ;
+   static char searchstring[SEARCHSTRING_LEN] = "" ;
    CHAR x1;
    con_event evt ;
    int line = 1 ;
@@ -7787,7 +7809,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
             else if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 /*always true: && x1 <= 255*/ )
             {
-                if ( len >= 62 ) {
+                if ( len >= SEARCHSTRING_LEN - 1 ) {
                     bleep(BP_WARN);
                 }
                 else {
@@ -7797,7 +7819,11 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
             else if ( x1 == 8 || x1 == 127 )
             {
-                searchstring[len-1] = '\0' ;
+                if (len - 1 < 0) {
+                    bleep(BP_WARN);
+                } else {
+                    searchstring[len-1] = '\0' ;
+                }
             }
             else if ( x1 == 13 )
             {
@@ -12163,7 +12189,7 @@ line25(int vmode) {
             strinsert(&s[01],usertext);
         else
             strinsert(&s[01],
-            "CKW Command Screen | Help: Alt-H | Terminal: CONNECT or Alt-X ");
+            "K95 Command Screen | Help: Alt-H | Terminal: CONNECT or Alt-X ");
         break;
     default:
         s = "";
@@ -13706,6 +13732,122 @@ vtcsi(void)
                             decsace = TRUE;
                     }
                     break;
+                case 'y': {      /* DECRQCRA - Request Checksum of Rectangular Area */
+                    if ( (ISVT420( tt_type_mode) || ISXTERM(tt_type_mode)) && tt_senddata) {
+                        /* pn[1] - Request Id
+                         * pn[2] - Page number
+                         * pn[3] - top. Default=1
+                         * pn[4] - left.
+                         * pn[5] - bottom. Default=height of screen
+                         * pn[6] - right. Width of screen
+                         *
+                         * If pn[2] is omitted (or 0), following parameters are ignored
+                         * we're supposed to calculate the checksum for all pages in
+                         * memory
+                         *
+                         * If pn[3-6] are omitted we calculate the checksum for the entire
+                         * page.
+                         *
+                         * Constraints:
+                         *   pn[4] < pn[6]
+                         *   pn[3] < pn[5]
+                         *
+                         * Note: coordinates of the rectangular area are affected by
+                         *       setting of origin mode
+                         */
+                        int checksum=0, pid=1;
+                        int top, left, bot, right;
+                        int row, col;
+                        int x, y;
+                        char buf[20];
+
+                        if (k < 3) pn[3] = 1;
+                        if (k < 4) pn[4] = 1;
+                        if (k < 5) pn[5] = VscrnGetHeight(VTERM) - (tt_status[VTERM] ? 1 : 0);
+                        if (k < 6) pn[6] = VscrnGetWidth(VTERM);
+                        k = 6;
+
+                        /*checksum &= 0xffff;*/
+                        pid = pn[1];
+                        /* Ignore pn[2] - we don't support multiple pages */
+                        top = pn[3] + (margintop > 1 ? margintop : 0);
+                        left = pn[4] + (marginleft > 1 ? marginleft : 0);
+                        bot = pn[5];
+                        right = pn[6];
+
+                        debug(F111, "DECRQCRA", "pid", pid);
+                        debug(F111, "DECRQCRA", "init-top", pn[3]);
+                        debug(F111, "DECRQCRA", "init-left", pn[4]);
+                        debug(F111, "DECRQCRA", "init-bot", pn[5]);
+                        debug(F111, "DECRQCRA", "init-right", pn[6]);
+
+
+                        debug(F111, "DECRQCRA", "margintop", margintop);
+                        debug(F111, "DECRQCRA", "marginleft", marginleft);
+                        debug(F111, "DECRQCRA", "marginbot", marginbot);
+                        debug(F111, "DECRQCRA", "marginright", marginright);
+
+                        if (top < margintop) top = margintop;
+                        if (top > marginbot + 1) top = marginbot + 1;
+                        if (left < marginleft) left = marginleft;
+                        if (left > marginright + 1) left = marginright + 1;
+                        if (bot < margintop) bot = margintop;
+                        if (bot > marginbot) bot = marginbot;
+                        if (right < marginleft) right = marginleft;
+                        if (right > marginright) right = marginright;
+
+
+                        debug(F111, "DECRQCRA", "top", top);
+                        debug(F111, "DECRQCRA", "left", left);
+                        debug(F111, "DECRQCRA", "bot", bot);
+                        debug(F111, "DECRQCRA", "right", right);
+
+                        for ( y=top-1; y<bot; y++ ) {
+                            videoline * line = VscrnGetLineFromTop(VTERM,y);
+                            for ( x=left-1; x<right; x++ ) {
+                                unsigned short c, a;
+                                unsigned char cellattr, fgcoloridx, bgcoloridx;
+
+                                c = line->cells[x].c;
+                                cellattr = line->cells[x].a;
+                                a = line->vt_char_attrs[x];
+                                /* Get colour including bright flag - not sure if we actually
+                                 * need that for this calculation
+                                 * bgcolor = (cellattr&0xF0)>>4;
+                                 * fgcolor = (cellattr&0x0F);*/
+                                bgcoloridx = sgrindex[((cellattr&0x70)>>4)%8];
+                                fgcoloridx = sgrindex[(cellattr&0x07)%8];
+
+                                debug(F111, "DECRQCRA iteration", "x", x);
+                                debug(F111, "DECRQCRA iteration", "y", y);
+                                debug(F111, "DECRQCRA iteration", "c", c);
+                                debug(F111, "DECRQCRA iteration", "checksum", checksum);
+
+                                checksum += c;
+
+                                debug(F111, "DECRQCRA iteration", "checksum+c", checksum);
+
+                                if (a & VT_CHAR_ATTR_PROTECTED) checksum += 0x04;
+                                if (a & VT_CHAR_ATTR_INVISIBLE) checksum += 0x08;
+                                if (a & VT_CHAR_ATTR_UNDERLINE) checksum += 0x10;
+                                if (a & VT_CHAR_ATTR_REVERSE) checksum += 0x20;
+                                if (a & VT_CHAR_ATTR_BLINK) checksum += 0x40;
+                                if (a & VT_CHAR_ATTR_BOLD) checksum += 0x80;
+                                /*checksum += bgcoloridx;
+                                checksum += fgcoloridx * 0x10;*/
+                                debug(F111, "DECRQCRA iteration", "checksum+attrs", checksum);
+                            }
+                        }
+                        debug(F111, "DECRQCRA", "checksum", checksum);
+                        sprintf(buf, "\033P%d!~%04X\033\\", pid, checksum);
+
+                        // TODO: Call sendesqseq instead (and check for any other places
+                        //       where we should be doing this but aren't)
+                        sendchars(buf, strlen(buf));
+                    }
+
+                    break;
+                }
                 }
                 break;
             case '`':

@@ -3,19 +3,77 @@ This document covers what has changed in each release of C-Kermit for Windows
 (formerly known as Kermit 95). For a more in-depth look at what has changed, 
 check the git commit log.
 
-## C-Kermit for Windows 10.0b10 beta 6 - coming soon
+## Kermit 95 v3.0 beta 7 - TBD
+
+As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name
+it carried from 1995 through to 2013.
+
+### Things to be aware of when upgrading
+Nothing yet
+
+### New features
+* SSH Port forwarding (tunneling) is now supported again in both
+  the Direct/Local and Reverse/Remote forms. You can add forwards before
+  establishing a connection with `SSH ADD { local, remote }` and remove all
+  forwards of a given type with `SSH CLEAR { local, remote }`. These commands
+  don't yet have any effect on an already established SSH connection.
+* New command to allow removing individual port forwards (`SSH REMOVE 
+  { local, remote }`) - previously Kermit 95 only had commands to remove *all*
+  forwarded ports of a given type.
+* X11 forwarding is back. Turn on with `SET SSH X11 ON`, and set your display
+  with `SET TELNET ENV DISPLAY`
+* The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
+  load the backend DLL provided the `-#2` command line argument has not been
+  supplied. If no SSH backend gets loaded, you can load one manually with the new
+  `ssh load` command. This allows CKW to load the appropriate backend automatically
+  based on operating system (Windows XP or not) and presence of MIT Kerberos for
+  Windows. This removes the need to manually shuffle around ssh.dll variants, and
+  also means that alternative SSH backends not based on libssh can now be supported
+  should anyone want to build one, opening the door to SSH on vintage windows or
+  OS/2 systems.
+* REXX support has been extended to x86 systems running Windows XP or newer. This
+  was previously an OS/2-only feature. You can now run REXX scripts and commands
+  from the K95 command mode with the `rexx` command, and REXX scripts run from 
+  K95 can execute any Kermit 95 command by enclosing the K95 command in single
+  quotes (eg, `'set parity none'`). For full details, see the REXX section of
+  the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx. The
+  REXX implementation is the current Regina REXX release. regutil.dll is included
+  but note that the Console I/O Routines it provides are not currently compatible 
+  with K95.
+
+### Minor Enhancements and other changes
+* All executables (*.exe, *.dll) now have proper versioninfo resources
+
+### Fixed bugs
+* Fix `fopen` causing a crash. This issue seems to have come in some recent 
+  version of the Microsoft C Runtime.
+* Fix hitting backspace in an empty search-in-buffer crashing
+* Fix `pty dir` (or trying to run anything else that isn't a valid program)
+  causing a crash
+* Fixed POTS modem support not being available on NT 3.50
+* Fixed OpenSSL libraries not being included in the ARM32 distribution
+
+### Other Source Changes
+None yet
+
+
+## C-Kermit for Windows 10.0b11 beta 6 - 11 August 2024
 
 This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
-now out of support) to OpenSSL 3.0.x. Also included are a selection of bug
-fixes and other minor enhancements. 
+now out of support) to OpenSSL 3.0.x, and libssh 0.10.5 to 0.10.6. Also 
+included are a selection of bug fixes and other minor enhancements. 
 
 Also in this release: official support for Windows NT on Alpha and PowerPC
 has returned after being discontinued in March 2000 and April 1998 
 respectively. And for the first time ever, C-Kermit is now supported on
 Windows NT for MIPS computers, though without TAPI support.
 
-### Fixed Bugs
+### Things to be aware of when upgrading
+Windows XP users: current versions of libssh are no longer compatible with 
+Windows XP. See the included SSH Readme for a workaround if SSH support on
+Windows XP.
 
+### Fixed Bugs
 * Fixed directory listings not reporting a size or modified time for files
   requiring more than 32 bits to store the file size on Windows NT 3.51 and
   newer. This issue will remain on NT 3.1/3.50.
@@ -35,11 +93,25 @@ Windows NT for MIPS computers, though without TAPI support.
   the server after each authentication method is attempted. This allows the
   client to handle servers which change their list of allowed authentication
   methods during login.
+* Fixed `show network` command showing "SSH V1 and V2 protocols - not available"
+  in builds that *do* have SSH support
+* Fixed `show network` command showing "SSH V1 and V2 protocols" when SSH V1 is
+  no longer supported in C-Kermit for Windows.
+* Fixed not being able to resize the terminal area to greater than the primary
+  display in K95G. For example, if the window was moved on to a display that
+  was taller than the primary display and maximised the bottom of the terminal
+  screen would not be correctly rendered. This fix only applies to modern
+  versions of Windows.
+* Fixed included openssl.exe not working on Windows XP
+* Fixed paging for the "help options all" command where argument help contains
+  line breaks
 
 ### Minor Enhancements and other changes
 
-* Upgraded to OpenSSL 3.0.11, the current long term support release 
+* Upgraded to OpenSSL 3.0.14, the current long term support release 
   (supported until 7 September 2026)
+* Updated to libssh 0.10.6
+* Updated to zlib 1.3.1
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
 * The default k95custom.ini now displays a message the console-mode version
@@ -48,6 +120,25 @@ Windows NT for MIPS computers, though without TAPI support.
   by `set ssh v2 authentication` (the list is now ordered rather than being
   simply a list of what is allowed). The default order is: none, gssapi, 
   public key, keyboard-interactive, password.
+* Binaries are now provided for Windows NT running on Alpha, MIPS and PowerPC
+  systems.
+* Upgraded to C-Kermit 10.0 Beta.11
+* About window (Help -> About) now includes the beta number
+* Added help text for `set terminal autopage` and `set terminal autoscroll`
+* Increased the maximum number of terminal columns from 256 to 512 in K95G.
+  This should be enough to fill a 4K display at with a 10pt font or larger.
+  As this change increases memory requirements by around 1MB whether the extra
+  columns are used or not, it has only been increased in builds targeting
+  modern PCs. Vintage PCs will still be limited to 256 columns.
+* CKW no longer rejects updated OpenSSL DLLs provided the major and minor
+  versions match.
+
+### New features
+
+* Implemented the DECRQCRA VT420 escape sequence which is required by esctest2.
+  This is disabled by default due to its security risks, but can be enabled 
+  with `set terminal send-data on`. As C-Kermit doesn't currently have a VT420
+  terminal option yet, select VT320 to make use of VT420 features.
 
 ### Source Changes
 
@@ -475,10 +566,31 @@ K95 v2.1.3, and changes for the SSH subsystem don't apply to CKW as CKW uses an
 entirely new SSH implementation.
 
 ## Previous Kermit 95 releases
- * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html)
- * [1.1.17 to 1.1.20 Change Log](https://web.archive.org/web/20010405154138/http://www.columbia.edu/kermit/k95news.html)
- * [1.1.16 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/8jaYcOv0cvo/m/Er5rCyp_xG8J)
- * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ)
- * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J)
- * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html)
- * 1.1.1 Changes - ?
+Change logs going back to the release of the first version in October 1995 (1.1)
+
+ * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html) - 2 April 2002 to 21 January 2003
+ * [1.1.20 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/gpLy0vTV1Ug/m/hHFQqajRe98J) - 4 April 2000 ([k95news](https://web.archive.org/web/20010405154138/http://www.columbia.edu/kermit/k95news.html))
+ * [1.1.19 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/uN9G8fp84nY/m/53HTzJvYQdgJ) - 17 February 2000
+ * 1.1.18 - Internal CU release
+ * [1.1.17 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/0mZIfP_LspA/m/cqLPWLsJiFYJ) - 21 June 1998
+ * [1.1.16 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/8jaYcOv0cvo/m/Er5rCyp_xG8J) - 8 April 1998
+ * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ) - 3 October 1997
+ * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J) - 25 September 1997
+ * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 24 July 1996 to 24 June 1997
+ * [1.1.6 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/Yb8oikR0uuQ/m/kVDydxVQKT4J) - 18 July 1996
+ * [1.1.5 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/L9wpCZEBw4Q/m/Y89bIR-wp3UJ) - 2 July 1996
+ * [1.1.2 to 1.1.4 Change Log (down the bottom)](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 18 December 1995 to 7 March 1996
+ * 1.1.1 - 3 November 1995:
+   * Attempts to remove preloaded entries from Dialer caused a crash
+   * Alphabetization of Dialer entries fixed not to be case-sensitive
+   * Download directory specification in Dialer no longer ignored
+   * Dial prefix no longer also treated as dial suffix by Dialer
+   * Kermit BBS Dialer entry fixed to have Backspace key send Backspace
+   * Range checking of various numbers by Dialer fixed
+   * SET MODEM commands in K95CUSTOM.INI no longer ignored
+   * Improved search technique for command files
+   * Accuracy of Dialer status line online timer improved
+   * ZMODEM downloads fixed to work when FILE COLLISION is BACKUP or RENAME
+   * ZMODEM transfers fixed to work over various types of TELNET connections
+   * Faster detection of lost connections during file transfer
+ * 1.1 - First Release - 2 October 1995 

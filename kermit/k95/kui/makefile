@@ -11,6 +11,41 @@ RTFLAG = /MT
 RTFLAG = /MD
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+!message MIPS Centaur compiler - forcing build with statically linked CRT.
+# /QmipsOb5000 increases the basic block threshold for optimisation
+COMMON_CFLAGS = /D_MT /QmipsOb5000
+CKB_STATIC_CRT = yes
+!endif
+
+# PDB Generation Stuff
+
+!if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
+!message Make is JOM and compiler is older than Visual C++ 2013. Can't reliably
+!message synchronise writes to a PDB file with this compiler. Disabling PDB
+!message generation. override with: set CKB_MAKE_PDB=yes but you may get build
+!message errors.
+CKB_MAKE_PDB=no
+!endif  # EndIf MSC_VER < 180 and ISJOM == yes and CKB_MAKE_PDB != yes
+
+!if "$(CKB_MAKE_PDB)" != "no"
+# Lets see if we can make a PDB file! This requires Visual C++ 4.0 or newer.
+!if ($(MSC_VER) > 90)
+!message Enabling PDB generation
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Zi
+
+# /FS is required to synchronise writes to a PDB when doing parallel builds with
+# something like JOM. It was introduced in Visual C++ 2013.
+!if ($(MSC_VER) >= 180)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
+!endif  # EndIf MSC_VER >= 180
+
+!endif  # EndIf MSC_VER > 90
+!endif  # EndIf CKB_MAKE_PDB != no
+
+# End PDB Generation Stuff
+
 all: $(OUTDIR)\$(PROJ).exe 
 
 KUIOBJS = \

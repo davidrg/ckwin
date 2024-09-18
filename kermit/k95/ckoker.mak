@@ -45,6 +45,8 @@ LWP30INC    = $(LWP30DIR)\inc20
 
 # Base flags for all versions of Visual C++ (and OpenWatcom
 # pretending to be Visual C++)
+#!if "$(DEBUG)" == "-DNDEBUG"
+# Doing a release build
 !if "$(CKB_STATIC_CRT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
@@ -52,8 +54,25 @@ COMMON_CFLAGS = /MT
 COMMON_CFLAGS = /MD
 !endif
 
+#!else
+# Doing a Debug build, use the Debug CRT
+#!if "$(CKB_STATIC_CRT)"=="yes"
+#!message Building with statically linked native CRT as requested.
+#COMMON_CFLAGS = /MTd
+#!else
+#COMMON_CFLAGS = /MDd
+#!endif
+#!endif
+
 # These options are used for all Windows .exe targets
+!if "$(CKF_DEV_CHECKS)" == "yes"
+# Enable extra runtime checks. These only work with a debug build and
+# Visual C++ 2002 and newer
+COMMON_CFLAGS = $(COMMON_CFLAGS) /RTCsu
+!else
 COMMON_OPTS = /Ox
+!endif
+
 # These are:
 # /GA     Optimise for Windows Application (ignored by OpenWatcom)
 # /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
@@ -125,6 +144,13 @@ TARGET_PLATFORM = OS/2
 CL = wcl386
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+!message MIPS Centaur compiler - forcing build with statically linked CRT.
+# /QmipsOb5000 increases the basic block threshold for optimisation
+COMMON_CFLAGS = /D_MT /QmipsOb5000
+CKB_STATIC_CRT = yes
+!endif
+
 # This turns features on and off based on set feature flags (CKF_*), the
 # platform being targeted, and the compiler currently in use.
 !include feature_flags.mak
@@ -137,6 +163,15 @@ CL = wcl386
 !message  Platform:                 $(PLATFORM)
 !message  Build:                    $(K95BUILD)
 !message  Architecture:             $(TARGET_CPU)
+!if "$(CROSS_BUILD)" == "yes"
+!if "$(CROSS_BUILD_COMPATIBLE)" == "yes"
+!message  Host Architecture:        $(HOST_CPU) (cross-compiling to compatible architecture)
+!else
+!message  Host Architecture:        $(HOST_CPU) (cross-compiling)
+!endif
+!else
+!message  Host Architecture:        $(HOST_CPU)
+!endif
 !message  Compiler:                 $(COMPILER)
 !message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
@@ -152,11 +187,11 @@ CL = wcl386
 # Standard windows headers from MinGW that don't come with OpenWatcom:
 INCLUDE = $(INCLUDE);ow\;
 
-!endif
+!endif   # EndIf CMP == OWCL
 
-!if ($(MSC_VER) < 60)
-!error Unsupported compiler version. Visual C++ 6.0 SP6 or newer required.
-!endif
+!if ($(MSC_VER) < 80)
+!error Unsupported compiler version. Visual C++ 1.0 32-bit edition or newer required.
+!endif   # EndIf MSC_VER < 80
 
 # TODO: Much of this compiler flag work should be applied to the KUI Makefile
 #       too
@@ -165,13 +200,18 @@ INCLUDE = $(INCLUDE);ow\;
 # then tell the linker we're targeting x86-64
 !if "$(TARGET_CPU)" == "x86-64"
 LDFLAGS = $(LDFLAGS) /MACHINE:X64
-!endif
+!endif  # EndIf TARGET_CPU == x86-64
 
 !if "$(TARGET_CPU)" == "AXP64"
 # This compiler is capable of targeting AXP64, so add the build flag to do that.
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64
 LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
-!endif
+!endif  # EndIf TARGET_CPU == AXP64
+
+!if ("$(DEBUG)" != "-DNDEBUG") && ($(MSC_VER) <= 130)
+# This debug flag is only valid on Visual C++ 6.0 and older.
+LINKFLAGS = $(LINKFLAGS) /debugtype:both
+!endif  # EndIf DEBUG != -DNDEBUG and MSC_VER <= 130
 
 !if ($(MSC_VER) >= 170) && ($(MSC_VER) <= 192)
 # Starting with Visual C++ 2012, the default subsystem version is set to 6.0
@@ -181,14 +221,57 @@ LINKFLAGS = $(LINKFLAGS) /MACHINE:ALPHA64
 # version to 5.1 so the generated binaries are compatible.
 SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
-!endif
+!endif  # EndIf MSC_VER >= 170 and MSC_VER <= 192
+
+!if ($(MSC_VER) == 80) && ("$(TARGET_CPU)" == "AXP")
+# The linker included with the NT 3.50 SDK for Alpha can't handle
+# K95 (complains "LINK : error LNK1155: Special symbol 'end' already defined.")
+# So to support using a newer linker that has less problems, we'll set
+# the subsystem version so the result still works on NT 3.1/3.50
+SUBSYSTEM_CONSOLE=console,3.1
+SUBSYSTEM_WIN32=windows,3.1
+!endif  # EndIf MSC_VER == 80 and TARGET_CPU == AXP
 
 !if ($(MSC_VER) > 90)
 !if "$(TARGET_CPU)" != "MIPS"
 # This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
 COMMON_OPTS = $(COMMON_OPTS) /GA
-!endif
-!endif
+!endif  # EndIf TARGET_CPU != MIPS
+!endif  # EndIf MSC_VER > 90
+
+# PDB Generation Stuff
+
+!if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
+!message Make is JOM and compiler is older than Visual C++ 2013. Can't reliably
+!message synchronise writes to a PDB file with this compiler. Disabling PDB
+!message generation. override with: set CKB_MAKE_PDB=yes but you may get build
+!message errors.
+CKB_MAKE_PDB=no
+!endif  # EndIf MSC_VER < 180 and ISJOM == yes and CKB_MAKE_PDB != yes
+
+!if "$(CKB_MAKE_PDB)" != "no"
+# Lets see if we can make a PDB file! This requires Visual C++ 4.0 or newer.
+!if ($(MSC_VER) > 90)
+!message Enabling PDB generation
+
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Zi
+LDDEBUG = $(LDDEBUG) /DEBUG /INCREMENTAL:NO /OPT:REF
+
+# /OPT:ICF is new in Visual C++ 5.0
+!if ($(MSC_VER) >= 110)
+LDDEBUG = $(LDDEBUG) /OPT:ICF
+!endif  # EndIf MSC_VER >= 110
+
+# /FS is required to synchronise writes to a PDB when doing parallel builds with
+# something like JOM. It was introduced in Visual C++ 2013.
+!if ($(MSC_VER) >= 180)
+COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
+!endif  # EndIf MSC_VER >= 180
+
+!endif  # EndIf MSC_VER > 90
+!endif  # EndIf CKB_MAKE_PDB != no
+
+# End PDB Generation Stuff
 
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
@@ -197,13 +280,13 @@ COMMON_OPTS = $(COMMON_OPTS) /GA
 # /GX- is new in Visual C++ 2.0
 !if ($(MSC_VER) > 80)
 COMMON_CFLAGS = $(COMMON_CFLAGS) /GX-
-!endif
+!endif  # EndIf MSC_VER > 80
 
 !if ($(MSC_VER) < 100)
 # Visual C++ 2.0 and 1.0 32-bit edition don't support these flags, so don't
 # use them.
 CFLAG_GF=
-!endif
+!endif  # EndIf MSC_VER < 100
 
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # These are:    /Ze     Enable extensions (default)
@@ -214,21 +297,28 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /Ze
 # So only generate PCH files when nmake instead of jom.
 !if "$(ISJOM)" == "no"
 COMMON_CFLAGS = $(COMMON_CFLAGS) /YX
-!endif
+!endif  # EndIf ISJOM == no
 
 !if "$(TARGET_CPU)" == "x86"
 # Optimise for Pentium
 COMMON_OPTS = $(COMMON_OPTS) /G5
-!endif
+!endif  # EndIf TARGET_CPU == x86
 
-!else
+!else  # Else MSC_VER < 140
 COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
-!endif
+!endif  # EndIf MSC_VER < 140
 
-!endif
+!endif  # EndIf PLATFORM  == NT
 
 RCDEFINES=$(RC_FEATURE_DEFS) /dCOMPILER_$(CMP)
+!if "$(SSH_LIB)" == ""
+SSH_LIB = ssh.lib
+!endif
+
+!if "$(REXX_LIB)" == ""
+REXX_LIB = rexx.lib
+!endif
 
 #---------- Compiler targets:
 #
@@ -334,7 +424,36 @@ msvc:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF $(LDDEBUG)" DEF="cknker.def"
+
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+msvc-sshdll:
+	$(MAKE) -f ckoker.mak win32sshdll \
+	CC="cl /nologo" \
+    CC2="" \
+    OUT="-Fe" O=".obj" \
+    OPT="$(COMMON_OPTS)" \
+    DEBUG="-DNDEBUG" \
+    DLL="" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    LDFLAGS="" \
+    PLATFORM="NT" \
+    NOLINK="/c" \
     LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
+msvc-sshdlld:
+	$(MAKE) -f ckoker.mak win32sshdll \
+	CC="cl /nologo" \
+    CC2="" \
+    OUT="-Fe" O=".obj" \
+    OPT="$(COMMON_OPTS)" \
+    DEBUG="-DNDEBUG" \
+    DLL="" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    LDFLAGS="" \
+    PLATFORM="NT" \
+    NOLINK="/c" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /OPT:REF" DEF="cknker.def"
+!endif
 
 # release version
 msvc-iksd:
@@ -364,7 +483,7 @@ msvcd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
 	DEF="cknker.def"
 
 # debug version
@@ -459,7 +578,7 @@ k95gd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /MAP /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /MAP /DEBUG /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 k95g:
@@ -474,7 +593,7 @@ k95g:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32) $(LDDEBUG)" \
 	DEF="cknker.def"
 
 ################### OS/2 TARGETS ###################
@@ -753,8 +872,12 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
         winmm.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
 # vdmdbg.lib
-!if "$(CKF_SSH)" == "yes"
-KUILIBS = $(KUILIBS) ssh.lib ws2_32.lib
+!if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
+KUILIBS = $(KUILIBS) $(SSH_LIB) ws2_32.lib
+!endif
+
+!if "$(CKF_REXX)" == "yes"
+KUILIBS = $(KUILIBS) $(REXX_LIB)
 !endif
 
 !if "$(CKF_SSL)" == "yes"
@@ -781,13 +904,25 @@ KUILIBS = $(KUILIBS) srp.lib
 KUILIBS = $(KUILIBS) wshload.lib
 !endif
 
+!if "$(MIPS_CENTAUR)" == "yes"
+KUILIBS = $(KUILIBS) libcmt.lib
+!endif
+
 # Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
        winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
 
-!if "$(CKF_SSH)" == "yes"
-LIBS = $(LIBS) ssh.lib ws2_32.lib
+!if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
+LIBS = $(LIBS) $(SSH_LIB) ws2_32.lib
+!endif
+
+!if "$(CKF_REXX)" == "yes"
+LIBS = $(LIBS) $(REXX_LIB)
+!endif
+
+!if "$(MIPS_CENTAUR)" == "yes"
+LIBS = $(LIBS) libcmt.lib
 !endif
 
 !if "$(CKF_SSL)" == "yes"
@@ -843,7 +978,10 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
         ck_crp$(O) ck_des$(O) \
 !endif
 !if ("$(CKF_SSH)" == "yes")
-        ckossh$(O) ckorbf$(O) ckoshs$(O) \
+        ckossh$(O) \
+!if ("$(CKF_DYNAMIC_SSH)" != "yes")
+        ckolssh$(O) ckorbf$(O) ckolsshs$(O) \
+!endif
 !endif
         ckocon$(O) ckoco2$(O) ckoco3$(O) ckoco4$(O) ckoco5$(O) \
         ckoetc$(O) ckoetc2$(O) ckokey$(O) ckomou$(O) ckoreg$(O) \
@@ -907,6 +1045,11 @@ win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe 
 !if "$(CKF_CRYPTDLL)" == "yes"
     k95crypt.dll \
 !endif
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+!if "$(CKF_SSH_BACKEND)" != "no"
+    k95ssh.dll nullssh.dll \
+!endif
+!endif
 # These likely require an old version of SRP (perhaps pre-1.7?) to build. They
 # appear to just be versions of utilities that come with SRP likely modified to
 # load the SSL DLL dynamically like K95 did - not really something we care much
@@ -914,6 +1057,10 @@ win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe 
 #!if "$(CKF_SRP)" == "yes"
 #       srp-passwd.exe srp-tconf.exe
 #!endif
+
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+win32sshdll: k95ssh.dll
+!endif
 
 win32md: mdnker.exe
 
@@ -983,19 +1130,19 @@ test.exe: test.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ test.obj cknker.res $(LIBS) 
 <<
 
-telnet.exe: telnet.obj $(DEF) ckoker.mak
+telnet.exe: telnet.obj telnet.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ telnet.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ telnet.obj telnet.res $(LIBS)
 <<
 
-rlogin.exe: rlogin.obj $(DEF) ckoker.mak
+rlogin.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ rlogin.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ rlogin.obj rlogin.res $(LIBS)
 <<
 
-se.exe: se.obj $(DEF) ckoker.mak
+se.exe: se.obj se.res $(DEF) ckoker.mak
        link.exe @<<
-       $(LINKFLAGS) /OUT:$@ se.obj $(LIBS)
+       $(LINKFLAGS) /OUT:$@ se.obj se.res $(LIBS)
 <<
 
 k2dc.exe: k2dc.obj $(DEF) ckoker.mak
@@ -1019,19 +1166,19 @@ otextps.exe: textps.obj $(DEF) ckoker.mak
       	$(CC) $(CC2) /B"$(LINKFLAGS)" textps.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
 !endif
 
-k95d.exe: k95d.obj $(DEF) ckoker.mak
+k95d.exe: k95d.obj k95d.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ k95d.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ k95d.obj k95d.res $(LIBS)
 <<
 
-ctl3dins.exe: ctl3dins.obj $(DEF) ckoker.mak
+ctl3dins.exe: ctl3dins.obj ctl3dins.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ ctl3dins.obj $(LIBS) VERSION.LIB
+       $(LINKFLAGS) /OUT:$@ ctl3dins.obj ctl3dins.res $(LIBS) VERSION.LIB
 <<
 
-textps.exe: textps.obj $(DEF) ckoker.mak
+textps.exe: textps.obj textps.res $(DEF) ckoker.mak
        link.exe @<< 
-       $(LINKFLAGS) /OUT:$@ textps.obj $(LIBS) 
+       $(LINKFLAGS) /OUT:$@ textps.obj textps.res $(LIBS)
 <<
 
 #       ckoker.msb  -- no idea what this is
@@ -1092,17 +1239,27 @@ pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
         rc -p -x1 ckopcf.res pcfonts.dll
 !endif
 
-k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak
-	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj libdes.lib \
+k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak k95crypt.res
+	link /dll /debug /def:ck_crp.def /out:$@ ck_crp.obj ckclib.obj ck_des.obj \
+	    libdes.lib \
+!if "$(PLATFORM)" != "OS2"
+	    k95crypt.res \
+!endif
 !if "$(TARGET_CPU)" == "IA64" && $(MSC_VER) < 150
         bufferoverflowu.lib
 !endif
+
+nullssh.dll: ckonssh.obj ckoker.mak
+	link /dll /debug /def:nullssh.def /out:$@ ckonssh.obj
+
+k95ssh.dll: ckolssh.obj ckolsshs.obj ckorbf.obj k95ssh.res ckoker.mak
+	link /dll /debug /def:k95ssh.def /out:$@ ckolssh.obj ckolsshs.obj \
+	    ckorbf.obj k95ssh.res $(SSH_LIB) ws2_32.lib
 
 k2crypt.dll: ck_crp.obj ck_des.obj ckclib.obj k2crypt.def ckoker.mak
 	ilink /nologo /noi /exepack:1 /align:16 /base:0x10000 k2crypt.def \
             /out:$@ ck_crp.obj ck_des.obj ckclib.obj libdes.lib
         dllrname $@ CPPRMI36=CKO32RTL
-
 
 docs:   ckermit.inf
 
@@ -1156,16 +1313,16 @@ srp-passwd.exe: srp-passwd.obj getopt.obj ckosslc.obj ckoker.mak
 !endif
 !endif
         
-iksdsvc.exe: iksdsvc.obj ckoker.mak
+iksdsvc.exe: iksdsvc.obj iksdsvc.res ckoker.mak
 !if "$(PLATFORM)" == "OS2"
 !else if "$(PLATFORM)" == "NT"
-	link /debug /out:$@ iksdsvc.obj $(LIBS)
+	link /debug /out:$@ iksdsvc.obj iksdsvc.res $(LIBS)
 !endif
         
-iksd.exe: iksd.obj ckoker.mak
+iksd.exe: iksd.obj iksd.res ckoker.mak
 !if "$(PLATFORM)" == "OS2"
 !else if "$(PLATFORM)" == "NT"
-	link /debug /out:$@ iksd.obj $(LIBS)
+	link /debug /out:$@ iksd.obj iksd.res $(LIBS)
 !endif
         
 
@@ -1192,7 +1349,7 @@ rlogin$(O):	rlogin.c
 textps$(O):     textps.c
 
 ckcmai$(O):	ckcmai.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcnet.h ckctel.h \
-                ckuusr.h ckonet.h ckcsig.h ckocon.h ckntap.h ckocon.h ck_ssl.h ckossl.h
+                ckuusr.h ckonet.h ckcsig.h ckocon.h ckntap.h ckocon.h ck_ssl.h ckossl.h ckover.h
 ckcmdb$(O):     ckcmdb.c ckcsym.h ckcdeb.h ckoker.h
 ckclib$(O):     ckclib.c ckcsym.h ckcdeb.h ckoker.h ckclib.h ckcasc.h
 ckcfns$(O):	ckcfns.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckcsym.h ckcxla.h ckuxla.h \
@@ -1210,18 +1367,20 @@ ckudia$(O):	ckudia.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckucmd.h ckuus
 ckuscr$(O):	ckuscr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckcsig.h ckcnet.h \
                 ckctel.h
 ckuusr$(O):	ckuusr.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h cknwin.h \
-	          ckowin.h ckntap.h kui\ikui.h
+		    ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h cknwin.h ckossh.h \
+	        ckowin.h ckntap.h kui\ikui.h
 ckuus2$(O):	ckuus2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h
+		  ckcxla.h ckuxla.h ckokvb.h ckocon.h ckokey.h ckcnet.h ckctel.h ckover.h
 ckuus3$(O):	ckuus3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
 		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckonbi.h ckntap.h ckoreg.h \
-          ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h
+          ckocon.h ckokey.h ckokvb.h ckcuni.h ck_ssl.h ckossl.h ckuath.h kui\ikui.h \
+          ckossh.h
 ckuus4$(O):	ckuus4.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h ckocon.h \
+		  ckcxla.h ckuxla.h ckuver.h ckcnet.h ckctel.h ckonet.h ckocon.h ckossh.h \
 	      ckoetc.h ckntap.h ckuath.h ck_ssl.h ckoreg.h ckoetc.h
 ckuus5$(O):	ckuus5.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-                ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h ck_ssl.h ckossl.h kui\ikui.h
+            ckocon.h ckokey.h ckokvb.h ckcuni.h ckcnet.h ckctel.h ck_ssl.h ckossl.h \
+            ckossh.h kui\ikui.h
 ckuus6$(O):	ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckntap.h \
                 ckcnet.h ckctel.h
 !if "$(PLATFORM)" == "OS2"
@@ -1229,18 +1388,19 @@ ckuus6$(O):	ckuus6.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucm
 
 !endif
 ckuus7$(O):	ckuus7.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h \
-		  ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h ckodir.h \
-                  ckokey.h ckokvb.h cknwin.h ckowin.h ckntap.h ckcuni.h \
-                  ckntap.h ckuath.h ck_ssl.h kui\ikui.h
+		    ckcxla.h ckuxla.h ckcnet.h ckctel.h ckonet.h ckocon.h ckodir.h \
+            ckokey.h ckokvb.h cknwin.h ckowin.h ckntap.h ckcuni.h ckossh.h \
+            ckntap.h ckuath.h ck_ssl.h kui\ikui.h
 ckuusx$(O):	ckuusx.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckonbi.h \
                 ckocon.h cknwin.h ckowin.h ckntap.h ckcnet.h ckctel.h kui\ikui.h
 ckuusy$(O):	ckuusy.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckuusr.h ckucmd.h ckcnet.h ckctel.h \
-	        ck_ssl.h kui\ikui.h
+	        ck_ssl.h ckossh.h kui\ikui.h
 ckofio$(O):	    ckofio.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckuver.h ckodir.h ckoker.h \
                 ckuusr.h ckcxla.h ck_ssl.h ckoreg.h ckosyn.h ckuath.h
 ckoava$(O):     ckoava.c ckoava.h ckcdeb.h ckoker.h ckclib.h ckcker.h ckcasc.h ckocon.h ckuusr.h
-ckocon$(O):	ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h ckctel.h \
-                ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h kui\ikui.h
+ckocon$(O):	    ckocon.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h ckcnet.h \
+                ckctel.h ckonbi.h ckokey.h ckokvb.h ckuusr.h cknwin.h ckowin.h ckcuni.h ckossh.h \
+                kui\ikui.h
 ckoco2$(O):     ckoco2.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
                 ckonbi.h ckopcf.h ckuusr.h ckokey.h ckokvb.h ckcuni.h kui\ikui.h
 ckoco3$(O):     ckoco3.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckcasc.h ckoker.h ckocon.h \
@@ -1285,8 +1445,8 @@ ckcftp$(O):     ckcftp.c ckcdeb.h ckoker.h ckcasc.h ckcker.h ckucmd.h ckuusr.h c
                 ckcxla.h ckuath.h ck_ssl.h ckoath.h ckoreg.h
 ckctel$(O):	ckctel.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckctel.h ckcnet.h ckocon.h ck_ssl.h \
                 ckossl.h ckosslc.h
-ckonet$(O):	ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
-                ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h ckowin.h ckuath.h \
+ckonet$(O):	    ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h ckctel.h ckonet.h \
+                ckotcp.h ckonbi.h ckuusr.h ckcsig.h cknwin.h ckowin.h ckuath.h ckossh.h \
                 ck_ssl.h ckossl.h ckosslc.h
 !if "$(PLATFORM)" == "NT"
 cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
@@ -1319,15 +1479,18 @@ cknprt$(O): cknprt.c ckcdeb.h ckoker.h ckcker.h ckucmd.h
 ckuath$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_ssl.h ckossl.h \
                 ckosslc.h ckuath.c ckoath.h
 ckoath$(O):     ckoath.c ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ckoath.h ckoetc.h
-ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h
+ck_ssl$(O):     ck_ssl.c ckcdeb.h ckoker.h ckclib.h ckctel.h ck_ssl.h ckosslc.h ckossl.h ckossh.h
 ckossl$(O):     ckossl.c ckcdeb.h ckoker.h ck_ssl.h ckossl.h
 ckosslc$(O):    ckosslc.c ckcdeb.h ckoker.h ck_ssl.h ckosslc.h
 ckozli$(O):     ckozli.c ckcdeb.h ckoker.h ckozli.h
 
-ckossh$(O):     ckoshs.h ckoshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckossh.c ckossh.h
-ckoshs$(O):     ckoshs.c ckoshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
+ckolssh$(O):    ckolsshs.h ckolsshs.h ckorbf.h ckcdeb.h ckoker.h ckclib.h ckosslc.h ckolssh.c ckolssh.h ckossh.h
+ckolsshs$(O):   ckolsshs.c ckolsshs.h ckorbf.h ckcdeb.h ckcker.h ckocon.h
 ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
 
+ckossh$(O):     ckossh.c ckossh.h ckcdeb.h ckuusr.h ckcker.h ckocon.h ckoreg.h
+
+ckonssh$(O):    ckonssh.c ckossh.h ckcdeb.h
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
@@ -1340,7 +1503,6 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 ck_des$(O):     ck_des.c
 !if "$(PLATFORM)" == "OS2"
 	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
-
 !endif
 
 # X/Y/Z Modem support (3rd-party library)
@@ -1356,6 +1518,36 @@ p_tl$(O):      ckcdeb.h ckoker.h ckclib.h ckocon.h p_tl.c     p_type.h p_tl.h p_
 p_omalloc$(O): ckcdeb.h ckoker.h ckclib.h p_omalloc.c p_type.h p_error.h p.h
 !endif
 
+# We're not always able to build and use WART so only do it if we're told to.
+!if "$(CKB_BUILD_WART)" == "yes"
+ckcpro.c:	ckcpro.w ckwart.exe
+#		$(MAKE) -f ckoker.mak ckwart.exe \
+#		  CC="$(CC) $(CC2)" OUT="$(OUT)" O="$(O)" OPT="$(OPT)" \
+#		  DEBUG="$(DEBUG)" CFLAGS="-DCK_ANSIC $(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+		ckwart ckcpro.w ckcpro.c
+
+!if "$(MIPS_CENTAUR)" == "yes"
+WART_DEFS = /D_MT /D_MIPS_=1 /DCKT_NT31
+WART_LIBS = libcmt.lib kernel32.lib
+!endif
+
+ckwart$(O):     ckwart.c
+	$(CC) $(WART_DEFS) -c ckwart.c
+
+
+ckwart.exe: ckwart.obj $(DEF)
+	$(CC) $(WART_LIBS) ckwart.obj
+
+!elseif "$(CKB_USE_WART)" == "yes"
+
+!if "$(WART)" == ""
+WART=ckwart
+!endif
+
+ckcpro.c: ckcpro.w
+		$(WART) ckcpro.w ckcpro.c
+
+!endif
 
 ckopcf$(O):     ckopcf.c ckopcf.h
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DLL) -c ckopcf.c
@@ -1425,6 +1617,36 @@ ckoker.res: ckoker.rc
 
 cknker.res: cknker.rc cknker.ico
         rc $(RCDEFINES) /fo cknker.res cknker.rc
+
+k95ssh.res: k95ssh.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95ssh.res k95ssh.rc
+
+k95crypt.res: k95crypt.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95crypt.res k95crypt.rc
+
+ctl3dins.res: ctl3dins.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo ctl3dins.res ctl3dins.rc
+
+iksd.res: iksd.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo iksd.res iksd.rc
+
+iksdsvc.res: iksdsvc.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo iksdsvc.res iksdsvc.rc
+
+k95d.res: k95d.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo k95d.res k95d.rc
+
+telnet.res: telnet.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo telnet.res telnet.rc
+
+rlogin.res: rlogin.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo rlogin.res rlogin.rc
+
+se.res: se.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo se.res se.rc
+
+textps.res: textps.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo textps.res textps.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc

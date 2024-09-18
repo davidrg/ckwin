@@ -60,10 +60,10 @@ _PROTOTYP(int vmsttyfd, (void) );
 #undef COMMENT
 #else
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
 #define APIRET ULONG
 #endif /* NT */
 #include "ckocon.h"
@@ -88,6 +88,11 @@ BOOL dialerIsCKCM = 0;
 #ifdef NT
 DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
 #endif /* NT */
+
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+
 #endif /* OS2 */
 
 #ifdef KUI
@@ -483,7 +488,7 @@ extern int frecl;
 #endif /* VMS */
 
 extern CK_OFF_T ffc, tfc, tlci, tlco;
-extern long filcnt, rptn, speed,  ccu, ccp, vernum;
+extern long filcnt, rptn, speed,  ccu, ccp, vernum, xvernum;
 
 #ifndef NOSPL
 extern char fspec[], myhost[];
@@ -543,10 +548,6 @@ extern char flfnam[];
 extern char lock2[];
 #endif /* USETTYLOCK */
 #endif /* UNIX */
-
-#ifdef OS2ORUNIX
-extern int maxnam, maxpath;             /* Longest name, path length */
-#endif /* OS2ORUNIX */
 
 extern int mdmtyp, mdmsav;
 
@@ -4138,6 +4139,7 @@ debopn(s,disp) char *s; int disp;
         debug(F100,ckxsys,"",0);
 #endif /* OS2 */
 #endif /* MAC */
+
 #ifdef CK_UTSNAME
         if (unm_mch[0]) {
             debug(F110,"uname machine",unm_mch,0);
@@ -5391,10 +5393,12 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
-    if (ck_ssleay_is_installed())
-        printf(" SSH V1 and V2 protocols\n");
-    else
-        printf(" SSH V1 and V2 protocols - not available\n");
+#if SSH_DLL
+    if (ssh_avail())
+        printf(" SSH V2 protocol\n");
+#else
+    printf(" SSH V2 protocol\n");
+#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
@@ -6028,12 +6032,14 @@ shofil() {
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
 #endif /* DYNAMIC */
 #endif /* UNIX */
-#ifdef OS2ORUNIX
-    printf(" Longest filename:        %d\n", maxnam);
+#ifdef CKMAXNAM
+    printf(" Longest filename:        %d\n", CKMAXNAM);
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
-    printf(" Longest pathname:        %d\n", maxpath);
+#endif /* def CKMAXNAM */
+#ifdef CKMAXPATH
+    printf(" Longest pathname:        %d\n", CKMAXPATH);
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
-#endif /* OS2ORUNIX */
+#endif /* def CKMAXPATH */
 
     printf(" Last file sent:          %s\n", sfspec ? sfspec : "(none)");
     if (++n > cmd_rows - 3) { if (!askmore()) { return;} else {n = 0;}}
@@ -6726,11 +6732,10 @@ doinput(timo,ms,mp,flags,count)
     static int cr = 0;
 #endif /* TNCODE */
     int is_tn = 0;
-#ifdef SSHBUILTIN
-    extern int ssh_cas;
-    extern char * ssh_cmd;
-#endif /* SSHBUILTIN */
     int noescseq = 0;			/* Filter escape sequences */
+#ifdef SSHBUILTIN
+    const char* ssh_cmd;
+#endif
 
     debug(F101,"input count","",count);
     debug(F101,"input flags","",flags);
@@ -6831,8 +6836,9 @@ doinput(timo,ms,mp,flags,count)
 #endif /* NOLOCAL */
 
 #ifdef SSHBUILTIN
-    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
-         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+    ssh_cmd = ssh_get_sparam(SSH_SPARAM_CMD);
+    if ( network && nettype == NET_SSH && ssh_get_iparam(SSH_IPARAM_CAS) &&
+        ssh_cmd && !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
         if (!quiet)
 	  printf("?SSH Subsystem active: %s\n", ssh_cmd);
         instatus = INP_IKS;
@@ -13270,7 +13276,7 @@ char *                                  /* Evaluate builtin variable */
 #endif /* NODIAL */
 #ifndef NOKVERBS                        /* Keyboard macro material */
     extern int keymac, keymacx;
-#endif /* NOKVERBS */
+#endif  /* NOKVERBS */
 #ifdef CK_LOGIN
     extern int isguest;
 #endif /* CK_LOGIN */
@@ -13459,9 +13465,8 @@ char *                                  /* Evaluate builtin variable */
         sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
-      /* C-Kermit 10.0... no more product-specific version numbers */
       case VN_XVNUM:                    /* Product-specific version number */
-        sprintf(vvbuf,"%ld",vernum);    /* SAFE */
+        sprintf(vvbuf,"%ld",xvernum);    /* SAFE */
         return(vvbuf);
 
       case VN_FULLVER:                  /* Full version number (edit 400) */
@@ -14200,23 +14205,25 @@ char *                                  /* Evaluate builtin variable */
                 p++;
             }
             p = vvbuf;
+
 #ifndef VMS
-            if (p > vvbuf) {          /* Directory termination character */
-                  c =
+            c =
 #ifdef MAC
-                      ':'
+                    ':'
 #else
 #ifdef datageneral
-                      ':'
+                    ':'
 #else
 #ifdef STRATUS
-                      '>'
+                    '>'
 #else
-                      '/'
+                    '/'
 #endif /* STRATUS */
 #endif /* datageneral */
 #endif /* MAC */
-                      ;
+            ;
+
+            if (p > vvbuf) {          /* Directory termination character */
                   if (*(p-1) != c) {    /* Add it to the end of the */
                       *p++ = c;         /* string if it was not already */
                       *p = NUL;         /* there */
@@ -14407,10 +14414,6 @@ char *                                  /* Evaluate builtin variable */
 
     switch(y) {
       case VN_XPROG:
-#ifndef COMMENT
-/* C-Kermit 9.0 and later for Windows and OS/2 is just C-Kermit */
-        return("C-Kermit");
-#else
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
@@ -14424,7 +14427,6 @@ char *                                  /* Evaluate builtin variable */
 #else
         return("C-Kermit");
 #endif /* OS2 */
-#endif /* COMMENT */
 
       case VN_EDITOR:
 #ifdef NOFRILLS

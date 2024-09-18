@@ -9,12 +9,13 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
     Last big update: 14 April 2023 (ANSI function declarations and prototypes)
-    Last update: 5 May 2023 (change semicolon to comma in extern statement)
+    Other updates: 5 May 2023 (change semicolon to comma in extern statement)
+    Other updates: 25 Jan 2024 (add semantics of REMOTE CDUP)
 */
 
 /*
@@ -52,10 +53,10 @@
 #else /* NT */
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
@@ -292,11 +293,11 @@ slrestor() {
 #endif /* TNCODE */
 #ifdef SSHBUILTIN
     if (sl_ssh_xfw_saved) {
-        ssh_xfw = sl_ssh_xfw;
+        ssh_set_iparam(SSH_IPARAM_XFW, sl_ssh_xfw);
         sl_ssh_xfw_saved = 0;
     }
     if (sl_ssh_ver_saved) {
-        ssh_ver = sl_ssh_ver;
+        ssh_set_iparam(SSH_IPARAM_VER, sl_ssh_ver);
         sl_ssh_ver_saved = 0;
     }
 #endif /* SSHBUILTIN */
@@ -7687,7 +7688,6 @@ dormt(xx) int xx;
     return rc;
 }
 
-
 int
 #ifdef CK_ANSIC
 xxdormt( int xx )
@@ -7740,13 +7740,29 @@ dormt(xx) int xx;
         }
         return(doprm(y,1));
     }
-
     switch (xx) {                       /* Others... */
 
       case XZCDU:
         if ((x = cmcfm()) < 0) return(x);
-        printf("?Sorry, REMOTE CDUP not supported yet\n");
-        return(-9);
+#ifdef VMS
+        s = "[-]";
+#else
+#ifdef datageneral
+        s = "^";
+#else
+        s = "..";
+#endif /* datageneral */
+#endif /* VMS */
+	rcdactive = 1;
+        sstate = setgen('C',s,"","");
+        retcode = 0;
+        break;
+
+      case XZSTA:                       /* Remote Status (2024) */
+        if ((x = cmcfm()) < 0) return(x);
+        sstate = setgen('Q',"","","");
+        retcode = 0;
+        break;
 
       case XZCWD:                       /* CWD (CD) */
         if ((x = cmtxt("Remote directory name","",&s,xxstring)) < 0)
@@ -7821,9 +7837,9 @@ dormt(xx) int xx;
             }
             s2 = sbuf;
         } else s2 = "";
+        debug(F110," password",s2,0);
 #endif /* DIRPWDPR */
 
-        debug(F110," password",s2,0);
 	rcdactive = 1;
         sstate = setgen('C',s,s2,"");
         retcode = 0;
@@ -8116,12 +8132,6 @@ dormt(xx) int xx;
           return(x);
         if (local) ttflui();            /* If local, flush tty input buffer */
         retcode = sstate = rfilop(s, (char)(xx == XZMKD ? 'm' : 'd'));
-        break;
-
-      case XZSTA:                       /* Status - new 2023 */
-        if ((x = remcfm()) < 0) return(x);
-        sstate = setgen('Q',"","","");
-        retcode = 0;
         break;
 
       case XZXIT:                       /* Exit */
@@ -9354,7 +9364,7 @@ cx_net(net, protocol, xhost, svc,
 
 #ifdef SSHBUILTIN
         if (net == NET_SSH) {
-            makestr(&ssh_hst,hostname);        /* Stash everything */
+            ssh_set_sparam(SSH_SPARAM_HST, hostname);   /* Stash everything */
             if (username) {
                 if (!sl_uid_saved) {
                     ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
@@ -9363,33 +9373,35 @@ cx_net(net, protocol, xhost, svc,
                 ckstrncpy(uidbuf,username,UIDBUFLEN);
             }
             if (srvbuf[0]) {
-                makestr(&ssh_prt,srvbuf);
-            } else
-                makestr(&ssh_prt,NULL);
+                ssh_set_sparam(SSH_SPARAM_PRT,srvbuf);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_PRT,NULL);
+            }
 
             if (command) {
-                makestr(&ssh_cmd,brstrip(command));
-                ssh_cas = param2;
-            } else
-                makestr(&ssh_cmd,NULL);
+                ssh_set_sparam(SSH_SPARAM_CMD, brstrip(command));
+                ssh_set_iparam(SSH_IPARAM_CAS, param2);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_CMD, NULL);
+            }
 
             if (param1 > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_ver_saved) {
-                    sl_ssh_ver = ssh_ver;
+                    sl_ssh_ver = ssh_get_iparam(SSH_IPARAM_VER);
                     sl_ssh_ver_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_ver = param1;
+                ssh_set_iparam(SSH_IPARAM_VER, param1);
             }
             if (param3 > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_xfw_saved) {
-                    sl_ssh_xfw = ssh_xfw;
+                    sl_ssh_xfw = ssh_get_iparam(SSH_IPARAM_XFW);
                     sl_ssh_xfw_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_xfw = param3;
+                ssh_set_iparam(SSH_IPARAM_XFW, param3);
             }
         } else                          /* NET_SSH */
 #endif /* SSHBUILTIN */
@@ -11858,6 +11870,10 @@ z_open(name, flags) char * name; int flags;
     int i, n;
     FILE * t;
     char * mode;
+#ifdef NT
+    char * modetemp;
+    int modelen;
+#endif
     debug(F111,"z_open",name,flags);
     if (!name) name = "";               /* Check name argument */
     if (!name[0])
@@ -11878,6 +11894,18 @@ z_open(name, flags) char * name; int flags;
         if (!mode[0])                   /* Check for illegal combinations */
           return(z_error = FX_BOM);
     }
+
+#ifdef NT
+    /*
+     * Take a copy of the mode string and append the 'S' sequential read file
+     * caching hint (_O_SEQUENTIAL). We'll free this copy after the call to
+     * fopen later.
+     */
+    modetemp = mode;
+    mode = malloc(10);
+    ckmakmsg(mode, 10, modetemp, "S", NULL, NULL);
+#endif /* NT */
+
     if (!z_inited) {                /* If file structs not inited */
         debug(F101,"z_open z_maxchan 1","",z_maxchan);
 #ifdef UNIX
@@ -11988,6 +12016,9 @@ z_open(name, flags) char * name; int flags;
     }
 #endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
+#ifdef NT
+    free(mode);     /* This is a copy of the original mode string */
+#endif /* NT */
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);
 #ifdef EMFILE
@@ -11998,12 +12029,22 @@ z_open(name, flags) char * name; int flags;
 	z_file[n] = NULL;
         return(z_error = (errno ?  FX_SYS : FX_UNK)); /* Return error code */
     }
+#ifdef COMMENT
+    /*
+     * 2024-08-19 DavidG: This started crashing on Windows 11 in CKW Beta 6. The
+     * call to setmode seems ok, it just doesn't like O_SEQUENTIAL anymore. Not
+     * sure if this is something unsupported now, or if its a bug in the CRT.
+     * For some reason I've not looked into too closely I'm not even getting
+     * O_SEQUENTIAL defined on my local PC, while its clearly there on the
+     * Gitub build agents.
+     */
 #ifdef NT
 #ifdef O_SEQUENTIAL
     if (t)                              /* Caching hint for NT */
       _setmode(_fileno(t),O_SEQUENTIAL);
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
+#endif /* COMMENT */
 
     z_nopen++;                          /* Open, count it. */
     z_file[n]->z_fp = t;		/* Stash the file pointer */
@@ -14569,7 +14610,12 @@ sho_iks() {
 
 #ifdef CK_AUTHENTICATION
 int
-sho_auth(cx) int cx; {
+#ifdef CK_ANSIC
+sho_auth( int cx )
+#else
+sho_auth(cx) int cx;
+#endif  /* CK_ANSIC */
+{
     extern int auth_type_user[], cmd_rows;
 #ifdef CK_KERBEROS
     int i;

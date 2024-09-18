@@ -1,4 +1,4 @@
-# Index to the C-Kermit for Windows Codebase
+# Index to the Kermit 95 Codebase
 
 The goal of this page is to help find relevant code a little bit faster as the
 various filenames are not always obvious.
@@ -71,7 +71,7 @@ This code all comes from C-Kermit for UNIX. Its syncronised with upstream on a r
 | ck_ssl.h            | OpenSSL Interface Header for C-Kermit                                 |                                                                |
 | README.TXT          | C-Kermit Readme file                                                  | for the cross-platform Unix/linux/VMS version, not windows/os2 |
 
-### C-Kermit for Windows and OS/2
+### Kermit 95 for Windows and OS/2
 
 This code is used on both Windows and OS/2.
 
@@ -83,12 +83,12 @@ This code is used on both Windows and OS/2.
 | ckoath.h            | Authentication for Kermit 95                               |                                                                                                                                |
 | ckoava.c            | AVATAR Emulation                                           |                                                                                                                                |
 | ckoava.h            | Header for AVATAR Emulation                                |                                                                                                                                |
-| ckoco2.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |
+| ckoco2.c            | Kermit connect command for OS/2 systems and Windows        | VScrn functions                                                                                                                |
 | ckoco3.c            | Kermit connect command for OS/2 systems and Windows        | A lot of escape sequence processing for the terminal emulator happens in here                                                  |
 | ckoco4.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |
 | ckoco5.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |
 | ckocon.c            | Kermit connect command for OS/2 systems and Windows        |                                                                                                                                |
-| ckocon.h            | OS/2 C-Kermit keyboard verb definitions & tables.          |                                                                                                                                |
+| ckocon.h            | OS/2 Kermit 95 keyboard verb definitions & tables.         |                                                                                                                                |
 | ckodg.c             | Data General Emulation                                     |                                                                                                                                |
 | ckodg.h             | Header for Data General Emulation                          |                                                                                                                                |
 | ckodir.h            |                                                            | A public domain implementation of BSD directory routines for MS-DOS                                                            |
@@ -102,8 +102,8 @@ This code is used on both Windows and OS/2.
 | ckohzl.h            | Header for Hazeltine Emulation                             |                                                                                                                                |
 | ckoi31.c            | IBM 31x1 Emulation                                         |                                                                                                                                |
 | ckoi31.h            | Header for IBM 31x1 Emulation                              |                                                                                                                                |
-| ckoker.h            |                                                            | some common definitions for C-Kermit on OS/2 and Windows                                                                       |
-| ckoker.mak          | Makefile                                                   | Makefile for C-Kermit on OS/2 and Windows                                                                                      |
+| ckoker.h            |                                                            | some common definitions for Kermit 95 on OS/2 and Windows                                                                      |
+| ckoker.mak          | Makefile                                                   | Makefile for Kermit 95 on OS/2 and Windows                                                                                     |
 | ckokey.c            | Kermit Keyboard support for OS/2 and Win32 Systems         |                                                                                                                                |
 | ckokey.h            | Kermit Keyboard support for OS/2 and Win32 Systems         |                                                                                                                                |
 | ckokvb.h            |                                                            | Keyboard key definitions                                                                                                       |
@@ -128,7 +128,7 @@ This code is used on both Windows and OS/2.
 | ckosslc.c           | OpenSSL Interface for Kermit 95                            |                                                                                                                                |
 | ckosslc.h           | OpenSSL Interface for Kermit 95                            |                                                                                                                                |
 | ckosyn.c            | Kermit synchronization functions for OS/2 and NT systems   |                                                                                                                                |
-| ckosyn.h            | OS/2 C-Kermit Synchronization function prototypes          |                                                                                                                                |
+| ckosyn.h            | OS/2 Kermit 95 Synchronization function prototypes         |                                                                                                                                |
 | ckotek.c            | Tektronix Emulation                                        |                                                                                                                                |
 | ckotek.h            | Tektronix Emulation                                        |                                                                                                                                |
 | ckothr.c            | Kermit thread management functions for OS/2 and NT systems |                                                                                                                                |
@@ -191,22 +191,24 @@ This code and other stuff is only used on Windows (if its absent, OS/2 should st
 | cknlat.h            |                                                      | DECnet/LAT support for Kermit 95                                                            |
 | cknnbi.c            | Win32-specific NetBios support                       |                                                                                             |
 | cknprt.c            |                                                      | Win32 Printing support?                                                                     |
-| cknpty.c            | Windows ConPTY Interface for C-Kermit                |                                                                                             |
-| cknpty.h            | Windows ConPTY Interface for C-Kermit                |                                                                                             |
+| cknpty.c            | Windows ConPTY Interface for Kermit 95               |                                                                                             |
+| cknpty.h            | Windows ConPTY Interface for Kermit 95               |                                                                                             |
 | cknsig.c            | Kermit signal handling for Win32 systems             |                                                                                             |
 | ckntap.c            | Kermit Telephony interface for MS Win32 TAPI systems |                                                                                             |
 | ckntap.h            | Kermit Telephony interface for MS Win32 TAPI systems |                                                                                             |
 | ckntel.c            | Kermit Telephony interface for MS Win32 TAPI systems |                                                                                             |
 | ckntel.h            | Kermit Telephony interface for MS Win32 TAPI systems |                                                                                             |
-| cknver.h            |                                                      | Internal version numbers used by C-Kermit for Windows                                       |
+| cknver.h            |                                                      | Internal version numbers used by Kermit 95                                                  |
 | cknwin.c            | Kermit GUI Windows support for Win32 systems         |                                                                                             |
 | cknwin.h            | Kermit GUI Windows support for Win32 systems         |                                                                                             |
 | ckorbf.c            |                                                      | A simple ring-buffer implementation for the SSH Subsystem                                   |
 | ckorbf.h            |                                                      | A simple ring-buffer implementation for the SSH Subsystem                                   |
-| ckoshs.c            | C-Kermit for Windows SSH Subsystem                   |                                                                                             |
-| ckoshs.h            | C-Kermit for Windows SSH Subsystem                   |                                                                                             |
-| ckossh.c            | SSH Subsystem Interface for C-Kermit                 |                                                                                             |
-| ckossh.h            | SSH Subsystem Interface for C-Kermit                 |                                                                                             |
+| ckolshs.c           | Kermit 95 libssh SSH Subsystem                       |                                                                                             |
+| ckolshs.h           | Kermit 95 libssh SSH Subsystem                       |                                                                                             |
+| ckolssh.c           | LibSSH SSH Subsystem Interface for Kermit 95         |                                                                                             |
+| ckolssh.h           | LibSSH SSH Subsystem Interface for Kermit 95         |                                                                                             |
+| ckossh.c            | SSH Subsystem Interface for Kermit 95                |                                                                                             |
+| ckossh.h            | SSH Subsystem Interface for Kermit 95                |                                                                                             |
 | ck_crp.def          |                                                      | Module definition file for k95crypt.dll                                                     |
 | clean-dist.bat      |                                                      | Cleans the dist directory                                                                   |
 | clean.bat           |                                                      | Deletes all files produced by a windows build                                               |
@@ -221,7 +223,7 @@ This code and other stuff is only used on Windows (if its absent, OS/2 should st
 | k95d.c              |                                                      | k95d.exe - Host mode server                                                                 |
 | k95d.cfg            |                                                      | Configuration file for k95d.exe                                                             |
 | k95f.ico            |                                                      |                                                                                             |
-| k95g.exe.manifest   |                                                      | Gives the GUI version of CKW modern UI controls on Windows XP and newer                     |
+| k95g.exe.manifest   |                                                      | Gives the GUI version of K95 modern UI controls on Windows XP and newer                     |
 | k95g.ico            |                                                      |                                                                                             |
 | mk.bat              |                                                      | Windows build script - builds all GUI + console                                             |
 | mkdist-os2.bat      |                                                      | Windows to OS/2 cross compile build script - copies built artifacts to an os2 dist folder   |
@@ -232,13 +234,13 @@ This code and other stuff is only used on Windows (if its absent, OS/2 should st
 | mkkui.bat           |                                                      | Builds the mysterious KUI configuration of K95G called cknkui.exe                           |
 | mknt.bat            |                                                      | Windows build script - everything but k95g.exe                                              |
 | mkntd.bat           |                                                      | Windows build script - debug build of everything but k95g.exe                               |
-| mkos2.bat           |                                                      | Windows build script - build C-Kermit for OS/2 on a Windows host (cross-compile)            |
-| mkos2d.bat          |                                                      | Windows build script - debug build of C-Kermit for OS/2 on a WIndows host (cross-compile)   |
+| mkos2.bat           |                                                      | Windows build script - build Kermit 95 for OS/2 on a Windows host (cross-compile)           |
+| mkos2d.bat          |                                                      | Windows build script - debug build of Kermit 95 for OS/2 on a Windows host (cross-compile)  |
 | se.c                |                                                      | se.exe - shell execute utility                                                              |
 | settapi.c           |                                                      | setup.exe: TAPI code for the old console-based install program                              |
 | welcome.txt         |                                                      | Welcome banner shown from the default k95custom.ini                                         |
-| wsetup.def          | C-Kermit for Windows NT Setup                        | setup.exe module definition file                                                            |
-| wtelnet.def         | C-Kermit for Win32 Telnet                            | telnet.exe module definition file                                                           |
+| wsetup.def          | Kermit 95 NT Setup                                   | setup.exe module definition file                                                            |
+| wtelnet.def         | Kermit 95 for Win32 Telnet                           | telnet.exe module definition file                                                           |
 
 #### GUI Only
 | Filename            | Title                                    | Notes                                                                                         |
@@ -259,7 +261,7 @@ This code and other stuff is only used on Windows (if its absent, OS/2 should st
 | kui/ikextern.h      |                                          |                                                                                               |
 | kui/ikterm.cxx      | Class: IKTerm, Constructed by: KClient   | Terminal interaction, keyboard events, etc                                                    |
 | kui/ikterm.h        | Class: IKTerm, Constructed by: KClient   |                                                                                               |
-| kui/ikui.cxx        |                                          | C Interface to KUI (Functions called by the rest of CKW to do GUI things)                     |
+| kui/ikui.cxx        |                                          | C Interface to KUI (Functions called by the rest of K95 to do GUI things)                     |
 | kui/ikui.h          |                                          |                                                                                               |
 | kui/k95.ico         |                                          |                                                                                               |
 | kui/k95a.ico        |                                          |                                                                                               |
@@ -326,36 +328,36 @@ This code and other stuff is only used on Windows (if its absent, OS/2 should st
 
 This code is only used on OS/2 (if its absent, Windows should still build fine)
 
-| Filename            | Title                                                                   | Notes                                                         |
-|---------------------|-------------------------------------------------------------------------|---------------------------------------------------------------|
-| ckermit.ico         |                                                                         | OS.2 icon                                                     |
-| cko32i20.def        |                                                                         | IBM TCP/IP 2.0 interface DLL for C-Kermit (32-bit)            |
-| cko32rt.c           |                                                                         | Dummy module so we can link resources to it                   |
-| ckoclip.c           |                                                                         | clipboard app for OS/2                                        |
-| ckoclip.def         |                                                                         | clipboard app for OS/2                                        |
-| ckoclip.h           |                                                                         | clipboard app for OS/2                                        |
-| ckoclip.ico         |                                                                         | clipboard app for OS/2                                        |
-| ckoclip.rc          |                                                                         | clipboard app for OS/2                                        |
-| ckoftp.c            | TCP/IP interface DLL between C-Kermit and FTP PC/TCP                    |                                                               |
-| ckoibm.c            | TCP/IP interface DLL between C-Kermit and IBM TCP/IP                    |                                                               |
-| ckoker.msb          |                                                                         | No idea what this is, but it *was* referenced in the makefile |
-| ckoker.rc           |                                                                         | OS/2 Resource Script                                          |
-| ckoker32.def        |                                                                         | C-Kermit for OS/2 (32-bit)                                    |
-| ckonbi.c            | OS/2-specific NetBios support                                           |                                                               |
-| ckonov.c            | TCP/IP interface DLL between C-Kermit and Novell LAN Workplace OS/2 3.0 |                                                               |
-| ckopcf.c            |                                                                         | pcfonts.dll: Dummy module so we can link resources to it      |
-| ckopcf.h            |                                                                         | pcfonts.dll: defines PC Font IDs for resource file            |
-| ckotcp.c            | TCP/IP interface DLL between C-Kermit and IBM TCP/IP                    |                                                               |
-| ckotcp.h            | TCP/IP interface for OS/2 C-Kermit                                      |                                                               |
-| ckotel.c            | Kermit stub to fake IBM Telnet and IBM TelnetPM                         | telnet.exe and telnetpm.exe for OS/2                          |
-| ckotel.def          |                                                                         | Telnet front-end for C-Kermit for OS/2                        |
-| k2.ini              |                                                                         | Default initialisation file for OS/2                          |
-| k2crypt.def         |                                                                         | Module definition file for k2crypt.dll                        |
-| osetup.def          | Kermit/2 Setup                                                          | Module definition file                                        |
-| k95f_os2.ico        |                                                                         |                                                               |
-| k95g_os2.ico        |                                                                         |                                                               |
-| mkos2.cmd           |                                                                         | OS/2 build script - build everything                          |
-| mkos2d.cmd          |                                                                         | OS/2 build script - debug build of everything                 |
+| Filename            | Title                                                                    | Notes                                                         |
+|---------------------|--------------------------------------------------------------------------|---------------------------------------------------------------|
+| ckermit.ico         |                                                                          | OS.2 icon                                                     |
+| cko32i20.def        |                                                                          | IBM TCP/IP 2.0 interface DLL for Kermit 95 (32-bit)           |
+| cko32rt.c           |                                                                          | Dummy module so we can link resources to it                   |
+| ckoclip.c           |                                                                          | clipboard app for OS/2                                        |
+| ckoclip.def         |                                                                          | clipboard app for OS/2                                        |
+| ckoclip.h           |                                                                          | clipboard app for OS/2                                        |
+| ckoclip.ico         |                                                                          | clipboard app for OS/2                                        |
+| ckoclip.rc          |                                                                          | clipboard app for OS/2                                        |
+| ckoftp.c            | TCP/IP interface DLL between Kermit 95 and FTP PC/TCP                    |                                                               |
+| ckoibm.c            | TCP/IP interface DLL between Kermit 95 and IBM TCP/IP                    |                                                               |
+| ckoker.msb          |                                                                          | No idea what this is, but it *was* referenced in the makefile |
+| ckoker.rc           |                                                                          | OS/2 Resource Script                                          |
+| ckoker32.def        |                                                                          | Kermit 95 for OS/2 (32-bit)                                   |
+| ckonbi.c            | OS/2-specific NetBios support                                            |                                                               |
+| ckonov.c            | TCP/IP interface DLL between Kermit 95 and Novell LAN Workplace OS/2 3.0 |                                                               |
+| ckopcf.c            |                                                                          | pcfonts.dll: Dummy module so we can link resources to it      |
+| ckopcf.h            |                                                                          | pcfonts.dll: defines PC Font IDs for resource file            |
+| ckotcp.c            | TCP/IP interface DLL between Kermit 95 and IBM TCP/IP                    |                                                               |
+| ckotcp.h            | TCP/IP interface for OS/2 Kermit 95                                      |                                                               |
+| ckotel.c            | Kermit stub to fake IBM Telnet and IBM TelnetPM                          | telnet.exe and telnetpm.exe for OS/2                          |
+| ckotel.def          |                                                                          | Telnet front-end for Kermit 95 for OS/2                       |
+| k2.ini              |                                                                          | Default initialisation file for OS/2                          |
+| k2crypt.def         |                                                                          | Module definition file for k2crypt.dll                        |
+| osetup.def          | Kermit/2 Setup                                                           | Module definition file                                        |
+| k95f_os2.ico        |                                                                          |                                                               |
+| k95g_os2.ico        |                                                                          |                                                               |
+| mkos2.cmd           |                                                                          | OS/2 build script - build everything                          |
+| mkos2d.cmd          |                                                                          | OS/2 build script - debug build of everything                 |
 
 ### Misc files
 
@@ -365,9 +367,9 @@ Some of these should probably be included in the distribution, some are just not
 |---------------------|--------------------------------------------------------------|----------------------------------------------------------------------------|
 | 00README.TXT        | KERMIT 95 SOURCE FILES                                       | Readme from the original Kermit 95 source release                          |
 | CHANGES.TXT         | K95 2.2 Changelog                                            | List of changes between Kermit 95 2.1.3 and the unreleased Kermit 95 2.2   |
-| COPYING.TXT         | C-Kermit for Windows License                                 |                                                                            |
-| default.ini         | C-Kermit SAVE KEYMAP file                                    |                                                                            |
-| dialing.ipf         | C-Kermit's Dialing Directory                                 |                                                                            |
+| COPYING.TXT         | Kermit 95 License                                            |                                                                            |
+| default.ini         | Kermit 95 SAVE KEYMAP file                                   |                                                                            |
+| dialing.ipf         | Kermit 95's Dialing Directory                                |                                                                            |
 | emacs.ini           | EMACS key map for Kermit 95                                  |                                                                            |
 | host.ksc            | "Host mode" script for K-95.                                 |                                                                            |
 | hostcom.ksc         | Sample host mode operation for dialin connections            |                                                                            |
@@ -377,7 +379,7 @@ Some of these should probably be included in the distribution, some are just not
 | iksdpy.ksc          |                                                              | Kermit script for viewing the IKS database                                 |
 | K95-NOTES.txt       |                                                              | Kermit 95 notes from Frank da Cruz (bugs, ideas, etc)                      |
 | login.ksc           |                                                              | a general-purpose login script                                             |
-| m2zmodem.ini        | Macros for invoking M2ZMODEM from OS/2 C-Kermit              |                                                                            |
+| m2zmodem.ini        | Macros for invoking M2ZMODEM from OS/2 Kermit 95             |                                                                            |
 | NOTES.TXT           |                                                              | Notes on the current C-Kermit release                                      |
 | scoansi.ini         |                                                              | Extended Keyboard definitions for Kermit 95, Works with ANSI terminal type |
 | vt220.ini           | Extended Keyboard definitions for Kermit 95                  | Works with any VT terminal type: VT52, VT100, VT102, VT220, or VT320       |
@@ -410,12 +412,12 @@ or utilities that aren't enabled. Further investigation required for all of it.
 | klogin.c       | Klogin stub for Kermit 95                                | doesn't appear to be used                                                                                      |
 | listcomx.c     |                                                          | Probably junk - program to list serial ports?                                                                  |
 | match.ksc      |                                                          | Probably junk                                                                                                  |
-| mksrczip.bat   |                                                          | builds a zip of the CKW source code - probably junk                                                            |
+| mksrczip.bat   |                                                          | builds a zip of the K95 source code - probably junk                                                            |
 | mnem.dat       |                                                          | No idea - junk probably                                                                                        |
 | mnem.syms      |                                                          | No idea - junk probably                                                                                        |
 | modems.ipf     |                                                          | Source for a book or manual: C-Kermit's Modem Support                                                          |
 | modetst.c      |                                                          | Probably junk - program to get OS/2 console mode                                                               |
-| print.c        |                                                          | Probably Junk - sample code for to send binary data to a printer on windows                                   |
+| print.c        |                                                          | Probably Junk - sample code for to send binary data to a printer on windows                                    |
 | prof.bat       |                                                          | Probably junk - script for profiling cknker.exe with some tool                                                 |
 | prof2.bat      |                                                          | Probably junk - script for profiling cknker.exe with some tool                                                 |
 | ptest.c        |                                                          | Probably junk - a printer test app for windows                                                                 |
@@ -424,11 +426,11 @@ or utilities that aren't enabled. Further investigation required for all of it.
 | setup.mak      |                                                          | Probably junk. Makefile for setup.exe which I think can be built by the main makefile now                      |
 | srpfltr.c      |                                                          | Probably junk - appears unusued                                                                                |
 | srpw95pp.reg   |                                                          | Maybe junk - registry entries for some SRP thing                                                               |
-| startk95.c     |                                                          | Example code: how to start CKW from another Win32 application                                                  |
+| startk95.c     |                                                          | Example code: how to start K95 from another Win32 application                                                  |
 | stub.c         | Stub for Kermit 95                                       | Example code I guess - for building things like the telnet stub                                                |
 | timesync.c     | "timesync stuff for leash"                               | Probably old Kerberos junk. Appears unused.                                                                    |
 | trim.c         | Trim trailing whitespace from file lines and/or untabify | Utility program. Appears unusued (not built by any makefile)                                                   |
 | url.c          |                                                          | Probably junk - appears unused                                                                                 |
 | vttime.c       |                                                          | Probably junk - appears unused. Program to set the clock on a VT series terminal based on the system time.     |
-| wtest.def      | C-Kermit for Windows NT Test                             | Almost certainly junk. Module definition file for test.exe, the source code for which does not exist.          |
+| wtest.def      | Kermit 95 NT Test                                        | Almost certainly junk. Module definition file for test.exe, the source code for which does not exist.          |
 | zip.sh         |                                                          | Script used to create the original Kermit 95 open source source release. Junk at this point, its done its job. |

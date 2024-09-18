@@ -1,4 +1,4 @@
-/* C-Kermit for Windows SSH Subsystem
+/* Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,11 @@
 
 #include "ckorbf.h"
 
+#ifdef SSH_DLL
+#undef debug
+#define debug(a,b,c,d) \
+((void)(debug_logging()?dodebug(a,b,(char *)(c),(CK_OFF_T)(d)):0))
+#endif /* SSH_DLL */
 
 #define SESSION_TYPE_PTY        0
 #define SESSION_TYPE_COMMAND    1
@@ -73,6 +78,54 @@
 #define SSH_ERR_BUFFER_CONSUME_FAILED -24 /* Failed to consume processed data from a ring buffer */
 #define SSH_ERR_BUFFER_WRITE_FAILED -25 /* Writing to a buffer failed, data has been lost */
 #define SSH_ERR_THREAD_STATE_UNKNOWN -26 /* SSH thread failed to start or fail in a reasonable time. State is now unknown */
+#define SSH_ERR_LISTEN_SOCKET_CREATE_FAILED -27 /* Failed to create listen socket for direct forward */
+#define SSH_ERR_DIRECTFWD_GETADDRINFO_FAILED -28 /* Call to getaddrinfo failed while setting up direct forward server */
+#define SSH_ERR_DIRECTFWD_BIND_FAILED -29 /* Call to bind failed while setting up direct forward server */
+#define SSH_ERR_DIRECTFWD_LISTEN_FAILED -30 /* Call to listen failed while setting up direct forward server */
+#define SSH_ERR_MUTEX_TIMEOUT -31       /* Timeout waiting for mutext */
+
+#ifndef SSH_PF_T
+#define SSH_PF_T
+/* Copied from ckossh.h */
+#define SSH_PORT_FORWARD_NULL       0
+#define SSH_PORT_FORWARD_LOCAL      1
+#define SSH_PORT_FORWARD_REMOTE     2
+#define SSH_PORT_FORWARD_INVALID   99       /* Invalid entry / free for re-use */
+typedef struct ssh_port_forward {
+    /* Type of port forward. One of:
+     *  SSH_PORT_FORWARD_LOCAL      Local (Direct) port forward
+     *  SSH_PORT_FORWARD_REMOTE     Remote (Reverse) port forward
+     *  SSH_PORT_FORWARD_INVALID    Empty list entry. Can be overwritten with a
+     *                              new entry. Should otherwise be skipped over
+     *  SSH_PORT_FORWARD_NULL       End of list marker
+     *  */
+    int type;
+
+    /* For remote (reverse) forwards: address on the server to bind to.
+     * Use NULL to bind ot all addresses.
+     *
+     * For local (direct) forwards: the address/host name for the servers
+     * logs.
+     * */
+    char* address;
+
+    /* This is the port that listens for new connections. Its either on the
+     * local host (Local/Direct forwarding) or the remote host (Remote/Reverse
+     * forwarding.
+     *
+     * For Remote/Reverse forwarding, you can set this to 0 to allow the server
+     * to choose the port.
+     * */
+    int port;
+
+    /* This is the host and port that connections will be made to when
+     * something makes a connection to port 1. For Local (Direct) forwarding,
+     * it's something accessible to the remote host, and for Remote (Reverse)
+     * forwarding it's something accessible to the local host. */
+    char* hostname;
+    int host_port;
+} ssh_port_forward_t;
+#endif /* SSH_PF_T */
 
 #define MAX_AUTH_METHODS 10
 
@@ -114,10 +167,12 @@ typedef struct {
      * the password auth option. */
     BOOL allow_password_auth;
 
-    /* TODO: When agent, X11, and other port forwarding is added
-     *      all forwarding should be forced off/cleared when host key
-     *      verification fails and strict host key checking is set to no.
-     */
+    const ssh_port_forward_t *port_forwards;
+
+    BOOL forward_x;             /* Forward X11 ? */
+    char* x11_host;             /* Host where the X server is running */
+    int x11_display;            /* X11 display number */
+    char* xauth_location;       /* Xauth location (filename) */
 } ssh_parameters_t;
 
 
@@ -130,13 +185,13 @@ typedef struct {
 
     /* Events raised by C-Kermit to signal conditions to the SSH thread */
     HANDLE disconnectEvent;   /* Disconnect requested by C-Kermit */
-    HANDLE ptySizeChangedEvent; /* CKW Terminal size changed. Store new values
+    HANDLE ptySizeChangedEvent;   /* K95 Terminal size changed. Store new values
                                    * in pty_height and pty_width */
     HANDLE flushEvent; /* Flush requested by C-Kermit */
     HANDLE breakEvent; /* Send break requested by C-Kermit */
-    HANDLE dataArrivedEvent; /* CKW has put data in the input buffer to be sent */
+    HANDLE dataArrivedEvent; /* K95 has put data in the input buffer to be sent */
 
-    /* CKW has consumed data from the output buffer. Only raised when the
+    /* K95 has consumed data from the output buffer. Only raised when the
      * output buffer transitions from full to less than full in case the
      * network has more data waiting but couldn't do anything with it because of
      * a full buffer */
@@ -153,6 +208,9 @@ typedef struct {
     char* error_message; /* An error message, if any */
     int pty_height, pty_width; /* For sending terminal size changes to the SSH thread */
 
+    HANDLE forwards_mutex;           /* Guards the list of ssh_forward_t */
+    struct ssh_forward *forwards;         /* Linked list of SSH forwarding config */
+    HANDLE forwardingConfigChanged;
 } ssh_client_t;
 
 
@@ -192,17 +250,24 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param key_exchange_methods Comma-separated list of key exchange methods
  * @param nodelay Set to disable Nagle's algorithm
  * @param proxy_command Set the command to be executed in order to connect to server
+ * @param forward_x Forward X11
+ * @param display_host Host running the X11 server
+ * @param display_number X11 display number
+ * @param xauth_location Xauth location
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
-        char* hostname, char* port, int verbosity, char* command,
+        const char* hostname, char* port, int verbosity, const char* command,
         BOOL subsystem, BOOL compression, BOOL use_openssh_config,
         BOOL gssapi_delegate_credentials, int host_key_checking_mode,
-        char* user_known_hosts_file, char* global_known_hosts_file,
-        char* username, char* password, char* terminal_type, int pty_width,
-        int pty_height, char* auth_methods, char* ciphers, int heartbeat,
-        char* hostkey_algorithms, char* macs, char* key_exchange_methods,
-        int nodelay, char* proxy_command);
+        const char* user_known_hosts_file, const char* global_known_hosts_file,
+        const char* username, const char* password, const char* terminal_type,
+        int pty_width, int pty_height, const char* auth_methods,
+        const char* ciphers, int heartbeat, const char* hostkey_algorithms,
+        const char* macs, const char* key_exchange_methods, int nodelay,
+        const char* proxy_command, const ssh_port_forward_t *port_forwards,
+        BOOL forward_x, const char* display_host, int display_number,
+        const char* xauth_location);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

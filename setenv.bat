@@ -55,13 +55,18 @@ set srp_root=%root%\srp
 
 REM Kerberos for Windows. Some examples of what you should find in the k4w_root:
 REM    target\bin\i386\rel\wshelp32.dll
-REM    target\lib\ie86\rel\wshload.lib
+REM    target\lib\i386\rel\wshload.lib
 REM    athena\wshelper\include\wshelper.h
-REM Kermit 95 was last built with v2.2-beta2. CKW is known to work with 2.6.0.
+REM Kermit 95 was last built with v2.2-beta2. K95 is known to work with 2.6.0.
 REM
 REM You can also point this at the root directory for the Kerberos for Windows
 REM 3.x or 4.x SDK.
 set k4w_root=%root%\kerberos\kfw-2.2-beta-2
+
+REM Regina REXX. We expect to find in here:
+REM     \lib\rexx.lib or ( \lib\regina.lib and \regina.dll )
+REM     \include\rexxsaa.h
+set rexx_root=%root%\rexx\regina396w32
 
 REM Make program must be something sufficiently compatible with nmake 1.40 (Visual C++ 1.1). Jom is recommended
 REM for doing parallel builds.
@@ -111,6 +116,11 @@ if %errorlevel% == 0 goto :axp
 cl 2>&1 | findstr /C:"for MIPS R-Series" > nul
 if %errorlevel% == 0 goto :mips
 
+REM Win32 SDK Final Release MIPS compiler (NT 3.1)
+REM Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+cl 2>&1 | findstr /C:"Microsoft (R) C Centaur Optimizing Compiler" > nul
+if %errorlevel% == 0 goto :mips
+
 cl 2>&1 | findstr /C:"for PowerPC" > nul
 if %errorlevel% == 0 goto :ppc
 
@@ -124,7 +134,7 @@ goto :bits32
 
 :arm
 REM 32bit ARM (Windows RT)
-REM TODO: Check
+set CKB_OPENSSL_SUFFIX=-arm
 set CKB_TARGET_ARCH=ARM
 goto :bits32
 
@@ -177,7 +187,7 @@ REM due to lack of C99 support. Force it off.
 set CKF_SSH=no
 
 REM Also no ZLIB support on Itanium (couldn't get it to easily
-REM cross-compile) - not that CKW actually uses zlib for anything.
+REM cross-compile) - not that K95 actually uses zlib for anything.
 set CKF_ZLIB=no
 goto :bits64
 
@@ -230,10 +240,10 @@ if exist %root%\superlat\include\latioc.h set ckinclude=%ckinclude%;%root%\super
 :nosuperlat
 
 REM This and everything else is windows-specific.
-set ckwinclude=%ckinclude%;%root%\kermit\k95\kui
+set k95include=%ckinclude%;%root%\kermit\k95\kui
 
 REM Set include path for targeting Windows.
-set include=%include%;%ckwinclude%
+set include=%include%;%k95include%
 
 REM Handle path overrides. These are to allow the build server to override any
 REM hard-coded definitions in here without having to modify.
@@ -244,6 +254,7 @@ if not "%libssh_build_override%"=="" set libssh_build=%libssh_build_override%
 if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
 if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
+if not "%rexx_root_override%"=="" set rexx_root=%rexx_root_override%
 if not "%make_override%"=="" set make=%make_override%
 
 REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
@@ -303,7 +314,7 @@ set CKF_ZLIB=no
 if exist %zlib_root%\zlib.h set include=%include%;%zlib_root%
 if exist %zlib_root%\zlib.lib set lib=%lib%;%zlib_root%
 if exist %zlib_root%\zlib.lib set CKF_ZLIB=yes
-if exist %zlib_root%\zlib.lib echo Found zlib
+if exist %zlib_root%\zlib.lib echo Found zlib: %zlib_root%\zlib.lib
 if exist %zlib_root%\zlib1.dll set CK_ZLIB_DIST_DLLS=%zlib_root%\zlib1.dll
 :nozlib
 
@@ -321,7 +332,7 @@ if exist %openssl_root%\inc32\openssl\NUL set include=%include%;%openssl_root%\i
 REM OpenSSL 1.1.x, 3.0.x
 if exist %openssl_root%\libssl.lib set lib=%lib%;%openssl_root%
 if exist %openssl_root%\libssl.lib set CKF_SSL=yes
-if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x
+if exist %openssl_root%\libssl.lib echo Found OpenSSL 1.1.x or 3.0.x: %openssl_root%\libssl.lib
 if exist %openssl_root%\libssl.lib set CKF_SSL_LIBS=libssl.lib libcrypto.lib
 if exist %openssl_root%\apps\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\apps\openssl.exe
 
@@ -337,7 +348,7 @@ REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_OPENSSL_VERSION=0.9.8 or 1.0.x
-if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x
+if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x: %openssl_root%\out32dll\ssleay32.lib
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
@@ -351,8 +362,19 @@ set CKF_SSH=no
 if exist %libssh_root%\include\NUL set include=%include%;%libssh_root%\include;%libssh_build%\include
 if exist %libssh_build%\src\ssh.lib set lib=%lib%;%libssh_build%\src
 if exist %libssh_build%\src\ssh.lib set CKF_SSH=yes
-if exist %libssh_build%\src\ssh.lib echo Found libssh
+if exist %libssh_build%\src\ssh.lib echo Found libssh: %libssh_build%\src\ssh.lib
 if exist %libssh_build%\src\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\ssh.dll
+
+if exist %libssh_build%\src\out\ssh.lib set lib=%lib%;%libssh_build%\src\out
+if exist %libssh_build%\src\out\ssh.lib echo Found libssh: %libssh_build%\src\out\ssh.lib
+if exist %libssh_build%\src\out\ssh.lib set CKF_SSH=yes
+if exist %libssh_build%\src\out\ssh.lib set lib=%lib%;%libssh_build%\src\out
+if exist %libssh_build%\src\out\ssh.dll set CK_SSH_DIST_DLLS=%libssh_build%\src\out\ssh.dll
+if exist %libssh_build%\src\out\sshg.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshg.dll
+if exist %libssh_build%\src\out\sshx.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshx.dll
+if exist %libssh_build%\src\out\sshgx.dll set CK_SSH_DIST_DLLS=%CK_SSH_DIST_DLLS% %libssh_build%\src\out\sshgx.dll
+if "%CKF_SSH%" == "no" echo Could not find libssh (%libssh_build%\src\ssh.lib or %libssh_build%\src\out\ssh.lib)
+if "%CKF_SSH%" == "no" goto :nossh
 :nossh
 
 REM libdes:
@@ -360,8 +382,9 @@ echo.
 if "%CKF_LIBDES%" == "no" echo Skipping check for libdes
 if "%CKF_LIBDES%" == "no" goto :nolibdes
 set CKF_LIBDES=no
+if not exist %libdes_root%\des\des.h echo Could not find libdes (%libdes_root%\des\des.h)
 if not exist %libdes_root%\des\des.h goto :nolibdes
-echo Found libdes
+echo Found libdes: %libdes_root%\des\des.h
 set CKF_LIBDES=yes
 set CKF_CRYPTDLL=yes
 set INCLUDE=%include%;%libdes_root%
@@ -382,7 +405,7 @@ if "%CKF_LIBDES%" == "no" goto :nosrp
 if "%CKF_SRP%" == "no" echo Skipping check for SRP
 if "%CKF_SRP%" == "no" goto :nosrp
 set CKF_SRP=no
-if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib echo Stanford SRP not found.
+if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib echo Stanford SRP not found (%srp_root%\win32\libsrp_openssl\Release\srp.lib)
 if not exist %srp_root%\win32\libsrp_openssl\Release\srp.lib goto :nosrp
 echo Found Stanford SRP
 set CKF_SRP=yes
@@ -456,6 +479,42 @@ REM TODO: also need the MFC DLLs
 for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
+echo Searching for REXX...
+set CKF_REXX=no
+if not exist %rexx_root%\include\rexxsaa.h echo Can't find rexxsaa.h
+if not exist %rexx_root%\include\rexxsaa.h goto :norex
+
+if exist %rexx_root%\lib\regina.lib set CKB_REXX_DYNAMIC=yes
+if exist %rexx_root%\lib\rexx.lib set CKB_REXX_STATIC=yes
+
+if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_STATIC=no
+if "%CKB_REXX_DYNAMIC%" == "yes" set CKB_REXX_DIST_DLLS=%rexx_root%\regina.dll %rexx_root%\regutil.dll %rexx_root%\en.mtb
+if "%CKB_REXX_DYNAMIC%" == "yes" set REXX_LIB=regina.lib
+if "%CKB_REXX_DYNAMIC%" == "yes" goto :haverex
+
+if "%CKB_REXX_STATIC%" == "yes" set REXX_LIB=rexx.lib
+if "%CKB_REXX_STATIC%" == "yes" goto :haverex
+
+REM We have the header, but we couldn't find the static or dynamic link
+REM library, so we don't have enough for REX support
+echo Couldn't find rexx.lib or regina.lib.
+set CKF_REXX=no
+
+:haverex
+set INCLUDE=%INCLUDE%;%rexx_root%\include\
+set LIB=%LIB%;%rexx_root%\lib\
+set CKF_REXX=yes
+
+REM Additional files from the Regina REXX distribution that we *could* include
+REM if we wanted to. They're not required for K95 to function at all. If we
+REM had a installer, these would be an optional "Additional Regina REXX components"
+REM feature.
+set CKF_REGINA_EXTRA=%rexx_root%\regina.exe %rexx_root%\rexx.exe %rexx_root%\rxqueue.exe %rexx_root%\rxstack.exe %rexx_root%\de.mtb %rexx_root%\es.mtb %rexx_root%\no.mtb %rexx_root%\pl.mtb %rexx_root%\pt.mtb %rexx_root%\sv.mtb %rexx_root%\tr.mtb
+
+if "%CKB_REXX_DYNAMIC%" == "yes" echo Found REXX (Dynamic)
+if "%CKB_REXX_STATIC%" == "yes" echo Found REXX (Static)
+
+:norex
 
 REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
@@ -471,11 +530,16 @@ set CK_COMPILER_NAME=unknown
 set ZINCBUILD=
 set CKF_ZINC=no
 set BUILD_ZINC=no
+set CKB_9X_COMPATIBLE=no
+set CKB_NT_COMPATIBLE=no
+set CKB_XP_COMPATIBLE=no
 
 REM We can't look at OpenWatcoms help output for a version number because it
 REM waits for input ("Press any key to continue:"), so we'll just detect it by
 REM the presence of its environment variables.
 if exist %WATCOM%\binnt\wcl386.exe goto :watcomc
+cl 2>&1 | findstr /C:"Version 19.4" > nul
+if %errorlevel% == 0 goto :vc144
 cl 2>&1 | findstr /C:"Version 19.3" > nul
 if %errorlevel% == 0 goto :vc143
 cl 2>&1 | findstr /C:"Version 19.2" > nul
@@ -516,6 +580,8 @@ cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul
 if %errorlevel% == 0 goto :vc1
 cl 2>&1 | findstr /R /C:"AXP.*Version 8\.0" > nul
 if %errorlevel% == 0 goto :vc1axp
+cl 2>&1 | findstr /R /C:"C Centaur.*Version 8\.00" > nul
+if %errorlevel% == 0 goto :vc1mips
 cl 2>&1 | findstr /C:"Version 8.00" > nul
 if %errorlevel% == 0 goto :vc116
 
@@ -528,12 +594,15 @@ set ZINCBUILD=ow19
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 REM For openwatcom we have to use its nmake clone
 set MAKE=nmake
 
-REM OpenWatcom doesn't include TAPI headers to we bundle them with CKW. Add them to the include
+REM OpenWatcom doesn't include TAPI headers to we bundle them with K95. Add them to the include
 REM path so the dialer can find them.
 set include=%include%;%root%\kermit\k95\ow
 goto :cvcdone
@@ -545,7 +614,9 @@ set CKF_SUPERLAT=unsupported
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
 goto :semisupported
 
 :vc1
@@ -554,7 +625,10 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc1axp
@@ -564,7 +638,27 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
+set CKB_NT_COMPATIBLE=yes
+
+REM As this compiler doesn't include msvcrt...
+set CKB_STATIC_CRT=yes
+
 goto :cvcdone
+
+:vc1mips
+REM This is in the Win32 SDK Final Release (NT 3.1) compiler.
+REM Doesn't include Visual C++ libs/runtime (msvcrt)
+set CK_COMPILER_NAME=Win32 SDK Final Release (MIPS) Centaur C 8.0
+set CKF_SSH=unsupported
+set CKF_SSL=unsupported
+set CKF_LIBDES=unsupported
+set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
+set CKB_STATIC_CRT=yes
+set CKB_NT_COMPATIBLE=yes
+goto :cvcdone
+
 
 :vc2
 :vc21
@@ -575,7 +669,10 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
 if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
@@ -591,7 +688,10 @@ set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
+set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "PPC" set ZINCBUILD=mvcpp400mt-ppc
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp400mt-alpha
@@ -605,6 +705,8 @@ set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp500mt-alpha
 
@@ -614,6 +716,8 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 
 if "%CKB_TARGET_ARCH%" == "ALPHA" set ZINCBUILD=mvcpp600mt-alpha
 
@@ -623,56 +727,81 @@ goto :cvcdone
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
 set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
+
+REM libdes won't build for Alpha64
+if "%CKB_TARGET_ARCH%" == "ALPHA64" set CKF_LIBDES=unsupported
+if "%CKB_TARGET_ARCH%" == "ALPHA64" set CKF_CRYPTDLL=no
+
 goto :cvcdone
 
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
 set CKB_9X_COMPATIBLE=yes
+set CKB_NT_COMPATIBLE=yes
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc9
 set CK_COMPILER_NAME=Visual C++ 2008 (9.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc10
 set CK_COMPILER_NAME=Visual C++ 2010 (10.0)
 set ZINCBUILD=mvcpp10
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc11
 set CK_COMPILER_NAME=Visual C++ 2012 (11.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc12
 set CK_COMPILER_NAME=Visual C++ 2013 (12.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc140
 set CK_COMPILER_NAME=Visual C++ 2015 (14.0)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc141
 set CK_COMPILER_NAME=Visual C++ 2017 (14.1)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc142
 set CK_COMPILER_NAME=Visual C++ 2019 (14.2)
 set CKF_SUPERLAT=unsupported
+set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
+
+REM Visual C++ 2022 and newer are not suitable for targeting XP.
 
 :vc143
 set CK_COMPILER_NAME=Visual C++ 2022 (14.3)
+set CKF_SUPERLAT=unsupported
+goto :cvcdone
+
+:vc144
+set CK_COMPILER_NAME=Visual C++ 2022 17.10+ (14.4)
 set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
@@ -682,7 +811,7 @@ REM requires Windows NT 3.5x or 4.0 (2000 and newer are unsupported)
 :unsupported
 echo.
 echo -- Unsupported compiler: %CK_COMPILER_NAME% --
-echo C-Kermit for Windows has not been tested with this compiler and may not build.
+echo Kermit 95 has not been tested with this compiler and may not build.
 echo.
 goto :cvcend
 
@@ -760,7 +889,7 @@ if "%CK_K95CINIT%" == "yes" goto :build_k95cinit
 REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
-set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES%
+set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS%
 
 echo -----------------------------
 echo.
@@ -769,6 +898,9 @@ echo    %include%
 echo.
 echo Library path set to:
 echo    %lib%
+echo.
+echo DIST DLLs set to:
+echo    %CK_DIST_DLLS%
 echo.
 echo Compiler: %CK_COMPILER_NAME%
 echo.
@@ -784,6 +916,8 @@ echo   libdes: %CKF_LIBDES%
 echo SuperLAT: %CKF_SUPERLAT%
 echo      SRP: %CKF_SRP%
 echo Kerberos: %CKF_K4W% (Kerberos+SSL: %CKF_K4W_SSL%, DNS-SRV: %CKF_K4W_WSHELPER%, KRB4: %CKF_K4W_KRB4%)
+if "%CKF_REXX%" == "yes" echo     REXX: %CKF_REXX% (%REXX_LIB%)
+if "%CKF_REXX%" == "no" echo     REXX: %CKF_REXX%
 echo.
 if "%BUILD_ZINC%" == "yes" echo OpenZinc is required for building the dialer. You can build it by extracting
 if "%BUILD_ZINC%" == "yes" echo the OpenZinc distribution to %root%\zinc and running

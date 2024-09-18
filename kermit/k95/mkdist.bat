@@ -22,10 +22,14 @@ if not exist dist\users\NUL mkdir dist\users
 
 @echo Move build outputs...
 move *.exe dist
+move *.pdb dist
+if exist dist\nullssh.pdb delete dist\nullssh.pdb
+move k95ssh*.dll dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
 copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
+ren dist\cknker.pdb k95.pdb
 ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
 REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
@@ -61,6 +65,8 @@ REM OpenSSL License was renamed in 3.0.0 to LICENSE.txt
 if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist\COPYING.openssl
 if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
 :nossl
+
+if exist dist\regina.dll copy %rexx_root%\COPYING-LIB dist\COPYING.regina
 
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
@@ -111,7 +117,7 @@ REM PRINTER directory
 REM originally contained:
 REM     pcaprint.sh, pcprint.com, pcprint.man, pcprint.sh
 REM         Utilities for printing from a unix or VMS host to a local printer
-REM         via CKW
+REM         via K95
 REM     textps.txt
 REM         Documentation for the textps utility
 REM     readme.txt
@@ -130,7 +136,7 @@ for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
 copy scripts-readme.txt dist\scripts\readme.txt
 
 REM SSH directory
-REM Empty directory in K-95, location not used by CKW SSH subsystem
+REM Empty directory in K-95, location not used by the new K95 SSH subsystem
 
 REM USERS directory
 @echo Copy User files...

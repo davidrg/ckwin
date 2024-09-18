@@ -97,11 +97,11 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 #ifdef NT
 #include <windows.h>
 #include <commctrl.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #ifdef CK_TAPI
 int TAPIAvail = 0 ;   /* is TAPI Installed */
@@ -190,12 +190,20 @@ static char *ckxrev = "32-bit";
 #define INCL_DOSDATETIME
 #define INCL_DOSNMPIPES
 #include <os2.h>        /* This pulls in a whole load of stuff */
+#undef COMMENT
+#endif /* NT */
+
 #ifdef CK_REXX
+
+#ifdef NT
+/* Regina REXX wants to typedef char to CHAR, but we already do that */
+#define CHAR_TYPEDEFED
+#define USHORT_TYPEDEFED
+#endif
+
 #define  INCL_REXXSAA
 #include <rexxsaa.h>
 #endif /* CK_REXX */
-#undef COMMENT
-#endif /* NT */
 
 #include "ckowin.h"
 #include "ckcuni.h"
@@ -9521,6 +9529,66 @@ get_os2_vers() {
 extern char * mrval[] ;
 extern int maclvl ;
 
+#ifdef NT
+LONG APIENTRY os2rexx_exit_handler(
+        LONG ExitNumber,
+        LONG Subfunction,
+        PEXIT ParamBlock
+        ) {
+
+    debug(F111, "os2rexx_exit_handler", "ExitNumber", ExitNumber);
+    debug(F111, "os2rexx_exit_handler", "Subfunction", Subfunction);
+
+    switch(ExitNumber) {
+        case RXSIO: {
+            switch(Subfunction) {
+                case RXSIOSAY:
+                    {
+                        RXSIOSAY_PARM *param;
+                        RXSTRING sayString;
+
+                        param = (RXSIOSAY_PARM*)ParamBlock;
+                        sayString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(sayString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(sayString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(sayString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - say", buf, 0);
+
+                                printf("%s\n", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
+                case RXSIOTRC:
+                case RXSIOTRD:
+                case RXSIODTR:
+                case RXSIOTLL:
+                default:
+                    return RXEXIT_NOT_HANDLED;
+                    break;
+            }
+        }
+        break;
+    case RXFNC:
+        /* TODO: Handle RexxUtil Console I/O functions */
+    default:
+        return RXEXIT_NOT_HANDLED;
+        break;
+    }
+}
+
+#endif /* NT */
+
 /* This is the CkCommand/CKermit function handler.  It is an undocumented  */
 /* Kermit feature.  Do not remove this code.                             */
 
@@ -9582,33 +9650,72 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
     RXSTRING  Instore[2] ; /* Instorage rexx procedure */
     RXSTRING  retstr  ;  /* program return value    */
     int       retval  ;  /* os2rexx return value    */
+    RXSYSEXIT exits[2];  /* Exit handlers */
 
     MAKERXSTRING( Instore[0], rexxcmd, strlen(rexxcmd) ) ;
     MAKERXSTRING( Instore[1], 0, 0 ) ;
     MAKERXSTRING( retstr, return_buffer, sizeof(return_buffer) ) ;
 
+#ifdef NT
+    /*
+     * Register an exit handler so that "say" works. This is NT only
+     * for now as I'm not sure if it is required on OS/2 at all.
+     */
+
+    RexxRegisterExitExe( "CKExitHandler",
+#ifdef RX_WEAKTYPING
+                        (PFN) os2rexx_exit_handler,
+#else
+                        os2rexx_exit_handler,
+#endif
+                        NULL );     /* User Area */
+
+    exits[0].sysexit_name = "CKExitHandler";
+    exits[0].sysexit_code = RXSIO;
+    exits[1].sysexit_code = RXENDLST;
+#endif /* NT */
+
     debug(F110,"os2rexx: procedure",rexxcmd,0);
     return_code = RexxStart( 0,   /* no program arguments */
                              0,   /* null argument list   */
+#ifdef NT
+                            "Kermit 95 REXX Command",
+#else
                             "Kermit for OS/2 REXX Command",
+#endif
                                                /* default program name */
                             Instore, /* rexx procedure to interpret */
                             "CKermit",         /* default address name */
                             RXFUNCTION,         /* calling as a function */
+#ifdef NT
+                            exits,              /* Exit handlers */
+#else
                             0,                  /* no exits used */
+#endif /* NT */
                             &rc,                /* converted return code */
                             &retstr);           /* returned result */
 
     debug(F111,"os2rexx: returns",RXSTRPTR(retstr),return_code);
+    debug(F111,"os2rexx: retstr",RXSTRPTR(retstr),RXSTRLEN( retstr ));
     if ( !return_code && RXSTRLEN( retstr ) < rexxbuflen ) {
-        ckstrncpy( rexxbuf, RXSTRPTR(retstr), RXSTRLEN( retstr ) );
+        ckstrncpy( rexxbuf, RXSTRPTR(retstr), rexxbuflen );
+        debug(F110,"os2rexx: rexxbuf",rexxbuf,0);
         retval = 0 ;                    /* Success */
     } else {
         rexxbuf[0] = '\0' ;
         retval = 1 ;                    /* Failure */
     }
-    if (RXSTRPTR(retstr) != return_buffer)
-      DosFreeMem(RXSTRPTR(retstr));
+    if (RXSTRPTR(retstr) != return_buffer) {
+        if (RXSTRPTR(retstr) != NULL) {
+#ifdef NT
+            free(RXSTRPTR(retstr));
+#else
+            DosFreeMem(RXSTRPTR(retstr));
+#endif
+        }
+    }
+
+    printf("\n");
 
     return retval ;
 }
@@ -9629,11 +9736,6 @@ os2rexxinit()
 #endif /* CK_REXX */
 
 #define TITLEBUF_LEN 128
-#ifdef NT
-#define TITLE_PLATFORM "Windows"
-#else
-#define TITLE_PLATFORM "OS/2"
-#endif
 int
 os2settitle(char *newtitle, int newpriv ) {
 #ifndef NOLOCAL
@@ -9673,24 +9775,24 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "",
+                 private ? (inserver ? " - IKS" : " - Kermit 95") : "",
                      videomode
                  );
         }
         else {
             _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "", videomode
+                 private ? (inserver ? " - IKS" : " - Kermit 95") : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) :  "", videomode
+                 private ? (inserver ? "IKS" : "Kermit 95") :  "", videomode
                  );
     }
     else {
         _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) : "" , videomode
+                 private ? (inserver ? "IKS" : "Kermit 95") : "" , videomode
                  );
     }
 
@@ -9901,9 +10003,9 @@ void
 DisplayCommProperties(HANDLE h)
 {
     COMMPROP *     lpCommProp = NULL;
-#ifndef NODIAL
+#ifdef CK_TAPI
     LPMODEMDEVCAPS lpModemDevCaps = NULL;
-#endif
+#endif /* CK_TAPI */
     int rc=0;
 
     /* leave enough room for provider specific information */
@@ -10065,7 +10167,7 @@ DisplayCommProperties(HANDLE h)
     printf("  Current Tx Queue   = %d (bytes)\n",lpCommProp->dwCurrentTxQueue);
     printf("  Current Rx Queue   = %d (bytes)\n",lpCommProp->dwCurrentRxQueue);
 
-#ifndef NODIAL
+#ifdef CK_TAPI
     if ( lpCommProp->dwProvSubType == PST_MODEM && lpCommProp->wcProvChar[0]) {
         lpModemDevCaps = (LPMODEMDEVCAPS) lpCommProp->wcProvChar;
         printf("Modem Device Capabilities:\n");
@@ -10179,7 +10281,7 @@ DisplayCommProperties(HANDLE h)
         printf("  Max DCE Rate           = %d (bits/second)\n",
                 lpModemDevCaps->dwMaxDCERate);
     }
-#endif /* NODIAL */
+#endif /* CK_TAPI */
     printf("\n");
     free(lpCommProp);
     return;

@@ -583,13 +583,11 @@ ckltox(n) long n;
     numbp += k+1;
     return(q);				/* Return pointer */
 }
-
-
 /*  C K F S T O A  --  File Size (or offset) to string  */
 
 /* This is just like ckltoa() except for the data type of the argument. */
 /* It's mainly for printing file sizes without having to know their data */
-/* type, so we don't have to hardware "%ld" or "%lld" into printf()s. */
+/* type, so we don't have to hardwire "%ld" or "%lld" into printf()s. */
 /* Works for 32 or 64 bits, according to CK_OFF_T definition. */
 
 char *
@@ -2303,7 +2301,7 @@ ckround(fpnum,places,obuf,obuflen)
 	}
     }
     if (minus) number--;                /* Back up to minus sign, if any. */
-#ifdef __alpha
+#ifdef FLT_NOT_DBL
     sscanf(number,"%f",&value);		/* Convert back to floating point */
 #else
     sscanf(number,"%lf",&value);        /* Convert back to floating point */

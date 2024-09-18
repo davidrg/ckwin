@@ -43,6 +43,11 @@ COMPILER_VERSION = Visual C++ 7.0 compatible
 MSC_VER = 120
 COMPILER_VERSION = Digital Mars C/C++
 
+!ELSEIF ([cl 2>&1 | findstr /C:"Version 19.4" > nul] == 0)
+# Visual C++ 14.3 (Visual Studio 2022)
+MSC_VER = 194
+COMPILER_VERSION = 14.4 (Visual Studio 2022)
+
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 19.3" > nul] == 0)
 # Visual C++ 14.3 (Visual Studio 2022)
 MSC_VER = 193
@@ -167,6 +172,16 @@ COMPILER_VERSION = 2.0
 MSC_VER = 80
 COMPILER_VERSION = 1.00 (NT 3.50 SDK, AXP)
 
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Centaur.*Version 8\.00" > nul] == 0)
+# The Win32 SDK Final Release (NT 3.1) MIPS compiler calls itself:
+# Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+
+MSC_VER = 80
+COMPILER_VERSION = 1.00 (NT 3.1 SDK, MIPS)
+
+# This compiler behaves weirdly. Flag it so we can deal with it later.
+MIPS_CENTAUR = yes
+
 !ELSEIF ([cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul] == 0)
 # This could also pick up the Win32 SDK, the final release of which calls itself:
 #   Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 8.00.3190a
@@ -218,6 +233,12 @@ TARGET_PLATFORM = Windows
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for MIPS R-Series" > nul] == 0)
 # We're targeting (and running on) Windows NT MIPS
+TARGET_CPU = MIPS
+
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Centaur.*Version 8\.00" > nul] == 0)
+# The Win32 SDK Final Release (NT 3.1) MIPS compiler calls itself:
+# Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+
 TARGET_CPU = MIPS
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for PowerPC" > nul] == 0)
@@ -286,5 +307,38 @@ TARGET_PLATFORM = Macintosh
 TARGET_CPU = x86
 
 !ENDIF
+
+# Figure out the host CPU Architecture
+HOST_CPU = $(PROCESSOR_ARCHITECTURE)
+!if "$(HOST_CPU)" == "AMD64"
+HOST_CPU = x86-64
+!endif
+
+# And if we're cross-compiling from a CPU architecture
+# other than the target.
+CROSS_BUILD = no
+!if "$(HOST_CPU)" != "$(TARGET_CPU)"
+CROSS_BUILD = yes
+!endif
+
+# And if we're cross-compiling, can we
+CROSS_BUILD_COMPATIBLE = yes
+!if "$(CROSS_BUILD)" == "yes"
+# We're cross-compiling.
+
+!if "$(HOST_CPU)" == "x86-64" && "$(TARGET_CPU)" == "x86"
+CROSS_BUILD_COMPATIBLE = yes
+
+!elseif "$(HOST_CPU)" == "ARM64" && "$(TARGET_CPU)" == "ARM"
+# TODO: Is this actually true? Do the compilers even run on these architectures?
+CROSS_BUILD_COMPATIBLE = yes
+
+!else
+# x86 can't run x86-64 code for example.
+CROSS_BUILD_COMPATIBLE = no
+
+!endif
+
+!endif
 
 !endif

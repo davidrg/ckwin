@@ -1,6 +1,6 @@
-# CKW Build Flags
+# K95 Build Flags
 
-The CKW build system will automatically try to turn on all features the current
+The K95 build system will automatically try to turn on all features the current
 compiler and available 3rd party libraries will support. If you'd like to turn
 off some features that would otherwise be on automatically, or otherwise
 customise the build you can set a few environment variables before running
@@ -30,15 +30,17 @@ when the compiler in use is too old to support that feature.
 | CKF_NO_CRYPTO      | No                                              | Disables SSH, SSL, Telnet encryption, SRP and Kerberos                                                 |
 | CKF_NT_UNICODE     | No                                              | Target Windows NT Unicode APIs. Does not work (yet)                                                    |
 | CKF_NTLM           | Yes (Visual C++ 6.0+)                           | NTLM Authentication support                                                                            |
-| CKF_RICHEDIT       | Yes (if Visual C++ 4.0+)                        | Enables the rich edit control (requires NT 3.51/95 or newer) |
+| CKF_RICHEDIT       | Yes (if Visual C++ 4.0+)                        | Enables the rich edit control (requires NT 3.51/95 or newer)                                           |
 | CKF_SRP            | Yes (if libsrp is found, unless Watcom on OS/2) | SRP authentication support                                                                             |
 | CKF_SSH            | Yes (if Visual C++ and libssh is found)         | Enable built-in SSH support (via libssh)                                                               |
 | CKF_SSL            | Yes (if openssl is found)                       | Enables SSL/TLS support for telnet, http and ftp                                                       |
 | CKF_SUPERLAT       | Yes (if SuperLAT headers are found)             | Enables support for Meridian SuperLAT                                                                  |
 | CKF_TAPI           | Yes (if Visual C++ 4.0+ and not MIPS)           | TAPI support on Windows 95/NT4+. Doesn't build on MIPS.                                                |
-| CKF_TOOLBAR        | Yes (if Visual C++ 4.0+)                        | Enables the toolbar in K95G (requires NT 3.51/95)
+| CKF_TOOLBAR        | Yes (if Visual C++ 4.0+)                        | Enables the toolbar in K95G (requires NT 3.51/95)                                                      |
 | CKF_XYZ            | Yes (unless Watcom on OS/2)                     | X/Y/Z MODEM support (via p95.dll). Disabled on OS/2 with Watcom due to build errors                    |
 | CKF_ZLIB           | Yes (if zlib is found)                          | Enables zlib support                                                                                   |
+| CKF_DYNAMIC_SSH    | No (unless Watcom)                              | Builds with the SSH subsystem in a DLL loadable at runtime                                             |
+| CKF_SSH_BACKEND    | No (if Watcom)                                  | If set to No and CKF_DYNAMIC_SSH is set to Yes then the SSH backend (k95ssh.dll) won't be built        |
 
 ### Crypt DLL
 

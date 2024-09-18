@@ -139,6 +139,10 @@ BOOL conpty_open = FALSE;
 #endif /* NT */
 #endif /* CK_CONPTY */
 
+#ifdef SSH_DLL
+#include "ckossh.h"
+#endif /* SSH_DLL */
+
 extern int ttnproto, tn_deb;
 #ifndef NOTERM
 extern int tt_type;
@@ -1347,6 +1351,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                     size, cmd_line, &procinfo, &hChildStdinWrDup, &hChildStdoutRdDup)) {
                 conpty_open = TRUE;
                 fSuccess = TRUE;
+            } else {
+                conpty_open = FALSE;
+                fSuccess = FALSE;
             }
         } else {
             conpty_open = FALSE;
@@ -2129,7 +2136,8 @@ os2_nettchk() {                         /* for reading from network */
 #ifdef NETCMD
     if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
-        if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
+        if (procinfo.hProcess == NULL ||
+                WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
             ttclos(0);
             return(-1);
         }
@@ -4402,6 +4410,24 @@ netinit() {
             ttyfd = -1 ;
         }
 #endif /* SUPERLAT */
+
+#ifdef SSH_DLL
+        if (deblog) {
+            printf("  SSH support..." ) ;
+            debug(F100,"SSH support...","",0);
+        }
+        if (ssh_dll_load(SSH_AUTO_DLLS, FALSE) >= 0) {
+            if (deblog) {
+                printf("OK\n") ;
+                debug(F100,"SSH OK","",0);
+            }
+        } else {
+            if (deblog) {
+                printf("Not installed\n" ) ;
+                debug(F100,"SSH not installed","",0) ;
+            }
+        }
+#endif /* SSH_DLL */
     }
 
 #ifdef TCPSOCKET

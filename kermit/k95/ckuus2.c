@@ -8,7 +8,7 @@
       Secure Endpoints Inc., New York City
     David Goodwin, New Zealand.
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -19,6 +19,8 @@
                   02 Dec 2022 (changed ssh v2 macs list in windows "help ssh").
                   03 Dec 2022 (fixed misplaced definition of cr_year).
                   12 Apr 2023 (ANSI-ize function definitions)
+                  25 Jan 2024 (Added HELP REMOTE STATUS)
+                  03 Feb 2024 (Added HELP REMOTE CWD)
 
   This module contains HELP command and other long text strings.
 
@@ -50,6 +52,7 @@
 #include "ckocon.h"
 #include "ckokvb.h"
 #include "ckokey.h"
+#include "ckover.h"             /* This really should be ckover.h */
 
 #ifndef NOLOCAL
 int ttgcwsz();                  /* ckocon.c */
@@ -202,12 +205,8 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 #ifndef NOHELP
 char *newstxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, the Open-Source successor to",
-#else
-"Welcome to C-Kermit for OS/2, the Open-Source successor to",
-#endif
-"Columbia University's Kermit 95 package.",
+        "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
+        "to Columbia Columbia University's Kermit 95 package."
 
 #ifdef BETATEST
 " ",
@@ -216,19 +215,23 @@ char *newstxt[] = {
 #endif /* BETATEST */
 
 " ",
-"Major new features since the final Kermit 95 release include:",
+"Major new features since the final commercial Kermit 95 release include:",
 " . Open Source Simplified 3-Clause BSD License",
 #else
 "Welcome to C-Kermit 10.0.",
 "New features since version 9.0 of 2011 include:",
 #endif /* OS2 */
 #ifdef OS2
-" . Source code!  The Windows edition of C-Kermit, formerly known",
-"   as Kermit 95 or K-95, is now available under the Revised 3-Clause",
+" . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
+" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0"
 " . Up-to-date fully exportable SSH v2 client",
+" . Up-to-date TLS support for http, ftp and telnet",
+" . PTY support on Windows 10 version 1809 and newer",
+" . Now available as a 64bit application (x86-64, ARM64, Itanium)",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
 "    (see HELP SET MOUSE for details)",
+" . X10, X11, URXVT and SGR mouse reporting",
 #endif /* OS2 */
 #ifndef OS2
 #ifdef COMMENT
@@ -303,11 +306,7 @@ char *newstxt[] = {
 #ifndef NOHELP
 char *introtxt[] = {
 #ifdef OS2
-#ifdef NT
-"Welcome to C-Kermit for Windows, communication software for:",
-#else
-"Welcome to C-Kermit for OS/2, communication software for:",
-#endif
+"Welcome to Kermit 95, communication software for:",
 #else
 #ifdef UNIX
 "Welcome to UNIX C-Kermit communications software for:",
@@ -567,11 +566,11 @@ char *introtxt[] = {
 
 #ifdef NT
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K-95> prompt:",
 #else
 #ifdef OS2
 " ",
-"To return from the terminal window to the C-Kermit> prompt:",
+"To return from the terminal window to the K/2> prompt:",
 #else
 " ",
 "To return from a terminal connection to the C-Kermit prompt:",
@@ -877,6 +876,19 @@ static char * hmxxssh[] = {
 "  This command replaces the comment associated with a V1 RSA key file.",
 " ",
 #endif
+#ifdef SSH_DLL
+"SSH LOAD filename",
+"  This command is only available when no SSH backend DLL was loaded on ",
+"  startup, either due to there being no compatible DLL available or due to",
+"  the loading of optional network libraries being disabled via command line",
+"  parameter. ",
+" ",
+"  This command takes one or more DLL filenames separated by a semicolon (;)",
+"  which will attempted in order. The first DLL that loads successfully will",
+"  enable all SSH commands and be used for all SSH operations until Kermit is",
+"  restarted.",
+" ",
+#endif
 "SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
 "      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
 "  This command establishes a new connection using SSH version 1 or",
@@ -892,6 +904,16 @@ static char * hmxxssh[] = {
 " ",
 "  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
 "     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
+" ",
+"SSH REMOVE LOCAL-PORT-FORWARD local-port",
+"  Removes the local port forward with the specified local-port from",
+"  the local port forwarding list. This has no effect on any active ",
+"  connection.",
+" ",
+"SSH REMOVE REMOTE-PORT-FORWARD remote-port",
+"  Removes the remote port forward with the specified remote-port from",
+"  the remote port forwarding list. This has no effect on any active ",
+"  connection.",
 " ",
 #ifdef COMMENT
 "SSH V2 REKEY",
@@ -910,6 +932,14 @@ static char * hmxxssh[] = {
 
 static char *hmxyssh[] = {
 #ifdef SSHBUILTIN
+#ifdef SSH_DLL
+/* Ideally we'd vary this help content based on what commands are actually
+ * available, but no easy way to do that with a static char*
+ */
+"NOTICE: Actual commands and parameters available may vary based on the ",
+"        currently loaded SSH backend. ",
+" ",
+#endif /* SSH_DLL */
 "SET SSH AGENT-FORWARDING { ON, OFF }",
 "  If an authentication agent is in use, setting this value to ON",
 "  results in the connection to the agent being forwarded to the remote",
@@ -954,7 +984,9 @@ static char *hmxyssh[] = {
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
 " ",
-#ifdef COMMENT
+#ifdef SSH_DLL
+/* These commands aren't supported by the default SSH backend, but if the
+ * backend is a DLL then some other backend might support them */
 "SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
 "  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
 "  The default is OFF.",
@@ -963,19 +995,17 @@ static char *hmxyssh[] = {
 "  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
 "  host.  The default is OFF.",
 " ",
-#endif
 "SET SSH PRIVILEGED-PORT { ON, OFF }",
 "  Specifies whether a privileged port (less than 1024) should be used",
 "  when connecting to the host.  Privileged ports are not required except",
 "  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
 "  is OFF.",
 " ",
-#ifdef COMMENT
 "SET SSH PROXY-COMMAND [ command ]",
 "  Specifies the command to be executed in order to connect to the remote",
 "  host. ",
 " ",
-#endif
+#endif /* SSH_DLL */
 "SET SSH QUIET { ON, OFF }",
 "  Specifies whether all messages generated in conjunction with SSH",
 "  protocols should be suppressed.  The default is OFF.",
@@ -997,7 +1027,7 @@ static char *hmxyssh[] = {
 "  after applying Kermit's SET SSH commands.  The configuration file",
 "  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
 " ",
-#ifdef COMMENT
+#ifdef SSH_DLL
 "SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
 "  Specifies which cipher should be used to protect SSH version 1",
 "  connections.  The default is 3DES.",
@@ -1014,7 +1044,7 @@ static char *hmxyssh[] = {
 " ",
 "    \\v(appdata)ssh/known_hosts",
 " ",
-#endif
+#endif /* SSH_DLL */
 "SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
 "    PUBKEY, NONE } [ ... ]",
 "  Specifies an ordered list of SSH version 2 authentication methods to",
@@ -1094,12 +1124,15 @@ static char *hmxyssh[] = {
 "SET SSH X11-FORWARDING { ON, OFF }",
 "  Specifies whether X Windows System Data is to be forwarded across the",
 "  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
-"  value is either set using the SET TELNET ENV DISPLAY command or read",
-"  from the DISPLAY environment variable.",
+"  value is set using the SET TELNET ENV DISPLAY command.",
 " ",
+#ifdef COMMENT
+/* While this command existed in K95 2.1.3, it was never actually implemented
+ * there. */
 "SET SSH XAUTH-LOCATION filename",
 "  Specifies the location of the xauth executable (if provided with the",
 "  X11 Server software.)",
+#endif /* COMMENT */
 #else  /* SSHBUILTIN */
 "Syntax: SET SSH COMMAND command",
 "  Specifies the external command to be used to make an SSH connection.",
@@ -1276,7 +1309,7 @@ static char *hmxxfirew[] = {
 
 #ifdef OS2
 #ifdef NT
-"C-Kermit for Windows supports SOCKS 4.2. The SOCKS Server is specified with:",
+"Kermit 95 supports SOCKS 4.2. The SOCKS Server is specified with:",
 " ",
 "  SET TCP SOCKS-SERVER hostname/ip-address",
 " ",
@@ -2181,7 +2214,7 @@ static char *hmxxkcd[] = {
 ,
 " ",
 #ifdef NT
-"    appdata       Your personal C-Kermit Windows application data directory",
+"    appdata       Your personal Kermit application data directory",
 "    common        C-Kermit's application data directory for all users",
 "    desktop       Your Windows desktop",
 #endif /* NT */
@@ -4685,7 +4718,7 @@ static char *ifhlp[] = { "Syntax: IF [NOT] condition commandlist",
 " ",
 "  MS-KERMIT   - Program is MS-DOS Kermit",
 "  C-KERMIT    - Program is C-Kermit",
-"  WINDOWS     - Program is C-Kermit for Windows",
+"  WINDOWS     - Program is Kermit 95",
 "  GUI         - Program runs in a GUI window",
 " ",
 "  AVAILABLE CRYPTO                  - Encryption is available",
@@ -4867,12 +4900,12 @@ static char *hxxask[] = {
 #ifdef OS2
 " /POPUP",
 "  The prompt and response dialog takes place in a text-mode popup.",
-"  C-Kermit for Windows only; in other C-Kermit versions /POPUP is ignored.",
+"  Kermit 95 only; in other C-Kermit versions /POPUP is ignored.",
 " ",
 #ifdef KUI
 " /GUI",
 "  The prompt and response dialog takes place in a GUI popup.",
-"  C-Kermit for Windows only; this switch is ignored elsewhere",
+"  Kermit 95 only; this switch is ignored elsewhere",
 " ",
 #endif /* KUI */
 #endif /* OS2 */
@@ -6020,7 +6053,7 @@ doxopts() {
 
 int
 dohopts() {
-    int i, n, x, y, z, all = 0, msg = 0;
+    int i, j, n, x, y, z, all = 0, msg = 0;
     char *s;
     extern char *opthlp[], *arghlp[];
     extern char * xopthlp[], * xarghlp[];
@@ -6083,6 +6116,14 @@ or the word ALL, or carriage return for an overview",
             printf("     %s\n",opthlp[i]);
             printf("     Argument: %s\n\n",arghlp[i]);
             x = 4;
+
+            /* Prevent argument help that contains line breaks (such K95s -#)
+             * from breaking paging */
+            for (j = 0; arghlp[i][j] != '\0'; j++) {
+                if (arghlp[i][j] == '\n') {
+                    n += 1;
+                }
+            }
         } else {                        /* Option without arg */
             printf(" -%c  %s%s\n",
                    (char)i, opthlp[i],
@@ -7393,7 +7434,7 @@ Makes a connection through the program whose command line is given. Example:\n\
 #ifdef NETPTY
 #ifdef NT
 case XXPTY:
-    /* For windows ConPTY support - run any windows text mode app inside CKW */
+    /* For windows ConPTY support - run any windows text mode app inside K95 */
     return(hmsg("Syntax: PTY [ command ]\n\
 Runs the specified command in a pseudoterminal. Example:\n\
 \n pty cmd.exe"));
@@ -7524,6 +7565,8 @@ case XXPURGE:
     return(hmsg("  RTYPE is a short form of REMOTE TYPE."));
   case XXRWHO:
     return(hmsg("  RWHO is a short form of REMOTE WHO."));
+  case XXRCDUP:
+    return(hmsg("  RCDUP is a short forms of REMOTE CDUP."));
 #endif /* NOXFER */
 
   case XXSCRN:
@@ -8051,12 +8094,12 @@ static char *hxymouse[] = {
 "   Disabled: Applications can not request mouse reports and reports will not",
 "             be sent.",
 "    Enabled: Applications can request mouse reports. Reports will only be ",
-"             sent for mouse events that have no action in C-Kermit. To ",
+"             sent for mouse events that have no action in Kermit 95. To ",
 "             allow an event (eg, Ctrl+Click) to be reported, map it to ",
 "             \\Kignore. For example: set mouse button 1 ctrl click \\Kignore",
 "   Override: Applications can request mouse reports. All mouse events will",
 "             be sent to the remote application regardless of what action it",
-"             is set to perform in C-Kermit. For example, if right mouse",
+"             is set to perform in Kermit 95. For example, if right mouse",
 "             click is set to \\Kpaste this won't occur when an application",
 "             requests mouse reporting - instead the right click will be sent",
 "             to the application.",
@@ -8205,8 +8248,14 @@ static char *hxyterm[] = {
 " ",
 #endif /* CK_XYZ */
 "SET TERMINAL AUTOPAGE { ON, OFF }",
+"  For Wyse and Televideo terminals, Autopage mode causes the cursor to move",
+"  to the top of the next page of terminal memory when it scrolls off the ",
+"  bottom of the current page. In K95, it moves the cursor to the top line ",
+"  from the bottom since K95 only supports a single page of terminal memory",
 " ",
 "SET TERMINAL AUTOSCROLL { ON, OFF }",
+"  Autoscroll mode is used on Televideo terminals when the size of a page of",
+"  terminal memory is larger than the view screen.",
 " ",
 #else /* OS2 */
 "SET TERMINAL AUTODOWNLOAD { ON, OFF, ERROR { STOP, CONTINUE } }",
@@ -8358,7 +8407,7 @@ static char *hxyterm[] = {
 #ifdef OS2
 #ifdef KUI
 "SET TERMINAL FONT <facename> <height>",
-"  Specifies the font to be used in the C-Kermit terminal window.  The font",
+"  Specifies the font to be used in the Kermit window.  The font",
 "  is determined by the choice of a facename and a height measured in Points.",
 "  The available facenames are those installed in the Font Control Panel.",
 " ",
@@ -9625,11 +9674,15 @@ static char *hxymacr[] = {
 static char *hmxyprm[] = {
 "Syntax: SET PROMPT [ text ]",
 " ",
+#ifdef OS2
+"Prompt text for this program, normally 'K-95>'.  May contain backslash",
+#else
 #ifdef MAC
 "Prompt text for this program, normally 'Mac-Kermit>'.  May contain backslash",
 #else
 "Prompt text for this program, normally 'C-Kermit>'.  May contain backslash",
 #endif /* MAC */
+#endif /* OS2 */
 "codes for special effects.  Surround by { } to preserve leading or trailing",
 #ifdef OS2
 "spaces.  If text omitted, prompt reverts to K-95>.  Prompt can include",
@@ -10777,6 +10830,14 @@ case XYUNCS:
   DISCARD (default) means reject any arriving files encoded in unknown\n\
   character sets.  KEEP means to accept them anyway."));
 #endif /* NOCSETS */
+
+#ifdef VMS
+case XYVMSTF:
+    return(hmsg("Syntax: SET VMS_TEXT { STREAM_LF, VARIABLE }\n\
+  Selects the record format for text output files on VMS\n\
+  (Stream_LF (default) or Variable-length)."
+));
+#endif /* VMS */
 
 #ifdef UNIX
 case XYWILD:
@@ -15002,6 +15063,24 @@ case XZXIT:
     return(hmsg("Syntax: REMOTE EXIT\n\
   Asks the Kermit server to exit.  Synonym: REXIT."));
 #endif /* NEWFTP */
+
+case XZSTA:
+    return(hmsg("Syntax: REMOTE STATUS\n\
+  Asks the remote Kermit server for information about itself.  Typically\n\
+  this would include the name and version of Kermit program,the underlying\n\
+  hardware/architecture, operating system, current directory, and the\n\
+  details of the most recent file transfer (if any)."));
+
+case XZCDU:
+#ifdef NEWFTP
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit or FTP server to change its working directory to\n\
+  the directory above it.  Synonym: RCDUP."));
+#else
+    return(hmsg("Syntax: REMOTE CDUP\n\
+  Asks the Kermit server to change its working directory to the directory\n\
+  above it.  Synonym: RCDUP."));
+#endif  /* NEWFTP */
 
 default:
     if ((x = cmcfm()) < 0) return(x);

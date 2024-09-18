@@ -1,6 +1,6 @@
 #include "ckcsym.h"
 
-char *cmdv = "Command package 10.0.183, 03 May 2023";
+char *cmdv = "Command package 10.0.184, 19 Sept 2023";
 
 /*  C K U C M D  --  Interactive command package for Unix  */
 
@@ -1691,8 +1691,9 @@ o_again:
 	return(2);
     }
 #endif /* CK_TMPDIR */
-
-    if (strcmp(s,CTTNAM) && (zchko(s) < 0)) { /* OK to write to console */
+    /* Fixed 19 September 2023 by Piotr Kolasinski */
+    /* Previously: if (strcmp(s,CTTNAM) && (zchko(s) < 0)) */
+    if ((strcmp(s,CTTNAM) == 0) && (zchko(s) < 0)) { /* write to console OK */
 #ifdef COMMENT
 #ifdef OS2
 /*

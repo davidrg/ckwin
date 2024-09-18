@@ -81,7 +81,7 @@ int MouseDebug = 0;
 int      mouse_reporting_mode = MOUSEREPORTING_NONE;
 
 /* TRUE - send reports *instead* of any action defined for that mouse button and
- *        modifier combination (CKW doesn't handle any mouse input).
+ *        modifier combination (K95 doesn't handle any mouse input).
  * FALSE - mouse reports are only sent if no other action is mapped for that
  *         mouse button and modifier combination. For example, if right-click
  *         is set to \Kpaste then right-clicks will not be sent to the remote
@@ -362,7 +362,7 @@ os2_mouseon( void )
 
 #ifdef NT
 #ifdef KUI
-    /* GUI version of CKW */
+    /* GUI version of K95 */
     int buttonCount;
 
     buttonCount = GetSystemMetrics(SM_CMOUSEBUTTONS);
@@ -375,7 +375,7 @@ os2_mouseon( void )
     mouseon = TRUE;
     debug(F100, "Mouse ON", "", 0);
 #else
-    /* Console version of CKW */
+    /* Console version of K95 */
     extern HANDLE KbdHandle ;
     DWORD mode=0, count=0 ;
 
@@ -604,7 +604,7 @@ void mouse_report(int x_coord, int y_coord, int button, BOOL ctrl, BOOL shift, B
         return; /* Mouse tracking isn't on - nothing to do. */
     }
 
-    /* CKW numbers buttons from 1, but we need to send buttons numbered from 0 */
+    /* K95 numbers buttons from 1, but we need to send buttons numbered from 0 */
     b = button - 1;
 
     if (b > 2) {
@@ -853,7 +853,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
     if (mouse_reporting_override && MOUSE_REPORTING_ACTIVE(mouse_reporting_mode, vmode)) {
         /* Mouse reporting is currently active and we're set to forward *all*
          * mouse events to the remote host regardless of what that input may be
-         * mapped to within CKW.*/
+         * mapped to within K95.*/
 
 #ifndef NOSCROLLWHEEL
         if (r.dwEventFlags & MOUSE_WHEELED) {
@@ -1088,7 +1088,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
             * if reporting is active */
            mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,
@@ -1100,7 +1100,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 * releases the button) */
                mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,
@@ -1108,7 +1108,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 
                mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,
@@ -1450,7 +1450,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
             * if reporting is active */
            mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,

@@ -1,0 +1,4 @@
+LIBRARY K95SSH
+EXPORTS
+  ssh_dll_init
+  ssh_impl_ver

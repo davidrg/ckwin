@@ -3,6 +3,7 @@
 /*
   For recent additions search below for "2021" and "2022" and "2023".
   Most recent updates: Sat Jul  1 10:27:16 2023 (David Goodwin, fdc)
+  More recent: Sun Feb  4 20:17:33 2024 (removed prototypes for malloc())
 
   NOTE TO CONTRIBUTORS: This file, and all the other C-Kermit files, must be
   compatible with C preprocessors that support only #ifdef, #else, #endif,
@@ -45,6 +46,21 @@
 */
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
+
+
+/* Some ancient MIPS compilers for Windows NT define "MIPS" which causes
+ * problems here and elsewhere. None of the windows headers depend on MIPS being
+ * defined (they all check for _MIPS_), so it's safe to just undefine it.
+ */
+#ifdef MIPS
+#ifdef OS2
+#undef MIPS     /* MIPS should never be defined when targeting OS/2 */
+#endif /* OS2 */
+#ifdef CKT_NT31
+#undef MIPS     /* MIPS should never be defined when targeting NT 3.1 */
+#endif /* CKT_NT31 */
+#endif /* MIPS */
+
 
 /* Moved here from ckcmai.c October 2022... REMOVE THIS AFTER BETA TEST! */
 #ifndef BETATEST
@@ -399,6 +415,9 @@
 #ifndef BSD4
 #define BSD4
 #endif /* BSD4 */
+#ifndef BIGBUFOK
+#define BIGBUFOK
+#endif /* BIGBUFOK */
 #ifndef NOSETBUF
 #define NOSETBUF
 #endif /* NOSETBUF */
@@ -818,7 +837,7 @@
 #endif /* OS2ORVMS */
 #endif /* OS2 */
 
-/* C-Kermit for Windows can now be 64-bit so OS2ORWIN32 is a misnomer */
+/* Kermit 95 can now be 64-bit so OS2ORWIN32 is a misnomer */
 #ifdef OS2ORWIN32
 #ifndef OS2ORWINDOWS
 #define OS2ORWINDOWS
@@ -1401,9 +1420,6 @@ extern int errno;                       /* fdc 1 November 2022 */
 #else /* def __ALPHA */
 #ifdef __ia64
 #define VMS64
-#ifndef VMSI64
-#define VMSI64                          /* See ckvtio.c.  Pointless now? */
-#endif /* ndef VMSI64 */
 #else /* def __ia64 */
 #ifdef __x86_64
 #define VMS64
@@ -1910,7 +1926,9 @@ int mac_fclose();
 #ifndef NODIAL
 #ifndef CK_TAPI
 #ifdef NT
+#ifndef NOTAPI
 #define CK_TAPI
+#endif /* NOTAPI */
 #endif /* NT */
 #endif /* CK_TAPI */
 #endif /* NODIAL */
@@ -2701,15 +2719,24 @@ _PROTOTYP( void bleep, (short) );
 
 #ifndef NOFLOAT
 
+#ifdef __alpha          /* Why only __alpha?  Other 64-bit systems? */
+#define FLT_NOT_DBL     /* (See also ckclib.c:ckround()). */
+#else /* def __alpha */
+#ifdef VMS64
+#define FLT_NOT_DBL     /* Was testing only __alpha below. */
+#endif /* def VMS64 */
+#endif /* def __alpha [else] */
+
 #ifndef CKFLOAT
-#ifdef __alpha
+#ifdef FLT_NOT_DBL      /* 2024-05-16 SMS.  Use instead of __alpha. */
 /* Don't use double on 64-bit platforms -- bad things happen */
+/* "double" on 64-bit platforms typically means 128-bit?  Do we care?*/
 #define CKFLOAT float
 #define CKFLOAT_S "float"
-#else
+#else /* def FLT_NOT_DBL */
 #define CKFLOAT double
 #define CKFLOAT_S "double"
-#endif /* __alpha */
+#endif /* def FLT_NOT_DBL [else] */
 #endif /* CKFLOAT */
 
 #ifndef NOGFTIMER			/* Floating-point timers */
@@ -3150,7 +3177,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 #ifdef COMMENT
@@ -3709,9 +3736,6 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef OS2PM				/* Presentation Manager */
 #undef OS2PM
 #endif /* OS2PM */
-#ifdef CK_REXX				/* Rexx */
-#undef CK_REXX
-#endif /* CK_REXX */
 #endif /* NT */
 #endif /* OS2 */
 
@@ -4884,6 +4908,10 @@ extern int errno;
 
 #ifdef sparc				/* SPARC processors */
 #define BIGBUFOK
+#else
+#ifdef SUNOS                            /* fdc 23 September 2023 */
+#define BIGBUFOK
+#endif /* SUNOS41 */
 #endif /* sparc */
 
 #ifdef mips				/* MIPS processors */
@@ -6325,6 +6353,8 @@ extern int _flsbuf(char c,FILE *stream);
 /*
   It is essential that these are declared correctly!
   Which is not always easy.  Take malloc() for instance ...
+  NOTE: there were a bunch of protypes here for malloc() here
+  before but why???  The specs come from the header files.
 */
 #ifdef PYRAMID
 #ifdef SVR4
@@ -6333,22 +6363,9 @@ extern int _flsbuf(char c,FILE *stream);
 #endif /* __STDC__ */
 #endif /* SVR4 */
 #endif /* PYRAMID */
-/*
-  Maybe some other environments need the same treatment for malloc.
-  If so, define SIZE_T_MALLOC for them here or in compiler CFLAGS.
-*/
-#ifdef SIZE_T_MALLOC
-_PROTOTYP( void * malloc, (size_t) );
-#else
-_PROTOTYP( char * malloc, (unsigned int) );
-#endif /* SIZE_T_MALLOC */
-
-_PROTOTYP( char * getenv, (char *) );
-_PROTOTYP( long atol, (char *) );
 #endif /* !MAC */
 #endif /* SUNOS41 */
 #endif /* CK_ANSILIBS */
-
 /*
   <sys/param.h> generally picks up NULL, MAXPATHLEN, and MAXNAMLEN
   and seems to present on all Unixes going back at least to SCO Xenix
@@ -6440,6 +6457,72 @@ _PROTOTYP( long atol, (char *) );
  * On VMS, PATH_MAX is defined as 256 in <limits.h>, but that is an
  * obsolete value, which is why NAMX_C_MAXRSS is used instead.
  */
+
+/* Maximum length for a simple filename, not counting \0 at end. */
+/*
+  Define maximum length for a file name if not already defined.
+  NOTE: This applies to a path segment (directory or file name),
+  not the entire path string, which can be CKMAXPATH bytes long.
+*/
+
+/* On VMS, this is ill-defined, and depends on the file system:
+ * ODS2: 39.39 + version (;32767), so 84.
+ * ODS5: 238 + version (;32767), so 233.
+ */
+#ifndef CKMAXNAM
+#ifdef VMS
+#ifdef NAML$C_BID
+#define CKMAXNAM 233                    /* ODS5 possible. */
+#else
+#define CKMAXNAM 84                     /* ODS5 unknown. */
+#endif /* def NAML$C_BID */
+#else /* def VMS */
+/* Non-VMS definitions moved here from ckufio.c. with MAXNAMLEN -> CKMAXNAM. */
+
+#ifndef CKMAXNAM                /* If MAXNAMLEN is defined, then use that. */
+#ifdef MAXNAMLEN
+#define CKMAXNAM MAXNAMLEN
+#endif /* def MAXNAMLEN */
+#endif /* ndef CKMAXNAM */
+
+#ifdef QNX
+#ifdef _MAX_FNAME
+#define CKMAXNAM _MAX_FNAME
+#else
+#define CKMAXNAM 48
+#endif /* _MAX_FNAME */
+#else
+#ifndef CKMAXNAM
+#ifdef sun
+#define CKMAXNAM 255
+#else
+#ifdef FILENAME_MAX
+#define CKMAXNAM FILENAME_MAX
+#else
+#ifdef NAME_MAX
+#define CKMAXNAM NAME_MAX
+#else
+#ifdef _POSIX_NAME_MAX
+#define CKMAXNAM _POSIX_NAME_MAX
+#else
+#ifdef _D_NAME_MAX
+#define CKMAXNAM _D_NAME_MAX
+#else
+#ifdef DIRSIZ
+#define CKMAXNAM DIRSIZ
+#else
+#define CKMAXNAM 14
+#endif /* DIRSIZ */
+#endif /* _D_NAME_MAX */
+#endif /* _POSIX_NAME_MAX */
+#endif /* _POSIX_NAME_MAX */
+#endif /* NAME_MAX */
+#endif /* FILENAME_MAX */
+#endif /* sun */
+#endif /* CKMAXNAM */
+#endif /* QNX */
+
+#endif /* def VMS [else] */
 
 /* Maximum length for the name of a tty device */
 #ifndef DEVNAMLEN

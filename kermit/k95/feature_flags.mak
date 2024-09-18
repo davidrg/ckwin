@@ -31,6 +31,7 @@
 #   CKF_TAPI       yes        Modem dialing support
 #   CKF_RICHEDIT   yes        Rich Edit control support
 #   CKF_TOOLBAR    yes        Include the toolbar
+#   CKF_REXX       no         REXX support
 #
 # The following flags are set automatically:
 #   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
@@ -62,8 +63,12 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 WIN32_VERSION=0x0400
 
 !if "$(CMP)" == "OWCL"
-# No built-in SSH support for OpenWatcom (yet)
-CKF_SSH=no
+# No built-in SSH support for OpenWatcom (yet), so if SSH support has been
+# requested, turn Dynamic SSH on.
+!if "$(CKF_SSH)" == "yes"
+CKF_DYNAMIC_SSH=yes
+CKF_SSH_BACKEND=no
+!endif
 !endif
 
 !if ($(MSC_VER) >= 192)
@@ -167,6 +172,23 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKT_NT31ONLY
 #                     newer versions of windows.
 # None of the above - Targeting NT 3.51 or newer
 
+# These compatibility flags are decided by setenv.bat based on the compiler in
+# use. They're mostly used in resource scripts to decide on the icon to use.
+# 9X Compatible implies NT and XP compatible
+!if "$(CKB_9X_COMPATIBLE)" == "yes"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_9X_COMPATIBLE
+!endif
+
+# But NT compatible does not imply 9X or XP compatible (it could be a RISC build)
+!if "$(CKB_NT_COMPATIBLE)" == "yes"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT_COMPATIBLE
+!endif
+
+# And XP compatible does not imply 9X or NT compatible (compiler could be too new)
+!if "$(CKB_XP_COMPATIBLE)" == "yes"
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_XP_COMPATIBLE
+!endif
+
 !else
 
 # OS/2 gets NetBIOS support!
@@ -188,13 +210,24 @@ CKF_XYZ=no
 CKF_SRP=no
 # TODO: Figure out SRP support on OS/2 with OpenWatcom
 
+!message Turning Kerberos off - no Watcom support yet.
+CKF_K4W=no
+
 !endif
 
 !if "$(CKF_SSH)" == "yes"
-!message Target platform is OS/2 - forcing SSH off (not supported)
-# No built-in SSH support for OS/2 (yet)
-CKF_SSH=no
+!message Target platform is OS/2 - switching off built-in SSH (not supported)
+!message and turning on Dynamic SSH instead.
+# No built-in SSH support for OS/2 (yet), but Dynamic SSH should work if a
+# backend for it is built someday.
+CKF_DYNAMIC_SSH=yes
+CKF_SSH_BACKEND=no
 !endif
+!endif
+
+!if "$(MIPS_CENTAUR)" == "yes"
+!message Turning X/Y/Z MODEM support off - build errors need fixing with this compiler
+CKF_XYZ=no
 !endif
 
 !if "$(TARGET_CPU)" == "MIPS"
@@ -224,6 +257,29 @@ CKF_DECNET=yes
 CKF_DECNET=no
 !endif
 
+# Build and use wart to generate ckcpro.c from ckcpro.w unless we're told
+# not to
+!if "$(CKB_BUILD_WART)" != "no"
+CKB_BUILD_WART=yes
+!endif
+
+# ... or unless we're targeting a CPU architecture incompatible with that of
+# the host machine.
+!if "$(CROSS_BUILD_COMPATIBLE)" == "no"
+!message Forcing build of WART off - target CPU architecture is incompatible
+!message with host architecture. To generate ckcpro.c from ckcpro.w, supply
+!message a version of ckwart.exe compatible with the host architecture and
+!message set CKB_USE_WART=yes
+CKB_BUILD_WART=no
+!endif
+
+!if "$(CKB_BUILD_WART)" == "yes"
+CKB_USE_WART=yes
+WART=ckwart
+!endif
+
+
+
 # Other features that should one day be turned on via feature flags once we
 # figure out how to build them and get any dependencies sorted out.
 #
@@ -240,6 +296,8 @@ CKF_SSL=no
 CKF_TELNET_ENCRYPTION=no
 CKF_SRP=no
 CKF_K4W=no
+CKF_INTERNAL_CRYPT=no
+CKF_CRYPTDLL=no
 !endif
 
 # MIT Kerberos for Windows:
@@ -329,7 +387,13 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -D_CRT_DECLARE_NONSTDC_NAMES
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DOPENSSL_NO_COMP
 !endif
 
-#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOPENSSL_100
+!if "$(CKF_OPENSSL_VERSION)" == "3.x"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOPENSSL_300
+!endif
+
+!if "$(CKF_OPENSSL_VERSION)" == "1.1.x"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DOPENSSL_300
+!endif
 
 SSL_LIBS=$(CKF_SSL_LIBS)
 
@@ -338,10 +402,10 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) SSL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL
 !endif
 
-# Built-in SSH support (libssh)
+# Built-in SSH support
 #   Turn on with: -DSSHBUILTIN
 #   Turn off with: -DNOSSH
-#   Requires: libssh
+#   Requires: libssh or CKF_DYNAMIC_SSH=yes
 !if "$(CKF_SSH)" == "yes"
 !message CKF_SSH set - turning built-in SSH on.
 ENABLED_FEATURES = $(ENABLED_FEATURES) SSH
@@ -349,6 +413,53 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) SSH
 DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
 !endif
+
+# Dynamic SSH support
+#   Turn on with: -DSSH_DLL
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) SSH_DLL
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSSH_DLL
+
+# Officially provided variants of k95ssh.dll have a suffix indicating platform
+# support and features:
+#   g - Kerberos (GSSAPI) support
+#   x - Windows XP support
+# For these, we'll define some stuff so that the description can be set properly
+# in resulting .dll file so that even if the files get renamed its still
+# possible to tell them apart.
+!if "$(CKF_SSH_DLL_VARIANT)" == "g"
+!message Building G variant ssh dll (GSSAPI)
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_G
+!if "$(SSH_LIB)" == ""
+SSH_LIB=sshg.lib
+!endif
+!elseif "$(CKF_SSH_DLL_VARIANT)" == "x"
+!message Building X variant ssh dll (Windows XP)
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_X
+!if "$(SSH_LIB)" == ""
+SSH_LIB=sshx.lib
+!endif
+!elseif "$(CKF_SSH_DLL_VARIANT)" == "gx"
+!message Building GX variant ssh dll (GSSAPI, Windows XP)
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_GX
+!if "$(SSH_LIB)" == ""
+SSH_LIB=sshgx.lib
+!endif
+!endif
+
+# Statically link libssh
+#   Turn on with: -DLIBSSH_STATIC=1
+# doesn't work unless openssl is statically linked too.
+#!if "$(CKF_LIBSSH_STATIC)" == "yes"
+#ENABLED_FEATURES = $(ENABLED_FEATURES) LibSSH-static
+#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DLIBSSH_STATIC=1
+#!endif
+
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) SSH_DLL
+!endif
+
+
 
 # Windows Pseudoterminal Support (ConPTY)
 #   Turn on with: -DCK_CONPTY
@@ -455,7 +566,7 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNONTLM
 # Turns off telephony support
 !if "$(CKF_TAPI)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) TAPI
-DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNODIAL
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTAPI
 !endif
 
 # Rich Edit control
@@ -502,7 +613,7 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
 # issues (see: https://libunicows.sourceforge.net/) so using Opencow
 # (https://opencow.sourceforge.net/) may be more desirable.
 #
-# Note that CKW will *NOT* actually build with this option enabled at this time.
+# Note that K95 will *NOT* actually build with this option enabled at this time.
 # Work still needs to be done to:
 #   - Adjust all GetProcAddress calls to get either the A or W version of an API
 #     depending on if CK_NT_UNICODE is defined (UNICODE can't be relied on as
@@ -517,4 +628,11 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSCROLLWHEEL
 !if "$(CKF_NT_UNICODE)" == "yes"
 ENABLED_FEATURES = $(ENABLED_FEATURES) Windows-Unicode
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_NT_UNICODE -DUNICODE -D_UNICODE
+!endif
+
+!if "$(CKF_REXX)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) REXX
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) REXX
+DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOREXX
 !endif

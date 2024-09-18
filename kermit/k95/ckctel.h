@@ -167,6 +167,8 @@
 
 #endif	/* COMMENT */
 
+_PROTOTYP(char * tel_unk, (int));       /* "UNKNOWN-%u" string. */
+
 #ifdef TELCMDS
 char *telcmds[] = {
         "EOF", "SUSP", "ABORT", "EOR",
@@ -183,7 +185,7 @@ extern char *telcmds[];
                          (unsigned int)(x) >= TELCMD_FIRST || \
                           (unsigned int)(x) == TN_SAK)
 #define TELCMD(x)       (TELCMD_OK(x)? ((x) == TN_SAK?"SAK": \
-                         telcmds[(x)-TELCMD_FIRST]):"UNKNOWN")
+                         telcmds[(x)-TELCMD_FIRST]):tel_unk(x))
 
 /* Then the options */
 /* NB: the following platforms have TELOPT_AUTHENTICATION defined as */
@@ -429,11 +431,11 @@ extern char *telcmds[];
 #define TELOPT_OK(x)    (((x) >= TELOPT_BINARY && (x) <= TELOPT_STDERR) ||\
              ((x) >= TELOPT_PRAGMA_LOGON && (x) <= TELOPT_PRAGMA_HEARTBEAT) ||\
              ((x) == TELOPT_IBM_SAK))
-#define TELOPT(x)       (TELOPT_OK(x)?telopts[TELOPT_INDEX(x)]:"UNKNOWN")
+#define TELOPT(x)       (TELOPT_OK(x)?telopts[TELOPT_INDEX(x)]:tel_unk(x))
 #else /* TELOPT_MACRO */
 _PROTOTYP(int telopt_index,(int));
 _PROTOTYP(int telopt_ok,(int));
-_PROTOTYP(CHAR * telopt, (int));
+_PROTOTYP(char * telopt, (int));        /* Type match telopts[], below. */
 
 #define TELOPT_INDEX(x) telopt_index(x)
 #define TELOPT_OK(x)    telopt_ok(x)
@@ -635,10 +637,10 @@ extern char * telopt_modes[];
 
 #ifdef TELOPT_MACRO
 #define TELOPT_MODE_OK(x) ((unsigned int)(x) <= TN_NG_MU)
-#define TELOPT_MODE(x) (TELOPT_MODE_OK(x)?telopt_modes[(x)-TN_NG_RF]:"UNKNOWN")
+#define TELOPT_MODE(x) (TELOPT_MODE_OK(x)?telopt_modes[(x)-TN_NG_RF]:tel_unk(x))
 #else /* TELOPT_MACRO */
 _PROTOTYP(int telopt_mode_ok,(int));
-_PROTOTYP(CHAR * telopt_mode,(int));
+_PROTOTYP(char * telopt_mode,(int));   /* Type match telopt_modes[], above. */
 
 #define TELOPT_MODE_OK(x) telopt_mode_ok(x)
 #define TELOPT_MODE(x)    telopt_mode(x)
@@ -736,7 +738,7 @@ extern char *slc_names[];
 #endif
 
 #define SLC_NAME_OK(x)  ((unsigned int)(x) <= NSLC)
-#define SLC_NAME(x)     (SLC_NAME_OK(x)?slc_names[x]:"UNKNOWN")
+#define SLC_NAME(x)     (SLC_NAME_OK(x)?slc_names[x]:tel_unk(x))
 
 #define SLC_NOSUPPORT       0
 #define SLC_CANTCHANGE      1
@@ -898,10 +900,10 @@ extern char *authmode_names[];
 #define AUTHMODE_CNT  32
 
 #define AUTHTYPE_NAME_OK(x)     ((unsigned int)(x) < AUTHTYPE_CNT)
-#define AUTHTYPE_NAME(x)      (AUTHTYPE_NAME_OK(x)?authtype_names[x]:"UNKNOWN")
+#define AUTHTYPE_NAME(x)      (AUTHTYPE_NAME_OK(x)?authtype_names[x]:tel_unk(x))
 
 #define AUTHMODE_NAME_OK(x)     ((unsigned int)(x) < AUTHMODE_CNT)
-#define AUTHMODE_NAME(x)      (AUTHMODE_NAME_OK(x)?authmode_names[x]:"UNKNOWN")
+#define AUTHMODE_NAME(x)      (AUTHMODE_NAME_OK(x)?authmode_names[x]:tel_unk(x))
 
 /* Kerberos Authentication Message Identifiers */
 #define KRB_AUTH                0       /* Authentication data follows */
@@ -1008,10 +1010,10 @@ extern char *enctype_names[];
 #endif
 
 #define ENCRYPT_NAME_OK(x)      ((unsigned int)(x) < ENCRYPT_CNT)
-#define ENCRYPT_NAME(x)      (ENCRYPT_NAME_OK(x)?encrypt_names[x]:"UNKNOWN")
+#define ENCRYPT_NAME(x)      (ENCRYPT_NAME_OK(x)?encrypt_names[x]:tel_unk(x))
 
 #define ENCTYPE_NAME_OK(x)      ((unsigned int)(x) < ENCTYPE_CNT)
-#define ENCTYPE_NAME(x)      (ENCTYPE_NAME_OK(x)?enctype_names[x]:"UNKNOWN")
+#define ENCTYPE_NAME(x)      (ENCTYPE_NAME_OK(x)?enctype_names[x]:tel_unk(x))
 
 /* For setting the state of validUser */
 
@@ -1280,7 +1282,7 @@ extern char *tnc_names[];
 
 #define TNC_NAME_OK(x)  ((x) >= 0 && (x) <= 12 || (x) >= 100 && (x) <= 112)
 #define TNC_NAME(x) \
-             (TNC_NAME_OK(x)?tnc_names[(x)>=100?(x)-100:(x)]:"UNKNOWN")
+             (TNC_NAME_OK(x)?tnc_names[(x)>=100?(x)-100:(x)]:tel_unk(x))
 
 _PROTOTYP(int tnc_init,(void));
 _PROTOTYP(int tnc_wait,(CHAR *, int));

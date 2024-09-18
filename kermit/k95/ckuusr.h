@@ -1065,6 +1065,7 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_MAX   TT_VTNT
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
+#define     TT_XTERM   98   /*    XTerm */
 #define     TT_TEK40 99	/*    Tektronix 401x */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
@@ -1125,6 +1126,7 @@ struct stringint {			/* String and (wide) integer */
 #define ISVTNT(x)  (x == TT_VTNT)
 #define ISADM3A(x) (x == TT_ADM3A)
 #define ISADM5(x)  (x == TT_ADM5)
+#define ISXTERM(x) (x == TT_XTERM)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
@@ -1770,6 +1772,11 @@ struct stringint {			/* String and (wide) integer */
 #define XYEXTRN  135    /* SET EXTERNAL-PROTOCOL */
 #define XYVAREV  136    /* SET VARIABLE-EVALUATION */
 #define XYLOCALE 137    /* SET LOCALE */
+#ifdef VMS
+#define XYVMSTF  138    /* SET VMS_TEXT */
+#define  VMSTFS    1    /*  STREAM_LF */
+#define  VMSTFV    2    /*  VARIABLE */
+#endif /* VMS */
 
 /* End of SET commands */
 
@@ -2021,6 +2028,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOREN    72			/* SHOW RENAME */
 #define SHOLOC    73			/* SHOW LOCALE */
 #define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
+#define SHOVMSTXT 75			/* SHOW VMS_TEXT */
 
 /* REMOTE command symbols */
 
@@ -2713,6 +2721,8 @@ struct stringint {			/* String and (wide) integer */
 #define XSSH_KEY 6
 #define XSSH_CLR 7
 #define XSSH_AGT 8
+#define XSSH_LOAD 9
+#define XSSH_REM 10
 
 #ifdef COMMENT
 #define SSHKT_1R   0			/* SSH KEY TYPE symbols */
@@ -2756,6 +2766,9 @@ struct stringint {			/* String and (wide) integer */
 
 #define SSHC_LPF 1
 #define SSHC_RPF 2
+
+#define SSHR_LPF 1
+#define SSHR_RPF 2
 
 #define XSSH2_RKE 1
 

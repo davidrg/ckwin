@@ -1,4 +1,4 @@
-Building Stanford SRP for C-Kermit for Windows/OS2
+Building Stanford SRP for Kermit 95
 ==================================================
 
 Warning: The Stanford SRP distribution has been unmaintained for over a decade
