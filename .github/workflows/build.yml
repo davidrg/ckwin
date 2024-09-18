@@ -466,10 +466,15 @@ jobs:
         
         call build.bat /M out /N gx /G /C /R /X ${{env.LIBSSH_VERSION}}    
 
-      # 32bit ARM doesn't get libssh as version 0.10.3 gets link errors there:
-      #   misc.c.obj : error LNK2019: unresolved external symbol __imp_GetUserNameA referenced in function ssh_get_local_username
-      #   misc.c.obj : error LNK2019: unresolved external symbol __imp_SHGetSpecialFolderPathA referenced in function ssh_get_user_home_dir
-      # zlib is also disabled as it doesn't currently build for ARM
+      # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
+    - name: Build libssh (arm32)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+      shell: powershell
+      run: |
+        cd libssh\${{env.LIBSSH_VERSION}}\build
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        nmake
+
     - name: Build libssh (arm64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
       shell: powershell
