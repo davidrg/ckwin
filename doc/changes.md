@@ -43,6 +43,7 @@ Nothing yet
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
+* Upgraded to OpenSSL 3.0.15 which fixes a number of bugs and security issues
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
