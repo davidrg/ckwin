@@ -1003,6 +1003,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b828">828. The SET MOUSE ACTIVATE command does not work in K95G</a>
 <li><tt>[+] (K)</tt> <a href="#b829">829. Receiving files with a specified destination fails when autodownload is set to ask</a>
 <li><tt>[ ] (K)</tt> <a href="#b830">830. Switching between command and terminal screens via the keyboard does not update the toolbar button state</a>
+<li><tt>[ ] (M)</tt> <a href="#b831">831. On Windows NT 3.50 for Alpha, K95G causes Windows to crash</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -7947,6 +7948,24 @@ Fixed in 3.0
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/116">Issue #116 on Github</a>
 
+
+<h3><a name="b831">831. On Windows NT 3.50 for Alpha, K95G causes Windows to crash</a></h3>
+<p>When K95G is started on Windows NT 3.50 for DEC Alpha, the Win32 subsystem
+    begins malfunctioning so badly the computer is immediately unusable. If it
+    doesn't crash entirely causing a Blue Screen, the only way to recover is to
+    power cycle or reboot the machine yourself.
+</p>
+
+<p>This is a bug in Windows NT 3.50 - a user mode application such as Kermit 95
+    should not be able to bring down the operating system. While there may be
+    something specific that K95 is doing to cause this issue, given the limited
+    demand for Kermit 95 on this platform it isn't really worth investigating
+    developing a workaround for this problem. As of 3.0 beta 7, K95 for this
+    platform is console-mode only (no K95G).
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/308">Issue #308 on Github</a>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
