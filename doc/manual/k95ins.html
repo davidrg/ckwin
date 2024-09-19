@@ -3,7 +3,7 @@
 <title>Welcome to the Kermit 95 Installation!</title>
 <META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 </head><body bgcolor="#ffffff" text="#000000">
-<h2><a name="top">Welcome to the Kermit 95 Installer for Columbia University</h2>
+<h2><a name="top">Welcome to the Kermit 95 2.1 Installer</h2>
 
 <i>K95 2.1.3 -- 1 Jan 2003</i>
 
@@ -31,7 +31,7 @@ to bring up the Installer.
 &nbsp;&nbsp;&nbsp;<a href="#sect2.3">2.3: Everson Mono Terminal Font</a><br>
 
 <a href="#config">3. Special Configuration</a><br>
-&nbsp;&nbsp;&nbsp;<a href="#sect3.1">3.1: CU Kerberos Configuration Files</a><br>
+&nbsp;&nbsp;&nbsp;<a href="#sect3.1">3.1: Kerberos Configuration Files</a><br>
 &nbsp;&nbsp;&nbsp;<a href="#sect3.2">3.2: IKS Configuration File</a><br>
 <a href="#postinst">4. Where To Go From Here</a>
 </big>
@@ -54,7 +54,7 @@ will not be prompted for information that is referenced here.
 <p>
 
 Also note that all of the links to additional documentation are links to The
-<a href="http://www.columbia.edu/kermit/">Kermit Project website</a>
+<a href="http://www.kermitproject.org/">Kermit Project website</a>
 and therefore require an active Internet connection.
 
 <h3><a name="patch11"><hr>1. The K95 1.1 to 2.1 Upgrade</a></h3>
@@ -123,7 +123,7 @@ visit:
 <p>
 <blockquote>
 
-<a href="http://www.columbia.edu/kermit/k95upgrade.html#migrate"><tt>http://www.columbia.edu/kermit/k95upgrade.html#migrate</tt></a>
+<a href="http://www.kermitproject.org/k95upgrade.html#migrate"><tt>http://www.kermitproject.org/k95upgrade.html#migrate</tt></a>
 
 </blockquote>
 <p>
@@ -178,8 +178,12 @@ depending on what you did with the font during the 2.0 install.
 
 <p>
 
-Your Columbia University academic site license copy of Kermit 95 is preregistered.
-Thus you will not be prompted to enter any serial number.
+To install Kermit 95 you must have a valid K95 serial number.  If you
+don't have one, stop now and contact your distributor to obtain one.  If
+you are installing from a shrinkwrapped CDROM, your serial numbers are in
+the package, usually stapled to the registration card.  If you are installing
+an electronically distributed copy, the distributor should have furnished
+you with a serial number.  Bulk and site license copies are preregistered.
 
 <p>
 
@@ -230,9 +234,9 @@ files to use Kermit 95 to create secure connections using all of the security
 protocols listed.  While the installer will not ask you for any additional
 configuration info, you will have some post-install configuration for any of
 these security protocols to work.  Instructions for using Kermit 95 as an SSH
-client <a href="http://www.columbia.edu/kermit/sshclient.html">are available
+client <a href="http://www.kermitproject.org/sshclient.html">are available
 on our web site.</a>  Look
-<a href="http://www.columbia.edu/kermit/security.html#x4">HERE</a> for details
+<a href="http://www.kermitproject.org/security.html#x4">HERE</a> for details
 on using the other methods such as SRP, TLS and SSL.</dd>
 
 <p>
@@ -281,7 +285,14 @@ the following configuration files in your default Windows directory
 </ul>
 <p>
 
-These files are preconfigured for Columbia's Kerberos environment.
+You need to at least know the host name of your KDC and your default
+realm in order to create useful configuration files.  If you are not sure
+about any of this, it would be best to not install Kerberos support at this
+point.  You can gather the necessary information and then run this installer
+again to add in Kerberos support.  Also be aware that if your company or
+institution supports Kerberos, it is likely that they have customized
+initialization files that you can download and use.  The Installer never
+replaces existing files that it finds in place.
 
 <p>
 
@@ -296,8 +307,8 @@ PC to upload and download files as well as do basic file management commands
 (when authorized).  Since it is based on Kermit 95, it provides all of Kermit
 95's file collision handling options as well as access to Kermit 95's script
 langauge.  See the <a
-href="http://www.columbia.edu/kermit/wiksduser.html">user's Guide</a> and the
-<a href="http://www.columbia.edu/kermit/wiksdadmin.html">Administrator's
+href="http://www.kermitproject.org/wiksduser.html">user's Guide</a> and the
+<a href="http://www.kermitproject.org/wiksdadmin.html">Administrator's
 Guide</a> for a better idea of what the IKS is capable of.  Because IKS is
 installed as a service and started by default, you should be aware of the
 security implications of installing it.  The installer will ask you several
@@ -414,31 +425,65 @@ install type and who are installing IKS for NT/2000/XP and/or Kerberos.
 
 <p>
 
-<b><i><a name="sect3.1">3.1: CU Kerberos Config Files</a></i></b>
+<b><i><a name="sect3.1">3.1: Kerberos Configuration Files</a></i></b>
 
-<p>The Columbia University distribution comes with Kerberos configuration
-files that are preconfigured for Columbia's Kerberos environment.  These
-files are installed in your default Windows directory (e.g. C:\WINDOWS).
-If you happen to already have any of these configuration files in your
-Windows directory, the Installer will give you the option to replace your
-existing ones.  This is highly recommended to insure that Kerberos connections
-to the CU hosts work properly.  Any of the existing files that you have will be
-renamed with a &quot;.k9521&quot; extension so they are preserved.
+<p>
 
-<p>If you are confident that your existing config files are correct and/or you
-have made extensive customizations to them, then you can choose not to replace them.
-If you find that your Kerberos authentication and/or encryption does not work, then 
-you may want to manually replace your existing config files with the ones provided
-in this packages.  These will be located in a CUCONFIG folder under your Application 
-Data folder.  This folder is most easily accessed from within Kermit 95 by saying:
+As stated above, three files are required to configure Kerberos authentication
+and encryption for Windows; two are for Kerberos 4 support, KRB.CON and
+KRBREALM.CON and one for Kerberos 5 support, KRB5.INI.  Basically, these files
+supply two primary pieces of configuration information, Domain-to-Realm
+mapping and Realm-to-Server mapping.  If this is sounding like Greek to you,
+please take a look at our <a
+    href="http://www.kermitproject.org/security80.html#x4">installation and
+configuration help file</a> for details and links that should help make this
+more intelligible.  Also check with your local SysAdmin or on your company's
+or institution's IntraNet for details on how to configure Kerberos clients for
+your specific environment.
 
-<blockquote>
-cd \v(appdata)CUCONFIG
-</blockquote>
+<p>
 
-<p>For more details on Kerberos configuration in general, you can reference
-our online <a href="http://www.columbia.edu/kermit/security80.html#x4">
-document on security</a> in Kermit 95.</p>
+As the Kerberos support files are installing, and if you do not already have
+all three Kerberos configuration files on your system, the Installer asks you
+the following series of questions so that it can build the configuration files
+(you have the option to bail out of this process both at the beginning and
+then right before the files are created):
+
+<ul>
+
+<li><b>Default Realms</b> - these are the Kerberos 4 and 5 realms that are the
+    default for your environment.  Often they are the same; if they are, you can
+    leave the Kerberos 5 realm blank.</b>
+
+<li><b>Does DNS provide hostname/domain to realm mapping?</b> - this Yes/No
+    question allows you to include, or not include, a directive in the
+    configuration files that tells the Kerberos client program to query the DNS
+    for this information.  Be careful with this one; if you say yes, and your DNS
+    does not provide this information, Kermit 95 will appear to hang for a long
+    time when attempting to make Kerberized connections.
+
+<li><b>Domains to be Mapped</b> - here you can enter up to six domains that
+    you want to map to the default realm that you specified on the first dialog.
+    There are two screens with room for three domains each.  Even if you are
+    certain that your DNS provides this information, you should fill in the
+    domains you know.
+
+<li><b>Does DNS provide realm to server mapping?</b> - similar to the above
+    question about information from the DNS server.  Same cautions apply.
+
+<li><b>Kerberos Server</b> - the name of the machine that serves all the
+    Kerberos requests for your network.
+
+<li><b>Realms to be mapped</b> - provide the name of at least your default
+    realm and add any that you need to have associated with the Kerberos server
+    you entered in the previous dialog.
+
+</ul>
+
+<p>
+
+You should then receive a confirmation screen which lets you confirm the
+creation of the configuration files or cancel them.
 
 <p>
 
@@ -475,20 +520,11 @@ information on the time, CPS, etc. of the transfer.
 The <tt>IKSD.KSC</tt> file create by the installer barely scratches
 the surface of the kind of customization you can accomplish with this
 file.  Please read the <a
-href="http://www.columbia.edu/kermit/wiksdadmin.html">Administrator's
+href="http://www.kermitproject.org/wiksdadmin.html">Administrator's
 Guide</a> for more details.  The guide is a work in progress, but should
 provide enough information to do things like: allowing anonymous access,
 setting a root directory to "jail" various classes of users, do special
 configuration based on the user who logs in, etc...
-
-
-<b><i><a name="sect3.3">3.3: CU SSH Known Host files</a></i></b>
-
-<p>To make it more convenient and more secure to access Columbia hosts via
-SSH, we have provided to "Known Hosts" files that list a large number of
-CU hosts.  These two files <tt>ssh_known_hosts</tt> and <tt>ssh_known_hosts2</tt>
-and they are placed in the Shared Data directory for Kermit 95.  (This is 
-pointed to by the variable \v(common) within the Kermit 95 program.)</p>
 
 
 <h3><a name="postinst"><hr>4. Where To Go From Here</a></h3>
@@ -520,8 +556,6 @@ you might think!
 <address>
 Kermit 95 2.1 Installer /
 The Kermit Project /
-Columbia University /
-<a href="mailto:kermit@columbia.edu"><tt>kermit@columbia.edu</tt></a> /
 24 Oct 2002
 </body>
 </html>
