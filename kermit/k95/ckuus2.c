@@ -12558,7 +12558,7 @@ dohkverb(xx) int xx; {
         printf("\\Kdecremove     Transmit DEC REMOVE sequence\n");
         break;
     case  K_DECSELECT :                 /* DEC Select key */
-        printf("\\Kdecfselect    Transmit DEC SELECT sequence\n");
+        printf("\\Kdecselect     Transmit DEC SELECT sequence\n");
         break;
     case  K_DECPREV   :                 /* DEC Previous Screen key */
         printf("\\Kdecprev       Transmit DEC PREV SCREEN sequence\n");
@@ -12826,7 +12826,7 @@ dohkverb(xx) int xx; {
       printf("\\Ktn_ao         TELNET: Transmit Cancel-Output request\n");
       break;
     case  K_TN_AYT      :               /* TELNET Are You There */
-      printf("\\Ktnayt         TELNET: Transmit Are You There? request\n");
+      printf("\\Ktn_ayt        TELNET: Transmit Are You There? request\n");
       break;
     case  K_TN_EC       :               /* TELNET Erase Character */
       printf("\\Ktn_ec         TELNET: Transmit Erase Character request\n");
@@ -12872,7 +12872,7 @@ dohkverb(xx) int xx; {
       printf("\\Kkeyclick      Toggle Keyclick mode\n");
       break;
     case  K_LOGDEBUG    :               /* Toggle Debug Log File */
-      printf("\\Klogdebug      Toggle Debug Logging to File\n");
+      printf("\\Kdebuglog      Toggle Debug Logging to File\n");
       break;
     case  K_FNKEYS      :               /* Show Function Key Labels */
       printf("\\Kfnkeys        Display Function Key Labels\n");
@@ -13616,7 +13616,7 @@ dohkverb(xx) int xx; {
       printf("\\Kdgbs          Transmit Data General: Backspace         \n");
       break;
     case  K_DGSHOME      :
-      printf("\\Kdshome        Transmit Data General: Shift-Home        \n");
+      printf("\\Kdgshome       Transmit Data General: Shift-Home        \n");
       break;
 
 

@@ -64,6 +64,7 @@ is being emulated.
    \Kkbenglish     Switch to normal keyboard mode
    \Kkbhebrew      Switch to HEBREW keyboard mode
    \Kkbrussian     Switch to Russian keyboard mode
+   \Kkbwp          Switch to Word Perfect 5.1 keyboard mode
    \Kkeyclick      Toggle Keyclick On/Off
    \Klbreak        Transmit Long Break signal
    \Klfall         Scroll to left margin
@@ -75,7 +76,8 @@ is being emulated.
    \Kmarkcancel    Cancel Mark Mode
    \Kmarkcopyclip  Copy marked text to clipboard
    \Kmarkcopyhost  Copy marked text to host
-   \Kmarkstart     Start Mark Mode
+   \Kmarkstart     Start Mark Mode  <!--       \Kmarkselect is marked as invisible
+   \Kmarkselect    Mark Mode: Place marked text into \v(select)           -->
    \Kmousecurpos   Transmit sequence to move cursor to mouse position
    \Kmousemark     Mouse drag sequence marks text
    \Kmouseurl      Start Browser with selected URL
@@ -84,7 +86,7 @@ is being emulated.
    \Kpaste         Paste text from clipboard to host
    \Kprintff       Send Formfeed to SET PRINTER device
    \Kprtauto       Toggle Auto-print mode
-   \Kprtcpy        User-initiated Ctrl-print
+   \Kprtcopy       Toggle Copy-Print mode
    \Kprtctrl       Toggle Ctrl-print mode
    \Kquit          Disconnect from host and terminate Kermit
    \Kreset         Reset terminal
@@ -92,7 +94,8 @@ is being emulated.
    \Krtarr         Transmit Terminal Right Arrow sequence
    \Krtone         Scroll right one column
    \Krtpage        Scroll right eight columns
-   \Ksession       Toggle on/off session logging to 'session.log'
+   \Ksession       Toggle on/off session logging to 'session.log' <!--
+   \Kdebuglog      Toggle Debug Logging to File                      This Kverb is marked invisible-->
    \Ksetbook       Set bookmark 
    \Kstatus        Toggle statusline (None, Indicator, Host Writeable)
    \Ktermtype      Toggle Terminal Type
@@ -109,7 +112,8 @@ is being emulated.
    \Kuparr         Transmit Terminal Up Arrow sequence
    \Kupone         Roll screen up one line
    \Kupscn	   Roll screen up one page
-   \Kurl           Treat text under cursor position as a URL
+   \Kurl           Treat text under cursor position as a URL <!--  \Kemacs_overwrite is marked as invisible
+   \Kemacs_overwrite  Transmit EMACS Overwrite toggle command sequence -->
 </pre>
 <p>
 For use with SCOANSI and AT386 emulations:
@@ -316,7 +320,7 @@ For use with DEC VT and Wyse 370 emulations:
    \Kpf2           DEC PF2
    \Kpf3           DEC PF3
    \Kpf4           DEC PF4
-   \Kudkdo         DEC UDK Do
+   \Kudkdo         DEC UDK Do (\Kudkf16)
    \Kudkf1         DEC UDK F1
    \Kudkf2         DEC UDK F2
    \Kudkf3         DEC UDK F3
@@ -331,11 +335,13 @@ For use with DEC VT and Wyse 370 emulations:
    \Kudkf12        DEC UDK F12
    \Kudkf13        DEC UDK F13
    \Kudkf14        DEC UDK F14
+   \Kudkf15        DEC UDK F15 (\Kudkhelp)
+   \Kudkf16        DEC UDK F16 (\Kudkdo)
    \Kudkf17        DEC UDK F17
    \Kudkf18        DEC UDK F18
    \Kudkf19        DEC UDK F19
-   \Kudkf20	   DEC UDK F20
-   \Kudkhelp	   DEC UDK Help
+   \Kudkf20	       DEC UDK F20
+   \Kudkhelp	   DEC UDK Help (\Kudkf15)
 </pre>
 <p>
 For use with HP emulations:
@@ -469,8 +475,12 @@ For use with Wyse ASCII emulations:
    \Kwypgprev	   Wyse Page Previous    
    \Kwyprtscn	   Wyse Print Screen     
    \Kwyreplace	   Wyse Replace          
-   \Kwyreturn	   Wyse Return           
-   \Kwysbs	   Wyse Shift Backspace  
+   \Kwyreturn	   Wyse Return      <!--
+   \Kwyuparr       Wyse Up Arrow       The WYSE Arrow KVerbs are currently
+   \Kwydnarr       Wyse Down Arrow     hidden/invisible, and the default key
+   \Kwylfarr       Wyse Left Arrow     maps just use \Klfarr, \Kuparr, \Krtarr
+   \Kwyrtarr       Wyse Right Arrow    and \Kdnarr for some reason. -->
+   \Kwysbs	   Wyse Shift Backspace
    \Kwysclrln	   Wyse Shift Clear Line 
    \Kwysclrpg	   Wyse Shift Clear Page 
    \Kwysdnarr	   Wyse Shift Down Arrow 
@@ -729,6 +739,86 @@ For use with Nixdorf BA80 emulations:
    \Kba80_softkey8   Transmit BA80: Softkey 8
    \Kba80_softkey9   Transmit BA80: Softkey 9
    \Kba80_undo       Transmit BA80: Undo
+</pre>
+<p>
+   For use with IBM 31xx emulations:
+<pre>
+   \Ki31_f01         Transmit IBM 31xx: F1
+   \Ki31_f02         Transmit IBM 31xx: F2
+   \Ki31_f03         Transmit IBM 31xx: F3
+   \Ki31_f04         Transmit IBM 31xx: F4
+   \Ki31_f05         Transmit IBM 31xx: F5
+   \Ki31_f06         Transmit IBM 31xx: F6
+   \Ki31_f07         Transmit IBM 31xx: F7
+   \Ki31_f08         Transmit IBM 31xx: F8
+   \Ki31_f09         Transmit IBM 31xx: F9
+   \Ki31_f10         Transmit IBM 31xx: F10
+   \Ki31_f11         Transmit IBM 31xx: F11
+   \Ki31_f12         Transmit IBM 31xx: F12
+   \Ki31_f13         Transmit IBM 31xx: F13
+   \Ki31_f14         Transmit IBM 31xx: F14
+   \Ki31_f15         Transmit IBM 31xx: F15
+   \Ki31_f16         Transmit IBM 31xx: F16
+   \Ki31_f17         Transmit IBM 31xx: F17
+   \Ki31_f18         Transmit IBM 31xx: F18
+   \Ki31_f19         Transmit IBM 31xx: F19
+   \Ki31_f20         Transmit IBM 31xx: F20
+   \Ki31_f21         Transmit IBM 31xx: F21
+   \Ki31_f22         Transmit IBM 31xx: F22
+   \Ki31_f23         Transmit IBM 31xx: F23
+   \Ki31_f24         Transmit IBM 31xx: F24
+   \Ki31_f25         Transmit IBM 31xx: F25
+   \Ki31_f26         Transmit IBM 31xx: F26
+   \Ki31_f27         Transmit IBM 31xx: F27
+   \Ki31_f28         Transmit IBM 31xx: F28
+   \Ki31_f29         Transmit IBM 31xx: F29
+   \Ki31_f30         Transmit IBM 31xx: F30
+   \Ki31_f31         Transmit IBM 31xx: F31
+   \Ki31_f32         Transmit IBM 31xx: F32
+   \Ki31_f33         Transmit IBM 31xx: F33
+   \Ki31_f34         Transmit IBM 31xx: F34
+   \Ki31_f35         Transmit IBM 31xx: F35
+   \Ki31_f36         Transmit IBM 31xx: F36
+   \Ki31_pa1         Transmit IBM 31xx: PA1
+   \Ki31_pa2         Transmit IBM 31xx: PA2
+   \Ki31_pa3         Transmit IBM 31xx: PA3
+   \Ki31_reset       Transmit IBM 31xx: Reset
+   \Ki31_jump        Transmit IBM 31xx: Jump
+   \Ki31_clear       Transmit IBM 31xx: Clear
+   \Ki31_erase_eof   Transmit IBM 31xx: Erase to End of Field
+   \Ki31_eop         Transmit IBM 31xx: Erase to End of Page
+   \Ki31_inp         Transmit IBM 31xx: Erase Input Operation
+   \Ki31_ins_char    Transmit IBM 31xx: Insert Character
+   \Ki31_ins_space   Transmit IBM 31xx: Insert Space
+   \Ki31_delete      Transmit IBM 31xx: Delete Character
+   \Ki31_ins_line    Transmit IBM 31xx: Insert Line
+   \Ki31_del_ln      Transmit IBM 31xx: Delete Line
+   \Ki31_prt_line    Transmit IBM 31xx: Print Line
+   \Ki31_prt_msg     Transmit IBM 31xx: Print Message
+   \Ki31_prt_shift   Transmit IBM 31xx: Print Shift
+   \Ki31_cancel      Transmit IBM 31xx: Cancel
+   \Ki31_send_line   Transmit IBM 31xx: Send Line
+   \Ki31_send_msg    Transmit IBM 31xx: Send Message
+   \Ki31_send_page   Transmit IBM 31xx: Send Page
+   \Ki31_home        Transmit IBM 31xx: Home
+   \Ki31_back_tab    Transmit IBM 31xx: Back Tab
+</pre>
+<p>
+   For use with Sun Console emulations:
+<pre>
+   \Ksunstop         Transmit SUN Console: Stop
+   \Ksunagain        Transmit SUN Console: Again
+   \Ksunprops        Transmit SUN Console: Props
+   \Ksunundo         Transmit SUN Console: Undo
+   \Ksunfront        Transmit SUN Console: Front
+   \Ksuncopy         Transmit SUN Console: Copy
+   \Ksunopen         Transmit SUN Console: Open
+   \Ksunpaste        Transmit SUN Console: Paste
+   \Ksunfind         Transmit SUN Console: Find
+   \Ksuncut          Transmit SUN Console: Cut
+   \Ksunhelp         Transmit SUN Console: Help
+
+</pre>
 <p>
 <i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
 <p>
