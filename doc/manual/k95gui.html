@@ -1,17 +1,17 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
 <html><head>
-<title>The Kermit 95 2.0 GUI</title></head>
+<title>The Kermit 95 GUI</title></head>
 <body bgcolor="#ffffff" text="#000000">
 
-<h2><a name="top">THE KERMIT 95 2.0 GUI</a></h2>
+<h2><a name="top">THE KERMIT 95 GUI</a></h2>
 
 <blockquote>
-<i>As of:</i> Kermit 95 2.1.3<br>
-1 January 2003
+<i>As of:</i> Kermit 95 <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--><br>
+<!--$ver-date$-->1 January 2003<!--/$ver-date$-->
 </blockquote>
 
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://www.kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><hr><a name="contents">CONTENTS</a></h3>
 
@@ -34,25 +34,25 @@
 
 <h3><hr><a name="x1">1. INTRODUCTION</a></h3>
 
-<img src="crownico.gif" align="left" hspace="12">
+<img src="logo.gif" align="left" hspace="12">
 
 <b><big><big>K</big></big>ermit 95 2.0</b> was the first K95 release that runs
 in a graphical user interface (GUI) window.  The GUI version of Kermit 95 is
 called K95G.  A console-window version remains available; it is called K95, as
 before.  This document describes the GUI-specific features of K95G.
 
-K95G has a new icon: the Columbia University crown.  Please do not attribute
+<!--K95G has a new icon: the Columbia University crown.  Please do not attribute
 any religious or political significance to this symbol, beyond the fact that
 it is the emblem of <a href="http://www.columbia.edu/">Columbia University</a>,
 representing the crown of
 <a href="http://www.britannia.com/history/monarchs/mon54.html">George II</a>,
 King of England, who founded the University in 1754 (more about the crown
-<a href="http://www.royal.gov.uk/output/Page450.asp">HERE</a>).
+<a href="http://www.royal.gov.uk/output/Page450.asp">HERE</a>).-->
 
 <br clear="left">
 <p>
 
-The user interface of the initial K95G release is the same as always:
+The user interface of K95G is the same as K95:
 text-mode commands and prompts plus a separate full-GUI connection manager
 (Dialer).  But K95G also has a new, more "native-Windows" look, font
 selections, a closer connection to the Dialer, and new GUI-based controls and
@@ -71,11 +71,11 @@ versions:
 <tr>
 <th>Feature
 <th>GUI<br>
-Win9x/ME/NT/2000/XP
+All Windows
 <th>Console<br>
 Win9x/ME
 <th>Console<br>
-NT/2000/XP
+NT/2000/XP/7/8/10/11
 <tr>
 <td><i>Kermit Menu</i>
 <td align="center">Yes
@@ -144,18 +144,18 @@ NT/2000/XP
 </table>
 </blockquote>
 
-<p>
+<!--<p>
 
 The form and substance of subsequent K95G releases will be determined by
 customer response to version 2.0: should we concentrate on adding features
 such as graphics terminal emulation, 3270 and 5250 terminal emulation, etc, or
 should we chase after new standards such as IPv6 and IPsec, or should we add
 more GUI dialogs and Windows conveniences?  (Of course these aren't the only
-choices.)
+choices.)-->
 
 <p>
 
-<a name="newscreen">Here's the new K95G Terminal screen</a>:
+<a name="newscreen">Here's the K95G Terminal screen</a>:
 
 <p>
 
@@ -168,7 +168,7 @@ Quick tour:
 <p>
 <dl>
 <dt><i>The Title Bar</i></dt>
-<dd>Shows the new crown icon.  Shows how window title can be set (with new
+<dd><!--Shows the new crown icon.-->  Shows how window title can be set (with
 <tt>--title:</tt> command-line option or the SET TITLE command).  Minimize,
 Maximize/Restore, and Exit controls on the right all work.
 
@@ -202,8 +202,7 @@ the current screen is scrolled back, and how far.
 
 <dt><i>The Status Bar</i></dt>
 <dd>Indicates K95G's current active screen (Command or
-Terminal), the communications protocol (in this case Telnet with Kerberos 4
-and TLS), the cursor coordinates, and the screen dimensions.  The lower right
+Terminal), the communications protocol (in this case SSH2), the cursor coordinates, and the screen dimensions.  The lower right
 corner lets you stretch or shrink the screen.
 
 </dl>
@@ -261,9 +260,9 @@ connection, you must use K95G's Menu or Tool bar or its Command Screen.
 
 <h3><hr><a name="x3">3. STARTING AND STOPPING K95G</a></h3>
 
-Kermit 95 2.0 has several new command-line options, some of them GUI-specific,
+Kermit 95 2.0+ has several command-line options, some of them GUI-specific,
 which are used by the Dialer when you specify the associated values in the
-Dialer's new <a href="#x4">GUI page</a> or Terminal page:
+Dialer's <a href="#x4">GUI page</a> or Terminal page:
 
 <p>
 <dl>
@@ -405,9 +404,9 @@ position and font information.
 
 <img src="dial_ico.gif" align="left" hspace="12">
 
-The new Dialer icon is a rotary telephone dial.  Although we don't use rotary
-phones much any more, the telephone dial is a universally recognizable symbol
-for making connections.  The Dialer has a new GUI settings page, shown below.
+The Dialer icon is a rotary telephone dial.  Although we don't use rotary
+phones much anymore, the telephone dial was a universally recognizable symbol
+for making connections.  The Dialer has a GUI settings page, shown below.
 Each connection can have its own separate GUI settings.
 
 <br clear="left">
@@ -485,7 +484,7 @@ color of the result.
 
 </dl>
 
-<h3><hr><a name="x5">5. NEW COMMANDS AND VARIABLES</a></h3>
+<h3><hr><a name="x5">5. GUI COMMANDS AND VARIABLES</a></h3>
 
 <dl>
 
@@ -512,13 +511,15 @@ might include a way to specify a default answer).
 
 <p>
 
+<!-- Not GUI related, and K95 2.0 was ~22 years ago now --
+
 <dt><b>KCD</b> <i>symbolic-directory-name</i></dt>
 
 <dd><i>(Not strictly GUI related, but new to version 2.0)</i> Changes Kermit
 95's working directory to the given symbolically named directory: EXEDIR,
 COMMON, APPDATA, etc (explained in the <a href="readme.html">README</a>
 document).
-<p>
+<p>-->
 
 <dt><b>SET GUI RGB-COLORS</b> &nbsp;
 <i>ansi-color-name &nbsp;
@@ -615,6 +616,7 @@ the GUI page.
 Command Screen, and they always affect the number of screen rows and columns,
 regardless of the GUI WINDOW RESIZE-MODE setting.
 
+<!-- Not GUI specific so doesn't belong in the GUI features doc
 <p>
 <dt><b>SET TITLE</b> <i>text</i>
 
@@ -623,6 +625,7 @@ for the Title bar, Task bar, Task list, etc.  You can also specify the
 window title on the <a href="#x3">command line</a>.  If you don't specify
 a window title, the name of the connection, host, or communication device
 is used.
+-->
 
 <p>
 <dt><b>NOSCROLL</b>
@@ -637,7 +640,7 @@ is used.
 </dl>
 <p>
 
-New GUI-related variables include:
+GUI-related variables include:
 
 <p>
 <dl>
@@ -679,7 +682,7 @@ number of pixels from screen top to bottom.
 
 <p>
 
-A new status bar at the bottom of the window is divided into six sections;
+The status bar at the bottom of the window is divided into six sections;
 from left to right:
 
 <ol>
@@ -890,7 +893,7 @@ unchecked when remote).
 
 <p>
 
-The Console version of K95 2.0 behaves the same way, but without the GUI
+The Console version of K95 behaves the same way, but without the GUI
 popups.
 
 <h3>7.4. The Help Menu</h3>
@@ -1086,7 +1089,7 @@ as described in <a href="#x3">Section 3</a>.
 <p>
 
 The screen dimensions can be set with the SET TERMINAL HEIGHT and SET TERMINAL
-WIDTH commands, as before, and now also by stretching the K95G window with the
+WIDTH commands, as before, and also by stretching the K95G window with the
 mouse when <a href="#x7">Resize Mode</a> in the Actions menu is set to Changes
 Dimensions (but note that holding Shift while resizing always changes screen
 dimensions and holding Ctrl always changes font size):
@@ -1197,11 +1200,16 @@ version:
 
 These are both described in the Kermit 95 manual.  In addition, as noted in <a
 href="#x4">Section 4</a>, in K95G only, you can change the <i>value</i> of
-each color.  A GUI color dialog in K95G itself is a wish-list item for future
-releases.
+each color. <!-- A GUI color dialog in K95G itself is a wish-list item for future
+releases.-->
 
 <h3><hr><a name="x13">13. FONTS AND CHARACTER SETS</a></h3>
 
+<p>
+    See: <a href="index.html#c7guicset">Character Sets and Fonts in K95G</a>
+</p>
+
+<!--
 <img src="glass2.gif">
 
 <p>
@@ -1282,7 +1290,6 @@ Katakana, Hiragana, Math, Symbols, Line and Box Drawing, Dingbats, and APL
 Myanmar, and Braille).  This is not a free font; it comes with Kermit 95 2.0
 but may not be further redistributed.  <a href="glass.html#emt">CLICK HERE</a>
 for a sample.
-
 <p>
 
 <h3>Proportional Fonts</h3>
@@ -1299,7 +1306,7 @@ most cases.
 
 <ul>
 <li><a href="utf8.html">UTF-8 sampler</a>
-<li><a href="glass.html">K95G screen shots with different fonts</a>
+<li><a href="glass.html">K95G screenshots with different fonts</a>
 <li><a href="http://www.alanwood.net/unicode/fonts.html">Unicode
 Fonts for Windows</a> (Alan Wood)
 <li><a href="http://www.evertype.com">Everson Typography</a> (Michael Everson)
@@ -1570,6 +1577,7 @@ Kermit the printer's character with SET PRINTER
 
 Some of these limitations might be lifted in future releases.
 
+-->
 
 <h3><hr><a name="x14">14. (NOT) BUGS</a></h3>
 
@@ -1636,19 +1644,19 @@ occurs in the Terminal screen's context.
 applications and therefore can load only the Console version of K95.
 
 </ul>
-<p>
-Also see:
-<a href="ftp://kermit.columbia.edu/kermit/k95/newbugs.txt"><tt>ftp://kermit.columbia.edu/kermit/k95/newbugs.txt</tt></a>
+<!--<p>-->
+<!--Also see:-->
+<!--<a href="ftp://kermit.columbia.edu/kermit/k95/newbugs.txt"><tt>ftp://kermit.columbia.edu/kermit/k95/newbugs.txt</tt></a>-->
 
 
 <p>
 [ <a href="#top">Top</a> ]
 [ <a href="#contents">Contents</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">K95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/">Kermit Home</a> ]
+[ <a href="http://www.kermitproject.org/k95.html">K95 Home</a> ]
+[ <a href="http://www.kermitproject.org/">Kermit Home</a> ]
 <hr>
 <address>
-Kermit 95 GUI / The Kermit Project / Columbia University /
-1 January 2003
+Kermit 95 GUI / The Kermit Project /
+<!--$ver-date$-->1 January 2003<!--/$ver-date$-->
 </address>
 </body></html>
