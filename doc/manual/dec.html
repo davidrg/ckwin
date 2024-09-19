@@ -12,11 +12,17 @@ networks and hosts.
 <ul>
 <li><a href="#decslat">SuperLAT</a>
 <li><a href="#decpath">DECnet / PATHWORKS</a>
-<li><a href="#dectex">TES32</a>
+<li><a href="#dectes">TES32</a>
 </ul>
 <p>
-Note: as of this writing none of the third party products described
-on this page are available for Windows 2000 or later.
+Note: All the third-party products discussed here have been discontinued
+  and are no longer commercially available. None of them are compatible with
+  any version of Windows newer than Windows Server 2003.
+
+<p>Due to unclear licensing, support for SuperLAT and TES32 is no longer
+  included by default as of Kermit 95 version 3.0. Support <em>may</em> return
+  in a future release, but in the meantime you can compile Kermit 95 from
+  source yourself if you need it.
 <p>
 <hr>
 <h3><a name="decslat">SuperLAT</h3>
@@ -26,18 +32,29 @@ on this page are available for Windows 2000 or later.
 
 This section applies to Windows 95 and NT only; the OS/2 version
 does not support SuperLAT, but it does support PATHWORKS via SET NETWORK 
-TYPE DECNET (see 6.4.2 and OS2K95.TXT).
+TYPE DECNET (see <a href="os2k95.html">OS/2 Specifics of Kermit 95</a>
+  <!--6.4.2 and OS2K95.TXT  <=== What was 6.4.2??    -->).
 <p>
-SuperLAT(TM) is a commercial product from Meridian Technology Corporation,
-11 McBride Corporate Center Drive, Suite 250, Chesterfield MO 63005-1407 USA:
+SuperLAT(TM) was a commercial product from Meridian Technology Corporation,
+formerly at 11 McBride Corporate Center Drive, Suite 250,
+Chesterfield MO 63005-1407 USA:
 <p><pre>
-  Email: <a href="mailto:info@meridiantc.com">info@meridiantc.com</a>
-  Web:   <a href="http://www.meridiantc.com/">http://www.meridiantc.com/</a>
-  Voice: +1 (800) INFOMTC, +1 (314) 532-7707
+  <!-- Email: info@meridiantc.com -->
+  Web:   <a href="https://web.archive.org/web/20001206101500/http://www.meridiantc.com/">http://www.meridiantc.com/</a> (via archive.org)
+<!--  Voice: +1 (800) INFOMTC, +1 (314) 532-7707
   Fax:   +1 (314) 532-3242
-  BBS:   +1 (314) 532-3473
+  BBS:   +1 (314) 532-3473 -->
 </pre><p>
-SuperLAT provides LAT (Local Area Transport) service to Digital Equipment
+
+Meridian Technology discontinued all sales and support for SuperLAT on 31
+December 2000 and <a href="https://groups.google.com/g/comp.os.vms/c/bdib6QcRZqo/m/uKLGZCsBc9IJ">
+offered source code</a> to customers with the required LAT patent licenses for
+self-support purposes.
+
+<!-- Above google groups post archived at:
+https://web.archive.org/web/20240828100349/https://groups.google.com/g/comp.os.vms/c/bdib6QcRZqo/m/uKLGZCsBc9IJ -->
+
+<p>SuperLAT provides LAT (Local Area Transport) service to Digital Equipment
 Corporation (DEC) VMS or other hosts that support it, as well as to LAT-based
 DECservers, e.g. for shared dialout modem access.  You can make SuperLAT
 connections from Kermit 95 if you have SuperLAT installed on your Windows 95
@@ -72,15 +89,16 @@ flow control.  VMS C-Kermit MUST have "set flow xon/xoff".
 <b>Links:</b> [<a href="#dectes">Next</a>] [<a href="#decslat">Prev</a>] [<a href="#dec">Index</a>]
 <p>
 
-This section applies to Windows 95, Windows NT, and OS/2.
+This section applies to 32bit Windows 95, NT, 2000, XP, Server 2003, and OS/2
+on x86 and Alpha CPUs only.
 <p>
-PATHWORKS is a networking package for PCs available from Digital Equipment
-Corporation,
-<a href="http://www.digital.com/">http://www.digital.com/</a>.  It was also
+PATHWORKS is a networking package for PCs formerly available from Digital
+Equipment Corporation, later Compaq and then HP.  It was also
 once known as DECNET/DOS.  Kermit has supported this networking method in OS/2
-for several years; as of version 1.1.13, K95 supports it in Windows 95 and NT
-too.  In Windows 95 and NT, Digital PATHWORKS-32 V7.0 or later is required.
-In OS/2, PATHWORKS 2.0 or higher can be used.
+since the mid 90s; as of version 1.1.13 (June 1997), K95 supports it in
+Windows 95 and NT too. In Windows 95 and NT, Digital PATHWORKS-32 V7.0 or later
+is required. In OS/2, PATHWORKS 2.0 or higher can be used. The final release
+of PATHWORKS-32 for Windows was version 7.4 released in 2004.
 <p>
 If you have PATHWORKS installed on your PC, you can use "set network type
 pathworks" and then "set host xxx", where xxx is a DECnet node name or
@@ -121,23 +139,22 @@ which one:
 <b>Links:</b> [<a href="#decpath">Prev</a>] [<a href="#dec">Index</a>]
 <p>
 
-This section applies to Windows 95/98/ME and NT only.  The OS/2 version
-of C-Kermit does not support TES32, and TES32 is not available (as of
-this writing) for Windows 2000.
+This section applies to Windows 95/98/ME only.  The OS/2 version
+of C-Kermit does not support TES32, and TES32 is not available for Windows NT,
+  Windows 2000 or newer.
 <p>
 The TES networking method (virtual terminal service to VMS hosts over Novell
-networks) is supported as of version 1.1.8 via SET NETWORK TYPE TES32, if you
-have the TES32 product, and the corresponding server on your VMS host.  These
-are products of InterConnections Inc / Emulex.  As of this writing, TES32 is
-available for Windows 95, but not for Windows NT.  More info at:
+networks) is supported as of version 1.1.8 (November 1996) via
+SET NETWORK TYPE TES32, if you have the TES32 product, and the corresponding
+server on your VMS host. These were products of InterConnections Inc / Emulex
+and were discontinued sometime at the end of the 90s.  More info at:
 <p><pre>
-  <a href="http://www.icxn.com/">http://www.icxn.com/</a>
+  <a href="https://web.archive.org/web/20011007023412/http://www.emulex.com/leverage/index.html">http://www.emulex.com/leverage/index.html</a> (via archive.org)
 </pre><p>
-In fact, TES connections were also supported prior to this version, since TES
-is accessed through the same interface as SuperLAT.  TES32 is not mentioned in
+In fact, TES connections were also supported prior to this version 1.1.8, since
+TES is accessed through the same interface as SuperLAT. TES32 is not mentioned in
 the various Dialer dialog boxes; just choose SuperLAT wherever you need to use
-TES32.  If TES32 becomes available for Windows NT and you install it on your
-NT system, Kermit 95 should be able to use it.
+TES32.
 
 <p>
 <i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
