@@ -102,17 +102,16 @@ expand, fmt, fold, head, join, md5sum, nl, od, paste, pr, sort, split, sum,
 tac, tail, tr, unexpand, uniq, wc, gzip, gunzip, gawk, and sed.
 <p>
 
-NOTE (2011): All the sites mentioned below have disappeared
-
-<p>
-
-Windows 95 and NT versions can be found at the popular Windows ftp sites, such
-as <a href="http://ftp.cdrom.com">ftp.cdrom.com</a>
+In the 90s, Windows 95 and NT versions could be found at popular Windows ftp sites such
+as <a href="https://ftp.zx.net.nz/pub/archive/simtel.net/pub/simtelnet/">ftp.cdrom.com (simtel)</a>
 and
-<a href="ftp.winsite.com">ftp.winsite.com</a>.  The OS/2 versions, from Kai
+<a href="https://ftp.zx.net.nz/pub/archive/ftp.winsite.com/">ftp.winsite.com</a>,
+while <a href="https://gnuwin32.sourceforge.net/">GnuWin32</a> (now unmaintained)
+and <a href="https://www.cygwin.com/">Cygwin</a> provide more recent
+Windows ports of various GNU software.  OS/2 versions, from Kai
 Uwe Rommel, can be found at:
 <p><pre>
-  <a href="http://www.leo.org/pub/comp/os/os2/leo/gnu/index.html">http://www.leo.org/pub/comp/os/os2/leo/gnu/index.html</a>
+  <a href="https://ftp.zx.net.nz/pub/archive/ftp.leo.org/pub/comp/os/os2/leo/gnu/">ftp.leo.org/pub/comp/os/os2/leo/gnu/</a>
 </pre><p>
 These implementations are freely available on the Internet but might have
 some problems.  For example, "creceive cat &#62; filename" on Windows 95 or NT
@@ -122,11 +121,11 @@ same (using cat version 1.6).
 Gzip/Gunzip (GNU ZIP and UNZIP) archiving and compression software for Windows
 95 and NT is available from:
 <p><pre>
-  <a href="ftp://ftp.winsite.com/pub/pc/winnt/misc/gzip.zip">ftp://ftp.winsite.com/pub/pc/winnt/misc/gzip.zip</a>
+  <a href="https://winsite.retropc.se/winsite-mar96-4/winnt/misc/gzip.zip">ftp.winsite.com/pub/pc/winnt/misc/gzip.zip</a>
 </pre><p>
 And for OS/2 from:
 <p><pre>
-  <a href="http://www.leo.org/pub/comp/os/os2/leo/gnu/archiver/index.html">http://www.leo.org/pub/comp/os/os2/leo/gnu/archiver/index.html</a>
+  <a href="https://ftp.zx.net.nz/pub/archive/ftp.leo.org/pub/comp/os/os2/leo/gnu/archiver/">ftp.leo.org/pub/comp/os/os2/leo/gnu/archiver/</a>
 </pre><p>
 Unlike the Info-Zip tools (Section 5.10.8.4.3), this package was designed from
 the beginning to handle pipes.  So using Gzip and Gunzip on Windows 95,
@@ -148,17 +147,17 @@ same crashing bug as noted for Info-ZIP zip/unzip (see 5.10.8.4.3), plus a
 failure of the OS/2 version to open pipes in binary mode (depending on which
 compiler it was built with), thus corrupting the ZIP format, rendering the
 result useless.  These bugs have been reported to the maintainers, along with
-fixes, and hopefully new releases of these programs will be issued shortly.
+fixes.
 
 <h4>The Hamilton C Shell</h4>
 
-One source of high-quality filters that have been tested successfully with
+One source of high-quality filters that was in the distant past tested successfully with
 K95's pipes is from Hamilton Laboratories, Inc:
 <p><pre>
-  <a href-"http://www.hamiltonlabs.com">http://www.hamiltonlabs.com</a>
+  <a href="http://www.hamiltonlabs.com">http://www.hamiltonlabs.com</a>
 </pre><p>
 The Hamilton C Shell package includes a version of the Berkeley UNIX C-Shell
-for Windows 95, Windows NT (i386, alpha, mips, and ppc), and OS/2, and comes
+<!-- [not anymore] for Windows 95, Windows NT (i386, alpha, mips, and ppc), and OS/2,--> and comes
 with an extensive array of UNIX filters and utilities, including all that you
 would expect to find in UNIX and many original additions, including a DES
 encryption filter.  Using this filter we could support the following syntax
@@ -184,7 +183,7 @@ which could be used for remote backups to tape.
 The Info-ZIP project writes portable Zip/Unzip software for many platforms.
 More info at:
 <p><pre>
-   <a href="http://quest.jpl.nasa.gov/Info-ZIP/">http://quest.jpl.nasa.gov/Info-ZIP/</a>
+   <a href="https://infozip.sourceforge.net/">https://infozip.sourceforge.net/</a>
 </pre><p>
 Ideally, it should be possible to use the Info-ZIP utilities to send an entire
 directory tree from one machine to another in compressed form.  (NOTE: See
@@ -192,7 +191,7 @@ directory tree from one machine to another in compressed form.  (NOTE: See
 for another method of
 sending directory trees that does not depend on external utilities like ZIP.)
 This would
-provide better compression than found in modems and it would also provide
+provide better compression than found in modems, and it would also provide
 compression over network connections where compression normally does not take
 place.  And it would allow the data to be sent encrypted and confer other
 benefits as well.
@@ -201,8 +200,12 @@ But it turns out that although the Info-ZIP ZIP program has no problem
 creating a ZIP archive to Stdout ("<tt>zip - filelist</tt>") and can even
 compress Stdin to Stdout ("zip") or read the filelist to be compressed from
 Stdin and output the archive to Stdout ("<tt>zip -@ -</tt>"), the UNZIP
-program can't handle an archive as input from Stdin (this feature is on the
-list for version 6).
+program can't handle an archive as input from Stdin. <!--
+ Previously:
+    (this feature is on the list for version 6).
+ Well, version 6 is out and I can see no sign of unzip supporting reading from
+ stdin
+ -->
 <p>
 However, an FUNZIP (unzip filter) program is also provided as part of the
 Info-Zip package.  But it has some major limitations.  First, it can only
