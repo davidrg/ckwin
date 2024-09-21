@@ -1004,6 +1004,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b829">829. Receiving files with a specified destination fails when autodownload is set to ask</a>
 <li><tt>[ ] (K)</tt> <a href="#b830">830. Switching between command and terminal screens via the keyboard does not update the toolbar button state</a>
 <li><tt>[ ] (M)</tt> <a href="#b831">831. On Windows NT 3.50 for Alpha, K95G causes Windows to crash</a>
+<li><tt>[ ] (K)</tt> <a href="#b832">832. K95G crashes on exit if a connection is active and GUI dialogs are off</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -7967,8 +7968,33 @@ Fixed in 3.0
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/308">Issue #308 on Github</a>
 
+<h3><a name="b832">832. K95G crashes on exit if a connection is active and GUI dialogs are off</a></h3>
+<p>
+    If you try to close the K95G window either with the [X] button, or the
+    File -&gt; Exit menu item while a connection is active and GUI dialogs are
+    turned off (<tt>set gui dialogs off</tt> or Actions -&gt; GUI Dialogs),
+    instead of asking if you want to exit K95G stops responding and must be
+    terminated with task manager.
+</p>
+
+<p>This bug affects K95G 2.1.3 and likely all GUI versions of K95G going back
+    to v2.0
+</p>
+
+<p>At the moment the workaround is to leave GUI dialogs turned on, or disable
+    the on-exit warning with <tt>set exit warning off</tt>
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/322">Issue #322 on Github</a>
+
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
+<p>
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/xxx">Issue #xxx on Github</a>
 -->
 
 <p>
