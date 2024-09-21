@@ -3,27 +3,28 @@
 <title>Kermit 95 READ ME</title></head>
 <body bgcolor="#ffffff" text="#000000">
 
-<h2><a name="top">WELCOME TO KERMIT 95 2.1.3</a></h2>
+<h2><a name="top">WELCOME TO KERMIT 95 <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--></a></h2>
 
 <blockquote>
-<i>1 January 2003</i>
+<i><!--$ver-date$-->1 January 2003<!--/$ver-date$--></i>
 </blockquote>
 
 <p>
 
 <big><big>K</big></big>ermit 95<b>:</b> Powerful, flexible, customizable,
-secure 32-bit communications software for Microsoft Windows, now in GUI form.
-Please remember: this is licensed software, not to be redistributed in any
-form without license to do so, nor made available to unlicensed persons for
-copying by any means (including but not limited to network copying).
+secure 32-bit communications software for Microsoft Windows, now in open source
+form.
 
 <p>
 <big>
 
+Unlike the K95 1.1.x and 2.x releases, <b>K95 3.0 and later are fully open-source</b>
+under the 3-clause BSD license!
+  <!--
 Unlike the K95 1.1.x releases, <b>K95 2.0 and later run in a GUI window</b>
 (a Console version is available too).  A description of the
 Graphical User Interface is <a href="k95gui.html">HERE</a> and also in the
-updated Kermit 95 manual.
+updated Kermit 95 manual.-->
 
 </big>
 <p>
@@ -45,7 +46,8 @@ Portions Copyright &#169; 1997, Stanford University.<br>
 Portions Copyright &#169; 1998 CORE SDI S.A., Buenos Aires, Argentina.<br>
 Portions Copyright &#169; 1998-2001 The OpenSSL Project.<br>
 Portions Copyright &#169; (date unspecified) Markus Friedl, Theo de Raadt,
-Niels Provos, Dug Song, Aaron Campbell.
+Niels Provos, Dug Song, Aaron Campbell.<br>
+Portions Copyright &#169; The Kermit Project Contributors
 </small></blockquote>
 
 <h3><hr><a name="contents">CONTENTS</a></h3>
@@ -78,82 +80,15 @@ Niels Provos, Dug Song, Aaron Campbell.
 
 <h3><hr><a name="x1">1. WHAT'S WHAT</a></h3>
 
-This is version 2.1.3 of Kermit 95 -- the twenty-fourth update since the 
-original release in September 1995.  You might have received this version as
-an update patch to a previous version, or you might have received it as part
-of a bulk or site license, or you might have purchased it new in its box
-or via some means of electronic delivery.  All versions include:
+Kermit 95 Version 3.0.0, the twenty-fifth update since the
+original release in September 1995, is currently in development with periodic
+beta releases to fix issues, restore missing functionality and add new
+features now expected of modern terminal emulators. This is currently release:
+<!--$ver-full$-->3.0.0 DEV<!--/$ver-full$-->
 
-<p>
-<dl>
-<dt><i>The Kermit 95 Software</i>
-<dd>The CDROM includes Kermit 95 for Windows 95/98/ME/NT/2000/XP and OS/2.
-The appropriate version is installed for you automatically.
-<p>
-<dt><i>The Kermit 95 Manual</i>
-<dd>The new Seventh Edition of the online Kermit 95 manual is completely up
-to date with version 2.1.3.  It is in
-<a href="gloss.html#g_html">HyperText Markup Language</a> (HTML)
-format so you can navigate it with your Web browser.  This manual
-concentrates on the unique aspects of Kermit 95, primarily the K95 Dialer
-and the terminal emulator.
-</dl>
-<p>
-
-The shrinkwrapped retail version, Kermit 95+, also includes the following
-(hence the "+"):
-
-<dl>
-
-<dt><i>The C-Kermit CDROM</i>
-
-<dd><a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> is
-Kermit 95's file-transfer and client/server partner for UNIX (Linux, Solaris,
-AIX, HP-UX, etc), VMS, VOS, and many other operating systems.  It is not part
-of Kermit 95; it has been included to ensure that you have an up-to-date,
-high-performance, supported Kermit file transfer partner on the UNIX, VMS, or
-VOS systems that you connect to with Kermit 95.
-
-
-<p>
-
-<dt><i>The C-Kermit Manual</i>
-
-<dd>The book,
-<a href="http://www.columbia.edu/kermit/ck60manual.html"><cite>Using
-C-Kermit</cite></a>, is the technical reference manual
-for the Command Window and script programming language, as well as for file
-transfer, and also contains useful tutorials on character sets, data
-communications and troubleshooting of dialing and connection problems.  It is
-also the user manual for C-Kermit itself, which has the same command and
-scripting language as Kermit 95.  The second edition of <cite>Using
-C-Kermit</cite> was published concurrently with the release of C-Kermit 6.0
-and Kermit 95 1.1.8; updates for C-Kermit 7.0 (which corresponds to Kermit 95
-1.1.20) and 8.0 (Kermit 95 1.1.21 / 2.0) are included with the K95 manual.
-Beginning with Kermit 95 1.1.20, <cite>Using C-Kermit</cite> is provided in
-online PDF format (with shrinkwrapped retail copies only).  Beginning with
-version 2.1, the PDF version of the manual must be downloaded from the
-Kermit 95 publisher, using your Kermit 95 serial number as license key
-(Kermit 95 2.1 shrinkwrapped copies only).  See the
-<a href="http://www.columbia.edu/kermit/">Kermit website</a> for more
-(and perhaps more up-to-date) information about <i>Using C-Kermit</i>.
-
-<p>
-<dt><i>Your Serial Number Stickers and Registration Card</i>
-<dd>Explained <a href="#register">below</a>.
-</dl>
-<p>
-
-If you have Kermit 95 as part of a bulk or site license, then you received
-only the Kermit 95 software and online Kermit 95 (but not C-Kermit)
-documentation, preregistered and possibly customized for your site.  Copies of
-<cite>Using C-Kermit</cite> (ISBN 1-55558-164-1) should be available at your
-organization's library or software licensing office, and can also be ordered
-separately or purchased in book or computer stores or
-from
-<A HREF="http://www.amazon.com/exec/obidos/redirect?tag=kermit95-20&path=ISBN=1555581641/6584-5665863-047434">Amazon.Com</A>
-or from
-<a href="http://www.columbia.edu/kermit/manuals.html">the Kermit Project</a>.
+<p>Some features are still missing from the current beta release - it is
+hoped that most of them, where possible, will return in a future release.
+</p>
 
 
 <p>
@@ -163,41 +98,60 @@ or from
 
 <h3><hr><a name="x2">2. WHAT'S NEW</a></h3>
 
-Kermit 95 2.1 is an update of version 2.0 to prepare it for shrinkwrap
-manufacturing.  Differences from 2.0 include:
+Kermit 95 3.0 is the first open source release of K95. Differences from the
+last commercial release, 2.1.3, include:
 
 <p>
 <ul>
 
-<li>Bug fixes (see the <a href="k95bugs.html">bugs list</a>).
-<li>Numerous improvements in the <a href="https://www.kermitproject.org/ckermi80.html#ftp">text-mode FTP
-client</a>.
-<li>Better handling of screen resizing, maximizing, and restoring.
-<li>Updated security modules.
-<li>New GUI file dialogs for autodownload, capture, etc.
-<li>Several <a href="https://www.kermitproject.org/ckermi80.html#ck206">new commands</a>.
-
+<li>Improved compatibility and appearance on modern Windows versions including
+  large file support and ports to 64bit Windows on: x86-64, ARM64 and Itanium
+<li>Support for Windows NT on Alpha and PowerPC has been restored
+<li>New ports to 32bit Windows on: MIPS and ARM32, and new support for Windows NT 3.50</li>
+<li>PTYs are now supported on Windows 10 v1809 and newer</li>
+<li>Mouse Wheel support</li>
+<li>Terminal Mouse Reporting</li>
+<li>REXX is now supported on x86 and x86-64 Windows XP and newer as well as OS/2</li>
+<li>Named Pipe connections are now supported on Windows as well as OS/2</li>
+<li>New modern SSH implementation based on libssh</li>
+<li>Support for the latest versions of OpenSSL and MIT Kerberos for Windows</li>
+<li>TLS SNI support in the http and telnet clients</li>
+<li>A number of new escape sequences are supported in the ANSI terminal
+  emulator to improve xterm and linux compatibility</li>
+<li>The screen update interval is no longer fixed at 100ms in K95G - it can be
+  changed with <tt>set terminal screen-update fast</tt></li>
+<li>New ADM5 terminal type</li>
+<li>New SKERMIT command</li>
+<li>Updated to C-Kermit 10</li>
 </ul>
 <p>
 
-Kermit 95 2.1.3 is a minor update to 2.1 that includes:
+Unfortunately some features have had to be removed from v3.0 due to changing
+  3rd party dependencies and licensing concerns:
 
 <p>
 <ul>
-<li>Better handling of maximized windows and improved transitions between
-maximized, minimized, and restored windows.
-<li>Better handling of window resize events.
-<li>New controls for creating "locked down" sessions.
-<li>SSH Agent forwarding.
-<li>OpenSSL library updated to 0.9.7 Final.
-<li>For the terminal emulator: selectable line spacing and a nonblinking cursor
-option.
-<li>Bug fixes (see <a href="k95bugs.html">bugs list</a>).
+  <li>SSHv1 and some Kerberos-related SSH commands and options are no longer
+    supported as the new SSH backend (libssh) doesn't support them</li>
+  <li>SSH and SSL/TLS are no longer supported on Windows versions older than XP
+    as OpenSSL and libssh no longer support these platforms.</li>
+  <li>SRP and Kerberos IV support is no longer included as these 3rd-party
+    libraries have been unmaintained for some years now.
+  </li>
+  <li>SuperLAT and TES32 support is no longer included by default due to unclear
+    header licensing. This may change in the future.
+  </li>
 </ul>
+<p>As Kermit 95 is open-source now, if you <em>need</em> support for SRP,
+  Kerberos IV, SuperLAT or TES32 it is still possible to compile Kermit 95 with
+  these features by using an older compiler and supplying the now unmaintained
+  3rd-party libraries required to support them.
+
+<p>For a full list of everything that's changed since Kermit 95 2.1.3, consult
+  the change log that you should have received with your copy of Kermit 95.
+</p>
+
 <p>
-
-
-
 [ <a href="#top">Top</a> ]
 [ <a href="#contents">Contents</a> ]
 [ <a href="kermit95.html">K95 Manual</a> ]
@@ -208,8 +162,13 @@ All you need to use Kermit 95 are:
 
 <ul>
 
-<li>An Intel-based or compatible PC running Microsoft Windows 95, 98, ME, NT
-4.0 or later, Windows 2000, or Windows XP, or IBM OS/2 3.0 or later.
+<li>Any 32bit or 64bit Windows compatible computer running any 32bit or 64bit
+  version of Windows except for Windows NT 3.1 or MIPS Windows NT 3.50, or a
+  PC running IBM OS/2 3.0 or later.
+</li>
+
+<!--<li>An Intel-based or compatible PC running Microsoft Windows 95, 98, ME, NT-->
+<!--4.0 or later, Windows 2000, or Windows XP, or IBM OS/2 3.0 or later.-->
 
 <li>The normal amount of memory and swap space for those platforms
 (as with any Windows application, K95 works best when there is plenty
@@ -228,13 +187,14 @@ The following are not supported:
 <p>
 
 <ul>
-<li>Alpha and PowerPC Windows platforms are no longer supported.
-<li>Windows NT versions prior to 4.0 are not supported.
+<li>Windows NT 3.10</li>
+<li>MIPS Windows NT 3.50</li>
+<li>Alpha Windows NT 3.50 is console-mode only (no K95G)</li>
 <li>Windows CE and Pocket PC are not supported.
 </ul>
 
 <p>
-
+<!-- TODO: update memory and disk requirements -->
 Windows 95/98/ME and Windows NT/2000/XP are demand-paged virtual memory
 operating systems, and so the time-honored question, "How much RAM is
 required?" does not strictly apply to Kermit 95.  But as with most Windows
@@ -260,12 +220,10 @@ your Dialer database.
 
 <h3><hr><a name="x4">4. SECURITY AND ENCRYPTION</a></h3>
 
-Kermit 95 is capable of making secure, authenticated, encrypted Internet
-connections using a variety of methods, all of which include strong
-cryptography.  Effective 16 July 2002, the US Department of Commerce Bureau of
-Industry and Security has granted Kermit 95 an export license exception
-allowing export to all countries except Iraq, Iran, Libya, North Korea, Sudan,
-Syria, and Cuba; a non-cryptographic version is available for those countries.
+Kermit 95 contains strong cryptography and its legality may vary from country
+to country. You may find the information at
+<a href="http://www.cryptolaw.org/">cryptolaw.org</a> useful but the Kermit
+Project can not vouch for its correctness.
 
 <p>
 
@@ -281,15 +239,25 @@ methods supported by Kermit 95.
 
 <h3><hr><a name="x5">5. INSTALLING KERMIT 95</a></h3>
 
-New copies of Kermit 1.1.21 and later are installed using a new
-graphical <a href="http://www.installshield.com">InstallShield</a> procedure
-that replaces the text-mode question and answer session of the
-<tt>SETUP.EXE</tt> program that came with K95 1.1.20 and earlier.
-If you are patching up from an original installation of 1.1.20 or earlier,
-you will never see the InstallShield procedure.  If you are installing a
-new copy Kermit 95, the installation instructions appear on your screen
-when you install it.  You can also read them
-<a href="k95ins.html">HERE</a>.
+Current releases of Kermit 95 do not yet have an installation procedure.
+Beta releases are currently distributed as &quot;portable&quot; applications -
+just unzip the release to somewhere convenient and create a shortcut or
+run k95g.exe. Kermit 95 isn't specifically designed as a portable application
+however, and it <em>will</em> create a few registry keys under
+<tt>\HKCU\Software\Kermit</tt> on first run.
+
+<p>If you would like to have shortcuts and file associates created, the old
+  K95 Registry Tool is included with current K95 3.0 betas so you can create
+  these by running k95regtl.exe and choosing which things to create.
+
+<p>
+  There are no particular procedures <em>required</em> when upgrading from
+  Kermit 95 v2.1.3 but due to changes in the dialer it is advised you
+  take a backup of your dialer data files if you use the dialer. Otherwise, you
+  should be able to run K95 2.1.3 and 3.0 side-by-side.
+</p>
+
+<!-- TODO: More info on upgrading from K95 2.1.3 -->
 
 <p>
 [ <a href="#top">Top</a> ]
@@ -298,6 +266,16 @@ when you install it.  You can also read them
 
 <h3><hr><a name="x6">6. UNINSTALLING KERMIT 95</a></h3>
 
+For the current release uninstalling is the reverse of installing. If you used
+the K95 Registry Tool (k95regtl.exe) to setup associations, etc, run it again
+to undo those things, then delete the K95 files you originally extracted from
+the release archive along with any shortcuts you created.
+
+<p>One other bit of cleanup you may want to do: K95 creates a few of registry
+  keys under <tt>\HKCU\Software\Kermit</tt> which can be deleted if you wish.
+</p>
+
+<!--
 Should you wish to remove Kermit 95 from your Windows 95 system, it depends on
 how you installed it in the first place.  In both cases you should exit from
 all Kermit programs (K95, the Dialer) first.  Then:
@@ -349,6 +327,7 @@ Kerberos credentials in memory.
 </ol>
 
 </dl>
+-->
 
 <p>
 [ <a href="#top">Top</a> ]
@@ -357,45 +336,13 @@ Kerberos credentials in memory.
 
 <h3><hr><a name="x7">7. REGISTRATION</a></h3>
 
-If you have a site- or bulk-licensed version of Kermit 95, or if you are
-upgrading from an earlier version by applying a patch, then your copy of
-Kermit 95 is already registered, in which case please
-<a href="#resources">ignore this section</a>, which applies to the
-shrinkwrapped package.
+Registration of Kermit 95 v3.0 and newer is no longer required - starting with
+this release it is completely free and open source.
 
-<p>
-
-If you have downloaded a Try-and-Buy version of K95 or are installing an
-electronically delivered version of K95, also please ignore this section. 
-
-<p>
-
-Kermit 95 comes with <b>two serial-number stickers.</b> The serial number on
-each sticker should be the same.
-
-<p>
-
-The installation software includes a registration procedure that asks for your
-name, company, and Kermit 95 serial number.  You should enter your real name,
-since it will be announced every time you (or anyone else) starts the program.
-The company name is optional.  The serial number must be entered exactly as
-shown on the sticker: letters, punctuation, and all.
-
-<p>
-
-Then please affix ONE of the stickers to your mailback registration card, fill
-out the card, and mail it back to us.  Keep the other sticker as a record of
-your serial number; for example, in case your PC stops working and you have
-to install K95 on a new PC.  In case you lose your serial number, we'll have
-a record of it if you sent in your card.
-
-<p>
-
-If you have an e-mail address, be sure to include it so we can notify you of
-new releases or patches (mailings are infrequent and there is no junk mail;
-the list is private and is not sold or otherwise provided to anyone else for
-any purpose).
-
+<p>This does not apply to Kermit 95 v2.1.3 and earlier releases -
+those are <em>not</em> free. Columbia may still sell bulk licenses for K95
+v2.1.3 if you need an older version for some reason.
+</p>
 
 <p>
 [ <a href="#top">Top</a> ]
@@ -405,20 +352,20 @@ any purpose).
 <h3><hr><a name="x8">8. RESOURCES</a></h3>
 
 <dl>
-<dt><a href="uck2epdf.html"><i>Using C-Kermit</i>, 2nd Edition</a>
+<dt><a href="https://kermitproject.org/onlinebooks/uck2ep2.pdf"><i>Using C-Kermit</i>, 2nd Edition</a>
 <dd>The user manual for C-Kermit and the technical reference manual for
-Kermit95 in PDF format.  Included only with shrinkwrapped copies of
-Kermit 95 1.1.20 and later.  Access from the References links in the
-Kermit 95 manual.  Also available
-<a href="http://www.columbia.edu/kermit/ck60manual.html">in book form</a>.
+Kermit95 in PDF format.  This is <a href="https://kermitproject.org/booksonline.html">
+    available from the Kermit Project Website
+  </a>.
 
 <p>
 
 <dt><a href="https://www.kermitproject.org/ckermi70.html"><i>The C-Kermit 7.0 Update Notes</i></a>
 <dt><a href="https://www.kermitproject.org/ckermi80.html"><i>The C-Kermit 8.0 Update Notes</i></a>
+<dt><a href="https://www.kermitproject.org/ckermit90.html"><i>The C-Kermit 9.0 Update Notes</i></a>
 
-<dd> Kermit 95 1.1.21 and 2.0 are based on C-Kermit 8.0, but <cite>Using
-C-Kermit</cite> is current with C-Kermit 6.0.  The C-Kermit 7.0 and 8.0 update
+<dd> Kermit 95 3.0 is based on C-Kermit 10.0, but <cite>Using
+C-Kermit</cite> is current with C-Kermit 6.0.  The C-Kermit 7.0, 8.0 and 9.0 update
 notes document all the features added to C-Kermit since the second edition of
 the book was published in 1997.  These are fully cross-linked HTML documents,
 rather than plain text as in earlier K95 releases.  Access them via the link
@@ -447,53 +394,49 @@ the References section at the top your K95 manual.
 lists for each.
 
 <p>
-<dt><a href="http://www.columbia.edu/kermit/"><tt>http://www.columbia.edu/kermit/</tt></a>
+<dt><a href="http://www.kermitproject.org/"><tt>http://www.kermitproject.org/</tt></a>
 <dd>The Kermit Project website on the Internet.  Here you will find
 information about Kermit software for other platforms, news about Kermit 95,
 hints and tips, script programming examples, and lots more.  Internet
 connection required.  Here are some points of interest:
 <p>
 <dl>
-<dt><a href="ftp://kermit.columbia.edu/kermit/k95/newbugs.txt">
-<tt>ftp://kermit.columbia.edu/kermit/k95/newbugs.txt</tt></a>
-<dd>The <tt>newbugs.txt</tt> file at the Kermit Project website.  This
-file lists bugs or other information discovered after this release of Kermit
-95 was packaged.  
+<dt>The <a href="https://github.com/davidrg/ckwin/issues?q=is%3Aissue+label%3Abug+created%3A%3E%3D$!ver-date-iso$">
+  Github Issue Tracker</a></a></dt>
+<dd>Which lists bugs or other information discovered after this version of Kermit
+95 was released.
 <p>
-<dt><a href="http://www.columbia.edu/kermit/k95.html">
+<dt><a href="http://www.kermitproject.org/k95.html">
 <tt>http://www.columbia.edu/kermit/k95.html</tt></a>
 <dd>The Kermit 95 page.
 <p>
-<dt><a href="http://www.columbia.edu/kermit/k95pricing.html">
-<tt>http://www.columbia.edu/kermit/k95pricing.html</tt></a>
-<dd>Kermit 95 pricing and licensing options.  Details about low-cost bulk
-right-to-copy licenses and academic site licenses.
-<p>
 
-<dt><a href="http://www.columbia.edu/kermit/k95next.html">
+<!--<dt><a href="http://www.columbia.edu/kermit/k95next.html">
 <tt>http://www.columbia.edu/kermit/k95next.html</tt></a>
-<dd>News about upcoming K95 releases.
+<dd>News about upcoming K95 releases.-->
+
 <p>
-<dt><a href="http://www.columbia.edu/kermit/ckermit.html">
-<tt>http://www.columbia.edu/kermit/ckermit.html</tt></a>
+<dt><a href="http://www.kermitproject.org/ckermit.html">
+<tt>http://www.kermitproject.org/ckermit.html</tt></a>
 <dd>The C-Kermit page, K95's companion software for UNIX, VMS, and
 other platforms.
 <p>
-<dt><a href="http://www.columbia.edu/kermit/support.html">
-<tt>http://www.columbia.edu/kermit/support.html</tt></a>
+<dt><a href="http://www.kermitproject.org/support.html">
+<tt>http://www.kermitproject.org/support.html</tt></a>
 <dd>The technical support page, explaining how to get technical support,
-and including some hints and tips to save you some time.
+and including some hints and tips to save you some time. For Kermit 95-specific
+    help, you can also try asking a question on Github at: <a href="https://github.com/davidrg/ckwin/discussions">https://github.com/davidrg/ckwin/discussions</a>
 <p>
-<dt><a href="http://www.columbia.edu/kermit/scriptlib.html">
-<tt>http://www.columbia.edu/kermit/scriptlib.html</tt></a>
+<dt><a href="https://kermitproject.org/scriptlib.html">
+<tt>https://kermitproject.org/scriptlib.html</tt></a>
 <dd>The Kermit Script Library.
 Lots of sample scripts demonstrating how to automate everything from dialing
 to Internet sessions to complex file-management and computation tasks.
 </dl>
-<p>
+<!--<p>
 <dt><a href="news:comp.protocols.kermit.announce">
 <tt>comp.protocols.kermit.announce</tt></a>
-<dd>The Kermit software announcements newsgroup (moderated).
+<dd>The Kermit software announcements newsgroup (moderated).-->
 <p>
 <dt><a href="news:comp.protocols.kermit.misc">
 <tt>comp.protocols.kermit.misc</tt></a>
@@ -505,6 +448,14 @@ to Internet sessions to complex file-management and computation tasks.
 [ <a href="kermit95.html">K95 Manual</a> ]
 
 <h3><a name="files"><a name="directories"><a name="x9"><hr>9. FILES AND DIRECTORIES</a></a></a></h3>
+
+<b><u>NOTE: Section 9 (and 9.1/9.2/9.3) has not been updated for K95 v3.0 yet!</u></b>
+  The plan is for K95 v3.0 to largely match what is described here when it's
+  installed via an installer, but installers haven't been built yet. If you've
+  upgraded from K95 v2.1.3 then your setup will end up looking like that
+  described in section 9.2 as the current distribution method of K95 v3.0 betas
+  is more similar to that of K95 v1.1.20 and earlier.
+
 
 <pre>
   9.1. <a href="#x9.1"><b>The New Directory Structure</b></a>
@@ -1705,7 +1656,7 @@ where your files went.
 [ <a href="kermit95.html">K95 Manual</a> ]
 <hr>
 <address>
-Kermit 95 README / Version 2.1.3 /
-1 January 2003
+Kermit 95 README / <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--> /
+<!--$ver-date$-->1 January 2003<!--/$ver-date$-->
 </address>
 </body></html>
