@@ -67,7 +67,7 @@ access to this compiler so it is currently unknown if it still works or if chang
 in the last 22 years have introduced problems.
 
 While waiting for a copy of VisualAge C++ to appear on ebay, some work has gone in
-to getting K95 building with OpenWatcom. Most if now builds, and if you disable
+to getting K95 building with OpenWatcom. Most of it now builds, and if you disable
 enough features and compiler optimisation it even runs, but there are a number of 
 outstanding issues (see ticket [#8](https://github.com/davidrg/ckwin/issues/8))
 which need fixing before its worth including OS/2 binaries in beta releases. 
