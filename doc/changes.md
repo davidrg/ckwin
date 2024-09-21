@@ -9,7 +9,8 @@ As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name
 it carried from 1995 through to 2013.
 
 ### Things to be aware of when upgrading
-Nothing yet
+* K95G no longer opens COM1 by default. If you previously depended on this, 
+  you'll need to add `set port com1` to your k95custom.ini
 
 ### New features
 * SSH Port forwarding (tunneling) is now supported again in both
@@ -44,6 +45,8 @@ Nothing yet
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
 * Upgraded to OpenSSL 3.0.15 which fixes a number of bugs and security issues
+* K95G no longer opens COM1 by default. If you still want this behaviour, add
+  `set port com1` to your k95custom.ini
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 

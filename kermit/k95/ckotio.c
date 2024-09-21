@@ -420,8 +420,26 @@ extern int os2pm;
 char *dftty = "0"; /* stdin */
 int dfloc = 0;
 #else
+
+/* For K95G we used to just assume the user was going to
+ * use a modem attached to COM1 and so go and open that
+ * device automatically on startup if nothing else had
+ * it open. In 2024 this behaviour is less likely to be
+ * useful, so now K95G behaves as K95 does - it opens
+ * stdin instead so as to not unexpectedly lock resources
+ * that might be needed by other applications. The
+ * original COM1 opening code is left below primarily as
+ * an example of how dftty and dfloc work.
+ */
+
+#ifdef COMMENT
 char *dftty = "com1"; /* COM1 */
 int dfloc = 1;
+#else /* COMMENT */
+char *dftty = "0"; /* stdin */
+int dfloc = 0;
+#endif /* COMMENT */
+
 #endif /* K95G */
 
 int OSVer = 0;
