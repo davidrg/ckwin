@@ -1071,6 +1071,18 @@ jobs:
       run: |
         move dist ${{ github.workspace }}\ckwin
         move ..\dialer\dist ${{ github.workspace }}\dialer
+        
+        REM ctl3dins is a utility for installing ctl3d32 and, in some cases,
+        REM the Visual C++ runtime. Builds of the Dialer done with OpenWatcom 
+        REM can't use ctl3d32 (it a Visual C++ thing), and they don't need the
+        REM Visual C++ runtime, so ctl3dins.exe serves no purpose here. Even
+        REM worse, Microsoft AntiVirus frequently misdetects it as being a
+        REM virus (Trojan:Win32/Wacatac.B!ml) making the artifact difficult
+        REM to download. So... just exclude ctl3dins from OpenWatcom-built
+        REM artifacts.
+        
+        del ckwin\ctl3dins.exe
+        
 
     - name: Fetch Docs
       uses: actions/download-artifact@v4
