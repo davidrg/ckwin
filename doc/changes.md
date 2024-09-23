@@ -41,6 +41,7 @@ it carried from 1995 through to 2013.
   REXX implementation is the current Regina REXX release. regutil.dll is included
   but note that the Console I/O Routines it provides are not currently compatible 
   with K95.
+* SSH is now supported on 32bit ARM devices (Windows RT)
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
