@@ -346,7 +346,7 @@ jobs:
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
-        cmake . -G "NMake Makefiles"
+        cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
         nmake    
 
     - name: Build openssl (x86)
