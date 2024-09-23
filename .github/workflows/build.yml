@@ -328,11 +328,6 @@ jobs:
 
       shell: powershell
 
-      # No zlib for ARM - it fails at the link step:
-      #   link -nologo -debug -incremental:no -opt:ref -def:./win32/zlib.def -dll -implib:zdll.lib  -out:zlib1.dll -base:0x5A4C0000 adler32.obj compress.obj crc32.obj deflate.obj gzclose.obj gzlib.obj gzread.obj  gzwrite.obj infback.obj inflate.obj inftrees.obj inffast.obj trees.obj uncompr.obj zutil.obj  zlib1.res
-      #     Creating library zdll.lib and object zdll.exp
-      #   LINK : fatal error LNK1355: invalid base address 0x5A4C0000; ARM64 image cannot have base address below 4GB
-      # See bug: https://github.com/madler/zlib/issues/325
     - name: Build zlib (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
@@ -348,6 +343,7 @@ jobs:
         cd zlib\${{env.ZLIB_VERSION}}
         cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
         nmake
+        dir
 
     - name: Build openssl (x86)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
@@ -606,6 +602,10 @@ jobs:
         REM as the current LTS release isn't compatible.
         if "${{matrix.arch}}" == "x64_arm" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
         if "${{matrix.arch}}" == "x64_arm64" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
+        
+        REM No Kerberos on ARM Windows yet 
+        if "${{matrix.arch}}" == "x64_arm" set k4w_root_override=${{github.workspace}}
+        if "${{matrix.arch}}" == "x64_arm64" set k4w_root_override=${{github.workspace}}
         
         call ..\setenv.bat
         
