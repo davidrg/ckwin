@@ -214,7 +214,7 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+ver1
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+ver6
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
@@ -328,18 +328,21 @@ jobs:
 
       shell: powershell
 
-      # No zlib for ARM - it fails at the link step:
-      #   link -nologo -debug -incremental:no -opt:ref -def:./win32/zlib.def -dll -implib:zdll.lib  -out:zlib1.dll -base:0x5A4C0000 adler32.obj compress.obj crc32.obj deflate.obj gzclose.obj gzlib.obj gzread.obj  gzwrite.obj infback.obj inflate.obj inftrees.obj inffast.obj trees.obj uncompr.obj zutil.obj  zlib1.res
-      #     Creating library zdll.lib and object zdll.exp
-      #   LINK : fatal error LNK1355: invalid base address 0x5A4C0000; ARM64 image cannot have base address below 4GB
-      # See bug: https://github.com/madler/zlib/issues/325
-    - name: Build zlib
+    - name: Build zlib (x86/x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
         cmake .
         nmake -f win32\Makefile.msc
+
+    - name: Build zlib (arm32/arm64)
+      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
+      shell: cmd
+      run: |
+        cd zlib\${{env.ZLIB_VERSION}}
+        cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+        nmake
 
     - name: Build openssl (x86)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
@@ -380,7 +383,7 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_ARM_VERSION}}
-        perl Configure VC-WIN32-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+        perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}} 
         
         ${{env.OPENSSL_MAKE}}
 
@@ -391,7 +394,7 @@ jobs:
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
         cd openssl\${{env.OPENSSL_ARM_VERSION}}
-        perl Configure VC-WIN64-ARM ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
+        perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
         ${{env.OPENSSL_MAKE}}
 
     - name: Build libssh (x86/x86-64, Vista+)
@@ -481,7 +484,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
         nmake
 
       # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
@@ -490,7 +493,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DWITH_DSA=ON -DWITH_ZLIB=OFF
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -DWITH_DSA=ON
         nmake        
 
     - name: Build libdes
@@ -598,6 +601,10 @@ jobs:
         REM as the current LTS release isn't compatible.
         if "${{matrix.arch}}" == "x64_arm" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
         if "${{matrix.arch}}" == "x64_arm64" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
+        
+        REM No Kerberos on ARM Windows yet 
+        if "${{matrix.arch}}" == "x64_arm" set k4w_root_override=${{github.workspace}}
+        if "${{matrix.arch}}" == "x64_arm64" set k4w_root_override=${{github.workspace}}
         
         call ..\setenv.bat
         
