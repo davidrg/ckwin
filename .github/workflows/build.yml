@@ -171,35 +171,19 @@ jobs:
           - x64_arm
           - x64_arm64
         toolset:
-          - 14.0
+          # Note: the 14.0 toolset doesn't really work (just results in 14.4)
           - 14.2
           - 14.4
         exclude:
-          # ARM32 must be built with 14.0 as it was the last release a redist
-          # was shipped for.
-          - arch: x64_arm
-            toolset: 14.1
-          - arch: x64_arm
-            toolset: 14.2
-          - arch: x64_arm
-            toolset: 14.3
+          # The last ARM32 redist was shipped for 14.0 (Visual C++ 2015), but
+          # newer versions of Visual C++ seem to be able to target it OK. For
+          # now just use 14.2 same as for x86 and x86-64.
           - arch: x64_arm
             toolset: 14.4
           # No point in building ARM64 targets with anything but the latest as
           # the latest hasn't dropped any windows support yet.
           - arch: x64_arm64
-            toolset: 14.0
-          - arch: x64_arm64
-            toolset: 14.1
-          - arch: x64_arm64
             toolset: 14.2
-          # No point building x86, x86-64 and arm64 with 14.0
-          - arch: x64_arm64
-            toolset: 14.0
-          - arch: x86
-            toolset: 14.0
-          - arch: x64
-            toolset: 14.0
 
     steps:
     - uses: actions/checkout@v4
@@ -712,12 +696,6 @@ jobs:
       with:
         name: markdown-docs
         path: ${{ github.workspace }}\kermit\k95\dist
-
-    # ARM builds don't currently include SSH so don't need the SSH Readme
-    - name: Remove SSH Readme
-      if: matrix.arch == 'x64_arm'
-      run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
-      shell: cmd
 
     - name: Prepare Artifact
       shell: cmd
@@ -1900,7 +1878,6 @@ jobs:
 
       # Builds with Visual C++ 2005 don't include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
-        if: matrix.arch == 'x64_arm'
         run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
         shell: cmd
 

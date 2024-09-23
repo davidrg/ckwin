@@ -13,7 +13,7 @@ The "Tested Often" column indicates which compilers are tested regularly
 either automatically by github or through occasional manual builds. These
 compilers are highly likely to work.
 
-ARM, ARM64 and Itanium are built automatically by github actions but
+ARM64 and Itanium are built automatically by github actions but
 this project lacks the required hardware to actually test these builds.
 If you discover any issues please log a bug.
 
@@ -44,9 +44,9 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>x86-64, x86</td>
     <td>Windows Vista SP2</td>
     <td rowspan="3">✅</td> <!-- Free -->
-    <td rowspan="3">✅</td> <!-- Tested -->
+    <td rowspan="2">✅</td> <!-- Tested -->
     <td rowspan="3">✅</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -55,11 +55,12 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 <tr>
     <td>ARM64</td>
     <td></td>
+    
 </tr>
 <tr>
     <td>ARM32</td>
     <td></td>
-    <td>❌</td> <!-- SSH -->
+    <td>❌</td>   <!-- Tested often: not really -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2019</td>
@@ -68,7 +69,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="3">✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
     <td rowspan="3">✅</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -82,8 +83,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 <tr>
     <td>ARM32</td>
     <td></td>
-    <td>❌</td> <!-- Tested -->
-    <td>❌</td> <!-- SSH -->
+    <td>✅</td> <!-- Tested -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2017</td>
@@ -92,7 +92,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="3">✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
     <td rowspan="3">❌</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -107,7 +107,6 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>ARM32</td>
     <td></td>
     <td>❌</td> <!-- Tested -->
-    <td>❌</td> <!-- SSH -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2015</td>
@@ -116,7 +115,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="3">✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
     <td rowspan="3">❌</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -131,7 +130,6 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>ARM32</td>
     <td></td>
     <td>❌</td> <!-- Tested -->
-    <td>❌</td> <!-- SSH -->
 </tr>
 <tr>
     <td>Visual C++ 2013</td>
