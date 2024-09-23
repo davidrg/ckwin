@@ -1005,6 +1005,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b830">830. Switching between command and terminal screens via the keyboard does not update the toolbar button state</a>
 <li><tt>[ ] (M)</tt> <a href="#b831">831. On Windows NT 3.50 for Alpha, K95G causes Windows to crash</a>
 <li><tt>[ ] (K)</tt> <a href="#b832">832. K95G crashes on exit if a connection is active and GUI dialogs are off</a>
+<li><tt>[ ] (K)</tt> <a href="#bxxx">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -7987,6 +7988,21 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/322">Issue #322 on Github</a>
+
+<h3><a name="b833">833. Scrollback search input box isn't visible if the terminal
+        status line is turned off</a></h3>
+<p>When you search within the scrollback buffer, the search field is shown
+    in the terminal status line. If the terminal status line is turned off,
+    the search field is invisible.
+</p>
+<p>
+    The search does appear to still work but this may just be confusing if you
+    don't know about it - you hit Alt+Left and nothing visibly changed but your
+    keystrokes aren't going anywhere obvious now.
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/326">Issue #326 on Github</a>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
