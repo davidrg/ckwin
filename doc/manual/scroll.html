@@ -284,7 +284,7 @@ Kermit 95 can scroll not only backwards and forwards (e.g. to view material
 that has scrolled off the top of the screen), but also right and left.  The
 main benefit of this feature is to let you have a wider screen on the host
 than you have on your PC.  For example, a 132-column session while in
-fullscreen mode (which supports only 80 columns on most videa adapters).
+fullscreen mode (which supports only 80 columns on most video adapters).
 
 <p>
 The horizontal scrolling feature allows the "logical width" of the terminal
@@ -361,10 +361,13 @@ Note that you can issue a command like <tt>SET</tt> <tt>COMMAND</tt>
 <tt>WIDTH</tt> <tt>132</tt> to set up a 132-column command screen.  If you do
 this, and <tt>SET</tt> <tt>TERM</tt> <tt>VIDEO-CHANGE</tt> is
 <tt>DISABLED</tt>, then horizontal scrolling works in the Command screen just
-like it does in the Terminal screen, except since the Command screen has no
+like it does in the Terminal screen.<!--
+-- While this was the case in K95 1.1.15 at least, by 2.1.3 the command screen
+      has a status line --
+, except since the Command screen has no
 status line, there are no visual cues about the horizontal positioning of the
 virtual screen.
-
+-->
 <p>
 <hr>
 <h3><a name="disable">Disabling Scrollback</h3>
