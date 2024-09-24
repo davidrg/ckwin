@@ -45,8 +45,8 @@ Requirements (Windows)
 Kermit 95 supports virtually all 32bit and 64bit releases of Microsoft Windows
 on all CPU architectures. The only exceptions are [Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164),
 and MIPS Windows NT 3.50 (issues with the compiler in the NT 3.1 SDK). However,
-due to lack of hardware some non-x86 platforms (ARM64, Itanium) are not actively
-so bug reports from users are essential on these platforms.
+due to lack of hardware Itanium and ARM64 are not actively tested
+so bug reports from users on these platforms are essential.
 
 Unfortunately despite best efforts certain features in K95 do have a minimum version
 requirement:
