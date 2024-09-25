@@ -42,26 +42,43 @@ This software is currently based on C-Kermit version 10.0 Beta.11 of
 Requirements (Windows)
 ----------------------
 
-Kermit 95 should work on every released 32bit or 64bit version of 
-Windows [except Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164). 
-Some non-x86 platforms (ARM, ARM64, Itanium) are not actively tested due to a 
-lack of hardware.
+Kermit 95 supports virtually all 32bit and 64bit releases of Microsoft Windows
+on all CPU architectures. The only exceptions are [Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164),
+and MIPS Windows NT 3.50 (issues with the compiler in the NT 3.1 SDK). However,
+due to lack of hardware Itanium and ARM64 are not actively tested
+so bug reports from users on these platforms are essential.
 
-Certain features within Kermit 95 have a minimum Windows version
+Unfortunately despite best efforts certain features in K95 do have a minimum version
 requirement:
 
-| Feature | Minimum Windows Version | Description                                                                    |
+| Feature | Minimum Windows Version | Description / Notes                                                            |
 |---------|-------------------------|--------------------------------------------------------------------------------|
 | PTY     | Windows 10 version 1809 | Windows cmd/powershell/WSL using the K95 terminal emulator                     |
-| SSH     | Windows XP SP 3         |                                                                                |
+| SSH     | Windows XP SP 3         | Earlier Windows releases will require writing an alternative SSH module based on some other SSH implementation |
 | SSL/TLS | Windows XP SP 3         | This includes https, ftps and secure telnet support                            |
 | TAPI    | Windows 95 or NT 4.0    | Modem dialing via `set modem` should still work on earlier versions of windows |
 | Toolbar | Windows NT 3.51         | Some GUI dialogs also require at least NT 3.51                                 |
 
+OS/2 Support
+------------
+The last release to officially support OS/2 was v2.1.2 released in 2002 and built 
+with some version of IBMs VisualAge C++ compiler. The Kermit Project no longer has
+access to this compiler so it is currently unknown if it still works or if changes 
+in the last 22 years have introduced problems.
+
+While waiting for a copy of VisualAge C++ to appear on ebay, some work has gone in
+to getting K95 building with OpenWatcom. Most of it now builds, and if you disable
+enough features and compiler optimisation it even runs, but there are a number of 
+outstanding issues (see ticket [#8](https://github.com/davidrg/ckwin/issues/8))
+which need fixing before its worth including OS/2 binaries in beta releases. 
+
+It is *hoped* these will be resolved for the final release, but no one currently 
+involved in the Kermit Project has any OS/2 development experience.
+
 Supported Terminal Emulations
 -----------------------------
 
-ANSI-BBS; Avatar/0+; AT386; BeBox ANSI; Data General DASHER D200, D210; 
+ADM-3A and ADM-5; ANSI-BBS; Avatar/0+; AT386; BeBox ANSI; Data General DASHER D200, D210; 
 Data General DASHER D217 in native and Unix modes; DEC VT52; DEC VT100, VT102, 
 VT220, VT320 with color extensions; Hazeltine 1500; Heath/Zenith 19; 
 Hewlett Packard 2621A; HPTERM; IBM HFT and AIXTERM; IBM 3151; Linux console; 
@@ -79,10 +96,11 @@ supported and can be configured via the `set mouse reporting` command.
 Documentation
 -------------
 
-The [Kermit 95 manual v2.1](https://www.kermitproject.org/k95manual/) still covers 
-Kermit 95 quite well and is the first place to look for details on
+The documentation is currently being updated for v3.0. In the meantime, the
+[Kermit 95 manual v2.1](https://www.kermitproject.org/k95manual/) still covers 
+current releases quite well and is the first place to look for details on
 features and capabilities specific to Windows and OS/2. The SSH Client reference
-is now a little out of date, see the [SSH Readme](doc/ssh-readme.md) for more
+is now a little out of date, so consult the [SSH Readme](doc/ssh-readme.md) for more
 details on what has changed in the Kermit 95 SSH implementation. 
 There is also a [Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html)
 which may be useful for new users.
@@ -95,100 +113,71 @@ and 10.0 changelogs
 
 New Features
 ------------
+
 Since the [original open-source release](https://www.kermitproject.org/k95sourcecode-orig.html)
-way back in July 2011, a lot of work has gone on to restore missing features and
-bits that couldn't be open sourced at the time:
+way back in July 2011, a lot of work has gone on to [restore missing features and
+bits that couldn't be open sourced at the time](doc/k95-open.md). In addition to this work getting
+Kermit 95 back to where it was in 2003, a number of new features have been added to bring it
+forward:
 
-* The missing source code required to build the GUI version has been recovered
-* The Dialer has been made available now that the framework it was built with,
-  Zinc, is available under an open license
-* X/Y/Z MODEM support has been restored thanks to Jyrki Salmi of 
-  Online Solutions Oy (www.online.fi) providing his "P" X/Y/Z MODEM library 
-  under the same license as Kermit 95
 * An entirely new SSH subsystem using [libssh](https://libssh.org/) has been
-  built. Not all SSH features are supported yet though - see the 
-  [SSH Readme](doc/ssh-readme.md)
-* The SSL/TLS code has been upgraded to support the latest version of OpenSSL
-  allowing support for https, ftps and secure telnet to return
-* Initial support for OS/2 is back, now built with OpenWatcom. Much
-  more work is required to get this into a usable state however and assistance
-  from anyone familiar with OS/2 development would be much appreciated.
-* DECnet support has been re-enabled but you need a licensed copy of Pathworks32
-  installed to use it.
-* SuperLAT support has been restored as a custom build option. The SDK, while made
-  publicly available by Meridian, has an unclear license so SuperLAT support
-  isn't included by default at this time.
-* The Telnet Encryption Option (DES/CAST) is supported again, not that anyone
-  should be using it today if they care about security.
-* Kerberos V is supported again (including GSSAPI support in the SSH client). To
-  use Kerberos authentication in K95 you must
-  [Download and Install Kerberos for Windows from MIT](http://web.mit.edu/kerberos/dist/index.html),
-  it is not bundled with K95 like it was with kermit 95. If you need Kerberos IV
-  you can build K95 from source against an older version of the KFW SDK (2.x or
-  3.x).
-* Alpha and PowerPC support has been restored. Alpha support was previously
-  discontinued after Kermit 95 v1.1.20 (May 2000) and PowerPC was discontinued after
-  Kermit 95 v1.1.16 (8 April 1998).
-
-Additionally, a number of new features have been added:
-* Compiler support has been extended down to Visual C++ 2.0 and all the way up
-  to Visual C++ 2022 fixing a number of issues along the way. This enables
-  proper support for the latest versions of windows, as well as the second
-  oldest 32bit version - Windows NT 3.50. Support has also been added for
-  OpenWatcom (targeting both Windows and OS/2) and MinGW.
-* PTYs are also supported on Windows 10+ now via the `pty` command. For example,
+  built. Not all SSH features are supported yet though - see the [SSH Readme](doc/ssh-readme.md)
+  for more information.
+* Significantly expanded compiler support
+  *  Added support for Visual C++ 5.0 down to 1.0 32-bit
+  *  Added support for Visual C++ 2003 up to 2022
+  *  Added support for OpenWatcom (targeting both Win32 and OS/2)
+  *  Added limited support for GCC (MinGW)
+* Significant work on supported CPU architectures:
+  * New port to 64bit Windows on x86-64, ARM64, Itanium and Alpha64
+  * New port to 32bit ARM (Windows RT) and MIPS
+  * Reinstated ports to Alpha and PowerPC. Alpha support was previously discontinued
+    after Kermit 95 v1.1.20 (May 2000) and PowerPC was discontinued after Kermit 95
+    v1.1.16 (8 April 1998).
+* Improved support for modern Windows versions, and added support for Windows NT 3.50
+* PTYs are now supported on Windows 10 v1809 or newer via the `pty` command. For example,
   `pty cmd.exe` will open the Windows shell inside Kermit 95 and from there you can
   run any windows console tool. Note that Kermit file transfers are not supported
   via this mechanism as Windows PTYs are not transparent. There may also be some
   minor terminal emulation glitches as windows slots a terminal emulator in 
   between the subprocess and K95 (Windows PTYs are not transparent).
-* The `pipe` command has also been fixed and kermit file transfers *are* supported
-  via this mechanism. Applications relying on the special Windows terminal APIs
-  won't work properly but anything that just outputs standard ANSI escape
-  sequences should work interactively. PuTTYs plink tool works as long as the
-  remote host is already trusted, and you use public key authentication.
-* Network DLLs are also fixed. You can now add support for additional protocols
-  via custom DLLs which are loaded with the `set network type dll` command.
 * Mouse wheel support and terminal mouse reporting have been implemented
-* Support for 64bit Windows (x86-64, Itanium, ARM64, AXP64)
-* Ports to new CPU architectures: MIPS, Itanium, x86-64, ARM, ARM64
 * REXX is now supported on Windows as well as OS/2
 * A selection of other bugs fixed and other minor features added
 
 A full [Change Log](doc/changes.md) is available and updated for major releases.
 
-### Still Missing Features
+### Missing/Removed Features
 The following features supported by Kermit 95 v2.1.3 remain unavailable in
 Kermit 95 at this time:
 
-* few misc SSH features have not been implemented yet - ticket #44 is tracking 
-  these.
-* SSH v1 support will not return as this is not supported by libssh anymore.
+* few misc SSH features have not been implemented yet - ticket
+  [#44](https://github.com/davidrg/ckwin/issues/44) is tracking these.
+* DNS-SRV ([#205](https://github.com/davidrg/ckwin/issues/205)) - support for this
+  previously came from wshelper, a part of MIT Kerberos for Windows that was removed
+  in 2018.
+
+And the following features will not be returning outside of custom builds (with the
+exception of SSHv1 the code to support them still exists give the right obsolete
+dependencies):
+  
+* SSHv1: Not supported by LibSSH anymore
 * SSH/SSL/TLS on Windows versions prior to Windows XP SP3 will likely not return
-  as OpenSSL no longer supports these older versions of Windows or the compilers
-  required to target them.
+  as current versions of OpenSSL no longer supports these older versions of
+  Windows or the compilers required to target them.
 * SRP: Formerly provided by the Stanford SRP distribution, now unmaintained for
-  over a decade it is not compatible with any supported version of OpenSSL. 
-  Its still buildable if really needed but not included in any standard builds.
-  OpenSSL includes SRP support now which is probably the way forward if K95 is 
-  to ever include SRP support as standard again, but it would probably be a lot 
-  of work to switch - see ticket #32 for more information
-* DNS-SRV (#205) - support for this previously came from wshelper, a part of
-  MIT Kerberos for Windows that was removed in 2018.
+  over a decade it is not compatible with any supported version of OpenSSL. If
+  SRP support is ever to return, it will likely be via someone adding support for
+  OpenSSLs implementation of it ([#32](https://github.com/davidrg/ckwin/issues/205))
 * Kerberos IV support is not included in standard builds as current versions of
   MIT Kerberos for Windows no longer support it. 
-
-Code to support Kerberos IV, Stanford SRP and old versions of OpenSSL still exists
-and should still work if there is some need for these features despite the known
-security issues.
 
 Compiling
 ---------
 
 To build Kermit 95, see the [Build Instructions](doc/building.md).
-Visual C++ 2019 is strongly recommended, but any released 32bit or 64bit version
-*should* work (with certain features automatically excluded on older compilers).
-To build with ConPTY and SSH support you'll need to use Visual C++ 2019 or newer.
+Visual C++ 2019 or newer is strongly recommended, but any released 32bit or 64bit
+version *should* work (with certain features automatically excluded on older compilers).
 
 There is also limited support for compiling with OpenWatcom 1.9+ and MinGW. For
 OpenWatcom, just follow the normal build instructions above. For cross-compiling
@@ -197,25 +186,15 @@ from Linux, see the [MinGW Build Instructions](doc/mingw-building.md).
 To build Kermit 95 for OS/2 (Kermit/2) using OpenWatcom, see the
 [OS/2 Build Instructions](doc/os2-building.md).
 
-### Making Changes
-Any files matching the pattern `ck[cu]*.[cwh]` are shared by implementations of 
-C-Kermit for other platforms (UNIX, Linux, VMS, and others) and are not 
-specific to the Windows and OS/2 port in this repository. Any changes to these 
-files should be sent to [The Kermit Project](https://www.kermitproject.org/)
-to be included in future C-Kermit releases for other platforms. If your changes
-are not intended to affect other platforms, make sure they're ifdef'd for either
-OS2 (OS/2+Windows) or NT (Windows only).
+For a list of supported compilers and which features they do or don't get,
+see [Compiler Support](doc/compilers.md)
 
-Files matching `ck[on]*.*` can be safely modified as they are only used by the 
-OS/2 and Windows targets
-
-The dialer data files (dialer.dat, registry.dat) are binary files edited by the
-zinc designer. It's not possible to merge these files, so it's probably best to
-get in touch before making changes to these files.
 
 History
 -------
 Kermit 95 v3.0 is based on what was going to be Kermit 95 v2.2 which was
-never released publicly. For full details on what's changed since the last public
-release of Kermit 95, v2.1.3 of 21 January 2003, see the 
-[Change Log](doc/changes.md).
+never released publicly. The code was partially open-sourced in 2011 with
+[further bits open-sourced in the decade since](doc/k95-open.md).
+
+For full details on what's changed since the last public release of Kermit 95,
+v2.1.3 of 21 January 2003, see the [Change Log](doc/changes.md).

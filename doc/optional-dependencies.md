@@ -30,6 +30,12 @@ This has been tested against the following versions:
 * OpenSSL 1.1.1v, 3.0.10, 3.1.1
 * libssh 0.9.6, 0.10.1, 0.10.3, 0.10.5, 0.10.6
 
+For targeting ARM32, OpenSSL versions 3.2 and newer should be used - earlier
+releases use incorrect linker flags for building desktop apps.
+
+For targeting ARM32 or ARM64, skip zlib - it doesn't build correctly for ARM
+currently.
+
 And to build it all the following tools should work:
 * Visual C++ (2022 community edition works, or for Windows XP compatibility use 2019)
 * cmake - required for zlib and libssh (version 3.22 tested)
@@ -148,6 +154,14 @@ Note that this does not build libssh with GSSAPI support. If you're building
 libssh 0.10.x and want DSA support (ssh-dss), add `-DWITH_DSA=ON` to the end
 of the cmake command.
 
+If you're building for ARM32, for unknown reasons cmake may leave out the default
+libraries resulting in link errors. If you get this, it can be fixed by adding 
+the following to the cmake command:
+```
+-DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+```
+
+
 #### Building with GSSAPI (Kerberos) support
 
 Libssh does not currently support GSSAPI on windows, though only a very
@@ -182,8 +196,9 @@ with GSSAPI support and one without.
 #### Building the easy way
 
 To make things easier, a batch file is provided (`libssh\build.bat`) which is
-[documented here](../libssh/README.md). This batch fly.ile supports applying
-patches to enable GSSAPI and (for 0.10.6) Windows XP support
+[documented here](../libssh/README.md). This batch file supports applying
+patches to enable GSSAPI and (for 0.10.6) Windows XP support. It does not work
+for ARM32 currently.
 
 #### Building with Dynamic SSH support
 
