@@ -14,6 +14,7 @@ char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 #ifdef OS2MOUSE
 #ifdef NT
 #include <windows.h>
+#include <process.h>
 #else /* NT */
 #define INCL_WINSHELLDATA
 #define INCL_VIO
@@ -28,6 +29,7 @@ char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 #define INCL_DOSASYNCTIMER
 #include <os2.h>
 #undef COMMENT                /* COMMENT is defined in os2.h */
+#include <process.h>
 #endif /* NT */
 
 #include "ckuusr.h"
@@ -448,7 +450,7 @@ extern    BYTE vmode ;
     dblclickspeed = querydblclickspeed() ;
 
         if (!tidMouse) {
-        tidMouse = _beginthread( &os2_mouseevt, 0, THRDSTKSIZ, 0 ) ;
+        tidMouse = _beginthread( &os2_mouseevt, 0, THRDSTKSIZ, NULL ) ;
         }
     }
 #endif /* NT */

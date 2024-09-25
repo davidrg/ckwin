@@ -248,7 +248,12 @@ extern int tn_wait_flg;
 #endif /* TNCODE */
 
 VOID
-slrestor() {
+#ifdef CK_ANSIC
+slrestor( void )
+#else
+slrestor()
+#endif /* CK_ANSIC */
+{
 #ifdef CK_AUTHENTICATION
     int x;
     if (sl_auth_saved) {

@@ -10,13 +10,13 @@
 # ----- Windows NT compiler options -----------------------------------------
 # for debug:    add /Zi to CPP_OPTS
 #               add /DEBUG:MAPPED,FULL /DEBUGTYPE:CV to LINK_OPTS
-WNT_CPP=cl
-WNT_LINK=link
-WNT_LIBRARIAN=lib
+WNT_CPP=cl /nologo
+WNT_LINK=link /nologo
+WNT_LIBRARIAN=lib /nologo
 
-#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. -noBool
+#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DNT -I.\.. -noBool
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. /Zi -noBool
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DNT -I.\.. /Zi -noBool
 WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
 WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
 WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS

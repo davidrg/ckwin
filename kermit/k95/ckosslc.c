@@ -40,7 +40,7 @@
 #ifdef NT
 HINSTANCE hCRYPTO = NULL;
 #else /* NT */
-HMODULE hCRYPTO = NULL;
+HMODULE hCRYPTO = 0;
 #endif /* NT */
 
 int crypto_dll_loaded=0;

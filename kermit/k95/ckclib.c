@@ -135,7 +135,7 @@ int
 #ifdef CK_ANSIC
 ckstrncpy(char * dest, const char * src, int len)
 #else
-ckstrncpy(dest,src,len) char * dest, * src; int len;
+ckstrncpy(dest,src,len) char * dest; const char * src; int len;
 #endif /* CK_ANSIC */
 {
     int i;

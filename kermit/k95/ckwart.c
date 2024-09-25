@@ -136,11 +136,7 @@ typedef struct transx *trans;
 
 /* Function prototypes */
 
-#ifdef OS2
-typedef VOID WMAINTYPE;
-#else
 typedef int WMAINTYPE;
-#endif  /* OS2 */
 _PROTOTYP( WMAINTYPE main, (int argc, char **argv) );
 _PROTOTYP( VOID fatal, (char *msg) );
 _PROTOTYP( VOID setwstate, (int state, trans t) );
@@ -290,7 +286,7 @@ rdinput(infp,outfp) FILE *infp,*outfp;
 VOID
 #ifdef CK_ANSIC
 initial(FILE *infp, FILE *outfp)
-#else 
+#else
 initial(infp,outfp) FILE *infp, *outfp;
 #endif  /* CK_ANSIC */
 /* initial */ {
@@ -615,7 +611,7 @@ main(argc,argv) int argc; char **argv;
     writetbl(outfile);
     copyrest(infile,outfile);
     printf("%d states, %d actions\n",nstates,nacts);
-    exit(GOOD_EXIT);
+    return(GOOD_EXIT);
 }
 
 /*

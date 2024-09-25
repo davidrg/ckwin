@@ -36,7 +36,7 @@
 #ifdef NT
 HINSTANCE hZLIB = NULL;
 #else /* NT */
-HMODULE hZLIB = NULL;
+HMODULE hZLIB = 0;
 #endif /* NT */
 
 #ifdef NOT_KERMIT

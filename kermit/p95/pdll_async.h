@@ -172,7 +172,7 @@ _Inline void async_getch_buf(void) {
 
 #ifdef NT
 extern OVERLAPPED overlapped_read;
-extern int nActuallyRead ;
+extern DWORD nActuallyRead;
 #endif /* NT */
   APIRET rc=0;
   U32 tmout_cnt;
@@ -259,7 +259,7 @@ _Inline void async_flush_outbuf(void) {
 
 #ifdef NT
    extern OVERLAPPED overlapped_write;
-   extern int nActuallyWritten ;
+   extern DWORD nActuallyWritten ;
 
        if ( overlapped_write.hEvent == (HANDLE) -1 )
        {

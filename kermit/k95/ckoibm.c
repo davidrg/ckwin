@@ -37,7 +37,7 @@
 #include <types.h>
 #endif
 
-#ifdef __TYPES_32H
+#ifdef _TYPES_H_
 #define FDPTR                                  /* TCP/IP 2.0 */
 #define PACKED
 #else
@@ -653,7 +653,7 @@ int ENTRY ck_listen(int socket, int backlog)
 int ENTRY ck_accept(int socket, struct ck_sockaddr *name, int * namelen)
 {
   struct sockaddr_in addr;
-#ifdef __SOCKET_32H
+#ifdef _SYS_SOCKET_H_
   int len ;
 #else
 short len ;
@@ -700,7 +700,7 @@ int ENTRY ck_recv(int socket, char *buffer, int length, int flags)
   return recv(socket, buffer, length, flags);
 }
 
-int ENTRY ck_select(int *fds, int read, int write, int except, long timeout)
+int ENTRY ck_select(int *fds, int read, int write, int except, long timeout_ms)
 {
   /* Warning: if the called select is 16-bit but the calling code is
    * 32-bit, only one fd can be pointed to by fds! However, calling
@@ -712,6 +712,7 @@ int ENTRY ck_select(int *fds, int read, int write, int except, long timeout)
 #ifdef BSD_SELECT
   fd_set rfds;
   struct timeval tv;
+  ldiv_t time_sec;
   int socket = *fds;
 #endif
 
@@ -721,19 +722,16 @@ int ENTRY ck_select(int *fds, int read, int write, int except, long timeout)
 #ifdef BSD_SELECT
   FD_ZERO(&rfds);
   FD_SET(socket, &rfds);
-  tv.tv_sec = tv.tv_usec = 0L;
-
-  if (timeout < 1000)
-    tv.tv_usec = (long) timeout * 1000L;
-  else
-    tv.tv_sec = timeout / 1000L;
+  time_sec = ldiv( timeout_ms, 1000L );
+  tv.tv_sec = time_sec.quot;
+  tv.tv_usec = time_sec.rem * 1000L;
 
   rc =  (read ? select(FD_SETSIZE, &rfds, NULL, NULL, &tv) : 1) &&
         (write ? select(FD_SETSIZE, NULL, &rfds, NULL, &tv) : 1) &&
         (except ? select(FD_SETSIZE, NULL, NULL, &rfds, &tv) : 1) &&
             FD_ISSET(socket, &rfds);
 #else
-  rc = select(FDPTR fds, read, write, except, timeout);
+  rc = select(FDPTR fds, read, write, except, timeout_ms);
 #endif
     return rc ;
 }
@@ -781,7 +779,7 @@ int ENTRY ck_setsockopt(int socket, int level, int optname,
 int ENTRY ck_getsockopt(int socket, int level, int optname,
                   char *optvalue, int * optlength)
 {
-#ifdef __SOCKET_32H
+#ifdef _SYS_SOCKET_H_
     int len = *optlength;
 #else
     short len = (short) *optlength ;
@@ -963,7 +961,7 @@ char * ENTRY ck_inet_ntoa(struct ck_in_addr in)
 
 int ENTRY ck_getpeername( int socket, struct ck_sockaddr * name, int * namelen )
 {
-#ifdef __SOCKET_32H
+#ifdef _SYS_SOCKET_H_
     int len = *namelen;
 #else
     short len = (short) *namelen ;
@@ -977,7 +975,7 @@ int ENTRY ck_getpeername( int socket, struct ck_sockaddr * name, int * namelen )
 
 int ENTRY ck_getsockname( int socket, struct ck_sockaddr * name, int * namelen )
 {
-#ifdef __SOCKET_32H
+#ifdef _SYS_SOCKET_H_
     int len = *namelen;
 #else
     short len = (short) *namelen ;
@@ -989,7 +987,7 @@ int ENTRY ck_getsockname( int socket, struct ck_sockaddr * name, int * namelen )
     return rc;
 }
 
-#ifdef __SOCKET_32H
+#ifdef _SYS_SOCKET_H_
 int ENTRY ck_addsockettolist( int socket )
 {
     int rc = 0 ;
@@ -1005,7 +1003,7 @@ int ENTRY ck_addsockettolist( int socket )
 
 int ENTRY ck_gethostname( char * buf, int len )
 {
-#ifdef __SOCKET_32H
+#ifdef _SYS_SOCKET_H_
     int rc = 0 ;
     rc = gethostname( buf, len ) ;
     return rc;

@@ -189,7 +189,7 @@ EXTERN int ENTRY ck_listen(int socket, int backlog);
 EXTERN int ENTRY ck_accept(int socket, struct ck_sockaddr *name, int *namelen);
 EXTERN int ENTRY ck_ioctl(int socket, int cmd, long *data);
 EXTERN int ENTRY ck_recv(int socket, char *buffer, int length, int flags);
-EXTERN int ENTRY ck_select(int *fds, int nread, int write, int except, long timeout);
+EXTERN int ENTRY ck_select(int *fds, int nread, int write, int except, long timeout_ms);
 EXTERN int ENTRY ck_send(int socket, char *buffer, int length, int flags);
 EXTERN int ENTRY ck_setsockopt(int socket, int level, int optname,
                                char *optvalue, int optlength);
@@ -218,6 +218,15 @@ EXTERN int ENTRY ck_gethostname(char *, int);
 #define __NETDB_32H
 #define __IF_32H
 #define __IF_ARPA_32H
+#ifdef __WATCOMC__
+#define _SYS_SOCKET_H_
+#define _UTILS_H_
+#define _TYPES_H_
+#define _NETINET_IN_H_
+#define _NETDB_H_
+#define _NET_IF_H_
+#define _NET_IF_ARP_H_
+#endif
 #define _SYS_PARAM_H_
 #define _ARPA_INET_H_
 

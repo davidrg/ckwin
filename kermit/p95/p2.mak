@@ -76,7 +76,7 @@ pdll_exeio.obj
 
 SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
-LIBS = tcp32dll.lib so32dll.lib os2386.lib
+LIBS = tcp32dll.lib so32dll.lib
 DEFS = p2.def
 
 .c.obj:

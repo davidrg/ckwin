@@ -107,6 +107,7 @@ extern char pipename[PIPENAML+1];
 #define  INCL_DOSNMPIPES
 #include <os2.h>
 #undef COMMENT
+#include <process.h>
 #endif /* NT */
 
 #ifndef SEM_INDEFINITE_WAIT
@@ -466,14 +467,14 @@ NetCmdGetChar( char * pch )
 
 #ifdef NT
 void
-NetCmdReadThread( HANDLE pipe )
+NetCmdReadThread( void *pipe )
 {
     int success = 1;
     CHAR c;
     DWORD io;
 
     while ( success && ttyfd != -1 ) {
-        if ( success = ReadFile(pipe, &c, 1, &io, NULL ) )
+        if ( success = ReadFile((HANDLE)pipe, &c, 1, &io, NULL ) )
         {
             NetCmdPutChar(c);
         }
@@ -481,14 +482,14 @@ NetCmdReadThread( HANDLE pipe )
 }
 #else /* NT */
 void
-NetCmdReadThread( HFILE pipe )
+NetCmdReadThread( void *pipe )
 {
     int success = 1;
     CHAR c;
     ULONG io;
 
     while ( success && ttyfd != -1 ) {
-        if ( success = !DosRead(pipe, &c, 1, &io) )
+        if ( success = !DosRead((HFILE)pipe, &c, 1, &io) )
         {
             NetCmdPutChar(c);
         }
@@ -792,7 +793,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
             ttyfd = NetBiosLSN = 0 ;
 
-            ListenThreadID = _beginthread( &NetbiosListenThread, 0, 16384, 0 );
+            ListenThreadID = _beginthread( &NetbiosListenThread, 0, 16384, NULL );
             if ( ListenThreadID == -1 ) {
                 Dos16SemWait( pListenNCB->basic_ncb.ncb_semaphore,
                               SEM_INDEFINITE_WAIT ) ;
@@ -1604,11 +1605,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         ttyfd = 999;
 
         /* Start reading from pipe */
-        _beginthread( NetCmdReadThread,
-#ifndef NT
-                     0,
-#endif /* NT */
-                     65536, hChildStdoutRdDup );
+#ifdef NT
+        _beginthread( NetCmdReadThread, 65536, (void *)hChildStdoutRdDup );
+#else
+        _beginthread( NetCmdReadThread, 0, 65536, (void *)hChildStdoutRdDup );
+#endif
         rc = 0;
     }
 #endif /* NETCMD */

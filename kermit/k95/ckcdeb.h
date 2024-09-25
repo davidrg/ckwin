@@ -814,6 +814,9 @@
 #endif /* WIN32ORUNIX */
 #ifndef OS2
 #define WIN32ONLY
+#define NOCRYPT
+#include <windows.h>
+#define NTSIG
 #endif /* OS2 */
 #endif /* NT */
 
@@ -849,7 +852,6 @@
 
 #ifndef MAINNAME
 #ifdef OS2ORWINDOWS
-#define MAINISVOID
 #ifdef KUI
 #define MAINNAME Main
 #else /* not KUI */

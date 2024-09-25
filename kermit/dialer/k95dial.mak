@@ -47,11 +47,11 @@ CL = wcl386
 # ----- Windows NT compiler options -----------------------------------------
 # for debug:    add /Zi to CPP_OPTS
 #               add /DEBUG:MAPPED,FULL /DEBUGTYPE:CV to LINK_OPTS
-WNT_CPP=cl
-WNT_LINK=link
-WNT_LIBRARIAN=lib
+WNT_CPP=cl /nologo
+WNT_LINK=link /nologo
+WNT_LIBRARIAN=lib /nologo
 
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95 -noBool
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DNT -DCKODIALER -I..\k95 -noBool
 !if $(MSC_VER) < 100
 # Visual C++ 2.0 or older
 WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
@@ -63,7 +63,7 @@ WNT_LINK_OPTS=-subsystem:windows /MAP
 !else
 WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
 !endif
-#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I..\k95 /Zi -noBool
+#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DNT -I..\k95 /Zi -noBool
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
 WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
 WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
@@ -87,10 +87,10 @@ WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage
 
 # ----- OS/2 compiler options -----------------------------------------------
 !if "$(CMP)" == "OWCL386"
-OS2_CPP=wpp386
-OS2_LINK=wlink
-OS2_LIBRARIAN=wlib
-OS2_RC=wrc
+OS2_CPP=wpp386 -zq
+OS2_LINK=wlink op quiet
+OS2_LIBRARIAN=wlib -zq
+OS2_RC=wrc -zq
 !else
 OS2_CPP=icc
 OS2_LINK=ilink
@@ -122,7 +122,7 @@ OS2_RC=rc
 # -O    ?           Optimize generated code
 # -Oi25 -Oe=<num>   Set the threshold for auto-inlining to <value> intermediate code instructions
 # -Gm   ? -bm       Link with multithread runtime libraries. Default: /Gm-
-#       -bt=os2v2     Compile for target OS
+#       -bt=os2     Compile for target OS
 #
 # Link Flags - ICC  wlink
 # /BASE:0x10000
@@ -130,11 +130,10 @@ OS2_RC=rc
 # /NOI
 # /NOE
 #                   -l=os2v2_pm Link for OS/2 v2 Presentation Manager
-#                   -x          Make name case-sensitive
 
 #
 # -c -xs
-OS2_CPP_OPTS=-D__OS2__ -DOS2 -DCKODIALER -zp=1 -bm -Fh -bt=os2
+OS2_CPP_OPTS=-DOS2 -DCKODIALER -zp=1 -bm -Fh -bt=os2
 OS2_LINK_OPTS=SYSTEM os2v2_pm OP ST=96000
 OS2_LIB_OPTS=
 OS2_RC_OPTS=
@@ -294,7 +293,7 @@ os2: k2dial.exe
 
 #$(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
 #        wrc -q -bt=os2 ckoker.res $@
-# LINKFLAGS="-l=os2v2 -x" \
+# LINKFLAGS="-l=os2v2" \
 
 # os2.def was previously included below but does not exist in the K95 2.1.3
 # build tree. I can only assume either this file was supplied by the IBM

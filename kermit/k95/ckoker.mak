@@ -617,56 +617,55 @@ k95g:
 #         -Gt     ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
 #         -Gd     ?             /Gd+: Use the version of the runtime library that is dynamically linked.
 #         -J      N/A (uchar is default)          /J+: Make default char type unsigned. Default: /J+
-#                 -bt=os2v2     Compile for target OS
+#                 -bt=os2       Compile for target OS
 # NOLINK: -c        /C+: Perform compile only, no link.
 # LINKFLAGS: /nologo
 #            /noi
 #            /align:16
 #            /base:0x10000
 #                           -l=os2v2
-#                           -x
 
 # Watcom C targeting OS/2
 # TODO: Fix buiding with OPT="-ox " (currently this causes it to crash on
 # startup with trap 001 )
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
-	    CMP="OWCL386" \
-	    CC="wcl386" \
+        CMP="OWCL386" \
+        CC="wcl386" \
         CC2="-Fh" \
         OUT="-Fe=" O=".obj" \
-	    OPT=" " \
+        OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
-	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+        CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
         NOLINK="-c" \
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-l=os2v2 -x" \
-	    DEF=""  # ckoker32.def
+        LINKFLAGS="-q -l=os2v2" \
+        DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
-	    CMP="OWCL386" \
-	    CC="wcl386" \
+        CMP="OWCL386" \
+        CC="wcl386" \
         CC2="-Fh -d3" \
         OUT="-Fe=" O=".obj" \
-	    OPT=" " \
+        OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
-	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+        CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
         NOLINK="-c" \
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-l=os2v2 -x" \
-	    DEF=""  # ckoker32.def
+        LINKFLAGS="-q -l=os2v2" \
+        DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 # Flags are:
@@ -686,7 +685,6 @@ wcos2d:
 #   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
 #   -c              Compile only, don't link
 #   -l=os2v2        Link for 32bit OS/2
-#   -x              Make names case sensitive
 
 # release version
 #         CC2="-Fi+ -Si+ -Gi+ -Gl+" \
@@ -716,21 +714,10 @@ ibmc:
 # source browser
 ibmsb:
 	$(MAKE) -f ckoker.mak os232 \
-	CC="sb" \
-        CC2="" \
-        OUT="-Fo" O="._sb" \
-	OPT="" \
-        DEBUG="" \
-        DLL="" \
-	CFLAGS="" \
-        LDFLAGS="" \
         PLATFORM="OS2" \
-        NOLINK="" \
 !ifdef WARP
-        WARP="YES" \
+        WARP="YES"
 !endif
-        LINKFLAGS="" \
-	DEF=""
 
 # profiling version
 ibmcp:
@@ -801,12 +788,12 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
 K95BUILD = K95
 !endif
 !if "$(K95BUILD)" == "TLSONLY"
-DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
+DEFINES = -DNT -DWINVER=0x0400 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DUSE_STRERROR \
           -DNETFILE -DONETERMUPD -DNO_ENCRYPTION -DZLIB \
           -DNO_SRP -DNO_KERBEROS -DBETATEST -DNOCKXYZ
 !else if "$(K95BUILD)" == "UIUC"
-DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
+DEFINES = -DNT -DWINVER=0x0400 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DUSE_STRERROR \
           -DNETFILE -DONETERMUPD -DZLIB \
           -DNOXFER -DNODIAL -DNOHTTP -DNOFORWARDX -DNOBROWSER -DNOLOGIN \
@@ -814,21 +801,21 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DNOSOCKS -DNONETCMD -DNO_SRP -DNO_SSL -DNOFTP -DBETATEST \
           -DNODEBUG -DCK_TAPI -DNOPUSH -DNO_COMPORT -DNOXMIT -DNOSCRIPT -DNO_KERBEROS -DNOCKXYZ
 !else if "$(K95BUILD)" == "IKSD"
-DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRERROR \
+DEFINES = -DNT -DWINVER=0x0400 -DNOSSH -DONETERMUPD -DUSE_STRERROR \
           -DDYNAMIC -DKANJI -DNETCONN -DIKSDONLY -DZLIB \
           -DHADDRLIST -DCK_LOGIN \
           -DNO_SRP -DNO_KERBEROS -DNOCKXYZ
 		  #-DBETATEST # -DPRE_SRP_1_7_3
 !else
-DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
+DEFINES = -DNT -DWINVER=0x0400 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
           -DDYNAMIC -DKANJI \
           -DHADDRLIST -DNPIPE -DOS2MOUSE -DTCPSOCKET -DRLOGCODE \
           -DNETFILE -DONETERMUPD  \
           -DNEWFTP -DBETATEST -DNO_DNS_SRV \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
+!endif
 !if "$(CMP)" != "OWCL"
 DEFINES = $(DEFINES) -D__STDC__
-!endif
 !endif
 !endif
 !else
@@ -845,11 +832,11 @@ COMMODE_OBJ = commode.obj
 
 !ifdef PLATFORM
 !if "$(PLATFORM)" == "OS2"
-LIBS = os2386.lib rexx.lib
+LIBS = rexx.lib
 
 # OpenWatcom doesn't have bigmath.lib
 #  -> this likely comes from the SRP distribution (srp\srp-1.4\cryptolib_1.1\VISUALC\BIGMATH)
-!if "$(CMP)" != "OWCL"
+!if "$(CMP)" != "OWCL386"
 LIBS = $(LIBS) bigmath.lib
 !endif
 
@@ -868,9 +855,9 @@ LIBS = $(LIBS) wshload.lib
 !endif
 
 !else
-KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
+KUILIBS = $(COMMODE_OBJ) kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
         advapi32.lib shell32.lib rpcrt4.lib rpcns4.lib wsock32.lib \
-        winmm.lib comctl32.lib mpr.lib $(COMMODE_OBJ)
+        winmm.lib comctl32.lib mpr.lib
 # vdmdbg.lib
 !if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
 KUILIBS = $(KUILIBS) $(SSH_LIB) ws2_32.lib
@@ -911,7 +898,7 @@ KUILIBS = $(KUILIBS) libcmt.lib
 # Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\
-       winmm.lib mpr.lib advapi32.lib winspool.lib $(COMMODE_OBJ)
+       winmm.lib mpr.lib advapi32.lib winspool.lib
 
 !if "$(CKF_SSH)" == "yes" && "$(CKF_DYNAMIC_SSH)" != "yes"
 LIBS = $(LIBS) $(SSH_LIB) ws2_32.lib
@@ -956,10 +943,18 @@ KUILIBS = $(KUILIBS) bufferoverflowu.lib
 
 #---------- Inference rules:
 
-.SUFFIXES: .w .c $(O)
+.SUFFIXES: .w .c ._sb .obj
 
-.c$(O):
+.c.obj:
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(NOLINK) $*.c
+
+.c._sb:
+	$(MAKE) -f ckoker.mak os232 \
+        PLATFORM="OS2" \
+!ifdef WARP
+        WARP="YES"
+!endif
+	sb $(DEFINES) -Fo._sb $*.c
 
 #---------- Targets:
 
@@ -1208,7 +1203,8 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
 cko32i20.dll: ckoi20.obj ckoker.mak
 !if "$(CMP)" == "OWCL386"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 $(LINKFLAGS) tcpip32.lib $(LIBS)
+	-fm -bm -l=os2v2_dll tcpip32.lib $(LIBS)
+	type cko32i20.map
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
@@ -1282,7 +1278,7 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) -l=os2v2_pm -x $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) -l=os2v2_pm $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
@@ -1586,7 +1582,8 @@ ckoi20.obj: ckoibm.c ckotcp.h
         @echo > ckoi20.obj
         del ckoi20.obj
 !if "$(CMP)" == "OWCL386"
-	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -D__SOCKET_32H $(DLL) -c ckoibm.c
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(DLL) -c ckoibm.c
+	#$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -D_SYS_SOCKET_H_ -DSOCKS_ENABLED $(DLL) -c ckoibm.c
 	# Watcom lacks the headers to support -DSOCKS_ENABLED
 !else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \

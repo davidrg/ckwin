@@ -1035,7 +1035,7 @@ typedef struct _P_CFG {
    functions.
 */
 
-  U32 (* _System status_func)(U32, ...);
+  U32 (* _System status_func)(U32, void *);
 /*
    This function is called to inform the calling program about
    progress of file transfer.

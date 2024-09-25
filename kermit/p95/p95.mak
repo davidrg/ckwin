@@ -145,10 +145,10 @@ LIBS = $(LIBS) ucrt.lib vcruntime.lib
 # To generate debug info, add $(CFLAGSD) to CFLAGS
 
 CC = cl
-CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
+CFLAGS = /nologo /LD /J /c -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
 CFLAGSO = /Ot /Oi
 CFLAGSD = /Zi
-#CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
+#CFLAGS = /J /c /MT -DNT -DCK_ANSIC -I.. /Zi
 LD = link
 LDFLAGS = /nologo /dll /nod /map
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since

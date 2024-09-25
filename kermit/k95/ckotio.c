@@ -16,7 +16,7 @@ char *ckxv = "OS/2 Communications I/O, 8.0.229, 29 Dec 2005";
 */
 
 /*
-  Authors: Jeffrey E Altman (jaltman@secure-endpoints.com), 
+  Authors: Jeffrey E Altman (jaltman@secure-endpoints.com),
              Secure Endpoints Inc., New York City
            Frank da Cruz (fdc@columbia.edu),
              Columbia University Academic Information Systems, New York City.
@@ -1448,10 +1448,10 @@ GetLocalUser()
     /* Initialize the Username buffer if possible */
     /* Allow environment variable to override the OS value */
     char * user;
-    
+
     if (localuser[0])
         return(localuser);
-    
+
     user = getenv( "USER" );
     if ( user ) {
         ckstrncpy( localuser, user, UIDBUFLEN );
@@ -1472,7 +1472,7 @@ GetLocalUser()
 VOID
 firsttime(void)
 {
-    /* 
+    /*
      *  What we will do is check to see if the Common and User App Data
      *  directories exist.  If they do not, we will create them.
      */
@@ -2139,7 +2139,7 @@ sysinit() {
         TAPIAvail = cktapiinit() ;
         if ( TAPIAvail ) {
             cktapiopen();
-#ifndef NODIAL 
+#ifndef NODIAL
             CopyTapiLocationInfoToKermitDialCmd();
 #endif /* NODIAL */
         }
@@ -2531,7 +2531,7 @@ os2settimo(int spd, int modem)
      * The fastest modem connection is 53,000 bits per second (6625 bytes per second)
      * the largest kermit packet is 9024 bytes.  Therefore, we can never process more
      * than one write/second therefore it makes no sense for this value to be anything
-     * but 2 for modems.  For non-modems, use bytes/sec/max-packet 
+     * but 2 for modems.  For non-modems, use bytes/sec/max-packet
      */
     if ( modem > 0 )
         maxow = 2;
@@ -3204,7 +3204,7 @@ ttopen(char *ttname, int *lcl, int modem, int spare) {
             ckstrncpy(ttnmsv, ttname, DEVNAMLEN); /* Keep copy of name locally. */
             ttyfd = atoi(p);
             if ( p = getenv("PRAGMASYS_COMPORT") ) {
-                /* 
+                /*
                  * The PragaSys sample code puts a DuplicateHandle here
                  */
                 debug(F110,"PRAGMASYS_COMPORT",p,0);
@@ -3690,7 +3690,7 @@ tthang() {
          )
         return(0);              /* Nothing to do */
 #ifdef NETCONN
-    if (network 
+    if (network
 #ifdef TN_COMPORT
 	 && !istncomport()
 #endif /* TN_COMPORT */
@@ -6624,7 +6624,7 @@ rdch(int timo /* ms */) {
 /*
   These settings will wait until at least one character
   is available to be read.  at least in Win95
-*/              
+*/
             if ( timeouts.ReadIntervalTimeout != MAXDWORD ) {
                 timeouts.ReadIntervalTimeout = MAXDWORD ;
                 change++;
@@ -8804,20 +8804,20 @@ win95popen(char *cmd, char *mode) {
 int
 win95pclose(FILE *pipe) {
     int    fileno = _fileno(pipe);
-    DWORD  exitcode=0;
+    DWORD  exit_code=0;
     HANDLE handle = (HANDLE) _get_osfhandle(_fileno(pipe));
 
     debug(F111,"pclose","FILE*",pipe);
     fclose(pipe);
     if (pids[fileno]) {
         WaitForSingleObject ((HANDLE) pids[(int)fileno], INFINITE);
-        if (!GetExitCodeProcess((HANDLE) pids[(int)fileno], &exitcode)) {
-            exitcode = 128;
+        if (!GetExitCodeProcess((HANDLE) pids[(int)fileno], &exit_code)) {
+            exit_code = 128;
         }
         pids[fileno] = 0;
     }
 
-    return (exitcode == 128 ? -1 : exitcode<<8);
+    return (exit_code == 128 ? -1 : exit_code<<8);
 }
 #endif /* COMMENT */
 #else /* NT */
@@ -8935,14 +8935,14 @@ pclose(FILE *pipe) {
 static DWORD exitcode;
 
 void
-ttruncmd2( HANDLE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     DWORD io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = ReadFile( pipe, &outc, 1, &io, NULL ) )
+        if ( success = ReadFile( (HANDLE)pipe, &outc, 1, &io, NULL ) )
         {
             ttoc(outc) ;
         }
@@ -9163,7 +9163,11 @@ ttruncmd(char * cmd)
         CloseHandle(procinfo.hThread);
 
         exitcode = STILL_ACTIVE;
-        _beginthread( ttruncmd2, 65536, hChildStdoutRd );
+#ifdef NT
+        _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );
+#else
+        _beginthread( ttruncmd2, 0, 65536, (void *)hChildStdoutRd );
+#endif /* NT */
         do {
             DWORD io ;
             int  inc ;
@@ -9208,14 +9212,14 @@ ttruncmd(char * cmd)
 #define STILL_ACTIVE -1L
 static ULONG exitcode = 0;
 void
-ttruncmd2( HFILE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     ULONG io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = !DosRead( pipe, &outc, 1, &io ) )
+        if ( success = !DosRead( (HFILE)pipe, &outc, 1, &io ) )
         {
             ttoc(outc) ;
         }
@@ -9312,7 +9316,11 @@ ttruncmd(cmd) char *cmd; { /* Return: 0 = failure, 1 = success */
     debug(F111,"ttruncmd","PID",pid);
 
     exitcode = STILL_ACTIVE;
-    _beginthread( ttruncmd2, 0, 65536, hChildStdoutRd );
+#ifdef NT
+    _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );
+#else
+    _beginthread( ttruncmd2, 0, 65536, (void *)hChildStdoutRd );
+#endif /* NT */
     do {
         ULONG io ;
         int inc ;

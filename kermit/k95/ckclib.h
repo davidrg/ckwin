@@ -16,13 +16,8 @@ struct stringarray {
     int a_size;
 };
 
-#ifdef CK_ANSIC
 _PROTOTYP( int ckstrncpy, (char *, const char *, int) );
 _PROTOTYP( int ckstrncat, (char *, const char *, int) );
-#else
-_PROTOTYP( int ckstrncpy, (char *, char *, int) );
-_PROTOTYP( int ckstrncat, (char *, char *, int) );
-#endif /* CK_ANSIC */
 
 _PROTOTYP( int ckmakmsg,  (char *, int, char *, char *, char *, char *) );
 _PROTOTYP( int ckmakxmsg, (char *, int,

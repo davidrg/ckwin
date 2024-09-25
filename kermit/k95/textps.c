@@ -203,6 +203,7 @@ char *copyright = "Copyright (C) 1991, 1996, Trustees of Columbia University";
 #endif /* CHARSET */
 
 #include <stdio.h>			/* For EOF definition */
+#include <stdlib.h>			/* For exit() */
 #ifdef OS2NTDOS
 #include <io.h>				/* For isatty() */
 #include <string.h>

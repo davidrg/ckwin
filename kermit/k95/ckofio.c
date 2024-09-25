@@ -54,6 +54,8 @@ extern int priority;
 #include "ckosyn.h"
 #include "ckuath.h"
 
+#include "ckcfnp.h"
+
 /*
 
   C-Kermit's OS/2 support originally by Chris Adie <C.Adie@uk.ac.edinburgh>
@@ -174,6 +176,10 @@ extern int pclose(FILE *);
 
 /* Because standard stat has trouble with trailing /'s we have to wrap it */
 int os2stat(char *, struct stat *);
+
+/* forward declarations */
+int os2getattr( char * name );
+int os2setattr( char * name );
 
 /* Is `y' a leap year? */
 #define leap(y) (((y) % 4 == 0 && (y) % 100 != 0) || (y) % 400 == 0)
@@ -4662,8 +4668,10 @@ zdtstr(time) time_t time;
     struct tm lts;
 
     debug(F101,"zdatstr time","",time);
+#ifndef __WATCOMC__
     if (time < 0)
       return("");
+#endif
     time_stamp = localtime(&(time));
     if (!time_stamp) {
         debug(F100,"localtime returns null","",0);
@@ -4735,7 +4743,7 @@ zstrdt(date,len) char * date; int len; {
     /* time_t is a 64bit value on Visual C++ 2005 and newer on 64bit windows. */
     time_t tmx=0;
 #else /* NT */
-    long tmx=0;
+    time_t tmx=0;
 #endif /* NT */
     long days;
     int i, n, isleapyear;

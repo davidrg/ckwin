@@ -40,6 +40,7 @@
 #include "pdll_global.h"
 #include "pdll_main.h"
 #include "pdll_common.h"
+#include "p_status.h"
 
 U32 p_error_visited;
 
@@ -58,14 +59,21 @@ p_error() U32 num;
      U32 opt_arg);
 #endif
 {
+  status_args   status;
+
   if (p_error_visited)		/* Yeah right, we are already closing down.. */
 				/* We'll just ignore all errors after the */
 				/* first one... */
     return;
-  else
-    p_error_visited = 1;
-  if (p_cfg->status_func(PS_ERROR, num, error_code,
-			 module, line, opt_arg))
+
+  p_error_visited = 1;
+
+  status.arg0 = num;
+  status.arg1 = error_code;
+  status.arg2 = module;
+  status.arg3 = line;
+  status.arg4 = opt_arg;
+  if (p_cfg->status_func(PS_ERROR, STDATA(&status)))
     user_aborted();
   longjmp(p_jmp_buf, 1);
 }

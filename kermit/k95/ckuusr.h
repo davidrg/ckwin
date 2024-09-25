@@ -3040,6 +3040,7 @@ _PROTOTYP (int sho_auth,( int  ) );
 #endif /* CK_AUTHENTICATION */
 #endif /* NONET */
 _PROTOTYP( VOID shomdm, (void) );
+_PROTOTYP( VOID slrestor, (void) );
 #endif /* NOLOCAL */
 #ifdef OS2
 _PROTOTYP( VOID shokeycode, (int,int) );

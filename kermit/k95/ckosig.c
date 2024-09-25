@@ -18,6 +18,7 @@
 #endif /* NOSPL */
 
 #include <signal.h>
+#include <process.h>
 #ifndef NOCCTRAP
 #ifdef NT
 #include <setjmpex.h>

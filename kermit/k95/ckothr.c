@@ -23,6 +23,7 @@
 #define INCL_DOSDATETIME
 #include <os2.h>
 #undef COMMENT                /* COMMENT is defined in os2.h */
+#include <process.h>
 #endif /* NT */
 #include "ckothr.h"
 #include "ckosyn.h"

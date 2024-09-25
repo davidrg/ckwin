@@ -20,7 +20,7 @@
 #include <types.h>
 #endif
 
-#ifdef __TYPES_32H
+#ifdef _TYPES_H_
 #define FDPTR                                  /* TCP/IP 2.0 */
 #define PACKED
 #else
@@ -84,7 +84,7 @@ int ENTRY ck_recv(int socket, char *buffer, int length, int flags)
   return recv(socket, buffer, length, flags);
 }
 
-int ENTRY ck_select(int *fds, int read, int write, int except, long timeout)
+int ENTRY ck_select(int *fds, int read, int write, int except, long timeout_ms)
 {
   /* Warning: if the called select is 16-bit but the calling code is
    * 32-bit, only one fd can be pointed to by fds! However, calling
@@ -94,6 +94,7 @@ int ENTRY ck_select(int *fds, int read, int write, int except, long timeout)
 #ifdef BSD_SELECT
   fd_set rfds;
   struct timeval tv;
+  ldiv_t time_sec;
   int socket = *fds;
 #endif
 
@@ -103,16 +104,13 @@ int ENTRY ck_select(int *fds, int read, int write, int except, long timeout)
 #ifdef BSD_SELECT
   FD_ZERO(&rfds);
   FD_SET(socket, &rfds);
-  tv.tv_sec = tv.tv_usec = 0L;
-
-  if (timeout < 1000)
-    tv.tv_usec = (long) timeout * 1000L;
-  else
-    tv.tv_sec = timeout;
+  time_sec = ldiv( timeout_ms, 1000L );
+  tv.tv_sec = time_sec.quot;
+  tv.tv_usec = time_sec.rem * 1000L;
 
   return select(FD_SETSIZE, &rfds, NULL, NULL, &tv) && FD_ISSET(socket, &rfds);
 #else
-  return select(FDPTR fds, read, write, except, timeout);
+  return select(FDPTR fds, read, write, except, timeout_ms);
 #endif
 }
 

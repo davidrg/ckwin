@@ -9,7 +9,7 @@ OUT_DLL	    = conpty.dll
 SRC         = conptydll.c cknpty.c ckclib.c
 DEF         = conptydll.def
 
-DEFINES	    = -D__WIN32__ -DWIN32 -DOS2 -DNT -D__STDC__ -DNETCMD \
+DEFINES	    = -D__WIN32__ -DWIN32 -DNT -D__STDC__ -DNETCMD \
               -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR -DCK_CONPTY
 
 LIBS        = kernel32.lib

@@ -96,6 +96,7 @@ extern long gtv, oldgtv;
 #include "p_global.h"
 #include "p_module.h"
 #include "p_omalloc.h"
+#include "p_status.h"
 
 #ifdef PIPESEND
 #undef PIPESEND
@@ -156,36 +157,36 @@ static char errbuf[512];
  */
 U32 _System
 #ifdef CK_ANSIC
-status_func(U32 type, intptr_t arg0, U32 arg1, U32 arg2, U32 arg3, intptr_t arg4)
+status_func(U32 type, void *args)
 #else
-status_func(type,arg0,arg1,arg2,arg3,arg4)
-     U32 type; intptr_t arg0; U32 arg1; U32 arg2; U32 arg3; intptr_t arg4;
+status_func(type,args)
+     U32 type; void *args;
 #endif
 {
     switch (type) {
     case PS_ERROR:
         {
             sprintf(errbuf,"Module: %d, Line %d, Device: %s, Error: %d",
-                     arg2,
-                     arg3,
-                     arg4?(char*)arg4:"<NULL>",
-                     (U32)arg0);
-            debug(F111,"P ERROR",errbuf,arg1);
+                     ST( args )->arg2,
+                     ST( args )->arg3,
+                     ST( args )->arg4?(char*)ST( args )->arg4:"<NULL>",
+                     (U32)ST( args )->arg0);
+            debug(F111,"P ERROR",errbuf,ST( args )->arg1);
 
         }
 
-        if (is_os2_error(arg0)) {
-            os2_error(arg0,             /* Error num */
-                       arg1,            /* Return code */
-                       arg2,            /* Module */
-                       arg3,            /* Line num */
-                       (U8 *)arg4);     /* Optional argument */
-        } else if (is_tcpip_error(arg0)) {
-            tcpip_error(arg0,           /* Error num */
-                         arg1,          /* Return code */
-                         arg2,          /* Module */
-                         arg3,          /* Line num */
-                         (U8 *)arg4); /* Optional argument */
+        if (is_os2_error(ST( args )->arg0)) {
+            os2_error(ST( args )->arg0,             /* Error num */
+                       ST( args )->arg1,            /* Return code */
+                       ST( args )->arg2,            /* Module */
+                       ST( args )->arg3,            /* Line num */
+                       (U8 *)ST( args )->arg4);     /* Optional argument */
+        } else if (is_tcpip_error(ST( args )->arg0)) {
+            tcpip_error(ST( args )->arg0,           /* Error num */
+                         ST( args )->arg1,          /* Return code */
+                         ST( args )->arg2,          /* Module */
+                         ST( args )->arg3,          /* Line num */
+                         (U8 *)ST( args )->arg4); /* Optional argument */
         }
         break;
 
@@ -196,9 +197,9 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
 
     case PS_TIMEOUT:
         timeouts++ ;
-        sprintf(msgbuf,"Timeout (%lu secs)",(U32)arg0);
+        sprintf(msgbuf,"Timeout (%lu secs)",STVAL( args ));
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
-        debug(F111,"P status_func","TIMEOUT",(U32)arg0);
+        debug(F111,"P status_func","TIMEOUT",STVAL( args ));
         break;
 
     case PS_TRANSFER_DONE:
@@ -208,8 +209,8 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_PROGRESS:
-        ffc = arg0 ;
-        ckscreen(SCR_PT,'D',arg0," characters so far");
+        ffc = STVAL( args );
+        ckscreen(SCR_PT,'D',STVAL( args )," characters so far");
         break;
 
     case PS_CANNOT_SEND_BLOCK:
@@ -217,9 +218,9 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_CHECKING_METHOD:
-        if (checking_method != arg0) { /* Has the checking method */
+        if (checking_method != STVAL( args )) { /* Has the checking method */
             /* changed since last displayed? */
-            checking_method = arg0;
+            checking_method = STVAL( args );
             switch (checking_method) {
             case CHECKING_CHECKSUM:
                 ckscreen(SCR_ST,ST_MSG,0l,"Checksum checking will be used");
@@ -252,7 +253,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_CHECK_FAILED:
-        switch (arg0) {
+        switch (STVAL( args )) {
         case CHECKING_CHECKSUM:
             crunched++ ;
             ckscreen(SCR_PT,'Q',0L,"");
@@ -282,7 +283,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_XYG_NAK:
-        sprintf(msgbuf,"Got NAK on byte %lu", (U32)arg0 );
+        sprintf(msgbuf,"Got NAK on byte %lu", STVAL( args ) );
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         ckscreen(SCR_PT,'N',0L,"");
         break;
@@ -291,36 +292,33 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         ckscreen(SCR_PT,'E',0L,"");
         crunched++ ;
         sprintf(msgbuf, "Block numbers mismatch (%lu:%lu <> %lu:%lu)",
-             (U32)arg0, arg1,
-             arg2, arg3);
+             (U32)ST( args )->arg0, ST( args )->arg1,
+             ST( args )->arg2, ST( args )->arg3);
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         break;
 
     case PS_Z_HEADER:
         if (opt_headers) {
-           sprintf(msgbuf,"%s %lu",
-                 z_header[arg0], arg1);
+           sprintf(msgbuf,"%s %lu", z_header[ST( args )->arg0], ST( args )->arg1);
             ckscreen(SCR_ST,ST_MSG,0l, msgbuf ) ;
         }
         break;
 
     case PS_Z_UNEXPECTED_HEADER:
         ckscreen(SCR_PT,'E',0L,"");
-        sprintf(msgbuf,"Unexpected %s %lu",
-             z_header[arg0], arg1);
+        sprintf(msgbuf,"Unexpected %s %lu", z_header[ST( args )->arg0], ST( args )->arg1);
         ckscreen(SCR_ST,ST_ERR,0l, msgbuf);
         break;
 
     case PS_Z_FRAME_END:
         if (opt_frameends)
-          ckscreen(SCR_ST,ST_MSG,0l, z_frame_end[arg0]);
+          ckscreen(SCR_ST,ST_MSG,0l, z_frame_end[STVAL( args )]);
         break;
 
     case PS_Z_INVALID_FRAME_END:
         crunched++ ;
         ckscreen(SCR_PT,'E',0L,"");
-        sprintf( msgbuf, "Invalid frame end: %s",
-             z_frame_end[arg0]);
+        sprintf( msgbuf, "Invalid frame end: %s", z_frame_end[STVAL( args )]);
         ckscreen(SCR_ST,ST_ERR,0l, msgbuf );
         break;
 
@@ -338,18 +336,17 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         crunched++ ;
         ckscreen(SCR_PT,'Q',0L,"");
         sprintf(msgbuf, "Got data from invalid position: %lu, expected from %lu",
-             (U32)arg0, arg1);
+             (U32)ST( args )->arg0, ST( args )->arg1);
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         break;
 
     case PS_Z_COMMAND:
-       sprintf(msgbuf, "Zcommand: \"%s\"", (char*)arg0);
+       sprintf(msgbuf, "Zcommand: \"%s\"", (char*)args);
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
         break;
 
     case PS_Z_CTRL_CHAR_IGNORED:
-       sprintf(msgbuf, "Unexpected control character ignored: %lu",
-             (U32)arg0);
+       sprintf(msgbuf, "Unexpected control character ignored: %lu", STVAL( args ));
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
         break;
 
@@ -359,7 +356,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_Z_CHECK_FAILED_FOR_HEADER:
-        switch (arg0) {
+        switch (STVAL( args )) {
         case CHECKING_CHECKSUM:
             /* This never happens... Checksum checking isn't used for headers! */
             break;
@@ -388,22 +385,22 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         crunched++ ;
         ckscreen(SCR_PT,'Q',0L,"");
         sprintf(msgbuf, "Too long zmodem subpacket received (> %lu)",
-             (U32)arg0);
+             STVAL( args ));
         ckscreen(SCR_ST,ST_ERR,0l,msgbuf);
         break;
 
     case PS_Z_CRASH_RECOVERY:
-        sprintf(msgbuf, "Crash recovery at %lu", (U32)arg0);
+        sprintf(msgbuf, "Crash recovery at %lu", STVAL( args ));
         ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
-        debug(F111,"P status_func","CRASH RECOVERY",(U32)arg0);
+        debug(F111,"P status_func","CRASH RECOVERY",STVAL( args ));
         break;
 
     case PS_Z_RECEIVER_FLAGS:
-        if (receiver_flags != arg0) {
+        if (receiver_flags != STVAL( args )) {
             if (receiver_flags != 0)    /* We have parsed zrinit */
               /* at least once before */
               ckscreen(SCR_ST,ST_MSG,0l, "Receiver has changed its parameters");
-            receiver_flags = arg0;
+            receiver_flags = STVAL( args );
 
             if (receiver_flags & RZ_FLAG_CANFDX)
               ckscreen(SCR_ST,ST_MSG,0l, "Receiver is capable of true full duplex");
@@ -428,10 +425,10 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_Z_RECEIVER_WINDOW_SIZE:
-        if (receiver_window_size != arg0) {
+        if (receiver_window_size != STVAL( args )) {
             if (receiver_window_size != -1)
               ckscreen(SCR_ST,ST_MSG,0l, "Receiver has changed its window parameters");
-            receiver_window_size = arg0;
+            receiver_window_size = STVAL( args );
             if (receiver_window_size == 0)
               ckscreen(SCR_ST,ST_MSG,0l, "Receiver can accept full streaming");
             else
@@ -449,14 +446,14 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         break;
 
     case PS_Z_SENDER_FLAGS:
-        if (arg0 & RZ_FLAG_ESC_CTRL)
+        if (STVAL( args ) & RZ_FLAG_ESC_CTRL)
           ckscreen(SCR_ST,ST_MSG,0l, "Sender wants control characters to be escaped");
-        if (arg0 & RZ_FLAG_ESC_8TH)
+        if (STVAL( args ) & RZ_FLAG_ESC_8TH)
           ckscreen(SCR_ST,ST_MSG,0l, "Sender wants 8th bit to be escaped");
         break;
 
     case PS_SERVER_WAITING:
-        if (arg0 == opt_wait) {
+        if (STVAL( args ) == opt_wait) {
             if (opt_wait) {
                 ckscreen(SCR_PT,'T',0L,"");
                 ckscreen(SCR_ST,ST_ERR,0l, "Timeout");
@@ -465,7 +462,7 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
                 ckscreen(SCR_ST,ST_ERR,0l, "No connection, try specifying a waiting time (with -wait option)");
             aborted = 1;
         } else {
-            sprintf(msgbuf, "Waiting for connect (%lu secs)", (U32)arg0 + 1);
+            sprintf(msgbuf, "Waiting for connect (%lu secs)", STVAL( args ) + 1);
             ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
             if (!opt_quiet)
                 DosBeep(250, 20);
@@ -481,10 +478,10 @@ status_func(type,arg0,arg1,arg2,arg3,arg4)
         if (p_cfg.attr & CFG_QUERY_SERIAL_NUM) /* Let's not show it, if not */
                                            /* explicitly asked to */
         {
-            sprintf(msgbuf, "Serial number of the receiver is %lu", (U32)arg0);
+            sprintf(msgbuf, "Serial number of the receiver is %lu", STVAL( args ));
             ckscreen(SCR_ST,ST_MSG,0l,msgbuf);
         }
-        remote_serial_num = arg0;
+        remote_serial_num = STVAL( args );
         break;
 
     case PS_PACKET_LENGTH:

@@ -1,4 +1,3 @@
-
 # This makefile tries to figure out what compiler we're using,
 # its version, the target CPU Architecture and platform.
 #

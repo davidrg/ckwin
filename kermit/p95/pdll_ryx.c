@@ -44,6 +44,7 @@
 #include "pdll_omalloc.h"
 #include "pdll_r.h"
 #include "pdll_x_global.h"
+#include "p_status.h"
 
 VOID
 #ifdef CK_ANSIC
@@ -95,7 +96,7 @@ ryx_blk_size()
     }
     time(&t_now);
     if (t_now - t_started >= 5) {
-      if (p_cfg->status_func(PS_TIMEOUT, 5))
+      if (p_cfg->status_func(PS_TIMEOUT, STDATA( 5 )))
 	user_aborted();
       return;
     }
@@ -151,7 +152,7 @@ ryx_handshake()
       switch (ch_to_send) {
       case NAK:
 	if (chk_data_len != 1) {	/* Prevents us from repeating this */
-	  if (p_cfg->status_func(PS_CHECKING_METHOD, CHECKING_CHECKSUM))
+	  if (p_cfg->status_func(PS_CHECKING_METHOD, STDATA( CHECKING_CHECKSUM )))
 	    user_aborted();
 	}
 	chk_data_len = 1;
@@ -160,7 +161,7 @@ ryx_handshake()
       case 'C':
       case 'G':
 	if (chk_data_len != 2) {	/* Prevents us from repeating this */
-	  if (p_cfg->status_func(PS_CHECKING_METHOD, CHECKING_CRC16))
+	  if (p_cfg->status_func(PS_CHECKING_METHOD, STDATA( CHECKING_CRC16 )))
 	    user_aborted();
 	}
 	chk_data_len = 2;
@@ -169,12 +170,12 @@ ryx_handshake()
       return;
     }
     if (++cnt == 4 && protocol_type != PROTOCOL_G && ch_to_send == 'C') {
-      if (p_cfg->status_func(PS_XY_FALLBACK_TO_CHECKSUM))
+      if (p_cfg->status_func(PS_XY_FALLBACK_TO_CHECKSUM, NULL))
 	user_aborted();
       ch_to_send = NAK;
     }
     if (cnt == 12) {
-      if (p_cfg->status_func(PS_TIMEOUT, 60))
+      if (p_cfg->status_func(PS_TIMEOUT, STDATA( 60 )))
 	user_aborted();
       pdll_aborted = A_MISC;
       return;
@@ -214,11 +215,12 @@ ryx_block()
   U32 chk_data_idx;
   time_t t_started;
   time_t t_now;
+  status_args status;
 
   chk_data_idx = 3 + blk_size;
   blk_len = 3 + blk_size + chk_data_len;
 
-  if (p_cfg->status_func(PS_PACKET_LENGTH, blk_len))
+  if (p_cfg->status_func(PS_PACKET_LENGTH, STDATA( blk_len )))
       user_aborted();
 
   while (1) {
@@ -230,10 +232,10 @@ ryx_block()
       case DEV_TIMEOUT:
 	time(&t_now);
 	if (t_now - t_started >= 5) {
-	  if (p_cfg->status_func(PS_TIMEOUT, 5))
+	  if (p_cfg->status_func(PS_TIMEOUT, STDATA( 5 )))
 	    user_aborted();
 	  if (protocol_type == PROTOCOL_G) {
-	    if (p_cfg->status_func(PS_G_ABORTED))
+	    if (p_cfg->status_func(PS_G_ABORTED, NULL))
 	      user_aborted();
 	    pdll_aborted = A_MISC;
 	    cancel();
@@ -255,11 +257,11 @@ ryx_block()
     if (block_ok) {
       if (blk[1] != expected_blk_num[0] &&
 	  blk[2] != expected_blk_num[1]) {
-	if (p_cfg->status_func(PS_XYG_BLK_NUM_MISMATCH,
-			       blk[1],
-			       blk[2],
-			       expected_blk_num[0],
-			       expected_blk_num[1]))
+	status.arg0 = blk[1];
+	status.arg1 = blk[2];
+	status.arg1 = expected_blk_num[0];
+	status.arg1 = expected_blk_num[1];
+	if (p_cfg->status_func(PS_XYG_BLK_NUM_MISMATCH, STDATA( &status )))
 	    user_aborted();
 	block_ok = 0;
       }
@@ -271,7 +273,7 @@ ryx_block()
 	for (i = 3; i < chk_data_idx; i++)
 	  checksum = (checksum + blk[i]) & 0xFF;
 	if (blk[chk_data_idx] != checksum) {
-	  if (p_cfg->status_func(PS_CHECK_FAILED, CHECKING_CHECKSUM))
+	  if (p_cfg->status_func(PS_CHECK_FAILED, STDATA( CHECKING_CHECKSUM )))
 	    user_aborted();
 	  block_ok = 0;
 	}
@@ -282,7 +284,7 @@ ryx_block()
 	  checksum = updcrc16(blk[i], checksum);
 	if (blk[chk_data_idx] != ((checksum >> 8) & 0xFF) ||
 	    blk[chk_data_idx + 1] != (checksum & 0xFF)) {
-	  if (p_cfg->status_func(PS_CHECK_FAILED, CHECKING_CRC16))
+	  if (p_cfg->status_func(PS_CHECK_FAILED, STDATA( CHECKING_CRC16 )))
 	    user_aborted();
 	  block_ok = 0;
 	}
@@ -299,7 +301,7 @@ ryx_block()
       break;
     } else {
       if (protocol_type == PROTOCOL_G) {
-	if (p_cfg->status_func(PS_G_ABORTED))
+	if (p_cfg->status_func(PS_G_ABORTED, NULL))
 	  user_aborted();
 	pdll_aborted = A_MISC;
 	cancel();
@@ -352,7 +354,7 @@ ryx_file()
   ryx_open_file();
   if (!pdll_aborted) {
     ryx_handshake();
-    if (p_cfg->status_func(PS_PROGRESS, offset))
+    if (p_cfg->status_func(PS_PROGRESS, STDATA( offset )))
       user_aborted();
 
     while (1) {
@@ -373,7 +375,7 @@ ryx_file()
       }
       cnt = 0;
       while (1) {
-	if (p_cfg->status_func(PS_PROGRESS, offset))
+	if (p_cfg->status_func(PS_PROGRESS, STDATA( offset )))
 	  user_aborted();
 
 	ryx_blk_size();
@@ -381,7 +383,7 @@ ryx_file()
 	  break;
 	cnt++;
 	if (cnt == 12) {
-	  if (p_cfg->status_func(PS_TIMEOUT, 60))
+	  if (p_cfg->status_func(PS_TIMEOUT, STDATA( 60 )))
 	    user_aborted();
 
 	  pdll_aborted = A_MISC;
@@ -390,7 +392,7 @@ ryx_file()
 	dev_putch_buf(NAK);
 	dev_flush_outbuf();
       }
-	if (p_cfg->status_func(PS_PROGRESS, offset))
+	if (p_cfg->status_func(PS_PROGRESS, STDATA( offset )))
 	  user_aborted();
       if (blk[0] == EOT)
 	break;

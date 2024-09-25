@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <direct.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifdef OS2
 #ifdef NT
@@ -960,7 +961,7 @@ void
 os2Folder(char * diskdir, int new_install, int windowable) {
     ICONINFO iconinfo ;
     UCHAR    exefile[256] ;
-    UCHAR    iconfile[256] ;
+    char     iconfile[256] ;
     UCHAR    title[256];
     UCHAR    classname[256] ;
     UCHAR    location[256] ;
@@ -973,7 +974,7 @@ os2Folder(char * diskdir, int new_install, int windowable) {
     iconinfo.cb = sizeof(ICONINFO);
     iconinfo.fFormat = ICON_FILE ;
     iconinfo.pszFileName = iconfile;
-    iconinfo.hmod = NULL ;
+    iconinfo.hmod = NULLHANDLE ;
     iconinfo.resid = 0 ;
     iconinfo.cbIconData = 0 ;
     iconinfo.pIconData = NULL ;
@@ -988,7 +989,7 @@ os2Folder(char * diskdir, int new_install, int windowable) {
     iconinfo.cb = sizeof(ICONINFO);
     iconinfo.fFormat = ICON_FILE ;
     iconinfo.pszFileName = iconfile;
-    iconinfo.hmod = NULL ;
+    iconinfo.hmod = NULLHANDLE ;
     iconinfo.resid = 0 ;
     iconinfo.cbIconData = 0 ;
     iconinfo.pIconData = NULL ;
