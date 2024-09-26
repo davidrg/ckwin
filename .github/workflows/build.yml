@@ -987,28 +987,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Open Watcom setup
+      uses: open-watcom/setup-watcom@v0
+      with:
+        version: "1.9"
+        target: "nt"
       # Cache OpenWatcom because it takes quite a while to download and
       # decompress.
-    - name: Cache OpenWatcom and Dependencies
+    - name: Cache openzinc
       uses: actions/cache@v4
-      id: cache-watcom-zinc
+      id: cache-openzinc
       with:
         path: |
-          ${{github.workspace}}\watcom
-        key: w32-watcom-1.9+openzinc1
+          ${{github.workspace}}\zinc
+        key: openzinc1
 
-    - name: Get OpenWatcom 1.9 and Dependencies
-      if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
+    - name: Get openzinc
+      if: steps.cache-openzinc.outputs.cache-hit != 'true'
       run: |
-        if (Test-Path watcom) {
-            Remove-Item watcom -Force
-        }
-        mkdir watcom
-        cd watcom
-        wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
-        7z x open-watcom-c-win32-1.9.exe
-        cd ..
-        
         mkdir zinc
         cd zinc
         wget ${{ env.OPENZINC }} -outfile OZ1.zip
@@ -1018,17 +1014,6 @@ jobs:
 
     - name: Full Build
       run: |
-        SET PATH=%WATCOM%\BINW;%PATH%
-        SET PATH=%WATCOM%\BINNT;%PATH%
-        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
-        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
-        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
-        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
-        SET INCLUDE=%WATCOM%\H;%INCLUDE%
-        SET EDPATH=%WATCOM%\EDDAT
-        SET WHTMLHELP=%WATCOM%\BINNT\HELP
-        SET WIPFC=%WATCOM%\WIPFC
-
         call setenv.bat
         
         REM Enable Dynamic SSH just to be sure those bits are buildable
@@ -1063,20 +1048,8 @@ jobs:
       working-directory: ${{ github.workspace }}
       env:
         ROOT: ${{ github.workspace }}
-        WATCOM: ${{ github.workspace }}\watcom
     - name: Dialer Build
       run: |
-        SET PATH=%WATCOM%\BINW;%PATH%
-        SET PATH=%WATCOM%\BINNT;%PATH%
-        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
-        SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
-        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
-        SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
-        SET INCLUDE=%WATCOM%\H;%INCLUDE%
-        SET EDPATH=%WATCOM%\EDDAT
-        SET WHTMLHELP=%WATCOM%\BINNT\HELP
-        SET WIPFC=%WATCOM%\WIPFC
-
         call setenv.bat
         cd kermit\dialer
         call mk.bat
@@ -1085,7 +1058,6 @@ jobs:
       working-directory: ${{ github.workspace }}
       env:
         ROOT: ${{ github.workspace }}
-        WATCOM: ${{ github.workspace }}\watcom
     - name: Prepare Artifacts
       shell: cmd
       working-directory: ${{ github.workspace }}\kermit\k95
@@ -1138,39 +1110,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-        # Cache OpenWatcom because it takes quite a while to download and
-        # decompress.
-      - name: Cache OpenWatcom
-        uses: actions/cache@v4
-        id: cache-watcom
+      - name: Open Watcom setup
+        uses: open-watcom/setup-watcom@v0
         with:
-          path: |
-            ${{github.workspace}}\watcom
-          key: nt-watcom-1.9
-      - name: Get OpenWatcom 1.9
-        if: steps.cache-watcom.outputs.cache-hit != 'true'
-        run: |
-          if (Test-Path watcom) {
-            Remove-Item watcom -Force
-          }
-          mkdir watcom
-          cd watcom
-          wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
-          7z x open-watcom-c-win32-1.9.exe
-        shell: powershell
+          version: "1.9"
+          target: "nt"
       - name: Full Build
         run: |
-          SET PATH=%WATCOM%\BINW;%PATH%
-          SET PATH=%WATCOM%\BINNT;%PATH%
-          SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
-          SET INCLUDE=%WATCOM%\H\NT;%INCLUDE%
-          SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DIRECTX
-          SET INCLUDE=%INCLUDE%;C:\WATCOM\H\NT\DDK
-          SET INCLUDE=%WATCOM%\H;%INCLUDE%
-          SET EDPATH=%WATCOM%\EDDAT
-          SET WHTMLHELP=%WATCOM%\BINNT\HELP
-          SET WIPFC=%WATCOM%\WIPFC
-          
           REM Build for Windows NT 3.50 (and, someday, NT 3.1)
           set CKT_NT31=yes
           
@@ -1201,7 +1147,6 @@ jobs:
         working-directory: ${{ github.workspace }}\kermit
         env:
           ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
@@ -1248,28 +1193,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-        # Cache OpenWatcom because it takes quite a while to download and
-        # decompress.
-      - name: Cache OpenWatcom
+      - name: Open Watcom setup
+        uses: open-watcom/setup-watcom@v0
+        with:
+          version: "1.9"
+          target: "os2"
+      - name: Cache openzinc
         uses: actions/cache@v4
-        id: cache-watcom-zinc
+        id: cache-openzinc
         with:
           path: |
-            ${{github.workspace}}\watcom
             ${{github.workspace}}\zinc
-          key: os2-watcom-1.9+openzinc1+v2
-      - name: Get OpenWatcom 1.9
-        if: steps.cache-watcom-zinc.outputs.cache-hit != 'true'
+          key: openzinc1
+      - name: Get openzinc
+        if: steps.cache-openzinc.outputs.cache-hit != 'true'
         run: |
-          if (Test-Path watcom) {
-            Remove-Item watcom -Force
-          }
-          mkdir watcom
-          cd watcom
-          wget https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-win32-1.9.exe -outfile open-watcom-c-win32-1.9.exe
-          7z x open-watcom-c-win32-1.9.exe
-          cd ..
-          
           mkdir zinc
           cd zinc
           wget ${{ env.OPENZINC }} -outfile OZ1.zip
@@ -1279,13 +1217,6 @@ jobs:
         shell: powershell
       - name: Kermit/2 Build
         run: |
-          SET PATH=%WATCOM%\BINW;%PATH%
-          SET PATH=%WATCOM%\BINNT;%PATH%
-          SET INCLUDE=%WATCOM%\H;%INCLUDE%
-          SET EDPATH=%WATCOM%\EDDAT
-          SET WHTMLHELP=%WATCOM%\BINNT\HELP
-          SET WIPFC=%WATCOM%\WIPFC
-          
           call setenv.bat
           cd kermit\k95
           call mkos2.bat
@@ -1307,16 +1238,8 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
       - name: Dialer Build
         run: |
-          SET PATH=%WATCOM%\BINW;%PATH%
-          SET PATH=%WATCOM%\BINNT;%PATH%
-          SET INCLUDE=%WATCOM%\H;%INCLUDE%
-          SET EDPATH=%WATCOM%\EDDAT
-          SET WHTMLHELP=%WATCOM%\BINNT\HELP
-          SET WIPFC=%WATCOM%\WIPFC
-          
           call setenv.bat
           cd kermit\dialer
           call mkos2.bat
@@ -1324,14 +1247,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         env:
           ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
       - name: Make Dialer Distribution
         run: mkdist-os2.bat
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\dialer
         env:
           ROOT: ${{ github.workspace }}
-          WATCOM: ${{ github.workspace }}\watcom
       - name: Prepare Artifact
         shell: cmd
         working-directory: ${{ github.workspace }}\kermit\k95
