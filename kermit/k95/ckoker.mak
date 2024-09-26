@@ -617,14 +617,13 @@ k95g:
 #         -Gt     ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
 #         -Gd     ?             /Gd+: Use the version of the runtime library that is dynamically linked.
 #         -J      N/A (uchar is default)          /J+: Make default char type unsigned. Default: /J+
-#                 -bt=os2v2     Compile for target OS
+#                 -bt=os2       Compile for target OS
 # NOLINK: -c        /C+: Perform compile only, no link.
 # LINKFLAGS: /nologo
 #            /noi
 #            /align:16
 #            /base:0x10000
 #                           -l=os2v2
-#                           -x
 
 # Watcom C targeting OS/2
 # TODO: Fix buiding with OPT="-ox " (currently this causes it to crash on
@@ -638,14 +637,14 @@ wcos2:
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
-	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
         NOLINK="-c" \
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-l=os2v2 -x" \
+        LINKFLAGS="-l=os2v2" \
 	    DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
@@ -658,14 +657,14 @@ wcos2d:
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
-	    CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
         NOLINK="-c" \
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-l=os2v2 -x" \
+        LINKFLAGS="-l=os2v2" \
 	    DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
@@ -682,11 +681,10 @@ wcos2d:
 #   -ox             Maximum optimisation
 #   -br             Build with dll runtime library - maybe equivalent to /Ge- on the
 #                   IBM compiler.
-#   -q              Operate quietly
+#   -zq             Operate quietly
 #   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
 #   -c              Compile only, don't link
 #   -l=os2v2        Link for 32bit OS/2
-#   -x              Make names case sensitive
 
 # release version
 #         CC2="-Fi+ -Si+ -Gi+ -Gl+" \
@@ -1282,7 +1280,7 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) -l=os2v2_pm -x $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) -l=os2v2_pm $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
