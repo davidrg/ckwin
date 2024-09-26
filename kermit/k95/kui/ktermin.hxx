@@ -38,6 +38,7 @@ public:
     void disableMenu( void );
     void disableToolbar( void );
     void disableClose( void );
+    void setToolbarVisible(Bool visible);
 
   private:
     Bool OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,

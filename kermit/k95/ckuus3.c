@@ -9082,6 +9082,11 @@ static int setprinter( int );
 #define GUI_MNB  6
 #define GUI_CLS  7
 
+#define GUIB_OFF 0
+#define GUIB_ON  1
+#define GUIB_DIS 2
+#define GUIB_VIS 3
+
 #define GUIW_POS 1
 #define GUIW_RES 2
 #define GUIW_RUN 3
@@ -9105,6 +9110,15 @@ static struct keytab guitab[] = {
     { "", 0, 0}
 };
 static int nguitab = (sizeof(guitab) / sizeof(struct keytab));
+
+static struct keytab guibartab[] = {
+    { "disabled",    GUIB_DIS, 0 },
+    { "off",         GUIB_OFF, CM_INV},
+    { "on",          GUIB_ON,  CM_INV},
+    { "visible",     GUIB_VIS, 0 },
+    { "", 0, 0}
+};
+static int nguibartab = (sizeof(guibartab) / sizeof(struct keytab));
 
 static struct keytab guiwtab[] = {
     { "position",    GUIW_POS, 0 },
@@ -9338,10 +9352,39 @@ setguimenubar(x) int x;
     KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
 }
 
-VOID
-setguitoolbar(x) int x;
+int
+setguitoolbar()
 {
-    KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the toolbar */
+                KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the toolbar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
 }
 
 VOID
@@ -9368,10 +9411,7 @@ setgui() {
       case GUI_WIN:
         return(setguiwin());
       case GUI_TLB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguitoolbar(x);
-        return(rc);
+        return(setguitoolbar());
       case GUI_MNB:
         rc = seton(&x);
         if (rc >= 0)

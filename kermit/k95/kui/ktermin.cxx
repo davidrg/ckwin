@@ -316,6 +316,34 @@ void KTerminal::disableToolbar( void )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
+void KTerminal::setToolbarVisible(Bool visible) {
+#ifndef NOTOOLBAR
+    if (toolbar) {
+        int tbwid = 0, tbhi = 0;
+        toolbar->getSize(tbwid, tbhi);
+
+        int twid = 0, thi = 0;
+        getSize(twid, thi);
+
+        int newWindowHeight = visible ? thi + tbhi : thi - tbhi;
+
+        toolbar->setVisible(visible);
+
+        // move the client
+        int clientY = visible ? tbhi - kglob->sysMets->edgeHeight() : 0;
+        SetWindowPos( client->hwnd(), 0, 0,
+                      clientY
+                      , 0, 0, SWP_NOSIZE  );
+
+        size(twid, newWindowHeight);
+        client->setDimensions(TRUE);
+
+    }
+#endif /* NOTOOLBAR */
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
 void KTerminal::createWin( KWin* par )
 {
     inCreate( TRUE );

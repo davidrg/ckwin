@@ -42,12 +42,19 @@ it carried from 1995 through to 2013.
   but note that the Console I/O Routines it provides are not currently compatible 
   with K95.
 * SSH is now supported on 32bit ARM devices (Windows RT)
+* New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
 * Upgraded to OpenSSL 3.0.15 which fixes a number of bugs and security issues
 * K95G no longer opens COM1 by default. If you still want this behaviour, add
   `set port com1` to your k95custom.ini
+* The command `set gui toolbar off` has been renamed to
+  `set gui toolbar disabled` to better describe what it actually does and to
+  make room for new commands to turn it on and off. The previous syntax
+  (`set gui toolbar { off, on }`) is still accepted for  compatibility with 
+  existing scripts. `set gui toolbar on` still does nothing as it always has
+  (disabling the toolbar is a session lockdown feature)
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
