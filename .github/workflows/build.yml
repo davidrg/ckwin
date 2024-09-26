@@ -1110,8 +1110,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-        # Cache OpenWatcom because it takes quite a while to download and
-        # decompress.
       - name: Open Watcom setup
         uses: open-watcom/setup-watcom@v0
         with:
@@ -1200,8 +1198,6 @@ jobs:
         with:
           version: "1.9"
           target: "os2"
-        # Cache OpenWatcom because it takes quite a while to download and
-        # decompress.
       - name: Cache openzinc
         uses: actions/cache@v4
         id: cache-openzinc

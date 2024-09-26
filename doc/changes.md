@@ -582,6 +582,7 @@ Change logs going back to the release of the first version in October 1995 (1.1)
  * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ) - 3 October 1997
  * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J) - 25 September 1997
  * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 24 July 1996 to 24 June 1997
+   * v1.1.11 of February 1997 restored OS/2 support replacing OS/2 C-Kermit 5A(191)
  * [1.1.6 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/Yb8oikR0uuQ/m/kVDydxVQKT4J) - 18 July 1996
  * [1.1.5 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/L9wpCZEBw4Q/m/Y89bIR-wp3UJ) - 2 July 1996
  * [1.1.2 to 1.1.4 Change Log (down the bottom)](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 18 December 1995 to 7 March 1996
@@ -598,4 +599,11 @@ Change logs going back to the release of the first version in October 1995 (1.1)
    * ZMODEM downloads fixed to work when FILE COLLISION is BACKUP or RENAME
    * ZMODEM transfers fixed to work over various types of TELNET connections
    * Faster detection of lost connections during file transfer
- * 1.1 - First Release - 2 October 1995 
+ * 1.1 - First Release - 2 October 1995
+ * [OS/2 C-Kermit 5A(191)](https://www.columbia.edu/kermit/cko191.html) - 23 April 1995
+   * Last free release before it was renamed [Kermit 95 for OS/2](https://www.columbia.edu/kermit/os2.html), ported to Windows and sold commercially
+ * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
+   * Last release to include 16-bit OS/2 1.x support
+ * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
+ * [OS/2 C-Kermit 5A(?)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
+
