@@ -604,6 +604,6 @@ Change logs going back to the release of the first version in October 1995 (1.1)
    * Last free release before it was renamed [Kermit 95 for OS/2](https://www.columbia.edu/kermit/os2.html), ported to Windows and sold commercially
  * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
    * Last release to include 16-bit OS/2 1.x support
- * [OS/2 C-Kermit 5A(189))[https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ] - 18 July 1993
- * [OS/2 C-Kermit 5A(?))[https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ] - 23 November 1992
- * 
+ * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
+ * [OS/2 C-Kermit 5A(?)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
+
