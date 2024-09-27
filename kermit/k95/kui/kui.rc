@@ -472,6 +472,70 @@ BEGIN
 END
 
 
+IDR_TERMMENU_SYSTEM_MARK MENU DISCARDABLE
+BEGIN
+    MENUITEM "Start",                  ID_ACTION_MARK_START
+    MENUITEM "Cancel",                 ID_ACTION_MARK_CANCEL
+    MENUITEM "Copy to Clipboard",      ID_ACTION_MARK_COPY_CLIP
+    MENUITEM "Copy to Host",           ID_ACTION_MARK_COPY_HOST
+END
+
+IDR_TERMMENU_SYSTEM_ACTIONS MENU DISCARDABLE
+BEGIN
+    MENUITEM "Clear Screen",               ID_ACTION_CLEARSCREEN
+    MENUITEM "Clear Scrollback",           ID_ACTION_CLEARSCROLLBACK
+    MENUITEM "Reset Terminal",                      ID_ACTION_RESET
+    POPUP "Send"
+    BEGIN
+            MENUITEM "Break",                 ID_ACTION_BREAKSENDONE
+    MENUITEM "Long Break",            ID_ACTION_SEND_LBREAK
+    MENUITEM "NUL",                   ID_ACTION_SEND_NUL
+    MENUITEM "Telnet Are You There?",            ID_ACTION_AYT
+    MENUITEM "Telnet Interrupt Process",         ID_ACTION_TN_IP
+    END
+            MENUITEM SEPARATOR
+            MENUITEM "Compose (character)",        ID_ACTION_COMPOSECHARACTER
+    MENUITEM "Unicode Compose (character)",ID_ACTION_COMPOSEUNICODE
+    MENUITEM SEPARATOR
+    POPUP "Autodownload"
+    BEGIN
+            MENUITEM "Ask",                ID_ACTION_AUTODOWNLOAD_ASK, CHECKED
+            MENUITEM "Off",                ID_ACTION_AUTODOWNLOAD_OFF, CHECKED
+            MENUITEM "On",                 ID_ACTION_AUTODOWNLOAD_ON, CHECKED
+            END
+    POPUP "Automatic Locus Switching"
+    BEGIN
+            MENUITEM "Ask",                ID_ACTION_AUTO_LOCUS_ASK, CHECKED
+            MENUITEM "Off",                ID_ACTION_AUTO_LOCUS_OFF, CHECKED
+            MENUITEM "On",                 ID_ACTION_AUTO_LOCUS_ON, CHECKED
+            END
+    POPUP "Bytesize"
+    BEGIN
+            MENUITEM "7 Bit",              ID_ACTION_7BIT, CHECKED
+            MENUITEM "8 Bit",              ID_ACTION_8BIT, CHECKED
+            END
+    MENUITEM "Capture",                    ID_ACTION_CAPTURE, CHECKED
+            MENUITEM "Copy to Printer",            ID_ACTION_PRINTERCOPY, CHECKED
+            MENUITEM "Debug",                      ID_ACTION_DEBUG, CHECKED
+            POPUP "Exit Warnings"
+    BEGIN
+            MENUITEM "Always",                 ID_ACTION_WARNING_ALWAYS
+    MENUITEM "Off",                    ID_ACTION_WARNING_OFF
+    MENUITEM "On",                     ID_ACTION_WARNING_ON
+    END
+            MENUITEM "GUI Dialogs",                ID_ACTION_GUI_DIALOGS, CHECKED
+            MENUITEM "Keyclick",                   ID_ACTION_KEYCLICK, CHECKED
+            MENUITEM "Locus: Local",               ID_ACTION_LOCUS, CHECKED
+            MENUITEM "PCTERM Keyboard",            ID_ACTION_PCTERM, CHECKED
+            POPUP "Resize Mode"
+    BEGIN
+            MENUITEM "Scales Font",        ID_ACTION_RESIZE_FONT, CHECKED
+            MENUITEM "Changes Dimensions", ID_ACTION_RESIZE_DIMENSION, CHECKED
+            END
+    MENUITEM "URL Highlighting",           ID_ACTION_URL_HIGHLIGHT, CHECKED
+
+END
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap

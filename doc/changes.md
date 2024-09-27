@@ -43,6 +43,9 @@ it carried from 1995 through to 2013.
   with K95.
 * SSH is now supported on 32bit ARM devices (Windows RT)
 * New command to turn the menubar on or off: `set gui menubar visible { on, off }`
+  When the menubar is turned off in this way (rather than the command line 
+  parameter), important menu items are moved on to the system/control/window menu
+  (right-click on the title bar for the actions menu and a few other things)
 * New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
 * New command to turn the statusbar on or off: `set gui statusbar { on, off }`
 
@@ -72,6 +75,8 @@ it carried from 1995 through to 2013.
   causing a crash
 * Fixed POTS modem support not being available on NT 3.50
 * Fixed OpenSSL libraries not being included in the ARM32 distribution
+* Fixed \Kexit (Alt+x by default) not updating the state of the associated
+  toolbar button
 
 ### Other Source Changes
 None yet

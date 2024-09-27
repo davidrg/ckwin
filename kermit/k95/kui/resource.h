@@ -9,6 +9,8 @@
 #define IDT_CLIENTTIMER                 107
 #define IDR_TERMMENU                    109
 #define IDR_TERMMENU_NOCLOSE            110
+#define IDR_TERMMENU_SYSTEM_MARK        111
+#define IDR_TERMMENU_SYSTEM_ACTIONS     112
 #define IDD_FILETRANSFERSTATUS          116
 #define IDR_TOOLBARTERMINAL             121
 #define IDD_ABOUTBOX                    123

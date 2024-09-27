@@ -734,6 +734,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         initMenu();
         break;
 
+    case WM_SYSCOMMAND:
     case WM_COMMAND:
         //debug(F111,"KAppWin::message","WM_COMMAND",msg);
         {
@@ -801,6 +802,13 @@ Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             }
             break;
         }
+    }
+
+    if (msg == WM_SYSCOMMAND) {
+        // For WM_SYSCOMMAND, a return value of 0 indicates the message was
+        // processed.
+        if (done) return 0;
+        return 1;
     }
 
     return done;

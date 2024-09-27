@@ -42,15 +42,30 @@ public:
     void setToolbarVisible(Bool visible);
     void setStatusbarVisible(Bool visible);
 
+    void setMenuItemChecked(UINT menuItemId, Bool checked);
+    void setConnectMode(Bool on);
+
   private:
     Bool OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,
                          UINT codeHitTest);
+    void disableMenuItem(UINT menuItemId);
 
     Bool toolbar_disabled;
     KClient* client;
     Bool menuInitialized;
     int  firstShow;
     Bool noDialer;
+
+    Bool menuDisabled;
+    HMENU sysActions;
+
+    // Track menu state for items that aren't backed by some global variable.
+    // These all default to FALSE
+    Bool menuCapture, menuPrinterCopy, menuDebug, menuPcTerm, menuKeyClick,
+         menuTerminalScreen;
+    // These all default to TRUE
+    Bool menuGuiDialogs;
+
 };
 
 #endif
