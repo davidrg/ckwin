@@ -398,7 +398,12 @@ void Kui::setProperty( int propid, intptr_t param1, intptr_t param2 )
         break;
     case KUI_GUI_TOOLBAR_VIS:
         if ( terminal ) {
-            terminal->setToolbarVisible(param1);  // need to disable toolbar
+            terminal->setToolbarVisible(param1);  // need to hide toolbar
+        }
+        break;
+    case KUI_GUI_STATBAR_VIS:
+        if ( terminal ) {
+            terminal->setStatusbarVisible(param1);  // need to hide statusbar
         }
         break;
 

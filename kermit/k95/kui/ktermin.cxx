@@ -318,7 +318,7 @@ void KTerminal::disableToolbar( void )
 ------------------------------------------------------------------------*/
 void KTerminal::setToolbarVisible(Bool visible) {
 #ifndef NOTOOLBAR
-    if (toolbar) {
+    if ( toolbar ) {
         int tbwid = 0, tbhi = 0;
         toolbar->getSize(tbwid, tbhi);
 
@@ -340,6 +340,25 @@ void KTerminal::setToolbarVisible(Bool visible) {
 
     }
 #endif /* NOTOOLBAR */
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KTerminal::setStatusbarVisible(Bool visible) {
+    if ( status ) {
+        int sbwid = 0, sbhi = 0;
+        status->getSize(sbwid, sbhi);
+
+        int twid = 0, thi = 0;
+        getSize(twid, thi);
+
+        int newWindowHeight = visible ? thi + sbhi : thi - sbhi;
+
+        status->setVisible(visible);
+
+        size(twid, newWindowHeight);
+        client->setDimensions(TRUE);
+    }
 }
 
 /*------------------------------------------------------------------------

@@ -85,9 +85,9 @@ void KAppWin::size( int width, int height )
     if( inCreate() )
         return;
 
-    if ( toolbar && toolbar->isVisible())
+    if ( toolbar && toolbar->isVisible() )
         toolbar->size( width, height );
-    if ( status )
+    if ( status && status->isVisible() )
         status->size( width, height );
 
     if( client ) {
@@ -103,11 +103,11 @@ void KAppWin::size( int width, int height )
 void KAppWin::getClientCoord( int& x, int& y, int& w, int& h )
 {
     int tbh = 0, tbw = 0;
-    if ( toolbar && toolbar->isVisible())
+    if ( toolbar && toolbar->isVisible() )
         toolbar->getSize( tbw, tbh );
 
     int sth = 0, stw = 0;
-    if ( status )
+    if ( status && status->isVisible() )
         status->getSize( stw, sth );
 
     RECT rect;

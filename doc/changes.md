@@ -43,6 +43,7 @@ it carried from 1995 through to 2013.
   with K95.
 * SSH is now supported on 32bit ARM devices (Windows RT)
 * New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
+* New command to turn the statusbar on or off: `set gui statusbar { on, off }`
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources

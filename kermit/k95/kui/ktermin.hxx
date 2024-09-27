@@ -39,6 +39,7 @@ public:
     void disableToolbar( void );
     void disableClose( void );
     void setToolbarVisible(Bool visible);
+    void setStatusbarVisible(Bool visible);
 
   private:
     Bool OnNCLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y,

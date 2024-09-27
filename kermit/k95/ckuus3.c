@@ -9078,9 +9078,11 @@ static int setprinter( int );
 #define GUI_WIN  2
 #define GUI_FON  3
 #define GUI_DIA  4
-#define GUI_TLB  5
-#define GUI_MNB  6
-#define GUI_CLS  7
+#define GUI_STB  5
+#define GUI_TLB  6
+#define GUI_MNB  7
+#define GUI_CLS  8
+
 
 #define GUIB_OFF 0
 #define GUIB_ON  1
@@ -9103,6 +9105,7 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+    { "statusbar",   GUI_STB,  0 },
 #ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
 #endif
@@ -9385,6 +9388,17 @@ setguitoolbar()
             }
             break;
     }
+    return(0);
+}
+
+int
+setguistatusbar() {
+    int x, rc;
+
+    rc = seton(&x);
+    if (rc >= 0)
+      KuiSetProperty(KUI_GUI_STATBAR_VIS, (intptr_t)x, 0L);
+    return(rc);
 }
 
 VOID
@@ -9412,6 +9426,8 @@ setgui() {
         return(setguiwin());
       case GUI_TLB:
         return(setguitoolbar());
+      case GUI_STB:
+        return (setguistatusbar());
       case GUI_MNB:
         rc = seton(&x);
         if (rc >= 0)
