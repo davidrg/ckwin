@@ -14,6 +14,7 @@ KMenu::KMenu( int mid )
     : hMenu( 0 )
     , menuid( mid )
     , parent( 0 )
+    , visible( TRUE )
 {
 }
 
@@ -33,6 +34,17 @@ void KMenu::createMenu( HINSTANCE hinst, KWin* p )
     hMenu = LoadMenu( hinst, MAKEINTRESOURCE( menuid ) );
     SetMenu( parent->hwnd(), hMenu );
 }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KMenu::setVisible( Bool visible ) {
+    if (visible == this->visible) return;
+
+    SetMenu(parent->hwnd(), visible ? hMenu : NULL);
+
+    this->visible = visible;
+}
+
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/

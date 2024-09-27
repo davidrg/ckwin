@@ -38,6 +38,7 @@ public:
     void disableMenu( void );
     void disableToolbar( void );
     void disableClose( void );
+    void setMenubarVisible(Bool visible);
     void setToolbarVisible(Bool visible);
     void setStatusbarVisible(Bool visible);
 

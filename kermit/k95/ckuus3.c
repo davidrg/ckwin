@@ -9349,11 +9349,42 @@ setguidialog(x) int x;
     KuiSetProperty(KUI_GUI_DIALOGS, (intptr_t)x, 0L);
 }
 
-VOID
-setguimenubar(x) int x;
+int
+setguimenubar()
 {
-    KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the menubar */
+                KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the menubar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_MENUBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
 }
+
 
 int
 setguitoolbar()
@@ -9429,10 +9460,7 @@ setgui() {
       case GUI_STB:
         return (setguistatusbar());
       case GUI_MNB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguimenubar(x);
-        return(rc);
+        return (setguimenubar());
       case GUI_CLS:
         rc = seton(&x);
         if (rc >= 0)

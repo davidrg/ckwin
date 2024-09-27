@@ -316,6 +316,30 @@ void KTerminal::disableToolbar( void )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
+void KTerminal::setMenubarVisible(Bool visible) {
+    if ( menu ) {
+        // Get menubar height
+        int mbhi = kglob->sysMets->menuHeight();
+
+        // Get terminal window height
+        int twid = 0, thi = 0;
+        getSize(twid, thi);
+
+        // Figure out appropriate new size for the window without
+        // the menubar
+        int newWindowHeight = visible ? thi + mbhi : thi - mbhi;
+
+        // Get rid of the menubar
+        menu->setVisible(visible);
+
+        // Resize the window and the client
+        size(twid, newWindowHeight);
+        client->setDimensions(TRUE);
+    }
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
 void KTerminal::setToolbarVisible(Bool visible) {
 #ifndef NOTOOLBAR
     if ( toolbar ) {

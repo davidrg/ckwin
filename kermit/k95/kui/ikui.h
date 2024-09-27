@@ -37,6 +37,7 @@
 #define KUI_GUI_CLOSE       1020
 #define KUI_GUI_TOOLBAR_VIS 1021
 #define KUI_GUI_STATBAR_VIS 1022
+#define KUI_GUI_MENUBAR_VIS 1023
 
 
 struct _kui_init {

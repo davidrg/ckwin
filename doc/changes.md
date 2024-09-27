@@ -42,6 +42,7 @@ it carried from 1995 through to 2013.
   but note that the Console I/O Routines it provides are not currently compatible 
   with K95.
 * SSH is now supported on 32bit ARM devices (Windows RT)
+* New command to turn the menubar on or off: `set gui menubar visible { on, off }`
 * New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
 * New command to turn the statusbar on or off: `set gui statusbar { on, off }`
 
@@ -53,9 +54,15 @@ it carried from 1995 through to 2013.
 * The command `set gui toolbar off` has been renamed to
   `set gui toolbar disabled` to better describe what it actually does and to
   make room for new commands to turn it on and off. The previous syntax
-  (`set gui toolbar { off, on }`) is still accepted for  compatibility with 
+  (`set gui toolbar { off, on }`) is still accepted for compatibility with 
   existing scripts. `set gui toolbar on` still does nothing as it always has
   (disabling the toolbar is a session lockdown feature)
+* The command `set gui menubar off` has been renamed to
+  `set gui menubar disabled` to better describe what it actually does and to
+  make room for new commands to turn it on and off. The previous syntax
+  (`set gui menubar { off, on }`) is still accepted for compatibility with
+  existing scripts. `set gui menubar on` still does nothing as it always has
+  (disabling the menubar is a session lockdown feature)* 
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
