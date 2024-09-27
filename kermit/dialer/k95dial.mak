@@ -122,7 +122,7 @@ OS2_RC=rc
 # -O    ?           Optimize generated code
 # -Oi25 -Oe=<num>   Set the threshold for auto-inlining to <value> intermediate code instructions
 # -Gm   ? -bm       Link with multithread runtime libraries. Default: /Gm-
-#       -bt=os2v2     Compile for target OS
+#       -bt=os2     Compile for target OS
 #
 # Link Flags - ICC  wlink
 # /BASE:0x10000
@@ -130,7 +130,6 @@ OS2_RC=rc
 # /NOI
 # /NOE
 #                   -l=os2v2_pm Link for OS/2 v2 Presentation Manager
-#                   -x          Make name case-sensitive
 
 #
 # -c -xs
@@ -294,7 +293,7 @@ os2: k2dial.exe
 
 #$(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
 #        wrc -q -bt=os2 ckoker.res $@
-# LINKFLAGS="-l=os2v2 -x" \
+# LINKFLAGS="-l=os2v2" \
 
 # os2.def was previously included below but does not exist in the K95 2.1.3
 # build tree. I can only assume either this file was supplied by the IBM
