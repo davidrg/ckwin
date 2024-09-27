@@ -618,7 +618,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         break;
 
     case WM_INITMENU:
-        if (!menuInitialized) {
+        if (!menuInitialized && menu && menu->isVisible()) {
             initMenu();
             menuInitialized = TRUE;
         }
