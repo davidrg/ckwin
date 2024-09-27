@@ -250,7 +250,7 @@ const char* (*p_ssh_get_uid)();
 const char* (*p_ssh_get_pw)();
 int (*p_ssh_get_nodelay_enabled)();
 static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
-static int (*p_vscrnprintf)(char *, ...)=NULL;
+static int (*p_vscrnprintf)(const char *, ...)=NULL;
 static int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int) = NULL;
 static int (*p_uq_mtxt) (char *,char **,int,struct txtbox[]) = NULL;
 int (*p_uq_ok)(char *,char *,int,char **,int) = NULL;
