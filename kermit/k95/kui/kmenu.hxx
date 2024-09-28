@@ -31,11 +31,14 @@ public:
     void enable(UINT id, Bool on = TRUE);
     void remove(UINT id);
 
+    void setVisible(Bool visible);
+    BOOL isVisible() { return visible; }
+
 private:
     HMENU hMenu;
     int menuid;
     KWin* parent;
-
+    int visible;
 };
 
 #endif

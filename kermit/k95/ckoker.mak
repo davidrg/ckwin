@@ -637,14 +637,14 @@ wcos2:
         OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
-        CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+	      CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
         NOLINK="-c" \
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-q -l=os2v2" \
+        LINKFLAGS="-l=os2v2" \
         DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
@@ -657,14 +657,14 @@ wcos2d:
         OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
-        CFLAGS="-q -zp=1 -bm -bt=os2 -aa" \
+	      CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
         NOLINK="-c" \
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-q -l=os2v2" \
+        LINKFLAGS="-l=os2v2" \
         DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
@@ -681,7 +681,7 @@ wcos2d:
 #   -ox             Maximum optimisation
 #   -br             Build with dll runtime library - maybe equivalent to /Ge- on the
 #                   IBM compiler.
-#   -q              Operate quietly
+#   -zq             Operate quietly
 #   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
 #   -c              Compile only, don't link
 #   -l=os2v2        Link for 32bit OS/2

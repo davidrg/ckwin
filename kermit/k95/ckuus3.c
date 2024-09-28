@@ -9078,9 +9078,16 @@ static int setprinter( int );
 #define GUI_WIN  2
 #define GUI_FON  3
 #define GUI_DIA  4
-#define GUI_TLB  5
-#define GUI_MNB  6
-#define GUI_CLS  7
+#define GUI_STB  5
+#define GUI_TLB  6
+#define GUI_MNB  7
+#define GUI_CLS  8
+
+
+#define GUIB_OFF 0
+#define GUIB_ON  1
+#define GUIB_DIS 2
+#define GUIB_VIS 3
 
 #define GUIW_POS 1
 #define GUIW_RES 2
@@ -9098,6 +9105,7 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+    { "statusbar",   GUI_STB,  0 },
 #ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
 #endif
@@ -9105,6 +9113,15 @@ static struct keytab guitab[] = {
     { "", 0, 0}
 };
 static int nguitab = (sizeof(guitab) / sizeof(struct keytab));
+
+static struct keytab guibartab[] = {
+    { "disabled",    GUIB_DIS, 0 },
+    { "off",         GUIB_OFF, CM_INV},
+    { "on",          GUIB_ON,  CM_INV},
+    { "visible",     GUIB_VIS, 0 },
+    { "", 0, 0}
+};
+static int nguibartab = (sizeof(guibartab) / sizeof(struct keytab));
 
 static struct keytab guiwtab[] = {
     { "position",    GUIW_POS, 0 },
@@ -9332,16 +9349,87 @@ setguidialog(x) int x;
     KuiSetProperty(KUI_GUI_DIALOGS, (intptr_t)x, 0L);
 }
 
-VOID
-setguimenubar(x) int x;
+int
+setguimenubar()
 {
-    KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the menubar */
+                KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the menubar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_MENUBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
 }
 
-VOID
-setguitoolbar(x) int x;
+
+int
+setguitoolbar()
 {
-    KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the toolbar */
+                KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the toolbar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
+}
+
+int
+setguistatusbar() {
+    int x, rc;
+
+    rc = seton(&x);
+    if (rc >= 0)
+      KuiSetProperty(KUI_GUI_STATBAR_VIS, (intptr_t)x, 0L);
+    return(rc);
 }
 
 VOID
@@ -9368,15 +9456,11 @@ setgui() {
       case GUI_WIN:
         return(setguiwin());
       case GUI_TLB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguitoolbar(x);
-        return(rc);
+        return(setguitoolbar());
+      case GUI_STB:
+        return (setguistatusbar());
       case GUI_MNB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguimenubar(x);
-        return(rc);
+        return (setguimenubar());
       case GUI_CLS:
         rc = seton(&x);
         if (rc >= 0)

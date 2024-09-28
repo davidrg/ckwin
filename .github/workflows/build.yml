@@ -991,7 +991,6 @@ jobs:
       uses: open-watcom/setup-watcom@v0
       with:
         version: "1.9"
-        target: "nt"
       # Cache OpenWatcom because it takes quite a while to download and
       # decompress.
     - name: Cache openzinc
@@ -1114,7 +1113,6 @@ jobs:
         uses: open-watcom/setup-watcom@v0
         with:
           version: "1.9"
-          target: "nt"
       - name: Full Build
         run: |
           REM Build for Windows NT 3.50 (and, someday, NT 3.1)
@@ -1197,7 +1195,6 @@ jobs:
         uses: open-watcom/setup-watcom@v0
         with:
           version: "1.9"
-          target: "os2"
       - name: Cache openzinc
         uses: actions/cache@v4
         id: cache-openzinc

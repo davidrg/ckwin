@@ -203,7 +203,7 @@ typedef struct  {
     const char* (*p_ssh_get_pw)();
     int (*p_ssh_get_nodelay_enabled)();
     int (*p_dodebug)(int,char *,char *,CK_OFF_T);
-    int (*p_vscrnprintf)(char *, ...);
+    int (*p_vscrnprintf)(const char *, ...);
     int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int);
     int (*p_uq_mtxt) (char *,char **,int,struct txtbox[]);
     int (*p_uq_ok)(char *,char *,int,char **,int);
