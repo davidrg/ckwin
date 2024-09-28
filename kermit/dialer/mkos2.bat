@@ -21,7 +21,7 @@ set INCLUDE=%WATCOM%\H;%WATCOM%\H\OS2;%CKINCLUDE%;%ck_zinc_include%
 set OLDLIB=%LIB%
 set LIB=%WATCOM%\lib386\os2\;%WATCOM%\lib386;%ck_zinc_lib%
 
-nmake -f k95dial.mak PLATFORM=OS2 os2
+nmake /nologo -f k95dial.mak PLATFORM=OS2 os2
 
 REM Restore old include and lib paths.
 set INCLUDE=%OLDINCLUDE%
