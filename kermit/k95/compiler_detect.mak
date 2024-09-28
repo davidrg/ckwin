@@ -29,14 +29,14 @@ COMPILER = Visual C++
 # This is Watcom wmake pretending to be nmake. We'll assume the compiler is
 # really Watcom C pretending to be Visual C++ 2002.
 #
-# This check has to come first because OpenWatcom 1.9 just stops waiting for
+# This check has to come first because Open Watcom 1.9 just stops waiting for
 # input and never exits
 CMP = OWCL
-COMPILER = OpenWatcom C/C++ CL clone
+COMPILER = Open Watcom C/C++ CL clone
 MSC_VER = 130
 COMPILER_VERSION = Visual C++ 7.0 compatible
 
-!message *Assuming* OpenWatcom due to use of wmake
+!message *Assuming* Open Watcom due to use of wmake
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Digital Mars" > nul] == 0)
 
@@ -222,9 +222,9 @@ COMPILER_VERSION = Unknown
 TARGET_PLATFORM = Windows
 
 !IFDEF __VERSION__
-# OpenWatcom again. Assume x86.
+# Open Watcom again. Assume x86.
 
-!message Assuming x86 target for OpenWatcom
+!message Assuming x86 target for Open Watcom
 
 TARGET_CPU = x86
 

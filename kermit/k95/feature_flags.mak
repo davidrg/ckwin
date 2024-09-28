@@ -34,7 +34,7 @@
 #   CKF_REXX       no         REXX support
 #
 # The following flags are set automatically:
-#   CKF_SSH     Turned off when targeting OS/2 or when building with OpenWatcom
+#   CKF_SSH     Turned off when targeting OS/2 or when building with Open Watcom
 #   CKF_CONPTY  Turned on when building with MSC >= 192
 #   CKF_SSL     Turned off always (SSL support doesn't currently build)
 #   CKF_LOGIN   Turned off when building with Visual C++ 5.0 or older
@@ -63,7 +63,7 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 WIN32_VERSION=0x0400
 
 !if "$(CMP)" == "OWCL"
-# No built-in SSH support for OpenWatcom (yet), so if SSH support has been
+# No built-in SSH support for Open Watcom (yet), so if SSH support has been
 # requested, turn Dynamic SSH on.
 !if "$(CKF_SSH)" == "yes"
 CKF_DYNAMIC_SSH=yes
@@ -116,7 +116,7 @@ CKT_NT31=yes
 !endif
 
 !if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
-# OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
+# Open Watcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
 !endif
 
@@ -124,7 +124,7 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
 # minimum version is defined as whatever the compiler happens to support.
 # For Windows NT 3.1 and 3.50 the API differences are enough missing APIs
 # to require a special macro to exclude references to them. This allows
-# NT 3.50 and 3.1 to be targeted with both Visual C++ and OpenWatcom.
+# NT 3.50 and 3.1 to be targeted with both Visual C++ and Open Watcom.
 
 !if "$(CKT_NT35)" == "yes"
 # These features are available on NT 3.50 but not on NT 3.1
@@ -198,17 +198,17 @@ CKF_NETBIOS=yes
 CKF_MOUSEWHEEL=no
 
 !if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
-# But not when building with OpenWatcom. At the moment it causes Kermit/2 to
+# But not when building with Open Watcom. At the moment it causes Kermit/2 to
 # crash on startup at ckonbi.c:152
-!message Turning NetBIOS support off - OpenWatcom builds just crash with it enabled.
+!message Turning NetBIOS support off - Open Watcom builds just crash with it enabled.
 CKF_NETBIOS=no
 
-!message Turning X/Y/Z MODEM support off - build errors with OpenWatcom need fixing
+!message Turning X/Y/Z MODEM support off - build errors with Open Watcom need fixing
 CKF_XYZ=no
 
 !message Turning SRP off - no Watcom support for it yet.
 CKF_SRP=no
-# TODO: Figure out SRP support on OS/2 with OpenWatcom
+# TODO: Figure out SRP support on OS/2 with Open Watcom
 
 !message Turning Kerberos off - no Watcom support yet.
 CKF_K4W=no

@@ -141,7 +141,7 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define CKWIsWinVerOrGreater(ver) (FALSE)
 #endif /* _MSC_VER */
 #else /* __WATCOMC__ */
-/* OpenWatcom doesn't have versionhelpers.h */
+/* Open Watcom doesn't have versionhelpers.h */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
 #endif /* __WATCOMC__ */
 #endif /* NT */
@@ -271,7 +271,7 @@ int ck_security_loaddll();
 #endif /* CK_SECURITY */
 
 #ifdef __WATCOMC__
-/* The Watcom headers (in OpenWatcom 1.9 at least) don't seem to
+/* The Watcom headers (in Open Watcom 1.9 at least) don't seem to
  * have _tzset(), but they do have tzset()... */
 #define _tzset tzset
 #endif /* __WATCOMC__ */
@@ -9424,7 +9424,7 @@ conkbg(void) {
 
     *p = '\0';
 
-/* TODO: This doesn't build on openwatcom currently*/
+/* TODO: This doesn't build on Open Watcom currently*/
 #ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 

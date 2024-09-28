@@ -25,8 +25,8 @@ if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt
 @echo Copy resources...
 copy k2.ini dist-os2
 
-REM OS/2 builds with OpenWatcom don't appear to depend on any Watcom runtime
-REM libraries (ckoker32.exe runs fine on a Warp 3 VM thats never had OpenWatcom
+REM OS/2 builds with Open Watcom don't appear to depend on any Watcom runtime
+REM libraries (ckoker32.exe runs fine on a Warp 3 VM thats never had Open Watcom
 REM installed)
 
 REM @echo Copy enabled optional dependencies

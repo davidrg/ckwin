@@ -6,7 +6,7 @@
  
  /*
   * This version retrieved from http://sourceforge.net/apps/trac/mingw-w64/browser/trunk/mingw-w64-headers/include/tapi.h?rev=1262
-  * and modified for compatibility with OpenWatcom 1.9 (functions containing LPCWSTR commented out)
+  * and modified for compatibility with Open Watcom 1.9 (functions containing LPCWSTR commented out)
   */
  
 #ifndef TAPI_H

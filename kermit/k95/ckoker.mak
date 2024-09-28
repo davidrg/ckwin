@@ -43,7 +43,7 @@ LWP30DIR  = C:\LANWP\TOOLKIT
 LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib
 LWP30INC    = $(LWP30DIR)\inc20
 
-# Base flags for all versions of Visual C++ (and OpenWatcom
+# Base flags for all versions of Visual C++ (and Open Watcom
 # pretending to be Visual C++)
 #!if "$(DEBUG)" == "-DNDEBUG"
 # Doing a release build
@@ -74,10 +74,10 @@ COMMON_OPTS = /Ox
 !endif
 
 # These are:
-# /GA     Optimise for Windows Application (ignored by OpenWatcom)
+# /GA     Optimise for Windows Application (ignored by Open Watcom)
 # /Ox     Maximum Opts (= /Ogityb2 /Gs in VC6/7.0)
 
-# If Visual C++ <= 2003 or OpenWatcom:
+# If Visual C++ <= 2003 or Open Watcom:
 #   /G5     Optimise for Pentium
 
 # These may be good to add at some point
@@ -125,12 +125,12 @@ CFLAG_GF=/GF
 !include compiler_detect.mak
 !message
 !else
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# On OS/2 we'll just assume Open Watcom for now. I don't have access to the
 # IBM compiler to find a way to tell it apart from watcom like we do for
 # Visual C++.
 CMP = OWCL386
-COMPILER = OpenWatcom WCL386
-COMPILER_VERSION = OpenWatcom
+COMPILER = Open Watcom WCL386
+COMPILER_VERSION = Open Watcom
 
 # wcl386 doesn't pretend to be Visual C++ and doesn't take the same
 # command line arguments.
@@ -184,7 +184,7 @@ CKB_STATIC_CRT = yes
 !if "$(PLATFORM)" == "NT"
 !if "$(CMP)" == "OWCL"
 
-# Standard windows headers from MinGW that don't come with OpenWatcom:
+# Standard windows headers from MinGW that don't come with Open Watcom:
 INCLUDE = $(INCLUDE);ow\;
 
 !endif   # EndIf CMP == OWCL
@@ -788,7 +788,7 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
 !if "$(CMP)" == "OWCL386"
           -D__32BIT__
 !endif
-# OpenWatcom doesn't define __32BIT__ by default which upsets a lot of OS/2
+# Open Watcom doesn't define __32BIT__ by default which upsets a lot of OS/2
 # code. Maybe there is some compiler flag thats missing though it seems to be
 # producing 32bit OS/2 binaries fine as-is.
 
@@ -845,7 +845,7 @@ COMMODE_OBJ = commode.obj
 !if "$(PLATFORM)" == "OS2"
 LIBS = os2386.lib rexx.lib
 
-# OpenWatcom doesn't have bigmath.lib
+# Open Watcom doesn't have bigmath.lib
 #  -> this likely comes from the SRP distribution (srp\srp-1.4\cryptolib_1.1\VISUALC\BIGMATH)
 !if "$(CMP)" != "OWCL"
 LIBS = $(LIBS) bigmath.lib

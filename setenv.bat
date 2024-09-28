@@ -11,7 +11,7 @@ REM turned on automatically when the required dependencies are built.
 REM debug logging ("log debug" command)
 REM set CKF_DEBUG=no
 
-REM Target NT 3.50 when building with OpenWatcom (this is automatic when building
+REM Target NT 3.50 when building with Open Watcom (this is automatic when building
 REM with Visual C++ 2.0)
 REM set CKT_NT31=yes
 
@@ -257,7 +257,7 @@ if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
 if not "%rexx_root_override%"=="" set rexx_root=%rexx_root_override%
 if not "%make_override%"=="" set make=%make_override%
 
-REM The OpenWatcom 1.9 linker can't handle %LIB% starting with a semicolon which
+REM The Open Watcom 1.9 linker can't handle %LIB% starting with a semicolon which
 REM is what we get when we do "set LIB=%LIB%;C:\somewhere" when LIB starts out
 REM empty. So we need to make sure there is always at least *something* in the
 REM lib path before we go appending things to it. That something doesn't
@@ -536,7 +536,7 @@ set CKB_9X_COMPATIBLE=no
 set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 
-REM We can't look at OpenWatcoms help output for a version number because it
+REM We can't look at Open Watcoms help output for a version number because it
 REM waits for input ("Press any key to continue:"), so we'll just detect it by
 REM the presence of its environment variables.
 if exist %WATCOM%\binnt\wcl386.exe goto :watcomc
@@ -590,8 +590,8 @@ if %errorlevel% == 0 goto :vc116
 goto :unsupported
 
 :watcomc
-REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
-set CK_COMPILER_NAME=OpenWatcom
+REM TODO - ideally we should try and detect the version of Open Watcom - at least 1.9 vs 2.0
+set CK_COMPILER_NAME=Open Watcom
 set ZINCBUILD=ow19
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
@@ -601,10 +601,10 @@ set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 
-REM For openwatcom we have to use its nmake clone
+REM For Open Watcom we have to use its nmake clone
 set MAKE=nmake
 
-REM OpenWatcom doesn't include TAPI headers to we bundle them with K95. Add them to the include
+REM Open Watcom doesn't include TAPI headers to we bundle them with K95. Add them to the include
 REM path so the dialer can find them.
 set include=%include%;%root%\kermit\k95\ow
 goto :cvcdone
