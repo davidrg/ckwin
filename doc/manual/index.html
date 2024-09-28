@@ -1418,8 +1418,12 @@ we'll discuss the Dialer <a href="#whatsin">below</a>.  The K95G menu is clean
 and simple: File, Edit, Actions, Help.  There are no keyboard shortcuts for
 K95G's menu items, since every key and key combination already has
 application-specific uses.
+The menubar at the top of the K95G window is also optional - if you'd like a
+little screen real estate back, you can turn it off with the
+<tt>SET GUI MENUBAR VISIBLE OFF</tt> command and use the
+<a href="#menuWindow">Window Menu</a> instead.
 
-<h3>The File Menu</h3>
+<h4>The File Menu</h4>
 
 <dl><dt><i>Connections</i></dt>
 <dd>Invokes the Kermit 95 Dialer so you can make a connection, or use it in
@@ -1432,7 +1436,7 @@ any other desired way.
 <dd>Exits from K95G.
 </dl>
 
-<h3>The Edit Menu</h3>
+<h4>The Edit Menu</h4>
 
 <dl>
 
@@ -1452,7 +1456,7 @@ href="scroll.html">HERE</a>.
 
 </dl>
 
-<h3>The Actions Menu</a></h3>
+<h4 id="menuActions">The Actions Menu</h4>
 
 The following actions take place when you choose them in the Actions menu:
 
@@ -1574,6 +1578,53 @@ Ctrl always changes font size).
 
 </dl>
 
+<h4 id="menuWindow">The Window Menu</h4>
+<p>This is a special menu accessible by clicking on the window icon
+(Windows 95/NT 4.0+) or control box (Windows NT 3.x) in the top-left
+corner of the K95G window, or by right-clicking anywhere on the title bar.
+When the menubar has been hidden with <tt>SET GUI MENUBAR VISIBLE OFF</tt>,
+a number of important K95G menu items appear in the Window Menu alongside
+the usual items Windows places there such as Maximize and Close</p>
+
+<dl>
+
+<dt><i>Connections</i></dt>
+<dd>Invokes the Kermit 95 Dialer so you can make a connection, or use it in
+    any other desired way.
+<p>
+
+<dt><i>Terminal Screen</i></dt>
+<dd>Switches between the Terminal Screen and the Command Screen
+<p>
+
+<dt><i>Hangup</i></dt>
+<dd>Closes the current connection.
+<p>
+
+<dt><i>Paste</i></dt>
+
+<dd>Copies the text (if any) from the clipboard into the current window
+(Command or Terminal).
+
+<p>
+
+<dt><i>Mark Mode</i></dt>
+
+<dd>Lets you use your keyboard to mark text for copying to the clipboard or
+transmission to the host.  The particular action is controlled by the submenu:
+Start, Cancel, Copy to Clipboard, Copy to Host.  More about mark mode <a
+        href="scroll.html">HERE</a>.
+
+<p>
+
+<dt><i>Actions</i></dt>
+
+<dd>The contents of this menu is the same as what normally appears in
+    <a href="#menuActions">The Actions Menu</a>
+
+
+</dl>
+
 <h3 id="k95gtool">The K95G Toolbar</h3>
 
 <img src="guitools.gif">
@@ -1670,6 +1721,10 @@ probably needs changing.
 
 </ul>
 
+<p>If you find yourself rarely using the toolbar, you can hide it with the
+    command <tt>SET GUI TOOLBAR VISIBLE OFF</tt> to get some screen space back.
+    </p>
+
 <h3 id="k95gstatus">The K95G Status Bar</h3>
 
 <img src="guistat.gif">
@@ -1691,6 +1746,10 @@ of authentication and encryption methods used, if any.
 <li>Pull corner for changing screen dimension or font size.
 </ol>
 <p>
+
+<p>If desired, it can be hidden with the command
+    <tt>SET GUI STATUSBAR OFF</tt>.
+</p>
 
 <h3 id="whatsin">The Dialer</h3>
 
