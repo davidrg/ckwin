@@ -8,28 +8,8 @@
 #    set LIB=.;C:\ZINC\LIB\MVCPP400;C:\MSVC\LIB
 
 # TODO: We should only do this on Windows.
-!if "$(PLATFORM)" == "NT"
 !message Attempting to detect compiler...
 !include ..\k95\compiler_detect.mak
-!else
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
-# IBM compiler to find a way to tell it apart from watcom like we do for
-# Visual C++.
-CMP = OWCL386
-COMPILER = OpenWatcom WCL386
-COMPILER_VERSION = OpenWatcom
-
-# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
-# command line arguments.
-MSC_VER = 0
-
-# Nothing supports PowerPC OS/2.
-TARGET_CPU = x86
-TARGET_PLATFORM = OS/2
-
-# Override CL so we don't end up running the Visual C++ clone cl.
-CL = wcl386
-!endif
 
 !message
 !message
