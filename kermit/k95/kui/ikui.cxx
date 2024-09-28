@@ -157,15 +157,9 @@ void KuiSetTerminalStatusText(int item, char * buf)
 
 void KuiSetTerminalConnectButton(int on) 
 {
-#ifndef NOTOOLBAR
     if (kui) {
-        KToolBar * toolbar = kui->getTerminal()->getToolbar();
-        if ( toolbar )
-            SendMessage(toolbar->hwnd(),
-                     TB_CHECKBUTTON, ID_ACTION_EXIT, 
-                     MAKELONG(on,0));
+        kui->getTerminal()->setConnectMode(on);
     }
-#endif
 }
 
 void 
