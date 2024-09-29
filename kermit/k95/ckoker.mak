@@ -636,7 +636,7 @@ wcos2:
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
-        DLL="-br" \
+        DLL="" \
         LINKFLAGS="-l=os2v2 -k512K" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
@@ -648,6 +648,7 @@ wcos2:
         LINKFLAGS="-l=os2v2" \
 	    DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
+#       LINKFLAGS also not used when building DLLs as these need -l=os2v2_dll
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
@@ -657,7 +658,7 @@ wcos2d:
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
-        DLL="-br" \
+        DLL="" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
@@ -665,7 +666,6 @@ wcos2d:
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-l=os2v2" \
         LINKFLAGS="-l=os2v2 -k512K" \
 	    DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
@@ -1205,10 +1205,12 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
         ILIB /NOBR /OUT:cko32rt.lib $(VISUALAGE)\LIB\CPPRNO36.LIB
 
 # cko32i20.def
+# TODO: -bd really should live in $(DLL), but that currently causes link
+#       errors as some modules (probably one or more of ck_des.obj,
 cko32i20.dll: ckoi20.obj ckoker.mak
 !if "$(CMP)" == "OWCL386"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 $(LINKFLAGS) tcpip32.lib $(LIBS)
+	 -bd -l=os2v2_dll tcpip32.lib $(LIBS)
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
