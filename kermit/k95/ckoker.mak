@@ -637,6 +637,7 @@ wcos2:
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
         DLL="-br" \
+        LINKFLAGS="-l=os2v2 -k512K" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
@@ -665,6 +666,7 @@ wcos2d:
         WARP="YES" \
 !endif
         LINKFLAGS="-l=os2v2" \
+        LINKFLAGS="-l=os2v2 -k512K" \
 	    DEF=""  # ckoker32.def
 # Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
