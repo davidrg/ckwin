@@ -119,32 +119,11 @@ CFLAG_GF=/GF
 
 # On windows we'll try to detect the Visual C++ version being used and adjust
 # compiler flags accordingly.
-!if "$(PLATFORM)" == "NT"
 !message Attempting to detect compiler...
-
 !include compiler_detect.mak
-!message
-!else
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
-# IBM compiler to find a way to tell it apart from watcom like we do for
-# Visual C++.
-CMP = OWCL386
-COMPILER = OpenWatcom WCL386
-COMPILER_VERSION = OpenWatcom
-
-# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
-# command line arguments.
-MSC_VER = 0
-
-# Nothing supports PowerPC OS/2.
-TARGET_CPU = x86
-TARGET_PLATFORM = OS/2
-
-# Override CL so we don't end up running the Visual C++ clone cl.
-CL = wcl386
-!endif
 
 !if "$(MIPS_CENTAUR)" == "yes"
+!message
 !message MIPS Centaur compiler - forcing build with statically linked CRT.
 # /QmipsOb5000 increases the basic block threshold for optimisation
 COMMON_CFLAGS = /D_MT /QmipsOb5000
