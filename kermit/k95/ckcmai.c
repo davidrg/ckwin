@@ -614,9 +614,10 @@ ACKNOWLEDGMENTS:
 #undef COMMENT
 #endif /* OS2ONLY */
 
+#include <process.h>                    /* for getpid() */
+
 #ifdef NT
 #include <windows.h>
-#include <process.h>                    /* for getpid() */
 #ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
