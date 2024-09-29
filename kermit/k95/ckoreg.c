@@ -773,16 +773,7 @@ Real_Win32ShellExecute( void* param )
 int
 Win32ShellExecute( char * object )
 {
-    int rc = 0;
-    DWORD tid = _beginthread( Real_Win32ShellExecute,
-#ifndef NT
-                            0,
-#endif /* NT */
-                            65535,
-                            (void *)object
-                            ) ;
-    rc = (DWORD)tid != 0xffffffff;
-    return (rc);
+    return (_beginthread(Real_Win32ShellExecute, 65535, (void *)object) != -1);
 }
 #endif /* NT */
 #endif /* BROWSER */
