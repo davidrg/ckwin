@@ -2902,6 +2902,7 @@ _PROTOTYP( int setnum, (int *, int, int, int) );
 _PROTOTYP( int seton, (int *) );
 _PROTOTYP( int setonaut, (int *) );
 _PROTOTYP( VOID shmdmlin, (void) );
+_PROTOTYP( VOID slrestor, (void) );
 _PROTOTYP( VOID initmdm, (int) );
 _PROTOTYP( char * showoff, (int) );
 _PROTOTYP( char * showooa, (int) );

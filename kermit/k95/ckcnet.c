@@ -5179,7 +5179,6 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 /*  N E T C L O S  --  Close current network connection.  */
 
 #ifndef NOLOCAL
-_PROTOTYP(VOID slrestor,(VOID));
 #ifdef CK_SSL
 int tls_norestore = 0;
 #endif /* CK_SSL */
