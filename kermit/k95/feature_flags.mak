@@ -198,11 +198,6 @@ CKF_NETBIOS=yes
 CKF_MOUSEWHEEL=no
 
 !if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
-# But not when building with Open Watcom. At the moment it causes Kermit/2 to
-# crash on startup at ckonbi.c:152
-!message Turning NetBIOS support off - Open Watcom builds just crash with it enabled.
-CKF_NETBIOS=no
-
 !message Turning X/Y/Z MODEM support off - build errors with Open Watcom need fixing
 CKF_XYZ=no
 
