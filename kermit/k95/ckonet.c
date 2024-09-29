@@ -779,7 +779,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
         DosResetEventSem( hevNetBiosLSN, &PostCount ) ;
 
-        if ( !strcmp( "*               ", RemoteName ) ) { /* Server Mode */
+        if ( !strcmp( "*", RemoteName ) ) { /* Server Mode */
             if ( pListenNCB->basic_ncb.bncb.ncb_retcode == NB_COMMAND_IN_PROCESS)
               return 0 ;
 
