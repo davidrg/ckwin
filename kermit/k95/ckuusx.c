@@ -89,9 +89,7 @@ char * tgoto (const char *, int, int);
 
 #ifdef OS2
 #include <string.h>
-#if NT
 #include <process.h>  /* for getpid() */
-#endif /* NT */
 _PROTOTYP(char * os2_gethostname, (void));
 #ifndef __WATCOMC__
 #define getpid _getpid
