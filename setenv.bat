@@ -68,6 +68,11 @@ REM     \lib\rexx.lib or ( \lib\regina.lib and \regina.dll )
 REM     \include\rexxsaa.h
 set rexx_root=%root%\rexx\regina396w32
 
+REM IBM TCP/IP 4.0 SDK
+REM     \ibmtcp\lib\tcp32dll.lib
+REM     \ibmtcp\include\types.h
+set ibm20dir=%root%\ibmtcp
+
 REM Make program must be something sufficiently compatible with nmake 1.40 (Visual C++ 1.1). Jom is recommended
 REM for doing parallel builds.
 set make=nmake
@@ -255,6 +260,7 @@ if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
 if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
 if not "%rexx_root_override%"=="" set rexx_root=%rexx_root_override%
+if not "%ibm20dir_override%"=="" set ibm20dir=%ibm20dir_override%
 if not "%make_override%"=="" set make=%make_override%
 
 REM The Open Watcom 1.9 linker can't handle %LIB% starting with a semicolon which
@@ -518,6 +524,12 @@ if "%CKB_REXX_STATIC%" == "yes" echo Found REXX (Static)
 
 :norex
 
+REM IBM TCP/IP 2.0-4.0 SDK for OS/2
+echo Searching for IBM TCP/IP...
+set CKB_IBMTCP20=no
+if exist %ibm20dir%\lib\tcp32dll.lib set CKB_IBMTCP20=yes
+if exist %ibm20dir%\lib\tcp32dll.lib echo found %ibm20dir%\lib\tcp32dll.lib
+
 REM --------------------------------------------------------------
 REM Detect compiler so the OpenZinc build environment can be setup 
 REM --------------------------------------------------------------
@@ -535,6 +547,7 @@ set BUILD_ZINC=no
 set CKB_9X_COMPATIBLE=no
 set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
+set CKB_OS2_COMPATIBLE=no
 
 REM We can't look at Open Watcoms help output for a version number because it
 REM waits for input ("Press any key to continue:"), so we'll just detect it by
@@ -600,6 +613,7 @@ set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_OS2_COMPATIBLE=yes
 
 REM For Open Watcom we have to use its nmake clone
 set MAKE=nmake

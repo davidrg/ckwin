@@ -3947,6 +3947,8 @@ os2_tcpipinit() {
     if ( CKTCPIPDLL ) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, CKTCPIPDLL, _MAX_PATH );
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if (!rc) {
             if (deblog)
@@ -3956,6 +3958,7 @@ os2_tcpipinit() {
         } else {
             debug(F110,"CKTCPIPDLL",CKTCPIPDLL,0);
             debug(F111,"CKTCPIPDLL DosLoadModule failed",fail,rc);
+            debug(F110, "Object contributing to load failure", fail, 0);
         }
     } else
         debug(F100,"CKTCPIPDLL not defined","",0);
@@ -3964,13 +3967,35 @@ os2_tcpipinit() {
 /*
   Attempt to load in the following order:
   1. CKTCPIPDLL environment variable
-  2. IBM 2.0
-  3. FTP 1.3
-  4. IBM 1.2
+  2. IBM 4.1+ (the new 32bit TCP/IP stack in Warp Server for eBusiness)
+  3. IBM 2.0-4.0
+  4. FTP 1.3
+  5. IBM 1.2
 */
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
+        ckstrncat(dll, "CKO32I41.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
+        rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
+        if ( rc ) {
+            ckstrncpy(dll,"CKO32I41", _MAX_PATH);
+            rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
+        }
+        if (!rc) {
+            if (deblog) printf( "32bit IBM TCP/IP 4.1 or higher loaded...") ;
+            sprintf(tcpname,"%s = 32-bit IBM TCP/IP 4.1 or higher", dll);
+            debug(F111,"32bit IBM TCP/IP 4.1 or higher loaded",dll,rc);
+        } else {
+          debug(F111,"32bit IBM TCP/IP 4.1 or higher load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
+    }
+    if (rc != 0) {
+        ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32I20.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll,"CKO32I20", _MAX_PATH);
@@ -3980,12 +4005,16 @@ os2_tcpipinit() {
             if (deblog) printf( "32bit IBM TCP/IP 2.0 or higher loaded...") ;
             sprintf(tcpname,"%s = 32-bit IBM TCP/IP 2.0 or higher", dll);
             debug(F111,"32bit IBM TCP/IP 2.0 or higher loaded",dll,rc);
-        } else
+        } else {
           debug(F111,"32bit IBM TCP/IP 2.0 or higher load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32F13.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll, "CKO32F13", _MAX_PATH);
@@ -3995,12 +4024,16 @@ os2_tcpipinit() {
             if (deblog) printf( "32bit FTP PC/TCP 1.3 loaded...") ;
             sprintf(tcpname,"%s = 32-bit FTP PC/TCP 1.3", dll);
             debug(F111,"32bit FTP PC/TCP 1.3 loaded",dll,rc);
-        } else
+        } else {
           debug(F111,"32bit FTP PC/TCP 1.3 load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32I12.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll, "CKO32I12", _MAX_PATH);
@@ -4018,9 +4051,11 @@ os2_tcpipinit() {
                 printf( "32bit IBM TCP/IP 1.2 (or compatible) loaded...") ;
             sprintf(tcpname,"%s = 32-bit IBM TCP/IP 1.2 (or compatible)", dll);
             debug(F111,"32bit IBM TCP/IP 1.2 (or compatible) loaded",dll,rc);
-        } else
+        } else {
             debug(F111,
                    "32bit IBM TCP/IP 1.2 (or compatible) load failed",dll,rc);
+            debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
 #else
 /*

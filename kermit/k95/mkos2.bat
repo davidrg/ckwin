@@ -13,7 +13,9 @@ REM values suitable for cross-compiling OS/2 applications and restore them
 REM at the end
 
 set OLDINCLUDE=%INCLUDE%
-set INCLUDE=%WATCOM%\H;%WATCOM%\H\OS2;%CKINCLUDE%
+set INCLUDE=%CKINCLUDE%;%WATCOM%\H;%WATCOM%\H\OS2;
+
+echo %INCLUDE%
 
 set OLDLIB=%LIB%
 set LIB=%WATCOM%\lib386\os2\;%WATCOM%\lib386

@@ -23,12 +23,18 @@ K95BUILD = K95
 VISUALAGE = C:\IBMCXX0
 
 # for IBM TCP/IP 1.2.1
+# While tcpipdll.lib is on the Warp 4 CD-ROM, the headers are not. You likely
+# need the IBM TCP/IP 1.2.1 Programmers Tool Kit and probably some updates like
+# PROGCSD.EXE to build cko32i12.dll
 IBM12DIR  = C:\TCPIP
 IBM12LIBS = $(IBM12DIR)\lib\tcpipdll.lib
 IBM12INC  = $(IBM12DIR)\include
 
 # for IBM TCP/IP 2.0
-IBM20DIR  = C:\TCPIP
+# This should be the IBM TCP/IP 2.0 Programmers Tool Kit, but the SDK on the
+# Warp 4 CD-ROM seems to work too. Set IBM20DIR in setenv.cmd (OS/2), or follow
+# the instructions in \ibmtcp\README.md (Windows).
+#IBM20DIR  = C:\TCPIP
 IBM20LIBS = $(IBM20DIR)\lib\tcp32dll.lib $(IBM20DIR)\lib\so32dll.lib
 IBM20INC  = $(IBM20DIR)\include
 
@@ -42,6 +48,17 @@ FTP13INC  = $(FTP13DIR)\include
 LWP30DIR  = C:\LANWP\TOOLKIT
 LWP30LIBS32 = $(LWP30DIR)\os2lib20\socklib.lib
 LWP30INC    = $(LWP30DIR)\inc20
+
+# Manually Specify TCP/IP support DLLs to build
+#OS2TCPDLLS = cko32i41.dll cko32i20.dll
+# Options are:
+#   cko32i41.dll    - for IBM TCP/IP 4.1+ (MPTS 5.3+), the "new" 32-bit TCP/IP stack
+#   cko32i20.dll    - for IBM TCP/IP 2.0-4.0
+#   cko32i12.dll    - for IBM TCP/IP 1.2.1
+#   cko32f13.dll    - for FTP PC/TCP 1.3
+#   cko32n30.dll    - for Novell LAN Workplace 3.0 (cko32n30.dll was never released)
+# If not specified, any DLLs you can build will be configured automatically
+# based on compiler and available SDKs
 
 # Base flags for all versions of Visual C++ (and Open Watcom
 # pretending to be Visual C++)
@@ -149,6 +166,21 @@ CL = wcl386
 # /QmipsOb5000 increases the basic block threshold for optimisation
 COMMON_CFLAGS = /D_MT /QmipsOb5000
 CKB_STATIC_CRT = yes
+!endif
+
+# Figure out which OS/2 TCP/IP Support DLLs to build
+!if "$(OS2TCPDLLS)" == ""
+
+# Open Watcom can always build cko32i41.dll
+!if "$(CMP)" == "OWCL386"
+OS2TCPDLLS=$(OS2TCPDLLS) cko32i41.dll
+!endif
+
+# If setenv found the IBM TCP/IP 2.0-4.0 SDK, then build that too
+!if "$(CKB_IBMTCP20)" == "yes"
+OS2TCPDLLS=$(OS2TCPDLLS) cko32i20.dll
+!endif
+
 !endif
 
 # This turns features on and off based on set feature flags (CKF_*), the
@@ -1001,6 +1033,7 @@ OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
 
 # Internal cryptography (instead of k95crypt.dll)
 !if "$(CKF_INTERNAL_CRYPT)" == "yes"
+# TODO: If being built for internal, don't build ck_crp and ck_des with $(DLL)
 OBJS = $(OBJS) ck_crp.obj ckclib.obj ck_des.obj
 LIBS = $(LIBS) libdes.lib
 KUILIBS = $(KUILIBS) libdes.lib
@@ -1088,9 +1121,12 @@ textps: textps.exe
 # FTP Software PC/TCP 1.3 - cko32i13.dll 
 # Novell LWP OS/2 3.0     - cko32n30.dll 
 
-tcp32: cko32i20.dll
-# cko32i12.dll cko32f13.dll
-# cko32n30.dll
+tcp32: $(OS2TCPDLLS)
+# cko32i41.dll    - for IBM TCP/IP 4.1+ (MPTS 5.3+), the "new" 32-bit TCP/IP stack
+# cko32i20.dll    - for IBM TCP/IP 2.0-4.0
+# cko32i12.dll    - for IBM TCP/IP 1.2.1
+# cko32f13.dll    - for FTP PC/TCP 1.3
+# cko32n30.dll    - for Novell LAN Workplace 3.0 (cko32n30.dll was never released)
 
 cknker.exe: $(OBJS) cknker.res $(DEF) ckoker.mak 
 #        $(CC) $(CC2) /link "$(LINKFLAGS)" $(DEBUG) $(OBJS) $(DEF) $(OUT) $@ $(LIBS) $(LDFLAGS)
@@ -1207,20 +1243,45 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
 # cko32i20.def
 # TODO: -bd really should live in $(DLL), but that currently causes link
 #       errors as some modules (probably one or more of ck_des.obj,
+#       ck_crp.obj, ckosftp.obj) are ending up in ckoker32.exe
+# TODO: What libs are required for the IBM compiler when targeting TCP-32?
+cko32i41.dll: ckoi41.obj ckoker.mak
+!if "$(CMP)" == "OWCL386"
+    $(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj $(OUT)$@ \
+	 -bd -l=os2v2_dll tcpip32.lib $(LIBS)
+!else
+	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj cko32i41.def $(OUT) $@ \
+	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
+        dllrname $@ CPPRMI36=CKO32RTL
+!endif
+
+# cko32i20.def
+# TODO: -bd really should live in $(DLL), but that currently causes link
+#       errors as some modules (probably one or more of ck_des.obj,
+#       ck_crp.obj, ckosftp.obj) are ending up in ckoker32.exe
+# TODO: WATCOM: I'm really not sure about the "ALIAS __res=_res" bit. It makes
+#       it link and it seems to work on Warp 4 at least, but surely having to
+#       do this is a sign there is some other issue elsewhere.
 cko32i20.dll: ckoi20.obj ckoker.mak
 !if "$(CMP)" == "OWCL386"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 -bd -l=os2v2_dll tcpip32.lib $(LIBS)
+	 -bd -l=os2v2_dll $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res"
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
         dllrname $@ CPPRMI36=CKO32RTL
 !endif
 
-cko32i12.dll: ckoi12.obj cko32i12.def ckoker.mak
+# cko32i12.def
+cko32i12.dll: ckoi12.obj  ckoker.mak
+!if "$(CMP)" == "OWCL386"
+    $(CC) $(CC2) $(DEBUG) $(DLL) ckoi12.obj $(OUT)$@ \
+	 -bd -l=os2v2_dll $(IBM12LIBS) $(LIBS)
+!else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi12.obj cko32i12.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM12LIBS) $(LIBS)
         dllrname $@ CPPRMI36=CKO32RTL       
+!endif
 
 cko32f13.dll: ckof13.obj cko32f13.def ckoker.mak
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckof13.obj cko32f13.def $(OUT) $@ \
@@ -1584,23 +1645,49 @@ ckof13.obj: ckoftp.c ckotcp.h
            $(DEBUG) $(OPT) $(DEFINES) $(DLL) -c ckoftp.c
         ren ckoftp.obj ckof13.obj
 
-ckoi20.obj: ckoibm.c ckotcp.h
-        @echo > ckoi20.obj
-        del ckoi20.obj
+# TODO: What headers and libs are needed for the IBM compiler when
+#       targeting TCP-32?
+ckoi41.obj: ckoibm.c ckotcp.h
+        @echo > ckoi41.obj
+        del ckoi41.obj
 !if "$(CMP)" == "OWCL386"
-	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -D__SOCKET_32H $(DLL) -c ckoibm.c
+        @echo > wcc386.pch
+        del wcc386.pch
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) \
+	    -D__SOCKET_32H $(DLL) -bd -c ckoibm.c
 	# Watcom lacks the headers to support -DSOCKS_ENABLED
 !else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
            $(DEBUG) $(OPT) $(DEFINES) -DSOCKS_ENABLED $(DLL) -c ckoibm.c
+!endif
+        ren ckoibm.obj ckoi41.obj
+
+ckoi20.obj: ckoibm.c ckotcp.h
+        @echo > ckoi20.obj
+        del ckoi20.obj
+!if "$(CMP)" == "OWCL386"
+        @echo > wcc386.pch
+        del wcc386.pch
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -DTCPV40HDRS \
+	     -D_ERRNO_H_INCLUDED -DSOCKS_ENABLED $(DLL) -I$(IBM20INC) -bd -c ckoibm.c
+!else
+	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
+           $(DEBUG) $(OPT) $(DEFINES) -DSOCKS_ENABLED -DTCPV40HDRS $(DLL) -c ckoibm.c
 !endif
         ren ckoibm.obj ckoi20.obj
 
 ckoi12.obj: ckoibm.c ckotcp.h
         @echo > ckoi12.obj
         del ckoi12.obj
+!if "$(CMP)" == "OWCL386"
+        @echo > wcc386.pch
+        del wcc386.pch
+	$(CC) $(CC2) $(CFLAGS) -I$(IBM12INC) -D_ERRNO_H_INCLUDED \
+           $(DEBUG) $(OPT) $(DEFINES) $(DLL) -bd -c ckoibm.c
+!else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM12INC) \
            $(DEBUG) $(OPT) $(DEFINES) $(DLL) -c ckoibm.c
+!endif
         ren ckoibm.obj ckoi12.obj
 
 ckon30.obj: ckonov.c ckotcp.h
