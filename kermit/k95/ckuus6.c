@@ -9690,16 +9690,20 @@ static char * pcvtbufin = NULL;
 static char * pcvtbufout = NULL;
 
 static int				/* Input function xgnbyte() */
-cvtfnin() {
+#ifdef CK_ANSIC
+cvtfnin(void)
+#else
+cvtfnin()
+#endif	/* CK_ANSIC */
+{
     CHAR c;
     c = *pcvtbufin++;
     return(c ? c : -1);
 }
 
-_PROTOTYP(int cvtfnout,(char));		/* Output function for xpnbyte() */
-int
+static int
 #ifdef CK_ANSIC
-cvtfnout(char c)
+cvtfnout(char c)			/* Output function for xpnbyte() */
 #else
 cvtfnout(c) char c;
 #endif	/* CK_ANSIC */
