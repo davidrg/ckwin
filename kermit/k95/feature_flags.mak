@@ -197,7 +197,7 @@ CKF_NETBIOS=yes
 # And does not get mouse wheel support (not implemented)
 CKF_MOUSEWHEEL=no
 
-!if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
+!if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWWCL")
 !message Turning X/Y/Z MODEM support off - build errors with Open Watcom need fixing
 CKF_XYZ=no
 

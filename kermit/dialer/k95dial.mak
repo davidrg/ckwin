@@ -8,28 +8,8 @@
 #    set LIB=.;C:\ZINC\LIB\MVCPP400;C:\MSVC\LIB
 
 # TODO: We should only do this on Windows.
-!if "$(PLATFORM)" == "NT"
 !message Attempting to detect compiler...
 !include ..\k95\compiler_detect.mak
-!else
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
-# IBM compiler to find a way to tell it apart from watcom like we do for
-# Visual C++.
-CMP = OWCL386
-COMPILER = OpenWatcom WCL386
-COMPILER_VERSION = OpenWatcom
-
-# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
-# command line arguments.
-MSC_VER = 0
-
-# Nothing supports PowerPC OS/2.
-TARGET_CPU = x86
-TARGET_PLATFORM = OS/2
-
-# Override CL so we don't end up running the Visual C++ clone cl.
-CL = wcl386
-!endif
 
 !message
 !message
@@ -86,7 +66,7 @@ WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 
 # ----- OS/2 compiler options -----------------------------------------------
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 OS2_CPP=wpp386
 OS2_LINK=wlink
 OS2_LIBRARIAN=wlib
@@ -105,7 +85,7 @@ OS2_RC=rc
 #OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /Gx+ /Sp1 /FiZIL.SYM /SiZIL.SYM
 #OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE 
 # ----- Next line for pre-compiled headers and optimization -----------------
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 # ICC   WCC386
 # /Gx+  -xs         Enable generation of C++ Exception Handling Code (watcom: -xs = balanced exception handling)
 # /Sp1  -zp=1       Pack aggregate members on specified alignment
@@ -307,7 +287,7 @@ k2dial.exe: main.obo dialer.obo lstitm.obo kconnect.obo \
             ksetkerberos.obo ksettls.obo ksetkeyboard.obo ksetlogin.obo \
             ksetprinter.obo ksetlogs.obo ksetssh.obo ksetftp.obo ksetgui.obo \
             ksetdlg.obo kabout.obo ksettcp.obo k2dial.rc
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 	$(OS2_LINK) $(OS2_LINK_OPTS) N k2dial.exe \
     F main.obo,dialer.obo,lstitm.obo,kconnect.obo,kdialopt.obo,kquick.obo,kdconfig.obo,\
     kcolor.obo,dialetc.obo,kdirnet.obo,kdirdial.obo,kdemo.obo,kstatus.obo,kwinmgr.obo,\

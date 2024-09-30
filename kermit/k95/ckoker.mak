@@ -134,34 +134,13 @@ SUBSYSTEM_WIN32=windows
 # /GF enables read-only string pooling
 CFLAG_GF=/GF
 
-# On windows we'll try to detect the Visual C++ version being used and adjust
+# Try to detect the compiler version being used so we can adjust
 # compiler flags accordingly.
-!if "$(PLATFORM)" == "NT"
 !message Attempting to detect compiler...
-
 !include compiler_detect.mak
-!message
-!else
-# On OS/2 we'll just assume Open Watcom for now. I don't have access to the
-# IBM compiler to find a way to tell it apart from watcom like we do for
-# Visual C++.
-CMP = OWCL386
-COMPILER = Open Watcom WCL386
-COMPILER_VERSION = Open Watcom
-
-# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
-# command line arguments.
-MSC_VER = 0
-
-# Nothing supports PowerPC OS/2.
-TARGET_CPU = x86
-TARGET_PLATFORM = OS/2
-
-# Override CL so we don't end up running the Visual C++ clone cl.
-CL = wcl386
-!endif
 
 !if "$(MIPS_CENTAUR)" == "yes"
+!message
 !message MIPS Centaur compiler - forcing build with statically linked CRT.
 # /QmipsOb5000 increases the basic block threshold for optimisation
 COMMON_CFLAGS = /D_MT /QmipsOb5000
@@ -640,8 +619,9 @@ k95g:
 #         -Oi25   -Oe=<num>     Set the threshold for auto-inlining to <value> intermediate code instructions
 # DEBUG:  -Gs     ?             Suppress stack probes in function prologs
 # DLL:    -Gt-    ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
-#         /Ge-    ? -br         Use the version of the runtime library that assumes a DLL is being
-#                               built. Default: /Ge+
+#                 -bd           Compile for DLL
+#         /Ge-    ? -br         Use DLL version of C/C++ runtime library - maybe equivalent to /Ge-
+#                               on the IBM compiler.
 # CFLAGS: -Sp1    -zp=1         /Sp<[1]|2|4|8|16> : Pack aggregate members on specified alignment. Default: /Sp4
 #         -Sm     ?             Ignore migration keywords. Default: /Sm-
 #         -Gm     ? -bm         Link with multithread runtime libraries. Default: /Gm-
@@ -662,14 +642,13 @@ k95g:
 # startup with trap 001 )
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
-	    CMP="OWCL386" \
+	    CMP="OWWCL" \
 	    CC="wcl386" \
         CC2="-Fh" \
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
-        DLL="" \
-        LINKFLAGS="-l=os2v2 -k512K" \
+        DLL="-bd" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
@@ -677,20 +656,20 @@ wcos2:
 !ifdef WARP
         WARP="YES" \
 !endif
-        LINKFLAGS="-l=os2v2" \
+        LINKFLAGS="-l=os2v2 -k512K" \
+        LINKFLAGS_WIN="-l=os2v2_pm" \
+        LINKFLAGS_DLL="-l=os2v2_dll" \
 	    DEF=""  # ckoker32.def
-# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
-#       LINKFLAGS also not used when building DLLs as these need -l=os2v2_dll
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
-	    CMP="OWCL386" \
+	    CMP="OWWCL" \
 	    CC="wcl386" \
         CC2="-Fh -d3" \
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
-        DLL="" \
+        DLL="-bd" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
@@ -699,8 +678,9 @@ wcos2d:
         WARP="YES" \
 !endif
         LINKFLAGS="-l=os2v2 -k512K" \
+        LINKFLAGS_WIN="-l=os2v2_pm" \
+        LINKFLAGS_DLL="-l=os2v2_dll" \
 	    DEF=""  # ckoker32.def
-# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 # Flags are:
 #   --aa            Allows non-const initializers for local aggregates or unions.
@@ -713,8 +693,9 @@ wcos2d:
 #                   the IBM compiler.
 #   -Fe=<file>      Output executable filename
 #   -ox             Maximum optimisation
-#   -br             Build with dll runtime library - maybe equivalent to /Ge- on the
-#                   IBM compiler.
+#   -bd             Compile for DLL
+#   -br             Use DLL version of C/C++ runtime library - maybe equivalent to /Ge-
+#                   on theIBM compiler.
 #   -zq             Operate quietly
 #   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
 #   -c              Compile only, don't link
@@ -819,7 +800,7 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
           -D__32BIT__
 !endif
 # Open Watcom doesn't define __32BIT__ by default which upsets a lot of OS/2
@@ -1057,7 +1038,7 @@ KUIOBJS = \
 
 
 os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
-!if "$(CMP)" != "OWCL386"
+!if "$(CMP)" != "OWWCL"
        cko32rtl.dll \    # IBM compiler only.
 !endif
 !if "$(CKF_SRP)" == "yes"
@@ -1182,21 +1163,21 @@ se.exe: se.obj se.res $(DEF) ckoker.mak
 <<
 
 k2dc.exe: k2dc.obj $(DEF) ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
 !else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
 !endif
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) rlogin.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
 !else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" rlogin.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
 !endif
 
 otextps.exe: textps.obj $(DEF) ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) textps.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
 !else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" textps.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
@@ -1219,7 +1200,7 @@ textps.exe: textps.obj textps.res $(DEF) ckoker.mak
 
 #       ckoker.msb  -- no idea what this is
 ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
         wrc -q -bt=os2 ckoker.res $@
 !else
@@ -1241,14 +1222,11 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
         ILIB /NOBR /OUT:cko32rt.lib $(VISUALAGE)\LIB\CPPRNO36.LIB
 
 # cko32i20.def
-# TODO: -bd really should live in $(DLL), but that currently causes link
-#       errors as some modules (probably one or more of ck_des.obj,
-#       ck_crp.obj, ckosftp.obj) are ending up in ckoker32.exe
 # TODO: What libs are required for the IBM compiler when targeting TCP-32?
 cko32i41.dll: ckoi41.obj ckoker.mak
 !if "$(CMP)" == "OWCL386"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj $(OUT)$@ \
-	 -bd -l=os2v2_dll tcpip32.lib $(LIBS)
+	 $(LINKFLAGS_DLL) tcpip32.lib $(LIBS)
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj cko32i41.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
@@ -1256,16 +1234,13 @@ cko32i41.dll: ckoi41.obj ckoker.mak
 !endif
 
 # cko32i20.def
-# TODO: -bd really should live in $(DLL), but that currently causes link
-#       errors as some modules (probably one or more of ck_des.obj,
-#       ck_crp.obj, ckosftp.obj) are ending up in ckoker32.exe
 # TODO: WATCOM: I'm really not sure about the "ALIAS __res=_res" bit. It makes
 #       it link and it seems to work on Warp 4 at least, but surely having to
 #       do this is a sign there is some other issue elsewhere.
 cko32i20.dll: ckoi20.obj ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 -bd -l=os2v2_dll $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res"
+	 $(LINKFLAGS_DLL) $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res"
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
@@ -1328,7 +1303,7 @@ docs:   ckermit.inf
 
 # ckotel.def
 otelnet.exe: ckotel.obj ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(DEBUG) ckotel.obj $(LINKFLAGS) $(OUT)$@ $(LIBS)
 !else
         $(CC) $(CC2) $(DEBUG) ckotel.obj ckotel.def $(OUT) $@ $(LIBS)
@@ -1336,7 +1311,7 @@ otelnet.exe: ckotel.obj ckoker.mak
 !endif
 
 osetup.exe: setup.obj osetup.def ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(DEBUG) setup.obj $(LINKFLAGS) $(OUT)$@
 !else
         $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@
@@ -1344,8 +1319,8 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
-!if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) -l=os2v2_pm $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+!if "$(CMP)" == "OWWCL"
+        $(CC) $(CC2) $(LINKFLAGS_WIN) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
@@ -1556,17 +1531,10 @@ ckossh$(O):     ckossh.c ckossh.h ckcdeb.h ckuusr.h ckcker.h ckocon.h ckoreg.h
 ckonssh$(O):    ckonssh.c ckossh.h ckcdeb.h
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
 
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
-!if "$(PLATFORM)" == "OS2"
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_crp.c
-!endif
 
 ck_des$(O):     ck_des.c
-!if "$(PLATFORM)" == "OS2"
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
-!endif
 
 # X/Y/Z Modem support (3rd-party library)
 !if "$(CKF_XYZ)" == "yes"
@@ -1665,7 +1633,7 @@ ckoi41.obj: ckoibm.c ckotcp.h
 ckoi20.obj: ckoibm.c ckotcp.h
         @echo > ckoi20.obj
         del ckoi20.obj
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         @echo > wcc386.pch
         del wcc386.pch
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -DTCPV40HDRS \
@@ -1698,7 +1666,7 @@ ckon30.obj: ckonov.c ckotcp.h
         ren ckonov.obj ckon30.obj
 
 ckoker.res: ckoker.rc
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         wrc -r -bt=os2 ckoker.rc
 !else
         rc -r ckoker.rc
@@ -1741,7 +1709,7 @@ ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
 
 ckoclip.res: ckoclip.rc ckoclip.h ckoclip.ico
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         wrc -r -bt=os2 ckoclip.rc
 !else
         rc -r ckoclip.rc

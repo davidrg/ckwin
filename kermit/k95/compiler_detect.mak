@@ -1,3 +1,4 @@
+!if "$(PLATFORM)" == "NT"
 
 # This makefile tries to figure out what compiler we're using,
 # its version, the target CPU Architecture and platform.
@@ -342,3 +343,25 @@ CROSS_BUILD_COMPATIBLE = no
 !endif
 
 !endif
+
+!ELSE IF "$(PLATFORM)" == "OS2"
+
+# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# IBM compiler to find a way to tell it apart from watcom like we do for
+# Visual C++.
+CMP = OWWCL
+COMPILER = Open Watcom WCL
+COMPILER_VERSION = Open Watcom
+
+# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
+# command line arguments.
+MSC_VER = 0
+
+# Nothing supports PowerPC OS/2.
+TARGET_CPU = x86
+TARGET_PLATFORM = OS/2
+
+# Override CL so we don't end up running the Visual C++ clone cl.
+CL = wcl386
+
+!ENDIF
