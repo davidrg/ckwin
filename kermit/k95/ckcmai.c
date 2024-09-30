@@ -611,6 +611,7 @@ ACKNOWLEDGMENTS:
 #ifdef OS2ONLY
 #define INCL_VIO                        /* Needed for ckocon.h */
 #include <os2.h>
+#include <process.h>                    /* for getpid() */
 #undef COMMENT
 #endif /* OS2ONLY */
 
