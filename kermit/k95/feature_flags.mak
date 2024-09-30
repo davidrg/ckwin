@@ -197,7 +197,7 @@ CKF_NETBIOS=yes
 # And does not get mouse wheel support (not implemented)
 CKF_MOUSEWHEEL=no
 
-!if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWCL386")
+!if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWWCL")
 # But not when building with OpenWatcom. At the moment it causes Kermit/2 to
 # crash on startup at ckonbi.c:152
 !message Turning NetBIOS support off - OpenWatcom builds just crash with it enabled.

@@ -349,9 +349,9 @@ CROSS_BUILD_COMPATIBLE = no
 # On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
 # IBM compiler to find a way to tell it apart from watcom like we do for
 # Visual C++.
-CMP = OWCL386
-COMPILER = OpenWatcom WCL386
-COMPILER_VERSION = OpenWatcom
+CMP = OWWCL
+COMPILER = Open Watcom WCL
+COMPILER_VERSION = Open Watcom
 
 # wcl386 doesn't pretend to be Visual C++ and doesn't take the same
 # command line arguments.
