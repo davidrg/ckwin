@@ -587,8 +587,9 @@ k95g:
 #         -Oi25   -Oe=<num>     Set the threshold for auto-inlining to <value> intermediate code instructions
 # DEBUG:  -Gs     ?             Suppress stack probes in function prologs
 # DLL:    -Gt-    ?             Store variables so that they do not cross 64K boundaries. Default: /Gt-
-#         /Ge-    ? -br         Use the version of the runtime library that assumes a DLL is being
-#                               built. Default: /Ge+
+#                 -bd           Compile for DLL
+#         /Ge-    ? -br         Use DLL version of C/C++ runtime library - maybe equivalent to /Ge-
+#                               on the IBM compiler.
 # CFLAGS: -Sp1    -zp=1         /Sp<[1]|2|4|8|16> : Pack aggregate members on specified alignment. Default: /Sp4
 #         -Sm     ?             Ignore migration keywords. Default: /Sm-
 #         -Gm     ? -bm         Link with multithread runtime libraries. Default: /Gm-
@@ -609,13 +610,13 @@ k95g:
 # startup with trap 001 )
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
-	    CMP="OWCL386" \
+	    CMP="OWWCL" \
 	    CC="wcl386" \
         CC2="-Fh" \
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
-        DLL="-br" \
+        DLL="-bd" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
@@ -624,18 +625,19 @@ wcos2:
         WARP="YES" \
 !endif
         LINKFLAGS="-l=os2v2" \
+        LINKFLAGS_WIN="-l=os2v2_pm" \
+        LINKFLAGS_DLL="-l=os2v2_dll" \
 	    DEF=""  # ckoker32.def
-# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
-	    CMP="OWCL386" \
+	    CMP="OWWCL" \
 	    CC="wcl386" \
         CC2="-Fh -d3" \
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
-        DLL="-br" \
+        DLL="-bd" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
@@ -644,8 +646,9 @@ wcos2d:
         WARP="YES" \
 !endif
         LINKFLAGS="-l=os2v2" \
+        LINKFLAGS_WIN="-l=os2v2_pm" \
+        LINKFLAGS_DLL="-l=os2v2_dll" \
 	    DEF=""  # ckoker32.def
-# Note: LINKFLAGS not used by ckoclip.exe (as it needs -l=os2v2_pm)
 
 # Flags are:
 #   --aa            Allows non-const initializers for local aggregates or unions.
@@ -658,8 +661,9 @@ wcos2d:
 #                   the IBM compiler.
 #   -Fe=<file>      Output executable filename
 #   -ox             Maximum optimisation
-#   -br             Build with dll runtime library - maybe equivalent to /Ge- on the
-#                   IBM compiler.
+#   -bd             Compile for DLL
+#   -br             Use DLL version of C/C++ runtime library - maybe equivalent to /Ge-
+#                   on theIBM compiler.
 #   -zq             Operate quietly
 #   -bt=os2         Compile for OS/2 (rather than DOS/NetWare/Windows/QNX/whatever)
 #   -c              Compile only, don't link
@@ -764,7 +768,7 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
           -D__32BIT__
 !endif
 # OpenWatcom doesn't define __32BIT__ by default which upsets a lot of OS/2
@@ -1001,7 +1005,7 @@ KUIOBJS = \
 
 
 os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
-!if "$(CMP)" != "OWCL386"
+!if "$(CMP)" != "OWWCL"
        cko32rtl.dll \    # IBM compiler only.
 !endif
 !if "$(CKF_SRP)" == "yes"
@@ -1123,21 +1127,21 @@ se.exe: se.obj se.res $(DEF) ckoker.mak
 <<
 
 k2dc.exe: k2dc.obj $(DEF) ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
 !else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
 !endif
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) rlogin.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
 !else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" rlogin.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
 !endif
 
 otextps.exe: textps.obj $(DEF) ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) textps.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
 !else
       	$(CC) $(CC2) /B"$(LINKFLAGS)" textps.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
@@ -1160,7 +1164,7 @@ textps.exe: textps.obj textps.res $(DEF) ckoker.mak
 
 #       ckoker.msb  -- no idea what this is
 ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
         wrc -q -bt=os2 ckoker.res $@
 !else
@@ -1183,9 +1187,9 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
 
 # cko32i20.def
 cko32i20.dll: ckoi20.obj ckoker.mak
-!if "$(CMP)" == "OWCL386"
-    $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 $(LINKFLAGS) tcpip32.lib $(LIBS)
+!if "$(CMP)" == "OWWCL"
+         $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
+	 $(LINKFLAGS_DLL) tcpip32.lib $(LIBS)
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
@@ -1242,7 +1246,7 @@ docs:   ckermit.inf
 
 # ckotel.def
 otelnet.exe: ckotel.obj ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(CC2) $(DEBUG) ckotel.obj $(LINKFLAGS) $(OUT)$@ $(LIBS)
 !else
         $(CC) $(CC2) $(DEBUG) ckotel.obj ckotel.def $(OUT) $@ $(LIBS)
@@ -1250,7 +1254,7 @@ otelnet.exe: ckotel.obj ckoker.mak
 !endif
 
 osetup.exe: setup.obj osetup.def ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         $(CC) $(DEBUG) setup.obj $(LINKFLAGS) $(OUT)$@
 !else
         $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@
@@ -1258,8 +1262,8 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
-!if "$(CMP)" == "OWCL386"
-        $(CC) $(CC2) -l=os2v2_pm $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+!if "$(CMP)" == "OWWCL"
+        $(CC) $(CC2) $(LINKFLAGS_WIN) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
@@ -1470,17 +1474,10 @@ ckossh$(O):     ckossh.c ckossh.h ckcdeb.h ckuusr.h ckcker.h ckocon.h ckoreg.h
 ckonssh$(O):    ckonssh.c ckossh.h ckcdeb.h
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ckosftp.c
 
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
-!if "$(PLATFORM)" == "OS2"
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_crp.c
-!endif
 
 ck_des$(O):     ck_des.c
-!if "$(PLATFORM)" == "OS2"
-	$(CC) $(CC2) $(CFLAGS) $(DLL) $(DEBUG) $(DEFINES) $(NOLINK) ck_des.c
-!endif
 
 # X/Y/Z Modem support (3rd-party library)
 !if "$(CKF_XYZ)" == "yes"
@@ -1562,7 +1559,7 @@ ckof13.obj: ckoftp.c ckotcp.h
 ckoi20.obj: ckoibm.c ckotcp.h
         @echo > ckoi20.obj
         del ckoi20.obj
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -D__SOCKET_32H $(DLL) -c ckoibm.c
 	# Watcom lacks the headers to support -DSOCKS_ENABLED
 !else
@@ -1586,7 +1583,7 @@ ckon30.obj: ckonov.c ckotcp.h
         ren ckonov.obj ckon30.obj
 
 ckoker.res: ckoker.rc
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         wrc -r -bt=os2 ckoker.rc
 !else
         rc -r ckoker.rc
@@ -1629,7 +1626,7 @@ ckopcf.res: ckopcf.rc ckopcf.h
         rc -r ckopcf.rc
 
 ckoclip.res: ckoclip.rc ckoclip.h ckoclip.ico
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         wrc -r -bt=os2 ckoclip.rc
 !else
         rc -r ckoclip.rc

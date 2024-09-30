@@ -66,7 +66,7 @@ WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 
 # ----- OS/2 compiler options -----------------------------------------------
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 OS2_CPP=wpp386
 OS2_LINK=wlink
 OS2_LIBRARIAN=wlib
@@ -85,7 +85,7 @@ OS2_RC=rc
 #OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /Gx+ /Sp1 /FiZIL.SYM /SiZIL.SYM
 #OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE 
 # ----- Next line for pre-compiled headers and optimization -----------------
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 # ICC   WCC386
 # /Gx+  -xs         Enable generation of C++ Exception Handling Code (watcom: -xs = balanced exception handling)
 # /Sp1  -zp=1       Pack aggregate members on specified alignment
@@ -287,7 +287,7 @@ k2dial.exe: main.obo dialer.obo lstitm.obo kconnect.obo \
             ksetkerberos.obo ksettls.obo ksetkeyboard.obo ksetlogin.obo \
             ksetprinter.obo ksetlogs.obo ksetssh.obo ksetftp.obo ksetgui.obo \
             ksetdlg.obo kabout.obo ksettcp.obo k2dial.rc
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 	$(OS2_LINK) $(OS2_LINK_OPTS) N k2dial.exe \
     F main.obo,dialer.obo,lstitm.obo,kconnect.obo,kdialopt.obo,kquick.obo,kdconfig.obo,\
     kcolor.obo,dialetc.obo,kdirnet.obo,kdirdial.obo,kdemo.obo,kstatus.obo,kwinmgr.obo,\
