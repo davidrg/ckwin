@@ -18,6 +18,9 @@ CFG=Release
 !ERROR An invalid configuration is specified.
 !ENDIF 
 
+# This is needed by compiler_detect.mak
+PLATFORM=NT
+
 !message Attempting to detect compiler...
 !include ..\kermit\k95\compiler_detect.mak
 
