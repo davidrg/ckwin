@@ -8,3 +8,4 @@ del registry\*.obn
 del registry\*.map
 del registry\*.exe
 del registry\*.err
+del registry\*.res
