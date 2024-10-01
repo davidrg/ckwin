@@ -2151,8 +2151,13 @@ static int rfnlen = 0;
 static char rfnbuf[RFNBUFSIZ];          /* Remote filename translate buffer */
 static char * xgnbp = NULL;
 
-static int
-strgetc() {                             /* Helper function for xgnbyte() */
+static int                              /* Helper function for xgnbyte() */
+#ifdef CK_ANSIC
+strgetc(void)
+#else
+strgetc()
+#endif /* CK_ANSIC */
+{
     int c;
     if (!xgnbp)
       return(-1);
@@ -12550,7 +12555,12 @@ cancelrecv(sig) int sig;
 /* Argumentless front-end for secure_getc() */
 
 static int
-netgetc() {
+#ifdef CK_ANSIC
+netgetc(void)				/* Input function to point to... */
+#else  /* CK_ANSIC */
+netgetc()
+#endif /* CK_ANSIC */
+{
     return(secure_getc(globaldin,0));
 }
 
