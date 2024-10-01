@@ -1,5 +1,5 @@
-Kermit 95 (C-Kermit for Windows)
-================================
+Kermit 95 (C-Kermit for Windows and OS/2)
+=========================================
 
 This is Kermit 95, the Windows and OS/2 port of C-Kermit from the Kermit Project.
 Kermit 95 was formerly a commercial product of Columbia University from 1994 
