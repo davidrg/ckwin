@@ -1665,7 +1665,7 @@ ckon30.obj: ckonov.c ckotcp.h
            $(DEBUG) $(OPT) $(DLL) -c ckonov.c
         ren ckonov.obj ckon30.obj
 
-ckoker.res: ckoker.rc
+ckoker.res: ckoker.rc k95f_os2.ico
 !if "$(CMP)" == "OWWCL"
         wrc -r -bt=os2 ckoker.rc
 !else
