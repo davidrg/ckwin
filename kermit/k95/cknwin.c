@@ -321,7 +321,7 @@ ckMainThread( void * param )
 HANDLE
 MainThreadInit( HINSTANCE hInst )
 {
-    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, hInst ) ;
+    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, (void *)hInst ) ;
     return(MainThread);
 }
 

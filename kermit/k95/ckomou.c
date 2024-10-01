@@ -15,6 +15,7 @@ char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 #ifdef NT
 #include <windows.h>
 #else /* NT */
+#include <process.h>
 #define INCL_WINSHELLDATA
 #define INCL_VIO
 #define INCL_MOU
@@ -448,7 +449,7 @@ extern    BYTE vmode ;
     dblclickspeed = querydblclickspeed() ;
 
         if (!tidMouse) {
-        tidMouse = _beginthread( &os2_mouseevt, 0, THRDSTKSIZ, 0 ) ;
+        tidMouse = _beginthread( &os2_mouseevt, 0, THRDSTKSIZ, NULL ) ;
         }
     }
 #endif /* NT */

@@ -3377,7 +3377,7 @@ conect(int async) {
 #ifdef OS2ONLY
                       0,
 #endif /* OS2ONLY */
-                      65536, 0);
+                      65536, NULL);
 
     if (tt_timelimit && (now_t - start_t >= tt_timelimit))
         return(0);

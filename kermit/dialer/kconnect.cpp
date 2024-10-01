@@ -3145,54 +3145,27 @@ Browse( ZIL_ICHAR * url )
             sprintf(cmdbuf,"%s %s",_config->_app_www,url);
 #ifdef WIN32
         return(system(cmdbuf));
-#else
-#ifdef __WATCOMC__
-        ZIL_UINT32 tid = _beginthread((void (*)(void *)) ExecuteBrowser,
-                                      0,
-                                      65535,
-                                      (void *)cmdbuf
-                                      ) ;
-#else
-        ZIL_UINT32 tid = _beginthread((void (* _Optlink)(void *)) ExecuteBrowser,
-                                      0,
-                                      65535, 
-                                      (void *)cmdbuf
-                                      ) ;
-#endif /* __WATCOMC__ */
-        return ((DWORD)tid != 0xffffffff);
 #endif
     }
-
-    if (browsopts[0]) {
-        s = strstr("%1",(char *)browsopts);
+    else {
+        if (browsopts[0]) {
+            s = strstr("%1",(char *)browsopts);
+            if (s)
+                *s = 's';
+            else
+                s = strstr("%s",(char *)browsopts);	
+        }
         if (s)
-            *s = 's';
+            sprintf(tmpbuf,browsopts,url);
         else
-            s = strstr("%s",(char *)browsopts);	
+            sprintf(tmpbuf,"%s %s",browsopts,url);
+        sprintf(cmdbuf,"%s %s",browser,tmpbuf);
     }
-    if (s)
-        sprintf(tmpbuf,browsopts,url);
-    else
-        sprintf(tmpbuf,"%s %s",browsopts,url);
-    sprintf(cmdbuf,"%s %s",browser,tmpbuf);
-
-    ZIL_UINT32 tid = _beginthread( 
-#ifndef WIN32
-#ifdef __WATCOMC__
-                                   (void (*)(void *))
+#ifdef WIN32
+    return (_beginthread(ExecuteBrowser, 65535, (void *)cmdbuf) != -1);
 #else
-                                   (void (* _Optlink)(void *))
-#endif /* __WATCOMC__ */
-#endif /* WIN32 */
-
-                                   ExecuteBrowser,
-#ifndef WIN32
-                            0,
-#endif /* WIN32 */
-                            65535, 
-                            (void *)url
-                            ) ;
-    return ((DWORD)tid != 0xffffffff);
+    return (_beginthread(ExecuteBrowser, 0, 65535, (void *)cmdbuf) != -1);
+#endif
 }
 
 
@@ -9340,14 +9313,7 @@ Win32ShellExecute( ZIL_ICHAR * object )
     ZIL_SCREENID frameID ;
     Information(I_GET_FRAMEID, &frameID);
     MyFrameID = frameID;
-    ZIL_UINT32 tid = _beginthread( Real_Win32ShellExecute, 
-#ifndef WIN32
-                            0,
-#endif /* WIN32 */
-                            65535, 
-                            (void *)object 
-                            ) ;
-    return ((DWORD)tid != 0xffffffff);
+    return (_beginthread( Real_Win32ShellExecute, 65535, (void *)object) != -1);
 }
 #endif /* WIN32 */
 

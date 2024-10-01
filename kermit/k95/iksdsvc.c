@@ -475,7 +475,7 @@ IKSDStart (DWORD argc, LPTSTR *argv)
     }
 
     iksd_started = 1;
-    _beginthread(listen_thread,65536, 0);
+    _beginthread(listen_thread,65536, NULL);
 
     // Initialization complete - report running status.
     IKSDStatus.dwCurrentState       = SERVICE_RUNNING;

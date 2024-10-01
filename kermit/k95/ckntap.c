@@ -4653,7 +4653,7 @@ cktapidisconnect( void )
 {
     int i=5;
     if ( !g_bHangingUp && !g_bClosing ) {
-        _beginthread( cktapihangup_thr, 65535, 0 );
+        _beginthread( cktapihangup_thr, 65535, NULL );
     }
     do {
         msleep(50);
@@ -4666,7 +4666,7 @@ cktapicloseasync( void )
 {
     int i=5;
     if ( !g_bClosing ) {
-        _beginthread( cktapiclose_thr, 65535, 0 );
+        _beginthread( cktapiclose_thr, 65535, NULL );
     }
     do {
         msleep(50);
