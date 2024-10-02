@@ -1007,6 +1007,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b832">832. K95G crashes on exit if a connection is active and GUI dialogs are off</a>
 <li><tt>[ ] (K)</tt> <a href="#b833">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
 <li><tt>[ ] (K)</tt> <a href="#b834">834. Switching between command and terminal via \Kexit doesn't toggle the toolbar button</a>
+<li><tt>[ ] (K)</tt> <a href="#b835">835. The SET HOST command does nothing when the network type is NETBIOS</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -8017,6 +8018,22 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/116">Issue #116 on Github</a>
+
+<h3><a name="b835">835. The SET HOST command does nothing when the network type is NETBIOS</a></h3>
+<p>When using the NetBIOS network type under OS/2, the SET HOST command does nothing.
+    <tt>SET HOST *</tt> does not listen for connections, and <tt>SET HOST foo</tt>
+    does not connect to the host named foo. No output is produced in response to
+    either command.
+</p>
+
+<p>Based on available code, Kermit 95 version 1.1.17 (June 1998) was the last
+    release where NetBIOS support was likely to work on OS/2. By 1.1.19 of
+    February 2000 (1.1.18 wasn't a public release), the code to make actually
+    make or listen for NetBIOS connections was missing.
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/339">Issue #339 on Github</a>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
