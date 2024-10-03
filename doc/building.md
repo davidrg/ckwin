@@ -9,12 +9,12 @@ needs if you're looking to run on versions of Windows older than XP or CPU
 architectures other than x86 and ARM.
 
 If you wish to also build the Dialer (entirely optional), you'll need ideally a 
-copy of Visual C++ 6.0 SP6. OpenWatcom 1.9 is also supported but due to a lack 
+copy of Visual C++ 6.0 SP6. Open Watcom 1.9 is also supported but due to a lack 
 of support for CTRL3D32 in that compiler the resulting application will look 
 like something from Windows 3.1.
 
 If you're using MinGW, see [Building with MinGW](mingw-building.md) - the
-content below only applies to Visual C++ and OpenWatcom.
+content below only applies to Visual C++ and Open Watcom.
 
 ## Build Environment
 
@@ -66,7 +66,7 @@ relative to each other:
 \zinc\copymak.bat
 ```
 
-If you're building with OpenWatcom, this is all that should be required - when
+If you're building with Open Watcom, this is all that should be required - when
 you run setenv.bat it will detect the presence of OpenZinc and add it to the
 build environment so that you can build the Dialer. You can skip ahead to the
 build step
@@ -100,7 +100,7 @@ doesn't take very long.
 ## Build Kermit 95
 
 1. Open a console and change directory to where the source code is located
-2. Setup the Visual C++ or OpenWatcom build environment by running the 
+2. Setup the Visual C++ or Open Watcom build environment by running the 
     appropriate batch file for your compiler. Some examples are: 
 ```
 REM Visual C++ 2008:
@@ -112,7 +112,7 @@ REM Visual C++ 2019:
 REM Visual C++ 2022, 64bit:
 "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=14.3
 
-REM OpenWatcom:
+REM Open Watcom:
 C:\watcom\owsetenv.bat
 ```
 3. Setup the C-Kermit build environment by running `setenv.bat`
@@ -125,7 +125,7 @@ C:\watcom\owsetenv.bat
     dependencies into `kermit\k95\dist`
 
 Done! Depending on the Visual C++ version you're using you may need to also
-distribute the Visual C++ runtime with K95. If you built with OpenWatcom the 
+distribute the Visual C++ runtime with K95. If you built with Open Watcom the 
 runtime libraries should have already been copied there for you but if they 
 weren't you'll need to grab `clbr19.dll mt719.dll plbr19.dll` from the watcom 
 `binnt` subdirectory.
@@ -156,7 +156,7 @@ All files are required for the dialer to work normally.
 ### ctl3d32.dll Installation Procedure
 When built with Visual C++ 6.0 or older the dialer relies on ctl3d32 to get the Windows 95
 look and feel (rather than the "16bit app on Windows 95" look and feel). Ctl3d32 is not
-available for OpenWatcom or newer versions of Visual C++ so when built with these the dialer
+available for Open Watcom or newer versions of Visual C++ so when built with these the dialer
 will have the 2D "16bit app on Windows 95" look.
 
 In order to be used ctl3d32.dll *must* be installed correctly on the users machine - it can't

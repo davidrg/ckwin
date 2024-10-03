@@ -1,5 +1,5 @@
-Kermit 95 (C-Kermit for Windows)
-================================
+Kermit 95 (C-Kermit for Windows and OS/2)
+=========================================
 
 This is Kermit 95, the Windows and OS/2 port of C-Kermit from the Kermit Project.
 Kermit 95 was formerly a commercial product of Columbia University from 1994 
@@ -67,7 +67,7 @@ access to this compiler so it is currently unknown if it still works or if chang
 in the last 22 years have introduced problems.
 
 While waiting for a copy of VisualAge C++ to appear on ebay, some work has gone in
-to getting K95 building with OpenWatcom. Most of it now builds, and if you disable
+to getting K95 building with Open Watcom. Most of it now builds, and if you disable
 enough features and compiler optimisation it even runs, but there are a number of 
 outstanding issues (see ticket [#8](https://github.com/davidrg/ckwin/issues/8))
 which need fixing before its worth including OS/2 binaries in beta releases. 
@@ -126,7 +126,7 @@ forward:
 * Significantly expanded compiler support
   *  Added support for Visual C++ 5.0 down to 1.0 32-bit
   *  Added support for Visual C++ 2003 up to 2022
-  *  Added support for OpenWatcom (targeting both Win32 and OS/2)
+  *  Added support for Open Watcom (targeting both Win32 and OS/2)
   *  Added limited support for GCC (MinGW)
 * Significant work on supported CPU architectures:
   * New port to 64bit Windows on x86-64, ARM64, Itanium and Alpha64
@@ -179,11 +179,11 @@ To build Kermit 95, see the [Build Instructions](doc/building.md).
 Visual C++ 2019 or newer is strongly recommended, but any released 32bit or 64bit
 version *should* work (with certain features automatically excluded on older compilers).
 
-There is also limited support for compiling with OpenWatcom 1.9+ and MinGW. For
-OpenWatcom, just follow the normal build instructions above. For cross-compiling
+There is also limited support for compiling with Open Watcom 1.9+ and MinGW. For
+Open Watcom, just follow the normal build instructions above. For cross-compiling
 from Linux, see the [MinGW Build Instructions](doc/mingw-building.md).
 
-To build Kermit 95 for OS/2 (Kermit/2) using OpenWatcom, see the
+To build Kermit 95 for OS/2 (Kermit/2) using Open Watcom, see the
 [OS/2 Build Instructions](doc/os2-building.md).
 
 For a list of supported compilers and which features they do or don't get,

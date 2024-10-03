@@ -549,7 +549,7 @@ set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 set CKB_OS2_COMPATIBLE=no
 
-REM We can't look at Open Watcoms help output for a version number because it
+REM We can't look at OpenWatcoms help output for a version number because it
 REM waits for input ("Press any key to continue:"), so we'll just detect it by
 REM the presence of its environment variables.
 if exist %WATCOM%\binnt\wcl386.exe goto :watcomc

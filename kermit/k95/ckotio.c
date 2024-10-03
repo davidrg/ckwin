@@ -8953,14 +8953,14 @@ pclose(FILE *pipe) {
 static DWORD exitcode;
 
 void
-ttruncmd2( HANDLE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     DWORD io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = ReadFile( pipe, &outc, 1, &io, NULL ) )
+        if ( success = ReadFile( (HANDLE)pipe, &outc, 1, &io, NULL ) )
         {
             ttoc(outc) ;
         }
@@ -9181,7 +9181,7 @@ ttruncmd(char * cmd)
         CloseHandle(procinfo.hThread);
 
         exitcode = STILL_ACTIVE;
-        _beginthread( ttruncmd2, 65536, hChildStdoutRd );
+        _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );
         do {
             DWORD io ;
             int  inc ;
@@ -9226,14 +9226,14 @@ ttruncmd(char * cmd)
 #define STILL_ACTIVE -1L
 static ULONG exitcode = 0;
 void
-ttruncmd2( HFILE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     ULONG io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = !DosRead( pipe, &outc, 1, &io ) )
+        if ( success = !DosRead( (HFILE)pipe, &outc, 1, &io ) )
         {
             ttoc(outc) ;
         }
@@ -9330,7 +9330,7 @@ ttruncmd(cmd) char *cmd; { /* Return: 0 = failure, 1 = success */
     debug(F111,"ttruncmd","PID",pid);
 
     exitcode = STILL_ACTIVE;
-    _beginthread( ttruncmd2, 0, 65536, hChildStdoutRd );
+    _beginthread( ttruncmd2, 0, 65536, (void *)hChildStdoutRd );
     do {
         ULONG io ;
         int inc ;

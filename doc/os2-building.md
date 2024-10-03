@@ -9,7 +9,7 @@ compatibility has not been tested since 2002 so the build process is unlikely
 to be smooth. If you have access to IBM C/C++ 2.0+ it may be worth trying 
 ([let us know how you get on](https://github.com/davidrg/ckwin/discussions/new?category=general) 
 if you do), but using Open Watcom 1.9 will be easiest. The Open Watcom 2.0
-fork may also work but it has not been tested.
+fork may also work, but it has not been tested.
 
 ## Cross-compiling from Windows with Open Watcom
 This is the recommended method for building Kermit 95 for OS/2.
@@ -23,12 +23,12 @@ file and set the value to where your source code lives, for example
 `set root=C:\dev\ckwin`, then save the file.
 
 There are no further dependencies you need to build as OpenSSL (and therefore 
-libssh) does not support OpenWatcom.
+libssh) does not support Open Watcom.
 
 ### Build Kermit 95 for OS/2
 
 1. Open a console and change directory to where the source code is located
-2. OpenWatcom build environment by running `owsetenv.bat` (in `C:\WATCOM` by default)
+2. Open Watcom build environment by running `owsetenv.bat` (in `C:\WATCOM` by default)
 3. Setup the Kermit 95 build environment by running `setenv.bat`
 4. CD into `kermit\k95`
 5. run `mkos2.bat` for a release build or `mkos2d.bat` for a debug build

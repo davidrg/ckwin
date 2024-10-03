@@ -20,6 +20,11 @@
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER < 1300
+#ifndef UINT_PTR
+#define UINT_PTR UINT
+#endif
+#endif
 
 #ifndef NOTOOLBAR
 const int numButtons = 3;

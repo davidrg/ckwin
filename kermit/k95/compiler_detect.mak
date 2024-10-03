@@ -346,7 +346,7 @@ CROSS_BUILD_COMPATIBLE = no
 
 !ELSE IF "$(PLATFORM)" == "OS2"
 
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# On OS/2 we'll just assume Open Watcom for now. I don't have access to the
 # IBM compiler to find a way to tell it apart from watcom like we do for
 # Visual C++.
 CMP = OWWCL

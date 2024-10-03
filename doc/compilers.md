@@ -1,8 +1,8 @@
-# Compiler Support
+﻿# Compiler Support
 
 Kermit 95 should build with all released 32bit or better 
 versions of Microsoft Visual C++ as well as 32bit versions of 
-OpenWatcom 1.9. For the best security, always use the most recent
+Open Watcom 1.9. For the best security, always use the most recent
 compiler you can. Support for older compilers remains for those wishing 
 to build Kermit 95 for vintage Windows systems, the security situation of 
 which is well known.
@@ -18,7 +18,7 @@ this project lacks the required hardware to actually test these builds.
 If you discover any issues please log a bug.
 
 The Dialer is currently known to build fine with Visual C++ 2.0-7.0 (2002) and
-OpenWatcom 1.9. Visual C++ 6.0 SP6 is the recommended compiler as newer versions
+Open Watcom 1.9. Visual C++ 6.0 SP6 is the recommended compiler as newer versions
 lack ctl3d32 - without this the application tends to look a little like
 something from Windows 3.1. Compilers newer than 2002 may work but OpenZinc is
 known to be incompatible with Visual C++ 14.x.
@@ -390,7 +390,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     </td>
 </tr>
 <tr>
-    <td>OpenWatcom 1.9</td>
+    <td>Open Watcom 1.9</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
@@ -408,7 +408,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     </td>
 </tr>
 <tr>
-    <td>OpenWatcom 2.0</td>
+    <td>Open Watcom 2.0</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>

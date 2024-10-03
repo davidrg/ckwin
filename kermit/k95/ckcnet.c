@@ -5179,7 +5179,6 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 /*  N E T C L O S  --  Close current network connection.  */
 
 #ifndef NOLOCAL
-_PROTOTYP(VOID slrestor,(VOID));
 #ifdef CK_SSL
 int tls_norestore = 0;
 #endif /* CK_SSL */
@@ -6944,9 +6943,9 @@ nettoc(c) CHAR c;
 #ifdef TNCODE
 static int
 #ifdef CK_ANSIC
-netgetc(int timo)                       /* Input function to point to... */
+netgetct(int timo)                      /* Input function to point to... */
 #else  /* CK_ANSIC */
-netgetc(timo) int timo;
+netgetct(timo) int timo;
 #endif /* CK_ANSIC */
 {                                       /* ...in the tn_doop() call */
 #ifdef TCPIPLIB
@@ -6984,7 +6983,7 @@ netflui() {
             ch = netinc(1);
             if (ch == IAC) {
                 extern int duplex;  /* this really shouldn't be here but ... */
-                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetc);
+                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetct);
                 if (tx == 1) duplex = 1;
                 else if (tx == 2) duplex = 0;
                 n = nettchk();
@@ -7029,7 +7028,7 @@ netflui() {
             ch = ttinc(1);
             if (ch == IAC) {
                 extern int duplex;  /* this really shouldn't be here but ... */
-                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetc);
+                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetct);
                 if (tx == 1) duplex = 1;
                 else if (tx == 2) duplex = 0;
                 n = ttchk();
