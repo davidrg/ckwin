@@ -5,7 +5,7 @@ OUTDIR = .\win95
 !include ..\compiler_detect.mak
 !include ..\feature_flags.mak
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 RTFLAG = /MT
 !else
 RTFLAG = /MD
@@ -15,7 +15,7 @@ RTFLAG = /MD
 !message MIPS Centaur compiler - forcing build with statically linked CRT.
 # /QmipsOb5000 increases the basic block threshold for optimisation
 COMMON_CFLAGS = /D_MT /QmipsOb5000
-CKB_STATIC_CRT = yes
+CKB_STATIC_CRT_NT = yes
 !endif
 
 # PDB Generation Stuff

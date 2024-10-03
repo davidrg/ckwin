@@ -604,6 +604,8 @@ set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
+set CKB_STATIC_CRT_NT=no
+set CKB_STATIC_CRT_OS2=yes
 
 REM For Open Watcom we have to use its nmake clone
 set MAKE=nmake
@@ -648,7 +650,7 @@ set CKF_K4W=unsupported
 set CKB_NT_COMPATIBLE=yes
 
 REM As this compiler doesn't include msvcrt...
-set CKB_STATIC_CRT=yes
+set CKB_STATIC_CRT_NT=yes
 
 goto :cvcdone
 
@@ -661,7 +663,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
-set CKB_STATIC_CRT=yes
+set CKB_STATIC_CRT_NT=yes
 set CKB_NT_COMPATIBLE=yes
 goto :cvcdone
 

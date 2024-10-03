@@ -47,7 +47,7 @@ LWP30INC    = $(LWP30DIR)\inc20
 # pretending to be Visual C++)
 #!if "$(DEBUG)" == "-DNDEBUG"
 # Doing a release build
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
@@ -127,7 +127,7 @@ CFLAG_GF=/GF
 !message MIPS Centaur compiler - forcing build with statically linked CRT.
 # /QmipsOb5000 increases the basic block threshold for optimisation
 COMMON_CFLAGS = /D_MT /QmipsOb5000
-CKB_STATIC_CRT = yes
+CKB_STATIC_CRT_NT = yes
 !endif
 
 # This turns features on and off based on set feature flags (CKF_*), the
@@ -612,7 +612,11 @@ wcos2:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWWCL" \
 	    CC="wcl386" \
+!if "$(CKB_STATIC_CRT_OS2)"=="yes"
         CC2="-Fh" \
+!else
+        CC2="-Fh -br" \
+!endif
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
@@ -633,7 +637,11 @@ wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWWCL" \
 	    CC="wcl386" \
+!if "$(CKB_STATIC_CRT_OS2)"=="yes"
         CC2="-Fh -d3" \
+!else
+        CC2="-Fh -d3 -br" \
+!endif
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
