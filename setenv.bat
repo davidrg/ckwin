@@ -86,7 +86,9 @@ REM This should match the %PROCESSOR_ARCHITECTURE% on the target machine
 set CKB_TARGET_ARCH=x86
 
 set CKB_OPENSSL_SUFFIX=
-if exist %WATCOM%\binnt\wcl386.exe goto :bitcheckdone
+wcc386 . <nul 2>&1 > nul
+if %errorlevel% == 0 goto :bitcheckdone
+
 cl 2>&1 | findstr /C:"for x64" > nul
 if %errorlevel% == 0 goto :x64
 
@@ -536,10 +538,8 @@ set CKB_9X_COMPATIBLE=no
 set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 
-REM We can't look at OpenWatcoms help output for a version number because it
-REM waits for input ("Press any key to continue:"), so we'll just detect it by
-REM the presence of its environment variables.
-if exist %WATCOM%\binnt\wcl386.exe goto :watcomc
+wcc386 . <nul 2>&1 > nul
+if %errorlevel% == 0 goto :watcomc
 cl 2>&1 | findstr /C:"Version 19.4" > nul
 if %errorlevel% == 0 goto :vc144
 cl 2>&1 | findstr /C:"Version 19.3" > nul
@@ -590,9 +590,13 @@ if %errorlevel% == 0 goto :vc116
 goto :unsupported
 
 :watcomc
-REM TODO - ideally we should try and detect the version of OpenWatcom - at least 1.9 vs 2.0
+set ZINCBUILD=
+wcc386 . <nul 2>&1 | findstr /C:"Version 1.9" > nul
+if %errorlevel% == 0 set ZINCBUILD=ow19
+wcc386 . <nul 2>&1 | findstr /C:"Version 2.0" > nul
+if %errorlevel% == 0 set ZINCBUILD=ow20
+if "%ZINCBUILD%" == "" goto :unsupported
 set CK_COMPILER_NAME=OpenWatcom
-set ZINCBUILD=ow19
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
