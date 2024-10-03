@@ -862,7 +862,7 @@ LIBS = os2386.lib rexx.lib
 
 # Open Watcom doesn't have bigmath.lib
 #  -> this likely comes from the SRP distribution (srp\srp-1.4\cryptolib_1.1\VISUALC\BIGMATH)
-!if "$(CMP)" != "OWCL"
+!if "$(CMP)" != "OWCL" && "$(CMP)" != "OWWCL"
 LIBS = $(LIBS) bigmath.lib
 !endif
 
