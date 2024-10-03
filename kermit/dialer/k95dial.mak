@@ -38,7 +38,7 @@ WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
 !endif
 
 !if "$(CMP)" == "OWCL"
-# The OpenWatcom 1.9 linker fails with an internal error using the normal linker options.
+# The Open Watcom 1.9 linker fails with an internal error using the normal linker options.
 WNT_LINK_OPTS=-subsystem:windows /MAP
 !else
 WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
@@ -54,7 +54,7 @@ WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib 
 !if $(MSC_VER) < 130
 !message Using ctl3d32
 # CTL3D32 is only available on Visual C++ 6.0 and earlier. Visual C++ 2002 and
-# OpenWatcom (which we pretend is VC++ 2002) do not have it.
+# Open Watcom (which we pretend is VC++ 2002) do not have it.
 WNT_LIBS=$(WNT_LIBS) ctl3d32.lib
 !endif
 

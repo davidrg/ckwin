@@ -1,5 +1,5 @@
 @echo off
-REM For cross-compiling C-Kermit for OS/2 from Windows using OpenWatcom.
+REM For cross-compiling C-Kermit for OS/2 from Windows using Open Watcom.
 REM     --> DEBUG BUILD <--
 REM
 REM You should have already run owsetenv.bat to at a minimum to do the

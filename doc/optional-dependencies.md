@@ -310,7 +310,7 @@ libdes, a very old crypto library. Needless to say the security here will not be
 great, but perhaps it's better than entirely unencrypted telnet (assuming you 
 can find a telnet _server_ that supports the Encryption Option).
 
-This feature currently requires at least Visual C++ 5.0 - OpenWatcom and earlier
+This feature currently requires at least Visual C++ 5.0 - Open Watcom and earlier
 versions of Visual C++ are not supported due to makefile incompatibilities.
 
 To enable the Encryption Option, simply build libdes. To do this:

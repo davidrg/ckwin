@@ -165,7 +165,7 @@ CFLAGS = $(CFLAGS) /MD
 !endif
 
 !if "$(CMP)" == "OWCL"
-# The OpenWatcom 1.9 linker doesn't know what /nod is.
+# The Open Watcom 1.9 linker doesn't know what /nod is.
 LDFLAGS = /nologo /dll /map /debug:full
 !endif
 
@@ -189,7 +189,7 @@ CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
 !endif
 
 !if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
-# OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
+# Open Watcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
 !endif
 

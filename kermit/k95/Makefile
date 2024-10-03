@@ -13,7 +13,7 @@
 #   IA64 Windows		Visual C++ 2010
 #   Windows XP SP3+		Visual C++ 2019
 #	ARM Windows			Visual C++ 2022
-#   IBM OS/2 32bit		OpenWatcom 1.9
+#   IBM OS/2 32bit		Open Watcom 1.9
 #
 # The following optional dependencies are *NOT* supported when building with
 # GCC due to extensive use of cast-as-lvalue:
@@ -38,7 +38,7 @@ DEFINES=-DNO_SRP -DNDEBUG -DWIN32 -D_WIN32 -D_CONSOLE -D__32BIT__ \
        	-DCK_HAVE_INTPTR_T -DXYZMODEM -DOPENSSL_NO_COMP -DNOREXX
 # -DZLIB : Only if built with zlib. Probably not actually used so doesn't matter.
 # -DCK_CONPTY : PTY support on Windows 10+, doesn't currently build with MinGW
-# SRP, Kerberos: Currently requires Visual C++ or OpenWatcom due to lvalue casts.
+# SRP, Kerberos: Currently requires Visual C++ or Open Watcom due to lvalue casts.
 #				 Not used anymore due to out-of-date dependencies so doesn't matter.
 
 KUIDEFINES=-DSTRICT -D_WINDOWS -DSCRIPTTERM -DOS2TEST -DKUI -DK95G -DCK_WIN

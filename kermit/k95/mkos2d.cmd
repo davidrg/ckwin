@@ -1,5 +1,5 @@
 @echo off
-REM For compiling C-Kermit for OS/2 on an OS/2 host using OpenWatcom.
+REM For compiling C-Kermit for OS/2 on an OS/2 host using Open Watcom.
 REM     --> DEBUG BUILD <--
 REM
 REM You should have already run owsetenv.cmd to at a minimum to do the
