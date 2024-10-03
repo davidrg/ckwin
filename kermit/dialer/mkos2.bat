@@ -1,6 +1,6 @@
 @echo off
 REM For cross-compiling the C-Kermit for OS/2 Dialer from Windows using
-REM OpenWatcom.
+REM Open Watcom.
 REM
 REM You should have already run owsetenv.bat to at a minimum to do the
 REM following:
@@ -27,7 +27,7 @@ REM Restore old include and lib paths.
 set INCLUDE=%OLDINCLUDE%
 set LIB=%OLDLIB%
 
-REM because OpenWatcoms nmake clone doesn't seem to set errorlevel when the
+REM because Open Watcom 1.9s nmake clone doesn't seem to set errorlevel when the
 REM build fails.
 if not exist k2dial.exe goto :missingoutputs
 

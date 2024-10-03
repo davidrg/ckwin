@@ -1,5 +1,5 @@
 @echo off
-REM For compiling the C-Kermit Dialer for OS/2 on an OS/2 host using OpenWatcom.
+REM For compiling the C-Kermit Dialer for OS/2 on an OS/2 host using Open Watcom.
 REM
 REM You should have already run owsetenv.cmd to at a minimum to do the
 REM following:
