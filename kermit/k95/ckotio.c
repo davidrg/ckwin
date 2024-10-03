@@ -9424,7 +9424,10 @@ conkbg(void) {
 
     *p = '\0';
 
-/* TODO: This doesn't build on Open Watcom currently*/
+/* TODO: This doesn't build on Open Watcom currently :
+ *      OpenWatcom names some of the KBDHWID struct members differently,
+ *      and KbdGetHWID produces an "undefined symbol KBD16GETHWID_"
+ *      link error */
 #ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 
