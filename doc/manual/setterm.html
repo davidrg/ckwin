@@ -6,8 +6,8 @@
 
 <h2>The SET TERMINAL Command</h2>
 
-Kermit 95's <tt>SET</tt> <tt>TERMINAL</tt> and related commands.  These
-commands can be issued at the <tt>K-95&#62;</tt> prompt in the Command window,
+Kermit 95's <tt>SET</tt> <tt>TERMINAL</tt> and related commands
+can be issued at the <tt>K-95&#62;</tt> prompt in the Command window,
 or from a command or initialization file, to change most aspects of the
 terminal emulator.
 
@@ -63,7 +63,8 @@ Kermit-95's terminal screen is active.  ON allows execution of "safe"
 commands and disallows obviously dangerous commands such as <tt>DELETE</tt>,
 <tt>RENAME</tt>, <tt>OUTPUT</tt>, and <tt>RUN</tt>.  <tt>OFF</tt> prevents
 execution of APCs.  <tt>UNCHECKED</tt> allows execution of all commands.  OFF
-is the default.  See Section 3.1 of the <tt>CKERMIT.UPD</tt> file for a full
+is the default.  See <a href="https://kermitproject.org/onlinebooks/uck2ep2.pdf#page=287">
+    Chapter 13 of <em>Using C-Kermit</em></a> for a full
 explanation.  APCs are not available in all terminal types.
 <p>
 <dt><tt>SET TERMINAL ARROW-KEYS <i>{</i> APPLICATION, CURSOR <i>}</i></tt>
@@ -86,12 +87,12 @@ entire current screen and the entire terminal scrollback buffer.
 <blockquote>
 When <tt>BLINK</tt> is <tt>ON</tt>, true blinking is done.  But due to
 limitations of console mode, true underlining is simulated by reversing the
-intensity of the background color.  If you turn <tt>BLINK</tt> <tt>OFF</tt>
+intensity of the background color. If you turn <tt>BLINK</tt> <tt>OFF</tt>
 while <tt>UNDERLINE</tt> is <tt>ON</tt>, then, because <tt>BLINK</tt> is now
 represented by reversing the intensity of the background color, blink and
 underline would look the same, so <tt>UNDERLINE</tt> reverts to <tt>OFF</tt>.
-(This will be remedied in the <a href="gloss.html#g_gui">full-GUI</a> version,
-where true underlining can be done.)
+K95G, the GUI version of Kermit 95, supports true underlining so does not have
+this problem.
 </blockquote>
 <p>
 <dt><tt>SET TERMINAL ATTRIBUTE PROTECTED <i>{</i> BOLD, DIM, INVISIBLE, NORMAL, REVERSE, ... <i>}</i></tt>
@@ -314,6 +315,10 @@ Can be used only in full-screen sessions.  Also see <tt>SET</tt>
 <tt>REMOTE-CHARACTER-SET</tt>.
 
 <p>
+<dt><tt>SET TERMINAL FONT <i>font-name</i> <i>height</i> <b>(K95G only)</b></tt>
+<dd>Sets the font and font height (in points) to that specified. This is a
+  synonym for <tt>SET GUI font</tt></dd>
+<p>
 
 <dt><tt>SET TERMINAL HEIGHT <i>number</i></tt>
 <dd>Changes the number of rows (lines) to use during terminal emulation, not
@@ -380,8 +385,16 @@ that are not code pages can not be used as local character sets unless you
 know something we don't).  In any case, you normally should not need to give
 this command, since (a) Kermit 95 probably knows what your PC code page is,
 and (b) you can't change it anyway.
-In Windows NT, this command affects only keyboard-to-host translation
+In Windows NT, this command affects only keyboard-to-host translation;
 incoming material is translated to UNICODE.
+
+<p>
+<dt><tt><a name="trmlfd">SET TERMINAL LF-DISPLAY <i>{</i> CRLF, NORMAL <i>}</i></tt></dt>
+<dd>Specifies how incoming linefeed characters are to be displayed
+    on your screen. <tt>NORMAL</tt> (the default) means a LF is displayed as
+    itself.  <tt>CRLF</tt> means a LF is displayed as a carriage return and a line
+    feed (LF). Note: this is like
+    <a href="#trmcrd"><tt>SET TERMINAL CR-DISPLAY</tt></a>
 
 <p>
 <dt><tt>SET TERMINAL LINE-SPACING</tt> <i>number</i></dt>
@@ -394,19 +407,23 @@ lines.
 <dt><tt>SET TERMINAL LOCKING-SHIFT <i>{</i> OFF, ON <i>}</i></tt>
 <dd>Tells Kermit 95 whether to send Shift-In/Shift-Out (Ctrl-O and Ctrl-N) to
 switch between 7-bit and 8-bit characters sent during terminal emulation
-over 7-bit connections.  Explained in <cite>Using C-Kermit</cite>, Chapters 8
-and 16.  <tt>OFF</tt> by default.
+over 7-bit connections.  Explained in <cite>Using C-Kermit</cite>,
+<a href="https://kermitproject.org/onlinebooks/uck2ep2.pdf#page=147">Chapters 8</a>
+and <a href="https://kermitproject.org/onlinebooks/uck2ep2.pdf#page=295">16</a>.  <tt>OFF</tt> by default.
+
 <p>
 <dt><tt>SET TERMINAL MARGIN-BELL <i>{</i> ON <i>[</i> <i>column</i> ], OFF <i>}</i></tt>
 <dd>Allows user to turn typewriter-like margin bell on and off, and when turned
 <tt>ON</tt>, also to specify the column at which the bell is rung, e.g. "set
 term margin-bell on 72".
+
 <p>
-<dt><tt><a name="trmnlm">SET TERMINAL MOUSE <i>{</i> OFF, ON <i>}</i></tt>
+<dt><tt>SET TERMINAL MOUSE <i>{</i> OFF, ON <i>}</i></tt>
 <dd>Tells Kermit 95 whether to control the mouse itself (<tt>ON</tt>) or
 to ignore it.  If the operating system is handling mouse events, then Kermit 95
 won't see them.
 
+<p>
 <dt><tt><a name="trmnlm">SET TERMINAL NEWLINE-MODE <i>{</i> OFF, ON <i>}</i></tt>
 <dd>Tells what to send when you press the Enter key while in the Terminal
 screen.  Normally only carriage return (CR) is sent.  <tt>SET TERM NEWLINE
@@ -432,7 +449,7 @@ mappings including kverbs and escape characters are disabled.  To turn off
 PCTERM keyboard mode while in CONNECT mode press Ctrl-CapsLock.  The
 default is OFF.
 <p>
-<dt><tt><a name="trmrcs">SET TERMINAL REMOTE-CHARACTER SET <i>name</i> <i>[</i> <i>{</i> G0, G1, G2, G3, ALL <i>}</i> <i>]</i></tt>
+<dt><tt><a name="trmrcs">SET TERMINAL REMOTE-CHARACTER-SET <i>name</i> <i>[</i> <i>{</i> G0, G1, G2, G3, ALL <i>}</i> <i>]</i></tt>
 <dd>Specifies the character set used by the host or application that Kermit 95
 is connected to, and assign it to one of the tables
 <a href="iso2022.html">G0 through G3</a>, or
@@ -496,7 +513,8 @@ bits.  The default is <tt>NORMAL</tt>.
 since the last update.  <tt>OFF</tt> means to refresh the entire screen when
 updating.  <tt>ON</tt> is the default.  Choose whichever method performs best
 on your computer.  If you are using a speech or Braille device, you should use
-<tt>ON</tt>.
+<tt>ON</tt>. Has no effect on K95G which always refreshes the entire screen.
+
 <p>
 <dt><tt><a name="sttupd">SET TERMINAL SCREEN-UPDATE <i>{</i> FAST, SMOOTH <i>}</i> <i>[</i> <i>milliseconds</i> <i>]</i></tt>
 <dd>Chooses the mechanism used for screen updating and the update frequency.
@@ -512,7 +530,9 @@ smooth-scrolling sequence.  However, note that K95 does not presently
 implement smooth scrolling in the VT100 sense.  If the host switches K95 from
 <tt>SMOOTH</tt> to <tt>FAST</tt>, the most recently specified (or if none,
 default) update interval is used.  If you are using a speech or Braille
-device, you should <tt>SET TERMINAL SCREEN-UPDATE SMOOTH</tt>.
+device, you should <tt>SET TERMINAL SCREEN-UPDATE SMOOTH</tt>. SMOOTH is not
+supported by K95G at this time.
+
 <p>
 <dt><tt><a name="t_scroll">SET TERMINAL SCROLLBACK <i>lines</i></tt>
 <dd>Sets size of Terminal screen rollback (scrollback) buffer.  <i>lines</i>
@@ -547,6 +567,23 @@ these sequences.  To make Kermit 95 ignore color setting sequences, in effect
 turning into a monochrome terminal, use <tt>SET TERMINAL SGR-COLORS OFF</tt>.
 This command affects all ANSI-style emulations, including ANSI, SCOANSI, AT386,
 etc, as well as Wyse 370 and VT100/102/220/320.
+
+<p>
+
+<dt><tt>SET TERMINAL SNI-CH.CODE <i>{ ON, OFF }</i></tt>
+<dd>This command controls the state of the CH.CODE key.  It is the equivalent
+to the SNI_CH_CODE Keyboard verb.  The SNI terminal uses CH.CODE to
+easily switch between the National Language character set and U.S. ASCII.
+The default is ON which means to display characters as U.S. ASCII.  When
+OFF the lanuage specified by SET TERMINAL SNI-LANUAGE is used to display
+characters when 7-bit character sets are in use.
+
+<p>
+
+<dt><tt>SET TERMINAL SNI-FIRMWARE-VERSIONS <i>kbd-version terminal-version</i></tt>
+<dd>Specifies the Firmware Version number that should be reported to the host
+when the terminal is queried.  The default is 920031 for the keyboard
+and 830851 for the terminal.
 
 <p>
 
@@ -637,7 +674,7 @@ automatically in response to escape sequences from the other computer.
 default is <tt>ENABLED</tt>.  When <tt>TERMINAL</tt> <tt>VIDEO-CHANGE</tt> is
 <tt>DISABLED</tt>, the emulator switches modes without changing the window
 size, and wide screens can be viewed by <a href="scroll.html">scrolling
-horizontally</a>.
+horizontally</a>. Not supported in K95G.
 
 <p>
 
@@ -648,7 +685,7 @@ NRC mode is activated.  The default is "North American".
 <p>
 
 <dt><tt>SET TERMINAL VT-NRC-MODE { ON, OFF }</tt>
-<dd>OFF (default) chooses VT multinational Character Set mode.  OFF chooses
+<dd>OFF (default) chooses VT multinational Character Set mode.  ON chooses
 VT National Replacement Character-set mode.  The NRC is selected with
 SET TERMINAL VT-LANGUAGE.
 

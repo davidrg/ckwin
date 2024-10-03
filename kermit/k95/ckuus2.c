@@ -8706,7 +8706,7 @@ static char *hxyterm[] = {
 "  NRC mode is activated.  The default is \"North American\".",
 " ",
 "SET TERMINAL VT-NRC-MODE { ON, OFF }",
-"  OFF (default) chooses VT multinational Character Set mode.  OFF chooses",
+"  OFF (default) chooses VT multinational Character Set mode.  ON chooses",
 "  VT National Replacement Character-set mode.  The NRC is selected with",
 "  SET TERMINAL VT-LANGUAGE",
 " ",
