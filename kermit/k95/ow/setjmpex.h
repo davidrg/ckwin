@@ -4,7 +4,7 @@
  * No warranty is given; refer to the file DISCLAIMER within this package.
  */
  
- /* Note: OpenWatcom is missing this file. It has been adjusted from the mingw version to work with OpenWatcom. */
+ /* Note: Open Watcom is missing this file. It has been adjusted from the mingw version to work with Open Watcom. */
  
 #ifndef _SETJMPEX_H_INCLUDED_
 #define _SETJMPEX_H_INCLUDED_

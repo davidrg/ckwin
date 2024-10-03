@@ -5363,7 +5363,7 @@ typedef unsigned int u_int;
 #ifdef CKT_NT31
 #ifdef CKT_NT35
 /* Any compiler capable of targeting NT 3.50 should support __int64
- * (Visual C++ 2.0, OpenWatcom) */
+ * (Visual C++ 2.0, Open Watcom) */
 #define CK_OFF_T __int64
 #else /* CKT_NT35 */
 /* Compilers capable of targeting only Windows NT 3.1

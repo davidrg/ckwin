@@ -1,5 +1,5 @@
 @echo off
-REM For cross-compiling C-Kermit for OS/2 from Windows using OpenWatcom.
+REM For cross-compiling C-Kermit for OS/2 from Windows using Open Watcom.
 REM
 REM You should have already run owsetenv.bat to at a minimum to do the
 REM following:
@@ -29,7 +29,7 @@ set INCLUDE=%OLDINCLUDE%
 set LIB=%OLDLIB%
 
 
-REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
+REM Open Watcom 1.9s nmake clone doesn't seem to set errorlevel when the build
 REM fails. So we'll check the expected outputs were generated and if not report
 REM the error ourselves.
 if not exist ckoclip.exe goto :missingoutputs

@@ -976,9 +976,9 @@ jobs:
           retention-days: 7
 
 
-  ##############################################################################
-  # Build with OpenWatcom 1.9 which allows targeting older versions of Windows #
-  ##############################################################################
+  ###############################################################################
+  # Build with Open Watcom 1.9 which allows targeting older versions of Windows #
+  ###############################################################################
   # It is also likely to be upset by the same sorts of things as Visual C++ 6
   # which reduces the likelihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
@@ -991,7 +991,7 @@ jobs:
       uses: open-watcom/setup-watcom@v0
       with:
         version: "1.9"
-      # Cache OpenWatcom because it takes quite a while to download and
+      # Cache Open Watcom because it takes quite a while to download and
       # decompress.
     - name: Cache openzinc
       uses: actions/cache@v4
@@ -1016,7 +1016,7 @@ jobs:
         call setenv.bat
         
         REM Enable Dynamic SSH just to be sure those bits are buildable
-        REM with OpenWatcom
+        REM with Open Watcom
         set CKF_SSH=yes
         set CKF_DYNAMIC_SSH=yes
         
@@ -1071,7 +1071,7 @@ jobs:
         path: ${{ github.workspace }}\ckwin
 
       # ctl3dins is a utility for installing ctl3d32 and, in some cases,
-      # the Visual C++ runtime. Builds of the Dialer done with OpenWatcom
+      # the Visual C++ runtime. Builds of the Dialer done with Open Watcom
       # can't use ctl3d32 (it a Visual C++ thing), and they don't need the
       # Visual C++ runtime, so ctl3dins.exe serves no purpose here. Even
       # worse, Microsoft AntiVirus frequently misdetects it as being a
@@ -1082,7 +1082,7 @@ jobs:
       run: del ${{ github.workspace }}\ckwin\ctl3dins.exe
       shell: cmd
 
-      # OpenWatcom builds don't include SSH so don't need the SSH Readme
+      # Open Watcom builds don't include SSH so don't need the SSH Readme
     - name: Remove SSH Readme
       run: del ${{ github.workspace }}\ckwin\ssh-readme.html
       shell: cmd
@@ -1153,7 +1153,7 @@ jobs:
           path: ${{ github.workspace }}\ckwin
 
       # ctl3dins is a utility for installing ctl3d32 and, in some cases,
-      # the Visual C++ runtime. Builds of the Dialer done with OpenWatcom
+      # the Visual C++ runtime. Builds of the Dialer done with Open Watcom
       # can't use ctl3d32 (it a Visual C++ thing), and they don't need the
       # Visual C++ runtime, so ctl3dins.exe serves no purpose here. Even
       # worse, Microsoft AntiVirus frequently misdetects it as being a
@@ -1164,7 +1164,7 @@ jobs:
         run: del ${{ github.workspace }}\ckwin\ctl3dins.exe
         shell: cmd
 
-        # OpenWatcom builds don't include SSH so don't need the SSH Readme
+        # Open Watcom builds don't include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
         run: del ${{ github.workspace }}\ckwin\ssh-readme.html
         shell: cmd
@@ -1183,7 +1183,7 @@ jobs:
           retention-days: 7
 
   ##############################################################################
-  # Build C-Kermit for OS/2 with OpenWatcom 1.9 which can cross-compile        #
+  # Build C-Kermit for OS/2 with Open Watcom 1.9 which can cross-compile       #
   ##############################################################################
   Build-OpenWatcom19-OS2:
     runs-on: windows-latest

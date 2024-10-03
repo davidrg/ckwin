@@ -29,7 +29,7 @@ COMPILER = Visual C++
 !IF ([wcc386 . <nul 2>&1 > nul] == 0)
 # Open Watcom
 CMP = OWCL
-COMPILER = OpenWatcom C/C++ CL clone
+COMPILER = Open Watcom C/C++ CL clone
 MSC_VER = 130
 COMPILER_VERSION = Visual C++ 7.0 compatible
 
@@ -334,7 +334,7 @@ CROSS_BUILD_COMPATIBLE = no
 
 !ELSE IF "$(PLATFORM)" == "OS2"
 
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
+# On OS/2 we'll just assume Open Watcom for now. I don't have access to the
 # IBM compiler to find a way to tell it apart from watcom like we do for
 # Visual C++.
 CMP = OWWCL

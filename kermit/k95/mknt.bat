@@ -16,7 +16,7 @@ del ckcmai.obj ckuus5.obj
 %MAKE% /nologo /e /f ckoker.mak msvc
 move *.obj %OUTDIR%  > nul
 
-REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
+REM Open Watcom 1.9s nmake clone doesn't seem to set errorlevel when the build
 REM fails. And VC5 nmake often seems to complete successfully but report an
 REM error of 1 even though we're not supplying the /K flag. So we'll check the
 REM expected outputs were produced to detect failure instead:

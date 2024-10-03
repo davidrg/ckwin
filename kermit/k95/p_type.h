@@ -58,7 +58,7 @@ typedef unsigned long   BOOLEAN;
 #ifdef NT
 #ifndef __WATCOMC__
 #if !defined(_MSC_VER) || _MSC_VER > 800
-/* Visual C++ 1.0 32-bit edition (MSC_VER==800) and OpenWatcom don't like this */
+/* Visual C++ 1.0 32-bit edition (MSC_VER==800) and Open Watcom don't like this */
 typedef long APIRET ;
 #endif
 #endif /* __WATCOMC__ */

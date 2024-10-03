@@ -406,14 +406,14 @@ slipping somewhat.
   to match what CKW actually supports
 
 ### Source Changes:
-* The Dialer now builds with OpenWatcom 1.9 and Visual C++ 2.0
+* The Dialer now builds with Open Watcom 1.9 and Visual C++ 2.0
 * dropped the /ALIGN linker flag which has produced a linker warning since 
   Visual C++ 5.0 SP3 (November 1997)
 
 ## C-Kermit for Windows 10.0b4 beta 3 - 14 September 2022
 This release focused on improving SSH support, returning SSL support, minor
 enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
-(Visual C++ 2.0, OpenWatcom 2.0, OpenWatcom 1.9 for OS/2)
+(Visual C++ 2.0, Open Watcom 2.0, Open Watcom 1.9 for OS/2)
 
 ### New Features:
 * Idle SSH sessions can now be prevented from timing out by supplying some
@@ -464,7 +464,7 @@ enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
   terminal type.
 * Fixed terminal being cleared the first time you move the K95G window and
   possibly the other random occurrences of this happening
-* Fixed terminal scrolling bug in OpenWatcom! Builds done with OpenWatcom are
+* Fixed terminal scrolling bug in Open Watcom! Builds done with Open Watcom are
   now functionally equivalent to Visual C++ 6 in platform support and features
   and have no known issues unique to that compiler.
 * Fixed auto-download "ask" setting not working on Windows NT 3.51
@@ -493,11 +493,11 @@ enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
     * ssh v2 rekey
 
 ### Source Changes:
-* Fixed compatibility with the OpenWatcom 2.0 fork
+* Fixed compatibility with the Open Watcom 2.0 fork
 * Added support for building with Visual C++ 2.0
-* Added support for targeting Windows NT 3.50 with either OpenWatcom 1.9 or
+* Added support for targeting Windows NT 3.50 with either Open Watcom 1.9 or
   Visual C++ 2.0
-* Now builds on OS/2 with OpenWatcom 1.9. Only minimal testing has been done.
+* Now builds on OS/2 with Open Watcom 1.9. Only minimal testing has been done.
   Networking does not work and the builds are done without optimisations.
   Further work is required, likely by someone with OS/2 development knowledge,
   to get it back to the Kermit-95 level of functionality.
@@ -514,14 +514,14 @@ the end so focus shifted to built-in SSH using libssh.
 
 Support for some older Visual C++ releases (4.0 and 5.0) was added to enable 
 RISC NT builds in the future (Visual C++ 4.0 was the last release to support 
-MIPS and PowerPC), and OpenWatcom 1.9 support was added to enable future OS/2 
+MIPS and PowerPC), and Open Watcom 1.9 support was added to enable future OS/2 
 work.
 
  * Fixed builds with Visual C++ 14.x (2015-2022)
  * Fixed file transfer crash on builds done with Visual C++ 2008 and newer
  * Fixed builds with free versions of Visual C++ that don't include MFC
  * PTY support on Windows 10 v1809 and newer
- * Added OpenWatcom 1.9 support (win32 target only)
+ * Added Open Watcom 1.9 support (win32 target only)
  * Fixed building with Visual C++ 97 (5.0)
  * Fixed building with Visual C++ 4.0
  * Fixed building with the free Visual C++ 2003 toolkit & Platform SDK
