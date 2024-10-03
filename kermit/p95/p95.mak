@@ -115,7 +115,7 @@ DEFS = p95.def
 
 # Visual C++ only libraries
 !if "$(CMP)" == "VCXX"
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 LIBS = $(LIBS) libcmt.lib
 !else
 LIBS = $(LIBS) msvcrt.lib
@@ -158,7 +158,7 @@ LDFLAGS = /nologo /dll /nod /map
 #                 the IA64 cross-compiler complains about it when using
 #                 the Win7.1 SDK.
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 CFLAGS = $(CFLAGS) /MT
 !else
 CFLAGS = $(CFLAGS) /MD
