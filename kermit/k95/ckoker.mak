@@ -1162,11 +1162,17 @@ se.exe: se.obj se.res $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ se.obj se.res $(LIBS)
 <<
 
+!if "$(CKB_IBMTCP20)" == "yes"
+K2DC_INCLUDE=-I$(IBM20INC)
+K2DC_LIBS=$(IBM20LIBS)
+K2DC_DEFINES=-DTCPV40HDRS -D_ERRNO_H_INCLUDED
+!endif
+
 k2dc.exe: k2dc.obj $(DEF) ckoker.mak
 !if "$(CMP)" == "OWWCL"
-        $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS)
+        $(CC) $(CC2) $(LINKFLAGS) k2dc.obj $(OUT)$@ $(LDFLAGS) $(LIBS) $(K2DC_LIBS)
 !else
-      	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS)
+      	$(CC) $(CC2) /B"$(LINKFLAGS)" k2dc.obj $(OUT) $@ $(LDFLAGS) $(LIBS) $(K2DC_LIBS)
 !endif
 
 orlogin.exe: rlogin.obj $(DEF) ckoker.mak
@@ -1605,6 +1611,17 @@ srp-passwd$(O): srp-passwd.c getopt.h
 iksdsvc$(O):    iksdsvc.c 
 
 iksd$(O):    iksd.c 
+
+k2dc.obj: k2dc.c
+!if "$(CMP)" == "OWWCL"
+        @echo > wcc386.pch
+        del wcc386.pch
+	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(K2DC_INCLUDE) \
+	    $(K2DC_DEFINES) -c k2dc.c
+!else
+	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
+           $(DEBUG) $(OPT) $(DEFINES) -DTCPV40HDRS -c k2dc.c
+!endif
 
 ckof13.obj: ckoftp.c ckotcp.h
         @echo > ckof13.obj
