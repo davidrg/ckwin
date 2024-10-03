@@ -151,7 +151,7 @@ CKB_STATIC_CRT = yes
 !if "$(OS2TCPDLLS)" == ""
 
 # Open Watcom can always build cko32i41.dll
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 OS2TCPDLLS=$(OS2TCPDLLS) cko32i41.dll
 !endif
 
@@ -1224,7 +1224,7 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
 # cko32i20.def
 # TODO: What libs are required for the IBM compiler when targeting TCP-32?
 cko32i41.dll: ckoi41.obj ckoker.mak
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj $(OUT)$@ \
 	 $(LINKFLAGS_DLL) tcpip32.lib $(LIBS)
 !else
@@ -1618,7 +1618,7 @@ ckof13.obj: ckoftp.c ckotcp.h
 ckoi41.obj: ckoibm.c ckotcp.h
         @echo > ckoi41.obj
         del ckoi41.obj
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         @echo > wcc386.pch
         del wcc386.pch
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) \
@@ -1647,7 +1647,7 @@ ckoi20.obj: ckoibm.c ckotcp.h
 ckoi12.obj: ckoibm.c ckotcp.h
         @echo > ckoi12.obj
         del ckoi12.obj
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
         @echo > wcc386.pch
         del wcc386.pch
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM12INC) -D_ERRNO_H_INCLUDED \
