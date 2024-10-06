@@ -2575,34 +2575,6 @@ main(int argc, char ** argv) {
     }
     printf("\n");
 #endif /* COMMENT */
-#ifdef NT
-    drawbar();
-    printf("\n");
-    printf(
-" Now please enter your name, your company (optional), and %s serial\n",PRODUCT
-	   );
-    printf(
-" number into the Registration Window...\n\n"
-	   );    
-   printf(
-" In the Serial Number box, type your entire %s serial number, beginning with\n",ABBR);
-printf(" %s and ending with 1.1, over the template that is shown in the box,\n",ABBR);
-printf(" including the punctuation.\n\n");
-
-printf(" When you have finished registering, click the mouse back on this window to\n");
-printf(" continue SETUP (if necessary)...\n");
-
-    mysystem("ckreg");
-
-    printf("\n");
-    drawbar();
-    printf("\n");
-    mysystem("k95regtl");
-
-#else
-    mysystem("k2reg");
-#endif
-    printf("\n");
     drawbar();
     printf("\n");
 
@@ -2641,15 +2613,6 @@ printf(" continue SETUP (if necessary)...\n");
     }
     printf(
 "  instructions in the README.TXT file.\n");
-    printf("\n");
-    printf(
-"  Please be sure to fill out and mail in your registration card with one\n");
-    printf(
-"  of your serial-number stickers attached to it.  This gives you access\n");
-    printf(
-"  to the %s support BBS for news and patches, and it entitles you\n",PRODUCT);
-    printf(
-"   to a discount on the next major release.\n");
     printf("\n");
     printf("Thank you for choosing %s!\n",PRODUCT);
     drawbar();
