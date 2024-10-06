@@ -982,18 +982,20 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 		ABBR);
     }
 
-    printf("Assigning the K95F_OS2 icon to %sDIAL.EXE\n",ABBR);
     sprintf(exefile,"%s\\%sDIAL.EXE",diskdir,ABBR);
-    sprintf(iconfile,"%s\\ICONS\\K95F_OS2.ICO",diskdir);
-    iconinfo.cb = sizeof(ICONINFO);
-    iconinfo.fFormat = ICON_FILE ;
-    iconinfo.pszFileName = iconfile;
-    iconinfo.hmod = NULL ;
-    iconinfo.resid = 0 ;
-    iconinfo.cbIconData = 0 ;
-    iconinfo.pIconData = NULL ;
-    if ( !WinSetFileIcon( exefile, &iconinfo ) ) {
-	printf(" ERROR: Unable to assign icon to %sDIAL.EXE\n",ABBR);
+    if (zchki(exefile) > 0) {
+        printf("Assigning the K95F_OS2 icon to %sDIAL.EXE\n", ABBR);
+        sprintf(iconfile, "%s\\ICONS\\K95F_OS2.ICO", diskdir);
+        iconinfo.cb = sizeof(ICONINFO);
+        iconinfo.fFormat = ICON_FILE;
+        iconinfo.pszFileName = iconfile;
+        iconinfo.hmod = NULL;
+        iconinfo.resid = 0;
+        iconinfo.cbIconData = 0;
+        iconinfo.pIconData = NULL;
+        if (!WinSetFileIcon(exefile, &iconinfo)) {
+            printf(" ERROR: Unable to assign icon to %sDIAL.EXE\n", ABBR);
+        }
     }
 
     printf("Building %s Folder\n",PRODUCT);
@@ -1034,14 +1036,18 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 	printf(" ERROR: Unable to create Program Object\n");
     }
 
-    printf("Building Kermit/2 Dialer Program Object\n");
-    sprintf(title,"Kermit/2 Dialer");
-    sprintf(classname,"WPProgram");
-    sprintf(location,"<%sFLDR>",ABBR);
-    sprintf(setup,"EXENAME=%s\\%sDIAL.EXE;STARTUPDIR=%s;PARAMETERS=%%;ICONFILE=%s\\%s.ICO",
-	     diskdir,ABBR,diskdir,diskdir,"K95F_OS2");
-    if ( !WinCreateObject( classname, title, setup, location, CO_UPDATEIFEXISTS) ) {
-	printf(" ERROR: Unable to create Program Object\n");
+    /* Only create the dialer link if it was installed */
+    sprintf(setup,"%s\\%sDIAL.EXE",diskdir, ABBR);
+    if (zchki(setup) > 0) {
+        printf("Building Kermit/2 Dialer Program Object\n");
+        sprintf(title, "Kermit/2 Dialer");
+        sprintf(classname, "WPProgram");
+        sprintf(location, "<%sFLDR>", ABBR);
+        sprintf(setup, "EXENAME=%s\\%sDIAL.EXE;STARTUPDIR=%s;PARAMETERS=%%;ICONFILE=%s\\%s.ICO",
+                diskdir, ABBR, diskdir, diskdir, "K95F_OS2");
+        if (!WinCreateObject(classname, title, setup, location, CO_UPDATEIFEXISTS)) {
+            printf(" ERROR: Unable to create Program Object\n");
+        }
     }
 
     printf("Building %s PM Clipboard Server Program Object\n",PRODUCT);
@@ -2624,6 +2630,15 @@ printf(" continue SETUP (if necessary)...\n");
 "  To run it, open the folder and click on the colorful %sDIAL icon.\n",ABBR);
     printf(
 "  To create a shortcut icon for %s on your desktop, follow the\n",PRODUCT);
+    if (zchki(ABBR "DIAL.EXE") > 0) {
+        printf(
+            "  To run it, open the folder and click on the colorful %sDIAL icon.\n",
+            ABBR);
+    } else {
+        printf(
+            "  To run it, open the folder and click on the colorful %s icon.\n",
+            ABBR);
+    }
     printf(
 "  instructions in the README.TXT file.\n");
     printf("\n");
@@ -2646,7 +2661,8 @@ printf(" continue SETUP (if necessary)...\n");
 	printf("\n");
     }
 #else
-    if (getok("Would you like to start Kermit/2 now? (y/n)",'Y')) {
+    if (zchki("k2dial.exe") > 0 &&
+        getok("Would you like to start Kermit/2 now? (y/n)",'Y')) {
        mysystem("k2dial.exe");
     } else {
 	printf("\n");
