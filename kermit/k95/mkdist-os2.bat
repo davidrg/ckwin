@@ -1,16 +1,28 @@
 @echo off
 @echo === Make Distribution (OS/2) ===
 
+if exist dist-os2\NUL rmdir /S /Q dist-os2
+
 @echo Create directories...
 if not exist dist-os2\NUL mkdir dist-os2
 if not exist dist-os2\docs\NUL mkdir dist-os2\docs
 if not exist dist-os2\docs\manual\NUL mkdir dist-os2\docs\manual
+if not exist dist-os2\download\NUL mkdir dist-os2\download
+if not exist dist-os2\EAS\NUL mkdir dist-os2\EAS
+if not exist dist-os2\ICONS\NUL mkdir dist-os2\ICONS
+if not exist dist-os2\KEYMAPS\NUL mkdir dist-os2\KEYMAPS
+if not exist dist-os2\PHONES\NUL mkdir dist-os2\PHONES
+if not exist dist-os2\PRINTER\NUL mkdir dist-os2\PRINTER
+if not exist dist-os2\PUBLIC\NUL mkdir dist-os2\PUBLIC
+if not exist dist-os2\SCRIPTS\NUL mkdir dist-os2\SCRIPTS
+if not exist dist-os2\TMP\NUL mkdir dist-os2\TMP
+if not exist dist-os2\USERS\NUL mkdir dist-os2\USERS
 
 @echo Move build outputs...
 move *.exe dist-os2
 move cko32*.dll dist-os2
 move dist-os2\ckwart.exe .\
-move dist-os2\osetup.exe .\
+ren dist-os2\osetup.exe setup.exe
 ren dist-os2\ckoker32.exe k2.exe
 ren dist-os2\otelnet.exe telnet.exe
 ren dist-os2\otextps.exe textps.exe
@@ -25,18 +37,74 @@ if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt
 @echo Copy resources...
 copy k2.ini dist-os2
 
-REM OS/2 builds with Open Watcom don't appear to depend on any Watcom runtime
-REM libraries (ckoker32.exe runs fine on a Warp 3 VM thats never had Open Watcom
-REM installed)
+REM OS/2 builds with Open Watcom are currently statically linked to the
+REM C runtime, so no need to copy their dist DLLs
 
-REM @echo Copy enabled optional dependencies
-REM for %%I in (%CK_DIST_DLLS%) do copy %%I dist-os2\
+REM DOWNLOAD directory
+copy download-readme.txt dist-os2\DOWNLOAD\readme.txt
 
-@echo Copy licenses
-copy ..\..\COPYING dist-os2
-if exist dist-os2\ssh.dll copy %libssh_root%\COPYING dist-os2\COPYING.libssh
-if not exist dist-os2\openssl.exe goto :nossl
-REM OpenSSL License was renamed in 3.0.0 to LICENSE.txt
-if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist-os2\COPYING.openssl
-if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist-os2\COPYING.openssl
-:nossl
+REM EAS directory
+REM k2.eas, k2dial.eas, k2reg.eas  - Extended Attributes? Is this something
+REM                                  Unzip does?
+
+REM ICONS directory
+@echo Copy icons...
+copy k95f_os2.ico dist-os2\ICONS\
+copy k95g_os2.ico dist-os2\ICONS\
+copy ckoclip.ico dist-os2\ICONS\k2clip.ico
+copy ckermit.ico dist-os2\ICONS\k2.ico
+copy icons-readme.txt dist-os2\ICONS\readme.txt
+
+REM KEYMAPS directory
+@echo Copy keymaps...
+set CK_DIST_KEYMAPS=vt220.ksc keycodes.txt capslock.ksc
+REM These also used to be distributed but aren't very useful anymore:
+REM       emacs.ksc keypad.ksc sni.ksc  wp50.ksc wp51.ksc
+REM They *were* available at:
+REM   ftp://kermit.columbia.edu/pub/kermit/archives/k95keymaps.zip
+REM Now archived at:
+REM   https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu-2/pub/kermit/archives/k95keymaps.zip
+
+for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\keymaps\
+copy keymaps-readme.txt dist\keymaps\readme.txt
+
+REM Ideally we'd generate default.ksc here, but we can't run OS/2 binaries
+REM on Windows.
+REM TODO: Is default.ksc from a windows build identical?
+
+REM PHONES directory
+REM Contains dialing directories. All the files previously distributed here are
+REM completely obsolete - none of the dial-in BBS still exist 20+ years later.
+REM TODO: PHONES\readme.txt
+
+REM PRINTER directory
+REM originally contained:
+REM     pcaprint.sh, pcprint.com, pcprint.man, pcprint.sh
+REM         Utilities for printing from a unix or VMS host to a local printer
+REM         via K95
+REM     textps.txt
+REM         Documentation for the textps utility
+REM     readme.txt
+REM         Document describing the contents of this directory
+
+REM PUBLIC directory
+@echo Copy public files...
+copy hostuser.txt dist-os2\PUBLIC\
+
+REM SCRIPTS directory
+@echo Copy scripts...
+set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc
+set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc
+set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% npage.ksc recover.ksc review.ksc rgrep.ksc host.cfg
+for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
+copy scripts-readme.txt dist\scripts\readme.txt
+
+REM TMP directory
+REM TODO: TMP\readme.txt
+
+REM USERS directory
+@echo Copy User files...
+copy hostmode-greeting.txt dist-os2\USERS\greeting.txt
+copy hostmode-help.txt dist-os2\USERS\hostmode.txt
+
+REM TODO: Copy over k95custom.sample as k2custom.sample

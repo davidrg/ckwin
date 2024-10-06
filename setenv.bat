@@ -73,6 +73,13 @@ REM     \ibmtcp\lib\tcp32dll.lib
 REM     \ibmtcp\include\types.h
 set ibm20dir=%root%\ibmtcp
 
+REM Info-Zip Distribution
+REM   \zip.exe              - for the host architecture and platform
+REM   \unzip.exe            - for the host architecture and platform
+REM   \os2\unzipsfx.exe     - 32bit OS/2 version of unzipsfx.exe
+set infozip_root=%root%\info-zip
+
+
 REM Make program must be something sufficiently compatible with nmake 1.40 (Visual C++ 1.1). Jom is recommended
 REM for doing parallel builds.
 set make=nmake
@@ -261,6 +268,7 @@ if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
 if not "%rexx_root_override%"=="" set rexx_root=%rexx_root_override%
 if not "%ibm20dir_override%"=="" set ibm20dir=%ibm20dir_override%
+if not "%infozip_root_override%"=="" set infozip_root=%infozip_root_override%
 if not "%make_override%"=="" set make=%make_override%
 
 REM The Open Watcom 1.9 linker can't handle %LIB% starting with a semicolon which
