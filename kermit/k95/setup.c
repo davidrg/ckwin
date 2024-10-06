@@ -1676,7 +1676,7 @@ main(int argc, char ** argv) {
     /* assume that it is an Update, otherwise assume New install */
 
    drawbar();
-   if (getok("Will you be using a modem? ",'Y')) {
+   if (getok("Will you be using a modem? ",'N')) {
       printf("\n");
 #ifdef NT
        if ( tapiavail && ntapiline ) {
