@@ -1005,15 +1005,19 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 	printf(" ERROR: Unable to create Folder\n");
     }
 
-    printf("Building Kermit 95 Hyperlink Manual object\n",PRODUCT);
-    sprintf(title,"Kermit 95 Hyperlink Manual");
-    sprintf(classname,"WPProgram");
-    sprintf(location,"<%sFLDR>",ABBR);
-    sprintf(setup,
-            "EXENAME=NETSCAPE.EXE;STARTUPDIR=%s\\docs\\manual;PARAMETERS=%s\\docs\\manual\\kermit95.htm",
-	     diskdir,diskdir);
-    if ( !WinCreateObject( classname, title, setup, location, CO_UPDATEIFEXISTS) ) {
-	printf(" ERROR: Unable to create Program Object\n");
+    /* Only create the manual link if it was installed */
+    sprintf(setup,"%s\\docs\\manual\\kermit95.htm",diskdir);
+    if (zchki(setup) > 0) {
+        printf("Building Kermit 95 Hyperlink Manual object\n", PRODUCT);
+        sprintf(title, "Kermit 95 Hyperlink Manual");
+        sprintf(classname, "WPProgram");
+        sprintf(location, "<%sFLDR>", ABBR);
+        sprintf(setup,
+                "EXENAME=NETSCAPE.EXE;STARTUPDIR=%s\\docs\\manual;PARAMETERS=%s\\docs\\manual\\kermit95.htm",
+                diskdir, diskdir);
+        if (!WinCreateObject(classname, title, setup, location, CO_UPDATEIFEXISTS)) {
+            printf(" ERROR: Unable to create Program Object\n");
+        }
     }
 
     printf("Building Kermit/2 Program Object\n");
