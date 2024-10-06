@@ -2587,13 +2587,16 @@ main(int argc, char ** argv) {
     printf("\n");
 #endif
 
-    if (getok("Would you like to read the README.TXT file now? (y/n)",'Y')) {
+    if (zchki("README.TXT") > 0) {
+        if (getok("Would you like to read the README.TXT file now? (y/n)",'Y')) {
 #ifdef NT
-	sprintf(buf,"edit README.TXT",diskdir);
+            sprintf(buf,"edit README.TXT",diskdir);
 #else /* NT */
-	sprintf(buf,"e README.TXT",diskdir);
+            sprintf(buf,"e README.TXT",diskdir);
 #endif /* NT */
-	mysystem(buf);
+            mysystem(buf);
+        }
+        printf("\n");
     }
 
     printf("\n");
@@ -2612,8 +2615,6 @@ main(int argc, char ** argv) {
             "  To run it, open the folder and click on the colorful %s icon.\n",
             ABBR);
     }
-    printf(
-"  instructions in the README.TXT file.\n");
     printf("\n");
     printf("Thank you for choosing %s!\n",PRODUCT);
     drawbar();
