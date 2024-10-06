@@ -999,7 +999,8 @@ os2Folder(char * diskdir, int new_install, int windowable) {
     }
 
     printf("Building %s Folder\n",PRODUCT);
-    sprintf(title,"%s 1.1",PRODUCT);
+    /*sprintf(title,"%s 1.1",PRODUCT);*/
+    sprintf(title,"%s",PRODUCT);
     sprintf(classname,"WPFolder");
     sprintf(location,"<WP_DESKTOP>");
     sprintf(setup,"OBJECTID=<%sFLDR>",ABBR);
