@@ -984,17 +984,18 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 
     sprintf(exefile,"%s\\%sDIAL.EXE",diskdir,ABBR);
     if (zchki(exefile) > 0) {
-    printf("Assigning the K95F_OS2 icon to %sDIAL.EXE\n",ABBR);
-    sprintf(iconfile,"%s\\ICONS\\K95F_OS2.ICO",diskdir);
-    iconinfo.cb = sizeof(ICONINFO);
-    iconinfo.fFormat = ICON_FILE ;
-    iconinfo.pszFileName = iconfile;
-    iconinfo.hmod = NULL ;
-    iconinfo.resid = 0 ;
-    iconinfo.cbIconData = 0 ;
-    iconinfo.pIconData = NULL ;
-    if ( !WinSetFileIcon( exefile, &iconinfo ) ) {
-	printf(" ERROR: Unable to assign icon to %sDIAL.EXE\n",ABBR);
+        printf("Assigning the K95F_OS2 icon to %sDIAL.EXE\n", ABBR);
+        sprintf(iconfile, "%s\\ICONS\\K95F_OS2.ICO", diskdir);
+        iconinfo.cb = sizeof(ICONINFO);
+        iconinfo.fFormat = ICON_FILE;
+        iconinfo.pszFileName = iconfile;
+        iconinfo.hmod = NULL;
+        iconinfo.resid = 0;
+        iconinfo.cbIconData = 0;
+        iconinfo.pIconData = NULL;
+        if (!WinSetFileIcon(exefile, &iconinfo)) {
+            printf(" ERROR: Unable to assign icon to %sDIAL.EXE\n", ABBR);
+        }
     }
 
     printf("Building %s Folder\n",PRODUCT);
