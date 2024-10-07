@@ -30,6 +30,10 @@ ren dist-os2\orlogin.exe rlogin.exe
 ren dist-os2\ckoclip.exe k2clip.exe
 copy dist-os2\telnet.exe dist-os2\telnetpm.exe
 
+if "%CKF_XYZ%" == "no" goto :nop
+if exist ..\p95\p2.dll copy ..\p95\p2.dll dist-os2\
+:nop
+
 @echo Copy manual...
 copy ..\..\doc\manual\ckos2.htm dist-os2\docs\manual\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt

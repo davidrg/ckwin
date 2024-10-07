@@ -47,6 +47,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #ifdef OS2
 #ifdef NT
@@ -155,13 +156,20 @@ static char errbuf[512];
  *       need to be an intptr_t (they were just U32s before the 64bit port)
  */
 U32 _System
-#ifdef CK_ANSIC
-status_func(U32 type, intptr_t arg0, U32 arg1, U32 arg2, U32 arg3, intptr_t arg4)
-#else
-status_func(type,arg0,arg1,arg2,arg3,arg4)
-     U32 type; intptr_t arg0; U32 arg1; U32 arg2; U32 arg3; intptr_t arg4;
-#endif
+status_func(U32 type, ...)
 {
+    va_list args;
+    intptr_t arg0, arg4;
+    U32 arg1, arg2, arg3;
+
+    va_start(args, type);
+    arg0 = va_arg(args, intptr_t);
+    arg1 = va_arg(args, U32);
+    arg2 = va_arg(args, U32);
+    arg3 = va_arg(args, U32);
+    arg4 = va_arg(args, intptr_t);
+    va_end(args);
+
     switch (type) {
     case PS_ERROR:
         {

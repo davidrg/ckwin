@@ -198,8 +198,6 @@ CKF_NETBIOS=yes
 CKF_MOUSEWHEEL=no
 
 !if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWWCL")
-!message Turning X/Y/Z MODEM support off - build errors with Open Watcom need fixing
-CKF_XYZ=no
 
 !message Turning SRP off - no Watcom support for it yet.
 CKF_SRP=no

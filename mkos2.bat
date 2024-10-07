@@ -17,10 +17,9 @@ REM call mkzinc.bat
 
 :buildp
 if "%CKF_XYZ%" == "no" goto :buildkermit
-REM How do we build this?
-REM cd kermit\p95
-REM call mknt.bat
-REM cd ..\..
+cd kermit\p95
+call mkos2.bat
+cd ..\..
 
 if "%CKF_LIBDES%" NEQ "yes" goto :buildkermit
 REM How do we build this?
