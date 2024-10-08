@@ -196,10 +196,6 @@ _PROTOTYP(void ssh_initialise,(void));
 #endif
 
 #ifdef SSH_DLL
-typedef struct {
-
-} common_directories;
-
 typedef struct  {
 
     /* Version 1 */
