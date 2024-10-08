@@ -260,6 +260,7 @@ int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
         char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
         char *s10, char *s11, char *s12) = NULL;
 char* (*p_whoami)() = NULL;
+char* (*p_GetAppData)(int common) = NULL;
 char* (*p_GetHomePath)() = NULL;
 char* (*p_GetHomeDrive)() = NULL;
 int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
@@ -349,6 +350,10 @@ char* whoami() {
     return p_whoami();
 }
 
+char* GetAppData(int common) {
+    return p_GetAppData(common);
+}
+
 char* GetHomePath() {
     return p_GetHomePath();
 }
@@ -397,6 +402,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     p_zmkdir = params->p_zmkdir;
     p_ckmakxmsg = params->p_ckmakxmsg;
     p_whoami = params->p_whoami;
+    p_GetAppData = params->p_GetAppData;
     p_GetHomePath = params->p_GetHomePath;
     p_GetHomeDrive = params->p_GetHomeDrive;
     p_ckstrncpy = params->p_ckstrncpy;
@@ -770,6 +776,14 @@ const char* ssh_get_sparam(int param) {
     return NULL;
 }
 
+/** This is the equivalent of ssh_dll_init - when the SSH module is
+ * compiled into the K95 executable (SSH_DLL not defined), this is
+ * called on application startup to give the SSH subsystem an
+ * opportunity to set sensible defaults, etc.
+ */
+void ssh_initialise() {
+
+}
 
 /** Opens an SSH connection. Connection parameters are passed through global
  * variables

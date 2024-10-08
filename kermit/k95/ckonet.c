@@ -4427,6 +4427,8 @@ netinit() {
                 debug(F100,"SSH not installed","",0) ;
             }
         }
+#else
+        ssh_initialise();
 #endif /* SSH_DLL */
     }
 

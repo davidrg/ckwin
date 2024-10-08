@@ -59,6 +59,10 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 /* for FamilyLocal, FamilyInternet, etc */
 #include "ckctel.h"
 
+#ifndef SSH_DLL
+#include "ckclib.h"
+#endif
+
 
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
@@ -528,6 +532,7 @@ int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
         char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
         char *s10, char *s11, char *s12) = NULL;
 char* (*p_whoami)() = NULL;
+char* (*p_GetAppData)(int common) = NULL;
 char* (*p_GetHomePath)() = NULL;
 char* (*p_GetHomeDrive)() = NULL;
 int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
@@ -614,8 +619,15 @@ int ckmakxmsg(char * buf, int len, char *s1, char *s2, char *s3,
                        s12);
 }
 
+#define ckmakmsg(buf,len,s1,s2,s3,s4) ckmakxmsg(buf, len, s1, s2, s3, s4, \
+            NULL, NULL,NULL, NULL, NULL, NULL, NULL, NULL)
+
 char* whoami() {
     return p_whoami();
+}
+
+char* GetAppData(int common) {
+    return p_GetApPData();
 }
 
 char* GetHomePath() {
@@ -755,6 +767,8 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     CHECK_FP(p_ckmakxmsg)
     p_whoami = params->p_whoami;
     CHECK_FP(p_whoami)
+    p_GetAppData = params->p_GetAppData;
+    CHECK_FP(p_GetAppData)
     p_GetHomePath = params->p_GetHomePath;
     CHECK_FP(p_GetHomePath)
     p_GetHomeDrive = params->p_GetHomeDrive;
@@ -813,6 +827,10 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_dll_ver", ssh_dll_ver);
     params->p_install_funcs("ssh_get_keytab", ssh_get_keytab);
     params->p_install_funcs("ssh_feature_supported", ssh_feature_supported);
+
+    /* And lastly do any other initialisation work that is independent of
+     * whether we're a DLL or not */
+    ssh_initialise();
 
     return 0;
 }
@@ -1035,6 +1053,16 @@ const char* ssh_get_sparam(int param) {
     return NULL;
 }
 
+/** This is called by ssh_dll_init when the DLL is loaded (SSH_DLL defined)
+ * or directly by K95 on application startup (SSH_DLL not defined) at the
+ * point where the DLL would normally have been loaded.
+ *
+ * Here we can set defaults.
+ */
+void ssh_initialise() {
+
+}
+
 
 /* Similar to "show ssh"
  * TODO: Delete this once all the not-implemented functions are implemented */
@@ -1163,6 +1191,8 @@ int ssh_open() {
     int pty_height, pty_width;
     int rc;
     const char* uidbuf;
+#define NHPATHMAX 1024
+    char *unh = NULL, *gnh = NULL;
 
     /* X11 forwarding details */
     int display_number = 0, screen_number = 0;
@@ -1282,6 +1312,25 @@ int ssh_open() {
         if (rest) free(rest);
     }
 
+    /* Sort out default files and directories */
+    if (ssh2_unh != NULL) {
+        unh = _strdup(ssh2_unh);
+    } else {
+        unh = malloc(sizeof(char)*NHPATHMAX);
+
+        /* \v(appdata) = GetAppData(0) + "Kermit 95/" */
+        ckmakmsg(unh, NHPATHMAX, GetAppData(0), "Kermit 95/", "ssh/", "known_hosts2");
+    }
+
+    if (ssh2_gnh != NULL) {
+        gnh = _strdup(ssh2_gnh);
+    } else {
+        gnh = malloc(sizeof(char)*NHPATHMAX);
+
+        /* \v(common) = GetAppData(1) + "Kermit 95/" */
+        ckmakmsg(gnh, NHPATHMAX, GetAppData(1), "Kermit 95/", "ssh/", "known_hosts2");
+    }
+
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
     debug(F100, "ssh_open() - construct parameters", "", 0);
@@ -1295,8 +1344,8 @@ int ssh_open() {
             ssh_cfg,  /* Read openssh configuration */
             ssh_gsd,  /* GSSAPI Delegate Credentials */
             ssh_shk,  /* Strict Host Key Checking */
-            ssh2_unh, /* User known hosts file */
-            ssh2_gnh, /* Global known hosts file*/
+            unh,      /* User known hosts file */
+            gnh,      /* Global known hosts file*/
             user,     /* Username */
             ssh_get_pw(), /* Password (if supplied) */
             get_current_terminal_type(),
@@ -1318,6 +1367,8 @@ int ssh_open() {
             );
 
     if (user) free(user);
+    if (unh) free(unh);
+    if (gnh) free(gnh);
     if (x11_host) {
         free(x11_host);
         x11_host = NULL;
