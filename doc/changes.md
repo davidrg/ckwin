@@ -12,6 +12,41 @@ it carried from 1995 through to 2013.
 * K95G no longer opens COM1 by default. If you previously depended on this, 
   you'll need to add `set port com1` to your k95custom.ini
 
+#### SSH User Known Hosts File Has Moved
+
+In Kermit 95 2.1.3 and earlier, the user known hosts file was
+`\v(appdata)ssh/known_hosts2`. In Kermit 95 3.0 beta 2, when the new SSH backend
+was introduced, this was *accidentally* changed to `\v(home).ssh/known_hosts`
+(the default location used by libssh).
+
+It wasn't really appropriate for K95 to be picking up known hosts from other
+SSH packages, or for K95 to go adding hosts to another SSH packages known hosts
+file without the user being aware of this. As a result this accidental change
+has been reversed and as of Kermit 95 3.0 beta 7, the *default* SSH user known 
+hosts file is once again `\v(appdata)ssh/known_hosts2`.
+
+If you'd like Kermit 95 to share a known hosts file with OpenSSH or any
+other SSH packages using `\v(home).ssh/known_hosts`, you can add the following
+to your k95custom.ini to explicitly opt in to this:
+`set ssh v2 user-known-hosts-file \v(home).ssh/known_hosts`.
+
+If you do not do the above, you may be effectively starting off with an
+empty `known_hosts` file when upgrading to beta 7 resulting in host verification 
+prompts for previously known hosts. If you want to keep the K95 known hosts file 
+separate in its new default location, but don't want all the host verification prompts, 
+you can *copy* the known hosts file from its previous location to the new one by
+entering the following commands at the K95 prompt:
+```
+mkdir \v(appdata)ssh
+copy \v(home).ssh/known_hosts \v(appdata)ssh/known_hosts2
+```
+
+If `\v(appdata)ssh/known_hosts2` already exists the above will overwrite it.
+
+> [!TIP]
+> To find out where `\v(appdata)`, `\v(home)` and other such directories are
+> on your disk, you can use the `orient` command.
+
 ### New features
 * SSH Port forwarding (tunneling) is now supported again in both
   the Direct/Local and Reverse/Remote forms. You can add forwards before
@@ -65,7 +100,12 @@ it carried from 1995 through to 2013.
   make room for new commands to turn it on and off. The previous syntax
   (`set gui menubar { off, on }`) is still accepted for compatibility with
   existing scripts. `set gui menubar on` still does nothing as it always has
-  (disabling the menubar is a session lockdown feature)* 
+  (disabling the menubar is a session lockdown feature)
+* The default location for the SSH user known hosts file has changed from
+  `\v(home).ssh/known_hosts` (K95 3.0 betas 2-6) to the value used by Kermit
+  95 v2.1.3 and earlier: `\v(appdata)ssh/known_hosts2`. Placing this file in
+  `\v(home).ssh` was never an intentional decision, but rather a detail
+  overlooked when switching to a new SSH backend.
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
@@ -77,6 +117,9 @@ it carried from 1995 through to 2013.
 * Fixed OpenSSL libraries not being included in the ARM32 distribution
 * Fixed \Kexit (Alt+x by default) not updating the state of the associated
   toolbar button
+* Fix the SSH global known hosts file not being set to something sensible
+  on windows. It's now set to the value used by past Kermit 95 releases by
+  default: `\v(common)ssh\known_hosts2`
 
 ### Other Source Changes
 None yet

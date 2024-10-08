@@ -432,6 +432,7 @@ int ssh_load(char* dllname) {
     init_params.p_zmkdir = zmkdir;
     init_params.p_ckmakxmsg = ckmakxmsg;
     init_params.p_whoami = whoami;
+    init_params.p_GetAppData = GetAppData;
     init_params.p_GetHomePath = GetHomePath;
     init_params.p_GetHomeDrive = GetHomeDrive;
     init_params.p_ckstrncpy = ckstrncpy;

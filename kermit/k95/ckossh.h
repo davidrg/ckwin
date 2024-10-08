@@ -191,6 +191,10 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 
 
+#ifndef SSH_DLL
+_PROTOTYP(void ssh_initialise,(void));
+#endif
+
 #ifdef SSH_DLL
 typedef struct  {
 
@@ -213,6 +217,7 @@ typedef struct  {
             char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
             char *s10, char *s11, char *s12);
 	char* (*p_whoami)();
+    char* (*p_GetAppData)(int);
 	char* (*p_GetHomePath)();
 	char* (*p_GetHomeDrive)();
     int (*p_ckstrncpy)(char * dest, const char * src, int len);

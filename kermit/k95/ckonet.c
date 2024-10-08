@@ -4427,6 +4427,10 @@ netinit() {
                 debug(F100,"SSH not installed","",0) ;
             }
         }
+#else
+#ifdef SSHBUILTIN
+        ssh_initialise();
+#endif /* SSHBUILTIN */
 #endif /* SSH_DLL */
     }
 
