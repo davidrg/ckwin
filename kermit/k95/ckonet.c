@@ -4428,7 +4428,9 @@ netinit() {
             }
         }
 #else
+#ifdef SSHBUILTIN
         ssh_initialise();
+#endif /* SSHBUILTIN */
 #endif /* SSH_DLL */
     }
 
