@@ -629,7 +629,7 @@ char* whoami() {
 }
 
 char* GetAppData(int common) {
-    return p_GetAppData();
+    return p_GetAppData(common);
 }
 
 char* GetHomePath() {
