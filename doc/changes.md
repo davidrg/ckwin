@@ -31,10 +31,11 @@ to your k95custom.ini to explicitly opt in to this:
 `set ssh v2 user-known-hosts-file \v(home).ssh/known_hosts`.
 
 If you do not do the above, you may be effectively starting off with an
-empty `known_hosts` file resulting in host verification prompts for
-previously known hosts. If you want to keep the K95 known hosts file separate
-in its new default location, but don't want all the host verification prompts, 
-you can *copy* the known hosts file from its previous location to the new one with:
+empty `known_hosts` file when upgrading to beta 7 resulting in host verification 
+prompts for previously known hosts. If you want to keep the K95 known hosts file 
+separate in its new default location, but don't want all the host verification prompts, 
+you can *copy* the known hosts file from its previous location to the new one by
+entering the following commands at the K95 prompt:
 ```
 mkdir \v(appdata)ssh
 copy \v(home).ssh/known_hosts \v(appdata)ssh/known_hosts2
