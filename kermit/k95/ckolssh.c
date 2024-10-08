@@ -516,6 +516,8 @@ HANDLE hSSHClientThread = NULL;   /* SSH subsystem thread */
 
 #ifdef SSH_DLL
 
+void ssh_initialise();
+
 static void (*p_get_current_terminal_dimensions)(int* rows, int* cols) = NULL;
 const char* (*p_get_current_terminal_type)() = NULL;
 const char* (*p_ssh_get_uid)();
