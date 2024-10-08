@@ -1194,7 +1194,7 @@ int ssh_open() {
     int rc;
     const char* uidbuf;
 #define NHPATHMAX 1024
-    char *unh = NULL, *gnh = NULL;
+    char *unh = NULL, *gnh = NULL, *dir = NULL;
 
     /* X11 forwarding details */
     int display_number = 0, screen_number = 0;
@@ -1333,6 +1333,10 @@ int ssh_open() {
         ckmakmsg(gnh, NHPATHMAX, GetAppData(1), "Kermit 95/", "ssh/", "known_hosts2");
     }
 
+    /* Set libssh SSH dir to \v(appdata)ssh/ */
+    dir = malloc(sizeof(char)*NHPATHMAX);
+    ckmakmsg(dir, NHPATHMAX, GetAppData(0), "Kermit 95/", "ssh/", NULL);
+
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
     debug(F100, "ssh_open() - construct parameters", "", 0);
@@ -1365,12 +1369,14 @@ int ssh_open() {
             ssh_xfw,        /* Forward X11 */
             x11_host,       /* Host to forward X11 too */
             display_number, /* X11 display number */
-            ssh_xal         /* Xauth location */
+            ssh_xal,        /* Xauth location */
+            dir             /* SSH Dir*/
             );
 
     if (user) free(user);
     if (unh) free(unh);
     if (gnh) free(gnh);
+    if (dir) free(dir);
     if (x11_host) {
         free(x11_host);
         x11_host = NULL;
