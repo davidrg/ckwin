@@ -638,15 +638,16 @@ k95g:
 #                           -l=os2v2
 
 # Watcom C targeting OS/2
-# TODO: Fix buiding with OPT="-ox " (currently this causes it to crash on
-# startup with trap 001 )
+# OPT note: Building with -ox doesn't work with Open Watcom 1.9 as the -s
+# build option (remove stack overflow checks) is problematic. See issue #55
+# for a description.
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWWCL" \
 	    CC="wcl386" \
         CC2="-Fh" \
         OUT="-Fe=" O=".obj" \
-	    OPT=" " \
+	    OPT="-obmiler" \
         DEBUG="-DNDEBUG" \
         DLL="-bd" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
