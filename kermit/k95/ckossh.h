@@ -1,10 +1,7 @@
 #ifndef _CKOSSH_H
 #define _CKOSSH_H
 
-/* TODO: These all need to be accessed via functions, not as globals. */
-extern char * ssh_idf[32];              /* identity files */
-extern int ssh_idf_n;
-
+/* TODO: This needs to be accessed via a function, not as a global. */
 extern int ssh_sock;                    /* SSH socket */
 
 #ifndef SSH_PF_T
@@ -98,6 +95,7 @@ _PROTOTYP(int ssh_set_iparam,(int param, int value));
 _PROTOTYP(int ssh_get_iparam,(int param));
 _PROTOTYP(int ssh_set_sparam,(int param, const char* value));
 _PROTOTYP(const char* ssh_get_sparam,(int param));
+_PROTOTYP(int ssh_set_identity_files,(const char** identity_files));
 
 /* Getters for various global values within C-Kermit */
 _PROTOTYP(const char* ssh_get_uid,(VOID));

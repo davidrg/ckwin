@@ -414,6 +414,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_get_iparam", ssh_get_iparam);
     params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
     params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
+    params->p_install_funcs("ssh_set_identity_files", ssh_set_identity_files);
     params->p_install_funcs("ssh_open", ssh_open);
     params->p_install_funcs("ssh_clos", ssh_clos);
     params->p_install_funcs("ssh_tchk", ssh_tchk);
@@ -774,6 +775,15 @@ const char* ssh_get_sparam(int param) {
             return NULL;
     }
     return NULL;
+}
+
+/** Set the list of SSH identity files to use for authentication
+ *
+ * @param identity_files List of identity files, null terminated.
+ * @returns 0 on success, -1 if not supported
+ */
+int ssh_set_identity_files(const char** identity_files) {
+    return -1;
 }
 
 /** This is the equivalent of ssh_dll_init - when the SSH module is

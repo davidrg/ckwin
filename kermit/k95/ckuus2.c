@@ -996,9 +996,11 @@ static char *hmxyssh[] = {
 "  identities (private keys) are to be read when using public key",
 "  authorization.  These are files used in addition to the default files:",
 " ",
-"    \\v(appdata)ssh/identity      V1 RSA",
+/*"    \\v(appdata)ssh/identity      V1 RSA",*/
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
+"    \\v(appdata)ssh/id_ecdsa      ECDSA",
+"    \\v(appdata)ssh/id_ed25519    ED25519",
 " ",
 #ifdef SSH_DLL
 /* These commands aren't supported by the default SSH backend, but if the
