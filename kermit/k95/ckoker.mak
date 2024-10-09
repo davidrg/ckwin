@@ -1035,8 +1035,9 @@ win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe 
     k95crypt.dll \
 !endif
 !if "$(CKF_DYNAMIC_SSH)" == "yes"
+    nullssh.dll \
 !if "$(CKF_SSH_BACKEND)" != "no"
-    k95ssh.dll nullssh.dll \
+    k95ssh.dll \
 !endif
 !endif
 # These likely require an old version of SRP (perhaps pre-1.7?) to build. They
