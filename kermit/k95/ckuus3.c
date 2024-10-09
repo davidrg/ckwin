@@ -8332,12 +8332,12 @@ dosetssh() {
             sshtab[z].flgs = CM_INV;
         }
         else if ((sshtab[z].kwval == SSH_XFW && !ssh_feature_supported(SSH_FEAT_X11_FWD))
-            || (sshtab[z].flgs = CM_INV  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
+            || (sshtab[z].flgs == SSH_XAL  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
             /*
              * "set ssh x11-forwarding" and "set ssh xauth-location" commands.
              */
+            sshtab[z].flgs = CM_INV;
         }
-        // sshtab[z].kwval == SSH_XAL
         else if ((sshtab[z].kwval == SSH_DYF || sshtab[z].kwval == SSH_GWP)
             && !ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
             /* Dynamic Port Forwarding
