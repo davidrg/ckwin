@@ -12,12 +12,6 @@ for the built-in SSH client as delivered in Kermit 95 v2.1.3 is available here:
 https://kermitproject.org/k95manual/sshclien.html - SSH differences between
 Kermit 95 and Kermit 95 are discussed later in this document.
 
-For convenience Kermit 95 currently looks for the known_hosts file as well as 
-your public and private keys in `%USERPROFILE%\.ssh`. This directory is also
-used by the version of OpenSSH bundled with Windows 10+ so if you were
-previously using that your keys and known hosts should be picked up
-automatically by Kermit 95.
-
 ## Known Issues
 
 * When connecting to modern linux hosts with the linux terminal type, you'll
@@ -97,10 +91,15 @@ SSH REMOVE LOCAL-PORT-FORWARD local-port
   the local port forwarding list. This has no effect on any active 
   connection.
 
-SSH REMOVE REMOTE-PORT-FORWARD remote-port",
+SSH REMOVE REMOTE-PORT-FORWARD remote-port
   Removes the remote port forward with the specified remote-port from
   the remote port forwarding list. This has no effect on any active
   connection.
+
+SET SSH DIRECTORY directory
+  Specifies where Kermit 95 should look for the default SSH user files
+  such as the user-known-hosts file and identity files (id_rsa, etc).
+  By default Kermit 95 looks for these in \\v(appdata)ssh.
 
 set ssh v2 key-exchange-methods {CURVE25519-SHA256,
      CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,
@@ -153,7 +152,6 @@ SET SSH
     CHECK-HOST-IP {ON,OFF}
     DYNAMIC-FORWARDING {ON,OFF}
     GATEWAY-PORTS {ON,OFF}
-    IDENTITY-FILE filename
     PRIVILEGED-PORT {ON,OFF}
     QUIET {ON,OFF}
     V2 AUTO-REKEY {ON,OFF}

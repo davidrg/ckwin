@@ -98,7 +98,9 @@ REM This should match the %PROCESSOR_ARCHITECTURE% on the target machine
 set CKB_TARGET_ARCH=x86
 
 set CKB_OPENSSL_SUFFIX=
-if exist %WATCOM%\binnt\wcl386.exe goto :bitcheckdone
+wcc386 . <nul 2>&1 > nul
+if %errorlevel% == 0 goto :bitcheckdone
+
 cl 2>&1 | findstr /C:"for x64" > nul
 if %errorlevel% == 0 goto :x64
 
@@ -557,10 +559,8 @@ set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 set CKB_OS2_COMPATIBLE=no
 
-REM We can't look at OpenWatcoms help output for a version number because it
-REM waits for input ("Press any key to continue:"), so we'll just detect it by
-REM the presence of its environment variables.
-if exist %WATCOM%\binnt\wcl386.exe goto :watcomc
+wcc386 . <nul 2>&1 > nul
+if %errorlevel% == 0 goto :watcomc
 cl 2>&1 | findstr /C:"Version 19.4" > nul
 if %errorlevel% == 0 goto :vc144
 cl 2>&1 | findstr /C:"Version 19.3" > nul
@@ -611,9 +611,13 @@ if %errorlevel% == 0 goto :vc116
 goto :unsupported
 
 :watcomc
-REM TODO - ideally we should try and detect the version of Open Watcom - at least 1.9 vs 2.0
-set CK_COMPILER_NAME=Open Watcom
-set ZINCBUILD=ow19
+set ZINCBUILD=
+wcc386 . <nul 2>&1 | findstr /C:"Version 1.9" > nul
+if %errorlevel% == 0 set ZINCBUILD=ow19
+wcc386 . <nul 2>&1 | findstr /C:"Version 2.0" > nul
+if %errorlevel% == 0 set ZINCBUILD=ow20
+if "%ZINCBUILD%" == "" goto :unsupported
+set CK_COMPILER_NAME=OpenWatcom
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
@@ -622,6 +626,8 @@ set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
 set CKB_OS2_COMPATIBLE=yes
+set CKB_STATIC_CRT_NT=no
+set CKB_STATIC_CRT_OS2=yes
 
 REM For Open Watcom we have to use its nmake clone
 set MAKE=nmake
@@ -666,7 +672,7 @@ set CKF_K4W=unsupported
 set CKB_NT_COMPATIBLE=yes
 
 REM As this compiler doesn't include msvcrt...
-set CKB_STATIC_CRT=yes
+set CKB_STATIC_CRT_NT=yes
 
 goto :cvcdone
 
@@ -679,7 +685,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
-set CKB_STATIC_CRT=yes
+set CKB_STATIC_CRT_NT=yes
 set CKB_NT_COMPATIBLE=yes
 goto :cvcdone
 

@@ -41,8 +41,13 @@ if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt
 @echo Copy resources...
 copy k2.ini dist-os2
 
-REM OS/2 builds with Open Watcom are currently statically linked to the
-REM C runtime, so no need to copy their dist DLLs
+if "%WATCOM%"=="" goto :nortdll
+if "%CKB_STATIC_CRT_OS2%"=="yes" goto :noowrtdll
+@echo Copy Open Watcom DLL run-time libraries
+copy %WATCOM%\binp\dll\mt7r*.dll dist-os2
+copy %WATCOM%\binp\dll\clbr*.dll dist-os2
+copy %WATCOM%\binp\dll\plbr*.dll dist-os2
+:noowrtdll
 
 REM DOWNLOAD directory
 copy download-readme.txt dist-os2\DOWNLOAD\readme.txt

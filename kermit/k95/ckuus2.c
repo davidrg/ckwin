@@ -970,6 +970,11 @@ static char *hmxyssh[] = {
 "SET SSH COMPRESSION { ON, OFF }",
 "  Specifies whether compression will be used.  The default is ON.",
 " ",
+"SET SSH DIRECTORY directory",
+"  Specifies where Kermit 95 should look for the default SSH user files",
+"  such as the user-known-hosts file and identity files (id_rsa, etc).",
+"  By default Kermit 95 looks for these in \\v(appdata)ssh.",
+" ",
 "SET SSH DYNAMIC-FORWARDING { ON, OFF }",
 "  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
 "  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
@@ -996,9 +1001,11 @@ static char *hmxyssh[] = {
 "  identities (private keys) are to be read when using public key",
 "  authorization.  These are files used in addition to the default files:",
 " ",
-"    \\v(appdata)ssh/identity      V1 RSA",
+/*"    \\v(appdata)ssh/identity      V1 RSA",*/
 "    \\v(appdata)ssh/id_rsa        V2 RSA",
 "    \\v(appdata)ssh/id_dsa        V2 DSA",
+"    \\v(appdata)ssh/id_ecdsa      ECDSA",
+"    \\v(appdata)ssh/id_ed25519    ED25519",
 " ",
 #ifdef SSH_DLL
 /* These commands aren't supported by the default SSH backend, but if the

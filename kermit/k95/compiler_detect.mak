@@ -26,21 +26,14 @@ ISJOM=yes
 CMP = VCXX
 COMPILER = Visual C++
 
-!IFDEF __VERSION__
-# This is Watcom wmake pretending to be nmake. We'll assume the compiler is
-# really Watcom C pretending to be Visual C++ 2002.
-#
-# This check has to come first because Open Watcom 1.9 just stops waiting for
-# input and never exits
+!IF ([wcc386 . <nul 2>&1 > nul] == 0)
+# Open Watcom
 CMP = OWCL
 COMPILER = Open Watcom C/C++ CL clone
 MSC_VER = 130
 COMPILER_VERSION = Visual C++ 7.0 compatible
 
-!message *Assuming* Open Watcom due to use of wmake
-
 !ELSEIF ([cl 2>&1 | findstr /C:"Digital Mars" > nul] == 0)
-
 MSC_VER = 120
 COMPILER_VERSION = Digital Mars C/C++
 
@@ -222,15 +215,10 @@ COMPILER_VERSION = Unknown
 # Assume we're building for Windows
 TARGET_PLATFORM = Windows
 
-!IFDEF __VERSION__
-# Open Watcom again. Assume x86.
-
-!message Assuming x86 target for Open Watcom
+!if "$(CMP)" == "OWCL"
+# Open Watcom
 
 TARGET_CPU = x86
-
-TARGET_PLATFORM = Windows
-# TODO: What if we're targeting OS/2? Watcom supports OS/2...
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for MIPS R-Series" > nul] == 0)
 # We're targeting (and running on) Windows NT MIPS

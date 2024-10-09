@@ -49,10 +49,13 @@ copy welcome.txt dist
 copy hostmode.bat dist
 REM (k95custom.sample should be renamed to k95custom.ini upon installation)
 
-@echo Copy runtime libraries
-if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist
-if defined WATCOM copy %WATCOM%\binnt\clbr*.dll dist
-if defined WATCOM copy %WATCOM%\binnt\plbr*.dll dist
+@echo Copy Open Watcom DLL run-time libraries
+if "%WATCOM%"=="" goto :noowrtdll
+if "%CKB_STATIC_CRT_NT%"=="yes" goto :noowrtdll
+copy %WATCOM%\binnt\mt7r*.dll dist
+copy %WATCOM%\binnt\clbr*.dll dist
+copy %WATCOM%\binnt\plbr*.dll dist
+:noowrtdll
 
 @echo Copy enabled optional dependencies
 for %%I in (%CK_DIST_DLLS%) do copy %%I dist\

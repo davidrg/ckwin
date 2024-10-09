@@ -64,7 +64,7 @@ LWP30INC    = $(LWP30DIR)\inc20
 # pretending to be Visual C++)
 #!if "$(DEBUG)" == "-DNDEBUG"
 # Doing a release build
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
@@ -144,7 +144,7 @@ CFLAG_GF=/GF
 !message MIPS Centaur compiler - forcing build with statically linked CRT.
 # /QmipsOb5000 increases the basic block threshold for optimisation
 COMMON_CFLAGS = /D_MT /QmipsOb5000
-CKB_STATIC_CRT = yes
+CKB_STATIC_CRT_NT = yes
 !endif
 
 # Figure out which OS/2 TCP/IP Support DLLs to build
@@ -645,7 +645,11 @@ wcos2:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWWCL" \
 	    CC="wcl386" \
+!if "$(CKB_STATIC_CRT_OS2)"=="yes"
         CC2="-Fh" \
+!else
+        CC2="-Fh -br" \
+!endif
         OUT="-Fe=" O=".obj" \
 	    OPT="-obmiler" \
         DEBUG="-DNDEBUG" \
@@ -666,7 +670,11 @@ wcos2d:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWWCL" \
 	    CC="wcl386" \
+!if "$(CKB_STATIC_CRT_OS2)"=="yes"
         CC2="-Fh -d3" \
+!else
+        CC2="-Fh -d3 -br" \
+!endif
         OUT="-Fe=" O=".obj" \
 	    OPT=" " \
         DEBUG="-DNDEBUG" \
@@ -1061,8 +1069,9 @@ win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe 
     k95crypt.dll \
 !endif
 !if "$(CKF_DYNAMIC_SSH)" == "yes"
+    nullssh.dll \
 !if "$(CKF_SSH_BACKEND)" != "no"
-    k95ssh.dll nullssh.dll \
+    k95ssh.dll \
 !endif
 !endif
 # These likely require an old version of SRP (perhaps pre-1.7?) to build. They

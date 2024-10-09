@@ -157,6 +157,8 @@ typedef struct {
                                                  * seconds, 0 disables. */
     int nodelay;                                /* Set to disable nagles agorithm */
     char* proxy_command;                        /* Command to execute to connect to the server */
+    char* ssh_dir;                              /* SSH Directory */
+    char** identity_files;                      /* SSH Identity Files */
 
     /* Which authentication methods should be attempted and their order. */
     int authentication_methods[MAX_AUTH_METHODS];
@@ -254,6 +256,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param display_host Host running the X11 server
  * @param display_number X11 display number
  * @param xauth_location Xauth location
+ * @param ssh_dir SSH Directory
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -267,7 +270,8 @@ ssh_parameters_t* ssh_parameters_new(
         const char* macs, const char* key_exchange_methods, int nodelay,
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
-        const char* xauth_location);
+        const char* xauth_location, const char* ssh_dir,
+        const char** identity_files);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

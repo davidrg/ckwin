@@ -5,7 +5,7 @@ REM
 REM You should have already run owsetenv.cmd to at a minimum to do the
 REM following:
 REM     SET WATCOM=C:\WATCOM
-REM     SET PATH=%WATCOM%\BINW;%WATCOM%\BINP;%PATH%
+REM     SET PATH=%WATCOM%\BINP;%WATCOM%\BINW;%PATH%
 REM And also modified and run setenv.cmd to add \kermit\k95 to the include path
 
 mkdir os2

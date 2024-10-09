@@ -12,6 +12,22 @@ it carried from 1995 through to 2013.
 * K95G no longer opens COM1 by default. If you previously depended on this, 
   you'll need to add `set port com1` to your k95custom.ini
 
+#### The default SSH directory has changed!
+The default SSH directory in beta 7 has changed from `\v(home).ssh` back to
+`\v(appdata)ssh`, the location used by Kermit 95 2.1.3 and earlier.
+
+This means Kermit 95 may not find your known hosts file, or your identity 
+(public key authentication) files after upgrading to beta 7.
+
+If you'd prefer to keep these files in `\v(home).ssh`, the same location used
+by OpenSSH on modern versions of windows, add the command 
+`set ssh directory \v(home).ssh` to your k95custom.ini
+
+> [!TIP]
+> To find out where `\v(appdata)`, `\v(home)` and other such directories are
+> on your disk, you can use the `orient` command.
+
+
 ### New features
 * SSH Port forwarding (tunneling) is now supported again in both
   the Direct/Local and Reverse/Remote forms. You can add forwards before
@@ -65,7 +81,14 @@ it carried from 1995 through to 2013.
   make room for new commands to turn it on and off. The previous syntax
   (`set gui menubar { off, on }`) is still accepted for compatibility with
   existing scripts. `set gui menubar on` still does nothing as it always has
-  (disabling the menubar is a session lockdown feature)* 
+  (disabling the menubar is a session lockdown feature)
+* Implemented the `set ssh identity-file` command
+* Added new command `set ssh directory` which allows you to set the default
+  location where K95 looks for user known hosts and identity files.
+* The default SSH directory has changed from `\v(home).ssh` back to
+  `\v(appdata)ssh`
+* The `ssh key` commands will now default to opening or saving keys in the
+  SSH directory.
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
@@ -77,6 +100,9 @@ it carried from 1995 through to 2013.
 * Fixed OpenSSL libraries not being included in the ARM32 distribution
 * Fixed \Kexit (Alt+x by default) not updating the state of the associated
   toolbar button
+* Fix the SSH global known hosts file not being set to something sensible
+  on windows. It's now set to the value used by past Kermit 95 releases by
+  default: `\v(common)ssh\known_hosts2`
 
 ### Other Source Changes
 None yet

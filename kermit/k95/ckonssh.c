@@ -241,6 +241,7 @@ static char                             /* The following are to be malloc'd */
 * ssh2_unh = NULL,                    /* v2 user known hosts file */
 * ssh2_kex = NULL,                    /* Key Exchange Methods */
 * ssh_pxc = NULL,                     /* Proxy command */
+* ssh_dir = NULL,                     /* SSH Directory */
 * xxx_dummy = NULL;
 
 #ifdef SSH_DLL
@@ -260,6 +261,7 @@ int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
         char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
         char *s10, char *s11, char *s12) = NULL;
 char* (*p_whoami)() = NULL;
+char* (*p_GetAppData)(int common) = NULL;
 char* (*p_GetHomePath)() = NULL;
 char* (*p_GetHomeDrive)() = NULL;
 int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
@@ -349,6 +351,10 @@ char* whoami() {
     return p_whoami();
 }
 
+char* GetAppData(int common) {
+    return p_GetAppData(common);
+}
+
 char* GetHomePath() {
     return p_GetHomePath();
 }
@@ -397,6 +403,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     p_zmkdir = params->p_zmkdir;
     p_ckmakxmsg = params->p_ckmakxmsg;
     p_whoami = params->p_whoami;
+    p_GetAppData = params->p_GetAppData;
     p_GetHomePath = params->p_GetHomePath;
     p_GetHomeDrive = params->p_GetHomeDrive;
     p_ckstrncpy = params->p_ckstrncpy;
@@ -408,6 +415,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_get_iparam", ssh_get_iparam);
     params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
     params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
+    params->p_install_funcs("ssh_set_identity_files", ssh_set_identity_files);
     params->p_install_funcs("ssh_open", ssh_open);
     params->p_install_funcs("ssh_clos", ssh_clos);
     params->p_install_funcs("ssh_tchk", ssh_tchk);
@@ -721,6 +729,9 @@ int ssh_set_sparam(int param, const char* value) {
         case SSH_SPARAM_PXC:
             copy_set_sparam(&ssh_pxc, value);
             break;
+        case SSH_SPARAM_DIR:
+            copy_set_sparam(&ssh_dir, value);
+            break;
         default:
             return 1;
     }
@@ -764,12 +775,31 @@ const char* ssh_get_sparam(int param) {
             return ssh2_kex;
         case SSH_SPARAM_PXC:
             return ssh_pxc;
+        case SSH_SPARAM_DIR:
+            return ssh_dir;
         default:
             return NULL;
     }
     return NULL;
 }
 
+/** Set the list of SSH identity files to use for authentication
+ *
+ * @param identity_files List of identity files, null terminated.
+ * @returns 0 on success, -1 if not supported
+ */
+int ssh_set_identity_files(const char** identity_files) {
+    return -1;
+}
+
+/** This is the equivalent of ssh_dll_init - when the SSH module is
+ * compiled into the K95 executable (SSH_DLL not defined), this is
+ * called on application startup to give the SSH subsystem an
+ * opportunity to set sensible defaults, etc.
+ */
+void ssh_initialise() {
+
+}
 
 /** Opens an SSH connection. Connection parameters are passed through global
  * variables

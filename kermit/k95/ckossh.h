@@ -1,10 +1,7 @@
 #ifndef _CKOSSH_H
 #define _CKOSSH_H
 
-/* TODO: These all need to be accessed via functions, not as globals. */
-extern char * ssh_idf[32];              /* identity files */
-extern int ssh_idf_n;
-
+/* TODO: This needs to be accessed via a function, not as a global. */
 extern int ssh_sock;                    /* SSH socket */
 
 #ifndef SSH_PF_T
@@ -91,6 +88,7 @@ typedef struct ssh_port_forward {
 #define SSH_SPARAM_2_UNH    13      /* v2 user known hosts file */
 #define SSH_SPARAM_2_KEX    14      /* Key Exchange Methods */
 #define SSH_SPARAM_PXC      15      /* Proxy command */
+#define SSH_SPARAM_DIR      16      /* SSH Directory */
 
 /* Setters and getters for the various "set ssh" options. set_ssh_sparam takes
  * a copy of the supplied string rather than taking ownership of it.*/
@@ -98,6 +96,7 @@ _PROTOTYP(int ssh_set_iparam,(int param, int value));
 _PROTOTYP(int ssh_get_iparam,(int param));
 _PROTOTYP(int ssh_set_sparam,(int param, const char* value));
 _PROTOTYP(const char* ssh_get_sparam,(int param));
+_PROTOTYP(int ssh_set_identity_files,(const char** identity_files));
 
 /* Getters for various global values within C-Kermit */
 _PROTOTYP(const char* ssh_get_uid,(VOID));
@@ -191,6 +190,10 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 
 
+#ifndef SSH_DLL
+_PROTOTYP(void ssh_initialise,(void));
+#endif
+
 #ifdef SSH_DLL
 typedef struct  {
 
@@ -213,6 +216,7 @@ typedef struct  {
             char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
             char *s10, char *s11, char *s12);
 	char* (*p_whoami)();
+    char* (*p_GetAppData)(int);
 	char* (*p_GetHomePath)();
 	char* (*p_GetHomeDrive)();
     int (*p_ckstrncpy)(char * dest, const char * src, int len);

@@ -149,7 +149,8 @@ ssh_parameters_t* ssh_parameters_new(
         const char* macs, const char* key_exchange_methods, int nodelay,
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
-        const char* xauth_location) {
+        const char* xauth_location, const char* ssh_dir,
+        const char** identity_files) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
@@ -170,6 +171,8 @@ ssh_parameters_t* ssh_parameters_new(
     params->keepalive_seconds = heartbeat;
     params->nodelay = nodelay;
     params->proxy_command = NULL;
+    params->ssh_dir = NULL;
+    params->identity_files = identity_files;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -197,6 +200,7 @@ ssh_parameters_t* ssh_parameters_new(
     if (key_exchange_methods)
         params->key_exchange_methods = _strdup(key_exchange_methods);
     if (proxy_command) params->proxy_command = _strdup(proxy_command);
+    if (ssh_dir) params->ssh_dir = strdup(ssh_dir);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -312,10 +316,15 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->key_exchange_methods);
     if (parameters->proxy_command)
         free(parameters->proxy_command);
+    if (parameters->ssh_dir)
+        free(parameters->ssh_dir);
     if (parameters->x11_host)
         free(parameters->x11_host);
     if (parameters->xauth_location)
         free(parameters->xauth_location);
+
+    /* Note: parameters->identity_files should *not* be freed as we're not
+     *       currently taking a copy of it */
 
     free(parameters);
 }
@@ -1481,6 +1490,10 @@ static int configure_session(ssh_client_state_t * state) {
         ssh_options_set(state->session, SSH_OPTIONS_PROXYCOMMAND,
                         state->parameters->proxy_command);
     }
+    if (state->parameters->ssh_dir) {
+        ssh_options_set(state->session, SSH_OPTIONS_SSH_DIR,
+                        state->parameters->ssh_dir);
+    }
 
     if (state->parameters->port)
         ssh_options_set(state->session, SSH_OPTIONS_PORT_STR, state->parameters->port);
@@ -1491,7 +1504,17 @@ static int configure_session(ssh_client_state_t * state) {
     if (state->parameters->global_known_hosts_file)
         ssh_options_set(state->session, SSH_OPTIONS_GLOBAL_KNOWNHOSTS,
                         state->parameters->global_known_hosts_file);
-    // TODO: Set SSH_OPTIONS_SSH_DIR to where the known_hosts and keys live
+
+    if (state->parameters->identity_files != NULL) {
+        int i = 0;
+        while (state->parameters->identity_files[i] != NULL) {
+            debug(F111, "Add identity file", state->parameters->identity_files[i], i);
+            ssh_options_set(state->session, SSH_OPTIONS_ADD_IDENTITY ,
+                            state->parameters->identity_files[i]);
+            i++;
+        }
+    }
+
     // TODO: SSH_OPTIONS_STRICTHOSTKEYCHECK ?
 
     // identity fields (set ssh identity-file)

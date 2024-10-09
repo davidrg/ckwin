@@ -7984,6 +7984,7 @@ setprinter(xx) int xx;
 #define SSH_CFG 22                      /* Use OpenSSH Config */
 #define SSH_HBT 23                      /* Heartbeat Interval */
 #define SSH_PXC 24                      /* Proxy Command */
+#define SSH_DIR 25                      /* SSH Directory */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
@@ -7991,6 +7992,7 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
     { "agent-forwarding",        SSH_AFW,  0 },     /* SSH_FEAT_AGENT_FWD */
     { "check-host-ip",           SSH_CHI,  0 },
     { "compression",             SSH_CMP,  0 },
+    { "directory",               SSH_DIR,  0 },
     { "dynamic-forwarding",      SSH_DYF,  0 },     /* SSH_FEAT_PORT_FWD */
     { "gateway-ports",           SSH_GWP,  0 },     /* SSH_FEAT_PORT_FWD */
     { "gssapi",                  SSH_GSS,  0 },     /* SSH_FEAT_ADV_GSSAPI */
@@ -8095,11 +8097,12 @@ static struct keytab gssapitab[] = {
 static int ngssapitab = (sizeof(gssapitab) / sizeof(struct keytab)) - 1;
 
 
-char * ssh_idf[32] = {                  /* Identity file list */
+char * ssh_idf[33] = {                  /* Identity file list - null terminated */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+  NULL
 };
 char * ssh_tmp[32] = {                  /* Temp identity file list */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
@@ -8146,6 +8149,7 @@ shossh() {
     }
     printf(" ssh check-host-ip:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CHKIP)));
     printf(" ssh compression:                 %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CMP)));
+    printf(" ssh directory:                   %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_DIR)));
     if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
         printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_get_iparam(SSH_IPARAM_DYF)));
     }
@@ -8319,7 +8323,6 @@ dosetssh() {
         return (-9);
     }
 #endif /* SSH_DLL */
-
     /* Hide any "set ssh" commands not supported by the currently loaded SSH
      * backend */
     for (z = 0; z < nsshtab; z++) {
@@ -8331,12 +8334,12 @@ dosetssh() {
             sshtab[z].flgs = CM_INV;
         }
         else if ((sshtab[z].kwval == SSH_XFW && !ssh_feature_supported(SSH_FEAT_X11_FWD))
-            || (sshtab[z].flgs = CM_INV  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
+            || (sshtab[z].flgs == SSH_XAL  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
             /*
              * "set ssh x11-forwarding" and "set ssh xauth-location" commands.
              */
+            sshtab[z].flgs = CM_INV;
         }
-        // sshtab[z].kwval == SSH_XAL
         else if ((sshtab[z].kwval == SSH_DYF || sshtab[z].kwval == SSH_GWP)
             && !ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
             /* Dynamic Port Forwarding
@@ -8387,6 +8390,15 @@ dosetssh() {
              */
             sshtab[z].flgs = CM_INV;
         }
+        else if (sshtab[z].kwval == SSH_GSS
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+            /*
+             * "set ssh gssapi" commands - if none of them are enabled,
+             * hide "set ssh gssapi" too.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
     }
 
     /* Hide any "set ssh v2" commands not supported by the currently loaded SSH
@@ -8403,19 +8415,19 @@ dosetssh() {
 
     /* Hide any "set ssh gssapi" commands not supported by the currently loaded SSH
      * backend */
-    for (z = 0; z < nsshv2tab; z++) {
-        if (sshv2tab[z].kwval == SSH_GSSAPI_DELEGATE
+    for (z = 0; z < ngssapitab; z++) {
+        if (gssapitab[z].kwval == SSH_GSSAPI_DELEGATE
             && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
             /*
              * "set ssh gssapi delegate-credentials"
              */
-            sshv2tab[z].flgs = CM_INV;
-        } else if (sshv2tab[z].kwval == SSH_GSSAPI_KEYEX
+            gssapitab[z].flgs = CM_INV;
+        } else if (gssapitab[z].kwval == SSH_GSSAPI_KEYEX
             && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
             /* The always hidden command:
              * "set ssh gssapi key-exchange"
              */
-            sshv2tab[z].flgs = CM_INV;
+            gssapitab[z].flgs = CM_INV;
         }
     }
 #endif /* SSHBUILTIN */
@@ -8447,6 +8459,21 @@ dosetssh() {
 
       case SSH_CMP:                     /* Compression */
         return(success = set_ssh_iparam_on(SSH_IPARAM_CMP));
+
+      case SSH_DIR:
+        if ((x = cmdir("SSH Directory","",&s,xxstring)) < 0) {
+            if (x != -3)
+              return(x);
+        } else {
+            ckstrncpy(line,s,LINBUFSIZ);
+            if (zfnqfp(line,TMPBUFSIZ,tmpbuf))
+              ckstrncpy(line,tmpbuf,LINBUFSIZ);
+        }
+        s = (x == -3) ? NULL : line;
+        if ((x = cmcfm()) < 0)
+          return(x);
+        ssh_set_sparam(SSH_SPARAM_DIR, s);
+        return(1);
 
       case SSH_DYF:                     /* Dynamic Forwarding */
         if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
@@ -8987,6 +9014,12 @@ dosetssh() {
             }
         }
         ssh_idf_n = n;
+
+        if (ssh_set_identity_files(ssh_idf) < 0) {
+            printf("\r\nCommand not supported by the current SSH backend\r\n");
+            return(0);
+        }
+
         return(success = 1);
       }
       case SSH_XFW:                     /* X11-forwarding */

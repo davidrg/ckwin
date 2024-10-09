@@ -19,12 +19,12 @@ everything else upgraded or rebuilt where possible:
 * OpenSSL and MIT Kerberos for Windows upgraded to the latest versions
 
 This gets the Open-Source Kermit 95 somewhat closer to equivalence with K95 v2.1.3, though SSH and SSL/TLS features are
-now excluded from Windows releases older than XP thats the minimum OpenSSL and LibSSH can reasonably be built for.
+now excluded from Windows releases older than XP as thats the minimum OpenSSL and LibSSH can reasonably be built for.
 
 Additionally some features can no longer be supported in standard builds of K95:
 
 * SSHv1: Not supported by LibSSH anymore, and not widely enough deployed to be worth finding an alternative solution
-* SRP Authentication: Stanford SRP is no longer maintained and it the last release is incompatible with current OpenSSL releases
+* SRP Authentication: Stanford SRP is no longer maintained and the last release is incompatible with any OpenSSL release still receiving security fixes
 * Kerberos IV: No longer supported by current releases of MIT Kerberos for Windows
 * SuperLAT and TES32: While the SDK is publicly available, the license on it is unclear
 
