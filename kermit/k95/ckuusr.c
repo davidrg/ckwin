@@ -148,6 +148,10 @@ extern tt_status[VNUM];
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */
+#ifdef SSHBUILTIN
+extern char * ssh_idf[32];              /* identity files */
+extern int ssh_idf_n;
+#endif /* SSHBUILTIN */
 #endif /* OS2 */
 
 int optlines = 0;
@@ -2444,7 +2448,7 @@ static struct keytab sshkwtab[] = {
     { "load",                XSSH_LOAD, CM_INV },
     { "open",                XSSH_OPN, 0 },
     { "remove",              XSSH_REM, 0 },         /* SSH_FEAT_PORT_FWD */
-    { "v2",                  XSSH_V2,  0 },         /* SSH_FEAT_REKEY_MANUAL */
+    { "v2",                  XSSH_V2,  0 },         /*  */
     { "", 0, 0 }
 };
 static int nsshcmd = (sizeof(sshkwtab) / sizeof(struct keytab)) - 1;
@@ -2459,7 +2463,7 @@ static int nsshloadcmd = (sizeof(sshloadkwtab) / sizeof(struct keytab)) - 1;
 #endif /* SSH_DLL */
 
 static struct keytab ssh2tab[] = {
-    { "rekey", XSSH2_RKE, 0 }, /* Not supported by libssh */
+    { "rekey", XSSH2_RKE, 0 }, /* SSH_FEAT_REKEY_MANUAL */
     { "", 0, 0 }
 };
 static int nssh2tab = (sizeof(ssh2tab) / sizeof(struct keytab));
@@ -10879,7 +10883,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                  */
                 sshkwtab[z].flgs = CM_INV;
             }
-            else if (sshkwtab[z].kwval == XSSH_V2
+            else if (sshkwtab[z].kwval == XSSH2_RKE
                 && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
                 /*
                  * "ssh agent"

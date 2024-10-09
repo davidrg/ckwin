@@ -11,6 +11,10 @@ it carried from 1995 through to 2013.
 ### Things to be aware of when upgrading
 * K95G no longer opens COM1 by default. If you previously depended on this, 
   you'll need to add `set port com1` to your k95custom.ini
+* The default SSH home directory has been reverted from `\v(home).ssh` back to
+  the location used by Kermit 95 2.1.3 and earlier - `\v(appdata)ssh`.  You
+  may wish to add some commands to your k95custom.ini if you'd rather keep
+  using the location used by C-Kermit for Windows betas 2-6 (K95 3.0 betas 2-6).
 
 #### SSH User Known Hosts File Has Moved
 
@@ -46,6 +50,24 @@ If `\v(appdata)ssh/known_hosts2` already exists the above will overwrite it.
 > [!TIP]
 > To find out where `\v(appdata)`, `\v(home)` and other such directories are
 > on your disk, you can use the `orient` command.
+
+#### Default location for identity files has changed
+
+As of beta 7, Kermit 95 3.0 now looks in `\v(appdata)ssh` for identity files,
+the same place Kermit 95 v2.1.3 and earlier used.
+
+If you'd rather not use the new old location, you can add the following to
+your K95 custom:
+```
+local idf
+.idf := set ssh identity-file
+if exist \v(home).ssh/id_rsa .idf := \m(idf) \v(home).ssh/id_rsa
+if exist \v(home).ssh/id_dsa .idf := \m(idf) \v(home).ssh/id_dsa
+if exist \v(home).ssh/id_ecdsa .idf := \m(idf) \v(home).ssh/id_ecdsa
+if exist \v(home).ssh/id_ed25519 .idf := \m(idf) \v(home).ssh/id_ed25519
+if > \Flength(\m(idf)) 21 idf
+```
+
 
 ### New features
 * SSH Port forwarding (tunneling) is now supported again in both
@@ -101,11 +123,14 @@ If `\v(appdata)ssh/known_hosts2` already exists the above will overwrite it.
   (`set gui menubar { off, on }`) is still accepted for compatibility with
   existing scripts. `set gui menubar on` still does nothing as it always has
   (disabling the menubar is a session lockdown feature)
+* Implemented the `set ssh set ssh identity-file` command
 * The default location for the SSH user known hosts file has changed from
   `\v(home).ssh/known_hosts` (K95 3.0 betas 2-6) to the value used by Kermit
   95 v2.1.3 and earlier: `\v(appdata)ssh/known_hosts2`. Placing this file in
   `\v(home).ssh` was never an intentional decision, but rather a detail
   overlooked when switching to a new SSH backend.
+* Related to the above, the default location for SSH user identities has 
+  changed from `\v(home).ssh/` to `\v(appdata)ssh`
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 

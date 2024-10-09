@@ -61,6 +61,7 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 
 #ifndef SSH_DLL
 #include "ckclib.h"
+#include "ckoreg.h"
 #endif
 
 
@@ -168,7 +169,7 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
  *      GSSAPI DELEGATE-CREDENTIALS {ON,OFF}
  *          Value is stored in ssh_gsd
  *      HEARTBEAT-INTERVAL interval
- *      TODO: IDENTITY-FILE filename
+ *      IDENTITY-FILE filename
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
  *          -> This should suppress all printfs
@@ -491,6 +492,8 @@ static char                             /* The following are to be malloc'd */
     * ssh_pxc = NULL,                     /* Proxy command */
     * xxx_dummy = NULL;
 
+static const char **ssh_idf = NULL;                    /* Identity files */
+
 /* The SSH subsystem actually tracks port forwards with a linked list so it has
  * no particular limit on the number it will support, but we need to be able to
  * track these things separately from the SSH subsystem to allow them to be set
@@ -789,6 +792,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_get_iparam", ssh_get_iparam);
     params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
     params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
+    params->p_install_funcs("ssh_set_identity_files", ssh_set_identity_files);
     params->p_install_funcs("ssh_open", ssh_open);
     params->p_install_funcs("ssh_clos", ssh_clos);
     params->p_install_funcs("ssh_tchk", ssh_tchk);
@@ -1055,6 +1059,22 @@ const char* ssh_get_sparam(int param) {
     return NULL;
 }
 
+/** Set the list of SSH identity files to use for authentication
+ *
+ * @param identity_files List of identity files, null terminated.
+ * @returns 0 on success, -1 if not supported
+ */
+int ssh_set_identity_files(const char** identity_files) {
+    /* TODO: We really *should* make a copy of this rather than
+     *      just holding on to the pointer given to us by K95.
+     *      Currently its "ok" as the array of identity files is
+     *      statically allocated by K95, and there is little
+     *      reason for this to change in the future.
+     */
+    ssh_idf = identity_files;
+    return 0;
+}
+
 /** This is called by ssh_dll_init when the DLL is loaded (SSH_DLL defined)
  * or directly by K95 on application startup (SSH_DLL not defined) at the
  * point where the DLL would normally have been loaded.
@@ -1194,7 +1214,7 @@ int ssh_open() {
     int rc;
     const char* uidbuf;
 #define NHPATHMAX 1024
-    char *unh = NULL, *gnh = NULL;
+    char *unh = NULL, *gnh = NULL, *dir = NULL;
 
     /* X11 forwarding details */
     int display_number = 0, screen_number = 0;
@@ -1333,6 +1353,10 @@ int ssh_open() {
         ckmakmsg(gnh, NHPATHMAX, GetAppData(1), "Kermit 95/", "ssh/", "known_hosts2");
     }
 
+    /* Set libssh SSH dir to \v(appdata)ssh/ */
+    dir = malloc(sizeof(char)*NHPATHMAX);
+    ckmakmsg(dir, NHPATHMAX, GetAppData(0), "Kermit 95/", "ssh/", NULL);
+
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
     debug(F100, "ssh_open() - construct parameters", "", 0);
@@ -1365,12 +1389,15 @@ int ssh_open() {
             ssh_xfw,        /* Forward X11 */
             x11_host,       /* Host to forward X11 too */
             display_number, /* X11 display number */
-            ssh_xal         /* Xauth location */
+            ssh_xal,        /* Xauth location */
+            dir,            /* SSH Dir*/
+            ssh_idf         /* Identity files */
             );
 
     if (user) free(user);
     if (unh) free(unh);
     if (gnh) free(gnh);
+    if (dir) free(dir);
     if (x11_host) {
         free(x11_host);
         x11_host = NULL;

@@ -8095,11 +8095,12 @@ static struct keytab gssapitab[] = {
 static int ngssapitab = (sizeof(gssapitab) / sizeof(struct keytab)) - 1;
 
 
-char * ssh_idf[32] = {                  /* Identity file list */
+char * ssh_idf[33] = {                  /* Identity file list - null terminated */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+  NULL
 };
 char * ssh_tmp[32] = {                  /* Temp identity file list */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
@@ -8987,6 +8988,12 @@ dosetssh() {
             }
         }
         ssh_idf_n = n;
+
+        if (ssh_set_identity_files(ssh_idf) < 0) {
+            printf("\r\nCommand not supported by the current SSH backend\r\n");
+            return(0);
+        }
+
         return(success = 1);
       }
       case SSH_XFW:                     /* X11-forwarding */

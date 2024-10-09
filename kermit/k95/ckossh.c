@@ -168,6 +168,7 @@ typedef int (*p_ssh_set_iparam_t)(int, int);
 typedef int (*p_ssh_get_iparam_t)(int);
 typedef int (*p_ssh_set_sparam_t)(int, const char*);
 typedef const char* (*p_ssh_get_sparam_t)(int);
+typedef int (*p_ssh_set_identity_files_t)(const char**);
 typedef int (*p_ssh_open_t)();
 typedef int (*p_ssh_clos_t)();
 typedef int (*p_ssh_tchk_t)();
@@ -211,6 +212,7 @@ static p_ssh_set_iparam_t p_ssh_set_iparam = NULL;
 static p_ssh_get_iparam_t p_ssh_get_iparam = NULL;
 static p_ssh_set_sparam_t p_ssh_set_sparam = NULL;
 static p_ssh_get_sparam_t p_ssh_get_sparam = NULL;
+static p_ssh_set_identity_files_t p_ssh_set_identity_files = NULL;
 static p_ssh_open_t p_ssh_open = NULL;
 static p_ssh_clos_t p_ssh_clos = NULL;
 static p_ssh_tchk_t p_ssh_tchk = NULL;
@@ -285,6 +287,8 @@ void ssh_install_func(const char* function, const void* p_function) {
         p_ssh_set_sparam = F_CAST(p_ssh_set_sparam_t) p_function;
     else if ( !strcmp(function,"ssh_get_sparam") )
         p_ssh_get_sparam = F_CAST(p_ssh_get_sparam_t) p_function;
+    else if ( !strcmp(function,"ssh_set_identity_files") )
+        p_ssh_set_identity_files = F_CAST(p_ssh_set_identity_files_t) p_function;
     else if ( !strcmp(function,"ssh_open") )
         p_ssh_open = F_CAST(p_ssh_open_t) p_function;
     else if ( !strcmp(function,"ssh_clos") )
@@ -482,6 +486,7 @@ int ssh_dll_unload(int quiet) {
     p_ssh_get_iparam = NULL;
     p_ssh_set_sparam = NULL;
     p_ssh_get_sparam = NULL;
+    p_ssh_set_identity_files = NULL;
     p_ssh_open = NULL;
     p_ssh_clos = NULL;
     p_ssh_tchk = NULL;
@@ -663,6 +668,15 @@ const char* ssh_get_sparam(int param) {
         return p_ssh_get_sparam(param);
 
     return NULL;
+}
+
+/** Set the list of identity files to use for authentication.
+ * @param identity_files The list of identity file names, null terminated.
+ */
+int ssh_set_identity_files(const char** identity_files) {
+    if (p_ssh_set_identity_files)
+        return p_ssh_set_identity_files(identity_files);
+    return -1;
 }
 
 /** Opens an SSH connection. Connection parameters are passed through global
