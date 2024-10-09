@@ -91,10 +91,15 @@ SSH REMOVE LOCAL-PORT-FORWARD local-port
   the local port forwarding list. This has no effect on any active 
   connection.
 
-SSH REMOVE REMOTE-PORT-FORWARD remote-port",
+SSH REMOVE REMOTE-PORT-FORWARD remote-port
   Removes the remote port forward with the specified remote-port from
   the remote port forwarding list. This has no effect on any active
   connection.
+
+SET SSH DIRECTORY directory
+  Specifies where Kermit 95 should look for the default SSH user files
+  such as the user-known-hosts file and identity files (id_rsa, etc).
+  By default Kermit 95 looks for these in \\v(appdata)ssh.
 
 set ssh v2 key-exchange-methods {CURVE25519-SHA256,
      CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,

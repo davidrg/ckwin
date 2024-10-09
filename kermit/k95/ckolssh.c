@@ -490,6 +490,7 @@ static char                             /* The following are to be malloc'd */
     * ssh2_unh = NULL,                    /* v2 user known hosts file */
     * ssh2_kex = NULL,                    /* Key Exchange Methods */
     * ssh_pxc = NULL,                     /* Proxy command */
+    * ssh_dir = NULL,                     /* SSH Directory */
     * xxx_dummy = NULL;
 
 static const char **ssh_idf = NULL;                    /* Identity files */
@@ -1015,6 +1016,9 @@ int ssh_set_sparam(int param, const char* value) {
         case SSH_SPARAM_PXC:
             copy_set_sparam(&ssh_pxc, value);
             break;
+        case SSH_SPARAM_DIR:
+            copy_set_sparam(&ssh_dir, value);
+            break;
         default:
             return 1;
     }
@@ -1053,6 +1057,8 @@ const char* ssh_get_sparam(int param) {
             return ssh2_kex;
         case SSH_SPARAM_PXC:
             return ssh_pxc;
+        case SSH_SPARAM_DIR:
+            return ssh_dir;
         default:
             return NULL;
     }
@@ -1201,6 +1207,24 @@ static int get_ssh_error() {
     return error;
 }
 
+/* Returns the SSH directory in a new string. The string must be freed by
+ * the caller.
+ *
+ * @returns A new string containing the SSH directory.
+ */
+char* ssh_directory() {
+
+    char* dir;
+    if (ssh_dir != NULL) {      /* SSH Directory */
+        dir = _strdup(ssh_dir);
+    } else {
+        dir = malloc(sizeof(char)*MAX_PATH);
+
+        /* \v(appdata)ssh/ */
+        ckmakmsg(dir, MAX_PATH, GetAppData(0), "Kermit 95/", "ssh/", NULL);
+    }
+    return dir;
+}
 
 /** Opens an SSH connection. Connection parameters are passed through global
  * variables
@@ -1335,16 +1359,29 @@ int ssh_open() {
     }
 
     /* Sort out default files and directories */
-    if (ssh2_unh != NULL) {
+    if (ssh2_unh != NULL) {     /* SSHv2 User Known Hosts file */
         unh = _strdup(ssh2_unh);
-    } else {
+    } else if (ssh_dir == NULL) {
+        /* Set the default user known hosts file to
+         * \v(appdata)ssh/known_hosts2 only if:
+         *      -> The user has not specified the user known hosts file with the
+         *         set ssh v2 user-known-hosts-file
+         *      -> The user has not specified an SSH directory
+         * This is to retain compatibility with Kermit 95 2.1.3 and earlier
+         * which named the SSHv2 UNH file "known_hosts2" and the SSHv1 UNH file
+         * "known_hosts". If the user changes their SSH directory to something
+         * else, we don't need to worry about K95 2.1.3 and earlier named this
+         * file, and we'll just go with "known_hosts" which is what OpenSSH
+         * uses.
+         */
+
         unh = malloc(sizeof(char)*NHPATHMAX);
 
         /* \v(appdata) = GetAppData(0) + "Kermit 95/" */
         ckmakmsg(unh, NHPATHMAX, GetAppData(0), "Kermit 95/", "ssh/", "known_hosts2");
     }
 
-    if (ssh2_gnh != NULL) {
+    if (ssh2_gnh != NULL) {     /* SSHv2 Global Known Hosts file */
         gnh = _strdup(ssh2_gnh);
     } else {
         gnh = malloc(sizeof(char)*NHPATHMAX);
@@ -1353,9 +1390,7 @@ int ssh_open() {
         ckmakmsg(gnh, NHPATHMAX, GetAppData(1), "Kermit 95/", "ssh/", "known_hosts2");
     }
 
-    /* Set libssh SSH dir to \v(appdata)ssh/ */
-    dir = malloc(sizeof(char)*NHPATHMAX);
-    ckmakmsg(dir, NHPATHMAX, GetAppData(0), "Kermit 95/", "ssh/", NULL);
+    dir = ssh_directory();
 
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
@@ -2241,15 +2276,20 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
         output_filename = _strdup(filename);
     } else {
         char* default_pathname;
+        char* dir;
         output_filename = malloc(MAX_PATH * sizeof(char));
         default_pathname = malloc(MAX_PATH * sizeof(char));
 
-        /* We'll suggest the user save in %USERPROFILE%\.ssh by default as thats
-         * where both C-Kermit and the windows builds of OpenSSH look */
-        snprintf(default_pathname, MAX_PATH, "%s%s.ssh/%s",
-                 GetHomeDrive(), GetHomePath(), default_filename);
+        dir = ssh_directory();
+
+        /* We'll suggest the user save in their ssh directory by default as
+         * that's where K95 looks by default */
+        snprintf(default_pathname, MAX_PATH, "%s%s",
+                 dir, default_filename);
+        free(dir);
+
 #ifdef CK_MKDIR
-        /* Make the .ssh directory if it doesn't already exist */
+        /* Make the ssh directory if it doesn't already exist */
         zmkdir(default_pathname);
 #endif
 
@@ -2373,6 +2413,26 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     return SSH_ERR_NO_ERROR;
 }
 
+/** Gets the default key filename. This will be something like id_rsa
+ * in the SSH directory.
+ *
+ * The returned string must be freed by the caller.
+ *
+ * @return Default SSH key filename. Must be freed by caller.
+ */
+char* default_key_filename() {
+    char *default_filename, *dir;
+    dir = ssh_directory();
+    default_filename = malloc(MAX_PATH * sizeof(char));
+
+    /* We'll suggest the user save in their ssh directory by default as
+     * that's where K95 looks by default */
+    snprintf(default_filename, MAX_PATH, "%s%s",
+             dir, "id_rsa");
+    free(dir);
+    return default_filename;
+}
+
 /** Displays the fingerprint for the specified public key
  *
  * @param filename Key file to display the fingerprint for. If not supplied, one
@@ -2406,6 +2466,8 @@ int sshkey_display_fingerprint(char * filename, int babble) {
 /*    printf("sshkey_display_fingerprint\nFilename: %s\nBabble: %d\n", filename, babble);*/
 
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
+
         fn = malloc(MAX_PATH);
         int rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2413,10 +2475,11 @@ int sshkey_display_fingerprint(char * filename, int babble) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2469,6 +2532,8 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
      */
 
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
+
         fn = malloc(MAX_PATH);
         rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2476,10 +2541,11 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2522,16 +2588,13 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
 int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
     /* ssh key display /format:ssh.com id_rsa */
 
-
     ssh_key key = NULL;
     int rc;
     char* fn = NULL, * blob;
 
-    /* We get here with the following:
-     * ssh key display /format:openssh id_rsa
-     */
-
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
+
         fn = malloc(MAX_PATH);
         rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2539,10 +2602,11 @@ int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2597,6 +2661,7 @@ int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
     char* pp = NULL;
 
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
         fn = malloc(MAX_PATH);
         rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2604,10 +2669,11 @@ int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
