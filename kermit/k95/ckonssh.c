@@ -241,6 +241,7 @@ static char                             /* The following are to be malloc'd */
 * ssh2_unh = NULL,                    /* v2 user known hosts file */
 * ssh2_kex = NULL,                    /* Key Exchange Methods */
 * ssh_pxc = NULL,                     /* Proxy command */
+* ssh_dir = NULL,                     /* SSH Directory */
 * xxx_dummy = NULL;
 
 #ifdef SSH_DLL
@@ -728,6 +729,9 @@ int ssh_set_sparam(int param, const char* value) {
         case SSH_SPARAM_PXC:
             copy_set_sparam(&ssh_pxc, value);
             break;
+        case SSH_SPARAM_DIR:
+            copy_set_sparam(&ssh_dir, value);
+            break;
         default:
             return 1;
     }
@@ -771,6 +775,8 @@ const char* ssh_get_sparam(int param) {
             return ssh2_kex;
         case SSH_SPARAM_PXC:
             return ssh_pxc;
+        case SSH_SPARAM_DIR:
+            return ssh_dir;
         default:
             return NULL;
     }

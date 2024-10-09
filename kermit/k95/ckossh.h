@@ -88,6 +88,7 @@ typedef struct ssh_port_forward {
 #define SSH_SPARAM_2_UNH    13      /* v2 user known hosts file */
 #define SSH_SPARAM_2_KEX    14      /* Key Exchange Methods */
 #define SSH_SPARAM_PXC      15      /* Proxy command */
+#define SSH_SPARAM_DIR      16      /* SSH Directory */
 
 /* Setters and getters for the various "set ssh" options. set_ssh_sparam takes
  * a copy of the supplied string rather than taking ownership of it.*/

@@ -7984,6 +7984,7 @@ setprinter(xx) int xx;
 #define SSH_CFG 22                      /* Use OpenSSH Config */
 #define SSH_HBT 23                      /* Heartbeat Interval */
 #define SSH_PXC 24                      /* Proxy Command */
+#define SSH_DIR 25                      /* SSH Directory */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
@@ -7991,6 +7992,7 @@ static struct keytab sshtab[] = {       /* SET SSH command table */
     { "agent-forwarding",        SSH_AFW,  0 },     /* SSH_FEAT_AGENT_FWD */
     { "check-host-ip",           SSH_CHI,  0 },
     { "compression",             SSH_CMP,  0 },
+    { "directory",               SSH_DIR,  0 },
     { "dynamic-forwarding",      SSH_DYF,  0 },     /* SSH_FEAT_PORT_FWD */
     { "gateway-ports",           SSH_GWP,  0 },     /* SSH_FEAT_PORT_FWD */
     { "gssapi",                  SSH_GSS,  0 },     /* SSH_FEAT_ADV_GSSAPI */
@@ -8147,6 +8149,7 @@ shossh() {
     }
     printf(" ssh check-host-ip:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CHKIP)));
     printf(" ssh compression:                 %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CMP)));
+    printf(" ssh directory:                   %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_DIR)));
     if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
         printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_get_iparam(SSH_IPARAM_DYF)));
     }
@@ -8448,6 +8451,21 @@ dosetssh() {
 
       case SSH_CMP:                     /* Compression */
         return(success = set_ssh_iparam_on(SSH_IPARAM_CMP));
+
+      case SSH_DIR:
+        if ((x = cmdir("SSH Directory","",&s,xxstring)) < 0) {
+            if (x != -3)
+              return(x);
+        } else {
+            ckstrncpy(line,s,LINBUFSIZ);
+            if (zfnqfp(line,TMPBUFSIZ,tmpbuf))
+              ckstrncpy(line,tmpbuf,LINBUFSIZ);
+        }
+        s = (x == -3) ? NULL : line;
+        if ((x = cmcfm()) < 0)
+          return(x);
+        ssh_set_sparam(SSH_SPARAM_DIR, s);
+        return(1);
 
       case SSH_DYF:                     /* Dynamic Forwarding */
         if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
