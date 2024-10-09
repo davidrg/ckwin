@@ -8323,7 +8323,6 @@ dosetssh() {
         return (-9);
     }
 #endif /* SSH_DLL */
-
     /* Hide any "set ssh" commands not supported by the currently loaded SSH
      * backend */
     for (z = 0; z < nsshtab; z++) {
@@ -8391,6 +8390,15 @@ dosetssh() {
              */
             sshtab[z].flgs = CM_INV;
         }
+        else if (sshtab[z].kwval == SSH_GSS
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+            /*
+             * "set ssh gssapi" commands - if none of them are enabled,
+             * hide "set ssh gssapi" too.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
     }
 
     /* Hide any "set ssh v2" commands not supported by the currently loaded SSH
@@ -8407,19 +8415,19 @@ dosetssh() {
 
     /* Hide any "set ssh gssapi" commands not supported by the currently loaded SSH
      * backend */
-    for (z = 0; z < nsshv2tab; z++) {
-        if (sshv2tab[z].kwval == SSH_GSSAPI_DELEGATE
+    for (z = 0; z < ngssapitab; z++) {
+        if (gssapitab[z].kwval == SSH_GSSAPI_DELEGATE
             && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
             /*
              * "set ssh gssapi delegate-credentials"
              */
-            sshv2tab[z].flgs = CM_INV;
-        } else if (sshv2tab[z].kwval == SSH_GSSAPI_KEYEX
+            gssapitab[z].flgs = CM_INV;
+        } else if (gssapitab[z].kwval == SSH_GSSAPI_KEYEX
             && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
             /* The always hidden command:
              * "set ssh gssapi key-exchange"
              */
-            sshv2tab[z].flgs = CM_INV;
+            gssapitab[z].flgs = CM_INV;
         }
     }
 #endif /* SSHBUILTIN */
