@@ -53,7 +53,9 @@
 #include "ckokvb.h"
 #include "ckokey.h"
 #include "ckover.h"             /* This really should be ckover.h */
-
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif
 #ifndef NOLOCAL
 int ttgcwsz();                  /* ckocon.c */
 #endif /* NOLOCAL */
@@ -794,104 +796,11 @@ static char * hmxxfunc[] = {
 #ifdef ANYSSH
 static char * hmxxssh[] = {
 #ifdef SSHBUILTIN
-"Syntax: SSH { ADD, AGENT, CLEAR, KEY, [ OPEN ], V2 } operands...",
-"  Performs an SSH-related action, depending on the keyword that follows:",
-" ",
-"SSH ADD LOCAL-PORT-FORWARD local-port host port",
-"  Adds a port forwarding triplet to the local port forwarding list.",
-"  The triplet specifies a local port to be forwarded and the hostname /",
-"  ip-address and port number to which the port should be forwarded from",
-"  the remote host.  Port forwarding is activated at connection",
-"  establishment and continues until the connection is terminated.",
-" ",
-"SSH ADD REMOTE-PORT-FORWARD remote-port host port",
-"  Adds a port forwarding triplet to the remote port forwarding list.",
-"  The triplet specifies a remote port to be forwarded and the",
-"  hostname/ip-address and port number to which the port should be",
-"  forwarded from the local machine.  Port forwarding is activated at",
-"  connection establishment and continues until the connection is",
-"  terminated.",
-" ",
-"SSH AGENT ADD [ identity-file ]",
-"  Adds the contents of the identity-file (if any) to the SSH AGENT",
-"  private key cache.  If no identity-file is specified, all files",
-"  specified with SET SSH IDENTITY-FILE are added to the cache.",
-" ",
-"SSH AGENT DELETE [ identity-file ]",
-"  Deletes the contents of the identity-file (if any) from the SSH AGENT",
-"  private key cache.  If no identity-file is specified, all files",
-"  specified with SET SSH IDENTITY-FILE are deleted from the cache.",
-" ",
-"SSH AGENT LIST [ /FINGERPRINT ]",
-"  Lists the contents of the SSH AGENT private key cache.  If /FINGERPRINT",
-"  is specified, the fingerprint of the private keys are displayed instead",
-"  of the keys.",
-" ",
-"SSH CLEAR LOCAL-PORT-FORWARD",
-"  Clears the local port forwarding list.",
-" ",
-"SSH CLEAR REMOTE-PORT-FORWARD",
-"  Clears the remote port forwarding list.",
-" ",
-"SSH KEY commands:",
-"  The SSH KEY commands create and manage public and private key pairs",
-"  (identities).  There are four forms of SSH keys.  Each key pair is",
-"  stored in its own set of files:",
-" ",
-"   Key Type      Private Key File           Public Key File",
-"    RSA keys      \\v(home).ssh/id_rsa       \\v(home).ssh/id_rsa.pub",
-"    DSA keys      \\v(home).ssh/id_dsa       \\v(home).ssh/id_dsa.pub",
-"    ECDSA keys    \\v(home).ssh/id_ecdsa     \\v(home).ssh/id_ecdsa.pub",
-"    ED25519 keys  \\v(home).ssh/id_ed25519   \\v(home).ssh/id_ed25519.pub",
-" ",
-"  Keys are stored using the OpenSSH keyfile format.  The private key",
-"  files can be (optionally) protected by specifying a passphrase.  A",
-"  passphrase is a longer version of a password.  English text provides",
-"  no more than 2 bits of key data per character.  56-bit keys can be",
-"  broken by a brute force attack in approximately 24 hours.  When used,",
-"  private key files should therefore be protected by a passphrase of at",
-"  least 40 characters (about 80 bits).",
-" ",
-"  To install a public key file on the host, you must transfer the file",
-"  to the host and append it to your \"authorized_keys\" file.  The file",
-"  permissions must be 600 (or equivalent).",
-" ",
-"SSH KEY CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase",
-"      /OLD-PASSPHRASE:passphrase ] filename",
-"  This re-encrypts the specified private key file with a new passphrase.",
-"  The old passphrase is required.  If the passphrases (and filename) are",
-"  not provided Kermit prompts your for them.",
-" ",
-"SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
-"    /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename",
-"  This command creates a new private/public key pair.  The defaults is",
-"  TYPE:ED25519.  The filename is the name of the private key file.  The",
-"  The public key is created with the same name with .pub appended to it.",
-"  If a filename is not specified Kermit prompts you for it. Key length ",
-"  options (/BITS:) depends on the key type:",
-" ",
-"    ECDSA: 256 (default), 384, 521",
-"    RSA: 1024, 2048, 3072 (default), 4096, 8192",
-"    DSS: 1024 (default), 2048",
-" ",
-"  ED25519 does not support being given a key length and any value supplied",
-"  via /BITS: will be ignored.",
-" ",
-#ifdef COMMENT
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
-"  This command displays the contents of a public or private key file.",
-"  The default format is OPENSSH.",
-" ",
-#endif
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH,SSH.COM} ] filename",
-"  This command displays the fingerprint or public key for the specified key.",
-"  Default action is to show the fingerprint.",
-" ",
-#ifdef COMMENT
-"SSH KEY V1 SET-COMMENT filename comment",
-"  This command replaces the comment associated with a V1 RSA key file.",
-" ",
-#endif
+/* In Kermit 95, help content is provided by the currently loaded SSH backend.
+ * This help text will only be output when no backend is loaded. If K95 was
+ * built with SSHBUILTIN and not SSH_DLL, then the SSH backend is compiled in
+ * so can never not be loaded.
+ */
 #ifdef SSH_DLL
 "SSH LOAD filename",
 "  This command is only available when no SSH backend DLL was loaded on ",
@@ -904,36 +813,6 @@ static char * hmxxssh[] = {
 "  enable all SSH commands and be used for all SSH operations until Kermit is",
 "  restarted.",
 " ",
-#endif
-"SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
-"      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
-"  This command establishes a new connection using SSH version 1 or",
-"  version 2 protocol.  The connection is made to the specified host on",
-"  the SSH port (you can override the port by including a port name or",
-"  number after the host name).  Once the connection is established the",
-"  authentication negotiations begin.  If the authentication is accepted,",
-"  the local and remote port forwarding lists are used to establish the",
-"  desired connections.  If X11 Forwarding is active, this results in a",
-"  remote port forwarding between the X11 clients on the remote host and",
-"  X11 Server on the local machine.  If a /COMMAND is provided, the",
-"  command is executed on the remote host in place of your default shell.",
-" ",
-"  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
-"     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
-" ",
-"SSH REMOVE LOCAL-PORT-FORWARD local-port",
-"  Removes the local port forward with the specified local-port from",
-"  the local port forwarding list. This has no effect on any active ",
-"  connection.",
-" ",
-"SSH REMOVE REMOTE-PORT-FORWARD remote-port",
-"  Removes the remote port forward with the specified remote-port from",
-"  the remote port forwarding list. This has no effect on any active ",
-"  connection.",
-" ",
-#ifdef COMMENT
-"SSH V2 REKEY",
-"  Requests that an existing SSH V2 connection generate new session keys.",
 #endif
 #else  /* SSHBUILTIN */
 "Syntax: SSH [ options ] <hostname> [ command ]",
@@ -949,10 +828,14 @@ static char * hmxxssh[] = {
 static char *hmxyssh[] = {
 #ifdef SSHBUILTIN
 /* In Kermit 95, help content is provided by the currently loaded SSH backend.
- * This help text will only be output when no backend is loaded.
+ * This help text will only be output when no backend is loaded. If K95 was
+ * built with SSHBUILTIN and not SSH_DLL, then the SSH backend is compiled in
+ * so can never not be loaded.
  */
+#ifdef SSH_DLL
 "No SSH backend loaded. If you have a suitable backend DLL, you can load",
 "it with the SSH LOAD command.",
+#endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
 "Syntax: SET SSH COMMAND command",
 "  Specifies the external command to be used to make an SSH connection.",
@@ -7440,7 +7323,19 @@ case XXPURGE:
 
 #ifdef ANYSSH
   case XXSSH:
+#ifdef SSHBUILTIN
+    {
+        const char **help_content;
+        if (ssh_avail()) {
+            help_content = ssh_get_help();
+        } else {
+            help_content = hmxxssh;
+        }
+        return(hmsga(help_content));
+    }
+#else
     return(hmsga(hmxxssh));
+#endif /* SSHBUILTIN */
 #endif /* ANYSSH */
 
 #ifdef TCPSOCKET
@@ -10842,16 +10737,18 @@ case XYTIMER:
 #ifdef ANYSSH
   case XYSSH:
 #ifdef SSHBUILTIN
-    const char *help_content;
-    if (ssh_avail()) {
-        help_content = ssh_get_set_help();
-    } else {
-        help_content = hmxyssh;
+    {
+        const char **help_content;
+        if (ssh_avail()) {
+            help_content = ssh_get_set_help();
+        } else {
+            help_content = hmxyssh;
+        }
+        return(hmsga(help_content));
     }
-    return(hmsga(help_content));
 #else
     return(hmsga(hmxyssh));
-#endif
+#endif /* SSHBUILTIN */
 #endif /* ANYCMD */
 
 #ifdef LOCUS

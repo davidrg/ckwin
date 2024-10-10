@@ -224,6 +224,7 @@ typedef const char* (*p_ssh_dll_ver_t)();
 typedef ktab_ret (*p_ssh_get_keytab_t)(int keytab_id);
 typedef int (*p_ssh_feature_supported_t)(int feature_id);
 typedef const char** (*p_ssh_get_set_help_t)();
+typedef const char** (*p_ssh_get_help_t)();
 
 /* Function pointers received from the currently loaded SSH subsystem DLL */
 static p_ssh_set_iparam_t p_ssh_set_iparam = NULL;
@@ -270,6 +271,7 @@ static p_ssh_dll_ver_t p_ssh_dll_ver = NULL;
 static p_ssh_get_keytab_t p_ssh_get_keytab = NULL;
 static p_ssh_feature_supported_t p_ssh_feature_supported = NULL;
 static p_ssh_get_set_help_t p_ssh_get_set_help = NULL;
+static p_ssh_get_help_t p_ssh_get_help = NULL;
 
 /* If a subsystem has been successfully loaded and initialised or not */
 int ssh_subsystem_loaded = FALSE;
@@ -379,6 +381,8 @@ void ssh_install_func(const char* function, const void* p_function) {
         p_ssh_feature_supported = F_CAST(p_ssh_feature_supported_t) p_function;
     else if (!strcmp(function,"ssh_get_set_help"))
         p_ssh_get_set_help = F_CAST(p_ssh_get_set_help_t) p_function;
+    else if (!strcmp(function,"ssh_get_help"))
+        p_ssh_get_help = F_CAST(p_ssh_get_help_t) p_function;
 }
 
 /** Attempts to load and initialise a particular SSH subsystem DLL
@@ -541,6 +545,8 @@ int ssh_dll_unload(int quiet) {
     p_ssh_agent_add_file = NULL;  /* TODO */
     p_ssh_agent_list_identities = NULL;    /* TODO */
     p_ssh_unload = NULL;
+    p_ssh_get_set_help = NULL;
+    p_ssh_get_help = NULL;
 
     #ifdef NT
     FreeLibrary(hSSH);
@@ -1189,6 +1195,21 @@ const char** ssh_get_set_help() {
 };
     if (p_ssh_get_set_help)
         result = p_ssh_get_set_help();
+
+    if (result != NULL)
+        return result;
+
+    return hmxyssh;
+}
+
+const char** ssh_get_help() {
+    const char** result;
+    static char *hmxyssh[] = {
+"No help content for SSH was provided by the currently loaded SSH backend.",
+""
+};
+    if (p_ssh_get_help)
+        result = p_ssh_get_help();
 
     if (result != NULL)
         return result;
