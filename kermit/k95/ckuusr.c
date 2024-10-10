@@ -11319,7 +11319,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	          return(y);
 	      }
 
-          if ((x = cmnum((cx == SSHR_LPF) ?
+          if ((x = cmnum((y == SSHR_LPF) ?
 			     "Local port number" : "Remote port number",
 			     "",10,&port,xxstring)) < 0) {
 		    return(x);
