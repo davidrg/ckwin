@@ -1223,7 +1223,7 @@ textps.exe: textps.obj textps.res $(DEF) ckoker.mak
 #       ckoker.msb  -- no idea what this is
 ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
 !if "$(CMP)" == "OWWCL"
-        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
+        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS) -"OPTION MAP"
         wrc -q -bt=os2 ckoker.res $@
 !else
         $(CC) $(CC2) /B"$(LINKFLAGS)" $(DEBUG) $(OBJS) $(DEF) $(OUT) $@ $(LIBS) $(LDFLAGS)
@@ -1262,7 +1262,7 @@ cko32i41.dll: ckoi41.obj ckoker.mak
 cko32i20.dll: ckoi20.obj ckoker.mak
 !if "$(CMP)" == "OWWCL"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 $(LINKFLAGS_DLL) $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res"
+	 $(LINKFLAGS_DLL) $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res" -"OPTION MAP"
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
