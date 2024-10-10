@@ -2881,11 +2881,12 @@ ktab_ret ssh_get_keytab(int keytab_id) {
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
 
-        case SSH_FEAT_OPENSSH_CONF: /* Configuration via openssh config file */
-        case SSH_FEAT_KEY_MGMT:     /* SSH key creation, etc */
-        case SSH_FEAT_PORT_FWD:     /* Local and remote port forwarding */
-        case SSH_FEAT_X11_FWD:      /* X11 forwarding */
-        case SSH_FEAT_REKEY_AUTO:   /* TODO: do we implement this? */
+        case SSH_FEAT_OPENSSH_CONF:   /* Configuration via openssh config file */
+        case SSH_FEAT_KEY_MGMT:       /* SSH key creation, etc */
+        case SSH_FEAT_PORT_FWD:       /* Local and remote port forwarding */
+        case SSH_FEAT_X11_FWD:        /* X11 forwarding */
+        case SSH_FEAT_GSSAPI_DELEGAT: /* GSSAPI Delegate Credentials */
+        case SSH_FEAT_REKEY_AUTO:     /* TODO: do we implement this? */
             return TRUE;
 
         case SSH_FEAT_SSH_V1:         /* Not supported by libssh anymore */
@@ -2898,7 +2899,7 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_DYN_PORT_FWD:   /* Requires a SOCKS server implementation */
         case SSH_FEAT_X11_XAUTH:      /* TODO - not implemented here yet */
         case SSH_FEAT_AGENT_FWD:      /* TODO - not implemented here yet */
-        case SSH_FEAT_GSSAPI_DELEGAT: /* TODO: can we support this ? I think so */
+
         case SSH_FEAT_AGENT_MGMT:     /* TODO: can we support this ? */
         default:
             return FALSE;
