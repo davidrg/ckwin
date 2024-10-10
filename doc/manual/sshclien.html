@@ -29,7 +29,7 @@ already.
   4. <a href="#x4">KNOWN BUGS</a>
   5. <a href="#x5">THINGS TO WATCH OUT FOR</a>
   6. <a href="#x6">NOT IMPLEMENTED YET</a>
-  7. <a href="#x7">NEW COMMANDS FOR SSH</a>
+  7. <a href="#x7">COMMANDS FOR SSH</a>
      7.1. <a href="#x7.1">The SSH Command</a>
      7.2. <a href="#x7.2">The SET SSH Command</a>
 </pre>
@@ -589,7 +589,7 @@ log out but Kermit stays in its terminal screen, use Alt-u to disconnect.
 <li>SHOW SSH shows only settings, not details about current connection.
 </ul>
 
-<h3><hr><a name="x7">7. NEW COMMANDS FOR SSH</a></h3>
+<h3><hr><a name="x7">7. COMMANDS FOR SSH</a></h3>
 
 [ <a href="#top">Top</a> ]
 [ <a href="#contents">Contents</a> ]
@@ -605,7 +605,7 @@ SECTION CONTENTS
 </pre>
 <p>
 
-The remainder of this document lists K95's new SSH-related commands.  You can
+The remainder of this document lists K95's SSH-related commands.  You can
 also find most of this information with K95's HELP commmand (HELP SSH,
 HELP SET SSH, etc).  Notation:
 
@@ -630,7 +630,7 @@ pick one of the items.
 
 Many of these commands have counterparts in the
 <a href="newdial.html#ssh">SSH Settings dialog</a>
-in the <a href="newdial.html">new Dialer</a>.
+in the <a href="newdial.html">Dialer</a>.
 
 <h3><hr><a name="x7.1">7.1. The SSH Command</a></h3>
 
@@ -648,12 +648,12 @@ Let's look at the most important and most commonly used SSH command first:
 <dt><tt><b>SSH </b><i>[</i><b> OPEN </b><i>] host [ port ]
 [</i><b> /COMMAND:</b><i>command</i>
 <b>/USER:</b><i>username</i> <b>/PASSWORD:</b><i>passwd</i>
-<b>/VERSION:</b><i>{</i><b>1,2</b><i>}</i>
+<!--<b>/VERSION:</b><i>{</i><b>1,2</b><i>}</i>-->
 <b>/SUBSYSTEM:</b><i>name</i>
 <b>/X11-FORWARDING:</b><i>{</i><b>ON,OFF</b><i>}&nbsp;]</i></tt></dt>
 
-<dd>This command establishes a new connection using SSH version 1 or version 2
-protocol.  The connection is made to the specified host on the SSH port (you
+<dd>This command establishes a new connection using SSH<!-- version 1 or version 2
+protocol-->.  The connection is made to the specified host on the SSH port (you
 can override the port by including a port name or number after the host name).
 Once the connection is established the authentication negotiations begin.  If
 the authentication is accepted, the local and remote port forwarding lists (if
@@ -672,13 +672,14 @@ connections to be made in scripts, in which interactions with the host are to
 be automated.  To see how to set up an SSH-based Kermit file-transfer
 and -management service (similar to SFTP but with greater flexibility,
 functionality, friendliness, and scriptability),
-<a href="http://www.columbia.edu/kermit/skermit.html">CLICK HERE</a>.
+<a href="https://kermitproject.org/skermit.html">CLICK HERE</a>.
 
 <p>
 
 If your username on the host is not the same as K95's <tt>\v(userid)</tt>
 value, you <i>must</i> include the <tt>/USER:</tt> switch to specify the
-username on the host.  You can find out K95's <tt>\(userid)</tt> value by
+username on the host, or alternatively you can supply your username as part
+of the host (username@host).  You can find out K95's <tt>\(userid)</tt> value by
 typing SHOW VAR USERID at the K95 prompt.  You can set this variable globally
 with the SET LOGIN USERID command, in which case it is used for all future
 network logins until you EXIT from K95.  The <tt>/USER:</tt> switch, on the
@@ -751,15 +752,16 @@ displayed instead of the keys.
 
 <dt><tt><b>SSH KEY</b> </tt> Commands:</dt>
 <dd>The SSH KEY commands create and manage public and private key pairs
-(identities).  There are three forms of SSH keys.  Each key is stored
+(identities).  There are four forms of SSH keys.  Each key is stored
 in its own file:
 
 <p>
 <pre>
    <u><i>Key Type      Private Key File          Public Key File</i>           </u>
-   v1 RSA keys   \v(appdata)ssh/identity   \v(appdata)ssh/identity.pub
-   v2 RSA keys   \v(appdata)ssh/id_rsa     \v(appdata)ssh/id_rsa.pub
-   v2 DSA keys   \v(appdata)ssh/id_dsa     \v(appdata)ssh/id_dsa.pub
+   RSA keys      \v(appdata)ssh/id_rsa     \v(appdata)ssh/id_rsa.pub
+   DSA keys      \v(appdata)ssh/id_dsa     \v(appdata)ssh/id_dsa.pub
+   ECDSA Keys    \v(appdata)ssh/id_ecdsa   \v(appdata)ssh/id_ecdsa.pub
+   ED25519 Keys  \v(appdata)ssh/id_ed25519 \v(appdata)ssh/id_ed25519.pub
 </pre>
 <p>
 
@@ -785,41 +787,85 @@ not provided Kermit prompts your for them.
 
 <dt><tt><b>SSH KEY CREATE</b> <i>[</i> <b>/BITS:</b><i>bits</i><b>
 /PASSPHRASE:</b><i>passphrase</i><b>
-/TYPE:</b><i>{</i><b>V1-RSA,V2-DSA,V2-RSA</b><i>}</i><b>
-/V1-RSA-COMMENT:</b><i>comment ] filename</i></tt></dt>
+/TYPE:</b><i>{</i><b>DSS,RSA,ECDSA,ED25519</b><i>}</i>
+<!--<b>/V1-RSA-COMMENT:</b><i>comment--><i> ] filename</i></tt>
+</dt>
 
 <dd>This command creates a new private/public key pair.  The defaults are:
-BITS:1024 and TYPE:V2-RSA.  The filename is the name of the private key file.
+BITS:0 and TYPE:ED25519.  The filename is the name of the private key file.
 The public key is created with the same name with .pub appended to it.  If a
-filename is not specified Kermit prompts you for it.  V1 RSA key files may
-have an optional comment, which is ignored for other key types.
+filename is not specified Kermit prompts you for it.
+<p>
+  The number of bits allowed depends on the key type. For ED25519, this setting
+  is not relevant so is always 0. DSS can have either 1024 or 2048 bits
+  (default 1024).  RSA supports 1024, 2048, 3072, and 4096 or 82192
+  (default 3072).  ECDSA supports 256, 384 or 521 (default 256).
+
+<p>
+  ED25519 is the most modern and secure of the key types supported and should
+  be used whenever the host supports it (most should at this point, as it has
+  been around since the mid-2000s).
 
 <p>
 
 <dt><tt><b>SSH KEY DISPLAY
 </b><i>[</i><b>
-/FORMAT:</b><i>{</i><b>FINGERPRINT,IETF,OPENSSH,SSH.COM</b><i>} ]
+/FORMAT:</b><i>{</i><b>FINGERPRINT,OPENSSH,SSH.COM</b><i>} ]
 filename</i></tt></dt>
 
 <dd>This command displays the contents of a public or private key file.
 The default format is OPENSSH.
 
-<p>
+<!--<p>
 
 <dt><tt><b>SSH KEY V1 SET-COMMENT </b><i>filename comment</i></tt></dt>
 <dd>This command replaces the comment associated with a V1 RSA key file.
+-->
 
-<p>
+<!--<p>
 
 <dt><tt><b>SSH V2 REKEY</b></tt></dt>
 <dd>Requests that an existing SSH V2 connection generate new session keys.
+-->
+
+<p>
+<dt><tt><b>SSH LOAD</b> <i>dll-name</i></tt></dt>
+<dd><i>New in Kermit 95 3.0:</i> This command is only available when no SSH
+  backend DLL was loaded on startup, either due to there being no compatible
+  DLL available or due to the loading of optional network libraries being
+  disabled via command line parameter.
+
+  <p>
+  This command takes one or more DLL filenames separated by a semicolon (;)
+  which will attempted in order. The first DLL that loads successfully will
+  enable all SSH commands and be used for all SSH operations until Kermit is
+  restarted. When a DLL loads successfully, the SSH LOAD command becomes
+  unavailable.
+
+  <p>
+  On some platforms, Kermit 95 might not have this command either because there
+  exists only one compatible SSH backend and its built-in to the .exe file, or
+  because no compatible backend exists for that platform whether built in or in
+  DLL form.
+
+<p>
+<dt><tt><b>SSH REMOVE LOCAL-PORT-FORWARD</b> <i>local-port</i></tt></dt>
+<dd><i>New in Kermit 95 3.0:</i> this command removes a single local port
+  forward, specified by the local port number. This does not have any effect
+  on an active SSH session.
+
+<p>
+<dt><tt><b>SSH REMOVE REMOTE-PORT-FORWARD</b> <i>remote-port</i></tt></dt>
+<dd><i>New in Kermit 95 3.0:</i> this command removes a single remote port
+  forward, specified by the remote port number. This does not have any effect
+  on an active SSH session.
 
 </dl>
 
 <h3><hr><a name="x7.2">7.2. The SET SSH Command</a></h3>
 
 <dl>
-
+<!-- TODO: Not implemented yet
 <dt><tt><b>SET SSH AGENT-FORWARDING
 </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 
@@ -827,15 +873,16 @@ The default format is OPENSSH.
 the connection to the agent being forwarded to the remote computer.  The
 default is OFF.
 
-<p>
+<p> -->
 
+<!-- TODO: Not implemented yet
 <dt><tt><b>SET SSH CHECK-HOST-IP </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 
 <dd>Specifies whether the remote host's ip-address should be checked against
 the matching host key in the known_hosts file.  This can be used to determine
 if the host key changed as a result of DNS spoofing.  The default is ON.
 
-<p>
+<p> -->
 
 <dt><tt><b>SET SSH COMPRESSION </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 
@@ -843,6 +890,26 @@ if the host key changed as a result of DNS spoofing.  The default is ON.
 
 <p>
 
+<dt><tt><b>SET SSH DIRECTORY </b><i>directory</i></tt></dt>
+
+<dd><i>New in Kermit 94 3.0:</i> Specifies where Kermit 95 should look for the
+  user known hosts file and
+  identity files. By default this is <tt>\v(appdata)ssh</tt>, but you may
+  like to set it to <tt>\v(home).ssh</tt> in order to share files with
+  the version of OpenSSH shipped with modern versions of Windows.
+
+<p>This setting also affects the default name of the user known hosts file.
+  When this setting is unchanged from its default, the default user known
+  hosts filename is <tt>known_hosts2</tt> (<tt>\v(appdata)ssh/known_hosts2</tt>)
+  for compatibility with previous versions of Kermit 95. If you set a
+  different SSH directory (or even the same SSH directory) with the
+  <tt>SET SSH DIRECTORY</tt> command, then the default user known hosts file
+  will be <tt>known_hosts</tt> (eg, <tt>\v(home).ssh/known_hosts</tt>)
+  for compatibility with OpenSSH and other clients.
+
+<p>
+
+<!-- TODO: Not implemented yet
 <dt><tt><b>SET SSH DYNAMIC-FORWARDING
 </b><i>{</i> <b>ON, OFF</b> <i>}</i></tt></dt>
 
@@ -851,14 +918,16 @@ connected to a remote host via SSH.  When Kermit acts as a SOCKS4 service, it
 accepts connection requests and forwards the connections through the remote
 host.  The default is OFF.
 
-<p>
+<p> -->
 
+<!-- TODO: Not implemented yet
 <dt><tt><b>SET SSH GATEWAY-PORTS </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 
 <dd>Specifies whether Kermit should act as a gateway for forwarded
 connections received from the remote host.  The default is OFF.
 
-<p>
+<p> -->
+
 
 <dt><tt><b>SET SSH GSSAPI DELEGATE-CREDENTIALS
 </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
@@ -878,11 +947,14 @@ files used in addition to the default files:
 
 <p>
 <pre>
-  V1 RSA:  \v(appdata)ssh/identity
-  V2 RSA:  \v(appdata)ssh/id_rsa
-  V2 DSA:  \v(appdata)ssh/id_dsa
+  RSA:     \v(appdata)ssh/id_rsa
+  DSA:     \v(appdata)ssh/id_dsa
+  ECDSA:   \v(appdata)ssh/id_ecdsa
+  ED25519: \v(appdata)ssh/id_ed25519
 </pre>
 <p>
+
+<!-- Not Implemented for K95 3.0
 
 <dt><tt><b>SET SSH KERBEROS4 TGT-PASSING</b>
 <i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
@@ -898,8 +970,10 @@ The default is OFF.
 <dd>Specifies whether Kermit should forward Kerberos 5 TGTs to to the host.
 The default is OFF.
 
-<p>
+<p> -->
 
+<!-- TODO: Not implemented
+      And probably not relevant anymore now that SSHv1 is no longer supported
 <dt><tt><b>SET SSH PRIVILEGED-PORT
 </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 
@@ -907,21 +981,22 @@ The default is OFF.
 when connecting to the host.  Privileged ports are not required except when
 using SSH V1 with Rhosts or RhostsRSA authorization.  The default is OFF.
 
-<p>
+<p> -->
 
+<!-- TODO: Not implemented
 <dt><tt><b>SET SSH QUIET </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 
 <dd>Specifies whether all messages generated in conjunction with SSH
 protocols should be suppressed.  The default is OFF.
 
-<p>
+<p> -->
 
 <dt><tt><b>SET SSH STRICT-HOST-KEY-CHECK</b>
 <i>{</i><b> ASK, ON, OFF </b><i>}</i></tt></dt>
 
-<dd>Specifies how Kermit should behave if the the host key check fails.  When
+<dd>Specifies how Kermit should behave if the host key check fails.  When
 strict host key checking is OFF, the new host key is added to the
-protocol-version-specific user-known-hosts-file.  When strict host key
+user-known-hosts-file.  When strict host key
 checking is ON, the new host key is refused and the connection is dropped.
 When set to ASK, Kermit prompt you to say whether the new host key should be
 accepted.  The default is ASK.  Strict host key checking protects you against
@@ -939,6 +1014,7 @@ at <tt>\v(appdata)ssh/ssh_config</tt>.  The default is OFF.
 
 <p>
 
+<!-- SSHv1 no longer supported
 <dt><tt><b>SET SSH V1 CIPHER
 </b><i>{</i><b> 3DES, BLOWFISH, DES </b><i>}</i></tt></dt>
 
@@ -968,31 +1044,30 @@ location is:
 <pre>
   \v(appdata)ssh/known_hosts
 </pre>
-<p>
+<p> -->
 
 <dt><tt><b>SET SSH V2 AUTHENTICATION</b>
-<i>{</i><b> EXTERNAL-KEYX, GSSAPI, HOSTBASED, KEYBOARD-INTERACTIVE, PASSWORD,
-PUBKEY, SRP-GEX-SHA1 </b><i>} [ ... ]</i></tt></dt>
+<i>{</i><b> GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY </b><i>} [ ... ]</i></tt></dt>
 
-<dd>Specifies an ordered list of SSH version 2 authentication methods to
+<dd>Specifies an ordered list of SSH authentication methods to
 be used when connecting to the remote host.  The default list is:
 
 <p>
 <pre>
-  external-keyx gssapi hostbased publickey srp-gex-sha1 
-  keyboard-interactive password none
+  gssapi publickey keyboard-interactive password
 </pre>
 <p>
 
 <dt><tt><b>SET SSH V2 CIPHERS </b><i>{</i><b> 3DES-CBC, AES128-CBC, AES192-CBC,
-AES256-CBC, ARCFOUR, BLOWFISH-CBC, CAST128-CBC, RIJNDAEL128-CBC,
-RIJNDAEL192-CBC, RIJNDAEL256-CBC </b><i>}</i></tt></dt>
-<dd>Specifies an ordered list of SSH version ciphers to be used to encrypt
-the established connection.  "Rijndael" is an alias for "aes".
+  AES256-CBC, AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM,
+  AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 </b><i>}</i></tt></dt>
+<dd>Specifies an ordered list of SSH ciphers to be used to encrypt
+the established connection.
 The default list is:
 <p>
 <pre>
-  aes128-cbc 3des-cbc blowfish-cbc cast128-cbc arcfour aes192-cbc aes256-cbc
+  aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr
+  aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc
 </pre>
 <p>
 
@@ -1002,24 +1077,48 @@ default location depends on the operating system:
 
 <p>
 <pre>
-  Windows 95/98/98SE/ME: %windir%\ssh_known_hostss
-  Windows NT/2000/XP:    \v(common)ssh\ssh_known_hosts2
+  \v(common)ssh\ssh_known_hosts2
 </pre>
 <p>
 
 <dt><tt><b>SET SSH V2 HOSTKEY-ALGORITHMS
-</b><i>{</i><b> SSH-DSA, SSH-RSA </b><i>}</i></tt></dt>
+</b><i>{</i><b> ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384,
+  ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519,
+  SSH-RSA </b><i>}</i></tt></dt>
 <dd>Specifies an ordered list of hostkey algorithms to be used to verify
 the identity of the host.  The default list is
 
 <p>
 <pre>
-  ssh-rsa ssh-dsa
+  ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256
+  rsa-sha2-512 rsa--256 ssh-rsa
+</pre>
+<p>
+
+<dt><tt><b>SET SSH V2 KEY-EXCHANGE-METHODS
+</b><i>{</i><b> CURVE25519-SHA256, CURVE25519-SHA256@LIBSSH.ORG,
+  DIFFIE-HELLMAN-GROUP1-SHA1, DIFFIE-HELLMAN-GROUP14-SHA1,
+  DIFFIE-HELLMAN-GROUP14-SHA256, DIFFIE-HELLMAN-GROUP16-SHA512,
+  DIFFIE-HELLMAN-GROUP18-SHA512, DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1,
+  DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256,
+  ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 </b><i>}</i></tt></dt>
+<dd><i>New in Kermit 95 3.0:</i> Specifies an ordered list of Key Exchange
+  Methods to be used to generate per-connection keys. The default list is:
+
+<p>
+<pre>
+  curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
+  ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512
+  diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256
+  diffie-hellman-group14-sha256 diffie-hellman-group14-sha1
+  diffie-hellman-group1-sha1 ext-info-c
 </pre>
 <p>
 
 <dt><tt><b>SET SSH V2 MACS </b><i>{</i><b>
-HMAC-MD5 HMAC-MD5-96 HMAC-RIPEMD160 HMAC-SHA1 HMAC-SHA1-96</b>
+  HMAC-SHA1, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256,
+  HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512,
+  HMAC-SHA2-512-ETM@OPENSSH.COM, NONE</b>
 <i>}</i></tt></dt>
 
 <dd>Specifies an ordered list of Message Authentication Code algorithms to be
@@ -1028,7 +1127,8 @@ is:
 
 <p>
 <pre>
-  hmac-md5 hmac-sha1 hmac-ripemd160 hmac-sha1-96 hmac-md5-96
+  hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com
+  hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1
 </pre>
 <p>
 
@@ -1043,17 +1143,18 @@ location is:
 <p>
 
 <dt><tt><b>SET SSH VERBOSE </b><i>level</i></tt></dt>
-<dd>Specifies how many messages should be generated by the OpenSSH engine.
+<dd>Specifies how many messages should be generated by the LibSSH engine.
 The level can range from 0 to 7.  The default value is 2.
 
 <p>
 
+<!-- No longer supported
 <dt><tt><b>SET SSH VERSION </b><i>{</i><b> 1, 2, AUTOMATIC </b><i>}</i></tt></dt>
 <dd>Specifies which SSH version should be negotiated.  The default is
 AUTOMATIC which means use version 2 if supported; otherwise to fall
 back to version 1.
 
-<p>
+<p>-->
 
 <dt><tt><b>SET SSH X11-FORWARDING </b><i>{</i><b> ON, OFF </b><i>}</i></tt></dt>
 <dd>Specifies whether X Windows System Data is to be forwarded across the
@@ -1063,9 +1164,11 @@ from the DISPLAY environment variable.
 
 <p>
 
+<!-- TODO: Not implemented
 <dt><tt><b>SET SSH XAUTH-LOCATION </b><i>filename</i></tt></dt>
 <dd>Specifies the location of the xauth executable (if provided with the
 X11 Server software.)
+-->
 
 </dl>
 
