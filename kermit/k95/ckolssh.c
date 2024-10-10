@@ -448,9 +448,6 @@ static int nsshkextab = (sizeof(sshkextab) / sizeof(struct keytab)) - 1;
 
 /* Global variables */
 
-int ssh_sock;   /* TODO: get rid of this (unless its needed for connecting
-                 *      through a proxy server?) */
-
 static int                                     /* SET SSH variables */
     ssh_afw = 0,                          /* agent forwarding */
     ssh_xfw = 0,                          /* x11 forwarding   */
@@ -794,6 +791,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
     params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
     params->p_install_funcs("ssh_set_identity_files", ssh_set_identity_files);
+    params->p_install_funcs("ssh_get_socket", ssh_get_socket);
     params->p_install_funcs("ssh_open", ssh_open);
     params->p_install_funcs("ssh_clos", ssh_clos);
     params->p_install_funcs("ssh_tchk", ssh_tchk);
@@ -1162,6 +1160,17 @@ static void debug_params(const char* function) {
 }
 
 
+/** Get the socket currently in use by the SSH client.
+ *
+ * @returns Socket for the current SSH connection, or -1 if not implemented or
+ *      no active connection
+ */
+int ssh_get_socket() {
+
+    /* TODO: Get the libssh socket */
+
+    return -1;
+}
 
 /** Checks that the SSH thread is alive and has not reported an error.
  *

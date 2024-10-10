@@ -10159,8 +10159,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = keepalive(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = keepalive(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = keepalive(ttyfd,z);
@@ -10174,8 +10174,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = dontroute(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = dontroute(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = dontroute(ttyfd,z);
@@ -10189,8 +10189,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,z);
@@ -10202,8 +10202,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,!z);
@@ -10225,8 +10225,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = ck_linger(ssh_sock,z,y);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = ck_linger(ssh_get_socket(),z,y);
             else
 #endif /* SSHBUILTIN */
 	      success = ck_linger(ttyfd,z,y);
@@ -10241,8 +10241,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = sendbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = sendbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = sendbuf(ttyfd,z);
@@ -10268,8 +10268,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             }
 #endif /* QNX16 */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = recvbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = recvbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = recvbuf(ttyfd,z);

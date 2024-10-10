@@ -416,6 +416,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
     params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
     params->p_install_funcs("ssh_set_identity_files", ssh_set_identity_files);
+    params->p_install_funcs("ssh_get_socket", ssh_get_socket);
     params->p_install_funcs("ssh_open", ssh_open);
     params->p_install_funcs("ssh_clos", ssh_clos);
     params->p_install_funcs("ssh_tchk", ssh_tchk);
@@ -789,6 +790,24 @@ const char* ssh_get_sparam(int param) {
  * @returns 0 on success, -1 if not supported
  */
 int ssh_set_identity_files(const char** identity_files) {
+    return -1;
+}
+
+/** Get the socket currently in use by the SSH client.
+ *
+ * @returns Socket for the current SSH connection, or -1 if not implemented or
+ *      no active connection
+ */
+int ssh_get_socket() {
+
+    /* If there is an active SSH session, this function should return its
+     * socket. It's used by the various "set tcp" commands to set socket
+     * options.
+     *
+     * If there is no active connection, or the SSH client can't supply
+     * the socket its using, return -1
+     */
+
     return -1;
 }
 

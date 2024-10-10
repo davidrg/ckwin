@@ -1,9 +1,6 @@
 #ifndef _CKOSSH_H
 #define _CKOSSH_H
 
-/* TODO: This needs to be accessed via a function, not as a global. */
-extern int ssh_sock;                    /* SSH socket */
-
 #ifndef SSH_PF_T
 #define SSH_PF_T
 /* Note: This also exists in ckolsshs.h */
@@ -97,6 +94,7 @@ _PROTOTYP(int ssh_get_iparam,(int param));
 _PROTOTYP(int ssh_set_sparam,(int param, const char* value));
 _PROTOTYP(const char* ssh_get_sparam,(int param));
 _PROTOTYP(int ssh_set_identity_files,(const char** identity_files));
+_PROTOTYP(int ssh_get_socket,());
 
 /* Getters for various global values within C-Kermit */
 _PROTOTYP(const char* ssh_get_uid,(VOID));
