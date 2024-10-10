@@ -159,6 +159,7 @@ typedef struct {
     char* proxy_command;                        /* Command to execute to connect to the server */
     char* ssh_dir;                              /* SSH Directory */
     char** identity_files;                      /* SSH Identity Files */
+    SOCKET existing_socket;                     /* Connect with an existing socket */
 
     /* Which authentication methods should be attempted and their order. */
     int authentication_methods[MAX_AUTH_METHODS];
@@ -257,6 +258,8 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param display_number X11 display number
  * @param xauth_location Xauth location
  * @param ssh_dir SSH Directory
+ * @param identity_files List of identity files
+ * @param socket Existing socket to use for the connection
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -271,7 +274,7 @@ ssh_parameters_t* ssh_parameters_new(
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
-        const char** identity_files);
+        const char** identity_files, SOCKET socket);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

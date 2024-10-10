@@ -524,6 +524,7 @@ const char* (*p_get_current_terminal_type)() = NULL;
 const char* (*p_ssh_get_uid)();
 const char* (*p_ssh_get_pw)();
 int (*p_ssh_get_nodelay_enabled)();
+SOCKET (*p_ssh_open_socket)(char* host, char* port);
 static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
 static int (*p_vscrnprintf)(const char *, ...)=NULL;
 static int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int) = NULL;
@@ -562,6 +563,10 @@ const char* ssh_get_pw() {
 
 int ssh_get_nodelay_enabled() {
     return p_ssh_get_nodelay_enabled();
+}
+
+SOCKET ssh_open_socket(char* host, char* port) {
+    return p_ssh_open_socket(host, port);
 }
 
 int dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
@@ -752,6 +757,8 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     CHECK_FP(p_ssh_get_pw)
     p_ssh_get_nodelay_enabled = params->p_ssh_get_nodelay_enabled;
     CHECK_FP(p_ssh_get_nodelay_enabled)
+    p_ssh_open_socket = params->p_ssh_open_socket;
+    CHECK_FP(p_ssh_open_socket)
     p_dodebug = params->p_dodebug;
     CHECK_FP(p_dodebug)
     p_vscrnprintf = params->p_vscrnprintf;
@@ -1252,6 +1259,7 @@ int ssh_open() {
     /* X11 forwarding details */
     int display_number = 0, screen_number = 0;
     char *x11_host = NULL;
+    SOCKET socket = INVALID_SOCKET;
 
     uidbuf = ssh_get_uid();
 
@@ -1270,6 +1278,12 @@ int ssh_open() {
         debug(F100, "Error - host not specified (ssh_hst is null)", "", 0);
         return SSH_ERR_HOST_NOT_SPECIFIED;
     }
+
+    /* Check if K95 wants to supply us with a socket - it may do this if
+     * the user has configured a http proxy. If we receive a socket, we're
+     * responsible for closing it when the connection is done - K95 and
+     * libssh (if we get that far) won't close it for us. */
+    socket = ssh_open_socket(ssh_hst, ssh_prt);
 
     if (strlen(uidbuf) == 0) {
         /* Username is not set - prompt for one */
@@ -1316,6 +1330,7 @@ int ssh_open() {
             rc = ssh_clos();
             if (rc != SSH_ERR_NO_ERROR) {
                 /* Failed to close the existing connection. Can't start a new one.*/
+                if (socket != INVALID_SOCKET) closesocket(socket);
                 return rc;
             }
         } else {
@@ -1435,7 +1450,8 @@ int ssh_open() {
             display_number, /* X11 display number */
             ssh_xal,        /* Xauth location */
             dir,            /* SSH Dir*/
-            ssh_idf         /* Identity files */
+            ssh_idf,        /* Identity files */
+            socket
             );
 
     if (user) free(user);
@@ -1449,6 +1465,7 @@ int ssh_open() {
 
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
+        if (socket != INVALID_SOCKET) closesocket(socket);
         return SSH_ERR_MALLOC_FAILED;
     }
 
@@ -1460,6 +1477,7 @@ int ssh_open() {
     if (ssh_client == NULL) {
         debug(F100, "ssh_open() - failed to construct client struct", "", 0);
         ssh_parameters_free(parameters);
+        if (socket != INVALID_SOCKET) closesocket(socket);
         return SSH_ERR_MALLOC_FAILED;
     }
 

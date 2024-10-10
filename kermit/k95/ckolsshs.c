@@ -150,12 +150,13 @@ ssh_parameters_t* ssh_parameters_new(
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
-        const char** identity_files) {
+        const char** identity_files, SOCKET socket) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
     memset(params, 0, sizeof(ssh_parameters_t));
 
+    params->existing_socket = INVALID_SOCKET;
     params->hostname = NULL;
     params->port = NULL;
     params->command_or_subsystem = NULL;
@@ -173,6 +174,8 @@ ssh_parameters_t* ssh_parameters_new(
     params->proxy_command = NULL;
     params->ssh_dir = NULL;
     params->identity_files = identity_files;
+
+    params->existing_socket = socket;
 
     /* Copy hostname and port*/
     params->hostname = _strdup(hostname);
@@ -465,6 +468,12 @@ static void ssh_client_close(ssh_client_state_t* state, ssh_client_t *client,
     if (exit_status == SSH_ERR_SSH_ERROR) {
         error_message = _strdup(ssh_get_error(state->session));
         debug(F100, "sshsubsys - have libssh error message", error_message, 0);
+    }
+
+    /* Close the existing socket if we were supplied one rather than
+     * letting libssh create it */
+    if (state->parameters->existing_socket != INVALID_SOCKET) {
+        closesocket(state->parameters->existing_socket);
     }
 
     if (state != NULL)
@@ -1454,6 +1463,10 @@ static int configure_session(ssh_client_state_t * state) {
     ssh_options_set(state->session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
     ssh_set_callbacks(state->session, &cb);
     ssh_options_set(state->session, SSH_OPTIONS_HOST, state->parameters->hostname);
+    if (state->parameters->existing_socket != INVALID_SOCKET) {
+        ssh_options_set(state->session, SSH_OPTIONS_FD,
+                        &(state->parameters->existing_socket));
+    }
     ssh_options_set(state->session, SSH_OPTIONS_GSSAPI_DELEGATE_CREDENTIALS,
                     &state->parameters->gssapi_delegate_credentials);
     ssh_options_set(state->session, SSH_OPTIONS_PROCESS_CONFIG,

@@ -151,6 +151,22 @@ int parse_displayname(char *displayname, int *familyp, char **hostp,
                                   dpynump, scrnump, restp);
 }
 
+
+/* Opens a socket for a new SSH connection if a proxy server is configured.
+ * Returns INVALID_SOCKET if no proxy server is configured or opening the
+ * socket failed in some way. In this situation, the caller should assume
+ * no proxy server is configured and try opening the socket itself.
+ *
+ * @returns a socket or INVALID_SOCKET if no proxy server is configured.
+ */
+SOCKET ssh_open_socket(char* host, char* port) {
+    /* TODO: If HTTP Proxy is configured, open a connection through
+     *       that and return it.
+     */
+
+    return INVALID_SOCKET;
+}
+
 #ifdef SSH_DLL
 
 /* SSH_DLL:
@@ -425,6 +441,7 @@ int ssh_load(char* dllname) {
     init_params.p_ssh_get_uid = ssh_get_uid;
     init_params.p_ssh_get_pw = ssh_get_pw;
     init_params.p_ssh_get_nodelay_enabled = ssh_get_nodelay_enabled;
+    init_params.p_ssh_open_socket = ssh_open_socket;
     init_params.p_dodebug = dodebug;
     init_params.p_vscrnprintf = Vscrnprintf;
     init_params.p_uq_txt = uq_txt;

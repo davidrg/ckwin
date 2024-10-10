@@ -250,6 +250,7 @@ const char* (*p_get_current_terminal_type)() = NULL;
 const char* (*p_ssh_get_uid)();
 const char* (*p_ssh_get_pw)();
 int (*p_ssh_get_nodelay_enabled)();
+SOCKET (*p_ssh_open_socket)(char* host, char* port) = NULL;
 static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
 static int (*p_vscrnprintf)(const char *, ...)=NULL;
 static int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int) = NULL;
@@ -288,6 +289,10 @@ const char* ssh_get_pw() {
 
 int ssh_get_nodelay_enabled() {
     return p_ssh_get_nodelay_enabled();
+}
+
+SOCKET ssh_open_socket(char* host, char* port) {
+    return p_ssh_open_socket(host, port);
 }
 
 int dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
@@ -394,6 +399,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     p_ssh_get_uid = params->p_ssh_get_uid;
     p_ssh_get_pw = params->p_ssh_get_pw;
     p_ssh_get_nodelay_enabled = params->p_ssh_get_nodelay_enabled;
+    p_ssh_open_socket = params->p_ssh_open_socket;
     p_dodebug = params->p_dodebug;
     p_vscrnprintf = params->p_vscrnprintf;
     p_uq_txt = params->p_uq_txt;
@@ -826,6 +832,22 @@ void ssh_initialise() {
  * @return An error code (0 = success)
  */
 int ssh_open(){
+
+    /*
+     * If Kermit 95 is configured with proxy server details
+     * ("set tcp http-proxy" or "set tcp socks-proxy"), then Kermit 95 can
+     * open a connection through that proxy server and hand that connection
+     * over ready to make an SSH connection through.
+     *
+     * To do this, just call ssh_open_socket(). If you get a socket back,
+     * you're free to go ahead and use it. If you get INVALID_SOCKET back
+     * then you'll need to make the connection yourself.
+     *
+     * If ssh_open_socket() returns a valid socket then you are responsible
+     * for closing it when the SSH connection is closed (or fails to open).
+     * Kermit 95 doesn't track it and won't close it for you.
+     */
+
     return 0;
 }
 
@@ -1175,21 +1197,21 @@ ktab_ret ssh_get_keytab(int keytab_id) {
  */
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
-        case SSH_FEAT_OPENSSH_CONF:
-        case SSH_FEAT_KEY_MGMT:
-        case SSH_FEAT_REKEY_AUTO:
-        case SSH_FEAT_SSH_V1:
-        case SSH_FEAT_PROXY_CMD:
-        case SSH_FEAT_ADV_KERBEROS4:
-        case SSH_FEAT_ADV_KERBEROS5:
-        case SSH_FEAT_REKEY_MANUAL:
-        case SSH_FEAT_FROM_PRIV_PRT:
-        case SSH_FEAT_GSSAPI_KEYEX:
-        case SSH_FEAT_PORT_FWD:
-        case SSH_FEAT_X11_FWD:
-        case SSH_FEAT_AGENT_FWD:
-        case SSH_FEAT_GSSAPI_DELEGAT:
-        case SSH_FEAT_AGENT_MGMT:
+        case SSH_FEAT_OPENSSH_CONF:     /* Configuration via openssh config file */
+        case SSH_FEAT_KEY_MGMT:         /* SSH key creation, etc */
+        case SSH_FEAT_REKEY_AUTO:       /* Automatic rekeying options */
+        case SSH_FEAT_SSH_V1:           /* SSHv1 protocol support */
+        case SSH_FEAT_PROXY_CMD:        /* Proxy command */
+        case SSH_FEAT_ADV_KERBEROS4:    /* Advanced Kerberos IV options */
+        case SSH_FEAT_ADV_KERBEROS5:    /* Advanced Kerberos V options */
+        case SSH_FEAT_REKEY_MANUAL:     /* Manual rekeying */
+        case SSH_FEAT_FROM_PRIV_PRT:    /* Connect from private port */
+        case SSH_FEAT_GSSAPI_KEYEX:     /* GSSAPI Key Exchange */
+        case SSH_FEAT_PORT_FWD:         /* Local and remote port forwarding */
+        case SSH_FEAT_X11_FWD:          /* X11 forwarding */
+        case SSH_FEAT_AGENT_FWD:        /* SSH Agent Forwarding */
+        case SSH_FEAT_GSSAPI_DELEGAT:   /* GSSAPI Delegation */
+        case SSH_FEAT_AGENT_MGMT:       /* SSH Agent management */
         default:
             return TRUE;
     }

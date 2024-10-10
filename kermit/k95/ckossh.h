@@ -105,6 +105,7 @@ _PROTOTYP(const char* get_current_terminal_type,());
 
 /* SSH Interface */
 _PROTOTYP(int ssh_open,(VOID));
+_PROTOTYP(int ssh_open,(VOID));
 _PROTOTYP(int ssh_clos,(VOID));
 _PROTOTYP(int ssh_tchk,(VOID));
 _PROTOTYP(int ssh_flui,(VOID));
@@ -203,6 +204,7 @@ typedef struct  {
     const char* (*p_ssh_get_uid)();
     const char* (*p_ssh_get_pw)();
     int (*p_ssh_get_nodelay_enabled)();
+    SOCKET (*p_ssh_open_socket)(char* host, char* port);
     int (*p_dodebug)(int,char *,char *,CK_OFF_T);
     int (*p_vscrnprintf)(const char *, ...);
     int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int);
