@@ -7326,7 +7326,7 @@ case XXPURGE:
 #ifdef SSHBUILTIN
     {
         const char **help_content;
-        if (ssh_avail()) {
+        if (ck_ssh_is_installed()) {
             help_content = ssh_get_help();
         } else {
             help_content = (const char**)hmxxssh;
@@ -10739,7 +10739,7 @@ case XYTIMER:
 #ifdef SSHBUILTIN
     {
         const char **help_content;
-        if (ssh_avail()) {
+        if (ck_ssh_is_installed()) {
             help_content = ssh_get_set_help();
         } else {
             help_content = (const char**)hmxyssh;

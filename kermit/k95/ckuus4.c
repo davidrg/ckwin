@@ -5393,12 +5393,8 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
-#if SSH_DLL
-    if (ssh_avail())
+    if (ck_ssh_is_installed())
         printf(" SSH V2 protocol\n");
-#else
-    printf(" SSH V2 protocol\n");
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET

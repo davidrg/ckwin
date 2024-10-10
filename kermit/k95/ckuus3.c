@@ -9675,20 +9675,15 @@ case XYPAD:                             /* SET PAD ... */
                 netcmd[z].flgs =  CM_INV;
 #endif /* SUPERLAT */
 #if SSH_DLL
-              else if (netcmd[z].kwval == NET_SSH && !ssh_avail())
+              else if (netcmd[z].kwval == NET_SSH && !ck_ssh_is_installed())
                   netcmd[z].flgs = CM_INV;
 #endif /* SSH_DLL */
           }
           if (tcp_avail)                /* Default network type */
             ckstrncpy(tmpbuf,"tcp/ip",TMPBUFSIZ);
 #ifdef SSHBUILTIN
-#ifdef SSH_DLL
-          else if ( ssh_avail() )
+          else if ( ck_ssh_is_installed() )
             ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
-#else
-          else if ( TRUE )
-            ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 #ifdef DECNET
           else if (dnet_avail)
