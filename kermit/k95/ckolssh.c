@@ -2229,7 +2229,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
             ktype = SSH_KEYTYPE_RSA;
             if (bits == 0) bits = 3072;
             if (bits != 1024 && bits != 2048 && bits != 3072 &&
-                    bits != 2048 && bits != 8192) {
+                    bits != 4096 && bits != 8192) {
                 printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
                 return SSH_ERR_UNSPECIFIED;
             }
@@ -2239,7 +2239,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
             ktype = SSH_KEYTYPE_RSA1;
             if (bits == 0) bits = 3072;
             if (bits != 1024 && bits != 2048 && bits != 3072 &&
-                bits != 2048 && bits != 8192) {
+                bits != 4096 && bits != 8192) {
                 printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
                 return SSH_ERR_UNSPECIFIED;
             }
