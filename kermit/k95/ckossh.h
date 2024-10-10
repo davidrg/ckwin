@@ -150,7 +150,8 @@ _PROTOTYP(const char * ssh_proto_ver,(void));
 _PROTOTYP(const char * ssh_impl_ver,(void));
 _PROTOTYP(const char * ssh_dll_name,(void));
 _PROTOTYP(const char * ssh_dll_ver,(void));
-_PROTOTYP(int ssh_avail,(VOID));
+/*_PROTOTYP(int ssh_avail,(void));*/
+int ssh_avail();
 _PROTOTYP(void ssh_unload,(VOID));
 _PROTOTYP(const char ** ssh_get_set_help,(void));
 _PROTOTYP(const char ** ssh_get_help,(void));

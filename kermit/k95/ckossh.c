@@ -565,7 +565,6 @@ int ssh_dll_unload(int quiet) {
  */
 int ssh_dll_load(const char* dll_names, int quiet) {
     int rc = 0;
-    int len, index=0;
     char* dlls;
     char* dll;
     char* delim = ";";
@@ -1189,7 +1188,7 @@ int ssh_feature_supported(int feature_id) {
 
 const char** ssh_get_set_help() {
     const char** result;
-    static char *hmxyssh[] = {
+    static const char *hmxyssh[] = {
 "No help content for SET SSH was provided by the currently loaded SSH backend.",
 ""
 };
@@ -1204,7 +1203,7 @@ const char** ssh_get_set_help() {
 
 const char** ssh_get_help() {
     const char** result;
-    static char *hmxyssh[] = {
+    static const char *hmxyssh[] = {
 "No help content for SSH was provided by the currently loaded SSH backend.",
 ""
 };

@@ -8159,7 +8159,7 @@ shossh() {
          * want to output them separately. The array is terminated with an
          * entry that has its type set to SSH_PORT_FORWARD_NULL.
          */
-        ssh_port_forward_t* fwd = ssh_fwd_get_ports();
+        const ssh_port_forward_t* fwd = ssh_fwd_get_ports();
 
         if (fwd != NULL) {
             int i = 0;
@@ -9015,7 +9015,7 @@ dosetssh() {
         }
         ssh_idf_n = n;
 
-        if (ssh_set_identity_files(ssh_idf) < 0) {
+        if (ssh_set_identity_files((const char **)ssh_idf) < 0) {
             printf("\r\nCommand not supported by the current SSH backend\r\n");
             return(0);
         }

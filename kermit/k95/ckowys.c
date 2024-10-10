@@ -39,6 +39,9 @@
 #include "ckokey.h"
 #include "ckowys.h"
 #include "ckctel.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 
 void udkreset();                /* ckoco3.c */
 void clrscreen(BYTE, CHAR);     /* ckoco3.c */

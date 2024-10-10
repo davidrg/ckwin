@@ -7329,9 +7329,9 @@ case XXPURGE:
         if (ssh_avail()) {
             help_content = ssh_get_help();
         } else {
-            help_content = hmxxssh;
+            help_content = (const char**)hmxxssh;
         }
-        return(hmsga(help_content));
+        return(hmsga((char**)help_content));
     }
 #else
     return(hmsga(hmxxssh));
@@ -10742,9 +10742,9 @@ case XYTIMER:
         if (ssh_avail()) {
             help_content = ssh_get_set_help();
         } else {
-            help_content = hmxyssh;
+            help_content = (const char**)hmxyssh;
         }
-        return(hmsga(help_content));
+        return(hmsga((char**)help_content));
     }
 #else
     return(hmsga(hmxyssh));

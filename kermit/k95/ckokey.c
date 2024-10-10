@@ -52,6 +52,9 @@ char *ckyv = "OS/2 Keyboard I/O, 8.0.203, 30 Oct 2003";
 #include "ckcuni.h"
 #include "ckocon.h"
 #include "ckokey.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 #ifdef KUI
 #include "ikui.h"
 #else

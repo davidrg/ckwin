@@ -402,6 +402,11 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) SSL
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_SSL
 !endif
 
+# Dynamic SSH implies SSH
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+CKF_SSH=yes
+!endif
+
 # Built-in SSH support
 #   Turn on with: -DSSHBUILTIN
 #   Turn off with: -DNOSSH
