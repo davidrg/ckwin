@@ -1050,6 +1050,12 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 !if "$(CMP)" != "OWWCL"
        cko32rtl.dll \    # IBM compiler only.
 !endif
+!if "$(CKF_DYNAMIC_SSH)" == "yes"
+    nullssh.dll \
+!if "$(CKF_SSH_BACKEND)" != "no"
+    k95ssh.dll \
+!endif
+!endif
 !if "$(CKF_SRP)" == "yes"
 #!if "$(CKF_SSL)" == "yes"
        srp-tconf.exe srp-passwd.exe \
@@ -1267,7 +1273,7 @@ cko32i20.dll: ckoi20.obj ckoker.mak
 cko32i12.dll: ckoi12.obj  ckoker.mak
 !if "$(CMP)" == "OWCL386"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi12.obj $(OUT)$@ \
-	 -bd -l=os2v2_dll $(IBM12LIBS) $(LIBS)
+	   -l=os2v2_dll $(IBM12LIBS) $(LIBS)
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi12.obj cko32i12.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM12LIBS) $(LIBS)
@@ -1304,7 +1310,14 @@ k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak k95crypt.re
 !endif
 
 nullssh.dll: ckonssh.obj ckoker.mak
+!if "$(PLATFORM)" == "NT"
 	link /dll /debug /def:nullssh.def /out:$@ ckonssh.obj
+!else
+!if "$(CMP)" == "OWWCL"
+    $(CC) $(CC2) $(DEBUG) $(DLL) ckonssh.obj $(OUT)$@ \
+	    $(LINKFLAGS_DLL) $(LIBS) -"export ssh_dll_init"
+!endif
+!endif
 
 k95ssh.dll: ckolssh.obj ckolsshs.obj ckorbf.obj k95ssh.res ckoker.mak
 	link /dll /debug /def:k95ssh.def /out:$@ ckolssh.obj ckolsshs.obj \
@@ -1545,6 +1558,11 @@ ckorbf$(O):     ckorbf.c ckorbf.h ckcdeb.h
 ckossh$(O):     ckossh.c ckossh.h ckcdeb.h ckuusr.h ckcker.h ckocon.h ckoreg.h
 
 ckonssh$(O):    ckonssh.c ckossh.h ckcdeb.h
+!if "$(PLATFORM)" == "OS2"
+!if "$(CMP)" == "OWWCL"
+    $(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) $(DLL) -c ckonssh.c
+!endif
+!endif
 
 ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 
@@ -1649,7 +1667,7 @@ ckoi41.obj: ckoibm.c ckotcp.h
         @echo > wcc386.pch
         del wcc386.pch
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) \
-	    -D__SOCKET_32H $(DLL) -bd -c ckoibm.c
+	    -D__SOCKET_32H $(DLL) -c ckoibm.c
 	# Watcom lacks the headers to support -DSOCKS_ENABLED
 !else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
@@ -1664,7 +1682,7 @@ ckoi20.obj: ckoibm.c ckotcp.h
         @echo > wcc386.pch
         del wcc386.pch
 	$(CC) $(CC2) $(CFLAGS) $(DEBUG) $(OPT) $(DEFINES) -DTCPV40HDRS \
-	     -D_ERRNO_H_INCLUDED -DSOCKS_ENABLED $(DLL) -I$(IBM20INC) -bd -c ckoibm.c
+	     -D_ERRNO_H_INCLUDED -DSOCKS_ENABLED $(DLL) -I$(IBM20INC) -c ckoibm.c
 !else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM20INC) \
            $(DEBUG) $(OPT) $(DEFINES) -DSOCKS_ENABLED -DTCPV40HDRS $(DLL) -c ckoibm.c
@@ -1678,7 +1696,7 @@ ckoi12.obj: ckoibm.c ckotcp.h
         @echo > wcc386.pch
         del wcc386.pch
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM12INC) -D_ERRNO_H_INCLUDED \
-           $(DEBUG) $(OPT) $(DEFINES) $(DLL) -bd -c ckoibm.c
+           $(DEBUG) $(OPT) $(DEFINES) $(DLL) -c ckoibm.c
 !else
 	$(CC) $(CC2) $(CFLAGS) -I$(IBM12INC) \
            $(DEBUG) $(OPT) $(DEFINES) $(DLL) -c ckoibm.c

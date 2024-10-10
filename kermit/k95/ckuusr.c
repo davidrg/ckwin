@@ -10920,16 +10920,16 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             /* There is a different set of "ssh" commands available when the
              * SSH backend hasn't been loaded.
              */
-          	cmfdbi(&kw,			/* 1st FDB - commands */
+          	cmfdbi(&kw,			/* load command only */
                _CMKEY,			/* fcode */
                "action",	    /* hlpmsg */
                "",			    /* default */
                "",			    /* addtl string data */
-                nsshloadcmd,    /* addtl numeric data 1: tbl size */
+               nsshloadcmd,     /* addtl numeric data 1: tbl size */
                0,			    /* addtl numeric data 2: 0 = keyword */
                xxstring,		/* Processing function */
                sshloadkwtab,	/* Keyword table */
-               &fl			    /* Pointer to next FDB */
+               0			    /* Pointer to next FDB */
             );
             x = cmfdb(&kw);
             debug(F101,"SSH external cmfdb &kw","",x);

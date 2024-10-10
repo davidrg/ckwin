@@ -194,38 +194,44 @@ _PROTOTYP(int ssh_feature_supported,(int feature_id));
 _PROTOTYP(void ssh_initialise,(void));
 #endif
 
+#ifdef NT
+#ifndef _System
+#define _System
+#endif /* _System */
+#endif /* NT */
+
 #ifdef SSH_DLL
 typedef struct  {
 
     /* Version 1 */
     int version;
-    void (*p_install_funcs)(const char*, const void*);
-    void (*p_get_current_terminal_dimensions)(int* rows, int* cols);
-    const char* (*p_get_current_terminal_type)();
-    const char* (*p_ssh_get_uid)();
-    const char* (*p_ssh_get_pw)();
-    int (*p_ssh_get_nodelay_enabled)();
-    int (*p_dodebug)(int,char *,char *,CK_OFF_T);
-    int (*p_vscrnprintf)(const char *, ...);
-    int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int);
-    int (*p_uq_mtxt) (char *,char **,int,struct txtbox[]);
-    int (*p_uq_ok)(char *,char *,int,char **,int);
-    int (*p_uq_file)(char *,char *,int,char **,char *,char *,int);
-	int (*p_zmkdir)(char *);
-	int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
+    void (* _System p_install_funcs)(const char*, const void*);
+    void (* _System p_get_current_terminal_dimensions)(int* rows, int* cols);
+    const char* (* _System p_get_current_terminal_type)();
+    const char* (* _System p_ssh_get_uid)();
+    const char* (* _System p_ssh_get_pw)();
+    int (* _System p_ssh_get_nodelay_enabled)();
+    int (* _System p_dodebug)(int,char *,char *,CK_OFF_T);
+    int (* _System p_vscrnprintf)(const char *, ...);
+    int (* _System p_uq_txt)(char *,char *,int,char **,char *,int,char *,int);
+    int (* _System p_uq_mtxt) (char *,char **,int,struct txtbox[]);
+    int (* _System p_uq_ok)(char *,char *,int,char **,int);
+    int (* _System p_uq_file)(char *,char *,int,char **,char *,char *,int);
+	int (* _System p_zmkdir)(char *);
+	int (* _System p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
             char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
             char *s10, char *s11, char *s12);
-	char* (*p_whoami)();
-    char* (*p_GetAppData)(int);
-	char* (*p_GetHomePath)();
-	char* (*p_GetHomeDrive)();
-    int (*p_ckstrncpy)(char * dest, const char * src, int len);
-    int (*p_debug_logging)();
+	char* (* _System p_whoami)();
+    char* (* _System p_GetAppData)(int);
+	char* (* _System p_GetHomePath)();
+	char* (* _System p_GetHomeDrive)();
+    int (* _System p_ckstrncpy)(char * dest, const char * src, int len);
+    int (* _System p_debug_logging)();
 
     /* Returns a statically allocated string containing the currently
      * configured X11 display
      */
-    unsigned char* (*p_get_display)();
+    unsigned char* (* _System p_get_display)();
 
     /* Utility function for parsing the display name. Result is returned
      * via:
@@ -235,8 +241,8 @@ typedef struct  {
      *   *scrnump   - Screen number
      *   **restp    - Anything else at the end
      */
-    int (*p_parse_displayname)(char *displayname, int *familyp, char **hostp,
-                        int *dpynump, int *scrnump, char **restp);
+    int (* _System p_parse_displayname)(char *displayname, int *familyp,
+            char **hostp, int *dpynump, int *scrnump, char **restp);
 } ssh_init_parameters_t;
 
 /*

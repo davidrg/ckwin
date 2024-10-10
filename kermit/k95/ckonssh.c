@@ -49,6 +49,15 @@
 #include "ckossh.h"
 
 #include <stdio.h>
+#include <stdarg.h>
+
+#ifdef NT
+#include <windows.h>
+#else
+#define INCL_DOSPROCESS
+#include <os2.h>
+#undef COMMENT
+#endif
 
 /*
  * Keyword tables for some of the "set ssh" options - these are the tables whose
@@ -388,7 +397,7 @@ int parse_displayname(char *displayname, int *familyp, char **hostp,
  * this DLL provides.
  * @param params SSH initialisation parameters from Kermit 95
  */
-int ssh_dll_init(ssh_init_parameters_t *params) {
+int _System ssh_dll_init(ssh_init_parameters_t *params) {
     p_get_current_terminal_dimensions = params->p_get_current_terminal_dimensions;
     p_get_current_terminal_type = params->p_get_current_terminal_type;
     p_ssh_get_uid = params->p_ssh_get_uid;
@@ -801,12 +810,33 @@ void ssh_initialise() {
 
 }
 
+/* This a message we'll output to Kermit 95 if the user tries to make a
+ * connection using this null SSH backend
+ */
+static char* message =
+"This is the null SSH backend. It serves two purposes:\r\n"
+"  1. To allow testing Kermit 95s ability to load SSH DLLs in the absence\r\n"
+"     of a real SSH backend DLL to test against (such as on Windows or OS/2\r\n"
+"     versions where no backend is available)\r\n"
+"  2. To provide a template for the development of alternative SSH \r\n"
+"     backends for Kermit 95\r\n"
+"\n\n"
+"Aside from producing this message, the null SSH backend does nothing.\r\n"
+"You may now return to the command screen using the exit sequence (Alt+x\r\n"
+"by default).\0";
+
+/* How long the message is, and what the next character to return to K95 is */
+static int message_length = 0, message_position = 0;
+
 /** Opens an SSH connection. Connection parameters are passed through global
  * variables
  *
  * @return An error code (0 = success)
  */
 int ssh_open(){
+    /* Reset the message to the start */
+    message_length = strlen(message);
+    message_position = 0;
     return 0;
 }
 
@@ -826,7 +856,8 @@ int ssh_clos() {
  *          < 0 indicates a fatal error and the connection should be closed.
  */
 int ssh_tchk() {
-    return 0;
+    /* Respond with how many characters are left in the message */
+    return message_length - message_position;
 }
 
 /** Flush input
@@ -853,7 +884,27 @@ int ssh_break() {
  * @return -1 for timeout, >= 0 is a valid character, < -1 is a fatal error
  */
 int ssh_inc(int timeout) {
-    return 0;
+    int result;
+
+    if (message_position >= message_length) {
+        /* We're at the end of the message and there is nothing more to
+         * return. If K95 wants us to block until another byte arrives
+         * (which it will never do), just sleep for a while to not waste
+         * CPU */
+        int tmo = timeout;
+        if (tmo == 0) tmo = 1000;
+#ifdef NT
+        Sleep(1000);
+#else
+        DosSleep(1000);
+#endif
+        return -1;
+    };
+
+    /* Return the next character in the message */
+    result = message[message_position];
+    message_position++;
+    return result;
 }
 
 /** Extended Input - reads multiple characters from the network. This
@@ -867,7 +918,18 @@ int ssh_inc(int timeout) {
  * @return >= 0 indicates the number of characters read, < 0 indicates error
  */
 int ssh_xin(int count, char * buffer) {
-    return 0;
+    int length = message_length - message_position;
+
+    if (count < length) length = count;
+
+    /* We're at the end of the message - nothing more to return */
+    if (length <= 0) return 0;
+
+    /* Return the requested portion of the message */
+    memcpy(buffer, message, length);
+    message_position += length;
+
+    return length;
 }
 
 /** Terminal Output Character - send a single character. Blocks until the

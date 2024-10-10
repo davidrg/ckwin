@@ -37,7 +37,7 @@ env:
   # ctl3dins.exe is not currently included but perhaps should be.
   STANDARD_BUILD_OUTPUTS: k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe k95crypt.dll p95.dll
   # And these are what we currently expect from standard builds for OS/2
-  OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telnetpm.exe textps.exe
+  OS2_BUILD_OUTPUTS: k2.exe k2clip.exe k2dc.exe rlogin.exe telnet.exe telnetpm.exe textps.exe p2.dll nullssh.dll
   # Use JOM instead of nmake for parallel builds
   JOM: https://download.qt.io/official_releases/jom/jom.zip
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
@@ -1214,8 +1214,22 @@ jobs:
         shell: powershell
       - name: Kermit/2 Build
         run: |
+          
+          REM Enable Dynamic SSH just to be sure those bits are buildable
+          REM for OS/2 with Open Watcom
+          set CKF_SSH=yes
+          set CKF_DYNAMIC_SSH=yes
+          
+          REM Don't build the libssh backend though - that hasn't been ported 
+          REM to OS/2 yet
+          set CKF_SSH_BACKEND=no
+          
           call setenv.bat
-          cd kermit\k95
+          
+          cd kermit\p95
+          call mkos2.bat
+          
+          cd ..\k95
           call mkos2.bat
           
           call mkdist-os2.bat
