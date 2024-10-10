@@ -10883,10 +10883,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                  */
                 sshkwtab[z].flgs = CM_INV;
             }
-            else if (sshkwtab[z].kwval == XSSH2_RKE
+            else if (sshkwtab[z].kwval == XSSH_V2
                 && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
                 /*
-                 * "ssh agent"
+                 * "ssh v2 rekey"
                  */
                 sshkwtab[z].flgs = CM_INV;
             }
