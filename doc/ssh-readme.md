@@ -39,12 +39,12 @@ specified as part of the command.
 The SSH backend has been moved out into a DLL that is loaded automatically on
 startup if present. On x86 platforms, four DLLs are provided:
 
-| DLL          | Description                                                |
-|--------------|------------------------------------------------------------|
-| k95sshg.dll  | GSSAPI-enabled SSH backend for Windows Vista and newer.    |
-| k95ssh.dll   | Standard SSH backend for Windows Vista and newer           |
-| k95sshgx.dll | GSS-API enabled SSH backend for Windows XP and Server 2003 |
-| k95sshx.dll  | Standard SSH backend for Windows XP and Server 2003        |
+| DLL          | Description                                               |
+|--------------|-----------------------------------------------------------|
+| k95sshg.dll  | GSSAPI-enabled SSH backend for Windows Vista and newer.   |
+| k95ssh.dll   | Standard SSH backend for Windows Vista and newer          |
+| k95sshgx.dll | GSSAPI enabled SSH backend for Windows XP and Server 2003 |
+| k95sshx.dll  | Standard SSH backend for Windows XP and Server 2003       |
 
 On startup, K95 will attempt each one in order and if any one of them loads
 then SSH features will be made available. If none of these DLLs are present or
@@ -99,7 +99,16 @@ SSH REMOVE REMOTE-PORT-FORWARD remote-port
 SET SSH DIRECTORY directory
   Specifies where Kermit 95 should look for the default SSH user files
   such as the user-known-hosts file and identity files (id_rsa, etc).
-  By default Kermit 95 looks for these in \\v(appdata)ssh.
+  By default Kermit 95 looks for these in \v(appdata)ssh.
+  
+  This setting also affects the default name of the user known hosts file. 
+  When this setting is unchanged from its default, the default user known 
+  hosts filename is known_hosts2 (\v(appdata)ssh/known_hosts2) for 
+  compatibility with previous versions of Kermit 95. If you set a different 
+  SSH directory (or even the same SSH directory) with the SET SSH DIRECTORY 
+  command, then the default user known hosts file will be known_hosts 
+  (eg, \v(home).ssh/known_hosts) for compatibility with OpenSSH and other 
+  clients.
 
 set ssh v2 key-exchange-methods {CURVE25519-SHA256,
      CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,
@@ -173,7 +182,7 @@ When this is installed, Kermit 95 will automatically load the
 GSSAPI-enabled backend (k95sshg.dll or k95sshgx.dll) on startup.
 
 GSSAPI authentication is not currently supported on non-x86 builds of K95 as
-current versions of Kerberos for Windows are only available for x86.
+current versions of Kerberos for Windows are only available for x86 and x86-64.
 
 ### Using SSH on Windows XP
 Libssh 0.10.6 includes a fix for the security vulnerability 
