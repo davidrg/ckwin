@@ -21,6 +21,7 @@ if not exist dist-os2\USERS\NUL mkdir dist-os2\USERS
 @echo Move build outputs...
 move *.exe dist-os2
 move cko32*.dll dist-os2
+move nullssh.dll dist-os2
 move dist-os2\ckwart.exe .\
 ren dist-os2\osetup.exe setup.exe
 ren dist-os2\ckoker32.exe k2.exe
