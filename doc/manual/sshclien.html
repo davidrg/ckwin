@@ -7,7 +7,7 @@
 <h2><a name="top">The Kermit 95 SSH Client</a></h2>
 
 <i>Most recent update:</i>
-4 June 2002
+<!--$last-update-short$-->4 June 2002<!--/$last-update-short$-->
 
 <p>
 
@@ -524,8 +524,6 @@ that performs SRP authentication).
 [ <a href="#x3">Previous</a> ]
 <p>
 
-These should be fixed before the final release:
-
 <ul>
 
 <li>The result of "<tt>ssh</tt> <tt><i>hostname</i></tt>
@@ -560,28 +558,6 @@ wrong order:
 
 <ul>
 
-<li>K95 tries to negotiate SSH v2 by default so if you try to connect to
-an SSH V1 server, it might take a long time.  In such cases, use
-"<tt>ssh</tt> <i>host</i> <tt>/version:1</tt>" to get an immediate connection.
-
-<p>
-
-<li>Performance.  Obviously performance varies
-with your PC's memory capacity, CPU speed, and load, but the OS itself is also
-a factor.  Since the SSH code runs in a separate thread, the differing thread
-scheduling capabilities of Win9x/ME versus NT/2000/XP are significant; all
-else being equal, expect better performance in Windows NT/2000/XP.  When
-comparing Kermit's performance with other SSH clients, bear in mind that
-Kermit is likely to negotiate a stronger and therefore more CPU-intensive
-encryption method than other clients, and that Kermit does more in its
-terminal window: emulation of many terminal types, character-set conversion,
-URL highlighting, preservation of attributes for each cell, true blinking,
-file-transfer initiation detection (autoup/download), host-initiated printing,
-etc.  The effects are not noticeable on modern PCs, but might be on older,
-slower ones.
-
-<p>
-
 <li>Stairsteps.  SSH servers on some Unix systems (usually old ones but
 reportedly also some new ones too) do not translate LF to CRLF, so lines come
 out on your screen in stairstep fashion.  You can usually fix this by giving
@@ -594,14 +570,6 @@ same hosts.
 <li>Some SSH servers do not break the connection when you log out.  If you
 log out but Kermit stays in its terminal screen, use Alt-u to disconnect.
 (The same thing happens with other SSH clients.)
-
-<p>
-
-<li>SSH compression is enabled by default.  It improves performance on fast
-machines, but might slow things down when the CPU is the bottleneck,
-especially on fast LAN connections.  Compression is important, however, for
-modem connections (e.g. PPP) because the encrypted data stream can't be
-compressed by the modem.
 
 </ul>
 
