@@ -582,7 +582,21 @@ log out but Kermit stays in its terminal screen, use Alt-u to disconnect.
 <p>
 
 <ul>
-<li>Kerberos autoget/destroy TGTs.
+<li>SSH Agent support, and the associated commands
+   (SSH AGENT ADD, SSH AGENT DELETE, SSH AGENT LIST,
+  SET SSH AGENT-FORWARDING)  <!-- #105 -->
+<li>Dynamic (SOCKS) port forwarding (SET SSH DYNAMIC-FORWARDING)
+<li>SSH through HTTP and SOCKS proxy servers  <!-- #78 and #361 -->
+<li>The SET TCP commands do not currently affect SSH connections  <!-- #357 -->
+<li>xauth is not currently run for X11 forwarding (SET SSH XAUTH-LOCATION)
+<li>The following SET SSH commands from K95 2.1.3 are unimplemented:
+    <ul>
+      <li>SET SSH CHECK-HOST-IP</li>
+      <li>SET SSH GATEWAY-PORTS</li>
+      <li>SET SSH PRIVILEGED-PORT</li>
+      <li>SET SSH QUIET</li>
+      <li>SET SSH V2 AUTO-REKEY</li>
+    </ul>
 <li>Telnet through SSH port forwarding.
 <li>Incoming SSH.
 <li>Integration of HTTP, RDNS, DNS SRV, etc.
