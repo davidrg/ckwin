@@ -463,6 +463,7 @@ int ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_dll_ver", ssh_dll_ver);
     params->p_install_funcs("ssh_get_keytab", ssh_get_keytab);
     params->p_install_funcs("ssh_feature_supported", ssh_feature_supported);
+    params->p_install_funcs("ssh_get_set_help", ssh_get_set_help);
 
     return 0;
 }
@@ -1212,7 +1213,236 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_AGENT_FWD:        /* SSH Agent Forwarding */
         case SSH_FEAT_GSSAPI_DELEGAT:   /* GSSAPI Delegation */
         case SSH_FEAT_AGENT_MGMT:       /* SSH Agent management */
+        case SSH_FEAT_DYN_PORT_FWD:     /* Dynamic port forwarding */
         default:
             return TRUE;
     }
+}
+
+/** This function should return the text for "HELP SET SSH". Any commands not
+ * supported should be excluded.
+ *
+ * @return Help text for HELP SET SSH.
+ */
+const char** ssh_get_set_help() {
+
+    /*
+     * TODO: Remove help text for any commands reported as not supported by
+     *  ssh_feature_supported(), and adjust the parameter lists to match
+     *  those returned by ssh_get_keytab()
+     */
+
+    static const char *hmxyssh[] = {
+/* Feature: SSH_FEAT_AGENT_FWD */
+"SET SSH AGENT-FORWARDING { ON, OFF }",
+"  If an authentication agent is in use, setting this value to ON",
+"  results in the connection to the agent being forwarded to the remote",
+"  computer.  The default is OFF.",
+" ",
+"SET SSH CHECK-HOST-IP { ON, OFF }",
+"  Specifies whether the remote host's ip-address should be checked",
+"  against the matching host key in the known_hosts file.  This can be",
+"  used to determine if the host key changed as a result of DNS spoofing.",
+"  The default is ON.",
+" ",
+"SET SSH COMPRESSION { ON, OFF }",
+"  Specifies whether compression will be used.  The default is ON.",
+" ",
+"SET SSH DIRECTORY directory",
+"  Specifies where Kermit 95 should look for the default SSH user files",
+"  such as the user-known-hosts file and identity files (id_rsa, etc).",
+"  By default Kermit 95 looks for these in \\v(appdata)ssh.",
+" ",
+/* Feature: SSH_FEAT_DYN_PORT_FWD */
+"SET SSH DYNAMIC-FORWARDING { ON, OFF }",
+"  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
+"  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
+"  service, it accepts connection requests and forwards the connections",
+"  through the remote host.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SET SSH GATEWAY-PORTS { ON, OFF }",
+"  Specifies whether Kermit should act as a gateway for forwarded",
+"  connections received from the remote host.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_GSSAPI_DELEGAT */
+"SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
+"  Specifies whether Kermit should delegate GSSAPI credentials to ",
+"  the remote host after authentication.  Delegating credentials allows",
+"  the credentials to be used from the remote host.  The default is OFF.",
+" ",
+"SET SSH HEARTBEAT-INTERVAL <seconds>",
+"  Specifies a number of seconds of idle time after which an IGNORE",
+"  message will be sent to the server.  This pulse is useful for",
+"  maintaining connections through HTTP Proxy servers and Network",
+"  Address Translators.  The default is OFF (0 seconds).",
+" ",
+"SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
+"  Specifies one or more files from which the user's authorization",
+"  identities (private keys) are to be read when using public key",
+"  authorization.  These are files used in addition to the default files:",
+" ",
+"    \\v(appdata)ssh/identity      V1 RSA",     /* Feature: SSH_FEAT_SSH_V1 */
+"    \\v(appdata)ssh/id_rsa        V2 RSA",
+"    \\v(appdata)ssh/id_dsa        V2 DSA",
+"    \\v(appdata)ssh/id_ecdsa      ECDSA",
+"    \\v(appdata)ssh/id_ed25519    ED25519",
+" ",
+/* Feature: SSH_FEAT_ADV_KERBEROS4 */
+"SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
+"  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
+"  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_ADV_KERBEROS5 */
+"SET SSH KERBEROS5 TGT-PASSING { ON, OFF }",
+"  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
+"  host.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_FROM_PRIV_PRT */
+"SET SSH PRIVILEGED-PORT { ON, OFF }",
+"  Specifies whether a privileged port (less than 1024) should be used",
+"  when connecting to the host.  Privileged ports are not required except",
+"  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
+"  is OFF.",
+" ",
+/* Feature: SSH_FEAT_PROXY_CMD */
+"SET SSH PROXY-COMMAND [ command ]",
+"  Specifies the command to be executed in order to connect to the remote",
+"  host. ",
+" ",
+"SET SSH QUIET { ON, OFF }",
+"  Specifies whether all messages generated in conjunction with SSH",
+"  protocols should be suppressed.  The default is OFF.",
+" ",
+"SET SSH STRICT-HOST-KEY-CHECK { ASK, ON, OFF }",
+"  Specifies how Kermit should behave if the the host key check fails.",
+"  When strict host key checking is OFF, the new host key is added to the",
+"  protocol-version-specific user-known-hosts-file.  When strict host key",
+"  checking is ON, the new host key is refused and the connection is",
+"  dropped.  When set to ASK, Kermit prompt you to say whether the new",
+"  host key should be accepted.  The default is ASK.",
+" ",
+"  Strict host key checking protects you against Trojan horse attacks.",
+"  It depends on you to maintain the contents of the known-hosts-file",
+"  with current and trusted host keys.",
+" ",
+/* Feature: SSH_FEAT_OPENSSH_CONF */
+"SET SSH USE-OPENSSH-CONFIG { ON, OFF }",
+"  Specifies whether Kermit should parse an OpenSSH configuration file",
+"  after applying Kermit's SET SSH commands.  The configuration file",
+"  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
+"  Specifies which cipher should be used to protect SSH version 1",
+"  connections.  The default is 3DES.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH V1 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The",
+"  default is:",
+" ",
+"    \v(common)ssh_known_hosts",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH V1 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts-file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts",
+" ",
+"SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
+"    PUBKEY, NONE } [ ... ]",
+"  Specifies an ordered list of SSH version 2 authentication methods to",
+"  be used when connecting to the remote host. The SSH client requires ",
+"  none to be attempted first, so the default list is:",
+" ",
+"    none gssapi publickey keyboard-interactive password",
+" ",
+/* Feature: SSH_FEAT_REKEY_AUTO */
+"SET SSH V2 AUTO-REKEY { ON, OFF }",
+"  Specifies whether Kermit automatically issues rekeying requests",
+"  once an hour when SSH version 2 in in use.  The default is ON.",
+" ",
+"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
+"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
+"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
+"  Specifies an ordered list of SSH version ciphers to be used to encrypt",
+"  the established connection.  The default list is:",
+" ",
+"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
+"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
+" ",
+"SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(common)ssh/known_hosts2",
+" ",
+"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
+"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
+"     SSH-RSA }",
+"  Specifies an ordered list of hostkey algorithms to be used to verify",
+"  the identity of the host.  The default list is",
+" ",
+"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
+"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
+" ",
+"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
+"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
+"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
+"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
+"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
+"  per-connection keys. The default list is:",
+" ",
+"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
+"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
+"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
+"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
+"    diffie-hellman-group1-sha1 ext-info-c",
+" ",
+"SET SSH V2 MACS { HMAC-SHA1, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
+"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
+"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
+"  Specifies an ordered list of Message Authentication Code algorithms to",
+"  be used for integrity  protection of the established connection.  The",
+"  default list is:",
+" ",
+"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
+"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
+" ",
+"SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts2",
+" ",
+"SET SSH VERBOSE level",
+"  Specifies how many messages should be generated by the OpenSSH engine.",
+"  The level can range from 0 to 7.  The default value is 2.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH VERSION { 1, 2, AUTOMATIC }",
+"   Specifies which SSH version should be negotiated.  The default is",
+"   AUTOMATIC which means use version 2 if supported; otherwise to fall",
+"   back to version 1.",
+" ",
+/* Feature: SSH_FEAT_X11_FWD */
+"SET SSH X11-FORWARDING { ON, OFF }",
+"  Specifies whether X Windows System Data is to be forwarded across the",
+"  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
+"  value is set using the SET TELNET ENV DISPLAY command.",
+" ",
+/* Feature: SSH_FEAT_X11_XAUTH */
+"SET SSH XAUTH-LOCATION filename",
+"  Specifies the location of the xauth executable (if provided with the",
+"  X11 Server software.)",
+/* Last line of help text must be an empty string to terminate */
+""
+    };
+
+    return hmxyssh;
 }
