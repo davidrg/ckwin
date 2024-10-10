@@ -1214,6 +1214,8 @@ jobs:
         shell: powershell
       - name: Kermit/2 Build
         run: |
+                   
+          call setenv.bat
           
           REM Enable Dynamic SSH just to be sure those bits are buildable
           REM for OS/2 with Open Watcom
@@ -1223,8 +1225,6 @@ jobs:
           REM Don't build the libssh backend though - that hasn't been ported 
           REM to OS/2 yet
           set CKF_SSH_BACKEND=no
-          
-          call setenv.bat
           
           cd kermit\p95
           call mkos2.bat
