@@ -86,6 +86,7 @@ typedef struct ssh_port_forward {
 #define SSH_SPARAM_2_KEX    14      /* Key Exchange Methods */
 #define SSH_SPARAM_PXC      15      /* Proxy command */
 #define SSH_SPARAM_DIR      16      /* SSH Directory */
+#define SSH_SPARAM_AGENTLOC 17      /* SSH Agent location */
 
 /* Setters and getters for the various "set ssh" options. set_ssh_sparam takes
  * a copy of the supplied string rather than taking ownership of it.*/
@@ -188,6 +189,7 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 #define SSH_FEAT_FROM_PRIV_PRT  15
 #define SSH_FEAT_DYN_PORT_FWD   16
 #define SSH_FEAT_X11_XAUTH      17
+#define SSH_FEAT_AGENT_LOC      18
 
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 

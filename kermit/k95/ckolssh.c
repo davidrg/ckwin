@@ -488,6 +488,7 @@ static char                             /* The following are to be malloc'd */
     * ssh2_kex = NULL,                    /* Key Exchange Methods */
     * ssh_pxc = NULL,                     /* Proxy command */
     * ssh_dir = NULL,                     /* SSH Directory */
+    * ssh_sal = NULL,                     /* SSH Agent Location */
     * xxx_dummy = NULL;
 
 static const char **ssh_idf = NULL;                    /* Identity files */
@@ -1026,6 +1027,9 @@ int ssh_set_sparam(int param, const char* value) {
         case SSH_SPARAM_DIR:
             copy_set_sparam(&ssh_dir, value);
             break;
+        case SSH_SPARAM_AGENTLOC:
+            copy_set_sparam(&ssh_sal, value);
+            break;
         default:
             return 1;
     }
@@ -1453,7 +1457,8 @@ int ssh_open() {
             ssh_xal,        /* Xauth location */
             dir,            /* SSH Dir*/
             ssh_idf,        /* Identity files */
-            socket
+            socket,         /* Existing socket to use */
+            ssh_sal         /* SSH Agent Location */
             );
 
     if (user) free(user);
@@ -2889,6 +2894,7 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_X11_FWD:        /* X11 forwarding */
         case SSH_FEAT_GSSAPI_DELEGAT: /* GSSAPI Delegate Credentials */
         case SSH_FEAT_REKEY_AUTO:     /* TODO: do we implement this? */
+        case SSH_FEAT_AGENT_LOC:
             return TRUE;
 
         case SSH_FEAT_SSH_V1:         /* Not supported by libssh anymore */
@@ -2914,10 +2920,16 @@ int ssh_feature_supported(int feature_id) {
  */
 const char** ssh_get_set_help() {
     static const char *hmxyssh[] = {
+#ifdef COMMENT
 "SET SSH AGENT-FORWARDING { ON, OFF }",
 "  If an authentication agent is in use, setting this value to ON",
 "  results in the connection to the agent being forwarded to the remote",
 "  computer.  The default is OFF.",
+" ",
+#endif
+"SET SSH AGENT-LOCATION location",
+"  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent",
+"  for public key authentication.",
 " ",
 #ifdef COMMENT
 "SET SSH CHECK-HOST-IP { ON, OFF }",

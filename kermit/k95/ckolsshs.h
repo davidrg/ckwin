@@ -160,6 +160,7 @@ typedef struct {
     char* ssh_dir;                              /* SSH Directory */
     char** identity_files;                      /* SSH Identity Files */
     SOCKET existing_socket;                     /* Connect with an existing socket */
+    char* agent_location;                       /* SSH Agent Location */
 
     /* Which authentication methods should be attempted and their order. */
     int authentication_methods[MAX_AUTH_METHODS];
@@ -260,6 +261,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param ssh_dir SSH Directory
  * @param identity_files List of identity files
  * @param socket Existing socket to use for the connection
+ * @param agent_location SSH agent location
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -274,7 +276,8 @@ ssh_parameters_t* ssh_parameters_new(
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
-        const char** identity_files, SOCKET socket);
+        const char** identity_files, SOCKET socket,
+        const char* agent_location);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

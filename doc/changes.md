@@ -48,6 +48,11 @@ by OpenSSH on modern versions of windows, add the command
   also means that alternative SSH backends not based on libssh can now be supported
   should anyone want to build one, opening the door to SSH on vintage windows or
   OS/2 systems.
+* SSH is now supported on 32bit ARM devices (Windows RT)
+* Initial very limited SSH agent support has been added. Libssh is currently the
+  limiting factor here and SSH agent support in K95 likely won't get much better
+  without significant improvements to libssh in this area. See the SSH Readme
+  for more details.
 * REXX support has been extended to x86 systems running Windows XP or newer. This
   was previously an OS/2-only feature. You can now run REXX scripts and commands
   from the K95 command mode with the `rexx` command, and REXX scripts run from 
@@ -57,7 +62,6 @@ by OpenSSH on modern versions of windows, add the command
   REXX implementation is the current Regina REXX release. regutil.dll is included
   but note that the Console I/O Routines it provides are not currently compatible 
   with K95.
-* SSH is now supported on 32bit ARM devices (Windows RT)
 * New command to turn the menubar on or off: `set gui menubar visible { on, off }`
   When the menubar is turned off in this way (rather than the command line 
   parameter), important menu items are moved on to the system/control/window menu

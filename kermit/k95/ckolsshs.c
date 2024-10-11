@@ -150,7 +150,8 @@ ssh_parameters_t* ssh_parameters_new(
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
-        const char** identity_files, SOCKET socket) {
+        const char** identity_files, SOCKET socket,
+        const char* agent_location) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
@@ -173,6 +174,8 @@ ssh_parameters_t* ssh_parameters_new(
     params->nodelay = nodelay;
     params->proxy_command = NULL;
     params->ssh_dir = NULL;
+    params->agent_location = NULL;
+
     params->identity_files = identity_files;
 
     params->existing_socket = socket;
@@ -204,6 +207,7 @@ ssh_parameters_t* ssh_parameters_new(
         params->key_exchange_methods = _strdup(key_exchange_methods);
     if (proxy_command) params->proxy_command = _strdup(proxy_command);
     if (ssh_dir) params->ssh_dir = strdup(ssh_dir);
+    if (agent_location) params->agent_location = _strdup(agent_location);
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -325,6 +329,8 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->x11_host);
     if (parameters->xauth_location)
         free(parameters->xauth_location);
+    if (parameters->agent_location)
+        free(parameters->agent_location);
 
     /* Note: parameters->identity_files should *not* be freed as we're not
      *       currently taking a copy of it */
@@ -1528,7 +1534,11 @@ static int configure_session(ssh_client_state_t * state) {
         }
     }
 
-    // TODO: SSH_OPTIONS_STRICTHOSTKEYCHECK ?
+    if (state->parameters->agent_location) {
+        debug(F110, "sshsubsys - set agent location", state->parameters->agent_location, 0);
+        ssh_options_set(state->session, SSH_OPTIONS_IDENTITY_AGENT,
+                        state->parameters->agent_location);
+    }
 
     // identity fields (set ssh identity-file)
     // stored in ssh_idf[32]

@@ -61,6 +61,39 @@ to be provided by implementing a relatively simple DLL interface similar to
 Kermit 95s "Network DLL" interface. This may someday allow SSH to return on 
 vintage windows, or SSH to be supported on OS/2.
 
+### SSH Agent Support
+
+Kermit 95s SSH Agent Support is at this time severely limited by what libssh
+supports. Most SSH agents on Windows use Named Pipes for communication, while
+libssh only supports UNIX Domain Sockets (AF_UNIX). 
+
+At the time of writing, the only compatible SSH Agent is PuTTYs Pageant which 
+must be started with the `--unix` command line parameter to create a unix 
+socket. The socket _should_ be placed somewhere on your filesystem where only 
+you have access to it so that other users can't communicate with your SSH agent.
+For example: 
+```
+pagant.exe --unix C:\users\david\.ssh\pageant.sock
+```
+
+Then you've got to tell Kermit 95 where the socket is. You do this with the new
+`SET SSH AGENT-LOCATION` command:
+```
+SET SSH AGENT-LOCATION C:/users/david/.ssh/pageant.sock
+```
+
+Note that PuTTY uses its own key format which is incompatible with that used
+by OpenSSH and Kermit 95. Any keys created by OpenSSH or with K95s 
+`SSH KEY CREATE` command may need to be converted to PuTTYs format with
+`puttygen.exe` before you can import them into Pageant.
+
+The `SSH AGENT { ADD, DELETE, LIST }` commands for managing the SSH Agent
+remain unimplemented at this time as libssh does not support this part of the
+SSH agent protocol.
+
+AF_UNIX has only been supported since Windows 10 v1803, so SSH Agent support
+with libssh is not possible on Windows 8.1 and earlier.
+
 ### New Command Options
 These commands are unchanged aside from having some new options. Some options
 that were supported in Kermit 95 may have been removed.
@@ -95,7 +128,11 @@ SSH REMOVE REMOTE-PORT-FORWARD remote-port
   Removes the remote port forward with the specified remote-port from
   the remote port forwarding list. This has no effect on any active
   connection.
-
+  
+SET SSH AGENT-LOCATION location  
+  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent
+  for public key authentication.
+  
 SET SSH DIRECTORY directory
   Specifies where Kermit 95 should look for the default SSH user files
   such as the user-known-hosts file and identity files (id_rsa, etc).

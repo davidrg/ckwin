@@ -7985,11 +7985,13 @@ setprinter(xx) int xx;
 #define SSH_HBT 23                      /* Heartbeat Interval */
 #define SSH_PXC 24                      /* Proxy Command */
 #define SSH_DIR 25                      /* SSH Directory */
+#define SSH_AGL 26                      /* SSH Agent Location */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
 #ifdef SSHBUILTIN
     { "agent-forwarding",        SSH_AFW,  0 },     /* SSH_FEAT_AGENT_FWD */
+    { "agent-location",          SSH_AGL,  0 },     /* SSH_FEAT_AGENT_LOC */
     { "check-host-ip",           SSH_CHI,  0 },
     { "compression",             SSH_CMP,  0 },
     { "directory",               SSH_DIR,  0 },
@@ -8386,7 +8388,14 @@ dosetssh() {
         else if (sshtab[z].kwval == SSH_AFW
             && !ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
             /*
-             * "set ssh agent-forwarding" commands.
+             * "set ssh agent-forwarding" command.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_AGL
+            && !ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            /*
+             * "set ssh agent-location" command.
              */
             sshtab[z].flgs = CM_INV;
         }
@@ -8452,6 +8461,18 @@ dosetssh() {
             return(-9);
         }
         return(success = set_ssh_iparam_on(SSH_IPARAM_AFW));
+
+      case SSH_AGL:
+        if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            printf("\r\nSetting of agent location is not supported by the "
+                   "current SSH backend\r\n");
+            return(-9);
+        }
+        if ((x = cmifi("Socket Name","",&s,&z,xxstring)) < 0) {
+            return(x);
+        }
+        ssh_set_sparam(SSH_SPARAM_AGENTLOC, s);
+        return(1);
 
       case SSH_CHI:                     /* Check Host IP */
         return(success = set_ssh_iparam_on(SSH_IPARAM_CHKIP));
@@ -9057,7 +9078,7 @@ dosetssh() {
             printf("\r\nSSH proxy command feature not supported by the current SSH backend\r\n");
             return(-9);
         }
-        if ((y = cmtxt("title text","",&s,xxstring)) < 0)
+        if ((y = cmtxt("Command","",&s,xxstring)) < 0)
           return(y);
         ssh_set_sparam(SSH_SPARAM_PXC, s);
         return(success = 1);
