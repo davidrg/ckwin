@@ -793,6 +793,18 @@ static char * hmxxfunc[] = {
 ""
 };
 
+#ifdef SSHBUILTIN
+static const char * hmxxskrm[] = {
+"SKERMIT [ OPEN ] host [ port ] /PASSWORD:pwd /USER:username",
+"  This is an approximate synonym for: ",
+"    SSH OPEN host port /PASSWORD:pwd /USER:username /SUBSYSTEM:kermit",
+"  Which opens an SSH connection to the host using the kermit subsystem. This",
+"  requires kermit to be registered as a subsystem with the remote SSH server.",
+"  For more details on this, see: https://kermitproject.org/skermit.html",
+""
+};
+#endif /* SSHBUILTIN */
+
 #ifdef ANYSSH
 static char * hmxxssh[] = {
 #ifdef SSHBUILTIN
@@ -7320,6 +7332,11 @@ case XXPURGE:
   case XXLEARN:
     return(hmsga(hmxxlearn));
 #endif /* CKLEARN */
+
+#ifdef SSHBUILTIN
+  case XXSKRM:
+      return(hmsga(hmxxskrm));
+#endif /* SSHBUILTIN */
 
 #ifdef ANYSSH
   case XXSSH:
