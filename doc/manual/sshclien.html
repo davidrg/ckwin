@@ -32,6 +32,7 @@ already.
   7. <a href="#x7">COMMANDS FOR SSH</a>
      7.1. <a href="#x7.1">The SSH Command</a>
      7.2. <a href="#x7.2">The SET SSH Command</a>
+     7.3. <a href="#x7.3">The SKERMIT Command</a>
 </pre>
 
 <h3><hr><a name="x1">1. K95 SSH OVERVIEW</a></h3>
@@ -616,6 +617,7 @@ SECTION CONTENTS
 <pre>
   7.1. <a href="#x7.1">The SSH Command</a>
   7.2. <a href="#x7.2">The SET SSH Command</a>
+  7.3. <a href="#x7.3">The SKERMIT Command</a>
 </pre>
 <p>
 
@@ -1184,6 +1186,23 @@ from the DISPLAY environment variable.
 X11 Server software.)
 -->
 
+</dl>
+
+<h3><hr><a name="x7.3">7.3. The SKERMIT Command</a></h3>
+<dl>
+<dt><tt><b>SKERMIT </b><i>[</i><b> OPEN </b><i>] host [ port ]
+  [</i><b>/USER:</b><i>username</i> <b>/PASSWORD:</b><i>passwd</i>
+    <i>}&nbsp;]</i></tt></dt>
+<dd>This is an approximate synonym for:
+<p>
+<pre>
+  SSH OPEN host port /USER:username /PASSWORD:pwd /SUBSYSTEM:kermit
+</pre>
+<p>
+  Which opens an SSH connection to the host using the kermit subsystem. This
+  requires kermit to be registered as a subsystem with the remote SSH server.
+  For more details on this, see: <a href="https://kermitproject.org/skermit.html">
+  https://kermitproject.org/skermit.html</a>
 </dl>
 
 <p>
