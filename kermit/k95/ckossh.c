@@ -397,7 +397,7 @@ int ssh_load(char* dllname) {
     CHAR *exe_path;
     CHAR path[256];
     int len;
-    char* fail;
+    char fail[_MAX_PATH];
 #endif
 
     debug(F110, "Attempting to load SSH DLL...", dllname, 0);
