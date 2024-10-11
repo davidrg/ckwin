@@ -1,7 +1,7 @@
 # Change Log
-This document covers what has changed in each release of C-Kermit for Windows 
-(formerly known as Kermit 95). For a more in-depth look at what has changed, 
-check the git commit log.
+This document covers what has changed in each release of Kermit 95 since its
+first open-source release in 2022.  For a more in-depth look at what has 
+changed, check the git commit log.
 
 ## Kermit 95 v3.0 beta 7 - TBD
 
@@ -89,6 +89,7 @@ by OpenSSH on modern versions of windows, add the command
   `\v(appdata)ssh`
 * The `ssh key` commands will now default to opening or saving keys in the
   SSH directory.
+* The `skermit` command now has help text
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
@@ -103,9 +104,11 @@ by OpenSSH on modern versions of windows, add the command
 * Fix the SSH global known hosts file not being set to something sensible
   on windows. It's now set to the value used by past Kermit 95 releases by
   default: `\v(common)ssh\known_hosts2`
+* Fixed generation of 4096 RSA SSH keys
 
 ### Other Source Changes
-None yet
+* Fixed a selection of build warnings, and improved compatibility with the 
+  Open Watcom compiler.
 
 
 ## C-Kermit for Windows 10.0b11 beta 6 - 11 August 2024
@@ -119,9 +122,12 @@ has returned after being discontinued in March 2000 and April 1998
 respectively. And for the first time ever, C-Kermit is now supported on
 Windows NT for MIPS computers, though without TAPI support.
 
+This is also the last release carrying the "C-Kermit for Windows" name. The
+next release will be Kermit 95 3.0 beta 7.
+
 ### Things to be aware of when upgrading
 Windows XP users: current versions of libssh are no longer compatible with 
-Windows XP. See the included SSH Readme for a workaround if SSH support on
+Windows XP. See the included SSH Readme for a workaround for SSH support on
 Windows XP.
 
 ### Fixed Bugs
