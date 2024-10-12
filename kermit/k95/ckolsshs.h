@@ -35,6 +35,9 @@
 
 #include "ckorbf.h"
 
+// TODO: Only if built with GSSAPI support
+#define SSH_GSSAPI_SUPPORT
+
 #ifdef SSH_DLL
 #undef debug
 #define debug(a,b,c,d) \

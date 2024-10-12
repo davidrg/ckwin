@@ -309,7 +309,13 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 
 static struct keytab ssh2aut[] = {      /* SET SSH V2 AUTH command table */
         /*{ "external-keyx",      SSHA_EXT, 0 },*/
-        { "gssapi",             SSHA_GSS, 0 },  /* TODO: Hide if not supported */
+
+        { "gssapi",             SSHA_GSS,
+#ifdef SSH_GSSAPI_SUPPORT
+                                            0 },
+#else
+                                            CM_INV },  /* Hidden as not supported */
+#endif /* SSH_GSSAPI_SUPPORT */
         /*{ "hostbased",          SSHA_HOS, 0 },*/
         { "keyboard-interactive",  SSHA_KBD, 0 },
         { "password",           SSHA_PSW, 0 },
@@ -2888,11 +2894,14 @@ ktab_ret ssh_get_keytab(int keytab_id) {
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
 
+#ifdef SSH_GSSAPI_SUPPORT
+        case SSH_FEAT_GSSAPI_DELEGAT: /* GSSAPI Delegate Credentials */
+            return TRUE;
+#endif
         case SSH_FEAT_OPENSSH_CONF:   /* Configuration via openssh config file */
         case SSH_FEAT_KEY_MGMT:       /* SSH key creation, etc */
         case SSH_FEAT_PORT_FWD:       /* Local and remote port forwarding */
         case SSH_FEAT_X11_FWD:        /* X11 forwarding */
-        case SSH_FEAT_GSSAPI_DELEGAT: /* GSSAPI Delegate Credentials */
         case SSH_FEAT_REKEY_AUTO:     /* TODO: do we implement this? */
         case SSH_FEAT_AGENT_LOC:
             return TRUE;
@@ -2959,11 +2968,13 @@ const char** ssh_get_set_help() {
 "  connections received from the remote host.  The default is OFF.",
 " ",
 #endif
+#ifdef SSH_GSSAPI_SUPPORT
 "SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
 "  Specifies whether Kermit should delegate GSSAPI credentials to ",
 "  the remote host after authentication.  Delegating credentials allows",
 "  the credentials to be used from the remote host.  The default is OFF.",
 " ",
+#endif /* SSH_GSSAPI_SUPPORT */
 "SET SSH HEARTBEAT-INTERVAL <seconds>",
 "  Specifies a number of seconds of idle time after which an IGNORE",
 "  message will be sent to the server.  This pulse is useful for",
@@ -3013,13 +3024,22 @@ const char** ssh_get_set_help() {
 "  after applying Kermit's SET SSH commands.  The configuration file",
 "  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
 " ",
+#ifdef SSH_GSSAPI_SUPPORT
 "SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
 "    PUBKEY, NONE } [ ... ]",
+#else
+    "SET SSH V2 AUTHENTICATION { KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, ",
+"    NONE } [ ... ]",
+#endif /* SSH_GSSAPI_SUPPORT */
 "  Specifies an ordered list of SSH version 2 authentication methods to",
 "  be used when connecting to the remote host. The SSH client requires ",
 "  none to be attempted first, so the default list is:",
 " ",
+#ifdef SSH_GSSAPI_SUPPORT
 "    none gssapi publickey keyboard-interactive password",
+#else
+"    none publickey keyboard-interactive password",
+#endif /* SSH_GSSAPI_SUPPORT */
 " ",
 "SET SSH V2 AUTO-REKEY { ON, OFF }",
 "  Specifies whether Kermit automatically issues rekeying requests",
