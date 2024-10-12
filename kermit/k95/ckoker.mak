@@ -639,8 +639,13 @@ k95g:
 
 # Watcom C targeting OS/2
 # OPT note: Building with -ox doesn't work with Open Watcom 1.9 as the -s
-# build option (remove stack overflow checks) is problematic. See issue #55
-# for a description.
+#           build option (remove stack overflow checks) is problematic. See
+#           issue #55 for a description:
+#             https://github.com/davidrg/ckwin/issues/55
+# DLL note: cko32i20.dll (and probably cko32i40.dll) needs to be built with
+#           -sg (generate calls to grow the stack) otherwise it crashes with a
+#           stack overflow on unpatched OS/2 Warp 3, OS/2 Warp 4 Server, and
+#           OS/2 Warp 4.
 wcos2:
 	$(MAKE) -f ckoker.mak os232 \
 	    CMP="OWWCL" \
@@ -653,7 +658,7 @@ wcos2:
         OUT="-Fe=" O=".obj" \
 	    OPT="-obmiler" \
         DEBUG="-DNDEBUG" \
-        DLL="-bd" \
+        DLL="-bd -sg" \
 	    CFLAGS="-zq -zp=1 -bm -bt=os2 -aa" \
         LDFLAGS="" \
         PLATFORM="OS2" \
