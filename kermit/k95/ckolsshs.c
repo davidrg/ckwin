@@ -36,6 +36,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifndef UNIX_PATH_MAX
+/* This is the important stuff in afunix.h which is only available in very
+ * recent Windows SDKs and may not be present in MinGW.
+ */
+#define UNIX_PATH_MAX 108
+struct sockaddr_un {
+    ADDRESS_FAMILY sun_family;
+    char sun_path[UNIX_PATH_MAX];
+};
+#endif /* UNIX_PATH_MAX */
+
 #include "ckcdeb.h"
 #include "ckcker.h"
 
@@ -54,6 +65,7 @@ extern HWND hwndConsole;
 #define SSH_FWD_TYPE_DIRECT  1
 #define SSH_FWD_TYPE_REVERSE 2
 #define SSH_FWD_TYPE_X11     3
+#define SSH_FWD_TYPE_AGENT   4
 
 #define SSH_FWD_STATE_PENDING   1
 #define SSH_FWD_STATE_OPEN      2
@@ -122,6 +134,7 @@ typedef struct ssh_forward {
  */
 typedef struct {
     ssh_parameters_t *parameters;    /* Connection parameters */
+    ssh_client_t *client;            /* The client instance */
     ssh_session session;             /* Current SSH session (if any) */
     ssh_channel ttyChannel;          /* The tty channel - shell or command */
     int pty_height, pty_width;       /* Dimensions of the pty */
@@ -151,7 +164,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
         const char** identity_files, SOCKET socket,
-        const char* agent_location) {
+        const char* agent_location, int agent_forwarding) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
@@ -175,6 +188,7 @@ ssh_parameters_t* ssh_parameters_new(
     params->proxy_command = NULL;
     params->ssh_dir = NULL;
     params->agent_location = NULL;
+    params->agent_forwarding = FALSE;
 
     params->identity_files = identity_files;
 
@@ -207,7 +221,15 @@ ssh_parameters_t* ssh_parameters_new(
         params->key_exchange_methods = _strdup(key_exchange_methods);
     if (proxy_command) params->proxy_command = _strdup(proxy_command);
     if (ssh_dir) params->ssh_dir = strdup(ssh_dir);
-    if (agent_location) params->agent_location = _strdup(agent_location);
+    if (agent_location) {
+#ifdef SSH_AGENT_SUPPORT
+        params->agent_location = _strdup(agent_location);
+        params->agent_forwarding = agent_forwarding;
+#else
+        params->agent_location = NULL;
+        params->agent_forwarding = FALSE;
+#endif
+    }
 
     params->log_verbosity = verbosity;
     params->compression = compression;
@@ -415,13 +437,15 @@ void ssh_client_free(ssh_client_t *client) {
  *
  * @param parameters SSH Client parameters
  */
-static ssh_client_state_t* ssh_client_state_new(ssh_parameters_t* parameters) {
+static ssh_client_state_t* ssh_client_state_new(ssh_parameters_t* parameters,
+                                                ssh_client_t *client) {
     ssh_client_state_t * state;
 
     debug(F100, "sshsubsys - ssh_client_state_new", NULL, 0);
 
     state = malloc(sizeof(ssh_client_state_t));
     state->parameters = parameters;
+    state->client = client;
     state->pty_width = parameters->pty_width;
     state->pty_height = parameters->pty_height;
     state->session = NULL;
@@ -722,9 +746,13 @@ static int verify_known_host(ssh_client_state_t * state) {
                     state->parameters->allow_password_auth = FALSE;
                 }
 
-                /* TODO: If agent forwarding, error:
-                 *      Agent forwarding is disabled to avoid trojan horses.
-                 */
+#ifdef SSH_AGENT_SUPPORT
+                if (state->parameters->agent_forwarding) {
+                    strncat(msg, "Agent forwarding is disabled to avoid trojan horses.\n",
+                            sizeof(msg) - strlen(msg) - 1);
+                    state->parameters->agent_forwarding = FALSE;
+                }
+#endif
 
                 if (state->parameters->forward_x) {
                     strncat(msg, "X11 forwarding is disabled to avoid trojan horses.\n",
@@ -1442,6 +1470,7 @@ static int open_shell(ssh_client_state_t * state) {
     return rc;
 }
 
+ssh_channel auth_agent_request_callback(ssh_session session, void *userdata);
 
 /** Applies all configuration to the SSH Session
  *
@@ -1458,8 +1487,14 @@ static int configure_session(ssh_client_state_t * state) {
      *   And channel_close_function to handle tidying up forwardings?
      * */
     static struct ssh_callbacks_struct cb = {
-            .auth_function = auth_prompt
+            .auth_function = auth_prompt,
+#ifdef SSH_AGENT_SUPPORT
+            .channel_open_request_auth_agent_function =
+                auth_agent_request_callback
+#endif
     };
+
+    cb.userdata = state;
 
     ssh_callbacks_init(&cb);
 
@@ -2474,6 +2509,152 @@ unsigned int __stdcall ssh_forwarding_connection_thread(
 }
 
 
+#ifdef SSH_AGENT_SUPPORT
+/** Accepts an agent forwarding request.
+ *
+ * @param session Session to accept a forwarding request for
+ * @param userdata This should be the ssh client state
+ * @returns a new ssh channel if the request is accepted
+ */
+ssh_channel auth_agent_request_callback(ssh_session session, void *userdata) {
+    ssh_client_state_t *state = (ssh_client_state_t*)userdata;
+    ssh_client_t *client = NULL;
+    ssh_forward_t *fwd = NULL;
+    ssh_channel channel = NULL;
+    struct sockaddr_un addr;
+    SOCKET sock = INVALID_SOCKET;
+    ssh_forward_connection_t *con, *conNode;
+    ssh_fwd_thread_params_t *threadParams;
+    int iResult = 0;
+
+    debug(F100, "sshsubsys - Received agent-request", NULL, 0);
+
+    if (state == NULL) {
+        debug(F100, "sshsubsys - Regecting agent request: state is NULL!", NULL, 0);
+        return channel;
+    }
+
+    client = state->client;
+
+    if (!state->parameters->agent_forwarding) {
+        /* Agent forwarding not enabled */
+        debug(F100, "sshsubsys - Rejecting agent-request: not enabled", NULL, 0);
+        return channel;
+    }
+
+    /* Try to find the forwarding entry. This is what will track the forwarding
+     * connection allowing it to be cleaned up properly later. Its localHost
+     * parameter contains the local socket the agent is listening on*/
+    fwd = client->forwards;
+    while (fwd && fwd->next != NULL) {
+        if (fwd->type == SSH_FWD_TYPE_AGENT)
+            break;
+
+        fwd = fwd->next;
+    }
+
+    if (fwd == NULL || fwd->type != SSH_FWD_TYPE_AGENT) {
+        debug(F100, "sshsubsys - Rejecting agent-request: "
+                    "agent forwarding not configured", NULL, 0);
+        return channel;
+    }
+
+    /*
+     *  From here on, it's all Unix Domain Sockets (AF_UNIX). This is
+     *  incompatible with both the version of ssh-agent supplied with Windows,
+     *  and how Pageant normally works.
+     *
+     *  Ideally we'd support Named Pipes here too as this is what ssh-agent
+     *  always uses, and what Pageant uses by default. But right now libssh
+     *  doesn't support Named Pipes for agent authentication, so there is
+     *  little point in supporting them for agent forwarding.
+     */
+
+    /* Create the AF_UNIX socket */
+    addr.sun_family = AF_UNIX;
+    snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", fwd->localHost);
+
+    /* Convert socket name to windows path separators (K95 uses unix
+     * separators internally) */
+    for (int i = 0; i < sizeof(addr.sun_path); i++) {
+        if (addr.sun_path[i] == '\0')
+            break;
+        if (addr.sun_path[i] == '/')
+            addr.sun_path[i] = '\\';
+    }
+
+    sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET) {
+        debug(F110, "sshsubsys - Rejecting agent-request: "
+                    "socket create failed", fwd->localHost, 0);
+        return channel;
+    }
+
+    /* And connect it */
+    iResult = connect(sock, (struct sockaddr *) &addr, sizeof(addr));
+    if (iResult == SOCKET_ERROR) {
+        /* Connect failed */
+        closesocket(sock);
+        sock = INVALID_SOCKET;
+        debug(F111, "sshsubsys - Rejecting agent-request: "
+                    "failed to connect to agent socket",
+              addr.sun_path, iResult);
+        return channel;
+    }
+
+    /* We're connected! Create a channel */
+    channel = ssh_channel_new(state->session);
+
+    /* Create the connection entry to track this agent forwarding */
+    con = malloc(sizeof(ssh_forward_connection_t));
+    con->next = NULL;
+    con->channel = channel;
+    con->outputBuffer = NULL;
+    con->inputBuffer = NULL;
+    con->state = SSH_FWD_STATE_OPEN;
+
+    con->disconnectEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    /* Add the connection to the list */
+    if (fwd->connections == NULL) {
+        fwd->connections = con;
+    } else {
+        conNode = fwd->connections;
+        while (conNode->next != NULL) {
+            conNode = conNode->next;
+        }
+        conNode->next = con;
+    }
+
+    /* Set up the I/O buffers */
+    con->outputBuffer = ring_buffer_new(1024*1024);
+    con->inputBuffer = ring_buffer_new(1024*1024);
+
+    /* The socket */
+    con->socket = sock;
+
+    /* Then launch a thread to handle the socket */
+    debug(F100, "sshsubsys - new agent fwd connection, launch thread", NULL, 0);
+    threadParams = malloc(sizeof(ssh_fwd_thread_params_t));
+    threadParams->socket = con->socket;
+    threadParams->outputBuffer = con->inputBuffer;
+    threadParams->inputBuffer = con->outputBuffer;
+    threadParams->readyRead = state->forwardingReadyRead;
+    threadParams->disconnectEvent = con->disconnectEvent;
+    con->thread = (HANDLE)_beginthreadex(
+            NULL,           /* Security info */
+            65536,          /* Stack size */
+            ssh_forwarding_connection_thread,     /* Start address */
+            (void *)threadParams,   /* Arg list */
+            0,              /* init flags - start immediately */
+            NULL            /* Thread identifier */
+    );
+
+    return channel;
+}
+#endif
+
+
 /** Accepts any waiting connections for direct forwarding.
  *
  */
@@ -2895,8 +3076,44 @@ static void configure_forwarding(ssh_client_state_t *state,
             }
         }
 
+#ifdef SSH_AGENT_SUPPORT
         /* Set up Agent forwarding */
-        /* TODO */
+        if (state->parameters->agent_forwarding && ssh_forwarding_lock(client, 2000)) {
+            int rc = 0;
+
+            debug(F100, "sshsubsys - Enable agent forwarding", NULL, 0);
+            ssh_forward_t *fwd = malloc(sizeof(ssh_forward_t));
+            fwd->next = NULL;
+            fwd->state = SSH_FWD_STATE_OPEN;
+            fwd->connections = NULL;
+
+            fwd->type = SSH_FWD_TYPE_AGENT;
+            fwd->remoteHost = NULL;
+            fwd->remotePort = 0;
+            fwd->localHost = _strdup(state->parameters->agent_location);
+            fwd->localPort = 0;
+
+            if (client->forwards == NULL) {
+                client->forwards = fwd;
+            } else {
+                /* Find the last entry in the list */
+                ssh_forward_t * node = client->forwards;
+                while (node->next != NULL) {
+                    node = node->next;
+                }
+                node->next = fwd;
+            }
+
+            ssh_forwarding_unlock(client);
+
+            rc = open_tty_channel(state);
+            if (rc != SSH_OK) {
+                printf("Failed to open tty channel for Agent forwarding!\n");
+            } else {
+                ssh_channel_request_auth_agent(state->ttyChannel);
+            }
+        }
+#endif /* AGENT_FORWARDING */
     }
 }
 
@@ -3007,13 +3224,17 @@ static int connect_ssh(ssh_client_state_t* state, ssh_client_t *client) {
 
     debug(F100, "sshsubsys - Authentication succeeded", "", 0);
 
-    /* Setup direct and reverse forwarding if its been requested */
+    /* Setup direct, reverse and agent forwarding if it's been requested */
     configure_forwarding(state, client);
 
 
     /* Setup X11 forwarding. What the libssh documentation fails to mention
      * is that this must be done *before* the session is started */
     setup_x11_forwarding(state, client);
+
+    if (state->forwarding_ok && state->parameters->agent_forwarding) {
+        rc = ssh_channel_request_auth_agent(state->ttyChannel);
+    }
 
     debug(F100, "sshsubsys - Starting session...", "", 0);
     if (state->parameters->session_type == SESSION_TYPE_SUBSYSTEM) {
@@ -3059,7 +3280,7 @@ unsigned int __stdcall ssh_thread(ssh_thread_params_t *parameters) {
 
     client = parameters->ssh_client;
 
-    state = ssh_client_state_new(parameters->parameters);
+    state = ssh_client_state_new(parameters->parameters, client);
     if (state == NULL) {
         debug(F100, "sshsubsys - failed to create client state. Giving up.", NULL, 0);
         ssh_client_close(NULL, client, SSH_ERR_STATE_MALLOC_FAILED);

@@ -454,7 +454,7 @@ static int nsshkextab = (sizeof(sshkextab) / sizeof(struct keytab)) - 1;
 
 /* Global variables */
 
-static int                                     /* SET SSH variables */
+static int                                /* SET SSH variables */
     ssh_afw = 0,                          /* agent forwarding */
     ssh_xfw = 0,                          /* x11 forwarding   */
     ssh_prp = SET_OFF,                    /* privileged ports */
@@ -1464,7 +1464,8 @@ int ssh_open() {
             dir,            /* SSH Dir*/
             ssh_idf,        /* Identity files */
             socket,         /* Existing socket to use */
-            ssh_sal         /* SSH Agent Location */
+            ssh_sal,        /* SSH Agent Location */
+            ssh_afw         /* Enable Agent forwarding? */
             );
 
     if (user) free(user);
@@ -2894,16 +2895,22 @@ ktab_ret ssh_get_keytab(int keytab_id) {
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
 
+#ifdef SSH_AGENT_SUPPORT
+        case SSH_FEAT_AGENT_FWD:      /* Agent Forwarding - needs AF_UNIX support */
+        case SSH_FEAT_AGENT_LOC:      /* Agent Location - needs AF_UNIX support */
+            return TRUE;
+#endif
+
 #ifdef SSH_GSSAPI_SUPPORT
         case SSH_FEAT_GSSAPI_DELEGAT: /* GSSAPI Delegate Credentials */
             return TRUE;
 #endif
+
         case SSH_FEAT_OPENSSH_CONF:   /* Configuration via openssh config file */
         case SSH_FEAT_KEY_MGMT:       /* SSH key creation, etc */
         case SSH_FEAT_PORT_FWD:       /* Local and remote port forwarding */
         case SSH_FEAT_X11_FWD:        /* X11 forwarding */
         case SSH_FEAT_REKEY_AUTO:     /* TODO: do we implement this? */
-        case SSH_FEAT_AGENT_LOC:
             return TRUE;
 
         case SSH_FEAT_SSH_V1:         /* Not supported by libssh anymore */
@@ -2915,7 +2922,6 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_GSSAPI_KEYEX:   /* Not supported by libssh */
         case SSH_FEAT_DYN_PORT_FWD:   /* Requires a SOCKS server implementation */
         case SSH_FEAT_X11_XAUTH:      /* TODO - not implemented here yet */
-        case SSH_FEAT_AGENT_FWD:      /* TODO - not implemented here yet */
         case SSH_FEAT_AGENT_MGMT:     /* TODO: can we support this ? */
         default:
             return FALSE;
@@ -2929,17 +2935,17 @@ int ssh_feature_supported(int feature_id) {
  */
 const char** ssh_get_set_help() {
     static const char *hmxyssh[] = {
-#ifdef COMMENT
+#ifdef SSH_AGENT_SUPPORT
 "SET SSH AGENT-FORWARDING { ON, OFF }",
 "  If an authentication agent is in use, setting this value to ON",
 "  results in the connection to the agent being forwarded to the remote",
 "  computer.  The default is OFF.",
 " ",
-#endif
 "SET SSH AGENT-LOCATION location",
 "  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent",
 "  for public key authentication.",
 " ",
+#endif /* SSH_AGENT_SUPPORT */
 #ifdef COMMENT
 "SET SSH CHECK-HOST-IP { ON, OFF }",
 "  Specifies whether the remote host's ip-address should be checked",

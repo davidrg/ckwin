@@ -35,6 +35,9 @@
 
 #include "ckorbf.h"
 
+// TODO: Only if on Windows 10 or newer (needs AF_UNIX)
+#define SSH_AGENT_SUPPORT
+
 // TODO: Only if built with GSSAPI support
 #define SSH_GSSAPI_SUPPORT
 
@@ -164,6 +167,7 @@ typedef struct {
     char** identity_files;                      /* SSH Identity Files */
     SOCKET existing_socket;                     /* Connect with an existing socket */
     char* agent_location;                       /* SSH Agent Location */
+    int agent_forwarding;                       /* Enable agent forwarding */
 
     /* Which authentication methods should be attempted and their order. */
     int authentication_methods[MAX_AUTH_METHODS];
@@ -265,6 +269,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param identity_files List of identity files
  * @param socket Existing socket to use for the connection
  * @param agent_location SSH agent location
+ * @param agent_forwarding Enable agent forwarding
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -280,7 +285,7 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
         const char** identity_files, SOCKET socket,
-        const char* agent_location);
+        const char* agent_location, int agent_forwarding);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *
