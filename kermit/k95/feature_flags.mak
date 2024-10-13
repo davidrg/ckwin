@@ -433,23 +433,32 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSSH_DLL
 # in resulting .dll file so that even if the files get renamed its still
 # possible to tell them apart.
 !if "$(CKF_SSH_DLL_VARIANT)" == "g"
+# Windows Vista or newer, GSSAPI
 !message Building G variant ssh dll (GSSAPI)
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_G
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS)
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshg.lib
 !endif
 !elseif "$(CKF_SSH_DLL_VARIANT)" == "x"
+# Windows XP, No GSSAPI
 !message Building X variant ssh dll (Windows XP)
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_X
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNO_SSH_AGENT_SUPPORT -DNO_SSH_GSSAPI_SUPPORT
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshx.lib
 !endif
 !elseif "$(CKF_SSH_DLL_VARIANT)" == "gx"
+# Windows XP, GSSAPI
 !message Building GX variant ssh dll (GSSAPI, Windows XP)
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_GX
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNO_SSH_AGENT_SUPPORT
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshgx.lib
 !endif
+!elseif "$(CKF_SSH_DLL_VARIANT)" == ""
+# Windows Vista or newer, No GSSAPI
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNO_SSH_GSSAPI_SUPPORT
 !endif
 
 # Statically link libssh

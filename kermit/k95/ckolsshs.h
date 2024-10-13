@@ -35,11 +35,13 @@
 
 #include "ckorbf.h"
 
-// TODO: Only if on Windows 10 or newer (needs AF_UNIX)
+#ifndef NO_SSH_AGENT_SUPPORT
 #define SSH_AGENT_SUPPORT
+#endif
 
-// TODO: Only if built with GSSAPI support
+#ifndef NO_SSH_GSSAPI_SUPPORT
 #define SSH_GSSAPI_SUPPORT
+#endif
 
 #ifdef SSH_DLL
 #undef debug

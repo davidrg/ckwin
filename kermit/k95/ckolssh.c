@@ -64,6 +64,26 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 #include "ckoreg.h"
 #endif
 
+#ifdef NT
+#ifndef __WATCOMC__
+#if !defined(_MSC_VER) || _MSC_VER >= 1920
+/* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
+ * and though the Win32 APIs it relies on have been around since Windows 2000,
+ * though building with Visual C++ 2017 (1910) fails with unresovled external
+ * symbol so we'll only do this on Visual C++ 2019 or newer */
+#include <versionhelpers.h>
+#define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
+#else /* _MSC_VER */
+/* Anything older than Visual C++ 2019 we won't bother trying to detect
+ * Windows 8.1 or newer - if you're building for a modern version of windows
+ * you really should be using a modern compiler. */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif /* _MSC_VER */
+#else /* __WATCOMC__ */
+/* Open Watcom doesn't have versionhelpers.h */
+#define CKWIsWinVerOrGreater(ver) (FALSE)
+#endif /* __WATCOMC__ */
+#endif /* NT */
 
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
@@ -2898,7 +2918,11 @@ int ssh_feature_supported(int feature_id) {
 #ifdef SSH_AGENT_SUPPORT
         case SSH_FEAT_AGENT_FWD:      /* Agent Forwarding - needs AF_UNIX support */
         case SSH_FEAT_AGENT_LOC:      /* Agent Location - needs AF_UNIX support */
-            return TRUE;
+            /* AF_UNIX is only available on Windows 10 v1803 or newer */
+            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                return TRUE;
+            }
+            return FALSE;
 #endif
 
 #ifdef SSH_GSSAPI_SUPPORT
@@ -2941,9 +2965,15 @@ const char** ssh_get_set_help() {
 "  results in the connection to the agent being forwarded to the remote",
 "  computer.  The default is OFF.",
 " ",
+"  This command requires Windows 10 version 1803 or newer. The command is",
+"  hidden when running on Windows 8.1 or earlier.",
+" ",
 "SET SSH AGENT-LOCATION location",
 "  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent",
 "  for public key authentication.",
+" ",
+"  This command requires Windows 10 version 1803 or newer. The command is",
+"  hidden when running on Windows 8.1 or earlier.",
 " ",
 #endif /* SSH_AGENT_SUPPORT */
 #ifdef COMMENT
