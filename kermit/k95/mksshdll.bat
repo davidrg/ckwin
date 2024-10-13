@@ -12,7 +12,7 @@ SET K95BUILD=K95
 set OUTDIR=nt%SUFFIX%
 if not exist %OUTDIR%\NUL mkdir %OUTDIR%
 move %OUTDIR%\*.obj . > nul
-del ckcmai.obj ckuus5.obj
+del ckolssh.obj ckolsshs.obj
 %MAKE% /nologo /e /f ckoker.mak msvc-sshdlld
 move *.obj %OUTDIR%  > nul
 
