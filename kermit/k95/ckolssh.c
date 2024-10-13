@@ -2965,15 +2965,9 @@ const char** ssh_get_set_help() {
 "  results in the connection to the agent being forwarded to the remote",
 "  computer.  The default is OFF.",
 " ",
-"  This command requires Windows 10 version 1803 or newer. The command is",
-"  hidden when running on Windows 8.1 or earlier.",
-" ",
 "SET SSH AGENT-LOCATION location",
 "  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent",
 "  for public key authentication.",
-" ",
-"  This command requires Windows 10 version 1803 or newer. The command is",
-"  hidden when running on Windows 8.1 or earlier.",
 " ",
 #endif /* SSH_AGENT_SUPPORT */
 #ifdef COMMENT
@@ -3153,6 +3147,14 @@ const char** ssh_get_set_help() {
 ""
     };
 
+#ifdef SSH_AGENT_SUPPORT
+    /* Hide the SSH agent command help when they're not supported. We can only
+     * get away with this because they're all grouped together at the start
+     * so we can just skip over them.
+     */
+    if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC))
+        return &hmxyssh[9];
+#endif
     return hmxyssh;
 }
 

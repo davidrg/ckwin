@@ -419,6 +419,16 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
 !endif
 
+
+# Statically link libssh
+#   Turn on with: -DLIBSSH_STATIC=1
+# doesn't work unless openssl is statically linked too.
+#!if "$(CKF_LIBSSH_STATIC)" == "yes"
+#ENABLED_FEATURES = $(ENABLED_FEATURES) LibSSH-static
+#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DLIBSSH_STATIC=1
+#!endif
+
+
 # Dynamic SSH support
 #   Turn on with: -DSSH_DLL
 !if "$(CKF_DYNAMIC_SSH)" == "yes"
@@ -456,18 +466,10 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNO_SSH_AGENT_SUPPORT
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshgx.lib
 !endif
-!elseif "$(CKF_SSH_DLL_VARIANT)" == ""
+!else
 # Windows Vista or newer, No GSSAPI
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DNO_SSH_GSSAPI_SUPPORT
 !endif
-
-# Statically link libssh
-#   Turn on with: -DLIBSSH_STATIC=1
-# doesn't work unless openssl is statically linked too.
-#!if "$(CKF_LIBSSH_STATIC)" == "yes"
-#ENABLED_FEATURES = $(ENABLED_FEATURES) LibSSH-static
-#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DLIBSSH_STATIC=1
-#!endif
 
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) SSH_DLL
