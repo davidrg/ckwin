@@ -35,6 +35,42 @@
 
 #include "ckorbf.h"
 
+/*
+ * On x86 and x86-64 Windows, four libssh backend DLLs are built currently:
+ *      G       Vista+, GSSAPI      k95sshg.dll
+ *      X       XP                  k95sshx.dll
+ *      GX      XP, GSSAPI          k95sshgx.dll
+ *      STD     Vista+              k95ssh.dll
+ * Only the G and GX builds get GSSAPI support, and only the G and STD
+ * builds get Agent support.
+ */
+
+#ifdef CKF_SSHDLL_VARIANT_G
+/* Vista+, GSSAPI : the only varaint to get all features */
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_X
+/* Windows XP */
+#define NO_SSH_AGENT_SUPPORT
+#define NO_SSH_GSSAPI_SUPPORT
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_GX
+/* Windows XP, GSSAPI */
+#define NO_SSH_AGENT_SUPPORT
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_STD
+/* Vista+ */
+#define NO_SSH_GSSAPI_SUPPORT
+#endif
+
+/*
+ * Unless we're told not to, build with SSH Agent and GSSAPI Support. There
+ * is no real harm in doing this - worst case there are some options in the
+ * UI that don't work if the Windows version is too old or the libssh dll
+ * lacks GSSAPI support.
+ */
 #ifndef NO_SSH_AGENT_SUPPORT
 #define SSH_AGENT_SUPPORT
 #endif
