@@ -419,6 +419,16 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) SSH
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOSSH
 !endif
 
+
+# Statically link libssh
+#   Turn on with: -DLIBSSH_STATIC=1
+# doesn't work unless openssl is statically linked too.
+#!if "$(CKF_LIBSSH_STATIC)" == "yes"
+#ENABLED_FEATURES = $(ENABLED_FEATURES) LibSSH-static
+#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DLIBSSH_STATIC=1
+#!endif
+
+
 # Dynamic SSH support
 #   Turn on with: -DSSH_DLL
 !if "$(CKF_DYNAMIC_SSH)" == "yes"
@@ -433,32 +443,35 @@ ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DSSH_DLL
 # in resulting .dll file so that even if the files get renamed its still
 # possible to tell them apart.
 !if "$(CKF_SSH_DLL_VARIANT)" == "g"
+# Windows Vista or newer, GSSAPI
 !message Building G variant ssh dll (GSSAPI)
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_G
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_G
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshg.lib
 !endif
 !elseif "$(CKF_SSH_DLL_VARIANT)" == "x"
+# Windows XP, No GSSAPI
 !message Building X variant ssh dll (Windows XP)
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_X
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_X
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshx.lib
 !endif
 !elseif "$(CKF_SSH_DLL_VARIANT)" == "gx"
+# Windows XP, GSSAPI
 !message Building GX variant ssh dll (GSSAPI, Windows XP)
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_GX
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_GX
 !if "$(SSH_LIB)" == ""
 SSH_LIB=sshgx.lib
 !endif
+!else
+# Windows Vista or newer, No GSSAPI
+!message Building (normal) variant ssh dll
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_STD
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKF_SSHDLL_VARIANT_STD
 !endif
-
-# Statically link libssh
-#   Turn on with: -DLIBSSH_STATIC=1
-# doesn't work unless openssl is statically linked too.
-#!if "$(CKF_LIBSSH_STATIC)" == "yes"
-#ENABLED_FEATURES = $(ENABLED_FEATURES) LibSSH-static
-#ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DLIBSSH_STATIC=1
-#!endif
 
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) SSH_DLL

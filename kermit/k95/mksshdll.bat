@@ -12,8 +12,8 @@ SET K95BUILD=K95
 set OUTDIR=nt%SUFFIX%
 if not exist %OUTDIR%\NUL mkdir %OUTDIR%
 move %OUTDIR%\*.obj . > nul
-del ckcmai.obj ckuus5.obj
 %MAKE% /nologo /e /f ckoker.mak msvc-sshdlld
+del ckolssh.obj ckolsshs.obj
 move *.obj %OUTDIR%  > nul
 
 REM Open Watcom 1.9s nmake clone doesn't seem to set errorlevel when the build

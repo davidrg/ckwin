@@ -64,6 +64,35 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 #include "ckoreg.h"
 #endif
 
+#ifdef SSH_AGENT_SUPPORT
+/*
+ * SSH Agent support currently relies on AF_UNIX support (introduced in
+ * Windows 10 v1803), so if we *know* we're running on something older than
+ * Windows 10, we'll hide the Agent-related commands.
+ *
+ * If we can't detect the Windows version because the compiler was too old,
+ * we'll enable the agent-related commands just in case. Worst case they just
+ * don't work.
+ */
+#ifdef NT
+#ifndef __WATCOMC__
+#if !defined(_MSC_VER) || _MSC_VER >= 1920
+/* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
+ * and though the Win32 APIs it relies on have been around since Windows 2000,
+ * though building with Visual C++ 2017 (1910) fails with unresovled external
+ * symbol so we'll only do this on Visual C++ 2019 or newer */
+#include <versionhelpers.h>
+#define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
+#else /* _MSC_VER */
+/* Can't detect if we're Windows 10 or greater so just assume we are */
+#define CKWIsWinVerOrGreater(ver) (TRUE)
+#endif /* _MSC_VER */
+#else /* __WATCOMC__ */
+/* Open Watcom doesn't have versionhelpers.h */
+#define CKWIsWinVerOrGreater(ver) (TRUE)
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* SSH_AGENT_SUPPORT */
 
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
@@ -2898,7 +2927,11 @@ int ssh_feature_supported(int feature_id) {
 #ifdef SSH_AGENT_SUPPORT
         case SSH_FEAT_AGENT_FWD:      /* Agent Forwarding - needs AF_UNIX support */
         case SSH_FEAT_AGENT_LOC:      /* Agent Location - needs AF_UNIX support */
-            return TRUE;
+            /* AF_UNIX is only available on Windows 10 v1803 or newer */
+            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                return TRUE;
+            }
+            return FALSE;
 #endif
 
 #ifdef SSH_GSSAPI_SUPPORT
@@ -3123,6 +3156,14 @@ const char** ssh_get_set_help() {
 ""
     };
 
+#ifdef SSH_AGENT_SUPPORT
+    /* Hide the SSH agent command help when they're not supported. We can only
+     * get away with this because they're all grouped together at the start
+     * so we can just skip over them.
+     */
+    if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC))
+        return &hmxyssh[9];
+#endif
     return hmxyssh;
 }
 
