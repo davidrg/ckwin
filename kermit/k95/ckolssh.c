@@ -64,6 +64,16 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 #include "ckoreg.h"
 #endif
 
+#ifdef SSH_AGENT_SUPPORT
+/*
+ * SSH Agent support currently relies on AF_UNIX support (introduced in
+ * Windows 10 v1803), so if we *know* we're running on something older than
+ * Windows 10, we'll hide the Agent-related commands.
+ *
+ * If we can't detect the Windows version because the compiler was too old,
+ * we'll enable the agent-related commands just in case. Worst case they just
+ * don't work.
+ */
 #ifdef NT
 #ifndef __WATCOMC__
 #if !defined(_MSC_VER) || _MSC_VER >= 1920
@@ -74,16 +84,15 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 #include <versionhelpers.h>
 #define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
 #else /* _MSC_VER */
-/* Anything older than Visual C++ 2019 we won't bother trying to detect
- * Windows 8.1 or newer - if you're building for a modern version of windows
- * you really should be using a modern compiler. */
-#define CKWIsWinVerOrGreater(ver) (FALSE)
+/* Can't detect if we're Windows 10 or greater so just assume we are */
+#define CKWIsWinVerOrGreater(ver) (TRUE)
 #endif /* _MSC_VER */
 #else /* __WATCOMC__ */
 /* Open Watcom doesn't have versionhelpers.h */
-#define CKWIsWinVerOrGreater(ver) (FALSE)
+#define CKWIsWinVerOrGreater(ver) (TRUE)
 #endif /* __WATCOMC__ */
 #endif /* NT */
+#endif /* SSH_AGENT_SUPPORT */
 
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
