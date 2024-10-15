@@ -146,7 +146,9 @@ We would have to think about under what conditions each one is valid, etc.
 #define K_HOMSCN     115                /* Screen rollback: oldest screen */
 #define K_GO_BOOK    116        /* Scroll to bookmark */
 #define K_GOTO       117        /* Scroll to line number */
-#define K_ROLLMAX    117
+#define K_UPHSCN     118                /* Screen rollback: up half a screen */
+#define K_DNHSCN     119                /* Screen rollback: down half a screen */
+#define K_ROLLMAX    119
 
 #define K_LFONE      130                /* Horizontal Scroll: Left one cell */
 #define K_LFPAGE     131                /* Horizontal Scroll: Left one page */

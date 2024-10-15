@@ -12433,11 +12433,17 @@ dohkverb(xx) int xx; {
     case  K_DNSCN     :                 /* Screen rollback: down one screen */
       printf("\\Kdnscn         Screen rollback: down one screen\n");
       break;
+    case  K_DNHSCN    :                 /* Screen rollback: down half a screen */
+      printf("\\Kdnhscn        Screen rollback: down half of one screen\n");
+      break;
     case  K_UPONE     :                 /* Screen rollback: Up one line */
       printf("\\Kupone         Screen rollback: up one line\n");
       break;
     case  K_UPSCN     :                 /* Screen rollback: Up one screen */
       printf("\\Kupscn         Screen rollback: up one screen\n");
+      break;
+    case  K_UPHSCN    :                 /* Screen rollback: Up half a screen */
+      printf("\\Kuphscn        Screen rollback: up half of one screen\n");
       break;
     case  K_ENDSCN    :                 /* Screen rollback: latest screen */
       printf("\\Kendscn        Screen rollback: latest screen\n");
