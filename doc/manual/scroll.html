@@ -111,16 +111,18 @@ of the rollback buffer to the bottom of the active screen ("select all"):
 The scrollback buffer is easily navigated using the keys to which the 
 Page Up, Page Down, Home, and End functions are assigned.  Each function
 is represented by a <a href="kverbs.html">"Kverbs"</a> which is in turn 
-assigned to a key combination with a SET TERM KEY command.  There are six
+assigned to a key combination with a SET TERM KEY command.  There are eight
 vertical scrolling functions:
 <p>
 <pre>
 <i> Kverb          Action</i>
  \Kdnone         Roll screen down one line
+ \Kdnhscn        Roll screen down half of one page
  \Kdnscn         Roll screen down one page (PgDn)
  \Kendscn        Roll screen to the bottom of buffer (End)
  \Khomscn        Roll screen to beginning of buffer (Home)
  \Kupone         Roll screen up one line
+ \Kuphscn        Roll screen up half of one page
  \Kupscn         Roll screen up one page (PgUp)
 </pre>
 <p>
