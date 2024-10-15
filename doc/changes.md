@@ -11,6 +11,13 @@ it carried from 1995 through to 2013.
 ### Things to be aware of when upgrading
 * K95G no longer opens COM1 by default. If you previously depended on this, 
   you'll need to add `set port com1` to your k95custom.ini
+* The mouse wheel now scrolls half a screen at time, rather than one line at
+  a time. If you'd prefer to retain the old default, put the following in your
+  k95custom.ini:
+  ```
+  set mouse wheel up none \Kupone
+  set mouse wheel down none \Kdnone
+  ```
 
 #### The default SSH directory has changed!
 The default SSH directory in beta 7 has changed from `\v(home).ssh` back to
@@ -68,6 +75,9 @@ by OpenSSH on modern versions of windows, add the command
   (right-click on the title bar for the actions menu and a few other things)
 * New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
 * New command to turn the statusbar on or off: `set gui statusbar { on, off }`
+* New screen scroll kverbs:
+  * `\Kuphscn` - Scroll up half a screen
+  * `\Kdnhscn` - Scroll down half a screen
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
@@ -94,6 +104,11 @@ by OpenSSH on modern versions of windows, add the command
 * The `ssh key` commands will now default to opening or saving keys in the
   SSH directory.
 * The `skermit` command now has help text
+* The default mouse wheel configuration has changed:
+  * Wheel up/down now scrolls up/down half a screen (like PuTTY) rather than a
+    single line. This provides better much speed than a line at a time with
+    better usability than a screen at a time.
+  * Shift+Wheel up/down now scrolls up/down one line
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 

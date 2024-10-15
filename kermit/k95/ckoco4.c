@@ -1076,6 +1076,21 @@ markdownscreen( BYTE vmode )
         }
 }
 
+
+void markdownhalfscreen(BYTE vmode) {
+    int i;
+    /* I know this is gross - we should just be able to tell markdownscreen()
+     * to mark half of what it otherwise would have, but I've spent a day or two
+     * staring at and playing around with that function and I have no idea how
+     * it works.
+     */
+
+    int lines = VscrnGetHeight(vmode) / 2;
+    for (i = 0; i < lines; i++) {
+        markdownone(vmode);
+    }
+}
+
 void
 markupscreen( BYTE vmode )
 {
@@ -1148,6 +1163,23 @@ markupscreen( BYTE vmode )
         else vscrn[vmode].cursor.y = 0 ;
         }
 }
+
+void
+markuphalfscreen( BYTE vmode ) {
+    int i;
+
+    /* I know this is gross - we should just be able to tell markupscreen()
+     * to mark half of what it otherwise would have, but I've spent a day or two
+     * staring at and playing around with that function and I have no idea how
+     * it works.
+     */
+
+    int lines = VscrnGetHeight(vmode) / 2;
+    for (i = 0; i < lines; i++) {
+        markupone(vmode);
+    }
+}
+
 
 void
 markhomescreen(BYTE vmode )

@@ -9731,6 +9731,14 @@ markmode( BYTE vmode, int k )
             markupscreen(vmode) ;
             break;
 
+        case K_DNHSCN:
+            markdownhalfscreen(vmode) ;
+            break;
+
+        case K_UPHSCN:
+            markuphalfscreen(vmode) ;
+            break;
+
         case K_HOMSCN:
             markhomescreen(vmode) ;
             break;
@@ -9914,6 +9922,19 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
         }
         break;
 
+    case K_UPHSCN:
+        if (!tt_roll[vmode]) {
+            if ( VscrnMoveTop(vmode,-((VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2)) < 0 )
+                if ( VscrnSetTop(vmode,VscrnGetBegin(vmode)) < 0 )
+                    bleep(BP_WARN) ;
+        }
+        else {
+            if ( VscrnMoveScrollTop(vmode,-((VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2)) < 0 )
+                if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode)) < 0 )
+                    bleep(BP_WARN);
+        }
+        break;
+
     case K_UPONE:
         if (!tt_roll[vmode]) {
             if ( VscrnMoveTop(vmode,-1) < 0 )
@@ -9936,6 +9957,24 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
               if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode)
                                       - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1) < 0 )
                 bleep(BP_WARN);
+        }
+        break;
+
+    case K_DNHSCN:                       /* Go down half a screen */
+        if (!tt_roll[vmode]) {
+            if ( VscrnMoveTop(vmode,(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2) < 0 ) {
+                if ( VscrnSetTop(vmode,VscrnGetEnd(vmode) - VscrnGetHeight(vmode)+1) < 0 ) {
+                    bleep(BP_WARN);
+                }
+            }
+        }
+        else {
+            if ( VscrnMoveScrollTop(vmode,(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2) < 0 ) {
+                if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode)
+                                        - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1) < 0 ) {
+                    bleep(BP_WARN);
+                }
+            }
         }
         break;
 
