@@ -685,9 +685,10 @@ getcmdcolor(void)
     viocell cell ;
     USHORT  x,y ;
     USHORT  length = 1;
-    GetCurPos( &x, &y ) ;
-    ReadCellStr( &cell, &length, x, y ) ;
-    colorcmd = cell.a ;
+    if (GetCurPos( &x, &y ) == 0) {
+        ReadCellStr(&cell, &length, x, y);
+        colorcmd = cell.a;
+    }
 #endif /* KUI */
 }
 
