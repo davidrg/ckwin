@@ -113,6 +113,7 @@ by OpenSSH on modern versions of windows, add the command
   usage information (`k95.exe -h` or `k95.exe --help`). Previously K95 would 
   pause for about 5 seconds after printing usage information before returning 
   you to the shell.
+* `iksdnt.exe` is now included.
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
