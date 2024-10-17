@@ -113,6 +113,10 @@ by OpenSSH on modern versions of windows, add the command
   usage information (`k95.exe -h` or `k95.exe --help`). Previously K95 would 
   pause for about 5 seconds after printing usage information before returning 
   you to the shell.
+* Fixed the `telnet.exe` and `rlogin.exe` stubs - these now behave as in K95  
+  2.1.3
+* Added the `ssh.exe`, `ftp.exe` and `http.exe` stubs that were included in
+  K95 2.1.3 
 * `iksdnt.exe` is now included.
 
 ### Fixed bugs
