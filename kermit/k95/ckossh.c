@@ -47,11 +47,27 @@ char *cksshv = "SSH-DLL support, 10.0,  28 July 2024";
 #include "ckoreg.h"
 #include "ckctel.h"
 
+#ifndef NT
+#define INCL_NOPM
+#define INCL_DOSPROCESS
+#define INCL_DOSMODULEMGR
+#define INCL_ERRORS
+#define  INCL_DOSNMPIPES
+#include <os2.h>
+#undef COMMENT
+
+/* This lives in p_common.c */
+_PROTOTYP( unsigned long get_dir_len, (unsigned char *));
+#endif /* Not NT */
+
 /* Various global variables owned by the rest of C-Kermit */
 extern char uidbuf[];                   /* User ID set via /user: */
 extern char pwbuf[];                    /* Password set via /password: */
 extern int  pwflg;                      /* Password has been set */
+
+#ifdef TCP_NODELAY
 extern int tcp_nodelay;                 /* Enable/disable Nagle's algorithm */
+#endif /* TCP_NODELAY */
 
 /** Gets the currently set username if there is one
  *
@@ -74,7 +90,11 @@ const char* ssh_get_pw() {
  * @return True if nodelay is enabled, False otherwise
  */
 int ssh_get_nodelay_enabled() {
+#ifdef TCP_NODELAY
     return tcp_nodelay;
+#else
+    return 0;
+#endif
 }
 
 /** Gets the current terminal (VTERM) dimensions
@@ -179,54 +199,55 @@ SOCKET ssh_open_socket(char* host, char* port) {
 
 /* Typedefs for all the function pointers we *could* receive from an SSH
  * subsystem DLL */
-typedef int (*p_ssh_dll_init_t)(ssh_init_parameters_t *);
-typedef int (*p_ssh_set_iparam_t)(int, int);
-typedef int (*p_ssh_get_iparam_t)(int);
-typedef int (*p_ssh_set_sparam_t)(int, const char*);
-typedef const char* (*p_ssh_get_sparam_t)(int);
-typedef int (*p_ssh_set_identity_files_t)(const char**);
-typedef int (*p_ssh_get_socket_t)();
-typedef int (*p_ssh_open_t)();
-typedef int (*p_ssh_clos_t)();
-typedef int (*p_ssh_tchk_t)();
-typedef int (*p_ssh_flui_t)();
-typedef int (*p_ssh_break_t)();
-typedef int (*p_ssh_inc_t)(int);
-typedef int (*p_ssh_xin_t)(int, char*);
-typedef int (*p_ssh_toc_t)(int);
-typedef int (*p_ssh_tol_t)(char*,int);
-typedef int (*p_ssh_snaws_t)();
-typedef const char* (*p_ssh_proto_ver_t)();
-typedef const char* (*p_ssh_impl_ver_t)();
-typedef int (*p_sshkey_create_t)(char *, int, char *, int, char *);
-typedef int (*p_sshkey_display_fingerprint_t)(char *, int);
-typedef int (*p_sshkey_display_public_t)(char *, char *);
-typedef int (*p_sshkey_display_public_as_ssh2_t)(char *,char *);
-typedef int (*p_sshkey_change_passphrase_t)(char *, char *, char *);
-typedef int (*p_ssh_fwd_remote_port_t)(char*, int, char *, int, BOOL);
-typedef int (*p_ssh_fwd_local_port_t)(char*, int,char *,int, BOOL);
-typedef int (*p_ssh_fwd_clear_local_ports_t)(BOOL);
-typedef int (*p_ssh_fwd_clear_remote_ports_t)(BOOL);
-typedef int (*p_ssh_fwd_remove_remote_port_t)(int, BOOL);
-typedef int (*p_ssh_fwd_remove_local_port_t)(int, BOOL);
-typedef ssh_port_forward_t* (*p_ssh_fwd_get_ports_t)();
+typedef int (_System * p_ssh_dll_init_t)(ssh_init_parameters_t *);
+typedef int (_System * p_ssh_set_iparam_t)(int, int);
+typedef int (_System * p_ssh_get_iparam_t)(int);
+typedef int (_System * p_ssh_set_sparam_t)(int, const char*);
+typedef const char* (_System * p_ssh_get_sparam_t)(int);
+typedef int (_System * p_ssh_set_identity_files_t)(const char**);
+typedef int (_System * p_ssh_get_socket_t)();
+typedef int (_System * p_ssh_open_t)();
+typedef int (_System * p_ssh_clos_t)();
+typedef int (_System * p_ssh_tchk_t)();
+typedef int (_System * p_ssh_flui_t)();
+typedef int (_System * p_ssh_break_t)();
+typedef int (_System * p_ssh_inc_t)(int);
+typedef int (_System * p_ssh_xin_t)(int, char*);
+typedef int (_System * p_ssh_toc_t)(int);
+typedef int (_System * p_ssh_tol_t)(char*,int);
+typedef int (_System * p_ssh_snaws_t)();
+typedef const char* (_System * p_ssh_proto_ver_t)();
+typedef const char* (_System * p_ssh_impl_ver_t)();
+typedef int (_System * p_sshkey_create_t)(char *, int, char *, int, char *);
+typedef int (_System * p_sshkey_display_fingerprint_t)(char *, int);
+typedef int (_System * p_sshkey_display_public_t)(char *, char *);
+typedef int (_System * p_sshkey_display_public_as_ssh2_t)(char *,char *);
+typedef int (_System * p_sshkey_change_passphrase_t)(char *, char *, char *);
+typedef int (_System * p_ssh_fwd_remote_port_t)(char*, int, char *, int, BOOL);
+typedef int (_System * p_ssh_fwd_local_port_t)(char*, int,char *,int, BOOL);
+typedef int (_System * p_ssh_fwd_clear_local_ports_t)(BOOL);
+typedef int (_System * p_ssh_fwd_clear_remote_ports_t)(BOOL);
+typedef int (_System * p_ssh_fwd_remove_remote_port_t)(int, BOOL);
+typedef int (_System * p_ssh_fwd_remove_local_port_t)(int, BOOL);
+typedef ssh_port_forward_t* (_System * p_ssh_fwd_get_ports_t)();
 #ifdef SSHTEST
-typedef int (*p_sshkey_v1_change_comment_t)(char *, char *, char *);
+typedef int (_System * p_sshkey_v1_change_comment_t)(char *, char *, char *);
 #endif /* SSHTEST */
 /*typedef char * (*p_sshkey_default_file_t)(int);*/
-typedef void (*p_ssh_v2_rekey_t)();
-typedef int (*p_ssh_agent_delete_file_t)(const char *);
-typedef int (*p_ssh_agent_delete_all_t)();
-typedef int (*p_ssh_agent_add_file_t)(const char*);
-typedef int (*p_ssh_agent_list_identities_t)(int);
-typedef void (*p_ssh_unload_t)();
-typedef const char* (*p_ssh_dll_ver_t)();
-typedef ktab_ret (*p_ssh_get_keytab_t)(int keytab_id);
-typedef int (*p_ssh_feature_supported_t)(int feature_id);
-typedef const char** (*p_ssh_get_set_help_t)();
-typedef const char** (*p_ssh_get_help_t)();
+typedef void (_System * p_ssh_v2_rekey_t)();
+typedef int (_System * p_ssh_agent_delete_file_t)(const char *);
+typedef int (_System * p_ssh_agent_delete_all_t)();
+typedef int (_System * p_ssh_agent_add_file_t)(const char*);
+typedef int (_System * p_ssh_agent_list_identities_t)(int);
+typedef void (_System * p_ssh_unload_t)();
+typedef const char* (_System * p_ssh_dll_ver_t)();
+typedef ktab_ret (_System * p_ssh_get_keytab_t)(int keytab_id);
+typedef int (_System * p_ssh_feature_supported_t)(int feature_id);
+typedef const char** (_System *p_ssh_get_set_help_t)();
+typedef const char** (_System *p_ssh_get_help_t)();
 
 /* Function pointers received from the currently loaded SSH subsystem DLL */
+static p_ssh_dll_init_t p_ssh_init = NULL;
 static p_ssh_set_iparam_t p_ssh_set_iparam = NULL;
 static p_ssh_get_iparam_t p_ssh_get_iparam = NULL;
 static p_ssh_set_sparam_t p_ssh_set_sparam = NULL;
@@ -284,7 +305,7 @@ char* dll_name = NULL;
 #define F_CAST(t) (t)
 static HINSTANCE hSSH;
 #else
-#define F_CAST(t) (PFN*)
+#define F_CAST(t) (t)
 static HMODULE hSSH;
 #endif
 
@@ -295,6 +316,8 @@ static HMODULE hSSH;
  * @param p_function - Pointer to the function
  */
 void ssh_install_func(const char* function, const void* p_function) {
+    debug(F110, "ssh_install_func", function, 0);
+
     if ( !strcmp(function,"ssh_set_iparam") )
         p_ssh_set_iparam = F_CAST(p_ssh_set_iparam_t) p_function;
     else if ( !strcmp(function,"ssh_get_iparam") )
@@ -391,11 +414,12 @@ void ssh_install_func(const char* function, const void* p_function) {
 int ssh_load(char* dllname) {
     ULONG rc = 0;
     ssh_init_parameters_t init_params;
-    p_ssh_dll_init_t init;
 
 #ifdef OS2ONLY
     CHAR *exe_path;
     CHAR path[256];
+    int len;
+    char fail[_MAX_PATH];
 #endif
 
     debug(F110, "Attempting to load SSH DLL...", dllname, 0);
@@ -407,8 +431,8 @@ int ssh_load(char* dllname) {
         debug(F111, "K95 SSH LoadLibrary failed", dllname, rc);
         return -1;
     } else {
-        init = (p_ssh_dll_init_t)GetProcAddress(hSSH, "ssh_dll_init");
-        if (init == NULL) {
+        p_ssh_init = (p_ssh_dll_init_t)GetProcAddress(hSSH, "ssh_dll_init");
+        if (p_ssh_init == NULL) {
             rc = GetLastError();
             debug(F111, "K95 SSH GetProcAddress for ssh_dll_init failed", dllname, rc);
             FreeLibrary(hSSH);
@@ -432,7 +456,7 @@ int ssh_load(char* dllname) {
         return -1;
     } else {
         debug(F111, "K95 SSH LoadLibrary success",fail,rc) ;
-        if (rc = DosQueryProcAddr(hSSH,0,"ssh_dll_init",(PFN*)&init))
+        if (rc = DosQueryProcAddr(hSSH,0,"ssh_dll_init",(PFN*)&p_ssh_init))
         {
             debug(F111,"K95 SSH GetProcAddress for ssh_dll_init failed", dllname, rc);
             DosFreeModule(hSSH);
@@ -468,7 +492,8 @@ int ssh_load(char* dllname) {
     init_params.p_parse_displayname = fwdx_parse_displayname;    /* ckctel.c */
 
     /* Initialise! */
-    rc = init(&init_params);
+    debug(F100, "Call ssh_dll_init()", NULL, 0);
+    rc = p_ssh_init(&init_params);
 
     /* TODO: Check all mandatory functions are available */
 
@@ -505,6 +530,7 @@ int ssh_dll_unload(int quiet) {
 
     ssh_subsystem_loaded = FALSE;
 
+    p_ssh_init = NULL;
     p_ssh_set_iparam = NULL;
     p_ssh_get_iparam = NULL;
     p_ssh_set_sparam = NULL;

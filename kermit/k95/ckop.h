@@ -4,7 +4,7 @@
 /*****************************************************************************/
 
 #ifdef XYZ_DLL
-extern U32 (* _System p_transfer)(P_CFG *);
+extern U32 (_System * p_transfer)(P_CFG *);
 #else /* XYZ_DLL */
 U32 _System p_transfer(P_CFG *);
 #endif /* XYZ_DLL */

@@ -37,8 +37,12 @@
 #ifdef OS2ONLY
   #pragma seg16(address)
   typedef unsigned char * _Seg16 address;
+  /* The 16bit HSEM isn't a pointer and defining it like below causes
+   * Open Watcom to perform a 0:32 to 16:16 conversion when it shouldn't
   #pragma seg16(HSEM16)
   typedef void * _Seg16 HSEM16;
+   */
+  typedef ULONG HSEM16;
   typedef HSEM16 * PHSEM16;
 #else /* OS2ONLY */
   typedef unsigned char * address;

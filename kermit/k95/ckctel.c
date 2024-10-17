@@ -1109,6 +1109,10 @@ static Xauth *real_xauth=NULL;
 #define UNIX_CONNECTION_LENGTH 4
 #endif
 
+#endif /* CK_FORWARD_X */
+
+#ifdef CK_FWDX_PARSE_DISPN
+
 /*
  * private utility routines
  */
@@ -1189,6 +1193,10 @@ copyhostname ()
 }
 #endif
 
+/*
+ * Parse X11 display name. This is used by both Telnet X11 forwarding,
+ * and on Kermit 95, X11 forwarding over SSH.
+ */
 
 int
 #ifdef CK_ANSIC
@@ -1337,6 +1345,9 @@ fwdx_parse_displayname (displayname, familyp, hostp, dpynump, scrnump, restp)
     return 1;
 }
 
+#endif /* CK_FWDX_PARSE_DISPN */
+
+#ifdef CK_FORWARD_X
 
 int
 #ifdef CK_ANSIC

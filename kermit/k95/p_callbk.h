@@ -27,7 +27,13 @@
  */
 
 
-_PROTOTYP( U32 _System status_func, (U32, intptr_t, U32, U32, U32, intptr_t));
+/* status_func is really a variadic function and Open Watcom doesn't like it
+ * when we pretend it isn't. This breaks compatibility with K&R C compilers,
+ * but in practice we *never* use a K&R C compiler to target Win32 or OS/2. I'm
+ * not even sure there exists a compatible K&R C compiler for these platforms. */
+/*_PROTOTYP( U32 _System status_func, (U32, intptr_t, U32, U32, U32, intptr_t));*/
+U32 _System status_func(U32, ...);
+
 _PROTOTYP( U32 _System s_open_func, (U8 **, U32 *, U32 *, U32 *,
                        U32 *, U32 *,
                        U8 *, U8 *, U8 *));

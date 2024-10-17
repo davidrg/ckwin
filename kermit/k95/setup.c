@@ -982,22 +982,25 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 		ABBR);
     }
 
-    printf("Assigning the K95F_OS2 icon to %sDIAL.EXE\n",ABBR);
     sprintf(exefile,"%s\\%sDIAL.EXE",diskdir,ABBR);
-    sprintf(iconfile,"%s\\ICONS\\K95F_OS2.ICO",diskdir);
-    iconinfo.cb = sizeof(ICONINFO);
-    iconinfo.fFormat = ICON_FILE ;
-    iconinfo.pszFileName = iconfile;
-    iconinfo.hmod = NULL ;
-    iconinfo.resid = 0 ;
-    iconinfo.cbIconData = 0 ;
-    iconinfo.pIconData = NULL ;
-    if ( !WinSetFileIcon( exefile, &iconinfo ) ) {
-	printf(" ERROR: Unable to assign icon to %sDIAL.EXE\n",ABBR);
+    if (zchki(exefile) > 0) {
+        printf("Assigning the K95F_OS2 icon to %sDIAL.EXE\n", ABBR);
+        sprintf(iconfile, "%s\\ICONS\\K95F_OS2.ICO", diskdir);
+        iconinfo.cb = sizeof(ICONINFO);
+        iconinfo.fFormat = ICON_FILE;
+        iconinfo.pszFileName = iconfile;
+        iconinfo.hmod = NULL;
+        iconinfo.resid = 0;
+        iconinfo.cbIconData = 0;
+        iconinfo.pIconData = NULL;
+        if (!WinSetFileIcon(exefile, &iconinfo)) {
+            printf(" ERROR: Unable to assign icon to %sDIAL.EXE\n", ABBR);
+        }
     }
 
     printf("Building %s Folder\n",PRODUCT);
-    sprintf(title,"%s 1.1",PRODUCT);
+    /*sprintf(title,"%s 1.1",PRODUCT);*/
+    sprintf(title,"%s",PRODUCT);
     sprintf(classname,"WPFolder");
     sprintf(location,"<WP_DESKTOP>");
     sprintf(setup,"OBJECTID=<%sFLDR>",ABBR);
@@ -1005,15 +1008,19 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 	printf(" ERROR: Unable to create Folder\n");
     }
 
-    printf("Building Kermit 95 Hyperlink Manual object\n",PRODUCT);
-    sprintf(title,"Kermit 95 Hyperlink Manual");
-    sprintf(classname,"WPProgram");
-    sprintf(location,"<%sFLDR>",ABBR);
-    sprintf(setup,
-            "EXENAME=NETSCAPE.EXE;STARTUPDIR=%s\\docs\\manual;PARAMETERS=%s\\docs\\manual\\kermit95.htm",
-	     diskdir,diskdir);
-    if ( !WinCreateObject( classname, title, setup, location, CO_UPDATEIFEXISTS) ) {
-	printf(" ERROR: Unable to create Program Object\n");
+    /* Only create the manual link if it was installed */
+    sprintf(setup,"%s\\docs\\manual\\kermit95.htm",diskdir);
+    if (zchki(setup) > 0) {
+        printf("Building Kermit 95 Hyperlink Manual object\n", PRODUCT);
+        sprintf(title, "Kermit 95 Hyperlink Manual");
+        sprintf(classname, "WPProgram");
+        sprintf(location, "<%sFLDR>", ABBR);
+        sprintf(setup,
+                "EXENAME=NETSCAPE.EXE;STARTUPDIR=%s\\docs\\manual;PARAMETERS=%s\\docs\\manual\\kermit95.htm",
+                diskdir, diskdir);
+        if (!WinCreateObject(classname, title, setup, location, CO_UPDATEIFEXISTS)) {
+            printf(" ERROR: Unable to create Program Object\n");
+        }
     }
 
     printf("Building Kermit/2 Program Object\n");
@@ -1030,14 +1037,18 @@ os2Folder(char * diskdir, int new_install, int windowable) {
 	printf(" ERROR: Unable to create Program Object\n");
     }
 
-    printf("Building Kermit/2 Dialer Program Object\n");
-    sprintf(title,"Kermit/2 Dialer");
-    sprintf(classname,"WPProgram");
-    sprintf(location,"<%sFLDR>",ABBR);
-    sprintf(setup,"EXENAME=%s\\%sDIAL.EXE;STARTUPDIR=%s;PARAMETERS=%%;ICONFILE=%s\\%s.ICO",
-	     diskdir,ABBR,diskdir,diskdir,"K95F_OS2");
-    if ( !WinCreateObject( classname, title, setup, location, CO_UPDATEIFEXISTS) ) {
-	printf(" ERROR: Unable to create Program Object\n");
+    /* Only create the dialer link if it was installed */
+    sprintf(setup,"%s\\%sDIAL.EXE",diskdir, ABBR);
+    if (zchki(setup) > 0) {
+        printf("Building Kermit/2 Dialer Program Object\n");
+        sprintf(title, "Kermit/2 Dialer");
+        sprintf(classname, "WPProgram");
+        sprintf(location, "<%sFLDR>", ABBR);
+        sprintf(setup, "EXENAME=%s\\%sDIAL.EXE;STARTUPDIR=%s;PARAMETERS=%%;ICONFILE=%s\\%s.ICO",
+                diskdir, ABBR, diskdir, diskdir, "K95F_OS2");
+        if (!WinCreateObject(classname, title, setup, location, CO_UPDATEIFEXISTS)) {
+            printf(" ERROR: Unable to create Program Object\n");
+        }
     }
 
     printf("Building %s PM Clipboard Server Program Object\n",PRODUCT);
@@ -1665,7 +1676,7 @@ main(int argc, char ** argv) {
     /* assume that it is an Update, otherwise assume New install */
 
    drawbar();
-   if (getok("Will you be using a modem? ",'Y')) {
+   if (getok("Will you be using a modem? ",'N')) {
       printf("\n");
 #ifdef NT
        if ( tapiavail && ntapiline ) {
@@ -2565,34 +2576,6 @@ main(int argc, char ** argv) {
     }
     printf("\n");
 #endif /* COMMENT */
-#ifdef NT
-    drawbar();
-    printf("\n");
-    printf(
-" Now please enter your name, your company (optional), and %s serial\n",PRODUCT
-	   );
-    printf(
-" number into the Registration Window...\n\n"
-	   );    
-   printf(
-" In the Serial Number box, type your entire %s serial number, beginning with\n",ABBR);
-printf(" %s and ending with 1.1, over the template that is shown in the box,\n",ABBR);
-printf(" including the punctuation.\n\n");
-
-printf(" When you have finished registering, click the mouse back on this window to\n");
-printf(" continue SETUP (if necessary)...\n");
-
-    mysystem("ckreg");
-
-    printf("\n");
-    drawbar();
-    printf("\n");
-    mysystem("k95regtl");
-
-#else
-    mysystem("k2reg");
-#endif
-    printf("\n");
     drawbar();
     printf("\n");
 
@@ -2604,33 +2587,28 @@ printf(" continue SETUP (if necessary)...\n");
     printf("\n");
 #endif
 
-    if (getok("Would you like to read the README.TXT file now? (y/n)",'Y')) {
+    if (zchki("README.TXT") > 0) {
+        if (getok("Would you like to read the README.TXT file now? (y/n)",'Y')) {
 #ifdef NT
-	sprintf(buf,"edit README.TXT",diskdir);
+            sprintf(buf,"edit README.TXT",diskdir);
 #else /* NT */
-	sprintf(buf,"e README.TXT",diskdir);
+            sprintf(buf,"e README.TXT",diskdir);
 #endif /* NT */
-	mysystem(buf);
+            mysystem(buf);
+        }
+        printf("\n");
     }
 
-    printf("\n");
-    printf(
-"  %s has been installed in %s.\n", PRODUCT,diskdir);
-    printf(
-"  To run it, open the folder and click on the colorful %sDIAL icon.\n",ABBR);
-    printf(
-"  To create a shortcut icon for %s on your desktop, follow the\n",PRODUCT);
-    printf(
-"  instructions in the README.TXT file.\n");
-    printf("\n");
-    printf(
-"  Please be sure to fill out and mail in your registration card with one\n");
-    printf(
-"  of your serial-number stickers attached to it.  This gives you access\n");
-    printf(
-"  to the %s support BBS for news and patches, and it entitles you\n",PRODUCT);
-    printf(
-"   to a discount on the next major release.\n");
+    printf("  %s has been installed in %s.\n", PRODUCT,diskdir);
+    if (zchki(ABBR "DIAL.EXE") > 0) {
+        printf(
+            "  To run it, open the folder and click on the colorful %sDIAL icon.\n",
+            ABBR);
+    } else {
+        printf(
+            "  To run it, open the folder and click on the colorful %s icon.\n",
+            ABBR);
+    }
     printf("\n");
     printf("Thank you for choosing %s!\n",PRODUCT);
     drawbar();
@@ -2642,7 +2620,8 @@ printf(" continue SETUP (if necessary)...\n");
 	printf("\n");
     }
 #else
-    if (getok("Would you like to start Kermit/2 now? (y/n)",'Y')) {
+    if (zchki("k2dial.exe") > 0 &&
+        getok("Would you like to start Kermit/2 now? (y/n)",'Y')) {
        mysystem("k2dial.exe");
     } else {
 	printf("\n");
