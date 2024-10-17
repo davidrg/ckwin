@@ -1135,12 +1135,7 @@ rlogin-old.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
 <<
 
 # Generic stub application. Just launches K95 with a different personality.
-stub.exe: stub.c
-!if "$(CKB_STATIC_CRT_NT)"=="yes"
-    cl /MT stub.c
-!else
-    cl stub.c
-!endif
+stub.exe: stub.obj
 
 telnet.exe: stub.exe
     copy stub.exe $@
@@ -1514,6 +1509,8 @@ ckosftp$(O):    ckcdeb.h ckoker.h ckclib.h ckosftp.h ckosftp.c
 ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h ck_crp.c
 
 ck_des$(O):     ck_des.c
+
+stub.obj:       stub.c
 
 # X/Y/Z Modem support (3rd-party library)
 !if "$(CKF_XYZ)" == "yes"
