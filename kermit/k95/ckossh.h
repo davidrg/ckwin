@@ -204,6 +204,14 @@ _PROTOTYP(void ssh_initialise,(void));
 #endif /* _System */
 #endif /* NT */
 
+#ifndef SOCKET
+/* On OS/2, SOCKET is just int. */
+#define SOCKET int
+#endif /* SOCKET */
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif /* INVALID_SOCKET */
+
 #ifdef SSH_DLL
 typedef struct  {
 

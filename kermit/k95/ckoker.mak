@@ -160,6 +160,8 @@ OS2TCPDLLS=$(OS2TCPDLLS) cko32i41.dll
 OS2TCPDLLS=$(OS2TCPDLLS) cko32i20.dll
 !endif
 
+!Message Building these TCP/IP DLLs: $(OS2TCPDLLS)
+
 !endif
 
 # This turns features on and off based on set feature flags (CKF_*), the
