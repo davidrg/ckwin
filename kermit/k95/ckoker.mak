@@ -1030,7 +1030,7 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 
 
 win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe \
-    se.exe \
+    se.exe wstubs \
 !if "$(CKF_CRYPTDLL)" == "yes"
     k95crypt.dll \
 !endif
@@ -1064,9 +1064,11 @@ wsetup: setup.exe
 
 wtest: test.exe
 
-wtelnet: telnet.exe
+wtelnet: telnet.exe telnet-old.exe
 
-wrlogin: rlogin.exe
+wrlogin: rlogin.exe rlogin-old.exe
+
+wstubs: telnet.exe rlogin.exe ssh.exe ftp.exe http.exe
 
 k95d: k95d.exe
 
@@ -1120,15 +1122,36 @@ test.exe: test.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ test.obj cknker.res $(LIBS) 
 <<
 
-telnet.exe: telnet.obj telnet.res $(DEF) ckoker.mak
+# This is the old telnet stub which does some command line parsing itself
+telnet-old.exe: telnet.obj telnet.res $(DEF) ckoker.mak
        link.exe @<< 
        $(LINKFLAGS) /OUT:$@ telnet.obj telnet.res $(LIBS)
 <<
 
-rlogin.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
+# And this is the old rlogin stub which does some command line parsing itself
+rlogin-old.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
        link.exe @<< 
        $(LINKFLAGS) /OUT:$@ rlogin.obj rlogin.res $(LIBS)
 <<
+
+# Generic stub application. Just launches K95 with a different personality.
+stub.exe: stub.c
+    cl stub.c
+
+telnet.exe: stub.exe
+    copy stub.exe $@
+
+rlogin.exe: stub.exe
+    copy stub.exe $@
+
+ssh.exe: stub.exe
+    copy stub.exe $@
+
+ftp.exe: stub.exe
+    copy stub.exe $@
+
+http.exe: stub.exe
+    copy stub.exe $@
 
 se.exe: se.obj se.res $(DEF) ckoker.mak
        link.exe @<<
