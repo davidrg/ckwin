@@ -171,6 +171,22 @@ int parse_displayname(char *displayname, int *familyp, char **hostp,
                                   dpynump, scrnump, restp);
 }
 
+
+/* Opens a socket for a new SSH connection if a proxy server is configured.
+ * Returns INVALID_SOCKET if no proxy server is configured or opening the
+ * socket failed in some way. In this situation, the caller should assume
+ * no proxy server is configured and try opening the socket itself.
+ *
+ * @returns a socket or INVALID_SOCKET if no proxy server is configured.
+ */
+SOCKET ssh_open_socket(char* host, char* port) {
+    /* TODO: If HTTP Proxy is configured, open a connection through
+     *       that and return it.
+     */
+
+    return INVALID_SOCKET;
+}
+
 #ifdef SSH_DLL
 
 /* SSH_DLL:
@@ -189,6 +205,7 @@ typedef int (_System * p_ssh_get_iparam_t)(int);
 typedef int (_System * p_ssh_set_sparam_t)(int, const char*);
 typedef const char* (_System * p_ssh_get_sparam_t)(int);
 typedef int (_System * p_ssh_set_identity_files_t)(const char**);
+typedef int (_System * p_ssh_get_socket_t)();
 typedef int (_System * p_ssh_open_t)();
 typedef int (_System * p_ssh_clos_t)();
 typedef int (_System * p_ssh_tchk_t)();
@@ -226,6 +243,8 @@ typedef void (_System * p_ssh_unload_t)();
 typedef const char* (_System * p_ssh_dll_ver_t)();
 typedef ktab_ret (_System * p_ssh_get_keytab_t)(int keytab_id);
 typedef int (_System * p_ssh_feature_supported_t)(int feature_id);
+typedef const char** (_System *p_ssh_get_set_help_t)();
+typedef const char** (_System *p_ssh_get_help_t)();
 
 /* Function pointers received from the currently loaded SSH subsystem DLL */
 static p_ssh_dll_init_t p_ssh_init = NULL;
@@ -234,6 +253,7 @@ static p_ssh_get_iparam_t p_ssh_get_iparam = NULL;
 static p_ssh_set_sparam_t p_ssh_set_sparam = NULL;
 static p_ssh_get_sparam_t p_ssh_get_sparam = NULL;
 static p_ssh_set_identity_files_t p_ssh_set_identity_files = NULL;
+static p_ssh_get_socket_t p_ssh_get_socket = NULL;
 static p_ssh_open_t p_ssh_open = NULL;
 static p_ssh_clos_t p_ssh_clos = NULL;
 static p_ssh_tchk_t p_ssh_tchk = NULL;
@@ -271,12 +291,8 @@ static p_ssh_unload_t p_ssh_unload = NULL;
 static p_ssh_dll_ver_t p_ssh_dll_ver = NULL;
 static p_ssh_get_keytab_t p_ssh_get_keytab = NULL;
 static p_ssh_feature_supported_t p_ssh_feature_supported = NULL;
-
-/* The various "set tcp" functions will try to set socket options (keepalive,
- * linger, dontroute, nodelay. recvbuf, sendbuf and perhaps others) on this
- * if it has a value. Might also be relevant for opening connections through
- * proxy servers. */
-int ssh_sock; /* TODO: GET RID OF THIS */
+static p_ssh_get_set_help_t p_ssh_get_set_help = NULL;
+static p_ssh_get_help_t p_ssh_get_help = NULL;
 
 /* If a subsystem has been successfully loaded and initialised or not */
 int ssh_subsystem_loaded = FALSE;
@@ -312,6 +328,8 @@ void ssh_install_func(const char* function, const void* p_function) {
         p_ssh_get_sparam = F_CAST(p_ssh_get_sparam_t) p_function;
     else if ( !strcmp(function,"ssh_set_identity_files") )
         p_ssh_set_identity_files = F_CAST(p_ssh_set_identity_files_t) p_function;
+    else if ( !strcmp(function,"ssh_get_socket") )
+        p_ssh_get_socket = F_CAST(p_ssh_get_socket_t) p_function;
     else if ( !strcmp(function,"ssh_open") )
         p_ssh_open = F_CAST(p_ssh_open_t) p_function;
     else if ( !strcmp(function,"ssh_clos") )
@@ -384,6 +402,10 @@ void ssh_install_func(const char* function, const void* p_function) {
         p_ssh_get_keytab = F_CAST(p_ssh_get_keytab_t) p_function;
     else if (!strcmp(function,"ssh_feature_supported"))
         p_ssh_feature_supported = F_CAST(p_ssh_feature_supported_t) p_function;
+    else if (!strcmp(function,"ssh_get_set_help"))
+        p_ssh_get_set_help = F_CAST(p_ssh_get_set_help_t) p_function;
+    else if (!strcmp(function,"ssh_get_help"))
+        p_ssh_get_help = F_CAST(p_ssh_get_help_t) p_function;
 }
 
 /** Attempts to load and initialise a particular SSH subsystem DLL
@@ -451,6 +473,7 @@ int ssh_load(char* dllname) {
     init_params.p_ssh_get_uid = ssh_get_uid;
     init_params.p_ssh_get_pw = ssh_get_pw;
     init_params.p_ssh_get_nodelay_enabled = ssh_get_nodelay_enabled;
+    init_params.p_ssh_open_socket = ssh_open_socket;
     init_params.p_dodebug = dodebug;
     init_params.p_vscrnprintf = Vscrnprintf;
     init_params.p_uq_txt = uq_txt;
@@ -513,6 +536,7 @@ int ssh_dll_unload(int quiet) {
     p_ssh_set_sparam = NULL;
     p_ssh_get_sparam = NULL;
     p_ssh_set_identity_files = NULL;
+    p_ssh_get_socket = NULL;
     p_ssh_open = NULL;
     p_ssh_clos = NULL;
     p_ssh_tchk = NULL;
@@ -547,6 +571,8 @@ int ssh_dll_unload(int quiet) {
     p_ssh_agent_add_file = NULL;  /* TODO */
     p_ssh_agent_list_identities = NULL;    /* TODO */
     p_ssh_unload = NULL;
+    p_ssh_get_set_help = NULL;
+    p_ssh_get_help = NULL;
 
     #ifdef NT
     FreeLibrary(hSSH);
@@ -565,7 +591,6 @@ int ssh_dll_unload(int quiet) {
  */
 int ssh_dll_load(const char* dll_names, int quiet) {
     int rc = 0;
-    int len, index=0;
     char* dlls;
     char* dll;
     char* delim = ";";
@@ -702,6 +727,17 @@ const char* ssh_get_sparam(int param) {
 int ssh_set_identity_files(const char** identity_files) {
     if (p_ssh_set_identity_files)
         return p_ssh_set_identity_files(identity_files);
+    return -1;
+}
+
+/** Get the socket currently in use by the SSH client.
+ *
+ * @returns Socket for the current SSH connection, or -1 if not implemented or
+ *      no active connection
+ */
+int ssh_get_socket() {
+    if (p_ssh_get_socket)
+        return p_ssh_get_socket();
     return -1;
 }
 
@@ -1174,6 +1210,36 @@ int ssh_feature_supported(int feature_id) {
     if (p_ssh_feature_supported)
         return p_ssh_feature_supported(feature_id);
     return FALSE; /* No features supported! */
+}
+
+const char** ssh_get_set_help() {
+    const char** result;
+    static const char *hmxyssh[] = {
+"No help content for SET SSH was provided by the currently loaded SSH backend.",
+""
+};
+    if (p_ssh_get_set_help)
+        result = p_ssh_get_set_help();
+
+    if (result != NULL)
+        return result;
+
+    return hmxyssh;
+}
+
+const char** ssh_get_help() {
+    const char** result;
+    static const char *hmxyssh[] = {
+"No help content for SSH was provided by the currently loaded SSH backend.",
+""
+};
+    if (p_ssh_get_help)
+        result = p_ssh_get_help();
+
+    if (result != NULL)
+        return result;
+
+    return hmxyssh;
 }
 
 

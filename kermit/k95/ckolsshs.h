@@ -35,6 +35,50 @@
 
 #include "ckorbf.h"
 
+/*
+ * On x86 and x86-64 Windows, four libssh backend DLLs are built currently:
+ *      G       Vista+, GSSAPI      k95sshg.dll
+ *      X       XP                  k95sshx.dll
+ *      GX      XP, GSSAPI          k95sshgx.dll
+ *      STD     Vista+              k95ssh.dll
+ * Only the G and GX builds get GSSAPI support, and only the G and STD
+ * builds get Agent support.
+ */
+
+#ifdef CKF_SSHDLL_VARIANT_G
+/* Vista+, GSSAPI : the only varaint to get all features */
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_X
+/* Windows XP */
+#define NO_SSH_AGENT_SUPPORT
+#define NO_SSH_GSSAPI_SUPPORT
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_GX
+/* Windows XP, GSSAPI */
+#define NO_SSH_AGENT_SUPPORT
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_STD
+/* Vista+ */
+#define NO_SSH_GSSAPI_SUPPORT
+#endif
+
+/*
+ * Unless we're told not to, build with SSH Agent and GSSAPI Support. There
+ * is no real harm in doing this - worst case there are some options in the
+ * UI that don't work if the Windows version is too old or the libssh dll
+ * lacks GSSAPI support.
+ */
+#ifndef NO_SSH_AGENT_SUPPORT
+#define SSH_AGENT_SUPPORT
+#endif
+
+#ifndef NO_SSH_GSSAPI_SUPPORT
+#define SSH_GSSAPI_SUPPORT
+#endif
+
 #ifdef SSH_DLL
 #undef debug
 #define debug(a,b,c,d) \
@@ -159,6 +203,9 @@ typedef struct {
     char* proxy_command;                        /* Command to execute to connect to the server */
     char* ssh_dir;                              /* SSH Directory */
     char** identity_files;                      /* SSH Identity Files */
+    SOCKET existing_socket;                     /* Connect with an existing socket */
+    char* agent_location;                       /* SSH Agent Location */
+    int agent_forwarding;                       /* Enable agent forwarding */
 
     /* Which authentication methods should be attempted and their order. */
     int authentication_methods[MAX_AUTH_METHODS];
@@ -257,6 +304,10 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param display_number X11 display number
  * @param xauth_location Xauth location
  * @param ssh_dir SSH Directory
+ * @param identity_files List of identity files
+ * @param socket Existing socket to use for the connection
+ * @param agent_location SSH agent location
+ * @param agent_forwarding Enable agent forwarding
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -271,7 +322,8 @@ ssh_parameters_t* ssh_parameters_new(
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
-        const char** identity_files);
+        const char** identity_files, SOCKET socket,
+        const char* agent_location, int agent_forwarding);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

@@ -39,12 +39,12 @@ specified as part of the command.
 The SSH backend has been moved out into a DLL that is loaded automatically on
 startup if present. On x86 platforms, four DLLs are provided:
 
-| DLL          | Description                                                |
-|--------------|------------------------------------------------------------|
-| k95sshg.dll  | GSSAPI-enabled SSH backend for Windows Vista and newer.    |
-| k95ssh.dll   | Standard SSH backend for Windows Vista and newer           |
-| k95sshgx.dll | GSS-API enabled SSH backend for Windows XP and Server 2003 |
-| k95sshx.dll  | Standard SSH backend for Windows XP and Server 2003        |
+| DLL          | Description                                               |
+|--------------|-----------------------------------------------------------|
+| k95sshg.dll  | GSSAPI-enabled SSH backend for Windows Vista and newer.   |
+| k95ssh.dll   | Standard SSH backend for Windows Vista and newer          |
+| k95sshgx.dll | GSSAPI enabled SSH backend for Windows XP and Server 2003 |
+| k95sshx.dll  | Standard SSH backend for Windows XP and Server 2003       |
 
 On startup, K95 will attempt each one in order and if any one of them loads
 then SSH features will be made available. If none of these DLLs are present or
@@ -60,6 +60,39 @@ It is also now possible for alternative SSH implementations not based on libssh
 to be provided by implementing a relatively simple DLL interface similar to 
 Kermit 95s "Network DLL" interface. This may someday allow SSH to return on 
 vintage windows, or SSH to be supported on OS/2.
+
+### SSH Agent Support
+
+Kermit 95s SSH Agent Support is at this time severely limited by what libssh
+supports. Most SSH agents on Windows use Named Pipes for communication, while
+libssh only supports UNIX Domain Sockets (AF_UNIX). 
+
+At the time of writing, the only compatible SSH Agent is PuTTYs Pageant which 
+must be started with the `--unix` command line parameter to create a unix 
+socket. The socket _should_ be placed somewhere on your filesystem where only 
+you have access to it so that other users can't communicate with your SSH agent.
+For example: 
+```
+pagant.exe --unix C:\users\david\.ssh\pageant.sock
+```
+
+Then you've got to tell Kermit 95 where the socket is. You do this with the new
+`SET SSH AGENT-LOCATION` command:
+```
+SET SSH AGENT-LOCATION C:/users/david/.ssh/pageant.sock
+```
+
+Note that PuTTY uses its own key format which is incompatible with that used
+by OpenSSH and Kermit 95. Any keys created by OpenSSH or with K95s 
+`SSH KEY CREATE` command may need to be converted to PuTTYs format with
+`puttygen.exe` before you can import them into Pageant.
+
+The `SSH AGENT { ADD, DELETE, LIST }` commands for managing the SSH Agent
+remain unimplemented at this time as libssh does not support this part of the
+SSH agent protocol.
+
+AF_UNIX has only been supported since Windows 10 v1803, so SSH Agent support
+with libssh is not possible on Windows 8.1 and earlier.
 
 ### New Command Options
 These commands are unchanged aside from having some new options. Some options
@@ -95,11 +128,24 @@ SSH REMOVE REMOTE-PORT-FORWARD remote-port
   Removes the remote port forward with the specified remote-port from
   the remote port forwarding list. This has no effect on any active
   connection.
-
+  
+SET SSH AGENT-LOCATION location  
+  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent
+  for public key authentication.
+  
 SET SSH DIRECTORY directory
   Specifies where Kermit 95 should look for the default SSH user files
   such as the user-known-hosts file and identity files (id_rsa, etc).
-  By default Kermit 95 looks for these in \\v(appdata)ssh.
+  By default Kermit 95 looks for these in \v(appdata)ssh.
+  
+  This setting also affects the default name of the user known hosts file. 
+  When this setting is unchanged from its default, the default user known 
+  hosts filename is known_hosts2 (\v(appdata)ssh/known_hosts2) for 
+  compatibility with previous versions of Kermit 95. If you set a different 
+  SSH directory (or even the same SSH directory) with the SET SSH DIRECTORY 
+  command, then the default user known hosts file will be known_hosts 
+  (eg, \v(home).ssh/known_hosts) for compatibility with OpenSSH and other 
+  clients.
 
 set ssh v2 key-exchange-methods {CURVE25519-SHA256,
      CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,
@@ -173,7 +219,7 @@ When this is installed, Kermit 95 will automatically load the
 GSSAPI-enabled backend (k95sshg.dll or k95sshgx.dll) on startup.
 
 GSSAPI authentication is not currently supported on non-x86 builds of K95 as
-current versions of Kerberos for Windows are only available for x86.
+current versions of Kerberos for Windows are only available for x86 and x86-64.
 
 ### Using SSH on Windows XP
 Libssh 0.10.6 includes a fix for the security vulnerability 

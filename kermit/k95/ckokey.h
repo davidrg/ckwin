@@ -67,6 +67,8 @@ typedef struct _vik_rec {               /* Very Important Keys - */
     KEY quit;
     KEY upscn;
     KEY dnscn;
+    KEY uphscn;
+    KEY dnhscn;
     KEY upone;
     KEY dnone;
     KEY homscn;

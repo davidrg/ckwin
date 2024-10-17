@@ -181,6 +181,8 @@ extern int tt_scroll, tt_escape;
 #ifdef OS2PM
 extern int os2pm;
 #endif /* OS2PM */
+extern int usageparm;
+extern unsigned long startflags;
 #endif /* OS2 */
 
 #ifdef CK_NETBIOS
@@ -2502,6 +2504,19 @@ doxarg(s,pre) char ** s; int pre;
       return(-1);                       /* fail. */
 
     /* Handle prescan versus post-initialization file */
+
+#ifdef OS2
+    if (x == XA_HELP) {
+        noinit = 1;
+        startflags |= 2;    /* No network DLLs */
+        startflags |= 4;    /* No TAPI DLLs */
+        startflags |= 8;    /* No Security DLLs */
+        startflags |= 16;   /* No Zmodem DLLs */
+        startflags |= 32;   /* Stdin */
+        startflags |= 64;   /* Stdout */
+        usageparm = 1;      /* Showing usage and exiting */
+    }
+#endif
 
     if (((xargtab[z].flgs & CM_PRE) || (c == '+')) && !pre)
       return(0);

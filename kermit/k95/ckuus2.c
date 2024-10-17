@@ -53,7 +53,9 @@
 #include "ckokvb.h"
 #include "ckokey.h"
 #include "ckover.h"             /* This really should be ckover.h */
-
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif
 #ifndef NOLOCAL
 int ttgcwsz();                  /* ckocon.c */
 #endif /* NOLOCAL */
@@ -791,107 +793,26 @@ static char * hmxxfunc[] = {
 ""
 };
 
+#ifdef SSHBUILTIN
+static const char * hmxxskrm[] = {
+"SKERMIT [ OPEN ] host [ port ] /PASSWORD:pwd /USER:username",
+"  This is an approximate synonym for: ",
+"    SSH OPEN host port /PASSWORD:pwd /USER:username /SUBSYSTEM:kermit",
+"  Which opens an SSH connection to the host using the kermit subsystem. This",
+"  requires kermit to be registered as a subsystem with the remote SSH server.",
+"  For more details on this, see: https://kermitproject.org/skermit.html",
+""
+};
+#endif /* SSHBUILTIN */
+
 #ifdef ANYSSH
 static char * hmxxssh[] = {
 #ifdef SSHBUILTIN
-"Syntax: SSH { ADD, AGENT, CLEAR, KEY, [ OPEN ], V2 } operands...",
-"  Performs an SSH-related action, depending on the keyword that follows:",
-" ",
-"SSH ADD LOCAL-PORT-FORWARD local-port host port",
-"  Adds a port forwarding triplet to the local port forwarding list.",
-"  The triplet specifies a local port to be forwarded and the hostname /",
-"  ip-address and port number to which the port should be forwarded from",
-"  the remote host.  Port forwarding is activated at connection",
-"  establishment and continues until the connection is terminated.",
-" ",
-"SSH ADD REMOTE-PORT-FORWARD remote-port host port",
-"  Adds a port forwarding triplet to the remote port forwarding list.",
-"  The triplet specifies a remote port to be forwarded and the",
-"  hostname/ip-address and port number to which the port should be",
-"  forwarded from the local machine.  Port forwarding is activated at",
-"  connection establishment and continues until the connection is",
-"  terminated.",
-" ",
-"SSH AGENT ADD [ identity-file ]",
-"  Adds the contents of the identity-file (if any) to the SSH AGENT",
-"  private key cache.  If no identity-file is specified, all files",
-"  specified with SET SSH IDENTITY-FILE are added to the cache.",
-" ",
-"SSH AGENT DELETE [ identity-file ]",
-"  Deletes the contents of the identity-file (if any) from the SSH AGENT",
-"  private key cache.  If no identity-file is specified, all files",
-"  specified with SET SSH IDENTITY-FILE are deleted from the cache.",
-" ",
-"SSH AGENT LIST [ /FINGERPRINT ]",
-"  Lists the contents of the SSH AGENT private key cache.  If /FINGERPRINT",
-"  is specified, the fingerprint of the private keys are displayed instead",
-"  of the keys.",
-" ",
-"SSH CLEAR LOCAL-PORT-FORWARD",
-"  Clears the local port forwarding list.",
-" ",
-"SSH CLEAR REMOTE-PORT-FORWARD",
-"  Clears the remote port forwarding list.",
-" ",
-"SSH KEY commands:",
-"  The SSH KEY commands create and manage public and private key pairs",
-"  (identities).  There are four forms of SSH keys.  Each key pair is",
-"  stored in its own set of files:",
-" ",
-"   Key Type      Private Key File           Public Key File",
-"    RSA keys      \\v(home).ssh/id_rsa       \\v(home).ssh/id_rsa.pub",
-"    DSA keys      \\v(home).ssh/id_dsa       \\v(home).ssh/id_dsa.pub",
-"    ECDSA keys    \\v(home).ssh/id_ecdsa     \\v(home).ssh/id_ecdsa.pub",
-"    ED25519 keys  \\v(home).ssh/id_ed25519   \\v(home).ssh/id_ed25519.pub",
-" ",
-"  Keys are stored using the OpenSSH keyfile format.  The private key",
-"  files can be (optionally) protected by specifying a passphrase.  A",
-"  passphrase is a longer version of a password.  English text provides",
-"  no more than 2 bits of key data per character.  56-bit keys can be",
-"  broken by a brute force attack in approximately 24 hours.  When used,",
-"  private key files should therefore be protected by a passphrase of at",
-"  least 40 characters (about 80 bits).",
-" ",
-"  To install a public key file on the host, you must transfer the file",
-"  to the host and append it to your \"authorized_keys\" file.  The file",
-"  permissions must be 600 (or equivalent).",
-" ",
-"SSH KEY CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase",
-"      /OLD-PASSPHRASE:passphrase ] filename",
-"  This re-encrypts the specified private key file with a new passphrase.",
-"  The old passphrase is required.  If the passphrases (and filename) are",
-"  not provided Kermit prompts your for them.",
-" ",
-"SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
-"    /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename",
-"  This command creates a new private/public key pair.  The defaults is",
-"  TYPE:ED25519.  The filename is the name of the private key file.  The",
-"  The public key is created with the same name with .pub appended to it.",
-"  If a filename is not specified Kermit prompts you for it. Key length ",
-"  options (/BITS:) depends on the key type:",
-" ",
-"    ECDSA: 256 (default), 384, 521",
-"    RSA: 1024, 2048, 3072 (default), 4096, 8192",
-"    DSS: 1024 (default), 2048",
-" ",
-"  ED25519 does not support being given a key length and any value supplied",
-"  via /BITS: will be ignored.",
-" ",
-#ifdef COMMENT
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
-"  This command displays the contents of a public or private key file.",
-"  The default format is OPENSSH.",
-" ",
-#endif
-"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,OPENSSH,SSH.COM} ] filename",
-"  This command displays the fingerprint or public key for the specified key.",
-"  Default action is to show the fingerprint.",
-" ",
-#ifdef COMMENT
-"SSH KEY V1 SET-COMMENT filename comment",
-"  This command replaces the comment associated with a V1 RSA key file.",
-" ",
-#endif
+/* In Kermit 95, help content is provided by the currently loaded SSH backend.
+ * This help text will only be output when no backend is loaded. If K95 was
+ * built with SSHBUILTIN and not SSH_DLL, then the SSH backend is compiled in
+ * so can never not be loaded.
+ */
 #ifdef SSH_DLL
 "SSH LOAD filename",
 "  This command is only available when no SSH backend DLL was loaded on ",
@@ -904,36 +825,6 @@ static char * hmxxssh[] = {
 "  enable all SSH commands and be used for all SSH operations until Kermit is",
 "  restarted.",
 " ",
-#endif
-"SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
-"      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
-"  This command establishes a new connection using SSH version 1 or",
-"  version 2 protocol.  The connection is made to the specified host on",
-"  the SSH port (you can override the port by including a port name or",
-"  number after the host name).  Once the connection is established the",
-"  authentication negotiations begin.  If the authentication is accepted,",
-"  the local and remote port forwarding lists are used to establish the",
-"  desired connections.  If X11 Forwarding is active, this results in a",
-"  remote port forwarding between the X11 clients on the remote host and",
-"  X11 Server on the local machine.  If a /COMMAND is provided, the",
-"  command is executed on the remote host in place of your default shell.",
-" ",
-"  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
-"     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
-" ",
-"SSH REMOVE LOCAL-PORT-FORWARD local-port",
-"  Removes the local port forward with the specified local-port from",
-"  the local port forwarding list. This has no effect on any active ",
-"  connection.",
-" ",
-"SSH REMOVE REMOTE-PORT-FORWARD remote-port",
-"  Removes the remote port forward with the specified remote-port from",
-"  the remote port forwarding list. This has no effect on any active ",
-"  connection.",
-" ",
-#ifdef COMMENT
-"SSH V2 REKEY",
-"  Requests that an existing SSH V2 connection generate new session keys.",
 #endif
 #else  /* SSHBUILTIN */
 "Syntax: SSH [ options ] <hostname> [ command ]",
@@ -948,214 +839,15 @@ static char * hmxxssh[] = {
 
 static char *hmxyssh[] = {
 #ifdef SSHBUILTIN
-#ifdef SSH_DLL
-/* Ideally we'd vary this help content based on what commands are actually
- * available, but no easy way to do that with a static char*
+/* In Kermit 95, help content is provided by the currently loaded SSH backend.
+ * This help text will only be output when no backend is loaded. If K95 was
+ * built with SSHBUILTIN and not SSH_DLL, then the SSH backend is compiled in
+ * so can never not be loaded.
  */
-"NOTICE: Actual commands and parameters available may vary based on the ",
-"        currently loaded SSH backend. ",
-" ",
-#endif /* SSH_DLL */
-"SET SSH AGENT-FORWARDING { ON, OFF }",
-"  If an authentication agent is in use, setting this value to ON",
-"  results in the connection to the agent being forwarded to the remote",
-"  computer.  The default is OFF.",
-" ",
-"SET SSH CHECK-HOST-IP { ON, OFF }",
-"  Specifies whether the remote host's ip-address should be checked",
-"  against the matching host key in the known_hosts file.  This can be",
-"  used to determine if the host key changed as a result of DNS spoofing.",
-"  The default is ON.",
-" ",
-"SET SSH COMPRESSION { ON, OFF }",
-"  Specifies whether compression will be used.  The default is ON.",
-" ",
-"SET SSH DIRECTORY directory",
-"  Specifies where Kermit 95 should look for the default SSH user files",
-"  such as the user-known-hosts file and identity files (id_rsa, etc).",
-"  By default Kermit 95 looks for these in \\v(appdata)ssh.",
-" ",
-"SET SSH DYNAMIC-FORWARDING { ON, OFF }",
-"  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
-"  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
-"  service, it accepts connection requests and forwards the connections",
-"  through the remote host.  The default is OFF.",
-" ",
-"SET SSH GATEWAY-PORTS { ON, OFF }",
-"  Specifies whether Kermit should act as a gateway for forwarded",
-"  connections received from the remote host.  The default is OFF.",
-" ",
-"SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
-"  Specifies whether Kermit should delegate GSSAPI credentials to ",
-"  the remote host after authentication.  Delegating credentials allows",
-"  the credentials to be used from the remote host.  The default is OFF.",
-" ",
-"SET SSH HEARTBEAT-INTERVAL <seconds>",
-"  Specifies a number of seconds of idle time after which an IGNORE",
-"  message will be sent to the server.  This pulse is useful for",
-"  maintaining connections through HTTP Proxy servers and Network",
-"  Address Translators.  The default is OFF (0 seconds).",
-" ",
-"SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
-"  Specifies one or more files from which the user's authorization",
-"  identities (private keys) are to be read when using public key",
-"  authorization.  These are files used in addition to the default files:",
-" ",
-/*"    \\v(appdata)ssh/identity      V1 RSA",*/
-"    \\v(appdata)ssh/id_rsa        V2 RSA",
-"    \\v(appdata)ssh/id_dsa        V2 DSA",
-"    \\v(appdata)ssh/id_ecdsa      ECDSA",
-"    \\v(appdata)ssh/id_ed25519    ED25519",
-" ",
 #ifdef SSH_DLL
-/* These commands aren't supported by the default SSH backend, but if the
- * backend is a DLL then some other backend might support them */
-"SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
-"  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
-"  The default is OFF.",
-" ",
-"SET SSH KERBEROS5 TGT-PASSING { ON, OFF }",
-"  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
-"  host.  The default is OFF.",
-" ",
-"SET SSH PRIVILEGED-PORT { ON, OFF }",
-"  Specifies whether a privileged port (less than 1024) should be used",
-"  when connecting to the host.  Privileged ports are not required except",
-"  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
-"  is OFF.",
-" ",
-"SET SSH PROXY-COMMAND [ command ]",
-"  Specifies the command to be executed in order to connect to the remote",
-"  host. ",
-" ",
+"No SSH backend loaded. If you have a suitable backend DLL, you can load",
+"it with the SSH LOAD command.",
 #endif /* SSH_DLL */
-"SET SSH QUIET { ON, OFF }",
-"  Specifies whether all messages generated in conjunction with SSH",
-"  protocols should be suppressed.  The default is OFF.",
-" ",
-"SET SSH STRICT-HOST-KEY-CHECK { ASK, ON, OFF }",
-"  Specifies how Kermit should behave if the the host key check fails.",
-"  When strict host key checking is OFF, the new host key is added to the",
-"  protocol-version-specific user-known-hosts-file.  When strict host key",
-"  checking is ON, the new host key is refused and the connection is",
-"  dropped.  When set to ASK, Kermit prompt you to say whether the new",
-"  host key should be accepted.  The default is ASK.",
-" ",
-"  Strict host key checking protects you against Trojan horse attacks.",
-"  It depends on you to maintain the contents of the known-hosts-file",
-"  with current and trusted host keys.",
-" ",
-"SET SSH USE-OPENSSH-CONFIG { ON, OFF }",
-"  Specifies whether Kermit should parse an OpenSSH configuration file",
-"  after applying Kermit's SET SSH commands.  The configuration file",
-"  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
-" ",
-#ifdef SSH_DLL
-"SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
-"  Specifies which cipher should be used to protect SSH version 1",
-"  connections.  The default is 3DES.",
-" ",
-"SET SSH V1 GLOBAL-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the system-wide known-hosts file.  The",
-"  default is:",
-" ",
-"    \v(common)ssh_known_hosts",
-" ",
-"SET SSH V1 USER-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the user-known-hosts-file.  The default",
-"  location is:",
-" ",
-"    \\v(appdata)ssh/known_hosts",
-" ",
-#endif /* SSH_DLL */
-"SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
-"    PUBKEY, NONE } [ ... ]",
-"  Specifies an ordered list of SSH version 2 authentication methods to",
-"  be used when connecting to the remote host. The SSH client requires ",
-"  none to be attempted first, so the default list is:",
-" ",
-"    none gssapi publickey keyboard-interactive password",
-" ",
-"SET SSH V2 AUTO-REKEY { ON, OFF }",
-"  Specifies whether Kermit automatically issues rekeying requests",
-"  once an hour when SSH version 2 in in use.  The default is ON.",
-" ",
-"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
-"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
-"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
-"  Specifies an ordered list of SSH version ciphers to be used to encrypt",
-"  the established connection.  The default list is:",
-" ",
-"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
-"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
-" ",
-"SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the system-wide known-hosts file.  The default",
-"  location is:",
-" ",
-"    \\v(common)ssh/known_hosts2",
-" ",
-"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
-"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
-"     SSH-RSA }",
-"  Specifies an ordered list of hostkey algorithms to be used to verify",
-"  the identity of the host.  The default list is",
-" ",
-"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
-"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
-" ",
-"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
-"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
-"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
-"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
-"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
-"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
-"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
-"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
-"  per-connection keys. The default list is:",
-" ",
-"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
-"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
-"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
-"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
-"    diffie-hellman-group1-sha1 ext-info-c",
-" ",
-"SET SSH V2 MACS { HMAC-SHA1, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
-"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
-"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
-"  Specifies an ordered list of Message Authentication Code algorithms to",
-"  be used for integrity  protection of the established connection.  The",
-"  default list is:",
-" ",
-"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
-"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
-" ",
-"SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
-"  Specifies the location of the user-known-hosts file.  The default",
-"  location is:",
-" ",
-"    \\v(appdata)ssh/known_hosts2",
-" ",
-"SET SSH VERBOSE level",
-"  Specifies how many messages should be generated by the OpenSSH engine.",
-"  The level can range from 0 to 7.  The default value is 2.",
-" ",
-"SET SSH VERSION { 2, AUTOMATIC }",
-"  Obsolete: retained only for backwards compatibility. Only SSH Version 2",
-"  is supported now.",
-" ",
-"SET SSH X11-FORWARDING { ON, OFF }",
-"  Specifies whether X Windows System Data is to be forwarded across the",
-"  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
-"  value is set using the SET TELNET ENV DISPLAY command.",
-" ",
-#ifdef COMMENT
-/* While this command existed in K95 2.1.3, it was never actually implemented
- * there. */
-"SET SSH XAUTH-LOCATION filename",
-"  Specifies the location of the xauth executable (if provided with the",
-"  X11 Server software.)",
-#endif /* COMMENT */
 #else  /* SSHBUILTIN */
 "Syntax: SET SSH COMMAND command",
 "  Specifies the external command to be used to make an SSH connection.",
@@ -7641,9 +7333,26 @@ case XXPURGE:
     return(hmsga(hmxxlearn));
 #endif /* CKLEARN */
 
+#ifdef SSHBUILTIN
+  case XXSKRM:
+      return(hmsga(hmxxskrm));
+#endif /* SSHBUILTIN */
+
 #ifdef ANYSSH
   case XXSSH:
+#ifdef SSHBUILTIN
+    {
+        const char **help_content;
+        if (ck_ssh_is_installed()) {
+            help_content = ssh_get_help();
+        } else {
+            help_content = (const char**)hmxxssh;
+        }
+        return(hmsga((char**)help_content));
+    }
+#else
     return(hmsga(hmxxssh));
+#endif /* SSHBUILTIN */
 #endif /* ANYSSH */
 
 #ifdef TCPSOCKET
@@ -11044,7 +10753,19 @@ case XYTIMER:
 
 #ifdef ANYSSH
   case XYSSH:
+#ifdef SSHBUILTIN
+    {
+        const char **help_content;
+        if (ck_ssh_is_installed()) {
+            help_content = ssh_get_set_help();
+        } else {
+            help_content = (const char**)hmxyssh;
+        }
+        return(hmsga((char**)help_content));
+    }
+#else
     return(hmsga(hmxyssh));
+#endif /* SSHBUILTIN */
 #endif /* ANYCMD */
 
 #ifdef LOCUS
@@ -12712,11 +12433,17 @@ dohkverb(xx) int xx; {
     case  K_DNSCN     :                 /* Screen rollback: down one screen */
       printf("\\Kdnscn         Screen rollback: down one screen\n");
       break;
+    case  K_DNHSCN    :                 /* Screen rollback: down half a screen */
+      printf("\\Kdnhscn        Screen rollback: down half of one screen\n");
+      break;
     case  K_UPONE     :                 /* Screen rollback: Up one line */
       printf("\\Kupone         Screen rollback: up one line\n");
       break;
     case  K_UPSCN     :                 /* Screen rollback: Up one screen */
       printf("\\Kupscn         Screen rollback: up one screen\n");
+      break;
+    case  K_UPHSCN    :                 /* Screen rollback: Up half a screen */
+      printf("\\Kuphscn        Screen rollback: up half of one screen\n");
       break;
     case  K_ENDSCN    :                 /* Screen rollback: latest screen */
       printf("\\Kendscn        Screen rollback: latest screen\n");

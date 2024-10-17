@@ -199,13 +199,13 @@ mousemapinit( int button, int event )
     if ( resetall || button == MMB4 && event == MMWHEEL) {
         /* Assign wheel up event */
         mousemap[MMB4][MMWHEEL].type = kverb ;
-        mousemap[MMB4][MMWHEEL].kverb.id = F_KVERB | K_UPONE ;
+        mousemap[MMB4][MMWHEEL].kverb.id = F_KVERB | K_UPHSCN ;
     }
 
     if ( resetall || button == MMB5 && event == MMWHEEL) {
         /* Assign wheel down event */
         mousemap[MMB5][MMWHEEL].type = kverb ;
-        mousemap[MMB5][MMWHEEL].kverb.id = F_KVERB | K_DNONE ;
+        mousemap[MMB5][MMWHEEL].kverb.id = F_KVERB | K_DNHSCN ;
     }
 
     if ( resetall || button == MMB4 && event == MMCTRL | MMWHEEL) {
@@ -218,6 +218,18 @@ mousemapinit( int button, int event )
         /* Assign wheel ctrl+down event */
         mousemap[MMB5][MMCTRL | MMWHEEL].type = kverb ;
         mousemap[MMB5][MMCTRL | MMWHEEL].kverb.id = F_KVERB | K_DNSCN ;
+    }
+
+    if ( resetall || button == MMB4 && event == MMSHIFT | MMWHEEL) {
+        /* Assign wheel shift+up event */
+        mousemap[MMB4][MMSHIFT | MMWHEEL].type = kverb ;
+        mousemap[MMB4][MMSHIFT | MMWHEEL].kverb.id = F_KVERB | K_UPONE ;
+    }
+
+    if ( resetall || button == MMB5 && event == MMSHIFT | MMWHEEL) {
+        /* Assign wheel shift+down event */
+        mousemap[MMB5][MMSHIFT | MMWHEEL].type = kverb ;
+        mousemap[MMB5][MMSHIFT | MMWHEEL].kverb.id = F_KVERB | K_DNONE ;
     }
 #endif
 

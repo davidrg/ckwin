@@ -56,10 +56,6 @@ $NetBSD: patch-ab,v 1.8 2020/04/08 15:22:07 rhialto Exp $
 #include <inet.h>
 #endif /* DEC_TCPIP */
 
-#ifdef SSH_DLL
-#include "ckossh.h"
-#endif /* SSH_DLL */
-
 #ifdef OS2
 extern char exedir[];
 #ifdef NT
@@ -71,6 +67,11 @@ extern int quiet;			/* fdc - Mon Nov 28 11:44:15 2005 */
 
 static int ssl_installed = 1;
 #endif /* CK_SSL */
+
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+
 int
 ck_ssh_is_installed()
 {

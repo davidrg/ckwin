@@ -1584,9 +1584,6 @@ jobs:
           echo Cleaning...
           call clean.bat
           
-          echo Building iksdnt...
-          call mkiksd.bat
-          
           echo Building kui...
           call mkkui.bat
           
@@ -1595,7 +1592,7 @@ jobs:
           
           REM Check outputs
           set MISSING_BUILD_RESULTS=
-          for %%y in (cknkui.exe iksdnt.exe) do (
+          for %%y in (cknkui.exe) do (
             if not exist dist-misc\%%y echo Build result not found: %%y
             if not exist dist-misc\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
             if not exist dist-misc\%%y set FAILED=yes

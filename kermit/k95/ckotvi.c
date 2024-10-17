@@ -27,6 +27,9 @@
 #include "ckotvi.h"
 #include "ckctel.h"
 #include "ckokvb.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;

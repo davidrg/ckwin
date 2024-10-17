@@ -1075,7 +1075,7 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 
 
 win32: cknker.exe wtelnet wrlogin k95d textps ctl3dins.exe iksdsvc.exe iksd.exe \
-    se.exe \
+    se.exe wstubs \
 !if "$(CKF_CRYPTDLL)" == "yes"
     k95crypt.dll \
 !endif
@@ -1109,9 +1109,11 @@ wsetup: setup.exe
 
 wtest: test.exe
 
-wtelnet: telnet.exe
+wtelnet: telnet.exe telnet-old.exe
 
-wrlogin: rlogin.exe
+wrlogin: rlogin.exe rlogin-old.exe
+
+wstubs: telnet.exe rlogin.exe ssh.exe ftp.exe http.exe
 
 k95d: k95d.exe
 
@@ -1168,14 +1170,42 @@ test.exe: test.obj $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ test.obj cknker.res $(LIBS) 
 <<
 
-telnet.exe: telnet.obj telnet.res $(DEF) ckoker.mak
+# This is the old telnet stub which does some command line parsing itself
+telnet-old.exe: telnet.obj telnet.res $(DEF) ckoker.mak
        link.exe @<< 
        $(LINKFLAGS) /OUT:$@ telnet.obj telnet.res $(LIBS)
 <<
 
-rlogin.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
+# And this is the old rlogin stub which does some command line parsing itself
+rlogin-old.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
        link.exe @<< 
        $(LINKFLAGS) /OUT:$@ rlogin.obj rlogin.res $(LIBS)
+<<
+
+
+telnet.exe: stub.obj telnet.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj telnet.res $(LIBS)
+<<
+
+rlogin.exe: stub.obj rlogin.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj rlogin.res $(LIBS)
+<<
+
+ssh.exe: stub.obj ssh.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj ssh.res $(LIBS)
+<<
+
+ftp.exe:  stub.obj ftp.res $(DEF) ckoker.mak
+        link.exe @<<
+        $(LINKFLAGS) /OUT:$@ stub.obj ftp.res $(LIBS)
+<<
+
+http.exe: stub.obj http.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj http.res $(LIBS)
 <<
 
 se.exe: se.obj se.res $(DEF) ckoker.mak
@@ -1575,6 +1605,8 @@ ck_crp$(O):     ckcdeb.h ckoker.h ckclib.h ckcnet.h ckctel.h ckuath.h ckuat2.h c
 
 ck_des$(O):     ck_des.c
 
+stub.obj:       stub.c
+
 # X/Y/Z Modem support (3rd-party library)
 !if "$(CKF_XYZ)" == "yes"
 p_brw$(O):     ckcdeb.h ckoker.h ckclib.h ckocon.h p_brw.c p_type.h p_brw.h
@@ -1748,6 +1780,15 @@ telnet.res: telnet.rc cknver.h
 
 rlogin.res: rlogin.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo rlogin.res rlogin.rc
+
+ssh.res: ssh.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo ssh.res ssh.rc
+
+http.res: http.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo http.res http.rc
+
+ftp.res: ftp.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo ftp.res ftp.rc
 
 se.res: se.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo se.res se.rc

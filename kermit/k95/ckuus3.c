@@ -7985,11 +7985,13 @@ setprinter(xx) int xx;
 #define SSH_HBT 23                      /* Heartbeat Interval */
 #define SSH_PXC 24                      /* Proxy Command */
 #define SSH_DIR 25                      /* SSH Directory */
+#define SSH_AGL 26                      /* SSH Agent Location */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
 #ifdef SSHBUILTIN
     { "agent-forwarding",        SSH_AFW,  0 },     /* SSH_FEAT_AGENT_FWD */
+    { "agent-location",          SSH_AGL,  0 },     /* SSH_FEAT_AGENT_LOC */
     { "check-host-ip",           SSH_CHI,  0 },
     { "compression",             SSH_CMP,  0 },
     { "directory",               SSH_DIR,  0 },
@@ -8159,7 +8161,7 @@ shossh() {
          * want to output them separately. The array is terminated with an
          * entry that has its type set to SSH_PORT_FORWARD_NULL.
          */
-        ssh_port_forward_t* fwd = ssh_fwd_get_ports();
+        const ssh_port_forward_t* fwd = ssh_fwd_get_ports();
 
         if (fwd != NULL) {
             int i = 0;
@@ -8386,7 +8388,14 @@ dosetssh() {
         else if (sshtab[z].kwval == SSH_AFW
             && !ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
             /*
-             * "set ssh agent-forwarding" commands.
+             * "set ssh agent-forwarding" command.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_AGL
+            && !ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            /*
+             * "set ssh agent-location" command.
              */
             sshtab[z].flgs = CM_INV;
         }
@@ -8452,6 +8461,18 @@ dosetssh() {
             return(-9);
         }
         return(success = set_ssh_iparam_on(SSH_IPARAM_AFW));
+
+      case SSH_AGL:
+        if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            printf("\r\nSetting of agent location is not supported by the "
+                   "current SSH backend\r\n");
+            return(-9);
+        }
+        if ((x = cmifi("Socket Name","",&s,&z,xxstring)) < 0) {
+            return(x);
+        }
+        ssh_set_sparam(SSH_SPARAM_AGENTLOC, s);
+        return(1);
 
       case SSH_CHI:                     /* Check Host IP */
         return(success = set_ssh_iparam_on(SSH_IPARAM_CHKIP));
@@ -9015,7 +9036,7 @@ dosetssh() {
         }
         ssh_idf_n = n;
 
-        if (ssh_set_identity_files(ssh_idf) < 0) {
+        if (ssh_set_identity_files((const char **)ssh_idf) < 0) {
             printf("\r\nCommand not supported by the current SSH backend\r\n");
             return(0);
         }
@@ -9057,7 +9078,7 @@ dosetssh() {
             printf("\r\nSSH proxy command feature not supported by the current SSH backend\r\n");
             return(-9);
         }
-        if ((y = cmtxt("title text","",&s,xxstring)) < 0)
+        if ((y = cmtxt("Command","",&s,xxstring)) < 0)
           return(y);
         ssh_set_sparam(SSH_SPARAM_PXC, s);
         return(success = 1);
@@ -9675,20 +9696,15 @@ case XYPAD:                             /* SET PAD ... */
                 netcmd[z].flgs =  CM_INV;
 #endif /* SUPERLAT */
 #if SSH_DLL
-              else if (netcmd[z].kwval == NET_SSH && !ssh_avail())
+              else if (netcmd[z].kwval == NET_SSH && !ck_ssh_is_installed())
                   netcmd[z].flgs = CM_INV;
 #endif /* SSH_DLL */
           }
           if (tcp_avail)                /* Default network type */
             ckstrncpy(tmpbuf,"tcp/ip",TMPBUFSIZ);
 #ifdef SSHBUILTIN
-#ifdef SSH_DLL
-          else if ( ssh_avail() )
+          else if ( ck_ssh_is_installed() )
             ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
-#else
-          else if ( TRUE )
-            ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 #ifdef DECNET
           else if (dnet_avail)
@@ -10159,8 +10175,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = keepalive(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = keepalive(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = keepalive(ttyfd,z);
@@ -10174,8 +10190,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = dontroute(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = dontroute(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = dontroute(ttyfd,z);
@@ -10189,8 +10205,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,z);
@@ -10202,8 +10218,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,!z);
@@ -10225,8 +10241,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = ck_linger(ssh_sock,z,y);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = ck_linger(ssh_get_socket(),z,y);
             else
 #endif /* SSHBUILTIN */
 	      success = ck_linger(ttyfd,z,y);
@@ -10241,8 +10257,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = sendbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = sendbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = sendbuf(ttyfd,z);
@@ -10268,8 +10284,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             }
 #endif /* QNX16 */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = recvbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = recvbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = recvbuf(ttyfd,z);

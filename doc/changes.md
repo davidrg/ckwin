@@ -1,7 +1,7 @@
 # Change Log
-This document covers what has changed in each release of C-Kermit for Windows 
-(formerly known as Kermit 95). For a more in-depth look at what has changed, 
-check the git commit log.
+This document covers what has changed in each release of Kermit 95 since its
+first open-source release in 2022.  For a more in-depth look at what has 
+changed, check the git commit log.
 
 ## Kermit 95 v3.0 beta 7 - TBD
 
@@ -11,6 +11,13 @@ it carried from 1995 through to 2013.
 ### Things to be aware of when upgrading
 * K95G no longer opens COM1 by default. If you previously depended on this, 
   you'll need to add `set port com1` to your k95custom.ini
+* The mouse wheel now scrolls half a screen at time, rather than one line at
+  a time. If you'd prefer to retain the old default, put the following in your
+  k95custom.ini:
+  ```
+  set mouse wheel up none \Kupone
+  set mouse wheel down none \Kdnone
+  ```
 
 #### The default SSH directory has changed!
 The default SSH directory in beta 7 has changed from `\v(home).ssh` back to
@@ -48,6 +55,11 @@ by OpenSSH on modern versions of windows, add the command
   also means that alternative SSH backends not based on libssh can now be supported
   should anyone want to build one, opening the door to SSH on vintage windows or
   OS/2 systems.
+* SSH is now supported on 32bit ARM devices (Windows RT)
+* Initial very limited SSH agent support has been added. Libssh is currently the
+  limiting factor here and SSH agent support in K95 likely won't get much better
+  without significant improvements to libssh in this area. See the SSH Readme
+  for more details.
 * REXX support has been extended to x86 systems running Windows XP or newer. This
   was previously an OS/2-only feature. You can now run REXX scripts and commands
   from the K95 command mode with the `rexx` command, and REXX scripts run from 
@@ -57,13 +69,15 @@ by OpenSSH on modern versions of windows, add the command
   REXX implementation is the current Regina REXX release. regutil.dll is included
   but note that the Console I/O Routines it provides are not currently compatible 
   with K95.
-* SSH is now supported on 32bit ARM devices (Windows RT)
 * New command to turn the menubar on or off: `set gui menubar visible { on, off }`
   When the menubar is turned off in this way (rather than the command line 
   parameter), important menu items are moved on to the system/control/window menu
   (right-click on the title bar for the actions menu and a few other things)
 * New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
 * New command to turn the statusbar on or off: `set gui statusbar { on, off }`
+* New screen scroll kverbs:
+  * `\Kuphscn` - Scroll up half a screen
+  * `\Kdnhscn` - Scroll down half a screen
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
@@ -89,6 +103,21 @@ by OpenSSH on modern versions of windows, add the command
   `\v(appdata)ssh`
 * The `ssh key` commands will now default to opening or saving keys in the
   SSH directory.
+* The `skermit` command now has help text
+* The default mouse wheel configuration has changed:
+  * Wheel up/down now scrolls up/down half a screen (like PuTTY) rather than a
+    single line. This provides better much speed than a line at a time with
+    better usability than a screen at a time.
+  * Shift+Wheel up/down now scrolls up/down one line
+* Improve exit time when the console version (k95.exe) is just being run to show
+  usage information (`k95.exe -h` or `k95.exe --help`). Previously K95 would 
+  pause for about 5 seconds after printing usage information before returning 
+  you to the shell.
+* Fixed the `telnet.exe` and `rlogin.exe` stubs - these now behave as in K95  
+  2.1.3
+* Added the `ssh.exe`, `ftp.exe` and `http.exe` stubs that were included in
+  K95 2.1.3 
+* `iksdnt.exe` is now included.
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 
@@ -103,9 +132,12 @@ by OpenSSH on modern versions of windows, add the command
 * Fix the SSH global known hosts file not being set to something sensible
   on windows. It's now set to the value used by past Kermit 95 releases by
   default: `\v(common)ssh\known_hosts2`
+* Fixed generation of 4096 RSA SSH keys
+* Fixed stdout parameter not working correctly
 
 ### Other Source Changes
-None yet
+* Fixed a selection of build warnings, and improved compatibility with the 
+  Open Watcom compiler.
 
 
 ## C-Kermit for Windows 10.0b11 beta 6 - 11 August 2024
@@ -119,9 +151,12 @@ has returned after being discontinued in March 2000 and April 1998
 respectively. And for the first time ever, C-Kermit is now supported on
 Windows NT for MIPS computers, though without TAPI support.
 
+This is also the last release carrying the "C-Kermit for Windows" name. The
+next release will be Kermit 95 3.0 beta 7.
+
 ### Things to be aware of when upgrading
 Windows XP users: current versions of libssh are no longer compatible with 
-Windows XP. See the included SSH Readme for a workaround if SSH support on
+Windows XP. See the included SSH Readme for a workaround for SSH support on
 Windows XP.
 
 ### Fixed Bugs

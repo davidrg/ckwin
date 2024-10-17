@@ -10883,10 +10883,10 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
                  */
                 sshkwtab[z].flgs = CM_INV;
             }
-            else if (sshkwtab[z].kwval == XSSH2_RKE
+            else if (sshkwtab[z].kwval == XSSH_V2
                 && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
                 /*
-                 * "ssh agent"
+                 * "ssh v2 rekey"
                  */
                 sshkwtab[z].flgs = CM_INV;
             }
@@ -11319,7 +11319,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	          return(y);
 	      }
 
-          if ((x = cmnum((cx == SSHR_LPF) ?
+          if ((x = cmnum((y == SSHR_LPF) ?
 			     "Local port number" : "Remote port number",
 			     "",10,&port,xxstring)) < 0) {
 		    return(x);

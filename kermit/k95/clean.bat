@@ -10,6 +10,9 @@
 del %src_base%\cko32i*.dll
 del %src_base%\k95ssh*.dll
 del %src_base%\nullssh.dll
+@del %src_base%\k95ssh.dll
+@del %src_base%\nullssh.dll
+@del %src_base%\k95crypt.dll
 @del /Q %src_base%\nt\*.*
 @del /Q %src_base%\ntd\*.*
 @del /Q %src_base%\kui\win95\*.*

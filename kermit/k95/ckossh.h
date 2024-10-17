@@ -1,9 +1,6 @@
 #ifndef _CKOSSH_H
 #define _CKOSSH_H
 
-/* TODO: This needs to be accessed via a function, not as a global. */
-extern int ssh_sock;                    /* SSH socket */
-
 #ifndef SSH_PF_T
 #define SSH_PF_T
 /* Note: This also exists in ckolsshs.h */
@@ -89,6 +86,7 @@ typedef struct ssh_port_forward {
 #define SSH_SPARAM_2_KEX    14      /* Key Exchange Methods */
 #define SSH_SPARAM_PXC      15      /* Proxy command */
 #define SSH_SPARAM_DIR      16      /* SSH Directory */
+#define SSH_SPARAM_AGENTLOC 17      /* SSH Agent location */
 
 /* Setters and getters for the various "set ssh" options. set_ssh_sparam takes
  * a copy of the supplied string rather than taking ownership of it.*/
@@ -97,6 +95,7 @@ _PROTOTYP(int ssh_get_iparam,(int param));
 _PROTOTYP(int ssh_set_sparam,(int param, const char* value));
 _PROTOTYP(const char* ssh_get_sparam,(int param));
 _PROTOTYP(int ssh_set_identity_files,(const char** identity_files));
+_PROTOTYP(int ssh_get_socket,());
 
 /* Getters for various global values within C-Kermit */
 _PROTOTYP(const char* ssh_get_uid,(VOID));
@@ -106,6 +105,7 @@ _PROTOTYP(void get_current_terminal_dimensions,(int*,int*));
 _PROTOTYP(const char* get_current_terminal_type,());
 
 /* SSH Interface */
+_PROTOTYP(int ssh_open,(VOID));
 _PROTOTYP(int ssh_open,(VOID));
 _PROTOTYP(int ssh_clos,(VOID));
 _PROTOTYP(int ssh_tchk,(VOID));
@@ -151,8 +151,11 @@ _PROTOTYP(const char * ssh_proto_ver,(void));
 _PROTOTYP(const char * ssh_impl_ver,(void));
 _PROTOTYP(const char * ssh_dll_name,(void));
 _PROTOTYP(const char * ssh_dll_ver,(void));
-_PROTOTYP(int ssh_avail,(VOID));
+/*_PROTOTYP(int ssh_avail,(void));*/
+int ssh_avail();
 _PROTOTYP(void ssh_unload,(VOID));
+_PROTOTYP(const char ** ssh_get_set_help,(void));
+_PROTOTYP(const char ** ssh_get_help,(void));
 
 typedef struct {
     int rc;
@@ -186,6 +189,7 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 #define SSH_FEAT_FROM_PRIV_PRT  15
 #define SSH_FEAT_DYN_PORT_FWD   16
 #define SSH_FEAT_X11_XAUTH      17
+#define SSH_FEAT_AGENT_LOC      18
 
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 
@@ -211,6 +215,7 @@ typedef struct  {
     const char* (* _System p_ssh_get_uid)();
     const char* (* _System p_ssh_get_pw)();
     int (* _System p_ssh_get_nodelay_enabled)();
+    SOCKET (* _System p_ssh_open_socket)(char* host, char* port);
     int (* _System p_dodebug)(int,char *,char *,CK_OFF_T);
     int (* _System p_vscrnprintf)(const char *, ...);
     int (* _System p_uq_txt)(char *,char *,int,char **,char *,int,char *,int);

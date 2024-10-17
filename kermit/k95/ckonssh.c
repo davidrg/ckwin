@@ -259,6 +259,7 @@ const char* (*p_get_current_terminal_type)() = NULL;
 const char* (*p_ssh_get_uid)();
 const char* (*p_ssh_get_pw)();
 int (*p_ssh_get_nodelay_enabled)();
+SOCKET (*p_ssh_open_socket)(char* host, char* port) = NULL;
 static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
 static int (*p_vscrnprintf)(const char *, ...)=NULL;
 static int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int) = NULL;
@@ -297,6 +298,10 @@ const char* ssh_get_pw() {
 
 int ssh_get_nodelay_enabled() {
     return p_ssh_get_nodelay_enabled();
+}
+
+SOCKET ssh_open_socket(char* host, char* port) {
+    return p_ssh_open_socket(host, port);
 }
 
 int dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
@@ -403,6 +408,7 @@ int _System ssh_dll_init(ssh_init_parameters_t *params) {
     p_ssh_get_uid = params->p_ssh_get_uid;
     p_ssh_get_pw = params->p_ssh_get_pw;
     p_ssh_get_nodelay_enabled = params->p_ssh_get_nodelay_enabled;
+    p_ssh_open_socket = params->p_ssh_open_socket;
     p_dodebug = params->p_dodebug;
     p_vscrnprintf = params->p_vscrnprintf;
     p_uq_txt = params->p_uq_txt;
@@ -425,6 +431,7 @@ int _System ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
     params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
     params->p_install_funcs("ssh_set_identity_files", ssh_set_identity_files);
+    params->p_install_funcs("ssh_get_socket", ssh_get_socket);
     params->p_install_funcs("ssh_open", ssh_open);
     params->p_install_funcs("ssh_clos", ssh_clos);
     params->p_install_funcs("ssh_tchk", ssh_tchk);
@@ -465,6 +472,8 @@ int _System ssh_dll_init(ssh_init_parameters_t *params) {
     params->p_install_funcs("ssh_dll_ver", ssh_dll_ver);
     params->p_install_funcs("ssh_get_keytab", ssh_get_keytab);
     params->p_install_funcs("ssh_feature_supported", ssh_feature_supported);
+    params->p_install_funcs("ssh_get_set_help", ssh_get_set_help);
+    params->p_install_funcs("ssh_get_help", ssh_get_help);
 
     return 0;
 }
@@ -801,6 +810,24 @@ int ssh_set_identity_files(const char** identity_files) {
     return -1;
 }
 
+/** Get the socket currently in use by the SSH client.
+ *
+ * @returns Socket for the current SSH connection, or -1 if not implemented or
+ *      no active connection
+ */
+int ssh_get_socket() {
+
+    /* If there is an active SSH session, this function should return its
+     * socket. It's used by the various "set tcp" commands to set socket
+     * options.
+     *
+     * If there is no active connection, or the SSH client can't supply
+     * the socket its using, return -1
+     */
+
+    return -1;
+}
+
 /** This is the equivalent of ssh_dll_init - when the SSH module is
  * compiled into the K95 executable (SSH_DLL not defined), this is
  * called on application startup to give the SSH subsystem an
@@ -837,6 +864,22 @@ int ssh_open(){
     /* Reset the message to the start */
     message_length = strlen(message);
     message_position = 0;
+
+    /*
+     * If Kermit 95 is configured with proxy server details
+     * ("set tcp http-proxy" or "set tcp socks-proxy"), then Kermit 95 can
+     * open a connection through that proxy server and hand that connection
+     * over ready to make an SSH connection through.
+     *
+     * To do this, just call ssh_open_socket(). If you get a socket back,
+     * you're free to go ahead and use it. If you get INVALID_SOCKET back
+     * then you'll need to make the connection yourself.
+     *
+     * If ssh_open_socket() returns a valid socket then you are responsible
+     * for closing it when the SSH connection is closed (or fails to open).
+     * Kermit 95 doesn't track it and won't close it for you.
+     */
+
     return 0;
 }
 
@@ -1218,22 +1261,404 @@ ktab_ret ssh_get_keytab(int keytab_id) {
  */
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
-        case SSH_FEAT_OPENSSH_CONF:
-        case SSH_FEAT_KEY_MGMT:
-        case SSH_FEAT_REKEY_AUTO:
-        case SSH_FEAT_SSH_V1:
-        case SSH_FEAT_PROXY_CMD:
-        case SSH_FEAT_ADV_KERBEROS4:
-        case SSH_FEAT_ADV_KERBEROS5:
-        case SSH_FEAT_REKEY_MANUAL:
-        case SSH_FEAT_FROM_PRIV_PRT:
-        case SSH_FEAT_GSSAPI_KEYEX:
-        case SSH_FEAT_PORT_FWD:
-        case SSH_FEAT_X11_FWD:
-        case SSH_FEAT_AGENT_FWD:
-        case SSH_FEAT_GSSAPI_DELEGAT:
-        case SSH_FEAT_AGENT_MGMT:
+        case SSH_FEAT_OPENSSH_CONF:     /* Configuration via openssh config file */
+        case SSH_FEAT_KEY_MGMT:         /* SSH key creation, etc */
+        case SSH_FEAT_REKEY_AUTO:       /* Automatic rekeying options */
+        case SSH_FEAT_SSH_V1:           /* SSHv1 protocol support */
+        case SSH_FEAT_PROXY_CMD:        /* Proxy command */
+        case SSH_FEAT_ADV_KERBEROS4:    /* Advanced Kerberos IV options */
+        case SSH_FEAT_ADV_KERBEROS5:    /* Advanced Kerberos V options */
+        case SSH_FEAT_REKEY_MANUAL:     /* Manual rekeying */
+        case SSH_FEAT_FROM_PRIV_PRT:    /* Connect from private port */
+        case SSH_FEAT_GSSAPI_KEYEX:     /* GSSAPI Key Exchange */
+        case SSH_FEAT_PORT_FWD:         /* Local and remote port forwarding */
+        case SSH_FEAT_X11_FWD:          /* X11 forwarding */
+        case SSH_FEAT_AGENT_FWD:        /* SSH Agent Forwarding */
+        case SSH_FEAT_GSSAPI_DELEGAT:   /* GSSAPI Delegation */
+        case SSH_FEAT_AGENT_MGMT:       /* SSH Agent management */
+        case SSH_FEAT_DYN_PORT_FWD:     /* Dynamic port forwarding */
         default:
             return TRUE;
     }
+}
+
+/** This function should return the text for "HELP SET SSH". Any commands not
+ * supported should be excluded.
+ *
+ * @return Help text for HELP SET SSH.
+ */
+const char** ssh_get_set_help() {
+
+    /*
+     * TODO: Remove help text for any commands reported as not supported by
+     *  ssh_feature_supported(), and adjust the parameter lists to match
+     *  those returned by ssh_get_keytab()
+     */
+
+    static const char *hmxyssh[] = {
+/* Feature: SSH_FEAT_AGENT_FWD */
+"SET SSH AGENT-FORWARDING { ON, OFF }",
+"  If an authentication agent is in use, setting this value to ON",
+"  results in the connection to the agent being forwarded to the remote",
+"  computer.  The default is OFF.",
+" ",
+"SET SSH CHECK-HOST-IP { ON, OFF }",
+"  Specifies whether the remote host's ip-address should be checked",
+"  against the matching host key in the known_hosts file.  This can be",
+"  used to determine if the host key changed as a result of DNS spoofing.",
+"  The default is ON.",
+" ",
+"SET SSH COMPRESSION { ON, OFF }",
+"  Specifies whether compression will be used.  The default is ON.",
+" ",
+"SET SSH DIRECTORY directory",
+"  Specifies where Kermit 95 should look for the default SSH user files",
+"  such as the user-known-hosts file and identity files (id_rsa, etc).",
+"  By default Kermit 95 looks for these in \\v(appdata)ssh.",
+" ",
+/* Feature: SSH_FEAT_DYN_PORT_FWD */
+"SET SSH DYNAMIC-FORWARDING { ON, OFF }",
+"  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
+"  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
+"  service, it accepts connection requests and forwards the connections",
+"  through the remote host.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SET SSH GATEWAY-PORTS { ON, OFF }",
+"  Specifies whether Kermit should act as a gateway for forwarded",
+"  connections received from the remote host.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_GSSAPI_DELEGAT */
+"SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
+"  Specifies whether Kermit should delegate GSSAPI credentials to ",
+"  the remote host after authentication.  Delegating credentials allows",
+"  the credentials to be used from the remote host.  The default is OFF.",
+" ",
+"SET SSH HEARTBEAT-INTERVAL <seconds>",
+"  Specifies a number of seconds of idle time after which an IGNORE",
+"  message will be sent to the server.  This pulse is useful for",
+"  maintaining connections through HTTP Proxy servers and Network",
+"  Address Translators.  The default is OFF (0 seconds).",
+" ",
+"SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
+"  Specifies one or more files from which the user's authorization",
+"  identities (private keys) are to be read when using public key",
+"  authorization.  These are files used in addition to the default files:",
+" ",
+"    \\v(appdata)ssh/identity      V1 RSA",     /* Feature: SSH_FEAT_SSH_V1 */
+"    \\v(appdata)ssh/id_rsa        V2 RSA",
+"    \\v(appdata)ssh/id_dsa        V2 DSA",
+"    \\v(appdata)ssh/id_ecdsa      ECDSA",
+"    \\v(appdata)ssh/id_ed25519    ED25519",
+" ",
+/* Feature: SSH_FEAT_ADV_KERBEROS4 */
+"SET SSH KERBEROS4 TGT-PASSING { ON, OFF }",
+"  Specifies whether Kermit should forward Kerberos 4 TGTs to the host.",
+"  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_ADV_KERBEROS5 */
+"SET SSH KERBEROS5 TGT-PASSING { ON, OFF }",
+"  Specifies whether Kermit should forward Kerberos 5 TGTs to to the",
+"  host.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_FROM_PRIV_PRT */
+"SET SSH PRIVILEGED-PORT { ON, OFF }",
+"  Specifies whether a privileged port (less than 1024) should be used",
+"  when connecting to the host.  Privileged ports are not required except",
+"  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
+"  is OFF.",
+" ",
+/* Feature: SSH_FEAT_PROXY_CMD */
+"SET SSH PROXY-COMMAND [ command ]",
+"  Specifies the command to be executed in order to connect to the remote",
+"  host. ",
+" ",
+"SET SSH QUIET { ON, OFF }",
+"  Specifies whether all messages generated in conjunction with SSH",
+"  protocols should be suppressed.  The default is OFF.",
+" ",
+"SET SSH STRICT-HOST-KEY-CHECK { ASK, ON, OFF }",
+"  Specifies how Kermit should behave if the the host key check fails.",
+"  When strict host key checking is OFF, the new host key is added to the",
+"  protocol-version-specific user-known-hosts-file.  When strict host key",
+"  checking is ON, the new host key is refused and the connection is",
+"  dropped.  When set to ASK, Kermit prompt you to say whether the new",
+"  host key should be accepted.  The default is ASK.",
+" ",
+"  Strict host key checking protects you against Trojan horse attacks.",
+"  It depends on you to maintain the contents of the known-hosts-file",
+"  with current and trusted host keys.",
+" ",
+/* Feature: SSH_FEAT_OPENSSH_CONF */
+"SET SSH USE-OPENSSH-CONFIG { ON, OFF }",
+"  Specifies whether Kermit should parse an OpenSSH configuration file",
+"  after applying Kermit's SET SSH commands.  The configuration file",
+"  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH V1 CIPHER { 3DES, BLOWFISH, DES }",
+"  Specifies which cipher should be used to protect SSH version 1",
+"  connections.  The default is 3DES.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH V1 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The",
+"  default is:",
+" ",
+"    \v(common)ssh_known_hosts",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH V1 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts-file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts",
+" ",
+"SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
+"    PUBKEY, NONE } [ ... ]",
+"  Specifies an ordered list of SSH version 2 authentication methods to",
+"  be used when connecting to the remote host. The SSH client requires ",
+"  none to be attempted first, so the default list is:",
+" ",
+"    none gssapi publickey keyboard-interactive password",
+" ",
+/* Feature: SSH_FEAT_REKEY_AUTO */
+"SET SSH V2 AUTO-REKEY { ON, OFF }",
+"  Specifies whether Kermit automatically issues rekeying requests",
+"  once an hour when SSH version 2 in in use.  The default is ON.",
+" ",
+"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
+"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
+"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
+"  Specifies an ordered list of SSH version ciphers to be used to encrypt",
+"  the established connection.  The default list is:",
+" ",
+"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
+"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
+" ",
+"SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(common)ssh/known_hosts2",
+" ",
+"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
+"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
+"     SSH-RSA }",
+"  Specifies an ordered list of hostkey algorithms to be used to verify",
+"  the identity of the host.  The default list is",
+" ",
+"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
+"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
+" ",
+"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
+"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
+"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
+"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
+"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
+"  per-connection keys. The default list is:",
+" ",
+"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
+"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
+"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
+"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
+"    diffie-hellman-group1-sha1 ext-info-c",
+" ",
+"SET SSH V2 MACS { HMAC-SHA1, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
+"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
+"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
+"  Specifies an ordered list of Message Authentication Code algorithms to",
+"  be used for integrity  protection of the established connection.  The",
+"  default list is:",
+" ",
+"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
+"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
+" ",
+"SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts2",
+" ",
+"SET SSH VERBOSE level",
+"  Specifies how many messages should be generated by the OpenSSH engine.",
+"  The level can range from 0 to 7.  The default value is 2.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SET SSH VERSION { 1, 2, AUTOMATIC }",
+"   Specifies which SSH version should be negotiated.  The default is",
+"   AUTOMATIC which means use version 2 if supported; otherwise to fall",
+"   back to version 1.",
+" ",
+/* Feature: SSH_FEAT_X11_FWD */
+"SET SSH X11-FORWARDING { ON, OFF }",
+"  Specifies whether X Windows System Data is to be forwarded across the",
+"  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
+"  value is set using the SET TELNET ENV DISPLAY command.",
+" ",
+/* Feature: SSH_FEAT_X11_XAUTH */
+"SET SSH XAUTH-LOCATION filename",
+"  Specifies the location of the xauth executable (if provided with the",
+"  X11 Server software.)",
+/* Last line of help text must be an empty string to terminate */
+""
+    };
+
+    return hmxyssh;
+}
+
+/** This function should return the text for "HELP SSH". Any commands not
+ * supported should be excluded.
+ *
+ * @return Help text for HELP SSH.
+ */
+const char** ssh_get_help() {
+
+    /*
+     * TODO: Remove help text for any commands reported as not supported by
+     *  ssh_feature_supported(), and adjust the parameter lists to match
+     *  those returned by ssh_get_keytab()
+     */
+
+    static const char * hmxxssh[] = {
+"Syntax: SSH { ADD, AGENT, CLEAR, KEY, [ OPEN ], V2 } operands...",
+"  Performs an SSH-related action, depending on the keyword that follows:",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SSH ADD LOCAL-PORT-FORWARD local-port host port",
+"  Adds a port forwarding triplet to the local port forwarding list.",
+"  The triplet specifies a local port to be forwarded and the hostname /",
+"  ip-address and port number to which the port should be forwarded from",
+"  the remote host.  Port forwarding is activated at connection",
+"  establishment and continues until the connection is terminated.",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SSH ADD REMOTE-PORT-FORWARD remote-port host port",
+"  Adds a port forwarding triplet to the remote port forwarding list.",
+"  The triplet specifies a remote port to be forwarded and the",
+"  hostname/ip-address and port number to which the port should be",
+"  forwarded from the local machine.  Port forwarding is activated at",
+"  connection establishment and continues until the connection is",
+"  terminated.",
+" ",
+/* Feature: SSH_FEAT_AGENT_MGMT */
+"SSH AGENT ADD [ identity-file ]",
+"  Adds the contents of the identity-file (if any) to the SSH AGENT",
+"  private key cache.  If no identity-file is specified, all files",
+"  specified with SET SSH IDENTITY-FILE are added to the cache.",
+" ",
+/* Feature: SSH_FEAT_AGENT_MGMT */
+"SSH AGENT DELETE [ identity-file ]",
+"  Deletes the contents of the identity-file (if any) from the SSH AGENT",
+"  private key cache.  If no identity-file is specified, all files",
+"  specified with SET SSH IDENTITY-FILE are deleted from the cache.",
+" ",
+/* Feature: SSH_FEAT_AGENT_MGMT */
+"SSH AGENT LIST [ /FINGERPRINT ]",
+"  Lists the contents of the SSH AGENT private key cache.  If /FINGERPRINT",
+"  is specified, the fingerprint of the private keys are displayed instead",
+"  of the keys.",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SSH CLEAR LOCAL-PORT-FORWARD",
+"  Clears the local port forwarding list.",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SSH CLEAR REMOTE-PORT-FORWARD",
+"  Clears the remote port forwarding list.",
+" ",
+/* Feature: SSH_FEAT_KEY_MGMT */
+"SSH KEY commands:",
+"  The SSH KEY commands create and manage public and private key pairs",
+"  (identities).  There are four forms of SSH keys.  Each key pair is",
+"  stored in its own set of files:",
+" ",
+"   Key Type      Private Key File           Public Key File",
+"    RSA keys      \\v(home).ssh/id_rsa       \\v(home).ssh/id_rsa.pub",
+"    DSA keys      \\v(home).ssh/id_dsa       \\v(home).ssh/id_dsa.pub",
+"    ECDSA keys    \\v(home).ssh/id_ecdsa     \\v(home).ssh/id_ecdsa.pub",
+"    ED25519 keys  \\v(home).ssh/id_ed25519   \\v(home).ssh/id_ed25519.pub",
+" ",
+"  Keys are stored using the OpenSSH keyfile format.  The private key",
+"  files can be (optionally) protected by specifying a passphrase.  A",
+"  passphrase is a longer version of a password.  English text provides",
+"  no more than 2 bits of key data per character.  56-bit keys can be",
+"  broken by a brute force attack in approximately 24 hours.  When used,",
+"  private key files should therefore be protected by a passphrase of at",
+"  least 40 characters (about 80 bits).",
+" ",
+"  To install a public key file on the host, you must transfer the file",
+"  to the host and append it to your \"authorized_keys\" file.  The file",
+"  permissions must be 600 (or equivalent).",
+" ",
+/* Feature: SSH_FEAT_KEY_MGMT */
+"SSH KEY CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase",
+"      /OLD-PASSPHRASE:passphrase ] filename",
+"  This re-encrypts the specified private key file with a new passphrase.",
+"  The old passphrase is required.  If the passphrases (and filename) are",
+"  not provided Kermit prompts your for them.",
+" ",
+/* Feature: SSH_FEAT_KEY_MGMT */
+"SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
+"    /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename",
+"  This command creates a new private/public key pair.  The defaults is",
+"  TYPE:ED25519.  The filename is the name of the private key file.  The",
+"  The public key is created with the same name with .pub appended to it.",
+"  If a filename is not specified Kermit prompts you for it. Key length ",
+"  options (/BITS:) depends on the key type:",
+" ",
+"    ECDSA: 256 (default), 384, 521",
+"    RSA: 1024, 2048, 3072 (default), 4096, 8192",
+"    DSS: 1024 (default), 2048",
+" ",
+"  ED25519 does not support being given a key length and any value supplied",
+"  via /BITS: will be ignored.",
+" ",
+/* Feature: SSH_FEAT_KEY_MGMT */
+"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
+"  This command displays the contents of a public or private key file.",
+"  The default format is OPENSSH.",
+" ",
+/* Feature: SSH_FEAT_SSH_V1 */
+"SSH KEY V1 SET-COMMENT filename comment",
+"  This command replaces the comment associated with a V1 RSA key file.",
+" ",
+"SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
+"      /PASSWORD:pwd /VERSION:{ 1, 2 } /X11-FORWARDING:{ ON, OFF } ]",
+"  This command establishes a new connection using SSH version 1 or",
+"  version 2 protocol.  The connection is made to the specified host on",
+"  the SSH port (you can override the port by including a port name or",
+"  number after the host name).  Once the connection is established the",
+"  authentication negotiations begin.  If the authentication is accepted,",
+"  the local and remote port forwarding lists are used to establish the",
+"  desired connections.  If X11 Forwarding is active, this results in a",
+"  remote port forwarding between the X11 clients on the remote host and",
+"  X11 Server on the local machine.  If a /COMMAND is provided, the",
+"  command is executed on the remote host in place of your default shell.",
+" ",
+"  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
+"     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SSH REMOVE LOCAL-PORT-FORWARD local-port",
+"  Removes the local port forward with the specified local-port from",
+"  the local port forwarding list. This has no effect on any active ",
+"  connection.",
+" ",
+/* Feature: SSH_FEAT_PORT_FWD */
+"SSH REMOVE REMOTE-PORT-FORWARD remote-port",
+"  Removes the remote port forward with the specified remote-port from",
+"  the remote port forwarding list. This has no effect on any active ",
+"  connection.",
+" ",
+/* Feature: SSH_FEAT_REKEY_MANUAL */
+"SSH V2 REKEY",
+"  Requests that an existing SSH V2 connection generate new session keys.",
+/* Last line must be empty to terminate */
+""
+    };
+    return hmxxssh;
 }

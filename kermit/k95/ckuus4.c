@@ -162,6 +162,10 @@ extern int debtim;
 
 extern int noinit;
 
+#ifdef OS2
+extern int usageparm;  /* Set if we're only going to show usage info and exit */
+#endif /* OS2 */
+
 static char ndatbuf[10];
 
 char *months[] = {
@@ -1680,6 +1684,7 @@ prescan(dummy) int dummy;
                                   startflags |= 16;   /* No Zmodem DLLs */
                                   startflags |= 32;   /* Stdin */
                                   startflags |= 64;   /* Stdout */
+                                  usageparm = 1; /* Showing usage and exiting */
 #endif /* OS2 */
                                   break;
                               case 'd': /* = SET DEBUG ON */
@@ -1788,6 +1793,7 @@ prescan(dummy) int dummy;
                         startflags |= 16;   /* No Zmodem DLLs */
                         startflags |= 32;   /* Stdin */
                         startflags |= 64;   /* Stdout */
+                        usageparm = 1;      /* Showing usage and exiting */
 #endif /* OS2 */
                         break;
                       case 'd':             /* = SET DEBUG ON */
@@ -2000,6 +2006,7 @@ prescan(dummy) int dummy;
                     startflags |= 16;   /* No Zmodem DLLs */
                     startflags |= 32;   /* Stdin */
                     startflags |= 64;   /* Stdout */
+                    usageparm = 1;      /* Showing usage and exiting */
 #endif /* OS2 */
                     break;
 #ifndef NOICP
@@ -5393,12 +5400,8 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
-#if SSH_DLL
-    if (ssh_avail())
+    if (ck_ssh_is_installed())
         printf(" SSH V2 protocol\n");
-#else
-    printf(" SSH V2 protocol\n");
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
