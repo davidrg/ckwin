@@ -1136,7 +1136,11 @@ rlogin-old.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
 
 # Generic stub application. Just launches K95 with a different personality.
 stub.exe: stub.c
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
+    cl /MT stub.c
+!else
     cl stub.c
+!endif
 
 telnet.exe: stub.exe
     copy stub.exe $@
