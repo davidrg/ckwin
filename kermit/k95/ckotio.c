@@ -2185,7 +2185,7 @@ sysinit() {
 #ifndef NOLOCAL
 #ifndef KUI
 #ifdef ONETERMUPD
-    if ( !(inserver && k95stdout) )
+    if ( !k95stdout )
         tidTermScrnUpd = (TID) ckThreadBegin( &TermScrnUpd,
                                           THRDSTKSIZ, 0, TRUE, 0 ) ;
 #endif /* ONETERMUPD */

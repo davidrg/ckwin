@@ -124,6 +124,7 @@ by OpenSSH on modern versions of windows, add the command
   on windows. It's now set to the value used by past Kermit 95 releases by
   default: `\v(common)ssh\known_hosts2`
 * Fixed generation of 4096 RSA SSH keys
+* Fixed stdout parameter not working correctly
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
