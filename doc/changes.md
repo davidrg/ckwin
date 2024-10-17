@@ -109,6 +109,10 @@ by OpenSSH on modern versions of windows, add the command
     single line. This provides better much speed than a line at a time with
     better usability than a screen at a time.
   * Shift+Wheel up/down now scrolls up/down one line
+* Improve exit time when the console version (k95.exe) is just being run to show
+  usage information (`k95.exe -h` or `k95.exe --help`). Previously K95 would 
+  pause for about 5 seconds after printing usage information before returning 
+  you to the shell.
 
 ### Fixed bugs
 * Fix `fopen` causing a crash. This issue seems to have come in some recent 

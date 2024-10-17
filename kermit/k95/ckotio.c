@@ -294,6 +294,11 @@ extern int tt_status[VNUM] ;
 int k95stdin=0,k95stdout=0;
 extern int inserver, local;
 
+/* This is set by prescan() if the -h flag was given. In this case we want to
+ * skip some parts of startup in order to preserve the console and exit
+ * faster */
+int usageparm = 0;
+
 #ifdef CHAR
 #undef CHAR
 #endif /* CHAR */
@@ -1949,7 +1954,11 @@ sysinit() {
 #ifdef IKSD
     if ( !inserver )
 #endif /* IKSD */
-    KbdHandlerInit() ;
+    if ( !usageparm ) {
+        /* If we're just going to show usage info and exit, we don't need a
+         * keyboard handler. Starting it just slows down our escape. */
+        KbdHandlerInit();
+    }
 #endif /* KUI */
 #endif /* NOLOCAL */
 
@@ -1998,8 +2007,7 @@ sysinit() {
 #endif /* NT */
 
     getcmdcolor();
-    os2gettitle(szOldTitle, sizeof(szOldTitle));
-    debug(F110,"sysinit szOldTitle",szOldTitle,0);
+    os2gettitle(szOldTitle, sizeof(szOldTitle));debug(F110,"sysinit szOldTitle",szOldTitle,0);
     os2settitle("", TRUE);
 #endif /* NOLOCAL */
 
