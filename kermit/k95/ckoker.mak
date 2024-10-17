@@ -1134,26 +1134,31 @@ rlogin-old.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
        $(LINKFLAGS) /OUT:$@ rlogin.obj rlogin.res $(LIBS)
 <<
 
-# Generic stub application. Just launches K95 with a different personality.
-stub.exe: stub.obj
+
+telnet.exe: stub.obj telnet.res $(DEF) ckoker.mak
        link.exe @<<
-       $(LINKFLAGS) /OUT:$@ stub.obj $(LIBS)
+       $(LINKFLAGS) /OUT:$@ stub.obj telnet.res $(LIBS)
 <<
 
-telnet.exe: stub.exe
-    copy stub.exe $@
+rlogin.exe: stub.obj rlogin.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj rlogin.res $(LIBS)
+<<
 
-rlogin.exe: stub.exe
-    copy stub.exe $@
+ssh.exe: stub.obj ssh.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj ssh.res $(LIBS)
+<<
 
-ssh.exe: stub.exe
-    copy stub.exe $@
+ftp.exe:  stub.obj ftp.res $(DEF) ckoker.mak
+        link.exe @<<
+        $(LINKFLAGS) /OUT:$@ stub.obj ftp.res $(LIBS)
+<<
 
-ftp.exe: stub.exe
-    copy stub.exe $@
-
-http.exe: stub.exe
-    copy stub.exe $@
+http.exe: stub.obj http.res $(DEF) ckoker.mak
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj http.res $(LIBS)
+<<
 
 se.exe: se.obj se.res $(DEF) ckoker.mak
        link.exe @<<
@@ -1651,6 +1656,15 @@ telnet.res: telnet.rc cknver.h
 
 rlogin.res: rlogin.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo rlogin.res rlogin.rc
+
+ssh.res: ssh.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo ssh.res ssh.rc
+
+http.res: http.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo http.res http.rc
+
+ftp.res: ftp.rc cknver.h
+        rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo ftp.res ftp.rc
 
 se.res: se.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo se.res se.rc

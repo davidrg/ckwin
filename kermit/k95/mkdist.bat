@@ -34,7 +34,6 @@ ren dist\cknker.exe.manifest k95.exe.manifest
 del dist\cknker.exe.manifest
 REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
 move dist\ckwart.exe .\
-move dist\stub.exe .\
 move dist\telnet-old.* .\
 move dist\rlogin-old.* .\
 if not exist dist\ssh.dll move dist\ssh.exe .\
