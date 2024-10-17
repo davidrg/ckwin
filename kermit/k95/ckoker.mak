@@ -1136,6 +1136,9 @@ rlogin-old.exe: rlogin.obj rlogin.res $(DEF) ckoker.mak
 
 # Generic stub application. Just launches K95 with a different personality.
 stub.exe: stub.obj
+       link.exe @<<
+       $(LINKFLAGS) /OUT:$@ stub.obj $(LIBS)
+<<
 
 telnet.exe: stub.exe
     copy stub.exe $@
