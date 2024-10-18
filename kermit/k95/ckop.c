@@ -47,7 +47,7 @@ extern int rpackets, spackets, spktl, rpktl, what ;
 #ifdef XYZ_DLL
 #ifdef OS2
 static HMODULE dll_handle;
-typedef U32 (* _System p_transfer_t)(P_CFG *);
+typedef U32 (_System * p_transfer_t)(P_CFG *);
 p_transfer_t p_transfer = NULL;
 #endif /* OS2 */
 

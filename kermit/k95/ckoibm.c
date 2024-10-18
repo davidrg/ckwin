@@ -60,8 +60,10 @@
 #include <sys/select.h>
 
 #ifdef __WATCOMC__
+#ifndef TCPV40HDRS
 #include <tcpustd.h>
 #include <arpa/inet.h>
+#endif /* TCPV40HDRS */
 #endif
 
 #define CK_DLL
@@ -990,6 +992,10 @@ int ENTRY ck_getsockname( int socket, struct ck_sockaddr * name, int * namelen )
 }
 
 #ifdef __SOCKET_32H
+
+/* This is missing from the headers on the OS/2 Warp 4 CD-ROM */
+void _System addsockettolist(int);
+
 int ENTRY ck_addsockettolist( int socket )
 {
     int rc = 0 ;

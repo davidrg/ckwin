@@ -11020,7 +11020,30 @@ setlin(xx, zz, fc) int xx, zz, fc;
                         );
         }
 #endif /* NETDLL */
-
+#ifdef CK_NETBIOS
+        if (mynet == NET_BIOS) {
+            /*
+             * TODO:
+             *   "server name, *,\n or carriage return to close an open connection" :
+             *   "server name, *,\n or carriage return to resume an open connection",
+             */
+            x = cx_net(mynet,	/* nettype */
+			   0,		/* protocol (not used) */
+			   line,	/* host */
+			   "",		/* port */
+			   NULL,	/* alternate username */
+			   NULL,	/* password */
+			   NULL,	/* command to execute */
+			   0,		/* param1 */
+			   0,		/* param2 */
+			   0,		/* param3 */
+			   cx,		/* enter CONNECT mode */
+			   sx,		/* enter SERVER mode */
+			   zz,		/* close connection if open */
+			   0		/* gui */
+			   );
+        }
+#endif /* CK_NETBIOS */
 #ifdef NPIPE                            /* Named pipe */
         if (mynet == NET_PIPE) {        /* Needs backslash twiddling */
             if (line[0]) {

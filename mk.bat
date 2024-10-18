@@ -7,6 +7,9 @@ REM  - C-Kermit Console (k95.exe) and associated utilities (iksd.exe, iksdsvc.ex
 REM  - The Dialer (k95dial.exe) and registry tool (k95regtl.exe) - only if zinc has been built.
 REM To collect build artifacts, run mkdist
 
+echo Clean distribution folders...
+call clean-dist.bat
+
 if "%BUILD_ZINC%" == "yes" goto :buildzinc 
 goto :buildp
 
