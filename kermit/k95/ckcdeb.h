@@ -7200,7 +7200,11 @@ typedef unsigned long DWORD_PTR;
  */
 #ifdef OS2
 #ifdef CK_HAVE_INTPTR_T
+#ifdef NT
 #define CK_TTYFD_T intptr_t
+#else /* NT */
+#define CK_TTYFD_T int
+#endif /* NT */
 #else /* CK_HAVE_INTPTR_T */
 #define CK_TTYFD_T int
 #endif /* CK_HAVE_INTPTR_T */

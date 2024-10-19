@@ -345,11 +345,32 @@ COMPILER_VERSION = Open Watcom
 # command line arguments.
 MSC_VER = 0
 
+# Buit different versions still support different features. So we may still
+# need to know *what* version of Open Watcom we're dealing with.
+OWCC_VER = 0
+
 # Nothing supports PowerPC OS/2.
 TARGET_CPU = x86
 TARGET_PLATFORM = OS/2
 
 # Override CL so we don't end up running the Visual C++ clone cl.
 CL = wcl386
+
+# We still need to know if this is Open Watcom 1.9 or the 2.0 fork. We don't
+# bother to check for Watcom versions older than 1.9 as even 1.9 really
+# struggles to build Kermit 95 due to compiler bugs
+!IF ([wcc386 . <nul | findstr /C:"Version 1.9" > nul] == 0)
+# Open Watcom 1.9
+!message Open Watcom version: 1.9
+OWCC_VER = 19
+!ELSEIF ([wcc386 . <nul | findstr /C:"Version 2.0 beta" > nul] == 0)
+# Open Watcom 2.0 beta.
+!message Open Watcom version: 2.0 beta
+
+OWCC_VER = 20
+
+# Open Watcom 2.0 has intptr_t
+CKB_HAVE_INTPTR_T=yes
+!ENDIF
 
 !ENDIF
