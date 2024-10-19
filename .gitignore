@@ -319,3 +319,6 @@ kermit/k95/p_servic.znc
 /kerberos/kfw41
 /rexx/*
 
+# Dist directories
+dist-os2
+dist

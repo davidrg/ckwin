@@ -144,7 +144,12 @@ struct ck_servent
   #endif
 #else
   #ifdef __32BIT__
-  #define SYSTEM _System
+  #  ifdef __WATCOMC__
+  #    define ENTRY _System
+  #    define SYSTEM
+  #  else /* __IBMC__ */
+  #    define SYSTEM _System
+  #  endif /* if __WATCOMC__ */
   #else
   #define SYSTEM
   #endif

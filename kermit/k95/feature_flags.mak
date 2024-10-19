@@ -59,6 +59,9 @@ ENABLED_FEATURE_DEFS = -DDOSYSLOG -DDOARROWKEYS
 # type /interpret doesn't work on windows currently.
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 
+# ==============================================================================
+# ############################# Platform: WIN32 ################################
+# ==============================================================================
 !if "$(PLATFORM)" == "NT"
 WIN32_VERSION=0x0400
 
@@ -189,6 +192,9 @@ RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT_COMPATIBLE
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_XP_COMPATIBLE
 !endif
 
+# ==============================================================================
+# ############################# Platform: OS/2 #################################
+# ==============================================================================
 !else
 
 # OS/2 gets NetBIOS support!
@@ -198,13 +204,6 @@ CKF_NETBIOS=yes
 CKF_MOUSEWHEEL=no
 
 !if ("$(CMP)" == "OWCL") || ("$(CMP)" == "OWWCL")
-# But not when building with Open Watcom. At the moment it causes Kermit/2 to
-# crash on startup at ckonbi.c:152
-!message Turning NetBIOS support off - Open Watcom builds just crash with it enabled.
-CKF_NETBIOS=no
-
-!message Turning X/Y/Z MODEM support off - build errors with Open Watcom need fixing
-CKF_XYZ=no
 
 !message Turning SRP off - no Watcom support for it yet.
 CKF_SRP=no
@@ -212,6 +211,11 @@ CKF_SRP=no
 
 !message Turning Kerberos off - no Watcom support yet.
 CKF_K4W=no
+
+!if ($(OWCC_VER) >= 20)
+# Open Watcom 2.0 Beta knows about intptr_t
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_INTPTR_T
+!endif
 
 !endif
 
@@ -224,6 +228,10 @@ CKF_DYNAMIC_SSH=yes
 CKF_SSH_BACKEND=no
 !endif
 !endif
+
+# ==============================================================================
+# ############################# Platform: Any  #################################
+# ==============================================================================
 
 !if "$(MIPS_CENTAUR)" == "yes"
 !message Turning X/Y/Z MODEM support off - build errors need fixing with this compiler

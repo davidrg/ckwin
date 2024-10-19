@@ -7,6 +7,9 @@
 @del %src_base%\*.ilk
 @del %src_base%\*.pdb
 @del %src_base%\*.obj
+del %src_base%\cko32i*.dll
+del %src_base%\k95ssh*.dll
+del %src_base%\nullssh.dll
 @del %src_base%\k95ssh.dll
 @del %src_base%\nullssh.dll
 @del %src_base%\k95crypt.dll

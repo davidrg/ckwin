@@ -1,9 +1,17 @@
 # Building Kermit 95 for OS/2 (Kermit/2) from Source
 
-To build Kermit 95 for OS/2 you need Open Watcom version 1.9. The Open Watcom 2.0
-fork may work but has not been tested. 
+Kermit 95 for OS/2 was previously built with IBM C/C++ 3.6 (included with
+IBM VisualAge C/C++ 4.0), and _may_ still be buildable with this or, with
+some makefile adjustments, earlier versions down to C/C++ 2.0.
 
-## Cross-compiling from Windows
+The Kermit Project no longer has access to any of these compilers and
+compatibility has not been tested since 2002 so the build process is unlikely
+to be smooth. If you have access to IBM C/C++ 2.0+ it may be worth trying 
+([let us know how you get on](https://github.com/davidrg/ckwin/discussions/new?category=general) 
+if you do), but using Open Watcom 1.9 will be easiest. The Open Watcom 2.0
+fork may also work, but it has not been tested.
+
+## Cross-compiling from Windows with Open Watcom
 This is the recommended method for building Kermit 95 for OS/2.
 
 ### Build Process
@@ -39,7 +47,7 @@ dist-os2 subdirectory:
 | rlogin.exe   | RLogin stub (launches k2.exe as a rlogin client) |
 
 
-## Building on OS/2
+## Building on OS/2 with Open Watcom
 
 The recommended method is to cross-compile from Windows as this is the only
 method that is tested regularly. Doing builds *on* OS/2 is really only supported

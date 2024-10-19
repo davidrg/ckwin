@@ -12,7 +12,9 @@ REM So we'll temporarily replace these with with values suitable for
 REM cross-compiling OS/2 applications and restore them at the end
 
 set OLDINCLUDE=%INCLUDE%
-set INCLUDE=%WATCOM%\H;%WATCOM%\H\OS2;%CKINCLUDE%
+set INCLUDE=%CKINCLUDE%;%WATCOM%\H;%WATCOM%\H\OS2;
+
+echo %INCLUDE%
 
 if not exist os2\NUL mkdir os2
 move os2\*.obj . > nul

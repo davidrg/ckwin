@@ -442,6 +442,39 @@ USHORT
 netbios_avail(BOOL Netbeui)
 {
     int rc=0;
+#ifdef __WATCOMC__
+    /* The Open Watcom C compiler has a bug of sorts where it fails to account
+     * for the fact that DosQueryProcAddr (called by loadapi) returns a 0:32
+     * flat address of a 16bit entry point. The IBM compiler automatically
+     * converts this to 16:16, but Watcom C does not.
+     *
+     * Casting the 0:32 pointer to void* forces the pointer to be converted to
+     * 16:16 working around the problem. This workaround was found by MichalN.
+     */
+    PFN fn_adr;
+
+    if(!Netbeui)
+    {
+        if(!netbios) {
+            rc=loadapi("ACSNETB","NETBIOS",&fn_adr);
+            netbios = (void*)fn_adr;
+        }
+    } /* end if */
+    else
+    {
+        if(!netbios_Submit)
+        {
+            rc|=loadapi("NETAPI","NETBIOSSUBMIT",&fn_adr);
+            netbios_Submit = (void*)fn_adr;
+            rc|=loadapi("NETAPI","NETBIOSCLOSE", &fn_adr );
+            netbios_Close = (void*)fn_adr;
+            rc|=loadapi("NETAPI","NETBIOSOPEN",  &fn_adr  );
+            netbios_Open = (void*)fn_adr;
+            rc|=loadapi("NETAPI","NETBIOSENUM",  &fn_adr  );
+            netbios_Enum = (void*)fn_adr;
+        } /* end if */
+    } /* end else */
+#else /* __IBMC__ */
     if(!Netbeui)
     {
         if(!netbios)
@@ -457,6 +490,7 @@ netbios_avail(BOOL Netbeui)
             rc|=loadapi("NETAPI","NETBIOSENUM",  (PFN *) &netbios_Enum  );
         } /* end if */
     } /* end else */
+#endif /* __WATCOMC__ */
     debug(F111,"ckonbi:netbios_avail","rc",rc);
     return rc;
 }
