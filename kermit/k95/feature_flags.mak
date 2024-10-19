@@ -192,6 +192,40 @@ RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_NT_COMPATIBLE
 RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dCKT_XP_COMPATIBLE
 !endif
 
+
+!if "$(MIPS_CENTAUR)" == "yes"
+!message Turning X/Y/Z MODEM support off - build errors need fixing with this compiler
+CKF_XYZ=no
+!endif
+
+!if "$(TARGET_CPU)" == "MIPS"
+# "Visual C++ 10.00.5292X for MIPS R-Series" can't build ckntap.c for
+# some reason. So just turn TAPI support off. You get errors about illegal
+# type conversions and tree nodes not being evaluated.
+!message Targeting NT-MIPS: Forcing TAPI support OFF
+CKF_TAPI=no
+!endif
+
+# Disable debug logging on PowerPC to avoid link error LNK1176: TOC size limit exceeded
+# (turns out PowerPC has a maximum number of global symbols)
+!if "$(TARGET_CPU)" == "PPC"
+!message Targeting NT-PowerPC: Forcing debug logging OFF to avoid exceeding TOC size limit
+CKF_DEBUG=no
+!endif
+
+# Almost certainly won't build
+# TODO: Make it build (probably *a lot* of work)
+CKF_NT_UNICODE=no
+
+# DECnet requires an x86 or Alpha CPU and is only available on Window Server
+# 2003 and older. This means Visual C++ 2019 or older.
+!if ("$(TARGET_CPU)" == "x86" || "$(TARGET_CPU)" == "AXP") && $(MSC_VER) < 193
+CKF_DECNET=yes
+!else
+CKF_DECNET=no
+!endif
+
+
 # ==============================================================================
 # ############################# Platform: OS/2 #################################
 # ==============================================================================
@@ -233,37 +267,6 @@ CKF_SSH_BACKEND=no
 # ############################# Platform: Any  #################################
 # ==============================================================================
 
-!if "$(MIPS_CENTAUR)" == "yes"
-!message Turning X/Y/Z MODEM support off - build errors need fixing with this compiler
-CKF_XYZ=no
-!endif
-
-!if "$(TARGET_CPU)" == "MIPS"
-# "Visual C++ 10.00.5292X for MIPS R-Series" can't build ckntap.c for
-# some reason. So just turn TAPI support off. You get errors about illegal
-# type conversions and tree nodes not being evaluated.
-!message Targeting NT-MIPS: Forcing TAPI support OFF
-CKF_TAPI=no
-!endif
-
-# Disable debug logging on PowerPC to avoid link error LNK1176: TOC size limit exceeded
-# (turns out PowerPC has a maximum number of global symbols)
-!if "$(TARGET_CPU)" == "PPC"
-!message Targeting NT-PowerPC: Forcing debug logging OFF to avoid exceeding TOC size limit
-CKF_DEBUG=no
-!endif
-
-# Almost certainly won't build
-# TODO: Make it build (probably *a lot* of work)
-CKF_NT_UNICODE=no
-
-# DECnet requires an x86 or Alpha CPU and is only available on Window Server
-# 2003 and older. This means Visual C++ 2019 or older.
-!if ("$(TARGET_CPU)" == "x86" || "$(TARGET_CPU)" == "AXP") && $(MSC_VER) < 193
-CKF_DECNET=yes
-!else
-CKF_DECNET=no
-!endif
 
 # Build and use wart to generate ckcpro.c from ckcpro.w unless we're told
 # not to
