@@ -78,6 +78,13 @@ by OpenSSH on modern versions of windows, add the command
 * New screen scroll kverbs:
   * `\Kuphscn` - Scroll up half a screen
   * `\Kdnhscn` - Scroll down half a screen
+* IBM OS/2 support is back! It should work on IBM OS/2 2.0 or newer with 
+  optional TCP/IP support provided by IBM TCP/IP 2.0 or newer. No SSH or 
+  Presentation Manager GUI as in past Kermit/2 releases. Additionally:
+  * No PC/TCP 1.2 or IBM TCP/IP 1.2.1 support (no SDK license; the DLLs from 
+    K95 1.2.1 should work if you need it)
+  * No dialer (crashes when built with Open Watcom)
+  * No NetBIOS (crashes when built with Open Watcom)
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
