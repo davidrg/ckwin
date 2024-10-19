@@ -61,19 +61,14 @@ requirement:
 
 OS/2 Support
 ------------
-The last release to officially support OS/2 was v2.1.2 released in 2002 and built 
-with some version of IBMs VisualAge C++ compiler. The Kermit Project no longer has
-access to this compiler so it is currently unknown if it still works or if changes 
-in the last 22 years have introduced problems.
 
-While waiting for a copy of VisualAge C++ to appear on ebay, some work has gone in
-to getting K95 building with Open Watcom. Most of it now builds, and if you disable
-enough features and compiler optimisation it even runs, but there are a number of 
-outstanding issues (see ticket [#8](https://github.com/davidrg/ckwin/issues/8))
-which need fixing before its worth including OS/2 binaries in beta releases. 
+Kermit 95 3.0 beta 7 should work on IBM OS/2 2.0 or newer. Optional TCP/IP
+support should work with IBM TCP/IP 2.0 or newer. 
 
-It is *hoped* these will be resolved for the final release, but no one currently 
-involved in the Kermit Project has any OS/2 development experience.
+There are still a number of outstanding issues caused by the switch from IBM
+C/C++ 3.6 (for which the project has no license) to Open Watcom 1.9 (see issue 
+[#8](https://github.com/davidrg/ckwin/issues/8)), but none of these affect
+making basic telnet or serial connections.
 
 Supported Terminal Emulations
 -----------------------------
