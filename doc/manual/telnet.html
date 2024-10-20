@@ -10,13 +10,13 @@ The Kermit Project<br>
 Columbia University
 <p>
 <dt><b>Most recent update:</b>
-<dd>4 June 2002
+<dd>4 June 2002. Broken links fixed 20 October 2024.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
 
 <h3><a name="contents">CONTENTS</a></h3>
 <ol>
@@ -38,7 +38,7 @@ Columbia University
 The Telnet protocol is one of the original protocols developed for the
 ARPANET, the precursor to today's Internet.  Telnet has evolved since the
 early 1970s due to the extensibility provided by its "option" model.  To quote
-<a href="ftp://ftp.isi.edu/in-notes/rfc854.txt">RFC854</a>:
+<a href="https://www.rfc-editor.org/rfc/rfc854.html">RFC854</a>:
 
 <p>
 
@@ -67,8 +67,8 @@ and timing dependencies that require increased sophistication from both client
 and server even though the original Telnet protocol specification did not 
 change.
 <p>
-Prior to <a href="http://www.columbia.edu/kermit/ckermit70.html">C-Kermit 7.0</a>
-and <a href="http://www.columbia.edu/kermit/k95next.html">K95 1.1.19</a>,
+Prior to <a href="http://kermitproject.org/ckermit70.html">C-Kermit 7.0</a>
+and K95 1.1.19,
 Kermit implemented Telnet protocol by opening a connection to the host and
 then transmitting the options that it supported.  What happened next was
 determined by how the connection was being used.  If the user told Kermit to:
@@ -150,9 +150,9 @@ modified for different connection types; the telnet negotiations should be
 transparent to the script.  In C-Kermit 7.0 and Kermit 95 1.1.18 they are.
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="options"><hr>2. SUPPORTED TELNET OPTIONS</a></h3>
 
@@ -164,7 +164,7 @@ transparent to the script.  In C-Kermit 7.0 and Kermit 95 1.1.18 they are.
 
 <dl>
 <dt><b>AUTHENTICATION (Authenticate end user to host)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc2941.txt">RFC2941</a>]</b> <dd>The
+[<a href="https://www.rfc-editor.org/rfc/rfc2941.html">RFC2941</a>]</b> <dd>The
 AUTHENTICATION option is used to determine which if any authentication method
 such as Kerberos 4, Kerberos 5, Secure Remote Password, etc, should be used to
 authenticate the user to the host.
@@ -172,7 +172,7 @@ authenticate the user to the host.
 <p>
 
 <dt><b>BINARY (Binary Transmission Mode)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc856.txt">RFC856</a>]</b> <dd>When a
+[<a href="https://www.rfc-editor.org/rfc/rfc856.html">RFC856</a>]</b> <dd>When a
 telnet session is initiated, the connection is in Network Virtual Terminal
 (NVT) mode.  NVT mode provides for special treatment of the carriage return
 (CR) control character to provide for deterministic parsing of the input
@@ -207,7 +207,7 @@ and return to NVT mode when the transfer is completed.
 <p>
 
 <dt><b>COM-PORT-CONTROL (Remote Serial Port device control)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc2217.txt">RFC2217</a>]</b> <dd>This
+[<a href="https://www.rfc-editor.org/rfc/rfc2217.html">RFC2217</a>]</b> <dd>This
 option is designed for use with reverse terminal servers and other network
 services that share serial line devices such as modems across the network.  A
 long term issue has been the need for the network administrator to
@@ -225,7 +225,7 @@ respond to changes in the modem or serial line properties.
 <p>
 
 <dt><b>ECHO (Echo Mode)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc857.txt">RFC857]</a></b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc857.html">RFC857</a>]</b></dt>
 
 <dd>When a telnet session is initiated, data is not echoed by the receiver.
 This means that a telnet client must echo each character locally as
@@ -250,7 +250,7 @@ will always respond WONT ECHO to a DO ECHO request when it is the client.
 <p>
 
 <dt><b>ENCRYPTION (Encrypt session)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc2946.txt">RFC2946</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc2946.html">RFC2946</a>]</b></dt>
 
 <dd>The ENCRYPTION option is used in conjunction with the AUTHENTICATE option
 to encrypt all the data transmitted during the session if START_TLS is not
@@ -260,7 +260,7 @@ direction.
 <p>
 
 <dt><b>FORWARD X (Forward X Windows Systems data with X authorization)
-[Internet-Draft]</b></dt>
+[<a href="https://datatracker.ietf.org/doc/html/draft-altman-telnet-fwdx-03">Internet-Draft</a>]</b></dt>
 
 <dd>The FORWARD X option (developed by the Kermit Project) allows the
 telnet server to redirect all output from X Windows clients and 
@@ -273,7 +273,7 @@ Server.  Unauthorized connections are rejected.
 <p>
 
 <dt><b>KERMIT (Synchronize Kermit File Transfers)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc2840.txt">RFC2840</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc2840.html">RFC2840</a>]</b></dt>
 
 <dd>The Kermit option (developed by the Kermit Project) is designed to 
 allow a Kermit file-transfer client and a Kermit server to synchronize
@@ -283,7 +283,7 @@ versa.
 
 <p>
 <dt><b>LOGOUT (Logout user from host)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc727.txt">RFC727</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc727.html">RFC727</a>]</b></dt>
 
 <dd>Some operating systems such as VMS support the notion of a login session
 that can continue across separate telnet connections.  If a telnet 
@@ -300,7 +300,7 @@ due to a network error.
 <p>
 
 <dt><b>NAWS (Negotiate About Window Size)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc1073.txt">RFC1073</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc1073.html">RFC1073</a>]</b></dt>
 
 <dd>The Negotiate About Windows Size (NAWS) lets the client report its current
 Window size to the host.  Every time the client's window size changes, the new
@@ -310,7 +310,7 @@ to report a window size to the client.
 <p>
 
 <dt><b>NEW ENVIRONMENT (Report Environment to host)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc1572.txt">RFC1572</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc1572.html">RFC1572</a>]</b></dt>
 
 <dd>The NEW ENVIRONMENT option is used by the client to reply to requests 
 from the server for either all or specified environment variables such
@@ -322,7 +322,7 @@ password prompt.
 <p>
 
 <dt><b>SEND LOCATION (Send Terminal Location)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc779.txt">RFC779</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc779.html">RFC779</a>]</b></dt>
 
 <dd>The Send Location option provides the host with a method for requesting
 the location of the telnet client.  When a location string has been
@@ -332,7 +332,7 @@ this string to the host upon request.
 <p>
 
 <dt><b>START TLS (Transmit Telnet over TLS)
-[<a href="http://search.ietf.org/internet-drafts/draft-ietf-tn3270e-telnet-tls-05.txt">Internet-Draft</a>]</b></dt>
+[<a href="https://datatracker.ietf.org/doc/html/draft-ietf-tn3270e-telnet-tls-05">Internet-Draft</a>]</b></dt>
 
 <dd>The START TLS option is used by the client and server to determine whether
 the telnet session should be restarted after first establishing a TLSv1
@@ -345,7 +345,7 @@ ENCRYPTION option.
 <p>
 
 <dt><b>SUPPRESS GO AHEAD (Suppress Go Ahead commands)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc858.txt">RFC858</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc858.html">RFC858</a>]</b></dt>
 
 <dd>When a telnet session is initiated, all data transmitted by the sender is
 to be followed by a Go Ahead (GA) command sequence.  This is to enable telnet
@@ -359,7 +359,7 @@ transmission of the GA commands and treat the connection as full duplex
 <p>
 
 <dt><b>TERMINAL TYPE (Negotiate Terminal Type)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc1091.txt">RFC1091</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc1091.html">RFC1091</a>]</b></dt>
 
 <dd>The Terminal Type option allows the client and server to agree to a common
 terminal type that they both support.  C-Kermit reports the value of the local
@@ -370,7 +370,7 @@ host decides which one to use.
 <p>
 
 <dt><b>XDISPLOC (Report X Window Display location)
-[<a href="ftp://ftp.isi.edu/in-notes/rfc1096.txt">RFC1096</a>]</b></dt>
+[<a href="https://www.rfc-editor.org/rfc/rfc1096.html">RFC1096</a>]</b></dt>
 
 <dd>The X Windows display option is used to report to the host the address of
 the local X Windows Server.  Kermit sends the contents of the local DISPLAY
@@ -380,9 +380,9 @@ DISPLAY command.  XDISPLOC is not used if FORWARDX is negotiated.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="managing"><hr>3. TELNET OPTION MANAGEMENT</a></h3>
 
@@ -497,9 +497,9 @@ The SET TELOPT command should be used instead of the older commands:
 which are now considered obsolete (but still supported).
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="summary"><hr>4. TELNET COMMAND SUMMARY</h3>
 
@@ -757,7 +757,7 @@ default.
 machine.  The default value is determined by Kermit.  Typical values
 are "UNIX", "VMS", "WIN32", and "OS2".
 </dl><p>
-See <a href="ftp://ftp.isi.edu/in-notes/rfc1572.txt">RFC1572</a> for further
+See <a href="https://www.rfc-editor.org/rfc/rfc1572.html">RFC1572</a> for further
 details.
 <p>
 <dt><tt><b>SET TELNET LOCATION</b> <i>[ text ]</i></tt></dt>
@@ -823,9 +823,9 @@ the host is not responding to set this option of OFF.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="problems"><a name="x5"><hr>
 5. DIAGNOSING AND FIXING PROBLEMS CONNECTING TO TELNET SERVERS</a></a></h3>
@@ -860,9 +860,9 @@ protocol as described in the IETF RFCs.  Here are some of the most common
 bugs and the workarounds that Kermit provides the user to avoid them.
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.1"><hr>5.1 BUG: Telnet Server does not respond to telnet options.</a></h4>
 
@@ -923,9 +923,9 @@ command.  For instance:
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.2"><hr>5.2 BUG: Server sends a subnegotiation without negotiating the option</a></h4>
 
@@ -995,9 +995,9 @@ as if it were:
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.3"><hr>5.3 BUG: Server sends DO TERM_TYPE but then never asks for the terminal type.</a></h4>
 
@@ -1028,9 +1028,9 @@ indeed been negotiated.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.4"><hr>5.4 BUG: Server negotiates BINARY mode in one direction but uses it in both.</a></h4>
 
@@ -1068,9 +1068,9 @@ to instruct Kermit to follow the broken behavior.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.5"><hr>5.5 PROBLEM: Long login times</a></h4>
 
@@ -1097,9 +1097,9 @@ entry for reverse lookups (IP address to name).
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.6"><hr>5.6 PROBLEM:
 The Telnet Server does not display a "login:" prompt</a></h4>
@@ -1135,9 +1135,9 @@ to specify your name on the host; or disable this option with:
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.7"><hr>5.7 BUG: The host echos input but never negotiates WILL ECHO</a></h4>
 
@@ -1169,9 +1169,9 @@ SET TELOPT ECHO REFUSE
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.8"><hr>5.8 BUG: BSDI BSD/OS 3.1 Telnetd improperly implements WILL BINARY mode</a></h4>
 
@@ -1189,7 +1189,7 @@ mode refuses to transmit CR control characters.  The man page for telnetd
 states, "Binary mode has no common interpretation except between similar
 operating systems (Unix in this case)."  The implementors clearly have
 misread 
-<a href="ftp://ftp.isi.edu/in-notes/rfc856.txt">RFC856</a>
+<a href="https://www.rfc-editor.org/rfc/rfc856.html">RFC856</a>
 (TELNET BINARY TRANSMISSION) which clearly states that
 the only affect that BINARY mode has on the channel is to disable NVT
 (network virtual terminal) handling of CR (CR no longer must be followed
@@ -1207,9 +1207,9 @@ allowed to negotiate WILL BINARY.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.9"><hr>5.9 PROBLEM: The host supports Telnet AUTH but you wish to login manually</a></h4>
 
@@ -1242,9 +1242,9 @@ Kermit to refuse to authenticate.
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.10"><hr>5.10 PROBLEM:  Applications on the host are unable to open the X Windows DISPLAY</a></h4>
 
@@ -1304,9 +1304,9 @@ following commands:
 </pre></dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.11"><hr>5.11 PROBLEM: The Telnet Server is the Microsoft Windows 2000 Telnet Service</a></h4>
 
@@ -1429,9 +1429,9 @@ If you are using C-Kermit:
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h4><a name="x5.12"><hr>5.12 PROBLEM: The Telnet Server is Seattle Lab's SLNet Telnet Server for NT</a></h4>
 
@@ -1464,7 +1464,7 @@ SLNet Telnet Server does not respond to the refusal:
 </pre>
 <p>
 <dt><b>Problem 2:</b>
-<dd>As per <a href="ftp://ftp.isi.edu/in-notes/rfc855.txt">RFC 855</a>, 
+<dd>As per <a href="https://www.rfc-editor.org/rfc/rfc855.html">RFC 855</a>,
 Telnet requires a default WONT or DONT response for
 any telnet option that is not supported or recognized.  The SLNet Telnet
 server does not respond in either an affirmative or negative manner to
@@ -1505,10 +1505,10 @@ already been agreed to.  In particular, the SLNet server retransmits
 </pre>
 <p>
 after these negotiations were already agreed to.  As per 
-<a href="ftp://ftp.isi.edu/in-notes/rfc855.txt">RFC 855</a>, a
+<a href="https://www.rfc-editor.org/rfc/rfc855.html">RFC 855</a>, a
 telnet option state command (WILL, WONT, DO, DONT) MUST NOT be sent unless it
 results in a change of state.  
-<a href="ftp://ftp.isi.edu/in-notes/rfc1143.txt">RFC 1143 "The Q Method of
+<a href="https://www.rfc-editor.org/rfc/rfc1143.html">RFC 1143 "The Q Method of
 Implementing Telnet Option Negotiation"</a> provides extensive hints on how to
 properly construct a telnet state machine to adhere to the rules of the Telnet
 protocol.
@@ -1528,16 +1528,15 @@ Kermit must be told to:
 </dl>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/ckermit.html">C-Kermit</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 <p>
 
 <hr>
 <address>
 C-Kermit 8.0 and Kermit 95 2.0 Telnet Protocol /
-Columbia University /
-kermit@columbia.edu /
+The Kermit Project /
 4 June 2002
 </address>
 </body>
