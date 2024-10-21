@@ -692,10 +692,23 @@ Change logs going back to the release of the first version in October 1995 (1.1)
    * Last free release before it was renamed [Kermit 95 for OS/2](https://www.columbia.edu/kermit/os2.html), ported to Windows and sold commercially
  * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
    * Last release to include 16-bit OS/2 1.x support
+   * Last release for which source code was publicly available until the Kermit 95 2.2 code was open-sourced in 2011
  * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
  * [OS/2 C-Kermit 5A(188) (update)](https://groups.google.com/g/comp.os.os2.apps/c/DesD23imeHI/m/I6-udyEnNhAJ) - 3 February 1993
  * [OS/2 C-Kermit 5A(188)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
- * OS/2 C-Kermit 4F(091) - ??
+ * [OS/2 C-Kermit 5A(179)](https://groups.google.com/g/fj.kermit/c/rG6d5lpJilI/m/b94gm9h4XgIJ) - 14 February 1992
+ * OS/2 C-Kermit 4F(091) (OS/2 Kermit 1.00) - ??
+   * Probably not an "official release" - by this point the OS/2 code was just part of the regular C-Kermit codebase
+   * Files: [ckoker.doc](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.doc),
+            [ckoker.bwr](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.bwr),
+            [ckoker.boo](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.boo) (encoded version of kermit.exe, see [ckboo.txt](https://www.columbia.edu/kermit/ftp/boo/ckboo.txt))
  * [OS/2 C-Kermit 4E(070) (OS/2 Kermit 1.00)](https://groups.google.com/g/comp.protocols.kermit/c/BXydCmAjmxo/m/jBWCa9BNkvwJ) - 10 May 1989
- * [OS/2 C-Kermit 1.0p](https://groups.google.com/g/comp.protocols.kermit/c/M8vYD4F-nBc/m/N4WrA1DpwaIJ) - 15 March 1989
+   * First release for which the OS/2 code was publicly available. 
+ * [OS/2 C-Kermit 4E(070) (OS/2 beta test version 1.0p](https://groups.google.com/g/comp.protocols.kermit/c/M8vYD4F-nBc/m/N4WrA1DpwaIJ) - 15 March 1989
+   * For OS/2 1.0+: 
+     [ckoker.ann](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.ann),
+     [ckoker.boo](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.boo) (encoded version of ckoker.exe, see [ckboo.txt](https://www.columbia.edu/kermit/ftp/boo/ckboo.txt)),
+     [ckoker.bwr](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.bwr),
+     [ckoker.doc](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.doc)
+ * [OS/2 C-Kermit 1.0b](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.ann) - 5 August 1988
  * [OS/2 C-Kermit 1.0a](https://groups.google.com/g/comp.protocols.kermit/c/KZ0P49Za-JA/m/ZpzhtBJOyT4J) - 29 July 1988
