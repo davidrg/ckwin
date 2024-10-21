@@ -693,5 +693,9 @@ Change logs going back to the release of the first version in October 1995 (1.1)
  * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
    * Last release to include 16-bit OS/2 1.x support
  * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
- * [OS/2 C-Kermit 5A(?)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
-
+ * [OS/2 C-Kermit 5A(188) (update)](https://groups.google.com/g/comp.os.os2.apps/c/DesD23imeHI/m/I6-udyEnNhAJ) - 3 February 1993
+ * [OS/2 C-Kermit 5A(188)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
+ * OS/2 C-Kermit 4F(091) - ??
+ * [OS/2 C-Kermit 4E(070) (OS/2 Kermit 1.00)](https://groups.google.com/g/comp.protocols.kermit/c/BXydCmAjmxo/m/jBWCa9BNkvwJ) - 10 May 1989
+ * [OS/2 C-Kermit 1.0p](https://groups.google.com/g/comp.protocols.kermit/c/M8vYD4F-nBc/m/N4WrA1DpwaIJ) - 15 March 1989
+ * [OS/2 C-Kermit 1.0a](https://groups.google.com/g/comp.protocols.kermit/c/KZ0P49Za-JA/m/ZpzhtBJOyT4J) - 29 July 1988
