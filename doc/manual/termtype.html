@@ -18,6 +18,11 @@ with several <a href="#restrictions">restrictions</a></a>:
 
 <p>
 
+<dt><b>ADM5</b>
+<dd>The Lear-Siegler ADM-5 terminal.
+
+<p>
+
 <dt><b>AIXTERM</b>
 <dd>For accessing IBM AIX systems.  Compatible with the AIXTERM window on AIX
 workstations, and the AIXTERM termcap / terminfo entry.
@@ -26,13 +31,14 @@ workstations, and the AIXTERM termcap / terminfo entry.
 
 <dt><b>ANNARBOR</b>
 
-<p>Partial emulation of the Ann Arbor Ambassador terminal, sufficient for
+<dd>Partial emulation of the Ann Arbor Ambassador terminal, sufficient for
 ordinary "termcap"-like applications, but not recommended for general Ann
 Arbor emulation; numerous Ann-Arbor-specific features are not presently
 supported, including multiple memory regions, moveable regions, per-line
 tab stops, alternate cursor, the Ann Arbor keyboard with 64 separate
 shift states per key, host-customizable printer controls, forms, etc.
 
+<p>
 <dt><b>ANSI-BBS <a href="#ansi">(*)</a></b>
 
 <dd>For accessing most BBSs.  8 bits, color, line- and box-drawing, "ANSI
@@ -367,7 +373,7 @@ Also note that terminals and PCs provide no way to <i>type</i> line- and
 box-drawing characters.  Thus if you need to create files that contain them
 from the keyboard, you must use the SET KEY command to assign their values to
 the keys of your choice.  (The Alt-digit-digit-digit technique can not be used
-in K95; see BUGS.TXT item 132.)
+in K95; see <a href="k95bugs.html#b132">BUGS.TXT item 132</a>.)
 
 <h3><a name="hpterm"><hr>HPTERM Emulation</h3>
 
