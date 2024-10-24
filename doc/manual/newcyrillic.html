@@ -95,7 +95,7 @@ Also unlike Windows 9x/ME, Windows NT/2000/XP allows the application to set
 the Code Page to be used for delivering keystrokes.  The code page may be set
 in Kermit 95 with the:
 
-<p<pre>
+<p><pre>
   SET TERMINAL CODE-PAGE <i>code-page</i>
 </pre><p>
 
@@ -175,7 +175,7 @@ too might need to be commanded into 8-bit transparency.
 
 <h3 id="cyrkey">Entering Cyrillic Characters on the Keyboard</h3>
 
-In Windows it is possible to install more than one
+In Windows, it is possible to install more than one
 keyboard layout in the Keyboard Control Panel on the Input Locales
 page.  When more than one Input Locale/Layout combination is defined,
 you are required to choose one of them as the default, and to choose a
@@ -223,7 +223,7 @@ mode.
 <p>
 Note that only characters that are in the active code page may be
 delivered to K95 from the keyboard.  In the above example code page
-1251 is used because it is available on all versions of NT and it
+1251 is used because it is available on all versions of NT, and it
 contains all of the Roman characters needed for U.S. English and the
 Cyrillic characters used by CP866.  (CP866 is not available on the
 U.S. version of NT but may be available on some international
@@ -277,7 +277,7 @@ on/off switch.
 <li>Russian keyboard mode is cleared when you execute the <tt>\Kreset</tt>
 (reset terminal) function, which is assigned to Alt-r by default.
 </ul><p>
-Of course you can assign these verbs to any other keys of your choice:
+Of course, you can assign these verbs to any other keys of your choice:
 <p><pre>
   SET TERM KEY RUSSIAN \368 \KkbRussian  ; F1 enters Russian keyboard mode
   SET TERM KEY ENGLISH \369 \KkbEnglish  ; F2 enters English keyboard mode
