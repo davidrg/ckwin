@@ -4,12 +4,12 @@
 <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head><body bgcolor="#ffffff" text="#000000">
 <h2><a name="top">
-<tt>Windows Internet Kermit Service - Overview</tt></a></a></h2>
+<tt>Windows Internet Kermit Service - Overview</tt></a></h2>
 
 Internet Kermit Service (IKS) is an Internet standard file transfer and 
 management service defined in
-<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">RFC2839</a> and
-<a href="ftp://ftp.isi.edu/in-notes/rfc2840.txt">RFC2840</a>.  It's similar
+<a href="https://www.rfc-editor.org/rfc/rfc2839">RFC2839</a> and
+<a href="https://www.rfc-editor.org/rfc/rfc2840">RFC2840</a>.  It's similar
 to an FTP server except:
 
 <p>
@@ -26,7 +26,7 @@ but also an interactive file-transfer and management shell to Telnet clients.
 </ul>
 <p>
 
-A well-known publicly accessible Internet Kermit Service is
+A well-known publicly accessible Internet Kermit Service <em>was</em>
 <a href="http://www.columbia.edu/kermit/cuiksd.html">the Unix-based
 one at Columbia University</a>.
 
@@ -37,7 +37,7 @@ The <b>Windows Internet Kermit Service Daemon</b> (WIKSD):
 
 <p>
 <ul>
-<li>Is available only for Windows NT, 2000, and XP.
+<li>Is available only for Windows NT, 2000, XP and newer.
 <li>Runs as a service.
 <li>Accepts connections only from the Internet.
 <li>Authenticates against the Windows user database.
@@ -51,7 +51,7 @@ handled remote access through a "host mode" script:
 
 <p>
 <ul>
-<li>Host mode is available for Windows 95, 98, ME, NT, 2000, and XP.
+<li>Host mode is available for Windows 95, 98, ME, NT, 2000, XP and newer.
 <li>It runs as a user process.
 <li>It accepts both Internet and serial (modem or direct) connections.
 <li>It authenticates against its own user database.
@@ -83,7 +83,7 @@ The WIKSD documentation is:
 
 WIKSD is simply Kermit 95 (<tt>K95.EXE</tt>), accessed remotely.  When K95 is
 acting as WIKSD, it is strictly a "remote mode Kermit" -- that is, it can
-not make connections and you can not activate its terminal emulator.  For
+not make connections, and you can not activate its terminal emulator.  For
 this reason, certain Kermit 95 commands don't work and generate error messages
 when given to IKSD, for example:
 
@@ -122,12 +122,11 @@ the always-legal ones, as in this example:
 
 <p>
 [ <a href="#top">Top</a> ]
-[ <a href="#contents">Contents</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 <hr noshade>
 <address>
 Windows Internet Kermit Service - Overview /
-The Kermit Project / Columbia University /
-2 April 2002
+The Kermit Project /
+<!--$ver-date$-->2 April 2002<!--/$ver-date$-->
 </address></body></html>
