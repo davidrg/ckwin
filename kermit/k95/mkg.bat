@@ -19,7 +19,8 @@ SET OUTDIR=.\kui\win95%SUFFIX%
 SET K95BUILD=K95
 move kui\win95%SUFFIX%\ck*.obj . > nul
 move kui\win95%SUFFIX%\p_*.obj . > nul
-del ckcmai.obj ckuus5.obj
+if exist ckcmai.obj del ckcmai.obj
+if exist ckuus5.obj del ckuus5.obj
 %MAKE% /nologo /e /f ckoker.mak k95g
 move *.obj kui\win95%SUFFIX% > nul
 
