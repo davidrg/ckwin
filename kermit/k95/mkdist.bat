@@ -31,7 +31,7 @@ copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
 ren dist\cknker.pdb k95.pdb
 ren dist\cknker.exe.manifest k95.exe.manifest
-del dist\cknker.exe.manifest
+if exist dist\cknker.exe.manifest del dist\cknker.exe.manifest
 REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
 move dist\ckwart.exe .\
 move dist\telnet-old.* .\

@@ -19,7 +19,10 @@ call clean-dist.bat
 if "%CKF_XYZ%" == "no" goto :noxyz
 echo Clean p95 build...
 cd ..\p95
-del p95.dll p95.lib p2.dll p2.lib
+if exist p95.dll del p95.dll
+if exist p95.lib del p95.lib
+if exist p2.dll del p2.dll
+if exist p2.lib del p2.lib
 :noxyz
 
 :done

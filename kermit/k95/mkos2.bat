@@ -18,7 +18,8 @@ echo %INCLUDE%
 
 if not exist os2\NUL mkdir os2
 move os2\*.obj . > nul
-del ckcmai.obj ckuus5.obj
+if exist ckcmai.obj del ckcmai.obj
+if exist ckuus5.obj del ckuus5.obj
 nmake /nologo /f ckoker.mak PLATFORM=OS2 wcos2
 move *.obj os2  > nul
 
