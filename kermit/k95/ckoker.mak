@@ -1053,7 +1053,8 @@ KUIOBJS = \
     $(OUTDIR)\ktermin.obj  $(OUTDIR)\kui.obj
 
 
-os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps.exe k2dc.exe \
+os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe \
+       otextps.exe k2dc.exe pcfonts.dll \
 !if "$(CMP)" != "OWWCL"
        cko32rtl.dll \    # IBM compiler only.
 !endif
@@ -1072,7 +1073,10 @@ os232: ckoker32.exe tcp32 otelnet.exe ckoclip.exe orlogin.exe osetup.exe otextps
 # TODO: Figure out how to build this for OS/2 with Watcom: k2crypt.dll
 !endif
 
-# docs pcfonts.dll
+# Other OS/2 targets not currently built by os232:
+#      docs
+# This removed as we don't have the required input .ipf files (they're not
+# present in the K95 2.2 open-source release, or the K95 2.1 build tree)
 
 
 
@@ -1328,12 +1332,18 @@ cko32n30.dll: ckon30.obj cko32n30.def ckoker.mak
         dllrname $@ CPPRMI36=CKO32RTL       
 
 pcfonts.dll: ckopcf.obj cko32pcf.def ckopcf.res ckoker.mak
+!if "$(CMP)" == "OWWCL"
+    $(CC) $(CC2) $(DEBUG) $(DLL) ckopcf.obj $(OUT)$@ $(LIBS) $(LINKFLAGS_DLL) \
+    -"OPTION DESCRIPTION 'VGA/SVGA PC FONTS for use in C-Kermit (32-bit)'"
+    wrc -q -bt=os2 ckopcf.res $@
+!else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckopcf.obj \
         cko32pcf.def $(OUT) $@ $(LIBS)
 !ifdef WARP
         rc -p -x2 ckopcf.res pcfonts.dll
 !else
         rc -p -x1 ckopcf.res pcfonts.dll
+!endif
 !endif
 
 k95crypt.dll: ck_crp.obj ck_des.obj ckclib.obj ck_crp.def ckoker.mak k95crypt.res
@@ -1799,7 +1809,11 @@ textps.res: textps.rc cknver.h
         rc $(RCDEFINES) $(RC_FEATURE_DEFS) /fo textps.res textps.rc
 
 ckopcf.res: ckopcf.rc ckopcf.h
+!if "$(CMP)" == "OWWCL"
+        wrc -r -bt=os2 ckopcf.rc
+!else
         rc -r ckopcf.rc
+!endif
 
 ckoclip.res: ckoclip.rc ckoclip.h ckoclip.ico
 !if "$(CMP)" == "OWWCL"

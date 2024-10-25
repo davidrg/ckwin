@@ -8,6 +8,8 @@ if not exist dist-os2\NUL mkdir dist-os2
 if not exist dist-os2\docs\NUL mkdir dist-os2\docs
 if not exist dist-os2\docs\manual\NUL mkdir dist-os2\docs\manual
 if not exist dist-os2\download\NUL mkdir dist-os2\download
+REM TODO: Kermit 95 2.1.2 had an EAS directory - what is it for? Is it still
+REM       needed?
 if not exist dist-os2\EAS\NUL mkdir dist-os2\EAS
 if not exist dist-os2\ICONS\NUL mkdir dist-os2\ICONS
 if not exist dist-os2\KEYMAPS\NUL mkdir dist-os2\KEYMAPS
@@ -21,6 +23,7 @@ if not exist dist-os2\USERS\NUL mkdir dist-os2\USERS
 @echo Move build outputs...
 move *.exe dist-os2
 move cko32*.dll dist-os2
+move pcfonts.dll dist-os2
 move nullssh.dll dist-os2
 move dist-os2\ckwart.exe .\
 ren dist-os2\osetup.exe setup.exe
