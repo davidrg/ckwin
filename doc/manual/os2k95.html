@@ -447,11 +447,16 @@ A:  Because the Kermit program on the remote end of the connection is
     large window sizes, long packets, and control-character unprefix (but
     remember not to unprefix character 255!).
 
-<h4>Using Named Pipes</h4>
-<!-- TODO: This all works on Windows now too -->
+<h4><a name="namedpipes">Using Named Pipes</a></h4>
 
-Kermit/2 for OS/2 supports NAMED PIPES as an interprocess communication
-mechanism.  Named Pipes support for local processes is built into OS/2.  In
+As of Kermit 95 v3.0, Named Pipes are supported on Windows as well. For
+details on using Named Pipes, see
+<a href="namepipe.html">Using Named Pipes in Kermit 95</a>. The rest of this
+section discusses OS/2-specific details.
+
+<p>
+
+Named Pipes support for local processes is built into OS/2.  In
 order to use them to communicate across a local area network both computers
 must have installed Named Pipe network support software. Each computer may
 be a Client, a Server or both.  Each server on a particular network has a
@@ -464,56 +469,7 @@ Kermit/2 has been tested <!-- todo: in the distant past --> with the following p
 <li>Microsoft LAN Manager Requester (Client) to LAN Manager (Server)
 <li>Novell NetWare Requester (Client) to Novell NetWare Requester (Server) 
 </ul>
-<p>  
-To have a named pipe connection between two Kermit programs, one
-Kermit program must be the "server" and the other must be the "client".  The
-server is the one that is started first, and which waits for a connection to
-come in from the client.  The server is started this way:
-<p><pre>
-  SET NETWORK NAMED-PIPE [ pipename ] 
-  SET HOST * 
-</pre><p>
-If the pipename is omitted from the SET NETWORK NAMED-PIPE command, a
-pipename of "kermit" is used.  "SET HOST *" means to wait for a connection
-to come in from another Kermit program.
-<p>
-Then the client makes a connection to the server: 
-<p><pre>
-  SET NETWORK NAMED-PIPE [ pipename ] 
-  SET HOST servername 
-</pre><p>
-where pipename is the pipename used by the server you want to communicate
-with (default "kermit"), and servername is the name of the server on the
-network.  If you specify a servername of "." (period), this means your own
-computer; you can set up such local connections even if you don't have Named
-Pipes network support installed, e.g.  between two copies of Kermit/2
-running in different windows.
-<p>
-Both pipename and servername are case-independent, and can contain spaces.
-<p>
-There is no particular restriction on what Kermit commands can be used on a
-named-pipe connection.  Here are some useful scenarios:
-<p><ol>
-<li>The named-pipe server is in Kermit SERVER mode.  Clients can 
-perform SEND, GET, REMOTE, FINISH, and similar commands. 
-<p>
-<li>Both Kermit programs are in CONNECT mode, allowing two network 
-users to "chat" with each other.  Each user should give the 
-following commands: 
-<p><pre>
-  set terminal echo local
-  set terminal cr-display crlf
-  connect
-</pre><p>
-</ol>
-<p>
-To close a named-pipe connection, give the HANGUP command (or the SET HOST
-command, specifying no hostname) to either the client or the server.
-<p>
-The Kermit/2 named-pipe server can also wait for a client to connect.  After
-the client disconnects, the connection will be reset to await the next
-client.  This allows for the use of kermit "server" as a pseudo-FTP site for
-those without IBM TCP/IP.
+
 <p>
 Note: When using Named Pipes with LAN Server or LAN Manager, only the
 machine which has the Network Server software is capable of successfully
