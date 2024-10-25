@@ -31,24 +31,25 @@
 
 <hr>
 
-Kermit 95 2.1 for IBM OS/2
-has all the same features as Kermit 95 for
-Windows 95/98/ME/NT/2000/XP, with the following exceptions:
+Kermit 95 <!--$ver$-->3.0 DEV<!--/$ver$--> for IBM OS/2
+has all the same features as Kermit 95 for Windows, with the following
+exceptions:
 
 <p>
 <ul>
 <li>A built-in SSH client.
+<li>SSL/TLS security (removed in 3.0)
 <li>Kerberos security.
 <li>The ability to run in a GUI window.
 <li>Internet Kermit Server.
 <li>Windows-specific services such as TAPI (the Microsoft Telephony API),
 NTLM authentication, and VTNT terminal emulation.
+<!-- TODO: The dialer - its not *currently* included, will it come back? -->
 </ul>
 <p>
 
 It also has a few features that the Windows versions do not have: SLIP and PPP
-dialing, a Rexx interface, and transmission of files with full OS/2 extended
-attributes.
+dialing, and transmission of files with full OS/2 extended attributes.
 
 <p>
 <blockquote>
@@ -63,6 +64,7 @@ and to the OS/2 version as "Kermit/2" for the sake of brevity and clarity.
 Kermit/2 replaces OS/2 C-Kermit 5A(191) of April 1995.  It is a 32-bit
 program, requiring OS/2 2.0 or later.  It comes with a GUI Presentation
 Manager Dialer (which requires OS/2 3.0 or later) to set up your connections.
+    <!-- TODO: Does it? -->
 
 <p>
 <blockquote>
@@ -90,11 +92,11 @@ programs for DOS, Windows, UNIX, VMS, and many other platforms.
 Kermit/2 is miles ahead of the old OS/2 C-Kermit:
 
 <p><pre>
-			    C-Kermit 5A(191)     Kermit/2 2.1
+			    C-Kermit 5A(191)     Kermit/2 <!--$ver$-->3.0 DEV<!--/$ver$-->
 <p>
   Terminal emulations:             6                    40
   Built-in modem types:           28                    82
-  Graphical dialer and database:  No                   Yes
+  Graphical dialer and database:  No                   Yes   <!--TODO: Dialer ? -->
   Intelligent dialing:            No                   Yes
   Portable dialing directory:     No                   Yes
   Integrated XYZMODEM protocol:   No                   Yes
@@ -120,16 +122,9 @@ IMPORTANT -- PLEASE READ THIS:
 
 <p>
 
-Eight years of full-time development have gone into Kermit 95.  It is not free
-software; it must be licensed.  The same goes for the OS/2 version; the terms
-for use are the same as for the Windows version.
-
-<p>
-
-However, in view of the declining importance of OS/2 in the marketplace, no
-effort has been devoted to creating OS/2-specific manuals, packaging, or
-hypertext INFO files.  This should not detract from the utility of the
-software itself.
+Versions of Kermit 95 prior to 3.0 (versions 1.x and 2.x) are not free software;
+they must still be licensed from Columbia University. This goes for the OS/2
+version as well.
 
 <p>
 
@@ -149,9 +144,9 @@ OS/2 version has some fonts that can't be used in Windows.
 
 <p>
 <hr>
-<h3><a name="os2diff">Differences Between OS/2 and Windows 95</h3>
+<h3><a name="os2diff">Differences Between OS/2 and Windows</h3>
 
-The following sections describe differences between OS/2 and Windows 95
+The following sections describe differences between OS/2 and Windows
 as they affect Kermit's Terminal window.
 
 <h4>Console Only</h4>
@@ -161,15 +156,19 @@ code.
 
 <h4>No SSH Client</h4>
 
-The OpenSSH library was not available for the native IBM OS/2 development
-environment.
+The LibSSH library is not available for the Open Watcom compiler.
+
+<h4>No SSL/TLS security</h4>
+
+This was removed from Kermit/2 version 3.0 due to a switch to the Open Watcom
+compiler for which OpenSSL is not available.
 
 <h4>No Toolbar</h4>
 
 OS/2 Console Windows, unlike Windows 95, do not contain an optional toolbar.
 All functions such as window sizing, font selection, copy/paste, ... are
 performed by using the System Menu accessed by clicking on the Window
-mini-icon in the upper left hand corner.
+mini-icon in the upper left hand corner like on Windows NT/2000/XP/etc.
 
 <h4>Changing the Window Font</h4>
 
@@ -189,7 +188,7 @@ repositioning you must disable "Mouse Actions" by using the System Menu.
 
 Kermit-95 for OS/2 supports the ability to install VGA fonts into the 
 video memory of the video adapter when running in a Full Screen session.
-This is accomplished by using the SET TERMINAL FONT <font> command.
+This is accomplished by using the SET TERMINAL FONT &lt;font&gt; command.
 Kermit-95 supplies fonts for:
 <p><pre>
   CP437 - Original PC Code page
@@ -482,16 +481,16 @@ Kermit/2 for OS/2 supports the following types of network connections:
 <li>NETBIOS
 </ul>
 
-<h4?TCP/IP PACKAGE SUPPORT</h4>
+<h4>TCP/IP Package Support</h4>
 
-Kermit/2's TCP/IP support works with:
+<!--Kermit/2's TCP/IP support works with:
 <p><ul>
 <li>IBM TCP/IP 1.2.1
 <li>IBM TCP/IP 2.0
 <li>IBM OS/2 WARP TCP/IP 3.0, 4.0, 4.1
-<li>Essex Systems TCP/2 
-<li>FTP Software's PC/TCP for OS/2 
-<li>IP-Switch Vantage IP 
+<li>Essex Systems TCP/2
+<li>FTP Software's PC/TCP for OS/2
+<li>IP-Switch Vantage IP
 </ul>
 <p>
 TCP/IP support is not yet available for Novell LAN Workplace for OS/2.  If a
@@ -501,6 +500,31 @@ will be added in future releases.  These can be supplied in the form of
 small DLLs that can be installed after the fact, which Kermit/2 will load
 automatically if you define the environment variable CKTCPIPDLL to indicate
 the pathname.
+-->
+
+The Kermit Project no longer has access to the number of TCP/IP SDKs for
+development or TCP/IP stacks for testing that it once did. As a result, the
+number of supported TCP/IP stacks is reduced from past releases. The current
+release of Kermit/2 has only been tested on the following:
+<p><ul>
+    <li>IBM TCP/IP 2.0
+    <li>IBM OS/2 WARP TCP/IP 3.0, 4.0, 4.1
+</ul>
+
+<p>
+If a TCP/IP package includes an IBM-compatible TCPIPDLL.DLL library,
+then Kermit/2 should work with it.  Support for other OS/2 TCP/IP packages
+can be added in future releases if licenses for the required SDKs can be
+obtained.  These can be supplied in the form of
+small DLLs that can be installed after the fact, which Kermit/2 will load
+automatically if you define the environment variable CKTCPIPDLL to indicate
+the pathname.
+
+<p>Additionally, if you have a license for Kermit/2 2.x, you can use its TCP/IP
+DLLs with the current release of Kermit/2 to gain support for the FTP PC/TCP
+and IBM TCP/IP 1.2.1 TCP/IP stacks. The DLLS are:
+<tt>cko32rtl.dll, ckoi32i12.dll, cko32f13.dll</tt>
+
 <p>
 When TELNET'ing into an OS/2 system, you should set your terminal type to
 ANSI.  This is particularly important if you are going to use Kermit/2 or
@@ -510,7 +534,7 @@ you have TELNET'ed into.
 Users of IP-Switch Vantage IP may notice a brief TRANSMISSION BLOCKED
 message after typing the first character upon entering terminal mode.  The
 blocked transmission does not result in any data loss or performance
-degradation as it only occurs only on the first typed character.
+degradation as it occurs only on the first typed character.
 <p>
 Q:  Why use Kermit on a TCP/IP connection rather than TELNET and FTP? 
 <p>
@@ -528,12 +552,13 @@ A:  Because the Kermit program on the remote end of the connection is
     probably not running directly on a TCP socket, but rather running
     underneath a TELNET server, usually on a pseudoterminal and under a
     login shell, with the vast amounts of per-character overhead all of that
-    implies.  Also Kermit does more than FTP, especially when transferring
+    implies.  Also, Kermit does more than FTP, especially when transferring
     in text mode. Still, you can get reasonably fast transfer rates by using
     large window sizes, long packets, and control-character unprefix (but
     remember not to unprefix character 255!).
 
 <h4>Using Named Pipes</h4>
+<!-- TODO: This all works on Windows now too -->
 
 Kermit/2 for OS/2 supports NAMED PIPES as an interprocess communication
 mechanism.  Named Pipes support for local processes is built into OS/2.  In
@@ -543,14 +568,14 @@ be a Client, a Server or both.  Each server on a particular network has a
 unique Named Pipe Server Name assigned as part of the Named Pipe software
 installation.
 <p>
-Kermit/2 has been tested with the following products: 
+Kermit/2 has been tested <!-- todo: in the distant past --> with the following products:
 <p><ul>
 <li>IBM WARP (LAN) Server Requester (Client) to WARP (LAN) Server (Server)
 <li>Microsoft LAN Manager Requester (Client) to LAN Manager (Server)
 <li>Novell NetWare Requester (Client) to Novell NetWare Requester (Server) 
 </ul>
 <p>  
-To have a named pipe connection connection between two Kermit programs, one
+To have a named pipe connection between two Kermit programs, one
 Kermit program must be the "server" and the other must be the "client".  The
 server is the one that is started first, and which waits for a connection to
 come in from the client.  The server is started this way:
@@ -610,6 +635,7 @@ named-pipes client and server code on the client workstation and does not
 require the existence of a Network server to operate.
 <p>
 <h4>Using NETBIOS</h4>
+<!-- TODO: If we can get it working! -->
 
 Kermit/2 for OS/2 supports the NETBIOS API, both the original NETBIOS 3.0 
 (NETAPI) interface and the newer NETBIOS 4.0 (ACSBNET) interface.  
@@ -771,7 +797,7 @@ Kermit/2 allows you to choose which NETBIOS implementation you want to use
 by using the '-N' (note uppercase) command-line option.  To use the driver
 assigned to ADAPTER1 in the [NETBIOS] section of PROTOCOL.INI use:
 <p><pre>
-  ckermit -N 1
+  k2 -N 1
 </pre><p>
 The syntax of the option is: 
 <p><pre>
@@ -847,13 +873,13 @@ with a NET USE command before starting Kermit, and then unmap
 it afterwards: 
 <p><pre>
   net use com3 \\server\modem
-  ckermit -l com3
+  k2 -l com3
   net use com3 /d
 </pre><p>
 <li>Simply use the Universal Naming Convention (UNC) resource name 
 as the port name: 
 <p><pre>
-  ckermit -l \\server\modem
+  k2 -l \\server\modem
 </pre><p>
 </ol>
 <p>
@@ -884,7 +910,7 @@ support than that included in SLIPTERM/PPPTERM.
 Once the SLIP/PPP driver has begun execution, run Kermit/2 and select port
 SLIPCOMx or PPPCOMx as your serial port, where x is the serial port in use
 for the SLIP/PPP connection.  Kermit/2 will obtain access to the port from
-the SLIP/PPP driver and you may then use the port as necessary to log into
+the SLIP/PPP driver, and you may then use the port as necessary to log into
 your SLIP/PPP server and start a SLIP/PPP session.  All of Kermit/2's
 features and capabilities are available for use over the serial line while
 Kermit/2 has control of the serial port.  Upon exiting Kermit/2 or issuing
@@ -1057,7 +1083,7 @@ Lap-Link software is typically used to synchronize the versions of files
 found on two separate computers by transfering files across either a direct
 serial port or parallel port connection.
 <p>
-Kermit/2 and MS-DOS Kermit are well designed for this task. The SET FILE
+Kermit/2 and MS-DOS Kermit are well-designed for this task. The SET FILE
 COLLISION UPDATE command may be used to instruct Kermit/2 to only transfer
 files that are new or have changed.
 <p>
@@ -1206,7 +1232,7 @@ Directory entry type:
 </pre><p>       
 </ol>
 <p>
-When double clicking on a Services Directory object you would first be
+When double-clicking on a Services Directory object you would first be
 prompted for the appropriate password prior to Kermit/2's connecting to the
 designated service.
 <p>
@@ -1308,7 +1334,7 @@ ABSOLUTE.
 your foreground process is performing a significant amount of disk access
 (such as a database search, compile, a long directory listing, or printing
 to the spooler) this will have a severe impact on your background file
-transfers. Try setting this this value to NO.
+transfers. Try setting this value to NO.
 </dl><p>  
 Other settings that also affect the performance of OS/2 are: 
 <p>
