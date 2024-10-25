@@ -1264,7 +1264,8 @@ textps.exe: textps.obj textps.res $(DEF) ckoker.mak
 #       ckoker.msb  -- no idea what this is
 ckoker32.exe: $(OBJS) $(DEF) ckoker.res ckoker.mak
 !if "$(CMP)" == "OWWCL"
-        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS) -"OPTION MAP"
+        $(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS) -"OPTION MAP" \
+         -"OPTION DESCRIPTION 'C-Kermit for OS/2 (32-bit)'"
         wrc -q -bt=os2 ckoker.res $@
 !else
         $(CC) $(CC2) /B"$(LINKFLAGS)" $(DEBUG) $(OBJS) $(DEF) $(OUT) $@ $(LIBS) $(LDFLAGS)
@@ -1289,7 +1290,8 @@ cko32rtl.lib: cko32rtl.dll cko32rt.def cko32rt.c
 cko32i41.dll: ckoi41.obj ckoker.mak
 !if "$(CMP)" == "OWWCL"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj $(OUT)$@ \
-	 $(LINKFLAGS_DLL) tcpip32.lib $(LIBS)
+	 $(LINKFLAGS_DLL) tcpip32.lib $(LIBS) \
+     -"OPTION DESCRIPTION 'IBM TCP/IP 4.1 interface DLL for C-Kermit (32-bit)'"
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi41.obj cko32i41.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
@@ -1303,7 +1305,8 @@ cko32i41.dll: ckoi41.obj ckoker.mak
 cko32i20.dll: ckoi20.obj ckoker.mak
 !if "$(CMP)" == "OWWCL"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj $(OUT)$@ \
-	 $(LINKFLAGS_DLL) $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res" -"OPTION MAP"
+	 $(LINKFLAGS_DLL) $(IBM20LIBS) $(LIBS) -"ALIAS __res=_res" -"OPTION MAP" \
+	 -"OPTION DESCRIPTION 'IBM TCP/IP 2.0 interface DLL for C-Kermit (32-bit)'"
 !else
 	$(CC) $(CC2) $(DEBUG) $(DLL) ckoi20.obj cko32i20.def $(OUT) $@ \
 	/B"/noe /noi" $(IBM20LIBS) $(LIBS)
@@ -1380,7 +1383,8 @@ docs:   ckermit.inf
 # ckotel.def
 otelnet.exe: ckotel.obj ckoker.mak
 !if "$(CMP)" == "OWWCL"
-        $(CC) $(CC2) $(DEBUG) ckotel.obj $(LINKFLAGS) $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) $(DEBUG) ckotel.obj $(LINKFLAGS) $(OUT)$@ $(LIBS) \
+         -"OPTION DESCRIPTION 'Telnet front-end for C-Kermit for OS/2'"
 !else
         $(CC) $(CC2) $(DEBUG) ckotel.obj ckotel.def $(OUT) $@ $(LIBS)
         dllrname $@ CPPRMI36=CKO32RTL
@@ -1388,7 +1392,8 @@ otelnet.exe: ckotel.obj ckoker.mak
 
 osetup.exe: setup.obj osetup.def ckoker.mak
 !if "$(CMP)" == "OWWCL"
-        $(CC) $(DEBUG) setup.obj $(LINKFLAGS) $(OUT)$@
+        $(CC) $(DEBUG) setup.obj $(LINKFLAGS) $(OUT)$@ \
+         -"OPTION DESCRIPTION 'Kermit/2 Setup'"
 !else
         $(CC) $(DEBUG) setup.obj osetup.def $(OUT) $@
 !endif
@@ -1396,7 +1401,8 @@ osetup.exe: setup.obj osetup.def ckoker.mak
 # ckoclip.def
 ckoclip.exe: ckoclip.obj ckoker.mak ckoclip.res
 !if "$(CMP)" == "OWWCL"
-        $(CC) $(CC2) $(LINKFLAGS_WIN) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS)
+        $(CC) $(CC2) $(LINKFLAGS_WIN) $(DEBUG) ckoclip.obj $(OUT)$@ $(LIBS) \
+         -"OPTION DESCRIPTION 'OS/2 C-Kermit PM Clipboard Server'"
         wrc -q -bt=os2 ckoclip.res $@
 !else
         $(CC) $(CC2) $(DEBUG) ckoclip.obj ckoclip.def $(OUT) $@ $(LIBS)
