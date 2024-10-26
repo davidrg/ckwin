@@ -7,17 +7,17 @@
 <tt>Windows Internet Kermit Service - User Guide</tt></a></a></h2>
 
 [ <a href="#contents">Contents</a> ]
-[ <a href="http://www.columbia.edu/kermit/wiksdadmin.html">
+[ <a href="http://kermitproject.org/wiksdadmin.html">
 WIKSD Admin Guide</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <p>
 
 <b>ABSTRACT:</b> How to use the <b>Windows Internet Kermit Service:</b>
 a standards-compliant File Transfer and
 Management Shell for Windows NT, 2000, and XP from the
-<a href="http://www.columbia.edu/kermit/">Kermit Project at Columbia
+<a href="http://kermitproject.org/">Kermit Project at Columbia
 University</a>, available in free and secure versions.
 
 <p>
@@ -27,7 +27,11 @@ University</a>, available in free and secure versions.
 <tt>&nbsp;&nbsp;</tt>
 <i>This file last updated:</i><b>
 4 June 2002
-</b> &nbsp; (New York City time)
+</b> &nbsp; (New York City time), with minor corrections on 29 October 2024 (New Zealand time)
+<!--
+Replace the above date(s) with the $last-update-short$ parameter if any actual
+content changes are made. The same is required down the bottom of the page.
+-->
 <p>
 
 IF YOU ARE READING A PLAIN-TEXT version of this document, 
@@ -36,7 +40,7 @@ possibly more up-to-date) Web page here:
 
 <p>
 <pre>
-  <a href="http://www.columbia.edu/kermit/wiksduser.html">http://www.columbia.edu/kermit/wiksduser.html</a>
+  <a href="http://kermitproject.org/wiksduser.html">http://kermitproject.org/wiksduser.html</a>
 </pre>
 
 
@@ -70,7 +74,7 @@ possibly more up-to-date) Web page here:
 <p>
 
 <b>The Windows Internet Kermit Service Daemon (WIKSD) for Windows NT, 2000,
-and XP</b> from the <a href="http://www.columbia.edu/kermit/index.html">Kermit
+XP and newer</b> from the <a href="http://kermitproject.org/index.html">Kermit
 Project</a> at Columbia University lets anybody with a suitable Telnet client
 make connections and log in to an Internet-connected Windows PC and download,
 upload, and manage files.  WIKSD is a self-contained, user-friendly, text-mode
@@ -106,10 +110,10 @@ things that WIKSD can do (within your logged-in access rights):
 
 <p>
 
-Thus automation is possible through any combination of server-side and
+Thus, automation is possible through any combination of server-side and
 client-side scripts.  IKSD-aware clients (such as <a
-href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> and <a
-href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a>) can even make
+href="http://kermitproject.org/k95.html">Kermit 95</a> and <a
+href="http://kermitproject.org/ckermit.html">C-Kermit</a>) can even make
 remote procedure calls, pass variables back and forth, etc.
 
 <p>
@@ -129,14 +133,14 @@ Here are the kinds of things WIKSD does <b><i>not</i></b> do:
 
 <p>
 
-Thus <b>WIKSD fills the same role as an FTP server</b>, but with some
+Thus, <b>WIKSD fills the same role as an FTP server</b>, but with some
 important differences:
 
 <p>
 <ul>
 <li>It uses Kermit protocol rather than FTP protocol, and therefore
 has more features, flexibility, and power than an FTP server;
-<a href="http://www.columbia.edu/kermit/iksd.html#x1">CLICK HERE</a>
+<a href="http://kermitproject.org/iksd.html#x1">CLICK HERE</a>
 for details.
 <li>You can interact with it directly if you wish.
 <li>Complex or repetitive tasks can be automated.
@@ -151,13 +155,13 @@ and because those operating systems do not support background services.
 <p>
 
 WIKSD is a specially configured version of <a
-href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> (K95).  As such,
+href="http://kermitproject.org/k95.html">Kermit 95</a> (K95).  As such,
 it has most of the same commands as Kermit 95 itself, as well as its cousins
-<a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> on UNIX,
+<a href="http://kermitproject.org/ckermit.html">C-Kermit</a> on UNIX,
 VMS, and other platforms, and <a
-href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a> on DOS
+href="http://kermitproject.org/mskermit.html">MS-DOS Kermit</a> on DOS
 and Windows 3.x.  Internet Kermit servers are also available for UNIX, such as
-<a href="http://www.columbia.edu/kermit/cuiksd.html">THIS ONE</a> at the
+<a href="http://kermitproject.org/cuiksd.html">THIS ONE</a> at the
 Kermit Project.
 
 <p>
@@ -169,44 +173,44 @@ use them.  For further information, you can also consult:
 
 <dl>
 <dt>The WIKSD Administrator's Guide</dt>
-<dd><a href="http://www.columbia.edu/kermit/wiksdadmin.html">
-<tt>http://www.columbia.edu/kermit/wiksdadmin.html</tt></a>
+<dd><a href="http://kermitproject.org/wiksdadmin.html">
+<tt>http://kermitproject.org/wiksdadmin.html</tt></a>
 <p>
 <dt>The Unix-based Kermit Project IKSD User Guide</dt>
-<dd><a href="http://www.columbia.edu/kermit/cuiksd.html">
-<tt>http://www.columbia.edu/kermit/cuiksd.html</tt></a>
+<dd><a href="http://kermitproject.org/cuiksd.html">
+<tt>http://kermitproject.org/cuiksd.html</tt></a>
 <p>
 <dt>The Unix IKSD Administrator Guide</dt>
-<dd><a href="http://www.columbia.edu/kermit/iksd.html">
-<tt>http://www.columbia.edu/kermit/iksd.html</tt></a>
+<dd><a href="http://kermitproject.org/iksd.html">
+<tt>http://kermitproject.org/iksd.html</tt></a>
 <p>
 <dt>The Kermit Home Page</dt>
-<dd><a href="http://www.columbia.edu/kermit/index.html">
-<tt>http://www.columbia.edu/kermit/index.html</tt></a>
+<dd><a href="http://kermitproject.org/index.html">
+<tt>http://kermitproject.org/index.html</tt></a>
 <p>
 <dt>The Kermit 95 Home Page</dt>
-<dd><a href="http://www.columbia.edu/kermit/k95.html">
-<tt>http://www.columbia.edu/kermit/k95.html</tt></a>
+<dd><a href="http://kermitproject.org/k95.html">
+<tt>http://kermitproject.org/k95.html</tt></a>
 <p>
 <dt>The Kermit 95 Tutorial</dt>
-<dd><a href="http://www.columbia.edu/kermit/k95tutor.html">
-<tt>http://www.columbia.edu/kermit/k95tutor.html</tt></a>
+<dd><a href="http://kermitproject.org/k95tutor.html">
+<tt>http://kermitproject.org/k95tutor.html</tt></a>
 <p>
 <dt>The C-Kermit Home Page</dt>
-<dd><a href="http://www.columbia.edu/kermit/ckermit.html">
-<tt>http://www.columbia.edu/kermit/ckermit.html</tt></a>
+<dd><a href="http://kermitproject.org/ckermit.html">
+<tt>http://kermitproject.org/ckermit.html</tt></a>
 <p>
 <dt>The C-Kermit Tutorial</dt>
-<dd><a href="http://www.columbia.edu/kermit/ckututor.html">
-<tt>http://www.columbia.edu/kermit/ckututor.html</tt></a>
+<dd><a href="http://kermitproject.org/ckututor.html">
+<tt>http://kermitproject.org/ckututor.html</tt></a>
 <p>
 <dt>The Kermit Script Library</dt>
-<dd><a href="http://www.columbia.edu/kermit/scriptlib.html">
-<tt>http://www.columbia.edu/kermit/scriptlib.html</tt></a>
+<dd><a href="http://kermitproject.org/scriptlib.html">
+<tt>http://kermitproject.org/scriptlib.html</tt></a>
 <p>
 <dt>Kermit Manuals</dt>
-<dd><a href="http://www.columbia.edu/kermit/manuals.html">
-<tt>http://www.columbia.edu/kermit/manuals.html</tt></a>
+<dd><a href="http://kermitproject.org/manuals.html">
+<tt>http://kermitproject.org/manuals.html</tt></a>
 
 </dl>
 
@@ -235,7 +239,7 @@ WIKSD clients than others.  The ideal Telnet client for this purpose:
 <ul>
 <li>Includes a Kermit file-transfer protocol implementation
 <li>Supports Kermit protocol autoupload and autodownload
-<li>Supports the Telnet Kermit Option (<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">RFC2839</a>)
+<li>Supports the Telnet Kermit Option (<a href="https://www.rfc-editor.org/rfc/rfc2839">RFC2839</a>)
 </ul>
 <p>
 
@@ -285,7 +289,7 @@ has been configured to allow it.
 <p>
 
 All of the forms shown above give you an interactive terminal session to
-the IKSD command processor.  If you want make a scripted and/or client/server
+the IKSD command processor.  If you want to make a scripted and/or client/server
 connection, use the "set host" command, explained in
 <a href="#x4">Section 4</a> and <a href="#x5">Section 5</a>.
 
@@ -324,8 +328,7 @@ of security that the server offers, and if so, how to use them.  When secure
 methods are used, you might not need to supply your username or password.
 WIKSD tells which security methods it has available if you give it the SHOW
 AUTHENTICATION command.  Ditto for K95 and C-Kermit clients.  Security is
-covered in <a href="http://www.columbia.edu/kermit/security.html">a separate
-document</a>.
+covered in <a href="security.html">a separate document</a>.
 
 <p>
 <blockquote>
@@ -342,7 +345,7 @@ acting as WIKSD.  <a href="wiksd.html">CLICK HERE</a> for details.
 
 The owner of the server PC also decides which directories you can access and
 what access rights you have.  If you log in to WIKSD as a real user in Windows
-NT, 2000, or XP, your initial current directory is the "home folder" from
+NT, 2000, XP or newer, your initial current directory is the "home folder" from
 your user profile, and you have all the same access rights you would have if
 you had logged in any other way.  The PC owner has the ability (and the
 right) to log your activities in the NT Event Log to any desired level of
@@ -594,7 +597,7 @@ itself, which are the topic of the rest of this document).
 <i>
 
 The demo server listed in this section, <tt>iks.kermit.columbia.edu</tt>,
-is not in service yet; therefore this section is for future reference only.
+is no longer in service; therefore this section is for future reference only.
 
 </i>
 </blockquote>
@@ -622,7 +625,7 @@ Kermit Service at the Kermit Project (the parts you type are
 
 The last line is the prompt.  The current disk and directory appear in
 brackets on the left margin, and "<tt>IKSD&gt;</tt>" tells you that you're
-talking to an Internet Kermit Service Daemon and it's waiting for a command
+talking to an Internet Kermit Service Daemon, and it's waiting for a command
 from your keyboard.  Begin by typing "help" (and then pressing the Enter or
 Return key):
 
@@ -985,11 +988,9 @@ emulate any particular kind of terminal to use the Internet Kermit service.
 
 Kermit's file management features and other commands are many and varied;
 it would (and does) require a thick book to describe them all.  If you would
-like to have a copy of the book (<cite>Using C-Kermit</cite>), purchase a copy
-of K95 yourself, or the book
-<a href="http://www.columbia.edu/kermit/ck60manual.html"><cite>Using
-C-Kermit</cite></a>.  Visit the 
-<a href="http://www.columbia.edu/kermit/">Kermit website</a> for details.
+like to have a copy of the book,  visit the
+<a href="http://kermitproject.org/usingckermit.html">Kermit website</a>
+for details.
 
 <p>
 
@@ -1006,15 +1007,15 @@ introduction.
 
 <p>
 
-Using just the information presented so far, you should be able make a
+Using just the information presented so far, you should be able to make a
 connection to a Windows-based Internet Kermit server and perform all the
 file management tasks you could do in DOS, but more easily, since you always
 have help text, menu-on-demand, command recall, and keyword/filename
 completion at your fingertips.
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="x3"><hr>3. TRANSFERRING FILES</a></h3>
 
@@ -1029,14 +1030,14 @@ over your Telnet connection using the Kermit protocol For this you need a
 Telnet client that includes a Kermit protocol implementation, and for best
 results it should also include Kermit autodownload and autoupload capability,
 as well as the Telnet Kermit Option
-(<a href="ftp://ftp.isi.edu/in-notes/rfc2840.txt">RFC2840</a>).  Examples:
+(<a href="https://www.rfc-editor.org/rfc/rfc2840">RFC2840</a>).  Examples:
 
 <p>
 <pre>
   <u>Autoup/download</u>   <u>Telnet Kermit Option</u>
-       Yes                  Yes            <i><a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a> (Unix, VMS, etc)</i>
-       Yes                  Yes            <i><a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a> (Windows and OS/2)</i>
-       Yes                  No             <i><a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a> (DOS and Windows 3.x)</i>
+       Yes                  Yes            <i><a href="http://kermitproject.org/ckermit.html">C-Kermit</a> (Unix, VMS, etc)</i>
+       Yes                  Yes            <i><a href="http://kermitproject.org/k95.html">Kermit 95</a> (Windows and OS/2)</i>
+       Yes                  No             <i><a href="http://kermitproject.org/mskermit.html">MS-DOS Kermit</a> (DOS and Windows 3.x)</i>
        No                   No             <i>Most other Telnet clients</i>
 </pre>
 <p>
@@ -1084,7 +1085,7 @@ If you want to force text or binary mode, however, you can use the /TEXT or
 </pre>
 <p>
 
-Of course you can also send files from other disks or directories that you
+Of course, you can also send files from other disks or directories that you
 have access to:
 
 <p>
@@ -1152,7 +1153,7 @@ others too.  You can get an idea by typing "<tt>send</tt> <tt>?</tt>" at the
 </pre>
 <p>
 
-Of course you can use "help send" to get the details.  As you can see, it
+Of course, you can use "help send" to get the details.  As you can see, it
 is possible to construct a rather complex download, e.g. of all files whose
 names match a certain pattern, but only if they are a certain size, and/or
 were created before and/or after a certain date, and so on, and you can even
@@ -1218,8 +1219,8 @@ terminal screen if necessary.
 </ol>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="x4"><hr>4. CLIENT/SERVER</a></h3>
 
@@ -1234,12 +1235,12 @@ Until now, we've treated WIKSD as an interactive shell.  There's another way
 to use it, in which you interact only with your client, similar to the way you
 would use an FTP client.  Obviously we can't document every client on earth,
 so in this section we'll stick with our own:
-<a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a>,
-<a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a>, and to some
-extent <a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS
+<a href="http://kermitproject.org/k95.html">Kermit 95</a>,
+<a href="http://kermitproject.org/ckermit.html">C-Kermit</a>, and to some
+extent <a href="http://kermitproject.org/mskermit.html">MS-DOS
 Kermit</a>.  No other Telnet clients are known (at this writing) to support
-<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">RFC2839</a> and
-<a href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">2840</a>.
+<a href="https://www.rfc-editor.org/rfc/rfc2839">RFC2839</a> and
+<a href="https://www.rfc-editor.org/rfc/rfc2840">2840</a>.
 
 <p>
 
@@ -1308,8 +1309,8 @@ disconnect.
 
 <p>
 
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="x5"><hr>5. AUTOMATION</a></h3>
 
@@ -1348,7 +1349,7 @@ scripts here:
 
 <p>
 <pre>
-  <a href="http://www.columbia.edu/kermit/ckscripts.html">http://www.columbia.edu/kermit/ckscripts.html</a>
+  <a href="http://kermitproject.org/ckscripts.html">http://kermitproject.org/ckscripts.html</a>
 </pre>
 
 <p>
@@ -1358,12 +1359,11 @@ done with client-side commands -- there are no INPUT/OUTPUT sequences, no
 "screen scraping", etc.  Matters become complicated when security is involved,
 since the script writer must know in advance exactly what forms of security
 are supported -- or required -- by the server, and what procedures and
-paramaters are involved to make a securely authenticated encrypted session.
+parameters are involved to make a securely authenticated encrypted session.
 
 <p>
 
-Assuming an insecure version of WIKSD (such as the free IKSDNT program),
-here is an outline of a scripted session:
+Assuming an insecure version of WIKSD, here is an outline of a scripted session:
 
 <p>
 <pre>
@@ -1436,8 +1436,8 @@ that the host you are connecting to is the on you think it is.
 <i>(More to be filled in . . . )</i>
 
 <p>
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <h3><a name="x6"><hr>6. APPLICATIONS AND EXAMPLES</a></h3>
 
@@ -1453,11 +1453,11 @@ that the host you are connecting to is the on you think it is.
 
 [ <a href="#top">Top</a> ]
 [ <a href="#contents">Contents</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 <hr>
 <address>
 Windows Internet Kermit Service - User Guide /
-The Kermit Project / Columbia University /
+The Kermit Project /
 4 June 2002
 </address></body></html>
