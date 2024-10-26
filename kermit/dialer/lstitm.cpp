@@ -1208,7 +1208,7 @@ KD_LIST_ITEM::ConvertModemInfo( void )
 	/* we have found a COM port */
 	ZIL_ICHAR newname[61];
 	sprintf(newname, "%s (%s)",_modem, _line_device);
-	if ( modem = connector->FindModem( newname ) ) {
+	if ( (modem = connector->FindModem( newname )) != NULL ) {
 	    strcpy( _modem, newname );
 	    strcpy( _line_device, modem->_port );
 	}
@@ -1948,7 +1948,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
        _color_command_bg = color;
    }
 
-  ver_1_2:
+//  ver_1_2:
     /* New items in version 1.2 */
     if ( itemMinor < 2 )
     {
@@ -1977,7 +1977,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
 	_lataddress[256] = '\0' ;
     }	       
 
-  ver_1_4:
+//  ver_1_4:
     /* New items in version 1.1.7 (minor = 4 ) */
     if ( itemMinor < 4 )
     {
@@ -2070,7 +2070,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
 	_log_transaction_fname[256] = '\0' ;
     }
 
-  ver_1_10:
+//  ver_1_10:
     /* New items in version 1.1.12 (minor = 10 ) */
     if ( itemMinor < 10 )
     {
@@ -2087,7 +2087,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
 	file->Load(&_log_transaction_append);
     }
 
-  ver_1_11:
+//  ver_1_11:
     if ( itemMinor < 11 )
     {
 	_use_mdm_speed = 0;
@@ -2307,7 +2307,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _k5_cache[256] = '\0';
     }
 
-    ver_1_18:
+//    ver_1_18:
     if ( itemMinor < 18 ) {
         _default_ip_address = 1;
     } else {
@@ -2471,20 +2471,20 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _tls_verify_mode = (enum TLS_VERIFY)Enum;
     }
 
-    ver_1_21:
+//    ver_1_21:
     if ( itemMinor < 21 ) {
         _telnet_debug = 0;
     } else {
         file->Load(&_telnet_debug);
     }
 
-    ver_1_22:
+//    ver_1_22:
     if ( itemMinor < 22 )
         _telnet_sb_delay = 1;
     else
         file->Load(&_telnet_sb_delay);
 
-    ver_1_23:
+//    ver_1_23:
     if ( itemMinor < 23 )
         _tcpproto = TCP_DEFAULT;
     else {
@@ -2492,7 +2492,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _tcpproto = (enum TCPPROTO)Enum;
     }
 
-    ver_1_24:
+//    ver_1_24:
     if ( itemMinor < 24 ) {
         _streaming = 1;
         _clear_channel = 1;
@@ -2624,7 +2624,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _ftpport[32] = '\0';
     }
 
-  ver_1_28:
+//  ver_1_28:
     if ( itemMinor < 28 ) {
         _ftp_autologin = 1;  
         _ftp_passive   = 1;    
@@ -2668,7 +2668,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         file->Load(&_ftp_auth_tls);
     }
 
-  ver_1_29:
+//  ver_1_29:
     if ( itemMinor < 29 ) {
         _telnet_fwdx_mode = TelnetAccept;
         _telnet_cpc_mode = TelnetAccept;
@@ -2799,7 +2799,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         file->Load(&_rgb[15][2]);
    }
 
-  ver_1_31:
+//  ver_1_31:
     if ( itemMinor < 31 ) {
         _ssh_credfwd = 0;  
     } else {
@@ -2860,7 +2860,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _keyscript[3000] = '\0' ;
     }
 
-  ver_1_34:
+//  ver_1_34:
     if ( itemMinor < 34 ) {
         _gui_resize = RES_CHANGE_DIM;
         _gui_run = RUN_RES;
@@ -2911,7 +2911,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         file->Load(_socks_pass,length);
     }
 
-  ver_1_36:
+//  ver_1_36:
     if ( itemMinor < 36 ) {
         _printer_charset = T_CP437;
     } else {
@@ -2919,7 +2919,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _printer_charset = (enum TERMCSET) Enum ;
     }
 
-  ver_1_37:
+//  ver_1_37:
     if ( itemMinor < 37 ) {
         _ssh2_cipher_aes128ctr = 1;
         _ssh2_cipher_aes192ctr = 1;
