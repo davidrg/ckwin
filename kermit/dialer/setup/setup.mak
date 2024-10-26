@@ -16,7 +16,11 @@ WNT_LIBRARIAN=lib
 
 #WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. -noBool
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. /Zi -noBool
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. /Zi
+!if "$(CMP)" == "VCXX"
+# noBool option isn't supported by any WATCOM or Open Watcom compilers
+WNT_CPP_OPTS=$(WNT_CPP_OPTS) -noBool
+!endif
 WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
 WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
 WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
