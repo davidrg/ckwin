@@ -4,13 +4,15 @@
 # This makefile processes feature flags (CKF_*) and adds whatever necessary
 # preprocessor definitions are required to turn those features on and off.
 #
-# The results are stored in four macros:
+# The results are stored in five macros:
 #   DISABLED_FEATURES       Optional features that have been turned OFF
 #   DSIABLED_FEATURE_DEFS   The preprocessor definitions to turn those features
 #                           off (eg, -DNO_ENCRYPTION)
 #   ENABLED_FEATURES        Optional features that have been turned ON
 #   ENABLED_FEATURE_DEFS    The preprocessor definitions to turn those features
 #                           on (eg, -DZLIB)
+#   RC_FEATURE_DEFS         The resource compiler preprocessor definitions for 
+#                           handling those features
 #
 # The supported feature flags are:
 #   Flag           Default    Description
@@ -573,6 +575,7 @@ DISABLED_FEATURES = $(DISABLED_FEATURES) SuperLAT
 !if "$(CKF_TOOLBAR)" == "no"
 DISABLED_FEATURES = $(DISABLED_FEATURES) Toolbar
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTOOLBAR
+RC_FEATURE_DEFS = $(RC_FEATURE_DEFS) /dNOTOOLBAR
 !endif
 
 # Login:

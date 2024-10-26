@@ -30,7 +30,11 @@ WNT_CPP=cl
 WNT_LINK=link
 WNT_LIBRARIAN=lib
 
-WNT_CPP_OPTS= -c -MT -W3 -DWIN32 -DOS2 -DNT -I.\.. -J -noBool
+WNT_CPP_OPTS= -c -MT -W3 -DWIN32 -DOS2 -DNT -I.\.. -J
+!if "$(CMP)" == "VCXX"
+# noBool option isn't supported by any WATCOM or Open Watcom compilers
+WNT_CPP_OPTS=$(WNT_CPP_OPTS) -noBool
+!endif
 
 !if "$(CMP)" == "OWCL"
 # The Open Watcom 1.9 linker fails with an internal error using the normal linker options.

@@ -31,7 +31,11 @@ WNT_CPP=cl
 WNT_LINK=link
 WNT_LIBRARIAN=lib
 
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95 -noBool
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95
+!if "$(CMP)" == "VCXX"
+# noBool option isn't supported by any WATCOM or Open Watcom compilers
+WNT_CPP_OPTS=$(WNT_CPP_OPTS) -noBool
+!endif
 !if $(MSC_VER) < 100
 # Visual C++ 2.0 or older
 WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
