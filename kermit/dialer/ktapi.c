@@ -33,6 +33,7 @@
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 #include "ktapi.h"
+#include "ckntapi.h"
 #endif /* NODIAL */
 #include "cknwin.h"
 

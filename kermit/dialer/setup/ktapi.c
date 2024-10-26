@@ -33,6 +33,7 @@
 /* or FALSE to indicate failure */
 #include "ktapi.h"
 #include "cknwin.h"
+#include "ckntapi.h"
 
 #undef debug
 #undef printf
