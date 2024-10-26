@@ -248,7 +248,10 @@ SUBSYSTEM_WIN32=windows,3.1
 !if ($(MSC_VER) > 90)
 !if "$(TARGET_CPU)" != "MIPS"
 # This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
+# It isn't supported by any WATCOM or Open Watcom compilers
+!if "$(CMP)" == "VCXX"
 COMMON_OPTS = $(COMMON_OPTS) /GA
+!endif
 !endif  # EndIf TARGET_CPU != MIPS
 !endif  # EndIf MSC_VER > 90
 
