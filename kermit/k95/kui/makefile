@@ -118,7 +118,7 @@ CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 LFLAGS    = /NOD /NOLOGO /SUBSYSTEM:windows
 RCFLAGS   = /r
-RCDEFINES = /dNDEBUG /dWIN32 $(RC_FEATURE_DEFS)
+RCDEFINES = /dNDEBUG
 MAPFILE   =
 
 # /D_X86_
@@ -133,7 +133,10 @@ CFLAGS = $(CFLAGS) /G5
 !if ($(MSC_VER) > 90)
 !if "$(TARGET_CPU)" != "MIPS"
 # This flag isn't valid on Visual C++ 4.0 MIPS (or, I assume, any other version)
+# It isn't supported by any WATCOM or Open Watcom compilers
+!if "$(CMP)" == "VCXX"
 CFLAGS = $(CFLAGS) /GA
+!endif
 !endif
 !endif
 
@@ -159,7 +162,7 @@ CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
 
 LFLAGS    = /NOD /NOLOGO /DEBUG:full /DEBUGTYPE:cv /SUBSYSTEM:windows
 RCFLAGS   = /r
-RCDEFINES = /d_DEBUG /dWIN32 /dCOMPILER_$(CMP)
+RCDEFINES = /d_DEBUG
 !if "$(CKT_NT31)" == "yes"
 RCDEFINES = $(RCDEFINES) /dCKT_NT31
 !endif
@@ -167,13 +170,18 @@ MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 
 !endif
 
+RCDEFINES = $(RCDEFINES) /dWIN32 /dCOMPILER_$(CMP)
+
 # Customise for the compiler version we're using
 !IF ($(MSC_VER) < 131)
 # Visual C++ 7.0 (2002) and earlier
 
 !if ($(MSC_VER) > 102)
 # This switch is new to Visual C++ 5.0 (along with bool support) (102 == Visual C++ 4.2)
+!if "$(CMP)" == "VCXX"
+# noBool option isn't supported by any WATCOM or Open Watcom compilers
 CFLAGS = $(CFLAGS) /noBool
+!endif
 !endif
 
 # Visual C++ 7.1 - nothing required
@@ -199,7 +207,7 @@ $(OUTDIR)\$(PROJ).EXE: $(OUTDIR) $(KUIOBJS) $(OUTDIR)\$(PROJ).res
 !endif
 
 $(OUTDIR)\$(PROJ).res: $(PROJ).rc $(RC_DEP)
-    rc $(RCFLAGS) $(RCDEFINES) /fo$(OUTDIR)\$(PROJ).res $(PROJ).rc
+    rc $(RCFLAGS) $(RCDEFINES) $(RC_FEATURE_DEFS) /fo$(OUTDIR)\$(PROJ).res $(PROJ).rc
 
 .c{$(OUTDIR)}.obj:
     cl $(CFLAGS) $(CDEFINES) $<
