@@ -167,10 +167,6 @@ MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 
 !endif
 
-!if "$(CKF_TOOLBAR)" == "no"
-RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
-!endif
-
 # Customise for the compiler version we're using
 !IF ($(MSC_VER) < 131)
 # Visual C++ 7.0 (2002) and earlier
