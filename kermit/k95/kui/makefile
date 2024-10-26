@@ -177,7 +177,10 @@ RCDEFINES = $(RCDEFINES) /dNOTOOLBAR
 
 !if ($(MSC_VER) > 102)
 # This switch is new to Visual C++ 5.0 (along with bool support) (102 == Visual C++ 4.2)
+!if "$(CMP)" == "VCXX"
+# noBool option isn't supported by any WATCOM or Open Watcom compilers
 CFLAGS = $(CFLAGS) /noBool
+!endif
 !endif
 
 # Visual C++ 7.1 - nothing required
