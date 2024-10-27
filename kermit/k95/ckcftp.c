@@ -13177,15 +13177,17 @@ Please confirm output file specification or supply an alternative:";
                             return;
                         }
                         if (c < 0 || c == EOF)
-                          goto break2;
+                            break;
                         if (c == '\0') {
                             bytes++;
-                            goto contin2;
+                            break;
                         }
                     }
                 }
-                if (c < 0)
-                  break;
+                if (c < 0 || c == EOF)
+                    break;
+                if (c == '\0')
+                    continue;
 #endif /* UNX */
 
                 if (out2screen && !ftprecv.pipename)
@@ -13199,10 +13201,7 @@ Please confirm output file specification or supply an alternative:";
                     break;
                 bytes++;
                 ffc++;
-              contin2:
-                ;
             }
-          break2:
             if (bare_lfs && (!dpyactive || ftp_deb)) {
                 printf("WARNING! %d bare linefeeds received in ASCII mode\n",
                        bare_lfs);
