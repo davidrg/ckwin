@@ -161,6 +161,7 @@ char *ckftpv = "FTP Client, 10.0.281, 18 Sep 2023";
 #ifdef OS2ONLY
 #define INCL_WINERRORS
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckowin.h"
 #include "ckocon.h"

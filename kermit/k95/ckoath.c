@@ -46,6 +46,7 @@
 #else /* NT */
 #define INCL_DOSMODULEMGR
 #include <os2.h>
+#undef COMMENT
 #endif /* NT */
 #endif /* OS2 */
 #endif /* CRYPT_DLL */
@@ -54,6 +55,7 @@
 #ifndef NT
 #define INCL_DOSMODULEMGR
 #include <os2.h>
+#undef COMMENT
 #endif
 #endif
 

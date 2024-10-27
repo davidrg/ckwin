@@ -88,6 +88,7 @@ int accept_complete = 0;
 #define INCL_DOSMODULEMGR
 #define INCL_DOSSEMAPHORES
 #include <os2.h>
+#undef COMMENT
 #endif /* NT */
 #endif /* OS2 */
 

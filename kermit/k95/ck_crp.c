@@ -73,6 +73,7 @@ char *ckcrpv = "Encryption Engine, 10.0.121, 23 Mar 2023";
 #include <stdarg.h>
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckosyn.h"
 #else /* OS2 */
