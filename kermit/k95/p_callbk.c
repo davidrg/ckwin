@@ -63,10 +63,12 @@
 #ifdef NT
 #define msleep Sleep
 #define DosBeep Beep
+#ifndef __WATCOMC__
 #define filelength _filelength
 #define fstat _fstat
 #define unlink _unlink
 #define stat _stat
+#endif /* __WATCOMC__ */
 #endif /* NT */
 
 extern int keep, moving;                /* fdc */

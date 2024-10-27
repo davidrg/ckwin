@@ -39,7 +39,11 @@
 #include "pdll_dev.h"
 
 U8 *dev_path = NULL;
-intptr_t dev_handle = 0;
+#ifdef NT
+HANDLE dev_handle;
+#else
+HFILE dev_handle;
+#endif
 U32 passive_socket = 0;
 U8 *socket_remote = NULL;
 U16 socket_port = 0;
@@ -276,7 +280,7 @@ dev_get_cfg(DEV_CFG *dev_cfg) {
 #ifdef COMMENT
      {
         DCB dcb ;
-        if ( !GetCommState( (HANDLE) dev_handle, &dcb ) )
+        if ( !GetCommState( dev_handle, &dcb ) )
            rc = GetLastError() ;
         else 
         {
@@ -313,7 +317,7 @@ dev_set_cfg(DEV_CFG *dev_cfg) {
 #ifdef COMMENT
      {
         DCB dcb ;
-        if ( !SetCommState( (HANDLE) dev_handle, &dcb ) )
+        if ( !SetCommState( dev_handle, &dcb ) )
            rc = GetLastError() ;
         else 
         {

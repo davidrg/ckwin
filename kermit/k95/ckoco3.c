@@ -159,7 +159,7 @@ _PROTOTYP( FILE * win95popen, (const char *cmd, const char *mode) );
 _PROTOTYP( int win95pclose, (FILE *pipe) );
 #define popen _popen
 #define pclose _pclose
-#else
+#else /* NT */
 #ifdef __WATCOMC__
 #define popen _popen
 #define pclose _pclose
