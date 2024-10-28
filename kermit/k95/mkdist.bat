@@ -73,6 +73,7 @@ if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
 :nossl
 
 if exist dist\regina.dll copy %rexx_root%\COPYING-LIB dist\COPYING.regina
+if exist dist\regina.dll copy %rexx_root%\doc\*.pdf dist\docs\
 
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
