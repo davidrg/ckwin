@@ -1,5 +1,5 @@
 ;
-; K-95 mkdocs script: Updates version numbers dates in the Kermit 95 manual
+; K-95 mkdocs script: Updates version numbers & dates in the Kermit 95 manual
 ; to match those of the K-95 build running this script, updates last-modified
 ; times within files to match the files last modified time, and updates file
 ; timestamps to match the git commit.
@@ -7,7 +7,7 @@
 ; This is most certainly *not* the best way to achieve this. A shell script
 ; and sed would run much faster and be simpler, but K-95 is a windows program
 ; and we can't really rely on having things like sed available. One thing we
-; *can* rely on having is K-95, so thats why we're using it to the job.
+; *can* rely on having is K-95, so that's why we're using it to the job.
 ;
 ; Strings to update in .htm and .html files are marked with tags such as below:
 ;	<!--$ver$-->3.0 DEV<!--/$ver$-->
@@ -36,6 +36,9 @@
 ;
 ;	$last-update$		The last modified time for the file, or the timestamp of
 ;						the last commit to modify the file if run inside a git repo
+;
+;   $last-update-short$ Last modified time for the file, or the datestamp of the
+;                       last commit to modify the file if run inside a git repo
 ;
 ; An alternative format is also available for these tags:
 ;	$!ver$
@@ -351,10 +354,12 @@ def process_file {
 		if = \flength(\m(git_date)) 0 {
 			date_to_touch_date {\m(file_date)} 0
 			.file_last_modified := \m(file_date)
+			.file_last_modified_short := \m(file_date)
 		}
 		else {
 			date_to_touch_date {\m(git_date)} 1
 			.file_last_modified := \m(git_date)
+			.file_last_modified_short := \Fcommand(git log -1 --pretty="format:%cd" --date="format:%e %B %Y" \m(file_in) 2> nul)
 		}
 	}
 
@@ -389,6 +394,9 @@ def process_file {
 		update_tag \m(line) $last-update$ {\m(file_last_modified)}
 		.line := \v(return)
 
+		update_tag \m(line) $last-update-short$ {\m(file_last_modified_short)}
+        .line := \v(return)
+
 		; Update one-part tags ($!foo$)
 		replace_tag \m(line) $!ver$ {\m(ver_maj_min)}
 		.line := \v(return)
@@ -407,6 +415,9 @@ def process_file {
 
 		replace_tag \m(line) $!last-update$ {\m(file_last_modified)}
 		.line := \v(return)
+
+		replace_tag \m(line) $!last-update-short$ {\m(file_last_modified_short)}
+        .line := \v(return)
 
 
 		;echo \m(line)
