@@ -145,12 +145,17 @@ LIBS = $(LIBS) ucrt.lib vcruntime.lib
 # To generate debug info, add $(CFLAGSD) to CFLAGS
 
 CC = cl
+#CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
 CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
 CFLAGSO = /Ot /Oi
+!if "$(CMP)" == "VCXX"
 CFLAGSD = /Zi
-#CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
+LDFLAGS = /nologo /dll /map /nod
+!else
+CFLAGSD = /Z7
+LDFLAGS = /nologo /dll /map
+!endif
 LD = link
-LDFLAGS = /nologo /dll /nod /map
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
 #                 Visual C++ 5.0 SP3 and its almost just a leftover of the
 #                 default Visual C++ 4.0 makefile settings
@@ -162,11 +167,6 @@ LDFLAGS = /nologo /dll /nod /map
 CFLAGS = $(CFLAGS) /MT
 !else
 CFLAGS = $(CFLAGS) /MD
-!endif
-
-!if "$(CMP)" == "OWCL"
-# The Open Watcom 1.9 linker doesn't know what /nod is.
-LDFLAGS = /nologo /dll /map /debug:full
 !endif
 
 !if "$(CKT_NT35)" == "yes"
