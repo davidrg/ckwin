@@ -142,7 +142,7 @@ extern bool viewonly;
 extern int k95stdout;
 extern int tt_scroll;
 #ifndef NOTERM
-extern tt_status[VNUM];
+extern int tt_status[VNUM];
 #endif /* NOTERM */
 #include "ckossh.h"
 #ifdef KUI

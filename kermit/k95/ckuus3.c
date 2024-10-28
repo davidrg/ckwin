@@ -9231,7 +9231,7 @@ int nrgb = (sizeof(rgbtab) / sizeof(struct keytab));
 
 VOID
 shogui() {
-    extern gui_dialog;
+    extern int gui_dialog;
     extern HWND getHwndKUI();
     unsigned char cmdsav = colorcmd;
     int i, red, green, blue, lines=0;
