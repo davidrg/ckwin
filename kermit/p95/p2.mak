@@ -126,7 +126,7 @@ LD = wcl386
 
 #LDFLAGS not ported:
 #  /nologo /noi /exepack:1 /align:16 /base:0x10000
-LDFLAGS = -l=os2v2_dll -"export p_transfer"
+LDFLAGS = -l=os2v2_dll -fm -"export p_transfer"
 OUT=-Fe=
 !else
 

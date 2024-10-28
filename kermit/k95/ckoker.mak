@@ -255,6 +255,8 @@ COMMON_OPTS = $(COMMON_OPTS) /GA
 !endif  # EndIf TARGET_CPU != MIPS
 !endif  # EndIf MSC_VER > 90
 
+!if "$(CMP)" == "VCXX"
+
 # PDB Generation Stuff
 
 !if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
@@ -271,23 +273,31 @@ CKB_MAKE_PDB=no
 !message Enabling PDB generation
 
 COMMON_CFLAGS = $(COMMON_CFLAGS) /Zi
-LDDEBUG = $(LDDEBUG) /DEBUG /INCREMENTAL:NO /OPT:REF
-
-# /OPT:ICF is new in Visual C++ 5.0
-!if ($(MSC_VER) >= 110)
-LDDEBUG = $(LDDEBUG) /OPT:ICF
-!endif  # EndIf MSC_VER >= 110
-
 # /FS is required to synchronise writes to a PDB when doing parallel builds with
 # something like JOM. It was introduced in Visual C++ 2013.
 !if ($(MSC_VER) >= 180)
 COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
 !endif  # EndIf MSC_VER >= 180
 
+LDDEBUG = $(LDDEBUG) /DEBUG:full /OPT:REF /INCREMENTAL:NO /PROFILE
+# /OPT:ICF is new in Visual C++ 5.0
+!if ($(MSC_VER) >= 110)
+LDDEBUG = $(LDDEBUG) /OPT:ICF
+!endif  # EndIf MSC_VER >= 110
+
 !endif  # EndIf MSC_VER > 90
 !endif  # EndIf CKB_MAKE_PDB != no
 
 # End PDB Generation Stuff
+
+!else   # Else CMP == VCXX
+
+!if "$(CKB_MAKE_PDB)" != "no"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Z7
+LDDEBUG = $(LDDEBUG) /DEBUG:full /OPT:REF
+!endif  # EndIf CKB_MAKE_PDB != no
+
+!endif  # EndIf CMP == VCXX
 
 !if ($(MSC_VER) < 140)
 # These flags and options are deprecated or unsupported
@@ -366,6 +376,14 @@ unknown:
 # It is normally found in IBMCPP\HELP.
 
 ################### WINDOWS TARGETS ###################
+!if "$(CMP)" == "VCXX"
+DEBUG_COPT = /Zi
+DEBUG_LDFLAGS = $(LDDEBUG)
+!else
+DEBUG_COPT = /Z7
+DEBUG_LDFLAGS = $(LDDEBUG)
+!endif
+
 telnet:
 	$(MAKE) -f ckoker.mak wtelnet \
 	CC="cl /nologo" \
@@ -425,7 +443,7 @@ winsetup:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE)" \
 	DEF="wsetup.def"
 
 # release version
@@ -441,7 +459,7 @@ msvc:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF $(LDDEBUG)" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP" DEF="cknker.def"
 
 !if "$(CKF_DYNAMIC_SSH)" == "yes"
 msvc-sshdll:
@@ -456,20 +474,20 @@ msvc-sshdll:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP" DEF="cknker.def"
 msvc-sshdlld:
 	$(MAKE) -f ckoker.mak win32sshdll \
 	CC="cl /nologo" \
     CC2="" \
     OUT="-Fe" O=".obj" \
     OPT="$(COMMON_OPTS)" \
-    DEBUG="-DNDEBUG" \
+    DEBUG="$(DEBUG_COPT)" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /debugtype:both /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP $(DEBUG_LDFLAGS) /debugtype:both" DEF="cknker.def"
 !endif
 
 # release version
@@ -485,7 +503,7 @@ msvc-iksd:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /OPT:REF" DEF="cknker.def"
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP" DEF="cknker.def"
 
 # debug version
 msvcd:
@@ -494,13 +512,13 @@ msvcd:
     CC2="" \
     OUT="-Fe" O=".obj" \
 	OPT="" \
-    DEBUG="/Zi /Odi /Ge " \
+    DEBUG="$(DEBUG_COPT) /Odi /Ge " \
     DLL="" \
 	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /WARN:3 /FIXED:NO $(DEBUG_LDFLAGS)" \
 	DEF="cknker.def"
 
 # debug version
@@ -510,13 +528,13 @@ msvcd-iksd:
     CC2="" \
     OUT="-Fe" O=".obj" \
 	OPT="" \
-    DEBUG="/Zi /Odi /Ge " \
+    DEBUG="$(DEBUG_COPT) /Odi /Ge " \
     DLL="" \
 	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE /OPT:REF" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /WARN:3 /FIXED:NO $(DEBUG_LDFLAGS)" \
 	DEF="cknker.def"
 
 # memory debug version
@@ -526,13 +544,13 @@ msvcmd:
     CC2="" \
     OUT="-Fe" O=".obj" \
 	OPT="" \
-    DEBUG="/Zi /Odi /Ge -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
+    DEBUG="$(DEBUG_COPT) /Odi /Ge -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
     DLL="" \
 	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /DEBUG:full /WARN:3 /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /WARN:3 /FIXED:NO $(DEBUG_LDFLAGS)" \
 	DEF="cknker.def"
 
 # profile version
@@ -548,7 +566,7 @@ msvcp:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO /PROFILE" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_CONSOLE) /MAP /FIXED:NO" \
 	DEF="cknker.def"
 
 # kui debug version
@@ -558,13 +576,13 @@ kuid:
     CC2="" \
     OUT="-Fe" O=".obj" \
 	OPT="" \
-    DEBUG="/Zi /Odi" \
+    DEBUG="$(DEBUG_COPT) /Odi" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /DEBUG:full /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32) $(DEBUG_LDFLAGS)" \
 	DEF="cknker.def"
 
 kui:
@@ -589,13 +607,13 @@ k95gd:
     CC2="" \
     OUT="-Fe" O=".obj" \
 	OPT="" \
-    DEBUG="/Zi /Odi" \
+    DEBUG="$(DEBUG_COPT) /Odi" \
     DLL="" \
     CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /MAP /DEBUG /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
+    LINKFLAGS="/nologo /MAP /SUBSYSTEM:$(SUBSYSTEM_WIN32) $(DEBUG_LDFLAGS)" \
 	DEF="cknker.def"
 
 k95g:
@@ -610,7 +628,7 @@ k95g:
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
-    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32) $(LDDEBUG)" \
+    LINKFLAGS="/nologo /SUBSYSTEM:$(SUBSYSTEM_WIN32)" \
 	DEF="cknker.def"
 
 ################### OS/2 TARGETS ###################

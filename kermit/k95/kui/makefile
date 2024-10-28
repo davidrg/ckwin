@@ -18,6 +18,8 @@ COMMON_CFLAGS = /D_MT /QmipsOb5000
 CKB_STATIC_CRT_NT = yes
 !endif
 
+!if "$(CMP)" == "VCXX"
+
 # PDB Generation Stuff
 
 !if ($(MSC_VER) < 180) && ("$(ISJOM)" == "yes") && ("$(CKB_MAKE_PDB)" != "yes")
@@ -45,6 +47,14 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /FS
 !endif  # EndIf CKB_MAKE_PDB != no
 
 # End PDB Generation Stuff
+
+!else   # Else CMP == VCXX
+
+!if "$(CKB_MAKE_PDB)" != "no"
+COMMON_CFLAGS = $(COMMON_CFLAGS) /Z7
+!endif  # EndIf CKB_MAKE_PDB != no
+
+!endif  # EndIf CMP == VCXX
 
 all: $(OUTDIR)\$(PROJ).exe 
 
@@ -116,7 +126,11 @@ CDEFINES  = /D_MT /DSTRICT /DNDEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DHADDRLIST -DSCRIPTTERM -DOS2MOUSE -DOS2TEST -DKUI \
                 -D_WIN32_WINNT=$(WIN32_VERSION) \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
-LFLAGS    = /NOD /NOLOGO /SUBSYSTEM:windows
+!if "$(CMP)" == "VCXX"
+LFLAGS    = /NOLOGO /SUBSYSTEM:windows /NOD
+!else
+LFLAGS    = /NOLOGO /SUBSYSTEM:windows
+!endif
 RCFLAGS   = /r
 RCDEFINES = /dNDEBUG
 MAPFILE   =
@@ -150,7 +164,13 @@ CFLAGS = $(CFLAGS) /Ap64
 
 !MESSAGE Debugging build
 
-CFLAGS    = /c /W3 $(RTFLAG) /Od /Zi /J /Fd$(OUTDIR)\$(PROJ).pdb /nologo \
+!if "$(CMP)" == "VCXX"
+DEBUG_CFLAGS = /Zi /Fd$(OUTDIR)\$(PROJ).pdb
+!else
+DEBUG_CFLAGS = /Z7
+!endif
+
+CFLAGS    = /nologo /c /W3 $(RTFLAG) /Od $(DEBUG_CFLAGS) /J \
                 /Fo$(OUTDIR)\ /I$(KERMITDIR)
 CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 -DNT -DOS2 -DDYNAMIC -DKANJI -DNETCONN -DTCPSOCKET -DSUPERLAT\
@@ -160,7 +180,11 @@ CDEFINES  = /D_MT /DSTRICT /D_DEBUG /D_WINDOWS /DWIN32 /DWIN32_LEAN_AND_MEAN \
                 $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
 #  /D_X86_
 
-LFLAGS    = /NOD /NOLOGO /DEBUG:full /DEBUGTYPE:cv /SUBSYSTEM:windows
+!if "$(CMP)" == "VCXX"
+LFLAGS    = /NOLOGO /DEBUG:full /SUBSYSTEM:windows /DEBUGTYPE:cv /NOD
+!else
+LFLAGS    = /NOLOGO /DEBUG:full /SUBSYSTEM:windows
+!endif
 RCFLAGS   = /r
 RCDEFINES = /d_DEBUG
 MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
@@ -170,25 +194,23 @@ MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 RCDEFINES = $(RCDEFINES) /dWIN32 /dCOMPILER_$(CMP)
 
 # Customise for the compiler version we're using
-!IF ($(MSC_VER) < 131)
-# Visual C++ 7.0 (2002) and earlier
+!if "$(CMP)" == "VCXX"
 
 !if ($(MSC_VER) > 102)
-# This switch is new to Visual C++ 5.0 (along with bool support) (102 == Visual C++ 4.2)
-!if "$(CMP)" == "VCXX"
-# noBool option isn't supported by any WATCOM or Open Watcom compilers
+# This switch is new to Visual C++ 5.0 (along with bool support)
+# (102 == Visual C++ 4.2) noBool
 CFLAGS = $(CFLAGS) /noBool
 !endif
-!endif
-
+!IF ($(MSC_VER) < 131)
+# Visual C++ 7.0 (2002) and earlier
 # Visual C++ 7.1 - nothing required
-!ELSEIF ($(MSC_VER) > 131)
+!elseif ($(MSC_VER) > 131)
 # Visual C++ 8.0 or newer
-
 CFLAGS = $(CFLAGS) /Zc:wchar_t-
 CDEFINES = $(CDEFINES) -D_CRT_SECURE_NO_DEPRECATE
+!endif
 
-!ENDIF
+!endif
 
 #--------------------------------------------------------------------------
 # Build Rules

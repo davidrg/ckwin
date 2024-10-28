@@ -26,37 +26,35 @@
 !message
 !message
 
-WNT_CPP=cl
-WNT_LINK=link
-WNT_LIBRARIAN=lib
+WNT_CPP=cl /nologo
+WNT_LINK=link /nologo
+WNT_LIBRARIAN=lib /nologo
 
-WNT_CPP_OPTS= -c -MT -W3 -DWIN32 -DOS2 -DNT -I.\.. -J
 !if "$(CMP)" == "VCXX"
-# noBool option isn't supported by any WATCOM or Open Watcom compilers
-WNT_CPP_OPTS=$(WNT_CPP_OPTS) -noBool
-!endif
-
-!if "$(CMP)" == "OWCL"
-# The Open Watcom 1.9 linker fails with an internal error using the normal linker options.
-WNT_LINK_OPTS=-subsystem:windows /MAP
-!else
-WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP
-!endif
 
 #WNT_CPP_OPTS= -c -MT -W3 -D_X86_=1 -DWIN32 -DOS2 -DNT -I.\.. /Zi -J -noBool
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /Debug:full /Debugtype:cv 
+WNT_CPP_OPTS=-c -MT -W3 -DWIN32 -DOS2 -DNT -I.\.. -J -noBool
+WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP
 WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
-WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
-
-WNT_OBJS=
-WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib wnt_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib shell32.lib ole32.lib uuid.lib advapi32.lib # compmgr.lib
-
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
 !if $(MSC_VER) < 130
 !message Using ctl3d32
-# CTL3D32 is only available on Visual C++ 6.0 and earlier. Visual C++ 2002 and
-# Open Watcom (which we pretend is VC++ 2002) do not have it.
+# CTL3D32 is only available on Visual C++ 6.0 and earlier.
 WNT_LIBS=$(WNT_LIBS) ctl3d32.lib
 !endif
+
+!else
+
+WNT_CPP_OPTS=-c -MT -W3 -DWIN32 -DOS2 -DNT -I.\.. -J
+WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP
+WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib # compmgr.lib
+
+!endif
+
+WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
+WNT_OBJS=
 
 .cpp.obn:
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<

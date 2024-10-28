@@ -31,38 +31,39 @@ WNT_CPP=cl
 WNT_LINK=link
 WNT_LIBRARIAN=lib
 
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95
 !if "$(CMP)" == "VCXX"
-# noBool option isn't supported by any WATCOM or Open Watcom compilers
-WNT_CPP_OPTS=$(WNT_CPP_OPTS) -noBool
-!endif
+
+#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I..\k95 /Zi -noBool
+#WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95 -noBool
 !if $(MSC_VER) < 100
 # Visual C++ 2.0 or older
 WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
 !endif
-
-!if "$(CMP)" == "OWCL"
-# The Open Watcom 1.9 linker fails with an internal error using the normal linker options.
-WNT_LINK_OPTS=-subsystem:windows /MAP
-!else
 WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
-!endif
-#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I..\k95 /Zi -noBool
-#WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
 WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
-WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
-
-WNT_OBJS=
-WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib wnt_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib shell32.lib ole32.lib uuid.lib advapi32.lib # compmgr.lib
-
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
 !if $(MSC_VER) < 130
 !message Using ctl3d32
-# CTL3D32 is only available on Visual C++ 6.0 and earlier. Visual C++ 2002 and
-# Open Watcom (which we pretend is VC++ 2002) do not have it.
+# CTL3D32 is only available on Visual C++ 6.0 and earlier.
 WNT_LIBS=$(WNT_LIBS) ctl3d32.lib
 !endif
 
-WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib libc.lib kernel32.lib oldnames.lib
+
+!else
+
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95
+WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib
+WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup /MAP
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib
+
+!endif
+
+WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
+WNT_OBJS=
+
 .cpp.obn:
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 
