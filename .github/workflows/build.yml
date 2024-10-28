@@ -546,8 +546,9 @@ jobs:
         
         echo Building RexxRE
         cd %REGINA_SRCDIR%\..\rexxre
-        patch -p1 ..\rexxre.patch
+        patch -p1 < ..\rexxre.patch
         nmake -f Makefile.NT
+        if not exist rexxre.dll exit /b 1
         cd ..
 
     - name: Build Regina REXX (x86-64)
@@ -573,8 +574,9 @@ jobs:
         
         echo Building RexxRE
         cd %REGINA_SRCDIR%\..\rexxre
-        patch -p1 ..\rexxre.patch
+        patch -p1 < ..\rexxre.patch
         nmake -f Makefile.NT
+        if not exist rexxre.dll exit /b 1
         cd ..        
 
 #    TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
@@ -609,7 +611,7 @@ jobs:
 #
 #        echo Building RexxRE
 #        cd %REGINA_SRCDIR%\..\rexxre
-#        patch -p1 ..\rexxre.patch
+#        patch -p1 < ..\rexxre.patch
 #        nmake -f Makefile.NT
 #        cd ..
 
