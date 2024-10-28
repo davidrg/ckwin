@@ -2470,7 +2470,7 @@ zchdir(dirnam) char *dirnam; {
 #ifndef NOSPL
         if (nmac) {             /* Any macros defined? */
             int k;                /* Yes */
-            static on_cd = 0;
+            static int on_cd = 0;
             if ( !on_cd ) {
                 on_cd = 1;
                 k = mlook(mactab,"on_cd",nmac); /* Look this up */

@@ -125,6 +125,7 @@ char *copyright = "Copyright (C) 1991, 1996, Trustees of Columbia University";
 
   Copyright (C) 1985, 1997, Trustees of Columbia University in the City of New
   York.
+*/
 
 /* Defines and Includes... */
 
