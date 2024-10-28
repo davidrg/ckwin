@@ -15,8 +15,8 @@
 #include "kwinmgr.hpp"
 #ifdef WIN32
 extern "C" {
-#define OS2 
-#define NT  
+//#define OS2 
+//#define NT  
 #include "ckcdeb.h"
 #include "ckoetc.h"
 #ifndef NODIAL
@@ -278,7 +278,7 @@ int UI_APPLICATION::Main(void)
 #ifdef WIN32
 #ifndef NODIAL
     printf("Checking TAPI\n");
-    if (TapiAvail = cktapiinit(hInstance)) {
+    if ((TapiAvail = cktapiinit(hInstance)) != 0) {
         printf("TAPI available\n");
         cktapiopen();
         printf("TAPI Open\n");
