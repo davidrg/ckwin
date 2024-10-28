@@ -41,7 +41,7 @@ _Inline U32 async_connected(void) {
   static APIRET rc=0;
 #ifdef NT
    DWORD ModemStat ;
-   if ( !GetCommModemStatus( (HANDLE) dev_handle, &ModemStat ) )
+   if ( !GetCommModemStatus( dev_handle, &ModemStat ) )
    {
       p_error(P_ERROR_DOSDEVIOCTL, GetLastError(),
                MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
@@ -80,7 +80,7 @@ _Inline void async_open(void) {
 
   if (!dev_handle) {
 #ifdef NT
-    if ( (HANDLE)(dev_handle = (intptr_t) CreateFile(dev_path,
+    if ( (dev_handle = CreateFile(dev_path,
         GENERIC_READ | GENERIC_WRITE,
         dev_shared,  
         NULL,               /* no security specified */
@@ -115,7 +115,7 @@ _Inline void async_close(void) {
   APIRET rc = 0;
 
 #ifdef NT
-   if ( !CloseHandle( (HANDLE) dev_handle ) )
+   if ( !CloseHandle( dev_handle ) )
       rc = GetLastError() ;
 #else /* NT */
    rc = DosClose(dev_handle);
@@ -140,7 +140,7 @@ _Inline U32 async_incoming(void) {
     return(1);
 
 #ifdef NT
-   if ( !ClearCommError( (HANDLE) dev_handle, &errors, &comstat ) )
+   if ( !ClearCommError( dev_handle, &errors, &comstat ) )
       rc = GetLastError() ;
 #else /* NT */
    DataLengthInOut = 2 * sizeof(U16);
@@ -198,13 +198,13 @@ extern int nActuallyRead ;
        overlapped_read.Offset = overlapped_read.OffsetHigh = 0 ;
        ResetEvent( overlapped_read.hEvent ) ;
 
-       if ( !ReadFile( (HANDLE) dev_handle, inbuf, inbuf_size, &nActuallyRead,
+       if ( !ReadFile( dev_handle, inbuf, inbuf_size, &nActuallyRead,
                          &overlapped_read) )
        {
           DWORD error = GetLastError() ;
           if ( error == ERROR_IO_PENDING )
           {
-             while(!GetOverlappedResult( (HANDLE) dev_handle, &overlapped_read, &nActuallyRead, TRUE ))
+             while(!GetOverlappedResult( dev_handle, &overlapped_read, &nActuallyRead, TRUE ))
              {
                DWORD error = GetLastError() ;
                 if ( error == ERROR_IO_INCOMPLETE )
@@ -222,7 +222,7 @@ extern int nActuallyRead ;
                    COMSTAT comstat ;
                    p_error(P_ERROR_DOSREAD, error,
                             MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
-                   ClearCommError( (HANDLE) dev_handle, &errorflags, &comstat ) ;
+                   ClearCommError( dev_handle, &errorflags, &comstat ) ;
                    return ;
                 }
              }            
@@ -276,13 +276,13 @@ _Inline void async_flush_outbuf(void) {
        overlapped_write.Offset = overlapped_write.OffsetHigh = 0 ;
        ResetEvent( overlapped_write.hEvent ) ;
        nActuallyWritten = 0 ;
-       if ( !WriteFile( (HANDLE) dev_handle, outbuf, outbuf_idx, &nActuallyWritten,
+       if ( !WriteFile( dev_handle, outbuf, outbuf_idx, &nActuallyWritten,
                          &overlapped_write) )
        {
           DWORD error = GetLastError() ;
           if ( error == ERROR_IO_PENDING )
           {
-             while(!GetOverlappedResult( (HANDLE) dev_handle, &overlapped_write, &nActuallyWritten, TRUE ))
+             while(!GetOverlappedResult( dev_handle, &overlapped_write, &nActuallyWritten, TRUE ))
              {
                DWORD error = GetLastError() ;
                 if ( error == ERROR_IO_INCOMPLETE )
@@ -299,7 +299,7 @@ _Inline void async_flush_outbuf(void) {
                    COMSTAT comstat ;
                    p_error(P_ERROR_DOSWRITE, error,
                             MODULE_ASYNC, __LINE__, (intptr_t)dev_path);
-                   ClearCommError( (HANDLE) dev_handle, &errorflags, &comstat ) ;
+                   ClearCommError( dev_handle, &errorflags, &comstat ) ;
                    return ;
                 }
              }            
@@ -339,7 +339,7 @@ _Inline void async_set_break_on(void) {
   
   DataLengthInOut = sizeof(U16);
 #ifdef NT
-   if ( SetCommBreak( (HANDLE) dev_handle ) )
+   if ( SetCommBreak( dev_handle ) )
       rc = GetLastError() ;
 #else
    rc = DosDevIOCtl(dev_handle,		/* FileHandle */
@@ -364,7 +364,7 @@ _Inline void async_set_break_off(void) {
   static U32 DataLengthInOut;
   
 #ifdef NT
-   if ( ClearCommBreak( (HANDLE) dev_handle ) )
+   if ( ClearCommBreak( dev_handle ) )
       rc = GetLastError() ;
 #else
   DataLengthInOut = sizeof(U16);

@@ -136,11 +136,12 @@ extern int pclose(FILE *);
 #endif /* COMMENT */
 #endif
 
+#ifdef __WATCOMC__
+#define stat    _stati64
+#else /* __WATCOMC__ */
 #ifdef NT
-#ifndef __WATCOMC__
 #define timezone _timezone
 #define fileno _fileno
-#endif /* __WATCOMC__ */
 #define write _write
 #define stricmp _stricmp
 #define setmode _setmode
@@ -157,7 +158,7 @@ extern int pclose(FILE *);
 #define rmdir  _rmdir
 #define utimbuf _utimbuf
 
-#if defined(__WATCOMC__) || defined(__GNUC__) || _MSC_VER > 900
+#if defined(__GNUC__) || _MSC_VER > 900
 #define stat    _stati64
 #else
 /* Visual C++ 1.0 32-bit, 2.0 and 2.2 don't have _stati64 */
@@ -171,6 +172,7 @@ extern int pclose(FILE *);
 #define SEM_INDEFINITE_WAIT INFINITE
 #endif /* SEM_INDEFINITE_WAIT */
 #endif /* NT */
+#endif /* __WATCOMC__ */
 
 /* Because standard stat has trouble with trailing /'s we have to wrap it */
 int os2stat(char *, struct stat *);
@@ -379,6 +381,12 @@ int ckxperms = 0040;
 int ckxpriv = 1;                        /* Allow Root logins? */
 #endif /* UNIX */
 #endif /* CK_LOGIN */
+
+#ifdef CK_LABELED
+/* forward declaration */
+static int os2getattr( char * name );
+static int os2setattr( char * name );
+#endif /* CK_LABELED */
 
 #ifndef CKWTMP
 int ckxwtmp = 0;
@@ -4731,12 +4739,16 @@ zstrdt(date,len) char * date; int len; {
   To do: adapt code from OS-9 Kermit's ck9fio.c zstime function, which
   is more flexible, allowing [yy]yymmdd[ hh:mm[:ss]].
 */
+#ifdef __WATCOMC__
+    time_t tmx=0;
+#else
 #ifdef NT
     /* time_t is a 64bit value on Visual C++ 2005 and newer on 64bit windows. */
     time_t tmx=0;
 #else /* NT */
     long tmx=0;
 #endif /* NT */
+#endif
     long days;
     int i, n, isleapyear;
                    /*       J  F  M  A   M   J   J   A   S   O   N   D   */
