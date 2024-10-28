@@ -66,7 +66,14 @@ set k4w_root=%root%\kerberos\kfw-2.2-beta-2
 REM Regina REXX. We expect to find in here:
 REM     \lib\rexx.lib or ( \lib\regina.lib and \regina.dll )
 REM     \include\rexxsaa.h
-set rexx_root=%root%\rexx\regina396w32
+set rexx_root=%root%\rexx\regina
+
+REM RexxRE extension, a handy regular expressions extension available
+REM from: http://home.interlog.com/~ptjm/   (only includes x86-32 binaries)
+REM If its found, it will be added to the distribution. Expected files are:
+REM     \rexxre.dll
+REM     \rexxre.pdf
+REM set rexxre_root=%rexxroot%\..\rexxre
 
 REM IBM TCP/IP 4.0 SDK
 REM     \ibmtcp\lib\tcp32dll.lib
@@ -269,6 +276,7 @@ if not "%libdes_root_override%"=="" set libdes_root=%libdes_root_override%
 if not "%srp_root_override%"=="" set srp_root=%srp_root_override%
 if not "%k4w_root_override%"=="" set k4w_root=%k4w_root_override%
 if not "%rexx_root_override%"=="" set rexx_root=%rexx_root_override%
+if not "%rexxre_root_override%"=="" set rexxre_root=%rexxre_root_override%
 if not "%ibm20dir_override%"=="" set ibm20dir=%ibm20dir_override%
 if not "%infozip_root_override%"=="" set infozip_root=%infozip_root_override%
 if not "%make_override%"=="" set make=%make_override%
@@ -532,6 +540,13 @@ set CKF_REGINA_EXTRA=%rexx_root%\regina.exe %rexx_root%\rexx.exe %rexx_root%\rxq
 if "%CKB_REXX_DYNAMIC%" == "yes" echo Found REXX (Dynamic)
 if "%CKB_REXX_STATIC%" == "yes" echo Found REXX (Static)
 
+if "%rexxre_root%" == "" set rexxre_root=%rexx_root%\..\rexxre
+if not exist %rexxre_root%\rexxre.dll goto :norexxre
+
+echo Found RexxRE
+set CKB_REXX_DIST_DLLS=%CKB_REXX_DIST_DLLS% %rexxre_root%\rexxre.dll
+
+:norexxre
 :norex
 
 REM IBM TCP/IP 2.0-4.0 SDK for OS/2

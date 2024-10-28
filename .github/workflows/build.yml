@@ -60,6 +60,11 @@ env:
   # with its annoying interstitial advertising page
   REGINA_VER: 3.9.6
   REGINA_REXX: https://ftp.zx.net.nz/pub/dev/rexx/regina/3.9.6/regina396.zip
+  # RexxRE: Regular expressions for rexx!
+  REXXRE: http://home.interlog.com/~ptjm/rexxre101.zip
+  # Should the original ever go down (its not been updated in over 20 years),
+  # a mirror is here:
+  #REXXRE: https://ftp.zx.net.nz/pub/dev/rexx/ptjm/rexxre101.zip
 
 jobs:
   Get-CACerts-Bundle:
@@ -217,7 +222,9 @@ jobs:
           ${{github.workspace}}\libdes\Debug
           ${{github.workspace}}\tools
           ${{github.workspace}}\kerberos\kfw
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+ver6
+          ${{github.workspace}}\rexx\regina
+          ${{github.workspace}}\rexx\rexxre
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+rexxre+ver1
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
@@ -317,9 +324,9 @@ jobs:
         # Install perl modules required by OpenSSL build
         cpan -i Text::Template
         
-        # Get Regina REXX
-        mkdir rexx
         cd rexx
+        
+        # Get Regina REXX
         mkdir regina
         cd regina
         wget ${{env.REGINA_REXX}} -outfile regina.zip
@@ -327,6 +334,13 @@ jobs:
         del regina.zip
         dir
         cd ..
+        
+        # Get RexxRE
+        wget ${{env.REXXRE}} -outfile rexxre.zip
+        7z x rexxre.zip
+        del rexxre.zip
+        
+        # CD out of the rexx directory
         cd ..
 
       shell: powershell
@@ -529,6 +543,12 @@ jobs:
         cd lib
         copy ..\regina.lib
         cd ..
+        
+        echo Building RexxRE
+        cd %REGINA_SRCDIR%\..\rexxre
+        patch -p1 ..\rexxre.patch
+        nmake -f Makefile.NT
+        cd ..
 
     - name: Build Regina REXX (x86-64)
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
@@ -550,6 +570,12 @@ jobs:
         cd lib
         copy ..\regina.lib
         cd ..
+        
+        echo Building RexxRE
+        cd %REGINA_SRCDIR%\..\rexxre
+        patch -p1 ..\rexxre.patch
+        nmake -f Makefile.NT
+        cd ..        
 
 #    TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
 #          an incompatible target architecture:
@@ -579,6 +605,12 @@ jobs:
 #        mkdir lib
 #        cd lib
 #        copy ..\regina.lib
+#        cd ..
+#
+#        echo Building RexxRE
+#        cd %REGINA_SRCDIR%\..\rexxre
+#        patch -p1 ..\rexxre.patch
+#        nmake -f Makefile.NT
 #        cd ..
 
     - name: Fetch x86 wart
