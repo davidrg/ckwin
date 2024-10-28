@@ -39,7 +39,7 @@ void K_QUICK::PopulateList( enum TRANSPORT type )
     UIW_COMBO_BOX * combo = (UIW_COMBO_BOX *) Get( COMBO_QUICK );
     UIW_VT_LIST * quicklist  = (UIW_VT_LIST *) Get( LIST_QUICK );
     UIW_BUTTON * button = NULL;
-    while ( button = (UIW_BUTTON *) quicklist->First() ) {
+    while ( (button = (UIW_BUTTON *)quicklist->First()) != NULL ) {
         *quicklist - button;
         delete button;
     }

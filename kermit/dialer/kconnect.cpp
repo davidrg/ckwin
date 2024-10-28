@@ -287,7 +287,7 @@ kcopy(char *source, char *destination) {
 
         x = strlen(destination);
         len = strlen(destination) + strlen(source) + 2;
-        if (!(p = (char *)malloc(len)))
+        if ((p = (char *)malloc(len)) == NULL)
           return(-1);
         strcpy(p,destination);          /* Directory part */
         if (!ISDIRSEP(*(destination+x-1))) /* Separator, if needed */
@@ -296,7 +296,7 @@ kcopy(char *source, char *destination) {
         strcat(p,q);                    /* Concatenate to new directory */
     } else {
         len = strlen(destination) + 64;
-        if (!(p = (char *)malloc(len)))
+        if ((p = (char *)malloc(len)) == NULL)
           return(-1);
         strcpy(p,destination);
     }
@@ -332,7 +332,7 @@ kmkdir(const char *path) {
     x = strlen(path);
     if (x < 1 || x > CKMAXPATH)           /* Check length */
       return(-1);
-    if (!(tp = (char *)malloc(x+1)))            /* Make a temporary copy */
+    if ((tp = (char *)malloc(x+1)) == NULL)            /* Make a temporary copy */
       return(-1);
     strcpy(tp,path);
 
@@ -735,7 +735,7 @@ K_CONNECTOR::K_CONNECTOR(void)
         if ( !isdir(dir) ) {
             kmkdir(dir);
 
-            if ( common = GetAppData(1) ) {
+            if ( (common = GetAppData(1)) != NULL ) {
                 sprintf(file,"%s%s",(char *)common, "Kermit 95\\K95CUSTOM.INI");
                 kcopy(file,dir);
                 appdata = GetAppData(0);
@@ -7227,7 +7227,7 @@ StartKermit( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_entry 
    }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
 
         if ( !StartKermitFileName )
             OutofMemory("Unable to create MESSAGE_WINDOW StartKermit 3");
@@ -8403,7 +8403,7 @@ ExportLocations(void)
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR ExportLocations 1");
 
@@ -8511,7 +8511,7 @@ ExportModems(void)
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR ExportModems");
 #ifdef WIN32
@@ -8669,7 +8669,7 @@ CreateShortcut( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_ent
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR CreateShortcut");
 #ifdef WIN32
@@ -8945,7 +8945,7 @@ CreateScriptFile( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_e
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR CreateScriptFile");
 #ifdef WIN32
