@@ -7177,13 +7177,7 @@ _PROTOTYP( int readtext, (char *, char *, int));
 #ifdef OS2
 _PROTOTYP(int ck_auth_loaddll, (VOID));
 _PROTOTYP(int ck_auth_unloaddll, (VOID));
-#endif /* OS2 */
 
-#ifdef NT
-_PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
-                                   LPSTR lpBuffer, DWORD cchBuffer));
-_PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
-                                    LPSTR lpszShortPath, DWORD cchBuffer));
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
 #ifndef _INTPTR_T_DEFINED
@@ -7192,6 +7186,13 @@ typedef int intptr_t;
 typedef unsigned long DWORD_PTR;
 #define CK_HAVE_INTPTR_T
 #endif /* CK_HAVE_INTPTR_T */
+#endif /* OS2 */
+
+#ifdef NT
+_PROTOTYP(DWORD ckGetLongPathname,(LPCSTR lpFileName, 
+                                   LPSTR lpBuffer, DWORD cchBuffer));
+_PROTOTYP(DWORD ckGetShortPathName,(LPCSTR lpszLongPath,
+                                    LPSTR lpszShortPath, DWORD cchBuffer));
 #endif /* NT */
 
 /*
