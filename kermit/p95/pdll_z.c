@@ -80,7 +80,7 @@ zdl_getch()
     if (c == ZDLE)
       break;
     else if (esc_control && !(c & 96)) {
-      if (p_cfg->status_func(PS_Z_CTRL_CHAR_IGNORED, c))
+      if (p_cfg->status_func(PS_Z_CTRL_CHAR_IGNORED, STDATA(c)))
 	user_aborted();
       continue;
     } else
@@ -121,14 +121,14 @@ zdl_getch()
 
     default:
       if (esc_control && !(c & 96)) {
-	if (p_cfg->status_func(PS_Z_CTRL_CHAR_IGNORED, c))
+	if (p_cfg->status_func(PS_Z_CTRL_CHAR_IGNORED, STDATA(c)))
 	  user_aborted();
 	continue;
       }
       if ((c & 96) == 64) { /* bit6 set, bit5 reset? */
 	return(c ^ 64);
       } else {
-	if (p_cfg->status_func(PS_Z_INVALID_ZDLE_SEQUENCE))
+	if (p_cfg->status_func(PS_Z_INVALID_ZDLE_SEQUENCE, NULL))
 	  user_aborted();
 	return(GOTERROR);
       }
@@ -258,7 +258,7 @@ z_get_bin_header()
 
    if (crc & 0xFFFF) {
      if (!recovering) {
-       if (p_cfg->status_func(PS_Z_CHECK_FAILED_FOR_HEADER, CHECKING_CRC16))
+       if (p_cfg->status_func(PS_Z_CHECK_FAILED_FOR_HEADER, STDATA(CHECKING_CRC16)))
 	 user_aborted();
      }
      return(GOTERROR);
@@ -302,7 +302,7 @@ z_get_bin32_header()
   }
   if (crc != 0xDEBB20E3) {
     if (!recovering) {
-      if (p_cfg->status_func(PS_Z_CHECK_FAILED_FOR_HEADER, CHECKING_CRC32))
+      if (p_cfg->status_func(PS_Z_CHECK_FAILED_FOR_HEADER, STDATA(CHECKING_CRC32)))
 	user_aborted();
     }
     return(GOTERROR);
@@ -344,7 +344,7 @@ z_getch()
 
     default:
       if (esc_control && !(c & 96)) {
-	if (p_cfg->status_func(PS_Z_CTRL_CHAR_IGNORED, c))
+	if (p_cfg->status_func(PS_Z_CTRL_CHAR_IGNORED, STDATA(c)))
 	  user_aborted();
 	continue;
       } else
@@ -372,7 +372,7 @@ zhex_getch()
      c -= ('a' - ':');
   if (c > 15) {
     if (!recovering) {
-      if (p_cfg->status_func(PS_Z_INVALID_HEX_HEADER))
+      if (p_cfg->status_func(PS_Z_INVALID_HEX_HEADER, NULL))
 	user_aborted();
     }
     return(GOTERROR);
@@ -387,7 +387,7 @@ zhex_getch()
     c -= ('a' - ':');
   if (c > 15) {
     if (!recovering) {
-      if (p_cfg->status_func(PS_Z_INVALID_HEX_HEADER))
+      if (p_cfg->status_func(PS_Z_INVALID_HEX_HEADER, NULL))
 	user_aborted();
     }
     return(GOTERROR);
@@ -435,7 +435,7 @@ z_get_hex_header()
   
   if (crc & 0xFFFF) {
     if (!recovering) {
-      if (p_cfg->status_func(PS_Z_CHECK_FAILED_FOR_HEADER, CHECKING_CRC16))
+      if (p_cfg->status_func(PS_Z_CHECK_FAILED_FOR_HEADER, STDATA(CHECKING_CRC16)))
 	user_aborted();
     }
     return(GOTERROR);
@@ -749,7 +749,7 @@ z_handle_zrpos()
     if (last_sync_pos == offset) {
 	sync_cnt++;
 	if (sync_cnt > 12) {
-	    if (p_cfg->status_func(PS_CANNOT_SEND_BLOCK))
+	    if (p_cfg->status_func(PS_CANNOT_SEND_BLOCK, NULL))
 		user_aborted();
 	    pdll_aborted = A_MISC;
 	    return;
@@ -788,11 +788,14 @@ z_get_in_sync()
 
   static U32 c;
   static U32 bail;
+  status_args stargs;
 
   bail = 0;
   while (!bail) {
     c = z_get_header();
-    if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+    stargs.arg0 = outheader(c);
+    stargs.arg1 = *(U32 *)rx_hdr;
+    if (p_cfg->status_func(PS_Z_HEADER, &stargs))
       user_aborted();
     switch (c) {
     case ZCAN:
@@ -808,7 +811,7 @@ z_get_in_sync()
     case DEV_TIMEOUT:
       *(U32 *)tx_hdr = 0;	/* Should there be something?  */
       z_send_hex_header(ZNAK);
-	if (p_cfg->status_func(PS_TIMEOUT, 60))
+	if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 	    user_aborted();
 	break;
 
@@ -842,6 +845,7 @@ z_wait_for_ack()
   static U32 c;
   static time_t t_now;
   static time_t t_started;
+  status_args stargs;
 
   time(&t_started);
   bail = 0;
@@ -850,14 +854,16 @@ z_wait_for_ack()
     /* check if bail is true or not... */
     time(&t_now);
     if (t_now - t_started > 180) {
-      if (p_cfg->status_func(PS_TIMEOUT, 180))
+      if (p_cfg->status_func(PS_TIMEOUT, STDATA(180)))
 	user_aborted();
       pdll_aborted = A_MISC;
       break;			/* Bail out from the loop  */
     }
     c = z_get_header();
 
-    if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+    stargs.arg0 = outheader(c);
+    stargs.arg1 = *(U32 *)rx_hdr;
+    if (p_cfg->status_func(PS_Z_HEADER, &stargs))
       user_aborted();
     switch (c) {
     case ZCAN:
@@ -871,7 +877,7 @@ z_wait_for_ack()
       break;
 
     case DEV_TIMEOUT:
-	if (p_cfg->status_func(PS_TIMEOUT, 60))
+	if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 	    user_aborted();
 	break;
 
@@ -982,7 +988,7 @@ z_recv_block()
       if (c > 255)
 	break;
       if (rx_buf_len == rx_buf_size) {
-	if (p_cfg->status_func(PS_Z_SUBPACKET_TOO_LONG, rx_buf_size))
+	if (p_cfg->status_func(PS_Z_SUBPACKET_TOO_LONG, STDATA(rx_buf_size)))
 	  user_aborted();
 	c = GOTERROR;
 	break;
@@ -1019,7 +1025,7 @@ z_recv_block()
       crc_idx++;
       if (crc_idx == 4) {
 	if (*(U32 *)crc32 != true_crc32) {
-	  if (p_cfg->status_func(PS_CHECK_FAILED, CHECKING_CRC32))
+	  if (p_cfg->status_func(PS_CHECK_FAILED, STDATA(CHECKING_CRC32)))
 	    user_aborted();
 	  c = GOTERROR;
 	  break;
@@ -1039,7 +1045,7 @@ z_recv_block()
       if (c > 255)
 	break;
       if (rx_buf_len == rx_buf_size) {
-	if (p_cfg->status_func(PS_Z_SUBPACKET_TOO_LONG, rx_buf_size))
+	if (p_cfg->status_func(PS_Z_SUBPACKET_TOO_LONG, STDATA(rx_buf_size)))
 	  user_aborted();
 	c = GOTERROR;
 	break;
@@ -1074,7 +1080,7 @@ z_recv_block()
       crc_idx--;
       if (crc_idx == -1) {
 	if (*(U16 *)crc16 != true_crc16) {
-	  if (p_cfg->status_func(PS_CHECK_FAILED, CHECKING_CRC16))
+	  if (p_cfg->status_func(PS_CHECK_FAILED, STDATA(CHECKING_CRC16)))
 	    user_aborted();
 	  c = GOTERROR;
 	  break;

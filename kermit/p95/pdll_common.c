@@ -66,7 +66,7 @@ pdll_carrier_lost(void)
 pdll_carrier_lost()
 #endif 
 {
-  if (p_cfg->status_func(PS_CARRIER_LOST))
+  if (p_cfg->status_func(PS_CARRIER_LOST, NULL))
     user_aborted();
   pdll_aborted = A_CARRIER_LOST;
   longjmp(p_jmp_buf, 1);
@@ -117,7 +117,7 @@ server_connect()
   U32 cnt = 0;
 
   do {
-    if (p_cfg->status_func(PS_SERVER_WAITING, cnt++))
+    if (p_cfg->status_func(PS_SERVER_WAITING, STDATA(cnt++)))
       user_aborted();
   } while (!dev_connect());
 }

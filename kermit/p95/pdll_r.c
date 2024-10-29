@@ -64,7 +64,7 @@ get_header_field() U8 *buf; U32 *buf_idx; U32 buf_end; U32 *value_idx;
     if (*buf_idx == buf_end) {
       if (*buf_idx != *value_idx) { /* Were there some numbers */
 				    /* after the size? */
-	if (p_cfg->status_func(PS_NON_STD_FILE_INFO))
+	if (p_cfg->status_func(PS_NON_STD_FILE_INFO, NULL))
 	  user_aborted();
       }
       return(1);
@@ -111,7 +111,7 @@ process_file_info()
     return;
   while (1) {
     if (buf_idx == buf_end) {
-      if (p_cfg->status_func(PS_INVALID_FILE_INFO))
+      if (p_cfg->status_func(PS_INVALID_FILE_INFO, NULL))
 	user_aborted();
       pdll_aborted = A_MISC;
       return;

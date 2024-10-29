@@ -69,15 +69,15 @@ sz_parse_zrinit()
     if (rx_flags & TESC8)
 	esc_8th_bit = 1;
 
-    if (p_cfg->status_func(PS_Z_RECEIVER_FLAGS, rx_flags))
+    if (p_cfg->status_func(PS_Z_RECEIVER_FLAGS, STDATA(rx_flags)))
 	user_aborted();
-    if (p_cfg->status_func(PS_Z_RECEIVER_WINDOW_SIZE, recv_blk_size))
+    if (p_cfg->status_func(PS_Z_RECEIVER_WINDOW_SIZE, STDATA(recv_blk_size)))
 	user_aborted();
     if (tx_bin32) {
-	if (p_cfg->status_func(PS_CHECKING_METHOD, CHECKING_CRC32))
+	if (p_cfg->status_func(PS_CHECKING_METHOD, STDATA(CHECKING_CRC32)))
 	    user_aborted();
     } else {
-	if (p_cfg->status_func(PS_CHECKING_METHOD, CHECKING_CRC16))
+	if (p_cfg->status_func(PS_CHECKING_METHOD, STDATA(CHECKING_CRC16)))
 	    user_aborted();
     }
 }
@@ -93,13 +93,14 @@ sz_file_header()
     U32 resend_header = 1;
     time_t t_started;
     time_t t_now;
+    status_args stargs;
 
     time(&t_started);
     tx_buf_len = s_make_file_header(tx_buf);
     while (1) {
 	time(&t_now);
 	if (t_now - t_started >= 60) {
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    pdll_aborted = A_MISC;
 	    return;
@@ -116,7 +117,9 @@ sz_file_header()
 	    resend_header = 0;
 	}
 	c = z_get_header();
-	if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+	stargs.arg0 = outheader(c);
+	stargs.arg1 = *(U32 *)rx_hdr;
+	if (p_cfg->status_func(PS_Z_HEADER, &stargs))
 	    user_aborted();
 	switch (c) {
 	case ZCAN:
@@ -133,7 +136,7 @@ sz_file_header()
 
 	case DEV_TIMEOUT:
 	    resend_header = 1;
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    break;
 
@@ -145,13 +148,13 @@ sz_file_header()
 	    return;
 
 	case ZFERR:
-	    if (p_cfg->status_func(PS_FILE_SKIPPED))
+	    if (p_cfg->status_func(PS_FILE_SKIPPED, NULL))
 		user_aborted();
 	    skip_file = 1;
 	    return;
 
 	case ZSKIP:
-	    if (p_cfg->status_func(PS_FILE_SKIPPED))
+	    if (p_cfg->status_func(PS_FILE_SKIPPED, NULL))
 		user_aborted();
 	    skip_file = 1;
 	    return;
@@ -159,7 +162,7 @@ sz_file_header()
 	case ZRPOS:
 	    offset = *(U32 *)rx_hdr;
 	    if (offset != 0) {
-		if (p_cfg->status_func(PS_Z_CRASH_RECOVERY, offset))
+		if (p_cfg->status_func(PS_Z_CRASH_RECOVERY, STDATA(offset)))
 		    user_aborted();
 		if (p_cfg->seek_func(offset))
 		    user_aborted();
@@ -175,7 +178,9 @@ sz_file_header()
 	    break;
 
 	default:
-	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, outheader(c), *(U32 *)rx_hdr))
+	    stargs.arg0 = outheader(c);
+	    stargs.arg1 = *(U32 *)rx_hdr;
+	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, &stargs))
 		user_aborted();
 	    break;
 	}
@@ -190,6 +195,7 @@ sz_sinit()
 #endif
 {
   U32 c;
+  status_args stargs;
 
     if (!esc_control && !query_serial_num && attn_len == 0)
 	return;
@@ -206,7 +212,9 @@ sz_sinit()
 	z_send_block();
 
 	c = z_get_header();
-	if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+	stargs.arg0 = outheader(c);
+	stargs.arg1 = *(U32 *)rx_hdr;
+	if (p_cfg->status_func(PS_Z_HEADER, &stargs))
 	    user_aborted();
 
 	switch (c) {
@@ -215,12 +223,14 @@ sz_sinit()
 	    return;
 
 	case ZACK:
-	    if (p_cfg->status_func(PS_Z_SERIAL_NUM, *(U32 *)rx_hdr))
+	    if (p_cfg->status_func(PS_Z_SERIAL_NUM, STDATA(*(U32 *)rx_hdr)))
 		user_aborted();
 	    return;
 
 	default:
-	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, outheader(c), *(U32 *)rx_hdr))
+	    stargs.arg0 = outheader(c);
+	    stargs.arg1 = *(U32 *)rx_hdr;
+	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, &stargs))
 		user_aborted();
 	    break;
 	}
@@ -238,12 +248,13 @@ sz_init()
     U32 c;
     time_t t_started;
     time_t t_now;
+    status_args stargs;
 
     time(&t_started);
     while (1) {
 	time(&t_now);
 	if (t_now - t_started >= 60) {
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    pdll_aborted = A_MISC;
 	    return;
@@ -258,7 +269,9 @@ sz_init()
 	    send_zrqinit = 0;
 	}
 	c = z_get_header();
-	if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+	stargs.arg0 = outheader(c);
+	stargs.arg1 = *(U32 *)rx_hdr;
+	if (p_cfg->status_func(PS_Z_HEADER, &stargs))
 	    user_aborted();
 	switch (c) {
 	case ZRINIT:
@@ -281,7 +294,7 @@ sz_init()
 
 	case DEV_TIMEOUT:
 	    send_zrqinit = 1;
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    break;
 
@@ -290,7 +303,9 @@ sz_init()
 	    break;
 
 	default:
-	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, outheader(c), *(U32 *)rx_hdr))
+	    stargs.arg0 = outheader(c);
+	    stargs.arg1 = *(U32 *)rx_hdr;
+	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, &stargs))
 		user_aborted();
 	    break;
 	}	
@@ -307,12 +322,13 @@ sz_eof()
     U32 c = 0;
     time_t t_started;
     time_t t_now;
+    status_args stargs;
 
     time(&t_started);
     while (1) {
 	time(&t_now);
 	if (t_now - t_started >= 60) {
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    pdll_aborted = A_MISC;
 	    return(0);
@@ -324,7 +340,9 @@ sz_eof()
 	    z_send_bin16_header(ZEOF);
 
 	c = z_get_header();
-	if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+	stargs.arg0 = outheader(c);
+	stargs.arg1 = *(U32 *)rx_hdr;
+	if (p_cfg->status_func(PS_Z_HEADER, &stargs))
 	    user_aborted();
 	switch (c) {
 	case ZCAN:
@@ -344,7 +362,7 @@ sz_eof()
 	    return(c);
 
 	case DEV_TIMEOUT:
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    break;
 
@@ -352,7 +370,9 @@ sz_eof()
 	    break;
 
 	default:
-	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, outheader(c), *(U32 *)rx_hdr))
+	    stargs.arg0 = outheader(c);
+	    stargs.arg1 = *(U32 *)rx_hdr;
+	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, &stargs))
 		user_aborted();
 	    break;
 	}
@@ -369,12 +389,13 @@ sz_fin()
     U32 c;
     time_t t_started;
     time_t t_now;
+    status_args stargs;
 
     time(&t_started);
     while (1) {
 	time(&t_now);
 	if (t_now - t_started >= 60) {
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    pdll_aborted = A_MISC;
 	    return;
@@ -385,7 +406,9 @@ sz_fin()
 	else
 	    z_send_bin16_header(ZFIN);
 	c = z_get_header();
-	if (p_cfg->status_func(PS_Z_HEADER, outheader(c), *(U32 *)rx_hdr))
+	stargs.arg0 = outheader(c);
+	stargs.arg1 = *(U32 *)rx_hdr;
+	if (p_cfg->status_func(PS_Z_HEADER, &stargs))
 	    user_aborted();
 	switch (c) {
 	case ZFIN:
@@ -401,12 +424,14 @@ sz_fin()
 	    break;
 
 	case DEV_TIMEOUT:
-	    if (p_cfg->status_func(PS_TIMEOUT, 60))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 		user_aborted();
 	    break;
 
 	default:
-	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, outheader(c), *(U32 *)rx_hdr))
+	    stargs.arg0 = outheader(c);
+	    stargs.arg1 = *(U32 *)rx_hdr;
+	    if (p_cfg->status_func(PS_Z_UNEXPECTED_HEADER, &stargs))
 		user_aborted();
 	    break;
 	}
@@ -438,7 +463,7 @@ sz_file()
 	    tx_hdr_type = ZDATA;
 	    *(U32 *)tx_hdr = offset;
 	    while (1) {
-		if (p_cfg->status_func(PS_PROGRESS, offset))
+		if (p_cfg->status_func(PS_PROGRESS, STDATA(offset)))
 		    user_aborted();
 		if ( last_sync_pos == offset && tx_frame_end == ZCRCW ) {
 		    tx_frame_end = ZCRCW ;
@@ -479,7 +504,7 @@ sz_file()
 			break;
 		}
 	    }
-	    if (p_cfg->status_func(PS_PROGRESS, offset))
+	    if (p_cfg->status_func(PS_PROGRESS, STDATA(offset)))
 		user_aborted();
 	}
 	if (p_cfg->close_func(&path,

@@ -66,7 +66,7 @@ syx_start()
     switch (ch) {
     case NAK:
       if (chk_type != CHK_SUM) {	/* Prevents us from repeating this */
-	if (p_cfg->status_func(PS_CHECKING_METHOD, CHECKING_CHECKSUM))
+	if (p_cfg->status_func(PS_CHECKING_METHOD, STDATA(CHECKING_CHECKSUM)))
 	  user_aborted();
       }
       chk_type = CHK_SUM;
@@ -75,7 +75,7 @@ syx_start()
     case 'C':
     case 'G':
       if (chk_type != CHK_CRC16) { /* Prevents us from repeation this */
-	if (p_cfg->status_func(PS_CHECKING_METHOD, CHECKING_CRC16))
+	if (p_cfg->status_func(PS_CHECKING_METHOD, STDATA(CHECKING_CRC16)))
 	  user_aborted();
       }
       chk_type = CHK_CRC16;
@@ -98,7 +98,7 @@ syx_start()
     }
     time(&time_now);
     if (time_now - time_started >= 60) {
-      if (p_cfg->status_func(PS_TIMEOUT, 60))
+      if (p_cfg->status_func(PS_TIMEOUT, STDATA(60)))
 	user_aborted();
       pdll_aborted = A_MISC;
       return;
@@ -222,10 +222,10 @@ syx_block()
   time(&t_sending_blk_started);
   while (1) {
     if (!sending_header) {		/* If not file info block */
-      if (p_cfg->status_func(PS_PROGRESS, offset))
+      if (p_cfg->status_func(PS_PROGRESS, STDATA(offset)))
 	user_aborted();
     }
-    if (p_cfg->status_func(PS_PACKET_LENGTH, blk_size))
+    if (p_cfg->status_func(PS_PACKET_LENGTH, STDATA(blk_size)))
 	  user_aborted();
 
     switch (blk_size) {
@@ -295,7 +295,7 @@ syx_block()
 	  break;
 
 	case NAK:
-	  if (p_cfg->status_func(PS_XYG_NAK, offset))
+	  if (p_cfg->status_func(PS_XYG_NAK, STDATA(offset)))
 	    user_aborted();
 	  bail = 1;
 	  break;
@@ -318,7 +318,7 @@ syx_block()
 	if (!bail) {
 	  time(&t_now);
 	  if (t_now - t_getting_ack_started >= 10) {
-	    if (p_cfg->status_func(PS_TIMEOUT, 10))
+	    if (p_cfg->status_func(PS_TIMEOUT, STDATA(10)))
 	      user_aborted();
 	    bail = 1;
 	  }
@@ -331,13 +331,13 @@ syx_block()
     time(&t_now);
     if (t_now - t_sending_blk_started >= 120) { /* So that we won't loop */
 						/* forever */
-      if (p_cfg->status_func(PS_CANNOT_SEND_BLOCK))
+      if (p_cfg->status_func(PS_CANNOT_SEND_BLOCK, NULL))
 	user_aborted();
       pdll_aborted = A_MISC;
       break;
     }
   }
-    if (p_cfg->status_func(PS_PROGRESS, offset))
+    if (p_cfg->status_func(PS_PROGRESS, STDATA(offset)))
 	user_aborted();
   retransmits += this_block_retransmitted;
   blk[1]++;

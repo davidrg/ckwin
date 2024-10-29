@@ -37,6 +37,9 @@
 
 #include "p_type.h"
 #include "p.h"
+#ifdef XYZ_DLL
+#define XYZ_DLL_CLIENT
+#endif
 #include "ckop.h"
 #include "p_global.h"
 #include "p_callbk.h"
@@ -47,8 +50,7 @@ extern int rpackets, spackets, spktl, rpktl, what ;
 #ifdef XYZ_DLL
 #ifdef OS2
 static HMODULE dll_handle;
-typedef U32 (_System * p_transfer_t)(P_CFG *);
-p_transfer_t p_transfer = NULL;
+p_transfer_t *p_transfer = NULL;
 #endif /* OS2 */
 
 #define PINBUFSIZE 8192
@@ -64,14 +66,14 @@ load_p_dll(void) {
 #endif /* NT */
 
 #ifdef NT
-    dll_handle = LoadLibrary( "P95.DLL" ) ;
+    dll_handle = LoadLibrary( CKDEV_MODULE_NAME ".DLL" ) ;
     if ( !dll_handle )
     {
         rc = GetLastError() ;
         debug(F101,"load_p_dll - Unable to load module: rc","",rc);
         return rc;
     }
-    p_transfer = (p_transfer_t)GetProcAddress( dll_handle, "p_transfer" ) ;
+    p_transfer = (p_transfer_t *)GetProcAddress( dll_handle, CKDEV_ENTRY_NAME ) ;
     if ( !p_transfer )
     {
         rc = GetLastError() ;
@@ -80,19 +82,19 @@ load_p_dll(void) {
     }
 #else
     exe_path = GetLoadPath();
-    sprintf(path, "%.*sP2.DLL", (int)get_dir_len(exe_path), exe_path);
+    sprintf(path, "%.*s" CKDEV_MODULE_NAME ".DLL", (int)get_dir_len(exe_path), exe_path);
     rc = DosLoadModule(NULL, 0L, path, &dll_handle);
     if (rc) {
         /* P.DLL was not found in directory specified with LIBPATH, let's look */
         /* up for it from the directory where P.EXE was ran from. */
-        rc = DosLoadModule(NULL, 0L, "P2", &dll_handle);
+        rc = DosLoadModule(NULL, 0L, CKDEV_MODULE_NAME, &dll_handle);
         if (rc)
             debug(F101,"load_p_dll - Unable to load module: rc","",rc);
     }
     /* Query the address of p_transfer() entry function */
     rc = DosQueryProcAddr(dll_handle,
                            0,
-                           "p_transfer",
+                           CKDEV_ENTRY_NAME,
                            (PFN *)&p_transfer);
     if (rc)
         debug(F101,"load_p_dll - Unable to find p_transfer()","",rc);
@@ -118,13 +120,15 @@ unload_p_dll(void) {
 #endif /* XYZ_DLL */
 
 
-U32 _System
+U32
+CKDEVAPI
 pushback_func( U8 * buf, U32 len )
 {
     return le_puts( buf, len );
 }
 
-U32 _System
+U32
+CKDEVAPI
 in_func( U8 * buf, U32 len, U32 * bytes_received )
 {
     extern int network, carrier;
@@ -172,7 +176,8 @@ in_func( U8 * buf, U32 len, U32 * bytes_received )
     return(ERROR_NO_DATA); /* Either no data was received or timeout */
 }
 
-U32 _System
+U32
+CKDEVAPI
 out_func( U8 * buf, U32 len, U32 * bytes_written )
 {
     int rc = 0 ;
@@ -205,7 +210,8 @@ USHORT DosDevIOCtl32(PVOID pData, USHORT cbData, PVOID pParms, USHORT cbParms,
                      USHORT usFunction, USHORT usCategory, HFILE hDevice);
 #endif /* OS2ONLY */
 
-U32 _System
+U32
+CKDEVAPI
 break_func( U8 on )
 {
    extern int ttmdm ;
@@ -245,7 +251,8 @@ break_func( U8 on )
     return 0;
 }
 
-U32 _System
+U32
+CKDEVAPI
 available_func( U32 * available )
 {
     int rc = ttchk() ;
