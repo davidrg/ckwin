@@ -149,11 +149,13 @@ CC = cl
 CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
 CFLAGSO = /Ot /Oi
 !if "$(CMP)" == "VCXX"
+CFLAGS = $(CFLAGS) /W2
 CFLAGSD = /Zi
 LDFLAGS = /nologo /dll /map /nod
 !else
+CFLAGS = $(CFLAGS) /W4
 CFLAGSD = /Z7
-LDFLAGS = /nologo /dll /map
+LDFLAGS = /dll /map /showwopts
 !endif
 LD = link
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
@@ -220,9 +222,7 @@ CFLAGSO = $(CFLAGSO) /O2
 !endif
 
 p95.dll: $(OBJS) $(DEFS) p95.res
-	$(LD) @<<
-   $(LDFLAGS) /DEF:$(DEFS) /OUT:$@ $(OBJS) p95.res $(LIBS)
-<<
+	$(LD) $(LDFLAGS) /DEF:$(DEFS) /OUT:$@ $(OBJS) $(LIBS) p95.res
 
 pdll_common.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
             ../k95/p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h \
@@ -279,4 +279,4 @@ pdll_z.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll
 pdll_z_global.obj: ../k95/p_type.h
 
 p95.res: p95.rc
-        rc -r p95.rc
+        rc -r -dWINVER=0x0400 p95.rc

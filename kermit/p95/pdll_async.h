@@ -38,7 +38,6 @@
 
 _Inline U32 async_connected(void) {
 
-  static APIRET rc=0;
 #ifdef NT
    DWORD ModemStat ;
    if ( !GetCommModemStatus( dev_handle, &ModemStat ) )
@@ -49,6 +48,7 @@ _Inline U32 async_connected(void) {
    }
    return ( ModemStat & MS_RLSD_ON ) ;
 #else /* NT */
+  static APIRET rc=0;
   static U8 DataArea;
   static U32 DataLengthInOut;
   
@@ -75,8 +75,10 @@ _Inline U32 async_connected(void) {
 _Inline void async_open(void) {
 
   APIRET rc=0;
+#ifndef NT
   U32 ActionTaken;
   U32 mode;
+#endif /* NT */
 
   if (!dev_handle) {
 #ifdef NT
@@ -115,10 +117,10 @@ _Inline void async_close(void) {
   APIRET rc = 0;
 
 #ifdef NT
-   if ( !CloseHandle( dev_handle ) )
-      rc = GetLastError() ;
+  if ( !CloseHandle( dev_handle ) )
+    rc = GetLastError() ;
 #else /* NT */
-   rc = DosClose(dev_handle);
+    rc = DosClose(dev_handle);
 #endif /* NT */
   if (rc)
     p_error(P_ERROR_DOSCLOSE, rc,
@@ -172,10 +174,11 @@ _Inline void async_getch_buf(void) {
 
 #ifdef NT
 extern OVERLAPPED overlapped_read;
-extern int nActuallyRead ;
-#endif /* NT */
+extern U32 nActuallyRead ;
+#else /* NT */
   APIRET rc=0;
   U32 tmout_cnt;
+#endif /* NT */
 
   if (watch_carrier && !async_connected())
     pdll_carrier_lost();
@@ -259,7 +262,7 @@ _Inline void async_flush_outbuf(void) {
 
 #ifdef NT
    extern OVERLAPPED overlapped_write;
-   extern int nActuallyWritten ;
+   extern U32 nActuallyWritten ;
 
        if ( overlapped_write.hEvent == (HANDLE) -1 )
        {
@@ -334,7 +337,9 @@ _Inline void async_flush_outbuf(void) {
 _Inline void async_set_break_on(void) {
 
   static APIRET rc = 0;
+#ifndef NT
   static U16 DataArea;		/* com error */
+#endif
   static U32 DataLengthInOut;
   
   DataLengthInOut = sizeof(U16);
@@ -360,8 +365,10 @@ _Inline void async_set_break_on(void) {
 _Inline void async_set_break_off(void) {
 
   static APIRET rc = 0;
+#ifndef NT
   static U16 DataArea;		/* com error */
   static U32 DataLengthInOut;
+#endif 
   
 #ifdef NT
    if ( ClearCommBreak( dev_handle ) )

@@ -483,7 +483,7 @@ int _System ssh_dll_init(ssh_init_parameters_t *params) {
 #undef free
 #undef strdup
 
-static void
+void
 fatal(char *msg) {
     if (!msg) msg = "";
 

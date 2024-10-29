@@ -347,12 +347,17 @@ SSH_LIB = ssh.lib
 REXX_LIB = rexx.lib
 !endif
 
-#---------- Compiler targets:
-#
-# To build: "[dn]make <target>"
+!if "$(CMP)" == "VCXX"
+DEBUG_COPT = /Zi
+DEBUG_LDFLAGS = $(LDDEBUG)
+COMMON_OPTS = $(COMMON_OPTS) /W2
+!else
+DEBUG_COPT = /Z7
+DEBUG_LDFLAGS = $(LDDEBUG)
+COMMON_OPTS = $(COMMON_OPTS) /W4
+!endif
 
-unknown:
-	@echo Please specify target: "ibmc", "msvc" or "clean"
+O=.obj
 
 #    IMPORTANT: When building with TCP/IP support, edit the IBM-supplied
 #    TCPIP\INCLUDE\NETLIB.H to remove the spurious #define for SIGALRM!
@@ -375,15 +380,14 @@ unknown:
 # CKOKER.MSB, or the DDE4.MSG file must be copied into the current directory.
 # It is normally found in IBMCPP\HELP.
 
-################### WINDOWS TARGETS ###################
-!if "$(CMP)" == "VCXX"
-DEBUG_COPT = /Zi
-DEBUG_LDFLAGS = $(LDDEBUG)
-!else
-DEBUG_COPT = /Z7
-DEBUG_LDFLAGS = $(LDDEBUG)
-!endif
+#---------- Compiler targets:
+#
+# To build: "[dn]make <target>"
 
+unknown:
+	@echo Please specify target: "ibmc", "msvc" or "clean"
+
+################### WINDOWS TARGETS ###################
 telnet:
 	$(MAKE) -f ckoker.mak wtelnet \
 	CC="cl /nologo" \
@@ -392,7 +396,7 @@ telnet:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -408,7 +412,7 @@ rlogin:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__ /W2" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_WIN32 /D_CONSOLE /D__32BIT__" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -424,7 +428,7 @@ test:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_CONSOLE /D__32BIT__ /W2" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32=1 /D_CONSOLE /D__32BIT__" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -439,7 +443,7 @@ winsetup:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /W2 /D_WIN32_WINNT=$(WIN32_VERSION)" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /D_WIN32 /DOS2 /DNT /D_CONSOLE /D__32BIT__ /D_WIN32_WINNT=$(WIN32_VERSION)" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -455,7 +459,7 @@ msvc:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -470,7 +474,7 @@ msvc-sshdll:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -483,7 +487,7 @@ msvc-sshdlld:
     OPT="$(COMMON_OPTS)" \
     DEBUG="$(DEBUG_COPT)" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32=1 /D_WIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -499,7 +503,7 @@ msvc-iksd:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION)  /D_CONSOLE /D__32BIT__ /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -514,7 +518,7 @@ msvcd:
 	OPT="" \
     DEBUG="$(DEBUG_COPT) /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -530,7 +534,7 @@ msvcd-iksd:
 	OPT="" \
     DEBUG="$(DEBUG_COPT) /Odi /Ge " \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF)  /GZ /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -546,7 +550,7 @@ msvcmd:
 	OPT="" \
     DEBUG="$(DEBUG_COPT) /Odi /Ge -Dmalloc=dmalloc -Dfree=dfree -DMDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /F65536" \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -562,7 +566,7 @@ msvcp:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /Fm /F65536" \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /Fm /F65536" \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="/c" \
@@ -578,7 +582,7 @@ kuid:
 	OPT="" \
     DEBUG="$(DEBUG_COPT) /Odi" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) $(CFLAG_GF) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -593,7 +597,7 @@ kui:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -609,7 +613,7 @@ k95gd:
 	OPT="" \
     DEBUG="$(DEBUG_COPT) /Odi" \
     DLL="" \
-    CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 -I." \
+    CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ -I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \
@@ -624,7 +628,7 @@ k95g:
     OPT="$(COMMON_OPTS)" \
     DEBUG="-DNDEBUG" \
     DLL="" \
-	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /W2 /I." \
+	CFLAGS=" $(COMMON_CFLAGS) /J /DKUI /DK95G /DCK_WIN /DWIN32 /D_WIN32_WINNT=$(WIN32_VERSION) /D_CONSOLE /D__32BIT__ /I." \
     LDFLAGS="" \
     PLATFORM="NT" \
     NOLINK="-c" \

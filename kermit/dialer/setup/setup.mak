@@ -20,17 +20,17 @@ WNT_LIBRARIAN=lib /nologo
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
 WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. /Zi -noBool
 WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /Debug:full /NODEFAULTLIB:libc /Debugtype:cv
-WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib ctl3d32.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib ctl3d32.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
 WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
-WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib libc.lib kernel32.lib oldnames.lib
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib libc.lib kernel32.lib oldnames.lib
 
 !else
 
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. -Z7
+WNT_CPP_OPTS= -c -W4 -MT -DWIN32 -DOS2 -DNT -I.\.. -Z7
 WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /Debug:full
-WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib # compmgr.lib
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib # compmgr.lib
 WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
-WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib
 
 !endif
 
@@ -63,7 +63,7 @@ OS2_LIB_OPTS=
 OS2_RC_OPTS=
 
 OS2_OBJS=
-OS2_LIBS=os2_zil.lib odirect.lib oservice.lib ostorage.lib
+OS2_LIBS=os2_zil.lib odirect.lib oservice.lib
 
 .SUFFIXES : .cpp .c
 

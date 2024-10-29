@@ -120,7 +120,7 @@ CC = wcl386
 #     -Tx+       ?          Generate full exception register dump
 #     -Ti+       ?          Generate debugging information
 #     -Ge-       ?          Use the version of the runtime library that assumes a DLL is being built
-CFLAGS = -D__DEBUG -DOS2 -DXYZ_DLL -bd -bt=os2 -i=.. -c
+CFLAGS = -D__DEBUG -DOS2 -DXYZ_DLL -bd -bt=os2 -i=.. -c -w4
 
 LD = wcl386
 

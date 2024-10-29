@@ -42,22 +42,22 @@ WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
 !endif
 WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
 WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
-WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
 !if $(MSC_VER) < 130
 !message Using ctl3d32
 # CTL3D32 is only available on Visual C++ 6.0 and earlier.
 WNT_LIBS=$(WNT_LIBS) ctl3d32.lib
 !endif
 
-WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib libc.lib kernel32.lib oldnames.lib
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib libc.lib kernel32.lib oldnames.lib
 
 !else
 
-WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95
+WNT_CPP_OPTS= -c -W4 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95
 WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP
-WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib
 WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup /MAP
-WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib
 
 !endif
 
@@ -123,7 +123,7 @@ OS2_LINK_OPTS=SYSTEM os2v2_pm OP ST=96000
 OS2_LIB_OPTS=
 OS2_RC_OPTS=
 OS2_OBJS=
-OS2_LIBS=os2_zil.lib,odirect.lib,oservice.lib,ostorage.lib
+OS2_LIBS=os2_zil.lib,odirect.lib,oservice.lib
 !else
 OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /DCKODIALER /Gx+ /Sp1 -Sm -G5 -Gt -Gd- -Gn+ -J -Fi+ -Si+ -Gi+ -Gl+ -O -Oi25 -Gm
 OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE
@@ -131,7 +131,7 @@ OS2_LINK_OUT=
 OS2_LIB_OPTS=
 OS2_RC_OPTS=
 OS2_OBJS=
-OS2_LIBS=os2_zil.lib odirect.lib oservice.lib ostorage.lib
+OS2_LIBS=os2_zil.lib odirect.lib oservice.lib
 !endif
 
 .SUFFIXES : .cpp .c

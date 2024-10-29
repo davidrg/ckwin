@@ -71,8 +71,6 @@ U32 watch_carrier = 0;
 
 VOID dev_open(void) {
 
-  APIRET rc=0;
-
   if (!dev_handle)
     dev_opened = 1;
 
@@ -166,8 +164,6 @@ dev_close(void)
 dev_close()
 #endif
 {
-  APIRET rc=0;
-  
   if (dev_opened) {
     switch (dev_type) {
     case DEV_TYPE_EXE_IO:
@@ -273,7 +269,13 @@ VOID
 dev_get_cfg(DEV_CFG *dev_cfg) {
 
   static APIRET rc=0;
+#ifndef NT
   static U32 LengthInOut;
+#endif
+  
+#ifdef NT
+  /* unused parameters */ (void)dev_cfg;
+#endif
   
   if (dev_type == DEV_TYPE_ASYNC) {
 #ifdef NT
@@ -310,7 +312,13 @@ VOID
 dev_set_cfg(DEV_CFG *dev_cfg) {
 
   static APIRET rc=0;
+#ifndef NT
   static U32 LengthInOut;
+#endif
+
+#ifdef NT
+  /* unused parameters */ (void)dev_cfg;
+#endif
 
   if (dev_type == DEV_TYPE_ASYNC) {
 #ifdef NT
