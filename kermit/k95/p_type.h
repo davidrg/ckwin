@@ -81,10 +81,6 @@ typedef long APIRET ;
 #endif /* VOID */
 #endif /* OS2 */
 
-#ifndef OS2
-#define _System
-#endif /* OS2 */
-
 #ifndef _PROTOTYP
 #ifdef CK_ANSIC
 #define _PROTOTYP( func, parms ) func parms

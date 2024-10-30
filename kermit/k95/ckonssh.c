@@ -402,7 +402,7 @@ int parse_displayname(char *displayname, int *familyp, char **hostp,
  * this DLL provides.
  * @param params SSH initialisation parameters from Kermit 95
  */
-int _System ssh_dll_init(ssh_init_parameters_t *params) {
+int CKSSHAPI ssh_dll_init(ssh_init_parameters_t *params) {
     p_get_current_terminal_dimensions = params->p_get_current_terminal_dimensions;
     p_get_current_terminal_type = params->p_get_current_terminal_type;
     p_ssh_get_uid = params->p_ssh_get_uid;
@@ -483,7 +483,7 @@ int _System ssh_dll_init(ssh_init_parameters_t *params) {
 #undef free
 #undef strdup
 
-static void
+void
 fatal(char *msg) {
     if (!msg) msg = "";
 

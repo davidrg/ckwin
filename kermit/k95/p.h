@@ -33,10 +33,20 @@
 #include "p_type.h"             /* U32, U16, U8, etc typedefs */
 
 #ifdef __EMX__
-#define _System                 /* EMX/GCC doesn't have _System */
-#endif
+#define CKDEVAPI
+#else /* __EMX__ */
 #ifdef NT
-#define _System         /* Neither does Win32 */
+#define CKDEVAPI
+#else /* NT */
+#ifdef OS2
+#define CKDEVAPI	_System
+#else /* OS2 */
+#define CKDEVAPI
+#endif /* OS2 */
+#endif /* NT */
+#endif /* __EMX__ */
+
+#ifdef NT
 #define _Inline __inline
 #define APIRET DWORD
 #else
@@ -44,6 +54,7 @@
 #define _Inline inline
 #endif /* __WATCOMC__ */
 #endif /* NT */
+
 /******************/
 /* Protocol types */
 /******************/
@@ -1038,7 +1049,7 @@ typedef struct _P_CFG {
    functions.
 */
 
-  U32 (_System * status_func)(U32, ...);
+  U32 (CKDEVAPI * status_func)(U32, ...);
 /*
    This function is called to inform the calling program about
    progress of file transfer.
@@ -1056,7 +1067,7 @@ typedef struct _P_CFG {
         the comments in PS_* defines above.
 */
 
-  U32 (_System * r_open_func)(U8 **,
+  U32 (CKDEVAPI * r_open_func)(U8 **,
                                 U32,
                                 U32,
                                 U32,
@@ -1142,7 +1153,7 @@ typedef struct _P_CFG {
         the offset where at the sender should start sending the file.
 */
 
-  U32 (_System * s_open_func)(U8 **,
+  U32 (CKDEVAPI * s_open_func)(U8 **,
                                 U32 *,
                                 U32 *,
                                 U32 *,
@@ -1211,7 +1222,7 @@ typedef struct _P_CFG {
 
 */
 
-  U32 (_System * close_func)(U8 **,
+  U32 (CKDEVAPI * close_func)(U8 **,
                                U32,
                                U32,
                                U32,
@@ -1259,7 +1270,7 @@ typedef struct _P_CFG {
         transfer.
 
 */
-  U32 (_System * seek_func)(U32);
+  U32 (CKDEVAPI * seek_func)(U32);
 /*
    This function is called when we are starting to send a file with Zmodem
    protocol and the remote indicates that it already has a part of that
@@ -1274,7 +1285,7 @@ typedef struct _P_CFG {
         from, rather than from the beginning of the file.
 */
 
-  U32 (_System * read_func)(U8 *,
+  U32 (CKDEVAPI * read_func)(U8 *,
                               U32,
                               U32 *);
   /*
@@ -1300,7 +1311,7 @@ typedef struct _P_CFG {
         transmission error).
 */
 
-  U32 (_System * write_func)(U8 *,
+  U32 (CKDEVAPI * write_func)(U8 *,
                                U32);
 /*
    This function is called when we have received data to be written to the
@@ -1317,7 +1328,7 @@ typedef struct _P_CFG {
         The number of bytes to write from buf.
 */
 
-  U32 (_System * exe_in_func)(U8 *,
+  U32 (CKDEVAPI * exe_in_func)(U8 *,
                               U32,
                               U32 *);
   /*
@@ -1343,7 +1354,7 @@ typedef struct _P_CFG {
         transmission error).
 */
 
-  U32 (_System * exe_out_func)(U8 *,
+  U32 (CKDEVAPI * exe_out_func)(U8 *,
                                U32, U32 *);
 /*
    This function is called when we have data to send to the host.
@@ -1362,7 +1373,7 @@ typedef struct _P_CFG {
 
         Returns number of bytes actually written.
 */
-  U32 (_System * exe_break_func)(U8);
+  U32 (CKDEVAPI * exe_break_func)(U8);
 
 /*
    This function is called to manipulate the Break Signal
@@ -1374,7 +1385,7 @@ typedef struct _P_CFG {
        0 for Off; 1 for On.
 */
 
-  U32 (_System * exe_available_func)(U32 *);
+  U32 (CKDEVAPI * exe_available_func)(U32 *);
 /*
   This function is called to check the number of available bytes
 
@@ -1392,7 +1403,7 @@ typedef struct _P_CFG {
     /* 0 or 1 depending on whether that character position is to be  */
     /* prefixed.                                                     */
 
-    U32 (_System * exe_pushback_func)(U8 *, U32);
+    U32 (CKDEVAPI * exe_pushback_func)(U8 *, U32);
     /*
     This function is called to push back the unused bytes left over
     at the end of the transfer.
@@ -1409,12 +1420,5 @@ typedef struct _P_CFG {
 } P_CFG;
 
 #pragma pack()                  /* Back to default alignment */
-
-/*
-   Prototype for p_transfer() function. Commented because one might want to
-   use DosLoadLibrary instead of import library.
-
-   extern U32 _System p_transfer(P_CFG *);
-*/
 
 #endif /* _P_H_ */

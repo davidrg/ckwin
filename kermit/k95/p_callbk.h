@@ -31,18 +31,18 @@
  * when we pretend it isn't. This breaks compatibility with K&R C compilers,
  * but in practice we *never* use a K&R C compiler to target Win32 or OS/2. I'm
  * not even sure there exists a compatible K&R C compiler for these platforms. */
-/*_PROTOTYP( U32 _System status_func, (U32, intptr_t, U32, U32, U32, intptr_t));*/
-U32 _System status_func(U32, ...);
+/*_PROTOTYP( U32 CKDEVAPI status_func, (U32, intptr_t, U32, U32, U32, intptr_t));*/
+U32 CKDEVAPI status_func(U32, ...);
 
-_PROTOTYP( U32 _System s_open_func, (U8 **, U32 *, U32 *, U32 *,
+_PROTOTYP( U32 CKDEVAPI s_open_func, (U8 **, U32 *, U32 *, U32 *,
                        U32 *, U32 *,
                        U8 *, U8 *, U8 *));
-_PROTOTYP( U32 _System r_open_func, (U8 **, U32, U32, U32,
+_PROTOTYP( U32 CKDEVAPI r_open_func, (U8 **, U32, U32, U32,
                        U32, U32,
                        U8, U8, U8,
                        U32 *));
-_PROTOTYP( U32 _System close_func, (U8 **, U32, U32, U32, BOOLEAN, U32));
-_PROTOTYP( U32 _System seek_func, (U32));
-_PROTOTYP( U32 _System read_func, (U8 *, U32, U32 *));
-_PROTOTYP( U32 _System write_func, (U8 *, U32));
+_PROTOTYP( U32 CKDEVAPI close_func, (U8 **, U32, U32, U32, BOOLEAN, U32));
+_PROTOTYP( U32 CKDEVAPI seek_func, (U32));
+_PROTOTYP( U32 CKDEVAPI read_func, (U8 *, U32, U32 *));
+_PROTOTYP( U32 CKDEVAPI write_func, (U8 *, U32));
 

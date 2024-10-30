@@ -199,52 +199,52 @@ SOCKET ssh_open_socket(char* host, char* port) {
 
 /* Typedefs for all the function pointers we *could* receive from an SSH
  * subsystem DLL */
-typedef int (_System * p_ssh_dll_init_t)(ssh_init_parameters_t *);
-typedef int (_System * p_ssh_set_iparam_t)(int, int);
-typedef int (_System * p_ssh_get_iparam_t)(int);
-typedef int (_System * p_ssh_set_sparam_t)(int, const char*);
-typedef const char* (_System * p_ssh_get_sparam_t)(int);
-typedef int (_System * p_ssh_set_identity_files_t)(const char**);
-typedef int (_System * p_ssh_get_socket_t)();
-typedef int (_System * p_ssh_open_t)();
-typedef int (_System * p_ssh_clos_t)();
-typedef int (_System * p_ssh_tchk_t)();
-typedef int (_System * p_ssh_flui_t)();
-typedef int (_System * p_ssh_break_t)();
-typedef int (_System * p_ssh_inc_t)(int);
-typedef int (_System * p_ssh_xin_t)(int, char*);
-typedef int (_System * p_ssh_toc_t)(int);
-typedef int (_System * p_ssh_tol_t)(char*,int);
-typedef int (_System * p_ssh_snaws_t)();
-typedef const char* (_System * p_ssh_proto_ver_t)();
-typedef const char* (_System * p_ssh_impl_ver_t)();
-typedef int (_System * p_sshkey_create_t)(char *, int, char *, int, char *);
-typedef int (_System * p_sshkey_display_fingerprint_t)(char *, int);
-typedef int (_System * p_sshkey_display_public_t)(char *, char *);
-typedef int (_System * p_sshkey_display_public_as_ssh2_t)(char *,char *);
-typedef int (_System * p_sshkey_change_passphrase_t)(char *, char *, char *);
-typedef int (_System * p_ssh_fwd_remote_port_t)(char*, int, char *, int, BOOL);
-typedef int (_System * p_ssh_fwd_local_port_t)(char*, int,char *,int, BOOL);
-typedef int (_System * p_ssh_fwd_clear_local_ports_t)(BOOL);
-typedef int (_System * p_ssh_fwd_clear_remote_ports_t)(BOOL);
-typedef int (_System * p_ssh_fwd_remove_remote_port_t)(int, BOOL);
-typedef int (_System * p_ssh_fwd_remove_local_port_t)(int, BOOL);
-typedef ssh_port_forward_t* (_System * p_ssh_fwd_get_ports_t)();
+typedef int (CKSSHAPI * p_ssh_dll_init_t)(ssh_init_parameters_t *);
+typedef int (CKSSHAPI * p_ssh_set_iparam_t)(int, int);
+typedef int (CKSSHAPI * p_ssh_get_iparam_t)(int);
+typedef int (CKSSHAPI * p_ssh_set_sparam_t)(int, const char*);
+typedef const char* (CKSSHAPI * p_ssh_get_sparam_t)(int);
+typedef int (CKSSHAPI * p_ssh_set_identity_files_t)(const char**);
+typedef int (CKSSHAPI * p_ssh_get_socket_t)();
+typedef int (CKSSHAPI * p_ssh_open_t)();
+typedef int (CKSSHAPI * p_ssh_clos_t)();
+typedef int (CKSSHAPI * p_ssh_tchk_t)();
+typedef int (CKSSHAPI * p_ssh_flui_t)();
+typedef int (CKSSHAPI * p_ssh_break_t)();
+typedef int (CKSSHAPI * p_ssh_inc_t)(int);
+typedef int (CKSSHAPI * p_ssh_xin_t)(int, char*);
+typedef int (CKSSHAPI * p_ssh_toc_t)(int);
+typedef int (CKSSHAPI * p_ssh_tol_t)(char*,int);
+typedef int (CKSSHAPI * p_ssh_snaws_t)();
+typedef const char* (CKSSHAPI * p_ssh_proto_ver_t)();
+typedef const char* (CKSSHAPI * p_ssh_impl_ver_t)();
+typedef int (CKSSHAPI * p_sshkey_create_t)(char *, int, char *, int, char *);
+typedef int (CKSSHAPI * p_sshkey_display_fingerprint_t)(char *, int);
+typedef int (CKSSHAPI * p_sshkey_display_public_t)(char *, char *);
+typedef int (CKSSHAPI * p_sshkey_display_public_as_ssh2_t)(char *,char *);
+typedef int (CKSSHAPI * p_sshkey_change_passphrase_t)(char *, char *, char *);
+typedef int (CKSSHAPI * p_ssh_fwd_remote_port_t)(char*, int, char *, int, BOOL);
+typedef int (CKSSHAPI * p_ssh_fwd_local_port_t)(char*, int,char *,int, BOOL);
+typedef int (CKSSHAPI * p_ssh_fwd_clear_local_ports_t)(BOOL);
+typedef int (CKSSHAPI * p_ssh_fwd_clear_remote_ports_t)(BOOL);
+typedef int (CKSSHAPI * p_ssh_fwd_remove_remote_port_t)(int, BOOL);
+typedef int (CKSSHAPI * p_ssh_fwd_remove_local_port_t)(int, BOOL);
+typedef ssh_port_forward_t* (CKSSHAPI * p_ssh_fwd_get_ports_t)();
 #ifdef SSHTEST
-typedef int (_System * p_sshkey_v1_change_comment_t)(char *, char *, char *);
+typedef int (CKSSHAPI * p_sshkey_v1_change_comment_t)(char *, char *, char *);
 #endif /* SSHTEST */
 /*typedef char * (*p_sshkey_default_file_t)(int);*/
-typedef void (_System * p_ssh_v2_rekey_t)();
-typedef int (_System * p_ssh_agent_delete_file_t)(const char *);
-typedef int (_System * p_ssh_agent_delete_all_t)();
-typedef int (_System * p_ssh_agent_add_file_t)(const char*);
-typedef int (_System * p_ssh_agent_list_identities_t)(int);
-typedef void (_System * p_ssh_unload_t)();
-typedef const char* (_System * p_ssh_dll_ver_t)();
-typedef ktab_ret (_System * p_ssh_get_keytab_t)(int keytab_id);
-typedef int (_System * p_ssh_feature_supported_t)(int feature_id);
-typedef const char** (_System *p_ssh_get_set_help_t)();
-typedef const char** (_System *p_ssh_get_help_t)();
+typedef void (CKSSHAPI * p_ssh_v2_rekey_t)();
+typedef int (CKSSHAPI * p_ssh_agent_delete_file_t)(const char *);
+typedef int (CKSSHAPI * p_ssh_agent_delete_all_t)();
+typedef int (CKSSHAPI * p_ssh_agent_add_file_t)(const char*);
+typedef int (CKSSHAPI * p_ssh_agent_list_identities_t)(int);
+typedef void (CKSSHAPI * p_ssh_unload_t)();
+typedef const char* (CKSSHAPI * p_ssh_dll_ver_t)();
+typedef ktab_ret (CKSSHAPI * p_ssh_get_keytab_t)(int keytab_id);
+typedef int (CKSSHAPI * p_ssh_feature_supported_t)(int feature_id);
+typedef const char** (CKSSHAPI *p_ssh_get_set_help_t)();
+typedef const char** (CKSSHAPI *p_ssh_get_help_t)();
 
 /* Function pointers received from the currently loaded SSH subsystem DLL */
 static p_ssh_dll_init_t p_ssh_init = NULL;
