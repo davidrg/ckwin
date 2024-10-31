@@ -40,16 +40,19 @@
 
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
 typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
+typedef unsigned long DWORD_PTR;
 #define CK_HAVE_INTPTR_T
-#endif
+#endif /* CK_HAVE_INTPTR_T */
 
 typedef unsigned long   U32;
 typedef long            S32;
 typedef unsigned short  U16;
 typedef short           S16;
 typedef unsigned char   U8;
-typedef char            S8;
+typedef signed char     S8;
 #ifndef NT
 typedef unsigned long   BOOLEAN;
 #endif
