@@ -269,7 +269,7 @@ pxyz(int sstate) {
     extern CK_TTYFD_T ttyfd;
     extern int network;
 #ifndef NOLOCAL
-    extern term_io;
+    extern int term_io;
     int term_io_sav = term_io;
 #endif /* NOLOCAL */
 #ifdef TCPSOCKET

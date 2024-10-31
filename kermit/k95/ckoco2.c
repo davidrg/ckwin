@@ -113,7 +113,7 @@ extern int inserver;
 #endif /* IKSD */
 
 extern int tt_cursor;                   /* Cursor type */
-extern int tt_status[];                 /* Status line displayed ? */
+extern int tt_status[VNUM];             /* Status line displayed ? */
 
 extern unsigned char     colorstatus     ;
 extern unsigned char     colorselect ;
