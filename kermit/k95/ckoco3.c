@@ -3447,7 +3447,7 @@ void
 sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
     int i,j,n ;
     static unsigned char * sendbuf = NULL;
-    static buflen = 0;
+    static int buflen = 0;
     unsigned char * bufptr, *stuffptr ;
     CHAR * bytes = NULL;
     int count = 1;
@@ -10708,7 +10708,7 @@ debugses( unsigned char ch )
 void
 cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                                         /* TELNET options debug display. */
-    static vt52esclen = 0 ;
+    static int vt52esclen = 0 ;
 /*
    Edit 190.
    New code, supporting APC, and integrating escape sequence state switching

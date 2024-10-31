@@ -5786,7 +5786,7 @@ shotcs(csl,csr) int csl, csr;
     extern struct _vtG G[4], *GL, *GR;
     extern int decnrcm, sni_chcode;
     extern int tt_utf8, dec_nrc, dec_kbd, dec_lang;
-    extern prncs;
+    extern int prncs;
 
     printf(" Terminal character-sets:\n");
     if (IS97801(tt_type_mode)) {
@@ -6045,7 +6045,7 @@ shotrm() {
     int lines = 0;
 #ifdef KUI
     extern CKFLOAT tt_linespacing[];
-    extern tt_cursor_blink;
+    extern int tt_cursor_blink;
 #endif /* KUI */
 #ifdef PCFONTS
     int i;

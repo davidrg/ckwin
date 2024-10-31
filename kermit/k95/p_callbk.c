@@ -148,7 +148,7 @@ U8 *z_frame_end[] = {
 static char errbuf[512];
 
 /*
- * TODO: Definition in p.h is: U32 (* _System status_func)(U32, ...);
+ * TODO: Definition in p.h is: U32 (* CKDEVAPI status_func)(U32, ...);
  *       This results in a type mismatch error over in ckop.c:
  *          ckop.c(534): Warning! W102: Type mismatch (warning)
  *          ckop.c(534): Note! I2003: source conversion type is 'unsigned long (*)(unsigned long __p1,int __p2,unsigned long __p3,unsigned long __p4,unsigned long __p5,int __p6)'
@@ -157,7 +157,8 @@ static char errbuf[512];
  *       That might also make dealing with arg4 and arg0 which might not always
  *       need to be an intptr_t (they were just U32s before the 64bit port)
  */
-U32 _System
+U32
+CKDEVAPI
 status_func(U32 type, ...)
 {
     va_list args;

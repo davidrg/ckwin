@@ -912,7 +912,7 @@ InitTCPProtoList()
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_TCP_PROTOCOL ) ;
-    while ( button = (UIW_BUTTON *) list->First() ) {
+    while ( (button = (UIW_BUTTON *)list->First()) != NULL ) {
         *list - button;
         delete button;
     }
@@ -995,7 +995,7 @@ InitSSHProtoList()
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_TCP_PROTOCOL ) ;
-    while ( button = (UIW_BUTTON *) list->First() ) {
+    while ( (button = (UIW_BUTTON *)list->First()) != NULL ) {
         *list - button;
         delete button;
     }

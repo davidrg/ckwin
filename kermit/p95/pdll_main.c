@@ -52,6 +52,7 @@
 #include "pdll_x_global.h"
 #include "pdll_z.h"
 #include "pdll_z_global.h"
+#include "ckop.h"
 
 jmp_buf p_jmp_buf;
 
@@ -82,7 +83,8 @@ cleanup()
     }
 }
 
-U32 _System 
+U32
+CKDEVDLLENTRY
 #ifdef CK_ANSIC
 p_transfer(P_CFG *param_p_cfg) 
 #else
