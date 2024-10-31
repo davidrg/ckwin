@@ -9680,12 +9680,28 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
     RXSTRING  retstr  ;  /* program return value    */
     int       retval  ;  /* os2rexx return value    */
     RXSYSEXIT exits[2];  /* Exit handlers */
+    static int initted=0; /* os2rexxinit() called? */
 
     MAKERXSTRING( Instore[0], rexxcmd, strlen(rexxcmd) ) ;
     MAKERXSTRING( Instore[1], 0, 0 ) ;
     MAKERXSTRING( retstr, return_buffer, sizeof(return_buffer) ) ;
 
 #ifdef NT
+    /* For some reason we've got to re-reginster the subcommand handler
+     * here despite having done it on app start, but we've only got to do
+     * it once here. I guess the call to os2rexxinit() on app start isn't
+     * taking effect properly? Maybe some kind of threading issue? I'm not
+     * sure why, but if we don't do this somewhere in os2rexx()
+     * subcommands don't work.
+     *
+     * They work fine on OS/2 without doing this, so it appears to be
+     * a Windows and/or Regina specific thing.
+     */
+    if (!initted) {
+        os2rexxinit();
+        initted=1;
+    }
+
     /*
      * Register an exit handler so that "say" works. This is NT only
      * for now as I'm not sure if it is required on OS/2 at all.
@@ -9756,6 +9772,11 @@ os2rexxinit()
    /* handler instead.  Both mechanisms can co-exist, so we leave in   */
    /* the CkCommand/CKermit as an undocumented function.               */
 
+#ifdef NT
+   RexxDeregisterFunction("CKermit");
+   RexxDeregisterFunction("CKCommand");
+   RexxDeregisterSubcom("CKermit", NULL);
+#endif
    RexxRegisterFunctionExe("CKermit",(PFN)os2rexxckcmd) ;
    RexxRegisterFunctionExe("CKCommand",(PFN)os2rexxckcmd) ;
    RexxRegisterSubcomExe("CKermit",(PFN)os2rexxsubcom, NULL);
