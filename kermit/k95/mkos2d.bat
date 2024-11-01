@@ -16,7 +16,7 @@ set OLDINCLUDE=%INCLUDE%
 set INCLUDE=%WATCOM%\H;%WATCOM%\H\OS2;%CKINCLUDE%
 
 if not exist os2\NUL mkdir os2
-move os2\*.obj . > nul
+if exist os2\*.obj move os2\*.obj . > nul
 if exist ckcmai.obj del ckcmai.obj
 if exist ckuus5.obj del ckuus5.obj
 nmake /nologo /f ckoker.mak PLATFORM=OS2 wcos2d
