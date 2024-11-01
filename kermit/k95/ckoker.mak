@@ -335,9 +335,11 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /EHs-c-
 # These are:    /EHs-c-     Enable C++ Exception handling (replaces /GX-)
 !endif  # EndIf MSC_VER < 140
 
+RCDEFINES=/dWINVER=0x0400
+
 !endif  # EndIf PLATFORM  == NT
 
-RCDEFINES=/dCOMPILER_$(CMP)
+RCDEFINES=$(RCDEFINES) /dCOMPILER_$(CMP)
 
 !if "$(SSH_LIB)" == ""
 SSH_LIB = ssh.lib
@@ -346,6 +348,8 @@ SSH_LIB = ssh.lib
 !if "$(REXX_LIB)" == ""
 REXX_LIB = rexx.lib
 !endif
+
+O=.obj
 
 #---------- Compiler targets:
 #
@@ -837,13 +841,15 @@ ibmcd:
 DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
           -DNPIPE -DOS2MOUSE -DHADDRLIST -DPCFONTS \
           -DRLOGCODE -DNETFILE -DONETERMUPD \
-          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS) \
+          $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
+# __32BIT__ macro is defined by IBM compilers and used by Kermit OS/2 code
+# Open Watcom compiler doesn't define such macro that it must be defined
+# as additional macro
+# if Kermit will not support 16-bit code anymore then this macro could
+# be removed
 !if "$(CMP)" == "OWWCL"
-          -D__32BIT__
+DEFINES = $(DEFINES) -D__32BIT__
 !endif
-# Open Watcom doesn't define __32BIT__ by default which upsets a lot of OS/2
-# code. Maybe there is some compiler flag thats missing though it seems to be
-# producing 32bit OS/2 binaries fine as-is.
 
 # zlib support:  -DZLIB
            
@@ -852,12 +858,12 @@ DEFINES = -DOS2 -DDYNAMIC -DKANJI -DTCPSOCKET \
 K95BUILD = K95
 !endif
 !if "$(K95BUILD)" == "TLSONLY"
-DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
+DEFINES = -DNT -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DUSE_STRERROR \
           -DNETFILE -DONETERMUPD -DNO_ENCRYPTION -DZLIB \
           -DNO_SRP -DNO_KERBEROS -DBETATEST -DNOCKXYZ
 !else if "$(K95BUILD)" == "UIUC"
-DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
+DEFINES = -DNT -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DDYNAMIC -DNETCONN -DHADDRLIST -DOS2MOUSE -DTCPSOCKET -DRLOGCODE -DUSE_STRERROR \
           -DNETFILE -DONETERMUPD -DZLIB \
           -DNOXFER -DNODIAL -DNOHTTP -DNOFORWARDX -DNOBROWSER -DNOLOGIN \
@@ -865,7 +871,7 @@ DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH \
           -DNOSOCKS -DNONETCMD -DNO_SRP -DNO_SSL -DNOFTP -DBETATEST \
           -DNODEBUG -DCK_TAPI -DNOPUSH -DNO_COMPORT -DNOXMIT -DNOSCRIPT -DNO_KERBEROS -DNOCKXYZ
 !else if "$(K95BUILD)" == "IKSD"
-DEFINES = -DNT -D__STDC__ -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRERROR \
+DEFINES = -DNT -DWINVER=0x0400 -DOS2 -DNOSSH -DONETERMUPD -DUSE_STRERROR \
           -DDYNAMIC -DKANJI -DNETCONN -DIKSDONLY -DZLIB \
           -DHADDRLIST -DCK_LOGIN \
           -DNO_SRP -DNO_KERBEROS -DNOCKXYZ
@@ -877,16 +883,16 @@ DEFINES = -DNT -DWINVER=0x0400 -DOS2 -D_CRT_SECURE_NO_DEPRECATE -DUSE_STRERROR\
           -DNETFILE -DONETERMUPD  \
           -DNEWFTP -DBETATEST -DNO_DNS_SRV \
           $(ENABLED_FEATURE_DEFS) $(DISABLED_FEATURE_DEFS)
-!if "$(CMP)" != "OWCL"
-DEFINES = $(DEFINES) -D__STDC__
 !endif
+!if "$(CMP)" != "OWCL" && "$(CMP)" != "OWWCL"
+DEFINES = $(DEFINES) -D__STDC__
 !endif
 !endif
 !else
 ! ERROR Macro named PLATFORM undefined
 !endif
 
-!if "$(CMP)" == "OWCL"
+!if "$(CMP)" == "OWCL" || "$(CMP)" == "OWWCL"
 # Watcom was the full path to commode.obj - its not enough for it to
 # be on the library path.
 COMMODE_OBJ = $(WATCOM)\lib386\nt\commode.obj

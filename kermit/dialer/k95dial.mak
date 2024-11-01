@@ -178,7 +178,7 @@ nckdial.exe: main.obn dialer.obn lstitm.obn kconnect.obn \
     $(WNT_LIBS)
 
 nk95dial.res: k95dial.rc k95f.ico
-    rc -v -fo nk95dial.res k95dial.rc
+    rc -v -dWINVER=0x0400 -fo nk95dial.res k95dial.rc
 
 main.obn: main.cpp dialer.hpp kconnect.hpp kwinmgr.hpp kdemo.hpp
 

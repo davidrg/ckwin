@@ -646,6 +646,8 @@ set CKB_STATIC_CRT_OS2=yes
 
 REM For Open Watcom we have to use its nmake clone
 set MAKE=nmake
+set NMAKE=-nowwarn
+set WATCOM_CLONE_OPTIONS=-nowwarn
 
 REM Open Watcom doesn't include TAPI headers to we bundle them with K95. Add them to the include
 REM path so the dialer can find them.
