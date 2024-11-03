@@ -26,7 +26,7 @@ ISJOM=yes
 CMP = VCXX
 COMPILER = Visual C++
 
-!IF ([wcc386 . <nul 2>&1 > nul] == 0)
+!IF ([wcc386 . <nul >nul 2>&1] == 0)
 # Open Watcom
 CMP = OWCL
 COMPILER = Open Watcom C/C++ CL clone
