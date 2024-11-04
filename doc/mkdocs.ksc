@@ -64,12 +64,25 @@
 ; temporary console window to run git in for each file.
 ;
 ;
-; TODO: We also need single replacement values that can be used where
+; We also need single replacement values that can be used where
 ;       comments aren't allowed - such as within strings or the title tag.
 ; Replacements needed:
 ;   $!ver-full$             Same as $ver-full$  - for index.html <title> tag
 ;   $!ver-date-iso$         Eg 2023-07-05       - For github issues links at line 1110
 ;
+; TODO: also the option to normalise links to kermitproject.org to use either
+;       https://, http://, or just //
+;
+; TODO: Also an option to use either html or htm file extensions. This will
+;       require doing a find&replace in all files for all files
+;
+;   Builds would be:
+;      Vintage:     .htm    http://
+;      Modern:      .html   https://
+;      Web:         .html   // or https://
+;
+; TODO: Add a "prerelease" flag that would add a header to the top of every
+;       page indicating this documentation is preliminary, etc.
 
 local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modified touch_date
 
@@ -79,12 +92,12 @@ local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modifie
 def USAGE {
     echo {K95 mkdocs script}
     xecho {Usage: mkdocs.ksc input-directory output-directory}
-    echo { [touch-files] [dry-run] [dev-mode] }
+    echo { [git-file-dates] [dry-run] [dev-mode] }
     echo {}
 	echo {Where:}
 	echo {  input-directory     Source documentation directory, preferably in git}
 	echo {  output-directory    Destination directory for updated files}
-	echo {  touch-files         true to update file modified times (default), false to leave as-is}
+	echo {  git-file-dates      true to update file modified times to git commit date (default), false to leave as-is}
 	echo {  dry-run             true to do a dry-run, false to process (default) }
 	echo {  dev-mode            true to mark as development version, }
 	echo {                      false to mark as release version (default)}
@@ -103,17 +116,31 @@ if not defined \%2 usage
 
 .touch_files := true
 .dry_run := false
-.dev := false
+.dev_mode := false
 
 if defined \%3 .touch_files := \%3
 if defined \%4 .dry_run := \%4
-if defined \%5 .dev := \%5
+if defined \%5 .dev_mode := \%5
+
+if \m(dev_mode) {
+  .dev_mode = 1
+}
+else {
+  .dev_mode = 0
+}
+
+if \m(touch_files) {
+  .touch_files = 1
+}
+else {
+  .touch_files = 0
+}
 
 ; ============================================================================
 ; Date Utility Functions
 
 define short_month_to_number {
-echo short_month_to_number \%1
+;echo short_month_to_number \%1
 	switch \%1 {
 		:Jan, return 01, break
 		:Feb, return 02, break
@@ -160,291 +187,27 @@ define date_to_touch_date {
 }
 
 ; ============================================================================
-; This extracts the version from the herald which is not very nice and won't
-; tolerate major or minor version numbers greater than 9 or revisions greater
-; than 99.
-
-.touch_date := {}
-
-.ver_full := \v(herald)
-.ver_end := \Findex({,},\m(ver_full),0)
-.ver_len := \Feval(\m(ver_end) - 11)
-.ver_full := \Fsubstring(\m(ver_full),11,\m(ver_len))
-
-.ver_date_start := \Feval(\m(ver_end) + 2)
-
-;echo Full Ver String: \m(ver_full)
-
-.ver_len := \Findex({ },\m(ver_full),0)
-.ver_maj_min_rev := \Fsubstring(\m(ver_full),1,\m(ver_len))
-.ver_maj_min_rev := \Ftrim(\m(ver_maj_min_rev), { })
-
-;echo Major.Minor.Revision version string: \m(ver_maj_min_rev)
-
-; Currently we assume the Major and Minor version numbers are only 0-9
-; while the revision can be 0-99
-.ver_maj_min := \Fsubstring(\m(ver_full),1,3)
-
-;echo Major.Minor version string: \m(ver_maj_min)
-
-if \m(dev) {
-	.ver_maj_min := \m(ver_maj_min) DEV
-	.ver_full := \m(ver_maj_min_rev) DEV
-}
-
-; Aug 17 2024
-; 12345678
-
-.ver_date := \Fsubstring(\v(herald),\m(ver_date_start),11)
-;.ver_date := {Aug 5 2024}
-;echo Ver-Date: \m(ver_date)
-.ver_month := \Fsubstring(\m(ver_date),1,3)
-.ver_day := \Ftrim(\Fsubstring(\m(ver_date),5,2))
-
-.year_idx := \Findex({ },\m(ver_date),5)
-
-.ver_year := \Ftrim(\Fsubstring(\m(ver_date),\Feval(\Findex({ },\m(ver_date),5)+1),4))
-
-;echo Day: \m(ver_day)
-;echo Month: \m(ver_month)
-;echo Year: \m(ver_year)
-
-.ver_date := \m(ver_day) \m(ver_month) \m(ver_year)
-
-short_month_to_number \m(ver_month)
-.ver_month_num := \v(return)
-
-switch \m(ver_month) {
-	:Jan, .ver_month := January, break
-	:Feb, .ver_month := February, break
-	:Mar, .ver_month := March, break
-	:Apr, .ver_month := April, break
-	:May, .ver_month := May, break
-	:Jun, .ver_month := June, break
-	:Jul, .ver_month := July, break
-	:Aug, .ver_month := August, break
-	:Sep, .ver_month := September, break
-	:Oct, .ver_month := October, break
-	:Nov, .ver_month := November, break
-	:Dec, .ver_month := December, break
-}
-
-.ver_long_date := \m(ver_day) \m(ver_month_num) \m(ver_year)
-
-.ver_date_iso := \m(ver_year)-\m(ver_month_num)-\m(ver_day)
-
-
-
-; ============================================================================
-; Functions to update the value between two tags.
-
-define find_tag_start {
-	local line tag idx
-	.line := \Fcontents(\%1)
-	.tag := \%2
-
-	.idx := \findex(\m(tag),\m(line))
-
-	; Tag not found.
-	if = \m(idx) 0 return -1
-
-	; Found the tag. Now find the closing comment.
-	.idx := \findex({-->},\m(line),\m(idx))
-
-	; Closing comment not found.
-	if = \m(idx) 0 return -1;
-
-	return \Feval(\m(idx) + 3)
-}
-
-define find_tag_end {
-	local line tag idx len
-	.line := \Fcontents(\%1)
-	.tag := /\%2
-	.len := \Flength(\m(line))
-
-	.idx := \frindex(\m(tag),\m(line))
-
-	; Tag not found.
-	if = \m(idx) 0 return -1
-
-	; Found the tag. Now find the opening comment.
-	.idx := \frindex({<!--},\m(line),\Feval(\m(len) - \m(idx)))
-
-	; Opening comment not found.
-	if = \m(idx) 0 return -1;
-
-	return \Feval(\m(idx) - 1)
-}
-
-define update_tag {
-	local line tag value start_idx start end_idx end
-
-	.line := \Fcontents(\%1)
-	.tag := \%2
-	.value := \Fcontents(\%3)
-
-	find_tag_start \m(line) \m(tag)
-	.start_idx := \v(return)
-
-	; Tag not found.
-	if = -1 \m(start_idx) {
-		return \m(line)
-		;.upd_line := \m(line)
-		;return
-	}
-
-	find_tag_end \m(line) \m(tag)
-	.end_idx := \v(return)
-
-	; Tag not found
-	if = -1 \m(end_idx) {
-		return \m(line)
-		;.upd_line := \m(line)
-		;return
-	}
-
-	.start := \Fsubstring(\m(line),1,\Feval(\m(start_idx)-1))
-	.end := \Fsubstring(\m(line),\Feval(\m(end_idx)+1), \Feval(\Flength(\m(line)) - \m(end_idx)))
-
-	return \m(start)\m(value)\m(end)
-	;.upd_line := \m(line)
-}
-
-define replace_tag {
-	.line := \Fcontents(\%1)
-	.tag := \%2
-	.value := \%3
-
-	return \Freplace(\m(line),\m(tag),\m(value))
-}
-
-; ============================================================================
 ; Function to update tags in a single file
 
 def process_file {
-	local file_in file_out file_last_modified grepresult setdate getdate format
+	local file_in file_out gitdate git_date
 	define \%9
 
-	.file_in := \%1
-	.file_out := \%2
-	.setdate := \%3
-	.getdate := 0
-
-	;echo File \m(file_in) ---> \m(file_out)
+	.file_in := \Freplace(\%1,/,\\)
+	.file_out := \Freplace(\%2,/,\\)
+	.gitdate := \%3
 
 	; ============================================================================
-	; Get file modified date only if required (its a slow operation)
-
-	if \m(setdate) {
-		.getdate := 1
+	; Get file modified date from git if requested
+	if = \m(gitdate) 1 {
+		.git_date := \Fcommand(git log -1 --pretty="format:%ci" \m(file_in) 2> nul)
 	}
 
-	undefine grepresult
-	grep /verbatim /macro:grepresult $last-update$ \m(file_in)
-	if != \Flength(\m(grepresult)) 0 {
-		.getdate := 1
-	}
-
-	if = \m(getdate) 1 {
-		.file_date := \Fdate(\m(file_in))
-		.git_date := \Fcommand(git log -1 --pretty="format:%cD" \m(file_in) 2> nul)
-
-		; Convert to the format required by Touch
-		if = \flength(\m(git_date)) 0 {
-			date_to_touch_date {\m(file_date)} 0
-			.file_last_modified := \m(file_date)
-			.file_last_modified_short := \m(file_date)
-		}
-		else {
-			date_to_touch_date {\m(git_date)} 1
-			.file_last_modified := \m(git_date)
-			.file_last_modified_short := \Fcommand(git log -1 --pretty="format:%cd" --date="format:%e %B %Y" \m(file_in) 2> nul)
-		}
-	}
-
-	; ============================================================================
-	; Open the file and start reading
-
-	fopen /read \%i \m(file_in)
-
-	fopen /write \%o \m(file_out)
-
-	while true {
-		undef line
-		fread /line \%i line
-		if fail break
-
-		; Update two-part tags (<!--$foo$-->value here<!--/$foo$-->
-		update_tag \m(line) $ver$ {\m(ver_maj_min)}
-		.line := \v(return)
-
-		update_tag \m(line) $ver-full$ {\m(ver_full)}
-		.line := \v(return)
-
-		update_tag \m(line) $ver-date$ {\m(ver_long_date)}
-		.line := \v(return)
-
-		update_tag \m(line) $ver-short-date$ {\m(ver_date)}
-		.line := \v(return)
-
-		update_tag \m(line) $ver-date-iso$ {\m(ver_date_iso)}
-		.line := \v(return)
-
-		update_tag \m(line) $last-update$ {\m(file_last_modified)}
-		.line := \v(return)
-
-		update_tag \m(line) $last-update-short$ {\m(file_last_modified_short)}
-        .line := \v(return)
-
-		; Update one-part tags ($!foo$)
-		replace_tag \m(line) $!ver$ {\m(ver_maj_min)}
-		.line := \v(return)
-
-		replace_tag \m(line) $!ver-full$ {\m(ver_full)}
-		.line := \v(return)
-
-		replace_tag \m(line) $!ver-date$ {\m(ver_long_date)}
-		.line := \v(return)
-
-		replace_tag \m(line) $!ver-short-date$ {\m(ver_date)}
-		.line := \v(return)
-
-		replace_tag \m(line) $!ver-date-iso$ {\m(ver_date_iso)}
-		.line := \v(return)
-
-		replace_tag \m(line) $!last-update$ {\m(file_last_modified)}
-		.line := \v(return)
-
-		replace_tag \m(line) $!last-update-short$ {\m(file_last_modified_short)}
-        .line := \v(return)
-
-
-		;echo \m(line)
-		fwrite /line \%o \m(line)
-	}
-
-	fclose \%i
-	fclose \%o
-
-	if \m(setdate) {
-		; Touch file to restore modified date - either to the date we got from
-		; git, or the date it had before.
-		touch /modtime:\m(touch_date) \m(file_out)
-	}
+    ; Update the file. This is done in REXX as its easier (regular expressions)
+    ; and faster.
+    rexx call mkdocs
 }
 
-; ============================================================================
-; Output replacements
-
-echo
-echo Replacements:
-echo . Ver: \m(ver_maj_min)
-echo . Ver-Full: \m(ver_full)
-echo . Ver-Date: \m(ver_long_date)
-echo . Ver-Date-Short: \m(ver_date)
-echo . Ver-Date-ISO: \m(ver_date_iso)
-echo
 
 ; ============================================================================
 ; Process files
@@ -491,13 +254,13 @@ while <= \%x \fdim(&f) {
 			     copy /overwrite:always \m(src_file) \m(dst_file)
 		}
 
-		if \m(touch_files) {
+		if = \m(touch_files) 1 {
 			; Try with git first, in RFC2822 style: Mon, 19 Aug 2024 19:41:25 +1200
-			.gitdate := \Fcommand(git log -1 --pretty="format:%cD" \m(src_file) 2> nul)
+			.touch_date := \Fcommand(git log -1 --pretty="format:%cd" --date=format:%Y:%m:%d:%H:%M:%S \m(src_file) 2> nul)
 
 			; Convert to the format required by Touch
-			if = \flength(\m(gitdate)) 0 date_to_touch_date {\m(src_date)} 0
-			else date_to_touch_date {\m(gitdate)} 1
+			if = \flength(\m(touch_date)) 0 date_to_touch_date {\m(src_date)} 0
+			;else date_to_touch_date {\m(gitdate)} 1
 
 			if \m(dry_run) {
 				echo touch /modtime:\m(touch_date) \m(dst_file)
@@ -508,6 +271,29 @@ while <= \%x \fdim(&f) {
 	}
 	increment \%x
 }
+
+; TODO: Only do this if the default keymap actually exists
+;       (which in practice it always should - the script that makes the dist
+;       directory also makes default.ksc provided the target binaries are
+;       compatible with the host, and if the aren't we won't be able to run
+;       this script with them anyway)
+echo Updating default keymap HTML file (default.html) from \m(dest)../../keymaps/default.ksc
+fopen /read \%i \m(dest)../../keymaps/default.ksc
+fopen /write \%o \m(dest)/default.html
+fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
+fwrite /line \%o {<html>}
+fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
+fwrite /line \%o {<pre>}
+while true {
+    undef line
+    fread /line \%i line
+    if fail break
+    fwrite /line \%o \m(line)
+}
+fwrite /line \%o {</pre>}
+fwrite /line \%o {</body></html>}
+fclose \%i
+fclose \%o
 
 echo Done
 exit
