@@ -16,7 +16,7 @@ REM CKB_IBMTCP20=yes
 REM ================== No changes required beyond this point ===================
 
 set ZINCBUILD=
-wcc386 . <nul 2>&1 > nul
+wcc386 . <nul >nul 2>&1
 if not %errorlevel% == 0 goto :unsupported
 wcc386 . <nul 2>&1 | findstr /C:"Version 1.9" > nul
 if %errorlevel% == 0 set ZINCBUILD=ow19

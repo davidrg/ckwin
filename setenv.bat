@@ -105,7 +105,7 @@ REM This should match the %PROCESSOR_ARCHITECTURE% on the target machine
 set CKB_TARGET_ARCH=x86
 
 set CKB_OPENSSL_SUFFIX=
-wcc386 . <nul 2>&1 > nul
+wcc386 . <nul >nul 2>&1
 if %errorlevel% == 0 goto :bitcheckdone
 
 cl 2>&1 | findstr /C:"for x64" > nul
@@ -574,7 +574,7 @@ set CKB_NT_COMPATIBLE=no
 set CKB_XP_COMPATIBLE=no
 set CKB_OS2_COMPATIBLE=no
 
-wcc386 . <nul 2>&1 > nul
+wcc386 . <nul >nul 2>&1
 if %errorlevel% == 0 goto :watcomc
 cl 2>&1 | findstr /C:"Version 19.4" > nul
 if %errorlevel% == 0 goto :vc144
