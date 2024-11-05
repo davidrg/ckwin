@@ -279,4 +279,4 @@ pdll_z.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll
 pdll_z_global.obj: ../k95/p_type.h
 
 p95.res: p95.rc
-        rc -r p95.rc
+        rc -r -dWINVER=0x0400 p95.rc

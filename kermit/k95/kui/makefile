@@ -191,7 +191,7 @@ MAPFILE   = /map:$(OUTDIR)\$(PROJ).map
 
 !endif
 
-RCDEFINES = $(RCDEFINES) /dWIN32 /dCOMPILER_$(CMP)
+RCDEFINES = $(RCDEFINES) /dWIN32 /dWINVER=0x0400 /dCOMPILER_$(CMP)
 
 # Customise for the compiler version we're using
 !if "$(CMP)" == "VCXX"

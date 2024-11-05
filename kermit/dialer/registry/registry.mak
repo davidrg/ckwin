@@ -84,7 +84,7 @@ k95regtl.exe: main.obn kregistry.obn registry.obn k95regtl.res
     main.obn kregistry.obn registry.obn k95regtl.res $(WNT_LIBS)
 
 k95regtl.res: k95regtl.rc k95f.ico
-    rc -v -fo k95regtl.res k95regtl.rc
+    rc -v -dWINVER=0x0400 -fo k95regtl.res k95regtl.rc
 
 main.obn: main.cpp kregistry.hpp registry.hpp
 
