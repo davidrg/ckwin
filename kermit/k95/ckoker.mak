@@ -693,7 +693,7 @@ wcos2:
         WARP="YES" \
 !endif
         LINKFLAGS="-l=os2v2 -k512K" \
-        LINKFLAGS_WIN="-l=os2v2_pm" \
+        LINKFLAGS_WIN="-l=os2v2_pm -k512K" \
         LINKFLAGS_DLL="-l=os2v2_dll" \
 	    DEF=""  # ckoker32.def
 
@@ -718,7 +718,7 @@ wcos2d:
         WARP="YES" \
 !endif
         LINKFLAGS="-l=os2v2 -k512K" \
-        LINKFLAGS_WIN="-l=os2v2_pm" \
+        LINKFLAGS_WIN="-l=os2v2_pm -k512K" \
         LINKFLAGS_DLL="-l=os2v2_dll" \
 	    DEF=""  # ckoker32.def
 
