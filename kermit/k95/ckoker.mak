@@ -347,6 +347,8 @@ SSH_LIB = ssh.lib
 REXX_LIB = rexx.lib
 !endif
 
+O=.obj
+
 #---------- Compiler targets:
 #
 # To build: "[dn]make <target>"
