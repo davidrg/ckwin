@@ -4984,6 +4984,7 @@ check_data_connection(fd,fc) int fd, fc;
 #endif /* CK_ANSIC */
 {
     int x;
+#ifdef BSDSELECT
     struct timeval tv;
     fd_set in, out, err;
 
@@ -5002,19 +5003,30 @@ check_data_connection(fd,fc) int fd, fc;
 #else
     x = select(FD_SETSIZE,&in,&out,&err,&tv);
 #endif /* INTSELECT */
+#else /* BSDSELECT */
+#ifdef IBMSELECT
+    if (ftp_timeout < 1L)
+        return(0);
 
+    if (fc) { /* write */
+        x = select(&fd, 0, 1, 0, ftp_timeout * 1000L);
+    } else { /* read */
+        x = select(&fd, 1, 0, 0, ftp_timeout * 1000L);
+    }
+#endif /* IBMSELECT */
+#endif /* BSDSELECT */
     if (x == 0) {
 #ifdef EWOULDBLOCK
-	errno = EWOULDBLOCK;
+        errno = EWOULDBLOCK;
 #else
 #ifdef EAGAIN
-	errno = EAGAIN;
+        errno = EAGAIN;
 #else
-	errno = 11;
+        errno = 11;
 #endif	/* EAGAIN */
 #endif	/* EWOULDBLOCK */
-	debug(F100,"ftp check_data_connection TIMOUT","",0);
-	return(-3);
+        debug(F100,"ftp check_data_connection TIMOUT","",0);
+        return(-3);
     }
     return(0);
 }
