@@ -16,15 +16,15 @@ set DEV_MODE=false
 set WEB_MODE=false
 set HTTPS_MODE=true
 
-for %%I in (switch valid) do set "%%I="
+for %%I in (switch valid OUT_DIR) do set "%%I="
 for %%I in (%*) do (
     rem Value after a switch
     if defined switch (
 
         rem Example: /X
-        REM if /i "!switch:~1!"=="X" set "X_VALUE=%%~I"
+        if /i "!switch:~1!"=="O" set "OUT_DIR=%%~I"
 
-        REM set "switch="
+        set "switch="
 
     ) else (
 
@@ -38,7 +38,7 @@ for %%I in (%*) do (
             REM S = use-https
 
             rem Check for a valid switch
-            for %%x in (G N D W I) do (
+            for %%x in (G N D W I O) do (
                 if /i "!switch:~1!"=="%%x" set "valid=true"
             )
 
@@ -102,17 +102,10 @@ echo   /I    Use HTTP:// links to kermitproject.org and select other sites
 echo         instead of HTTPS:// - this should only be used without the /W
 echo         switch when building for vintage platforms that are unlikely to
 echo         have an up-to-date web browser.
+echo   /O=   Set output directory
 goto :end
 
 :begin
-
-REM git-file-dates dry-run dev-mode web-mode use-https
-echo Parameters:
-echo Git File dates: %GIT_DATES%
-echo Dry Run: %DRY_RUN%
-echo Dev Mode: %DEV_MODE%
-echo Web Mode: %WEB_MODE%
-echo HTTPS Mode: %HTTPS_MODE%
 
 if exist %root%\dist\k95.exe set dist_root=%root%\dist
 if exist %root%\dist\k95.exe goto :mkdocs
@@ -125,12 +118,22 @@ goto :end
 
 :mkdocs
 
+if "%OUT_DIR%" == "" set OUT_DIR=%dist_root%\docs\manual\
+
+echo Parameters:
+echo Git File dates: %GIT_DATES%
+echo Dry Run: %DRY_RUN%
+echo Dev Mode: %DEV_MODE%
+echo Web Mode: %WEB_MODE%
+echo HTTPS Mode: %HTTPS_MODE%
+echo Out Dir: %OUT_DIR%
+
 set docs_root=%root%\doc
 
 echo Disting to: %dist_root%\docs\
 echo Using: %dist_root%\k95.exe
 
-set manual_dist_dir=%dist_root%\docs\manual\
+set manual_dist_dir=%OUT_DIR%
 
 REM Kermit requires the \ character to be escaped (\\ instead of \) so...
 set manual_dist_dir=%manual_dist_dir:\=\\%
@@ -146,9 +149,11 @@ pushd %dist_root%
 
 echo Disting the manual...
 
+k95.exe -Y -# 127 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
+
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
-k95.exe %docs_root%\mkdocs.ksc -Y -# 126 = %docs_root%\manual %dist_root%\docs\manual %GIT_DATES% %DRY_RUN% %DEV_MODE% %WEB_MODE% %HTTPS_MODE%
+k95.exe %docs_root%\mkdocs.ksc -Y -d -# 126 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DRY_RUN% %DEV_MODE% %WEB_MODE% %HTTPS_MODE%
 
 REM And update modified dates for anything that hasn't changed since the manual
 REM was added to git

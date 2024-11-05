@@ -70,17 +70,6 @@
 ;   $!ver-full$             Same as $ver-full$  - for index.html <title> tag
 ;   $!ver-date-iso$         Eg 2023-07-05       - For github issues links at line 1110
 ;
-; TODO: also the option to normalise links to kermitproject.org to use either
-;       https://, http://, or just //
-;
-; TODO: Also an option to use either html or htm file extensions. This will
-;       require doing a find&replace in all files for all files
-;
-;   Builds would be:
-;      Vintage:     .htm    http://
-;      Modern:      .html   https://
-;      Web:         .html   // or https://
-;
 ; TODO: Add a "prerelease" flag that would add a header to the top of every
 ;       page indicating this documentation is preliminary, etc.
 
@@ -325,7 +314,7 @@ if \m(dry_run) {
     echo Generate \m(defhtm)
 }
 else {
-    fopen /read \%i \m(dest)../../keymaps/default.ksc
+    fopen /read \%i \m(dest)default.ksc
     fopen /write \%o \m(defhtm)
     fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
     fwrite /line \%o {<html>}
@@ -341,6 +330,7 @@ else {
     fwrite /line \%o {</body></html>}
     fclose \%i
     fclose \%o
+    if exist \m(dest)default.ksc del /noask \m(dest)default.ksc
 }
 
 if = \m(web_mode) 0 {
