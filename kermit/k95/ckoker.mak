@@ -1387,7 +1387,7 @@ nullssh.dll: ckonssh.obj ckoker.mak
 !else
 !if "$(CMP)" == "OWWCL"
     $(CC) $(CC2) $(DEBUG) $(DLL) ckonssh.obj $(OUT)$@ \
-	    $(LINKFLAGS_DLL) $(LIBS) -"export ssh_dll_init"
+	    $(LINKFLAGS_DLL) $(LIBS) -"export ssh_dll_init=_ssh_dll_init"
 !endif
 !endif
 
