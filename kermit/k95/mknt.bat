@@ -11,7 +11,7 @@ SET PLATFORM=NT
 SET K95BUILD=K95
 set OUTDIR=nt%SUFFIX%
 if not exist %OUTDIR%\NUL mkdir %OUTDIR%
-move %OUTDIR%\*.obj . > nul
+if exist %OUTDIR%\*.obj move %OUTDIR%\*.obj . > nul
 if exist ckcmai.obj del ckcmai.obj
 if exist ckuus5.obj del ckuus5.obj
 %MAKE% /nologo /e /f ckoker.mak msvc

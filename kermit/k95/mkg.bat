@@ -17,8 +17,8 @@ cd ..
 REM UNSET NODEBUG
 SET OUTDIR=.\kui\win95%SUFFIX%
 SET K95BUILD=K95
-move kui\win95%SUFFIX%\ck*.obj . > nul
-move kui\win95%SUFFIX%\p_*.obj . > nul
+if exist kui\win95%SUFFIX%\ck*.obj move kui\win95%SUFFIX%\ck*.obj . > nul
+if exist kui\win95%SUFFIX%\p_*.obj move kui\win95%SUFFIX%\p_*.obj . > nul
 if exist ckcmai.obj del ckcmai.obj
 if exist ckuus5.obj del ckuus5.obj
 %MAKE% /nologo /e /f ckoker.mak k95g
