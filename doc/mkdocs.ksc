@@ -92,7 +92,7 @@ local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modifie
 def USAGE {
     echo {K95 mkdocs script}
     xecho {Usage: mkdocs.ksc input-directory output-directory}
-    echo { [git-file-dates] [dry-run] [dev-mode] }
+    echo { [git-file-dates] [dry-run] [dev-mode] [web-mode] }
     echo {}
 	echo {Where:}
 	echo {  input-directory     Source documentation directory, preferably in git}
@@ -101,6 +101,10 @@ def USAGE {
 	echo {  dry-run             true to do a dry-run, false to process (default) }
 	echo {  dev-mode            true to mark as development version, }
 	echo {                      false to mark as release version (default)}
+	echo {  web-mode            true to build for the web, false to build for offline }
+	echo {                      use (for distribution with K95 itself) }
+	echo {  use-https           true to use https links for kermitproject.org, }
+    echo {                      false ot use http links (default=https) }
     exit 0
 }
 
@@ -117,16 +121,34 @@ if not defined \%2 usage
 .touch_files := true
 .dry_run := false
 .dev_mode := false
+.web_mode := 1
+.use_https := 1
 
 if defined \%3 .touch_files := \%3
 if defined \%4 .dry_run := \%4
 if defined \%5 .dev_mode := \%5
+if defined \%6 .web_mode := \%6
+if defined \%7 .use_https := \%7
 
 if \m(dev_mode) {
   .dev_mode = 1
 }
 else {
   .dev_mode = 0
+}
+
+if \m(web_mode) {
+  .web_mode = 1
+}
+else {
+  .web_mode = 0
+}
+
+if \m(use_https) {
+  .use_https = 1
+}
+else {
+  .use_https = 0
 }
 
 if \m(touch_files) {
@@ -225,6 +247,22 @@ array declare f
 
 dir /array:f /files \m(src)
 
+if = \m(web_mode) 0 {
+    ; If not in web-mode, build a list of .html files that will need to be
+    ; renamed to .htm
+
+    local curdir
+    array declare g
+
+    .curdir := \v(directory)
+    cd \m(src)
+    dir /array:g /files *.html
+    cd \m(curdir)
+
+    ; mkdocs.rex will pick up the list of .html files to rename from here.
+    .html_files := \fjoin(&g[],{,})
+}
+
 mkdir \m(dest)
 
 echo Processing \fdim(&f) files...
@@ -278,22 +316,46 @@ while <= \%x \fdim(&f) {
 ;       compatible with the host, and if the aren't we won't be able to run
 ;       this script with them anyway)
 echo Updating default keymap HTML file (default.html) from \m(dest)../../keymaps/default.ksc
-fopen /read \%i \m(dest)../../keymaps/default.ksc
-fopen /write \%o \m(dest)/default.html
-fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
-fwrite /line \%o {<html>}
-fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
-fwrite /line \%o {<pre>}
-while true {
-    undef line
-    fread /line \%i line
-    if fail break
-    fwrite /line \%o \m(line)
+
+.defhtm := \m(dest)/default.html
+if = \m(web_mode) 0 {
+    .defhtm := \m(dest)/default.htm
 }
-fwrite /line \%o {</pre>}
-fwrite /line \%o {</body></html>}
-fclose \%i
-fclose \%o
+if \m(dry_run) {
+    echo Generate \m(defhtm)
+}
+else {
+    fopen /read \%i \m(dest)../../keymaps/default.ksc
+    fopen /write \%o \m(defhtm)
+    fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
+    fwrite /line \%o {<html>}
+    fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
+    fwrite /line \%o {<pre>}
+    while true {
+        undef line
+        fread /line \%i line
+        if fail break
+        fwrite /line \%o \m(line)
+    }
+    fwrite /line \%o {</pre>}
+    fwrite /line \%o {</body></html>}
+    fclose \%i
+    fclose \%o
+}
+
+if = \m(web_mode) 0 {
+    echo Swapping around index.htm
+    if \m(dry_run) {
+        echo if exist {\m(dest)kermit95.htm} del /noask {\m(dest)kermit95.htm}
+        echo ren \m(dest)index.htm \m(dest)kermit95.htm
+        echo ren \m(dest)docindex.htm \m(dest)index.htm
+    }
+    else {
+        if exist {\m(dest)kermit95.htm} del /noask {\m(dest)kermit95.htm}
+        ren \m(dest)index.htm \m(dest)kermit95.htm
+        ren \m(dest)docindex.htm \m(dest)index.htm
+    }
+}
 
 echo Done
 exit

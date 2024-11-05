@@ -59,7 +59,27 @@ output_file = CKermit("return \m(file_out)")
 git_date = CKermit("return \m(git_date)")
 dev_mode = CKermit("return \m(dev_mode)")
 
-use_https = 1   /* 1 = use https://kermitproject.org, 0 = use http://kermitproject.org */
+/* 1 = use https://kermitproject.org, 0 = use http://kermitproject.org */
+use_https = CKermit("return \m(use_https)")
+
+/* 1 = generate .html files, 0 = generate .htm files and fix up links */
+use_html = CKermit("return \m(web_mode)")
+
+/* This is a list of all html files that we'll replacing references to within
+ * files */
+html_files. = ''
+
+if use_html = 0 then do
+    /* If we're renaming html -> htm, then prepare the list of all html
+     * files! */
+    new_fn= CKermit("return \m(html_files)")
+    do #=1  until  new_fn==''
+    parse var new_fn html_files.# ',' new_fn
+    end
+
+    /* And update the name of *this* file we're processing */
+    output_file = changestr(".html",output_file,".htm")
+end
 
 /*
 say "input_file =" input_file
@@ -146,9 +166,18 @@ do while lines(input_file) = 1
         output_string = changestr("https://www.kermitproject.org",output_string,"http://www.kermitproject.org")
     end
 
-    /* TODO:
-         Handle .html or .htm file extensions
-     */
+    if use_html = 0 then do
+        /* index.html becomes kermit95.htm */
+        output_string = changestr('="index.html',output_string,'="kermit95.htm')
+
+        /* replace any references to .html files with .htm files */
+        do j=1 for #
+            old_fn = html_files.j
+            new_fn = substr(html_files.j,1,length(html_files.j)-1)
+            /*say old_fn "-->" new_fn*/
+            output_string = changestr('="'old_fn,output_string,'="'new_fn)
+        end
+    end
 
     do forever
         matched = ReExec(tagre, output_string, 'FIELDS')
