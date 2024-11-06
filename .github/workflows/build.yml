@@ -215,6 +215,7 @@ jobs:
         path: |
           ${{github.workspace}}\zlib 
           ${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+          ${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
           ${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
           ${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}-gssapi
           ${{github.workspace}}\libdes\des
@@ -224,7 +225,7 @@ jobs:
           ${{github.workspace}}\kerberos\kfw
           ${{github.workspace}}\rexx\regina
           ${{github.workspace}}\rexx\rexxre
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+rexxre+ver2
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+rexxre+ver3
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
