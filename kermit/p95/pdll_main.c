@@ -227,7 +227,11 @@ p_transfer() P_CFG *param_p_cfg ;
     }
     dev_type = p_cfg->dev_type;
     dev_path = p_cfg->dev_path;
-    dev_handle = p_cfg->dev_handle;
+#ifdef NT
+    dev_handle = (HANDLE)p_cfg->dev_handle;
+#else
+    dev_handle = (HFILE)p_cfg->dev_handle;
+#endif
     socket_remote = p_cfg->socket_host;
     socket_port = p_cfg->socket_port;
 

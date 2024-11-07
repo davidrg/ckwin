@@ -342,7 +342,7 @@ extern ascreen                          /* For saving screens: */
 
 extern ascreen mousescreen; /* Screen during mouse actions */
 
-extern unsigned char                    /* Video attribute bytes */
+unsigned char                           /* Video attribute bytes */
     attribute=NUL,                      /* Current video attribute byte */
     underlineattribute=NUL,
     savedattribute[VNUM]={0,0,0,0},       /* Saved video attribute byte */
