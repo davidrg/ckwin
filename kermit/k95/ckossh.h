@@ -211,8 +211,6 @@ _PROTOTYP(void ssh_initialise,(VOID));
  * for all 32-bit systems it uses cdecl for better interoperatibility
  * now you can use DLL created by any compiler togather with application
  * compiled by another compiler
- * only two symbols are exported from DLL
- * ssh_dll_init and ssh_impl_ver
  */
 #ifndef _WIN64
 #define SSH_DLL_CALLCONV    cdecl
@@ -294,7 +292,7 @@ typedef struct  {
      *   **restp    - Anything else at the end
      */
     parse_displayname_callback *callbackp_parse_displayname;
-} ssh_init_parameters_t;
+} ssh_dll_init_data;
 
 /* prototypes for all functions provided by DLL */
 typedef int CKSSHAPI ssh_set_iparam_dllfunc(int, int);

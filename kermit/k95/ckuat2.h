@@ -280,7 +280,7 @@ int decrypt_ks_hack(unsigned char *, int);
 #endif /* ENCRYPTION */
 
 #ifdef CRYPT_DLL
-struct _crypt_dll_init {
+typedef struct {
     int version;
 
     /* Version 1 variables */
@@ -294,12 +294,12 @@ struct _crypt_dll_init {
     void * p_k5_context;
 
     /* Version 3 variables */
-    void (*p_install_funcs)(char *,void *);
+    void (*callbackp_install_dllfunc)(char *,void *);
 
     /* Version 5 variables */
     unsigned long (*p_reqtelmutex)(unsigned long);
     unsigned long (*p_reltelmutex)(void);
-};
+} crypt_dll_init_data;
 #endif /* CRYPT_DLL */
 
 /* per Kerberos v5 protocol spec */

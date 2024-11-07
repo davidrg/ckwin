@@ -5495,11 +5495,11 @@ ck_crypt_dll_version()
 }
 
 int
-crypt_dll_init( struct _crypt_dll_init * init )
+crypt_dll_init( crypt_dll_init_data * init )
 {
 #ifdef LIBDES
     extern int des_check_key;
-    extern void libdes_dll_init(struct _crypt_dll_init *);
+    extern void libdes_dll_init(crypt_dll_init_data *);
     des_check_key = 1;
 #endif /* LIBDES */
 
@@ -5519,29 +5519,29 @@ crypt_dll_init( struct _crypt_dll_init * init )
             return(1);
     }
     if ( init->version >= 3 ) {
-        init->p_install_funcs("encrypt_parse",encrypt_parse);
-        init->p_install_funcs("encrypt_init",encrypt_init);
-        init->p_install_funcs("encrypt_session_key",encrypt_session_key);
-        init->p_install_funcs("encrypt_send_request_start",
+        init->callbackp_install_dllfunc("encrypt_parse",encrypt_parse);
+        init->callbackp_install_dllfunc("encrypt_init",encrypt_init);
+        init->callbackp_install_dllfunc("encrypt_session_key",encrypt_session_key);
+        init->callbackp_install_dllfunc("encrypt_send_request_start",
                               encrypt_send_request_start
                               );
-        init->p_install_funcs("encrypt_request_start",encrypt_request_start);
-        init->p_install_funcs("encrypt_send_request_end",
+        init->callbackp_install_dllfunc("encrypt_request_start",encrypt_request_start);
+        init->callbackp_install_dllfunc("encrypt_send_request_end",
                               encrypt_send_request_end
                               );
-        init->p_install_funcs("encrypt_request_end",encrypt_request_end);
-        init->p_install_funcs("encrypt_send_end",encrypt_send_end);
-        init->p_install_funcs("encrypt_send_support",encrypt_send_support);
-        init->p_install_funcs("encrypt_is_encrypting",encrypt_is_encrypting);
-        init->p_install_funcs("encrypt_is_decrypting",encrypt_is_decrypting);
-        init->p_install_funcs("get_crypt_table",get_crypt_table);
-        init->p_install_funcs("des_is_weak_key",ck_des_is_weak_key);
+        init->callbackp_install_dllfunc("encrypt_request_end",encrypt_request_end);
+        init->callbackp_install_dllfunc("encrypt_send_end",encrypt_send_end);
+        init->callbackp_install_dllfunc("encrypt_send_support",encrypt_send_support);
+        init->callbackp_install_dllfunc("encrypt_is_encrypting",encrypt_is_encrypting);
+        init->callbackp_install_dllfunc("encrypt_is_decrypting",encrypt_is_decrypting);
+        init->callbackp_install_dllfunc("get_crypt_table",get_crypt_table);
+        init->callbackp_install_dllfunc("des_is_weak_key",ck_des_is_weak_key);
         libdes_dll_init(init);
         if (init->version == 3)
           return(1);
     }
     if ( init->version >= 4 ) {
-        init->p_install_funcs("crypt_dll_version",ck_crypt_dll_version);
+        init->callbackp_install_dllfunc("crypt_dll_version",ck_crypt_dll_version);
         if (init->version == 4)
           return(1);
     }
@@ -5554,7 +5554,7 @@ crypt_dll_init( struct _crypt_dll_init * init )
     }
 
     if ( init->version >= 6 ) {
-        init->p_install_funcs("encrypt_dont_support",encrypt_dont_support);
+        init->callbackp_install_dllfunc("encrypt_dont_support",encrypt_dont_support);
         if ( init->version == 6 )
             return(1);
         /* when adding new versions; migrate the next two lines */
