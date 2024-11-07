@@ -235,7 +235,7 @@ typedef const char* CKSSHAPI ssh_get_pw_callback(void);
 typedef int CKSSHAPI ssh_get_nodelay_enabled_callback(void);
 typedef SOCKET CKSSHAPI ssh_open_socket_callback(char* host, char* port);
 typedef int CKSSHAPI dodebug_callback(int,char *,char *,CK_OFF_T);
-typedef int CKSSHAPI vscrnprintf_callback(const char *str);
+typedef int CKSSHAPI scrnprint_callback(const char *str);
 typedef int CKSSHAPI uq_txt_callback(char *,char *,int,char **,char *,int,char *,int);
 typedef int CKSSHAPI uq_mtxt_callback(char *,char **,int,struct txtbox[]);
 typedef int CKSSHAPI uq_ok_callback(char *,char *,int,char **,int);
@@ -266,7 +266,7 @@ typedef struct  {
     ssh_get_nodelay_enabled_callback *callbackp_ssh_get_nodelay_enabled;
     ssh_open_socket_callback *callbackp_ssh_open_socket;
     dodebug_callback *callbackp_dodebug;
-    vscrnprintf_callback *callbackp_vscrnprintf;
+    scrnprint_callback *callbackp_scrnprint;
     uq_txt_callback *callbackp_uq_txt;
     uq_mtxt_callback *callbackp_uq_mtxt;
     uq_ok_callback *callbackp_uq_ok;

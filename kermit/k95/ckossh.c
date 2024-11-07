@@ -264,6 +264,11 @@ static HINSTANCE hSSH;
 static HMODULE hSSH;
 #endif
 
+static int scrnprint(const char *str)
+{
+    return( Vscrnprintf(str) );
+}
+
 #ifdef SSH_DLL_CALLCONV
 
 /* define prototypes for callback functions */
@@ -274,7 +279,7 @@ static get_current_terminal_dimensions_callback callback_get_current_terminal_di
 static get_current_terminal_type_callback callback_get_current_terminal_type;
 static get_display_callback callback_get_display;
 static parse_displayname_callback callback_parse_displayname;
-static vscrnprintf_callback callback_vscrnprintf;
+static scrnprint_callback callback_scrnprint;
 static ckstrncpy_callback callback_ckstrncpy;
 static ssh_open_socket_callback callback_ssh_open_socket;
 static dodebug_callback callback_dodebug;
@@ -320,9 +325,9 @@ static int CKSSHAPI callback_parse_displayname(char *displayname, int *familyp, 
                                   dpynump, scrnump, restp);
 }
 
-static int CKSSHAPI callback_vscrnprintf(const char *str)
+static int CKSSHAPI callback_scrnprint(const char *str)
 {
-    return( Vscrnprintf(str) );
+    return( scrnprint(str) );
 }
 
 static int CKSSHAPI callback_ckstrncpy(char * dest, const char * src, int len)
@@ -396,7 +401,7 @@ static int CKSSHAPI callback_debug_logging(void) {
 #define callback_get_current_terminal_type  get_current_terminal_type
 #define callback_get_display                get_display
 #define callback_parse_displayname          parse_displayname
-#define callback_vscrnprintf                Vscrnprintf
+#define callback_scrnprint                  scrnprint
 #define callback_ckstrncpy                  ckstrncpy
 #define callback_ssh_open_socket            ssh_open_socket
 #define callback_dodebug                    dodebug
@@ -580,7 +585,7 @@ int ssh_load(char* dllname) {
     init_params.callbackp_ssh_get_nodelay_enabled = callback_ssh_get_nodelay_enabled;
     init_params.callbackp_ssh_open_socket = callback_ssh_open_socket;
     init_params.callbackp_dodebug = callback_dodebug;
-    init_params.callbackp_vscrnprintf = callback_vscrnprintf;
+    init_params.callbackp_scrnprint = callback_scrnprint;
     init_params.callbackp_uq_txt = callback_uq_txt;
     init_params.callbackp_uq_mtxt = callback_uq_mtxt;
     init_params.callbackp_uq_ok = callback_uq_ok;

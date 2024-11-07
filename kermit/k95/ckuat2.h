@@ -288,7 +288,7 @@ struct _crypt_dll_init {
     int (*p_dodebug)(int,char *,char *,CK_OFF_T);
     int (*p_dohexdump)(char *,char *,int);
     void (*p_tn_debug)(char *);
-    int (*p_vscrnprintf)(const char *, ...);
+    int (*p_scrnprint)(const char *);
 
     /* Version 2 variables */
     void * p_k5_context;
