@@ -147,6 +147,7 @@ by OpenSSH on modern versions of windows, add the command
   * `SET HOST` doing nothing for NetBIOS connections
   * NetBIOS name not being correctly padded when making a connection to
     a NetBIOS Server
+* Fixed emacs turning off mouse reporting when started
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
