@@ -84,7 +84,8 @@ by OpenSSH on modern versions of windows, add the command
   * No PC/TCP 1.2 or IBM TCP/IP 1.2.1 support (no SDK license; the DLLs from 
     K95 1.2.1 should work if you need it)
   * No dialer (crashes when built with Open Watcom)
-  * No NetBIOS (crashes when built with Open Watcom)
+  * No SSL/TLS support (can't be built with Open Watcom)
+  * No legacy telnet encryption (may return in a future release)
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
@@ -141,6 +142,11 @@ by OpenSSH on modern versions of windows, add the command
   default: `\v(common)ssh\known_hosts2`
 * Fixed generation of 4096 RSA SSH keys
 * Fixed stdout parameter not working correctly
+* Fixed a pair of issues in the OS/2 NetBIOS implementation which has likely
+  been totally broken since Kermit 95 v1.1.17:
+  * `SET HOST` doing nothing for NetBIOS connections
+  * NetBIOS name not being correctly padded when making a connection to
+    a NetBIOS Server
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
