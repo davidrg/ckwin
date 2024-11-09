@@ -16,10 +16,10 @@ env:
   # fine, so we've switched back to zlib.net.
   ZLIB_VERSION: 1.3.1
   # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 3.0.15
+  OPENSSL_VERSION: 3.4.0
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
-  OPENSSL_ARM_VERSION: 3.3.2
+  OPENSSL_ARM_VERSION: 3.4.0
   # Exoected filename: ${{env.LIBSSH_SOURCE}}libssh-${{env.LIBSSH_VERSION}}.tar.xz
   LIBSSH_SOURCE: https://www.libssh.org/files/0.10/
   LIBSSH_VERSION: 0.10.6

@@ -89,7 +89,8 @@ by OpenSSH on modern versions of windows, add the command
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
-* Upgraded to OpenSSL 3.0.15 which fixes a number of bugs and security issues
+* Upgraded to OpenSSL 3.4 which fixes a number of bugs and security issues and
+  is supported until October 2026. 
 * K95G no longer opens COM1 by default. If you still want this behaviour, add
   `set port com1` to your k95custom.ini
 * The command `set gui toolbar off` has been renamed to
