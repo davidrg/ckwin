@@ -1050,6 +1050,9 @@ OBJS =  ckcmai$(O) ckcfns$(O) ckcfn2$(O) ckcfn3$(O) ckcnet$(O) ckcpro$(O) \
 OBJS = $(OBJS) cknnbi$(O)
 !else
 OBJS = $(OBJS) ckonbi$(O)
+!if "$(CMP)" == "OWWCL"
+OBJS = $(OBJS) ckonbw$(O)
+!endif
 !endif
 !if ("$(CKF_XYZ)" == "yes")
 OBJS = $(OBJS) ckop$(O) p_callbk$(O) p_global$(O) p_omalloc$(O) p_error$(O) \
@@ -1599,7 +1602,12 @@ ckonet$(O):	    ckonet.c ckcker.h ckcdeb.h ckoker.h ckclib.h ckoker.h ckcnet.h c
 !if "$(PLATFORM)" == "NT"
 cknnbi$(O):     cknnbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
 !else
-ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h 
+ckonbi$(O):     ckonbi.c ckonbi.h ckcdeb.h ckoker.h ckclib.h
+!if "$(CMP)" == "OWWCL"
+ckonbw$(O):     ckonbw.c ckcdeb.h ckcker.h ckonbi.h
+    wcc -s $(DEFINES) -zl -nd=XX -nt=_TEXT16 -I$(WATCOM)\h\os21x ckonbw.c
+# wcc -s -DCK_NETBIOS -DOS2 -zl -nd=XX -nt=_TEXT16 -I$(WATCOM)\h\os21x ckonbw.c
+!endif
 !endif
 !if "$(PLATFORM)" == "NT"
 cknpty$(O):     cknpty.c cknpty.h

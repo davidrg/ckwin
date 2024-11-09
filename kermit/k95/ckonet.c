@@ -771,7 +771,14 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         if ( !netbiosAvail )
           return -1 ;
 
-        ckstrncpy( RemoteName, name, NETBIOS_NAME_LEN+1 ) ;
+        /*
+         * RemoteName must be padded with spaces to NETBIOS_NAME_LEN characters.
+         */
+        if (strlen(name) < NETBIOS_NAME_LEN) {
+            strncpy( RemoteName, name, strlen(name) ) ;
+        } else {
+            ckstrncpy( RemoteName, name, NETBIOS_NAME_LEN+1 ) ;
+        }
 
         if ( NetBiosLSN > 0             /* Make sure a handle doesn't exist */
              || ttyfd > -1 )
@@ -813,8 +820,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             printf("Calling \"%s\" via NetBios\n", RemoteName ) ;
             rc = NCBCall( NetbeuiAPI, pWorkNCB, NetBiosAdapter, NetBiosName,
                           RemoteName, NB_RECV_TIMEOUT, NB_SEND_TIMEOUT, FALSE ) ;
+            debug(F100,"Dos16Semwait...",NULL,0);
             rc = Dos16SemWait( pWorkNCB->basic_ncb.ncb_semaphore,
                                SEM_INDEFINITE_WAIT ) ;
+            debug(F101,"Dos16Semwait...done: ncb_retcode","",pWorkNCB->basic_ncb.bncb.ncb_retcode);
+
             if (rc)
               return -1 ;
 

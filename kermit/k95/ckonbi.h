@@ -37,6 +37,7 @@
 #ifdef OS2ONLY
   #pragma seg16(address)
   typedef unsigned char * _Seg16 address;
+  typedef unsigned char FAR * fn_addr;
   /* The 16bit HSEM isn't a pointer and defining it like below causes
    * Open Watcom to perform a 0:32 to 16:16 conversion when it shouldn't
   #pragma seg16(HSEM16)
@@ -196,7 +197,7 @@ struct     network_control_block
   byte       ncb_sto;                   /* Send timeout              */
   union                                 /* Offset 44 parameters      */
    {
-   address   ncb_post_address;          /* Address of post routine   */
+   fn_addr   ncb_post_address;          /* Address of post routine   */
    HSEM16    ncb_post_handle;           /* Handle to event semaphore */
    struct
     {
