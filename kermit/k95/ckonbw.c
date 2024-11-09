@@ -2,6 +2,8 @@
  * 16bit version of ncbpost() for compatibility with Open Watcom
  */
 
+#ifdef CK_NETBIOS
+
 #ifdef _M_IX86
 #define APIRET		USHORT
 #define APIRET16	USHORT
