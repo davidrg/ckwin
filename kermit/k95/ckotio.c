@@ -9599,6 +9599,32 @@ LONG APIENTRY os2rexx_exit_handler(
                     }
                     break;
                 case RXSIOTRC:
+                    {
+                        RXSIOTRC_PARM *param;
+                        RXSTRING trcString;
+
+                        param = (RXSIOTRC_PARM*)ParamBlock;
+                        trcString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(trcString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(trcString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(trcString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - trc", buf, 0);
+
+                                printf("%s\n", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
                 case RXSIOTRD:
                 case RXSIODTR:
                 case RXSIOTLL:
