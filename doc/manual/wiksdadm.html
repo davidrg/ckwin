@@ -17,10 +17,9 @@ Columbia University, New York City
 <p>
 
 [ <a href="#contents">Contents</a> ]
-[ <a href="http://www.columbia.edu/kermit/wiksduser.html">
-WIKSD User Guide</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="wiksduse.html">WIKSD User Guide</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
 
 <p>
 
@@ -34,11 +33,12 @@ University</a>, available in free and secure versions.
 <p>
 
 <tt>&nbsp;&nbsp;</tt>
-<i>As of Kermit 95 version:</i>  <b>2.0</b><br>
+<i>As of Kermit 95 version:</i>  <b><!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--></b><br>
 <tt>&nbsp;&nbsp;</tt>
 <i>This file last updated:</i><b>
 4 June 2002
-</b> &nbsp; (New York City time)
+</b> &nbsp; (New York City time), with minor updates on
+  <!--$last-update-short$-->11 November 2024<!--/$last-update-short$-->
 
 <p>
 
@@ -48,7 +48,7 @@ possibly more up-to-date) Web page here:
 
 <p>
 <pre>
-  <a href="http://www.columbia.edu/kermit/wiksdadmin.html">http://www.columbia.edu/kermit/wiksdadmin.html</a>
+  <a href="http://kermitproject.org/wiksdadmin.html">http://kermitproject.org/wiksdadmin.html</a>
 </pre>
 
 <p>
@@ -67,8 +67,8 @@ Service on those operating systems.
 
 <p>
 
-Comments, suggestions, questions welcome.  Send them by email to:
-<a href="mailto:kermit-support@columbia.edu"><tt>kermit-support@columbia.edu</tt></a>.
+Comments, suggestions, questions welcome.  Open a discussion on github:
+<a href="https://github.com/davidrg/ckwin/discussions"><tt>https://github.com/davidrg/ckwin/discussions</tt></a>.
 
 <h3><a name="contents"><hr noshade>CONTENTS</a></h3>
 
@@ -103,7 +103,7 @@ in effect built a user-ID based authentication and file system onto a Windows
 
 <p>
 
-Windows NT (which actually predates Windows 95 by a couple years, but did
+Windows NT (which actually predates Windows 95 by a couple of years, but did not
 become popular until much later) solves many of the same problems
 addressed by K95 Host Mode: a file system supporting authenticated users
 with a full range of access controls.  Of course Windows NT is only the first
@@ -135,8 +135,8 @@ Enter Windows IKSD.
 offers a secure and flexible file-transfer and management service on the
 Internet, based on Telnet and Kermit protocols, that can be accessed from
 anywhere on the Internet, using the procedures specified in Internet RFCs <a
-href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">2839</a> and <a
-href="ftp://ftp.isi.edu/in-notes/rfc2839.txt">2840</a>, and supporting
+href="https://www.rfc-editor.org/rfc/rfc2839">2839</a> and <a
+href="https://www.rfc-editor.org/rfc/rfc2840">2840</a>, and supporting
 various IETF-standard security methods that can be negotiated with the client.
 
 <p>
@@ -144,7 +144,7 @@ various IETF-standard security methods that can be negotiated with the client.
 <b>WIKSD</b> is a version of IKSD for Windows NT, 2000, or XP, based on Kermit
 95.  It is not a "PcAnywhere" substitute (graphical desktop replicator), nor
 does it give you remote access to the "DOS" shell (more about this in the
-<a href="http://www.columbia.edu/kermit/wiksduser.html">WIKSD User Guide</a>)
+<a href="wiksduse.html">WIKSD User Guide</a>)
 -- it is more like a high-function FTP server that gives you the options of
 interacting with it directly and of scripting its operation.
 WIKSD comes in two forms:
@@ -159,18 +159,16 @@ started in a special manner that instructs it to be an Internet Kermit Service.
 <p>
 
 <dt><tt>Internet Kermit Service for Windows NT/2000/XP</tt></dt>
-<dd>This is the free public download version, which lacks many of the features
-of Kermit 95: it can't make connections, it does not include a terminal
-emulator, it does not support ZMODEM, YMODEM, or XMODEM file-transfer protocols
-(but of course it does support Kermit), and it does not support the full range
-of authentication and security methods.
+<dd>This is a special version of Kermit 95 that runs as a Windows Service in
+  the background and can only act as an Internet Kermit Service (it doesn't
+  include terminal emulation or the ability to make connections).
 
 </dl>
 
 <p>
 
 Windows Internet Kermit Service allows both anonymous and authenticated
-text-mode access.  As the PC owner, you can allow or disable anonymous access
+text-mode access.  As the PC owner, you can allow or disable anonymous access,
 and you can also restrict which users may and may not log in to your PC with
 IKSD.  Anonymous users have restricted access rights; for example, they are
 not allowed to delete, overwrite, or modify existing files.  Authenticated
@@ -275,11 +273,11 @@ supported).  The clients that work best are:
 <p>
 <ul>
 
-<li><a href="http://www.columbia.edu/kermit/ckermit.html">C-Kermit</a>
+<li><a href="https://kermitproject.org/ckermit.html">C-Kermit</a>
 7.0 or later for UNIX, VMS, etc.
-<li><a href="http://www.columbia.edu/kermit/k95.html">Kermit 95</a>
+<li><a href="https://kermitproject.org/k95.html">Kermit 95</a>
 1.1.20 or later for Windows 96/98/ME/NT/2000/XP
-<li><a href="http://www.columbia.edu/kermit/mskermit.html">MS-DOS Kermit</a>
+<li><a href="https://kermitproject.org/mskermit.html">MS-DOS Kermit</a>
 3.15 or later for DOS or Windows 3.x
 
 </ul>
@@ -301,8 +299,8 @@ Other clients might or might not support:
 </ul>
 <p>
 
-A <a href="http://www.columbia.edu/kermit/cuiksd.html">Unix-based IKSD</a>
-is available for public access at:
+A <a href="https://kermitproject.org/cuiksd.html">Unix-based IKSD</a>
+<em>was</em> available for public access at:
 
 <p>
 <pre>
@@ -318,7 +316,7 @@ the Kermit command language, it is documented in:
 <blockquote>
 
 Frank da Cruz and Christine M. Gianone, 
-<a href="http://www.columbia.edu/kermit/ck60manual.html"><cite>Using
+<a href="https://kermitproject.org/ck60manual.html"><cite>Using
 C-Kermit</cite></a>, Second Edition,
 Digital Press / Butterworth-Heinemann, Woburn, MA, 1997, 622 pages,
 ISBN 1-55558-164-1.
@@ -331,28 +329,28 @@ following pages at the Kermit website:
 
 <p>
 <dl>
-<dt><a href="http://www.columbia.edu/kermit/k95tutor.html">
-<tt>http://www.columbia.edu/kermit/k95tutor.html</tt></a></dt>
+<dt><a href="https://kermitproject.org/k95tutor.html">
+<tt>https://kermitproject.org/k95tutor.html</tt></a></dt>
 <dd>Kermit 95 Tutorial
 
-<dt><a href="http://www.columbia.edu/kermit/wiksduser.html">
-<tt>http://www.columbia.edu/kermit/wiksduser.html</tt></a></dt>
+<dt><a href="wiksduse.html">
+<tt>wiksduse.html</tt></a></dt>
 <dd>Windows IKSD User Guide
 
-<dt><a href="http://www.columbia.edu/kermit/ckututor.html">
-<tt>http://www.columbia.edu/kermit/ckututor.html</tt></a></dt>
+<dt><a href="https://kermitproject.org/ckututor.html">
+<tt>https://kermitproject.org/ckututor.html</tt></a></dt>
 <dd>Unix C-Kermit Tutorial
 
-<dt><a href="http://www.columbia.edu/kermit/iksd.html">
-<tt>http://www.columbia.edu/kermit/iksd.html</tt></a></dt>
+<dt><a href="https://kermitproject.org/iksd.html">
+<tt>https://kermitproject.org/iksd.html</tt></a></dt>
 <dd>Unix IKSD Administrator Guide
 
-<dt><a href="http://www.columbia.edu/kermit/security.html">
-<tt>http://www.columbia.edu/kermit/security.html</tt></a></dt>
+<dt><a href="security.html">
+<tt>security.html</tt></a></dt>
 <dd>Kermit Security Reference
 
-<dt><a href="http://www.columbia.edu/kermit/telnet.html">
-<tt>http://www.columbia.edu/kermit/telnet.html</tt></a></dt>
+<dt><a href="telnet.html">
+<tt>telnet.html</tt></a></dt>
 <dd>Kermit Telnet Client Reference
 
 </dl>
@@ -434,11 +432,11 @@ Command Window for instructions).
 
 <p>
 
-You can install WIKSD in the normal, easy Windows way (from the InstallShield
-package) or for greater control over the configuration, you can install it
-<a href="#x2.2">manually</a>.
+You can install WIKSD in the normal, easy Windows way (from the Kermit 95
+installer package) or for greater control over the configuration, you can
+install it <a href="#x2.2">manually</a>.
 
-<h3><a name="x2.1"><hr>2.1. InstallShield Installation</h3>
+<h3><a name="x2.1"><hr>2.1. Installation</h3>
 
 [ <a href="#top">Top</a> ]
 [ <a href="#contents">Contents</a> ]
@@ -446,6 +444,11 @@ package) or for greater control over the configuration, you can install it
 [ <a href="#x2.2">Next</a> ]
 <p>
 
+  Installation Packages have not been prepared for this version of Kermit 95
+  yet. See the <a href="#x2.2">next section</a> for manual installation
+  instructions
+
+<!--
 Normally you would install Internet Kermit Service on your Windows system the
 same way you install any other program, using the normal Windows installation
 procedure.  WIKSD comes in an InstallShield (IS) package, a single
@@ -613,6 +616,7 @@ Your Kermit 95 initialization and customization files.
 
 Plus any Kerberos configuration files that might have been created.
 
+-->
 
 <h3><a name="x2.2"><hr>2.2. Manual Installation</h3>
 
@@ -632,7 +636,7 @@ Plus any Kerberos configuration files that might have been created.
 <p>
 
 Manual installation of WIKSD is possible only if you installed Kermit 95
-without choosing to to install WIKSD, or if you uninstalled WIKSD after
+without choosing to install WIKSD, or if you uninstalled WIKSD after
 first installing it.
 
 <p>
@@ -693,10 +697,11 @@ NT/2000 and wish to install IKSD as a Service; Otherwise, go to
 <i>Also see the following Microsoft Knowledge Base articles:</i>
 <ul>
 <li><a
-href="http://support.microsoft.com/directory/article.asp?ID=KB;EN-US;Q266118">
+href="http://web.archive.org/web/20140714073532/http://support.microsoft.com/kb/266118">
 How to Restore the Default NTFS Permissions for Windows 2000 (Q266118)</a>
-<li><a href="http://support.microsoft.com/directory/article.asp?ID=KB;EN-US;Q148437">Q148437</a>
-<li><a href="http://support.microsoft.com/directory/article.asp?ID=KB;EN-US;Q244600">
+<li><a href="https://web.archive.org/web/20140317173909/http://support.microsoft.com/kb/148437">
+  Default NTFS Permissions in Windows NT (Q148437)</a>
+<li><a href="http://web.archive.org/web/20131126021829/http://support.microsoft.com/kb/244600">
 Default NTFS Permissions in Windows 2000 (Q244600)</a>
 </ul>
 
@@ -788,6 +793,9 @@ login to Windows.
 [ <a href="#x2.2.2">Previous</a> ]
 <p>
 
+<!-- Super out of date now - last updated October 23, 2001
+https://web.archive.org/web/20031004102450/http://www.columbia.edu/acis/security/safecomputing.html
+
 <i>Also see:</i>
 <ul>
 <li>The <a
@@ -798,6 +806,7 @@ Computing on Windows</a> document.
 </ul>
 
 <p>
+-->
 
 By default, Windows NT leaves the file system wide open.  These operating
 systems rely on applications like drive and folder sharing or IIS (Internet
@@ -806,8 +815,8 @@ and directory trees.  To some extent you can also use IKSD to limit access in
 the same way using the IKSD configuration file (see the SET ROOT command in <a
 href="#x4.1">Section 4.1</a> below).  But to fully secure your system
 and to implement special permissions schemes, like the incoming folder for the
-anonymous accunt, you will need to make some adjustments to the default folder
-permissions.  (This assumes that you are using NTFS drives; if you are not or
+anonymous account, you will need to make some adjustments to the default folder
+permissions.  (This assumes that you are using NTFS drives; if you are not, or
 you are running 95/98/ME, then you can use only IKSD mechanisms for
 restricting users -- see SET ROOT and the discussion of the ON_LOGIN macro in
 <a href="#x4">Section 4</a>.)
@@ -820,7 +829,7 @@ restricting users -- see SET ROOT and the discussion of the ON_LOGIN macro in
 <dd>
 This is a special group to which everyone must belong.  You cannot remove this
 group and membership is not optional; therefore the Anonymous ID account
-(e.g. Guest) is a member of this group.  By default the Everyone group has
+(e.g. Guest) is a member of this group.  By default, the Everyone group has
 full control over all drives, and therefore by inheritance, over all folders.
 An IKSD-enabled system should remove the Everyone group from the permissions
 for each drive:
@@ -853,7 +862,7 @@ your PC from becoming a "warez" repository for software pirates).
 
 The following procedure applies to Window 2000 (and most likely XP); in
 Windows NT 3 and 4 the concepts and permissions are the same, but the tools
-are not as well developed.
+are not as well-developed.
 
 </i>
 </blockquote>
@@ -866,7 +875,7 @@ Then:
 <p>
 <ol>
 
-<li>Uncheck the box next to "Allow inheritbale permissions..."
+<li>Uncheck the box next to "Allow inheritable permissions..."
 <li>Click "Remove" to reset the permissions for this folder.
 <li>You should now see that the "Name" box is empty.
 <li>Now click "Add" and add in the "Administrator" account with Full Control.
@@ -989,7 +998,10 @@ incoming file.
 [ <a href="#x2.2.5">Next</a> ]
 [ <a href="#x2.2.3">Previous</a> ]
 <p>
+<b>Note: SRP is no longer a standard feature as of Kermit 95 v3.0 - you must
+  build it from source using old and insecure libraries if you need it.</b>
 
+<p>
 On Windows NT/2000/SP, Secure Remote Password
 (<a href="http://www.columbia.edu/kermit/security.html">SRP</a>) can be used in
 with the local user accounts by installing a DLL (<tt>SRPFILTR.DLL</tt>) into
@@ -1033,7 +1045,10 @@ method with IKSD.
 [ <a href="#x2.2">Subsection Contents</a> ]
 [ <a href="#x2.2.4">Previous</a> ]
 <p>
+  <b>Note: SRP is no longer a standard feature as of Kermit 95 v3.0 - you must
+    build it from source using old and insecure libraries if you need it.</b>
 
+<p>
 <blockquote>
 <i>
 (This section is informational only.  WIKSD is not supported on Windows
@@ -1175,7 +1190,7 @@ system.
 [ <a href="#x3.2">Next</a> ]
 <p>
 
-Althought the default GUEST user on NT/2000/XP systems is a possible candidate
+Although the default GUEST user on NT/2000/XP systems is a possible candidate
 for mapping to the IKSD ANONYMOUS user, it might be better to create a new
 user for this purpose.  Since the IKSD ANONYMOUS user must be so carefully
 restricted to a specific part of the file system, making the necessary
@@ -1202,7 +1217,7 @@ the user's password for that domain.  (See the <a href="#defdom"><tt>SET</tt>
 in, they have the same privileges and permissions they have if they had logged
 in to the machine locally.  If the NT user had a home directory defined, this
 is where they start.  (See <a href="#howhome"><i>How the user's home directory
-is detrmined</i></a> below.)  One would use NT's control over file permissions
+is determined</i></a> below.)  One would use NT's control over file permissions
 to determine where the user would have rights to read, list, write, etc...
 
 <p>
@@ -1413,7 +1428,7 @@ default.  <i>This command has no effect on Windows 95/98/ME.</i>
 
 <dt><tt>SET IKS ANONYMOUS INITFILE <i>filename</i></tt></dt>
 
-<dd>The initialization file to be executed for anonymous logins.  By default
+<dd>The initialization file to be executed for anonymous logins.  By default,
 it is K95.INI in the home directory associated with the ANNONYMOUS ACCOUNT.
 Any <i>filename</i> that you specify here must be readable by the ANONYMOUS
 ACCOUNT and if a SET IKS ANONYMOUS ROOT command is issue, exist within
@@ -1424,7 +1439,7 @@ INITFILE command which applies only to real users.
 
 <dt><tt>SET IKS ANONYMOUS LOGIN <i>{</i> ON, OFF <i>}</i></tt></dt>
 
-<dd>Whether anonymous logins are allowed.  By default they are NOT allowed, so
+<dd>Whether anonymous logins are allowed.  By default, they are NOT allowed, so
 this option need be included only to allow them (or for clarity, to
 emphasize that they are not allowed).  Anonymous login occurs when the
 username "anonymous" is specified with any password (as with ftpd).
@@ -1605,7 +1620,7 @@ option, it implies SET IKS XFERFILE ON.
 <p>
 
 The IKSD configuration file can define three special macros which cannot
-altered or SHOWed by logged in users:  ON_LOGIN, ON_LOGOUT, ON_EXIT.  These
+altered or SHOWed by logged-in users:  ON_LOGIN, ON_LOGOUT, ON_EXIT.  These
 macros are used to define operations the Administrator wants to have executed
 at special moments during the session lifetime:
 
@@ -1669,8 +1684,8 @@ of the TCP/IP connection processes.  See
 
 <p>
 <pre>
-  <a href="http://www.kermitproject.org/security.html"><tt>http://www.kermitproject.org/security.html</tt></a>
-  <a href="http://www.kermitproject.org/telnet.html"><tt>http://www.kermitproject.org/telnet.html</tt></a>
+  <a href="security.html"><tt>security.html</tt></a>
+  <a href="telnet.html"><tt>telnet.html</tt></a>
 </pre>
 <p>
 
@@ -1692,7 +1707,7 @@ Examples:
 
 <li>No anonymous logins
 <li>CD Message Files are typed to the user
-<li>K95.INI file in the home directory of the logged in user is executed
+<li>K95.INI file in the home directory of the logged-in user is executed
 <li>All other Kermit defaults are in effect.
 
 </ul>
@@ -1839,9 +1854,9 @@ following are particularly useful:
 
 <dd>The current date, in case you want to restrict access by date.
 (Also read about the new date-related functions in the
-<a href="http://www.columbia.edu/kermit/ckermit70.html#x1.6">C-Kermit 
+<a href="https://kermitproject.org/ckermit70.html#x1.6">C-Kermit
 7.0</a> and 
-<a href="http://www.columbia.edu/kermit/ckermit80.html#x8.13">8.0</a>
+<a href="https://kermitproject.org/ckermit80.html#x8.13">8.0</a>
 update notes.
 
 <p>
@@ -2018,7 +2033,7 @@ The system logging levels are:
 
 Each level includes all the levels beneath it (except 0 is not included if the
 logging level is greater than 0).  The default logging level is 6.  If you
-specify a number higher than the the maximum, it is the same as specifying the
+specify a number higher than the maximum, it is the same as specifying the
 maximum.
 
 <p>
@@ -2147,7 +2162,7 @@ otherwise '0'.  Currently, always '0'.
 <dt>Authenticated user</dt>
 
 <dd>If the authentication class is '1', this is the user's ID on the client
-system.  Otherwise it is an asterisk ('*').  Currently it is always an
+system.  Otherwise, it is an asterisk ('*').  Currently, it is always an
 asterisk.
 
 </dl>
@@ -2191,7 +2206,7 @@ occur automatically:
 <li>Shell access is disabled.
 <li>Server-side Telnet negotiation is enabled.
 <li>SET RELIABLE ON (see the
-<a href="http://www.kermitproject.org/ckermit70.html#4.20">C-Kermit 7.0
+<a href="https://www.kermitproject.org/ckermit70.html#4.20">C-Kermit 7.0
 Update Notes</a>).
 <li>FAST file-transfer settings, including "cautious" unprefixing.
 <li>No flow control, no parity.
@@ -2306,7 +2321,7 @@ so any DISABLE commands in the anonymous-user initialization file
 [ <a href="#x5.3">Previous</a> ]
 <p>
 
-All forms of system and shell access are disabled in WIKSD.  Thus the user
+All forms of system and shell access are disabled in WIKSD.  Thus, the user
 can not execute REMOTE HOST commands from the client, nor access the shell
 from the IKSD command prompt via shell escapes (!), the RUN or PUSH command, or
 by specifying pipes or filters in file-transfer commands, or by pipe
@@ -2329,7 +2344,7 @@ SET IKS ANONYMOUS LOGIN ON command in the IKSD Configuration file.
 The account specified by SET IKS ANONYMOUS ACCOUNT is used on Windows
 NT/2000/XP to provide anonymous access.  <i>There is no ANONYMOUS ACCOUNT in
 Windows 95/98/ME.  For safety in Windows 9x, an anonymous root directory
-should always be specified with SET IKS ANONYMOUS ROOT.  Otherwise anonymous
+should always be specified with SET IKS ANONYMOUS ROOT.  Otherwise, anonymous
 users will have (at least) read access to your entire file system.</i>
 
 <p>
@@ -2365,7 +2380,7 @@ change this, add:
 </pre>
 <p>
 
-to the IKSD Configuration file or the ON_LOGIN macro.  Similarly for directory
+to the IKSD Configuration file or the ON_LOGIN macro.  Similarly, for directory
 removal:
 
 <p>
@@ -2387,7 +2402,7 @@ their permissions allow it.
 
 The command-line argument vector, normally accessible in the
 <tt>\&amp;@[]</tt> array, the top-level <tt>\%0..9</tt> variables, or by other
-means, is inaccessible to IKSD users.  Thus IKSD clients can not discover the
+means, is inaccessible to IKSD users.  Thus, IKSD clients can not discover the
 IKSD startup path or options, the logfile pathnames or directories, logging
 level, etc.
 
@@ -2446,7 +2461,7 @@ Panel</i> --&gt; <i>Administrative Tools</i> --&gt; <i>Event Viewer</i>
 
 IKSD entries have IKSD in the Source column.  The types of entries that appear
 in the log depend on your <a href="#syslog">SET SYSLOG selection</a>.  To see
-the detail for an entry, double click on it.  The text entered into the log by
+the detail for an entry, double-click on it.  The text entered into the log by
 IKSD is at the end of the Description box (despite the fact the that
 description begins with "The description for Event ID (0) uin Source (IKSD)
 cannot be found").
@@ -2578,14 +2593,14 @@ Certain options available in wu-ftpd are not implemented in iksd:
 <li>Ability to select IKSD logging for real vs anonymous users.
 <li>Ability to select IKSD logging for inbound vs outbound files.
 <ul>
-<li>Currently all transfers are logged.
+<li>Currently, all transfers are logged.
 </ul>
 
 <p>
 
 <li>Ability to allow/restrict chmod/delete/overwrite for anonymous users.
 <ul>
-<li>Currently there is no command for changing file permissions.
+<li>Currently, there is no command for changing file permissions.
 <li>Guests may not delete files, period.
 <li>FILE COLLISION is set to RENAME for guests and may not be changed
 since all the other options allow existing files to be altered.
@@ -2647,11 +2662,11 @@ the client to negotiate, e.g.:
 
 [ <a href="#top">Top</a> ]
 [ <a href="#contents">Contents</a> ]
-[ <a href="http://www.columbia.edu/kermit/k95.html">Kermit 95 Home</a> ]
-[ <a href="http://www.columbia.edu/kermit/index.html">Kermit Home</a> ]
+[ <a href="https://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="https://kermitproject.org/kermit/index.html">Kermit Home</a> ]
 <hr noshade>
 <address>
 Windows Internet Kermit Service - User Guide /
-The Kermit Project / Columbia University /
-4 June 2002
+The Kermit Project /
+  <!--$last-update-short$-->4 June 2002<!--/$last-update-short$-->
 </address></body></html>
