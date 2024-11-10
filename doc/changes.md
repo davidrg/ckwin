@@ -49,7 +49,7 @@ by OpenSSH on modern versions of windows, add the command
 * The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
   load the backend DLL provided the `-#2` command line argument has not been
   supplied. If no SSH backend gets loaded, you can load one manually with the new
-  `ssh load` command. This allows CKW to load the appropriate backend automatically
+  `ssh load` command. This allows K95 to load the appropriate backend automatically
   based on operating system (Windows XP or not) and presence of MIT Kerberos for
   Windows. This removes the need to manually shuffle around ssh.dll variants, and
   also means that alternative SSH backends not based on libssh can now be supported
@@ -68,7 +68,8 @@ by OpenSSH on modern versions of windows, add the command
   the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx. The
   REXX implementation is the current Regina REXX release. regutil.dll is included
   but note that the Console I/O Routines it provides are not currently compatible 
-  with K95.
+  with K95. The rexxre.dll external function package is also included providing
+  support for POSIX regular expressions.
 * New command to turn the menubar on or off: `set gui menubar visible { on, off }`
   When the menubar is turned off in this way (rather than the command line 
   parameter), important menu items are moved on to the system/control/window menu
@@ -82,7 +83,7 @@ by OpenSSH on modern versions of windows, add the command
   optional TCP/IP support provided by IBM TCP/IP 2.0 or newer. No SSH or 
   Presentation Manager GUI as in past Kermit/2 releases. Additionally:
   * No PC/TCP 1.2 or IBM TCP/IP 1.2.1 support (no SDK license; the DLLs from 
-    K95 1.2.1 should work if you need it)
+    K95 2.1.2 should work if you need it)
   * No dialer (crashes when built with Open Watcom)
   * No SSL/TLS support (can't be built with Open Watcom)
   * No legacy telnet encryption (may return in a future release)
@@ -90,7 +91,7 @@ by OpenSSH on modern versions of windows, add the command
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
 * Upgraded to OpenSSL 3.4 which fixes a number of bugs and security issues and
-  is supported until October 2026. 
+  will receive security fixes until October 2026. 
 * K95G no longer opens COM1 by default. If you still want this behaviour, add
   `set port com1` to your k95custom.ini
 * The command `set gui toolbar off` has been renamed to
