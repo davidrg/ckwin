@@ -3734,7 +3734,6 @@ ck_des_is_weak_key(Block B)
 void
 crypt_install_funcs(char * name, void * func)
 {
-#ifdef NT
     if ( !strcmp(name,"encrypt_parse") )
         p_encrypt_parse = (p_encrypt_parse_t) func;
     else if ( !strcmp(name,"encrypt_init") )
@@ -3777,50 +3776,6 @@ crypt_install_funcs(char * name, void * func)
         libdes_pcbc_encrypt = (libdes_pcbc_encrypt_t) func;
     else if ( !strcmp(name,"crypt_dll_version") )
         p_crypt_dll_version = (p_crypt_dll_version_t) func;
-#else /* NT */
-    if ( !strcmp(name,"encrypt_parse") )
-        p_encrypt_parse = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_init") )
-        p_encrypt_init = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_session_key") )
-        p_encrypt_session_key = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_dont_support") )
-        p_encrypt_dont_support = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_send_request_start") )
-        p_encrypt_send_request_start = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_request_start") )
-        p_encrypt_request_start = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_send_request_end") )
-        p_encrypt_send_request_end = (PFN*) func;
-    else if ( !strcmp(name, "encrypt_send_end") )
-        p_encrypt_send_end = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_send_support") )
-        p_encrypt_send_support = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_is_encrypting") )
-        p_encrypt_is_encrypting = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_is_decrypting") )
-        p_encrypt_is_decrypting = (PFN*) func;
-    else if ( !strcmp(name,"get_crypt_table") )
-        p_get_crypt_table = (PFN*) func;
-    else if ( !strcmp(name,"des_is_weak_key") )
-        p_des_is_weak_key = (PFN*) func;
-    else if ( !strcmp(name,"libdes_random_key") )
-        libdes_random_key = (PFN*) func;
-    else if ( !strcmp(name,"libdes_random_seed") )
-        libdes_random_seed = (PFN*) func;
-    else if ( !strcmp(name,"libdes_key_sched") )
-        libdes_key_sched = (PFN*) func;
-    else if ( !strcmp(name,"libdes_ecb_encrypt") )
-        libdes_ecb_encrypt = (PFN*) func;
-    else if ( !strcmp(name,"libdes_string_to_key") )
-        libdes_string_to_key = (PFN*) func;
-    else if ( !strcmp(name,"libdes_fixup_key_parity") )
-        libdes_fixup_key_parity = (PFN*) func;
-    else if ( !strcmp(name,"libdes_pcbc_encrypt") )
-        libdes_pcbc_encrypt = (PFN*) func;
-    else if ( !strcmp(name,"crypt_dll_version") )
-        p_crypt_dll_version = (PFN*) func;
-#endif /* NT */
 }
 
 char *
