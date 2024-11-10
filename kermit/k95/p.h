@@ -48,8 +48,12 @@
 
 #ifdef NT
 #define _Inline __inline
+#ifndef __GNUC__
 #define APIRET DWORD
-#else
+#else /* __GNUC__ */
+#define APIRET unsigned __LONG32
+#endif /* __GNUC__ */
+#else /* NT */
 #ifdef __WATCOMC__
 #define _Inline inline
 #endif /* __WATCOMC__ */
