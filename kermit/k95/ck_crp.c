@@ -142,7 +142,7 @@ static int (*p_ttol)(char *,int)=NULL;
 static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
 static int (*p_dohexdump)(char *,char *,int)=NULL;
 static void (*p_tn_debug)(char *)=NULL;
-static int (*p_vscrnprintf)(const char *, ...)=NULL;
+static int (*p_scrnprint)(const char *)=NULL;
 static void * p_k5_context=NULL;
 static unsigned long (*p_reqtelmutex)(unsigned long)=NULL;
 static unsigned long (*p_reltelmutex)(void)=NULL;
@@ -211,8 +211,8 @@ Vscrnprintf(const char * format, ...) {
 #endif /* NT */
     va_end(ap);
 
-    if ( p_vscrnprintf )
-        return(p_vscrnprintf(myprtfstr));
+    if ( p_scrnprint )
+        return(p_scrnprint(myprtfstr));
     else
         return(-1);
 }
@@ -5508,7 +5508,7 @@ crypt_dll_init( struct _crypt_dll_init * init )
         p_dodebug = init->p_dodebug;
         p_dohexdump = init->p_dohexdump;
         p_tn_debug = init->p_tn_debug;
-        p_vscrnprintf = init->p_vscrnprintf;
+        p_scrnprint = init->p_scrnprint;
         if ( init->version == 1 )
             return(1);
     }

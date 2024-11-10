@@ -3892,6 +3892,10 @@ ck_crypt_dll_loaddll_eh(void)
 
 static int crypt_dll_loaded=0;
 
+static int scrnprint(const char *str) {
+    return Vscrnprintf(str);
+}
+
 int
 ck_crypt_loaddll( void )
 {
@@ -3967,7 +3971,7 @@ ck_crypt_loaddll( void )
     init.p_dohexdump = NULL;
 #endif /* NODEBUG */
     init.p_tn_debug = tn_debug;
-    init.p_vscrnprintf = Vscrnprintf;
+    init.p_scrnprint = scrnprint;
     /* Version 2 */
 #ifdef KRB5
     init.p_k5_context = &k5_context;

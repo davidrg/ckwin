@@ -561,7 +561,7 @@ static ssh_get_pw_callback                  *callbackp_ssh_get_pw = NULL;
 static ssh_get_nodelay_enabled_callback     *callbackp_ssh_get_nodelay_enabled = NULL;
 static ssh_open_socket_callback             *callbackp_ssh_open_socket = NULL;
 static dodebug_callback                     *callbackp_dodebug = NULL;
-static vscrnprintf_callback                 *callbackp_vscrnprintf = NULL;
+static scrnprint_callback                   *callbackp_scrnprint = NULL;
 static uq_txt_callback                      *callbackp_uq_txt = NULL;
 static uq_mtxt_callback                     *callbackp_uq_mtxt = NULL;
 static uq_ok_callback                       *callbackp_uq_ok = NULL;
@@ -623,8 +623,8 @@ int Vscrnprintf(const char * format, ...) {
 #endif /* NT */
     va_end(ap);
 
-    if ( callbackp_vscrnprintf )
-        return(callbackp_vscrnprintf(myprtfstr));
+    if ( callbackp_scrnprint )
+        return(callbackp_scrnprint(myprtfstr));
     else
         return(-1);
 }
@@ -1077,8 +1077,8 @@ int CKSSHDLLENTRY ssh_dll_init(ssh_init_parameters_t *params) {
     CHECK_FP(callbackp_ssh_open_socket)
     callbackp_dodebug = params->callbackp_dodebug;
     CHECK_FP(callbackp_dodebug)
-    callbackp_vscrnprintf = params->callbackp_vscrnprintf;
-    CHECK_FP(callbackp_vscrnprintf)
+    callbackp_scrnprint = params->callbackp_scrnprint;
+    CHECK_FP(callbackp_scrnprint)
     callbackp_uq_txt = params->callbackp_uq_txt;
     CHECK_FP(callbackp_uq_txt)
     callbackp_uq_mtxt = params->callbackp_uq_mtxt;
