@@ -45,7 +45,7 @@
 
 _Inline void tcp_open(void) {
 
-  U32 true = 1;
+  U32 true_u32 = 1;
   struct hostent *hostnm;    /* server host name information */
   struct sockaddr_in server; /* server address information */
 #ifdef NT
@@ -68,7 +68,7 @@ _Inline void tcp_open(void) {
 		MODULE_SOCKET, __LINE__, 0);
 
       if (setsockopt(passive_socket, SOL_SOCKET, SO_REUSEADDR,
-		     (char *)&true, sizeof(true)))
+		     (char *)&true_u32, sizeof(true_u32)))
 	p_error(P_ERROR_SETSOCKOPT, sock_errno(),
 		MODULE_SOCKET, __LINE__, passive_socket);
 
@@ -87,9 +87,9 @@ _Inline void tcp_open(void) {
       /***********************************************/
       if (
 #ifdef NT
-ioctlsocket( passive_socket, FIONBIO, &true )
+ioctlsocket( passive_socket, FIONBIO, &true_u32 )
 #else
-ioctl(passive_socket, FIONBIO, (char *)&true, sizeof(U32))
+ioctl(passive_socket, FIONBIO, (char *)&true_u32, sizeof(true_u32))
 #endif
    )
 	p_error(P_ERROR_IOCTL, sock_errno(),
@@ -119,9 +119,9 @@ ioctl(passive_socket, FIONBIO, (char *)&true, sizeof(U32))
 		MODULE_SOCKET, __LINE__, socket_handle);
       if (
 #ifdef NT
-ioctlsocket( socket_handle, FIONBIO, &true )
+ioctlsocket( socket_handle, FIONBIO, &true_u32 )
 #else
-ioctl(socket_handle, FIONBIO, (char *)&true, sizeof(U32))
+ioctl(socket_handle, FIONBIO, (char *)&true_u32, sizeof(true_u32))
 #endif
    )
 	p_error(P_ERROR_IOCTL, sock_errno(),
@@ -134,7 +134,7 @@ ioctl(socket_handle, FIONBIO, (char *)&true, sizeof(U32))
 _Inline U32 tcp_connect(void) {
 
   U32 namelen;
-  U32 true = 1;
+  U32 true_u32 = 1;
   struct hostent *hostnm;    /* client host name information */
   struct sockaddr_in client; /* client address information */
 
@@ -169,9 +169,9 @@ _Inline U32 tcp_connect(void) {
 
       if (
 #ifdef NT
-ioctlsocket( socket_handle, FIONBIO, &true )
+ioctlsocket( socket_handle, FIONBIO, &true_u32 )
 #else
-ioctl(socket_handle, FIONBIO, (char *)&true, sizeof(U32))
+ioctl(socket_handle, FIONBIO, (char *)&true_u32, sizeof(true_u32))
 #endif
    )
     p_error(P_ERROR_IOCTL, sock_errno(),
