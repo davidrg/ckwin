@@ -147,6 +147,7 @@ COMMON_CFLAGS = /D_MT /QmipsOb5000
 CKB_STATIC_CRT_NT = yes
 !endif
 
+!if "$(PLATFORM)" == "OS2"
 # Figure out which OS/2 TCP/IP Support DLLs to build
 !if "$(OS2TCPDLLS)" == ""
 
@@ -161,6 +162,8 @@ OS2TCPDLLS=$(OS2TCPDLLS) cko32i20.dll
 !endif
 
 !Message Building these TCP/IP DLLs: $(OS2TCPDLLS)
+
+!endif
 
 !endif
 
