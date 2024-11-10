@@ -65,6 +65,14 @@ env:
   # Should the original ever go down (its not been updated in over 20 years),
   # a mirror is here:
   #REXXRE: https://ftp.zx.net.nz/pub/dev/rexx/ptjm/rexxre101.zip
+  #
+  # OS/2 Developer's Toolkit v4.5 is available on David Azarewicz's 88watts.net
+  # *supposedly* with permission from IBM - or so Arca Noae (which David is
+  # involved with) claims on this page:
+  #   https://www.arcanoae.com/wiki/information-for-developers/
+  # It is needed only for building the IBM TCP/IP 2.0 TCP/IP backend. The SDK
+  # for this is also available on the OS/2 Warp 4 CD.
+  OS2TK45: https://88watts.net/dlfile.php?F=Os2Tk45-
 
 jobs:
   Get-CACerts-Bundle:
@@ -1252,7 +1260,8 @@ jobs:
           path: |
             ${{github.workspace}}\zinc
             ${{github.workspace}}\info-zip
-          key: openzinc1+infozip
+            ${{github.workspace}}\toolkit
+          key: openzinc1+infozip+os2tk45
       - name: Get dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: |
@@ -1274,9 +1283,17 @@ jobs:
           7z x zip.zip
           cd ..
           dir
+          
+          wget ${{ env.OS2TK45 }} -outfile os2tk45.zip
+          7z x os2tk45.zip
+          del os2tk45.zip
+          cd toolkit\os2tk45
+          ren h include
+          cd ..\..\
         shell: powershell
       - name: Kermit/2 Build
         run: |
+          set ibm20dir_override=${{ github.workspace }}\toolkit\OS2TK45
           call setenv.bat
           
           REM Enable Dynamic SSH just to be sure those bits are buildable
