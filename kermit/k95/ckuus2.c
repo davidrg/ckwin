@@ -7884,7 +7884,7 @@ static char *hxyterm[] = {
 #endif /* OS2 */
 
 #ifdef CK_APC
-"SET TERMINAL APC { ON, OFF, NO-INPUT, NO-INPUT-UNCHECKED, UNCHECKED }",
+"SET TERMINAL APC { ON, OFF, NO-INPUT, UNCHECKED, UNCHECKED-NO-INPUT }",
 #ifdef OS2
 "  Controls execution of Application Program Commands sent by the host while",
 "  Kermit is either in CONNECT mode or processing INPUT commands.  ON allows",
