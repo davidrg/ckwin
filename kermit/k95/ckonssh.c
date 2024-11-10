@@ -689,107 +689,107 @@ static const char ** CKSSHAPI dllfunc_ssh_get_help(void) {
  * this DLL provides.
  * @param params SSH initialisation parameters from Kermit 95
  */
-int CKSSHDLLENTRY ssh_dll_init(ssh_init_parameters_t *params) {
+int CKSSHDLLENTRY ssh_dll_init(ssh_dll_init_data *init) {
     /* Store pointers to helper functions provided by K95 */
-    callbackp_get_current_terminal_dimensions = params->callbackp_get_current_terminal_dimensions;
+    callbackp_get_current_terminal_dimensions = init->callbackp_get_current_terminal_dimensions;
     CHECK_FP(callbackp_get_current_terminal_dimensions)
-    callbackp_get_current_terminal_type = params->callbackp_get_current_terminal_type;
+    callbackp_get_current_terminal_type = init->callbackp_get_current_terminal_type;
     CHECK_FP(callbackp_get_current_terminal_type)
-    callbackp_ssh_get_uid = params->callbackp_ssh_get_uid;
+    callbackp_ssh_get_uid = init->callbackp_ssh_get_uid;
     CHECK_FP(callbackp_ssh_get_uid)
-    callbackp_ssh_get_pw = params->callbackp_ssh_get_pw;
+    callbackp_ssh_get_pw = init->callbackp_ssh_get_pw;
     CHECK_FP(callbackp_ssh_get_pw)
-    callbackp_ssh_get_nodelay_enabled = params->callbackp_ssh_get_nodelay_enabled;
+    callbackp_ssh_get_nodelay_enabled = init->callbackp_ssh_get_nodelay_enabled;
     CHECK_FP(callbackp_ssh_get_nodelay_enabled)
-    callbackp_ssh_open_socket = params->callbackp_ssh_open_socket;
+    callbackp_ssh_open_socket = init->callbackp_ssh_open_socket;
     CHECK_FP(callbackp_ssh_open_socket)
-    callbackp_dodebug = params->callbackp_dodebug;
+    callbackp_dodebug = init->callbackp_dodebug;
     CHECK_FP(callbackp_dodebug)
-    callbackp_scrnprint = params->callbackp_scrnprint;
+    callbackp_scrnprint = init->callbackp_scrnprint;
     CHECK_FP(callbackp_scrnprint)
-    callbackp_uq_txt = params->callbackp_uq_txt;
+    callbackp_uq_txt = init->callbackp_uq_txt;
     CHECK_FP(callbackp_uq_txt)
-    callbackp_uq_mtxt = params->callbackp_uq_mtxt;
+    callbackp_uq_mtxt = init->callbackp_uq_mtxt;
     CHECK_FP(callbackp_uq_mtxt)
-    callbackp_uq_ok = params->callbackp_uq_ok;
+    callbackp_uq_ok = init->callbackp_uq_ok;
     CHECK_FP(callbackp_uq_ok)
-    callbackp_uq_file = params->callbackp_uq_file;
+    callbackp_uq_file = init->callbackp_uq_file;
     CHECK_FP(callbackp_uq_file)
-    callbackp_zmkdir = params->callbackp_zmkdir;
+    callbackp_zmkdir = init->callbackp_zmkdir;
     CHECK_FP(callbackp_zmkdir)
-    callbackp_ckmakxmsg = params->callbackp_ckmakxmsg;
+    callbackp_ckmakxmsg = init->callbackp_ckmakxmsg;
     CHECK_FP(callbackp_ckmakxmsg)
-    callbackp_whoami = params->callbackp_whoami;
+    callbackp_whoami = init->callbackp_whoami;
     CHECK_FP(callbackp_whoami)
-    callbackp_GetAppData = params->callbackp_GetAppData;
+    callbackp_GetAppData = init->callbackp_GetAppData;
     CHECK_FP(callbackp_GetAppData)
-    callbackp_GetHomePath = params->callbackp_GetHomePath;
+    callbackp_GetHomePath = init->callbackp_GetHomePath;
     CHECK_FP(callbackp_GetHomePath)
-    callbackp_GetHomeDrive = params->callbackp_GetHomeDrive;
+    callbackp_GetHomeDrive = init->callbackp_GetHomeDrive;
     CHECK_FP(callbackp_GetHomeDrive)
-    callbackp_ckstrncpy = params->callbackp_ckstrncpy;
+    callbackp_ckstrncpy = init->callbackp_ckstrncpy;
     CHECK_FP(callbackp_ckstrncpy)
-    callbackp_debug_logging = params->callbackp_debug_logging;
+    callbackp_debug_logging = init->callbackp_debug_logging;
     CHECK_FP(callbackp_debug_logging)
-    callbackp_get_display = params->callbackp_get_display;
+    callbackp_get_display = init->callbackp_get_display;
     CHECK_FP(callbackp_get_display)
-    callbackp_parse_displayname = params->callbackp_parse_displayname;
+    callbackp_parse_displayname = init->callbackp_parse_displayname;
     CHECK_FP(callbackp_parse_displayname)
 
-    params->callbackp_install_dllfunc("ssh_set_iparam", dllfunc_ssh_set_iparam);
-    params->callbackp_install_dllfunc("ssh_get_iparam", dllfunc_ssh_get_iparam);
-    params->callbackp_install_dllfunc("ssh_set_sparam", dllfunc_ssh_set_sparam);
-    params->callbackp_install_dllfunc("ssh_get_sparam", dllfunc_ssh_get_sparam);
-    params->callbackp_install_dllfunc("ssh_set_identity_files", dllfunc_ssh_set_identity_files);
-    params->callbackp_install_dllfunc("ssh_get_socket", dllfunc_ssh_get_socket);
-    params->callbackp_install_dllfunc("ssh_open", dllfunc_ssh_open);
-    params->callbackp_install_dllfunc("ssh_clos", dllfunc_ssh_clos);
-    params->callbackp_install_dllfunc("ssh_tchk", dllfunc_ssh_tchk);
-    params->callbackp_install_dllfunc("ssh_flui", dllfunc_ssh_flui);
-    params->callbackp_install_dllfunc("ssh_break", dllfunc_ssh_break);
-    params->callbackp_install_dllfunc("ssh_inc", dllfunc_ssh_inc);
-    params->callbackp_install_dllfunc("ssh_xin", dllfunc_ssh_xin);
-    params->callbackp_install_dllfunc("ssh_toc", dllfunc_ssh_toc);
-    params->callbackp_install_dllfunc("ssh_tol", dllfunc_ssh_tol);
-    params->callbackp_install_dllfunc("ssh_snaws", dllfunc_ssh_snaws);
-    params->callbackp_install_dllfunc("ssh_proto_ver", dllfunc_ssh_proto_ver);
-    params->callbackp_install_dllfunc("ssh_impl_ver", dllfunc_ssh_impl_ver);
+    init->callbackp_install_dllfunc("ssh_set_iparam", dllfunc_ssh_set_iparam);
+    init->callbackp_install_dllfunc("ssh_get_iparam", dllfunc_ssh_get_iparam);
+    init->callbackp_install_dllfunc("ssh_set_sparam", dllfunc_ssh_set_sparam);
+    init->callbackp_install_dllfunc("ssh_get_sparam", dllfunc_ssh_get_sparam);
+    init->callbackp_install_dllfunc("ssh_set_identity_files", dllfunc_ssh_set_identity_files);
+    init->callbackp_install_dllfunc("ssh_get_socket", dllfunc_ssh_get_socket);
+    init->callbackp_install_dllfunc("ssh_open", dllfunc_ssh_open);
+    init->callbackp_install_dllfunc("ssh_clos", dllfunc_ssh_clos);
+    init->callbackp_install_dllfunc("ssh_tchk", dllfunc_ssh_tchk);
+    init->callbackp_install_dllfunc("ssh_flui", dllfunc_ssh_flui);
+    init->callbackp_install_dllfunc("ssh_break", dllfunc_ssh_break);
+    init->callbackp_install_dllfunc("ssh_inc", dllfunc_ssh_inc);
+    init->callbackp_install_dllfunc("ssh_xin", dllfunc_ssh_xin);
+    init->callbackp_install_dllfunc("ssh_toc", dllfunc_ssh_toc);
+    init->callbackp_install_dllfunc("ssh_tol", dllfunc_ssh_tol);
+    init->callbackp_install_dllfunc("ssh_snaws", dllfunc_ssh_snaws);
+    init->callbackp_install_dllfunc("ssh_proto_ver", dllfunc_ssh_proto_ver);
+    init->callbackp_install_dllfunc("ssh_impl_ver", dllfunc_ssh_impl_ver);
 
     /* These functions are all optional */
 #ifdef COMMENT
-    params->callbackp_install_dllfunc("sshkey_create", dllfunc_sshkey_create);
-    params->callbackp_install_dllfunc("sshkey_display_fingerprint", dllfunc_sshkey_display_fingerprint);
-    params->callbackp_install_dllfunc("sshkey_display_public", dllfunc_sshkey_display_public);
-    params->callbackp_install_dllfunc("sshkey_display_public_as_ssh2", dllfunc_sshkey_display_public_as_ssh2);
-    params->callbackp_install_dllfunc("sshkey_change_passphrase", dllfunc_sshkey_change_passphrase);
-    params->callbackp_install_dllfunc("ssh_fwd_remote_port", dllfunc_ssh_fwd_remote_port);
-    params->callbackp_install_dllfunc("ssh_fwd_local_port", dllfunc_ssh_fwd_local_port);
-    params->callbackp_install_dllfunc("ssh_fwd_clear_remote_ports", dllfunc_ssh_fwd_clear_remote_ports);
-    params->callbackp_install_dllfunc("ssh_fwd_clear_local_ports", dllfunc_ssh_fwd_clear_local_ports);
-    params->callbackp_install_dllfunc("ssh_fwd_remove_remote_port", dllfunc_ssh_fwd_remove_remote_port);
-    params->callbackp_install_dllfunc("ssh_fwd_remove_local_port", dllfunc_ssh_fwd_remove_local_port);
-    params->callbackp_install_dllfunc("ssh_fwd_get_ports", dllfunc_ssh_fwd_get_ports);
+    init->callbackp_install_dllfunc("sshkey_create", dllfunc_sshkey_create);
+    init->callbackp_install_dllfunc("sshkey_display_fingerprint", dllfunc_sshkey_display_fingerprint);
+    init->callbackp_install_dllfunc("sshkey_display_public", dllfunc_sshkey_display_public);
+    init->callbackp_install_dllfunc("sshkey_display_public_as_ssh2", dllfunc_sshkey_display_public_as_ssh2);
+    init->callbackp_install_dllfunc("sshkey_change_passphrase", dllfunc_sshkey_change_passphrase);
+    init->callbackp_install_dllfunc("ssh_fwd_remote_port", dllfunc_ssh_fwd_remote_port);
+    init->callbackp_install_dllfunc("ssh_fwd_local_port", dllfunc_ssh_fwd_local_port);
+    init->callbackp_install_dllfunc("ssh_fwd_clear_remote_ports", dllfunc_ssh_fwd_clear_remote_ports);
+    init->callbackp_install_dllfunc("ssh_fwd_clear_local_ports", dllfunc_ssh_fwd_clear_local_ports);
+    init->callbackp_install_dllfunc("ssh_fwd_remove_remote_port", dllfunc_ssh_fwd_remove_remote_port);
+    init->callbackp_install_dllfunc("ssh_fwd_remove_local_port", dllfunc_ssh_fwd_remove_local_port);
+    init->callbackp_install_dllfunc("ssh_fwd_get_ports", dllfunc_ssh_fwd_get_ports);
 #ifdef SSHTEST
-    params->callbackp_install_dllfunc("sshkey_v1_change_comment", dllfunc_sshkey_v1_change_comment); /* TODO */
+    init->callbackp_install_dllfunc("sshkey_v1_change_comment", dllfunc_sshkey_v1_change_comment); /* TODO */
 #endif /* SSHTEST */
 #ifdef COMMENT
-    params->callbackp_install_dllfunc("sshkey_default_file", dllfunc_sshkey_default_file); */ /* TODO */
+    init->callbackp_install_dllfunc("sshkey_default_file", dllfunc_sshkey_default_file); */ /* TODO */
 #endif /* COMMENT */
-    params->callbackp_install_dllfunc("ssh_v2_rekey", dllfunc_ssh_v2_rekey); /* TODO */
-    params->callbackp_install_dllfunc("ssh_agent_delete_file", dllfunc_ssh_agent_delete_file); /* TODO */
-    params->callbackp_install_dllfunc("ssh_agent_delete_all", dllfunc_ssh_agent_delete_all); /* TODO */
-    params->callbackp_install_dllfunc("ssh_agent_add_file", dllfunc_ssh_agent_add_file); /* TODO */
-    params->callbackp_install_dllfunc("ssh_agent_list_identities", dllfunc_ssh_agent_list_identities); /* TODO */
+    init->callbackp_install_dllfunc("ssh_v2_rekey", dllfunc_ssh_v2_rekey); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_delete_file", dllfunc_ssh_agent_delete_file); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_delete_all", dllfunc_ssh_agent_delete_all); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_add_file", dllfunc_ssh_agent_add_file); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_list_identities", dllfunc_ssh_agent_list_identities); /* TODO */
 #ifdef COMMENT
     /* Not supported: */
-    params->callbackp_install_dllfunc("ssh_unload", dllfunc_ssh_unload);
+    init->callbackp_install_dllfunc("ssh_unload", dllfunc_ssh_unload);
 #endif /* COMMENT */
 #endif /* COMMENT */
-    params->callbackp_install_dllfunc("ssh_dll_ver", dllfunc_ssh_dll_ver);
-    params->callbackp_install_dllfunc("ssh_get_keytab", dllfunc_ssh_get_keytab);
-    params->callbackp_install_dllfunc("ssh_feature_supported", dllfunc_ssh_feature_supported);
-    params->callbackp_install_dllfunc("ssh_get_set_help", dllfunc_ssh_get_set_help);
-    params->callbackp_install_dllfunc("ssh_get_help", dllfunc_ssh_get_help);
+    init->callbackp_install_dllfunc("ssh_dll_ver", dllfunc_ssh_dll_ver);
+    init->callbackp_install_dllfunc("ssh_get_keytab", dllfunc_ssh_get_keytab);
+    init->callbackp_install_dllfunc("ssh_feature_supported", dllfunc_ssh_feature_supported);
+    init->callbackp_install_dllfunc("ssh_get_set_help", dllfunc_ssh_get_set_help);
+    init->callbackp_install_dllfunc("ssh_get_help", dllfunc_ssh_get_help);
 
     return 0;
 }

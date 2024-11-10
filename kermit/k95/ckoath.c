@@ -3576,7 +3576,7 @@ ck_des_pcbc_encrypt(Block input, Block output, long length,
 #endif /* CK_DES */
 
 #ifdef CRYPT_DLL
-typedef int  (*p_crypt_dll_init_t)(struct _crypt_dll_init *);
+typedef int  (*p_crypt_dll_init_t)(crypt_dll_init_data *);
 typedef int  (*p_encrypt_parse_t)(unsigned char *, int);
 typedef void (*p_encrypt_init_t)(kstream,int);
 typedef int  (*p_encrypt_session_key_t)(Session_Key *, int);
@@ -3732,7 +3732,7 @@ ck_des_is_weak_key(Block B)
 }
 
 void
-crypt_install_funcs(char * name, void * func)
+callback_install_dllfunc(char * name, void * func)
 {
     if ( !strcmp(name,"encrypt_parse") )
         p_encrypt_parse = (p_encrypt_parse_t) func;
@@ -3855,7 +3855,7 @@ int
 ck_crypt_loaddll( void )
 {
     ULONG rc = 0 ;
-    struct _crypt_dll_init init;
+    crypt_dll_init_data init;
     extern unsigned long startflags;
     int load_error = 0, len;
 #ifdef OS2ONLY
@@ -3934,7 +3934,7 @@ ck_crypt_loaddll( void )
     init.p_k5_context = NULL;
 #endif /* KRB5 */
     /* Version 3 */
-    init.p_install_funcs = crypt_install_funcs;
+    init.callbackp_install_dllfunc = callback_install_dllfunc;
     /* Version 5 */
     init.p_reqtelmutex = RequestTelnetMutex;
     init.p_reltelmutex = ReleaseTelnetMutex;

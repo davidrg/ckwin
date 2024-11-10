@@ -197,7 +197,7 @@ SOCKET ssh_open_socket(char* host, char* port) {
 
 #include <stdlib.h>
 
-typedef int CKSSHDLLENTRY ssh_dll_init_dllentry(ssh_init_parameters_t *);
+typedef int CKSSHDLLENTRY ssh_dll_init_dllentry(ssh_dll_init_data *);
 static ssh_dll_init_dllentry *dllentryp_ssh_init = NULL;
 
 /* Function pointers received from the currently loaded SSH subsystem DLL */
@@ -523,7 +523,7 @@ static void CKSSHAPI callback_install_dllfunc(const char* function, const void* 
  */
 int ssh_load(char* dllname) {
     ULONG rc = 0;
-    ssh_init_parameters_t init_params;
+    ssh_dll_init_data init;
 
 #ifdef OS2ONLY
     CHAR *exe_path;
@@ -576,34 +576,34 @@ int ssh_load(char* dllname) {
 #endif
 
     /* SSH DLL loaded successfully! Prepare init params! */
-    init_params.version = 1;
-    init_params.callbackp_install_dllfunc = callback_install_dllfunc;
-    init_params.callbackp_get_current_terminal_dimensions = callback_get_current_terminal_dimensions;
-    init_params.callbackp_get_current_terminal_type = callback_get_current_terminal_type;
-    init_params.callbackp_ssh_get_uid = callback_ssh_get_uid;
-    init_params.callbackp_ssh_get_pw = callback_ssh_get_pw;
-    init_params.callbackp_ssh_get_nodelay_enabled = callback_ssh_get_nodelay_enabled;
-    init_params.callbackp_ssh_open_socket = callback_ssh_open_socket;
-    init_params.callbackp_dodebug = callback_dodebug;
-    init_params.callbackp_scrnprint = callback_scrnprint;
-    init_params.callbackp_uq_txt = callback_uq_txt;
-    init_params.callbackp_uq_mtxt = callback_uq_mtxt;
-    init_params.callbackp_uq_ok = callback_uq_ok;
-    init_params.callbackp_uq_file = callback_uq_file;
-    init_params.callbackp_zmkdir = callback_zmkdir;
-    init_params.callbackp_ckmakxmsg = callback_ckmakxmsg;
-    init_params.callbackp_whoami = callback_whoami;
-    init_params.callbackp_GetAppData = callback_GetAppData;
-    init_params.callbackp_GetHomePath = callback_GetHomePath;
-    init_params.callbackp_GetHomeDrive = callback_GetHomeDrive;
-    init_params.callbackp_ckstrncpy = callback_ckstrncpy;
-    init_params.callbackp_debug_logging = callback_debug_logging;
-    init_params.callbackp_get_display = callback_get_display;
-    init_params.callbackp_parse_displayname = callback_parse_displayname;
+    init.version = 1;
+    init.callbackp_install_dllfunc = callback_install_dllfunc;
+    init.callbackp_get_current_terminal_dimensions = callback_get_current_terminal_dimensions;
+    init.callbackp_get_current_terminal_type = callback_get_current_terminal_type;
+    init.callbackp_ssh_get_uid = callback_ssh_get_uid;
+    init.callbackp_ssh_get_pw = callback_ssh_get_pw;
+    init.callbackp_ssh_get_nodelay_enabled = callback_ssh_get_nodelay_enabled;
+    init.callbackp_ssh_open_socket = callback_ssh_open_socket;
+    init.callbackp_dodebug = callback_dodebug;
+    init.callbackp_scrnprint = callback_scrnprint;
+    init.callbackp_uq_txt = callback_uq_txt;
+    init.callbackp_uq_mtxt = callback_uq_mtxt;
+    init.callbackp_uq_ok = callback_uq_ok;
+    init.callbackp_uq_file = callback_uq_file;
+    init.callbackp_zmkdir = callback_zmkdir;
+    init.callbackp_ckmakxmsg = callback_ckmakxmsg;
+    init.callbackp_whoami = callback_whoami;
+    init.callbackp_GetAppData = callback_GetAppData;
+    init.callbackp_GetHomePath = callback_GetHomePath;
+    init.callbackp_GetHomeDrive = callback_GetHomeDrive;
+    init.callbackp_ckstrncpy = callback_ckstrncpy;
+    init.callbackp_debug_logging = callback_debug_logging;
+    init.callbackp_get_display = callback_get_display;
+    init.callbackp_parse_displayname = callback_parse_displayname;
 
     /* Initialise! */
     debug(F100, "Call ssh_dll_init()", NULL, 0);
-    rc = dllentryp_ssh_init(&init_params);
+    rc = dllentryp_ssh_init(&init);
 
     /* TODO: Check all mandatory functions are available */
 
