@@ -16,7 +16,10 @@
 <li><a href="#tapiexm">TAPI Examples</a>
 </ul>
 <p>
-<b>Reference:</b>  <cite>Using C-Kermit</cite>, Chapters 4 and 5, Appendix II.
+<b>Reference:</b>  <cite>Using C-Kermit</cite>, Chapters
+  <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=81">4</a> and
+  <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">5</a>,
+  <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=479">Appendix II</a>.
 <p>
 
 TAPI is Microsoft's Telephony Application Programming Interface for Windows 95
@@ -228,7 +231,8 @@ card tones ("bong") when using a TAPI device.
 <b>Links:</b> [<a href="#tapiact">Next</a>] [<a href="#tapivs">Previous</a>] [<a href="#tapi">Index</a>]
 <p>
 
-As described in Chapter 5 of <cite>Using C-Kermit</cite>, Kermit can
+As described in <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">
+Chapter 5 of <cite>Using C-Kermit</cite></a>, Kermit can
 figure out how to dial almost any portable-format phone number from any
 location as long as you have specified the necessary location information,
 usually just the local country code and area code, plus the long distance and
@@ -241,8 +245,9 @@ responsible for conversions.
 <p><dl>
 <dt><tt>SET TAPI PHONE-NUMBER-CONVERSIONS { ON, OFF, AUTO }</tt>
 <dd><tt>ON</tt> means to let TAPI convert the phone number.  <tt>OFF</tt>
-means Kermit should convert the phone number as described in Chapter 5 of
-<cite>Using C-Kermit</cite>.  <tt>AUTO</tt> (the default) means TAPI should
+means Kermit should convert the phone number as described in
+<a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">Chapter 5 of
+<cite>Using C-Kermit</cite></a>.  <tt>AUTO</tt> (the default) means TAPI should
 convert the phone number if a TAPI line is in use, and Kermit should do it if
 a regular COM-port/modem ("set port") device is selected.  <tt>AUTO</tt> is
 available only at K95 command level, not in the Dialer
