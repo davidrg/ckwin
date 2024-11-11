@@ -706,7 +706,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b558">Problems with SET FILE INCOMPLETE DISCARD</a>
 <li><tt>[+] (K)</tt> <a href="#b559">Crash during Zmodem download with SET FILE COLLISION RENAME</a>
 <li><tt>[+] (K)</tt> <a href="#b560">TAPI dial gives "invalid call state message" after Busy</a>
-<li><tt>[+] (M)</tt> <a href="#b5561">Dead Keys cause K95.EXE to terminate in NT</a>
+<li><tt>[+] (M)</tt> <a href="#b561">Dead Keys cause K95.EXE to terminate in NT</a>
 <li><tt>[+] (K)</tt> <a href="#b562">If PDIAL is used, all subsequent calls are partially dialed</a>
 <li><tt>[+] (K)</tt> <a href="#b563">HOST.KSC vs. K95 1.1.17</a>
 <li><tt>[ ] (M)</tt> <a href="#b564">Don't tell K95 to RUN 16-bit programs</a>
@@ -1969,7 +1969,7 @@ and other East European versions.  If you have problems entering East-European
   set terminal byte 8
 </pre><p>
 If SHOW terminal doesn't say your code page 852, then also:
-<a href="<p>"><p></a>
+<p>
   set win95 keyboard latin2
 <p>
 and, as noted in item <a href="#b103">103</a>:
@@ -3078,7 +3078,9 @@ Perfect Keyboard Mode.
 
 <h3><a name="b268">268. HINT: Using the NETEDIT macro with GUI editors</a></h3>
 
-<i>(<a href="k95fixes.html#b268">Fixed</a>.)</i>
+<i>(Fixed.)</i>  <!-- Fixed should be a link to k95fixes.html#b268 but the bug
+ does not appear there nor any other version of this file going back to at least
+ K9 1.1.15 -->
 
 <h3><a name="b269">269. Yellow background change after !edit in K95</a></h3>
 
@@ -3493,7 +3495,7 @@ i.e. forcing the modem to dial even when it does not recognize a dial tone, as
 is often necessary with PBXs, in hotels, when travelling, etc, so to handle
 this you had to change your modem's init string (this section explained how).
 Blind dialing is now handled by the new SET DIAL IGNORE-DIALTONE command.
-See <a href="ckermi70.htm#x2.1.4">Section 2.1.4</a> of the C-Kermit 7.0
+See <a href="ckermi70.html#x2.1.4">Section 2.1.4</a> of the C-Kermit 7.0
 update notes.
 
 <h3><a name="b328">328. Log files in multiple sessions</a></h3>
@@ -4015,7 +4017,10 @@ of K95 hostmode.
 
 <h3><a name="b424">424. Various misleading file-transfer error messages</a></h3>
 
-<i>(<a href="k95fixes.html#b424">Fixed</a>.)</i>
+<i>(Fixed.)</i> <!-- Fixed should be a link to
+k95fixes.html#b424 but this entry does not appear in any version of this file
+going back to K95 1.1.17. It does not appear in K95 1.1.15 either, so if it ever
+appeared it was in 1.1.16 only -->
 
 <h3><a name="b425">425. EDIT command succeeds only on first attempt</a></h3>
 
@@ -4423,7 +4428,7 @@ greater than it should have been, since it was counting "<tt>.</tt>" and
 REMOTE QUERY KERMIT function(\%a) did not evaluate its argument before sending
 the query to the server; thus it was not possible to have the server run the
 function with client-side variables as arguments.  Fixed in 1.1.16.  Details
-in <a href="ckermi70.htm#x5.2">Section 5.2</a> of the C-Kermit 7.0
+in <a href="ckermi70.html#x5.2">Section 5.2</a> of the C-Kermit 7.0
 Update Notes.
 
 <h3><a name="b482">482. K95 Host Mode might be slow to put up Login prompt</a></h3>
@@ -4569,7 +4574,7 @@ Prior to version 1.1.16, and K95 was in server mode, there was no obvious
 way to send a GET command to it for a file whose name contained spaces.
 Now the server allows such names to be enclosed in curly braces or
 doublequotes.  See
-<a href="ckermi70.htm#x5.4">Section 5.4</a> of the C-Kermit 7.0
+<a href="ckermi70.html#x5.4">Section 5.4</a> of the C-Kermit 7.0
 Update Notes.
 
 <h3><a name="b494">494. HINT: CR and/or LF disappear!</a></h3>
@@ -5517,7 +5522,7 @@ href="#b587">previous item</a>).
 
 A new feature in K95 1.1.19 and C-Kermit 7.0 is the ability to include
 parameters for command files on the TAKE command line, documented
-in <a href="ckermi70.htm#x7.16">Section 7.16</a> of the C-Kermit 7.0 Update
+in <a href="ckermi70.html#x7.16">Section 7.16</a> of the C-Kermit 7.0 Update
 Notes.  As noted there, any arguments you give to a TAKE command are
 persistent.  This can produce surprising results with subsequent TAKE
 commands.  For example:
