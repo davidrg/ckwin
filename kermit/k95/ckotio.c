@@ -2064,10 +2064,10 @@ sysinit() {
     }
 
 
-#ifdef __IBMC__
+#ifdef OS2ONLY
     setvbuf(stdout, NULL, _IONBF, 0);
     setmode(1, _O_TEXT);
-#endif /* __IBMC__ */
+#endif /* OS2ONLY */
 
 #ifdef NT
     {
