@@ -36,7 +36,7 @@ REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required 
 move dist\ckwart.exe .\
 move dist\telnet-old.* .\
 move dist\rlogin-old.* .\
-if not exist dist\ssh.dll move dist\ssh.exe .\
+if "%CKF_SSH%" == "no" move dist\ssh.exe .\
 
 if "%CKF_XYZ%" == "no" goto :nop
 if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
