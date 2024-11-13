@@ -420,8 +420,18 @@ Bool Kui::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
     case WM_REQUEST_CLOSE_KERMIT:
         {
+            /* Calling hupok() from here will just hang forever if GUI Dialogs
+             * are disabled as it calls uq_ok which will try to get input from
+             * the user on VCMD, and if we're sitting here calling hupok() then
+             * we're not processing other events (like keyboard input) for the
+             * window. So as a workaround, just force GUI Dialogs on for the
+             * call to hupok(). */
+            int gui_dlg = gui_dialog;
+            gui_dialog = 1;
+
             // close down ckermit
             Bool hangupOK = hupok(0);
+            gui_dialog = gui_dlg;
             if( hangupOK ) {
                 if( terminal )
                     terminal->show( FALSE );
