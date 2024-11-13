@@ -150,6 +150,8 @@ by OpenSSH on modern versions of windows, add the command
   * NetBIOS name not being correctly padded when making a connection to
     a NetBIOS Server
 * Fixed emacs turning off mouse reporting when started
+* Fixed K95G hanging when closing the window or using File->Exit with when
+  a connection is active and GUI dialogs are turned off
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
