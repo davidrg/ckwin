@@ -87,6 +87,15 @@ by OpenSSH on modern versions of windows, add the command
   * No dialer (crashes when built with Open Watcom)
   * No SSL/TLS support (can't be built with Open Watcom)
   * No legacy telnet encryption (may return in a future release)
+* Reimplemented the three checkboxes in the Dialers GUI settings page for the
+  menu bar, toolbar and status bar. These options were new in Kermit 95 2.1.3
+  but were not present in previous open source releases of the dialer as it's
+  based on code from K95 2.1.2. Any dialer entries edited with the dialer from 
+  C-Kermit for Windows betas 4-6, or Kermit 95 2.1.2 or older, will have these 
+  checkboxes default to ON. Entries last edited with the K95 2.1.3 dialer will 
+  have these three settings preserved. Turning off the GUI bars in this way does
+  so via command line arguments rather than the new `set gui` commands so they
+  can't be turned back on with the new `set gui` commands.
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources

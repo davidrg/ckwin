@@ -42,10 +42,13 @@ K_CONNECTOR  *connector = NULL ;
 UIW_TOOL_BAR *toolbar = NULL ;
 UID_TIMER * timer = NULL ;
 
-/* Dialer 1.37 = Final Kermit 95 release? (either 2.1.2 or 2.1.3)
- * Dialer 1.38 = Kermit 95 3.0 (open source)
+/* Dialer 1.37 = Kermit 95 2.1.3
+ * Dialer 1.38 = Kermit 95 3.0 (open source) beta 4
+ *                  Updated the SSH settings
+ * Dialer 1.39 = Kermit 95 3.0 (open source) beta 7
+ *                  reimplemented GUI menu/tool/statusbar checkboxes from 2.1.3
  */
-ZIL_UINT8 kd_major = 1, kd_minor = 38;
+ZIL_UINT8 kd_major = 1, kd_minor = 39;
 
 ZIL_ICHAR * pathname = "";
 ZIL_UINT8    TapiAvail = 0;

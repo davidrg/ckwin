@@ -667,40 +667,6 @@ const ZIL_NUMBERID DEMO_OK                          = 0x0003;
 const ZIL_NUMBERID DEMO_NOTE                        = 0x0004;
 #endif
 
-#if defined(USE_DIALOG_GUI_SETTINGS)
-const ZIL_NUMBERID FIELD_1                          = 0x0002;
-const ZIL_NUMBERID BUTTON_SET_GUI_OK                = 0x0003;
-const ZIL_NUMBERID BUTTON_SET_GUI_CANCEL            = 0x0004;
-const ZIL_NUMBERID BUTTON_SET_GUI_HELP              = 0x0005;
-const ZIL_NUMBERID CHECK_GUI_USE                    = 0x0006;
-const ZIL_NUMBERID PROMPT_GUI_FACENAME              = 0x0007;
-const ZIL_NUMBERID PROMPT_GUI_FONTSIZE              = 0x0008;
-const ZIL_NUMBERID PROMPT_GUI_STARTUP               = 0x0009;
-const ZIL_NUMBERID PROMPT_GUI_YPOS                  = 0x000A;
-const ZIL_NUMBERID COMBO_GUI_FACENAME               = 0x000B;
-const ZIL_NUMBERID LIST_GUI_FACENAME                = 0x000C;
-const ZIL_NUMBERID SPIN_GUI_FONT_SIZE               = 0x000D;
-const ZIL_NUMBERID GUI_INT_FONT_SIZE                = 0x000E;
-const ZIL_NUMBERID COMBO_GUI_RESIZE                 = 0x000F;
-const ZIL_NUMBERID LIST_GUI_RESIZE                  = 0x0010;
-const ZIL_NUMBERID BUTTON_GUI_RES_SCALE             = 0x0011;
-const ZIL_NUMBERID BUTTON_GUI_RES_DIM               = 0x0012;
-const ZIL_NUMBERID COMBO_GUI_RUN                    = 0x0013;
-const ZIL_NUMBERID LIST_GUI_RUN                     = 0x0014;
-const ZIL_NUMBERID BUTTON_GUI_RUN_RES               = 0x0015;
-const ZIL_NUMBERID BUTTON_GUI_RUN_MAX               = 0x0016;
-const ZIL_NUMBERID BUTTON_GUI_RUN_MIN               = 0x0017;
-const ZIL_NUMBERID CHECK_GUI_DEFAULT_POS            = 0x0018;
-const ZIL_NUMBERID SPIN_GUI_XPOS                    = 0x0019;
-const ZIL_NUMBERID INT_GUI_XPOS                     = 0x001A;
-const ZIL_NUMBERID SPIN_GUI_YPOS                    = 0x001B;
-const ZIL_NUMBERID INT_GUI_YPOS                     = 0x001C;
-const ZIL_NUMBERID PROMPT_GUI_XPOS                  = 0x001D;
-const ZIL_NUMBERID TABLE_GROUP                      = 0x001E;
-const ZIL_NUMBERID PROMPT_GUI_RESIZE_MODE           = 0x001F;
-const ZIL_NUMBERID PROMPT_GUI_RUN                   = 0x0020;
-#endif
-
 #if defined(USE_WINDOW_DIALER)
 const ZIL_NUMBERID ICON_K95                         = 0x0002;
 const ZIL_NUMBERID MENU                             = 0x0003;
@@ -1102,6 +1068,43 @@ const ZIL_NUMBERID FIELD_DIAL_DIR_NAMES             = 0x0004;
 const ZIL_NUMBERID BUTTON_DIALDIR_OK                = 0x0005;
 const ZIL_NUMBERID BUTTON_DIALDIR_CANCEL            = 0x0006;
 const ZIL_NUMBERID BUTTON_DIALDIR_HELP              = 0x0007;
+#endif
+
+#if defined(USE_DIALOG_GUI_SETTINGS)
+const ZIL_NUMBERID FIELD_1                          = 0x0002;
+const ZIL_NUMBERID BUTTON_SET_GUI_OK                = 0x0003;
+const ZIL_NUMBERID BUTTON_SET_GUI_CANCEL            = 0x0004;
+const ZIL_NUMBERID BUTTON_SET_GUI_HELP              = 0x0005;
+const ZIL_NUMBERID CHECK_GUI_USE                    = 0x0006;
+const ZIL_NUMBERID PROMPT_GUI_FACENAME              = 0x0007;
+const ZIL_NUMBERID PROMPT_GUI_FONTSIZE              = 0x0008;
+const ZIL_NUMBERID PROMPT_GUI_STARTUP               = 0x0009;
+const ZIL_NUMBERID PROMPT_GUI_YPOS                  = 0x000A;
+const ZIL_NUMBERID COMBO_GUI_FACENAME               = 0x000B;
+const ZIL_NUMBERID LIST_GUI_FACENAME                = 0x000C;
+const ZIL_NUMBERID SPIN_GUI_FONT_SIZE               = 0x000D;
+const ZIL_NUMBERID GUI_INT_FONT_SIZE                = 0x000E;
+const ZIL_NUMBERID COMBO_GUI_RESIZE                 = 0x000F;
+const ZIL_NUMBERID LIST_GUI_RESIZE                  = 0x0010;
+const ZIL_NUMBERID BUTTON_GUI_RES_SCALE             = 0x0011;
+const ZIL_NUMBERID BUTTON_GUI_RES_DIM               = 0x0012;
+const ZIL_NUMBERID COMBO_GUI_RUN                    = 0x0013;
+const ZIL_NUMBERID LIST_GUI_RUN                     = 0x0014;
+const ZIL_NUMBERID BUTTON_GUI_RUN_RES               = 0x0015;
+const ZIL_NUMBERID BUTTON_GUI_RUN_MAX               = 0x0016;
+const ZIL_NUMBERID BUTTON_GUI_RUN_MIN               = 0x0017;
+const ZIL_NUMBERID CHECK_GUI_DEFAULT_POS            = 0x0018;
+const ZIL_NUMBERID SPIN_GUI_XPOS                    = 0x0019;
+const ZIL_NUMBERID INT_GUI_XPOS                     = 0x001A;
+const ZIL_NUMBERID SPIN_GUI_YPOS                    = 0x001B;
+const ZIL_NUMBERID INT_GUI_YPOS                     = 0x001C;
+const ZIL_NUMBERID PROMPT_GUI_XPOS                  = 0x001D;
+const ZIL_NUMBERID TABLE_GROUP                      = 0x001E;
+const ZIL_NUMBERID PROMPT_GUI_RESIZE_MODE           = 0x001F;
+const ZIL_NUMBERID PROMPT_GUI_RUN                   = 0x0020;
+const ZIL_NUMBERID CHECK_GUI_MENUBAR                = 0x002A;
+const ZIL_NUMBERID CHECK_GUI_TASKBAR                = 0x002C;
+const ZIL_NUMBERID CHECK_GUI_STATUSBAR              = 0x002D;
 #endif
 
 #if defined(USE_DERIVED_OBJECTS)

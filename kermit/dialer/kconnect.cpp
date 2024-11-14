@@ -7451,6 +7451,21 @@ StartKermit( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_entry 
                      entry->_startpos_x, entry->_startpos_y, 
                      tmp, entry->_fontsize) ;
         }
+
+        /* The K95 2.1.3 dialer turned off the GUI bars with command line
+         * arguments rather than SET GUI commands. I'm not sure if this is
+         * exactly how it did it, but it works. */
+        if (!entry->_gui_menu_bar) {
+            sprintf(buf + strlen(buf), " --nomenubar");
+        }
+
+        if (!entry->_gui_tool_bar) {
+            sprintf(buf + strlen(buf), " --notoolbar");
+        }
+
+        if (!entry->_gui_status_bar) {
+            sprintf(buf + strlen(buf), " --nostatusbar");
+        }
     } else 
 #endif /* WIN32 */
         sprintf( buf, "k95.exe \"%s\" -W %d %d", StartKermitFileName,frameID,K_STATUS::Instance ) ;

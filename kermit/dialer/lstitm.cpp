@@ -344,6 +344,9 @@ KD_LIST_ITEM::KD_LIST_ITEM():
     _startpos_auto = 1;
     _startpos_x = 0;
     _startpos_y = 0;
+    _gui_menu_bar = 1;
+    _gui_tool_bar = 1;
+    _gui_status_bar = 1;
 
     // Idx  Colour   R   G   B
     // 0    Black    0   0   0
@@ -712,6 +715,9 @@ KD_LIST_ITEM::KD_LIST_ITEM(KD_LIST_ITEM & item):
     _startpos_auto = item._startpos_auto;
     _startpos_x = item._startpos_x;
     _startpos_y = item._startpos_y;
+    _gui_menu_bar = item._gui_menu_bar;
+    _gui_tool_bar = item._gui_tool_bar;
+    _gui_status_bar = item._gui_status_bar;
     _rgb[0][0] = item._rgb[0][0];
     _rgb[0][1] = item._rgb[0][1];
     _rgb[0][2] = item._rgb[0][2];
@@ -1045,6 +1051,9 @@ KD_LIST_ITEM::KD_LIST_ITEM(TRANSPORT tType,
     _startpos_auto = 1;
     _startpos_x = 0;
     _startpos_y = 0;
+    _gui_menu_bar = 1;
+    _gui_tool_bar = 1;
+    _gui_status_bar = 1;
     _rgb[0][0] = 0;
     _rgb[0][1] = 0;
     _rgb[0][2] = 0;
@@ -1671,6 +1680,9 @@ KD_LIST_ITEM::KD_LIST_ITEM(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directo
     _startpos_auto = 1;
     _startpos_x = 0;
     _startpos_y = 0;
+    _gui_menu_bar = 1;
+    _gui_tool_bar = 1;
+    _gui_status_bar = 1;
     _rgb[0][0] = 0;
     _rgb[0][1] = 0;
     _rgb[0][2] = 0;
@@ -2920,6 +2932,7 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
     }
 
 //  ver_1_37:
+//  ver_1_38:
     if ( itemMinor < 37 ) {
         _ssh2_cipher_aes128ctr = 1;
         _ssh2_cipher_aes192ctr = 1;
@@ -2955,7 +2968,25 @@ void KD_LIST_ITEM::Load(const ZIL_ICHAR *name, ZIL_STORAGE_READ_ONLY *directory,
         _ssh2_kex_dh_group1_sha1 = 1;
         _ssh2_kex_ext_info_c = 1;
         _ssh2_kex_dh_group_exchange_sha1 = 1;
+    }
+
+    if (itemMinor == 38 || itemMinor < 37) {
+        /* These settings only existed in 1.37 (K95 2.1.3) and 1.39+
+         * (K95 3.0 beta7+). Version 1.38 (K95 3.0 betas 4 through 6) didn't
+         * have it as the open-source dialer code is based something slightly
+         * older than K95 2.1.3, so they had to be reimplemented. v1.37 stores
+         * these settings in this order in the file, while 1.38 stored the
+         * new SSH settings starting here. */
+        _gui_menu_bar = 1;
+        _gui_tool_bar = 1;
+        _gui_status_bar = 1;
     } else {
+        file->Load(&_gui_menu_bar);
+        file->Load(&_gui_tool_bar);
+        file->Load(&_gui_status_bar);
+    }
+
+    if ( itemMinor >= 38 ) {
         file->Load(&_ssh2_cipher_aes128ctr);
         file->Load(&_ssh2_cipher_aes192ctr);
         file->Load(&_ssh2_cipher_aes256ctr);
@@ -3482,7 +3513,13 @@ void KD_LIST_ITEM::Store(const ZIL_ICHAR *name, ZIL_STORAGE *directory,
     // itemMinor = 36
     file->Store(Enum = _printer_charset) ;
 
-    // itemMinor = 37
+    // itemMinor = 37 || itemMinor > 38
+    // (these appeared in 1.37 (K95 2.1.3) and 1.39+ (K95 3.0 beta7)
+    file->Store(_gui_menu_bar);
+    file->Store(_gui_tool_bar);
+    file->Store(_gui_status_bar);
+
+    // itemMinor = 38
     file->Store(_ssh2_cipher_aes128ctr);
     file->Store(_ssh2_cipher_aes192ctr);
     file->Store(_ssh2_cipher_aes256ctr);
