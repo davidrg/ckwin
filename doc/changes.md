@@ -155,6 +155,8 @@ by OpenSSH on modern versions of windows, add the command
 * Fixed K95 bug 797: Dialer generated connection scripts will no longer include
   `SET LOGIN PROMPT` or `SET LOGIN PASSWORD` commands if those fields do not
   have a value as this broke the use of the standard login.ksc script.
+* Fixed K95 bug 770: When editing an FTP entry in the dialer the general settings
+  page doesn't load the port number causing it to be cleared on save.
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
