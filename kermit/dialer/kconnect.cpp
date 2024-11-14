@@ -6166,10 +6166,12 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
     int anonymous = !stricmp(entry->_userid,"anonymous") ||
         !stricmp(entry->_userid,"ftp");
 
-    if ( entry->_password && !anonymous ) {
-        if ( !entry->_prompt_for_password )
-            sprintf(tmp, "set login password {%s}", entry->_password );
-        else {
+    if ( entry->_password
+            && (strlen(entry->_password) > 0 || entry->_prompt_for_password)
+            && !anonymous ) {
+        if ( !entry->_prompt_for_password ) {
+                sprintf(tmp, "set login password {%s}", entry->_password);
+        } else {
             /* Prompt for Password */
             ZIL_ICHAR    password[PASSWD_SZ];
             ZIL_UINT8    ok=0;
@@ -6188,7 +6190,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
         OUTFILE(BuildOutStr(buf, "", tmp));
         OUTFILE("set command quoting on\n");
     }
-    if ( entry->_prompt ) {
+    if ( entry->_prompt && strlen(entry->_prompt) > 0) {
         sprintf(tmp, "set login prompt {%s}", entry->_prompt);
         OUTFILE(BuildOutStr(buf, "", tmp));
     }

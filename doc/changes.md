@@ -152,6 +152,9 @@ by OpenSSH on modern versions of windows, add the command
 * Fixed emacs turning off mouse reporting when started
 * Fixed K95G hanging when closing the window or using File->Exit with when
   a connection is active and GUI dialogs are turned off
+* Fixed K95 bug 797: Dialer generated connection scripts will no longer include
+  `SET LOGIN PROMPT` or `SET LOGIN PASSWORD` commands if those fields do not
+  have a value as this broke the use of the standard login.ksc script.
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
