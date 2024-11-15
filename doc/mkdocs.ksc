@@ -306,14 +306,13 @@ while <= \%x \fdim(&f) {
 ;       this script with them anyway)
 echo Updating default keymap HTML file (default.html) from \m(dest)../../keymaps/default.ksc
 
-.defhtm := \m(dest)/default.html
+.defhtm := \m(dest)default.html
 if = \m(web_mode) 0 {
-    .defhtm := \m(dest)/default.htm
+    .defhtm := \m(dest)default.htm
 }
 if \m(dry_run) {
     echo Generate \m(defhtm)
-}
-else {
+} else {
     fopen /read \%i \m(dest)default.ksc
     fopen /write \%o \m(defhtm)
     fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
