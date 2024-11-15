@@ -2087,3 +2087,27 @@ jobs:
           cat linux+ssl.txt
           popd
         shell: bash
+
+  Build-Manual-Web:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.2-x64
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        run: |
+          set root=${{ github.workspace }}
+          mkdocs.bat /W /D
+        shell: cmd
+        working-directory: ${{ github.workspace }}\docs
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-web-dev
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
