@@ -153,12 +153,12 @@ k95.exe -Y -# 127 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
 
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
-k95.exe %docs_root%\mkdocs.ksc -Y -d -# 126 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DRY_RUN% %DEV_MODE% %WEB_MODE% %HTTPS_MODE%
+k95.exe %docs_root%\mkdocs.ksc -Y -d -# 127 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DRY_RUN% %DEV_MODE% %WEB_MODE% %HTTPS_MODE%
 
 REM And update modified dates for anything that hasn't changed since the manual
 REM was added to git
 if "%DRY_RUN%" == "true" goto :skipfd
-k95.exe -Y -H -# 126 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit"
+k95.exe -Y -H -# 127 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit"
 :skipfd
 
 echo manual done.
