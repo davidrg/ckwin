@@ -78,7 +78,6 @@ if exist dist\regina.dll copy %rexx_root%\doc\*.pdf dist\docs\
 if exist dist\rexxre.dll copy %rexxre_root%\rexxre.pdf dist\docs\
 
 @echo Copy manual...
-copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 copy hostmode.txt dist\docs\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
 
