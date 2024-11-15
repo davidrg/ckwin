@@ -2104,7 +2104,7 @@ jobs:
           set root=${{ github.workspace }}
           mkdocs.bat /W /D
         shell: cmd
-        working-directory: ${{ github.workspace }}\docs
+        working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
