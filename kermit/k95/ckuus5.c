@@ -652,7 +652,7 @@ char *m_purge = "run purge \\%*";
 #endif /* VMS */
 
 #ifdef OS2
-char *m_manual = "browse \\v(exedir)docs/manual/index.html";
+char *m_manual = "browse \\v(exedir)docs/manual/index.htm";
 #endif /* OS2 */
 
 /* Now the multiline macros, defined with addmmac()... */

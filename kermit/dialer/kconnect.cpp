@@ -3053,11 +3053,7 @@ IsManualInstalled(void)
     /* before starting the manual.  Otherwise, Netscape may   */
     /* be unable to find the referential links.               */
 
-#ifdef WIN32
-    strcat(exepath, "DOCS\\MANUAL\\CKWIN.HTM");
-#else
-    strcat(exepath, "DOCS\\MANUAL\\CKOS2.HTM");
-#endif
+    strcat(exepath, "DOCS\\MANUAL\\INDEX.HTM");
 
     if ( stat(exepath,&buf) >= 0 ) {
 #ifdef COMMENT
