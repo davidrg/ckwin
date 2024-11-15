@@ -125,6 +125,7 @@ char *copyright = "Copyright (C) 1991, 1996, Trustees of Columbia University";
 
   Copyright (C) 1985, 1997, Trustees of Columbia University in the City of New
   York.
+*/
 
 /* Defines and Includes... */
 
@@ -203,6 +204,7 @@ char *copyright = "Copyright (C) 1991, 1996, Trustees of Columbia University";
 #endif /* CHARSET */
 
 #include <stdio.h>			/* For EOF definition */
+#include <stdlib.h>			/* For atol and exit definition */
 #ifdef OS2NTDOS
 #include <io.h>				/* For isatty() */
 #include <string.h>

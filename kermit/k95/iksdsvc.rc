@@ -1,0 +1,95 @@
+//Microsoft Visual C++ generated resource script.
+//
+//#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+//#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+#include <winver.h>
+
+#include "cknver.h"
+
+////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION RC_FILE_VERSION
+ PRODUCTVERSION RC_PROD_VERSION
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Internet Kermit Service for " K95_VERSION_PRODUCT_SHORT "\0"
+            VALUE "CompanyName", "The Kermit Project\0"
+            VALUE "FileDescription", "Internet Kermit Service for Windows NT\0"
+            VALUE "FileVersion", RC_FILE_VERSION_STR
+            VALUE "InternalName", "iksdsvc\0"
+            VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013-" K95_VERSION_YEAR " The Kermit Project contributors.\0"
+            VALUE "OriginalFilename", "iksdsvc.exe\0"
+            VALUE "ProductName", K95_VERSION_PRODUCT "\0"
+            VALUE "ProductVersion", RC_PROD_VERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED

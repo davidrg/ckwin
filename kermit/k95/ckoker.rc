@@ -1,5 +1,4 @@
 #define INCL_DOSRESOURCES
 #include <os2.h>
 
-ICON 1 ckermit.ico
-
+ICON 1 k95f_os2.ico

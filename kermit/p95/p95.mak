@@ -115,7 +115,7 @@ DEFS = p95.def
 
 # Visual C++ only libraries
 !if "$(CMP)" == "VCXX"
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 LIBS = $(LIBS) libcmt.lib
 !else
 LIBS = $(LIBS) msvcrt.lib
@@ -145,12 +145,17 @@ LIBS = $(LIBS) ucrt.lib vcruntime.lib
 # To generate debug info, add $(CFLAGSD) to CFLAGS
 
 CC = cl
+#CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
 CFLAGS = /nologo /LD /J /c -DOS2 -DNT -DCK_ANSIC -I.. -DXYZ_DLL -DWIN32=1
 CFLAGSO = /Ot /Oi
+!if "$(CMP)" == "VCXX"
 CFLAGSD = /Zi
-#CFLAGS = /J /c /MT -DOS2 -DNT -DCK_ANSIC -I.. /Zi
+LDFLAGS = /nologo /dll /map /nod
+!else
+CFLAGSD = /Z7
+LDFLAGS = /nologo /dll /map
+!endif
 LD = link
-LDFLAGS = /nologo /dll /nod /map
 # /align:0x1000 - removed from LDFLAGS as the linker warns about it since
 #                 Visual C++ 5.0 SP3 and its almost just a leftover of the
 #                 default Visual C++ 4.0 makefile settings
@@ -158,15 +163,10 @@ LDFLAGS = /nologo /dll /nod /map
 #                 the IA64 cross-compiler complains about it when using
 #                 the Win7.1 SDK.
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 CFLAGS = $(CFLAGS) /MT
 !else
 CFLAGS = $(CFLAGS) /MD
-!endif
-
-!if "$(CMP)" == "OWCL"
-# The OpenWatcom 1.9 linker doesn't know what /nod is.
-LDFLAGS = /nologo /dll /map /debug:full
 !endif
 
 !if "$(CKT_NT35)" == "yes"
@@ -189,7 +189,7 @@ CFLAGS = $(CFLAGS) -DCKT_NT35_AND_31
 !endif
 
 !if ($(MSC_VER) >= 130) && "$(CMP)" == "VCXX"
-# OpenWatcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
+# Open Watcom is mostly compatible with Visual C++ 2002 but it doesn't have intptr_t
 CFLAGS = $(CFLAGS) -DCK_HAVE_INTPTR_T
 !endif
 
@@ -279,4 +279,4 @@ pdll_z.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll
 pdll_z_global.obj: ../k95/p_type.h
 
 p95.res: p95.rc
-        rc -r p95.rc
+        rc -r -dWINVER=0x0400 p95.rc

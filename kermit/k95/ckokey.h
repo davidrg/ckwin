@@ -67,6 +67,8 @@ typedef struct _vik_rec {               /* Very Important Keys - */
     KEY quit;
     KEY upscn;
     KEY dnscn;
+    KEY uphscn;
+    KEY dnhscn;
     KEY upone;
     KEY dnone;
     KEY homscn;
@@ -251,8 +253,8 @@ extern con_event mousemap[MMBUTTONMAX][MMSIZE] ;
  *   - update the shomou function in ckuus5.c to report the new reporting
  *     protocols when they're active
  **/
-#define MOUSEREPORTING_BTNEVENT 0x11
-#define MOUSEREPORTING_ANYEVENT 0x12
+#define MOUSEREPORTING_BTNEVENT 0x20
+#define MOUSEREPORTING_ANYEVENT 0x40
 
 
 /* These are the active mouse reporting modes. If any of these are set, mouse

@@ -1,6 +1,6 @@
 File SCRIPTS\README.TXT
 
-The C-Kermit for Windows scripts directory is the default location for script
+The Kermit 95 scripts directory is the default location for script
 programs to be executed by C-Kermits TAKE command.
 
 LOGIN.KSC

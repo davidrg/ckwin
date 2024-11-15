@@ -22,14 +22,21 @@ if not exist dist\users\NUL mkdir dist\users
 
 @echo Move build outputs...
 move *.exe dist
+if exist *.pdb move *.pdb dist
+if exist dist\nullssh.pdb delete dist\nullssh.pdb
+if exist k95ssh*.dll move k95ssh*.dll dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
 copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
+if exist dist\cknker.pdb ren dist\cknker.pdb k95.pdb
 ren dist\cknker.exe.manifest k95.exe.manifest
-del dist\cknker.exe.manifest
+if exist dist\cknker.exe.manifest del dist\cknker.exe.manifest
 REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
 move dist\ckwart.exe .\
+move dist\telnet-old.* .\
+move dist\rlogin-old.* .\
+if "%CKF_SSH%" == "no" move dist\ssh.exe .\
 
 if "%CKF_XYZ%" == "no" goto :nop
 if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
@@ -45,10 +52,13 @@ copy welcome.txt dist
 copy hostmode.bat dist
 REM (k95custom.sample should be renamed to k95custom.ini upon installation)
 
-@echo Copy runtime libraries
-if defined WATCOM copy %WATCOM%\binnt\mt7r*.dll dist
-if defined WATCOM copy %WATCOM%\binnt\clbr*.dll dist
-if defined WATCOM copy %WATCOM%\binnt\plbr*.dll dist
+@echo Copy Open Watcom DLL run-time libraries
+if "%WATCOM%"=="" goto :noowrtdll
+if "%CKB_STATIC_CRT_NT%"=="yes" goto :noowrtdll
+copy %WATCOM%\binnt\mt7r*.dll dist
+copy %WATCOM%\binnt\clbr*.dll dist
+copy %WATCOM%\binnt\plbr*.dll dist
+:noowrtdll
 
 @echo Copy enabled optional dependencies
 for %%I in (%CK_DIST_DLLS%) do copy %%I dist\
@@ -61,6 +71,11 @@ REM OpenSSL License was renamed in 3.0.0 to LICENSE.txt
 if exist %openssl_root%\LICENSE.txt copy %openssl_root%\LICENSE.txt dist\COPYING.openssl
 if exist %openssl_root%\LICENSE copy %openssl_root%\LICENSE dist\COPYING.openssl
 :nossl
+
+if exist dist\regina.dll copy %rexx_root%\COPYING-LIB dist\COPYING.regina
+if exist dist\regina.dll copy %rexx_root%\doc\*.pdf dist\docs\
+
+if exist dist\rexxre.dll copy %rexxre_root%\rexxre.pdf dist\docs\
 
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
@@ -112,7 +127,7 @@ REM PRINTER directory
 REM originally contained:
 REM     pcaprint.sh, pcprint.com, pcprint.man, pcprint.sh
 REM         Utilities for printing from a unix or VMS host to a local printer
-REM         via CKW
+REM         via K95
 REM     textps.txt
 REM         Documentation for the textps utility
 REM     readme.txt
@@ -137,7 +152,7 @@ for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
 copy scripts-readme.txt dist\scripts\readme.txt
 
 REM SSH directory
-REM Empty directory in K-95, location not used by CKW SSH subsystem
+REM Empty directory in K-95, location not used by the new K95 SSH subsystem
 
 REM USERS directory
 @echo Copy User files...

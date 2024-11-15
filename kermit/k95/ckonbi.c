@@ -60,6 +60,11 @@ char *ckonbiv = "OS/2 NetBios support, 8.0.010, 18 Sep 96";
 #define _loadds
 #endif
 
+#ifdef __WATCOMC__
+#pragma stack16(256)
+extern VOID CDECL16 ncbpost(USHORT Junk, PNCB16 NcbPointer);
+#endif
+
 static APIRET16 (* APIENTRY16 netbios)(PNCB)=NULL;
 static APIRET16 (* APIENTRY16 netbios_Submit)(USHORT, USHORT, PNCB)=NULL;
 static APIRET16 (* APIENTRY16 netbios_Close)(USHORT, USHORT)=NULL;
@@ -442,6 +447,39 @@ USHORT
 netbios_avail(BOOL Netbeui)
 {
     int rc=0;
+#ifdef __WATCOMC__
+    /* The Open Watcom C compiler has a bug of sorts where it fails to account
+     * for the fact that DosQueryProcAddr (called by loadapi) returns a 0:32
+     * flat address of a 16bit entry point. The IBM compiler automatically
+     * converts this to 16:16, but Watcom C does not.
+     *
+     * Casting the 0:32 pointer to void* forces the pointer to be converted to
+     * 16:16 working around the problem. This workaround was found by MichalN.
+     */
+    PFN fn_adr;
+
+    if(!Netbeui)
+    {
+        if(!netbios) {
+            rc=loadapi("ACSNETB","NETBIOS",&fn_adr);
+            netbios = (void*)fn_adr;
+        }
+    } /* end if */
+    else
+    {
+        if(!netbios_Submit)
+        {
+            rc|=loadapi("NETAPI","NETBIOSSUBMIT",&fn_adr);
+            netbios_Submit = (void*)fn_adr;
+            rc|=loadapi("NETAPI","NETBIOSCLOSE", &fn_adr );
+            netbios_Close = (void*)fn_adr;
+            rc|=loadapi("NETAPI","NETBIOSOPEN",  &fn_adr  );
+            netbios_Open = (void*)fn_adr;
+            rc|=loadapi("NETAPI","NETBIOSENUM",  &fn_adr  );
+            netbios_Enum = (void*)fn_adr;
+        } /* end if */
+    } /* end else */
+#else /* __IBMC__ */
     if(!Netbeui)
     {
         if(!netbios)
@@ -457,10 +495,18 @@ netbios_avail(BOOL Netbeui)
             rc|=loadapi("NETAPI","NETBIOSENUM",  (PFN *) &netbios_Enum  );
         } /* end if */
     } /* end else */
+#endif /* __WATCOMC__ */
     debug(F111,"ckonbi:netbios_avail","rc",rc);
     return rc;
 }
 
+#ifndef __WATCOMC__
+/*
+ * Kermit 95 (a 32bit process) calls the 16bit NetBIOS APIs, which call back
+ * to into Kermit 95 here. Open Watcom has difficult with this 32-16-32 callback
+ * madness, so instead a near identical version of this function lives in
+ * ckonbw.c which is built with the 16bit Open Watcom compiler.
+ */
 #pragma stack16(256)
 VOID CDECL16
 ncbpost(USHORT Junk, PNCB16 NcbPointer)
@@ -469,6 +515,7 @@ ncbpost(USHORT Junk, PNCB16 NcbPointer)
     NCB ncb = *NcbPointer ;
     rc = Dos16SemClear(NcbPointer->basic_ncb.ncb_semaphore);
 }
+#endif
 
 
 USHORT
@@ -574,7 +621,7 @@ NCBCall(BOOL Netbeui, PNCB  Ncb, USHORT lana, PBYTE lclname,
             ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
     } else {
         Ncb->basic_ncb.bncb.off44.ncb_post_address=
-            (address)((!wait)?ncbpost:NULL);
+            (fn_addr)((!wait)?ncbpost:NULL);
     }
 
     strncpy( Ncb->basic_ncb.bncb.ncb_name, lclname, NETBIOS_NAME_LEN );
@@ -612,7 +659,7 @@ NCBListen(BOOL Netbeui, PNCB  Ncb, USHORT lana, PBYTE lclname,
             ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
     } else {
         Ncb->basic_ncb.bncb.off44.ncb_post_address=
-            (address)((!wait)?ncbpost:NULL);
+            (fn_addr)((!wait)?ncbpost:NULL);
     }
 
     strncpy( Ncb->basic_ncb.bncb.ncb_name, lclname, NETBIOS_NAME_LEN );
@@ -665,7 +712,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -702,7 +749,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
     strncpy( Ncb->basic_ncb.bncb.ncb_callname, rmtname, NETBIOS_NAME_LEN );
@@ -739,7 +786,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -776,7 +823,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
   if(!wait)
@@ -827,7 +874,7 @@ PBuf2 b2;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    b2->Length=Length2;
@@ -867,7 +914,7 @@ PBuf2 b2;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    b2->Length=Length2;
@@ -919,7 +966,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -969,7 +1016,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -1006,7 +1053,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -1043,7 +1090,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -1145,7 +1192,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)
@@ -1182,7 +1229,7 @@ int rc;
          ((!wait)?Ncb->basic_ncb.ncb_semaphore:0L);
    } else {
       Ncb->basic_ncb.bncb.off44.ncb_post_address=
-         (address)((!wait)?ncbpost:NULL);
+         (fn_addr)((!wait)?ncbpost:NULL);
    }
 
    if(!wait)

@@ -35,6 +35,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 #ifdef OS2
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckocon.h"
 #endif /* OS2 */
@@ -91,6 +92,7 @@ _PROTOTYP( int zzstring, (char *, char **, int *) );
 #include <io.h>
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #endif /* OS2 */
 

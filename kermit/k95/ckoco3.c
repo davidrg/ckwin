@@ -159,7 +159,7 @@ _PROTOTYP( FILE * win95popen, (const char *cmd, const char *mode) );
 _PROTOTYP( int win95pclose, (FILE *pipe) );
 #define popen _popen
 #define pclose _pclose
-#else
+#else /* NT */
 #ifdef __WATCOMC__
 #define popen _popen
 #define pclose _pclose
@@ -342,7 +342,7 @@ extern ascreen                          /* For saving screens: */
 
 extern ascreen mousescreen; /* Screen during mouse actions */
 
-extern unsigned char                    /* Video attribute bytes */
+unsigned char                           /* Video attribute bytes */
     attribute=NUL,                      /* Current video attribute byte */
     underlineattribute=NUL,
     savedattribute[VNUM]={0,0,0,0},       /* Saved video attribute byte */
@@ -3447,7 +3447,7 @@ void
 sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
     int i,j,n ;
     static unsigned char * sendbuf = NULL;
-    static buflen = 0;
+    static int buflen = 0;
     unsigned char * bufptr, *stuffptr ;
     CHAR * bytes = NULL;
     int count = 1;
@@ -7742,6 +7742,8 @@ gotojump( int vmode )
     return;
 }
 
+#define SEARCHSTRING_LEN    63
+
 BOOL
 search( BYTE vmode, BOOL forward, BOOL prompt )
 {
@@ -7750,7 +7752,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
 #else
    extern int inpcas[] ;
 #endif /* DCMDBUF */
-   static char searchstring[63] = "" ;
+   static char searchstring[SEARCHSTRING_LEN] = "" ;
    CHAR x1;
    con_event evt ;
    int line = 1 ;
@@ -7807,7 +7809,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
             else if ( x1 >= ' ' && x1 <= 126 || x1 >= 128 /*always true: && x1 <= 255*/ )
             {
-                if ( len >= 62 ) {
+                if ( len >= SEARCHSTRING_LEN - 1 ) {
                     bleep(BP_WARN);
                 }
                 else {
@@ -7817,7 +7819,11 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
             else if ( x1 == 8 || x1 == 127 )
             {
-                searchstring[len-1] = '\0' ;
+                if (len - 1 < 0) {
+                    bleep(BP_WARN);
+                } else {
+                    searchstring[len-1] = '\0' ;
+                }
             }
             else if ( x1 == 13 )
             {
@@ -9725,6 +9731,14 @@ markmode( BYTE vmode, int k )
             markupscreen(vmode) ;
             break;
 
+        case K_DNHSCN:
+            markdownhalfscreen(vmode) ;
+            break;
+
+        case K_UPHSCN:
+            markuphalfscreen(vmode) ;
+            break;
+
         case K_HOMSCN:
             markhomescreen(vmode) ;
             break;
@@ -9908,6 +9922,19 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
         }
         break;
 
+    case K_UPHSCN:
+        if (!tt_roll[vmode]) {
+            if ( VscrnMoveTop(vmode,-((VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2)) < 0 )
+                if ( VscrnSetTop(vmode,VscrnGetBegin(vmode)) < 0 )
+                    bleep(BP_WARN) ;
+        }
+        else {
+            if ( VscrnMoveScrollTop(vmode,-((VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2)) < 0 )
+                if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode)) < 0 )
+                    bleep(BP_WARN);
+        }
+        break;
+
     case K_UPONE:
         if (!tt_roll[vmode]) {
             if ( VscrnMoveTop(vmode,-1) < 0 )
@@ -9930,6 +9957,24 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
               if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode)
                                       - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1) < 0 )
                 bleep(BP_WARN);
+        }
+        break;
+
+    case K_DNHSCN:                       /* Go down half a screen */
+        if (!tt_roll[vmode]) {
+            if ( VscrnMoveTop(vmode,(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2) < 0 ) {
+                if ( VscrnSetTop(vmode,VscrnGetEnd(vmode) - VscrnGetHeight(vmode)+1) < 0 ) {
+                    bleep(BP_WARN);
+                }
+            }
+        }
+        else {
+            if ( VscrnMoveScrollTop(vmode,(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2) < 0 ) {
+                if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode)
+                                        - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1) < 0 ) {
+                    bleep(BP_WARN);
+                }
+            }
         }
         break;
 
@@ -10663,7 +10708,7 @@ debugses( unsigned char ch )
 void
 cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                                         /* TELNET options debug display. */
-    static vt52esclen = 0 ;
+    static int vt52esclen = 0 ;
 /*
    Edit 190.
    New code, supporting APC, and integrating escape sequence state switching
@@ -12183,7 +12228,7 @@ line25(int vmode) {
             strinsert(&s[01],usertext);
         else
             strinsert(&s[01],
-            "CKW Command Screen | Help: Alt-H | Terminal: CONNECT or Alt-X ");
+            "K95 Command Screen | Help: Alt-H | Terminal: CONNECT or Alt-X ");
         break;
     default:
         s = "";

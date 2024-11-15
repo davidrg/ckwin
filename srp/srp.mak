@@ -100,14 +100,14 @@ CFLAGS=$(CFLAGS) /EHsc
 !endif
 
 !IF  "$(CFG)" == "Release"
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
 COMMON_CFLAGS = /MD
 !endif
 !ELSEIF  "$(CFG)" == "Debug"
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MTd
 !else

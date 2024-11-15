@@ -27,6 +27,9 @@
 #include "ckotvi.h"
 #include "ckctel.h"
 #include "ckokvb.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -76,7 +79,7 @@ extern int wy_nullsuppress ;
 extern int wy_monitor ;
 extern int wy_block;
 extern vtattrib WPattrib ;
-extern tt_sac;
+extern int tt_sac;
 extern bool xprintff; /* Print formfeed */
 
 int tvi_ic = SP;

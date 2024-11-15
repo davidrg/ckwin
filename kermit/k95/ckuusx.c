@@ -89,9 +89,7 @@ char * tgoto (const char *, int, int);
 
 #ifdef OS2
 #include <string.h>
-#if NT
 #include <process.h>  /* for getpid() */
-#endif /* NT */
 _PROTOTYP(char * os2_gethostname, (void));
 #ifndef __WATCOMC__
 #define getpid _getpid
@@ -179,10 +177,10 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 #else /* NT */
 #define INCL_VIO
 #define INCL_WINERRORS

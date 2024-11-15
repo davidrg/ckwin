@@ -1,10 +1,10 @@
-# Compiler Support
+﻿# Compiler Support
 
-C-Kermit for Windows should build with all released 32bit or better 
+Kermit 95 should build with all released 32bit or better 
 versions of Microsoft Visual C++ as well as 32bit versions of 
-OpenWatcom 1.9. For the best security, always use the most recent
+Open Watcom 1.9. For the best security, always use the most recent
 compiler you can. Support for older compilers remains for those wishing 
-to build C-Kermit for vintage Windows systems, the security situation of 
+to build Kermit 95 for vintage Windows systems, the security situation of 
 which is well known.
 
 The table below outlines which compilers you can use to target which
@@ -13,12 +13,12 @@ The "Tested Often" column indicates which compilers are tested regularly
 either automatically by github or through occasional manual builds. These
 compilers are highly likely to work.
 
-ARM, ARM64 and Itanium are built automatically by github actions but
+ARM64 and Itanium are built automatically by github actions but
 this project lacks the required hardware to actually test these builds.
 If you discover any issues please log a bug.
 
 The Dialer is currently known to build fine with Visual C++ 2.0-7.0 (2002) and
-OpenWatcom 1.9. Visual C++ 6.0 SP6 is the recommended compiler as newer versions
+Open Watcom 1.9. Visual C++ 6.0 SP6 is the recommended compiler as newer versions
 lack ctl3d32 - without this the application tends to look a little like
 something from Windows 3.1. Compilers newer than 2002 may work but OpenZinc is
 known to be incompatible with Visual C++ 14.x.
@@ -44,9 +44,9 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>x86-64, x86</td>
     <td>Windows Vista SP2</td>
     <td rowspan="3">✅</td> <!-- Free -->
-    <td rowspan="3">✅</td> <!-- Tested -->
+    <td rowspan="2">✅</td> <!-- Tested -->
     <td rowspan="3">✅</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -55,11 +55,12 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 <tr>
     <td>ARM64</td>
     <td></td>
+    
 </tr>
 <tr>
     <td>ARM32</td>
     <td></td>
-    <td>❌</td> <!-- SSH -->
+    <td>❌</td>   <!-- Tested often: not really -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2019</td>
@@ -68,7 +69,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="3">✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
     <td rowspan="3">✅</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -82,8 +83,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 <tr>
     <td>ARM32</td>
     <td></td>
-    <td>❌</td> <!-- Tested -->
-    <td>❌</td> <!-- SSH -->
+    <td>✅</td> <!-- Tested -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2017</td>
@@ -92,7 +92,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="3">✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
     <td rowspan="3">❌</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -107,7 +107,6 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>ARM32</td>
     <td></td>
     <td>❌</td> <!-- Tested -->
-    <td>❌</td> <!-- SSH -->
 </tr>
 <tr>
     <td rowspan="3">Visual C++ 2015</td>
@@ -116,7 +115,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td rowspan="3">✅</td> <!-- Free -->
     <td>✅</td> <!-- Tested -->
     <td rowspan="3">❌</td> <!-- PTY -->
-    <td rowspan="2">✅</td> <!-- SSH -->
+    <td rowspan="3">✅</td> <!-- SSH -->
     <td rowspan="3">✅</td> <!-- NTLM/Auth -->
     <td rowspan="3">✅</td> <!-- TAPI -->
     <td rowspan="3">❌</td> <!-- Dialer -->
@@ -131,7 +130,6 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     <td>ARM32</td>
     <td></td>
     <td>❌</td> <!-- Tested -->
-    <td>❌</td> <!-- SSH -->
 </tr>
 <tr>
     <td>Visual C++ 2013</td>
@@ -347,7 +345,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
         and would likely have some non-functional TAPI/modem-dialing stuff may be visible if it did. 
         Targets NT 3.50 and 3.10 by default. To target NT 3.50 only (no runtime
         checks for NT 3.50-only APIs), set <tt>set CKT_NT35=no</tt> before building.
-        CKW still has known issues when actually running on NT 3.1.
+        K95 still has known issues when actually running on NT 3.1.
     </td>
 </tr>
 <tr>
@@ -392,7 +390,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     </td>
 </tr>
 <tr>
-    <td>OpenWatcom 1.9</td>
+    <td>Open Watcom 1.9</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
@@ -410,7 +408,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
     </td>
 </tr>
 <tr>
-    <td>OpenWatcom 2.0</td>
+    <td>Open Watcom 2.0</td>
     <td>x86</td>
     <td>Windows NT 3.51, 
         Windows 95</td>
@@ -442,7 +440,7 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 ## Building with the Windows NT SDK
 
 Some versions of the Platform SDK include a compiler. Sometimes that compiler
-is usable for building CKW, sometimes it is not.
+is usable for building K95, sometimes it is not.
 
 ### Windows NT 3.1
 Building with this SDK *is* supported, but you also require some parts from

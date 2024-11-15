@@ -30,7 +30,23 @@
 #									                                          #
 ###############################################################################
 
-COMPILER = ICC
+!message Attempting to detect compiler...
+!include ../k95/compiler_detect.mak
+
+!message
+!message
+!message ===============================================================================
+!message P95 Build Configuration
+!message ===============================================================================
+!message  Architecture:             $(TARGET_CPU)
+!message  Compiler:                 $(COMPILER)
+!message  Compiler Version:         $(COMPILER_VERSION)
+!message  Compiler Target Platform: $(TARGET_PLATFORM)
+!message ===============================================================================
+!message
+!message
+
+# COMPILER = ICC
 
 P_SRCS = \
 pdll_common.c \
@@ -76,74 +92,113 @@ pdll_exeio.obj
 
 SRCS = $(P_SRCS)
 OBJS = $(P_OBJS)
-LIBS = tcp32dll.lib so32dll.lib os2386.lib
+#LIBS = tcp32dll.lib so32dll.lib os2386.lib
+!if "$(CMP)" != "OWWCL"
 DEFS = p2.def
+!endif
 
 .c.obj:
 	$(CC) $(CFLAGS) /Fo$@ $<
 
+!if "$(CMP)" == "OWWCL"
+# OpenWatcom WCL
+
+# CC parameters not ported: -q
+CC = wcl386
+
+# CFLAGS not ported:
+#  -Gt- -Ge- -Ti+ -Tx+ -Tm+  -Sp1 -Sm -Gm -G4 -Gt -Gd
+#
+#    ICC:       WCL386
+#     -Gd        ?          /Gd+: Use the version of the runtime library that is dynamically linked.
+#     -Gt        ?          Store variables so that they do not cross 64K boundaries. Default: /Gt-
+#     -G4        ?          /G4: Generate code optimized for use on a Pentium processor.
+#     -Gm        ? -bm      Link with multithread runtime libraries. Default: /Gm-
+#     -Sm        ?          Ignore migration keywords. Default: /Sm-
+#     -Sp1       -zp=1      /Sp<[1]|2|4|8|16> : Pack aggregate members on specified alignment. Default: /Sp4
+#     -Tm+       ?          Enable debug memory management support
+#     -Tx+       ?          Generate full exception register dump
+#     -Ti+       ?          Generate debugging information
+#     -Ge-       ?          Use the version of the runtime library that assumes a DLL is being built
+CFLAGS = -D__DEBUG -DOS2 -DXYZ_DLL -bd -bt=os2 -i=.. -c
+
+LD = wcl386
+
+#LDFLAGS not ported:
+#  /nologo /noi /exepack:1 /align:16 /base:0x10000
+LDFLAGS = -l=os2v2_dll -fm -"export p_transfer"
+OUT=-Fe=
+!else
+
+# IBM C/C++
 CC = icc -q
 CFLAGS =  -Gt- -Ge- -Ti+ -Tx+ -Tm+ -D__DEBUG -Sp1 -Sm -Gm -G4 -Gt -Gd -J -c -DOS2 -DXYZ_DLL -I..
 LD = ilink
 LDFLAGS = /nologo /noi /exepack:1 /align:16 /base:0x10000 #/debug /dbgpack
+OUT=/OUT:
+!endif
 
 p2.dll: $(OBJS) $(DEFS)
-	$(LD) @<<
-           $(LDFLAGS) $(DEFS) /OUT:$@ $(OBJS) $(LIBS)
-<<
-        dllrname $@ CPPRMI36=CKO32RTL           
+	$(LD) $(LDFLAGS) $(DEFS) $(OUT)$@ $(OBJS) $(LIBS)
 
-pdll_common.obj: ../p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
-            ../p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h \
+# For IBM ICC:
+# p2.dll: $(OBJS) $(DEFS)
+# 	$(LD) @<<
+#            $(LDFLAGS) $(DEFS) $(OUT)$@ $(OBJS) $(LIBS)
+# <<
+#         dllrname $@ CPPRMI36=CKO32RTL
+
+pdll_common.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
+            ../k95/p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h \
             pdll_global.h pdll_main.h
 
-pdll_crc.obj: ../p_type.h
+pdll_crc.obj: ../k95/p_type.h
 
-pdll_dev.obj: ../p_type.h pdll_dev.h pdll_os2incl.h pdll_error.h ../p.h pdll_common.h \
+pdll_dev.obj: ../k95/p_type.h pdll_dev.h pdll_os2incl.h pdll_error.h ../k95/p.h pdll_common.h \
          pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h
 
-pdll_global.obj: ../p_type.h ../p.h
+pdll_global.obj: ../k95/p_type.h ../k95/p.h
 
-pdll_main.obj: ../p_type.h pdll_common.h pdll_dev.h pdll_os2incl.h pdll_error.h ../p.h \
+pdll_main.obj: ../k95/p_type.h pdll_common.h pdll_dev.h pdll_os2incl.h pdll_error.h ../k95/p.h \
           pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_defs.h \
           pdll_global.h pdll_ryx.h \
           pdll_rz.h pdll_syx.h pdll_sz.h pdll_x_global.h pdll_z.h pdll_z_global.h
 
-pdll_omalloc.obj: ../p_type.h pdll_error.h ../p.h
+pdll_omalloc.obj: ../k95/p_type.h pdll_error.h ../k95/p.h
 
-pdll_error.obj: ../p_type.h pdll_global.h ../p.h pdll_main.h pdll_common.h
+pdll_error.obj: ../k95/p_type.h pdll_global.h ../k95/p.h pdll_main.h pdll_common.h
 
-pdll_r.obj: ../p_type.h pdll_common.h pdll_defs.h pdll_global.h ../p.h pdll_omalloc.h pdll_x_global.h \
+pdll_r.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_global.h ../k95/p.h pdll_omalloc.h pdll_x_global.h \
        pdll_z_global.h pdll_modules.h
 
-pdll_ryx.obj: ../p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
-         ../p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_global.h \
+pdll_ryx.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
+         ../k95/p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_global.h \
          pdll_omalloc.h pdll_r.h pdll_x_global.h
 
-pdll_rz.obj: ../p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h ../p.h \
+pdll_rz.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h ../k95/p.h \
          pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_global.h \
        pdll_omalloc.h pdll_r.h \
          pdll_z.h pdll_z_global.h
 
-pdll_s.obj: ../p_type.h pdll_global.h ../p.h
+pdll_s.obj: ../k95/p_type.h pdll_global.h ../k95/p.h
 
-pdll_syx.obj: ../p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
-          ../p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_omalloc.h \
+pdll_syx.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
+          ../k95/p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_omalloc.h \
           pdll_global.h pdll_s.h pdll_syx.h pdll_x_global.h
 
-pdll_sz.obj: ../p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h ../p.h \
+pdll_sz.obj: ../k95/p_type.h pdll_common.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h ../k95/p.h \
          pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_global.h pdll_omalloc.h pdll_s.h \
          pdll_z.h pdll_z_global.h
 
-pdll_tcpipapi.obj: ../p_type.h pdll_error.h ../p.h pdll_modules.h
+pdll_tcpipapi.obj: ../k95/p_type.h pdll_error.h ../k95/p.h pdll_modules.h
 
-pdll_exeio.obj: ../p_type.h pdll_common.h ../p.h pdll_global.h pdll_modules.h
+pdll_exeio.obj: ../k95/p_type.h pdll_common.h ../k95/p.h pdll_global.h pdll_modules.h
 
-pdll_x_global.obj: ../p_type.h
+pdll_x_global.obj: ../k95/p_type.h
 
-pdll_z.obj: ../p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
-       ../p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_global.h \
+pdll_z.obj: ../k95/p_type.h pdll_common.h pdll_crc.h pdll_defs.h pdll_dev.h pdll_os2incl.h pdll_error.h \
+       ../k95/p.h pdll_tcpipapi.h pdll_modules.h pdll_async.h pdll_pipe.h pdll_socket.h pdll_global.h \
        pdll_z.h pdll_z_global.h
 
-pdll_z_global.obj: ../p_type.h
+pdll_z_global.obj: ../k95/p_type.h
 

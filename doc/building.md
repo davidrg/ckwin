@@ -1,20 +1,20 @@
-# Building C-Kermit for Windows from Source
+# Building Kermit 95 from Source
 
-Building C-Kermit for Windows is easy! All you need is 
+Building Kermit 95 is easy! All you need is 
 [a compiler for Windows](compilers.md) (Visual C++ 2019 Community Edition 
 recommended). The compiler you choose will determine what features are 
-available and the minimum version of windows your build of CKW will support. 
+available and the minimum version of windows your build of K95 will support. 
 You can use the linked table to help choose the compiler that best meets your
 needs if you're looking to run on versions of Windows older than XP or CPU
 architectures other than x86 and ARM.
 
 If you wish to also build the Dialer (entirely optional), you'll need ideally a 
-copy of Visual C++ 6.0 SP6. OpenWatcom 1.9 is also supported but due to a lack 
+copy of Visual C++ 6.0 SP6. Open Watcom 1.9 is also supported but due to a lack 
 of support for CTRL3D32 in that compiler the resulting application will look 
 like something from Windows 3.1.
 
 If you're using MinGW, see [Building with MinGW](mingw-building.md) - the
-content below only applies to Visual C++ and OpenWatcom.
+content below only applies to Visual C++ and Open Watcom.
 
 ## Build Environment
 
@@ -35,7 +35,7 @@ vcpkg install libssh
 ```
 You'll then need to edit `setenv.bat` again and, under the Optional Dependencies
 heading, you'll need to uncomment the `vcpkg_installed` variable and set it to
-the location where you installed vcpkg so the C-Kermit for Windows build process
+the location where you installed vcpkg so the Kermit 95 build process
 can find libssh:
 ```
 REM If you've installed these dependencies using vcpkg, set the following
@@ -50,7 +50,7 @@ need to edit `setenv.bat` any further for this if you're using the same versions
 of the optional dependencies.
 
 ### Prepare OpenZinc (optional)
-The Dialer is an entirely optional component of C-Kermit for Windows. To build
+The Dialer is an entirely optional component of Kermit 95. To build
 it you'll need to grab a copy of OpenZinc 1.0 from
 [the OpenZinc Website](http://openzinc.com/Downloads.html). The full package
 is the one you need - "OpenZinc Engine, DOS, all Windows, OS/2, Unicode (zip)".
@@ -66,7 +66,7 @@ relative to each other:
 \zinc\copymak.bat
 ```
 
-If you're building with OpenWatcom, this is all that should be required - when
+If you're building with Open Watcom, this is all that should be required - when
 you run setenv.bat it will detect the presence of OpenZinc and add it to the
 build environment so that you can build the Dialer. You can skip ahead to the
 build step
@@ -97,10 +97,10 @@ C:\dev\ckw\mkzinc.bat
 As instructed, just run mkzinc.bat to build OpenZinc. On a modern PC it
 doesn't take very long.
 
-## Build C-Kermit for Windows
+## Build Kermit 95
 
 1. Open a console and change directory to where the source code is located
-2. Setup the Visual C++ or OpenWatcom build environment by running the 
+2. Setup the Visual C++ or Open Watcom build environment by running the 
     appropriate batch file for your compiler. Some examples are: 
 ```
 REM Visual C++ 2008:
@@ -112,7 +112,7 @@ REM Visual C++ 2019:
 REM Visual C++ 2022, 64bit:
 "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=14.3
 
-REM OpenWatcom:
+REM Open Watcom:
 C:\watcom\owsetenv.bat
 ```
 3. Setup the C-Kermit build environment by running `setenv.bat`
@@ -125,7 +125,7 @@ C:\watcom\owsetenv.bat
     dependencies into `kermit\k95\dist`
 
 Done! Depending on the Visual C++ version you're using you may need to also
-distribute the Visual C++ runtime with CKW. If you built with OpenWatcom the 
+distribute the Visual C++ runtime with K95. If you built with Open Watcom the 
 runtime libraries should have already been copied there for you but if they 
 weren't you'll need to grab `clbr19.dll mt719.dll plbr19.dll` from the watcom 
 `binnt` subdirectory.
@@ -146,7 +146,7 @@ following files:
 |----------------------|----------------------------------------------------------------|
 | COPYING.LESSOR.txt   | LGPL License text                                              |
 | dialer.dat           | Zinc data file containing all the dialer UI bits               |
-| k95dial.exe          | The C-Kermit for Windows Dialer                                |
+| k95dial.exe          | The Kermit 95 Dialer                                |
 | k95dial.exe.manifest | Makes the dialer fit in very slightly better on modern windows |
 | p_direct.znc         | ?                                                              |
 | p_servic.znc         | ?                                                              |
@@ -156,11 +156,11 @@ All files are required for the dialer to work normally.
 ### ctl3d32.dll Installation Procedure
 When built with Visual C++ 6.0 or older the dialer relies on ctl3d32 to get the Windows 95
 look and feel (rather than the "16bit app on Windows 95" look and feel). Ctl3d32 is not
-available for OpenWatcom or newer versions of Visual C++ so when built with these the dialer
+available for Open Watcom or newer versions of Visual C++ so when built with these the dialer
 will have the 2D "16bit app on Windows 95" look.
 
 In order to be used ctl3d32.dll *must* be installed correctly on the users machine - it can't
-simply be distributed in the CKW folder like other DLLs. To further complicate matters, there
+simply be distributed in the K95 folder like other DLLs. To further complicate matters, there
 are two different versions of ctl3d32 and the correct one for the users operating system must
 be installed. The ANSI version is for Windows 95/98/ME and the Unicode version is for 
 Windows NT and its descendants (including Windows Xp/7/8/10/11).
@@ -175,10 +175,10 @@ You can get both versions of Ctl3d32 from your Visual C++ CD-ROM:
 | Visual C++ 2.x     | `\MSVC20\REDIST\ANSI\CTL3D32.DLL`       | `\MSVC20\REDIST\CTL3D32.DLL`             |
 
 The appropriate version of ctl3d32.dll can be installed on the users machine using `ctl3dins.exe`
-which is produced as part of the standard CKW build procedure. This relies on having both versions of
-ctl3d32.dll present in the CKW folder alongside ctl3dins.exe. To use it, the ANSI version of ctl3d32.dll 
+which is produced as part of the standard K95 build procedure. This relies on having both versions of
+ctl3d32.dll present in the K95 folder alongside ctl3dins.exe. To use it, the ANSI version of ctl3d32.dll 
 must be renamed to `ctl3d95.dll` and the Unicode version to `ctl3dnt.dll`, then distribute them 
-alongside ctl3dins.exe with the rest of C-Kermit for Windows.
+alongside ctl3dins.exe with the rest of Kermit 95.
 
 When the user runs ctl3dins.exe if ctl3d32.dll isn't installed it will rename the appropriate
 version for the users operating system (ctl3dnt.dll or ctl3d95.dll) back to ctl3d32.dll and
@@ -192,7 +192,7 @@ port devices on Windows 95 versions prior to OSR2
 [described here](https://kermitproject.org/k95bugs.html#b79).
 
 It's pretty unlikely anyone will ever run into the issue this tool solves in the
-2020s so building it is highly optional - C-Kermit for Windows will work just
+2020s so building it is highly optional - Kermit 95 will work just
 fine on modern systems without it.
 
 If you'd like to build this utility anyway, Visual C++ 1.5 is required along 
@@ -210,7 +210,7 @@ This compiler is only supported for building the k95cinit.exe utility.
 You can build that now by running mk.bat
 C:\src\kermit\dialer\init> mk.bat
 ```
-The CKW setenv.bat script will detect your environment is set up for the 16bit
+The K95 setenv.bat script will detect your environment is set up for the 16bit
 Visual C++ 1.x compiler (due to running `msvcvars.bat`) and will configure the
 environment specially for building k95cinit.exe. All you have to do from there
 is run mk.bat to do the build, and optionally mkdist.bat to copy all the
@@ -221,12 +221,12 @@ you to build OpenZinc first - this will leave the current directory unchanged.
 
 # Improving build times
 
-C-Kermit for Windows uses nmake makefiles to build. nmake doesn't know how to
+Kermit 95 uses nmake makefiles to build. nmake doesn't know how to
 schedule builds on more than one CPU so if you're building with Visual C++ on
 a computer with multiple processors you can reduce build times significantly
 by using a compatible build tool that *is* aware of multiple processors.
 
-[JOM](https://wiki.qt.io/Jom) is regularly tested with CKW and works well with
+[JOM](https://wiki.qt.io/Jom) is regularly tested with K95 and works well with
 all versions of Visual C++ (if you're building on a modern version of Windows).
 Just [Download](http://download.qt.io/official_releases/jom/jom.zip) and unzip it
 somewhere on your path, then before running `setenv.bat` run `set MAKE=jom`:

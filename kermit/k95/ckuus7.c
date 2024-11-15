@@ -53,10 +53,10 @@
 #else /* NT */
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknwin.h"
 #endif /* NT */
 #include "ckowin.h"
@@ -248,7 +248,12 @@ extern int tn_wait_flg;
 #endif /* TNCODE */
 
 VOID
-slrestor() {
+#ifdef CK_ANSIC
+slrestor(void) 
+#else
+slrestor() 
+#endif /* CK_ANSIC */
+{
 #ifdef CK_AUTHENTICATION
     int x;
     if (sl_auth_saved) {
@@ -293,11 +298,11 @@ slrestor() {
 #endif /* TNCODE */
 #ifdef SSHBUILTIN
     if (sl_ssh_xfw_saved) {
-        ssh_xfw = sl_ssh_xfw;
+        ssh_set_iparam(SSH_IPARAM_XFW, sl_ssh_xfw);
         sl_ssh_xfw_saved = 0;
     }
     if (sl_ssh_ver_saved) {
-        ssh_ver = sl_ssh_ver;
+        ssh_set_iparam(SSH_IPARAM_VER, sl_ssh_ver);
         sl_ssh_ver_saved = 0;
     }
 #endif /* SSHBUILTIN */
@@ -9364,7 +9369,7 @@ cx_net(net, protocol, xhost, svc,
 
 #ifdef SSHBUILTIN
         if (net == NET_SSH) {
-            makestr(&ssh_hst,hostname);        /* Stash everything */
+            ssh_set_sparam(SSH_SPARAM_HST, hostname);   /* Stash everything */
             if (username) {
                 if (!sl_uid_saved) {
                     ckstrncpy(sl_uidbuf,uidbuf,UIDBUFLEN);
@@ -9373,33 +9378,35 @@ cx_net(net, protocol, xhost, svc,
                 ckstrncpy(uidbuf,username,UIDBUFLEN);
             }
             if (srvbuf[0]) {
-                makestr(&ssh_prt,srvbuf);
-            } else
-                makestr(&ssh_prt,NULL);
+                ssh_set_sparam(SSH_SPARAM_PRT,srvbuf);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_PRT,NULL);
+            }
 
             if (command) {
-                makestr(&ssh_cmd,brstrip(command));
-                ssh_cas = param2;
-            } else
-                makestr(&ssh_cmd,NULL);
+                ssh_set_sparam(SSH_SPARAM_CMD, brstrip(command));
+                ssh_set_iparam(SSH_IPARAM_CAS, param2);
+            } else {
+                ssh_set_sparam(SSH_SPARAM_CMD, NULL);
+            }
 
             if (param1 > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_ver_saved) {
-                    sl_ssh_ver = ssh_ver;
+                    sl_ssh_ver = ssh_get_iparam(SSH_IPARAM_VER);
                     sl_ssh_ver_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_ver = param1;
+                ssh_set_iparam(SSH_IPARAM_VER, param1);
             }
             if (param3 > -1) {
 #ifndef SSHTEST
                 if (!sl_ssh_xfw_saved) {
-                    sl_ssh_xfw = ssh_xfw;
+                    sl_ssh_xfw = ssh_get_iparam(SSH_IPARAM_XFW);
                     sl_ssh_xfw_saved = 1;
                 }
 #endif /* SSHTEST */
-                ssh_xfw = param3;
+                ssh_set_iparam(SSH_IPARAM_XFW, param3);
             }
         } else                          /* NET_SSH */
 #endif /* SSHBUILTIN */
@@ -11013,7 +11020,30 @@ setlin(xx, zz, fc) int xx, zz, fc;
                         );
         }
 #endif /* NETDLL */
-
+#ifdef CK_NETBIOS
+        if (mynet == NET_BIOS) {
+            /*
+             * TODO:
+             *   "server name, *,\n or carriage return to close an open connection" :
+             *   "server name, *,\n or carriage return to resume an open connection",
+             */
+            x = cx_net(mynet,	/* nettype */
+			   0,		/* protocol (not used) */
+			   line,	/* host */
+			   "",		/* port */
+			   NULL,	/* alternate username */
+			   NULL,	/* password */
+			   NULL,	/* command to execute */
+			   0,		/* param1 */
+			   0,		/* param2 */
+			   0,		/* param3 */
+			   cx,		/* enter CONNECT mode */
+			   sx,		/* enter SERVER mode */
+			   zz,		/* close connection if open */
+			   0		/* gui */
+			   );
+        }
+#endif /* CK_NETBIOS */
 #ifdef NPIPE                            /* Named pipe */
         if (mynet == NET_PIPE) {        /* Needs backslash twiddling */
             if (line[0]) {
@@ -11868,6 +11898,10 @@ z_open(name, flags) char * name; int flags;
     int i, n;
     FILE * t;
     char * mode;
+#ifdef NT
+    char * modetemp;
+    int modelen;
+#endif
     debug(F111,"z_open",name,flags);
     if (!name) name = "";               /* Check name argument */
     if (!name[0])
@@ -11888,6 +11922,18 @@ z_open(name, flags) char * name; int flags;
         if (!mode[0])                   /* Check for illegal combinations */
           return(z_error = FX_BOM);
     }
+
+#ifdef NT
+    /*
+     * Take a copy of the mode string and append the 'S' sequential read file
+     * caching hint (_O_SEQUENTIAL). We'll free this copy after the call to
+     * fopen later.
+     */
+    modetemp = mode;
+    mode = malloc(10);
+    ckmakmsg(mode, 10, modetemp, "S", NULL, NULL);
+#endif /* NT */
+
     if (!z_inited) {                /* If file structs not inited */
         debug(F101,"z_open z_maxchan 1","",z_maxchan);
 #ifdef UNIX
@@ -11998,6 +12044,9 @@ z_open(name, flags) char * name; int flags;
     }
 #endif /* UNIX */
     t = fopen(name, mode);              /* Try to open the file. */
+#ifdef NT
+    free(mode);     /* This is a copy of the original mode string */
+#endif /* NT */
     if (!t) {                           /* Failed... */
         debug(F111,"z_open error",name,errno);
 #ifdef EMFILE
@@ -12008,12 +12057,22 @@ z_open(name, flags) char * name; int flags;
 	z_file[n] = NULL;
         return(z_error = (errno ?  FX_SYS : FX_UNK)); /* Return error code */
     }
+#ifdef COMMENT
+    /*
+     * 2024-08-19 DavidG: This started crashing on Windows 11 in CKW Beta 6. The
+     * call to setmode seems ok, it just doesn't like O_SEQUENTIAL anymore. Not
+     * sure if this is something unsupported now, or if its a bug in the CRT.
+     * For some reason I've not looked into too closely I'm not even getting
+     * O_SEQUENTIAL defined on my local PC, while its clearly there on the
+     * Gitub build agents.
+     */
 #ifdef NT
 #ifdef O_SEQUENTIAL
     if (t)                              /* Caching hint for NT */
       _setmode(_fileno(t),O_SEQUENTIAL);
 #endif /* O_SEQUENTIAL */
 #endif /* NT */
+#endif /* COMMENT */
 
     z_nopen++;                          /* Open, count it. */
     z_file[n]->z_fp = t;		/* Stash the file pointer */

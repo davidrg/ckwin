@@ -4,7 +4,7 @@ nmake /f tconf.mak CFG="Release"
 nmake /f krypto.mak CFG="Release"
 
 REM Not sure what in the normal SRP build process creates the include directory,
-REM so we'll just populate it with the headers CKW needs.
+REM so we'll just populate it with the headers K95 needs.
 mkdir include
 cd include
 copy ..\libsrp\t_pwd.h

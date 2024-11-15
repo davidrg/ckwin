@@ -1074,6 +1074,24 @@ _PROTOTYP( int tn_sxdisploc, (void) );
 #ifdef CK_SNDLOC
 _PROTOTYP( int tn_sndloc, (void) );
 #endif /* CK_SNDLOC */
+
+/*
+ * The fwdx_parse_displayname function is required if:
+ *   CK_FORWARD_X is defined (Telnet X11 forwarding)
+ *   SSHBUILTIN is defined (SSH X11 forwarding)
+ * Kermit 95 for Windows supports both, but Kermit 95 for OS/2 only supports
+ * X11 forwarding over SSH.
+ */
+#ifdef CK_FORWARD_X
+#define CK_FWDX_PARSE_DISPN
+#else /* CK_FORWARD_X */
+#ifdef SSHBUILTIN
+#ifndef CK_FWDX_PARSE_DISPN
+#define CK_FWDX_PARSE_DISPN
+#endif /* CK_FWDX_PARSE_DISPN */
+#endif /* SSHBUILTIN */
+#endif /* CK_FORWARD_X */
+
 #ifdef CK_FORWARD_X
 /* From Xauth.h */
 typedef struct xauth {
@@ -1092,6 +1110,9 @@ typedef struct xauth {
 #include "ckuusr.h"
 #include "ckcfnp.h"
 
+#endif /* CK_FORWARD_X */
+
+#ifdef CK_FWDX_PARSE_DISPN
 /* from X.h */
 #define FamilyInternet          0
 #define FamilyDECnet            1
@@ -1102,6 +1123,9 @@ typedef struct xauth {
 # define FamilyNetname    (254)   /* not part of X standard */
 # define FamilyKrb5Principal (253) /* Kerberos 5 principal name */
 # define FamilyLocalHost (252)  /* for local non-net authentication */
+#endif /* CK_FWDX_PARSE_DISPN */
+
+#ifdef CK_FORWARD_X
 char *XauFileName();
 
 Xauth *XauReadAuth(
@@ -1151,12 +1175,17 @@ _PROTOTYP( int fwdx_authorize_channel, (int, unsigned char *, int));
 _PROTOTYP( int fwdx_create_fake_xauth, (char *, int, int));
 _PROTOTYP( int fwdx_send_xauth_to_xserver, (int, unsigned char *, int len));
 _PROTOTYP( int fwdx_server_avail, (VOID));
-_PROTOTYP( int fwdx_parse_displayname, (char *, int *, char **, int *, int *, char **));
 
 #ifdef NT
 _PROTOTYP( VOID fwdx_thread,(VOID *));
 #endif /* NT */
 #endif /* CK_FORWARD_X */
+
+#ifdef CK_FWDX_PARSE_DISPN
+/* This function is used for SSH X11 forwarding which works
+ * whether or not Telnet X11 forwarding is supported. */
+_PROTOTYP( int fwdx_parse_displayname, (char *, int *, char **, int *, int *, char **));
+#endif /* FWDX_PARSE_DISPN */
 
 #ifdef TN_COMPORT
 #define TNC_C2S_SIGNATURE                 0
