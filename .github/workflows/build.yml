@@ -230,7 +230,7 @@ jobs:
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
     - name: Cache Optional Dependencies
-      uses: actions/cache@v4
+      uses: "./.github/actions/cache"
       id: cache-optional-dependencies
       with:
         path: |
@@ -368,7 +368,7 @@ jobs:
       shell: powershell
 
     - name: Build zlib (x86/x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
@@ -376,7 +376,7 @@ jobs:
         nmake -f win32\Makefile.msc
 
     - name: Build zlib (arm32/arm64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
       shell: cmd
       run: |
         cd zlib\${{env.ZLIB_VERSION}}
@@ -384,7 +384,7 @@ jobs:
         nmake
 
     - name: Build openssl (x86)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x86'
       shell: cmd
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -400,7 +400,7 @@ jobs:
         ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x64'
       shell: cmd
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -416,7 +416,7 @@ jobs:
         ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (ARM)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x64_arm'
       shell: cmd
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -427,7 +427,7 @@ jobs:
         ${{env.OPENSSL_MAKE}}
 
     - name: Build openssl (ARM-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x64_arm64'
       shell: cmd
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -437,7 +437,7 @@ jobs:
         ${{env.OPENSSL_MAKE}}
 
     - name: Build libssh (x86/x86-64, Vista+)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       env:
         ROOT: ${{ github.workspace }}
@@ -455,7 +455,7 @@ jobs:
         call build.bat /M out /C /R /W ${{env.LIBSSH_VERSION}}
 
     - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && (matrix.arch == 'x86' || matrix.arch == 'x64')
       shell: cmd
       env:
         ROOT: ${{ github.workspace }}
@@ -476,7 +476,7 @@ jobs:
         call build.bat /M out /N g /G /C /R /W ${{env.LIBSSH_VERSION}}
 
     - name: Build libssh (x86/x86-64, XP)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && (matrix.toolset == '14.0' || matrix.toolset == '14.1' || matrix.toolset == '14.2')
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && (matrix.arch == 'x86' || matrix.arch == 'x64') && (matrix.toolset == '14.0' || matrix.toolset == '14.1' || matrix.toolset == '14.2')
       shell: cmd
       env:
         ROOT: ${{ github.workspace }}
@@ -496,7 +496,7 @@ jobs:
         call build.bat /M out /N x /C /R /X ${{env.LIBSSH_VERSION}}    
 
     - name: Build libssh (x86/x86-64, XP, GSSAPI)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && (matrix.toolset == '14.0' || matrix.toolset == '14.1' || matrix.toolset == '14.2')
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && (matrix.arch == 'x86' || matrix.arch == 'x64') && (matrix.toolset == '14.0' || matrix.toolset == '14.1' || matrix.toolset == '14.2')
       shell: cmd
       env:
         ROOT: ${{ github.workspace }}
@@ -519,7 +519,7 @@ jobs:
       # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
       # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
     - name: Build libssh (arm32)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x64_arm'
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
@@ -528,7 +528,7 @@ jobs:
 
       # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
     - name: Build libssh (arm64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x64_arm64'
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
@@ -536,7 +536,7 @@ jobs:
         nmake        
 
     - name: Build libdes
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true')
       shell: cmd
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom
@@ -546,7 +546,7 @@ jobs:
         call mknt.bat
 
     - name: Build Regina REXX (x86)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+      if: (vars.NOCACHE != '' || steps.cache-optional-dependencies.outputs.cache-hit != 'true') && matrix.arch == 'x86'
       shell: cmd
       run: |
         set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
@@ -604,7 +604,7 @@ jobs:
 #    TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
 #          an incompatible target architecture:
 #
-#	.\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
+#       .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
 #      NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
 #              This version of %1 is not compatible with the version of Windows
 #              you're running. Check your computer's system information and then
@@ -799,7 +799,7 @@ jobs:
         # Fetch the compiler                                                     #
         ##########################################################################
       - name: Cache Compiler
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-compiler
         with:
           path: |
@@ -831,7 +831,7 @@ jobs:
         # Build optional dependencies (openssl, libdes)                          #
         ##########################################################################
       - name: Cache Optional Dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-optional-dependencies
         with:
           path: |
@@ -1053,7 +1053,7 @@ jobs:
       # Cache Open Watcom because it takes quite a while to download and
       # decompress.
     - name: Cache openzinc
-      uses: actions/cache@v4
+      uses: "./.github/actions/cache"
       id: cache-openzinc
       with:
         path: |
@@ -1267,7 +1267,7 @@ jobs:
         with:
           version: "1.9"
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-dependencies
         with:
           path: |
@@ -1440,7 +1440,7 @@ jobs:
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
       - name: Cache VCT2003
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-vct2003
         with:
           path: |
@@ -1468,7 +1468,7 @@ jobs:
         shell: powershell
 
       - name: Cache legacy dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-legacy-deps
         if: matrix.legacy_dependencies == 'yes'
         with:
@@ -1837,7 +1837,7 @@ jobs:
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
       - name: Cache VCT2003+libdes
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-vct2003
         with:
           path: |
@@ -1973,7 +1973,7 @@ jobs:
         run: sudo apt install -y g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64
 
       - name: Cache Dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-dependencies
         with:
           path: |
@@ -2066,7 +2066,7 @@ jobs:
         # Cache the C-Kermit code so that we're not hitting the C-Kermit website
         # for every build.
       - name: Cache code
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-code
         with:
           path: |
