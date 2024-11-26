@@ -12230,6 +12230,8 @@ z_in(channel,s,buflen,length,flags)
       return(z_error = FX_NOP);
     if (channel >= z_maxchan)
       return(z_error = FX_CHN);
+    if (channel < 0)
+      return(z_error = FX_CHN);
     if (!z_file[channel])
       return(z_error = FX_NOP);
     if (!(t = z_file[channel]->z_fp))
