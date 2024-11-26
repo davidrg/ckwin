@@ -166,6 +166,8 @@ by OpenSSH on modern versions of windows, add the command
   have a value as this broke the use of the standard login.ksc script.
 * Fixed K95 bug 770: When editing an FTP entry in the dialer the general settings
   page doesn't load the port number causing it to be cleared on save.
+* Fixed `TYPE` command error "The /HEIGHT switch is not supported without /GUI"
+  when the `/HEIGHT` switch has not been supplied.
 
 ### Other Source Changes
 * Fixed a selection of build warnings, and improved compatibility with the 
