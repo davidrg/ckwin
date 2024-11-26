@@ -8,6 +8,9 @@ inputs:
   key:
     description: 'cache key'
     default: ''
+  nocache:
+    description: 'skip cache'
+    default: ''
 outputs:
   cache-hit:
     description: 'output cache-hit'
@@ -16,14 +19,14 @@ runs:
   using: composite
   steps:
     - name: Cache Optional Dependencies
-      if: vars.NOCACHE != 'true'
+      if: inputs.nocache != 'true'
       uses: actions/cache@v4
       id: cachecmd
       with:
         path: ${{ inputs.path }}
         key: ${{ inputs.key }}
     - name: output value
-      if: vars.NOCACHE == 'true'
+      if: inputs.nocache == 'true'
       run: |
         echo "steps.cachecmd.outputs.cache-hit=false" >> $GITHUB_OUTPUT
       shell: bash
