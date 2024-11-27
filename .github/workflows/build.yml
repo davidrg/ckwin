@@ -306,9 +306,11 @@ jobs:
         del *.gz
         cd ..
         
-        # Get and unpack nasm
+        # CD into the tools directory
         mkdir tools
         cd tools
+
+        # Get and unpack nasm
         wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
         7z x nasm-2.15.05-win32.zip
         ren nasm-2.15.05 nasm
@@ -341,10 +343,8 @@ jobs:
         dir ${{github.workspace}}\kerberos\kfw
         cd ..
         
+        # CD out of the tools directory
         cd ..          
-        
-        # Install perl modules required by OpenSSL build
-        cpan -i Text::Template
         
         cd rexx
         
@@ -365,6 +365,8 @@ jobs:
         # CD out of the rexx directory
         cd ..
 
+        # Install perl modules required by OpenSSL build
+        cpan -i Text::Template
       shell: powershell
 
     - name: Build zlib (x86/x86-64)
@@ -1468,9 +1470,9 @@ jobs:
         shell: powershell
 
       - name: Cache legacy dependencies
+        if: matrix.legacy_dependencies == 'yes'
         uses: "./.github/actions/cache"
         id: cache-legacy-deps
-        if: matrix.legacy_dependencies == 'yes'
         with:
           path: |
             ${{github.workspace}}\srp-2.1.2
@@ -1996,6 +1998,7 @@ jobs:
           tar zxf openssl-${{env.OPENSSL_VERSION}}.tar.gz
           rm openssl-${{env.OPENSSL_VERSION}}.tar.gz
           cd openssl-${{env.OPENSSL_VERSION}}
+          sudo cpan -i Text::Template
           perl Configure mingw64
           make depend
           make -j 2
