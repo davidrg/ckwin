@@ -23,7 +23,7 @@ if not exist dist\users\NUL mkdir dist\users
 @echo Move build outputs...
 move *.exe dist
 if exist *.pdb move *.pdb dist
-if exist dist\nullssh.pdb delete dist\nullssh.pdb
+if exist dist\nullssh.pdb del dist\nullssh.pdb
 if exist k95ssh*.dll move k95ssh*.dll dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
