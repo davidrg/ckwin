@@ -129,6 +129,12 @@ filename = lower(filename)
 
 input_file = src_dir"/"filename
 output_file = dest_dir""filename
+
+if use_html = 0 then do
+    /* And update the name of *this* file we're processing */
+    output_file = changestr(".html",output_file,".htm")
+end
+
 say "UPDATE " input_file "--->" output_file
 
 /* Git prevers the forward slashes, so save a copy of the filename before
@@ -137,11 +143,6 @@ git_fn = input_file
 
 input_file = changestr("/",input_file,"\")
 output_file = changestr("/",output_file,"\")
-
-if use_html = 0 then do
-    /* And update the name of *this* file we're processing */
-    output_file = changestr(".html",output_file,".htm")
-end
 
 /* This is the date from git, if we're asked to do that */
 git_date = ''
@@ -211,9 +212,9 @@ do while lines(input_file) = 1
         output_string = changestr('="index.html',output_string,'="kermit95.htm')
 
         /* replace any references to .html files with .htm files */
-        do j=1 for #
-            old_fn = html_files.j
-            new_fn = substr(html_files.j,1,length(html_files.j)-1)
+        do k=1 for #
+            old_fn = html_files.k
+            new_fn = substr(html_files.k,1,length(html_files.k)-1)
             /*say old_fn "-->" new_fn*/
             output_string = changestr('="'old_fn,output_string,'="'new_fn)
         end
