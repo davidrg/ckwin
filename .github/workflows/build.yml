@@ -205,7 +205,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Select env configuration
       run: |
-        if [ matrix.arch = 'x64_arm' || matrix.arch = 'x64_arm64' ]; then
+        if [[ "${{ matrix.arch }}" = "x64_arm" || "${{ matrix.arch }}" = "x64_arm64" ]]; then
           echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_ARM_VERSION }}" >> "$GITHUB_ENV"
           echo "CK_K4W_PATH=." >> "$GITHUB_ENV"
         else
