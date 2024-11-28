@@ -148,11 +148,6 @@ REM   64 - Use stdout for output instead of the console/terminal emulator
 echo Disting the manual to %OUT_DIR%...
 
 
-REM mkdocs.ksc needs default.ksc in order to regenerate default.html
-echo Save keymap to %manual_dist_dir%default.ksc...
-k95.exe -Y -# 94 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
-
-
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
 k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed

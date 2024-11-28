@@ -270,13 +270,14 @@ for \%x 1 \fdim(&o) 1 {
 ;       directory also makes default.ksc provided the target binaries are
 ;       compatible with the host, and if the aren't we won't be able to run
 ;       this script with them anyway)
-echo Updating default keymap HTML file (default.html) from \m(dest)../../keymaps/default.ksc
+echo Updating default keymap HTML file (default.html)...
 
 .defhtm := \m(dest)default.html
 if = \m(web_mode) 0 {
     .defhtm := \m(dest)default.htm
 }
 
+save keymap \m(dest)default.ksc
 fopen /read \%i \m(dest)default.ksc
 fopen /write \%o \m(defhtm)
 fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
