@@ -235,11 +235,9 @@ echo HTML Files: \m(html_files)
 mkdir \m(dest)
 
 echo Processing \fdim(&f) HTML files...
-echo Hand over to REXX
 rexx call mkdocs
-echo Back from REXX
 
-echo Processing \fdim(&o) Other files...
+echo Copying \fdim(&o) Other files...
 
 for \%x 1 \fdim(&o) 1 {
     ; echo Loop Top iteration \%x of \fdim(&o)
