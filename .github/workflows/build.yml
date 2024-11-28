@@ -15,7 +15,7 @@ env:
   # so we switched fetching zlib from ftp.zx.net.nz instead. As of 2024-08-16 it seems to be
   # fine, so we've switched back to zlib.net.
   ZLIB_VERSION: 1.3.1
-  # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz
+  # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
   OPENSSL_VERSION: 3.4.0
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
@@ -203,7 +203,30 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Select env configuration
+      run: |
+        if [ matrix.arch = 'x64_arm' || matrix.arch = 'x64_arm64' ]; then
+          echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_ARM_VERSION }}" >> "$GITHUB_ENV"
+          echo "CK_K4W_PATH=." >> "$GITHUB_ENV"
+        else
+          echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}" >> "$GITHUB_ENV"
+          echo "CK_K4W_PATH=kerberos\current\Kerberos" >> "$GITHUB_ENV"
+        fi
+      shell: bash
+    # temporary setup Windows SDK version for 32-bit ARM to 10.0.22621.0 because
+    # latest SDK version 10.0.26100.0 doesn't contains 32-bit ARM files
     - name: Enable Developer Command Prompt
+      if: matrix.arch == 'x64_arm'
+      # You may pin to the exact commit or the version.
+      # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{ matrix.arch }}
+        toolset: ${{ matrix.toolset }}
+        sdk: '10.0.22621.0'
+        #spectre: # set true to use VC libraries with sepctre mitigations
+    - name: Enable Developer Command Prompt
+      if: matrix.arch != 'x64_arm'
       # You may pin to the exact commit or the version.
       # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
       uses: ilammy/msvc-dev-cmd@v1
@@ -217,13 +240,12 @@ jobs:
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
     - name: Cache Optional Dependencies
-      uses: actions/cache@v4
+      uses: "./.github/actions/cache"
       id: cache-optional-dependencies
       with:
         path: |
           ${{github.workspace}}\zlib 
-          ${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
-          ${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
+          ${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
           ${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
           ${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}-gssapi
           ${{github.workspace}}\libdes\des
@@ -233,19 +255,11 @@ jobs:
           ${{github.workspace}}\kerberos\kfw
           ${{github.workspace}}\rexx\regina
           ${{github.workspace}}\rexx\rexxre
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.OPENSSL_VERSION}}+arm-openssl-${{env.OPENSSL_ARM_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+rexxre+ver3
+        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.CK_OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VER}}+rexxre+ver3
+        nocache: ${{ vars.NOCACHE }}
     - name: Get dependencies
       if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
       run: |
-        # Figure out what OPENSSL version we're using
-        $openssl_version = "${{env.OPENSSL_VERSION}}"
-        if ("${{matrix.arch}}" -eq "x64_arm" -Or "${{matrix.arch}}" -eq "x64_arm64") {
-          echo "Targeting Windows on ARM, using OpenSSL ${{env.OPENSSL_ARM_VERSION}}"
-          $openssl_version = "${{env.OPENSSL_ARM_VERSION}}"
-        }
-        
-        $openssl_url = "https://github.com/openssl/openssl/releases/download/openssl-${openssl_version}/openssl-${openssl_version}.tar.gz"
-        
         # Get and unpack zlib
         mkdir zlib
         cd zlib
@@ -262,10 +276,10 @@ jobs:
         
         # Get and unpack openssl
         cd openssl
-        wget $openssl_url -outfile openssl-${openssl_version}.tar.gz
-        7z x openssl-${openssl_version}.tar.gz
-        7z x openssl-${openssl_version}.tar
-        ren openssl-${openssl_version} ${openssl_version}
+        wget "https://github.com/openssl/openssl/releases/download/openssl-${{ env.CK_OPENSSL_VERSION }}/openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz" -outfile openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz
+        7z x openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz
+        7z x openssl-${{ env.CK_OPENSSL_VERSION }}.tar
+        ren openssl-${{ env.CK_OPENSSL_VERSION }} ${{ env.CK_OPENSSL_VERSION }}
         del *.tar 
         del *.gz
         cd ..
@@ -293,9 +307,11 @@ jobs:
         del *.gz
         cd ..
         
-        # Get and unpack nasm
+        # CD into the tools directory
         mkdir tools
         cd tools
+
+        # Get and unpack nasm
         wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
         7z x nasm-2.15.05-win32.zip
         ren nasm-2.15.05 nasm
@@ -328,10 +344,8 @@ jobs:
         dir ${{github.workspace}}\kerberos\kfw
         cd ..
         
+        # CD out of the tools directory
         cd ..          
-        
-        # Install perl modules required by OpenSSL build
-        cpan -i Text::Template
         
         cd rexx
         
@@ -352,6 +366,8 @@ jobs:
         # CD out of the rexx directory
         cd ..
 
+        # Install perl modules required by OpenSSL build
+        cpan -i Text::Template
       shell: powershell
 
     - name: Build zlib (x86/x86-64)
@@ -376,7 +392,7 @@ jobs:
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
-        cd openssl\${{env.OPENSSL_VERSION}}
+        cd openssl\${{env.CK_OPENSSL_VERSION}}
         perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
         REM The linker by default marks the subsystem version too high for XP
@@ -392,7 +408,7 @@ jobs:
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
-        cd openssl\${{env.OPENSSL_VERSION}}
+        cd openssl\${{env.CK_OPENSSL_VERSION}}
         perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
         REM The linker by default marks the subsystem version too high for XP
@@ -408,7 +424,7 @@ jobs:
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
-        cd openssl\${{env.OPENSSL_ARM_VERSION}}
+        cd openssl\${{env.CK_OPENSSL_VERSION}}
         perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}} 
         
         ${{env.OPENSSL_MAKE}}
@@ -419,7 +435,7 @@ jobs:
       run: |
         set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
         echo %PATH%
-        cd openssl\${{env.OPENSSL_ARM_VERSION}}
+        cd openssl\${{env.CK_OPENSSL_VERSION}}
         perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
         ${{env.OPENSSL_MAKE}}
 
@@ -429,7 +445,7 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
       run: |
-        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
         call setenv.bat
         cd ${{ github.workspace }}\libssh
@@ -447,9 +463,9 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
       run: |
-        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
-        set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
+        set k4w_root_override=${{github.workspace}}\${{ env.CK_K4W_PATH }}
         call setenv.bat
         cd ${{ github.workspace }}\libssh
         
@@ -468,7 +484,7 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
       run: |
-        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
         call setenv.bat
         cd ${{ github.workspace }}\libssh
@@ -488,9 +504,9 @@ jobs:
       env:
         ROOT: ${{ github.workspace }}
       run: |
-        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
-        set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
+        set k4w_root_override=${{github.workspace}}\${{ env.CK_K4W_PATH }}
         call setenv.bat
         cd ${{ github.workspace }}\libssh
         
@@ -510,7 +526,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
         nmake
 
       # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
@@ -519,7 +535,7 @@ jobs:
       shell: powershell
       run: |
         cd libssh\${{env.LIBSSH_VERSION}}\build
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -DWITH_DSA=ON
+        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}\ -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}} -DWITH_DSA=ON
         nmake        
 
     - name: Build libdes
@@ -591,7 +607,7 @@ jobs:
 #    TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
 #          an incompatible target architecture:
 #
-#	.\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
+#       .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
 #      NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
 #              This version of %1 is not compatible with the version of Windows
 #              you're running. Check your computer's system information and then
@@ -636,21 +652,12 @@ jobs:
       ##########################################################################
     - name: Full Build
       run: |
-        set k4w_root_override=${{github.workspace}}\kerberos\kfw\Kerberos
-        set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+        set k4w_root_override=${{github.workspace}}\${{ env.CK_K4W_PATH }}
+        set openssl_root_override=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
         set zlib_root_override=${{github.workspace}}\zlib\${{env.ZLIB_VERSION}}
         set libssh_root_override=${{github.workspace}}\libssh\${{env.LIBSSH_VERSION}}
         set libssh_build_override=%libssh_root_override%\build
         set rexx_root_override=${{github.workspace}}\rexx\regina\
-        
-        REM We're currently using a different version of Openssl on ARM Windows
-        REM as the current LTS release isn't compatible.
-        if "${{matrix.arch}}" == "x64_arm" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
-        if "${{matrix.arch}}" == "x64_arm64" set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_ARM_VERSION}}
-        
-        REM No Kerberos on ARM Windows yet 
-        if "${{matrix.arch}}" == "x64_arm" set k4w_root_override=${{github.workspace}}
-        if "${{matrix.arch}}" == "x64_arm64" set k4w_root_override=${{github.workspace}}
         
         call ..\setenv.bat
         
@@ -782,11 +789,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Select env configuration
+        run: echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}" >> "$GITHUB_ENV"
+        shell: bash
         ##########################################################################
         # Fetch the compiler                                                     #
         ##########################################################################
       - name: Cache Compiler
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-compiler
         with:
           path: |
@@ -795,6 +805,7 @@ jobs:
             ${{github.workspace}}\vc10.cmd
             ${{github.workspace}}\vcredist_x86.exe
           key: platform-sdk-71-compiler+sdk+redist
+          nocache: ${{ vars.NOCACHE }}
       - name: Get Windows 7 Platform SDK v7.1
         if: steps.cache-compiler.outputs.cache-hit != 'true'
         run: |
@@ -818,27 +829,28 @@ jobs:
         # Build optional dependencies (openssl, libdes)                          #
         ##########################################################################
       - name: Cache Optional Dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-optional-dependencies
         with:
           path: |
             ${{github.workspace}}\zlib 
-            ${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+            ${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
             ${{github.workspace}}\libssh
             ${{github.workspace}}\libdes\des
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\tools
-          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.OPENSSL_VERSION}}+libdes+v3
+          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.CK_OPENSSL_VERSION}}+libdes+v3
+          nocache: ${{ vars.NOCACHE }}
       - name: Get dependencies
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
         run: |         
           # Get and unpack openssl
           cd openssl
-          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.OPENSSL_VERSION}}.tar.gz
-          7z x openssl-${{env.OPENSSL_VERSION}}.tar.gz
-          7z x openssl-${{env.OPENSSL_VERSION}}.tar
-          ren openssl-${{env.OPENSSL_VERSION}} ${{env.OPENSSL_VERSION}}
+          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
+          7z x openssl-${{env.CK_OPENSSL_VERSION}}.tar
+          ren openssl-${{env.CK_OPENSSL_VERSION}} ${{env.CK_OPENSSL_VERSION}}
           del *.tar 
           del *.gz
           cd ..
@@ -887,7 +899,7 @@ jobs:
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           call vc10.cmd /release /xp /${{matrix.arch}}
           
-          cd openssl\${{env.OPENSSL_VERSION}}
+          cd openssl\${{env.CK_OPENSSL_VERSION}}
           perl Configure VC-WIN64I -D"_WIN32_WINNT=0x502"
           
           REM The perl configure script doesn't work quite right for cross-compiling to IA64
@@ -903,7 +915,7 @@ jobs:
           SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
           
-          cd openssl\${{env.OPENSSL_VERSION}}
+          cd openssl\${{env.CK_OPENSSL_VERSION}}
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
           perl Configure VC-WIN64A -D"_WIN32_WINNT=0x502"
@@ -921,7 +933,7 @@ jobs:
           SET PlatformToolset=100
           call vc10.cmd /release /xp /${{matrix.arch}}
           
-          cd openssl\${{env.OPENSSL_VERSION}}
+          cd openssl\${{env.CK_OPENSSL_VERSION}}
           
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
@@ -958,7 +970,7 @@ jobs:
           call vc10.cmd /release /xp /${{matrix.arch}}
           
           echo Configure build environment...
-          set openssl_root_override=${{github.workspace}}\openssl\${{env.OPENSSL_VERSION}}
+          set openssl_root_override=${{github.workspace}}\openssl\${{env.CK_OPENSSL_VERSION}}
           call setenv.bat
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
@@ -1040,12 +1052,13 @@ jobs:
       # Cache Open Watcom because it takes quite a while to download and
       # decompress.
     - name: Cache openzinc
-      uses: actions/cache@v4
+      uses: "./.github/actions/cache"
       id: cache-openzinc
       with:
         path: |
           ${{github.workspace}}\zinc
         key: openzinc1
+        nocache: ${{ vars.NOCACHE }}
 
     - name: Get openzinc
       if: steps.cache-openzinc.outputs.cache-hit != 'true'
@@ -1254,7 +1267,7 @@ jobs:
         with:
           version: "1.9"
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-dependencies
         with:
           path: |
@@ -1262,6 +1275,7 @@ jobs:
             ${{github.workspace}}\info-zip
             ${{github.workspace}}\toolkit
           key: openzinc1+infozip+os2tk45
+          nocache: ${{ vars.NOCACHE }}
       - name: Get dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: |
@@ -1427,13 +1441,14 @@ jobs:
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
       - name: Cache VCT2003
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-vct2003
         with:
           path: |
             ${{github.workspace}}\vct2003
             ${{github.workspace}}\jom
           key: vct2003+psdk2003sp1+jom
+          nocache: ${{ vars.NOCACHE }}
 
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
@@ -1455,9 +1470,9 @@ jobs:
         shell: powershell
 
       - name: Cache legacy dependencies
-        uses: actions/cache@v4
-        id: cache-legacy-deps
         if: matrix.legacy_dependencies == 'yes'
+        uses: "./.github/actions/cache"
+        id: cache-legacy-deps
         with:
           path: |
             ${{github.workspace}}\srp-2.1.2
@@ -1469,6 +1484,7 @@ jobs:
             ${{github.workspace}}\superlat
             ${{github.workspace}}\tools
           key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.0-ver2
+          nocache: ${{ vars.NOCACHE }}
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
@@ -1824,7 +1840,7 @@ jobs:
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
       - name: Cache VCT2003+libdes
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-vct2003
         with:
           path: |
@@ -1834,6 +1850,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\tools
           key: vct2003+psdk2003sp1+libdes+v2+jom1
+          nocache: ${{ vars.NOCACHE }}
       - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003 + libdes
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
         run: |
@@ -1955,23 +1972,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Select env configuration
+        run: echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}" >> "$GITHUB_ENV"
+        shell: bash
 
       - name: Install MinGW-w64
         run: sudo apt install -y g++-mingw-w64-x86-64-posix gcc-mingw-w64-x86-64-posix binutils-mingw-w64-x86-64
 
       - name: Cache Dependencies
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-dependencies
         with:
           path: |
             ${{github.workspace}}/openssl
             ${{github.workspace}}/libssh
             ${{github.workspace}}/zlib
-          key: deps-openssl-${{env.OPENSSL_VERSION}}-parallel
+          key: deps-openssl-${{env.CK_OPENSSL_VERSION}}-parallel
+          nocache: ${{ vars.NOCACHE }}
 
       - name: Build OpenSSL
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        shell: bash
         env:
           CXX: /usr/bin/x86_64-w64-mingw32-c++
           CC: /usr/bin/x86_64-w64-mingw32-gcc
@@ -1979,13 +1999,15 @@ jobs:
         run: |
           mkdir -p openssl
           cd openssl
-          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.OPENSSL_VERSION}}/openssl-${{env.OPENSSL_VERSION}}.tar.gz
-          tar zxf openssl-${{env.OPENSSL_VERSION}}.tar.gz
-          rm openssl-${{env.OPENSSL_VERSION}}.tar.gz
-          cd openssl-${{env.OPENSSL_VERSION}}
+          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
+          tar zxf openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
+          rm openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
+          cd openssl-${{env.CK_OPENSSL_VERSION}}
+          sudo cpan -i Text::Template
           perl Configure mingw64
           make depend
           make -j 2
+        shell: bash
 
       - name: Build
         shell: bash
@@ -1994,7 +2016,7 @@ jobs:
           CC: /usr/bin/x86_64-w64-mingw32-gcc
         run: |
           cd kermit/k95
-          make -j 2 RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.OPENSSL_VERSION}}/
+          make -j 2 RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=../../openssl/openssl-${{env.CK_OPENSSL_VERSION}}/
       - name: Make Distribution
         shell: bash
         run: |
@@ -2053,13 +2075,14 @@ jobs:
         # Cache the C-Kermit code so that we're not hitting the C-Kermit website
         # for every build.
       - name: Cache code
-        uses: actions/cache@v4
+        uses: "./.github/actions/cache"
         id: cache-code
         with:
           path: |
             ${{github.workspace}}/ckermit
             ${{github.workspace}}/openssl
           key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-r1
+          nocache: ${{ vars.NOCACHE }}
       - name: Get C-Kermit ${{env.C_KERMIT_VERSION}}
         if: steps.cache-code.outputs.cache-hit != 'true'
         run: |

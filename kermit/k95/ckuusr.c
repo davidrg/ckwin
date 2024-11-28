@@ -12766,7 +12766,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
-    int height;
+    int height = 0;
 	char guibuf[128], * gui_title = NULL;
 	int  gui = 0;
 #endif /* KUI */
