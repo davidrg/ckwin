@@ -138,18 +138,29 @@ set REGINA_MACROS=%docs_root%
 
 pushd %dist_root%
 
-echo Disting the manual...
+REM -# 94 is the sum of:
+REM    2 - Do not load optional network DLLs     +  These four are to skip
+REM    4 - Do not load optional TAPI DLLs        +  loading features we don't
+REM    8 - Do not load optional Kerberos DLLs    +  need to reduce startup time
+REM   16 - Do not load optional zmodem DLLs      +
+REM   64 - Use stdout for output instead of the console/terminal emulator
 
-k95.exe -Y -# 95 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
+echo Disting the manual to %OUT_DIR%...
+
+
+REM mkdocs.ksc needs default.ksc in order to regenerate default.html
+echo Save keymap to %manual_dist_dir%default.ksc...
+k95.exe -Y -# 94 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
+
 
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
-k95.exe %docs_root%\mkdocs.ksc -Y -# 95 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed
+k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed
 
 
 REM And update modified dates for anything that hasn't changed since the manual
 REM was added to git
-k95.exe -Y -H -# 95 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit" || goto :failed
+k95.exe -Y -H -# 94 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit" || goto :failed
 
 echo manual done.
 goto :finished
