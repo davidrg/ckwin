@@ -2200,6 +2200,25 @@ jobs:
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
 
+  ##############################################################################
+  # Generate final "releasable" artifacts                                      #
+  ##############################################################################
+  # This produces releasable artifacts containing the manual and anything
+  # else that isn't generated as part of the normal build.
+  #
+  # At this time this is limited to the manual. *IF* OpenWatcom supported
+  # ctl3d32 then we'd also insert the OpenWatcom-built dialer here too.
+  #
+  # For x86, x86-64 and arm32 we use the Visual C++ 14.2-built artifacts
+  # as this is newest we can get away with for Windows XP and Windows RT.
+  #
+  # For ARM64 we use the latest compiler (Visual C++ 14.4)
+  #
+  # For IA64 we use the Visual C++ 2010 version (Visual C++ 10.0)
+  #
+  # The results are all k95-${arch}.zip
+  #
+
   Update-x86-Artifact:
     runs-on: windows-latest
     needs: Build-Manual-Dist
@@ -2208,17 +2227,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: k95-vc14.2-x86
-          path: ${{ github.workspace }}\dist
+          path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
         with:
           name: k95-manual-dist
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95\docs\manual
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: k95-x86
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95
           retention-days: 1
 
   Update-x86-64-Artifact:
@@ -2229,17 +2248,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: k95-vc14.2-x64
-          path: ${{ github.workspace }}\dist
+          path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
         with:
           name: k95-manual-dist
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95\docs\manual
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: k95-x86-64
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95
           retention-days: 7
 
   Update-arm32-Artifact:
@@ -2250,17 +2269,17 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: k95-vc14.2-x64_arm
-          path: ${{ github.workspace }}\dist
+          path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
         with:
           name: k95-manual-dist
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95\docs\manual
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: k95-arm32
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95
           retention-days: 7
 
   Update-arm64-Artifact:
@@ -2271,15 +2290,36 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: k95-vc14.4-x64_arm64
-          path: ${{ github.workspace }}\dist
+          path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
         with:
           name: k95-manual-dist
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95\docs\manual
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: k95-arm64
-          path: ${{ github.workspace }}\dist\docs\manual
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-ia64-Artifact:
+    runs-on: windows-latest
+    needs: [Build-Manual-Dist, Build-PSDK71]
+    steps:
+      - name: Fetch K95 ia64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc10-ia64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-ia64
+          path: ${{ github.workspace }}\k95
           retention-days: 7
