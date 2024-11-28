@@ -2105,7 +2105,7 @@ jobs:
       - name: Prepare Documentation
         run: |
           set root=${{ github.workspace }}
-          mkdocs.bat /W /D
+          call mkdocs.bat /W /D
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact

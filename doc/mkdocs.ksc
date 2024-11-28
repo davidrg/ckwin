@@ -73,6 +73,8 @@
 ; TODO: Add a "prerelease" flag that would add a header to the top of every
 ;       page indicating this documentation is preliminary, etc.
 
+log debug
+
 local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modified touch_date
 
 ; ============================================================================
@@ -108,16 +110,14 @@ if not defined \%2 usage
 .dest := \Fcontents(\%2)
 
 .touch_files := true
-.dry_run := false
 .dev_mode := false
 .web_mode := 1
 .use_https := 1
 
 if defined \%3 .touch_files := \%3
-if defined \%4 .dry_run := \%4
-if defined \%5 .dev_mode := \%5
-if defined \%6 .web_mode := \%6
-if defined \%7 .use_https := \%7
+if defined \%5 .dev_mode := \%4
+if defined \%6 .web_mode := \%5
+if defined \%7 .use_https := \%6
 
 if \m(dev_mode) {
   .dev_mode = 1
@@ -198,29 +198,6 @@ define date_to_touch_date {
 }
 
 ; ============================================================================
-; Function to update tags in a single file
-
-def process_file {
-	local file_in file_out gitdate git_date
-	define \%9
-
-	.file_in := \Freplace(\%1,/,\\)
-	.file_out := \Freplace(\%2,/,\\)
-	.gitdate := \%3
-
-	; ============================================================================
-	; Get file modified date from git if requested
-	if = \m(gitdate) 1 {
-		.git_date := \Fcommand(git log -1 --pretty="format:%ci" \m(file_in) 2> nul)
-	}
-
-    ; Update the file. This is done in REXX as its easier (regular expressions)
-    ; and faster.
-    rexx call mkdocs
-}
-
-
-; ============================================================================
 ; Process files
 
 ; Make sure the src directory uses forward slashes
@@ -232,71 +209,62 @@ if neq "\Fsubstring(\m(dest),\flength(\m(dest)),1)" "/" {
 	.dest := \m(dest)/
 }
 
-array declare f
+array declare f o
 
-dir /array:f /files \m(src)
+; HTML files that need transforming
+dir /array:f /files \m(src)/*.html
 
-if = \m(web_mode) 0 {
-    ; If not in web-mode, build a list of .html files that will need to be
-    ; renamed to .htm
+; Other files that just need copying and maybe touching
+dir /array:o /files \m(src)/{*.css,*.gif,*.jpg}
 
-    local curdir
-    array declare g
+; Build a list of .html files that need processing
 
-    .curdir := \v(directory)
-    cd \m(src)
-    dir /array:g /files *.html
-    cd \m(curdir)
+local curdir
+array declare g
 
-    ; mkdocs.rex will pick up the list of .html files to rename from here.
-    .html_files := \fjoin(&g[],{,})
-}
+.curdir := \v(directory)
+cd \m(src)
+dir /array:g /files *.html
+cd \m(curdir)
+
+; mkdocs.rex will pick up the list of .html files to rename from here.
+.html_files := \fjoin(&g[],{,})
+
+echo HTML Files: \m(html_files)
 
 mkdir \m(dest)
 
-echo Processing \fdim(&f) files...
+echo Processing \fdim(&f) HTML files...
+echo Hand over to REXX
+rexx call mkdocs
+echo Back from REXX
 
-.\%x = 1
-while <= \%x \fdim(&f) {
-	.idx := \Fsearch(*.{htm,html},\&f[\%x])
+echo Processing \fdim(&o) Other files...
 
-	.src_file := \&f[\%x]
-	.dst_file := \m(dest)\Fbasename(\&f[\%x])
-	.src_date := \Fdate(\m(src_file))
+for \%x 1 \fdim(&o) 1 {
+    ; echo Loop Top iteration \%x of \fdim(&o)
 
-	if = \m(idx) 1 {
-		echo \%x. UPDATE  \m(src_file)  ---> \m(dst_file)
-		if \m(dry_run) {
-			echo process_file \m(src_file) \m(dst_file) \m(touch_files)
-		} else {
-				 process_file \m(src_file) \m(dst_file) \m(touch_files)
-		}
-	}
-	else {
-		echo \%x. COPY    \m(src_file)  ---> \m(dst_file)
+	.file_in := \&o[\%x]
+	; echo file_in \m(file_in)
+	.file_out := \m(dest)\Fbasename(\&o[\%x])
+	; echo file_out \m(file_out)
+	.src_date := \Fdate(\m(file_in))
+	; echo src_date \m(src_date)
 
-		if \m(dry_run) {
-			echo copy /overwrite:always \m(src_file) \m(dst_file)
-		} else {
-			     copy /overwrite:always \m(src_file) \m(dst_file)
-		}
+    echo \%x. COPY    \m(file_in)  ---> \m(file_out)
 
-		if = \m(touch_files) 1 {
-			; Try with git first, in RFC2822 style: Mon, 19 Aug 2024 19:41:25 +1200
-			.touch_date := \Fcommand(git log -1 --pretty="format:%cd" --date=format:%Y:%m:%d:%H:%M:%S \m(src_file) 2> nul)
+    copy /overwrite:always \m(file_in) \m(file_out)
+    if fail exit 1
 
-			; Convert to the format required by Touch
-			if = \flength(\m(touch_date)) 0 date_to_touch_date {\m(src_date)} 0
-			;else date_to_touch_date {\m(gitdate)} 1
+    if = \m(touch_files) 1 {
+        ; Try with git first, in RFC2822 style: Mon, 19 Aug 2024 19:41:25 +1200
+        .touch_date := \Fcommand(git log -1 --pretty="format:%cd" --date=format:%Y:%m:%d:%H:%M:%S \m(file_in) 2> nul)
 
-			if \m(dry_run) {
-				echo touch /modtime:\m(touch_date) \m(dst_file)
-			} else {
-				     touch /modtime:\m(touch_date) \m(dst_file)
-			}
-		}
-	}
-	increment \%x
+        ; Convert to the format required by Touch
+        if = \flength(\m(touch_date)) 0 date_to_touch_date {\m(src_date)} 0
+
+        touch /modtime:\m(touch_date) \m(file_out)
+    }
 }
 
 ; TODO: Only do this if the default keymap actually exists
@@ -310,40 +278,31 @@ echo Updating default keymap HTML file (default.html) from \m(dest)../../keymaps
 if = \m(web_mode) 0 {
     .defhtm := \m(dest)default.htm
 }
-if \m(dry_run) {
-    echo Generate \m(defhtm)
-} else {
-    fopen /read \%i \m(dest)default.ksc
-    fopen /write \%o \m(defhtm)
-    fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
-    fwrite /line \%o {<html>}
-    fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
-    fwrite /line \%o {<pre>}
-    while true {
-        undef line
-        fread /line \%i line
-        if fail break
-        fwrite /line \%o \m(line)
-    }
-    fwrite /line \%o {</pre>}
-    fwrite /line \%o {</body></html>}
-    fclose \%i
-    fclose \%o
-    if exist \m(dest)default.ksc del /noask \m(dest)default.ksc
+
+fopen /read \%i \m(dest)default.ksc
+fopen /write \%o \m(defhtm)
+fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
+fwrite /line \%o {<html>}
+fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
+fwrite /line \%o {<pre>}
+while true {
+    undef line
+    fread /line \%i line
+    if fail break
+    fwrite /line \%o \m(line)
 }
+fwrite /line \%o {</pre>}
+fwrite /line \%o {</body></html>}
+fclose \%i
+fclose \%o
+if exist \m(dest)default.ksc del /noask \m(dest)default.ksc
 
 if = \m(web_mode) 0 {
     echo Swapping around index.htm
-    if \m(dry_run) {
-        echo if exist {\m(dest)kermit95.htm} del /noask {\m(dest)kermit95.htm}
-        echo ren \m(dest)index.htm \m(dest)kermit95.htm
-        echo ren \m(dest)docindex.htm \m(dest)index.htm
-    }
-    else {
-        if exist {\m(dest)kermit95.htm} del /noask {\m(dest)kermit95.htm}
-        ren \m(dest)index.htm \m(dest)kermit95.htm
-        ren \m(dest)docindex.htm \m(dest)index.htm
-    }
+
+    if exist {\m(dest)kermit95.htm} del /noask {\m(dest)kermit95.htm}
+    ren \m(dest)index.htm \m(dest)kermit95.htm
+    ren \m(dest)docindex.htm \m(dest)index.htm
 }
 
 echo Done

@@ -11,7 +11,6 @@ if [%1] == [--help] goto :help
 REM Defaults: use git dates, build for K95 distribution (not web) with https
 REM           links.
 set GIT_DATES=true
-set DRY_RUN=false
 set DEV_MODE=false
 set WEB_MODE=false
 set HTTPS_MODE=true
@@ -21,7 +20,7 @@ for %%I in (%*) do (
     rem Value after a switch
     if defined switch (
 
-        rem Example: /X
+        rem /O for Output Directory
         if /i "!switch:~1!"=="O" set "OUT_DIR=%%~I"
 
         set "switch="
@@ -32,13 +31,12 @@ for %%I in (%*) do (
         echo(%%~I | >NUL findstr "^[-/]" && (
             set "switch=%%~I"
             REM G = no git-file-dates
-            REM N = dry-run
             REM D = dev-mode
             REM W = web-mode
             REM S = use-https
 
             rem Check for a valid switch
-            for %%x in (G N D W I O) do (
+            for %%x in (G D W I O) do (
                 if /i "!switch:~1!"=="%%x" set "valid=true"
             )
 
@@ -51,11 +49,6 @@ for %%I in (%*) do (
 
             if /i "!switch:~1!"=="G" (
                set "GIT_DATES=false"
-               set "switch="
-            )
-
-            if /i "!switch:~1!"=="N" (
-               set "DRY_RUN=true"
                set "switch="
             )
 
@@ -91,7 +84,6 @@ echo libraries must also be built and avaialble.
 echo.
 echo Options:
 echo   /G    Don't get file dates from git. Timestamps will be wrong.
-echo   /N    Dry run - don't actually do anything
 echo   /D    Dev mode - release tag will be "DEV" rather than "BETA.7" or
 echo         nothing, indicating this isn't an final/release version of the
 echo         manual.
@@ -122,7 +114,6 @@ if "%OUT_DIR%" == "" set OUT_DIR=%dist_root%\docs\manual\
 
 echo Parameters:
 echo Git File dates: %GIT_DATES%
-echo Dry Run: %DRY_RUN%
 echo Dev Mode: %DEV_MODE%
 echo Web Mode: %WEB_MODE%
 echo HTTPS Mode: %HTTPS_MODE%
@@ -153,15 +144,27 @@ k95.exe -Y -# 127 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
 
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
-k95.exe %docs_root%\mkdocs.ksc -Y -d -# 127 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DRY_RUN% %DEV_MODE% %WEB_MODE% %HTTPS_MODE%
+k95.exe %docs_root%\mkdocs.ksc -Y -d -# 127 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed
+
 
 REM And update modified dates for anything that hasn't changed since the manual
 REM was added to git
-if "%DRY_RUN%" == "true" goto :skipfd
-k95.exe -Y -H -# 127 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit"
-:skipfd
+k95.exe -Y -H -# 127 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit" || goto :failed
 
 echo manual done.
+goto :finished
+
+:failed
+echo K95 Manual build failed with exit status: %errorlevel%
+type debug.log
+popd
+
+set REGINA_MACROS=%REGINA_MACROS_OLD%
+set REGINA_MACROS_OLD=
+
+exit /B 1
+
+:finished
 popd
 
 set REGINA_MACROS=%REGINA_MACROS_OLD%

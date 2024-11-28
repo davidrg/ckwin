@@ -49,15 +49,11 @@ if rxFuncQuery("sysloadfuncs") = 1 then do
     say "RegUtil loaded successfully"
 end
 
-
-/* Get input and output file names. Because the names can contain spaces,
- * its easier to just pluck these out of Kermit rather than try and take
- * them as arguments.
- */
-input_file = CKermit("return \m(file_in)")
-output_file = CKermit("return \m(file_out)")
-git_date = CKermit("return \m(git_date)")
+/* 1 = use 'DEV' as version tag, 0 = don't do that */
 dev_mode = CKermit("return \m(dev_mode)")
+
+/* 1 = get file modified times from git, 0 = don't do that */
+touch_files = CKermit("return \m(touch_files)")
 
 /* 1 = use https://kermitproject.org, 0 = use http://kermitproject.org */
 use_https = CKermit("return \m(use_https)")
@@ -65,20 +61,98 @@ use_https = CKermit("return \m(use_https)")
 /* 1 = generate .html files, 0 = generate .htm files and fix up links */
 use_html = CKermit("return \m(web_mode)")
 
+src_dir = CKermit("return \m(src)")
+dest_dir = CKermit("return \m(dest)")
+
 /* This is a list of all html files that we'll replacing references to within
  * files */
 html_files. = ''
+new_fn= CKermit("return \m(html_files)")
+do #=1  until  new_fn==''
+parse var new_fn html_files.# ',' new_fn
+end
+
+/* REXX doesn't allow returning stems, get_version_tags will create the tags
+ * stem as a global, and populate it with information about the Kermit version
+ * this script is running under. */
+call get_version_tags
+
+/*
+say "Replacement Values"
+say "------------------"
+say "            Herald ($herald$):" tags.herald
+say "               Version Number ($ver$):" tags.ver_num
+say "                  Release ($ver-rel$):" tags.ver_rel
+say "            Full version ($ver-full$):" tags.ver_full
+say "            Version Date ($ver-date$):" tags.ver_date
+say "Short Version date ($ver-short-date$):" tags.ver_short_date
+say "    Version date ISO ($ver-date-iso$):" tags.ver_date_iso
+say "-----"
+say "     File last update ISO ($last_update_iso$):" tags.last_update_iso
+say "             File last update ($last_update$):" tags.last_update
+say " File last update short ($last_update_short$):" tags.last_update_short
+say "-----"
+*/
+
+/* Flags are:
+ *       'x': use extended regular expressions;
+ *       'c': respect case
+ *       'n': newlines denote line-ends
+ *       's': match variables to sub-expressions
+ *       'd': re is the value delimiter (default)
+ *       'v': re matches a var
+ *       't': first var is a stem for all the fields
+ */
+tagre = ReComp('<!--\$([a-z\-]*)\$-->([^<]*)<!--/\$([a-z\-]*)\$-->', 'x')
+replre = ReComp('\$!([a-z\-]*)\$', 'x')
+
+do j=1 for #
+    filename = html_files.j
+    call process_html_file filename
+end
+
+call ReFree tagre
+call ReFree replre
+
+Say "processing done."
+return
+
+process_html_file:
+arg filename
+
+/* Get input and output file names. Because the names can contain spaces,
+ * its easier to just pluck these out of Kermit rather than try and take
+ * them as arguments.
+ */
+
+filename = lower(filename)
+
+input_file = src_dir"/"filename
+output_file = dest_dir""filename
+say "UPDATE " input_file "--->" output_file
+
+/* Git prevers the forward slashes, so save a copy of the filename before
+ * we convert it to a windows-style path */
+git_fn = input_file
+
+input_file = changestr("/",input_file,"\")
+output_file = changestr("/",output_file,"\")
 
 if use_html = 0 then do
-    /* If we're renaming html -> htm, then prepare the list of all html
-     * files! */
-    new_fn= CKermit("return \m(html_files)")
-    do #=1  until  new_fn==''
-    parse var new_fn html_files.# ',' new_fn
-    end
-
     /* And update the name of *this* file we're processing */
     output_file = changestr(".html",output_file,".htm")
+end
+
+/* This is the date from git, if we're asked to do that */
+git_date = ''
+
+if touch_files = 1 then do
+    /* The usual REXX commands for running other programs or commands don't work
+     * here as any system commands are actually handed off to Kermit 95 for
+     * execution as it is in effect our shell. So we've got to ask K95 to run
+     * git
+     */
+     git_date = CKermit('return \Fcommand(git log -1 --pretty="format:%ci" "'git_fn'" 2> nul)')
 end
 
 /*
@@ -86,11 +160,6 @@ say "input_file =" input_file
 say "output_file =" output_file
 say "git date =" git_date
 */
-
-/* REXX doesn't allow returning stems, get_version_tags will create the tags
- * stem as a global, and populate it with information about the Kermit version
- * this script is running under. */
-call get_version_tags
 
 /* If Kermit can't supply gits date for this file, then use the existing
  * file date:
@@ -110,40 +179,11 @@ tags.last_update=left(date('W',f_date,'I'),3)" "left(date('M',f_date,'I'),3)" "f
 
 tags.last_update_short = f_date_d" "date('M',f_date,'I')" "f_date_y
 
-/*
-say "Replacement Values"
-say "------------------"
-say "            Herald ($herald$):" tags.herald
-say "               Version Number ($ver$):" tags.ver_num
-say "                  Release ($ver-rel$):" tags.ver_rel
-say "            Full version ($ver-full$):" tags.ver_full
-say "            Version Date ($ver-date$):" tags.ver_date
-say "Short Version date ($ver-short-date$):" tags.ver_short_date
-say "    Version date ISO ($ver-date-iso$):" tags.ver_date_iso
-say "-----"
-say "     File last update ISO ($last_update_iso$):" tags.last_update_iso
-say "             File last update ($last_update$):" tags.last_update
-say " File last update short ($last_update_short$):" tags.last_update_short
-say "-----"
-*/
-
 /* Ensure output file doesn't exist */
 rcc = SysFileDelete(output_file)
 /* rcc=0: success, rcc=2: doesn't exist */
 if rcc > 2 then say "error deleting output file:" output_file "("rcc")"
 if rcc = 1 then say "error deleting output file:" output_file "("rcc")"
-
-/* Flags are:
- *       'x': use extended regular expressions;
- *       'c': respect case
- *       'n': newlines denote line-ends
- *       's': match variables to sub-expressions
- *       'd': re is the value delimiter (default)
- *       'v': re matches a var
- *       't': first var is a stem for all the fields
- */
-tagre = ReComp('<!--\$([a-z\-]*)\$-->([^<]*)<!--/\$([a-z\-]*)\$-->', 'x')
-replre = ReComp('\$!([a-z\-]*)\$', 'x')
 
 do while lines(input_file) = 1
 
@@ -242,8 +282,12 @@ do while lines(input_file) = 1
 
 end
 
-call ReFree tagre
-call ReFree replre
+/* It is important we close the input and output files, otherwise Regina
+ * will crash when returning to Kermit 95 as it tries to clean up any unclosed
+ * files. This appears to be a bug in Regina REXX 3.9.6 at least.
+ */
+rc = close(input_file)
+rc = close(output_file)
 
 /* Set file timestamp */
 /*
@@ -253,7 +297,7 @@ say "     f_time:" f_time
 */
 rcc = SysSetFileDateTime(output_file, f_date, f_time)
 
-exit 0
+return
 
 get_version_tags: procedure expose tags.
     /* This sets tags. as a global as procedures aren't allowed to return stems.
@@ -272,7 +316,7 @@ get_version_tags: procedure expose tags.
     /* For debugging: output each of the things found in the herald
     say fields.0 'fields'
     do i = 1 to fields.0
-    say i '»'fields.i'«'
+    say i '?'fields.i'?'
     end*/
 
     tags.ver_num = fields.1                             /* $ver$ */
