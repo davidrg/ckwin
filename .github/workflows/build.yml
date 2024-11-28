@@ -2111,9 +2111,16 @@ jobs:
           popd
         shell: bash
 
-  # Build the manual. A built version of Kermit 95 with REXX support is required
-  # to do this, so we can't do it until after the Build-VisualCxx job has
-  # completed as all the x86 builds have REXX support included
+
+  ##############################################################################
+  # Build the Kermit 95 Manual                                                 #
+  ##############################################################################
+  # A built version of Kermit 95 with REXX support is required to do this, so
+  # we can't do it until after the Build-VisualCxx job has completed as all
+  # the x86 builds have REXX support included
+
+  # This version is for publishing on the internet. HTML files end in .html,
+  # and index.html is the front page of the manual
   Build-Manual-Web:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
@@ -2134,6 +2141,61 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k95-manual-web-dev
+          name: k95-manual-web
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # This is the normal version for distribution with the application. HTML
+  # files end in .htm, index.htm is the front page of the K95 documentation,
+  # and k95manual.htm is the front page of the manual
+  Build-Manual-Dist:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.2-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        run: |
+          set root=${{ github.workspace }}
+          call mkdocs.bat /D
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # This is a version for distribution with Kermit 95 for vintage PCs. It's the
+  # same as the normal version above, but doesn't use https:// links. Files
+  # end in .htm, index.htm is the front page of the K95 documentation, and
+  # k95manual.htm is the front page of the manual
+  Build-Manual-Dist-Vintage:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.2-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        run: |
+          set root=${{ github.workspace }}
+          call mkdocs.bat /D /I
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
