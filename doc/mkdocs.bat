@@ -140,23 +140,22 @@ pushd %dist_root%
 
 echo Disting the manual...
 
-k95.exe -Y -# 127 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
+k95.exe -Y -# 95 -C "save keymap %manual_dist_dir%default.ksc,exit" > NUL:
 
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
-k95.exe %docs_root%\mkdocs.ksc -Y -d -# 127 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed
+k95.exe %docs_root%\mkdocs.ksc -Y -# 95 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed
 
 
 REM And update modified dates for anything that hasn't changed since the manual
 REM was added to git
-k95.exe -Y -H -# 127 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit" || goto :failed
+k95.exe -Y -H -# 95 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit" || goto :failed
 
 echo manual done.
 goto :finished
 
 :failed
 echo K95 Manual build failed with exit status: %errorlevel%
-type debug.log
 popd
 
 set REGINA_MACROS=%REGINA_MACROS_OLD%
