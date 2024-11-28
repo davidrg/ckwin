@@ -2199,3 +2199,87 @@ jobs:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
+
+  Update-x86-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 x86
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.2-x86
+          path: ${{ github.workspace }}\dist
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  Update-x86-64-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 x86-64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.2-x64
+          path: ${{ github.workspace }}\dist
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86-64
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 7
+
+  Update-arm32-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 arm32
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.2-x64_arm
+          path: ${{ github.workspace }}\dist
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-arm32
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 7
+
+  Update-arm64-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 arm32
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vc14.4-x64_arm64
+          path: ${{ github.workspace }}\dist
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-arm64
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 7
