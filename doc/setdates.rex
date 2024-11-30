@@ -34,7 +34,7 @@ if rxFuncQuery("sysloadfuncs") = 1 then do
     say "RegUtil loaded successfully"
 end
 
-directory = CKermit("return \m(manual_dir)")
+directory = CKermit("return \m(dest)")
 modtime_file = CKermit("return \m(modtime_file)")
 
 say "   Directory:" directory

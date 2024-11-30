@@ -137,7 +137,7 @@ set manual_dist_dir=%OUT_DIR%
 REM Kermit requires the \ character to be escaped (\\ instead of \) so...
 set manual_dist_dir=%manual_dist_dir:\=\\%
 
-set mtime_file=%root%\doc\modtime.csv
+set mtime_file=%root%\doc\manual\modtime.csv
 set mtime_file=%mtime_file:\=\\%
 
 REM This required so that the mkdocs.rex script can be found
@@ -159,11 +159,6 @@ echo Disting the manual to %OUT_DIR%...
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
 k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% %BANNER_FILE% || goto :failed
-
-
-REM And update modified dates for anything that hasn't changed since the manual
-REM was added to git
-k95.exe -Y -H -# 94 -C ".manual_dir := %manual_dist_dir%,.modtime_file := %mtime_file%,rexx call setdates,exit" || goto :failed
 
 echo manual done.
 goto :finished

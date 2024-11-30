@@ -115,7 +115,7 @@ if not defined \%2 usage
 .web_mode := 1
 .use_https := 1
 .insert_banner := 0
-
+.modtime_file := \m(src)\\modtime.csv
 
 if defined \%3 .touch_files := \%3
 if defined \%4 .dev_mode := \%4
@@ -285,7 +285,7 @@ for \%x 1 \fdim(&o) 1 {
 ;       directory also makes default.ksc provided the target binaries are
 ;       compatible with the host, and if the aren't we won't be able to run
 ;       this script with them anyway)
-echo Updating default keymap HTML file (default.html)...
+echo Generating default keymap HTML file (default.html)...
 
 .defhtm := \m(dest)default.html
 if = \m(web_mode) 0 {
@@ -321,6 +321,11 @@ if = \m(web_mode) 0 {
     ren \m(dest)index.htm \m(dest)kermit95.htm
     ren \m(dest)docindex.htm \m(dest)index.htm
 }
+
+; Update modified dates for anything that hasn't changed since the manual
+; was added to git
+echo Fixing up timestmaps
+rexx call setdates
 
 echo Done
 exit
