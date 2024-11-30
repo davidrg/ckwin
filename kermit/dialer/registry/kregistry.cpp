@@ -66,11 +66,10 @@ Event( const UI_EVENT & event )
     case DOCS_START_MENU:
         success = CreateDocAssociations();
         success &= CreateShortcut("Kermit 95 Manual",
-                                   "docs\\manual\\ckwin.htm",0,2,0,0, FALSE);
-        /*
+                                   "docs\\manual\\index.htm",0,2,0,0, FALSE);
         success &= CreateShortcut("Read Me!","docs\\manual\\readme.htm",0,2,0,0);
         success &= CreateShortcut("Known Bugs","docs\\manual\\k95bugs.htm",0,2,0,0);
-        success &= CreateShortcut("Updates to Using C-Kermit 2nd Edition",
+        /*success &= CreateShortcut("Updates to Using C-Kermit 2nd Edition",
                         "docs\\manual\\ckermit2.htm",0,2,0,0);
         success &= CreateShortcut("Updates to Kermit-95","docs\\manual\\updates.htm",0,2,0,0);
          */
