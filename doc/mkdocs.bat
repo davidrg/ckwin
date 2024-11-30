@@ -23,6 +23,9 @@ for %%I in (%*) do (
         rem /O for Output Directory
         if /i "!switch:~1!"=="O" set "OUT_DIR=%%~I"
 
+        rem /B for banner file
+        if /i "!switch:~1!"=="B" set "BANNER_FILE=%%~I"
+
         set "switch="
 
     ) else (
@@ -36,7 +39,7 @@ for %%I in (%*) do (
             REM S = use-https
 
             rem Check for a valid switch
-            for %%x in (G D W I O) do (
+            for %%x in (G D W I O B) do (
                 if /i "!switch:~1!"=="%%x" set "valid=true"
             )
 
@@ -95,6 +98,8 @@ echo         instead of HTTPS:// - this should only be used without the /W
 echo         switch when building for vintage platforms that are unlikely to
 echo         have an up-to-date web browser.
 echo   /O=   Set output directory
+echo   /B=   Banner file to insert at the top of every HTML file. Only the first
+echo         line will be read from the file.
 goto :end
 
 :begin
@@ -121,7 +126,10 @@ echo Out Dir: %OUT_DIR%
 
 set docs_root=%root%\doc
 
-echo Disting to: %dist_root%\docs\
+set BANNER_FILE=%BANNER_FILE:\=\\%
+echo Banner File: %BANNER_FILE%
+
+echo Disting to: %OUT_DIR%
 echo Using: %dist_root%\k95.exe
 
 set manual_dist_dir=%OUT_DIR%
@@ -150,7 +158,7 @@ echo Disting the manual to %OUT_DIR%...
 
 REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
-k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% || goto :failed
+k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% %BANNER_FILE% || goto :failed
 
 
 REM And update modified dates for anything that hasn't changed since the manual

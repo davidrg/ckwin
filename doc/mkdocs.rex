@@ -64,6 +64,9 @@ use_html = CKermit("return \m(web_mode)")
 src_dir = CKermit("return \m(src)")
 dest_dir = CKermit("return \m(dest)")
 
+insert_banner = CKermit("return \m(insert_banner)")
+banner = CKermit("return \m(banner)")
+
 /* This is a list of all html files that we'll replacing references to within
  * files */
 html_files. = ''
@@ -105,6 +108,7 @@ say "-----"
  */
 tagre = ReComp('<!--\$([a-z\-]*)\$-->([^<]*)<!--/\$([a-z\-]*)\$-->', 'x')
 replre = ReComp('\$!([a-z\-]*)\$', 'x')
+bodyre = ReComp('<body', 'x')
 
 do j=1 for #
     filename = html_files.j
@@ -113,6 +117,7 @@ end
 
 call ReFree tagre
 call ReFree replre
+call ReFree bodyre
 
 Say "processing done."
 return
@@ -180,15 +185,27 @@ tags.last_update=left(date('W',f_date,'I'),3)" "left(date('M',f_date,'I'),3)" "f
 
 tags.last_update_short = f_date_d" "date('M',f_date,'I')" "f_date_y
 
+tags.file = filename
+
 /* Ensure output file doesn't exist */
 rcc = SysFileDelete(output_file)
 /* rcc=0: success, rcc=2: doesn't exist */
 if rcc > 2 then say "error deleting output file:" output_file "("rcc")"
 if rcc = 1 then say "error deleting output file:" output_file "("rcc")"
 
+do_banner = 0
+
 do while lines(input_file) = 1
 
-    input_string = linein(input_file)
+    if do_banner = 1 then do
+        input_string = banner
+        do_banner = 0
+    end
+    else do
+        input_string = linein(input_file)
+    end
+
+    /*input_string = linein(input_file)*/
     output_string = input_string
 
     /* Normalise links to kermitproject.org to use a specific scheme */
@@ -281,6 +298,19 @@ do while lines(input_file) = 1
 
     rcc = lineout(output_file, output_string)
 
+    /* Insert the banner if one has been specified. This facility is mostly used
+     * to warn about preliminary (or out of date) documentation. It is inserted
+     * right after the <body> tag.
+     */
+    if insert_banner = 1 then do
+        found = ReExec(bodyre, output_string)
+        if found = 1 then do
+            /*Say "Insert banner" banner "after line" output_string
+            rcc = lineout(output_file, banner) */
+            do_banner = 1
+        end
+    end
+
 end
 
 /* It is important we close the input and output files, otherwise Regina
@@ -327,8 +357,8 @@ get_version_tags: procedure expose tags.
         exit 0
     end
 
+    tags.ver_rel_actual = fields.2
 
-    /* TODO: set to DEV if in dev mode */
     if dev_mode = 0 then do
         tags.ver_rel = fields.2                             /* $ver_rel$ */
     end

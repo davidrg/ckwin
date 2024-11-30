@@ -83,7 +83,7 @@ local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modifie
 def USAGE {
     echo {K95 mkdocs script}
     xecho {Usage: mkdocs.ksc input-directory output-directory}
-    echo { [git-file-dates] [dry-run] [dev-mode] [web-mode] }
+    echo { [git-file-dates] [dry-run] [dev-mode] [web-mode] [use-https] [banner] }
     echo {}
 	echo {Where:}
 	echo {  input-directory     Source documentation directory, preferably in git}
@@ -96,6 +96,7 @@ def USAGE {
 	echo {                      use (for distribution with K95 itself) }
 	echo {  use-https           true to use https links for kermitproject.org, }
     echo {                      false ot use http links (default=https) }
+    echo {  banner              Banner file to insert at the top of every page (if any), single line only }
     exit 0
 }
 
@@ -113,11 +114,25 @@ if not defined \%2 usage
 .dev_mode := false
 .web_mode := 1
 .use_https := 1
+.insert_banner := 0
+
 
 if defined \%3 .touch_files := \%3
-if defined \%5 .dev_mode := \%4
-if defined \%6 .web_mode := \%5
-if defined \%7 .use_https := \%6
+if defined \%4 .dev_mode := \%4
+if defined \%5 .web_mode := \%5
+if defined \%6 .use_https := \%6
+if defined \%7 {
+    if exist \%7 {
+        echo Reading banner file \%7...
+        fopen /read \%i \%7
+        fread /line \%i banner
+        fclose \%i
+        .insert_banner := 1
+        echo Using banner: \m(banner)
+    } else {
+        echo Banner file \%7 not found.
+    }
+}
 
 if \m(dev_mode) {
   .dev_mode = 1
@@ -283,6 +298,9 @@ fopen /write \%o \m(defhtm)
 fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
 fwrite /line \%o {<html>}
 fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
+if = \m(insert_banner) 1 {
+    fwrite /line \%o \m(banner)
+}
 fwrite /line \%o {<pre>}
 while true {
     undef line
