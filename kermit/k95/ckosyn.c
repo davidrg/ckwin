@@ -72,11 +72,15 @@ UINT htimAlarm = (UINT) 0 ;
 UINT htimVscrn[VNUM] = {(UINT) 0, (UINT) 0, (UINT) 0} ;
 
 HANDLE hevVscrnTimer[VNUM] = { (HANDLE) 0, (HANDLE) 0,(HANDLE) 0 } ;
+
 HANDLE hevVscrnDirty[VNUM] = { (HANDLE) 0, (HANDLE) 0,(HANDLE) 0 } ;
 
+#ifndef KUI
 HANDLE hevVscrnUpdate[VNUM][2] = {{(HANDLE) NULL, (HANDLE) NULL},
    {(HANDLE) NULL, (HANDLE) NULL},
    {(HANDLE) NULL, (HANDLE) NULL}};
+#endif /* ! KUI */
+
 HANDLE hmuxCtrlC[4][2] = { { (HANDLE) NULL, (HANDLE) NULL },
                           { (HANDLE) NULL, (HANDLE) NULL },
                           { (HANDLE) NULL, (HANDLE) NULL },
@@ -1148,6 +1152,7 @@ CreateTermScrnUpdThreadSem( BOOL posted )
 #endif /* NT */
 }
 
+#ifndef KUI
 APIRET
 PostTermScrnUpdThreadSem( void )
 {
@@ -1160,6 +1165,7 @@ PostTermScrnUpdThreadSem( void )
     return DosPostEventSem( hevTermScrnUpdThread ) ;
 #endif /* NT */
 }
+#endif /* ! KUI */
 
 APIRET
 WaitTermScrnUpdThreadSem( ULONG timo )
@@ -1747,6 +1753,7 @@ TimeProc(
 }
 #endif /* NT */
 
+#ifndef KUI
 APIRET
 StartVscrnTimer( ULONG interval )
 {
@@ -1803,6 +1810,7 @@ StopVscrnTimer( void )
     }
     return rc;
 }
+#endif /* ! KUI */
 
 APIRET
 StartAlarmTimer( ULONG interval )
@@ -1848,6 +1856,7 @@ StopAlarmTimer( void )
 #endif /* NT */
 }
 
+#ifndef KUI
 APIRET
 CreateVscrnTimerSem( BOOL posted )
 {
@@ -1875,6 +1884,7 @@ CreateVscrnTimerSem( BOOL posted )
    }
    return 0;
 }
+#endif /* ! KUI */
 
 APIRET
 PostVscrnTimerSem( int vmode )
@@ -1926,6 +1936,7 @@ WaitAndResetVscrnTimerSem( int vmode, ULONG timo )
 #endif /* NT */
 }
 
+#ifndef KUI
 APIRET
 ResetVscrnTimerSem( int vmode )
 {
@@ -1942,6 +1953,7 @@ ResetVscrnTimerSem( int vmode )
     return semcount ;
 #endif /* NT */
 }
+#endif /* ! KUI */
 
 APIRET
 CloseVscrnTimerSem( void )
@@ -2088,6 +2100,7 @@ CloseVscrnDirtySem( void )
    return 0;
 }
 
+#ifndef KUI
 APIRET
 CreateVscrnMuxWait( int vmode )
 {
@@ -2148,6 +2161,7 @@ CloseVscrnMuxWait( int vmode )
     return rc ;
 #endif /* NT */
 }
+#endif /* ! KUI */
 
 /* Process and Thread management */
 
