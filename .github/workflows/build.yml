@@ -718,19 +718,12 @@ jobs:
         call mk.bat
 
         call mkdist.bat
-        
-        REM Check outputs
-        set MISSING_BUILD_RESULTS=
-        for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-        )
-
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
       shell: cmd
+    - name: Full Build Files Check
+      uses: "./.github/actions/files-check"
+      with:
+        path: 'kermit/k95/dist'
+        list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
     - name: Fetch CA Certs bundle
       uses: actions/download-artifact@v4
@@ -979,19 +972,12 @@ jobs:
           cd ..\k95
           call mk.bat
           call mkdist.bat
-          
-          echo Check outputs...
-          set MISSING_BUILD_RESULTS=
-          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
-          )
-          
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch CA Certs bundle
         uses: actions/download-artifact@v4
@@ -1078,24 +1064,13 @@ jobs:
         call mk.bat
         
         call mkdist.bat
-        
-        
-        REM Check outputs
-        REM ctl3d.exe
-        set MISSING_BUILD_RESULTS=
-        
-        REM Can't use STANDARD_BUILD_OUTPUTS as we're not building k95crypt.dll
-        REM here for some reason.
-        for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-        )
-
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
       shell: cmd
+    - name: Full Build Files Check
+      uses: "./.github/actions/files-check"
+      with:
+        path: 'kermit/k95/dist'
+        list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
+
     - name: Dialer Build
       env:
         ROOT: ${{ github.workspace }}
@@ -1105,19 +1080,13 @@ jobs:
 
         call mk.bat
         call mkdist.bat
-        
-        set MISSING_BUILD_RESULTS=
-
-        for %%y in (k95dial.exe k95regtl.exe) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-        )
-
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
       shell: cmd
+    - name: Dialer Build Files Check
+      uses: "./.github/actions/files-check"
+      with:
+        path: 'kermit/dialer/dist'
+        list: 'k95dial.exe k95regtl.exe'
+
     - name: Prepare Artifacts
       working-directory: ${{ github.workspace }}\kermit\k95
       run: |
@@ -1189,23 +1158,12 @@ jobs:
           call mk.bat
           
           call mkdist.bat
-          
-          REM Check outputs
-          REM ctl3d.exe
-          set MISSING_BUILD_RESULTS=
-          
-          REM Can't use STANDARD_BUILD_OUTPUTS as we're not building k95crypt.dll
-          REM here for some reason.
-          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-          )
-  
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
@@ -1319,19 +1277,13 @@ jobs:
           call mkos2.bat
           
           call mkdist-os2.bat
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          for %%y in (${{env.OS2_BUILD_OUTPUTS}}) do (
-            if not exist dist-os2\%%y echo Build result not found: %%y
-            if not exist dist-os2\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist-os2\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Kermit/2 Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist-os2'
+          list: ${{env.OS2_BUILD_OUTPUTS}}
+
       - name: Dialer Build
         env:
           ROOT: ${{ github.workspace }}
@@ -1663,20 +1615,12 @@ jobs:
           call mk.bat
           
           call mkdist.bat
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          REM ctl3dins.exe
-          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
 
       - name: Full Build Non-standard configs
         env:
@@ -1715,38 +1659,21 @@ jobs:
           
           mkdir dist-misc
           move *.exe dist-misc          
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          for %%y in (cknkui.exe) do (
-            if not exist dist-misc\%%y echo Build result not found: %%y
-            if not exist dist-misc\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist-misc\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Non-standard configs Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist-misc'
+          list: 'cknkui.exe'
 
       - name: Check additional legacy outputs
         if: matrix.legacy_dependencies == 'yes'
-        working-directory: ${{ github.workspace }}\kermit\k95
-        run: |
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          REM TODO: srp-tconf.exe srp-passwd.exe
-          REM TODO: Kerberos bits
-          for %%y in (k95crypt.dll) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing legacy build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
-        shell: cmd
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          # TODO: srp-tconf.exe srp-passwd.exe
+          # TODO: Kerberos bits
+          list: 'k95crypt.dll'
 
       - name: Fetch CA Certs bundle
         if: matrix.legacy_dependencies == 'yes'
@@ -1934,19 +1861,12 @@ jobs:
           call mk.bat
           
           call mkdist.bat
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-          )
-  
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4

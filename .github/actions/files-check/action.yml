@@ -1,0 +1,29 @@
+name: check-file-list
+description: 'Checking files in the list'
+
+inputs:
+  path:
+    description: 'path where to check'
+    default: ''
+  list:
+    description: 'list of files to check'
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Check file list
+      working-directory: ${{inputs.path}}
+      run: |
+        missing_files=
+        for fname in ${{inputs.list}}; do
+          if [[ ! -f "$fname" ]]; then
+            echo "Build result not found: $fname"
+            missing_files=$missing_files $fname
+          fi
+        done
+        if [[ ! -z "$missing_files" ]]; then
+          echo "Missing build outputs: $missing_files"
+          echo "One or more expected outputs are missing - failing build"
+          exit 1
+        fi
+      shell: bash
