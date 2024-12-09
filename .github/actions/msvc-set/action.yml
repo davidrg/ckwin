@@ -1,0 +1,40 @@
+name: comp-set
+description: 'setup build MSVC compiler environment'
+inputs:
+  path:
+    description: 'path list to add to PATH'
+    default: ''
+    required: false
+    type: string
+  include:
+    description: 'item list to add to INCLUDE'
+    default: ''
+    required: false
+    type: string
+  lib:
+    description: 'item list to add to LIB'
+    default: ''
+    required: false
+    type: string
+runs:
+  using: composite
+  steps:
+    - name: Setup build MSVC compiler Environment
+      run: |
+        rem add build MSVC compiler on the beginning of PATH
+        rem we need cvtres.exe from current MSVC compiler only
+        for /f "tokens=1,2"  %%a in ("${{inputs.path}}") do (
+          if not "%%b" == "" echo ${{github.workspace}}\%%b>> "%GITHUB_PATH%"
+          if not "%%a" == "" echo ${{github.workspace}}\%%a>> "%GITHUB_PATH%"
+        )
+        rem Don't want to pick up headers or libraries from current MSVC compiler
+        rem we override INCLUDE and LIB environment variables to point to build MSVC compiler
+        for /f "tokens=1,2"  %%a in ("${{inputs.include}}") do (
+          if not "%%b" == "" echo INCLUDE=${{github.workspace}}\%%a;${{github.workspace}}\%%b>> "%GITHUB_ENV%"
+          if "%%b" == "" if not "%%a" == "" echo INCLUDE=${{github.workspace}}\%%a>> "%GITHUB_ENV%"
+        )
+        for /f "tokens=1,2"  %%a in ("${{inputs.lib}}") do (
+          if not "%%b" == "" echo LIB=${{github.workspace}}\%%a;${{github.workspace}}\%%b>> "%GITHUB_ENV%"
+          if "%%b" == "" if not "%%a" == "" echo LIB=${{github.workspace}}\%%a>> "%GITHUB_ENV%"
+        )
+      shell: cmd

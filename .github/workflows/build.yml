@@ -1413,6 +1413,8 @@ jobs:
         legacy_dependencies:
           - yes
           - no
+    name: Build-VCT2003-PSDK2003 (x86, ${{matrix.legacy_dependencies}})
+
     steps:
       - uses: actions/checkout@v4
 
@@ -1424,8 +1426,12 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
-          toolset: 14.0
-
+      - name: Set VisualCxx Environment
+        uses: "./.github/actions/msvc-set"
+        with:
+          path: 'vct2003\bin'
+          include: 'vct2003\include'
+          lib: 'vct2003\lib'
         # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
         # quite a while to download and decompress and I don't want my FTP
         # server being hit constantly to download this whenever a build runs.
@@ -1563,16 +1569,8 @@ jobs:
 
       - name: Build libdes
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
-        env:
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: libdes
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
           set CKB_STATIC_CRT_NT=yes
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
@@ -1583,17 +1581,15 @@ jobs:
 
       - name: Build openssl
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
-        env:
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: openssl\1.0.1u
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib;%LIB%
-          
+          REM *************************************
+          REM Fix for bug in VCT2003
+          REM missing setargv.obj for x86 target
+          REM used by openssl only
+          REM *************************************
+          cl /nologo /c ${{github.workspace}}\openssl\setargv.c /Fosetargv.obj
+
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           perl Configure VC-WIN32 enable-static-engine
                    
@@ -1609,15 +1605,8 @@ jobs:
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         env:
           ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: srp-2.1.2
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
           set CKB_STATIC_CRT_NT=yes
           
           set openssl_root_override=${{ github.workspace }}\openssl\1.0.1u
@@ -1630,16 +1619,8 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: kermit
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
-          
           set openssl_root_override=${{ github.workspace }}\openssl\1.0.1u
           set srp_root_override=${{ github.workspace }}\srp-2.1.2
           set k4w_root_override=${{ github.workspace }}\kerberos\kfw-2.6.5\src
@@ -1681,16 +1662,8 @@ jobs:
       - name: Full Build Non-standard configs
         env:
           ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: kermit
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
-          
           set openssl_root_override=${{ github.workspace }}\openssl\1.0.1u
           set srp_root_override=${{ github.workspace }}\srp-2.1.2
           set k4w_root_override=${{ github.workspace }}\kerberos\kfw-2.6.5\src
@@ -1788,7 +1761,7 @@ jobs:
           path: ${{ github.workspace }}\ckwin-extra
           if-no-files-found: error
           retention-days: 7
-      - name: Upload Artifact
+      - name: Upload Artifact (legacy)
         uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'yes'
         with:
@@ -1796,7 +1769,7 @@ jobs:
           path: ${{ github.workspace }}\ckwin
           if-no-files-found: error
           retention-days: 7
-      - name: Upload Artifact (extra)
+      - name: Upload Artifact (legacy-extra)
         uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'yes'
         with:
@@ -1826,7 +1799,12 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
-          toolset: 14.0
+      - name: Set VisualCxx Environment
+        uses: "./.github/actions/msvc-set"
+        with:
+          path: 'vct2003\bin\win64 vct2003\bin'
+          include: 'vct2003\include'
+          lib: 'vct2003\lib\ia64'
 
         # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
         # quite a while to download and decompress and I don't want my FTP
@@ -1875,16 +1853,8 @@ jobs:
         if: steps.cache-vct2003.outputs.cache-hit != 'true'
         env:
           ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: libdes
         run: |
-          Set PATH=%VCT2003%\bin\win64;%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib\ia64
-          
           call ${{ github.workspace }}\setenv.bat
 
           REM Use the supplied x86 build of wart rather than building it for
@@ -1907,16 +1877,8 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: kermit
         run: |
-          Set PATH=%VCT2003%\bin\win64;%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib\ia64
-          
           call ${{ github.workspace }}\setenv.bat
           
           REM Use the supplied x86 build of wart rather than building it for
