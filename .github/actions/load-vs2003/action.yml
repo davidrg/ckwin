@@ -1,0 +1,51 @@
+name: load-vs2003-psdk2003-sp1
+description: Load Visual Studio 2003/2005 Toolkit and PSDK 2003 SP1
+inputs:
+  nocache:
+    description: 'skip cache'
+    default: ''
+    required: false
+    type: string
+  arch:
+    description: 'Architecture'
+    default: ''
+    required: false
+    type: string
+#
+# expected filename: https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z
+#
+runs:
+  using: composite
+  steps:
+    - name: Load Cache VS2003
+      if: inputs.nocache != 'true'
+      uses: actions/cache@v4
+      id: cache-vs2003
+      with:
+        path: |
+          ${{github.workspace}}\vs2003
+        key: all-vs2003+psdk2003sp1
+    - name: Get and unpack Visual C++ 2003 Toolkit and PSDK 2003 SP1
+      if: steps.cache-vs2003.outputs.cache-hit != 'true'
+      run: |
+        curl -LsS -o vs2003.7z https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z
+        7z x vs2003.7z
+        rm -f vs2003.7z
+        mv "Microsoft Platform SDK 2003SP1" vs2003
+        rm -f vs2003\Bin\Cvtres.exe
+        echo "content of vs2003"
+        ls -l vs2003
+      shell: bash
+    - name: Setup build MSVC compiler Environment
+      run: |
+        rem add build MSVC compiler on the beginning of PATH
+        rem we need cvtres.exe from current MSVC compiler only
+        if "${{inputs.arch}}" == "x86" echo ${{github.workspace}}\vs2003\bin>> "%GITHUB_PATH%"
+        if "${{inputs.arch}}" == "ia64" echo ${{github.workspace}}\vs2003\bin\win64;${{github.workspace}}\vs2003\bin>> "%GITHUB_PATH%"
+        rem Don't want to pick up headers or libraries from current MSVC compiler
+        rem we override INCLUDE and LIB environment variables to point to build MSVC compiler
+        echo INCLUDE=${{github.workspace}}\vs2003\include>> "%GITHUB_ENV%"
+        if "${{inputs.arch}}" == "x86" echo LIB=${{github.workspace}}\vs2003\lib;%LIB%>> "%GITHUB_ENV%"
+        if "${{inputs.arch}}" == "ia64" echo LIB=${{github.workspace}}\vs2003\lib\ia64>> "%GITHUB_ENV%"
+      shell: cmd
+      
