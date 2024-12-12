@@ -99,7 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: HTMLise Markdown Docs
-        working-directory: ${{ github.workspace }}
+        working-directory: ${{github.workspace}}
         run: |
           pip3 install markdown
           (
@@ -112,8 +112,8 @@ jobs:
           echo ^<head^>^<title^>Kermit 95 Change-Log^</title^>^</head^>
           echo ^<body^>
           ) > change-log.html
-          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\ssh-readme.md >> ssh-readme.html
-          python -m markdown -x markdown.extensions.fenced_code ${{ github.workspace }}\doc\changes.md >> change-log.html
+          python -m markdown -x markdown.extensions.fenced_code ${{github.workspace}}\doc\ssh-readme.md >> ssh-readme.html
+          python -m markdown -x markdown.extensions.fenced_code ${{github.workspace}}\doc\changes.md >> change-log.html
           (
           echo ^</body^>
           echo ^</html^>
@@ -144,10 +144,10 @@ jobs:
           arch: x86
       - name: Build ckwart
         env:
-          ROOT: ${{ github.workspace }}
+          ROOT: ${{github.workspace}}
         working-directory: kermit/k95
         run: |
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           nmake /nologo /e /f ckoker.mak ckwart.exe
           if not exist ckwart.exe exit /b 1
           move ckwart.exe ..\..\ckwart.exe
@@ -156,7 +156,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wart-x86
-          path: ${{ github.workspace }}\ckwart.exe
+          path: ${{github.workspace}}/ckwart.exe
           if-no-files-found: error
           retention-days: 1
 
@@ -167,596 +167,556 @@ jobs:
   # capable of still targeting Windows XP (2017). All support x86, x86-64, ARM32
   # and ARM64.
   Build-VisualCxx:
-    runs-on: windows-latest
     needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart]
     strategy:
       matrix:
         arch:
-          - x86
-          - x64
-          - x64_arm
-          - x64_arm64
-        toolset:
-          # Note: the 14.0 toolset doesn't really work (just results in 14.4)
-          - 14.2
-          - 14.4
-        exclude:
-          # The last ARM32 redist was shipped for 14.0 (Visual C++ 2015), but
-          # newer versions of Visual C++ seem to be able to target it OK. For
-          # now just use 14.2 same as for x86 and x86-64.
-          - arch: x64_arm
-            toolset: 14.4
-          # No point in building ARM64 targets with anything but the latest as
-          # the latest hasn't dropped any windows support yet.
-          - arch: x64_arm64
-            toolset: 14.2
+          - id: x86
+          - id: x64
+          - id: x64_arm
+            # temporary setup Windows SDK version for 32-bit ARM to 10.0.22621.0 because
+            # latest SDK version 10.0.26100.0 doesn't contains 32-bit ARM files
+            sdk: 10.0.22621.0
+          - id: x64_arm64
+        version:
+          - vs: 2019
+            image: windows-2019
+          - vs: 2022
+            image: windows-2022
+    runs-on: ${{matrix.version.image}}
+    name: Build-VS${{matrix.version.vs}} (${{matrix.arch.id}})
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Select env configuration
-      run: |
-        if [[ "${{ matrix.arch }}" = "x64_arm" || "${{ matrix.arch }}" = "x64_arm64" ]]; then
-          echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_ARM_VERSION }}" >> "$GITHUB_ENV"
-          echo "CK_K4W_PATH=." >> "$GITHUB_ENV"
-        else
-          echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}" >> "$GITHUB_ENV"
-          echo "CK_K4W_PATH=kerberos\current\Kerberos" >> "$GITHUB_ENV"
-        fi
-      shell: bash
-    # temporary setup Windows SDK version for 32-bit ARM to 10.0.22621.0 because
-    # latest SDK version 10.0.26100.0 doesn't contains 32-bit ARM files
-    - name: Enable Developer Command Prompt
-      if: matrix.arch == 'x64_arm'
-      # You may pin to the exact commit or the version.
-      # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.arch }}
-        toolset: ${{ matrix.toolset }}
-        sdk: '10.0.22621.0'
-        #spectre: # set true to use VC libraries with sepctre mitigations
-    - name: Enable Developer Command Prompt
-      if: matrix.arch != 'x64_arm'
-      # You may pin to the exact commit or the version.
-      # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
-      uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.arch }}
-        toolset: ${{ matrix.toolset }}
-        #sdk:   # use the latest
-        #spectre: # set true to use VC libraries with sepctre mitigations
+      - uses: actions/checkout@v4
+      - name: Select env configuration
+        id: cfg
+        run: |
+          if [[ "${{matrix.arch.id}}" = "x64_arm" || "${{matrix.arch.id}}" = "x64_arm64" ]]; then
+            echo "openssl=${{env.OPENSSL_ARM_VERSION}}" >> "$GITHUB_OUTPUT"
+            echo "k4w=." >> "$GITHUB_OUTPUT"
+          else
+            echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
+            echo "k4w=kerberos\current\Kerberos" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+      - name: Enable Developer Command Prompt
+        # You may pin to the exact commit or the version.
+        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{matrix.arch.id}}
+          vsversion: ${{matrix.version.vs}}
+          sdk: ${{matrix.arch.sdk}}
+          #spectre: # set true to use VC libraries with sepctre mitigations
 
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
       ##########################################################################
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
-    - name: Cache Optional Dependencies
-      uses: "./.github/actions/cache"
-      id: cache-optional-dependencies
-      with:
-        path: |
-          ${{github.workspace}}\zlib\current
-          ${{github.workspace}}\openssl\current
-          ${{github.workspace}}\libssh\current
-          ${{github.workspace}}\libssh\current-gssapi
-          ${{github.workspace}}\libdes\des
-          ${{github.workspace}}\libdes\Release
-          ${{github.workspace}}\libdes\Debug
-          ${{github.workspace}}\tools
-          ${{github.workspace}}\kerberos\current
-          ${{github.workspace}}\rexx
-        key: msvc-${{ matrix.toolset }}-${{ matrix.arch }}+zlib-${{env.ZLIB_VERSION}}+openssl-${{env.CK_OPENSSL_VERSION}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
-        nocache: ${{ vars.NOCACHE }}
-    - name: Get libssh url group
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
-      id: libssh-group
-      run: echo "val=${LIBSSH_VERSION%.*}" >> "$GITHUB_OUTPUT"
-      shell: bash
-    - name: Get dependencies
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
-      working-directory: ${{ github.workspace }}
-      run: |
-        # Get and unpack zlib
-        mkdir zlib
-        cd zlib
-        wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
-        7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
-        7z x zlib-${{env.ZLIB_VERSION}}.tar
-        del zlib-${{env.ZLIB_VERSION}}.tar 
-        del zlib-${{env.ZLIB_VERSION}}.tar.gz
-        ren zlib-${{env.ZLIB_VERSION}} current
-        dir current
-        cd ..
+      - name: Cache Optional Dependencies
+        uses: "./.github/actions/cache"
+        id: cache-optional-dependencies
+        with:
+          path: |
+            ${{github.workspace}}\zlib\current
+            ${{github.workspace}}\openssl\current
+            ${{github.workspace}}\libssh\current
+            ${{github.workspace}}\libssh\current-gssapi
+            ${{github.workspace}}\libdes\des
+            ${{github.workspace}}\libdes\Release
+            ${{github.workspace}}\libdes\Debug
+            ${{github.workspace}}\kerberos\current
+            ${{github.workspace}}\rexx
+          key: vs${{matrix.version.vs}}-${{matrix.arch.id}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
+          nocache: ${{vars.NOCACHE}}
+      - name: Get libssh url group
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        id: libssh-group
+        run: echo "val=${LIBSSH_VERSION%.*}" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: Get dependencies
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        working-directory: ${{github.workspace}}
+        run: |
+          # Get and unpack zlib
+          mkdir zlib
+          cd zlib
+          wget https://zlib.net/zlib-${{env.ZLIB_VERSION}}.tar.gz -outfile zlib-${{env.ZLIB_VERSION}}.tar.gz
+          7z x zlib-${{env.ZLIB_VERSION}}.tar.gz
+          7z x zlib-${{env.ZLIB_VERSION}}.tar
+          del zlib-${{env.ZLIB_VERSION}}.tar 
+          del zlib-${{env.ZLIB_VERSION}}.tar.gz
+          ren zlib-${{env.ZLIB_VERSION}} current
+          dir current
+          cd ..
         
-        # Get and unpack openssl
-        cd openssl
-        wget "https://github.com/openssl/openssl/releases/download/openssl-${{ env.CK_OPENSSL_VERSION }}/openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz" -outfile openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz
-        7z x openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz
-        7z x openssl-${{ env.CK_OPENSSL_VERSION }}.tar
-        del openssl-${{ env.CK_OPENSSL_VERSION }}.tar 
-        del openssl-${{ env.CK_OPENSSL_VERSION }}.tar.gz
-        ren openssl-${{ env.CK_OPENSSL_VERSION }} current
-        dir current
-        cd ..
+          # Get and unpack openssl
+          cd openssl
+          wget "https://github.com/openssl/openssl/releases/download/openssl-${{steps.cfg.outputs.openssl}}/openssl-${{steps.cfg.outputs.openssl}}.tar.gz" -outfile openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          7z x openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          7z x openssl-${{steps.cfg.outputs.openssl}}.tar
+          del openssl-${{steps.cfg.outputs.openssl}}.tar 
+          del openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          ren openssl-${{steps.cfg.outputs.openssl}} current
+          dir current
+          cd ..
         
-        # Get and unpack libssh
-        cd libssh
-        wget https://www.libssh.org/files/${{steps.libssh-group.outputs.val}}/libssh-${{env.LIBSSH_VERSION}}.tar.xz -outfile libssh-${{env.LIBSSH_VERSION}}.tar.xz
-        7z x libssh-${{env.LIBSSH_VERSION}}.tar.xz
-        7z x libssh-${{env.LIBSSH_VERSION}}.tar
-        del libssh-${{env.LIBSSH_VERSION}}.tar
-        del libssh-${{env.LIBSSH_VERSION}}.tar.xz
-        ren libssh-${{env.LIBSSH_VERSION}} current
-        cd current
-        mkdir build
-        cd ..
-        dir current
-        cd ..
+          # Get and unpack libssh
+          cd libssh
+          wget https://www.libssh.org/files/${{steps.libssh-group.outputs.val}}/libssh-${{env.LIBSSH_VERSION}}.tar.xz -outfile libssh-${{env.LIBSSH_VERSION}}.tar.xz
+          7z x libssh-${{env.LIBSSH_VERSION}}.tar.xz
+          7z x libssh-${{env.LIBSSH_VERSION}}.tar
+          del libssh-${{env.LIBSSH_VERSION}}.tar
+          del libssh-${{env.LIBSSH_VERSION}}.tar.xz
+          ren libssh-${{env.LIBSSH_VERSION}} current
+          cd current
+          mkdir build
+          cd ..
+          dir current
+          cd ..
         
-        # Get and unpack libdes
-        cd libdes
-        wget ${{env.LIBDES}} -outfile libdes.tar.gz
-        7z x libdes.tar.gz
-        7z x libdes.tar
-        del libdes.tar
-        del libdes.tar.gz
-        dir
-        cd ..
+          # Get and unpack libdes
+          cd libdes
+          wget ${{env.LIBDES}} -outfile libdes.tar.gz
+          7z x libdes.tar.gz
+          7z x libdes.tar
+          del libdes.tar
+          del libdes.tar.gz
+          dir
+          cd ..
         
-        # CD into the tools directory
-        mkdir tools
-        cd tools
-        # Get and unpack nasm
-        wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
-        7z x nasm-2.15.05-win32.zip
-        del nasm-2.15.05-win32.zip
-        ren nasm-2.15.05 nasm
-        dir nasm
+          # Get KFW
+          echo Get KFW...
+          cd kerberos
+          if ("${{matrix.arch.id}}" -eq "x86") {
+            echo x86 platform: ${{env.KFW_x86}}
+            wget ${{env.KFW_x86}} -outfile kfw.msi
+          } else {
+            echo x86-64 platform: ${{env.KFW_x86}}
+            wget ${{env.KFW_x86_64}} -outfile kfw.msi
+          }
+          start-process msiexec -argumentlist "/a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\current" -wait
+          dir current
+          cd ..
         
-        # Get and unpack JOM
-        mkdir jom
-        wget ${{env.JOM}} -outfile jom.zip
-        7z x jom.zip -ojom
-        del jom.zip
-        dir jom
-        # CD out of the tools directory
-        cd ..          
+          # CD into the rexx directory
+          cd rexx
+          # Get Regina REXX
+          # need use -UserAgent "Wget" to skip advertising pages and normaly download
+          Invoke-WebRequest -UserAgent "Wget" -OutFile regina.tar.gz -Uri https://sourceforge.net/projects/regina-rexx/files/regina-rexx/${{env.REGINA_VERSION}}/regina-rexx-${{env.REGINA_VERSION}}.tar.gz/download
+          7z x regina.tar.gz
+          7z x regina.tar
+          del regina.tar
+          del regina.tar.gz
+          ren regina-rexx-${{env.REGINA_VERSION}} regina
+          dir regina
+          # RexxRE: Regular expressions for Regina REXX!
+          # expected filename: http://home.interlog.com/~ptjm/rexxre101.zip
+          # Should the original ever go down (its not been updated in over 20 years),
+          # a mirror is here:
+          #   https://ftp.zx.net.nz/pub/dev/rexx/ptjm/rexxre101.zip
+          # Get RexxRE
+          wget http://home.interlog.com/~ptjm/rexxre101.zip -outfile rexxre.zip
+          7z x rexxre.zip
+          del rexxre.zip
+          dir rexxre
+          # CD out of the rexx directory
+          cd ..
+  
+          # Install perl modules required by OpenSSL build
+          cpan -i Text::Template
+        shell: powershell
+
+      - name: Build zlib (x86/x86-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        working-directory: zlib/current
+        run: |
+          cmake .
+          nmake -f win32\Makefile.msc
+        shell: cmd
+
+      - name: Build zlib (arm32/arm64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x64_arm' || matrix.arch.id == 'x64_arm64')
+        working-directory: zlib/current
+        run: |
+          cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+          nmake
+        shell: cmd
+
+      - name: Build openssl (x86)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x86'
+        working-directory: openssl/current
+        run: |
+          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+          echo %PATH%
+          perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
-        # Get KFW
-        echo Get KFW...
-        cd kerberos
-        if ("${{matrix.arch}}" -eq "x86") {
-          echo x86 platform: ${{env.KFW_x86}}
-          wget ${{env.KFW_x86}} -outfile kfw.msi
-        } else {
-          echo x86-64 platform: ${{env.KFW_x86}}
-          wget ${{env.KFW_x86_64}} -outfile kfw.msi
-        }
-        start-process msiexec -argumentlist "/a kfw.msi /qn TARGETDIR=${{github.workspace}}\kerberos\current" -wait
-        dir current
-        cd ..
+          REM The linker by default marks the subsystem version too high for XP
+          REM and there isn't a way to fix that from the configure script, so
+          REM do it the hard way.
+          sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
         
-        # CD into the rexx directory
-        cd rexx
-        # Get Regina REXX
-        # need use -UserAgent "Wget" to skip advertising pages and normaly download
-        Invoke-WebRequest -UserAgent "Wget" -OutFile regina.tar.gz -Uri https://sourceforge.net/projects/regina-rexx/files/regina-rexx/${{env.REGINA_VERSION}}/regina-rexx-${{env.REGINA_VERSION}}.tar.gz/download
-        7z x regina.tar.gz
-        7z x regina.tar
-        del regina.tar
-        del regina.tar.gz
-        ren regina-rexx-${{env.REGINA_VERSION}} regina
-        dir regina
-        # RexxRE: Regular expressions for Regina REXX!
-        # expected filename: http://home.interlog.com/~ptjm/rexxre101.zip
-        # Should the original ever go down (its not been updated in over 20 years),
-        # a mirror is here:
-        #   https://ftp.zx.net.nz/pub/dev/rexx/ptjm/rexxre101.zip
-        # Get RexxRE
-        wget http://home.interlog.com/~ptjm/rexxre101.zip -outfile rexxre.zip
-        7z x rexxre.zip
-        del rexxre.zip
-        dir rexxre
-        # CD out of the rexx directory
-        cd ..
+          ${{env.OPENSSL_MAKE}}
+        shell: cmd
 
-        # Install perl modules required by OpenSSL build
-        cpan -i Text::Template
-      shell: powershell
-
-    - name: Build zlib (x86/x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
-      working-directory: zlib/current
-      run: |
-        cmake .
-        nmake -f win32\Makefile.msc
-      shell: cmd
-
-    - name: Build zlib (arm32/arm64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
-      working-directory: zlib/current
-      run: |
-        cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
-        nmake
-      shell: cmd
-
-    - name: Build openssl (x86)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
-      working-directory: openssl/current
-      run: |
-        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-        echo %PATH%
-        perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+      - name: Build openssl (x86-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64'
+        working-directory: openssl/current
+        run: |
+          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+          echo %PATH%
+          perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
-        REM The linker by default marks the subsystem version too high for XP
-        REM and there isn't a way to fix that from the configure script, so
-        REM do it the hard way.
-        sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
+          REM The linker by default marks the subsystem version too high for XP
+          REM and there isn't a way to fix that from the configure script, so
+          REM do it the hard way.
+          sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
         
-        ${{env.OPENSSL_MAKE}}
-      shell: cmd
+          ${{env.OPENSSL_MAKE}}
+        shell: cmd
 
-    - name: Build openssl (x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
-      working-directory: openssl/current
-      run: |
-        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-        echo %PATH%
-        perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+      - name: Build openssl (ARM)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
+        working-directory: openssl/current
+        run: |
+          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+          echo %PATH%
+          perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}} 
         
-        REM The linker by default marks the subsystem version too high for XP
-        REM and there isn't a way to fix that from the configure script, so
-        REM do it the hard way.
-        sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
+          ${{env.OPENSSL_MAKE}}
+        shell: cmd
+
+      - name: Build openssl (ARM-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+        working-directory: openssl/current
+        run: |
+          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
+          echo %PATH%
+          perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
+          ${{env.OPENSSL_MAKE}}
+        shell: cmd
+
+      - name: Build libssh (x86/x86-64, Vista+)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: libssh
+        run: |
+          set openssl_root_override=${{github.workspace}}\openssl\current
+          set zlib_root_override=${{github.workspace}}\zlib\current
+
+          call ${{github.workspace}}\setenv.bat
         
-        ${{env.OPENSSL_MAKE}}
-      shell: cmd
-
-    - name: Build openssl (ARM)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
-      working-directory: openssl/current
-      run: |
-        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-        echo %PATH%
-        perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}} 
+          REM /M - output directory for binaries and libraries (Move to)
+          REM /C - clean build
+          REM /R - release build
+          REM /W - build for Windows Vista or newer (not XP)
         
-        ${{env.OPENSSL_MAKE}}
-      shell: cmd
+          call build.bat /M out /C /R /W current
+        shell: cmd
 
-    - name: Build openssl (ARM-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-      working-directory: openssl/current
-      run: |
-        set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-        echo %PATH%
-        perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
-        ${{env.OPENSSL_MAKE}}
-      shell: cmd
+      - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: libssh
+        run: |
+          set openssl_root_override=${{github.workspace}}\openssl\current
+          set zlib_root_override=${{github.workspace}}\zlib\current
+          set k4w_root_override=${{github.workspace}}\${{steps.cfg.outputs.k4w}}
 
-    - name: Build libssh (x86/x86-64, Vista+)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: libssh
-      run: |
-        set openssl_root_override=${{github.workspace}}\openssl\current
-        set zlib_root_override=${{github.workspace}}\zlib\current
-
-        call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
         
-        REM /M - output directory for binaries and libraries (Move to)
-        REM /C - clean build
-        REM /R - release build
-        REM /W - build for Windows Vista or newer (not XP)
+          REM /M - output directory for binaries and libraries (Move to)
+          REM /N - Name suffix  (eg, "/N g" produces "sshg.dll" and "sshg.lib")
+          REM /G - GSSAPI build
+          REM /C - clean build
+          REM /R - release build
+          REM /W - build for Windows Vista or newer (not XP)
         
-        call build.bat /M out /C /R /W current
-      shell: cmd
+          call build.bat /M out /N g /G /C /R /W current
+        shell: cmd
 
-    - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: libssh
-      run: |
-        set openssl_root_override=${{github.workspace}}\openssl\current
-        set zlib_root_override=${{github.workspace}}\zlib\current
-        set k4w_root_override=${{github.workspace}}\${{ env.CK_K4W_PATH }}
+      - name: Build libssh (x86/x86-64, XP)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64') && (matrix.version.vs == '2015' || matrix.version.vs == '2017' || matrix.version.vs == '2019')
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: libssh
+        run: |
+          set openssl_root_override=${{github.workspace}}\openssl\current
+          set zlib_root_override=${{github.workspace}}\zlib\current
 
-        call ${{ github.workspace }}\setenv.bat
-        
-        REM /M - output directory for binaries and libraries (Move to)
-        REM /N - Name suffix  (eg, "/N g" produces "sshg.dll" and "sshg.lib")
-        REM /G - GSSAPI build
-        REM /C - clean build
-        REM /R - release build
-        REM /W - build for Windows Vista or newer (not XP)
-        
-        call build.bat /M out /N g /G /C /R /W current
-      shell: cmd
+          call ${{github.workspace}}\setenv.bat
+          
+          REM /M - output directory for binaries and libraries (Move to)
+          REM /N - Name suffix  (eg, "/N x" produces "sshx.dll" and "sshx.lib")
+          REM /G - GSSAPI build
+          REM /C - clean build
+          REM /R - release build
+          REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)        
+          
+          call build.bat /M out /N x /C /R /X current
+        shell: cmd
 
-    - name: Build libssh (x86/x86-64, XP)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && (matrix.toolset == '14.0' || matrix.toolset == '14.1' || matrix.toolset == '14.2')
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: libssh
-      run: |
-        set openssl_root_override=${{github.workspace}}\openssl\current
-        set zlib_root_override=${{github.workspace}}\zlib\current
+      - name: Build libssh (x86/x86-64, XP, GSSAPI)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64') && (matrix.version.vs == '2015' || matrix.version.vs == '2017' || matrix.version.vs == '2019')
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: libssh
+        run: |
+          set openssl_root_override=${{github.workspace}}\openssl\current
+          set zlib_root_override=${{github.workspace}}\zlib\current
+          set k4w_root_override=${{github.workspace}}\${{steps.cfg.outputs.k4w}}
 
-        call ${{ github.workspace }}\setenv.bat
-        
-        REM /M - output directory for binaries and libraries (Move to)
-        REM /N - Name suffix  (eg, "/N x" produces "sshx.dll" and "sshx.lib")
-        REM /G - GSSAPI build
-        REM /C - clean build
-        REM /R - release build
-        REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)        
-        
-        call build.bat /M out /N x /C /R /X current
-      shell: cmd
+          call ${{github.workspace}}\setenv.bat
+          
+          REM /M - output directory for binaries and libraries (Move to)
+          REM /N - Name suffix  (eg, "/N xg" produces "sshxg.dll" and "sshxg.lib")
+          REM /G - GSSAPI build
+          REM /C - clean build
+          REM /R - release build
+          REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)     
+          
+          call build.bat /M out /N gx /G /C /R /X current
+        shell: cmd
 
-    - name: Build libssh (x86/x86-64, XP, GSSAPI)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && (matrix.toolset == '14.0' || matrix.toolset == '14.1' || matrix.toolset == '14.2')
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: libssh
-      run: |
-        set openssl_root_override=${{github.workspace}}\openssl\current
-        set zlib_root_override=${{github.workspace}}\zlib\current
-        set k4w_root_override=${{github.workspace}}\${{ env.CK_K4W_PATH }}
+        # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
+        # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
+      - name: Build libssh (arm32)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
+        working-directory: libssh/current/build
+        run: |
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+          nmake
+        shell: powershell
 
-        call ${{ github.workspace }}\setenv.bat
-        
-        REM /M - output directory for binaries and libraries (Move to)
-        REM /N - Name suffix  (eg, "/N xg" produces "sshxg.dll" and "sshxg.lib")
-        REM /G - GSSAPI build
-        REM /C - clean build
-        REM /R - release build
-        REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)     
-        
-        call build.bat /M out /N gx /G /C /R /X current
-      shell: cmd
+        # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
+      - name: Build libssh (arm64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+        working-directory: libssh/current/build
+        run: |
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON
+          nmake        
+        shell: powershell
 
-      # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
-      # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
-    - name: Build libssh (arm32)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
-      working-directory: libssh/current/build
-      run: |
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
-        nmake
-      shell: powershell
+      - name: Build libdes
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
+        working-directory: libdes
+        run: |
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set MAKE=jom
+          
+          call mknt.bat
+        shell: cmd
 
-      # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
-    - name: Build libssh (arm64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-      working-directory: libssh/current/build
-      run: |
-        cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON
-        nmake        
-      shell: powershell
+      - name: Build Regina REXX (x86)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x86'
+        working-directory: rexx
+        run: |
+          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+          set PLATFORM=x86
+          
+          cd regina
+          nmake -f makefile.win.vc
+          if not exist regina.dll exit /b 1
+          
+          mkdir include
+          copy rexxsaa.h include
+          mkdir lib
+          copy regina.lib lib
+          cd ..
 
-    - name: Build libdes
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
-      working-directory: libdes
-      run: |
-        set PATH=%PATH%;${{github.workspace}}\tools\jom
-        set MAKE=jom
-        
-        call mknt.bat
-      shell: cmd
+          echo Building RexxRE
+          cd rexxre
+          patch -p1 < ..\rexxre.patch
+          nmake -f Makefile.NT
+          if not exist rexxre.dll exit /b 1
+          cd ..
+        shell: cmd
 
-    - name: Build Regina REXX (x86)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
-      working-directory: rexx
-      run: |
-        set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-        set PLATFORM=x86
-        
-        cd regina
-        nmake -f makefile.win.vc
-        if not exist regina.dll exit /b 1
-        
-        mkdir include
-        copy rexxsaa.h include
-        mkdir lib
-        copy regina.lib lib
-        cd ..
+      - name: Build Regina REXX (x86-64)
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64'
+        working-directory: rexx
+        run: |
+          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+          set PLATFORM=x64
+          
+          cd regina
+          nmake -f makefile.win.vc
+          if not exist regina.dll exit /b 1
+          
+          mkdir include
+          copy rexxsaa.h include
+          mkdir lib
+          copy regina.lib lib
+          cd ..
 
-        echo Building RexxRE
-        cd rexxre
-        patch -p1 < ..\rexxre.patch
-        nmake -f Makefile.NT
-        if not exist rexxre.dll exit /b 1
-        cd ..
-      shell: cmd
+          echo Building RexxRE
+          cd rexxre
+          patch -p1 < ..\rexxre.patch
+          nmake -f Makefile.NT
+          if not exist rexxre.dll exit /b 1
+          cd ..
+        shell: cmd
 
-    - name: Build Regina REXX (x86-64)
-      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
-      working-directory: rexx
-      run: |
-        set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-        set PLATFORM=x64
-        
-        cd regina
-        nmake -f makefile.win.vc
-        if not exist regina.dll exit /b 1
-        
-        mkdir include
-        copy rexxsaa.h include
-        mkdir lib
-        copy regina.lib lib
-        cd ..
+#      TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
+#            an incompatible target architecture:
+#  
+#         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
+#        NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
+#                This version of %1 is not compatible with the version of Windows
+#                you're running. Check your computer's system information and then
+#                contact the software publisher.
+#  
+#      - name: Build Regina REXX (arm64)
+#        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+#        working-directory: rexx
+#        run: |
+#          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+#          set PLATFORM=arm64
+#  
+#          cd regina
+#          nmake -f makefile.win.vc
+#          if not exist regina.dll exit /b 1
+#  
+#          mkdir include
+#          copy rexxsaa.h include
+#          mkdir lib
+#          copy regina.lib lib
+#          cd ..
+#  
+#          echo Building RexxRE
+#          cd rexxre
+#          patch -p1 < ..\rexxre.patch
+#          nmake -f Makefile.NT
+#          cd ..
+#        shell: cmd
 
-        echo Building RexxRE
-        cd rexxre
-        patch -p1 < ..\rexxre.patch
-        nmake -f Makefile.NT
-        if not exist rexxre.dll exit /b 1
-        cd ..
-      shell: cmd
-
-#    TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
-#          an incompatible target architecture:
-#
-#       .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
-#      NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
-#              This version of %1 is not compatible with the version of Windows
-#              you're running. Check your computer's system information and then
-#              contact the software publisher.
-#
-#    - name: Build Regina REXX (arm64)
-#      if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-#      working-directory: rexx
-#      run: |
-#        set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-#        set PLATFORM=arm64
-#
-#        cd regina
-#        nmake -f makefile.win.vc
-#        if not exist regina.dll exit /b 1
-#
-#        mkdir include
-#        copy rexxsaa.h include
-#        mkdir lib
-#        copy regina.lib lib
-#        cd ..
-#
-#        echo Building RexxRE
-#        cd rexxre
-#        patch -p1 < ..\rexxre.patch
-#        nmake -f Makefile.NT
-#        cd ..
-#      shell: cmd
-
-    - name: Fetch x86 wart
-      uses: actions/download-artifact@v4
-      if: matrix.arch != 'x86' && matrix.arch != 'x64'
-      with:
-        name: wart-x86
-        path: ${{ github.workspace }}
-
+      - name: Fetch x86 wart
+        uses: actions/download-artifact@v4
+        if: matrix.arch.id != 'x86' && matrix.arch.id != 'x64'
+        with:
+          name: wart-x86
+          path: ${{github.workspace}}
+    
       ##########################################################################
       # Build K95, K95G and other bits for redistribution                      #
       ##########################################################################
-    - name: Full Build
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: kermit
-      run: |
-        set k4w_root_override=${{github.workspace}}\${{ env.CK_K4W_PATH }}
-        set openssl_root_override=${{github.workspace}}\openssl\current
-        set zlib_root_override=${{github.workspace}}\zlib\current
-        set libssh_root_override=${{github.workspace}}\libssh\current
-        set libssh_build_override=%libssh_root_override%\build
-        set rexx_root_override=${{github.workspace}}\rexx\regina\
-        
-        call ${{ github.workspace }}\setenv.bat
-        
-        set PATH=%PATH%;${{github.workspace}}\tools\jom
-        set MAKE=jom
-        
-        REM Don't make PDBs as it causes intermittent problems with JOM that
-        REM /FS *should* solve, but seemingly doesn't.
-        REM TODO: Take another look at this sometime and see if we can fix it
-        REM       properly.
-        set CKB_MAKE_PDB=no
-        
-        REM If the target arch is incompatible with the host arch, use
-        REM the x86 version of ckwart.exe which should have been placed
-        REM in the workplace previously, rather than trying to use a
-        REM version of wart built for the target architecture.
-        if "%CKB_CROSS_COMPATIBLE%" == "no" set CKB_USE_WART=yes
-        if "%CKB_CROSS_COMPATIBLE%" == "no" set WART=${{github.workspace}}\ckwart.exe
-        
-        cd p95
-        call mknt.bat
-        cd ..\k95
+      - name: Full Build
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: kermit
+        run: |
+          set k4w_root_override=${{github.workspace}}\${{steps.cfg.outputs.k4w}}
+          set openssl_root_override=${{github.workspace}}\openssl\current
+          set zlib_root_override=${{github.workspace}}\zlib\current
+          set libssh_root_override=${{github.workspace}}\libssh\current
+          set libssh_build_override=%libssh_root_override%\build
+          set rexx_root_override=${{github.workspace}}\rexx\regina\
+            
+          call ${{github.workspace}}\setenv.bat
+            
+          set PATH=%PATH%;${{github.workspace}}\tools\jom
+          set MAKE=jom
+            
+          REM Don't make PDBs as it causes intermittent problems with JOM that
+          REM /FS *should* solve, but seemingly doesn't.
+          REM TODO: Take another look at this sometime and see if we can fix it
+          REM       properly.
+          set CKB_MAKE_PDB=no
+            
+          REM If the target arch is incompatible with the host arch, use
+          REM the x86 version of ckwart.exe which should have been placed
+          REM in the workplace previously, rather than trying to use a
+          REM version of wart built for the target architecture.
+          if "%CKB_CROSS_COMPATIBLE%" == "no" set CKB_USE_WART=yes
+          if "%CKB_CROSS_COMPATIBLE%" == "no" set WART=${{github.workspace}}\ckwart.exe
+            
+          cd p95
+          call mknt.bat
+          cd ..\k95
+    
+          REM We only do dynamic SSH for x86 and x86-64 as at this time ARM only
+          REM has the single non-GSSAPI SSH backend to choose from.
+          if "%CKB_TARGET_ARCH%" == "x86" goto :build_ssh_dlls
+          if "%CKB_TARGET_ARCH%" == "AMD64" goto :build_ssh_dlls
+          goto :build_main        
+            
+          REM Support and build multiple SSH backends
+          :build_ssh_dlls
+          echo Enabling Dynamic SSH support
+          set CKF_DYNAMIC_SSH=yes
+            
+          REM Vista+, GSSAPI-enabled
+          set SSH_LIB=sshg.lib
+          set CKF_SSH_DLL_VARIANT=g
+          call mksshdll.bat
+          ren k95ssh.dll k95sshg.dll
+          ren k95ssh.pdb k95sshg.pdb
+          del k95ssh.res
+            
+          if "%CKB_XP_COMPATIBLE%" NEQ "yes" goto :noxp
+          REM XP only, no-GSSAPI
+          set SSH_LIB=sshx.lib
+          set CKF_SSH_DLL_VARIANT=x
+          call mksshdll.bat
+          ren k95ssh.dll k95sshx.dll
+          ren k95ssh.pdb k95sshx.pdb
+          del k95ssh.res
+            
+          REM XP, GSSAPI-enabled
+          set SSH_LIB=sshgx.lib
+          set CKF_SSH_DLL_VARIANT=gx
+          call mksshdll.bat
+          ren k95ssh.dll k95sshgx.dll
+          ren k95ssh.pdb k95sshgx.pdb
+          del k95ssh.res
+            
+          :noxp
+          REM Vista+, no-GSSAPI
+          REM built as part of the regular build (mk.bat)
+          set SSH_LIB=ssh.lib
+          set CKF_SSH_DLL_VARIANT=
+            
+          :build_main
+          call mk.bat
+    
+          call mkdist.bat
+        shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
-        REM We only do dynamic SSH for x86 and x86-64 as at this time ARM only
-        REM has the single non-GSSAPI SSH backend to choose from.
-        if "%CKB_TARGET_ARCH%" == "x86" goto :build_ssh_dlls
-        if "%CKB_TARGET_ARCH%" == "AMD64" goto :build_ssh_dlls
-        goto :build_main        
-        
-        REM Support and build multiple SSH backends
-        :build_ssh_dlls
-        echo Enabling Dynamic SSH support
-        set CKF_DYNAMIC_SSH=yes
-        
-        REM Vista+, GSSAPI-enabled
-        set SSH_LIB=sshg.lib
-        set CKF_SSH_DLL_VARIANT=g
-        call mksshdll.bat
-        ren k95ssh.dll k95sshg.dll
-        ren k95ssh.pdb k95sshg.pdb
-        del k95ssh.res
-        
-        if "%CKB_XP_COMPATIBLE%" NEQ "yes" goto :noxp
-        REM XP only, no-GSSAPI
-        set SSH_LIB=sshx.lib
-        set CKF_SSH_DLL_VARIANT=x
-        call mksshdll.bat
-        ren k95ssh.dll k95sshx.dll
-        ren k95ssh.pdb k95sshx.pdb
-        del k95ssh.res
-        
-        REM XP, GSSAPI-enabled
-        set SSH_LIB=sshgx.lib
-        set CKF_SSH_DLL_VARIANT=gx
-        call mksshdll.bat
-        ren k95ssh.dll k95sshgx.dll
-        ren k95ssh.pdb k95sshgx.pdb
-        del k95ssh.res
-        
-        :noxp
-        REM Vista+, no-GSSAPI
-        REM built as part of the regular build (mk.bat)
-        set SSH_LIB=ssh.lib
-        set CKF_SSH_DLL_VARIANT=
-        
-        :build_main
-        call mk.bat
-
-        call mkdist.bat
-        
-        REM Check outputs
-        set MISSING_BUILD_RESULTS=
-        for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-        )
-
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
-      shell: cmd
-
-    - name: Fetch CA Certs bundle
-      uses: actions/download-artifact@v4
-      with:
-        name: ca_certs
-        path: ${{ github.workspace }}\kermit\k95\dist
-
-    - name: Fetch Docs
-      uses: actions/download-artifact@v4
-      with:
-        name: markdown-docs
-        path: ${{ github.workspace }}\kermit\k95\dist
-
-    - name: Prepare Artifact
-      working-directory: ${{ github.workspace }}\kermit\k95
-      run: |
-        move dist ${{ github.workspace }}\ckwin
-      shell: cmd
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: k95-vc${{ matrix.toolset }}-${{ matrix.arch }}
-        path: ${{ github.workspace }}\ckwin
-        if-no-files-found: error
-        retention-days: 7
+      - name: Fetch CA Certs bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: ca_certs
+          path: ${{github.workspace}}\kermit\k95\dist
+    
+      - name: Fetch Docs
+        uses: actions/download-artifact@v4
+        with:
+          name: markdown-docs
+          path: ${{github.workspace}}\kermit\k95\dist
+    
+      - name: Prepare Artifact
+        working-directory: ${{github.workspace}}\kermit\k95
+        run: |
+          move dist ${{github.workspace}}\ckwin
+        shell: cmd
+    
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-vs${{matrix.version.vs}}-${{matrix.arch.id}}
+          path: ${{github.workspace}}/ckwin
+          if-no-files-found: error
+          retention-days: 7
 
   ##############################################################################
   # Build with Windows 7 Platform SDK version 7.1 (Visual C++ 2010)            #
@@ -764,7 +724,7 @@ jobs:
   # This is the last compiler that can target Itanium. Due to its lack of C99
   # support, builds with Visual C++ 2010 and older don't include SSH support.
   # OpenSSL 1.1.1t is supported however.
-  Build-PSDK71:
+  Build-VS2010-PSDK71:
     runs-on: windows-latest
     needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart]
     strategy:
@@ -773,48 +733,32 @@ jobs:
           - ia64
           #- x86
           #- x64
+    name: Build-VS2010-PSDK71 (${{matrix.arch}})
 
     steps:
       - uses: actions/checkout@v4
       - name: Select env configuration
-        run: echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}" >> "$GITHUB_ENV"
+        id: cfg
+        run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
         shell: bash
-        ##########################################################################
-        # Fetch the compiler                                                     #
-        ##########################################################################
-      - name: Cache Compiler
-        uses: "./.github/actions/cache"
-        id: cache-compiler
+
+      ##########################################################################
+      # Load build tools                                                       #
+      ##########################################################################
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
         with:
-          path: |
-            ${{github.workspace}}\Microsoft SDKs 
-            ${{github.workspace}}\Microsoft Visual Studio 10.0
-            ${{github.workspace}}\vc10.cmd
-            ${{github.workspace}}\vcredist_x86.exe
-          key: platform-sdk-71-compiler+sdk+redist
-          nocache: ${{ vars.NOCACHE }}
-      - name: Get Windows 7 Platform SDK v7.1
-        if: steps.cache-compiler.outputs.cache-hit != 'true'
-        run: |
-          wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z -outfile win7-7.1-sdk-vc.7z
-          7z x win7-7.1-sdk-vc.7z
-          del win7-7.1-sdk-vc.7z
-          
-          wget https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-psdk.7z -outfile win7-7.1-sdk-psdk.7z
-          7z x win7-7.1-sdk-psdk.7z
-          del win7-7.1-sdk-psdk.7z
-          
-          wget http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe -outfile vcredist_x86.exe
-        shell: powershell
-
-      - name: Install the Visual C++ 2010 Runtime
-        working-directory: ${{ github.workspace }}
-        run: vcredist_x86.exe /q /norestart
-        shell: cmd
-
-        ##########################################################################
-        # Build optional dependencies (openssl, libdes)                          #
-        ##########################################################################
+          nocache: ${{vars.NOCACHE}}
+      ##########################################################################
+      # Load the compiler                                                     #
+      ##########################################################################
+      - name: Load Visual C++ 2010 and Windows 7 PSDK 7.1
+        uses: "./.github/actions/load-vs2010"
+        with:
+          nocache: ${{vars.NOCACHE}}
+      ##########################################################################
+      # Build optional dependencies (openssl, libdes)                          #
+      ##########################################################################
       - name: Cache Optional Dependencies
         uses: "./.github/actions/cache"
         id: cache-optional-dependencies
@@ -826,21 +770,20 @@ jobs:
             ${{github.workspace}}\libdes\des
             ${{github.workspace}}\libdes\Release
             ${{github.workspace}}\libdes\Debug
-            ${{github.workspace}}\tools
-          key: platform-sdk-71-optdepts-${{ matrix.arch }}+nasm+openssl-${{env.CK_OPENSSL_VERSION}}+libdes+v3
-          nocache: ${{ vars.NOCACHE }}
+          key: vs2010-${{matrix.arch}}-psdk71+openssl-${{steps.cfg.outputs.openssl}}+libdes+v3
+          nocache: ${{vars.NOCACHE}}
       - name: Get dependencies
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
-        working-directory: ${{ github.workspace }}
+        working-directory: ${{github.workspace}}
         run: |         
           # Get and unpack openssl
           cd openssl
-          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz -outfile openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-          7z x openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-          7z x openssl-${{env.CK_OPENSSL_VERSION}}.tar
-          del openssl-${{env.CK_OPENSSL_VERSION}}.tar 
-          del openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-          ren openssl-${{env.CK_OPENSSL_VERSION}} current
+          wget https://github.com/openssl/openssl/releases/download/openssl-${{steps.cfg.outputs.openssl}}/openssl-${{steps.cfg.outputs.openssl}}.tar.gz -outfile openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          7z x openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          7z x openssl-${{steps.cfg.outputs.openssl}}.tar
+          del openssl-${{steps.cfg.outputs.openssl}}.tar 
+          del openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          ren openssl-${{steps.cfg.outputs.openssl}} current
           dir current
           cd ..
           
@@ -854,37 +797,18 @@ jobs:
           dir
           cd ..
           
-          # Get and unpack nasm
-          mkdir tools
-          cd tools
-          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
-          7z x nasm-2.15.05-win32.zip
-          del nasm-2.15.05-win32.zip
-          ren nasm-2.15.05 nasm
-          dir nasm
-          cd ..          
-        
-          # Get and unpack JOM
-          cd ${{github.workspace}}\tools
-          mkdir jom
-          wget ${{env.JOM}} -outfile jom.zip
-          7z x jom.zip -ojom
-          del jom.zip
-          dir jom
-          cd ..
-          
           # Install perl modules required by OpenSSL build
           cpan -i Text::Template
         shell: powershell
 
-      - name: Build openssl (ia64)
+      - name: Build openssl (${{matrix.arch}})
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'ia64'
         working-directory: openssl\current
         run: |
           SET PlatformToolset=100
           set PATH=%PATH%;${{github.workspace}}\tools\jom
 
-          call ${{ github.workspace }}\vc10.cmd /release /xp /${{matrix.arch}}
+          call ${{github.workspace}}\vc10.cmd /release /xp /${{matrix.arch}}
           
           perl Configure VC-WIN64I -D"_WIN32_WINNT=0x502"
           
@@ -901,7 +825,7 @@ jobs:
         run: |
           SET PlatformToolset=100
 
-          call ${{ github.workspace }}\vc10.cmd /release /xp /${{matrix.arch}}
+          call ${{github.workspace}}\vc10.cmd /release /xp /${{matrix.arch}}
           
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
@@ -920,7 +844,7 @@ jobs:
         run: |
           SET PlatformToolset=100
 
-          call ${{ github.workspace }}\vc10.cmd /release /xp /${{matrix.arch}}
+          call ${{github.workspace}}\vc10.cmd /release /xp /${{matrix.arch}}
           
           set PATH=%PATH%;${{github.workspace}}\tools\nasm;${{github.workspace}}\tools\jom
           
@@ -934,7 +858,7 @@ jobs:
         run: |
           SET PlatformToolset=100
 
-          call ${{ github.workspace }}\vc10.cmd /release /xp /${{matrix.arch}}
+          call ${{github.workspace}}\vc10.cmd /release /xp /${{matrix.arch}}
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           set MAKE=jom
@@ -947,25 +871,25 @@ jobs:
         if: matrix.arch == 'ia64'
         with:
           name: wart-x86
-          path: ${{ github.workspace }}
+          path: ${{github.workspace}}
 
         ##########################################################################
         # Build K95, K95G and other bits for redistribution                      #
         ##########################################################################
       - name: Full Build
         env:
-          ROOT: ${{ github.workspace }}
+          ROOT: ${{github.workspace}}
         working-directory: kermit
         run: |         
           echo Configure Platform SDK Build Environment...
           SET PlatformToolset=100
 
-          call ${{ github.workspace }}\vc10.cmd /release /xp /${{matrix.arch}}
+          call ${{github.workspace}}\vc10.cmd /release /xp /${{matrix.arch}}
           
           echo Configure build environment...
           set openssl_root_override=${{github.workspace}}\openssl\current
 
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           set MAKE=jom
@@ -979,239 +903,127 @@ jobs:
           cd ..\k95
           call mk.bat
           call mkdist.bat
-          
-          echo Check outputs...
-          set MISSING_BUILD_RESULTS=
-          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
-          )
-          
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch CA Certs bundle
         uses: actions/download-artifact@v4
         with:
           name: ca_certs
-          path: ${{ github.workspace }}\kermit\k95\dist
+          path: ${{github.workspace}}\kermit\k95\dist
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
         with:
           name: markdown-docs
-          path: ${{ github.workspace }}\kermit\k95\dist
+          path: ${{github.workspace}}\kermit\k95\dist
 
       # Builds with Visual C++ 2010 don't support SSH so don't need the SSH Readme
       - name: Remove SSH Readme
-        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        run: del ${{github.workspace}}\kermit\k95\dist\ssh-readme.html
         shell: cmd
 
       - name: Prepare Artifact
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{github.workspace}}\kermit\k95
         run: |
-          move dist ${{ github.workspace }}\ckwin
+          move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k95-vc10-${{ matrix.arch }}
-          path: ${{ github.workspace }}\ckwin
+          name: k95-vs2010-${{matrix.arch}}
+          path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
 
 
   ###############################################################################
-  # Build with Open Watcom 1.9 which allows targeting older versions of Windows #
+  # Build with Open Watcom which allows targeting older versions of Windows #
   ###############################################################################
   # It is also likely to be upset by the same sorts of things as Visual C++ 6
   # which reduces the likelihood of accidentally breaking that compiler.
   Build-OpenWatcom19-Win32:
     runs-on: windows-latest
     needs: Prepare-Docs
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Open Watcom setup
-      uses: open-watcom/setup-watcom@v0
-      with:
-        version: "1.9"
-      # Cache Open Watcom because it takes quite a while to download and
-      # decompress.
-    - name: Cache openzinc
-      uses: "./.github/actions/cache"
-      id: cache-openzinc
-      with:
-        path: |
-          ${{github.workspace}}\zinc
-        key: openzinc1
-        nocache: ${{ vars.NOCACHE }}
-
-    - name: Get openzinc
-      if: steps.cache-openzinc.outputs.cache-hit != 'true'
-      run: |
-        mkdir zinc
-        cd zinc
-        wget ${{ env.OPENZINC }} -outfile OZ1.zip
-        7z x OZ1.zip
-        cd ..
-      shell: powershell
-
-    - name: Full Build
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: kermit
-      run: |
-        call ${{ github.workspace }}\setenv.bat
-        
-        REM Enable Dynamic SSH just to be sure those bits are buildable
-        REM with Open Watcom
-        set CKF_SSH=yes
-        set CKF_DYNAMIC_SSH=yes
-        
-        cd p95
-        call mknt.bat
-        cd ..\k95
-        call mk.bat
-        
-        call mkdist.bat
-        
-        
-        REM Check outputs
-        REM ctl3d.exe
-        set MISSING_BUILD_RESULTS=
-        
-        REM Can't use STANDARD_BUILD_OUTPUTS as we're not building k95crypt.dll
-        REM here for some reason.
-        for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-        )
-
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
-      shell: cmd
-    - name: Dialer Build
-      env:
-        ROOT: ${{ github.workspace }}
-      working-directory: kermit\dialer
-      run: |
-        call ${{ github.workspace }}\setenv.bat
-
-        call mk.bat
-        call mkdist.bat
-        
-        set MISSING_BUILD_RESULTS=
-
-        for %%y in (k95dial.exe k95regtl.exe) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-        )
-
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-        if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-        if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
-      shell: cmd
-    - name: Prepare Artifacts
-      working-directory: ${{ github.workspace }}\kermit\k95
-      run: |
-        move dist ${{ github.workspace }}\ckwin
-        move ..\dialer\dist ${{ github.workspace }}\dialer
-      shell: cmd
-
-    - name: Fetch Docs
-      uses: actions/download-artifact@v4
-      with:
-        name: markdown-docs
-        path: ${{ github.workspace }}\ckwin
-
-      # ctl3dins is a utility for installing ctl3d32 and, in some cases,
-      # the Visual C++ runtime. Builds of the Dialer done with Open Watcom
-      # can't use ctl3d32 (it a Visual C++ thing), and they don't need the
-      # Visual C++ runtime, so ctl3dins.exe serves no purpose here. Even
-      # worse, Microsoft AntiVirus frequently misdetects it as being a
-      # virus (Trojan:Win32/Wacatac.B!ml) making the artifact difficult
-      # to download. So... just exclude ctl3dins from OpenWatcom-built
-      # artifacts.
-    - name: Remove ctl3dins.exe
-      run: del ${{ github.workspace }}\ckwin\ctl3dins.exe
-      shell: cmd
-
-      # Open Watcom builds don't include SSH so don't need the SSH Readme
-    - name: Remove SSH Readme
-      run: del ${{ github.workspace }}\ckwin\ssh-readme.html
-      shell: cmd
-
-    - name: Upload K95 Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: k95-ow1.9-x86
-        path: ${{ github.workspace }}\ckwin
-        if-no-files-found: error
-        retention-days: 7
-    - name: Upload Dialer Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: dialer-ow1.9-x86
-        path: ${{ github.workspace }}\dialer
-        if-no-files-found: error
-        retention-days: 7
-
-  Build-OpenWatcom19-Win32-NT-legacy:
-    runs-on: windows-latest
-    needs: Prepare-Docs
+    strategy:
+      matrix:
+        ver:
+          - '1.9'
+        id:
+          - 'nt'
+    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.id}})
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Open Watcom setup
-        uses: open-watcom/setup-watcom@v0
+      - name: Load Open Watcom
+        uses: "./.github/actions/load-watcom"
         with:
-          version: "1.9"
+          nocache: ${{vars.NOCACHE}}
+          ver: ${{matrix.ver}}
+          id: ${{matrix.id}}
+      - name: Load Open Zinc
+        uses: "./.github/actions/load-openzinc"
+        with:
+          nocache: ${{vars.NOCACHE}}
+
       - name: Full Build
         env:
-          ROOT: ${{ github.workspace }}
+          ROOT: ${{github.workspace}}
         working-directory: kermit
         run: |
-          REM Build for Windows NT 3.50 (and, someday, NT 3.1)
-          set CKT_NT31=yes
-          
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
+        
+          REM Enable Dynamic SSH just to be sure those bits are buildable
+          REM with Open Watcom
+          set CKF_SSH=yes
+          set CKF_DYNAMIC_SSH=yes
+        
           cd p95
           call mknt.bat
           cd ..\k95
           call mk.bat
-          
+        
           call mkdist.bat
-          
-          REM Check outputs
-          REM ctl3d.exe
-          set MISSING_BUILD_RESULTS=
-          
-          REM Can't use STANDARD_BUILD_OUTPUTS as we're not building k95crypt.dll
-          REM here for some reason.
-          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-          )
-  
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
+        shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
+
+      - name: Dialer Build
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: kermit\dialer
+        run: |
+          call ${{github.workspace}}\setenv.bat
+
+          call mk.bat
+          call mkdist.bat
+        shell: cmd
+      - name: Dialer Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/dialer/dist'
+          list: 'k95dial.exe k95regtl.exe'
+
+      - name: Prepare Artifacts
+        working-directory: ${{github.workspace}}\kermit\k95
+        run: |
+          move dist ${{github.workspace}}\ckwin
+          move ..\dialer\dist ${{github.workspace}}\dialer
         shell: cmd
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
         with:
           name: markdown-docs
-          path: ${{ github.workspace }}\ckwin
+          path: ${{github.workspace}}\ckwin
 
       # ctl3dins is a utility for installing ctl3d32 and, in some cases,
       # the Visual C++ runtime. Builds of the Dialer done with Open Watcom
@@ -1222,86 +1034,147 @@ jobs:
       # to download. So... just exclude ctl3dins from OpenWatcom-built
       # artifacts.
       - name: Remove ctl3dins.exe
-        run: del ${{ github.workspace }}\ckwin\ctl3dins.exe
+        run: del ${{github.workspace}}\ckwin\ctl3dins.exe
         shell: cmd
 
-        # Open Watcom builds don't include SSH so don't need the SSH Readme
+      # Open Watcom builds don't include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
-        run: del ${{ github.workspace }}\ckwin\ssh-readme.html
+        run: del ${{github.workspace}}\ckwin\ssh-readme.html
         shell: cmd
 
-      - name: Prepare Artifact
-        working-directory: ${{ github.workspace }}\kermit\k95
-        run: |
-          move dist ${{ github.workspace }}\ckwin
-        shell: cmd
-      - name: Upload Artifact
+      - name: Upload K95 Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k95-ow1.9-x86-nt350
-          path: ${{ github.workspace }}\ckwin
+          name: k95-ow${{matrix.ver}}-x86
+          path: ${{github.workspace}}/ckwin
+          if-no-files-found: error
+          retention-days: 7
+      - name: Upload Dialer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dialer-ow${{matrix.ver}}-x86
+          path: ${{github.workspace}}/dialer
           if-no-files-found: error
           retention-days: 7
 
-  ##############################################################################
-  # Build C-Kermit for OS/2 with Open Watcom 1.9 which can cross-compile       #
-  ##############################################################################
-  Build-OpenWatcom19-OS2:
+  Build-OpenWatcom19-Win32-NT-legacy:
     runs-on: windows-latest
+    needs: Prepare-Docs
+    strategy:
+      matrix:
+        ver:
+          - '1.9'
+        id:
+          - 'nt-legacy'
+    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.id}})
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Open Watcom setup
-        uses: open-watcom/setup-watcom@v0
+      - name: Load Open Watcom
+        uses: "./.github/actions/load-watcom"
         with:
-          version: "1.9"
-      - name: Cache dependencies
-        uses: "./.github/actions/cache"
-        id: cache-dependencies
-        with:
-          path: |
-            ${{github.workspace}}\zinc
-            ${{github.workspace}}\info-zip
-            ${{github.workspace}}\toolkit
-          key: openzinc1+infozip+os2tk45
-          nocache: ${{ vars.NOCACHE }}
-      - name: Get dependencies
-        if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        working-directory: ${{ github.workspace }}
-        run: |
-          mkdir zinc
-          cd zinc
-          wget ${{ env.OPENZINC }} -outfile OZ1.zip
-          7z x OZ1.zip
-          cd ..
-          
-          cd info-zip
-          wget ${{ env.INFOZIP_FTP }}win32/zip300xn.zip -outfile zip.zip
-          mkdir os2
-          cd os2
-          wget ${{ env.INFOZIP_FTP }}os2/unz600.exe -outfile unzip.zip
-          7z x unzip.zip
-          move 32-bit\*
-          del unzip.zip
-          cd ..
-          7z x zip.zip
-          cd ..
-          dir
-          
-          wget ${{ env.OS2TK45 }} -outfile os2tk45.zip
-          7z x os2tk45.zip
-          del os2tk45.zip
-          move toolkit\os2tk45\h toolkit\os2tk45\include
-        shell: powershell
-      - name: Kermit/2 Build
+          nocache: ${{vars.NOCACHE}}
+          ver: ${{matrix.ver}}
+          id: ${{matrix.id}}
+
+      - name: Full Build
         env:
-          ROOT: ${{ github.workspace }}
+          ROOT: ${{github.workspace}}
         working-directory: kermit
         run: |
-          set ibm20dir_override=${{ github.workspace }}\toolkit\OS2TK45
+          REM Build for Windows NT 3.50 (and, someday, NT 3.1)
+          set CKT_NT31=yes
+          
+          call ${{github.workspace}}\setenv.bat
+          cd p95
+          call mknt.bat
+          cd ..\k95
+          call mk.bat
+          
+          call mkdist.bat
+        shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
 
-          call ${{ github.workspace }}\setenv.bat
+      - name: Fetch Docs
+        uses: actions/download-artifact@v4
+        with:
+          name: markdown-docs
+          path: ${{github.workspace}}\ckwin
+
+      # ctl3dins is a utility for installing ctl3d32 and, in some cases,
+      # the Visual C++ runtime. Builds of the Dialer done with Open Watcom
+      # can't use ctl3d32 (it a Visual C++ thing), and they don't need the
+      # Visual C++ runtime, so ctl3dins.exe serves no purpose here. Even
+      # worse, Microsoft AntiVirus frequently misdetects it as being a
+      # virus (Trojan:Win32/Wacatac.B!ml) making the artifact difficult
+      # to download. So... just exclude ctl3dins from OpenWatcom-built
+      # artifacts.
+      - name: Remove ctl3dins.exe
+        run: del ${{github.workspace}}\ckwin\ctl3dins.exe
+        shell: cmd
+
+        # Open Watcom builds don't include SSH so don't need the SSH Readme
+      - name: Remove SSH Readme
+        run: del ${{github.workspace}}\ckwin\ssh-readme.html
+        shell: cmd
+
+      - name: Prepare Artifact
+        working-directory: ${{github.workspace}}\kermit\k95
+        run: |
+          move dist ${{github.workspace}}\ckwin
+        shell: cmd
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-ow${{matrix.ver}}-x86-nt350
+          path: ${{github.workspace}}/ckwin
+          if-no-files-found: error
+          retention-days: 7
+
+  ##############################################################################
+  # Build C-Kermit for OS/2 with Open Watcom which can cross-compile           #
+  ##############################################################################
+  Build-OpenWatcom19-OS2:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        ver:
+          - '1.9'
+        id:
+          - 'os2'
+    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.id}})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load Open Watcom
+        uses: "./.github/actions/load-watcom"
+        with:
+          nocache: ${{vars.NOCACHE}}
+          ver: ${{matrix.ver}}
+          id: ${{matrix.id}}
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
+      - name: Load Open Zinc
+        uses: "./.github/actions/load-openzinc"
+        with:
+          nocache: ${{vars.NOCACHE}}
+
+      - name: Kermit/2 Build
+        env:
+          ROOT: ${{github.workspace}}
+        working-directory: kermit
+        run: |
+          set ibm20dir_override=${{github.workspace}}\tools\os2tk45
+
+          call ${{github.workspace}}\setenv.bat
           
           REM Enable Dynamic SSH just to be sure those bits are buildable
           REM for OS/2 with Open Watcom
@@ -1319,78 +1192,72 @@ jobs:
           call mkos2.bat
           
           call mkdist-os2.bat
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          for %%y in (${{env.OS2_BUILD_OUTPUTS}}) do (
-            if not exist dist-os2\%%y echo Build result not found: %%y
-            if not exist dist-os2\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist-os2\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Kermit/2 Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist-os2'
+          list: ${{env.OS2_BUILD_OUTPUTS}}
+
       - name: Dialer Build
         env:
-          ROOT: ${{ github.workspace }}
+          ROOT: ${{github.workspace}}
         working-directory: kermit\dialer
         run: |
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           call mkos2.bat
         shell: cmd
       - name: Make Dialer Distribution
         env:
-          ROOT: ${{ github.workspace }}
+          ROOT: ${{github.workspace}}
         working-directory: kermit\dialer
         run: mkdist-os2.bat
         shell: cmd
       - name: Prepare Artifact
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{github.workspace}}\kermit\k95
         run: |
           move ..\dialer\dist-os2\* dist-os2\
-          move dist-os2 ${{ github.workspace }}\ckos2
-          cd ${{ github.workspace }}\ckos2
+          move dist-os2 ${{github.workspace}}\ckos2
+          cd ${{github.workspace}}\ckos2
           
           echo Making full distribution archive K2PACK.EXE
-          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
-          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
           del k2pack.zip
-          mkdir ${{ github.workspace }}\dist-full
-          move K2PACK.EXE ${{ github.workspace }}\dist-full\
-          copy setup.exe ${{ github.workspace }}\dist-full\
+          mkdir ${{github.workspace}}\dist-full
+          move K2PACK.EXE ${{github.workspace}}\dist-full\
+          copy setup.exe ${{github.workspace}}\dist-full\
           
           echo Making minimal distribution
           REM This is basically everything but the dialer. Its small enough to fit on a
           REM single floppy disk alongisde setup.exe
-          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe docs download eas icons keymaps phones printer public scripts tmp users
-          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack-mini.zip K2PACK.EXE
+          ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe docs download eas icons keymaps phones printer public scripts tmp users
+          copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack-mini.zip K2PACK.EXE
           del k2pack-mini.zip
-          mkdir ${{ github.workspace }}\dist-mini
-          move K2PACK.EXE ${{ github.workspace }}\dist-mini\
-          copy setup.exe ${{ github.workspace }}\dist-mini\
+          mkdir ${{github.workspace}}\dist-mini
+          move K2PACK.EXE ${{github.workspace}}\dist-mini\
+          copy setup.exe ${{github.workspace}}\dist-mini\
         shell: cmd
 
       - name: Upload Zip Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k2-ow1.9-x86
-          path: ${{ github.workspace }}\ckos2
+          name: k2-ow${{matrix.ver}}-x86
+          path: ${{github.workspace}}/ckos2
           if-no-files-found: error
           retention-days: 7
       - name: Upload Full Installer Artifact
         uses: actions/upload-artifact@v4
         with:
           name: k2-full-install
-          path: ${{ github.workspace }}\dist-full
+          path: ${{github.workspace}}/dist-full
           if-no-files-found: error
           retention-days: 7
       - name: Upload Minimal Installer Artifact
         uses: actions/upload-artifact@v4
         with:
           name: k2-mini-install
-          path: ${{ github.workspace }}\dist-mini
+          path: ${{github.workspace}}/dist-mini
           if-no-files-found: error
           retention-days: 7
 
@@ -1401,11 +1268,14 @@ jobs:
   # from the Visual C++ 2003 Toolkit, the Windows Server 2003 SP1 Platform SDK
   # as described here:
   # https://epics.anl.gov/base/msvctk.php
-  Build-VCT2003-PSDK2003:
+  Build-VS2003-PSDK2003SP1:
     runs-on: windows-latest
     needs: [Get-CACerts-Bundle, Prepare-Docs]
     strategy:
       matrix:
+        arch:
+          - id: 'x86'
+            vsversion: 2003
         # Do a build using ancient and insecure libraries like libsrp, k4w
         # and SuperLAT? This is *purely* for checking support with these
         # otherwise rarely tested build options doesn't get accidentlaly
@@ -1413,6 +1283,8 @@ jobs:
         legacy_dependencies:
           - yes
           - no
+    name: Build-VS${{matrix.arch.vsversion}}-PSDK2003SP1 (${{matrix.arch.id}}, ${{matrix.legacy_dependencies}})
+
     steps:
       - uses: actions/checkout@v4
 
@@ -1424,39 +1296,18 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
-          toolset: 14.0
-
-        # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
-        # quite a while to download and decompress and I don't want my FTP
-        # server being hit constantly to download this whenever a build runs.
-      - name: Cache VCT2003
-        uses: "./.github/actions/cache"
-        id: cache-vct2003
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
         with:
-          path: |
-            ${{github.workspace}}\vct2003
-            ${{github.workspace}}\tools\jom
-          key: vct2003+psdk2003sp1+jom
-          nocache: ${{ vars.NOCACHE }}
-
-      - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003
-        if: steps.cache-vct2003.outputs.cache-hit != 'true'
-        run: |
-          wget https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z -outfile VCT2003+PSDK2003+cvtres.7z
-          7z x VCT2003+PSDK2003+cvtres.7z
-          Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
-          Remove-Item VCT2003+PSDK2003+cvtres.7z
-          Remove-Item VCT2003\Bin\Cvtres.exe
-          
-          # Get and unpack JOM
-          mkdir tools
-          cd tools
-          mkdir jom
-          wget ${{env.JOM}} -outfile jom.zip
-          7z x jom.zip -ojom
-          del jom.zip
-          cd ..
-        shell: powershell
+          nocache: ${{vars.NOCACHE}}
+      # Load the Visual C++ 2003 Toolkit & Platform SDK from cache because it takes
+      # quite a while to download and decompress and I don't want my FTP
+      # server being hit constantly to download this whenever a build runs.
+      - name: Load Visual C++ ${{matrix.arch.vsversion}} Toolkit and Platform SDK 2003
+        uses: "./.github/actions/load-vs2003"
+        with:
+          nocache: ${{vars.NOCACHE}}
+          arch: ${{matrix.arch.id}}
 
       - name: Cache legacy dependencies
         if: matrix.legacy_dependencies == 'yes'
@@ -1464,38 +1315,27 @@ jobs:
         id: cache-legacy-deps
         with:
           path: |
-            ${{github.workspace}}\srp-2.1.2
-            ${{github.workspace}}\openssl\1.0.1u
-            ${{github.workspace}}\kerberos\kfw-2.6.5
-            ${{github.workspace}}\libdes\des
-            ${{github.workspace}}\libdes\Release
-            ${{github.workspace}}\libdes\Debug
-            ${{github.workspace}}\superlat
-            ${{github.workspace}}\tools
-          key: libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.5-ver2
-          nocache: ${{ vars.NOCACHE }}
+            ${{github.workspace}}/srp-2.1.2
+            ${{github.workspace}}/openssl/1.0.1u
+            ${{github.workspace}}/kerberos/kfw-2.6.5
+            ${{github.workspace}}/libdes/des
+            ${{github.workspace}}/libdes/Release
+            ${{github.workspace}}/libdes/Debug
+            ${{github.workspace}}/superlat
+          key: vs2003-${{matrix.arch.id}}-libdes+libsrp+openssl-1.0.1u+superlat+kfw-2.6.5-ver2
+          nocache: ${{vars.NOCACHE}}
 
       - name: Get Legacy Dependencies
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         run: |
           # Make sure everything is clean
-          #Remove-Item -Recurse -Force libdes\des
-          #Remove-Item -Recurse -Force libdes\Release
-          #Remove-Item -Recurse -Force libdes\Debug
-          #Remove-Item -Recurse -Force kerberos\kfw-2.6.5
-          #Remove-Item -Recurse -Force openssl\1.0.1u
+          #Remove-Item -Recurse -Force libdes/des
+          #Remove-Item -Recurse -Force libdes/Release
+          #Remove-Item -Recurse -Force libdes/Debug
+          #Remove-Item -Recurse -Force kerberos/kfw-2.6.5
+          #Remove-Item -Recurse -Force openssl/1.0.1u
           #Remove-Item -Recurse -Force srp-2.1.2
-          #Remove-Item -Recurse -Force tools
-          
-          # Get and unpack nasm
-          cd tools
-          wget https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip -outfile nasm-2.15.05-win32.zip
-          7z x nasm-2.15.05-win32.zip
-          del nasm-2.15.05-win32.zip
-          ren nasm-2.15.05 nasm
-          dir nasm
-          cd ..
-        
+
           # Get and unpack libdes
           cd libdes
           wget ${{env.LIBDES}} -outfile libdes.tar.gz
@@ -1563,16 +1403,8 @@ jobs:
 
       - name: Build libdes
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
-        env:
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: libdes
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
           set CKB_STATIC_CRT_NT=yes
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
@@ -1583,17 +1415,17 @@ jobs:
 
       - name: Build openssl
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
-        env:
-          VCT2003: ${{ github.workspace }}\VCT2003
         working-directory: openssl\1.0.1u
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib;%LIB%
-          
+          REM *************************************
+          REM Fix for bug in VCT2003
+          REM missing setargv.obj for x86 target
+          REM used by openssl only
+          REM it is only function call redirection
+          REM compile from auxiliary C source file
+          REM *************************************
+          cl /nologo /c ${{github.workspace}}\openssl\setargv.c /Fosetargv.obj
+
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
           perl Configure VC-WIN32 enable-static-engine
                    
@@ -1608,43 +1440,28 @@ jobs:
       - name: Build libsrp
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         env:
-          ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
+          ROOT: ${{github.workspace}}
         working-directory: srp-2.1.2
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
           set CKB_STATIC_CRT_NT=yes
           
-          set openssl_root_override=${{ github.workspace }}\openssl\1.0.1u
-          set srp_root_override=${{ github.workspace }}\srp-2.1.2
+          set openssl_root_override=${{github.workspace}}\openssl\1.0.1u
+          set srp_root_override=${{github.workspace}}\srp-2.1.2
           
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           call mknt.bat
         shell: cmd
 
       - name: Full Build
         env:
-          ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
+          ROOT: ${{github.workspace}}
         working-directory: kermit
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
-          
-          set openssl_root_override=${{ github.workspace }}\openssl\1.0.1u
-          set srp_root_override=${{ github.workspace }}\srp-2.1.2
-          set k4w_root_override=${{ github.workspace }}\kerberos\kfw-2.6.5\src
+          set openssl_root_override=${{github.workspace}}\openssl\1.0.1u
+          set srp_root_override=${{github.workspace}}\srp-2.1.2
+          set k4w_root_override=${{github.workspace}}\kerberos\kfw-2.6.5\src
   
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           set MAKE=jom
@@ -1663,39 +1480,23 @@ jobs:
           call mk.bat
           
           call mkdist.bat
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          REM ctl3dins.exe
-          for %%y in (k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
 
       - name: Full Build Non-standard configs
         env:
-          ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
+          ROOT: ${{github.workspace}}
         working-directory: kermit
         run: |
-          Set PATH=%VCT2003%\bin;%PATH%
+          set openssl_root_override=${{github.workspace}}\openssl\1.0.1u
+          set srp_root_override=${{github.workspace}}\srp-2.1.2
+          set k4w_root_override=${{github.workspace}}\kerberos\kfw-2.6.5\src
           
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib
-          
-          set openssl_root_override=${{ github.workspace }}\openssl\1.0.1u
-          set srp_root_override=${{ github.workspace }}\srp-2.1.2
-          set k4w_root_override=${{ github.workspace }}\kerberos\kfw-2.6.5\src
-          
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           
           set PATH=%PATH%;${{github.workspace}}\tools\jom
           set MAKE=jom          
@@ -1715,93 +1516,76 @@ jobs:
           
           mkdir dist-misc
           move *.exe dist-misc          
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          for %%y in (cknkui.exe) do (
-            if not exist dist-misc\%%y echo Build result not found: %%y
-            if not exist dist-misc\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist-misc\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Non-standard configs Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist-misc'
+          list: 'cknkui.exe'
 
       - name: Check additional legacy outputs
         if: matrix.legacy_dependencies == 'yes'
-        working-directory: ${{ github.workspace }}\kermit\k95
-        run: |
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          REM TODO: srp-tconf.exe srp-passwd.exe
-          REM TODO: Kerberos bits
-          for %%y in (k95crypt.dll) do (
-            if not exist dist\%%y echo Build result not found: %%y
-            if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-            if not exist dist\%%y set FAILED=yes
-          )
-
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing legacy build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
-        shell: cmd
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          # TODO: srp-tconf.exe srp-passwd.exe
+          # TODO: Kerberos bits
+          list: 'k95crypt.dll'
 
       - name: Fetch CA Certs bundle
         if: matrix.legacy_dependencies == 'yes'
         uses: actions/download-artifact@v4
         with:
           name: ca_certs
-          path: ${{ github.workspace }}\kermit\k95\dist
+          path: ${{github.workspace}}\kermit\k95\dist
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
         with:
           name: markdown-docs
-          path: ${{ github.workspace }}\kermit\k95\dist
+          path: ${{github.workspace}}\kermit\k95\dist
 
       # Builds with Visual C++ 2003 include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
-        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        run: del ${{github.workspace}}\kermit\k95\dist\ssh-readme.html
         shell: cmd
 
       - name: Prepare Artifact
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{github.workspace}}\kermit\k95
         run: |
-          move dist ${{ github.workspace }}\ckwin
-          move dist-misc ${{ github.workspace }}\ckwin-extra
+          move dist ${{github.workspace}}\ckwin
+          move dist-misc ${{github.workspace}}\ckwin-extra
         shell: cmd
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'no'
         with:
-          name: k95-vc7.1-x86
-          path: ${{ github.workspace }}\ckwin
+          name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}
+          path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
       - name: Upload Artifact (extra)
         uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'no'
         with:
-          name: k95-vc7.1-x86-extra
-          path: ${{ github.workspace }}\ckwin-extra
+          name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-extra
+          path: ${{github.workspace}}/ckwin-extra
           if-no-files-found: error
           retention-days: 7
-      - name: Upload Artifact
+      - name: Upload Artifact (legacy)
         uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'yes'
         with:
-          name: k95-vc7.1-x86-insecure
-          path: ${{ github.workspace }}\ckwin
+          name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-insecure
+          path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
-      - name: Upload Artifact (extra)
+      - name: Upload Artifact (legacy-extra)
         uses: actions/upload-artifact@v4
         if: matrix.legacy_dependencies == 'yes'
         with:
-          name: k95-vc7.1-x86-insecure-extra
-          path: ${{ github.workspace }}\ckwin-extra
+          name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-insecure-extra
+          path: ${{github.workspace}}/ckwin-extra
           if-no-files-found: error
           retention-days: 7
 
@@ -1811,56 +1595,49 @@ jobs:
   ##############################################################################
   # This uses Visual C++ 2005
   #
-  Build-PSDK2003SP1-IA64:
+  Build-VS2005-PSDK2003SP1:
     runs-on: windows-latest
     needs: [Prepare-Docs, Build-Wart]
+    strategy:
+      matrix:
+        arch:
+          - id: 'ia64'
+            vsversion: '2005'
+    name: Build-VS${{matrix.arch.vsversion}}-PSDK2003SP1 (${{matrix.arch.id}})
 
     steps:
       - uses: actions/checkout@v4
 
       # We need this only to get cvtres.exe which didn't come with either the
-      # Visual C++ 2003 Toolkit or the Windows Server 2003 SP1 Platform SDK.
+      # Visual C++ 2005 Toolkit or the Windows Server 2003 SP1 Platform SDK.
       - name: Enable Developer Command Prompt
         # You may pin to the exact commit or the version.
         # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
-          toolset: 14.0
-
-        # Cache the Visual C++ 2003 Toolkit & Platform SDK because it takes
-        # quite a while to download and decompress and I don't want my FTP
-        # server being hit constantly to download this whenever a build runs.
-      - name: Cache VCT2003+libdes
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
+      - name: Load Visual C++ ${{matrix.arch.vsversion}} Toolkit and Platform SDK 2003 SP1
+        uses: "./.github/actions/load-vs2003"
+        with:
+          nocache: ${{vars.NOCACHE}}
+          arch: ${{matrix.arch.id}}
+      - name: Cache libdes
         uses: "./.github/actions/cache"
-        id: cache-vct2003
+        id: cache-libdes
         with:
           path: |
-            ${{github.workspace}}\vct2003
-            ${{github.workspace}}\libdes\des
-            ${{github.workspace}}\libdes\Release
-            ${{github.workspace}}\libdes\Debug
-            ${{github.workspace}}\tools
-          key: vct2003+psdk2003sp1+libdes+v2+jom1
-          nocache: ${{ vars.NOCACHE }}
-      - name: Get Visual C++ 2003 Toolkit + Platform SDK 2003 + libdes
-        if: steps.cache-vct2003.outputs.cache-hit != 'true'
+            ${{github.workspace}}/libdes/des
+            ${{github.workspace}}/libdes/Release
+            ${{github.workspace}}/libdes/Debug
+          key: vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}-libdes+v2
+          nocache: ${{vars.NOCACHE}}
+      - name: Get libdes
+        if: steps.cache-libdes.outputs.cache-hit != 'true'
         run: |
-          wget https://ftp.zx.net.nz/pub/dev/VC2003Toolkit/VCT2003+PSDK2003+cvtres.7z -outfile VCT2003+PSDK2003+cvtres.7z
-          7z x VCT2003+PSDK2003+cvtres.7z
-          Rename-Item -Path "Microsoft Platform SDK 2003SP1" -NewName "VCT2003"
-          Remove-Item VCT2003+PSDK2003+cvtres.7z
-          Remove-Item VCT2003\Bin\Cvtres.exe
-
-          mkdir tools
-          cd tools
-          # Get and unpack JOM
-          mkdir jom
-          wget ${{env.JOM}} -outfile jom.zip
-          7z x jom.zip -ojom
-          del jom.zip
-          cd ..
-          
           # Get and unpack libdes
           cd libdes
           wget ${{env.LIBDES}} -outfile libdes.tar.gz
@@ -1872,20 +1649,12 @@ jobs:
         shell: powershell
 
       - name: Build libdes
-        if: steps.cache-vct2003.outputs.cache-hit != 'true'
+        if: steps.cache-libdes.outputs.cache-hit != 'true'
         env:
-          ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
+          ROOT: ${{github.workspace}}
         working-directory: libdes
         run: |
-          Set PATH=%VCT2003%\bin\win64;%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib\ia64
-          
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
 
           REM Use the supplied x86 build of wart rather than building it for
           REM itanium then fail to run it on the not-itanium build host
@@ -1902,22 +1671,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: wart-x86
-          path: ${{ github.workspace }}
+          path: ${{github.workspace}}
 
       - name: Full Build
         env:
-          ROOT: ${{ github.workspace }}
-          VCT2003: ${{ github.workspace }}\VCT2003
+          ROOT: ${{github.workspace}}
         working-directory: kermit
         run: |
-          Set PATH=%VCT2003%\bin\win64;%VCT2003%\bin;%PATH%
-          
-          REM Don't want to pick up headers or libraries from Visual C++ 14.0
-          REM which is also on here - we only want it for cvtres.exe.
-          Set INCLUDE=%VCT2003%\include
-          Set LIB=%VCT2003%\lib\ia64
-          
-          call ${{ github.workspace }}\setenv.bat
+          call ${{github.workspace}}\setenv.bat
           
           REM Use the supplied x86 build of wart rather than building it for
           REM itanium then fail to run it on the not-itanium build host
@@ -1934,41 +1695,34 @@ jobs:
           call mk.bat
           
           call mkdist.bat
-          
-          REM Check outputs
-          set MISSING_BUILD_RESULTS=
-          for %%y in (${{env.STANDARD_BUILD_OUTPUTS}}) do (
-          if not exist dist\%%y echo Build result not found: %%y
-          if not exist dist\%%y set MISSING_BUILD_RESULTS=%MISSING_BUILD_RESULTS% %%y
-          if not exist dist\%%y set FAILED=yes
-          )
-  
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo Missing build outputs: %MISSING_BUILD_RESULTS%
-          if "%MISSING_BUILD_RESULTS%" NEQ "" echo One or more expected outputs are missing - failing build
-          if "%MISSING_BUILD_RESULTS%" NEQ "" exit /b 1
         shell: cmd
+      - name: Full Build Files Check
+        uses: "./.github/actions/files-check"
+        with:
+          path: 'kermit/k95/dist'
+          list: ${{env.STANDARD_BUILD_OUTPUTS}}
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
         with:
           name: markdown-docs
-          path: ${{ github.workspace }}\kermit\k95\dist
+          path: ${{github.workspace}}\kermit\k95\dist
 
       # Builds with Visual C++ 2005 don't include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
-        run: del ${{ github.workspace }}\kermit\k95\dist\ssh-readme.html
+        run: del ${{github.workspace}}\kermit\k95\dist\ssh-readme.html
         shell: cmd
 
       - name: Prepare Artifact
-        working-directory: ${{ github.workspace }}\kermit\k95
+        working-directory: ${{github.workspace}}\kermit\k95
         run: |
-          move dist ${{ github.workspace }}\ckwin
+          move dist ${{github.workspace}}\ckwin
         shell: cmd
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k95-vc8-ia64
-          path: ${{ github.workspace }}\ckwin
+          name: k95-vs${{matrix.arch.vsversion}}-${{matrix.arch.id}}
+          path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
 
@@ -1985,7 +1739,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Select env configuration
-        run: echo "CK_OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}" >> "$GITHUB_ENV"
+        id: cfg
+        run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Install MinGW-w64
@@ -1999,19 +1754,19 @@ jobs:
             ${{github.workspace}}/openssl/current
             ${{github.workspace}}/libssh
             ${{github.workspace}}/zlib
-          key: deps-openssl-${{env.CK_OPENSSL_VERSION}}-parallel-v1
-          nocache: ${{ vars.NOCACHE }}
+          key: mingw64-deps-openssl-${{steps.cfg.outputs.openssl}}-parallel-v1
+          nocache: ${{vars.NOCACHE}}
 
       - name: Get dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
-        working-directory: ${{ github.workspace }}
+        working-directory: ${{github.workspace}}
         run: |
           mkdir -p openssl
           cd openssl
-          wget https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-          tar zxf openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-          rm openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-          mv openssl-${{env.CK_OPENSSL_VERSION}} current
+          wget https://github.com/openssl/openssl/releases/download/openssl-${{steps.cfg.outputs.openssl}}/openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          tar zxf openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          rm openssl-${{steps.cfg.outputs.openssl}}.tar.gz
+          mv openssl-${{steps.cfg.outputs.openssl}} current
           ls -l current
 
           sudo cpan -i Text::Template
@@ -2036,7 +1791,7 @@ jobs:
           CC: /usr/bin/x86_64-w64-mingw32-gcc
         run: |
           cd kermit/k95
-          make -j 2 RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=${{ github.workspace }}/openssl/current
+          make -j 2 RC=/usr/bin/x86_64-w64-mingw32-windres OPENSSL=${{github.workspace}}/openssl/current
         shell: bash
       - name: Make Distribution
         run: |
@@ -2050,24 +1805,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ca_certs
-          path: ${{ github.workspace }}/ckwin
+          path: ${{github.workspace}}/ckwin
 
       - name: Fetch Docs
         uses: actions/download-artifact@v4
         with:
           name: markdown-docs
-          path: ${{ github.workspace }}/ckwin
+          path: ${{github.workspace}}/ckwin
 
       # We're not currently building libssh on linux so remove the ssh readme
       - name: Remove SSH Readme
-        run: rm ${{ github.workspace }}/ckwin/ssh-readme.html
+        run: rm ${{github.workspace}}/ckwin/ssh-readme.html
         shell: bash
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: k95-mingw64-cross
-          path: ${{ github.workspace }}/ckwin
+          path: ${{github.workspace}}/ckwin
           if-no-files-found: error
 
   ##############################################################################
@@ -2102,12 +1857,12 @@ jobs:
           path: |
             ${{github.workspace}}/ckermit
             ${{github.workspace}}/openssl
-          key: ${{ runner.os }}-ckermit${{ env.C_KERMIT_VERSION }}-r1
-          nocache: ${{ vars.NOCACHE }}
+          key: ${{runner.os}}-ckermit-${{env.C_KERMIT_VERSION}}-r1
+          nocache: ${{vars.NOCACHE}}
       - name: Get C-Kermit ${{env.C_KERMIT_VERSION}}
         if: steps.cache-code.outputs.cache-hit != 'true'
         run: |
-          wget ${{ env.C_KERMIT_CODE }} -O ckermit.tar.gz
+          wget ${{env.C_KERMIT_CODE}} -O ckermit.tar.gz
           mkdir -p ckermit
           pushd ckermit
           tar -zxvf ../ckermit.tar.gz

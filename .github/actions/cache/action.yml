@@ -14,7 +14,7 @@ inputs:
 outputs:
   cache-hit:
     description: 'output cache-hit'
-    value: ${{ steps.cachecmd.outputs.cache-hit }}
+    value: ${{steps.cachecmd.outputs.cache-hit}}
 runs:
   using: composite
   steps:
@@ -23,8 +23,8 @@ runs:
       uses: actions/cache@v4
       id: cachecmd
       with:
-        path: ${{ inputs.path }}
-        key: ${{ inputs.key }}
+        path: ${{inputs.path}}
+        key: ${{inputs.key}}
     - name: output value
       if: inputs.nocache == 'true'
       run: |
