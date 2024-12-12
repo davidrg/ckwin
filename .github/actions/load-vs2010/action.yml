@@ -1,0 +1,62 @@
+name: load-vs2010-psdk71
+description: Load Visual Studio 2010 Toolkit and PSDK 7.1
+inputs:
+  nocache:
+    description: 'skip cache'
+    default: ''
+    required: false
+    type: string
+  arch:
+    description: 'Architecture'
+    default: ''
+    required: false
+    type: string
+#
+# expected filename: https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z
+# expected filename: https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-psdk.7z
+# expected filename: http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe
+#
+runs:
+  using: composite
+  steps:
+    - name: Load Cache VS2010
+      if: inputs.nocache != 'true'
+      uses: actions/cache@v4
+      id: cache-vs2010
+      with:
+        path: |
+          ${{github.workspace}}\Microsoft SDKs
+          ${{github.workspace}}\Microsoft Visual Studio 10.0
+          ${{github.workspace}}\vc10.cmd
+          ${{github.workspace}}\vs2010
+        key: all-vs2010-psdk71-redist
+    - name: Get and unpack Visual C++ 2010 Toolkit
+      if: steps.cache-vs2010.outputs.cache-hit != 'true'
+      run: |
+        curl -LsS -o win7-7.1-sdk-vc.7z https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-vc.7z
+        7z x win7-7.1-sdk-vc.7z
+        rm -f win7-7.1-sdk-vc.7z
+        echo "content of Microsoft Visual Studio 10.0"
+        ls -l "Microsoft Visual Studio 10.0"
+      shell: bash
+    - name: Get and unpack Windows 7 Platform SDK 7.1
+      if: steps.cache-vs2010.outputs.cache-hit != 'true'
+      run: |
+        curl -LsS -o win7-7.1-sdk-psdk.7z https://ftp.zx.net.nz/pub/dev/WinSDK/win7-7.1-dn4/win7-7.1-sdk-psdk.7z
+        7z x win7-7.1-sdk-psdk.7z
+        rm -f win7-7.1-sdk-psdk.7z
+        echo "content of Microsoft SDKs"
+        ls -l "Microsoft SDKs"
+      shell: bash
+    - name: Get Visual C++ 2010 runtime
+      if: steps.cache-vs2010.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p vs2010
+        curl -LsS -o vs2010/vcredist_x86.exe http://download.microsoft.com/download/5/B/C/5BC5DBB3-652D-4DCE-B14A-475AB85EEF6E/vcredist_x86.exe
+        echo "content of vs2010"
+        ls -l vs2010
+      shell: bash
+    - name: Install the VS2010 runtime
+      working-directory: ${{github.workspace}}
+      run: vs2010\vcredist_x86.exe /q /norestart
+      shell: cmd
