@@ -39,14 +39,15 @@ by OpenSSH on modern versions of windows, add the command
 * SSH Port forwarding (tunneling) is now supported again in both
   the Direct/Local and Reverse/Remote forms. You can add forwards before
   establishing a connection with `SSH ADD { local, remote }` and remove all
-  forwards of a given type with `SSH CLEAR { local, remote }`. These commands
-  don't yet have any effect on an already established SSH connection.
+  forwards of a given type with `SSH CLEAR { local, remote }`. As in past releases
+  of Kermit 95, these commands don't have any effect on an already established SSH
+  connection - this may be changed in the future.
 * New command to allow removing individual port forwards (`SSH REMOVE 
   { local, remote }`) - previously Kermit 95 only had commands to remove *all*
   forwarded ports of a given type.
 * X11 forwarding is back. Turn on with `SET SSH X11 ON`, and set your display
   with `SET TELNET ENV DISPLAY`
-* The SSH backend has been moved into a DLL. On startup, C-Kermit attempts to
+* The SSH backend has been moved into a DLL. On startup, K95 attempts to
   load the backend DLL provided the `-#2` command line argument has not been
   supplied. If no SSH backend gets loaded, you can load one manually with the new
   `ssh load` command. This allows K95 to load the appropriate backend automatically
@@ -55,7 +56,7 @@ by OpenSSH on modern versions of windows, add the command
   also means that alternative SSH backends not based on libssh can now be supported
   should anyone want to build one, opening the door to SSH on vintage windows or
   OS/2 systems.
-* SSH is now supported on 32bit ARM devices (Windows RT)
+* SSH is now supported on 32bit ARM devices (Windows RT) for the first time
 * Initial very limited SSH agent support has been added. Libssh is currently the
   limiting factor here and SSH agent support in K95 likely won't get much better
   without significant improvements to libssh in this area. See the SSH Readme
@@ -71,9 +72,10 @@ by OpenSSH on modern versions of windows, add the command
   with K95. The rexxre.dll external function package is also included providing
   support for POSIX regular expressions.
 * New command to turn the menubar on or off: `set gui menubar visible { on, off }`
-  When the menubar is turned off in this way (rather than the command line 
+  When the menubar is turned off in this way (rather than with the command line 
   parameter), important menu items are moved on to the system/control/window menu
-  (right-click on the title bar for the actions menu and a few other things)
+  (right-click on the title bar for the actions menu and a few other things):
+  ![k95-sysmenu](https://github.com/user-attachments/assets/4a016ca5-f339-43c5-83e8-7b899b28d117)
 * New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
 * New command to turn the statusbar on or off: `set gui statusbar { on, off }`
 * New screen scroll kverbs:
@@ -84,9 +86,10 @@ by OpenSSH on modern versions of windows, add the command
   Presentation Manager GUI as in past Kermit/2 releases. Additionally:
   * No PC/TCP 1.2 or IBM TCP/IP 1.2.1 support (no SDK license; the DLLs from 
     K95 2.1.2 should work if you need it)
-  * No dialer (crashes when built with Open Watcom)
+  * No dialer yet (crashes when built with Open Watcom)
   * No SSL/TLS support (can't be built with Open Watcom)
-  * No legacy telnet encryption (may return in a future release)
+  * No legacy telnet encryption (no longer useful, but may return in a future
+    release anyway)
 * Reimplemented the three checkboxes in the Dialers GUI settings page for the
   menu bar, toolbar and status bar. These options were new in Kermit 95 2.1.3
   but were not present in previous open source releases of the dialer as it's
