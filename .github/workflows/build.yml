@@ -161,7 +161,7 @@ jobs:
           retention-days: 1
 
   ##############################################################################
-  # Build with Visual C++ 14.x (2015/2017/2019/2022)                           #
+  # Build with Visual C++ (2019/2022)                                          #
   ##############################################################################
   # This includes the latest compilers available (2022), plus the most recent
   # capable of still targeting Windows XP (2017). All support x86, x86-64, ARM32
@@ -188,7 +188,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Select env configuration
+      - name: Select configuration
         id: cfg
         run: |
           if [[ "${{matrix.arch.id}}" = "x64_arm" || "${{matrix.arch.id}}" = "x64_arm64" ]]; then
@@ -208,7 +208,6 @@ jobs:
           vsversion: ${{matrix.version.vs}}
           sdk: ${{matrix.arch.sdk}}
           #spectre: # set true to use VC libraries with sepctre mitigations
-
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
         with:
@@ -737,7 +736,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Select env configuration
+      - name: Select configuration
         id: cfg
         run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -942,24 +941,49 @@ jobs:
 
 
   ###############################################################################
-  # Build with Open Watcom which allows targeting older versions of Windows #
+  # Build with Open Watcom                                                      #
+  # - allows targeting older versions of Windows                                #
+  # - cross-compile C-Kermit for OS/2                                           #
+  # It is also likely to be upset by the same sorts of things as Visual C++ 6   #
+  # which reduces the likelihood of accidentally breaking that compiler.        #
   ###############################################################################
-  # It is also likely to be upset by the same sorts of things as Visual C++ 6
-  # which reduces the likelihood of accidentally breaking that compiler.
-  Build-OpenWatcom19-Win32:
-    runs-on: windows-latest
+  Build-Open-Watcom:
     needs: Prepare-Docs
     strategy:
       matrix:
         ver:
           - '1.9'
-        id:
-          - 'nt'
-    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.id}})
+        os:
+          - id: 'nt'
+          - id: 'nt-legacy'
+          - id: 'os2'
+    runs-on: windows-latest
+    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.os.id}})
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Select configuration
+        id: cfg
+        run: |
+          if [[ "${{matrix.os.id}}" = "os2" ]]; then
+            echo "build1=mkos2" >> "$GITHUB_OUTPUT"
+            echo "build2=mkos2" >> "$GITHUB_OUTPUT"
+            echo "dist=dist-os2" >> "$GITHUB_OUTPUT"
+            echo "list=${{env.OS2_BUILD_OUTPUTS}}" >> "$GITHUB_OUTPUT"
+            echo "dialer-list=" >> "$GITHUB_OUTPUT"
+          else
+            echo "build1=mknt" >> "$GITHUB_OUTPUT"
+            echo "build2=mk" >> "$GITHUB_OUTPUT"
+            echo "dist=dist" >> "$GITHUB_OUTPUT"
+            echo "list=k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll" >> "$GITHUB_OUTPUT"
+            echo "dialer-list=k95dial.exe k95regtl.exe" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
       - name: Load Open Watcom
         uses: "./.github/actions/load-watcom"
         with:
@@ -974,52 +998,90 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
-        working-directory: kermit
+        working-directory: kermit/p95
         run: |
+          if "${{matrix.os.id}}" == "os2" set ibm20dir_override=${{github.workspace}}\toolkit\os2tk45
+
+          REM Build for Windows NT 3.50 (and, someday, NT 3.1)
+          if "${{matrix.os.id}}" == "nt-legacy" set CKT_NT31=yes
+
           call ${{github.workspace}}\setenv.bat
         
           REM Enable Dynamic SSH just to be sure those bits are buildable
           REM with Open Watcom
-          set CKF_SSH=yes
-          set CKF_DYNAMIC_SSH=yes
+          if not "${{matrix.os.id}}" == "nt-legacy" set CKF_SSH=yes
+          if not "${{matrix.os.id}}" == "nt-legacy" set CKF_DYNAMIC_SSH=yes
+
+          REM Don't build the libssh backend though - that hasn't been ported 
+          REM to OS/2 yet
+          if "${{matrix.os.id}}" == "os2" set CKF_SSH_BACKEND=no
         
-          cd p95
-          call mknt.bat
+          call ${{steps.cfg.outputs.build1}}.bat
           cd ..\k95
-          call mk.bat
-        
-          call mkdist.bat
+          call ${{steps.cfg.outputs.build2}}.bat
+          call mk${{steps.cfg.outputs.dist}}.bat
         shell: cmd
       - name: Full Build Files Check
         uses: "./.github/actions/files-check"
         with:
-          path: 'kermit/k95/dist'
-          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
+          path: 'kermit/k95/${{steps.cfg.outputs.dist}}'
+          list: ${{steps.cfg.outputs.list}}
 
       - name: Dialer Build
+        if: matrix.os.id == 'nt' || matrix.os.id == 'os2'
         env:
           ROOT: ${{github.workspace}}
         working-directory: kermit\dialer
         run: |
           call ${{github.workspace}}\setenv.bat
 
-          call mk.bat
-          call mkdist.bat
+          call ${{steps.cfg.outputs.build2}}.bat
+          call mk${{steps.cfg.outputs.dist}}.bat
         shell: cmd
       - name: Dialer Build Files Check
+        if: matrix.os.id == 'nt'
         uses: "./.github/actions/files-check"
         with:
-          path: 'kermit/dialer/dist'
-          list: 'k95dial.exe k95regtl.exe'
+          path: 'kermit/dialer/${{steps.cfg.outputs.dist}}'
+          list: ${{steps.cfg.outputs.dialer-list}}
 
       - name: Prepare Artifacts
         working-directory: ${{github.workspace}}\kermit\k95
         run: |
-          move dist ${{github.workspace}}\ckwin
-          move ..\dialer\dist ${{github.workspace}}\dialer
+          if "${{matrix.os.id}}" == "nt" (
+            move ${{steps.cfg.outputs.dist}} ${{github.workspace}}\ckwin
+            move ..\dialer\${{steps.cfg.outputs.dist}} ${{github.workspace}}\dialer
+          )
+          if "${{matrix.os.id}}" == "nt-legacy" (
+            move ${{steps.cfg.outputs.dist}} ${{github.workspace}}\ckwin
+          )
+          if "${{matrix.os.id}}" == "os2" (
+            move ..\dialer\${{steps.cfg.outputs.dist}}\* ${{steps.cfg.outputs.dist}}\
+            move ${{steps.cfg.outputs.dist}} ${{github.workspace}}\ckos2
+            cd ${{github.workspace}}\ckos2
+          
+            echo Making full distribution archive K2PACK.EXE
+            ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+            copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+            del k2pack.zip
+            mkdir ${{github.workspace}}\dist-full
+            move K2PACK.EXE ${{github.workspace}}\dist-full\
+            copy setup.exe ${{github.workspace}}\dist-full\
+          
+            echo Making minimal distribution
+            REM This is basically everything but the dialer. Its small enough to fit on a
+            REM single floppy disk alongisde setup.exe
+            ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe docs download eas icons keymaps phones printer public scripts tmp users
+            copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack-mini.zip K2PACK.EXE
+            del k2pack-mini.zip
+            mkdir ${{github.workspace}}\dist-mini
+            move K2PACK.EXE ${{github.workspace}}\dist-mini\
+            copy setup.exe ${{github.workspace}}\dist-mini\
+          )
         shell: cmd
 
       - name: Fetch Docs
+        if: matrix.os.id == 'nt' || matrix.os.id == 'nt-legacy'
         uses: actions/download-artifact@v4
         with:
           name: markdown-docs
@@ -1034,15 +1096,18 @@ jobs:
       # to download. So... just exclude ctl3dins from OpenWatcom-built
       # artifacts.
       - name: Remove ctl3dins.exe
+        if: matrix.os.id == 'nt' || matrix.os.id == 'nt-legacy'
         run: del ${{github.workspace}}\ckwin\ctl3dins.exe
         shell: cmd
 
       # Open Watcom builds don't include SSH so don't need the SSH Readme
       - name: Remove SSH Readme
+        if: matrix.os.id == 'nt' || matrix.os.id == 'nt-legacy'
         run: del ${{github.workspace}}\ckwin\ssh-readme.html
         shell: cmd
 
       - name: Upload K95 Artifact
+        if: matrix.os.id == 'nt'
         uses: actions/upload-artifact@v4
         with:
           name: k95-ow${{matrix.ver}}-x86
@@ -1050,196 +1115,23 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Dialer Artifact
+        if: matrix.os.id == 'nt'
         uses: actions/upload-artifact@v4
         with:
           name: dialer-ow${{matrix.ver}}-x86
           path: ${{github.workspace}}/dialer
           if-no-files-found: error
           retention-days: 7
-
-  Build-OpenWatcom19-Win32-NT-legacy:
-    runs-on: windows-latest
-    needs: Prepare-Docs
-    strategy:
-      matrix:
-        ver:
-          - '1.9'
-        id:
-          - 'nt-legacy'
-    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.id}})
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Load Open Watcom
-        uses: "./.github/actions/load-watcom"
-        with:
-          nocache: ${{vars.NOCACHE}}
-          ver: ${{matrix.ver}}
-          id: ${{matrix.id}}
-
-      - name: Full Build
-        env:
-          ROOT: ${{github.workspace}}
-        working-directory: kermit
-        run: |
-          REM Build for Windows NT 3.50 (and, someday, NT 3.1)
-          set CKT_NT31=yes
-          
-          call ${{github.workspace}}\setenv.bat
-          cd p95
-          call mknt.bat
-          cd ..\k95
-          call mk.bat
-          
-          call mkdist.bat
-        shell: cmd
-      - name: Full Build Files Check
-        uses: "./.github/actions/files-check"
-        with:
-          path: 'kermit/k95/dist'
-          list: 'k95.exe iksd.exe iksdsvc.exe k95d.exe rlogin.exe telnet.exe textps.exe k95g.exe p95.dll'
-
-      - name: Fetch Docs
-        uses: actions/download-artifact@v4
-        with:
-          name: markdown-docs
-          path: ${{github.workspace}}\ckwin
-
-      # ctl3dins is a utility for installing ctl3d32 and, in some cases,
-      # the Visual C++ runtime. Builds of the Dialer done with Open Watcom
-      # can't use ctl3d32 (it a Visual C++ thing), and they don't need the
-      # Visual C++ runtime, so ctl3dins.exe serves no purpose here. Even
-      # worse, Microsoft AntiVirus frequently misdetects it as being a
-      # virus (Trojan:Win32/Wacatac.B!ml) making the artifact difficult
-      # to download. So... just exclude ctl3dins from OpenWatcom-built
-      # artifacts.
-      - name: Remove ctl3dins.exe
-        run: del ${{github.workspace}}\ckwin\ctl3dins.exe
-        shell: cmd
-
-        # Open Watcom builds don't include SSH so don't need the SSH Readme
-      - name: Remove SSH Readme
-        run: del ${{github.workspace}}\ckwin\ssh-readme.html
-        shell: cmd
-
-      - name: Prepare Artifact
-        working-directory: ${{github.workspace}}\kermit\k95
-        run: |
-          move dist ${{github.workspace}}\ckwin
-        shell: cmd
       - name: Upload Artifact
+        if: matrix.os.id == 'nt-legacy'
         uses: actions/upload-artifact@v4
         with:
           name: k95-ow${{matrix.ver}}-x86-nt350
           path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
-
-  ##############################################################################
-  # Build C-Kermit for OS/2 with Open Watcom which can cross-compile           #
-  ##############################################################################
-  Build-OpenWatcom19-OS2:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        ver:
-          - '1.9'
-        id:
-          - 'os2'
-    name: Build-Open-Watcom-${{matrix.ver}} (${{matrix.id}})
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Load Open Watcom
-        uses: "./.github/actions/load-watcom"
-        with:
-          nocache: ${{vars.NOCACHE}}
-          ver: ${{matrix.ver}}
-          id: ${{matrix.id}}
-      - name: Load Build Tools
-        uses: "./.github/actions/load-tools"
-        with:
-          nocache: ${{vars.NOCACHE}}
-      - name: Load Open Zinc
-        uses: "./.github/actions/load-openzinc"
-        with:
-          nocache: ${{vars.NOCACHE}}
-
-      - name: Kermit/2 Build
-        env:
-          ROOT: ${{github.workspace}}
-        working-directory: kermit
-        run: |
-          set ibm20dir_override=${{github.workspace}}\tools\os2tk45
-
-          call ${{github.workspace}}\setenv.bat
-          
-          REM Enable Dynamic SSH just to be sure those bits are buildable
-          REM for OS/2 with Open Watcom
-          set CKF_SSH=yes
-          set CKF_DYNAMIC_SSH=yes
-          
-          REM Don't build the libssh backend though - that hasn't been ported 
-          REM to OS/2 yet
-          set CKF_SSH_BACKEND=no
-          
-          cd p95
-          call mkos2.bat
-          
-          cd ..\k95
-          call mkos2.bat
-          
-          call mkdist-os2.bat
-        shell: cmd
-      - name: Kermit/2 Build Files Check
-        uses: "./.github/actions/files-check"
-        with:
-          path: 'kermit/k95/dist-os2'
-          list: ${{env.OS2_BUILD_OUTPUTS}}
-
-      - name: Dialer Build
-        env:
-          ROOT: ${{github.workspace}}
-        working-directory: kermit\dialer
-        run: |
-          call ${{github.workspace}}\setenv.bat
-          call mkos2.bat
-        shell: cmd
-      - name: Make Dialer Distribution
-        env:
-          ROOT: ${{github.workspace}}
-        working-directory: kermit\dialer
-        run: mkdist-os2.bat
-        shell: cmd
-      - name: Prepare Artifact
-        working-directory: ${{github.workspace}}\kermit\k95
-        run: |
-          move ..\dialer\dist-os2\* dist-os2\
-          move dist-os2 ${{github.workspace}}\ckos2
-          cd ${{github.workspace}}\ckos2
-          
-          echo Making full distribution archive K2PACK.EXE
-          ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
-          copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
-          del k2pack.zip
-          mkdir ${{github.workspace}}\dist-full
-          move K2PACK.EXE ${{github.workspace}}\dist-full\
-          copy setup.exe ${{github.workspace}}\dist-full\
-          
-          echo Making minimal distribution
-          REM This is basically everything but the dialer. Its small enough to fit on a
-          REM single floppy disk alongisde setup.exe
-          ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe docs download eas icons keymaps phones printer public scripts tmp users
-          copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack-mini.zip K2PACK.EXE
-          del k2pack-mini.zip
-          mkdir ${{github.workspace}}\dist-mini
-          move K2PACK.EXE ${{github.workspace}}\dist-mini\
-          copy setup.exe ${{github.workspace}}\dist-mini\
-        shell: cmd
-
       - name: Upload Zip Artifact
+        if: matrix.os.id == 'os2'
         uses: actions/upload-artifact@v4
         with:
           name: k2-ow${{matrix.ver}}-x86
@@ -1247,6 +1139,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Full Installer Artifact
+        if: matrix.os.id == 'os2'
         uses: actions/upload-artifact@v4
         with:
           name: k2-full-install
@@ -1254,6 +1147,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Upload Minimal Installer Artifact
+        if: matrix.os.id == 'os2'
         uses: actions/upload-artifact@v4
         with:
           name: k2-mini-install
@@ -1288,21 +1182,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # We need this only to get cvtres.exe which didn't come with either the
-      # Visual C++ 2003 Toolkit or the Windows Server 2003 SP1 Platform SDK.
-      - name: Enable Developer Command Prompt
-        # You may pin to the exact commit or the version.
-        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x86
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
         with:
           nocache: ${{vars.NOCACHE}}
-      # Load the Visual C++ 2003 Toolkit & Platform SDK from cache because it takes
-      # quite a while to download and decompress and I don't want my FTP
-      # server being hit constantly to download this whenever a build runs.
       - name: Load Visual C++ ${{matrix.arch.vsversion}} Toolkit and Platform SDK 2003
         uses: "./.github/actions/load-vs2003"
         with:
@@ -1417,13 +1300,15 @@ jobs:
         if: steps.cache-legacy-deps.outputs.cache-hit != 'true' && matrix.legacy_dependencies == 'yes'
         working-directory: openssl\1.0.1u
         run: |
-          REM *************************************
-          REM Fix for bug in VCT2003
+          REM ******************************************
+          REM Fix for bug in
+          REM VCT2003+PSDK2003+cvtres.7z image file
           REM missing setargv.obj for x86 target
-          REM used by openssl only
-          REM it is only function call redirection
-          REM compile from auxiliary C source file
-          REM *************************************
+          REM it is used by openssl only and it contains
+          REM only function call redirection for
+          REM wildcard argument
+          REM compile it from auxiliary C source file
+          REM ******************************************
           cl /nologo /c ${{github.workspace}}\openssl\setargv.c /Fosetargv.obj
 
           set PATH=%PATH%;${{github.workspace}}\tools\nasm
@@ -1608,14 +1493,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # We need this only to get cvtres.exe which didn't come with either the
-      # Visual C++ 2005 Toolkit or the Windows Server 2003 SP1 Platform SDK.
-      - name: Enable Developer Command Prompt
-        # You may pin to the exact commit or the version.
-        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x86
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
         with:
@@ -1738,7 +1615,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Select env configuration
+      - name: Select configuration
         id: cfg
         run: echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -1838,7 +1715,7 @@ jobs:
   # This also isn't anywhere near a perfect test. Just because this builds
   # doesn't mean we haven't broken something on OpenVMS or Solaris or AIX
   # or Digital UNIX or BSD or MacOS X or any number of other platforms.
-  C-Kermit-Linux-Build-Test:
+  Test-C-Kermit-Linux-Build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -1857,7 +1734,7 @@ jobs:
           path: |
             ${{github.workspace}}/ckermit
             ${{github.workspace}}/openssl
-          key: ${{runner.os}}-ckermit-${{env.C_KERMIT_VERSION}}-r1
+          key: ${{runner.os}}-C-Kermit-${{env.C_KERMIT_VERSION}}-r1
           nocache: ${{vars.NOCACHE}}
       - name: Get C-Kermit ${{env.C_KERMIT_VERSION}}
         if: steps.cache-code.outputs.cache-hit != 'true'
