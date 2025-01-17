@@ -432,6 +432,7 @@ bool     literal_ch= FALSE;
 bool     screenon  = TRUE;
 extern bool     cursorena[];       /* Cursor enabled / disabled */
 extern bool     cursoron[] ;       /* Cursor state on/off       */
+extern bool     bracketed_paste[]; /* Bracketed paste on/off    */
 bool     relcursor = FALSE;
 bool     keylock   = FALSE;
 bool     vt52graphics = FALSE;
@@ -6063,6 +6064,8 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     attrib.hyperlink = FALSE;
     attrib.linkid = 0;
     savedattrib[VTERM] = attrib;
+
+    bracketed_paste[VTERM] = FALSE;     /* Bracketed paste off */
 
     erasemode = user_erasemode;
 
@@ -14767,6 +14770,10 @@ vtcsi(void)
                            mouse_reporting_mode |= MOUSEREPORTING_URXVT;
 #endif
                             break;
+                        case 2004:
+                            /* xterm - Set Bracketed Paste Mode */
+                            bracketed_paste[vmode] = TRUE;
+                            break;
                         default:
                             break;
                         }
@@ -15348,6 +15355,11 @@ vtcsi(void)
                                mouse_reporting_mode &= ~MOUSEREPORTING_URXVT;
 #endif
                                break;
+
+                            case 2004:
+                            	/* xterm - Disable Bracketed Paste Mode */
+                            	bracketed_paste[vmode] = FALSE;
+                            	break;
                            default:
                                break;
                            }

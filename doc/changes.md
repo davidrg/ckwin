@@ -99,6 +99,7 @@ by OpenSSH on modern versions of windows, add the command
   have these three settings preserved. Turning off the GUI bars in this way does
   so via command line arguments rather than the new `set gui` commands so they
   can't be turned back on with the new `set gui` commands.
+* Added support xterms Bracketed Paste feature
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources

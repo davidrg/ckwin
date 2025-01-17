@@ -3189,8 +3189,13 @@ key definition is saved so it can be restored later.</p>
 <!-- TODO: but we could easily support this feature, as above. -->
 
 <!-- TODO: xterm - 1014 - enable fastScroll resource -->
-<h4><i>Ps</i> = 1015 &#8658; URXVT - Enable URXVT Mosue Mode</h4>
+<h4><i>Ps</i> = 1015 &#8658; URXVT - Enable URXVT Mouse Mode</h4>
 <p>Enables URXVT mouse reporting</p>
+
+<h4><i>Ps</i> = 2004 &#8658; XTERM - Enable Bracketed Paste Mode</h4>
+<p>Enables bracketed paste mode. <tt>ESC [ 2 0 0 ~</tt> will be sent before the
+    pasted text, and <tt>ESC [ 2 0 1 ~</tt> after it.
+</p>
 
 <h3>CSI &gt; <span class="param">Pm</span> h</h3>
 <p>Zenith, Heath and AnnArbor set mode</p>
@@ -3630,6 +3635,9 @@ is always in this mode</p>
 
 <h4><i>Ps</i> = 1015 &#8658; URXVT - Disable URXVT Mosue Mode</h4>
 <p>Disable URXVT mouse reporting</p>
+
+<h4><i>Ps</i> = 2004 &#8658; XTERM - Disable Bracketed Paste Mode</h4>
+<p>Disable bracketed paste mode</p>
 
 <h3>CSI &gt; <span class="param">Pm</span> l</h3>
 <p>Zenith/Heath Mode Reset</p>
