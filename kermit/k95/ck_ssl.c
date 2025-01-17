@@ -67,27 +67,23 @@ extern int quiet;			/* fdc - Mon Nov 28 11:44:15 2005 */
 
 static int ssl_installed = 1;
 #endif /* CK_SSL */
+
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+
 int
 ck_ssh_is_installed()
 {
-#ifdef CK_SSL
 #ifdef SSHBUILTIN
-#ifdef SSLDLL
-#ifdef NT
-    extern HINSTANCE hCRYPTO;
-#else /* NT */
-    extern HMODULE hCRYPTO;
-#endif /* NT */
-    debug(F111,"ck_ssh_is_installed","hCRYPTO",hCRYPTO);
-    return(ssl_installed && (hCRYPTO != NULL));
-#else /* SSLDLL */
-    return(ssl_installed);
-#endif /* SSLDLL */
+#ifdef SSH_DLL
+    return ssh_avail();
+#else /* SSH_DLL */
+    return(1);
+#endif /* SSH_DLL */
 #else  /* SSHBUILTIN */
     return(0);
 #endif /* SSHBUILTIN */
-#endif /* CK_SSL */
-    return(0);
 }
 
 int
@@ -1539,7 +1535,14 @@ ssl_once_init()
     if (OPENSSL_VERSION_NUMBER > SSLeay()
          || ((OPENSSL_VERSION_NUMBER ^ SSLeay()) & COMPAT_VERSION_MASK)
 #ifdef OS2
+/* DG 2024-08-05: Not sure what the point of this was. Presumably the goal was
+ *    to prevent updated OpenSSL libraries from being used, though why you'd
+ *    want to do that I'm not sure. Might have been to do with how Kermit 95s
+ *    SSH code was built way back in the early 2000s I guess. Today Kermit 95s
+ *    use of OpenSSL is largely the same as how C-Kermit uses it on other
+ *    platforms so I don't see any reason to treat it differently here.
          || ckstrcmp(OPENSSL_VERSION_TEXT,(char *)SSLeay_version(SSLEAY_VERSION),-1,1)
+*/
 #endif /* OS2 */
          ) {
         ssl_installed = 0;
@@ -3057,7 +3060,7 @@ tls_userid_from_client_cert(ssl) SSL * ssl;
      * provided by a user-supplied DLL as described here:
      *   http://www.columbia.edu/kermit/security70.html#x3.1.4
      * This DLL would normally be loaded in ckossl.c (search for X5092UID) but
-     * at the moment that only happens when CKW is built with SSLDLL. SSLDLL is
+     * at the moment that only happens when K95 is built with SSLDLL. SSLDLL is
      * only compatible with OpenSSL 0.9.x so in practice X509_to_user is never
      * available. It wouldn't be hard to make it work without SSLDLL if needed.
      */

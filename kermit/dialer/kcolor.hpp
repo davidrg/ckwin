@@ -50,4 +50,4 @@ class ZIL_EXPORT_CLASS K_COLOR
    DWORD _color ;
 };
 
-#endif 
+#endif

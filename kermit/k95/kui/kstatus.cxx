@@ -41,6 +41,7 @@ KStatus::KStatus( K_GLOBAL* kg )
     , custXOffset( 0 )
     , custXWidth( 0 )
     , whichPane( -1 )
+    , visible( TRUE )
 {
     paneArray = new KArray();
     offsets = 0;
@@ -205,6 +206,24 @@ void KStatus::size( int width, int height )
     }
 
     SendMessage( hWnd, SB_SETPARTS, numParts, (LPARAM)statusWidths );
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KStatus::setVisible( Bool visible ) {
+    if (visible == this->visible) return;
+
+    if (!visible) {
+        // Hide the statusbar
+        ShowWindow(hwnd(), SW_HIDE);
+        //SetParent(hwnd(), NULL);
+    } else {
+        // Show the statusbar
+        ShowWindow(hwnd(), SW_SHOW);
+        //SetParent(hwnd(), parent->hwnd());
+    }
+
+    this->visible = visible;
 }
 
 /*------------------------------------------------------------------------

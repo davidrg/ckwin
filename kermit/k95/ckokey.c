@@ -52,6 +52,9 @@ char *ckyv = "OS/2 Keyboard I/O, 8.0.203, 30 Oct 2003";
 #include "ckcuni.h"
 #include "ckocon.h"
 #include "ckokey.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 #ifdef KUI
 #include "ikui.h"
 #else
@@ -378,6 +381,7 @@ struct keytab kverbs[] = {
     "dgsuparr",    K_DGSUPARR, 0,
     "dguparr",     K_DGUPARR, 0,
     "dnarr",      K_DNARR,       0,
+    "dnhscn",     K_DNHSCN,      0,
     "dnone",      K_DNONE,       0,
     "dnscn",      K_DNSCN,       0,
     "dos",        K_DOS,         0,
@@ -821,6 +825,7 @@ struct keytab kverbs[] = {
     "udkf20",     K_UDKF20,      0,
     "udkhelp",    K_UDKHELP,     0,
     "uparr",      K_UPARR,       0,
+    "uphscn",     K_UPHSCN,      0,
     "upone",      K_UPONE,       0,
     "upscn",      K_UPSCN,       0,
     "url",        K_CURSOR_URL,  0,
@@ -7922,6 +7927,8 @@ vikinit( void )
     vik.quit = 0;
     vik.upscn = 0;
     vik.dnscn = 0;
+    vik.uphscn = 0;
+    vik.dnhscn = 0;
     vik.upone = 0;
     vik.dnone = 0;
     vik.homscn = 0;
@@ -7986,6 +7993,10 @@ vikinit( void )
           vik.upscn = i;
         else if (!vik.dnscn && km == K_DNSCN)
           vik.dnscn = i;
+        else if (!vik.uphscn && km == K_UPHSCN)
+          vik.uphscn = i;
+        else if (!vik.dnhscn && km == K_DNHSCN)
+          vik.dnhscn = i;
         else if (!vik.upone && km == K_UPONE)
           vik.upone = i;
         else if (!vik.dnone && km == K_DNONE)

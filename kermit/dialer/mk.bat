@@ -15,7 +15,7 @@ goto :end
 
 :nozinc
 echo.
-echo OpenZinc has not been configured in the C-Kermit for Windows build environment!
+echo OpenZinc has not been configured in the Kermit 95 build environment!
 echo This is normally done by setenv.bat when it detects a build of OpenZinc for your
 echo current compiler, or by mkzinc.bat when it successfully builds OpenZinc for your
 echo current compiler.

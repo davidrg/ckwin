@@ -1,5 +1,6 @@
 #include "kabout.hxx"
 #include "ikextern.h"
+#include <ckover.h>
 #include <stdio.h>
 
 // there should only be one about box showing at a time.
@@ -81,12 +82,12 @@ Bool KAbout::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             hWnd = hwnd;
 
             // Set the version string
-            #define VERSION_LEN 128
+            #define VERSION_LEN 256
             char version[VERSION_LEN];
 #ifdef BETATEST
-            _snprintf(version, VERSION_LEN, "Version %s %s.%s", ck_s_ver, ck_s_test, ck_s_tver);
+            _snprintf(version, VERSION_LEN, "Version %s %s.%s (C-Kermit %s)", K95_VERSION_MAJ_MIN_REV, ck_s_test, ck_s_tver, ck_s_ver);
 #else
-            _snprintf(version, VERSION_LEN, "Version %s", ck_s_ver);
+            _snprintf(version, VERSION_LEN, "Version %s (C-Kermit %s)", ck_s_xver, ck_s_ver);
 #endif
 
             SendDlgItemMessage(hWnd, IDC_VERSION, WM_SETTEXT, 0,

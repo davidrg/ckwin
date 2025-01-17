@@ -84,10 +84,10 @@ int setmsk();            /* ckuus7.c */
 #ifdef NT
 #include <windows.h>
 #include "ckoreg.h"
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"                     /* Microsoft TAPI */
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 #ifdef KUI
 int get_gui_window_pos_y(); /* cknwin.c */
 int get_gui_window_pos_x(); /* cknwin.c */
@@ -4140,7 +4140,7 @@ dosexp(s) char *s;
             }
             goto xdosexp;
         } else if (x == SX_IFC) {               /* Conditional expression */
-            int true = 0;
+            int bool_result = 0;
             if (n > 4) {
                 printf("?Too many operands: IF - \"%s\"\n",s);
                 sexprc++;
@@ -4157,12 +4157,12 @@ dosexp(s) char *s;
                 } else {
                     fpj = atof(s2);
                 }
-                true = ((fpj != 0.0) ? 1 : 0);
+                bool_result = ((fpj != 0.0) ? 1 : 0);
             }
-            if (!true && n < 4) {
+            if (!bool_result && n < 4) {
                 s2 = NULL;
             } else {
-                s2 = dosexp(true ? p[3] : p[4]);
+                s2 = dosexp(bool_result ? p[3] : p[4]);
                 if (sexprc) goto xdosexp;
                 j = s2 ? ckatofs(s2) : 0;
                 if (xxfloat(s2,0) == 2) {
@@ -7984,39 +7984,42 @@ setprinter(xx) int xx;
 #define SSH_CFG 22                      /* Use OpenSSH Config */
 #define SSH_HBT 23                      /* Heartbeat Interval */
 #define SSH_PXC 24                      /* Proxy Command */
+#define SSH_DIR 25                      /* SSH Directory */
+#define SSH_AGL 26                      /* SSH Agent Location */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
 #ifdef SSHBUILTIN
-    { "agent-forwarding",        SSH_AFW,  0 },
+    { "agent-forwarding",        SSH_AFW,  0 },     /* SSH_FEAT_AGENT_FWD */
+    { "agent-location",          SSH_AGL,  0 },     /* SSH_FEAT_AGENT_LOC */
     { "check-host-ip",           SSH_CHI,  0 },
     { "compression",             SSH_CMP,  0 },
-    { "dynamic-forwarding",      SSH_DYF,  0 },
-    { "gateway-ports",           SSH_GWP,  0 },
-    { "gssapi",                  SSH_GSS,  0 },
+    { "directory",               SSH_DIR,  0 },
+    { "dynamic-forwarding",      SSH_DYF,  0 },     /* SSH_FEAT_PORT_FWD */
+    { "gateway-ports",           SSH_GWP,  0 },     /* SSH_FEAT_PORT_FWD */
+    { "gssapi",                  SSH_GSS,  0 },     /* SSH_FEAT_ADV_GSSAPI */
     { "heartbeat-interval",      SSH_HBT,  0 },
     { "identity-file",           SSH_IDF,  0 },
 #ifdef COMMENT
     { "kbd-interactive-devices", SSH_KBD,  0 },
 #endif /* COMMENT */
-    /*{ "k4",                      SSH_K4, CM_INV },
-    { "k5",                      SSH_K5, CM_INV },
-    { "kerberos4",               SSH_K4,   0 },
-    { "kerberos5",               SSH_K5,   0 },
-    { "krb4",                    SSH_K4, CM_INV },
-    { "krb5",                    SSH_K5, CM_INV },*/
-    { "privileged-port",         SSH_PRP,  0 },
-    /* Libssh doesn't support the proxy command setting on windows yet
-     * { "proxy-command",           SSH_PXC,  0 },*/
+    { "k4",                      SSH_K4, CM_INV },  /* SSH_FEAT_ADV_KERBEROS4 */
+    { "k5",                      SSH_K5, CM_INV },  /* SSH_FEAT_ADV_KERBEROS5 */
+    { "kerberos4",               SSH_K4,   0 },     /* SSH_FEAT_ADV_KERBEROS4 */
+    { "kerberos5",               SSH_K5,   0 },     /* SSH_FEAT_ADV_KERBEROS5 */
+    { "krb4",                    SSH_K4, CM_INV },  /* SSH_FEAT_ADV_KERBEROS4 */
+    { "krb5",                    SSH_K5, CM_INV },  /* SSH_FEAT_ADV_KERBEROS5 */
+    { "privileged-port",         SSH_PRP,  0 },     /* SSH_FEAT_FROM_PRIV_PRT */
+    { "proxy-command",           SSH_PXC,  0 },     /* SSH_FEAT_PROXY_CMD */
     { "quiet",                   SSH_SHH,  0 },
     { "strict-host-key-check",   SSH_SHK,  0 },
-    { "use-openssh-config",      SSH_CFG,  0 },
-    /* "v1",                      SSH_V1,   0 },*/
+    { "use-openssh-config",      SSH_CFG,  0 },     /* SSH_FEAT_OPENSSH_CONF */
+    { "v1",                      SSH_V1,   0 },     /* SSH_FEAT_SSH_V1 */
     { "v2",                      SSH_V2,   0 },
     { "verbose",                 SSH_VRB,  0 },
-    { "version",                 SSH_VER,  0 },
-    { "x11-forwarding",          SSH_XFW,  0 },
-    { "xauth-location",          SSH_XAL,  0 },
+    { "version",                 SSH_VER,  0 },     /* SSH_FEAT_SSH_V1 */
+    { "x11-forwarding",          SSH_XFW,  0 },     /* SSH_FEAT_X11_FWD */
+    { "xauth-location",          SSH_XAL,  0 },     /* SSH_FEAT_X11_XAUTH */
 #else
 #ifdef SSHCMD
     { "command",                 SSH_CMD,  0 },
@@ -8028,36 +8031,10 @@ static int nsshtab = (sizeof(sshtab) / sizeof(struct keytab)) - 1;
 
 #ifdef SSHBUILTIN
 static struct keytab sshver[] = {       /* SET SSH VERSION command table */
-    /*{ "1",          1,  0 },*/
+    { "1",          1,  0 },
     { "2",          2,  0 },
     { "automatic",  0,  0 }
 };
-
-#define SSHA_CRS   1
-#define SSHA_DSA   2
-#define SSHA_GSS   3
-#define SSHA_HOS   4
-#define SSHA_KBD   5
-#define SSHA_K4    6
-#define SSHA_K5    7
-#define SSHA_PSW   8
-#define SSHA_PK    9
-#define SSHA_SKE  10
-#define SSHA_TIS  11
-#define SSHA_EXT  12
-#define SSHA_SRP  13
-
-static struct keytab ssh2aut[] = {      /* SET SSH V2 AUTH command table */
-    /*{ "external-keyx",      SSHA_EXT, 0 },*/
-    { "gssapi",             SSHA_GSS, 0 },
-    /*{ "hostbased",          SSHA_HOS, 0 },*/
-    { "keyboard-interactive",  SSHA_KBD, 0 },
-    { "password",           SSHA_PSW, 0 },
-    { "publickey",          SSHA_PK,  0 },
-    /*{ "srp-gex-sha1",       SSHA_SRP, 0 },*/
-    { "", 0, 0 }
-};
-static int nssh2aut = (sizeof(ssh2aut) / sizeof(struct keytab)) - 1;
 
 #define SSHF_LCL   1
 #define SSHF_RMT   2
@@ -8083,7 +8060,6 @@ static int naddfwd = (sizeof(addfwd) / sizeof(struct keytab)) - 1;
 #define SSH2_AUT   7
 #define SSH2_KEX   8
 
-#ifdef COMMENT
 static struct keytab sshv1tab[] = {     /* SET SSH V1 command table */
     { "cipher",                  SSH1_CIF, 0 },
     { "global-known-hosts-file", SSH1_GNH, 0 },
@@ -8092,7 +8068,6 @@ static struct keytab sshv1tab[] = {     /* SET SSH V1 command table */
     { "", 0, 0 }
 };
 static int nsshv1tab = (sizeof(sshv1tab) / sizeof(struct keytab)) - 1;
-#endif
 
 static struct keytab sshv2tab[] = {     /* SET SSH V2 command table */
     { "authentication",          SSH2_AUT, 0 },
@@ -8107,187 +8082,29 @@ static struct keytab sshv2tab[] = {     /* SET SSH V2 command table */
 };
 static int nsshv2tab = (sizeof(sshv2tab) / sizeof(struct keytab)) - 1;
 
-/*#define SSHC_3DES 1*/                     /* 3DES */
-#define SSHC_3CBC 2                     /* 3DES-CBC */
-#define SSHC_A128 3                     /* AES128-CBC */
-#define SSHC_A192 4                     /* AES192-CBC */
-#define SSHC_A256 5                     /* AES256-CBC */
-/*#define SSHC_ARC4 6*/                     /* ARCFOUR */
-/*#define SSHC_FISH 7*/                     /* BLOWFISH */
-/*#define SSHC_BCBC 9*/                     /* BLOWFISH-CBC */
-/*#define SSHC_C128 8*/                     /* CAST128-CBC */
-/*#define SSHC_1DES 10*/                    /* DES */
-#define SSHC_CHPO 11                    /* chachae20-poly1305 */
-#define SSHC_A1GC 12                    /* aes128-gcm@openssh.com */
-#define SSHC_A2GC 13                    /* aes256-gcm@openssh.com */
-#define SSHC_A12C 14                    /* aes128-ctr */
-#define SSHC_A19C 15                    /* aes192-ctr */
-#define SSHC_A25C 16                    /* aes256-ctr */
-
-#ifdef COMMENT
-static struct keytab ssh1ciphers[] = {
-    { "3des",         SSHC_3DES, 0 },
-    { "blowfish",     SSHC_FISH, 0 },
-    { "des",          SSHC_1DES, 0 },
-    { "", 0, 0 }
-};
-static int nssh1ciphers = (sizeof(ssh1ciphers) / sizeof(struct keytab)) - 1;
-#endif
-
-static struct keytab ssh2ciphers[] = {  /* SET SSH V2 CIPHERS command table */
-    { "3des-cbc",        SSHC_3CBC, 0 },
-    { "aes128-cbc",      SSHC_A128, 0 },
-    { "aes192-cbc",      SSHC_A192, 0 },
-    { "aes256-cbc",      SSHC_A256, 0 },
-    /*{ "arcfour",         SSHC_ARC4, 0 },
-    { "blowfish-cbc",    SSHC_FISH, 0 },
-    { "cast128-cbc",     SSHC_C128, 0 },
-    { "rijndael128-cbc", SSHC_A128, 0 },
-    { "rijndael192-cbc", SSHC_A192, 0 },
-    { "rijndael256-cbc", SSHC_A256, 0 },*/
-    { "aes128-ctr", SSHC_A12C, 0 },
-    { "aes192-ctr", SSHC_A19C, 0 },
-    { "aes256-ctr", SSHC_A25C, 0 },
-    { "aes128-gcm@openssh.com", SSHC_A1GC, 0 },
-    { "aes256-gcm@openssh.com", SSHC_A2GC, 0 },
-    { "chachae20-poly1305", SSHC_CHPO, 0 },
-    { "", 0, 0 }
-};
-static int nssh2ciphers = (sizeof(ssh2ciphers) / sizeof(struct keytab)) - 1;
-
-#define SSHM_SHA        1               /* HMAC-SHA1 */
-#ifdef COMMENT
-#define SSHM_SHA_96     2               /* HMAC-SHA1-96 */
-#define SSHM_MD5        3               /* HMAC-MD5 */
-#define SSHM_MD5_96     4               /* HMAC-MD5-96 */
-#define SSHM_RIPE       5               /* HMAC-RIPEMD160 */
-#endif
-#define SSHM_SHA1_ETM   6               /* hmac-sha1-etm@openssh.com */
-#define SSHM_SHA2_256   7               /* hmac-sha2-256 */
-#define SSHM_SHA2_2ETM  8               /* hmac-sha2-256-etm@openssh.com */
-#define SSHM_SHA2_512   9               /* hmac-sha2-512 */
-#define SSHM_SHA2_5ETM  10              /* hmac-sha2-512-etm@openssh.com */
-#define SSHM_NONE       11              /* none */
-
-static struct keytab ssh2macs[] = {     /* SET SSH V2 MACS command table */
-   /*
-    { "hmac-md5",       SSHM_MD5,    0 },
-    { "hmac-md5-96",    SSHM_MD5_96, 0 },
-    { "hmac-ripemd160", SSHM_RIPE,   0 },*/
-    { "hmac-sha1",      SSHM_SHA,    0 },
-    /*{ "hmac-sha1-96",   SSHM_SHA_96, 0 },*/
-    { "hmac-sha1-etm@openssh.com",      SSHM_SHA1_ETM,    0 },
-    { "hmac-sha2-256",                  SSHM_SHA2_256,    0 },
-    { "hmac-sha2-256-etm@openssh.com",  SSHM_SHA2_2ETM,    0 },
-    { "hmac-sha2-512",                  SSHM_SHA2_512,    0 },
-    { "hmac-sha2-512-etm@openssh.com",  SSHM_SHA2_5ETM,    0 },
-    { "none",                           SSHM_NONE,    0 },
-    { "", 0, 0 }
-};
-static int nssh2macs = (sizeof(ssh2macs) / sizeof(struct keytab)) - 1;
-
 static struct keytab tgtpass[] = {
     { "tgt-passing", 1, 0, },
     { "", 0, 0 }
 };
 static int ntgtpass = (sizeof(tgtpass) / sizeof(struct keytab)) - 1;
 
+#define SSH_GSSAPI_DELEGATE    1
+#define SSH_GSSAPI_KEYEX       2
+
 static struct keytab gssapitab[] = {
-    { "delegate-credentials", 1, 0, },
-    { "key-exchange",         2, CM_INV, },
+    { "delegate-credentials", SSH_GSSAPI_DELEGATE, 0, },
+    { "key-exchange",         SSH_GSSAPI_KEYEX, CM_INV, },
     { "", 0, 0 }
 };
 static int ngssapitab = (sizeof(gssapitab) / sizeof(struct keytab)) - 1;
 
-#define HKA_RSA 1
-#define HKA_DSS 2
-#define HKA_EC2 3
-#define HKA_EC3 4
-#define HKA_EC5 5
-#define HKA_ED2 6
-#define HKA_S22 7
-#define HKA_S25 8
 
-static struct keytab hkatab[] = {
-    { "ecdsa-sha2-nistp256", HKA_EC2, 0, },
-    { "ecdsa-sha2-nistp384", HKA_EC3, 0, },
-    { "ecdsa-sha2-nistp521", HKA_EC5, 0, },
-    { "rsa-sha2-256", HKA_S22, 0, },
-    { "rsa-sha2-512", HKA_S25, 0, },
-    { "ssh-dss", HKA_DSS, 0, },
-    { "ssh-ed25519", HKA_ED2, 0, },
-    { "ssh-rsa", HKA_RSA, 0, },
-    { "", 0, 0 }
-};
-static int nhkatab = (sizeof(hkatab) / sizeof(struct keytab)) - 1;
-
-
-static struct keytab sshkextab[] = {
-    { "curve25519-sha256",              1, 0, },
-    { "curve25519-sha256@libssh.org",   2, 0, },
-    { "diffie-hellman-group1-sha1",     3, 0, },
-    { "diffie-hellman-group14-sha1",    4, 0, },
-    { "diffie-hellman-group14-sha256",  5, 0, },
-    { "diffie-hellman-group16-sha512",  6, 0, },
-    { "diffie-hellman-group18-sha512",  7, 0, },
-    { "diffie-hellman-group-exchange-sha1",   8, 0, },
-    { "diffie-hellman-group-exchange-sha256", 9, 0, },
-    { "ecdh-sha2-nistp256",             10, 0, },
-    { "ecdh-sha2-nistp384",             11, 0, },
-    { "ecdh-sha2-nistp521",             12, 0, },
-    /*{ "ext-info-c",                     13, 0, },*/
-    { "", 0, 0 }
-};
-static int nsshkextab = (sizeof(sshkextab) / sizeof(struct keytab)) - 1;
-
-int                                     /* SET SSH variables */
-  ssh_afw = 0,                          /* agent forwarding */
-  ssh_xfw = 0,                          /* x11 forwarding   */
-  ssh_prp = SET_OFF,                    /* privileged ports */
-  ssh_cmp = 1,                          /* compression */
-  ssh_shh = 0,                          /* quiet       */
-  ssh_ver = 0,                          /* protocol version (auto,1,2) */
-  ssh_vrb = 2,                          /* Report errors */
-  ssh_chkip = 0,                        /* SSH Check Host IP flag */
-  ssh_gwp = 0,                          /* gateway ports */
-  ssh_dyf = 0,                          /* dynamic forwarding */
-  ssh_gsd = 0,                          /* gssapi delegate credentials */
-  ssh_k4tgt = 0,                        /* k4 tgt passing */
-  ssh_k5tgt = 0,                        /* k5 tgt passing */
-  ssh_shk = 2,                          /* Strict host key (no, yes, ask) */
-  ssh2_ark = 1,                         /* Auto re-key */
-  ssh_cas = 0,                          /* command as subsys */
-  ssh_cfg = 0,                          /* use OpenSSH config? */
-  ssh_gkx = 1,                          /* gssapi key exchange */
-  ssh_k5_is_k4 = 1,                     /* some SSH v1 use same codes */
-  ssh_hbt = 0,                          /* heartbeat (seconds) */
-  ssh_dummy = 0;                        /* bottom of list */
-
-char                                    /* The following are to be malloc'd */
-  /* * ssh1_cif = NULL, */                    /* v1 cipher */
-  * ssh2_cif = NULL,                    /* v2 cipher list */
-  * ssh2_mac = NULL,                    /* v2 mac list */
-  * ssh2_auth = NULL,                   /* v2 authentication list */
-  * ssh_hst = NULL,                     /* hostname */
-  * ssh_prt = NULL,                     /* port/service */
-  * ssh_cmd = NULL,                     /* command to execute */
-  * ssh_xal = NULL,                     /* xauth-location */
-#ifdef COMMENT
-  * ssh1_gnh = NULL,                    /* v1 global known hosts file */
-  * ssh1_unh = NULL,                    /* v1 user known hosts file */
-#endif
-  * ssh2_gnh = NULL,                    /* v2 global known hosts file */
-  * ssh2_unh = NULL,                    /* v2 user known hosts file */
-  * ssh2_hka = NULL,                    /* Host Key Algorithms */
-  * ssh2_kex = NULL,                    /* Key Exchange Methods */
-  * ssh_pxc = NULL,                     /* Proxy command */
-  * xxx_dummy = NULL;
-
-char * ssh_idf[32] = {                  /* Identity file list */
+char * ssh_idf[33] = {                  /* Identity file list - null terminated */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+  NULL
 };
 char * ssh_tmp[32] = {                  /* Temp identity file list */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
@@ -8297,10 +8114,6 @@ char * ssh_tmp[32] = {                  /* Temp identity file list */
 };
 int ssh_idf_n = 0;
 
-extern int    ssh_pf_lcl_n,
-              ssh_pf_rmt_n;
-extern struct ssh_pf ssh_pf_lcl[32];    /* Port forwarding structs */
-extern struct ssh_pf ssh_pf_rmt[32];    /* (declared in ckuusr.c) */
 #endif /* SSHBUILTIN */
 
 #ifdef SFTP_BUILTIN
@@ -8315,70 +8128,161 @@ static int nsftptab = (sizeof(sftptab) / sizeof(struct keytab)) - 1;
 VOID
 shossh() {
 #ifdef SSHBUILTIN
-    int i, n = 0;                       /* ADD askmore()! */
+    int i, n = 0, ssh_ver;                       /* ADD askmore()! */
 
-    printf("\nSSH is built in (libssh %s):\n\n", ssh_impl_ver());
-    /*printf(" libssh version:                  %s\n", ssh_impl_ver());*/
-    printf(" ssh host:                        %s\n",showstring(ssh_hst));
-    printf(" ssh port:                        %s\n",showstring(ssh_prt));
-    printf(" ssh command:                     %s\n",showstring(ssh_cmd));
-    printf(" ssh agent-forwarding:            %s\n",showoff(ssh_afw));
-    printf(" ssh check-host-ip:               %s\n",showoff(ssh_chkip));
-    printf(" ssh compression:                 %s\n",showoff(ssh_cmp));
-    printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_dyf));
-    if (ssh_pf_lcl[0].p1 && ssh_pf_lcl[0].host && ssh_pf_lcl[0].p2) {
-      printf(" ssh forward-local-port:          %d %s %d\n",
-             ssh_pf_lcl[0].p1, ssh_pf_lcl[0].host, ssh_pf_lcl[0].p2);
-      for ( n=1;n<ssh_pf_lcl_n;n++ )
-        printf("                       :          %d %s %d\n",
-               ssh_pf_lcl[n].p1, ssh_pf_lcl[n].host, ssh_pf_lcl[n].p2);
-    } else
-      printf(" ssh forward-local-port:          (none)\n");
-    if (ssh_pf_rmt[0].p1 && ssh_pf_rmt[0].host && ssh_pf_rmt[0].p2) {
-      printf(" ssh forward-remote-port:         %d %s %d\n",
-             ssh_pf_rmt[0].p1, ssh_pf_rmt[0].host, ssh_pf_rmt[0].p2);
-      for ( n=1;n<ssh_pf_rmt_n;n++ )
-        printf("                        :         %d %s %d\n",
-               ssh_pf_rmt[n].p1, ssh_pf_rmt[n].host, ssh_pf_rmt[n].p2);
-    } else
-      printf(" ssh forward-remote-port:         (none)\n");
-    printf(" ssh gateway-ports:               %s\n",showoff(ssh_gwp));
-    printf(" ssh gssapi delegate-credentials: %s\n",showoff(ssh_gsd));
-    printf(" ssh gssapi key-exchange:         %s\n",showoff(ssh_gkx));
+    ssh_ver = ssh_get_iparam(SSH_IPARAM_VER);
+
+#ifndef SSH_DLL
+    printf("\nSSH is built in (%s):\n\n", ssh_impl_ver());
+#else
+    if (!ssh_avail()) {
+        printf("\nNo SSH backend loaded!");
+        printf("\nUse \"ssh load\" to specify a backend to make SSH commands available");
+    } else {
+    printf("\nSSH is loaded (%s):\n\n", ssh_impl_ver());
+    printf(" ssh backend:                     %s\n",showstring((char*)ssh_dll_name()));
+    printf(" ssh backend version:             %s\n",showstring((char*)ssh_dll_ver()));
+#endif /* SSH_DLL */
+    printf(" ssh host:                        %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_HST)));
+    printf(" ssh port:                        %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_PRT)));
+    printf(" ssh command:                     %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_CMD)));
+    if (ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
+        printf(" ssh agent-forwarding:            %s\n",showoff(ssh_get_iparam(SSH_IPARAM_AFW)));
+    }
+    printf(" ssh check-host-ip:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CHKIP)));
+    printf(" ssh compression:                 %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CMP)));
+    printf(" ssh directory:                   %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_DIR)));
+    if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+        printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_get_iparam(SSH_IPARAM_DYF)));
+    }
+    if (ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+        /* This is a combined array of local and remote port forwards in no
+         * particular order, so we've got to iterate through it twice if we
+         * want to output them separately. The array is terminated with an
+         * entry that has its type set to SSH_PORT_FORWARD_NULL.
+         */
+        const ssh_port_forward_t* fwd = ssh_fwd_get_ports();
+
+        if (fwd != NULL) {
+            int i = 0;
+            BOOL no_forwards = TRUE;
+
+            /* Output local port forwards */
+            while (fwd->type != SSH_PORT_FORWARD_NULL) {
+                if (fwd->type == SSH_PORT_FORWARD_LOCAL) {
+                    no_forwards = FALSE;
+                    if (i == 0) {
+                        printf(" ssh forward-local-port:          %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    } else {
+                        printf("                       :          %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    }
+                    i++;
+                }
+
+                fwd++;
+            }
+
+            if (no_forwards) {
+                printf(" ssh forward-local-port:          (none)\n");
+            }
+
+            /* Back to the start of the list for the next trip around */
+            fwd = ssh_fwd_get_ports();
+            i = 0;
+            no_forwards = TRUE;
+
+            /* Output remote port forwards */
+            while (fwd->type != SSH_PORT_FORWARD_NULL) {
+                if (fwd->type == SSH_PORT_FORWARD_REMOTE) {
+                    no_forwards = FALSE;
+                    if (i == 0) {
+                        printf(" ssh forward-remote-port:         %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    } else {
+                        printf("                        :         %d %s %d\n",
+                            fwd->port, fwd->hostname, fwd->host_port);
+                    }
+                    i++;
+                }
+
+                fwd++;
+            }
+
+            if (no_forwards) {
+                printf(" ssh forward-remote-port:         (none)\n");
+            }
+        }
+    }
+    if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+        printf(" ssh gateway-ports:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_GWP)));
+    }
+    if (ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
+        printf(" ssh gssapi delegate-credentials: %s\n",showoff(ssh_get_iparam(SSH_IPARAM_GSD)));
+    }
+    if (ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+        printf(" ssh gssapi key-exchange:         %s\n",showoff(ssh_get_iparam(SSH_IPARAM_GKX)));
+    }
     printf(" ssh identity-file:               %d\n",ssh_idf_n);
     for (i = 0; i < ssh_idf_n; i++)
       printf("  %2d. %s\n",i+1,showstring(ssh_idf[i]));
-    printf(" ssh heartbeat interval:          %d\n", ssh_hbt);
-    printf(" ssh k4 tgt-passing:              %s\n",showoff(ssh_k4tgt));
-    printf(" ssh k5 tgt-passing:              %s\n",showoff(ssh_k5tgt));
+    printf(" ssh heartbeat interval:          %d\n",ssh_get_iparam(SSH_IPARAM_HBT));
+    if (ssh_feature_supported(SSH_FEAT_ADV_KERBEROS4)) {
+        printf(" ssh k4 tgt-passing:              %s\n",showoff(ssh_get_iparam(SSH_IPARAM_K4TGT)));
+    }
+    if (ssh_feature_supported(SSH_FEAT_ADV_KERBEROS5)) {
+        printf(" ssh k5 tgt-passing:              %s\n",showoff(ssh_get_iparam(SSH_IPARAM_K5TGT)));
+    }
+    if (ssh_feature_supported(SSH_FEAT_FROM_PRIV_PRT)) {
+        printf(" ssh privileged-port:             %s\n",showooa(ssh_get_iparam(SSH_IPARAM_PRP)));
+    }
+    if (ssh_feature_supported(SSH_FEAT_PROXY_CMD)) {
+        printf(" ssh proxy command:               %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_PXC)));
+    }
+    printf(" ssh quiet:                       %s\n",showoff(ssh_get_iparam(SSH_IPARAM_SHH)));
+    printf(" ssh strict-host-key-check:       %d\n",ssh_get_iparam(SSH_IPARAM_SHK));
+    if (ssh_feature_supported(SSH_FEAT_OPENSSH_CONF)) {
+        printf(" ssh use-openssh-config:          %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CFG)));
+    }
+    printf(" ssh verbose:                     %d\n",ssh_get_iparam(SSH_IPARAM_VRB));
+    if (ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+        printf(" ssh version:                     %s\n",
+               ssh_ver ? ckitoa(ssh_ver) : "automatic"
+               );
+    }
+    if (ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+        extern char tn_env_disp[64];   /* ckctel.c */
+        printf(" ssh x11-forwarding:              %s\n",showooa(ssh_get_iparam(SSH_IPARAM_XFW)));
+        printf(" ssh x11-forwarding display:      %s\n",showstring(tn_env_disp));
+        /* TODO: Show the display - tn_env_disp */
+        if (ssh_feature_supported(SSH_FEAT_X11_XAUTH)) {
+            printf(" ssh xauth-location:              %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_XAL)));
+        }
+    }
 
-    printf(" ssh privileged-port:             %s\n",showooa(ssh_prp));
-    /*printf(" ssh proxy command:               %s\n",showstring(ssh_pxc));*/
-    printf(" ssh quiet:                       %s\n",showoff(ssh_shh));
-    printf(" ssh strict-host-key-check:       %d\n",ssh_shk);
-    printf(" ssh use-openssh-config:          %s\n",showoff(ssh_cfg));
-    printf(" ssh verbose:                     %d\n",ssh_vrb);
-    printf(" ssh version:                     %s\n",
-           ssh_ver ? ckitoa(ssh_ver) : "automatic"
-           );
-    printf(" ssh x11-forwarding:              %s\n",showooa(ssh_xfw));
-    printf(" ssh xauth-location:              %s\n",showstring(ssh_xal));
-#ifdef COMMENT
+    if (ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+        printf("\n");
+        printf(" ssh v1 cipher:                   %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_1_CIF)));
+        printf(" ssh v1 global-known-hosts-file:  %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_1_GNH)));
+        printf(" ssh v1 user-known-hosts-file:    %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_1_UNH)));
+    }
+
     printf("\n");
-    printf(" ssh v1 cipher:                   %s\n",showstring(ssh1_cif));
-    printf(" ssh v1 global-known-hosts-file:  %s\n",showstring(ssh1_gnh));
-    printf(" ssh v1 user-known-hosts-file:    %s\n",showstring(ssh1_unh));
-#endif
-    printf("\n");
-    printf(" ssh v2 authentication:           %s\n",showstring(ssh2_auth));
-    printf(" ssh v2 auto-rekey:               %s\n",showoff(ssh2_ark));
-    printf(" ssh v2 ciphers:                  %s\n",showstring(ssh2_cif));
-    printf(" ssh v2 command-as-subsystem:     %s\n",showoff(ssh_cas));
-    printf(" ssh v2 global-known-hosts-file:  %s\n",showstring(ssh2_gnh));
-    printf(" ssh v2 hostkey-algorithms:       %s\n",showstring(ssh2_hka));
-    printf(" ssh v2 key-exchange-methods:     %s\n",showstring(ssh2_kex));
-    printf(" ssh v2 mac:                      %s\n",showstring(ssh2_mac));
-    printf(" ssh v2 user-known-hosts-file:    %s\n",showstring(ssh2_unh));
+    printf(" ssh v2 authentication:           %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_AUTH)));
+    if (ssh_feature_supported(SSH_FEAT_REKEY_AUTO)) {
+        printf(" ssh v2 auto-rekey:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_2_ARK)));
+    }
+    printf(" ssh v2 ciphers:                  %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_CIF)));
+    printf(" ssh v2 command-as-subsystem:     %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CAS)));
+    printf(" ssh v2 global-known-hosts-file:  %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_GNH)));
+    printf(" ssh v2 hostkey-algorithms:       %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_HKA)));
+    printf(" ssh v2 key-exchange-methods:     %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_KEX)));
+    printf(" ssh v2 mac:                      %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_MAC)));
+    printf(" ssh v2 user-known-hosts-file:    %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_2_UNH)));
+#ifdef SSH_DLL
+    }
+#endif /* SSH_DLL */
 #else
 #ifdef SSHCMD
     extern char * sshcmd, * defsshcmd;
@@ -8390,6 +8294,15 @@ shossh() {
 #endif /* SSHBUILTIN */
     printf("\n");
 }
+
+#ifdef SSHBUILTIN
+static int set_ssh_iparam_on(int param) {
+    int value;
+    int success = seton(&value);
+    if (!success) return success;
+    return ssh_set_iparam(param, value);
+}
+#endif
 
 static int
 dosetssh() {
@@ -8403,6 +8316,130 @@ dosetssh() {
 #endif /* SSHBUILTIN */
     int cx, x, y, z;
     char * s;
+
+#ifdef SSHBUILTIN
+#ifdef SSH_DLL
+    if (!ssh_avail()) {
+        printf("\nNo SSH backend DLL loaded. SSH commands unavailable. Use the SSH LOAD command\n");
+        printf("to load a compatible SSH backend if you have one.\n");
+        return (-9);
+    }
+#endif /* SSH_DLL */
+    /* Hide any "set ssh" commands not supported by the currently loaded SSH
+     * backend */
+    for (z = 0; z < nsshtab; z++) {
+        if ((sshtab[z].kwval == SSH_V1 || sshtab[z].kwval == SSH_VER)
+            && !ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+            /*
+             * "set ssh v1" and "set ssh version" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if ((sshtab[z].kwval == SSH_XFW && !ssh_feature_supported(SSH_FEAT_X11_FWD))
+            || (sshtab[z].flgs == SSH_XAL  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
+            /*
+             * "set ssh x11-forwarding" and "set ssh xauth-location" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if ((sshtab[z].kwval == SSH_DYF || sshtab[z].kwval == SSH_GWP)
+            && !ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+            /* Dynamic Port Forwarding
+             * "set ssh dynamic-forwarding"
+             * "set ssh gateway-ports"
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_K4
+            && !ssh_feature_supported(SSH_FEAT_ADV_KERBEROS4)) {
+            /*
+             * "set ssh kerberos4" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_K5
+            && !ssh_feature_supported(SSH_FEAT_ADV_KERBEROS5)) {
+            /*
+             * "set ssh kerberos5" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_PXC
+            && !ssh_feature_supported(SSH_FEAT_PROXY_CMD)) {
+            /*
+             * "set ssh command" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_CFG
+            && !ssh_feature_supported(SSH_FEAT_OPENSSH_CONF)) {
+            /*
+             * "set ssh use-openssh-config" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_PRP
+            && !ssh_feature_supported(SSH_FEAT_FROM_PRIV_PRT)) {
+            /*
+             * "set ssh use-openssh-config" commands.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_AFW
+            && !ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
+            /*
+             * "set ssh agent-forwarding" command.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_AGL
+            && !ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            /*
+             * "set ssh agent-location" command.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_GSS
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+            /*
+             * "set ssh gssapi" commands - if none of them are enabled,
+             * hide "set ssh gssapi" too.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+    }
+
+    /* Hide any "set ssh v2" commands not supported by the currently loaded SSH
+     * backend */
+    for (z = 0; z < nsshv2tab; z++) {
+        if (sshv2tab[z].kwval == SSH2_ARK
+            && !ssh_feature_supported(SSH_FEAT_REKEY_AUTO)) {
+            /*
+             * "set ssh v2 auto-rekey"
+             */
+            sshv2tab[z].flgs = CM_INV;
+        }
+    }
+
+    /* Hide any "set ssh gssapi" commands not supported by the currently loaded SSH
+     * backend */
+    for (z = 0; z < ngssapitab; z++) {
+        if (gssapitab[z].kwval == SSH_GSSAPI_DELEGATE
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
+            /*
+             * "set ssh gssapi delegate-credentials"
+             */
+            gssapitab[z].flgs = CM_INV;
+        } else if (gssapitab[z].kwval == SSH_GSSAPI_KEYEX
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+            /* The always hidden command:
+             * "set ssh gssapi key-exchange"
+             */
+            gssapitab[z].flgs = CM_INV;
+        }
+    }
+#endif /* SSHBUILTIN */
 
     if ((cx = cmkey(sshtab,nsshtab,"","command", xxstring)) < 0)
       return(cx);
@@ -8418,29 +8455,77 @@ dosetssh() {
 
 #ifdef SSHBUILTIN
       case SSH_AFW:                     /* Agent-forwarding */
-        return(success = seton(&ssh_afw));
+        if (!ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
+            printf("\r\nAgent forwarding is not supported by the current SSH "
+                   "backend\r\n");
+            return(-9);
+        }
+        return(success = set_ssh_iparam_on(SSH_IPARAM_AFW));
+
+      case SSH_AGL:
+        if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            printf("\r\nSetting of agent location is not supported by the "
+                   "current SSH backend\r\n");
+            return(-9);
+        }
+        if ((x = cmifi("Socket Name","",&s,&z,xxstring)) < 0) {
+            return(x);
+        }
+        ssh_set_sparam(SSH_SPARAM_AGENTLOC, s);
+        return(1);
 
       case SSH_CHI:                     /* Check Host IP */
-        return(success = seton(&ssh_chkip));
+        return(success = set_ssh_iparam_on(SSH_IPARAM_CHKIP));
         break;
 
       case SSH_CMP:                     /* Compression */
-        return(success = seton(&ssh_cmp));
+        return(success = set_ssh_iparam_on(SSH_IPARAM_CMP));
+
+      case SSH_DIR:
+        if ((x = cmdir("SSH Directory","",&s,xxstring)) < 0) {
+            if (x != -3)
+              return(x);
+        } else {
+            ckstrncpy(line,s,LINBUFSIZ);
+            if (zfnqfp(line,TMPBUFSIZ,tmpbuf))
+              ckstrncpy(line,tmpbuf,LINBUFSIZ);
+        }
+        s = (x == -3) ? NULL : line;
+        if ((x = cmcfm()) < 0)
+          return(x);
+        ssh_set_sparam(SSH_SPARAM_DIR, s);
+        return(1);
 
       case SSH_DYF:                     /* Dynamic Forwarding */
-        return(success = seton(&ssh_dyf));
+        if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+            printf("\r\nDynamic port forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
+        return(success = set_ssh_iparam_on(SSH_IPARAM_DYF));
 
       case SSH_GWP:                     /* Gateway ports */
-        return(success = seton(&ssh_gwp));
+        if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
+            printf("\r\nPort forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
+        return(success = set_ssh_iparam_on(SSH_IPARAM_GWP));
 
       case SSH_GSS:                     /* GSSAPI */
         if ((y = cmkey(gssapitab,ngssapitab,"","", xxstring)) < 0)
           return(y);
         switch (y) {
-          case 1:                       /* Delegate credentials */
-            return(success = seton(&ssh_gsd));
-          case 2:                       /* key-exchange */
-            return(success = seton(&ssh_gkx));
+          case SSH_GSSAPI_DELEGATE:     /* Delegate credentials */
+            if (!ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
+                printf("\r\nDelegating GSSAPI credentials is not supported by the current SSH backend\r\n");
+                return(-9);
+            }
+            return(success = set_ssh_iparam_on(SSH_IPARAM_GSD));
+          case SSH_GSSAPI_KEYEX:        /* key-exchange */
+            if (!ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+                printf("\r\nConfiguration of GSSAPI Key Exchange is not supported by the current SSH backend\r\n");
+                return(-9);
+            }
+            return(success = set_ssh_iparam_on(SSH_IPARAM_GKX));
         }
         if ((x = cmcfm()) < 0)
           return(x);
@@ -8456,60 +8541,88 @@ dosetssh() {
 
       case SSH_K4:                      /* Kerberos IV */
       case SSH_K5:                      /* Kerberos V */
+        if (cx == SSH_K4 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+            printf("\r\nNo Kerberos 4 settings are supported by the current SSH backend\r\n");
+            return(-9);
+        } else if (cx == SSH_K5 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+            printf("\r\nNo Kerberos 5 settings are supported by the current SSH backend\r\n");
+            return(-9);
+        }
         if ((y = cmkey(tgtpass,1,"","tgt-passing", xxstring)) < 0)
           return(y);
         switch (y) {
           case 1:
             return(success = (cx == SSH_K4) ?
-                   seton(&ssh_k4tgt) : seton(&ssh_k5tgt));
+                   set_ssh_iparam_on(SSH_IPARAM_K4TGT) :
+                   set_ssh_iparam_on(SSH_IPARAM_K5TGT));
         }
         if ((x = cmcfm()) < 0)
           return(x);
         return(success = 0);
 
       case SSH_PRP:                     /* Privd port */
-        return(success = seton(&ssh_prp));
+        if (!ssh_feature_supported(SSH_FEAT_FROM_PRIV_PRT)) {
+            printf("\r\nConnecting from a privileged port not supported by the "
+                   "current SSH backend\r\n");
+            return(-9);
+        }
+        return(success = set_ssh_iparam_on(SSH_IPARAM_PRP));
 
       case SSH_SHH:                     /* Quiet */
-        return(success = seton(&ssh_shh));
+        return(success = set_ssh_iparam_on(SSH_IPARAM_SHH));
 
       case SSH_SHK:                     /* Strict Host Key Check */
         if ((y = cmkey(ooktab,3,"","", xxstring)) < 0)
           return(y);
         if ((x = cmcfm()) < 0)
           return(x);
-        ssh_shk = y;
-        return(success = 1);
+        success = ssh_set_iparam(SSH_IPARAM_SHK, y);
+        return(success);
 
       case SSH_HBT:
 	x = cmnum("Heartbeat interval, seconds","0",10,&z,xxstring);
 	if (x < 0) return(x);
 	if ((x = cmcfm()) < 0) return(x);
-	ssh_hbt = z;
-	return(success = 1);
+    success = ssh_set_iparam(SSH_IPARAM_HBT, z);
+	return(success );
 
-#ifdef COMMENT
-      /* SSH V2 is no longer supported */
       case SSH_V1:                      /* SSH V1 */
+        if (!ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+            printf("\r\nSSH V1 is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
         if ((y = cmkey(sshv1tab,nsshv1tab,"","", xxstring)) < 0)
           return(y);
         switch (y) {
           case SSH1_K54:
-            return(success = seton(&ssh_k5_is_k4));
-          case SSH1_CIF:                /* Not a list */
+            return(success = set_ssh_iparam_on(SSH_IPARAM_K5_IS_K4));
+          case SSH1_CIF: {                /* Not a list */
+            struct keytab *ssh1ciphers;
+            int nssh1ciphers;
+            ktab_ret ktr;
+
+            ktr = ssh_get_keytab(SSH_KTAB_V1_CIPHERS);
+            if (ktr.rc != 0) {
+                printf("\r\nFailed to get options from the SSH backend\r\n");
+                return(-9);
+            }
+            ssh1ciphers = ktr.ktab;
+            nssh1ciphers = ktr.ktab_len;
+
             if ((y = cmkey(ssh1ciphers,nssh1ciphers,"","", xxstring)) < 0)
               if (y != -3)
                 return(y);
             if ((x = cmcfm()) < 0) return(x);
             if (y == -3) {
-                makestr(&ssh1_cif,NULL);
+                ssh_set_sparam(SSH_SPARAM_1_CIF, NULL);
             } else {
                 for (x = 0; x < nssh1ciphers; x++)
                   if (ssh1ciphers[x].kwval == y)
                     break;
-                makestr(&ssh1_cif,ssh1ciphers[x].kwd);
+                ssh_set_sparam(SSH_SPARAM_1_CIF, ssh1ciphers[x].kwd);
             }
             return(1);
+          }
           case SSH1_GNH:
           case SSH1_UNH:
             if ((x = cmifi("Filename","",&s,&z,xxstring)) < 0) {
@@ -8524,22 +8637,38 @@ dosetssh() {
             if ((x = cmcfm()) < 0)
               return(x);
             switch (y) {
-              case SSH1_GNH: makestr(&ssh1_gnh,s); break;
-              case SSH1_UNH: makestr(&ssh1_unh,s); break;
+              case SSH1_GNH: ssh_set_sparam(SSH_SPARAM_1_GNH, s); break;
+              case SSH1_UNH: ssh_set_sparam(SSH_SPARAM_1_UNH, s); break;
             }
             return(1);
         }
-#endif
 
       case SSH_V2:                      /* SSH V2 */
         if ((y = cmkey(sshv2tab,nsshv2tab,"","", xxstring)) < 0)
           return(y);
         switch (y) {
           case SSH2_ARK:
-            return(success = seton(&ssh2_ark));
+            if (!ssh_feature_supported(SSH_FEAT_REKEY_AUTO)) {
+                printf("\r\nConfiguring automatic re-key is not supported by the "
+                       "current SSH backend\r\n");
+                return(-9);
+            }
+            return(success = set_ssh_iparam_on(SSH_IPARAM_2_ARK));
         case SSH2_AUT: {                        /* Authentication */
 #define TMPCNT 12
             int i, j, tmp[TMPCNT];
+            struct keytab *ssh2aut;
+            int nssh2aut;
+            ktab_ret ktr;
+
+            ktr = ssh_get_keytab(SSH_KTAB_V2_AUT);
+            if (ktr.rc != 0) {
+                printf("\r\nFailed to get options from the SSH backend\r\n");
+                return(-9);
+            }
+            ssh2aut = ktr.ktab;
+            nssh2aut = ktr.ktab_len;
+
             for (i = 0; i < TMPCNT; i++)
               tmp[i] = 0;
             for (i = 0; i < TMPCNT; i++) {
@@ -8560,11 +8689,8 @@ dosetssh() {
             if ((z = cmcfm()) < 0)
               return(z);
 
-            if (ssh2_auth) {
-                free(ssh2_auth);
-                ssh2_auth = NULL;
-            }
             if (i > 0) {
+                char* ssh2_auth = NULL;
                 int len = 0;
                 for (j = 0; j < i; j++) {
                     for (x = 0; x < nssh2aut; x++)
@@ -8582,6 +8708,8 @@ dosetssh() {
                     if (j < i - 1)
                       ckstrncat(ssh2_auth,",",len);
                 }
+                ssh_set_sparam(SSH_SPARAM_2_AUTH, ssh2_auth);
+                free(ssh2_auth);
             }
             return(success = 1);
 #undef TMPCNT
@@ -8589,6 +8717,18 @@ dosetssh() {
         case SSH2_CIF: {
 #define TMPCNT 12
             int i, j, tmp[TMPCNT];
+            struct keytab *ssh2ciphers;
+            int nssh2ciphers;
+            ktab_ret ktr;
+
+            ktr = ssh_get_keytab(SSH_KTAB_V2_CIPHERS);
+            if (ktr.rc != 0) {
+                printf("\r\nFailed to get options from the SSH backend\r\n");
+                return(-9);
+            }
+            ssh2ciphers = ktr.ktab;
+            nssh2ciphers = ktr.ktab_len;
+
             for (i = 0; i < TMPCNT; i++)
               tmp[i] = 0;
 
@@ -8610,11 +8750,8 @@ dosetssh() {
             if ((z = cmcfm()) < 0)
               return(z);
 
-            if (ssh2_cif) {
-                free(ssh2_cif);
-                ssh2_cif = NULL;
-            }
             if (i > 0) {
+                char* ssh2_cif = NULL;
                 int len = 0;
                 for (j=0; j < i; j++) {
                     for (x = 0; x < nssh2ciphers; x++)
@@ -8626,13 +8763,18 @@ dosetssh() {
                 ssh2_cif = malloc(len);
                 ssh2_cif[0] = '\0';
                 for (j = 0; j < i; j++) {
-                  for (x = 0; x < nssh2ciphers; x++)
-                    if (ssh2ciphers[x].kwval == tmp[j] && !ssh2ciphers[x].flgs)
+                  for (x = 0; x < nssh2ciphers; x++) {
+                    if (ssh2ciphers[x].kwval == tmp[j] && !ssh2ciphers[x].flgs) {
                       break;
-                    ckstrncat(ssh2_cif,ssh2ciphers[x].kwd,len);
-                    if (j < i - 1)
-                      ckstrncat(ssh2_cif,",",len);
+                    }
+                  }
+                  ckstrncat(ssh2_cif,ssh2ciphers[x].kwd,len);
+                  if (j < i - 1) {
+                    ckstrncat(ssh2_cif,",",len);
+                  }
                 }
+                ssh_set_sparam(SSH_SPARAM_2_CIF, ssh2_cif);
+                free(ssh2_cif);
             }
             return(success = 1);
 #undef TMPCNT
@@ -8640,6 +8782,18 @@ dosetssh() {
         case SSH2_MAC: {
 #define TMPCNT 12
             int i, j, tmp[TMPCNT];
+            struct keytab *ssh2macs;
+            int nssh2macs;
+            ktab_ret ktr;
+
+            ktr = ssh_get_keytab(SSH_KTAB_V2_MACS);
+            if (ktr.rc != 0) {
+                printf("\r\nFailed to get options from the SSH backend\r\n");
+                return(-9);
+            }
+            ssh2macs = ktr.ktab;
+            nssh2macs = ktr.ktab_len;
+
             for (i = 0; i < TMPCNT; i++)
               tmp[i] = 0;
 
@@ -8660,11 +8814,8 @@ dosetssh() {
             if ((z = cmcfm()) < 0)
                 return(z);
 
-            if (ssh2_mac) {
-                free(ssh2_mac);
-                ssh2_mac = NULL;
-            }
             if (i > 0) {
+                char* ssh2_mac = NULL;
                 int len = 0;
                 for (j = 0; j < i; j++) {
                     for (x = 0; x < nssh2macs; x++)
@@ -8682,6 +8833,8 @@ dosetssh() {
                     if (j < i - 1)
                       ckstrncat(ssh2_mac,",",len);
                 }
+                ssh_set_sparam(SSH_SPARAM_2_MAC, ssh2_mac);
+                free(ssh2_mac);
             }
             return(success = 1);
 #undef TMPCNT
@@ -8689,6 +8842,18 @@ dosetssh() {
           case SSH2_HKA: {
 #define TMPCNT 12
             int i, j, tmp[TMPCNT];
+            struct keytab *hkatab;
+            int nhkatab;
+            ktab_ret ktr;
+
+            ktr = ssh_get_keytab(SSH_KTAB_HKA);
+            if (ktr.rc != 0) {
+                printf("\r\nFailed to get options from the SSH backend\r\n");
+                return(-9);
+            }
+            hkatab = ktr.ktab;
+            nhkatab = ktr.ktab_len;
+
             for (i = 0; i < TMPCNT; i++)
               tmp[i] = 0;
 
@@ -8710,11 +8875,8 @@ dosetssh() {
             if ((z = cmcfm()) < 0)
               return(z);
 
-            if (ssh2_hka) {
-                free(ssh2_hka);
-                ssh2_hka = NULL;
-            }
             if (i > 0) {
+                char* ssh2_hka = NULL;
                 int len = 0;
                 for (j=0; j < i; j++) {
                     for (x = 0; x < nhkatab; x++)
@@ -8733,6 +8895,8 @@ dosetssh() {
                     if (j < i - 1)
                       ckstrncat(ssh2_hka,",",len);
                 }
+                ssh_set_sparam(SSH_SPARAM_2_HKA, ssh2_hka);
+                free(ssh2_hka);
             }
             return(success = 1);
 #undef TMPCNT
@@ -8740,6 +8904,18 @@ dosetssh() {
           case SSH2_KEX: {
 #define TMPCNT 24
             int i, j, tmp[TMPCNT];
+            struct keytab *sshkextab;
+            int nsshkextab;
+            ktab_ret ktr;
+
+            ktr = ssh_get_keytab(SSH_KTAB_KEX);
+            if (ktr.rc != 0) {
+                printf("\r\nFailed to get options from the SSH backend\r\n");
+                return(-9);
+            }
+            sshkextab = ktr.ktab;
+            nsshkextab = ktr.ktab_len;
+
             for (i = 0; i < TMPCNT; i++)
               tmp[i] = 0;
 
@@ -8761,11 +8937,9 @@ dosetssh() {
             if ((z = cmcfm()) < 0)
               return(z);
 
-            if (ssh2_kex) {
-                free(ssh2_kex);
-                ssh2_kex = NULL;
-            }
+
             if (i > 0) {
+                char* ssh2_kex = NULL;
                 int len = 0;
                 for (j=0; j < i; j++) {
                     for (x = 0; x < nsshkextab; x++)
@@ -8784,6 +8958,8 @@ dosetssh() {
                     if (j < i - 1)
                       ckstrncat(ssh2_kex,",",len);
                 }
+                ssh_set_sparam(SSH_SPARAM_2_KEX, ssh2_kex);
+                free(ssh2_kex);
             }
             return(success = 1);
 #undef TMPCNT
@@ -8802,23 +8978,30 @@ dosetssh() {
             if ((x = cmcfm()) < 0)
               return(x);
             switch (y) {
-              case SSH2_GNH: makestr(&ssh2_gnh,s); break;
-              case SSH2_UNH: makestr(&ssh2_unh,s); break;
+              case SSH2_GNH: ssh_set_sparam(SSH_SPARAM_2_GNH, s); break;
+              case SSH2_UNH: ssh_set_sparam(SSH_SPARAM_2_UNH, s); break;
               default: return(success = 0);
             }
             return(success = 1);
         }
 
-      case SSH_VRB:                     /* Verbosity level */
-        y = cmnum("SSH verbosity level, 0-7","2",10,&x,xxstring);
-        return(setnum(&ssh_vrb,x,y,7));
+      case SSH_VRB: {                    /* Verbosity level */
+          int val;
+          y = cmnum("SSH verbosity level, 0-7","2",10,&x,xxstring);
+          success = setnum(&val,x,y,7);
+          return(success = ssh_set_iparam(SSH_IPARAM_VRB, val));
+      }
 
       case SSH_VER:                     /* Version */
-        if ((y = cmkey(sshver,2,"","auto", xxstring)) < 0)
+        if (!ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+            printf("\r\nSSH V1 is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
+        if ((y = cmkey(sshver,3,"","auto", xxstring)) < 0)
           return(y);
         if ((x = cmcfm()) < 0)
           return(x);
-        ssh_ver = y;                    /* 0 == AUTO */
+        ssh_set_iparam(SSH_IPARAM_VER, y);  /* 0 == AUTO */
 #ifndef SSHTEST
         sl_ssh_ver_saved = 0;
 #endif /* SSHTEST */
@@ -8852,10 +9035,20 @@ dosetssh() {
             }
         }
         ssh_idf_n = n;
+
+        if (ssh_set_identity_files((const char **)ssh_idf) < 0) {
+            printf("\r\nCommand not supported by the current SSH backend\r\n");
+            return(0);
+        }
+
         return(success = 1);
       }
       case SSH_XFW:                     /* X11-forwarding */
-        success = seton(&ssh_xfw);
+        if (!ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+            printf("\r\nX11 forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
+        success = set_ssh_iparam_on(SSH_IPARAM_XFW);
 #ifndef SSHTEST
         if (success)
           sl_ssh_xfw_saved = 0;
@@ -8863,6 +9056,10 @@ dosetssh() {
         return(success);
 
       case SSH_XAL:                     /* SSH Xauth Location */
+        if (!ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+            printf("\r\nX11 forwarding is not supported by the current SSH backend\r\n");
+            return(-9);
+        }
         if ((x = cmifi("Path to executable", "",&s,&y,xxstring)) < 0) {
             if (x != -3)
               return(x);
@@ -8873,17 +9070,25 @@ dosetssh() {
         }
         s = (x == -3) ? NULL : line;
         if ((x = cmcfm()) < 0) return(x);
-        makestr(&ssh_xal,s);
+        ssh_set_sparam(SSH_SPARAM_XAL, s);
         return(success = 1);
 
       case SSH_PXC:                     /* SSH Proxy Command */
-        if ((y = cmtxt("title text","",&s,xxstring)) < 0)
+        if (!ssh_feature_supported(SSH_FEAT_PROXY_CMD)) {
+            printf("\r\nSSH proxy command feature not supported by the current SSH backend\r\n");
+            return(-9);
+        }
+        if ((y = cmtxt("Command","",&s,xxstring)) < 0)
           return(y);
-        makestr(&ssh_pxc,s);
+        ssh_set_sparam(SSH_SPARAM_PXC, s);
         return(success = 1);
 
       case SSH_CFG:                     /* Use OpenSSH Config */
-        return(success = seton(&ssh_cfg));
+        if (!ssh_feature_supported(SSH_FEAT_OPENSSH_CONF)) {
+            printf("\r\nOpenSSH configuration not supported by the current SSH backend\r\n");
+            return(-9);
+        }
+        return(success = set_ssh_iparam_on(SSH_IPARAM_CFG));
 #endif /* SSHBUILTIN */
 
       default:
@@ -8927,9 +9132,16 @@ static int setprinter( int );
 #define GUI_WIN  2
 #define GUI_FON  3
 #define GUI_DIA  4
-#define GUI_TLB  5
-#define GUI_MNB  6
-#define GUI_CLS  7
+#define GUI_STB  5
+#define GUI_TLB  6
+#define GUI_MNB  7
+#define GUI_CLS  8
+
+
+#define GUIB_OFF 0
+#define GUIB_ON  1
+#define GUIB_DIS 2
+#define GUIB_VIS 3
 
 #define GUIW_POS 1
 #define GUIW_RES 2
@@ -8947,6 +9159,7 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+    { "statusbar",   GUI_STB,  0 },
 #ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
 #endif
@@ -8954,6 +9167,15 @@ static struct keytab guitab[] = {
     { "", 0, 0}
 };
 static int nguitab = (sizeof(guitab) / sizeof(struct keytab));
+
+static struct keytab guibartab[] = {
+    { "disabled",    GUIB_DIS, 0 },
+    { "off",         GUIB_OFF, CM_INV},
+    { "on",          GUIB_ON,  CM_INV},
+    { "visible",     GUIB_VIS, 0 },
+    { "", 0, 0}
+};
+static int nguibartab = (sizeof(guibartab) / sizeof(struct keytab));
 
 static struct keytab guiwtab[] = {
     { "position",    GUIW_POS, 0 },
@@ -9009,7 +9231,7 @@ int nrgb = (sizeof(rgbtab) / sizeof(struct keytab));
 
 VOID
 shogui() {
-    extern gui_dialog;
+    extern int gui_dialog;
     extern HWND getHwndKUI();
     unsigned char cmdsav = colorcmd;
     int i, red, green, blue, lines=0;
@@ -9181,16 +9403,87 @@ setguidialog(x) int x;
     KuiSetProperty(KUI_GUI_DIALOGS, (intptr_t)x, 0L);
 }
 
-VOID
-setguimenubar(x) int x;
+int
+setguimenubar()
 {
-    KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the menubar */
+                KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the menubar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_MENUBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
 }
 
-VOID
-setguitoolbar(x) int x;
+
+int
+setguitoolbar()
 {
-    KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the toolbar */
+                KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the toolbar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
+}
+
+int
+setguistatusbar() {
+    int x, rc;
+
+    rc = seton(&x);
+    if (rc >= 0)
+      KuiSetProperty(KUI_GUI_STATBAR_VIS, (intptr_t)x, 0L);
+    return(rc);
 }
 
 VOID
@@ -9217,15 +9510,11 @@ setgui() {
       case GUI_WIN:
         return(setguiwin());
       case GUI_TLB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguitoolbar(x);
-        return(rc);
+        return(setguitoolbar());
+      case GUI_STB:
+        return (setguistatusbar());
       case GUI_MNB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguimenubar(x);
-        return(rc);
+        return (setguimenubar());
       case GUI_CLS:
         rc = seton(&x);
         if (rc >= 0)
@@ -9406,11 +9695,15 @@ case XYPAD:                             /* SET PAD ... */
               else if (netcmd[z].kwval == NET_SLAT  && slat_avail == 0)
                 netcmd[z].flgs =  CM_INV;
 #endif /* SUPERLAT */
+#if SSH_DLL
+              else if (netcmd[z].kwval == NET_SSH && !ck_ssh_is_installed())
+                  netcmd[z].flgs = CM_INV;
+#endif /* SSH_DLL */
           }
           if (tcp_avail)                /* Default network type */
             ckstrncpy(tmpbuf,"tcp/ip",TMPBUFSIZ);
 #ifdef SSHBUILTIN
-          else if ( ck_ssleay_is_installed() )
+          else if ( ck_ssh_is_installed() )
             ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
 #endif /* SSHBUILTIN */
 #ifdef DECNET
@@ -9471,6 +9764,14 @@ case XYPAD:                             /* SET PAD ... */
           }
 #endif /* NETPTY */
 #endif /* NOPUSH */
+
+#ifdef SSH_DLL
+          if (z == NET_SSH && !ssh_avail()) {
+              printf("\n?Sorry, no SSH backend DLL loaded; SSH commands are disabled. Use the SSH LOAD\n"
+                     "command to load a compatible SSH backend if you have one.\n");
+              return(-9);
+          }
+#endif
 
 #ifdef OS2
           if (z == NET_TCPB && tcp_avail == 0) {
@@ -9874,8 +10175,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = keepalive(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = keepalive(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = keepalive(ttyfd,z);
@@ -9889,8 +10190,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = dontroute(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = dontroute(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = dontroute(ttyfd,z);
@@ -9904,8 +10205,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,z);
@@ -9917,8 +10218,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,!z);
@@ -9940,8 +10241,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = ck_linger(ssh_sock,z,y);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = ck_linger(ssh_get_socket(),z,y);
             else
 #endif /* SSHBUILTIN */
 	      success = ck_linger(ttyfd,z,y);
@@ -9956,8 +10257,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = sendbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = sendbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = sendbuf(ttyfd,z);
@@ -9983,8 +10284,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             }
 #endif /* QNX16 */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = recvbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = recvbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = recvbuf(ttyfd,z);
@@ -14021,8 +14322,12 @@ dorexx() {
     int x, y;
     char *rexxcmd;
 
-        if ((x = cmtxt("Rexx command","",&rexxcmd,xxstring)) < 0)
-          return(x);
+    if ((x = cmtxt("Rexx command","",&rexxcmd,xxstring)) < 0)
+      return(x);
+
+    /* No REXX command? Don't try to run the REXX command (doing so causes
+     * Regina REXX to crash) */
+    if (strlen(rexxcmd) == 0) return(success = 0);
 
 #ifdef IKSD
     if (inserver) {

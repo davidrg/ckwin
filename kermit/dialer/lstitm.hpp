@@ -291,6 +291,9 @@ public:
    ZIL_UINT16           _startpos_x;
    ZIL_UINT16           _startpos_y;
    ZIL_UINT8            _rgb[16][3];
+   ZIL_UINT8            _gui_menu_bar,
+                        _gui_tool_bar,
+                        _gui_status_bar;
 
    ZIL_UINT8            _ssh_credfwd;
 

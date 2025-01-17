@@ -47,6 +47,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #ifdef OS2
 #ifdef NT
@@ -62,10 +63,12 @@
 #ifdef NT
 #define msleep Sleep
 #define DosBeep Beep
+#ifndef __WATCOMC__
 #define filelength _filelength
 #define fstat _fstat
 #define unlink _unlink
 #define stat _stat
+#endif /* __WATCOMC__ */
 #endif /* NT */
 
 extern int keep, moving;                /* fdc */
@@ -145,7 +148,7 @@ U8 *z_frame_end[] = {
 static char errbuf[512];
 
 /*
- * TODO: Definition in p.h is: U32 (* _System status_func)(U32, ...);
+ * TODO: Definition in p.h is: U32 (* CKDEVAPI status_func)(U32, ...);
  *       This results in a type mismatch error over in ckop.c:
  *          ckop.c(534): Warning! W102: Type mismatch (warning)
  *          ckop.c(534): Note! I2003: source conversion type is 'unsigned long (*)(unsigned long __p1,int __p2,unsigned long __p3,unsigned long __p4,unsigned long __p5,int __p6)'
@@ -154,14 +157,22 @@ static char errbuf[512];
  *       That might also make dealing with arg4 and arg0 which might not always
  *       need to be an intptr_t (they were just U32s before the 64bit port)
  */
-U32 _System
-#ifdef CK_ANSIC
-status_func(U32 type, intptr_t arg0, U32 arg1, U32 arg2, U32 arg3, intptr_t arg4)
-#else
-status_func(type,arg0,arg1,arg2,arg3,arg4)
-     U32 type; intptr_t arg0; U32 arg1; U32 arg2; U32 arg3; intptr_t arg4;
-#endif
+U32
+CKDEVAPI
+status_func(U32 type, ...)
 {
+    va_list args;
+    intptr_t arg0, arg4;
+    U32 arg1, arg2, arg3;
+
+    va_start(args, type);
+    arg0 = va_arg(args, intptr_t);
+    arg1 = va_arg(args, U32);
+    arg2 = va_arg(args, U32);
+    arg3 = va_arg(args, U32);
+    arg4 = va_arg(args, intptr_t);
+    va_end(args);
+
     switch (type) {
     case PS_ERROR:
         {

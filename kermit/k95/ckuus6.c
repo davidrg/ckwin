@@ -91,10 +91,10 @@ extern int k95stdout;
 #else
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
 #ifndef isatty
 /* This usually isn't required as oldnames.lib handles it - except in some
  * very old Windows SDKs where it doesn't - David Goodwin 2 July 2023 */
@@ -9690,16 +9690,20 @@ static char * pcvtbufin = NULL;
 static char * pcvtbufout = NULL;
 
 static int				/* Input function xgnbyte() */
-cvtfnin() {
+#ifdef CK_ANSIC
+cvtfnin(void)
+#else
+cvtfnin()
+#endif	/* CK_ANSIC */
+{
     CHAR c;
     c = *pcvtbufin++;
     return(c ? c : -1);
 }
 
-_PROTOTYP(int cvtfnout,(char));		/* Output function for xpnbyte() */
-int
+static int
 #ifdef CK_ANSIC
-cvtfnout(char c)
+cvtfnout(char c)			/* Output function for xpnbyte() */
 #else
 cvtfnout(c) char c;
 #endif	/* CK_ANSIC */

@@ -13,6 +13,14 @@
 #include <string.h>
 #include <process.h>
 
+/* Open Watcom 1.9 defines P_WAIT instead of _P_WAIT */
+#ifdef __WATCOMC__
+#ifndef _P_WAIT
+#define _P_WAIT P_WAIT
+#endif
+#define _spawnl spawnl
+#endif
+
 char k95path[512];
 
 int

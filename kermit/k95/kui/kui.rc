@@ -112,14 +112,14 @@ CAPTION "About"
 FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_ICONK95,IDC_STATIC,10,10,21,20,SS_REALSIZEIMAGE
-    LTEXT           "C-Kermit for Windows",IDC_STATIC,41,10,198,8
+    LTEXT           "Kermit 95",IDC_STATIC,41,10,198,8
     LTEXT           "Version 3.0",IDC_VERSION,41,21,198,8
     LTEXT           "(C) Copyright 1995-2013, The Trustees of Columbia University in the City of New York.",IDC_STATIC,41,32,198,17
     CTEXT           "Jeffrey Eric Altman, Secure Endpoints Inc.",IDC_STATIC,41,52,198,8
     CTEXT           "Frank da Cruz, The Kermit Project",IDC_STATIC,41,63,198,8
     CTEXT           "David Goodwin",IDC_STATIC,41,74,198,8
     CTEXT           "Thomas M. Wu",IDC_STATIC,41,85,198,8
-    LTEXT           "This is the free and open source version of the program formerly known as Kermit 95, a commercial product of Columbia University from 1994 to 2011.",
+    LTEXT           "This is the free and open source version of Kermit 95, formerly a commercial product of Columbia University from 1994 to 2011.",
                     IDC_STATIC,41,103,198,26
     LTEXT           "This version has been released under the 3-clause BSD license.",
                     IDC_STATIC,41,133,198,17
@@ -353,7 +353,7 @@ BEGIN
         POPUP "Via the Web"
         BEGIN
                 MENUITEM "The Kermit Project",  ID_WEB_KERMIT
-                MENUITEM "C-Kermit for Windows Website", ID_WEB_K95
+                MENUITEM "Kermit 95 Website", ID_WEB_K95
                 MENUITEM "News",      ID_WEB_NEWS
 //                MENUITEM "Kermit 95 Patches",   ID_WEB_PATCH
                 MENUITEM "Technical Support",   ID_WEB_SUPPORT
@@ -460,7 +460,7 @@ BEGIN
         POPUP "Via the Web"
         BEGIN
                 MENUITEM "The Kermit Project",  ID_WEB_KERMIT
-                MENUITEM "C-Kermit for Windows Website", ID_WEB_K95
+                MENUITEM "Kermit 95 Website", ID_WEB_K95
                 MENUITEM "News",      ID_WEB_NEWS
 //                MENUITEM "Kermit 95 Patches",   ID_WEB_PATCH
                 MENUITEM "Technical Support",   ID_WEB_SUPPORT
@@ -471,6 +471,70 @@ BEGIN
     END
 END
 
+
+IDR_TERMMENU_SYSTEM_MARK MENU DISCARDABLE
+BEGIN
+    MENUITEM "Start",                  ID_ACTION_MARK_START
+    MENUITEM "Cancel",                 ID_ACTION_MARK_CANCEL
+    MENUITEM "Copy to Clipboard",      ID_ACTION_MARK_COPY_CLIP
+    MENUITEM "Copy to Host",           ID_ACTION_MARK_COPY_HOST
+END
+
+IDR_TERMMENU_SYSTEM_ACTIONS MENU DISCARDABLE
+BEGIN
+    MENUITEM "Clear Screen",               ID_ACTION_CLEARSCREEN
+    MENUITEM "Clear Scrollback",           ID_ACTION_CLEARSCROLLBACK
+    MENUITEM "Reset Terminal",                      ID_ACTION_RESET
+    POPUP "Send"
+    BEGIN
+            MENUITEM "Break",                 ID_ACTION_BREAKSENDONE
+    MENUITEM "Long Break",            ID_ACTION_SEND_LBREAK
+    MENUITEM "NUL",                   ID_ACTION_SEND_NUL
+    MENUITEM "Telnet Are You There?",            ID_ACTION_AYT
+    MENUITEM "Telnet Interrupt Process",         ID_ACTION_TN_IP
+    END
+            MENUITEM SEPARATOR
+            MENUITEM "Compose (character)",        ID_ACTION_COMPOSECHARACTER
+    MENUITEM "Unicode Compose (character)",ID_ACTION_COMPOSEUNICODE
+    MENUITEM SEPARATOR
+    POPUP "Autodownload"
+    BEGIN
+            MENUITEM "Ask",                ID_ACTION_AUTODOWNLOAD_ASK, CHECKED
+            MENUITEM "Off",                ID_ACTION_AUTODOWNLOAD_OFF, CHECKED
+            MENUITEM "On",                 ID_ACTION_AUTODOWNLOAD_ON, CHECKED
+            END
+    POPUP "Automatic Locus Switching"
+    BEGIN
+            MENUITEM "Ask",                ID_ACTION_AUTO_LOCUS_ASK, CHECKED
+            MENUITEM "Off",                ID_ACTION_AUTO_LOCUS_OFF, CHECKED
+            MENUITEM "On",                 ID_ACTION_AUTO_LOCUS_ON, CHECKED
+            END
+    POPUP "Bytesize"
+    BEGIN
+            MENUITEM "7 Bit",              ID_ACTION_7BIT, CHECKED
+            MENUITEM "8 Bit",              ID_ACTION_8BIT, CHECKED
+            END
+    MENUITEM "Capture",                    ID_ACTION_CAPTURE, CHECKED
+            MENUITEM "Copy to Printer",            ID_ACTION_PRINTERCOPY, CHECKED
+            MENUITEM "Debug",                      ID_ACTION_DEBUG, CHECKED
+            POPUP "Exit Warnings"
+    BEGIN
+            MENUITEM "Always",                 ID_ACTION_WARNING_ALWAYS
+    MENUITEM "Off",                    ID_ACTION_WARNING_OFF
+    MENUITEM "On",                     ID_ACTION_WARNING_ON
+    END
+            MENUITEM "GUI Dialogs",                ID_ACTION_GUI_DIALOGS, CHECKED
+            MENUITEM "Keyclick",                   ID_ACTION_KEYCLICK, CHECKED
+            MENUITEM "Locus: Local",               ID_ACTION_LOCUS, CHECKED
+            MENUITEM "PCTERM Keyboard",            ID_ACTION_PCTERM, CHECKED
+            POPUP "Resize Mode"
+    BEGIN
+            MENUITEM "Scales Font",        ID_ACTION_RESIZE_FONT, CHECKED
+            MENUITEM "Changes Dimensions", ID_ACTION_RESIZE_DIMENSION, CHECKED
+            END
+    MENUITEM "URL Highlighting",           ID_ACTION_URL_HIGHLIGHT, CHECKED
+
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -556,6 +620,19 @@ END
 // Icon
 //
 
+/*
+ * The modern icon (k95a.ico) doesn't render properly on Windows 9x and NT,
+ * so there we'll use the old K95 1.x icon.
+ */
+#ifdef CKT_9X_COMPATIBLE
+#define VINTAGE_ICON
+#else /* CKT_9X_COMPATIBLE */
+#ifdef CKT_NT_COMPATIBLE
+#define VINTAGE_ICON
+#endif /* CKT_NT_COMPATIBLE */
+#endif /* CKT_9X_COMPATIBLE */
+
+#ifndef VINTAGE_ICON
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICONK95             ICON    DISCARDABLE     "k95a.ico"
@@ -567,6 +644,11 @@ IDI_ICON3		        ICON	DISCARDABLE		"k95f.ico"
 #endif
 4                       ICON    DISCARDABLE     "k95a.ico"
 #endif /* __GNUC__ */
+#else /* VINTAGE_ICON */
+IDI_ICONK95 	        ICON	DISCARDABLE		"k95g.ico"
+IDI_ICON1		        ICON	DISCARDABLE		"k95f.ico"
+IDI_ICON2               ICON    DISCARDABLE     "k95a.ico"
+#endif /* VINTAGE_ICON */
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -598,12 +680,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "The Kermit Project"
-            VALUE "FileDescription", "C-Kermit for Windows, Graphical executable"
+            VALUE "FileDescription", "Kermit 95, Graphical executable"
             VALUE "FileVersion", RC_FILE_VERSION_STR
             VALUE "InternalName", "k95g"
             VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013-2022 The Kermit Project contributors."
             VALUE "OriginalFilename", "k95g.exe"
-            VALUE "ProductName", "C-Kermit for Windows"
+            VALUE "ProductName", "Kermit 95"
             VALUE "ProductVersion", RC_PROD_VERSION_STR
         END
     END

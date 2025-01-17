@@ -24,7 +24,7 @@ static HANDLE hevKuiInitialized = NULL;
 
 const char KWinClassName[] = "KERMIT95:UI";
 const char CmdTitle[] = "K95 Command Window";
-const char TermTitle[] = "C-Kermit Terminal Window";
+const char TermTitle[] = "K95 Terminal Window";
 const char CServerTitle[] = "K95 Client Server Window";
 
 void KuiWindowThread( void* param );
@@ -157,15 +157,9 @@ void KuiSetTerminalStatusText(int item, char * buf)
 
 void KuiSetTerminalConnectButton(int on) 
 {
-#ifndef NOTOOLBAR
     if (kui) {
-        KToolBar * toolbar = kui->getTerminal()->getToolbar();
-        if ( toolbar )
-            SendMessage(toolbar->hwnd(),
-                     TB_CHECKBUTTON, ID_ACTION_EXIT, 
-                     MAKELONG(on,0));
+        kui->getTerminal()->setConnectMode(on);
     }
-#endif
 }
 
 void 

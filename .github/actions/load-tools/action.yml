@@ -1,0 +1,99 @@
+name: load-build-tools
+description: Load build tools
+inputs:
+  nocache:
+    description: 'skip cache'
+    default: ''
+    required: false
+    type: string
+#
+# JOM make, used instead of nmake for parallel builds
+#
+# expected filename: https://download.qt.io/official_releases/jom/jom.zip
+#
+# NASM assembler
+#
+# expected filename: https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip
+#
+# Infozip
+#
+# expected filename: ftp://ftp.info-zip.org/pub/infozip/win32/zip300xn.zip
+# expected filename: ftp://ftp.info-zip.org/pub/infozip/os2/unz600.exe
+#
+# alternate site: https://ftp.zx.net.nz/pub/archive/ftp.info-zip.org/pub/infozip/
+#
+# OS2TK45 OS/2 header files
+#
+# expected filename: https://88watts.net/dlfile.php?F=Os2Tk45-
+#
+# OS/2 Developer's Toolkit v4.5 is available on David Azarewicz's 88watts.net
+# *supposedly* with permission from IBM - or so Arca Noae (which David is
+# involved with) claims on this page:
+#   https://www.arcanoae.com/wiki/information-for-developers/
+# It is needed only for building the IBM TCP/IP 2.0 TCP/IP backend. The SDK
+# for this is also available on the OS/2 Warp 4 CD.
+#
+runs:
+  using: composite
+  steps:
+    - name: Load Build Tools Cache
+      if: inputs.nocache != 'true'
+      uses: actions/cache@v4
+      id: cache-tools
+      with:
+        path: |
+          ${{github.workspace}}/tools
+          ${{github.workspace}}/info-zip/zip.exe
+          ${{github.workspace}}/info-zip/unzip.exe
+          ${{github.workspace}}/info-zip/os2
+        key: all-nasm+jom+info-zip+os2tk45
+    - run: mkdir -p tools
+      if: steps.cache-tools.outputs.cache-hit != 'true'
+      shell: bash
+    - name: Get and unpack nasm
+      if: steps.cache-tools.outputs.cache-hit != 'true'
+      run: |
+        curl -LsS -o nasm-2.15.05-win32.zip https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/win32/nasm-2.15.05-win32.zip
+        7z x nasm-2.15.05-win32.zip -otools
+        rm -f nasm-2.15.05-win32.zip
+        mv tools/nasm-2.15.05 tools/nasm
+        echo "content of tools/nasm"
+        ls -l tools/nasm
+      shell: bash
+    - name: Get and unpack nasm
+      if: steps.cache-tools.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p tools/jom
+        curl -LsS -o jom.zip https://download.qt.io/official_releases/jom/jom.zip
+        7z x jom.zip -otools/jom
+        rm -f jom.zip
+        echo "content of tools/jom"
+        ls -l tools/jom
+      shell: bash
+    - name: Get and unpack os2tk45
+      if: steps.cache-tools.outputs.cache-hit != 'true'
+      run: |
+        curl -LsS -o os2tk45.zip ${{env.OS2TK45}}
+        7z x os2tk45.zip
+        rm -f os2tk45.zip
+        mv toolkit/os2tk45 tools/os2tk45
+        mv tools/os2tk45/h tools/os2tk45/include
+        echo "content of tools/os2tk45"
+        ls -l tools/os2tk45
+      shell: bash
+    - name: Get and unpack Info-Zip
+      if: steps.cache-tools.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p info-zip/os2
+        curl -LsS -o zip.zip ${{env.INFOZIP_FTP}}win32/zip300xn.zip
+        7z x zip.zip -oinfo-zip
+        rm -f zip.zip
+        curl -LsS -o unzip.zip ${{env.INFOZIP_FTP}}os2/unz600.exe
+        7z x unzip.zip -oinfo-zip/os2
+        rm -f unzip.zip
+        mv info-zip/os2/32-bit/* info-zip/os2/
+        echo "content of info-zip/os2"
+        ls -l info-zip/os2
+        echo "content of info-zip"
+        ls -l info-zip
+      shell: bash

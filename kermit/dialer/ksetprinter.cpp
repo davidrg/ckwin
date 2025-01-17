@@ -18,8 +18,12 @@
 extern "C" {
 #include "ckcdeb.h"             /* Typedefs, debug formats, etc */
 #include "ckucmd.h"
+#ifdef printf
 #undef printf
+#endif
+#ifdef fprintf
 #undef fprintf
+#endif
 #include <windows.h>            	/* Windows Definitions */
 }
 #endif /* WIN32 */
@@ -809,7 +813,7 @@ Win32EnumPrt( struct keytab ** pTable, struct keytab ** pTable2, int * pN )
     // (simple error checking, if these work assume rest will too)
     //
 
-    if (!(pPrtInfo2 = (LPPRINTER_INFO_2) LocalAlloc (LPTR, dwBytesNeeded)))
+    if ((pPrtInfo2 = (LPPRINTER_INFO_2)LocalAlloc (LPTR, dwBytesNeeded)) == NULL)
     {
         return(FALSE);
     }

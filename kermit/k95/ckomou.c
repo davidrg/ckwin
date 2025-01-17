@@ -15,6 +15,7 @@ char *ckomouv = "Mouse Support 10.0, 1 Oct 2022";
 #ifdef NT
 #include <windows.h>
 #else /* NT */
+#include <process.h>
 #define INCL_WINSHELLDATA
 #define INCL_VIO
 #define INCL_MOU
@@ -81,7 +82,7 @@ int MouseDebug = 0;
 int      mouse_reporting_mode = MOUSEREPORTING_NONE;
 
 /* TRUE - send reports *instead* of any action defined for that mouse button and
- *        modifier combination (CKW doesn't handle any mouse input).
+ *        modifier combination (K95 doesn't handle any mouse input).
  * FALSE - mouse reports are only sent if no other action is mapped for that
  *         mouse button and modifier combination. For example, if right-click
  *         is set to \Kpaste then right-clicks will not be sent to the remote
@@ -198,13 +199,13 @@ mousemapinit( int button, int event )
     if ( resetall || button == MMB4 && event == MMWHEEL) {
         /* Assign wheel up event */
         mousemap[MMB4][MMWHEEL].type = kverb ;
-        mousemap[MMB4][MMWHEEL].kverb.id = F_KVERB | K_UPONE ;
+        mousemap[MMB4][MMWHEEL].kverb.id = F_KVERB | K_UPHSCN ;
     }
 
     if ( resetall || button == MMB5 && event == MMWHEEL) {
         /* Assign wheel down event */
         mousemap[MMB5][MMWHEEL].type = kverb ;
-        mousemap[MMB5][MMWHEEL].kverb.id = F_KVERB | K_DNONE ;
+        mousemap[MMB5][MMWHEEL].kverb.id = F_KVERB | K_DNHSCN ;
     }
 
     if ( resetall || button == MMB4 && event == MMCTRL | MMWHEEL) {
@@ -217,6 +218,18 @@ mousemapinit( int button, int event )
         /* Assign wheel ctrl+down event */
         mousemap[MMB5][MMCTRL | MMWHEEL].type = kverb ;
         mousemap[MMB5][MMCTRL | MMWHEEL].kverb.id = F_KVERB | K_DNSCN ;
+    }
+
+    if ( resetall || button == MMB4 && event == MMSHIFT | MMWHEEL) {
+        /* Assign wheel shift+up event */
+        mousemap[MMB4][MMSHIFT | MMWHEEL].type = kverb ;
+        mousemap[MMB4][MMSHIFT | MMWHEEL].kverb.id = F_KVERB | K_UPONE ;
+    }
+
+    if ( resetall || button == MMB5 && event == MMSHIFT | MMWHEEL) {
+        /* Assign wheel shift+down event */
+        mousemap[MMB5][MMSHIFT | MMWHEEL].type = kverb ;
+        mousemap[MMB5][MMSHIFT | MMWHEEL].kverb.id = F_KVERB | K_DNONE ;
     }
 #endif
 
@@ -362,7 +375,7 @@ os2_mouseon( void )
 
 #ifdef NT
 #ifdef KUI
-    /* GUI version of CKW */
+    /* GUI version of K95 */
     int buttonCount;
 
     buttonCount = GetSystemMetrics(SM_CMOUSEBUTTONS);
@@ -375,7 +388,7 @@ os2_mouseon( void )
     mouseon = TRUE;
     debug(F100, "Mouse ON", "", 0);
 #else
-    /* Console version of CKW */
+    /* Console version of K95 */
     extern HANDLE KbdHandle ;
     DWORD mode=0, count=0 ;
 
@@ -448,7 +461,7 @@ extern    BYTE vmode ;
     dblclickspeed = querydblclickspeed() ;
 
         if (!tidMouse) {
-        tidMouse = _beginthread( &os2_mouseevt, 0, THRDSTKSIZ, 0 ) ;
+        tidMouse = _beginthread( &os2_mouseevt, 0, THRDSTKSIZ, NULL ) ;
         }
     }
 #endif /* NT */
@@ -604,7 +617,7 @@ void mouse_report(int x_coord, int y_coord, int button, BOOL ctrl, BOOL shift, B
         return; /* Mouse tracking isn't on - nothing to do. */
     }
 
-    /* CKW numbers buttons from 1, but we need to send buttons numbered from 0 */
+    /* K95 numbers buttons from 1, but we need to send buttons numbered from 0 */
     b = button - 1;
 
     if (b > 2) {
@@ -853,7 +866,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
     if (mouse_reporting_override && MOUSE_REPORTING_ACTIVE(mouse_reporting_mode, vmode)) {
         /* Mouse reporting is currently active and we're set to forward *all*
          * mouse events to the remote host regardless of what that input may be
-         * mapped to within CKW.*/
+         * mapped to within K95.*/
 
 #ifndef NOSCROLLWHEEL
         if (r.dwEventFlags & MOUSE_WHEELED) {
@@ -1088,7 +1101,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
             * if reporting is active */
            mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,
@@ -1100,7 +1113,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 * releases the button) */
                mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,
@@ -1108,7 +1121,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 
                mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,
@@ -1450,7 +1463,7 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
             * if reporting is active */
            mouse_report(r.dwMousePosition.X,
                         r.dwMousePosition.Y,
-                        mr_button + 1, /* CKW buttons start at 0 */
+                        mr_button + 1, /* K95 buttons start at 0 */
                         r.dwControlKeyState & CONTROL,
                         r.dwControlKeyState & SHIFT,
                         r.dwControlKeyState & ALT,

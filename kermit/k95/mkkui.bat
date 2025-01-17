@@ -8,8 +8,8 @@ cd kui
 nmake /e
 cd ..
 SET OUTDIR=.\kui\win95
-move kui\win95\ck*.obj . > nul
-move kui\win95\p_*.obj . > nul
+if exist kui\win95\ck*.obj move kui\win95\ck*.obj . > nul
+if exist  kui\win95\p_*.obj move kui\win95\p_*.obj . > nul
 nmake /nologo /e /f ckoker.mak kuid 
 move *.obj kui\win95 > nul
 

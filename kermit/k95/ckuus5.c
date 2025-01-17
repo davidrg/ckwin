@@ -17,7 +17,7 @@ int cmdsrc() { return(0); }
     Update: Jun 24 2023 (David Goodwin)
     Update: Oct 10-11 2022 (fdc and sms)
     Update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
-    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
+    Update: Dec 13 2022 (David Goodwin - missing break + K95 arrow keys)
     Update: Apr 14 2023 (ANSI function declarations and prototypes)
     Update: May 16 2023 (Jeff Johnson fix for iksd.conf diagnostic)
     Update: May 16 2023 (Jeff Johnson fix for \v(startup) vs \v(exedir))
@@ -70,12 +70,12 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 #undef COMMENT
 #else /* NT */
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
 #define APIRET ULONG
 extern int DialerHandle;
 extern int StartedFromDialer;
@@ -275,19 +275,12 @@ char * ikprompt = "IKSD>";
 #ifdef OS2
 /* Default prompt for OS/2 and Win32 */
 /* fdc 2013-12-06 - C-Kermit 9.0 and later is just "C-Kermit" */
+/* dg  2024-07-15 - Back to Kermit 95 on Windows and OS/2 */
 #ifdef NT
-#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
-#else
-char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] CKW> ";
-#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #else  /* NT */
-#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
-#else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-Kermit> ";
-#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */
 #else  /* OS2 */
@@ -398,6 +391,7 @@ extern char *cksshv;
 #ifdef SFTP_BUILTIN
 extern char *cksftpv;
 #endif /* SFTP_BUILTIN */
+#include "ckossh.h"
 #endif /* SSHBUILTIN */
 
 #ifdef TNCODE
@@ -3814,8 +3808,7 @@ dooutput(s, cx) char *s; int cx;
 #endif /* CK_ANSIC */
 {
 #ifdef SSHBUILTIN
-    extern int ssh_cas;
-    extern char * ssh_cmd;
+    const char * ssh_cmd;
 #endif /* SSHBUILTIN */
     int x, xx, y, quote;                /* Workers */
     int is_tn = 0;
@@ -3860,8 +3853,9 @@ dooutput(s, cx) char *s; int cx;
 #endif /* NOLOCAL */
     }
 #ifdef SSHBUILTIN
-    if ( network && nettype == NET_SSH && ssh_cas && ssh_cmd && 
-         !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
+    ssh_cmd = ssh_get_sparam(SSH_SPARAM_CMD);
+    if ( network && nettype == NET_SSH && ssh_get_iparam(SSH_IPARAM_CAS) &&
+         ssh_cmd && !(strcmp(ssh_cmd,"kermit") && strcmp(ssh_cmd,"sftp"))) {
         if (!quiet)
             printf("?SSH Subsystem active: %s\n", ssh_cmd);
         return(0);
@@ -5793,7 +5787,7 @@ shotcs(csl,csr) int csl, csr;
     extern struct _vtG G[4], *GL, *GR;
     extern int decnrcm, sni_chcode;
     extern int tt_utf8, dec_nrc, dec_kbd, dec_lang;
-    extern prncs;
+    extern int prncs;
 
     printf(" Terminal character-sets:\n");
     if (IS97801(tt_type_mode)) {
@@ -6052,7 +6046,7 @@ shotrm() {
     int lines = 0;
 #ifdef KUI
     extern CKFLOAT tt_linespacing[];
-    extern tt_cursor_blink;
+    extern int tt_cursor_blink;
 #endif /* KUI */
 #ifdef PCFONTS
     int i;
@@ -13081,13 +13075,11 @@ printf("NOWTMP not defined\n");
 #endif /* OS2MOUSE */
 
 #ifdef OS2
-#ifndef NT
 #ifndef CK_REXX
     printf(" No REXX script language interface\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_REXX */
-#endif /* NT */
 #endif /* OS2 */
 
 #ifndef IKSD

@@ -47,6 +47,21 @@
 #ifndef CKCDEB_H			/* Don't include me more than once. */
 #define CKCDEB_H
 
+
+/* Some ancient MIPS compilers for Windows NT define "MIPS" which causes
+ * problems here and elsewhere. None of the windows headers depend on MIPS being
+ * defined (they all check for _MIPS_), so it's safe to just undefine it.
+ */
+#ifdef MIPS
+#ifdef OS2
+#undef MIPS     /* MIPS should never be defined when targeting OS/2 */
+#endif /* OS2 */
+#ifdef CKT_NT31
+#undef MIPS     /* MIPS should never be defined when targeting NT 3.1 */
+#endif /* CKT_NT31 */
+#endif /* MIPS */
+
+
 /* Moved here from ckcmai.c October 2022... REMOVE THIS AFTER BETA TEST! */
 #ifndef BETATEST
 #define BETATEST
@@ -822,7 +837,7 @@
 #endif /* OS2ORVMS */
 #endif /* OS2 */
 
-/* C-Kermit for Windows can now be 64-bit so OS2ORWIN32 is a misnomer */
+/* Kermit 95 can now be 64-bit so OS2ORWIN32 is a misnomer */
 #ifdef OS2ORWIN32
 #ifndef OS2ORWINDOWS
 #define OS2ORWINDOWS
@@ -1911,7 +1926,9 @@ int mac_fclose();
 #ifndef NODIAL
 #ifndef CK_TAPI
 #ifdef NT
+#ifndef NOTAPI
 #define CK_TAPI
+#endif /* NOTAPI */
 #endif /* NT */
 #endif /* CK_TAPI */
 #endif /* NODIAL */
@@ -3160,7 +3177,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 #ifdef COMMENT
@@ -3719,9 +3736,6 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef OS2PM				/* Presentation Manager */
 #undef OS2PM
 #endif /* OS2PM */
-#ifdef CK_REXX				/* Rexx */
-#undef CK_REXX
-#endif /* CK_REXX */
 #endif /* NT */
 #endif /* OS2 */
 
@@ -5349,7 +5363,7 @@ typedef unsigned int u_int;
 #ifdef CKT_NT31
 #ifdef CKT_NT35
 /* Any compiler capable of targeting NT 3.50 should support __int64
- * (Visual C++ 2.0, OpenWatcom) */
+ * (Visual C++ 2.0, Open Watcom) */
 #define CK_OFF_T __int64
 #else /* CKT_NT35 */
 /* Compilers capable of targeting only Windows NT 3.1
@@ -7186,7 +7200,11 @@ typedef unsigned long DWORD_PTR;
  */
 #ifdef OS2
 #ifdef CK_HAVE_INTPTR_T
+#ifdef NT
 #define CK_TTYFD_T intptr_t
+#else /* NT */
+#define CK_TTYFD_T int
+#endif /* NT */
 #else /* CK_HAVE_INTPTR_T */
 #define CK_TTYFD_T int
 #endif /* CK_HAVE_INTPTR_T */

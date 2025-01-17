@@ -11,18 +11,16 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
 
 #include <windows.h>
 #include <process.h>
-#ifndef NODIAL
-#include <tapi.h>
-#endif
 #include <commctrl.h>
 #include "ckcdeb.h"
 #include "ckcker.h"
 #include "ckcasc.h"
 #include "cknwin.h"
 #include "ckowin.h"
-#ifndef NODIAL
+#ifdef CK_TAPI
+#include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "ckocon.h"
 #include "ckuusr.h"
 #include "ckokey.h"
@@ -323,7 +321,7 @@ ckMainThread( void * param )
 HANDLE
 MainThreadInit( HINSTANCE hInst )
 {
-    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, hInst ) ;
+    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, (void *)hInst ) ;
     return(MainThread);
 }
 
@@ -687,7 +685,7 @@ StartDialer(void)
         }
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
         SetForegroundWindow(hwndDialer);
-    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit for Windows Dialer")) {
+    } else if (_hwndDialer = FindWindow(NULL, "Kermit 95 Dialer")) {
         dialerIsCKCM = FALSE;
         StartedFromDialer = 1;
         hwndDialer = _hwndDialer;
@@ -700,7 +698,22 @@ StartDialer(void)
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
         SetForegroundWindow(hwndDialer);
         StartedFromDialer = 0;
-    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit Connection Manager")) {
+    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit for Windows Dialer")) {
+        /* Temporary: The dialer was called the "C-Kermit for Windows Dialer"
+         *            in betas 4, 5 and 6. So we'll check for that too. */
+        dialerIsCKCM = FALSE;
+        StartedFromDialer = 1;
+        hwndDialer = _hwndDialer;
+        KermitDialerID = 0;
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
+        if ( reuse ) {
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
+            DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
+        }
+        ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+        SetForegroundWindow(hwndDialer);
+        StartedFromDialer = 0;
+    }else if (_hwndDialer = FindWindow(NULL, "C-Kermit Connection Manager")) {
         /* The new Win32 replacement for the dialer */
         dialerIsCKCM = TRUE;
         StartedFromDialer = 1;
