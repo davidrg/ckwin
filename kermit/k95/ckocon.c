@@ -262,6 +262,7 @@ CK_CURSORINFO crsr_command={-88,0,8,1};
 
 extern bool     cursoron[VNUM]  = {TRUE,TRUE,TRUE};       /* For speed, turn off when busy */
 extern bool     cursorena[VNUM] = {TRUE,TRUE,TRUE};       /* Cursor enabled / disabled */
+bool bracketed_paste[VNUM] = {FALSE,FALSE,FALSE};         /* Enable/disable bracketed-pastes */
 
 extern bool     printon;                /* Printer is on */
 extern bool     xprint;                 /* Controller print in progress */

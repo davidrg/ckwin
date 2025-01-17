@@ -1,0 +1,73 @@
+name: load-open-watcom
+description: Load Open Watcom
+inputs:
+  nocache:
+    description: 'skip cache'
+    default: ''
+    required: false
+    type: string
+  ver:
+    description: 'version'
+    default: ''
+    required: false
+    type: string
+  id:
+    description: 'Identification'
+    default: ''
+    required: false
+    type: string
+#
+# Open Watcom 1.9
+# expected filename: https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-linux-1.9
+#
+# Open Watcom 2.0
+# expected filename: https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz
+#
+runs:
+  using: composite
+  steps:
+    - name: Load Cache VS2003
+      if: inputs.nocache != 'true'
+      uses: actions/cache@v4
+      id: cache-ow
+      with:
+        path: |
+          ${{github.workspace}}\watcom
+        key: all-open-watcom-${{inputs.ver}}
+    - name: Get and unpack Open Watcom
+      if: steps.cache-ow.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p watcom
+        if [[ "${{inputs.ver}}" = "2.0" ]]; then
+          curl -LsS -o ow-snapshot.tar.xz https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz
+          7z x ow-snapshot.tar.xz
+          7z x ow-snapshot.tar -owatcom
+          rm -f ow-snapshot.tar.xz ow-snapshot.tar
+        else
+          curl -LsS -o ow.zip https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-linux-1.9
+          7z x ow.zip -owatcom
+          rm -f ow.zip
+        fi
+        echo "content of watcom"
+        ls -l watcom
+      shell: bash
+    - name: Setup Open Watcom Environment
+      run: |
+        if [[ "${{runner.os}}" = "Windows" ]]; then
+          X=\\
+        else
+          X=/
+        fi
+        echo "WATCOM=${{github.workspace}}${X}watcom">> "$GITHUB_ENV"
+        echo "${{github.workspace}}${X}watcom${X}binw">> "$GITHUB_PATH"
+        if [[ "${{runner.os}}" = "Windows" ]]; then
+          echo "${{github.workspace}}${X}watcom${X}binnt">> "$GITHUB_PATH"
+        else
+          echo "${{github.workspace}}${X}watcom${X}binl">> "$GITHUB_PATH"
+        fi
+        if [[ "${{inputs.id}}" = "os2" ]]; then
+          echo "INCLUDE=${{github.workspace}}${X}watcom${X}h;${{github.workspace}}${X}watcom${X}h${X}os2">> "$GITHUB_ENV"
+        else
+          echo "INCLUDE=${{github.workspace}}${X}watcom${X}h;${{github.workspace}}${X}watcom${X}h${X}nt">> "$GITHUB_ENV"
+        fi
+      shell: bash

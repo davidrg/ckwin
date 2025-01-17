@@ -42,6 +42,7 @@
 extern int tnlm, tn_nlm;        /* Terminal newline mode, ditto for TELNET */
 #ifndef NOTERM
 extern int tt_status[VNUM] ;
+extern bool bracketed_paste[VNUM];
 #endif /* NOTERM */
 #ifndef NOLOCAL
 extern videobuffer vscrn[] ;
@@ -646,7 +647,17 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                             buf[j++] = *bytes++;
                     }
                 }
+
+                if (bracketed_paste[vmode]) { /* bracket paste */
+                  sendescseq("[200~");
+                }
+
                 sendcharsduplex(buf,bytecount,TRUE);
+
+                if (bracketed_paste[vmode]) { /* Un-bracket paste */
+                  sendescseq("[201~");
+                }
+
                 free(buf);
                 rc = 0;
             } else {
@@ -687,10 +698,19 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                 pData[j] = '\0';
                 debug(F111,"Clipboard","pData length",j);
 
+                if (bracketed_paste[vmode]) { /* bracket paste */
+                    sendescseq("[200~");
+                }
+
                 if ( vmode == VTERM )
                     sendcharsduplex(pData,j,FALSE);
                 else
                     putkeystr( vmode, pData );
+
+                if (bracketed_paste[vmode]) { /* Un-bracket paste */
+                    sendescseq("[201~");
+                }
+
                 free(pData);
                 rc = 0 ;
             }
