@@ -1958,7 +1958,7 @@ jobs:
 
   Update-ia64-Artifact:
     runs-on: windows-latest
-    needs: [Build-Manual-Dist, Build-PSDK71]
+    needs: [Build-Manual-Dist, Build-VS2010-PSDK71]
     steps:
       - name: Fetch K95 ia64
         uses: actions/download-artifact@v4
