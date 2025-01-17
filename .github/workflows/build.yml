@@ -1879,7 +1879,7 @@ jobs:
       - name: Fetch K95 x86
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.2-x86
+          name: k95-vs2019-x86
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
@@ -1900,7 +1900,7 @@ jobs:
       - name: Fetch K95 x86-64
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.2-x64
+          name: k95-vs2019-x64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
@@ -1921,7 +1921,7 @@ jobs:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.2-x64_arm
+          name: k95-vs2022-x64_arm
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
@@ -1942,7 +1942,7 @@ jobs:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.4-x64_arm64
+          name: k95-vs2022-x64_arm64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
@@ -1963,7 +1963,7 @@ jobs:
       - name: Fetch K95 ia64
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc10-ia64
+          name: k95-vs2010-ia64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
