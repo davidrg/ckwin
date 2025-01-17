@@ -1783,7 +1783,7 @@ jobs:
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.2-x86
+          name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
         run: |
@@ -1810,7 +1810,7 @@ jobs:
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.2-x86
+          name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
         run: |
@@ -1838,7 +1838,7 @@ jobs:
       - name: Fetch K95
         uses: actions/download-artifact@v4
         with:
-          name: k95-vc14.2-x86
+          name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
         run: |
