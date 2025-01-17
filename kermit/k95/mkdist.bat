@@ -80,6 +80,7 @@ if exist dist\rexxre.dll copy %rexxre_root%\rexxre.pdf dist\docs\
 @echo Copy manual...
 copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 copy hostmode.txt dist\docs\
+copy ..\..\doc\ctlseqs.html dist\docs\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
 
 REM --- The following belongs in "C:\ProgramData\Kermit 95" if "installed" ---
