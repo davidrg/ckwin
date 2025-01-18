@@ -1538,6 +1538,7 @@ int ncursors = 3;
 
 struct keytab ttyptab[] = {
     { "aaa",      TT_AAA,     CM_INV },     /* AnnArbor */
+    { "adds25",   TT_REGENT25,0 },          /* ADDS Regent 25 */
     { "adm3a",    TT_ADM3A,   0 },          /* LSI ADM-3A */
     { "adm5",     TT_ADM5,    0 },          /* LSI ADM-5 */
     { "aixterm",  TT_AIXTERM, 0 },          /* IBM AIXterm */
@@ -1566,7 +1567,7 @@ struct keytab ttyptab[] = {
     { "linux",    TT_LINUX,   0 },          /* Linux */
     { "qansi",    TT_QANSI,   0 },          /* QNX ANSI */
     { "qnx",      TT_QNX,     0 },          /* QNX Console */
-    { "regent25", TT_REGENT25,0 },          /* ADDS Regent 25 */
+    { "regent25", TT_REGENT25,CM_INV },     /* ADDS Regent 25 */
     { "scoansi",  TT_SCOANSI, 0 },          /* SCO ANSI */
     { "sni-97801",TT_97801,   0 },          /* SNI 97801 */
     { "sun",      TT_SUN,     0 },          /* SUN Console */
@@ -1628,6 +1629,7 @@ int nttyp = (sizeof(ttyptab) / sizeof(struct keytab));
 
 struct keytab ttkeytab[] = {
     { "aaa",       TT_AAA,        CM_INV },        /* AnnArbor */
+    { "adds25",    TT_REGENT25,   0 },             /* ADDS Regent 25 */
     { "adm3a",     TT_ADM3A,      0 },             /* LSI ADM-3A */
     { "adm5",      TT_ADM5,       0 },             /* LSI ADM-5 */
     { "aixterm",   TT_AIXTERM,    0 },             /* IBM AIXterm */
@@ -1657,7 +1659,7 @@ struct keytab ttkeytab[] = {
     { "linux",     TT_LINUX,      0 },             /* Linux */
     { "qansi",     TT_QANSI,      0 },             /* QNX ANSI */
     { "qnx",       TT_QNX,        0 },             /* QNX */
-    { "regent25",  TT_REGENT25,   0 },             /* ADDS Regent 25 */
+    { "regent25",  TT_REGENT25,   CM_INV },        /* ADDS Regent 25 */
     { "russian",   TT_KBM_RUSSIAN,0 },             /* Russian mode */
     { "scoansi",   TT_SCOANSI,    0 },             /* SCO ANSI */
     { "sni-97801", TT_97801,      0 },             /* SNI 97801 */

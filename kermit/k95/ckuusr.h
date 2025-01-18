@@ -1062,7 +1062,7 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_ADM3A   39       /*    LSI ADM 3A */
 #define     TT_ADM5    40		/*    LSI ADM 5 */
 #define     TT_VTNT    41       /*    Microsoft NT Virtual Terminal */
-#define     TT_REGENT25 42       /*    ADDS Regent 25 */
+#define     TT_REGENT25 42      /*    ADDS Regent 25 (ADDS25) */
 #define     TT_MAX   TT_REGENT25
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
