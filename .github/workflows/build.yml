@@ -1000,7 +1000,7 @@ jobs:
           ROOT: ${{github.workspace}}
         working-directory: kermit/p95
         run: |
-          if "${{matrix.os.id}}" == "os2" set ibm20dir_override=${{github.workspace}}\toolkit\os2tk45
+          if "${{matrix.os.id}}" == "os2" set ibm20dir_override=${{github.workspace}}\tools\os2tk45
 
           REM Build for Windows NT 3.50 (and, someday, NT 3.1)
           if "${{matrix.os.id}}" == "nt-legacy" set CKT_NT31=yes
