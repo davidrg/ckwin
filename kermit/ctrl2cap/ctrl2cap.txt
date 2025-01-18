@@ -1,0 +1,54 @@
+CTRL2CAPS                                                        June 1996
+
+  NOTE: With the recent release by Microsoft of its "Kernel Toys",
+  which includes a similar, and more general, key-swapping capability,
+  you might prefer to use the Microsoft utility:
+
+    http://www.microsoft.com/windows/software/krnltoy.htm
+
+CTRL2CAPS.VXD is device driver that swaps the Caps Lock and Left Ctrl keys
+on the PC keyboard in Windows 95, for use by those who prefer to have the
+Control key just left of the A key, rather than its present placement on
+PC keyboards, which is not handy for touch typists.
+
+This is the second version of CTRL2CAPS, which adds the option to swap the
+Esc and accent grave (`) keys:
+
+  To enable the escape/accent grave switching, put the following lines in
+  system.ini (anywhere):
+
+  [ctrl2cap]
+  escape=TRUE
+
+  This version changes caps-lock into control, but not vice versa 
+  (neither myself, nor any UNIX programmer I know ever use Caps Lock).
+
+CTRL2CAPS.VXD was tested within the Kermit Project for several months with no
+visible ill effects, but it is provided with no guarantees of any kind -- USE
+AT YOUR OWN RISK.  Here is the original announcement Mark Russinovich, who
+wrote it:
+
+Date: 30 Dec 1995 17:17:56 -0800
+From: mer@cs.uoregon.edu (mark eugene russinovich)
+Subject: Re: Need to Swap Ctrl and Caps Keys under Windows 95 & NT
+Organization: University of Oregon Computer and Information Sciences Dept.
+
+Here is the uuencoded VxD that switches the control and caps keys 
+for both DOS boxes and Windows in general under Windows 95.
+
+To enable it, put the line:
+
+device=<PATH>/ctrl2cap.vxd
+
+in the [386enh] section of your WINDOWS\SYSTEM.INI file.
+
+-Mark
+
+========================================================================
+Dr. Mark Russinovich
+Dept. of Computer and Information Science
+University of Oregon                                    Eugene, OR 97403
+Email: markr@numega.com
+========================================================================
+
+(End of CTRL2CAPS.TXT)

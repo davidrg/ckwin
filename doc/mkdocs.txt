@@ -1,0 +1,55 @@
+The Kermit 95 documentation in the manual directory contain tags that are
+replaced by mkdocs.rexx allowing the manual to be automatically updated with
+K95 version numbers, build dates, file last modified times, etc.
+
+You can have multiple tags in one line. Other tags, including HTML, are not
+allowed between the start and end tag. Eg, this is forbidden:
+    <!--$ver$--> <b>unknown!</b> <!--/$ver$-->
+
+Supported Tags
+================
+
+Major, Minor Version:
+  <!--$ver$-->3.0 DEV<!--/$ver$-->
+
+Full version:
+  <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$-->
+
+Version, Major:
+  <!--$ver-major$-->3<!--/$ver-major$-->
+
+Version, Minor:
+  <!--$ver-minor$-->0<!--/$ver-minor$-->
+
+Version, Revision:
+  <!--$ver-rev$-->0<!--/$ver-rev$-->
+
+Version, Release:
+  <!--$ver-rel$-->DEV<!--/$ver-rel$-->
+
+Version date:
+  <!--$ver-date$-->1 January 2003<!--/$ver-date$-->
+
+Version Short Date:
+  <!--$ver-short-date$-->1 Jan 2003<!--/$ver-short-date$-->
+
+Version ISO Date:
+  <!--$ver-date-iso$-->2003-01-01<!--/$ver-date-iso$-->
+
+File last updated:
+  <!--$last-update$-->Tue Jul 25 07:15:22 2023<!--/$last-update$-->
+
+  This value will come from git if possible in RFC2822 style format. If that
+  fails, then the native format from C-Kermits \Fdate function will be used.
+
+File last updated, short:
+<!--$last-update-short$-->25 July 2023<!--/$last-update-short$-->
+
+Alternate Tag Form
+==================
+All of the above tags can be used of the form:
+  $!ver$
+  $!ver-full$
+  etc
+These will be visible in the unprocessed version of the documentation, but this
+allows them to be used in places like attributes or the title tag.

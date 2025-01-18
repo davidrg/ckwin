@@ -88,6 +88,9 @@ runs:
         curl -LsS -o zip.zip ${{env.INFOZIP_FTP}}win32/zip300xn.zip
         7z x zip.zip -oinfo-zip
         rm -f zip.zip
+        curl -LsS -o unzip.zip ${{env.INFOZIP_FTP}}win32/unz600xn.exe
+        7z x unzip.zip -oinfo-zip -y
+        rm -f unzip.zip
         curl -LsS -o unzip.zip ${{env.INFOZIP_FTP}}os2/unz600.exe
         7z x unzip.zip -oinfo-zip/os2
         rm -f unzip.zip

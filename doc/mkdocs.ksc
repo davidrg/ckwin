@@ -1,0 +1,331 @@
+;
+; K-95 mkdocs script: Updates version numbers & dates in the Kermit 95 manual
+; to match those of the K-95 build running this script, updates last-modified
+; times within files to match the files last modified time, and updates file
+; timestamps to match the git commit.
+;
+; This is most certainly *not* the best way to achieve this. A shell script
+; and sed would run much faster and be simpler, but K-95 is a windows program
+; and we can't really rely on having things like sed available. One thing we
+; *can* rely on having is K-95, so that's why we're using it to the job.
+;
+; Strings to update in .htm and .html files are marked with tags such as below:
+;	<!--$ver$-->3.0 DEV<!--/$ver$-->
+; Multiple such tags may appear in a line, but each tag may only appear once
+; in a line. So this is valid:
+;   <!--$ver$-->3.0 DEV<!--/$ver$--> <!--$ver-date$-->1 January 2003<!--/$ver-date$-->
+; But this is invalid:
+;   <!--$ver$-->3.0 DEV<!--/$ver$--> <!--$ver$-->3.0 DEV<!--/$ver$-->
+;
+; Available tags are:
+;	$ver$				The short Kermit 95 version number: Major.Minor BetaNumber
+;						If run with a release build of Kermit 95 there won't be a
+;						beta number. If the dev-mode parameter is set to True, then
+;						the format is changed to: Major.Minor DEV
+;
+;	$ver-full$			The full version number: Major.Minor.Revision BetaNumber
+;						If run with a release build of Kermit 95 there won't be a
+;						beta number. If the dev-mode parameter is set to True, then
+;						the format is changed to: Major.Minor.REvision DEV
+;
+;	$ver-date$			The Kermit 95 build date
+;
+;	$ver-short-date$	Like $ver-date$ but with the month shortened to three characters
+;
+;	$ver-date-iso$		Like $ver-date$ but ISO8601 style: YYYY-MM-DD
+;
+;	$last-update$		The last modified time for the file, or the timestamp of
+;						the last commit to modify the file if run inside a git repo
+;
+;   $last-update-short$ Last modified time for the file, or the datestamp of the
+;                       last commit to modify the file if run inside a git repo
+;
+; An alternative format is also available for these tags:
+;	$!ver$
+; This will be replaced completely by the tags value. $!ver$ won't appear in
+; the output at all, but unlike the other format it *will* be visible in the
+; input document. This is for places where the other format is unsuitable.
+; For example, in the title tag or in a url or other HTML attribute
+;
+; For development builds, run:
+;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual true false true
+; For release builds, run:
+;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual
+; For a dry run (don't actually write/copy any files):
+;	k95.exe + C:\dev\ckwin\doc\manual C:\dev\ckwin\dist\doc\manual true true
+;
+; You should make sure that you're running this script with the version
+; of Kermit 95 that matches the documentation! Either put your dist directory
+; first in the path, or specify the path to K-95 explicitly - eg:
+;	dist\k95.exe + doc\mkdocs.ksc doc\manual doc\manual
+;
+; For best performance, use the console version (k95.exe) - using the GUI
+; version (k95g.exe) tends to be much slower due to having to open a new
+; temporary console window to run git in for each file.
+;
+;
+; We also need single replacement values that can be used where
+;       comments aren't allowed - such as within strings or the title tag.
+; Replacements needed:
+;   $!ver-full$             Same as $ver-full$  - for index.html <title> tag
+;   $!ver-date-iso$         Eg 2023-07-05       - For github issues links at line 1110
+;
+; TODO: Add a "prerelease" flag that would add a header to the top of every
+;       page indicating this documentation is preliminary, etc.
+
+log debug
+
+local ver_maj_min ver_full ver_long_date ver_date ver_date_iso file_last_modified touch_date
+
+; ============================================================================
+; Output usage
+
+def USAGE {
+    echo {K95 mkdocs script}
+    xecho {Usage: mkdocs.ksc input-directory output-directory}
+    echo { [git-file-dates] [dry-run] [dev-mode] [web-mode] [use-https] [banner] }
+    echo {}
+	echo {Where:}
+	echo {  input-directory     Source documentation directory, preferably in git}
+	echo {  output-directory    Destination directory for updated files}
+	echo {  git-file-dates      true to update file modified times to git commit date (default), false to leave as-is}
+	echo {  dry-run             true to do a dry-run, false to process (default) }
+	echo {  dev-mode            true to mark as development version, }
+	echo {                      false to mark as release version (default)}
+	echo {  web-mode            true to build for the web, false to build for offline }
+	echo {                      use (for distribution with K95 itself) }
+	echo {  use-https           true to use https links for kermitproject.org, }
+    echo {                      false ot use http links (default=https) }
+    echo {  banner              Banner file to insert at the top of every page (if any), single line only }
+    exit 0
+}
+
+; ============================================================================
+; Process command line arguments
+
+; input and output directories are required.
+if not defined \%1 usage
+if not defined \%2 usage
+
+.src := \Fcontents(\%1)
+.dest := \Fcontents(\%2)
+
+.touch_files := true
+.dev_mode := false
+.web_mode := 1
+.use_https := 1
+.insert_banner := 0
+.modtime_file := \m(src)\\modtime.csv
+
+if defined \%3 .touch_files := \%3
+if defined \%4 .dev_mode := \%4
+if defined \%5 .web_mode := \%5
+if defined \%6 .use_https := \%6
+if defined \%7 {
+    if exist \%7 {
+        echo Reading banner file \%7...
+        fopen /read \%i \%7
+        fread /line \%i banner
+        fclose \%i
+        .insert_banner := 1
+        echo Using banner: \m(banner)
+    } else {
+        echo Banner file \%7 not found.
+    }
+}
+
+if \m(dev_mode) {
+  .dev_mode = 1
+}
+else {
+  .dev_mode = 0
+}
+
+if \m(web_mode) {
+  .web_mode = 1
+}
+else {
+  .web_mode = 0
+}
+
+if \m(use_https) {
+  .use_https = 1
+}
+else {
+  .use_https = 0
+}
+
+if \m(touch_files) {
+  .touch_files = 1
+}
+else {
+  .touch_files = 0
+}
+
+; ============================================================================
+; Date Utility Functions
+
+define short_month_to_number {
+;echo short_month_to_number \%1
+	switch \%1 {
+		:Jan, return 01, break
+		:Feb, return 02, break
+		:Mar, return 03, break
+		:Apr, return 04, break
+		:May, return 05, break
+		:Jun, return 06, break
+		:Jul, return 07, break
+		:Aug, return 08, break
+		:Sep, return 09, break
+		:Oct, return 10, break
+		:Nov, return 11, break
+		:Dec, return 12, break
+	}
+	echo No match, return 0
+	return 0
+}
+
+; Convert either the Gits RFC2822 style date (eg, Mon, 19 Aug 2024 19:41:25 +1200)
+; or the \Fdate format (eg 20240819 20:54:26) to the format required by TOUCH
+;
+;  Parameters
+;	  	1  The date to convert
+;		2  The date format:
+;				0 Fdate
+;				1 Git
+define date_to_touch_date {
+	local x \&a
+
+	if = \%2 0 {
+		; Convert \Fdate format
+		.touch_date := \Fsubstring(\%1,1,4):\Fsubstring(\%1,5,2):\Fsubstring(\%1,7,2):\Fsubstring(\%1,10,8)
+	} else {
+		; Convert git format
+		def \%a
+		.x := \Fsplit(\%1,&a)
+
+		; Convert month to a number
+		short_month_to_number \&a[3]
+		assign \&a[3] \v(return)
+
+		.touch_date := \&a[4]:\&a[3]:\&a[2]:\&a[5]:\&a[6]:\&a[7]
+	}
+}
+
+; ============================================================================
+; Process files
+
+; Make sure the src directory uses forward slashes
+.src := \Freplace(\m(src),\\,/)
+
+; Make sure the dest directory has a trailing slash and uses forward slashes
+.dest := \Freplace(\m(dest),\\,/)
+if neq "\Fsubstring(\m(dest),\flength(\m(dest)),1)" "/" {
+	.dest := \m(dest)/
+}
+
+array declare f o
+
+; HTML files that need transforming
+dir /array:f /files \m(src)/*.html
+
+; Other files that just need copying and maybe touching
+dir /array:o /files \m(src)/{*.css,*.gif,*.jpg}
+
+; Build a list of .html files that need processing
+
+local curdir
+array declare g
+
+.curdir := \v(directory)
+cd \m(src)
+dir /array:g /files *.html
+cd \m(curdir)
+
+; mkdocs.rex will pick up the list of .html files to rename from here.
+.html_files := \fjoin(&g[],{,})
+
+echo HTML Files: \m(html_files)
+
+mkdir \m(dest)
+
+echo Processing \fdim(&f) HTML files...
+rexx call mkdocs
+
+echo Copying \fdim(&o) Other files...
+
+for \%x 1 \fdim(&o) 1 {
+    ; echo Loop Top iteration \%x of \fdim(&o)
+
+	.file_in := \&o[\%x]
+	; echo file_in \m(file_in)
+	.file_out := \m(dest)\Fbasename(\&o[\%x])
+	; echo file_out \m(file_out)
+	.src_date := \Fdate(\m(file_in))
+	; echo src_date \m(src_date)
+
+    echo \%x. COPY    \m(file_in)  ---> \m(file_out)
+
+    copy /overwrite:always \m(file_in) \m(file_out)
+    if fail exit 1
+
+    if = \m(touch_files) 1 {
+        ; Try with git first, in RFC2822 style: Mon, 19 Aug 2024 19:41:25 +1200
+        .touch_date := \Fcommand(git log -1 --pretty="format:%cd" --date=format:%Y:%m:%d:%H:%M:%S \m(file_in) 2> nul)
+
+        ; Convert to the format required by Touch
+        if = \flength(\m(touch_date)) 0 date_to_touch_date {\m(src_date)} 0
+
+        touch /modtime:\m(touch_date) \m(file_out)
+    }
+}
+
+; TODO: Only do this if the default keymap actually exists
+;       (which in practice it always should - the script that makes the dist
+;       directory also makes default.ksc provided the target binaries are
+;       compatible with the host, and if the aren't we won't be able to run
+;       this script with them anyway)
+echo Generating default keymap HTML file (default.html)...
+
+.defhtm := \m(dest)default.html
+if = \m(web_mode) 0 {
+    .defhtm := \m(dest)default.htm
+}
+
+save keymap \m(dest)default.ksc
+fopen /read \%i \m(dest)default.ksc
+fopen /write \%o \m(defhtm)
+fwrite /line \%o {<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">}
+fwrite /line \%o {<html>}
+fwrite /line \%o {<body bgcolor="#ffffff" text="#000000">}
+if = \m(insert_banner) 1 {
+    fwrite /line \%o \m(banner)
+}
+fwrite /line \%o {<pre>}
+while true {
+    undef line
+    fread /line \%i line
+    if fail break
+    fwrite /line \%o \m(line)
+}
+fwrite /line \%o {</pre>}
+fwrite /line \%o {</body></html>}
+fclose \%i
+fclose \%o
+if exist \m(dest)default.ksc del /noask \m(dest)default.ksc
+
+if = \m(web_mode) 0 {
+    echo Swapping around index.htm
+
+    if exist {\m(dest)kermit95.htm} del /noask {\m(dest)kermit95.htm}
+    ren \m(dest)index.htm \m(dest)kermit95.htm
+    ren \m(dest)docindex.htm \m(dest)index.htm
+}
+
+; Update modified dates for anything that hasn't changed since the manual
+; was added to git
+echo Fixing up timestmaps
+rexx call setdates
+
+echo Done
+exit

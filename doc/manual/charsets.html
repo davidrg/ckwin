@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>Kermit 95 - Character Sets</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Kermit 95 Character Sets</h2>
+
+One of Kermit 95's most important functions -- at least outside of the
+English-speaking world -- is to convert between the PC's codes for the
+characters of your language and the usually incompatible codes used on the
+host for the same language.
+<p>
+Kermit 95 can perform these conversions only for character sets that it
+knows about.  The following table lists these sets.  Legend:
+<p><pre>
+ <b>F</b> - Can Be a File Character-Set
+ <b>T</b> - Can Be a Transfer Character-Set
+ <b>L</b> - Can Be a Terminal Local-Character-Set
+ <b>R</b> - Can Be a Terminal Remote-Character-Set
+
+ A - ASCII
+ 7 - ASCII with language-specific characters substituted in some positions
+ S - A standard 8-bit character set with ASCII in the left half
+ 8 - A proprietary 8-bit character set that follows standard format
+ P - A PC Code page, ASCII in left half, graphics in C1 and GR
+ W - A Windows code page, like an ISO 8859 character set with graphics in C1
+ B - A special set for Box and Line drawing or technical symbols, etc.
+ M - A multibyte character set
+ U - The Universal character set (Unicode, ISO 10646)
+
+ CP  - Code Page
+ NRC - National Replacement Character-Set (NRC) from DEC VT terminals
+</pre>
+<p>
+See <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=295">
+<cite>Using C-Kermit</cite>, Chapter 16</a>, for an explanation of the
+terminology.
+<p>
+<pre><hr><i> <b>F  T  L  R</b>  Type   Kermit Name        MIME Name       Description</i><hr>
+          X   S     ARABIC-ISO         ISO-8859-6      ISO 8859-6 Latin/Arabic
+ X  X  X  X   A     ASCII              US-ASCII        ANSI X3.4-1986 US ASCII
+ X        X   7     BRITISH            ISO646-GB       ISO 646 British version
+ X     X  X   P     BULGARIA-PC                        Bulgaria Cyrillic PC Code Page
+ X        X   7     CANADIAN-FRENCH    ISO646-CA       Canadian French NRC
+ X     X  X   P     CP437              IBM437          PC CP 437 (Originl PC Code Page)
+       X  X   S     CP813                              PC CP 813 (ISO Latin/Greek)
+       X  X   S     CP819              ISO-8859-1      PC CP 819 (ISO Latin 1)
+ X     X  X   P     CP850              IBM850          PC CP 850 (PC "Multilingual")
+ X     X  X   P     CP852                              PC CP 852 (PC Latin 2)
+ X     X  X   P     CP855                              PC CP 855 (PC Cyrillic)
+       X  X   P     CP857              ISO-8859-5      PC CP 857 (PC Latin 5)
+ X     X  X   P     CP858                              PC CP 858 (= CP850 with with Euro)
+ X     X  X   P     CP862              IBM862          PC CP 862 (PC Hebrew)
+       X  X   P     CP864                              PC CP 864 (PC Arabic)
+ X     X  X   P     CP866              IBM866          PC CP 866 (PC Russian)
+ X     X  X   P     CP869              IBM869          PC CP 869 (PC Greek)
+       X  X   S     CP912              ISO-8859-2      PC CP 912 (ISO Latin 2)
+       X  X   S     CP913              ISO-8859-3      PC CP 913 (ISO Latin 3)
+       X  X   S     CP914              ISO-8859-4      PC CP 914 (ISO Latin 4)
+       X  X   S     CP915              ISO-8859-5      PC CP 915 (ISO Latin/Cyrillic)
+       X  X   S     CP916              ISO-8859-8      PC CP 916 (ISO Latin/Greek)
+       X  X   S     CP920              ISO-8859-9      PC CP 920 (ISO Latin 5)
+       X  X   S     CP923                              PC CP 923 (ISO 8859-15 Latin 9)
+       X  X   W     CP1051                             Windows CP 1051 (Windows HP Roman8)
+       X  X   W     CP1089                             Windows CP 1089 (Windows Latin/Arabic)
+ X     X  X   W     CP1250             WINDOWS-1250    Windows CP 1250 (Windows Latin 2)
+ X     X  X   W     CP1251             WINDOWS-1251    Windows CP 1251 (Windows Latin/Cyrillic)
+ X     X  X   W     CP1252             WINDOWS-1252    Windows CP 1252 (Windows Latin 1)
+       X  X   W     CP1253                             Windows CP 1253 (Windows Latin/Greek)
+       X  X   W     CP1254                             Windows CP 1254 (Windows Turkish)
+       X  X   W     CP1255                             Windows CP 1255 (Windows Latin/Hebrew)
+       X  X   W     CP1256                             Windows CP 1256 (Windows Arabic)
+       X  X   W     CP1257                             Windows CP 1257 (Windows Latin 4)
+       X  X   W     CP1258                             Windows CP 1258 (Windows Viet Nam)
+       X  X   8     CP10000                            Windows CP 10000 (Windows Macintosh)
+ X  X     X   S     CYRILLIC-ISO       ISO 8859-5      ISO 8859-5 Latin/Cryillic
+ X        X   7     DANISH             ISO646-DK       ISO 646 Danish Version
+ X            M     DEC-KANJI                          DEC Kanji (Japanese)
+ X        X   8     DEC-MCS                            DEC-MCS         DEC Multinational
+          X   B     DEC-SPECIAL                        DEC Special
+          X   B     DEC-TECHNICAL                      DEC Technical
+ X        X   8     DG-INTERNATIONAL                   Data General International
+          X   B     DG-LINEDRAWING                     Data General Line Drawing
+          X   B     DG-SPECIALGRAPHICS                 Data General Special Graphics
+          X   B     DG-WORDPROCESSING                  Data General Words Processing
+ X        X   7     DUTCH                              Dutch NRC
+ X        X   7     ELOT927-GREEK                      Uppercase-only Roman and Greek
+ X  X     X   S     ELOT928-GREEK      ISO-8859-7      Same as ISO Latin/Greek
+ X  X         M     EUC-JP             EUC-JP          JIS X 0208 + JIS X 0201
+ X        X   7     FINNISH            ISO646-FI       Finnish NRC
+ X        X   7     FRENCH             ISO646-FR       ISO 646 French Version
+ X        X   7     GERMAN             ISO646-DE       ISO 646 German Version
+ X  X     X   S     GREEK-ISO          ISO-8859-7      ISO 8859-7 Latin/Greek
+ X        X   7     HEBREW-7                           VT100 7-bit Hebrew
+ X  X     X   S     HEBREW-ISO         ISO-8859-8      ISO 8859-8 Latin/Hebrew
+          X   B     HP-LINE-DRAWING                    Hewlett Packard Line Drawing
+          X   B     HP-MATH-TECHNICAL                  Hewlett Packard Math / Technical
+ X        X   8     HP-ROMAN8                          Hewlett Packard Roman8
+ X        X   7     HUNGARIAN          ISO646-HU       ISO 646 Hungarian Version
+ X            M     ISO2022JP                          (Equivalent to JIS7 )
+ X        X   7     ITALIAN            ISO646-IT       ISO 646 Italian Version
+          X   7     JAPANESE-ROMAN     ISO646-JP       JIS X 201 Roman
+ X            M     JIS7-KANJI                         JIS X 0208 7-bit encoding
+          X   7     KATAKANA                           JIS X 201 Katakana
+ X        X   8     KOI8-CRYILLIC      KOI8-E          GOST 19768-74 Roman and Cyrillic
+ X        X   8     KOI8R              KOI8-R          KOI8-Russia (RFC1489)
+ X        X   8     KOI8U              KOI8-U          KOI8-Ukraine (RFC2319)
+ X  X     X   S     LATIN1-ISO         ISO-8859-1      ISO 8859-1 Latin Alphabet 1
+ X  X     X   S     LATIN2-ISO         ISO-8859-2      ISO 8859-2 Latin Alphabet 2
+          X   S     LATIN3-ISO         ISO-8859-3      ISO 8859-3 Latin Alphabet 3
+          X   S     LATIN4-ISO         ISO 8859-4      ISO 8859-4 Latin Alphabet 4
+          X   S     LATIN5-ISO         ISO-8859-9      ISO 8859-9 Latin Alphabet 5
+          X   S     LATIN6-ISO         ISO-8859-10     ISO 8859-10 Latin Alphabet 6
+ X  X     X   S     LATIN9-ISO         ISO-8859-15     ISO 8859-15 Latin Alphabet 9
+ X        X   8     MACINTOSH-LATIN                    Similar to Icelandic Quickdraw
+ X        X   8     MAZOVIA                            Polish PC code page
+ X        X   8     NEXTSTEP                           The NeXTSTEP character set
+ X        X   7     NORWEGIAN          ISO646-NO       ISO 646 Norwegian Version
+ X        X   7     PORTUGUESE         ISO646-PT       ISO 646 Portuguese Version
+          X   S     QNX-CONSOLE                        Similar to CP437
+ X           M,P    SHIFT-JIS-KANJI    SHIFT_JIS       PC Code 982 (Japanese)
+ X        X   7     SHORT-KOI                          Uppercase-Only Roman and Cyrillic
+          X   B     SNI-BRACKETS                       Siemens Nixdorf Brackets
+          X   8     SNI-EURO                           Siemens Nixdorf European
+          X   B     SNI-FACET                          Siemens Nixdorf Facet
+          X   B     SNI-IBM                            Siemens Nixdorf Code Page characters
+ X        X   7     SPANISH            ISO646-ES       ISO 646 Spanish Version
+ X        X   7     SWEDISH            ISO646-SE       ISO 646 Swedish Version
+ X        X   7     SWISS                              Switzerland NRC
+    X     X  N/A    TRANSPARENT                        (No translation)
+ X  X     X   U     UCS2               UCS-2           Unicode (ISO 10646) UCS-2
+ X  X         U     UTF8               UTF-8           Unicode (ISO 10646) UTF-8
+</pre>
+<hr>
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

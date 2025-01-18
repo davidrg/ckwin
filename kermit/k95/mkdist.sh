@@ -51,7 +51,6 @@ cp ../../../COPYING ./
 # cp ../doc/ssh-readme.md ssh-readme.txt
 
 # Documentation
-cp ../../../doc/manual/ckwin.htm docs/manual/ckwin.htm
 cp ../hostmode.txt docs/
 
 # Keymaps
