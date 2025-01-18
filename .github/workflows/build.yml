@@ -1976,3 +1976,94 @@ jobs:
           name: k95-ia64
           path: ${{ github.workspace }}\k95
           retention-days: 7
+
+  Update-os2-Artifact:
+    runs-on: windows-latest
+    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
+      - name: Fetch K95 os2 full
+        uses: actions/download-artifact@v4
+        with:
+          name: k2-full-install
+          path: ${{ github.workspace }}\k2-full
+      - name: Fetch K95 os2 mini
+        uses: actions/download-artifact@v4
+        with:
+          name: k2-mini-install
+          path: ${{ github.workspace }}\k2-mini
+      - name: Decompress artifacts
+        run: |         
+          cd ${{ github.workspace }}\k2-full
+          ${{ github.workspace }}\info-zip\unzip k2pack.exe
+          del k2pack.exe
+          cd ${{ github.workspace }}\k2-mini
+          ${{ github.workspace }}\info-zip\unzip k2pack.exe
+          del k2pack.exe
+        shell: cmd
+      - name: Fetch Manual - Mini
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\k2-mini\docs\manual
+      - name: Fetch Manual - Full
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\k2-full\docs\manual
+      - name: Compress artifacts
+        run: |
+          echo :: Create Directories
+          mkdir ${{ github.workspace }}\dist-mini
+          mkdir ${{ github.workspace }}\dist-full
+          
+          echo :: Repack K2-FULL
+          cd ${{ github.workspace }}\k2-full
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          
+          echo :: Repack K2-MINI
+          cd ${{ github.workspace }}\k2-mini
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          
+          echo :: Prepare DIST-MINI
+          cd ${{ github.workspace }}\dist-mini
+          copy ${{ github.workspace }}\k2-mini\setup.exe
+          copy ${{ github.workspace }}\k2-mini\K2PACK.exe
+          
+          echo :: Prepare DIST-FULL
+          cd ${{ github.workspace }}\dist-full
+          copy ${{ github.workspace }}\k2-full\setup.exe
+          copy ${{ github.workspace }}\k2-full\K2PACK.exe
+        shell: cmd
+
+      - name: Delete old full artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: k2-full-install
+
+      - name: Delete old mini artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: k2-mini-install
+
+      - name: Upload Full Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k2-full-install
+          path: ${{github.workspace}}/dist-full
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Minimal Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k2-mini-install
+          path: ${{github.workspace}}/dist-mini
+          if-no-files-found: error
+          retention-days: 7
