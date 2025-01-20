@@ -516,12 +516,14 @@ int quitonbreak = FALSE ;               /* Should SIGBREAK result in Quit */
 static int nOldCP;
 static char szOldTitle[80];
 
+#ifndef KUI
 #ifdef NT
 HANDLE
 #else
 HVIO
 #endif /* NT */
 VioHandle = 0;
+#endif /* ! KUI */
 
 #ifndef NOLOCAL
 #ifndef KUI
@@ -2480,9 +2482,11 @@ syscleanup() {
 #endif /* KUI */
 #ifdef NT
     CloseSerialMutex() ;
+#ifndef KUI
     if ( !stdout )
         CloseHandle(VioHandle);
     VioHandle = 0 ;
+#endif /* ! KUI */
 #endif /* NT */
     CloseThreadMgmtMutex() ;
     debug(F100,"Close Mutexes and Semaphores done","",0);
