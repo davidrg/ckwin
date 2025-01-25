@@ -54,12 +54,11 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 </tr>
 <tr>
     <td>ARM64</td>
-    <td></td>
-    
+    <td>Windows 10</td>
 </tr>
 <tr>
     <td>ARM32</td>
-    <td></td>
+    <td>Windows RT 8.0</td>
     <td>❌</td>   <!-- Tested often: not really -->
 </tr>
 <tr>
@@ -77,12 +76,12 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 </tr>
 <tr>
     <td>ARM64</td>
-    <td></td>
+    <td>Windows 10</td>
     <td>❌</td> <!-- Tested -->
 </tr>
 <tr>
     <td>ARM32</td>
-    <td></td>
+    <td>Windows RT 8.0</td>
     <td>✅</td> <!-- Tested -->
 </tr>
 <tr>
@@ -100,12 +99,12 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 </tr>
 <tr>
     <td>ARM64</td>
-    <td></td>
+    <td>Windows 10</td>
     <td>❌</td> <!-- Tested -->
 </tr>
 <tr>
     <td>ARM32</td>
-    <td></td>
+    <td>Windows RT 8.0</td>
     <td>❌</td> <!-- Tested -->
 </tr>
 <tr>
@@ -123,12 +122,12 @@ The highly optional k95cinit.exe utility requires Visual C++ 1.5 to be built.
 </tr>
 <tr>
     <td>ARM64</td>
-    <td></td>
+    <td>Windows 10</td>
     <td>❌</td> <!-- Tested -->
 </tr>
 <tr>
     <td>ARM32</td>
-    <td></td>
+    <td>Windows RT 8.0</td>
     <td>❌</td> <!-- Tested -->
 </tr>
 <tr>
@@ -450,8 +449,14 @@ link.exe, you may also need to grab cvtres.exe (link.exe version 3.0 from
 Visual C++ 4.0 is incompatible with the version of cvtres.exe included in the
 NT 3.1 SDK, possibly earlier versions of link.exe might be ok.)
 
-Both the MIPS and i386 compilers should be correctly detected and configured
+The MIPS and i386 compilers should be correctly detected and configured
 to statically link against the C runtime and set the subsystem version to 3.1.
+
+Note that the MIPS compiler is currently unable to build K95G, the GUI version
+of Kermit 95. The compiler fails on Ikui.cxx with the error:
+`opening u-code output C:\TEMP\000057.M.writing u-code output C:\TEMP\000057.M.rename: No such file or directory`
+The cause of this error is currently unknown, but it does not affect building the
+console version of Kermit 95.
 
 ### Windows NT 3.50
 
@@ -460,8 +465,13 @@ included is for the Alpha platform and is at a similar level to Visual C++ 1.0 3
 (MSC 8.0). The compiler works but the linker does not, so you'll need a newer
 linker from Visual C++ 2.0 or 4.0. You may also need an updated cvtres.exe.
 
-This Alpha cmopiler should be correctly detected and configured to statically
+This Alpha compiler should be correctly detected and configured to statically
 link against the C runtime and set the subsystem version to 3.1.
+
+Note that while the Alpha compiler is capable of building K95G (the GUI version of
+Kermit 95), the resulting executable crashes the Win32 subsystem when run on Alpha
+Windows NT 3.50. As a result it is recommended that this compiler only be used to
+build the console version of Kermit 95.
 
 ### January 2000 Platform SDK
 
