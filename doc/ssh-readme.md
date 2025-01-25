@@ -39,12 +39,16 @@ specified as part of the command.
 The SSH backend has been moved out into a DLL that is loaded automatically on
 startup if present. On x86 platforms, four DLLs are provided:
 
-| DLL          | Description                                               |
-|--------------|-----------------------------------------------------------|
-| k95sshg.dll  | GSSAPI-enabled SSH backend for Windows Vista and newer.   |
-| k95ssh.dll   | Standard SSH backend for Windows Vista and newer          |
-| k95sshgx.dll | GSSAPI enabled SSH backend for Windows XP and Server 2003 |
-| k95sshx.dll  | Standard SSH backend for Windows XP and Server 2003       |
+<table>
+<tr>
+<th>DLL</th>
+<th>Description</th>
+</tr>
+<tr><td>k95sshg.dll</td><td>GSSAPI-enabled SSH backend for Windows Vista and newer.</td></tr>
+<tr><td>k95ssh.dll</td><td>Standard SSH backend for Windows Vista and newer</td></tr>
+<tr><td>k95sshgx.dll</td><td>GSSAPI enabled SSH backend for Windows XP and Server 2003</td></tr>
+<tr><td>k95sshx.dll</td><td>Standard SSH backend for Windows XP and Server 2003</td></tr>
+</table>
 
 On startup, K95 will attempt each one in order and if any one of them loads
 then SSH features will be made available. If none of these DLLs are present or
