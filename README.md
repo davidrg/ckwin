@@ -20,20 +20,11 @@ Major features include:
 From 2013 until August 2024 this project was developed under the name
 *C-Kermit for Windows* but the decision has been made to switch back to the
 original name, Kermit 95, for the next release (beta 7) to reduce confusion
-(plus it's a shorter name and works better on OS/2). The current release
-(beta 6) is still called "C-Kermit for Windows".
+(plus it's a shorter name and works better on OS/2). While the name may have
+changed, it's still the same program
 
-As this code is currently "Pre-Beta 7", all material here now refers to
-"Kermit 95" rather than "C-Kermit for Windows" - know that these are just
-two names for the same program. 
-
-<!--
-If you see references to "C-Kermit for Windows", "CKW" or "CKWIN" around the 
-place know that it refers to the open-source Kermit 95.
--->
-
-To get the latest most stable release as well as other news and information, 
-visit the [Kermit 95 Beta website](https://www.kermitproject.org/ckw10beta.html).
+For more news and information, visit the 
+[Kermit 95 Beta website](https://www.kermitproject.org/ckw10beta.html).
 This software is currently based on C-Kermit version 10.0 Beta.11 of
 29-JUN-2024 and is available under the 3-clause BSD license.
 
@@ -43,21 +34,22 @@ Requirements (Windows)
 ----------------------
 
 Kermit 95 supports virtually all 32bit and 64bit releases of Microsoft Windows
-on all CPU architectures. The only exceptions are [Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164),
-and MIPS Windows NT 3.50 (issues with the compiler in the NT 3.1 SDK). However,
+on all CPU architectures. The only remaining exception is
+[Windows NT 3.10](https://github.com/davidrg/ckwin/issues/164). However,
 due to lack of hardware Itanium and ARM64 are not actively tested
 so bug reports from users on these platforms are essential.
 
 Unfortunately despite best efforts certain features in K95 do have a minimum version
 requirement:
 
-| Feature | Minimum Windows Version | Description / Notes                                                            |
-|---------|-------------------------|--------------------------------------------------------------------------------|
-| PTY     | Windows 10 version 1809 | Windows cmd/powershell/WSL using the K95 terminal emulator                     |
-| SSH     | Windows XP SP 3         | Earlier Windows releases will require writing an alternative SSH module based on some other SSH implementation |
-| SSL/TLS | Windows XP SP 3         | This includes https, ftps and secure telnet support                            |
-| TAPI    | Windows 95 or NT 4.0    | Modem dialing via `set modem` should still work on earlier versions of windows |
-| Toolbar | Windows NT 3.51         | Some GUI dialogs also require at least NT 3.51                                 |
+| Feature | Minimum Windows Version | Description / Notes                                                                                                  |
+|---------|-------------------------|----------------------------------------------------------------------------------------------------------------------|
+| PTY     | Windows 10 version 1809 | Windows cmd/powershell/WSL using the K95 terminal emulator                                                           |
+| SSH     | Windows XP SP 3         | Earlier Windows releases will require writing an alternative SSH module based on some other SSH implementation       |
+| SSL/TLS | Windows XP SP 3         | This includes https, ftps and secure telnet support                                                                  |
+| TAPI    | Windows 95 or NT 4.0    | Modem dialing via `set modem` should still work on earlier versions of windows                                       |
+| Toolbar | Windows NT 3.51         | Some GUI dialogs also require at least NT 3.51                                                                       |
+| GUI     | Windows NT 3.50 (x86), NT 3.51 (alpha/mips) | The GUI version (k95g.exe) is not currently available on the Alpha and MIPS versions of NT 3.50. |
 
 OS/2 Support
 ------------
@@ -68,7 +60,7 @@ support should work with IBM TCP/IP 2.0 or newer.
 There are still a number of outstanding issues caused by the switch from IBM
 C/C++ 3.6 (for which the project has no license) to Open Watcom 1.9 (see issue 
 [#8](https://github.com/davidrg/ckwin/issues/8)), but none of these affect
-making basic telnet or serial connections.
+making basic telnet, serial or NetBIOS connections.
 
 Supported Terminal Emulations
 -----------------------------
@@ -91,19 +83,18 @@ supported and can be configured via the `set mouse reporting` command.
 Documentation
 -------------
 
-The documentation is currently being updated for v3.0. In the meantime, the
-[Kermit 95 manual v2.1](https://www.kermitproject.org/k95manual/) still covers 
-current releases quite well and is the first place to look for details on
-features and capabilities specific to Windows and OS/2. The SSH Client reference
-is now a little out of date, so consult the [SSH Readme](doc/ssh-readme.md) for more
-details on what has changed in the Kermit 95 SSH implementation. 
-There is also a [Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html)
-which may be useful for new users.
+The Kermit 95 manual has mostly been revised for K95 v3.0 and is now included
+as of beta 7. To view it, choose _Manual_ from the _Help_ menu, or type the
+`manual` command at the K-95 prompt. There is also a 
+[Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html) which may be 
+useful for new users.
 
-For everything else, consult the [C-Kermit Documentation](https://www.kermitproject.org/ckbindex.html).
+The full documentation for the built-in SSH client is now included in the
+_SSH Client Reference_ section of the users guide, but for a quick summary
+you can consult the [SSH Readme](doc/ssh-readme.md). 
 
-If you previously used Kermit 95 and would like to know what's changed since v2.1,
-see the [Kermit 95 Change Log](doc/changes.md) as well as the C-Kermit 9.0
+If you previously used Kermit 95 v2.1 or earlier and would like to know what's 
+changed, see the [Kermit 95 Change Log](doc/changes.md) as well as the C-Kermit 9.0
 and 10.0 changelogs
 
 New Features

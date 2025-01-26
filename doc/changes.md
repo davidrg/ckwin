@@ -100,6 +100,9 @@ by OpenSSH on modern versions of windows, add the command
   so via command line arguments rather than the new `set gui` commands so they
   can't be turned back on with the new `set gui` commands.
 * Added support xterms Bracketed Paste feature
+* Most of the users guide has been revised for this release and is now included
+  as part of the release. The _Kermit Security Reference_ and sections dealing
+  with installing and uninstalling kermit 95 are still waiting to be overhauled.
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
