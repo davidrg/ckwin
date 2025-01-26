@@ -506,6 +506,7 @@ for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
 echo Searching for REXX...
+if "%CKF_REXX%" == "no" goto :norex
 set CKF_REXX=no
 if not exist %rexx_root%\include\rexxsaa.h echo Can't find rexxsaa.h
 if not exist %rexx_root%\include\rexxsaa.h goto :norex
