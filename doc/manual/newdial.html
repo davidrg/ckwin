@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<title>The New Kermit 95 Dialer</title>
+<META http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">The New Kermit 95 Dialer</a></h2>
+
+<i>Most recent update:</i>
+4 June 2002
+
+<p>
+
+<blockquote><i>
+
+A brief overview of the changes in Kermit 95's graphical Dialer for Kermit 95
+1.1.21 and 2.0.  The form and mechanics of adding and editing Dialer
+connections have changed since version 1.1.20; this page explains the changes.
+
+</i></blockquote>
+
+<h3><a name="contents">CONTENTS</a></h3>
+
+<pre>
+  <a href="#background">Background</a>
+  <a href="#overview">Summary of Changes</a>
+  <a href="#ssh">The SSH Settings Page</a>
+  <a href="#ftp">The FTP Settings Page</a>
+  <a href="#gui">The GUI Settings Page</a>
+</pre>
+
+<h3><hr><a name="background">Background</a></h3>
+
+The Kermit 95 Dialer offers a graphical user interface for defining and
+managing connections.  It is a separate program from Kermit 95 itself.  When
+you launch a connection from the Dialer, it creates a script (plain-text
+command file) for Kermit 95, and starts Kermit 95 with instructions to execute
+the script.  The script contains commands that correspond to each of your
+selections on each of the pages of the notebook for the connection you are
+launching.
+
+<p>
+
+When Kermit 95 was first written in 1995, our aim was to make it portable to
+different operating systems, primarily Microsoft Windows and IBM OS/2.  This
+was relatively easy in Kermit 95 itself (<tt>K95.EXE</tt>), because we have
+decades of experience in writing portable text-mode software.  But the Dialer
+is a GUI program, and GUI programs are not portable across operating systems.
+In those days, however, when portability was still a widely held value,
+companies made GUI development tools that could generate the same GUI program
+for different operating systems.  One such tool was Zinc, which we chose for
+the Dialer, allowing us to create a single Dialer for Windows and OS/2, and
+opening the possibility for someday porting it to Macintosh, X, and other
+graphical environments, as well as semi-graphical environments such as curses
+and SMS.
+
+<p>
+
+But after OS/2 disappeared from the landscape and Macintosh receded into
+its niche, portable GUI builders became less important and Zinc disappeared
+from the scene.
+
+<p>
+
+Meanwhile, the Windows underpinnings of the Dialer's Connection Notebook model
+have run out of steam, at least in Windows 9x, which provides only 64K for all
+Graphical Display Interface (GDI) resources shared by all the applications
+loaded at any one time.  The Dialer in K95 1.1.20 required 23K.  This amount
+is simply not available on most Windows 9x systems with a typical mix of
+applications running, let alone the increased amount required by K95 1.1.21's
+new features.  Thus the Dialer had to be reorganized before the new SSH and
+GUI settings pages could be added.
+
+<h3><hr><a name="overview">Summary of Changes</a></h3>
+
+The <b>new Dialer</b> no longer has connection notebooks or Add, Edit, Clone,
+or Remove buttons on the Toolbar.  The underlying structure is still the same
+-- each connection has all the properties formerly listed in the notebook.
+But now each notebook page is a separate dialog (a notebook containing many
+dialogs requires many times more GUI resources than a single dialog), and
+there is a new Connections item on the main menu bar.
+
+<p>
+
+The <b>Connections menu</b> contains four items: Add, Edit, Clone, and Remove,
+which were formerly Toolbar buttons, of which the first three behave somewhat
+differently from before:
+
+<p>
+<dl>
+<dt><b><i>The "Add..." Selection</i></b></dt>
+<dd>This creates a new entry, as always, but in a slightly different way.
+Instead of seeing the entire settings notebood for the entry, which allows
+you to move freely back and forth among pages by clicking their tabs, you
+get the relevant settings pages in sequence, in the forward direction only
+(no going back).  On each page you can click:
+
+<p>
+<dl>
+<dt><tt><b>Save/Next</b></tt></dt>
+<dd>Save the current page, proceed to the next.  Once you save the first
+page, the entry is created.
+<p>
+<dt><tt><b>Cancel</b></tt></dt>
+<dd>Cancels the current page and quits the Add session.  If you use the
+Cancel button on the first ("general") page, no new entry is created.  If you
+use it on subsequent pages, the entry has already been created.
+<p>
+<dt><tt><b>Help</b></tt></dt>
+<dd>Displays help text for the current page, as always.
+</dl>
+
+<p>
+<dt><b><i>The "Edit..." Selection</i></b></dt>
+
+<dd>Since we don't have settings notebooks any more, this brings up a menu
+instead of a notebook.  Click on the settings category you wish to edit:
+Terminal, File Transfer, etc.  To edit multiple settings pages, you have to
+use the Edit menu to access each page -- either through the Connections menu,
+or by right-clicking on the entry in the main Dialer panel.
+
+
+<p>
+<dt><b><i>The "Clone..." Selection</i></b></dt>
+
+<dd>This creates a new entry based on the highlighted (existing) entry.
+Unlike Add, Clone does not cycle through the settings pages; it simply uses
+the ones from the entry on which the new entry is based.  If you wish to make
+changes to the settings pages, you can always come back and Edit the new
+entry.
+
+</dl>
+<p>
+
+To offset the inconvenience of the new regime, the Dialer now offers a handy
+<b>Action menu</b> that appears when you right-click an entry in the main
+panel.  The selections include Add, Clone, Connect (i.e. launch a connection),
+Edit, Generate Script file, Remove, and (make a) Shortcut.
+
+<p>
+
+Finally, the <b>Quick dialog</b> has been modified to allow the new connection
+types: SSH and FTP.  However, this dialog now requires that you specify an
+existing entry of the same type upon which to base the connection.  Thus Quick
+is now just like Clone, except it does not put a new entry into the database.
+
+<p>
+
+Everything else works as before, but new pages have been added as described in
+the following sections.
+
+<h3><hr><a name="ssh">The SSH Settings Page</a></h3>
+
+The SSH Settings Page is used to configure or customize Secure Shell (SSH)
+connections, a new feature of Kermit 2.00.  This page contains selections
+corresponding to the SSH configuration commands explained <a
+href="sshclien.html">HERE</a>.  If you wish, you can leave this page
+completely unchanged and still make encrypted SSH connections in which you
+supply the host password locally and have K95 send it over the encrypted
+connection.
+
+<h3><hr><a name="ftp">The FTP Settings Page</a></h3>
+
+As of K95 1.1.21, you can specify FTP connections in the Dialer.  The
+<i>Connection -&gt; Add</i> page has a Connection Type list box that includes
+File Transfer Protocol (FTP) Service.  When you create an entry of this
+connection type, you can make or change FTP-related settings on the
+<i>Connection -&gt; Edit -&gt; FTP Settings</i> page.  The parameters are
+explained in the
+<a href="https://kermitproject.org/ckermit80.html#ftp">FTP client
+documentation</a>.
+
+<h3><hr><a name="ftp">The TCP/IP Settings Page</a></h3>
+
+As of K95 2.0, TCP/IP settings have been moved out of the Telnet page and
+into their own settings page.
+
+<h3><hr><a name="gui">The GUI Settings Page</a></h3>
+
+A new GUI Settings Page is included with K95 2.0 for adjusting
+GUI-specific properties.
+
+<p>
+
+<hr>
+<address>
+The New K95 Dialer / The Kermit Project /
+4 June 2002
+</body>
+</html>

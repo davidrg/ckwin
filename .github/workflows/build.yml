@@ -1763,3 +1763,307 @@ jobs:
           cat linux+ssl.txt
           popd
         shell: bash
+
+
+  ##############################################################################
+  # Build the Kermit 95 Manual                                                 #
+  ##############################################################################
+  # A built version of Kermit 95 with REXX support is required to do this, so
+  # we can't do it until after the Build-VisualCxx job has completed as all
+  # the x86 builds have REXX support included
+
+  # This version is for publishing on the internet. HTML files end in .html,
+  # and index.html is the front page of the manual
+  Build-Manual-Web:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        run: |
+          set root=${{ github.workspace }}
+          call mkdocs.bat /W /D
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-web
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # This is the normal version for distribution with the application. HTML
+  # files end in .htm, index.htm is the front page of the K95 documentation,
+  # and k95manual.htm is the front page of the manual
+  Build-Manual-Dist:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        run: |
+          set root=${{ github.workspace }}
+          call mkdocs.bat /D
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # This is a version for distribution with Kermit 95 for vintage PCs. It's the
+  # same as the normal version above, but doesn't use https:// links. Files
+  # end in .htm, index.htm is the front page of the K95 documentation, and
+  # k95manual.htm is the front page of the manual
+  Build-Manual-Dist-Vintage:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        run: |
+          set root=${{ github.workspace }}
+          call mkdocs.bat /D /I
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  ##############################################################################
+  # Generate final "releasable" artifacts                                      #
+  ##############################################################################
+  # This produces releasable artifacts containing the manual and anything
+  # else that isn't generated as part of the normal build.
+  #
+  # At this time this is limited to the manual. *IF* OpenWatcom supported
+  # ctl3d32 then we'd also insert the OpenWatcom-built dialer here too.
+  #
+  # For x86, x86-64 and arm32 we use the Visual C++ 14.2-built artifacts
+  # as this is newest we can get away with for Windows XP and Windows RT.
+  #
+  # For ARM64 we use the latest compiler (Visual C++ 14.4)
+  #
+  # For IA64 we use the Visual C++ 2010 version (Visual C++ 10.0)
+  #
+  # The results are all k95-${arch}.zip
+  #
+
+  Update-x86-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 x86
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x86
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86
+          path: ${{ github.workspace }}\k95
+          retention-days: 1
+
+  Update-x86-64-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 x86-64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86-64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-arm32-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 arm32
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x64_arm
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-arm32
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-arm64-Artifact:
+    runs-on: windows-latest
+    needs: Build-Manual-Dist
+    steps:
+      - name: Fetch K95 arm32
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x64_arm64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-arm64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-ia64-Artifact:
+    runs-on: windows-latest
+    needs: [Build-Manual-Dist, Build-VS2010-PSDK71]
+    steps:
+      - name: Fetch K95 ia64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2010-ia64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-ia64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-os2-Artifact:
+    runs-on: windows-latest
+    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
+      - name: Fetch K95 os2 full
+        uses: actions/download-artifact@v4
+        with:
+          name: k2-full-install
+          path: ${{ github.workspace }}\k2-full
+      - name: Fetch K95 os2 mini
+        uses: actions/download-artifact@v4
+        with:
+          name: k2-mini-install
+          path: ${{ github.workspace }}\k2-mini
+      - name: Decompress artifacts
+        run: |         
+          cd ${{ github.workspace }}\k2-full
+          ${{ github.workspace }}\info-zip\unzip k2pack.exe
+          del k2pack.exe
+          cd ${{ github.workspace }}\k2-mini
+          ${{ github.workspace }}\info-zip\unzip k2pack.exe
+          del k2pack.exe
+        shell: cmd
+      - name: Fetch Manual - Mini
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\k2-mini\docs\manual
+      - name: Fetch Manual - Full
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\k2-full\docs\manual
+      - name: Compress artifacts
+        run: |
+          echo :: Create Directories
+          mkdir ${{ github.workspace }}\dist-mini
+          mkdir ${{ github.workspace }}\dist-full
+          
+          echo :: Repack K2-FULL
+          cd ${{ github.workspace }}\k2-full
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          
+          echo :: Repack K2-MINI
+          cd ${{ github.workspace }}\k2-mini
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          
+          echo :: Prepare DIST-MINI
+          cd ${{ github.workspace }}\dist-mini
+          copy ${{ github.workspace }}\k2-mini\setup.exe
+          copy ${{ github.workspace }}\k2-mini\K2PACK.exe
+          
+          echo :: Prepare DIST-FULL
+          cd ${{ github.workspace }}\dist-full
+          copy ${{ github.workspace }}\k2-full\setup.exe
+          copy ${{ github.workspace }}\k2-full\K2PACK.exe
+        shell: cmd
+
+      - name: Delete old full artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: k2-full-install
+
+      - name: Delete old mini artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: k2-mini-install
+
+      - name: Upload Full Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k2-full-install
+          path: ${{github.workspace}}/dist-full
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Minimal Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k2-mini-install
+          path: ${{github.workspace}}/dist-mini
+          if-no-files-found: error
+          retention-days: 7

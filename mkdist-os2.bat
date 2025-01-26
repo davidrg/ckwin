@@ -30,7 +30,7 @@ copy /b %infozip_root%\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
 
 echo Making minimal distribution K2MINI.EXE
 REM This is basically everything but the dialer. Its small enough to fit on a
-REM single floppy disk alongisde setup.exe
+REM single floppy disk alongside setup.exe
 %infozip_root%\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe docs download eas icons keymaps phones printer public scripts tmp users
 copy /b %infozip_root%\os2\unzipsfx.exe + k2pack-mini.zip K2MINI.EXE
 

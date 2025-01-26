@@ -938,6 +938,10 @@ REM        and remove their dist files.
 
 set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS%
 
+REM If this build can run on Windows 9x, include ctrl2cap for swapping the
+REM CTRL and Caps Lock keys, and the accent grave and esc keys:
+if "%CKB_9X_COMPATIBLE%" == "yes" set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %root%\kermit\ctrl2cap\ctrl2cap.vxd %root%\kermit\ctrl2cap\ctrl2cap.txt %root%\kermit\ctrl2cap\ctrl2cap.license
+
 echo -----------------------------
 echo.
 echo Include path set to:
