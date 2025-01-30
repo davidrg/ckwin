@@ -19,7 +19,7 @@ Major features include:
 
 From 2013 until August 2024 this project was developed under the name
 *C-Kermit for Windows* but the decision has been made to switch back to the
-original name, Kermit 95, for the next release (beta 7) to reduce confusion
+original name, Kermit 95, starting with beta 7 to reduce confusion
 (plus it's a shorter name and works better on OS/2). While the name may have
 changed, it's still the same program
 
