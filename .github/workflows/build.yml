@@ -1796,7 +1796,12 @@ jobs:
           echo "SHA: $SHA"
           TAG=`git describe --tags --exact-match $SHA` || true
           echo "Tag: $TAG"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ $TAG == v* ]] ; then 
+              echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else 
+              echo "Not a release tag"
+              echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
 
   # This version is for publishing on the internet elsewhere. HTML files end
   # in .html, and index.html is the front page of the manual.
@@ -1891,11 +1896,10 @@ jobs:
       - Check-Build-Type
     env:
       have_stable_artifact: yes
-    # Only master can currently deploy to github-pages
+    # Only master or tags starting with v can currently deploy to github-pages
     # TODO: Eventually this will also need to be enabled for a 'stable' branch
     #  when we have one.
-    # TODO: And we should probably check that tags start with a 'v...' too.
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
