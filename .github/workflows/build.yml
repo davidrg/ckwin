@@ -1883,7 +1883,7 @@ jobs:
           echo Current commit is not tagged. Fetching stable artifact from deployed site...
           cd pages
           
-          curl -o artifact\\stable.zip https://%GITHUB_REPOSITORY_OWNER%.github.io/ckwin/artifact/stable.zip || true
+          curl -o artifact\\stable.zip https://davidrg.github.io/ckwin/artifact/stable.zip || true
           
           if [ -f artifact/stable.zip ]; then
             echo Have stable artifact from currently deployed site. Using that to retain
@@ -1903,7 +1903,7 @@ jobs:
           latest: true
           fileName: 'k95-manual-web.zip'
 
-      - name: Get stable docs
+      - name: Process latest release manual
         shell: bash
         if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
         run: |
@@ -1913,6 +1913,8 @@ jobs:
             mkdir pages/current
             cd pages/current
             7z x ..\\..\\k95-manual-web.zip
+            cd .. 
+            7z a -tzip artifact\stable.zip current
           echo "have_stable_artifact=yes" >> $GITHUB_ENV
           else
             echo Could not obtain manual artifact from latest release. This build
