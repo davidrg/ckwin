@@ -1850,6 +1850,9 @@ jobs:
     env:
       have_stable_artifact: yes
     # Only master can currently deploy to github-pages
+    # TODO: Eventually this will also need to be enabled for a 'stable' branch
+    #  when we have one.
+    # TODO: And we should probably check that tags start with a 'v...' too.
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
     steps:
       - name: Checkout
@@ -1875,23 +1878,29 @@ jobs:
       # stable documentation artifact *in* the pages artifact.
       - name: Get stable docs
         if: needs.Check-Build-Type.outputs.commit-tag == ''
-        shell: cmd
+        shell: bash
         run: |
           echo Current commit is not tagged. Fetching stable artifact from deployed site...
           cd pages
-          curl -o artifact\stable.zip https://%GITHUB_REPOSITORY_OWNER%.github.io/ckwin/artifact/stable.zip
-          if exist artifact\stable.zip echo Have stable artifact
-          if exist artifact\stable.zip 7z x artifact\stable.zip
-          if not exist artifact\stable.zip echo Don't have stable artifact, this build will be deployed as stable
-          if not exist artifact\stable.zip echo "have_stable_artifact=no" >> %GITHUB_ENV%
-          exit /b 0
+          
+          curl -o artifact\\stable.zip https://%GITHUB_REPOSITORY_OWNER%.github.io/ckwin/artifact/stable.zip || true
+          
+          if [ -f artifact/stable.zip ]; then
+            echo Have stable artifact from currently deployed site. Using that to retain
+            echo stable documentation in this github-pages artifact.
+            7z x artifact\\stable.zip
+          else
+            echo Could not obtain stable artifact from currently deployed site. This build
+            echo will be used to provide the stable documentation.
+            echo "have_stable_artifact=no" >> $GITHUB_ENV
+          fi
 
       - name: Fetch Manual as Stable Manual
         uses: actions/download-artifact@v4
         if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
         with:
           name: k95-manual-web
-          path: ${{ github.workspace }}\pages\stable\
+          path: ${{ github.workspace }}\pages\current\
 
       - name: Use current build as stable docs
         if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
@@ -1900,7 +1909,7 @@ jobs:
           echo Current commit is tagged (or currently deployed site has no stable artifact).
           echo Stable artifact will come from this build. 
           cd pages
-          7z a -tzip artifact\stable.zip stable
+          7z a -tzip artifact\stable.zip current
 
       - name: Fetch Manual as Dev Manual
         uses: actions/download-artifact@v4
