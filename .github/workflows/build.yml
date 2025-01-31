@@ -1889,11 +1889,36 @@ jobs:
             echo Have stable artifact from currently deployed site. Using that to retain
             echo stable documentation in this github-pages artifact.
             7z x artifact\\stable.zip
+          echo "have_stable_artifact=yes" >> $GITHUB_ENV
           else
             echo Could not obtain stable artifact from currently deployed site. This build
             echo will be used to provide the stable documentation.
             echo "have_stable_artifact=no" >> $GITHUB_ENV
           fi
+
+      - name: Fetch Latest Release Manual
+        uses: robinraju/release-downloader@v1
+        if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
+        with:
+          latest: true
+          fileName: 'k95-manual-web.zip'
+
+      - name: Get stable docs
+        shell: bash
+        if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
+        run: |
+          if [ -f k95-manual-web.zip ]; then
+            echo Have manual from latest release. This will be used to provide
+            echo stable documentation in this github-pages artifact.
+            mkdir pages/current
+            cd pages/current
+            7z x ..\\..\\k95-manual-web.zip
+          echo "have_stable_artifact=yes" >> $GITHUB_ENV
+          else
+            echo Could not obtain manual artifact from latest release. This build
+            echo will be used to provide the stable documentation.
+            echo "have_stable_artifact=no" >> $GITHUB_ENV
+          fi          
 
       - name: Fetch Manual as Stable Manual
         uses: actions/download-artifact@v4
