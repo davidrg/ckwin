@@ -1776,7 +1776,10 @@ jobs:
 
   # This checks to see if the commit we're building is tagged. We assume tagged
   # commits indicate a release build of some kind, meaning we should adjust
-  # the version number shown in the generated documentation.
+  # the version number shown in the generated documentation, and deploy the
+  # manual to the stable directory in the github pages artifact.
+  # *Probably* we could do this check as part of the other earlier jobs to shave
+  # 20 seconds off the overall build time.
   Check-Build-Type:
     runs-on: windows-latest
     needs: Build-VisualCxx
@@ -1869,7 +1872,7 @@ jobs:
       # make retaining the existing stable documentation, we just stash the
       # stable documentation artifact *in* the pages artifact.
       - name: Get stable docs
-        if: needs.Check-Build-Type.outputs.commit-tag != ''
+        if: needs.Check-Build-Type.outputs.commit-tag == ''
         shell: cmd
         run: |
           echo Current commit is not tagged. Fetching stable artifact from deployed site...
@@ -2211,3 +2214,11 @@ jobs:
           path: ${{github.workspace}}/dist-mini
           if-no-files-found: error
           retention-days: 7
+
+
+# TODO: If the commit is tagged v... it would be nice to automatically
+#   create a draft release and attach those artifacts that don't
+#   need updating with things not built by GHA. At the moment, that
+#   is probably just: IA64, ARM32 and ARM64. These three architectures
+#   don't receive the dialer or anything else that needs to be built
+#   offline with Visual C++ 6.0 or older.
