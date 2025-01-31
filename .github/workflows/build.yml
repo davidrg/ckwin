@@ -3,6 +3,8 @@ name: Full Build
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - '*'
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
@@ -1772,12 +1774,33 @@ jobs:
   # we can't do it until after the Build-VisualCxx job has completed as all
   # the x86 builds have REXX support included
 
+  # This checks to see if the commit we're building is tagged. We assume tagged
+  # commits indicate a release build of some kind, meaning we should adjust
+  # the version number shown in the generated documentation.
+  Check-Build-Type:
+    runs-on: windows-latest
+    needs: Build-VisualCxx
+    outputs:
+      commit-tag: ${{ steps.check-for-tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check if commit is tagged
+        id: check-for-tag
+        shell: bash
+        run: |
+          SHA=`git rev-parse HEAD`
+          echo "SHA: $SHA"
+          TAG=`git describe --tags --exact-match $SHA` || true
+          echo "Tag: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
   # This version is for publishing on the internet. HTML files end in .html,
   # and index.html is the front page of the manual
   Build-Manual-Web:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Build-VisualCxx
+    needs: Check-Build-Type
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1786,9 +1809,23 @@ jobs:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          
+          call mkdocs.bat /W
+          
+          goto :done
+          
+          :dev_doc
           call mkdocs.bat /W /D
+          
+          :done
+
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
@@ -1804,7 +1841,7 @@ jobs:
   Build-Manual-Dist:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Build-VisualCxx
+    needs: Check-Build-Type
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1813,9 +1850,22 @@ jobs:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+
+          call mkdocs.bat
+
+          goto :done
+
+          :dev_doc
           call mkdocs.bat /D
+
+          :done
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
@@ -1832,7 +1882,7 @@ jobs:
   Build-Manual-Dist-Vintage:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Build-VisualCxx
+    needs: Check-Build-Type
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1841,9 +1891,22 @@ jobs:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
+                    
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+
+          call mkdocs.bat /I
+
+          goto :done
+
+          :dev_doc
           call mkdocs.bat /D /I
+
+          :done
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
