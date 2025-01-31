@@ -1835,6 +1835,85 @@ jobs:
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
 
+  # Single deploy job since we're just deploying
+  deploy-website:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Web
+      - Check-Build-Type
+    env:
+      have_stable_artifact: yes
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare base site
+        shell: cmd
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          xcopy /E doc\web pages
+
+          echo "Trigger: ${{ github.ref_type }}"
+          echo "Tag: %TAG%
+
+      # Because github pages doesn't support partial deployment, we've got to
+      # fetch the bits of the site we don't want to change ourselves and add
+      # them into the new pages artifact. In this case, if the current commit
+      # isn't tagged, then we don't want to update the stable documentation. To
+      # make retaining the existing stable documentation, we just stash the
+      # stable documentation artifact *in* the pages artifact.
+      - name: Get stable docs
+        if: needs.Check-Build-Type.outputs.commit-tag != ''
+        shell: cmd
+        run: |
+          echo Current commit is not tagged. Fetching stable artifact from deployed site...
+          cd pages
+          curl -o artifact\stable.zip https://%GITHUB_REPOSITORY_OWNER%.github.io/ckwin/artifact/stable.zip
+          if exist artifact\stable.zip echo Have stable artifact
+          if exist artifact\stable.zip 7z x artifact\stable.zip
+          if not exist artifact\stable.zip echo Don't have stable artifact, this build will be deployed as stable
+          if not exist artifact\stable.zip echo "have_stable_artifact=no" >> %GITHUB_ENV%
+
+
+      - name: Fetch Manual as Stable Manual
+        uses: actions/download-artifact@v4
+        if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
+        with:
+          name: k95-manual-web
+          path: ${{ github.workspace }}\pages\stable\
+
+      - name: Use current build as stable docs
+        if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
+        shell: cmd
+        run: |
+          echo Current commit is tagged (or currently deployed site has no stable artifact).
+          echo Stable artifact will come from this build. 
+          cd pages
+          7z a -tzip artifact\stable.zip stable
+
+      - name: Fetch Manual as Dev Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-web
+          path: ${{ github.workspace }}\pages\dev\
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './pages'
+
+# This doesn't currently work properly.
+# See:  https://github.com/actions/deploy-pages/issues/383
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
+
   # This is the normal version for distribution with the application. HTML
   # files end in .htm, index.htm is the front page of the K95 documentation,
   # and k95manual.htm is the front page of the manual
@@ -1915,6 +1994,8 @@ jobs:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
+
+
 
   ##############################################################################
   # Generate final "releasable" artifacts                                      #
