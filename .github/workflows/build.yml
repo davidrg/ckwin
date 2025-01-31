@@ -1885,7 +1885,9 @@ jobs:
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
 
-  # Single deploy job since we're just deploying
+  # Deploy the Github Pages website if:
+  #   The branch is master
+  #   Or the tag starts with 'v'
   Deploy-Website:
     environment:
       name: github-pages
@@ -1942,6 +1944,10 @@ jobs:
             echo "have_stable_artifact=no" >> $GITHUB_ENV
           fi
 
+      # If we couldn't fetch the current stable manual from the live github
+      # pages site, then try and fetch the manual artifact from the latest
+      # release instead.
+      # (this is probably something we could just do always
       - name: Fetch Latest Release Manual
         uses: robinraju/release-downloader@v1
         if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
@@ -1949,7 +1955,7 @@ jobs:
           latest: true
           fileName: 'k95-manual-web.zip'
 
-      - name: Process latest release manual
+      - name: Process Latest Release Manual
         shell: bash
         if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
         run: |
@@ -1995,11 +2001,12 @@ jobs:
         with:
           path: './pages'
 
-# This doesn't currently work properly.
+# TODO: This doesn't currently work properly.
+# If the commit is built before the tag, the deploy won't happen.
 # See:  https://github.com/actions/deploy-pages/issues/383
-#      - name: Deploy to GitHub Pages
-#        id: deployment
-#        uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   # This is the normal version for distribution with the application. HTML
   # files end in .htm, index.htm is the front page of the K95 documentation,
