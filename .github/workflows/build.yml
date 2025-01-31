@@ -1849,6 +1849,8 @@ jobs:
       - Check-Build-Type
     env:
       have_stable_artifact: yes
+    # Only master can currently deploy to github-pages
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -1882,7 +1884,7 @@ jobs:
           if exist artifact\stable.zip 7z x artifact\stable.zip
           if not exist artifact\stable.zip echo Don't have stable artifact, this build will be deployed as stable
           if not exist artifact\stable.zip echo "have_stable_artifact=no" >> %GITHUB_ENV%
-
+          exit /b 0
 
       - name: Fetch Manual as Stable Manual
         uses: actions/download-artifact@v4
