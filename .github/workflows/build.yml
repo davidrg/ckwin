@@ -1836,7 +1836,7 @@ jobs:
           retention-days: 1
 
   # Single deploy job since we're just deploying
-  deploy-website:
+  Deploy-Website:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -1857,7 +1857,7 @@ jobs:
         env:
           TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
-          xcopy /E doc\web pages
+          xcopy /E doc\web pages\
 
           echo "Trigger: ${{ github.ref_type }}"
           echo "Tag: %TAG%
