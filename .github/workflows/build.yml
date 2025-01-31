@@ -1798,9 +1798,9 @@ jobs:
           echo "Tag: $TAG"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-  # This version is for publishing on the internet. HTML files end in .html,
-  # and index.html is the front page of the manual
-  Build-Manual-Web:
+  # This version is for publishing on the internet elsewhere. HTML files end
+  # in .html, and index.html is the front page of the manual.
+  Build-Manual-Web-Dist:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
     needs: Check-Build-Type
@@ -1838,6 +1838,48 @@ jobs:
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
 
+  # This version is for publishing on github pages. HTML files end in .html,
+  # and index.html is the front page of the manual. If the current commit is
+  # not tagged, then every page has a note at the top saying it is preliminary
+  # documentation for an unreleased version.
+  Build-Manual-Web-Pages:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Check-Build-Type
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          
+          call mkdocs.bat /W
+          
+          goto :done
+          
+          :dev_doc
+          call mkdocs.bat /W /D /B=${{ github.workspace }}\doc\preliminary.html
+          
+          :done
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-for-github-pages
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
   # Single deploy job since we're just deploying
   Deploy-Website:
     environment:
@@ -1845,7 +1887,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: windows-latest
     needs:
-      - Build-Manual-Web
+      - Build-Manual-Web-Pages
       - Check-Build-Type
     env:
       have_stable_artifact: yes
@@ -1914,7 +1956,7 @@ jobs:
             cd pages/current
             7z x ..\\..\\k95-manual-web.zip
             cd .. 
-            7z a -tzip artifact\stable.zip current
+            7z a -tzip artifact\\stable.zip current
           echo "have_stable_artifact=yes" >> $GITHUB_ENV
           else
             echo Could not obtain manual artifact from latest release. This build
@@ -1941,7 +1983,7 @@ jobs:
       - name: Fetch Manual as Dev Manual
         uses: actions/download-artifact@v4
         with:
-          name: k95-manual-web
+          name: k95-manual-for-github-pages
           path: ${{ github.workspace }}\pages\dev\
 
       - name: Upload artifact
