@@ -956,6 +956,16 @@ jobs:
   # which reduces the likelihood of accidentally breaking that compiler.        #
   ###############################################################################
   Build-Open-Watcom:
+    # As of 1 February, Open Watcom builds are failing with one of the following
+    # errors from its nmake clone:
+    #    Error(E08): Invalid macro name ()
+    #    Error(E07): Expecting a Form Qualifier
+    # There have been no code changes to cause this. Commits that previously
+    # built fine now result in errors. When run locally on my PC, running the
+    # build several times may eventually result in success but that doesn't
+    # seem to work reliably in GitHub Actions. So for now: disable Open Watcom
+    # builds.
+    if: false
     needs: Prepare-Docs
     strategy:
       matrix:
