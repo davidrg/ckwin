@@ -83,15 +83,17 @@ supported and can be configured via the `set mouse reporting` command.
 Documentation
 -------------
 
-The Kermit 95 manual has mostly been revised for K95 v3.0 and is now included
-as of beta 7. To view it, choose _Manual_ from the _Help_ menu, or type the
-`manual` command at the K-95 prompt. There is also a 
-[Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html) which may be 
+The Kermit 95 manual has mostly been revised for K95 v3.0 and is now
+[available on the web](https://davidrg.github.io/ckwin/current/) in addition to
+being included as part of the standard K95 distribution as of beta 7. To open it
+from Kermit 95, choose _Manual_ from the _Help_ menu, or type the `manual` 
+command at the K-95 prompt. There is also a [Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html) which may be 
 useful for new users.
 
 The full documentation for the built-in SSH client is now included in the
-_SSH Client Reference_ section of the users guide, but for a quick summary
-you can consult the [SSH Readme](doc/ssh-readme.md). 
+[_SSH Client Reference_](https://davidrg.github.io/ckwin/current/sshclien.html) 
+section of the users guide, but for a quick summary you can consult the 
+[SSH Readme](doc/ssh-readme.md). 
 
 If you previously used Kermit 95 v2.1 or earlier and would like to know what's 
 changed, see the [Kermit 95 Change Log](doc/changes.md) as well as the C-Kermit 9.0
