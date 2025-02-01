@@ -960,7 +960,14 @@ jobs:
     strategy:
       matrix:
         ver:
-          - '1.9'
+          - '2.0'
+
+          # This started failing with one of the following errors both locally
+          # and in github actions on the 1st of February without any changes to
+          # the makefile or code to explain the problem. Disabled for now.
+          #     Error(E08): Invalid macro name ()
+          #     Error(E07): Expecting a Form Qualifier
+          # - '1.9'
         os:
           - id: 'nt'
           - id: 'nt-legacy'
