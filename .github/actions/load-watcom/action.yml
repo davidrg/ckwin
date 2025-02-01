@@ -47,6 +47,21 @@ runs:
           curl -LsS -o ow.zip https://github.com/open-watcom/open-watcom-1.9/releases/download/ow1.9/open-watcom-c-linux-1.9
           7z x ow.zip -owatcom
           rm -f ow.zip
+        
+          # The Open Watcom 1.9 nmake clone seems to have stopped working all on
+          # its own. Code that previously built fine both locally and in GitHub
+          # actions now fails with errors like "Error(E08): Invalid macro name ()"
+          # and "Error(E07): Expecting a Form Qualifier". So as a workaround for
+          # now, we grab nmake from the latest Open Watcom 2.0 snapshot which
+          # doesn't seem to have this issue.
+          curl -LsS -o ow-snapshot.tar.xz https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz
+          7z x ow-snapshot.tar.xz
+          7z x ow-snapshot.tar.xz -owatcom2
+          rm -f ow-snapshot.tar.xz
+          mv watcom/binnt/nmake.exe watcom/binnt/nmake-1.9.exe
+          cp watcom2/binnt/nmake.exe watcom/binnt/
+          ls -l watcom/binnt/nmake*
+          rm -fR watcom2
         fi
         echo "content of watcom"
         ls -l watcom

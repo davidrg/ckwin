@@ -1003,30 +1003,11 @@ jobs:
         with:
           nocache: ${{vars.NOCACHE}}
 
-      - name: Get nmake from Open Watcom 2.0
-        if: matrix.ver == '1.9'
-        shell: cmd
-        run: |
-          mkdir temp
-          cd temp
-          curl -LsS -o ow-snapshot.tar.xz https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz
-          dir
-          7z x ow-snapshot.tar.xz
-          dir
-          7z x ow-snapshot.tar -owatcom
-          cd ..
-          mkdir bin
-          cd bin
-          copy ..\temp\watcom\binnt\nmake.exe
-
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
         working-directory: kermit/p95
         run: |
-          
-          if "${{matrix.ver}}" == "1.9" set PATH=${{github.workspace}}\bin;%PATH%
-          
           if "${{matrix.os.id}}" == "os2" set ibm20dir_override=${{github.workspace}}\tools\os2tk45
 
           REM Build for Windows NT 3.50 (and, someday, NT 3.1)
