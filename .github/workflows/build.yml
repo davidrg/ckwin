@@ -3,9 +3,17 @@ name: Full Build
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - '*'
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 env:
   # Expected filename: https://zlib.net/zlib-1.3.1.tar.gz
@@ -1772,12 +1780,41 @@ jobs:
   # we can't do it until after the Build-VisualCxx job has completed as all
   # the x86 builds have REXX support included
 
-  # This version is for publishing on the internet. HTML files end in .html,
-  # and index.html is the front page of the manual
-  Build-Manual-Web:
+  # This checks to see if the commit we're building is tagged. We assume tagged
+  # commits indicate a release build of some kind, meaning we should adjust
+  # the version number shown in the generated documentation, and deploy the
+  # manual to the stable directory in the github pages artifact.
+  # *Probably* we could do this check as part of the other earlier jobs to shave
+  # 20 seconds off the overall build time.
+  Check-Build-Type:
+    runs-on: windows-latest
+    needs: Build-VisualCxx
+    outputs:
+      commit-tag: ${{ steps.check-for-tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check if commit is tagged
+        id: check-for-tag
+        shell: bash
+        run: |
+          SHA=`git rev-parse HEAD`
+          echo "SHA: $SHA"
+          TAG=`git describe --tags --exact-match $SHA` || true
+          echo "Tag: $TAG"
+          if [[ $TAG == v* ]] ; then 
+              echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else 
+              echo "Not a release tag"
+              echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+  # This version is for publishing on the internet elsewhere. HTML files end
+  # in .html, and index.html is the front page of the manual.
+  Build-Manual-Web-Dist:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Build-VisualCxx
+    needs: Check-Build-Type
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1786,9 +1823,23 @@ jobs:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          
+          call mkdocs.bat /W
+          
+          goto :done
+          
+          :dev_doc
           call mkdocs.bat /W /D
+          
+          :done
+
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
@@ -1798,13 +1849,14 @@ jobs:
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
 
-  # This is the normal version for distribution with the application. HTML
-  # files end in .htm, index.htm is the front page of the K95 documentation,
-  # and k95manual.htm is the front page of the manual
-  Build-Manual-Dist:
+  # This version is for publishing on github pages. HTML files end in .html,
+  # and index.html is the front page of the manual. If the current commit is
+  # not tagged, then every page has a note at the top saying it is preliminary
+  # documentation for an unreleased version.
+  Build-Manual-Web-Pages:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Build-VisualCxx
+    needs: Check-Build-Type
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1813,9 +1865,186 @@ jobs:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          
+          call mkdocs.bat /W
+          
+          goto :done
+          
+          :dev_doc
+          call mkdocs.bat /W /D /B=${{ github.workspace }}\doc\preliminary.html
+          
+          :done
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-for-github-pages
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # Deploy the Github Pages website if:
+  #   The branch is master
+  #   Or the tag starts with 'v'
+  Deploy-Website:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Web-Pages
+      - Check-Build-Type
+    env:
+      have_stable_artifact: yes
+    # Only master or tags starting with v can currently deploy to github-pages
+    # TODO: Eventually this will also need to be enabled for a 'stable' branch
+    #  when we have one.
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare base site
+        shell: cmd
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          xcopy /E doc\web pages\
+
+          echo "Trigger: ${{ github.ref_type }}"
+          echo "Tag: %TAG%
+
+      # Because github pages doesn't support partial deployment, we've got to
+      # fetch the bits of the site we don't want to change ourselves and add
+      # them into the new pages artifact. In this case, if the current commit
+      # isn't tagged, then we don't want to update the stable documentation. To
+      # make retaining the existing stable documentation, we just stash the
+      # stable documentation artifact *in* the pages artifact.
+      - name: Get stable docs
+        if: needs.Check-Build-Type.outputs.commit-tag == ''
+        shell: bash
+        run: |
+          echo Current commit is not tagged. Fetching stable artifact from deployed site...
+          cd pages
+          
+          curl -o artifact\\stable.zip https://davidrg.github.io/ckwin/artifact/stable.zip || true
+          
+          if [ -f artifact/stable.zip ]; then
+            echo Have stable artifact from currently deployed site. Using that to retain
+            echo stable documentation in this github-pages artifact.
+            7z x artifact\\stable.zip
+          echo "have_stable_artifact=yes" >> $GITHUB_ENV
+          else
+            echo Could not obtain stable artifact from currently deployed site. This build
+            echo will be used to provide the stable documentation.
+            echo "have_stable_artifact=no" >> $GITHUB_ENV
+          fi
+
+      # If we couldn't fetch the current stable manual from the live github
+      # pages site, then try and fetch the manual artifact from the latest
+      # release instead.
+      # (this is probably something we could just do always
+      - name: Fetch Latest Release Manual
+        uses: robinraju/release-downloader@v1
+        if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
+        with:
+          latest: true
+          fileName: 'k95-manual-web.zip'
+
+      - name: Process Latest Release Manual
+        shell: bash
+        if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
+        run: |
+          if [ -f k95-manual-web.zip ]; then
+            echo Have manual from latest release. This will be used to provide
+            echo stable documentation in this github-pages artifact.
+            mkdir pages/current
+            cd pages/current
+            7z x ..\\..\\k95-manual-web.zip
+            cd .. 
+            7z a -tzip artifact\\stable.zip current
+          echo "have_stable_artifact=yes" >> $GITHUB_ENV
+          else
+            echo Could not obtain manual artifact from latest release. This build
+            echo will be used to provide the stable documentation.
+            echo "have_stable_artifact=no" >> $GITHUB_ENV
+          fi          
+
+      - name: Fetch Manual as Stable Manual
+        uses: actions/download-artifact@v4
+        if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
+        with:
+          name: k95-manual-web
+          path: ${{ github.workspace }}\pages\current\
+
+      - name: Use current build as stable docs
+        if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
+        shell: cmd
+        run: |
+          echo Current commit is tagged (or currently deployed site has no stable artifact).
+          echo Stable artifact will come from this build. 
+          cd pages
+          7z a -tzip artifact\stable.zip current
+
+      - name: Fetch Manual as Dev Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-for-github-pages
+          path: ${{ github.workspace }}\pages\dev\
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './pages'
+
+# TODO: This doesn't currently work properly.
+# If the commit is built before the tag, the deploy won't happen.
+# See:  https://github.com/actions/deploy-pages/issues/383
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # This is the normal version for distribution with the application. HTML
+  # files end in .htm, index.htm is the front page of the K95 documentation,
+  # and k95manual.htm is the front page of the manual
+  Build-Manual-Dist:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Check-Build-Type
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+
+          call mkdocs.bat
+
+          goto :done
+
+          :dev_doc
           call mkdocs.bat /D
+
+          :done
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
@@ -1832,7 +2061,7 @@ jobs:
   Build-Manual-Dist-Vintage:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Build-VisualCxx
+    needs: Check-Build-Type
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1841,9 +2070,22 @@ jobs:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
       - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
+                    
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+
+          call mkdocs.bat /I
+
+          goto :done
+
+          :dev_doc
           call mkdocs.bat /D /I
+
+          :done
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
       - name: Upload artifact
@@ -1852,6 +2094,8 @@ jobs:
           name: k95-manual-dist-vintage
           path: ${{ github.workspace }}\dist\docs\manual
           retention-days: 1
+
+
 
   ##############################################################################
   # Generate final "releasable" artifacts                                      #
@@ -2067,3 +2311,11 @@ jobs:
           path: ${{github.workspace}}/dist-mini
           if-no-files-found: error
           retention-days: 7
+
+
+# TODO: If the commit is tagged v... it would be nice to automatically
+#   create a draft release and attach those artifacts that don't
+#   need updating with things not built by GHA. At the moment, that
+#   is probably just: IA64, ARM32 and ARM64. These three architectures
+#   don't receive the dialer or anything else that needs to be built
+#   offline with Visual C++ 6.0 or older.
