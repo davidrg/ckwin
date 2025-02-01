@@ -56,8 +56,8 @@ runs:
           # doesn't seem to have this issue.
           curl -LsS -o ow-snapshot.tar.xz https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz
           7z x ow-snapshot.tar.xz
-          7z x ow-snapshot.tar.xz -owatcom2
-          rm -f ow-snapshot.tar.xz
+          7z x ow-snapshot.tar -owatcom2
+          rm -f ow-snapshot.tar.xz ow-snapshot.tar 
           mv watcom/binnt/nmake.exe watcom/binnt/nmake-1.9.exe
           cp watcom2/binnt/nmake.exe watcom/binnt/
           ls -l watcom/binnt/nmake*
