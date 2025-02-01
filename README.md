@@ -75,7 +75,7 @@ Televideo TVI910+, TVI925, TVI950; Volker Craig VC404;
 Wyse 30, 50, 60, 160, and 370
 
 For more details on what features the various emulations support, see 
-[The Manual](https://www.kermitproject.org/k95manual/termtype.html).
+[The Manual](https://davidrg.github.io/ckwin/current/termtype.html).
 
 Mouse reporting via the X10, X11/normal, URXVT and SGR protocols is also
 supported and can be configured via the `set mouse reporting` command.
