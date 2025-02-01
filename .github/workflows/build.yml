@@ -1005,6 +1005,7 @@ jobs:
 
       - name: Get nmake from Open Watcom 2.0
         if: matrix.ver == '1.9'
+        shell: cmd
         run: |
           mkdir temp
           cd temp
