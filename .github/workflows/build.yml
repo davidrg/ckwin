@@ -1010,7 +1010,9 @@ jobs:
           mkdir temp
           cd temp
           curl -LsS -o ow-snapshot.tar.xz https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz
+          dir
           7z x ow-snapshot.tar.xz
+          dir
           7z x ow-snapshot.tar -owatcom
           cd ..
           mkdir bin
