@@ -965,7 +965,6 @@ jobs:
     # build several times may eventually result in success but that doesn't
     # seem to work reliably in GitHub Actions. So for now: disable Open Watcom
     # builds.
-    if: false
     needs: Prepare-Docs
     strategy:
       matrix:
