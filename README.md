@@ -10,12 +10,10 @@ website: http://www.kermitproject.org.
 Major features include:
  * More than [40 terminal emulations](#supported-terminal-emulations)
  * Virtual Terminal connections over SSH, Telnet (including TLS support), 
-   rlogin, modem, serial port, named pipe and pty
+   rlogin, modem, serial port, named pipe and pty. Additionally, LAT and CTERM
+   are supported if you've got Pathworks installed, and NetBIOS is supported on OS/2.    
  * Scriptable file transfer via Kermit, X/Y/Z Modem, HTTP, HTTPS, FTP and FTPS protocols
  * International character set translation
- * Pathworks supported for LAT and CTERM Virtual Terminal connections. 
-   Can optionally be built with SuperLAT support as well (not enabled by
-   default)
 
 From 2013 until August 2024 this project was developed under the name
 *C-Kermit for Windows* but the decision has been made to switch back to the
