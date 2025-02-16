@@ -4704,7 +4704,9 @@ tcpsocket_open( char * name, int * lcl, int nett, int timo )
 #ifdef COMMENT
             if (bio_err!=NULL) {
                 BIO_printf(bio_err,"do_ssleay_init() failed\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                 ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
             } else {
                 fflush(stderr);
                 fprintf(stderr,"do_ssleay_init() failed\n");
@@ -5005,7 +5007,9 @@ tcpsrv_open(char * name, int * lcl, int nett, int timo) {
             ssl_failed = 1;
             if (bio_err!=NULL) {
                 BIO_printf(bio_err,"do_ssleay_init() failed\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                 ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
             } else {
                 fflush(stderr);
                 fprintf(stderr,"do_ssleay_init() failed\n");

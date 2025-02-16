@@ -34,6 +34,8 @@
 #endif /* ZLIB */
 #endif /* OS2 */
 
+#define CK_HAVE_ERR_PRINT_ERRORS
+
 #ifdef CK_WOLFSSL
 #include <wolfssl/options.h>
 
@@ -48,6 +50,16 @@
 
 /* Doesn't seem to supply comp.h either */
 #define OPENSSL_NO_COMP
+
+#ifdef NT
+/* In WolfSSL, ERR_print_errors becomes a call to wolfSSL_ERR_print_errors which
+ * in early 2025 is only available on Windows if DEBUG_WOLFSSL_VERBOSE is
+ * defined
+ */
+#ifndef DEBUG_WOLFSSL_VERBOSE
+#undef CK_HAVE_ERR_PRINT_ERRORS
+#endif /* DEBUG_WOLFSSL_VERBOSE */
+#endif /* NT */
 #endif
 
 #ifdef ZLIB

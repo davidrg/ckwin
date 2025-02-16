@@ -380,7 +380,9 @@ X509_STORE_CTX *ctx;
     len = BIO_read(bio_err,subject,256);
     subject[len < 256 ? len : 255] = '\0';
     if (!subject[0]) {
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
         ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
         uq_ok("X.509 Subject Name unavailable", ssl_err, 1, NULL, 0);
@@ -393,7 +395,9 @@ X509_STORE_CTX *ctx;
     len = BIO_read(bio_err,issuer,256);
     issuer[len < 256 ? len : 255] = '\0';
     if (!issuer[0]) {
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
         ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
         uq_ok("X.509 Issuer Name unavailable", ssl_err, 1, NULL, 0);
@@ -404,7 +408,9 @@ X509_STORE_CTX *ctx;
     X509_NAME_oneline(X509_get_subject_name(xs),subject,256);
     if (!subject[0]) {
         int len;
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
         ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
         uq_ok("X.509 Subject Name unavailable", ssl_err, 1, NULL, 0);
@@ -415,7 +421,9 @@ X509_STORE_CTX *ctx;
     X509_NAME_oneline(X509_get_issuer_name(xs),issuer,256);
     if (!issuer[0]) {
         int len;
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
         ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
         len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
         ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
         uq_ok("X.509 Issuer Name unavailable", ssl_err, 1, NULL, 0);
@@ -3600,13 +3608,17 @@ ssl_reply(how,data,cnt) int how; unsigned char *data; int cnt;
                 int len;
                 if (tn_deb || debses) {
                     tn_debug("[SSL - FAILED]");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                     ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     printf(ssl_err);
                 } else if ( verbosity ) {
                     printf("[SSL - FAILED]\r\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                     ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     printf(ssl_err);
@@ -3974,13 +3986,17 @@ ck_tn_tls_negotiate(VOID)
                 int len;
                 if (tn_deb || debses) {
                     tn_debug("[TLS - FAILED]");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                     ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     printf(ssl_err);
                 } else if ( verbosity ) {
                     printf("[TLS - FAILED]\r\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                     ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     printf(ssl_err);
@@ -4577,7 +4593,9 @@ ck_X509_save_cert_to_user_store(X509 *cert)
     out=BIO_new(BIO_s_file());
     if (out == NULL)
     {
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
         ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
         return(0);
     }
     if (BIO_write_filename(out,path) <= 0) {
@@ -4588,7 +4606,9 @@ ck_X509_save_cert_to_user_store(X509 *cert)
     X509_print_ex(out, cert, XN_FLAG_SEP_MULTILINE, X509V3_EXT_DUMP_UNKNOWN);
     if (!PEM_write_bio_X509(out,cert)) {
         BIO_printf(bio_err,"unable to write certificate\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
         ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
         BIO_free_all(out);
         return(0);
     }

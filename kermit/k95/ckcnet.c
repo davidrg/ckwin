@@ -1195,7 +1195,9 @@ ttbufr() {                              /* TT Buffer Read */
                   int len;
                   extern char ssl_err[];
                   BIO_printf(bio_err,"ttbufr SSL_ERROR_SSL\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                   ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                   len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                   ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                   debug(F110,"ttbufr SSL_ERROR_SSL",ssl_err,0);
@@ -2862,7 +2864,9 @@ tcpsrv_open(name,lcl,nett,timo) char * name; int * lcl; int nett; int timo;
             ssl_failed = 1;
             if (bio_err!=NULL) {
                 BIO_printf(bio_err,"do_ssleay_init() failed\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                 ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
             } else {
                 fflush(stderr);
                 fprintf(stderr,"do_ssleay_init() failed\n");
@@ -5098,7 +5102,9 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
             debug(F100,"netopen ssl_tn_init() failed","",0);
             if (bio_err!=NULL) {
                 BIO_printf(bio_err,"ssl_tn_init() failed\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                 ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
             } else {
                 fflush(stderr);
                 fprintf(stderr,"ssl_tn_init() failed\n");
@@ -5767,7 +5773,9 @@ nettchk() {                             /* for reading from network */
                     int len;
                     extern char ssl_err[];
                     BIO_printf(bio_err,"nettchk() SSL_ERROR_SSL\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                     ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                     len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                     ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                     debug(F110,"nettchk SSL_ERROR_SSL",ssl_err,0);
@@ -6605,7 +6613,9 @@ nettol(s,n) CHAR *s; int n;
                   int len;
                   extern char ssl_err[];
                   BIO_printf(bio_err,"nettol() SSL_ERROR_SSL\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                   ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                   len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                   ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                   debug(F110,"nettol SSL_ERROR_SSL",ssl_err,0);
@@ -6831,7 +6841,9 @@ nettoc(c) CHAR c;
                   int len;
                   extern char ssl_err[];
                   BIO_printf(bio_err,"nettoc() SSL_ERROR_SSL\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                   ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
                   len = BIO_read(bio_err,ssl_err,SSL_ERR_BFSZ);
                   ssl_err[len < SSL_ERR_BFSZ ? len : SSL_ERR_BFSZ] = '\0';
                   debug(F110,"nettoc SSL_ERROR_SSL",ssl_err,0);
@@ -11076,7 +11088,9 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
         if (!ssl_http_init(hostname)) {
             if (bio_err!=NULL) {
                 BIO_printf(bio_err,"ssl_tn_init() failed\n");
+#ifdef CK_HAVE_ERR_PRINT_ERRORS
                 ERR_print_errors(bio_err);
+#endif /* CK_HAVE_ERR_PRINT_ERRORS */
             } else {
                 fflush(stderr);
                 fprintf(stderr,"ssl_tn_init() failed\n");
