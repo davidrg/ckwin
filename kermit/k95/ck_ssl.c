@@ -2718,7 +2718,12 @@ ssl_get_dNSName(ssl) SSL * ssl;
             return NULL;
         if (!(ext = X509_get_ext(server_cert, i)))
             return NULL;
+#ifndef CK_WOLFSSL
+        /* WolfSSL doesn't have this, and in current OpenSSL 3.x it doesn't do
+         * anything anyway.
+         */
         X509V3_add_standard_extensions();
+#endif /* CK_WOLFSSL */
         if (!(ialt = X509V3_EXT_d2i(ext)))
             return NULL;
         for (i = 0; i < sk_GENERAL_NAME_num(ialt); i++) {
@@ -3115,7 +3120,12 @@ tls_get_SAN_objs(SSL * ssl, int type)
             goto eject;
         if (!(ext = X509_get_ext(server_cert, i)))
             goto eject;
+#ifndef CK_WOLFSSL
+        /* WolfSSL doesn't have this, and in current OpenSSL 3.x it doesn't do
+         * anything anyway.
+         */
         X509V3_add_standard_extensions();
+#endif /* CK_WOLFSSL */
         if (!(ialt = X509V3_EXT_d2i(ext)))
             goto eject;
         rv = objs;
@@ -4638,7 +4648,12 @@ X509_to_user(X509 *peer_cert, char *userid, int len)
         return -1;
     if (!(ext = X509_get_ext(peer_cert, i)))
         return -1;
-    X509V3_add_standard_extensions();
+#ifndef CK_WOLFSSL
+        /* WolfSSL doesn't have this, and in current OpenSSL 3.x it doesn't do
+         * anything anyway.
+         */
+        X509V3_add_standard_extensions();
+#endif /* CK_WOLFSSL */
     if (!(ialt = X509V3_EXT_d2i(ext)))
         return -1;
     for (i = 0; i < sk_GENERAL_NAME_num(ialt); i++) {
