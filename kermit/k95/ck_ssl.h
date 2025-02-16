@@ -34,6 +34,22 @@
 #endif /* ZLIB */
 #endif /* OS2 */
 
+#ifdef CK_WOLFSSL
+#include <wolfssl/options.h>
+
+/* WolfSSL may pretend to be an older version of OpenSSL, but it lacks certain
+ * functions such as TLSv1_server_method and TLSv1_client_method.
+ */
+#define OPENSSL_VERSION_NUMBER 0x10100000L
+
+/* WolfSSL doesn't support Blowfish or CAST */
+#define OPENSSL_NO_BF
+#define OPENSSL_NO_CAST
+
+/* Doesn't seem to supply comp.h either */
+#define OPENSSL_NO_COMP
+#endif
+
 #ifdef ZLIB
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
@@ -67,6 +83,8 @@
 #define COMPAT_VERSION_MASK 0xfffff00f  /* MNNFFppS, major+minor+fix+status */
 #endif	/* OPENSSL_100 */
 
+
+
 #ifdef OPENSSL_098
 #ifndef OPENSSL_097                     /* sms 15 November 2022 */
 #define OPENSSL_097
@@ -82,10 +100,14 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_BF
 #include <openssl/blowfish.h>
+#endif /* OPENSSL_NO_BF */
 #include <openssl/dh.h>
 #include <openssl/rc4.h>
+#ifndef OPENSSL_NO_CAST
 #include <openssl/cast.h>
+#endif /* OPENSSL_NO_CAST */
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
 #include <openssl/md5.h>

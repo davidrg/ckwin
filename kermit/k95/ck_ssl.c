@@ -1525,9 +1525,17 @@ ssl_once_init()
 #ifndef OS2ONLY
     debug(F111,"OpenSSL Library",SSLeay_version(SSLEAY_VERSION),
            SSLeay());
+
+    /* WolfSSL doesn't ahve some of these version constants */
+#ifdef SSLEAY_BUILT_ON
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_BUILT_ON),0);
+#endif /* SSLEAY_BUILT_ON */
+#ifdef SSLEAY_CFLAGS
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_CFLAGS),0);
+#endif /* SSLEAY_CFLAGS */
+#ifdef SSLEAY_PLATFORM
     debug(F110,"OpenSSL Library",SSLeay_version(SSLEAY_PLATFORM),0);
+#endif /* SSLEAY_PLATFORM */
 
     /* The following test is suggested by Richard Levitte */
     /* if (((OPENSSL_VERSION_NUMBER ^ SSLeay()) & 0xffffff0f) */
@@ -3113,13 +3121,15 @@ tls_get_SAN_objs(SSL * ssl, int type)
         rv = objs;
         for (i = 0, j = 0; i < sk_GENERAL_NAME_num(ialt) && j < NUM_SAN_OBJS - 2; i++) {
             gen = sk_GENERAL_NAME_value(ialt, i);
+#ifndef CK_WOLFSSL
             /* The use of V_ASN1_CONTEXT_SPECIFIC is because OpenSSL 0.9.6 defined its
              * types | V_ASN1_CONTEXT_SPECIFIC.  0.9.7 does not.  In case, we are built
              * with one and linked to the other we use this hack.
              */
             if ((gen->type | V_ASN1_CONTEXT_SPECIFIC) == (type | V_ASN1_CONTEXT_SPECIFIC)) {
+#endif /* CK_WOLFSSL */
                 if (!gen->d.ia5 || !gen->d.ia5->length)
-		  break;
+		          break;
                 if (strlen((char *)gen->d.ia5->data) != gen->d.ia5->length) {
                     /* Ignoring IA5String containing null character */
                     continue;
@@ -3130,7 +3140,9 @@ tls_get_SAN_objs(SSL * ssl, int type)
                     objs[j][gen->d.ia5->length] = 0;
                     j++;
                 }
+#ifndef CK_WOLFSSL
             }
+#endif /* CK_WOLFSSL */
         }
         X509V3_EXT_cleanup();
     }
@@ -3875,6 +3887,10 @@ ck_tn_tls_negotiate(VOID)
                 if ( verbosity )
                     printf("[TLS - commonName=%s]\r\n",str);
 
+#ifndef CK_WOLFSSL
+                /* WolfSSL doesn't seem to provide either NID_uniqueIdentifier
+                 * or NID_x500UniqueIdentifier
+                 */
                 X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
 #ifndef NID_x500UniqueIdentifier
                                            NID_uniqueIdentifier,
@@ -3886,6 +3902,7 @@ ck_tn_tls_negotiate(VOID)
                                            );
                 if ( verbosity )
                     printf("[TLS - uniqueIdentifier=%s]\r\n",str);
+#endif /* CK_WOLFSSL */
 
                 /* Try to determine user name */
                 uid = tls_userid_from_client_cert(tls_con);
@@ -4182,6 +4199,8 @@ ck_ssl_incoming(fd) int fd;
                                        );
             printf("[TLS - commonName=%s]\r\n",str);
 
+#ifndef CK_WOLFSSL
+            /* WolfSSL doesn't seem to provide access to the unique identifier*/
             X509_NAME_get_text_by_NID(X509_get_subject_name(peer),
 #ifndef NID_x500UniqueIdentifier
                                        NID_uniqueIdentifier,
@@ -4191,6 +4210,7 @@ ck_ssl_incoming(fd) int fd;
                                        str,256
                                        );
             printf("[TLS - uniqueIdentifier=%s]\r\n",str);
+#endif /* CK_WOLFSSL */
 
             /* Try to determine user name */
             uid = tls_userid_from_client_cert(tls_con);

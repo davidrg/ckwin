@@ -20,6 +20,9 @@
 #include "ckcdeb.h"
 #define OPENSSL_ENABLE_OLD_DES_SUPPORT
 #ifdef CK_SSL
+#ifdef CK_WOLFSSL
+#include <wolfssl/options.h>
+#endif /* CK_WOLFSSL */
 #include "openssl/des.h"
 #endif
 #include "ck_ssl.h"
