@@ -4531,6 +4531,13 @@ ck_ssl_http_client(fd, hostname) int fd; char * hostname;
     return(0);  /* success */
 }
 #endif /* NOHTTP */
+
+#ifndef CK_WOLFSSL
+/* WolfSSL does have SSL_renegotiate, but its use is discouraged and you have
+ * to enable support at build time, something its CMake makefiles don't support
+ * in early 2025. Kermit 95 doesn't seem to call this function at all anyway,
+ * so we can just exclude it.
+ */
 int
 ck_ssl_renegotiate_ciphers()
 {
@@ -4547,6 +4554,7 @@ ck_ssl_renegotiate_ciphers()
         return SSL_renegotiate(tls_con);
     return(0);
 }
+#endif /* CK_WOLFSSL */
 
 #ifdef NT
 int 
