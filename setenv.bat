@@ -378,6 +378,22 @@ if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
 if exist %openssl_root%\out32dll\openssl.exe set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\openssl.exe
+
+REM If we've found OpenSSL, skip looking for WolfSSL.
+if "%CKF_SSL%" == "yes" echo goto :nossl
+
+REM WolfSSL
+echo Checking for WolfSSL in %openssl_root%
+if not exist %openssl_root%\wolfssl\openssl\des.h goto :nossl
+if exist %openssl_root%\build\wolfssl.lib set include=%include%;%openssl_root%\wolfssl;%openssl_root%;%openssl_root%\build
+if exist %openssl_root%\build\wolfssl.lib set lib=%lib%;%openssl_root%\build
+if exist %openssl_root%\build\wolfssl.lib set CKF_SSL=yes
+if exist %openssl_root%\build\wolfssl.lib set CKF_OPENSSL_VERSION=WolfSSL
+if exist %openssl_root%\build\wolfssl.lib echo Found WolfSSL: %openssl_root%\build\wolfssl.lib
+if exist %openssl_root%\build\wolfssl.lib set CKF_SSL_LIBS=wolfssl.lib
+if exist %openssl_root%\build\wolfssl.lib set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% wolfssl.dll
+if exist %openssl_root%\build\wolfssl.lib set CK_WOLFSSL=yes
+
 :nossl
 
 REM libssh:
@@ -635,7 +651,7 @@ if %errorlevel% == 0 set ZINCBUILD=ow20
 if "%ZINCBUILD%" == "" goto :unsupported
 set CK_COMPILER_NAME=OpenWatcom
 set CKF_SSH=unsupported
-set CKF_SSL=unsupported
+REM set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_K4W=unsupported
 set CKB_9X_COMPATIBLE=yes
