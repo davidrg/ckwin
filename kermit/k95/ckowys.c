@@ -22,6 +22,9 @@
 /*      ]    ESC Y      Shift End          */
 
 #ifdef NT
+#ifdef CK_WS2
+#include <winsock2.h>
+#endif
 #include <windows.h>
 #else /* NT */
 #define INCL_DOSSEMAPHORES

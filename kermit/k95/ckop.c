@@ -12,6 +12,9 @@
 
 #ifdef OS2
 #ifdef NT
+#ifdef CK_WS2
+#include <winsock2.h>
+#endif
 #include <windows.h>
 #else
 #define INCL_DOSMODULEMGR

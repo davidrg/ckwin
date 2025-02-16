@@ -9,6 +9,9 @@ char *cknwin = "Win32 GUI Support 8.0.029, 10 March 2004";
   York.
 */
 
+#ifdef CK_WS2
+#include <winsock2.h>
+#endif
 #include <windows.h>
 #include <process.h>
 #include <commctrl.h>

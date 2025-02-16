@@ -34,6 +34,9 @@
 
 #ifdef NT
 
+#ifdef CK_WS2
+#include <winsock2.h>
+#endif
 #include <windows.h>
 #include <winbase.h>
 

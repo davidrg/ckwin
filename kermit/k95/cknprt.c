@@ -6,6 +6,9 @@
   York.  All rights reserved.
 */
 
+#ifdef CK_WS2
+#include <winsock2.h>
+#endif
 #include <windows.h>
 #include "ckcdeb.h"             /* Typedefs, debug formats, etc */
 #include "ckcker.h"             /* Kermit definitions */

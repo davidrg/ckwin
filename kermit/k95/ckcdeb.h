@@ -823,6 +823,9 @@
 #endif /* OS2ORWIN32 */
 #ifdef NT
 #define NOCRYPT
+#ifdef CK_WS2
+#include <winsock2.h>
+#endif
 #include <windows.h>
 #define NTSIG
 #else /* NT */
