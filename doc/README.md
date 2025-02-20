@@ -7,7 +7,7 @@ This directory contains documentation for Kermit 95:
 * [SSH Readme](ssh-readme.md) (slowly becoming obsolete)
 * [The User Manual](#the-user-manual)
 * [Quick History of Open Source Kermit 95](k95-open.md)
-* [Supported Control Sequences](ctlseqs.html)
+* [Supported Control Sequences](ctlseqs.html) - Also [available online!](https://davidrg.github.io/ckwin/dev/ctlseqs.html)
 * Build instructions
   * [Supported Compilers](compilers.md)
   * [Building for Windows with Visual C++ or Open Watcom](building.md)
