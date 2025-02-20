@@ -160,6 +160,11 @@ REM Copy manual to the output directory updating version numbers, etc, as we go
 REM Parameters are: source-directory destination-directory, git-file-dates dry-run dev-mode web-mode use-https
 k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATES% %DEV_MODE% %WEB_MODE% %HTTPS_MODE% %BANNER_FILE% || goto :failed
 
+REM If building for the web, put the ctlseqs document in there so it ends up
+REM on the website. Its not actually part of the manual though - for the normal
+REM dist process it just ends up in the docs folder.
+if "%WEB_MODE%" == "true" copy %docs_root%\ctlseqs.html %OUT_DIR%
+
 echo manual done.
 goto :finished
 
