@@ -3,6 +3,13 @@ This document covers what has changed in each release of Kermit 95 since its
 first open-source release in 2022.  For a more in-depth look at what has 
 changed, check the git commit log.
 
+Because it's been over 20 years since the last stable release of K95, changes
+for the Kermit 95 v3.0 beta releases (which are already more usable than the
+last stable release) are temporarily included here, with the full v3.0 change 
+log living in the [Whats New in 3.0](whats-new.md) document. When the final 
+release of v3.0 eventually happens, the details about the various v3.0 
+eventually be moved elsewhere, with the full v3.0 change log taking their place.
+
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
 As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name

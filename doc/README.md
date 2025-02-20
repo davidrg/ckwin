@@ -3,8 +3,11 @@ Kermit 95 Documentation Index
 This directory contains documentation for Kermit 95:
 
 * [Change Log](changes.md)
-* [SSH Readme](ssh-readme.md)
+* [What's New in Kermit 95 v3.0](whats-new.md)
+* [SSH Readme](ssh-readme.md) (slowly becoming obsolete)
 * [The User Manual](#the-user-manual)
+* [Quick History of Open Source Kermit 95](k95-open.md)
+* [Supported Control Sequences](ctlseqs.html)
 * Build instructions
   * [Supported Compilers](compilers.md)
   * [Building for Windows with Visual C++ or Open Watcom](building.md)
