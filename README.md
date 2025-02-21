@@ -78,7 +78,7 @@ features become unavailable:
 | PTY            | Windows 10 version 1809                     | Windows cmd/powershell/WSL using the K95 terminal emulator                                                     |
 | SSH Client     | Windows XP SP 3                             | Earlier Windows releases will require writing an alternative SSH module based on some other SSH implementation |
 | SSL/TLS        | Windows XP SP 3                             | This includes https, ftps and secure telnet support                                                            |
-| REXX Scripting | Windows XP SP 3 on x86 or x86-64            | It is hoped REXX support with be extended to builds for other Windows versions eventually.                     |
+| REXX Scripting | Windows XP SP 3 on x86 or x86-64            | It is hoped REXX support will be extended to builds for other Windows versions eventually.                     |
 | TAPI           | Windows 95 or NT 4.0                        | Modem dialing via `set modem` should still work on earlier versions of windows                                 |
 | Toolbar        | Windows NT 3.51                             | Some GUI dialogs also require at least NT 3.51                                                                 |
 | Dialer         | Windows NT 3.51                             | Not available on NT 3.50 currently                                                                             |
