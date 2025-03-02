@@ -3,13 +3,14 @@ set local
 @echo === Make Distribution ===
 
 @echo Create directories...
+REM These should normally go in: %PROGRAMFILES%\Kermit 95
 if not exist dist\NUL mkdir dist
 if not exist dist\docs\NUL mkdir dist\docs
 if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 REM if not exist dist\icons mkdir dist\icons
 REM if not exist dist\fonts mkdir dist\fonts
 
-REM These directories would normally go in: C:\ProgramData\Kermit 95
+REM These directories would normally go in: %ALLUSERSPROFILE%\Kermit 95
 REM if not exist dist\certs\NUL mkdir dist\certs
 REM if not exist dist\crls\NUL mkdir dist\crls
 if not exist dist\keymaps\NUL mkdir dist\keymaps
@@ -21,6 +22,7 @@ REM if not exist dist\ssh\NUL mkdir dist\ssh
 if not exist dist\users\NUL mkdir dist\users
 
 @echo Move build outputs...
+REM All of this should go in: %PROGRAMFILES%\Kermit 95
 move *.exe dist
 if exist *.pdb move *.pdb dist
 if exist dist\nullssh.pdb del dist\nullssh.pdb
@@ -45,12 +47,19 @@ if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
 @echo Copy resources...
 copy k95d.cfg dist
 
-REM The following would go in "C:\ProgramData\Kermit 95" if installed:
+REM ----------------------------------------------------------
+REM The following should go in: %ALLUSERSPROFILE%\Kermit 95
 copy k95.ini dist
 copy k95custom.ini dist\k95custom.sample
 copy welcome.txt dist
 copy hostmode.bat dist
 REM (k95custom.sample should be renamed to k95custom.ini upon installation)
+REM k95site.ini should also be included once an installer exists
+REM    And perhaps we should update it to copy %ALLUSERSPROFILE%\k95custom.ini
+REM    to %APPDATA%\k95custom.ini if it doesn't already exist.
+REM ca_certs.pem and ca_certs.license
+REM dialinf.dat when we have that (this is the dialer templates, etc)
+REM ----------------------------------------------------------
 
 @echo Copy Open Watcom DLL run-time libraries
 if "%WATCOM%"=="" goto :noowrtdll
