@@ -503,6 +503,12 @@ extern int send_c1_usr ;                /* User default for send_c1 */
     45 - Soft-key mapping
     46 - ASCII Terminal emulation
 */
+/* RFC1091 (telnet terminal type option) recommends using the terminal types
+ * from RFC1010. This has been obsoleted by the online database available at:
+ *   https://www.iana.org/assignments/terminal-type-names/terminal-type-names.xhtml
+ * though it doesn't appear to have been updated in a *very* long time; the
+ * VT420 (released 1990) and VT520 (released 1993) are missing for example.
+ */
 struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "TTY", {NULL},                              "",                    /* Teletype */
     "D200", {"DG200","DATA-GENERAL-200",NULL},  "o#!J ",               /* Data General 200 */
