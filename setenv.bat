@@ -545,7 +545,7 @@ if "%rexxre_root%" == "" set rexxre_root=%rexx_root%\..\rexxre
 if not exist %rexxre_root%\rexxre.dll goto :norexxre
 
 echo Found RexxRE
-set CKB_REXX_DIST_DLLS=%CKB_REXX_DIST_DLLS% %rexxre_root%\rexxre.dll
+set CKB_REXX_DIST_DLLS=%CKB_REXX_DIST_DLLS% %rexxre_root%\rexxre.dll %rexxre_root%\rexxre.pdb
 
 :norexxre
 :norex
