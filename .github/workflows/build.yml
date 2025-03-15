@@ -627,7 +627,7 @@ jobs:
           REM /FS *should* solve, but seemingly doesn't.
           REM TODO: Take another look at this sometime and see if we can fix it
           REM       properly.
-          set CKB_MAKE_PDB=no
+          set CKB_MAKE_PDB=yes
             
           REM If the target arch is incompatible with the host arch, use
           REM the x86 version of ckwart.exe which should have been placed
