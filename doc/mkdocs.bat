@@ -163,10 +163,6 @@ k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATE
 REM Build the control-sequences documentation
 pushd %docs_root%
 %dist_root%\k95.exe -Y -# 94 -C "take xml2doc.ksc %DEV_MODE% {preliminary-ctlseqs.html} 1, exit" || goto :failed
-move ctlseqs.html %docs_root%\
-move outline.html %docs_root%\
-move term-ctlseqs.html %docs_root%\
-move tt-ctlseqs.html %docs_root%\
 popd
 
 
@@ -177,6 +173,8 @@ if "%WEB_MODE%" == "true" copy %docs_root%\ctlseqs.html %OUT_DIR%
 if "%WEB_MODE%" == "true" copy %docs_root%\outline.html %OUT_DIR%
 if "%WEB_MODE%" == "true" copy %docs_root%\term-ctlseqs.html %OUT_DIR%
 if "%WEB_MODE%" == "true" copy %docs_root%\tt-ctlseqs.html %OUT_DIR%
+if "%WEB_MODE%" == "true" copy %docs_root%\todo.html %OUT_DIR%
+if "%WEB_MODE%" == "false" del %docs_root%\todo.html
 
 :end_web_mode
 echo manual done.
