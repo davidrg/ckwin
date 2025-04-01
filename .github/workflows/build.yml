@@ -1805,6 +1805,54 @@ jobs:
 
   # This version is for publishing on the internet elsewhere. HTML files end
   # in .html, and index.html is the front page of the manual.
+  Build-Ctlseqs-Doc:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs: Check-Build-Type
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+          
+          cd docs
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc, exit" || goto :failed
+          
+          goto :done
+          
+          :dev_doc          
+          %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc 1 {preliminary-ctlseqs.html}, exit" || goto :failed
+          
+          goto :done
+          
+          :done
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: |
+            ${{ github.workspace }}\docs\ctlseqs.html
+            ${{ github.workspace }}\docs\outline.html
+            ${{ github.workspace }}\docs\term-ctlseqs.html
+            ${{ github.workspace }}\docs\tt-ctlseqs.html
+            ${{ github.workspace }}\docs\todo.html
+          retention-days: 1
+
+  # This version is for publishing on the internet elsewhere. HTML files end
+  # in .html, and index.html is the front page of the manual.
   Build-Manual-Web-Dist:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
@@ -1850,7 +1898,9 @@ jobs:
   Build-Manual-Web-Pages:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Check-Build-Type
+    needs:
+      - Check-Build-Type
+      - Build-Ctlseqs-Doc
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1858,6 +1908,11 @@ jobs:
         with:
           name: k95-vs2022-x86
           path: ${{ github.workspace }}\dist
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
       - name: Prepare Documentation
         env:
           TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
@@ -1875,6 +1930,10 @@ jobs:
           call mkdocs.bat /W /D /B=${{ github.workspace }}\doc\preliminary.html
           
           :done
+          
+          REM Add the control sequences documentation to the manual so it goes
+          REM into the website.
+          copy %root%\ctlseqs\*.html %root%\doc\manual\
 
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
@@ -2118,7 +2177,9 @@ jobs:
 
   Update-x86-Artifact:
     runs-on: windows-latest
-    needs: Build-Manual-Dist
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
     steps:
       - name: Fetch K95 x86
         uses: actions/download-artifact@v4
@@ -2130,6 +2191,15 @@ jobs:
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -2139,7 +2209,9 @@ jobs:
 
   Update-x86-64-Artifact:
     runs-on: windows-latest
-    needs: Build-Manual-Dist
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
     steps:
       - name: Fetch K95 x86-64
         uses: actions/download-artifact@v4
@@ -2151,6 +2223,15 @@ jobs:
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -2160,7 +2241,9 @@ jobs:
 
   Update-arm32-Artifact:
     runs-on: windows-latest
-    needs: Build-Manual-Dist
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
     steps:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
@@ -2172,6 +2255,15 @@ jobs:
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -2181,7 +2273,9 @@ jobs:
 
   Update-arm64-Artifact:
     runs-on: windows-latest
-    needs: Build-Manual-Dist
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
     steps:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
@@ -2193,6 +2287,15 @@ jobs:
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -2202,7 +2305,7 @@ jobs:
 
   Update-ia64-Artifact:
     runs-on: windows-latest
-    needs: [Build-Manual-Dist, Build-VS2010-PSDK71]
+    needs: [Build-Manual-Dist, Build-VS2010-PSDK71, Build-Ctlseqs-Doc]
     steps:
       - name: Fetch K95 ia64
         uses: actions/download-artifact@v4
@@ -2214,6 +2317,15 @@ jobs:
         with:
           name: k95-manual-dist
           path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -2223,7 +2335,7 @@ jobs:
 
   Update-os2-Artifact:
     runs-on: windows-latest
-    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
+    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom, Build-Ctlseqs-Doc]
     steps:
       - uses: actions/checkout@v4
       - name: Load Build Tools

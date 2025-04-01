@@ -165,15 +165,13 @@ pushd %docs_root%
 %dist_root%\k95.exe -Y -# 94 -C "take xml2doc.ksc %DEV_MODE% {preliminary-ctlseqs.html} 1, exit" || goto :failed
 popd
 
-
-REM If building for the web, put the ctlseqs document in there so it ends up
-REM on the website. Its not actually part of the manual though - for the normal
-REM dist process it just ends up in the docs folder.
-if "%WEB_MODE%" == "true" copy %docs_root%\ctlseqs.html %OUT_DIR%
-if "%WEB_MODE%" == "true" copy %docs_root%\outline.html %OUT_DIR%
-if "%WEB_MODE%" == "true" copy %docs_root%\term-ctlseqs.html %OUT_DIR%
-if "%WEB_MODE%" == "true" copy %docs_root%\tt-ctlseqs.html %OUT_DIR%
-if "%WEB_MODE%" == "true" copy %docs_root%\todo.html %OUT_DIR%
+REM the control-sequences documentation isn't currently a part of the manual,
+REM but for
+copy %docs_root%\ctlseqs.html %OUT_DIR%
+copy %docs_root%\outline.html %OUT_DIR%
+copy %docs_root%\term-ctlseqs.html %OUT_DIR%
+copy %docs_root%\tt-ctlseqs.html %OUT_DIR%
+copy %docs_root%\todo.html %OUT_DIR%
 if "%WEB_MODE%" == "false" del %docs_root%\todo.html
 
 :end_web_mode
