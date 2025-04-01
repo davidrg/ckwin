@@ -1782,7 +1782,6 @@ jobs:
   # 20 seconds off the overall build time.
   Check-Build-Type:
     runs-on: windows-latest
-    needs: Build-VisualCxx
     outputs:
       commit-tag: ${{ steps.check-for-tag.outputs.tag }}
     steps:
@@ -1808,7 +1807,9 @@ jobs:
   Build-Ctlseqs-Doc:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Check-Build-Type
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1856,7 +1857,9 @@ jobs:
   Build-Manual-Web-Dist:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Check-Build-Type
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -1901,6 +1904,7 @@ jobs:
     needs:
       - Check-Build-Type
       - Build-Ctlseqs-Doc
+      - Build-VisualCxx
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -2079,7 +2083,9 @@ jobs:
   Build-Manual-Dist:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Check-Build-Type
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
@@ -2120,7 +2126,9 @@ jobs:
   Build-Manual-Dist-Vintage:
     runs-on: windows-latest
     # We need at least one artifact from the Build-VisualCxx step but Github
-    needs: Check-Build-Type
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
     steps:
       - uses: actions/checkout@v4
       - name: Fetch K95
