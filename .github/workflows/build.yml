@@ -1822,9 +1822,7 @@ jobs:
           TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
         run: |
           set root=${{ github.workspace }}
-          
-          cd %root%\docs
-          
+                   
           REM No tag? not release build
           if "%TAG%" == "" goto :dev_doc
           %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc, exit" || goto :failed
@@ -1837,7 +1835,6 @@ jobs:
           goto :done
           
           :done
-          dir
 
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
@@ -1846,11 +1843,11 @@ jobs:
         with:
           name: k95-ctlseqs-doc
           path: |
-            ${{ github.workspace }}\docs\ctlseqs.html
-            ${{ github.workspace }}\docs\outline.html
-            ${{ github.workspace }}\docs\term-ctlseqs.html
-            ${{ github.workspace }}\docs\tt-ctlseqs.html
-            ${{ github.workspace }}\docs\todo.html
+            ${{ github.workspace }}\doc\ctlseqs.html
+            ${{ github.workspace }}\doc\outline.html
+            ${{ github.workspace }}\doc\term-ctlseqs.html
+            ${{ github.workspace }}\doc\tt-ctlseqs.html
+            ${{ github.workspace }}\doc\todo.html
           retention-days: 1
 
   # This version is for publishing on the internet elsewhere. HTML files end
