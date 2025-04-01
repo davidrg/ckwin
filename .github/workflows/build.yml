@@ -2344,7 +2344,7 @@ jobs:
 
   Update-os2-Artifact:
     runs-on: windows-latest
-    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom, Build-Ctlseqs-Doc]
+    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
     steps:
       - uses: actions/checkout@v4
       - name: Load Build Tools
