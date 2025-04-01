@@ -1823,7 +1823,7 @@ jobs:
         run: |
           set root=${{ github.workspace }}
           
-          cd docs
+          cd %root%\docs
           
           REM No tag? not release build
           if "%TAG%" == "" goto :dev_doc
@@ -1837,6 +1837,7 @@ jobs:
           goto :done
           
           :done
+          dir
 
         shell: cmd
         working-directory: ${{ github.workspace }}\doc
