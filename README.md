@@ -39,8 +39,8 @@ list of all that's new, see [What's New in K95 v3.0](doc/whats-new.md).
 For a list of what's changed between the Kermit 95 3.0 beta releases, or past
 stable releases of Kermit 95, see [The Change Log](doc/changes.md)
 
-This software is currently based on C-Kermit version 10.0 Beta.11 of
-29-JUN-2024
+This software is currently based on C-Kermit version 10.0 Beta.12 of
+22 March 2025
 
 From 2013 until August 2024 this project was developed under the name
 *C-Kermit for Windows* but the decision has been made to switch back to the

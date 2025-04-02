@@ -4871,11 +4871,11 @@ extern int errno;
 #endif /* STRATUS */
 #endif /* _CRAY */
 
-#ifdef UNIX				/* Catch-all so we can have */
+#ifdef VMSORUNIX			/* Catch-all so we can have */
 #ifndef ESRCH				/* access to error mnemonics */
 #include <errno.h>			/* in all modules - 2007/08/25 */
-#endif	/* ESRCH */
-#endif	/* UNIX */
+#endif	/* ESRCH */			/* 2024-06-07 SMS.  Added VMSOR. */
+#endif	/* VMSORUNIX */
 
 #ifdef pdp11				/* Try to make some space on PDP-11 */
 #ifndef NODIAL

@@ -2352,7 +2352,7 @@ ssl_tn_init(mode) int mode;
         SSL_set_cipher_list(tls_con,ssl_cipher_list);
     } else {
         char * p;
-        if (p = getenv("SSL_CIPHER")) {
+        if ((p = getenv("SSL_CIPHER"))) {
             SSL_set_cipher_list(ssl_con,p);
             SSL_set_cipher_list(tls_con,p);
         } else {
@@ -2669,7 +2669,7 @@ ssl_http_init(hostname) char * hostname;
         SSL_set_cipher_list(tls_http_con,ssl_cipher_list);
     else {
         char * p;
-        if (p = getenv("SSL_CIPHER")) {
+        if ((p = getenv("SSL_CIPHER"))) {
             SSL_set_cipher_list(tls_http_con,p);
         } else {
             SSL_set_cipher_list(tls_http_con,DEFAULT_CIPHER_LIST);
@@ -2705,7 +2705,7 @@ ssl_get_dNSName(ssl) SSL * ssl;
         dns = NULL;
     }
 
-    if (server_cert = SSL_get_peer_certificate(ssl)) {
+    if ((server_cert = SSL_get_peer_certificate(ssl))) {
         if ((i = X509_get_ext_by_NID(server_cert, NID_subject_alt_name, -1))<0)
             return NULL;
         if (!(ext = X509_get_ext(server_cert, i)))
@@ -2730,7 +2730,15 @@ ssl_get_dNSName(ssl) SSL * ssl;
                 break;
             }
         }
+#ifndef LIBRESSL_VERSION_NUMBER
+        /* This function was removed in LibreSSL 3.9
+         *     https://github.com/libressl/portable/issues/1050
+         * In both LibreSSL 3.9 and OpenSSL 3.4, X509V3_add_standard_extensions
+         * does nothing so possibly there is nothing to clean up these days.
+         *        -- DG
+         */
         X509V3_EXT_cleanup();
+#endif /* LIBRESSL_VERSION_NUMBER */
     }
 cleanup:
     if (ialt)           sk_GENERAL_NAME_free(ialt);
@@ -2751,7 +2759,7 @@ ssl_get_commonName(ssl) SSL * ssl;
     X509 *server_cert;
 
     name_text_len = 0;
-    if (server_cert = SSL_get_peer_certificate(ssl)) {
+    if ((server_cert = SSL_get_peer_certificate(ssl))) {
         name_text_len =
 	    X509_NAME_get_text_by_NID(X509_get_subject_name(server_cert),
 				      NID_commonName, name, sizeof(name));
@@ -2783,7 +2791,7 @@ ssl_get_issuer_name(ssl) SSL * ssl;
     X509 *server_cert;
 
     name[0] = '\0';
-    if (server_cert = SSL_get_peer_certificate(ssl)) {
+    if ((server_cert = SSL_get_peer_certificate(ssl))) {
         X509_NAME_oneline(X509_get_issuer_name(server_cert),name,sizeof(name));
         X509_free(server_cert);
         return name;
@@ -2807,7 +2815,7 @@ ssl_get_subject_name(ssl) SSL * ssl;
     X509 *server_cert;
 
     name[0] = '\0';
-    if (server_cert = SSL_get_peer_certificate(ssl)) {
+    if ((server_cert = SSL_get_peer_certificate(ssl))) {
        X509_NAME_oneline(X509_get_subject_name(server_cert),name,sizeof(name));
        X509_free(server_cert);
        return name;
@@ -3070,7 +3078,7 @@ tls_userid_from_client_cert(ssl) SSL * ssl;
     int err;
     X509 *client_cert;
 
-    if (client_cert = SSL_get_peer_certificate(ssl)) {
+    if ((client_cert = SSL_get_peer_certificate(ssl))) {
         /* call the custom function */
         err = X509_to_user(client_cert, cn, sizeof(cn));
         X509_free(client_cert);
@@ -3102,7 +3110,7 @@ tls_get_SAN_objs(SSL * ssl, int type)
     GENERAL_NAME *gen = NULL;
 
     memset(objs, 0, sizeof(objs));
-    if (server_cert = SSL_get_peer_certificate(ssl)) {
+    if ((server_cert = SSL_get_peer_certificate(ssl))) {
         if ((i = X509_get_ext_by_NID(server_cert, NID_subject_alt_name, -1)) < 0)
             goto eject;
         if (!(ext = X509_get_ext(server_cert, i)))
@@ -3132,7 +3140,15 @@ tls_get_SAN_objs(SSL * ssl, int type)
                 }
             }
         }
+#ifndef LIBRESSL_VERSION_NUMBER
+        /* This function was removed in LibreSSL 3.9
+         *     https://github.com/libressl/portable/issues/1050
+         * In both LibreSSL 3.9 and OpenSSL 3.4, X509V3_add_standard_extensions
+         * does nothing so possibly there is nothing to clean up these days.
+         *        -- DG
+         */
         X509V3_EXT_cleanup();
+#endif /* LIBRESSL_VERSION_NUMBER */
     }
 eject:
     if (ialt)           sk_GENERAL_NAME_free(ialt);
@@ -3151,12 +3167,12 @@ dNSName_cmp(const char *host, const char *dNSName)
      * they should be equal many, or it's not a match
      */
     p = (char *) host;
-    while (p = strstr(p, ".")) {
+    while ((p = strstr(p, "."))) {
         c1++;
         p++;
     }
     p = (char *) dNSName;
-    while (p = strstr(p, ".")) {
+    while ((p = strstr(p, "."))) {
         c2++;
         p++;
     }
@@ -3170,12 +3186,12 @@ dNSName_cmp(const char *host, const char *dNSName)
         goto eject;
     /* make substrings by replacing '.' with '\0' */
     p = dNSName_copy;
-    while (p = strstr(p, ".")) {
+    while ((p = strstr(p, "."))) {
         *p = '\0';
         p++;
     }
     p = host_copy;
-    while (p = strstr(p, ".")) {
+    while ((p = strstr(p, "."))) {
         *p = '\0';
         p++;
     }
@@ -3291,14 +3307,14 @@ ssl_check_server_name(SSL * ssl, char * hostname)
 
     setverbosity();
     if (verbosity && !inserver) {
-        if (dNSName = tls_get_SAN_objs(ssl,GEN_DNS)) {
+        if ((dNSName = tls_get_SAN_objs(ssl,GEN_DNS))) {
             int i = 0;
             for (i = 0; dNSName[i]; i++) {
                 printf("Certificate[0] altSubjectName DNS=%s\r\n",dNSName[i]);
                 free(dNSName[i]);
             }
         }
-        if (ipAddress = tls_get_SAN_objs(ssl,GEN_IPADD)) {
+        if ((ipAddress = tls_get_SAN_objs(ssl,GEN_IPADD))) {
             int i = 0;
             char *server_ip;
             struct in_addr ia;
@@ -3313,21 +3329,21 @@ ssl_check_server_name(SSL * ssl, char * hostname)
             }
             /* ipAddress points to a static - don't free */
         }
-        if (dNSName = tls_get_SAN_objs(ssl,GEN_EMAIL)) {
+        if ((dNSName = tls_get_SAN_objs(ssl,GEN_EMAIL))) {
             int i = 0;
             for (i = 0; dNSName[i]; i++) {
                 printf("Certificate[0] altSubjectName Email=%s\r\n",dNSName[i]);
                 free(dNSName[i]);
             }
         }
-        if (dNSName = tls_get_SAN_objs(ssl,GEN_URI)) {
+        if ((dNSName = tls_get_SAN_objs(ssl,GEN_URI))) {
             int i = 0;
             for (i = 0; dNSName[i]; i++) {
                 printf("Certificate[0] altSubjectName URI=%s\r\n",dNSName[i]);
                 free(dNSName[i]);
             }
         }
-        if (dNSName = tls_get_SAN_objs(ssl,GEN_OTHERNAME)) {
+        if ((dNSName = tls_get_SAN_objs(ssl,GEN_OTHERNAME))) {
             int i = 0;
             for (i = 0; dNSName[i]; i++) {
                 printf("Certificate[0] altSubjectName Other=%s\r\n",dNSName[i]);
@@ -4639,7 +4655,15 @@ X509_to_user(X509 *peer_cert, char *userid, int len)
         }
     }
   cleanup:
+#ifndef LIBRESSL_VERSION_NUMBER
+    /* This function was removed in LibreSSL 3.9
+     *     https://github.com/libressl/portable/issues/1050
+     * In both LibreSSL 3.9 and OpenSSL 3.4, X509V3_add_standard_extensions
+     * does nothing so possibly there is nothing to clean up these days.
+     *        -- DG
+     */
     X509V3_EXT_cleanup();
+#endif /* LIBRESSL_VERSION_NUMBER */
     if (ialt)
         sk_GENERAL_NAME_free(ialt);
 

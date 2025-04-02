@@ -10763,7 +10763,7 @@ ssl_auth() {
         SSL_set_cipher_list(ssl_ftp_con,ssl_cipher_list);
     } else {
         char * p;
-        if (p = getenv("SSL_CIPHER")) {
+        if ((p = getenv("SSL_CIPHER"))) {
             SSL_set_cipher_list(ssl_ftp_con,p);
         } else {
             SSL_set_cipher_list(ssl_ftp_con,DEFAULT_CIPHER_LIST);

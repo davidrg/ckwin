@@ -1555,7 +1555,7 @@ fwdx_send_xauth_to_xserver(channel, data, len)
             else if (family == FamilyInternet) {
                 /* call with address = 4 bytes numeric ip addr (MSB) */
                 struct hostent *hi;
-                if (hi = gethostbyname(host))
+                if ((hi = gethostbyname(host)))
                     real_xauth = XauGetAuthByAddr(family, 4,
                                                   hi->h_addr, strlen(disp_no),
                                                   disp_no, 0, NULL);
@@ -2118,7 +2118,7 @@ fwdx_send_xauth(void)
         else if (family == FamilyInternet) {
             /* call with address = 4 bytes numeric ip addr (MSB) */
             struct hostent *hi;
-            if (hi = gethostbyname(host))
+            if ((hi = gethostbyname(host)))
                 real_xauth = XauGetAuthByAddr(family, 4,
                                               hi->h_addr,
                                               strlen(disp_no),

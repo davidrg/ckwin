@@ -66,6 +66,7 @@ char *cknetv = "Network support, 10.0.304, 18 Sep 2023";
 #include <errno.h>                      /* this version, but after in others */
 #endif /* I386IX */
 #include "ckcnet.h"                     /* which includes ckctel.h */
+#include "ckuusr.h"
 #ifdef CK_SSL
 #include "ck_ssl.h"
 #endif /* CK_SSL */
