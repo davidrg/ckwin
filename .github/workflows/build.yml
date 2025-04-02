@@ -2186,6 +2186,7 @@ jobs:
     needs:
       - Build-Manual-Dist
       - Build-Ctlseqs-Doc
+      - Build-VisualCxx
     steps:
       - name: Fetch K95 x86
         uses: actions/download-artifact@v4
@@ -2218,6 +2219,7 @@ jobs:
     needs:
       - Build-Manual-Dist
       - Build-Ctlseqs-Doc
+      - Build-VisualCxx
     steps:
       - name: Fetch K95 x86-64
         uses: actions/download-artifact@v4
@@ -2250,6 +2252,7 @@ jobs:
     needs:
       - Build-Manual-Dist
       - Build-Ctlseqs-Doc
+      - Build-VisualCxx
     steps:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
@@ -2282,6 +2285,7 @@ jobs:
     needs:
       - Build-Manual-Dist
       - Build-Ctlseqs-Doc
+      - Build-VisualCxx
     steps:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
