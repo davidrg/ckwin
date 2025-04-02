@@ -162,7 +162,7 @@ if "%CKB_STATIC%" == "yes" set CKB_STATIC=-DBUILD_SHARED_LIBS=OFF
 REM The version of CMake in github actions is no longer compatible with CMake
 REM versions 3.4 and older, which causes problems with libssh 0.10.6. This
 REM setting "fixes" the problem.
-if "%CKB_CMAKE_VER_OVERRIDE" == "yes" set CKB_CMAKE_VER_OV=-DCMAKE_POLICY_VERSION_MINIMUM=3.5
+if "%CKB_CMAKE_VER_OVERRIDE" == "yes" set CKB_CMAKE_VER_OV=-DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 pushd %root%\libssh\%CKB_LIBSSH%
 

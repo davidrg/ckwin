@@ -492,7 +492,7 @@ jobs:
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
         working-directory: libssh/current/build
         run: |
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
           nmake
         shell: powershell
 
@@ -501,7 +501,7 @@ jobs:
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
         working-directory: libssh/current/build
         run: |
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
           nmake        
         shell: powershell
 
