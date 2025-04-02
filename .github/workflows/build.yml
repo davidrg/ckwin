@@ -29,6 +29,8 @@ env:
   OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
   # Expected filename: https://www.libssh.org/files/0.10/libssh-0.10.6.tar.xz
   LIBSSH_VERSION: 0.10.6
+  # TODO: When upgrading to 0.11, drop -DCMAKE_POLICY_VERSION_MINIMUM=3.5 from
+  #       the ARM build jobs, and the /F flag from all the others.
   # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
@@ -416,7 +418,7 @@ jobs:
           REM /R - release build
           REM /W - build for Windows Vista or newer (not XP)
         
-          call build.bat /M out /C /R /W current
+          call build.bat /M out /C /R /F /W current
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
@@ -438,7 +440,7 @@ jobs:
           REM /R - release build
           REM /W - build for Windows Vista or newer (not XP)
         
-          call build.bat /M out /N g /G /C /R /W current
+          call build.bat /M out /N g /G /C /R /F /W current
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP)
@@ -459,7 +461,7 @@ jobs:
           REM /R - release build
           REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)        
           
-          call build.bat /M out /N x /C /R /X current
+          call build.bat /M out /N x /C /R /F /X current
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP, GSSAPI)
@@ -481,7 +483,7 @@ jobs:
           REM /R - release build
           REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)     
           
-          call build.bat /M out /N gx /G /C /R /X current
+          call build.bat /M out /N gx /G /C /R /F /X current
         shell: cmd
 
         # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
@@ -490,7 +492,7 @@ jobs:
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
         working-directory: libssh/current/build
         run: |
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
           nmake
         shell: powershell
 
@@ -499,7 +501,7 @@ jobs:
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
         working-directory: libssh/current/build
         run: |
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           nmake        
         shell: powershell
 
