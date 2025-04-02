@@ -374,6 +374,7 @@ REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_OPENSSL_VERSION=0.9.8 or 1.0.x
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_K4W_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x: %openssl_root%\out32dll\ssleay32.lib
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
