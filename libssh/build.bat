@@ -154,6 +154,7 @@ if "%CKB_STATIC%" == "yes" echo Static library
 if "%CKB_GSSAPI_PATCH%" == "yes" echo Apply GSSAPI patch
 if "%CKB_XP_PATCH%" == "yes" echo Apply Windows XP patch
 if "%CKB_XP_PATCH%" == "no" echo Reverse Windows XP patch
+if "%CKB_CMAKE_VER_OVERRIDE" == "yes" echo Force cmake policy version minimum to 3.5
 echo.
 
 if "%CKB_REL%" == "yes" set CKB_REL=-DCMAKE_BUILD_TYPE=Release
@@ -191,6 +192,7 @@ set XP_TLS=
 REM run the build!
 mkdir build
 cd build
+echo cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON %CKB_CMAKE_VER_OV%
 cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON %CKB_CMAKE_VER_OV%
 if %errorlevel% neq 0 exit /b %errorlevel%
 if "%CKB_CLEAN%" == "yes" nmake clean
