@@ -71,6 +71,10 @@ for %%I in (%*) do (
                set "CKB_GSSAPI_PATCH=yes"
                set "switch="
             )
+
+            REM This switch is just to enable building libssh 0.10.6 via Github
+            REM actions which has a newer version of cmake that thinks its
+            REM incompatbile with the libssh cmake file.
             if /i "!switch:~1!"=="F" (
                set "CKB_CMAKE_VER_OVERRIDE=yes"
                set "switch="
@@ -192,7 +196,6 @@ set XP_TLS=
 REM run the build!
 mkdir build
 cd build
-echo cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON %CKB_CMAKE_VER_OV%
 cmake .. %CKB_FRESH% -G "NMake Makefiles" %CKB_STATIC% %CKB_REL% -DOPENSSL_ROOT_DIR=%CKB_LIBSSH_OPENSSL_ROOT% %CKB_LIBSSH_ZLIB_OPT% %CKB_KERBEROS_OPT% %CKB_NAME_OPT% %XP_TLS% -DWITH_DSA=ON %CKB_CMAKE_VER_OV%
 if %errorlevel% neq 0 exit /b %errorlevel%
 if "%CKB_CLEAN%" == "yes" nmake clean
