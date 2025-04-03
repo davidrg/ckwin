@@ -20,7 +20,7 @@ env:
   OPENSSL_VERSION: 3.4.0
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
-  OPENSSL_ARM_VERSION: 3.4.0
+  OPENSSL_ARM_VERSION: 3.4.1
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
   # If jom works ideally we use that as it results in shorter build times.
   OPENSSL_MAKE: nmake
