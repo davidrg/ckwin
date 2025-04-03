@@ -154,7 +154,7 @@ if "%CKB_STATIC%" == "yes" echo Static library
 if "%CKB_GSSAPI_PATCH%" == "yes" echo Apply GSSAPI patch
 if "%CKB_XP_PATCH%" == "yes" echo Apply Windows XP patch
 if "%CKB_XP_PATCH%" == "no" echo Reverse Windows XP patch
-if "%CKB_CMAKE_VER_OVERRIDE" == "yes" echo Force cmake policy version minimum to 3.5
+if "%CKB_CMAKE_VER_OVERRIDE%" == "yes" echo Force cmake policy version minimum to 3.5
 echo.
 
 if "%CKB_REL%" == "yes" set CKB_REL=-DCMAKE_BUILD_TYPE=Release
@@ -163,7 +163,7 @@ if "%CKB_STATIC%" == "yes" set CKB_STATIC=-DBUILD_SHARED_LIBS=OFF
 REM The version of CMake in github actions is no longer compatible with CMake
 REM versions 3.4 and older, which causes problems with libssh 0.10.6. This
 REM setting "fixes" the problem.
-if "%CKB_CMAKE_VER_OVERRIDE" == "yes" set CKB_CMAKE_VER_OV=-DCMAKE_POLICY_VERSION_MINIMUM="3.5"
+if "%CKB_CMAKE_VER_OVERRIDE%" == "yes" set CKB_CMAKE_VER_OV=-DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
 pushd %root%\libssh\%CKB_LIBSSH%
 
