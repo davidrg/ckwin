@@ -1,10 +1,69 @@
-<html>
+<html lang="en">
 <head>
-    <title>Kermit 95 Documentation</title>
+    <meta charset="utf-8">
+    <title>Kermit 95</title>
 </head>
 <body>
-<h1>Kermit 95 Documentation</h1>
+<h1 id="top">Kermit 95</h1>
 <hr>
+<p>
+    Kermit 95 is a free scriptable terminal emulator and file transfer utility
+    for <a href="screenshots.html">nearly all</a> 32bit and 64bit releases of
+    Microsoft Windows, as well as 32bit IBM OS/2. Kermit 95 is the official
+    Windows and OS/2 port of C-Kermit
+    <a href="https://kermitproject.org/ckw10beta.html">from the Kermit Project</a>
+</p>
+
+<p>
+    The latest <a href="#nature">stable</a> release is: 3.0 Beta 7 (27 January 2025).
+    <a href="https://github.com/davidrg/ckwin/releases/tag/3.0.0beta7">Download it here</a>.
+</p>
+
+<p>
+    If you're upgrading from a Kermit 95 v2.1.3 or earlier, you may want to check
+    <a href="https://github.com/davidrg/ckwin/blob/master/doc/whats-new.md">
+        What's New in Kermit 95 v3.0</a>. If you're upgrading from a previous
+    Kermit 95 v3.0 beta release, then the
+    <a href="https://github.com/davidrg/ckwin/blob/master/doc/changes.md">
+    K95 3.0 beta change log</a> will tell you what's changed since the version
+    you're currently running.
+</p>
+
+<img src="images/stack.png"
+     alt="Kermit 95 on OS/2, Windows NT 3.51, Windows NT 4.0, Windows XP and Windows 11"/>
+
+<h2 id="highlights">Highlights</h2>
+<ul>
+    <li>Dozens of terminal emulation options</li>
+    <li>Full keyboard remapping</li>
+    <li>Connect via SSH†, Serial, Modem (TAPI or Direct), Named Pipe, Telnet,
+        Secure Telnet (TLS, Kerberos)†, rlogin, and PTY. Additionally,
+        NetBIOS is supported on OS/2</li>
+    <li>LAT and CTERM supported with DEC/Compaq/HP Pathworks32</li>
+    <li>RFC2217 Serial-over-telnet support</li>
+    <li>Supports Windows <em>natively</em> on x86, x86-64, ARM32, ARM64, Alpha,
+        MIPS, PowerPC, and Itanium CPUs</li>
+    <li>Runs as a <em>native</em> multithreaded 32-bit OS/2 application</li>
+    <li>Full-featured Kermit protocol implementation including server mode and
+        IKSD (based on C-Kermit)</li>
+    <li>Built-in X/Y/Z-MODEM support</li>
+    <li>Scriptable FTP(s)† and HTTP(s)† clients</li>
+    <li>Scriptable via its own scripting language (shared with
+        <a href="https://www.kermitproject.org/ckermit.html">C-Kermit</a>) and
+        REXX*</li>
+    <li>Can listen for incoming telnet or modem connections for file transfer and
+        scripting (eg, the included
+        <a href="https://www.kermitproject.org/k95host.html">Host Mode</a> scripts)</li>
+</ul>
+<p>† Secure communication methods (SSH, Telnet-ssl, ftps, https, Kerberos)
+    require Windows XP SP3 or newer.
+</p>
+<p>* REXX scripting currently requires Windows XP SP3 or newer and an x86 or
+    x86-64 CPU, or IBM OS/2. The next release will include REXX support on more
+    Windows releases and CPU architectures.
+</p>
+
+<h2 id="doc">Documentation</h2>
 <p>Three versions of the Kermit 95 manual are currently available online in addition
     to being packaged with Kermit 95:
 </p>
@@ -14,18 +73,12 @@
     <li><a href="https://kermitproject.org/k95manual/">Kermit 95 v2.1.3</a> - the last commercial release from 2003</li>
 </ul>
 
-<p>To download Kermit 95, the latest stable release is:
-    <a href="https://github.com/davidrg/ckwin/releases/tag/3.0.0beta7">
-        Kermit 95 3.0 beta 7</a>. Open Source, no registration required. It
-    <a href="screenshots.html">works on</a>:
+<p>
+    The Kermit 95 manual primarily covers details unique to Kermit 95 such as
+    its terminal emulator and SSH client. For information on its command
+    interface, telnet client and other aspects it shares with C-Kermit, see
+    <a href="https://www.kermitproject.org/uckindex.html">The C-Kermit Documentation</a>
 </p>
-<ul>
-    <li>all 32-bit and 64-bit desktop versions of Windows on any CPU architecture,
-        and most server versions (excludes Windows NT 3.10)
-    <li>IBM OS/2 2.x, Warp 3, Warp 4</li>
-</ul>
-
-<p>For support, you can ask a question <a href="https://github.com/davidrg/ckwin/discussions">on Github Discussions</a>.</p>
 
 <p>
     For information on the control sequences supported by Kermit 95, see the
@@ -35,13 +88,82 @@
     beta 7, you can find a copy of this file in your DOCS folder.
 </p>
 
+<h2 id="help">Getting Help</h2>
+<p>If you run into any trouble with Kermit 95 or need help with something, you
+    can ask a question
+    <a href="https://github.com/davidrg/ckwin/discussions">on GitHub Discussions</a>.
+    If you don't have a GitHub account, or would rather not ask a question in
+    public space, you can also email
+    <a href="mailto:ckw@kermitproject.org">ckw@kermitproject.org</a>.
+</p>
+
 <p>
-    For more information:
+    If you think you may have found a bug, you can check the
+    <a href="https://davidrg.github.io/ckwin/current/k95bugs.html">K95 Bugs List</a>
+    or the
+    <a href="https://github.com/davidrg/ckwin/issues">Issue Tracker on GitHub</a>
+    to see if your bug is described anywhere. If it isn't, feel free to log it
+    on the issue tracker or if you're not sure get in touch via one of the above
+    methods. Bugs that aren't reported aren't likely to get fixed anytime soon!
+</p>
+
+<h2 id="nature">Nature of the Current Release</h2>
+<p>
+    While recent Kermit 95 releases have carried the "beta" label, they have in
+    practice been stable feature releases. They continue to carry the beta label
+    only because:
 </p>
 <ul>
-    <li><a href="https://github.com/davidrg/ckwin/?tab=readme-ov-file#readme">The New Open Source Kermit 95</a></li>
+    <li>C-Kermit v10.0, on which Kermit 95 is based, is still in beta (though
+        the last few beta releases have only been addressing Unix/Linux/OpenVMS
+        portability concerns).</li>
+    <li>Kermit 95 v3.0 is not yet at feature parity with 2.1.3, though it isn't
+        far off now and the remaining missing features are becoming increasingly
+        esoteric.</li>
+    <li>There are a few terminal emulation features that have become common over
+        the last 20 years which Kermit 95 v3.0 should probably support (24bit
+        color, alternate screen buffer, and left/right margins to name a few).
+    </li>
+</ul>
+<p>
+    Because the last "stable" release was in 2003 and isn't freely available (or
+    particularly usable in 2025 due to changing encryption algorithms), Kermit 95
+    is currently in a kind of
+    <a href="https://en.wikipedia.org/wiki/Perpetual_beta">perpetual beta</a>
+    development stage. If the latest release meets you needs it
+    isn't worth waiting for the beta tag to disappear - the latest beta releases
+    are already more stable last stable commercial release, and the beta tag may
+    still be around for another year or three depending on how much free time the
+    projects single developer has.
+</p>
+
+<h3 id="dialer">The Dialer</h3>
+<img src="current/dialer.gif" alt="The Dialer"/>
+<p>
+    The "Dialer" as included in Kermit 95 2.1.3 and earlier is still included
+    with Kermit 95 v3.0 where possible, but it should now be considered a
+    deprecated feature. It's not going to go away, but its also not going to get
+    much in the way of enhancements or new features. It's there if you
+    <em>need</em> it, but you're better off writing scripts or macros to save
+    connection details.
+</p>
+<p>
+    The dialer is trapped in the 90s by the frameworks it was built with, so it
+    is not possible to build it for x86-64, Itanium, ARM32 or ARM64. As a result
+    it's not included with the Itanium, ARM32 or ARM64 versions of Kermit 95.
+</p>
+<p>
+    A new replacement will be developed eventually (it is in fact already more
+    than half built), but this likely appear until some release after K95 v3.0.
+    When it does appear, the dialer will receive one final upgrade to support
+    exporting its connections to a format its replacement can understand.
+</p>
+
+<h2 id="info">More Information</h2>
+<ul>
     <li><a href="https://kermitproject.org/ckw10beta.html">The Latest Kermit 95 beta information on kermitproject.org</a></li>
     <li><a href="https://kermitproject.org/k95.html">Information about Kermit 95 2.1.3</a> (from 2003, not open source)</li>
+    <li><a href="https://www.zx.net.nz/vc/notes/kermit/mskermit.shtml">Notes on transferring files with MS-DOS Kermit</a></li>
 </ul>
 <p>And these pages from <a href="https://github.com/davidrg/ckwin/wiki">the Wiki</a> may be useful:</p>
 <ul>
@@ -51,6 +173,8 @@
     <li><a href="https://github.com/davidrg/ckwin/wiki/Terminal-Emulation">Supported Terminal Emulations</a></li>
     <li><a href="https://github.com/davidrg/ckwin/wiki/Simple-Console-Server">Simple RFC2217 Console Server</a></li>
 </ul>
+<p>If you'd like to keep an eye on development progress, a
+    <a href="https://www.ext.zx.net.nz/software/notes/kermit95/">log of sorts is available</a>.</p>
 <hr>
 </body>
 </html>
