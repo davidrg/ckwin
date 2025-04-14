@@ -187,8 +187,8 @@ extern enum markmodes markmodeflag[VNUM] ;
   SET TERMINAL COLOR command (in ckuus7.c) or by CSI3x;4xm escape sequences
   from the host.
 */
-extern unsigned char     colorhelp;
-extern unsigned char     colorcmd;
+extern cell_video_attr_t colorhelp;
+extern cell_video_attr_t colorcmd;
 
 int     scrninitialized[VNUM] = {0,0,0} ;
 bool    scrollflag[VNUM]  = {0,0,0}, flipscrnflag[VNUM] = {0,0,0};
@@ -227,7 +227,7 @@ ascreen                                 /* For saving screens: */
   vt100screen,                          /* terminal screen */
   commandscreen ;                       /* OS/2 screen */
 
-extern unsigned char                    /* Video attribute bytes */
+extern cell_video_attr_t                /* Video attribute bytes */
   attribute,                            /* Current video attribute byte */
   savedattribute,                       /* Saved video attribute byte */
   defaultattribute;                     /* Default video attribute byte */
@@ -351,16 +351,21 @@ int
 
 int cmd_border = -1;
 
+/* This border stuff is OS/2 only */
 void
 setborder() {
 #ifdef CK_BORDER
     extern HVIO VioHandle ;
-    extern unsigned char borderattribute ;
+    extern cell_video_attr_t borderattribute ;
     VIOOVERSCAN vo;                     /* Set border (overscan) color */
 
     vo.cb = sizeof(vo);                 /* for terminal emulation window */
     vo.type = 1;
-    vo.color = borderattribute ;
+#ifdef CK_COLORS_16
+    vo.color = borderattribute;    /* This is always an unsigned char on OS/2 */
+#else
+#error "OS/2 builds only support 16 colours!"
+#endif
     VioSetState((PVOID) &vo, VioHandle );
 #endif /* CK_BORDER */
 }
@@ -403,7 +408,7 @@ SaveTermMode(int wherex, int wherey) {
 #endif /* KUI */
     vt100screen.ox = wherex;
     vt100screen.oy = wherey;
-    vt100screen.att = attribute;
+    vt100screen.cell_att = attribute;
     /*vt100screen.scrncpy ;      not used for terminal mode */
 }
 
@@ -447,7 +452,7 @@ SaveCmdMode(int wherex, int wherey) {
 #endif /* KUI */
     commandscreen.ox = wherex;
     commandscreen.oy = wherey;
-    commandscreen.att = colorcmd;
+    commandscreen.cell_att = colorcmd;
 }
 
 /* Restore a saved command screen */
@@ -466,7 +471,7 @@ RestoreCmdMode() {
     }
 #endif /* KUI */
 #ifdef COMMENT
-    colorcmd = commandscreen.att;
+    colorcmd = commandscreen.cell_att;
     wherey[VTERM] = commandscreen.oy;
     wherex[VTERM] = commandscreen.ox;
 #endif /* COMMENT */
@@ -688,7 +693,7 @@ getcmdcolor(void)
     USHORT  length = 1;
     if (GetCurPos( &x, &y ) == 0) {
         ReadCellStr(&cell, &length, x, y);
-        colorcmd = cell.a;
+        colorcmd = cell.video_attr;
     }
 #endif /* KUI */
 }
@@ -702,7 +707,7 @@ clearcmdscreen(void) {
 
     ttgcwsz();
     cell.c = ' ' ;
-    cell.a = colorcmd ;
+    cell.video_attr = colorcmd ;
     WrtNCell(cell, cmd_cols * (cmd_rows+1), 0, 0);
     SetCurPos( 0, 0 ) ;
 }
@@ -736,7 +741,7 @@ cleartermscreen( BYTE vmode ) {
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             line->cells[x].c = ' ' ;
-            line->cells[x].a = vmode == VTERM ? attribute : colorcmd ;
+            line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd ;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -769,7 +774,7 @@ helpstart(int w, int h, int gui) {               /* Start help window */
 #endif /* KUI */
     {
         helpcol = helprow = 0 ;
-        pPopup->a = colorhelp ;
+        pPopup->video_attr = colorhelp ;
         pPopup->width = w + 4 ;   /* 2 for border, plus 2 for padding */
         pPopup->height = h + 2 ;  /* 2 for border */
         pPopup->c[helprow][helpcol++] = 201; /* IBM upper left box corner double */
@@ -2338,7 +2343,7 @@ checkscreenmode() {
     vt100screen.mi.sbcol = vt100screen.mi.col;
 #endif /* NT */
 #endif /* KUI */
-    vt100screen.att = defaultattribute ;
+    vt100screen.cell_att = defaultattribute ;
 }
 
 void

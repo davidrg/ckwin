@@ -2437,6 +2437,9 @@ struct stringint {			/* String and (wide) integer */
 #define VN_MONTH    256			/* This month (name) */
 #define VN_NMONTH   257			/* This month (numeric) */
 #define VN_FULLVER  258			/* Full version number */
+#ifdef OS2
+#define VN_PALETTE  259         /* Terminal emulator color palette */
+#endif
 #endif /* NOSPL */
 
 /* INPUT status values */

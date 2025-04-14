@@ -259,24 +259,24 @@ extern int win95lucida, win95hsl;
   SET TERMINAL COLOR command (in ckuus7.c) or by CSI3x;4xm escape sequences
   from the host.
 */
-unsigned char     colornormal     = 0x17;
-unsigned char     colorunderline  = 0x47;
-unsigned char     colordebug      = 0x47;
-unsigned char     colorreverse    = 0x71;
-unsigned char     colorgraphic    = 0x17;
+cell_video_attr_t     colornormal     = cell_video_attr_init_vio_attribute(0x17);
+cell_video_attr_t     colorunderline  = cell_video_attr_init_vio_attribute(0x47);
+cell_video_attr_t     colordebug      = cell_video_attr_init_vio_attribute(0x47);
+cell_video_attr_t     colorreverse    = cell_video_attr_init_vio_attribute(0x71);
+cell_video_attr_t     colorgraphic    = cell_video_attr_init_vio_attribute(0x17);
 #ifdef COMMENT
-unsigned char     colorstatus     = 0x37;
-unsigned char     colorhelp       = 0x37;
+cell_video_attr_t     colorstatus     = cell_video_attr_init_vio_attribute(0x37);
+cell_video_attr_t     colorhelp       = cell_video_attr_init_vio_attribute(0x37);
 #else /* COMMENT */
-unsigned char     colorstatus     = 0x71;
-unsigned char     colorhelp       = 0x71;
+cell_video_attr_t     colorstatus     = cell_video_attr_init_vio_attribute(0x71);
+cell_video_attr_t     colorhelp       = cell_video_attr_init_vio_attribute(0x71);
 #endif /* COMMENT */
-unsigned char     colorselect     = 0xe0;
-unsigned char     colorborder     = 0x01;
-unsigned char     coloritalic     = 0x27;
+cell_video_attr_t     colorselect     = cell_video_attr_init_vio_attribute(0xe0);
+cell_video_attr_t     colorborder     = cell_video_attr_init_vio_attribute(0x01);
+cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27);
 
 int bgi = FALSE, fgi = FALSE ;
-unsigned char     colorcmd        = 0x07;
+cell_video_attr_t colorcmd        = cell_video_attr_init_vio_attribute(0x07);
 int colorreset    = TRUE ;  /* reset on CSI 0 m - use normal colors */
 int erasemode     = FALSE ; /* Use current colors when erasing characters */
 int user_erasemode= FALSE ; /* Use current colors when erasing characters */
@@ -309,6 +309,7 @@ extern int apcactive;                   /* Application Program Command (APC) */
 int apcrecv = 0;
 int dcsrecv = 0;                        /* Device Control String (DCS) */
 int oscrecv = 0;                        /* Operating System Command (OSC) */
+int oscterm = 0;                        /* OSC string terminator */
 int pmrecv  = 0;                        /* Private Message (PM) */
 int pu1recv = 0;                        /* 97801-5xx Private Use One (PU1) */
 int pu2recv = 0;                        /* 97801-5xx Private Use Two (PU2) */
@@ -342,20 +343,20 @@ extern ascreen                          /* For saving screens: */
 
 extern ascreen mousescreen; /* Screen during mouse actions */
 
-unsigned char                           /* Video attribute bytes */
-    attribute=NUL,                      /* Current video attribute byte */
-    underlineattribute=NUL,
+cell_video_attr_t                       /* Video attribute bytes */
+    attribute=cell_video_attr_init_vio_attribute(0), /* Current video attribute byte */
+    underlineattribute=cell_video_attr_init_vio_attribute(0),
     savedattribute[VNUM]={0,0,0,0},       /* Saved video attribute byte */
     saveddefaultattribute[VNUM]={0,0,0,0},/* Saved video attribute byte */
     savedunderlineattribute[VNUM]={0,0,0,0},/* Saved video attribute byte */
-    defaultattribute=NUL,               /* Default video attribute byte */
-    italicattribute=NUL,                /* Default video attribute byte */
+    defaultattribute=cell_video_attr_init_vio_attribute(0),  /* Default video attribute byte */
+    italicattribute=cell_video_attr_init_vio_attribute(0),   /* Default video attribute byte */
     saveditalicattribute[VNUM]={0,0,0,0},
-    reverseattribute=NUL,
+    reverseattribute=cell_video_attr_init_vio_attribute(0),
     savedreverseattribute[VNUM]={0,0,0,0},
-    graphicattribute=NUL,
+    graphicattribute=cell_video_attr_init_vio_attribute(0),
     savedgraphicattribute[VNUM]={0,0,0,0},
-    borderattribute=NUL,
+    borderattribute=cell_video_attr_init_vio_attribute(0),
     savedborderattribute[VNUM]={0,0,0,0};
 
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
@@ -635,6 +636,488 @@ unsigned short escbuffer[ESCBUFLEN+1];
 static int f_pushed = 0, c_pushed = 0, f_popped = 0;
 
 int sgrcolors = TRUE;                   /* Process SGR Color Commands */
+
+int colorpalette = CK_DEFAULT_PALETTE;  /* Color palette to use */
+#ifdef KUI
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+#endif /* KUI */
+
+/* The Wyse WY370 65-color palette.
+ * The first 16 colors are *NOT* ANSI/AIXTERM-compatible!
+ * TODO: Get color values for all of these! The manual only gives names.
+ *
+ * NOTE! These values aren't RGB, they're COLORREF - 0x00bbggrr (ugh)
+ */
+#ifdef CK_PALETTE_WY370
+ULONG WY370RGBTable[65] = {
+    0x000000,  /*  0 - Default                      /   /    */
+    0x000000,  /*  1 - Black                      00/ 00/ 00 */
+    0x000000,  /*  2 - Dark blue                    /   /    */
+    0x000000,  /*  3 - Deep blue                    /   /    */
+    0x000000,  /*  4 - Blue                         /   /    */
+    0x000000,  /*  5 - Grass green                  /   /    */
+    0x000000,  /*  6 - Teal blue                    /   /    */
+    0x000000,  /*  7 - Electric blue                /   /    */
+    0x000000,  /*  8 - Bright blue                  /   /    */
+    0x000000,  /*  9 - Bright green                 /   /    */
+    0x000000,  /* 10 - Light blue-green             /   /    */
+    0x000000,  /* 11 - Turquoise                    /   /    */
+    0x000000,  /* 12 - Sky blue                     /   /    */
+    0x000000,  /* 13 - Green                        /   /    */
+    0x000000,  /* 14 - Sea green                    /   /    */
+    0x000000,  /* 15 - Blue-green                   /   /    */
+    0x000000,  /* 16 - Cyan                         /   /    */
+    0x000000,  /* 17 - Brick red                    /   /    */
+    0x000000,  /* 18 - Violet                       /   /    */
+    0x000000,  /* 19 - Indigio                      /   /    */
+    0x000000,  /* 20 - Blue-purple                  /   /    */
+    0x000000,  /* 21 - Khaki-green                  /   /    */
+    0x000000,  /* 22 - Charcoal gray                /   /    */
+    0x000000,  /* 23 - Powder blue                  /   /    */
+    0x000000,  /* 24 - Medium blue                  /   /    */
+    0x000000,  /* 25 - Medium green                 /   /    */
+    0x000000,  /* 26 - Green-blue                   /   /    */
+    0x000000,  /* 27 - Blue-gray                    /   /    */
+    0x000000,  /* 28 - Light blue                   /   /    */
+    0x000000,  /* 29 - Lime green                   /   /    */
+    0x000000,  /* 30 - Seafoam green                /   /    */
+    0x000000,  /* 31 - Pale blue-green              /   /    */
+    0x000000,  /* 32 - Light cyan                   /   /    */
+    0x000000,  /* 33 - Deep red                     /   /    */
+    0x000000,  /* 34 - Rose                         /   /    */
+    0x000000,  /* 35 - Medium purple                /   /    */
+    0x000000,  /* 36 - Purple                       /   /    */
+    0x000000,  /* 37 - Orange brown                 /   /    */
+    0x000000,  /* 38 - Faded rose                   /   /    */
+    0x000000,  /* 39 - Purple-gray                  /   /    */
+    0x000000,  /* 40 - Purple-blue                  /   /    */
+    0x000000,  /* 41 - Dull chartreuse              /   /    */
+    0x000000,  /* 42 - Sage green                   /   /    */
+    0x000000,  /* 43 - Gray                         /   /    */
+    0x000000,  /* 44 - Light blue-purple            /   /    */
+    0x000000,  /* 45 - Chartreuse                   /   /    */
+    0x000000,  /* 46 - Pale green                   /   /    */
+    0x000000,  /* 47 - Faded blue-green             /   /    */
+    0x000000,  /* 48 - Pale cyan                    /   /    */
+    0x000000,  /* 49 - Red                          /   /    */
+    0x000000,  /* 50 - Hot pink                     /   /    */
+    0x000000,  /* 51 - Magenta                      /   /    */
+    0x000000,  /* 52 - Light purple                 /   /    */
+    0x000000,  /* 53 - Red-orange                   /   /    */
+    0x000000,  /* 54 - Pale pink                    /   /    */
+    0x000000,  /* 55 - Purple pink                  /   /    */
+    0x000000,  /* 56 - Light violet                 /   /    */
+    0x000000,  /* 57 - Amber                        /   /    */
+    0x000000,  /* 58 - Tan                          /   /    */
+    0x000000,  /* 59 - Faded purple                 /   /    */
+    0x000000,  /* 60 - Pale purple                  /   /    */
+    0x000000,  /* 61 - Yellow                       /   /    */
+    0x000000,  /* 62 - Pale yellow                  /   /    */
+    0x000000,  /* 63 - Cream                        /   /    */
+    0x000000,  /* 64 - White                        /   /    */
+};
+#endif /* CK_PALETTE_WY370 */
+
+/* The xterm 256-color palette
+ *
+ * NOTE! These values aren't RGB, they're COLORREF - 0x00bbggrr (ugh)
+ */
+ULONG RGBTable256[256] = {
+    /* First 8 are the standard SGR colors, and the second 8
+     * are the intense colors. These are in OS/2 VIO order, *not*
+     * SGR/xterm indexed color order  (the number in the comments
+     * is the xterm color number */
+    0x000000,  /*   0 - Black                      0/  0/  0 */
+    0x800000,  /*   4 - Navy (Blue)                0/  0/128 */
+    0x008000,  /*   2 - Green                      0/128/  0 */
+    0x808000,  /*   3 - Olive (Brown)            128/128/  0 */
+    0x000080,  /*   1 - Maroon (Red)             128/  0/  0 */
+    0x800080,  /*   5 - Purple (Magenta)         128/  0/128 */
+    0x008080,  /*   6 - Teal (Cyan)                0/128/128 */
+    0xc0c0c0,  /*   7 - Silver (Light Gray)      192/192/192 */
+    0x808080,  /*   8 - Grey (Dark Gray)         128/128/128 */
+    0xff0000,  /*  12 - Blue (Light Blue)          0/  0/255 */
+    0x00ff00,  /*  10 - Lime (Light Green)         0/255/  0 */
+    0xffff00,  /*  11 - Yellow                   255/255/  0 */
+    0x0000ff,  /*   9 - Red (Light Red)          255/  0/  0 */
+    0xff00ff,  /*  13 - Fuchsia (Light Magenta)  255/  0/255 */
+    0x00ffff,  /*  14 - Aqua (Light Cyan)          0/255/255 */
+    0xffffff,  /*  15 - White                    255/255/255 */
+    /* And the rest is the xterm 256-color palette */
+    //BBGGRR
+    0x000000,    /*  16 -                            0/  0/  0 */
+    0x5F0000,    /*  17 -                            0/  0/ 95 */
+    0x870000,    /*  18 -                            0/  0/135 */
+    0xAF0000,    /*  19 -                            0/  0/175 */
+    0xD70000,    /*  20 -                            0/  0/215 */
+    0xFF0000,    /*  21 -                            0/  0/255 */
+    0x005F00,    /*  22 -                            0/ 95/  0 */
+    0x5F5F00,    /*  23 -                            0/ 95/ 95 */
+    0x875F00,    /*  24 -                            0/ 95/135 */
+    0xAF5F00,    /*  25 -                            0/ 95/175 */
+    0xD75F00,    /*  26 -                            0/ 95/215 */
+    0xFF5F00,    /*  27 -                            0/ 95/255 */
+    0x008700,    /*  28 -                            0/135/  0 */
+    0x5F8700,    /*  29 -                            0/135/ 95 */
+    0x878700,    /*  30 -                            0/135/135 */
+    0xAF8700,    /*  31 -                            0/135/175 */
+    0xD78700,    /*  32 -                            0/135/215 */
+    0xFF8700,    /*  33 -                            0/135/255 */
+    0x00AF00,    /*  34 -                            0/175/  0 */
+    0x5FAF00,    /*  35 -                            0/175/ 95 */
+    0x87AF00,    /*  36 -                            0/175/135 */
+    0xAFAF00,    /*  37 -                            0/175/175 */
+    0xD7AF00,    /*  38 -                            0/175/215 */
+    0xFFAF00,    /*  39 -                            0/175/255 */
+    0x00D700,    /*  40 -                            0/215/  0 */
+    0x5FD700,    /*  41 -                            0/215/ 95 */
+    0x87D700,    /*  42 -                            0/215/135 */
+    0xAFD700,    /*  43 -                            0/215/175 */
+    0xD7D700,    /*  44 -                            0/215/215 */
+    0xFFD700,    /*  45 -                            0/215/255 */
+    0x00FF00,    /*  46 -                            0/255/  0 */
+    0x5FFF00,    /*  47 -                            0/255/ 95 */
+    0x87FF00,    /*  48 -                            0/255/135 */
+    0xAFFF00,    /*  49 -                            0/255/175 */
+    0xD7FF00,    /*  50 -                            0/255/215 */
+    0xFFFF00,    /*  51 -                            0/255/255 */
+    0x00005F,    /*  52 -                           95/  0/  0 */
+    0x5F005F,    /*  53 -                           95/  0/ 95 */
+    0x87005F,    /*  54 -                           95/  0/135 */
+    0xAF005F,    /*  55 -                           95/  0/175 */
+    0xD7005F,    /*  56 -                           95/  0/215 */
+    0xFF005F,    /*  57 -                           95/  0/255 */
+    0x005F5F,    /*  58 -                           95/ 95/  0 */
+    0x5F5F5F,    /*  59 -                           95/ 95/ 95 */
+    0x875F5F,    /*  60 -                           95/ 95/135 */
+    0xAF5F5F,    /*  61 -                           95/ 95/175 */
+    0xD75F5F,    /*  62 -                           95/ 95/215 */
+    0xFF5F5F,    /*  63 -                           95/ 95/255 */
+    0x00875F,    /*  64 -                           95/135/  0 */
+    0x5F875F,    /*  65 -                           95/135/ 95 */
+    0x87875F,    /*  66 -                           95/135/135 */
+    0xAF875F,    /*  67 -                           95/135/175 */
+    0xD7875F,    /*  68 -                           95/135/215 */
+    0xFF875F,    /*  69 -                           95/135/255 */
+    0x00AF5F,    /*  70 -                           95/175/  0 */
+    0x5FAF5F,    /*  71 -                           95/175/ 95 */
+    0x87AF5F,    /*  72 -                           95/175/135 */
+    0xAFAF5F,    /*  73 -                           95/175/175 */
+    0xD7AF5F,    /*  74 -                           95/175/215 */
+    0xFFAF5F,    /*  75 -                           95/175/255 */
+    0x00D75F,    /*  76 -                           95/215/  0 */
+    0x5FD75F,    /*  77 -                           95/215/ 95 */
+    0x87D75F,    /*  78 -                           95/215/135 */
+    0xAFD75F,    /*  79 -                           95/215/175 */
+    0xD7D75F,    /*  80 -                           95/215/215 */
+    0xFFD75F,    /*  81 -                           95/215/255 */
+    0x00FF5F,    /*  82 -                           95/255/  0 */
+    0x5FFF5F,    /*  83 -                           95/255/ 95 */
+    0x87FF5F,    /*  84 -                           95/255/135 */
+    0xAFFF5F,    /*  85 -                           95/255/175 */
+    0xD7FF5F,    /*  86 -                           95/255/215 */
+    0xFFFF5F,    /*  87 -                           95/255/255 */
+    0x000087,    /*  88 -                          135/  0/  0 */
+    0x5F0087,    /*  89 -                          135/  0/ 95 */
+    0x870087,    /*  90 -                          135/  0/135 */
+    0xAF0087,    /*  91 -                          135/  0/175 */
+    0xD70087,    /*  92 -                          135/  0/215 */
+    0xFF0087,    /*  93 -                          135/  0/255 */
+    0x005F87,    /*  94 -                          135/ 95/  0 */
+    0x5F5F87,    /*  95 -                          135/ 95/ 95 */
+    0x875F87,    /*  96 -                          135/ 95/135 */
+    0xAF5F87,    /*  97 -                          135/ 95/175 */
+    0xD75F87,    /*  98 -                          135/ 95/215 */
+    0xFF5F87,    /*  99 -                          135/ 95/255 */
+    0x008787,    /* 100 -                          135/135/  0 */
+    0x5F8787,    /* 101 -                          135/135/ 95 */
+    0x878787,    /* 102 -                          135/135/135 */
+    0xAF8787,    /* 103 -                          135/135/175 */
+    0xD78787,    /* 104 -                          135/135/215 */
+    0xFF8787,    /* 105 -                          135/135/255 */
+    0x00AF87,    /* 106 -                          135/175/  0 */
+    0x5FAF87,    /* 107 -                          135/175/ 95 */
+    0x87AF87,    /* 108 -                          135/175/135 */
+    0xAFAF87,    /* 109 -                          135/175/175 */
+    0xD7AF87,    /* 110 -                          135/175/215 */
+    0xFFAF87,    /* 111 -                          135/175/255 */
+    0x00D787,    /* 112 -                          135/215/  0 */
+    0x5FD787,    /* 113 -                          135/215/ 95 */
+    0x87D787,    /* 114 -                          135/215/135 */
+    0xAFD787,    /* 115 -                          135/215/175 */
+    0xD7D787,    /* 116 -                          135/215/215 */
+    0xFFD787,    /* 117 -                          135/215/255 */
+    0x00FF87,    /* 118 -                          135/255/  0 */
+    0x5FFF87,    /* 119 -                          135/255/ 95 */
+    0x87FF87,    /* 120 -                          135/255/135 */
+    0xAFFF87,    /* 121 -                          315/255/175 */
+    0xD7FF87,    /* 122 -                          135/255/215 */
+    0xFFFF87,    /* 123 -                          135/255/255 */
+    0x0000AF,    /* 124 -                          175/  0/  0 */
+    0x5F00AF,    /* 125 -                          175/  0/ 95 */
+    0x8700AF,    /* 126 -                          175/  0/135 */
+    0xAF00AF,    /* 127 -                          175/  0/175 */
+    0xD700AF,    /* 128 -                          175/  0/215 */
+    0xFF00AF,    /* 129 -                          175/  0/255 */
+    0x005FAF,    /* 130 -                          175/ 95/  0 */
+    0x5F5FAF,    /* 131 -                          175/ 95/ 95 */
+    0x875FAF,    /* 132 -                          175/ 95/135 */
+    0xAF5FAF,    /* 133 -                          175/ 95/175 */
+    0xD75FAF,    /* 134 -                          175/ 95/215 */
+    0xFF5FAF,    /* 135 -                          175/ 95/255 */
+    0x0087AF,    /* 136 -                          175/135/  0 */
+    0x5F87AF,    /* 137 -                          175/135/ 95 */
+    0x8787AF,    /* 138 -                          175/135/135 */
+    0xAF87AF,    /* 139 -                          175/135/175 */
+    0xD787AF,    /* 140 -                          175/135/215 */
+    0xFF87AF,    /* 141 -                          175/135/255 */
+    0x00AFAF,    /* 142 -                          175/175/  0 */
+    0x5FAFAF,    /* 143 -                          175/175/ 95 */
+    0x87AFAF,    /* 144 -                          175/175/135 */
+    0xAFAFAF,    /* 145 -                          175/175/175 */
+    0xD7AFAF,    /* 146 -                          175/175/215 */
+    0xFFAFAF,    /* 147 -                          175/175/255 */
+    0x00D7AF,    /* 148 -                          175/215/  0 */
+    0x5FD7AF,    /* 149 -                          175/215/ 95 */
+    0x87D7AF,    /* 150 -                          175/215/135 */
+    0xAFD7AF,    /* 151 -                          175/215/175 */
+    0xD7D7AF,    /* 152 -                          175/215/215 */
+    0xFFD7AF,    /* 153 -                          175/215/255 */
+    0x00FFAF,    /* 154 -                          175/255/  0 */
+    0x5FFFAF,    /* 155 -                          175/255/ 95 */
+    0x87FFAF,    /* 156 -                          175/255/135 */
+    0xAFFFAF,    /* 157 -                          175/255/175 */
+    0xD7FFAF,    /* 158 -                          175/255/215 */
+    0xFFFFAF,    /* 159 -                          175/255/255 */
+    0x0000A7,    /* 160 -                          215/  0/  0 */
+    0x5F00D7,    /* 161 -                          215/  0/ 95 */
+    0x8700D7,    /* 162 -                          215/  0/135 */
+    0xAF00D7,    /* 163 -                          215/  0/175 */
+    0xD700D7,    /* 164 -                          215/  0/215 */
+    0xFF00D7,    /* 165 -                          215/  0/255 */
+    0x005FD7,    /* 166 -                          215/ 95/  0 */
+    0x5F5FD7,    /* 167 -                          215/ 95/ 95 */
+    0x875FD7,    /* 168 -                          215/ 95/135 */
+    0xAF5FD7,    /* 169 -                          215/ 95/175 */
+    0xD75FD7,    /* 170 -                          215/ 95/215 */
+    0xFF5FD7,    /* 171 -                          215/ 95/255 */
+    0x0087D7,    /* 172 -                          215/135/  0 */
+    0x5F87D7,    /* 173 -                          215/135/ 95 */
+    0x8787D7,    /* 174 -                          215/135/135 */
+    0xAF87D7,    /* 175 -                          215/135/175 */
+    0xD787D7,    /* 176 -                          215/135/215 */
+    0xFF87D7,    /* 177 -                          215/135/255 */
+    0x00AFD7,    /* 178 -                          215/175/  0 */
+    0x5FAFD7,    /* 179 -                          215/175/ 95 */
+    0x87AFD7,    /* 180 -                          215/175/135 */
+    0xAFAFD7,    /* 181 -                          215/175/175 */
+    0xD7AFD7,    /* 182 -                          215/175/215 */
+    0xFFAFD7,    /* 183 -                          215/175/255 */
+    0x00D7D7,    /* 184 -                          215/215/  0 */
+    0x5FD7D7,    /* 185 -                          215/215/ 95 */
+    0x87D7D7,    /* 186 -                          215/215/135 */
+    0xAFD7D7,    /* 187 -                          215/215/175 */
+    0xD7D7D7,    /* 188 -                          215/215/215 */
+    0xFFD7D7,    /* 189 -                          215/215/255 */
+    0x00FFD7,    /* 190 -                          215/255/  0 */
+    0x5FFFD7,    /* 191 -                          215/255/ 95 */
+    0x87FFD7,    /* 192 -                          215/255/135 */
+    0xAFFFD7,    /* 193 -                          215/255/175 */
+    0xD7FFD7,    /* 194 -                          215/255/215 */
+    0xFFFFD7,    /* 195 -                          215/255/255 */
+    0x0000FF,    /* 196 -                          255/  0/  0 */
+    0x5F00FF,    /* 197 -                          255/  0/ 95 */
+    0x8700FF,    /* 198 -                          255/  0/135 */
+    0xAF00FF,    /* 199 -                          255/  0/175 */
+    0xD700FF,    /* 200 -                          255/  0/215 */
+    0xFF00FF,    /* 201 -                          255/  0/255 */
+    0x005FFF,    /* 202 -                          255/ 95/  0 */
+    0x5F5FFF,    /* 203 -                          255/ 95/ 95 */
+    0x875FFF,    /* 204 -                          255/ 95/135 */
+    0xAF5FFF,    /* 205 -                          255/ 95/175 */
+    0xD75FFF,    /* 206 -                          255/ 95/215 */
+    0xFF5FFF,    /* 207 -                          255/ 95/255 */
+    0x0087FF,    /* 208 -                          255/135/  0 */
+    0x5F87FF,    /* 209 -                          255/135/ 95 */
+    0x8787FF,    /* 210 -                          255/135/135 */
+    0xAF87FF,    /* 211 -                          255/135/175 */
+    0xD787FF,    /* 212 -                          255/135/215 */
+    0xFF87FF,    /* 213 -                          255/135/255 */
+    0x00AFFF,    /* 214 -                          255/175/  0 */
+    0x5FAFFF,    /* 215 -                          255/175/ 95 */
+    0x87AFFF,    /* 216 -                          255/175/135 */
+    0xAFAFFF,    /* 217 -                          255/175/175 */
+    0xD7AFFF,    /* 218 -                          255/175/215 */
+    0xFFAFFF,    /* 219 -                          255/175/255 */
+    0x00D7FF,    /* 220 -                          255/215/  0 */
+    0x5FD7FF,    /* 221 -                          255/215/ 95 */
+    0x87D7FF,    /* 222 -                          255/215/135 */
+    0xAFD7FF,    /* 223 -                          255/215/175 */
+    0xD7D7FF,    /* 224 -                          255/215/215 */
+    0xFFD7FF,    /* 225 -                          255/215/255 */
+    0x00FFFF,    /* 226 -                          255/255/  0 */
+    0x5FFFFF,    /* 227 -                          255/255/ 95 */
+    0x87FFFF,    /* 228 -                          255/255/135 */
+    0xAFFFFF,    /* 229 -                          255/255/175 */
+    0xD7FFFF,    /* 230 -                          255/255/215 */
+    0xFFFFFF,    /* 231 -                          255/255/255 */
+    0x080808,    /* 232 -                            8/  8/  8 */
+    0x121212,    /* 233 -                           18/ 18/ 18 */
+    0x1C1C1C,    /* 234 -                           28/ 28/ 28 */
+    0x262626,    /* 235 -                           38/ 38/ 38 */
+    0x303030,    /* 236 -                           48/ 48/ 48 */
+    0x3A3A3A,    /* 237 -                           58/ 58/ 58 */
+    0x444444,    /* 238 -                           68/ 68/ 68 */
+    0x4E4E4E,    /* 239 -                           78/ 78/ 78 */
+    0x585858,    /* 240 -                           88/ 88/ 88 */
+    0x606060,    /* 241 -                           98/ 98/ 98 */
+    0x666666,    /* 242 -                          108/108/108 */
+    0x767676,    /* 243 -                          118/118/118 */
+    0x808080,    /* 244 -                          128/128/128 */
+    0x8A8A8A,    /* 245 -                          138/138/138 */
+    0x949494,    /* 246 -                          148/148/148 */
+    0x9E9E9E,    /* 247 -                          158/158/158 */
+    0xA8A8A8,    /* 248 -                          168/168/168 */
+    0xB2B2B2,    /* 249 -                          178/178/178 */
+    0xBCBCBC,    /* 250 -                          188/188/188 */
+    0xC6C6C6,    /* 251 -                          198/198/198 */
+    0xD0D0D0,    /* 252 -                          208/208/208 */
+    0xDADADA,    /* 253 -                          218/218/218 */
+    0xE4E4E4,    /* 254 -                          228/228/228 */
+    0xEEEEEE     /* 255 -                          238/238/238 */
+};
+
+
+/* The xterm 88-color palette
+ *
+ * NOTE! These values aren't RGB, they're COLORREF - 0x00bbggrr (ugh)
+ */
+ULONG RGBTable88[88] = {
+    /* First 8 are the standard SGR colors, and the second 8
+     * are the intense colors. These are in OS/2 VIO order, *not*
+     * SGR/xterm indexed color order  (the number in the comments
+     * is the xterm color number */
+    0x000000,  /*   0 - Black                      0/  0/  0 */
+    0x800000,  /*   4 - Navy (Blue)                0/  0/128 */
+    0x008000,  /*   2 - Green                      0/128/  0 */
+    0x808000,  /*   3 - Olive (Brown)            128/128/  0 */
+    0x000080,  /*   1 - Maroon (Red)             128/  0/  0 */
+    0x800080,  /*   5 - Purple (Magenta)         128/  0/128 */
+    0x008080,  /*   6 - Teal (Cyan)                0/128/128 */
+    0xc0c0c0,  /*   7 - Silver (Light Gray)      192/192/192 */
+    0x808080,  /*   8 - Grey (Dark Gray)         128/128/128 */
+    0xff0000,  /*  12 - Blue (Light Blue)          0/  0/255 */
+    0x00ff00,  /*  10 - Lime (Light Green)         0/255/  0 */
+    0xffff00,  /*  11 - Yellow                   255/255/  0 */
+    0x0000ff,  /*   9 - Red (Light Red)          255/  0/  0 */
+    0xff00ff,  /*  13 - Fuchsia (Light Magenta)  255/  0/255 */
+    0x00ffff,  /*  14 - Aqua (Light Cyan)          0/255/255 */
+    0xffffff,  /*  15 - White                    255/255/255 */
+    /* And the rest is the xterm 256-color palette */
+    //BBGGRR
+    0x000000,  /* 16 -                            00/ 00/ 00 */
+    0x00008B,  /* 17 -                            00/ 00/ 8b */
+    0x0000CD,  /* 18 -                            00/ 00/ cd */
+    0x0000FF,  /* 19 -                            00/ 00/ ff */
+    0x008B00,  /* 20 -                            00/ 8b/ 00 */
+    0x008B8B,  /* 21 -                            00/ 8b/ 8b */
+    0x008BCD,  /* 22 -                            00/ 8b/ cd */
+    0x008BFF,  /* 23 -                            00/ 8b/ ff */
+    0x00CD00,  /* 24 -                            00/ cd/ 00 */
+    0x00CD8B,  /* 25 -                            00/ cd/ 8b */
+    0x00CDCD,  /* 26 -                            00/ cd/ cd */
+    0x00CDFF,  /* 27 -                            00/ cd/ ff */
+    0x00FF00,  /* 28 -                            00/ ff/ 00 */
+    0x00FF8B,  /* 29 -                            00/ ff/ 8b */
+    0x00FFCD,  /* 30 -                            00/ ff/ cd */
+    0x00FFFF,  /* 31 -                            00/ ff/ ff */
+    0x8B0000,  /* 32 -                            8b/ 00/ 00 */
+    0x8B008B,  /* 33 -                            8b/ 00/ 8b */
+    0x8B00CD,  /* 34 -                            8b/ 00/ cd */
+    0x8B00FF,  /* 35 -                            8b/ 00/ ff */
+    0x8B8B00,  /* 36 -                            8b/ 8b/ 00 */
+    0x8B8B8B,  /* 37 -                            8b/ 8b/ 8b */
+    0x8B8BCD,  /* 38 -                            8b/ 8b/ cd */
+    0x8B8BFF,  /* 39 -                            8b/ 8b/ ff */
+    0x8BCD00,  /* 40 -                            8b/ cd/ 00 */
+    0x8BCD8B,  /* 41 -                            8b/ cd/ 8b */
+    0x8BCDCD,  /* 42 -                            8b/ cd/ cd */
+    0x8BCDFF,  /* 43 -                            8b/ cd/ ff */
+    0x8BFF00,  /* 44 -                            8b/ ff/ 00 */
+    0x8BFF8B,  /* 45 -                            8b/ ff/ 8b */
+    0x8BFFCD,  /* 46 -                            8b/ ff/ cd */
+    0x8BFFFF,  /* 47 -                            8b/ ff/ ff */
+    0xCD0000,  /* 48 -                            cd/ 00/ 00 */
+    0xCD008B,  /* 49 -                            cd/ 00/ 8b */
+    0xCD00CD,  /* 50 -                            cd/ 00/ cd */
+    0xCD00FF,  /* 51 -                            cd/ 00/ ff */
+    0xCD8B00,  /* 52 -                            cd/ 8b/ 00 */
+    0xCD8B8B,  /* 53 -                            cd/ 8b/ 8b */
+    0xCD8BCD,  /* 54 -                            cd/ 8b/ cd */
+    0xCD8BFF,  /* 55 -                            cd/ 8b/ ff */
+    0xCDCD00,  /* 56 -                            cd/ cd/ 00 */
+    0xCDCD8B,  /* 57 -                            cd/ cd/ 8b */
+    0xCDCDCD,  /* 58 -                            cd/ cd/ cd */
+    0xCDCDFF,  /* 59 -                            cd/ cd/ ff */
+    0xCDFF00,  /* 60 -                            cd/ ff/ 00 */
+    0xCDFF8B,  /* 61 -                            cd/ ff/ 8b */
+    0xCDFFCD,  /* 62 -                            cd/ ff/ cd */
+    0xCDFFFF,  /* 63 -                            cd/ ff/ ff */
+    0xFF0000,  /* 64 -                            ff/ 00/ 00 */
+    0xFF008B,  /* 65 -                            ff/ 00/ 8b */
+    0xFF00CD,  /* 66 -                            ff/ 00/ cd */
+    0xFF00FF,  /* 67 -                            ff/ 00/ ff */
+    0xFF8B00,  /* 68 -                            ff/ 8b/ 00 */
+    0xFF8B8B,  /* 69 -                            ff/ 8b/ 8b */
+    0xFF8BCD,  /* 70 -                            ff/ 8b/ cd */
+    0xFF8BFF,  /* 71 -                            ff/ 8b/ ff */
+    0xFFCD00,  /* 72 -                            ff/ cd/ 00 */
+    0xFFCD8B,  /* 73 -                            ff/ cd/ 8b */
+    0xFFCDCD,  /* 74 -                            ff/ cd/ cd */
+    0xFFCDFF,  /* 75 -                            ff/ cd/ ff */
+    0xFFFF00,  /* 76 -                            ff/ ff/ 00 */
+    0xFFFF8B,  /* 77 -                            ff/ ff/ 8b */
+    0xFFFFCD,  /* 78 -                            ff/ ff/ cd */
+    0xFFFFFF,  /* 79 -                            ff/ ff/ ff */
+    0x2E2E2E,  /* 80 -                            2e/ 2e/ 2e */
+    0x5C5C5C,  /* 81 -                            5c/ 5c/ 5c */
+    0x737373,  /* 82 -                            73/ 73/ 73 */
+    0x8B8B8B,  /* 83 -                            8b/ 8b/ 8b */
+    0xA2A2A2,  /* 84 -                            a2/ a2/ a2 */
+    0xB9B9B9,  /* 85 -                            b9/ b9/ b9 */
+    0xD0D0D0,  /* 86 -                            d0/ d0/ d0 */
+    0xE7E7E7,  /* 87 -                            e7/ e7/ e7 */
+};
+
+/* The standard 16 color palette.
+ *
+ * NOTE! These values aren't RGB, they're COLORREF - 0x00bbggrr (ugh)
+ */
+ULONG RGBTable[16] = {
+    /* First 8 are the standard SGR colors, and the second 8
+     * are the intense colors. These are in OS/2 VIO order, *not*
+     * SGR/xterm indexed color order  (the number in the comments
+     * is the xterm color number */
+    0x000000,  /*   0 - Black                      0/  0/  0 */
+    0x800000,  /*   4 - Navy (Blue)                0/  0/128 */
+    0x008000,  /*   2 - Green                      0/128/  0 */
+    0x808000,  /*   3 - Olive (Brown)            128/128/  0 */
+    0x000080,  /*   1 - Maroon (Red)             128/  0/  0 */
+    0x800080,  /*   5 - Purple (Magenta)         128/  0/128 */
+    0x008080,  /*   6 - Teal (Cyan)                0/128/128 */
+    0xc0c0c0,  /*   7 - Silver (Light Gray)      192/192/192 */
+    0x808080,  /*   8 - Grey (Dark Gray)         128/128/128 */
+    0xff0000,  /*  12 - Blue (Light Blue)          0/  0/255 */
+    0x00ff00,  /*  10 - Lime (Light Green)         0/255/  0 */
+    0xffff00,  /*  11 - Yellow                   255/255/  0 */
+    0x0000ff,  /*   9 - Red (Light Red)          255/  0/  0 */
+    0xff00ff,  /*  13 - Fuchsia (Light Magenta)  255/  0/255 */
+    0x00ffff,  /*  14 - Aqua (Light Cyan)          0/255/255 */
+    0xffffff,  /*  15 - White                    255/255/255 */
+};
 
 /*
  * The numbers below are 3-bit colour codes for the OS/2 console
@@ -1165,6 +1648,156 @@ int nl2ktab = (sizeof(l2ktab) / sizeof(struct compose_key_tab));
 extern vik_rec vik;
 #endif /* NOKVERBS */
 
+/* A few colour table entries below 16 are swapped around compared
+ * to the standard xterm color table for OS/2 reasons. This is equivalent
+ * to sgrcols, but valid for the full 0-15 range (sgrcols only covers 0-7) */
+int color_index_to_vio(int index) {
+	if (index > 15) return index;
+	switch(index) {
+        case 1: return 4; break;
+        case 3: return 6; break;
+        case 4: return 1; break;
+        case 6: return 3; break;
+        case 9: return 12; break;
+        case 11: return 14; break;
+        case 12: return 9; break;
+        case 14: return 11; break;
+        default: break;
+    }
+    return index;
+}
+
+unsigned char palette_max_index() {
+    switch(colorpalette) {
+        case CK_PALETTE_XT88:
+        case CK_PALETTE_XTRGB88:
+            return 87;
+#ifdef CK_PALETTE_WY370
+        case CK_PALETTE_WY370:
+            return 65;
+#endif /* CK_PALETTE_WY370 */
+        case CK_PALETTE_XT256:
+        case CK_PALETTE_XTRGB:
+            return 255;
+    }
+    return 15;
+}
+
+ULONG* palette_rgb_table() {
+    switch(colorpalette) {
+        case CK_PALETTE_XT88:
+        case CK_PALETTE_XTRGB88:
+            return RGBTable88;
+#ifdef CK_PALETTE_WY370
+        case CK_PALETTE_WY370:
+            return WY370RGBTable;
+#endif /* CK_PALETTE_WY370 */
+        case CK_PALETTE_XT256:
+        case CK_PALETTE_XTRGB:
+            return RGBTable256;
+    }
+    return RGBTable;
+}
+
+#ifdef KUI
+ULONG* palette_saved_rgb_table() {
+    switch(colorpalette) {
+        case CK_PALETTE_XT88:
+        case CK_PALETTE_XTRGB88:
+            return SavedRGBTable88;
+#ifdef CK_PALETTE_WY370
+        case CK_PALETTE_WY370:
+            return SavedWY370RGBTable;
+#endif /* CK_PALETTE_WY370 */
+        case CK_PALETTE_XT256:
+        case CK_PALETTE_XTRGB:
+            return SavedRGBTable256;
+    }
+    return SavedRGBTable;
+}
+#endif /* KUI */
+
+void reset_palettes() {
+#ifdef KUI
+    int i;
+    for (i = 0; i < 256; i++) RGBTable256[i] = SavedRGBTable256[i];
+    for (i = 0; i < 88; i++) RGBTable88[i] = SavedRGBTable88[i];
+    for (i = 0; i < 16; i++) RGBTable[i] = SavedRGBTable[i];
+#ifdef CK_PALETTE_WY370
+    for (i = 0; i < 65; i++) WY370RGBTable[i] = SavedWY370RGBTable[i];
+#endif /* CK_PALETTE_WY370 */
+#endif /* KUI */
+}
+
+/** Finds the nearest color in the current palette to the supplied RGB values
+ * (colour quantization). Allows higher color depths to be mapped on to smaller
+ * palettes. In 16-color builds, this always maps on to the aixterm-16 palette
+ * regardless of the currently chosen palette.
+ */
+int nearest_palette_color_rgb(unsigned char r, unsigned char g, unsigned char b) {
+    ULONG *palette = NULL;
+    int palette_max = 15;
+    int min = 0xfffffff;
+    int result = 0;
+    int i;
+
+    /* Figure out which palette we're using */
+#ifdef CK_COLORS_16
+    palette = RGBTable;
+    palette_max = 15;
+#else /* CK_COLORS_16 */
+    palette_max = palette_max_index();
+    palette = palette_rgb_table();
+#endif /* CK_COLORS_16 */
+
+	for (i = 0; i < palette_max; i++) {
+    	int r_diff, g_diff, b_diff, diff;
+        b_diff = b - ((palette[i] & 0x00FF0000)>>16);
+		g_diff = g - ((palette[i] & 0x0000FF00)>>8);
+    	r_diff = r - ((palette[i] & 0x000000FF));
+
+        diff = r_diff*r_diff + g_diff*g_diff + b_diff*b_diff;
+        if (diff < min) {
+        	min = diff;
+            result = i;
+        }
+    }
+
+    return result;
+}
+
+
+/* Looks up the color in the specified color palette, then converts that to
+ * a color in the current color palette */
+int nearest_palette_color_palette(int palette_id, int palette_index) {
+    unsigned char r, g, b, palette_max;
+    ULONG *palette;
+
+    /* Figure out which palette we're using */
+    if (palette_id == CK_PALETTE_XT256 || palette_id == CK_PALETTE_XTRGB) {
+    	palette = RGBTable256;
+        palette_max = 255;
+    } else if (palette_id == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+		palette = RGBTable88;
+		palette_max = 87;
+#ifdef CK_PALETTE_WY370
+    } else if (colorpalette == CK_PALETTE_WY370) {
+        palette = WY370RGBTable;
+        palette_max = 64;
+#endif
+	} else { /* CK_PALETTE_ANSI */
+		palette = RGBTable;
+	    palette_max = 15;
+	}
+
+	if (palette_index > palette_max) return -1;
+
+	b = (palette[palette_index] & 0x00FF0000)>>16;
+	g = (palette[palette_index] & 0x0000FF00)>>8;
+    r = (palette[palette_index] & 0x000000FF);
+
+    return nearest_palette_color_rgb(r, g, b);
+}
 
 USHORT
 xldecgrph( CHAR c ) {
@@ -3855,7 +4488,7 @@ reversescreen(BYTE vmode) {
         width = VscrnGetLineWidth(vmode,r) ;
         for (c = 0;c < width;c++) { /* Loop for each character in row */
             cell = VscrnGetCell( vmode, c, r ) ;
-            cell->a = byteswapcolors(cell->a);
+            cell->video_attr = byteswapcolors(cell->video_attr);
         }
     }
 #else
@@ -3866,7 +4499,7 @@ reversescreen(BYTE vmode) {
             width = VscrnGetLineWidth(vmode,r) ;
             for (c = 0;c < width;c++) { /* Loop for each character in row */
                 cell = VscrnGetCell( vmode, c, r ) ;
-                cell->a = byteswapcolors(cell->a);
+                cell->video_attr = byteswapcolors(cell->video_attr);
                 }
             }
         }
@@ -3879,7 +4512,7 @@ reversescreen(BYTE vmode) {
         for (r = 0; r < cmd_rows; r++) {        /* Loop for each row */
            ReadCellStr(cells, &n, r, 0);        /* Read this row from the screen */
            for (c = 0; c < cmd_cols; c++) {     /* Loop for each character in row */
-                cells[c].a = swapcolors(cells[c].a);
+                cells[c].video_attr = swapcolors(cells[c].video_attr);
                 }
             WrtCellStr(cells, n, r, 0);  /* Write the row back. */
         }
@@ -3979,10 +4612,10 @@ pnumber(int *achar) {
 /* Clear Functions                                                   */
 /* ----------------------------------------------------------------- */
 
-unsigned char
+cell_video_attr_t
 geterasecolor( int vmode )
 {
-    unsigned char erasecolor = 0 ;
+    cell_video_attr_t erasecolor = cell_video_attr_init_vio_attribute(0);
 
     switch ( vmode ) {
     case VSTATUS:
@@ -4039,7 +4672,7 @@ void
 clrtoeoln( BYTE vmode, CHAR fillchar ) {
     int x ;
     videoline * line = NULL ;
-    unsigned char cellcolor = geterasecolor(vmode);
+    cell_video_attr_t cellcolor = geterasecolor(vmode);
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4051,7 +4684,7 @@ clrtoeoln( BYTE vmode, CHAR fillchar ) {
     for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
         {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor ;
+        line->cells[x].video_attr = cellcolor ;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
 }
@@ -4060,7 +4693,7 @@ void
 clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
     videoline * line = NULL;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4078,7 +4711,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=wherex[vmode]-1 ; x <MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
     }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4094,7 +4727,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
         for ( x=0 ; x <MAXTERMCOL ; x++ )
         {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4106,7 +4739,7 @@ void
 clrboscr_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
     videoline * line = NULL;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4124,7 +4757,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
         for ( x=0 ; x <MAXTERMCOL ; x++ )
             {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4135,7 +4768,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4169,7 +4802,7 @@ void
 clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
     videoline * line = NULL;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( wherey[VTERM] < margintop ||
          wherey[VTERM] > marginbot )
@@ -4191,7 +4824,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=wherex[vmode]-1 ; x <MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
     }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4204,7 +4837,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
         for ( x=0 ; x <MAXTERMCOL ; x++ )
         {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4216,7 +4849,7 @@ void
 clrboreg_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
     videoline * line = NULL;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( wherey[VTERM] < margintop ||
          wherey[VTERM] > marginbot )
@@ -4235,7 +4868,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
         for ( x=0 ; x <MAXTERMCOL ; x++ )
             {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4246,7 +4879,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
@@ -4256,7 +4889,7 @@ void
 clrbol_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
     int x ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4268,7 +4901,7 @@ clrbol_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
 }
@@ -4277,7 +4910,7 @@ void
 clrline_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
     int x ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4289,7 +4922,7 @@ clrline_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=0 ; x < MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
     }
 }
@@ -4326,7 +4959,7 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
 {
     int startx, starty, endx, endy, l, x ;
     videoline * line = NULL ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( left < right ) {
         startx = left - 1 ;
@@ -4365,7 +4998,7 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
         for ( x=startx ; x <= endx ; x++ )
         {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
 
@@ -4409,7 +5042,7 @@ void
 selclrtoeoln( BYTE vmode, CHAR fillchar ) {
     int x ;
     videoline * line = NULL ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4422,7 +5055,7 @@ selclrtoeoln( BYTE vmode, CHAR fillchar ) {
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -4432,7 +5065,7 @@ void
 selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
     int x,y;
     videoline * line = NULL;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4450,7 +5083,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -4463,7 +5096,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
             {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].a = cellcolor;
+                line->cells[x].video_attr = cellcolor;
                 line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
                 }
             }
@@ -4474,7 +5107,7 @@ void
 selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
     int x,y;
     videoline * line = NULL;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4489,7 +5122,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
             {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].a = cellcolor;
+                line->cells[x].video_attr = cellcolor;
                 line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
                 }
             }
@@ -4501,7 +5134,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -4511,7 +5144,7 @@ void
 selclrbol_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
     int x ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4524,7 +5157,7 @@ selclrbol_escape( BYTE vmode, CHAR fillchar ) {
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -4534,7 +5167,7 @@ void
 selclrline_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
     int x ;
-    unsigned char cellcolor = geterasecolor(vmode);
+    cell_video_attr_t cellcolor = geterasecolor(vmode);
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -4547,7 +5180,7 @@ selclrline_escape( BYTE vmode, CHAR fillchar ) {
     {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
             line->cells[x].c = fillchar ;
-            line->cells[x].a = cellcolor;
+            line->cells[x].video_attr = cellcolor;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
     }
@@ -4581,7 +5214,7 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
 {
     int startx, starty, endx, endy, l, x ;
     videoline * line = NULL ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( left < right ) {
         startx = left - 1 ;
@@ -4621,7 +5254,7 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
         {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
                 line->cells[x].c = fillchar ;
-                line->cells[x].a = cellcolor;
+                line->cells[x].video_attr = cellcolor;
                 line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -4637,11 +5270,11 @@ boxrect_escape( BYTE vmode, int row, int col )
     vtattrib vta = {0,0,0,0,0,0,0,0,0,0,0};
 
     if ( vmode == VTERM ) {
-        cell.a = attribute ;
+        cell.video_attr = attribute ;
         vta = attrib ;
     }
     else
-        cell.a = colorcmd ;
+        cell.video_attr = colorcmd ;
 
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
@@ -6056,6 +6689,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedgraphicattribute[VTERM] = colorgraphic;
     savedborderattribute[VTERM]  = colorborder;
     savedattribute[VTERM] = attribute;
+
+    /* Reset the color palettes */
+    reset_palettes();
 
     attrib.blinking = FALSE;            /* No blink */
     attrib.bold = FALSE;                /* No bold */
@@ -10135,6 +10771,169 @@ vt100key(int key) {
 }
 
 #ifdef CK_APC
+
+/* Parse color specification compatible with XParseColor. Only the following
+ * formats are currently supported:
+ * 	 rgb:r/g/b
+ *   rgb:rr/gg/bb
+ *   rgb:rrr/ggg/bbb
+ *   rgb:rrrr/gggg/bbbb
+ *   #rgb
+ *   #rrggbb
+ *   #rrrgggbbb
+ *   #rrrrggggbbbb
+ *
+ * If the color specification is invalid, COLORSPEC_INVALID is returned.
+ * If the color specification starts with "?", COLORSPEC_QUERY is returned.
+ *
+ * XParseColor formats not supported:
+ *    rgbi:
+ *	  CIEXYZ:
+ *    CIEuvY:
+ *    CIExyY:
+ *    CIELab:
+ *    CIELuv:
+ *    TekHVC:
+ */
+#define COLORSPEC_MAX 20
+#define COLORSPEC_INVALID -1
+#define COLORSPEC_QUERY -2
+int colorspec(int *achar, int* apcnext) {
+    int color = 0, i=0;
+    unsigned int r, g, b;
+    char spec[COLORSPEC_MAX];
+
+    while (*achar != ';' && *achar != 0) {
+        debug(0, "Colorspec", "achar", *achar);
+        if (i == COLORSPEC_MAX - 1) {
+            spec[i] = 0;
+            debug(F110, "Colorspec buffer limit!", spec, 0);
+			return COLORSPEC_INVALID;
+        }
+        spec[i] = *achar;
+		i++;
+        *achar = ((*apcnext)<=apclength)?apcbuf[(*apcnext)++]:0;
+    }
+    spec[i] = 0;
+
+    debug(F110, "Colorspec", spec, 0);
+
+    if (spec[0] == '?') {
+        debug(F110, "Colorspec is a query", spec, 0);
+        return COLORSPEC_QUERY;
+    }
+
+    if (i < 4) {
+        debug(F101, "Colorspec length too short", 0, i);
+        return COLORSPEC_INVALID;
+    }
+
+    /* Try to parse the color spec */
+    if (ckstrcmp("rgb:", spec, 4, 0) == 0) {
+        /* rgb:r/g/b format */
+		switch(i) {
+            case 9:		/* rgb:R/G/B */
+				if (sscanf(spec, "rgb:%1x/%1x/%1x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+				}
+				r *= 17;
+				g *= 17;
+                b *= 17;
+				break;
+            case 12:	/* rgb:RR/GG/BB */
+                if (sscanf(spec, "rgb:%2x/%2x/%2x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+				}
+				break;
+            case 15:	/* rgb:RRR/GGG/BBB */
+                if (sscanf(spec, "rgb:%3x/%3x/%3x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;return FALSE;
+				}
+				r >>= 4;
+                g >>= 4;
+            	b >>= 4;
+				break;
+			case 18:	/* rgb:RRRR/GGGG/BBBB */
+                if (sscanf(spec, "rgb:%4x/%4x/%4x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+				}
+				r >>= 8;
+                g >>= 8;
+                b >>= 8;
+				break;
+			default:
+                debug(F110, "Colorspec length invalid", spec, i);
+				return COLORSPEC_INVALID;
+        }
+    } else if (spec[0] == '#') {
+      	/* #rgb format */
+		switch (i) {
+		    case 4:		/* #RGB */
+			    if (sscanf(spec, "#%1x%1x%1x", &r, &g, &b) != 3) {
+				    debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+			    }
+			    r <<= 4;
+                g <<= 4;
+                b <<= 4;
+			    break;
+		  	case 7:		/* #RRGGBB */
+				if (sscanf(spec, "#%2x%2x%2x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+				}
+				break;
+		  	case 10:	/* #RRRGGGBBB */
+				if (sscanf(spec, "#%3x%3x%3x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+				}
+				r >>= 4;
+                g >>= 4;
+                b >>= 4;
+				break;
+		  	case 13:	/* #RRRRGGGGBBBB */
+				if (sscanf(spec, "#%4x%4x%4x", &r, &g, &b) != 3) {
+					debug(F110, "Colorspec format invalid", spec, i);
+					return COLORSPEC_INVALID;
+				}
+				r >>= 8;
+                g >>= 8;
+                b >>= 8;
+				break;
+		  default:
+                debug(F110, "Colorspec length invalid", spec, i);
+				return COLORSPEC_INVALID;
+		}
+    } else {
+        debug(F110, "Colorspec format unsupported", spec, 0);
+        return COLORSPEC_INVALID;
+    }
+
+    if (r > 255 | g > 255 | b > 255) {
+      	debug(F110, "Colorspec component out of range (max 255)", spec, 0);
+        debug(F111, "Colorspec component out of range", "r", r);
+        debug(F111, "Colorspec component out of range", "g", g);
+        debug(F111, "Colorspec component out of range", "b", b);
+        return COLORSPEC_INVALID;
+    }
+
+    debug(F111, "Colorspec component", "r", r);
+    debug(F111, "Colorspec component", "g", g);
+    debug(F111, "Colorspec component", "b", b);
+
+    color = (unsigned)(((unsigned)b << 16) |
+        (unsigned)((unsigned)g << 8) |
+        (unsigned)r);
+
+    debug(F111, "Colorspec", "color", color);
+    return color;
+}
+
 /* ------------------------------------------------------------------ */
 /* doosc - process OSC sequences (VT320 and higher)                   */
 /*         sequence of apclength in apcbuf                            */
@@ -10148,30 +10947,118 @@ vt100key(int key) {
 
 void
 doosc( void ) {
-/* at current we only process two SET WINDOW TITLE and SET ICON TITLE */
-/* So let's not implement a full parser                               */
+	int num = 0;
+	int apcnext = 0;
+
+    debug(F111, "OSC string", apcbuf, apclength);
+
+    if ( debses )              /* If TERMINAL DEBUG ON */
+      return ;                 /* don't do anything    */
+
+    /* The contents of apcbuf *should* be of the form:
+     *    <OSC> number ; string <ST>
+     * But for compatibility with aixterm and xterm, we also accept:
+     *    <OSC> number ; string <BEL>
+     * When the string is terminated with <BEL>, the oscterm variable will be
+	 * set to 7 (BEL).
+     *
+     * Additionally, there are a few exceptions to the above rules supposedly
+     * from dtterm:
+     *    <OSC> I string <ST/BEL>
+	 *    <OSC> l string <ST/BEL>
+	 *    <OSC> L string <ST/BEL>
+     * And one from the VT5xx series:
+     *    <OSC> 2 L ; string <ST/BEL>
+     */
+
+    achar = (apcnext<apclength)?apcbuf[apcnext++]:0;
+
+    /* Check the first character to deal with OSC sequences that start with a
+     * letter rather than a number. If the first character is a digit instead,
+	 * then read in the number to deal wioth the normal
+     * <OSC> number ; string <ST/BEL> form.*/
+    switch (achar) {
+      case 'I': /* dtterm - set icon to file */
+        /* We can't really do this sensibly as the string will almost certainly
+         * refer to some file on the remote host and we don't really have a
+         * reliable way of getting at that from here. */
+        debug(F111, "OSC I: dtterm - set icon file", apcbuf, apclength);
+		return;
+      case 'l': /* dtterm - set window title */
+		num = 0;  /* fall through to number */
+        achar = (apcnext<apclength)?apcbuf[apcnext++]:0;
+        debug(F111, "OSC l: dtterm - set window title", apcbuf, apclength);
+        if (achar != ';') {
+          debug(F111, "Expected 'OSC l ; <string>' sequence, got 'OSC l <string>'", apcbuf, apclength);
+          return;
+        }
+        break;
+      case 'L': /* dtterm - set icon label */
+        /* On Windows, the nearest equivalent would be setting the task bar
+         * label, something Windows doesn't let you do. The taskbar label will
+         * always be the window title.
+         */
+        debug(F111, "OSC L: dtterm - set icon label", apcbuf, apclength);
+        return;
+      default:  /* Look for a number */
+		if (!isdigit(achar)) {
+			debug(F111, "OSC string first character unrecongised", apcbuf, apclength);
+			return;
+		}
+        while (isdigit(achar)) {
+        	num = (num * 10) + achar - 48;
+            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+    	}
+    }
+
+    debug(F111, "OSC", "num", num);
+
+    if (num == 2 && achar == 'L') {
+        /* <OSC> 2 L ; name <ST>
+	     * DECSIN - Set Icon Name.
+         * Not currently supported as Win32 doesn't provide a way of setting the
+         * task bar button label to something other than the window title */
+        debug(F100, "DECSIN - Set Icon Title", 0, 0);
+        return;
+    } else if (achar != ';' && apcnext <= apclength) {
+        /* If there is more following the number, it should be separated from the
+         * number by a semicolon. If there is *only* the number (eg, OSC 104 ST)
+         * then don't require the semicolon. */
+        debug(F111, "Invalid OSC - expected ';' following number", apcbuf, apclength);
+        debug(F101, "Invalid OSC - achar", 0, achar);
+        return;
+    }
 
     /* AIXTERM */
     /*   0 - Set Icon and Title */
     /*   1 - Set Icon only      */
     /*   2 - Set Title only     */
 
-    switch ( apcbuf[0] ) {
-    case '0': { /* XTERM */
+    switch ( num ) {
+    case 0:  /* dtterm, xterm - set icon name and window title */
+    case 2:  /* dtterm, xterm - Set Window Title */
+	case 21: /* VT520 - DECSWT - Set Window Title */
+    {
         /* the rest of the apcbuffer is the Window Title */
         char wtitle[APC_TITLE_BUF_LEN] ;
-        int i ;
+        int i, j = 0 ;
 
         /* Take 1 off to leave room for the NUL at the end */
-        for ( i=0;i < APC_TITLE_BUF_LEN - 1 && i+2 < apclength; i++ )
-            wtitle[i] = apcbuf[i+2] ;
+        for ( i=apcnext; i < APC_TITLE_BUF_LEN - 1 && i < apclength; i++ ) {
+            wtitle[j] = apcbuf[i] ;
+            j++;
+        }
+
         if ( i > 0 && apcbuf[i-1] == 0x07 ) {
             /* XTERMs may append a Beep indicator at the end */
-            wtitle[i-1] = NUL ;
+            wtitle[j-1] = NUL ;
             bleep(BP_NOTE);
         }
-        else
-            wtitle[i] = NUL ;
+        else {
+            wtitle[j] = NUL ;
+		}
+
+        debug(F110, "OSC 0/2/21: set window title", wtitle, 0);
 
         if (!os2settitle(wtitle,1)) {
             bleep(BP_FAIL);
@@ -10179,30 +11066,300 @@ doosc( void ) {
         }
         break;
     }
-    case '2': /* DEC VTxxx */
-        switch ( apcbuf[1] ) {
-        case 'L':       /* SET ICON TITLE - DECSIN */
-            /* the rest of the apcbuffer is the Icon Title */
-            break;
-        case '1': {     /* SET WINDOW TITLE - DECSWT */
-            /* the rest of the apcbuffer is the Window Title */
-            char wtitle[APC_TITLE_BUF_LEN] ;
-            int i ;
-            /* Take one of the title buffer length to leave room for the NUL */
-            for ( i=0;i < APC_TITLE_BUF_LEN - 1 && i+3<=apclength; i++ )
-                wtitle[i] = apcbuf[i+3] ;
-            wtitle[i] = NUL ;
+    case 1: /* dtterm, xterm - set Icon Name */
+        debug(F111, "OSC 1: set icon name", apcbuf, apclength);
+        break; /* teraterm - set window title */
 
-            if (!os2settitle(wtitle,1)) {
-                bleep(BP_FAIL);
-                debug(F110,"doosc os2settitle fails",wtitle,0);
+#ifdef KUI
+	case 5:   /* xterm : Change Special Color Number*/
+    case 4: { /* xterm : Change color number */
+        /* Text is: c ; spec ; c ; spec ; c ; spec ; ...
+         * Where c is:
+		 *   - An index into the current palette (case 4)
+         *   - One of the special color numbers added to the size of the
+         *     current palette (case 4)
+         *   - One of the special color numbers (case 5)
+         * And spec is the name of a color specification as per XParseColor.
+         * Any number of c;spec pairs can be supplied. If spec is a "?", then
+         * K95 responds with the escape sequence for setting that color pair.
+		 *
+         * Special Color Numbers (case 5):
+         *    0   - Bold color (TODO: cant be simulated by attribute yet)
+         *    1   - Underline color (underlineattribute)
+         *    2   - Blink color (TODO: cant be simulated by attribute yet)
+         *    3   - Reverse color (reverseattribute)
+         *    4   - Italic color (italicattribute)
+         *
+		 * Special Color Numbers (case 4, example for the 256-color palette):
+         *    256   - Bold color (TODO: cant be simulated by attribute yet)
+         *    257   - Underline color (underlineattribute)
+         *    258   - Blink color (TODO: cant be simulated by attribute yet)
+         *    259   - Reverse color (reverseattribute)
+         *    260   - Italic color (italicattribute)
+ 	     */
+
+        ULONG *palette = NULL;
+        int palette_max = 15;
+        int idx = 0, pal_idx = 0;
+        char buf[256];
+
+        debug(F111, "OSC 4/5: Change color number", apcbuf, apclength);
+
+        palette_max = palette_max_index();
+        palette = palette_rgb_table();
+
+        if (num == 5) {  /* Change Special Color Number */
+			palette_max = 0;
+        }
+
+        /* Format of string is:
+    		c;spec;c;spec;c;spec...
+         */
+        do {
+			int idx = 0, color = 0;
+
+            /* Ready the next character! */
+    		achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+            if (!isdigit(achar)) {
+				debug(F111, "OSC 4/5: Expected digit", "apcnext", apcnext);
+            	debug(0, "OSC 4/5: Expected digit", "achar", achar);
+				break;
+        	}
+
+            /* Get c */
+			while (isdigit(achar)) {
+        		idx = (idx * 10) + achar - 48;
+            	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+    		}
+
+            debug(F111, "OSC 4/5: start pair", "idx", idx);
+
+            /* A few colors in the 0-15 range are swapped around in the K95
+             * palette for historic OS/2 reasons, so transalte the normal index
+             * to one that accounts for this. */
+            pal_idx = color_index_to_vio(idx);
+
+            if (achar != ';') {
+                debug(0, "OSC 4/5: Expected ';' following color index, got", "achar", achar);
             }
-            break;
-        }
-        }
+            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+			/* Get spec */
+			color = colorspec(&achar, &apcnext);
+
+			if (color == COLORSPEC_INVALID) continue;  /* Invalid colorspec */
+
+			if (color == COLORSPEC_QUERY) {  /* c;? */
+                /* Query */
+                debug(F100, "OSC 4/5: got query", 0, 0);
+
+                if (idx <= palette_max || num == 5) {
+                	color = palette[pal_idx];
+					_snprintf(buf, sizeof(buf),
+                              oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
+                                             : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
+                              num, idx,
+							  (palette[idx] & 0x000000FF) * 257,  /* Red */
+                              ((palette[idx] & 0x0000FF00)>>8) * 257, /* Green */
+                              ((palette[idx] & 0x00FF0000)>>16) * 257); /* Blue */
+					buf[255] = 0;
+					sendcharsduplex(buf, strlen(buf), TRUE);
+                } else {
+                  	debug(F111, "OSC 4/5: query index out of range for current palette", "index", idx);
+                }
+            } else if (idx > palette_max || num == 5) {  /* OSC 4/5: Set attribute color */
+				idx -= palette_max;
+                debug(F111, "OSC 4/5: Set special color", "idx", idx);
+                debug(F111, "OSC 4/5: Set special color", "color", color);
+
+                /* This is only available in builds with 24-bit RGB support. In
+				 * 16/256 color builds, the color attribute isn't capable of
+				 * storing RGB values.
+                 */
+
+                switch(idx) {
+#ifdef CK_COLORS_24BIT
+                  	/* TODO: Original values for these attributes should be backed up
+				     * and restored on terminal reset */
+                    case 0: /* TODO Bold attribute */
+                    case 1: /* TODO underline attribute */
+                	case 2: /* TODO blink attribute */
+                    case 3: /* TODO Reverse attribute */
+					case 4: /* TODO Italic attribute */
+#endif /* CK_COLORS_24BIT */
+				    default:
+						debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
+                }
+            } else { /* OSC 4: Set Palette Color */
+              	debug(F111, "OSC 4: set palette color", "index", idx);
+                debug(F111, "OSC 4: set palette color", "color", color);
+                palette[pal_idx] = color;
+            }
+        } while (achar == ';');
+
         break;
     }
-    return;
+#endif /* KUI */
+
+    case 6:
+    case 106: { /* xterm : Enable/disable special color number */
+    	/* TODO: 6 or 106   xterm : Enable/disable special color number
+     	*   I guess this just turns truebold, etc, on or off? Need to check the
+     	*   xterm sources to confirm */
+        break;
+    }
+    case 7: /* Misc - inform current working directory */
+		break; /* https://github.com/davidrg/ckwin/issues/413 */
+	case 8: /* misc - hyperlink */
+		break; /* https://github.com/davidrg/ckwin/issues/123 */
+    /* TODO: Set various special colors. Each one consumes one parameter, sets
+     *  the associated color, then if there are further parameters remaining in
+     *  the osc string it falls through to the next case */
+	case 10:
+         /* set attribute foreground */
+ 		 /* fall through */
+	case 11:
+         /* set attribute background */
+ 		 /* fall through */
+	case 12:
+         /* set set text cursor color */
+ 		 /* fall through */
+	case 13:
+         /* set pointer color foreground*/
+ 		 /* fall through */
+	case 14:
+         /* set pointer color background */
+ 		 /* fall through */
+	case 15:
+         /* set tektronix foreground */
+ 		 /* fall through */
+	case 16:
+         /* set tektronix background */
+ 		 /* fall through */
+	case 17:
+         /* set highlight background */
+ 		 /* fall through */
+	case 18:
+         /* set set tektronix cursor color */
+ 		 /* fall through */
+	case 19:
+         /* set highlight foreground color */
+         break;
+	case 22: /* xterm - Change pointer shape */
+	case 46: /* xterm - change log file */
+	case 50: /* xterm - set font */
+	case 51: /* xterm - reserved for emacs shell */
+	case 52: /* xterm - manipulate selection data */
+             /* teraterm only implements the  clipboard feature */
+	case 60: /* XTQALLOWED - query allowed features */
+	case 61: /* XTQDISALLOWED - query disallowed features */
+        break;
+
+#ifdef KUI
+	case 105:   /* xterm - reset special color number */
+	case 104: { /* xterm - reset color number */
+		/* 104 ; c ; c ; c ; ...   - reset specified color numbers*/
+		/* 104     - reset all color numbers */
+
+        ULONG *palette = NULL, *saved = NULL;
+        int palette_max = palette_max_index();
+        palette = palette_rgb_table();
+        saved = palette_saved_rgb_table();
+
+        debug(F111, "OSC 104/105: Reset color number", apcbuf, apclength);
+
+        /* No parameters! Reset everything! */
+        if (apcnext > apclength || apcnext+1 > apclength) {
+			if (num == 104) {
+				/* reset color palette */
+				int i;
+                debug(F100, "OSC 104: Resetting color palette", 0, 0);
+                for (i = 0; i <= palette_max; i++) palette[i] = saved[i];
+			} else {
+                debug(F100, "OSC 105: Resetting special colors", 0, 0);
+				/* TODO: reset all special color numbers */
+			}
+        }
+
+        if (num == 105) {  /* Reset Special Color Number */
+			palette_max = 0;
+        }
+
+        /* format of string is:
+			c;c;c;c;c;c...
+         */
+        do {
+            int idx = 0, pal_idx = 0;
+            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+            /* Get c */
+			while (isdigit(achar)) {
+        		idx = (idx * 10) + achar - 48;
+            	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+    		}
+
+            debug(F111, "OSC 104/105: ", "idx", idx);
+
+            /* A few colors in the 0-15 range are swapped around in the K95
+             * palette for historic OS/2 reasons, so transalte the normal index
+             * to one that accounts for this. */
+            pal_idx = color_index_to_vio(idx);
+
+            if (idx > palette_max || num == 105) {
+                idx -= palette_max;
+                debug(F111, "OSC 104/105: Reset special color", "idx", idx);
+
+                /* This is only available in builds with 24-bit RGB support. In
+				 * 16/256 color builds, the color attribute isn't capable of
+				 * storing RGB values.
+                 */
+
+                switch(idx) {
+#ifdef CK_COLORS_24BIT
+                    case 0: /* TODO Bold attribute */
+                    case 1: /* TODO underline attribute */
+                	case 2: /* TODO blink attribute */
+                    case 3: /* TODO Reverse attribute */
+					case 4: /* TODO Italic attribute */
+#endif /* CK_COLORS_24BIT */
+				    default:
+						debug(F101, "OSC 104/105: Unknown or Unsupported Special Color Number", 0, idx);
+                }
+            } else {
+                debug(F111, "OSC 104/105: Resetting color", "idx", idx);
+                palette[pal_idx] = saved[pal_idx];
+            }
+
+        } while (achar == ';');
+
+        break;
+    }
+#endif /* KUI */
+
+	case 110: /* xterm - reset attribute foreground */
+		/* TODO */
+		break;
+	case 111: /* xterm - reset attribute background */
+		/* TODO */
+		break;
+	case 112: /* xterm - reset text cursor color */
+		/* TODO */
+		break;
+	case 113: /* xterm - reset pointer foreground color */
+	case 114: /* xterm - reset pointer background color */
+	case 115: /* xterm - reset tektronix foreground */
+	case 116: /* xterm - reset tektronix background */
+		break;
+	case 117: /* xterm - reset highlight background color */
+		/* TODO */
+		break;
+	case 118: /* xterm - reset tektronix cursor color */
+		break;
+	case 119: /* xterm - reset highlight foreground color */
+		/* TODO */
+		break;
+    }
 }
 
 /* dopu1 - process PU1 sequences (97801-5xx terminals) */
@@ -10699,7 +11856,7 @@ debugses( unsigned char ch )
             wrtch(ch8);
         } else {                        /* Regular character */
             attribute = defaultattribute; /* Normal colors */
-            if (tn_bold) attribute ^= 8; /* (only for TELNET debugging...) */
+            if (tn_bold) attribute = cell_video_attr_with_fg_intensity_toggled(attribute); /* (only for TELNET debugging...) */
             wrtch(ch8);
         }
         if (deb_wrap ||
@@ -10989,7 +12146,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                             else
                                 vio.c = (pCharInfo->Char.UnicodeChar & 0xFF);
                         }
-                        vio.a = (pCharInfo->Attributes & 0xFF);
+                        vio.video_attr = cell_video_attr_from_vio_attribute(pCharInfo->Attributes & 0xFF);
                         VscrnWrtCell(VTERM,
                                       vio,
                                       vta,
@@ -11084,6 +12241,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             dcsrecv = FALSE ;
             pmrecv  = FALSE ;
             oscrecv = FALSE ;
+            oscterm = 0;
             pu1recv = FALSE ;
             pu2recv = FALSE ;
             c1strrecv = FALSE ;
@@ -11352,11 +12510,11 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 /* Reset Palette */
                 debug(F100, "Bad linux OSC - reset palette", "", 0);
 
-                /* TODO: If we wanted to handle the linux reset palette
-                 *       private mode sequence, this is where we'd do it */
+                reset_palettes();
 
                 escstate = ES_NORMAL;
                 oscrecv = FALSE;
+                oscterm = 0;
             } else {
                 /* We need to absorb 7 characters */
                 escstate = ES_BADLINUXOSC;
@@ -11376,6 +12534,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
              *   BEL as a string terminator. This is also what XTerm does:
              *      https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands
              * */
+            oscterm = BEL;
             escstate = ES_NORMAL;       /* If so, back to NORMAL */
             if (savefiletext[0]) {              /* Fix status line */
                 ckstrncpy(filetext,savefiletext,sizeof(filetext));
@@ -11387,6 +12546,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             if (!debses)
                 doosc() ;
             oscrecv = FALSE ;
+            oscterm = 0;
         }
         else if (apcrecv || dcsrecv || oscrecv || pmrecv ||
                   pu1recv || pu2recv || c1strrecv) {
@@ -11396,6 +12556,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                 apcrecv = FALSE ;         /* Discard what we got */
                 dcsrecv = FALSE ;
                 oscrecv = FALSE ;
+                oscterm = 0;
                 pmrecv  = FALSE ;
                 pu1recv = FALSE ;
                 pu2recv = FALSE ;
@@ -11417,15 +12578,36 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         }
 
         if (apclength >= 7) {
+#ifdef KUI
+            int index, r, g, b;
+            int color;
+            ULONG *palette = NULL;
+#endif /* KUI */
+
             /* Set Palette */
             apcbuf[apclength++] = 0;
-            debug(F110, "Bad linux OSC - reset palette", apcbuf, 0);
+            debug(F110, "Bad linux OSC - set palette", apcbuf, 0);
 
-            /* TODO: If we wanted to handle the linux set palette private mode
-             *       sequence, this is where we'd do it */
+#ifdef KUI
+            if (sscanf(apcbuf, "%1x%2x%2x%2x", &index, &r, &g, &b)) {
+                debug(F110, "Bad linux OSC - set palette", "index", index);
+                debug(F110, "Bad linux OSC - set palette", "r", r);
+                debug(F110, "Bad linux OSC - set palette", "g", g);
+                debug(F110, "Bad linux OSC - set palette", "b", b);
+                if (index <= 15) {
+                    color = (unsigned)(((unsigned)b << 16) |
+                            (unsigned)((unsigned)g << 8) |
+                            (unsigned)r);
+                    palette = palette_rgb_table();
+                    index = color_index_to_vio(index);
+                    palette[index] = color;
+                }
+            }
+#endif
 
             escstate = ES_NORMAL;
             oscrecv = FALSE;
+            oscterm = 0;
             apclength = 0;
             apcbuf[0] = 0;
         }
@@ -11491,6 +12673,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                       doosc() ;
                 }
                 oscrecv = FALSE ;
+                oscterm = 0;
             }
 #endif /* CK_APC */
         } else {
@@ -11605,7 +12788,7 @@ wrtch(unsigned short ch) {
             if ( !tt_hidattr )
                 vta.wyseattr = FALSE ;
             cell.c = ch;
-            cell.a = attribute;
+            cell.video_attr = attribute;
 
             if ( (ISWYSE(tt_type_mode) ||
                    ISTVI(tt_type_mode) ||
@@ -11682,7 +12865,7 @@ wrtch(unsigned short ch) {
         else    /* We are in character attribute mode */
         {
             cell.c = ch;
-            cell.a = attribute;
+            cell.video_attr = attribute;
 
             if ( (ISWYSE(tt_type_mode) ||
                    ISTVI(tt_type_mode) ||
@@ -12383,13 +13566,13 @@ settermtype( int x, int prompts )
 #ifdef COMMENT
     static int savcp = -1;
 #endif /* COMMENT */
-    static int savcolor = 0;            /* Terminal color */
-    static int savgrcol = 0;            /* Graphics color */
-    static int savulcol = 0;            /* Underline color */
-    static int savulatt = 0;            /* Underline attribute */
-    static int savrvatt = 0;            /* Reverse attribute */
-    static int savblatt = 0;            /* Blink attribute */
-    static int savcmask = 0;            /* For saving terminal bytesize */
+    static cell_video_attr_t savcolor = cell_video_attr_init_vio_attribute(0);   /* Terminal color */
+    static cell_video_attr_t savgrcol = cell_video_attr_init_vio_attribute(0);   /* Graphics color */
+    static cell_video_attr_t savulcol = cell_video_attr_init_vio_attribute(0);   /* Underline color */
+    static int savulatt = 0;                 /* Underline attribute */
+    static int savrvatt = 0;                 /* Reverse attribute */
+    static int savblatt = 0;                 /* Blink attribute */
+    static int savcmask = 0;                 /* For saving terminal bytesize */
     static int savedGset[VNUM] = {FALSE,FALSE,FALSE,FALSE};
 #ifndef KUI
     static int savstatus = TRUE ;
@@ -12401,7 +13584,7 @@ settermtype( int x, int prompts )
 
     tt_type_mode = tt_type = x;
 
-    if (savcolor) {             /* Restore this stuff if we */
+    if (!cell_video_attr_is_null(savcolor)) {             /* Restore this stuff if we */
         colorreset = savresetcol ;
         colornormal = savcolor; /* were ANSI before... */
         colorgraphic = savgrcol;
@@ -12411,9 +13594,9 @@ settermtype( int x, int prompts )
         truereverse   = savrvatt ;
         trueunderline = savulatt ;
 
-        savcolor = 0;
-        savgrcol = 0 ;
-        savulcol = 0 ;
+        savcolor = cell_video_attr_from_vio_attribute(0);
+        savgrcol = cell_video_attr_from_vio_attribute(0);
+        savulcol = cell_video_attr_from_vio_attribute(0);
         scrninitialized[VTERM] = 0;
         tt_status_usr[VTERM] = savstatus ;
         settermstatus(tt_status_usr[VTERM]) ;
@@ -12446,7 +13629,7 @@ settermtype( int x, int prompts )
  printf("WARNING, ANSI terminal emulation works right only if PARITY is NONE.\n");
  printf("HELP SET PARITY for further information.\n");
         }
-        if ( !savcolor ) {
+        if ( cell_video_attr_is_null(savcolor) ) {
             savcolor = colornormal;     /* Save coloration */
             savgrcol = colorgraphic ;
             savulcol = colorunderline ;
@@ -12455,9 +13638,9 @@ settermtype( int x, int prompts )
             savblatt = trueblink ;
             savrvatt = truereverse ;
 
-            colornormal = 0x07;         /* Light gray on black */
-            colorgraphic = 0x07;        /* Light gray on black */
-            colorunderline = 0x47;      /* Light gray on Red */
+            colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
+            colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
+            colorunderline = cell_video_attr_from_vio_attribute(0x47);      /* Light gray on Red */
 
 #ifndef KUI
             trueunderline = FALSE ;     /* Simulate underline */
@@ -12645,7 +13828,7 @@ settermtype( int x, int prompts )
             savedGset[VTERM] = TRUE ;
     }
     else if ( ISQANSI(tt_type) ) {
-        if ( !savcolor ) {
+        if ( cell_video_attr_is_null(savcolor) ) {
             savcolor = colornormal;     /* Save coloration */
             savgrcol = colorgraphic ;
             savulcol = colorunderline ;
@@ -12654,9 +13837,9 @@ settermtype( int x, int prompts )
             savblatt = trueblink ;
             savrvatt = truereverse ;
 
-            colornormal = 0x07;         /* Light gray on black */
-            colorgraphic = 0x07;        /* Light gray on black */
-            colorunderline = 0x47;      /* Light gray on Red */
+            colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
+            colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
+            colorunderline = cell_video_attr_from_vio_attribute(0x47);      /* Light gray on Red */
 
 #ifndef KUI
             trueunderline = FALSE ;     /* Simulate underline */
@@ -12750,14 +13933,14 @@ settermtype( int x, int prompts )
     msleep(10);
 }
 
-unsigned char
-ComputeColorFromAttr( int mode, unsigned char colorattr, USHORT vtattr )
+cell_video_attr_t
+ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 {
-    static unsigned char colorval= 0x00;
-    static unsigned char _colorattr=0x00;
+    static cell_video_attr_t colorval = cell_video_attr_init_vio_attribute(0x00);
+    static cell_video_attr_t _colorattr = cell_video_attr_init_vio_attribute(0x00);
     static USHORT _vtattr=0x00;
 
-    if ( _colorattr == colorattr && vtattr == _vtattr )
+    if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr )
         goto done;
 
     colorval = _colorattr = colorattr;
@@ -12813,16 +13996,20 @@ ComputeColorFromAttr( int mode, unsigned char colorattr, USHORT vtattr )
 #endif /* KUI */
              )
         {
+            /* Make the color values intensity bit the opposite of whatever the
+             * current normal foreground (or background in the case of reverse
+             * video) intensity bit is set to.
+             */
             if (decscnm) {
                 if ( fgi )
-                    colorval &= 0xF7 ;  /* Toggle FGI */
+                    colorval = cell_video_attr_with_fg_intensity_unset(colorval);  /* Toggle FGI */
                 else
-                    colorval |= 0x08 ;
+                    colorval = cell_video_attr_with_fg_intensity_set(colorval);
             } else {
                 if (bgi)
-                    colorval &= 0x7F ;  /* Toggle BGI */
+                    colorval = cell_video_attr_with_bg_intensity_unset(colorval);  /* Toggle BGI */
                 else
-                    colorval |= 0x80 ;
+                    colorval = cell_video_attr_with_bg_intensity_set(colorval);
             }
         }
 
@@ -12835,14 +14022,14 @@ ComputeColorFromAttr( int mode, unsigned char colorattr, USHORT vtattr )
              ) {
             if (decscnm) {
                 if (bgi)
-                    colorval &= 0x7F ;  /* Toggle BGI */
+                    colorval = cell_video_attr_with_bg_intensity_unset(colorval);  /* Toggle BGI */
                 else
-                    colorval |= 0x80 ;
+                    colorval = cell_video_attr_with_bg_intensity_set(colorval);
             } else {
                 if ( fgi )
-                    colorval &= 0xF7 ;  /* Toggle FGI */
+                    colorval = cell_video_attr_with_fg_intensity_unset(colorval);  /* Toggle FGI */
                 else
-                    colorval |= 0x08 ;
+                    colorval = cell_video_attr_with_fg_intensity_set(colorval);
             }
         }
 
@@ -12850,8 +14037,15 @@ ComputeColorFromAttr( int mode, unsigned char colorattr, USHORT vtattr )
             truereverse /* not being simulated */ )
             colorval = byteswapcolors(colorval);
 
-        if ( vtattr & VT_CHAR_ATTR_INVISIBLE )
-            colorval = (colorval&0xF0)|((colorval&0xF0)>>4) ;
+        if ( vtattr & VT_CHAR_ATTR_INVISIBLE ) {
+            colorval = cell_video_attr_set_fg_color(colorval,cell_video_attr_background(colorval));
+            /* Formerly:
+             * colorval = (colorval&0xF0)|((colorval&0xF0)>>4) ;
+             *             ^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^
+             *             Select BG        Select BG as FG
+             * So this copies the current background color to the foreground.
+             */
+            }
     }
 
   done:
@@ -12876,7 +14070,11 @@ ComputeColorFromAttr( int mode, unsigned char colorattr, USHORT vtattr )
   many more VT320 specific stuff
 */
 
+#define PE_MAX 5
+#define PN_MAX 11
+
 static int   pn[11]={0,0,0,0,0,0,0,0,0,0,0};
+static int   pe[PE_MAX]={0,0,0,0,0};
 static bool  private=FALSE;
 static bool  ansiext=FALSE;
 static bool  zdsext=FALSE;
@@ -12887,11 +14085,12 @@ void
 vtcsi(void)
 {
     unsigned short  j;
-    unsigned short  k;
+    unsigned short  k; /* Number of pn */
     unsigned short  l;
     viocell         blankvcell ;
     int             i;
     char            tempstr[20];
+    unsigned short  pecount = 0;  /* Number of pe */
 
     if ( ISH19(tt_type_mode) ) {
         /* Hold Screen Mode On */
@@ -13165,7 +14364,7 @@ vtcsi(void)
             while (achar == ';') { /* get Pn[k] */
                 achar = (escnext<=esclast)?
                     escbuffer[escnext++]:0;
-                k++;
+                if (k < PN_MAX-1) k++;
                 /* If there is a '?' at this point it is a protocol */
                 /* error.  We will skip over it since this appears  */
                 /* to be a frequent mistake that people make when   */
@@ -13174,6 +14373,11 @@ vtcsi(void)
                     achar = (escnext<=esclast)?
                         escbuffer[escnext++]:0;
                 pn[k] = pnumber(&achar);
+				while (achar == ':' && pecount <= PE_MAX) {
+					/* Handle parameter elements */
+					pecount++;
+					pe[pecount] = pnumber(&achar);
+				}
             }
             pn[k + 1] = 1;
           LB2003:
@@ -13854,17 +15058,48 @@ vtcsi(void)
                             videoline * line = VscrnGetLineFromTop(VTERM,y);
                             for ( x=left-1; x<right; x++ ) {
                                 unsigned short c, a;
-                                unsigned char cellattr, fgcoloridx, bgcoloridx;
+                                unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
 
                                 c = line->cells[x].c;
-                                cellattr = line->cells[x].a;
                                 a = line->vt_char_attrs[x];
-                                /* Get colour including bright flag - not sure if we actually
-                                 * need that for this calculation
-                                 * bgcolor = (cellattr&0xF0)>>4;
-                                 * fgcolor = (cellattr&0x0F);*/
-                                bgcoloridx = sgrindex[((cellattr&0x70)>>4)%8];
-                                fgcoloridx = sgrindex[(cellattr&0x07)%8];
+
+                                /* TODO: 24-bit color: skip dealing with the color
+                                 *       attribute if its not an indexed color. */
+                                fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
+                                bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
+
+                                /* Xterm implements the following behaviour to
+                                 * supposedly match what the VT525 does (I don't
+                                 * have access to a VT525 to confirm the
+                                 * behaviour myself): If the current background
+                                 * color is the default and the current foreground
+                                 * is *not* the default, then ignore the bold attribute
+                                 * if its set.
+                                 */
+                                if (a & VT_CHAR_ATTR_BOLD) {
+                                      unsigned char df_fg, df_bg;
+                                      df_fg = cell_video_attr_foreground(defaultattribute);
+                                      df_bg = cell_video_attr_background(defaultattribute);
+                                      if (df_bg == bgcoloridx && df_fg != fgcoloridx) {
+                                          checksum -= 0x80;
+                                      }
+                                }
+
+                                if (fgcoloridx < 16) {
+                                    fgcoloridx = sgrindex[fgcoloridx%8];
+                                } else {
+                                    /* FG color index is outside the range of
+                                     * valid values for the VT525. */
+                                    fgcoloridx = 0;
+                                }
+
+                                if (bgcoloridx < 16) {
+                                    bgcoloridx = sgrindex[bgcoloridx%8];
+                                } else {
+                                    /* BG color index is outside the range of
+                                     * valid values for the VT525. */
+                                    bgcoloridx = 0;
+                                }
 
                                 debug(F111, "DECRQCRA iteration", "x", x);
                                 debug(F111, "DECRQCRA iteration", "y", y);
@@ -13913,7 +15148,7 @@ vtcsi(void)
                         /* pn[1] contains new color */
                         if ( !sgrcolors )
                             break;
-                        borderattribute = sgrcols[pn[1]%10];
+                        borderattribute = cell_video_attr_from_vio_attribute(sgrcols[pn[1]%8]);
                         setborder();
                     }
                     else if ( ISBA80(tt_type_mode) ) {
@@ -14182,13 +15417,13 @@ vtcsi(void)
                      ansiext ) {
                     if ( !pn[1] && !bgi ||
                          pn[1] && bgi ) {
-                        attribute |= 0x80 ;
-                        defaultattribute |= 0x80 ;
+                        attribute = cell_video_attr_with_bg_intensity_set(attribute);
+                        defaultattribute = cell_video_attr_with_bg_intensity_set(defaultattribute);
                     }
                     else
                     {
-                        attribute &= 0x7F ;
-                        defaultattribute &= 0x7F ;
+                        attribute = cell_video_attr_with_bg_intensity_unset(attribute);
+                        defaultattribute = cell_video_attr_with_bg_intensity_unset(defaultattribute);
                     }
                 }
                 else  /* CUB - Cursor Left pn characters */
@@ -14253,19 +15488,34 @@ vtcsi(void)
                      ansiext ) {
                     /* pn[1] contains new color */
                     l = pn[1];
-                    if (decscnm
+                    if (decscnm   /* If the display is in reverse video mode */
 #ifdef COMMENT
                          && !attrib.reversed ||
                          !decscnm && attrib.reversed
 #endif
                          ) {
-                        i = (defaultattribute & 0xF0);
-                        attribute = defaultattribute = (i | (l << 4));
+                         /* The original code did this:
+                         i = (defaultattribute & 0xF0);
+                         attribute = defaultattribute = (i | (l << 4));
+                          * The first line wipes out the foreground colour,
+                          * while the second-line ORs the new foreground colour
+                          * with the existing background colour, and sets the
+                          * result as the new background colour. The resulting
+                          * background colour is *not* guaranteed to be what was
+                          * supplied as the new foreground colour in pn[1]. This
+                          * seems like very odd behaviour for "Set Normal
+                          * Foreground Color".
+                          *
+                          * The replacement code instead clears just sets the supplied
+                          * color as the new background color preserving the current
+                          * foreground color, the opposite of the non-reverse-video
+                          * operation. This seems more likely to be correct.
+                          */
 
+                         attribute = defaultattribute = cell_video_attr_set_bg_color(defaultattribute, l);
                     }
                     else {
-                        i = (defaultattribute & 0xF0);
-                        attribute = defaultattribute = (i | l);
+                        attribute = defaultattribute = cell_video_attr_set_fg_color(defaultattribute, l);
                     }
                 }
                 else {
@@ -14290,12 +15540,19 @@ vtcsi(void)
                          decscnm && attrib.reversed
 #endif
                          ) {
-                        i = (defaultattribute & 0x0F);
-                        attribute = defaultattribute = (i | (l << 4));
+                        attribute = defaultattribute = cell_video_attr_set_bg_color(defaultattribute, l);
                     }
                     else {
-                        i = (defaultattribute & 0x0F);
-                        attribute = defaultattribute = (i | l);
+                        /* Previously the above was:
+                               = ((defaultattribute & 0x0F) | (l << 4));
+                           While below was:
+                               = ((defaultattribute & 0x0F) | l);
+                           Which seems a lot like a bug. 0x0F clears the background,
+                           while 0xF0 clears the foreground, and you <<4 to set the
+                           background. The behaviour below (for 16 colour builds)
+                           should now be correct.
+                         */
+                        attribute = defaultattribute = cell_video_attr_set_fg_color(defaultattribute, l);
                     }
                 }
                 else {
@@ -14316,8 +15573,8 @@ vtcsi(void)
                      ansiext ) {
                     /* pn[1] contains new color */
                     l = pn[1];
-                    i = (reverseattribute & 0xF0);
-                    reverseattribute = (i | l);
+                    i = cell_video_attr_background(reverseattribute);
+                    reverseattribute = cell_video_attr_set_colors(l, i);
                     break;
                 }
                 /* 'H' is also CUP - Direct cursor address for */
@@ -14374,8 +15631,8 @@ vtcsi(void)
                     {
                         /* pn[1] contains new color */
                         l = pn[1];
-                        i = (reverseattribute & 0x0F);
-                        reverseattribute = (i | (l << 4));
+                        i = cell_video_attr_foreground(reverseattribute);
+                        reverseattribute = cell_video_attr_set_colors(i, l);
                     }
                 }
                 else {
@@ -14404,7 +15661,7 @@ vtcsi(void)
                      ansiext ) {
                     /* pn[1] contains a graphic Character
                     to display */
-                    unsigned char a = attribute ;
+                    cell_video_attr_t a = attribute ;
                     int eight = sco8bit ;
                     int c = crm ;
                     struct _vtG * g = GR ;
@@ -16187,12 +17444,37 @@ vtcsi(void)
                     }
                     if ( !sgrcolors )
                         break;
+                    /* pn[1] - 64 color palette - fg */
+                    /* pn[2] - 64 color palette - bg */
+#ifdef CK_COLORS_16
+                    /* TODO: This behaviour is totally wrong. Ideally we'd
+                     *    use color quantization to try and find the nearest
+                     *    match in the 16-color palette, but doing that requires
+                     *    us to know the RGB values for the WY370 palette
+                     */
                     l = sgrcols[(decscnm?pn[2]:pn[1])%8];
-                    i = (attribute & 0x8F);
-                    attribute = (i | ((l << 4)));
+                    attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
+
                     l = sgrcols[(decscnm?pn[1]:pn[2])%8];
-                    i = (attribute & 0xF8);
-                    attribute = (i | l);
+                    attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
+#else
+                    {
+                        int bg_index, fg_index, max_colors;
+
+
+                        max_colors = palette_max_index();
+
+                        bg_index = (decscnm?pn[2]:pn[1]);
+                        fg_index = (decscnm?pn[1]:pn[2]);
+
+                        if (bg_index < max_colors) {
+                            attribute = cell_video_attr_set_bg_color(attribute, bg_index);
+                        }
+                        if (fg_index < max_colors) {
+                            attribute = cell_video_attr_set_fg_color(attribute, fg_index);
+                        }
+                    }
+#endif
                     break;
                 }
 
@@ -16348,22 +17630,23 @@ vtcsi(void)
                             break;
                         case 2:
                             if ( ISSCO(tt_type_mode) ) {
-                                /* Select fg/bg iso colors */
+                                /* Select fg/bg iso colors while preserving the
+                                 * intensity bit. */
                                 if ( !sgrcolors )
                                     break;
                                 if (decscnm) {
-                                    i = (attribute & 0x88);
-                                    attribute = (i | (((pn[j+1] & 0x07) << 4)) | (pn[j+2] & 0x07));
+                                    attribute = cell_video_attr_set_vio_3bit_colors(attribute, (((pn[j+1] & 0x07) << 4)) | (pn[j+2] & 0x07));
                                     defaultattribute = attribute;
                                     graphicattribute = attribute;
-                                    reverseattribute = (i | (((pn[j+2] & 0x07) << 4)) | (pn[j+1] & 0x07));
+
+                                    reverseattribute = cell_video_attr_set_vio_3bit_colors(attribute, (((pn[j+2] & 0x07) << 4)) | (pn[j+1] & 0x07));
                                     /* reverseattribute = attribute; */
                                 } else {
-                                    i = (attribute & 0x88);
-                                    attribute = (i | (((pn[j+2] & 0x07) << 4)) | (pn[j+1] & 0x07));
+                                    attribute = cell_video_attr_set_vio_3bit_colors(attribute, (((pn[j+2] & 0x07) << 4)) | (pn[j+1] & 0x07));
                                     defaultattribute = attribute;
                                     graphicattribute = attribute;
-                                    reverseattribute = (i | (((pn[j+1] & 0x07) << 4)) | (pn[j+2] & 0x07));
+
+                                    reverseattribute = cell_video_attr_set_vio_3bit_colors(attribute, (((pn[j+1] & 0x07) << 4)) | (pn[j+2] & 0x07));
                                     /* reverseattribute = attribute; */
                                 }
                                 j += 2;
@@ -16625,7 +17908,7 @@ vtcsi(void)
                         case 35:
                         case 36:
                         case 37:
-                            /* Select foreground color */
+                            /* Select foreground color preserving the intensity*/
                             if ( !sgrcolors )
                                 break;
 
@@ -16637,45 +17920,117 @@ vtcsi(void)
                             else */
                                 l = sgrcols[pn[j] - 30];
                             if (decscnm) {
-                                i = (attribute & 0x8F);
-                                attribute = (i | ((l << 4)));
+                                attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
 
                                 if ( ISSCO(tt_type_mode) ) {
                                     /* set the default attribute as well */
-                                    i = (defaultattribute & 0x8F);
-                                    defaultattribute = (i | (l << 4));
-                                    i = (graphicattribute & 0x8F);
-                                    graphicattribute = (i | (l << 4));
+                                    defaultattribute = cell_video_attr_set_3bit_bg_color(defaultattribute, l);
+
+                                    graphicattribute = cell_video_attr_set_3bit_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    i = (reverseattribute & 0x8F);
-                                    reverseattribute = (i | (l << 4));
+                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
 #else
-                                    i = (reverseattribute & 0xF8);
-                                    reverseattribute = (i | l);
+                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
 #endif
                                 }
                             } else {
-                                i = (attribute & 0xF8);
-                                attribute = (i | l);
+                                attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
 
                                 if ( ISSCO(tt_type_mode) ) {
                                     /* set the default attribute as well */
-                                    i = (defaultattribute & 0xF8);
-                                    defaultattribute = (i | l);
-                                    i = (graphicattribute & 0xF8);
-                                    graphicattribute = (i | l);
+                                    defaultattribute = cell_video_attr_set_3bit_fg_color(defaultattribute, l);
+
+                                    graphicattribute = cell_video_attr_set_3bit_fg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    i = (reverseattribute & 0xF8);
-                                    reverseattribute = (i | l);
+                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
 #else
-                                    i = (reverseattribute & 0x8F);
-                                    reverseattribute = (i | (l << 4));
+                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
 #endif
                                 }
                             }
                             break;
-                        case 38:  /* enable underline option */
+                        case 38: {  /* enable underline option (for what terminal?) */
+									/* Extended Color */
+							/* if pecount > 0 then we're using parameter elements
+								seperated by colons. If pecount is 0, then we're
+								incorrectly using semicolons to separate the
+								parameter elements for compatibility with old xterm.
+								In that case, collect up the parameter elements from
+								the parameter list. */
+
+							int semicolons = FALSE;
+							int max_colors = palette_max_index();
+
+                            if ( !sgrcolors )
+                                break;
+
+							if (pecount == 0) {
+								int i, elreq = 0;
+								semicolons = TRUE;
+
+								if (pn[j+1] == 2) elreq = 5;
+								else if (pn[j+1] == 5) elreq = 2;
+
+								for (i = 0; i < elreq; i++) {
+									j++;
+									pecount++;
+									pe[pecount] = pn[j];
+								}
+							}
+
+							if (pecount >= 2 && pe[1] == 5) {
+                                /* K95s color IDs for colors 1-15 are different
+								 * from those used by xterm due to its OS/2
+								 * origins.
+								 */
+                                int index = color_index_to_vio(pe[2]);
+
+                                if (index <= max_colors) {
+#ifdef CK_COLORS_16
+                                    /* For 16-color builds, map from the currently
+									 * set palette on to the aixterm-16 palette.
+                                     */
+                                    index = nearest_palette_color_palette(colorpalette, index);
+#endif /* CK_COLORS_16 */
+									attribute = cell_video_attr_set_fg_color(attribute,index);
+                                }
+							}
+
+							/* Direct (24-bit) color value? */
+							else if (pecount >= 4 && pe[1] == 2 && semicolons) {
+								int r = pe[2], g = pe[3], b = pe[4], idx;
+#ifdef CK_COLORS_24BIT
+								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+									/* TODO: rgb colour stuff */
+                            	} else
+#endif /* CK_COLORS_24BIT */
+								{
+								/* Can't store 24-bit color, so look for the nearest
+								 * color in the current palette and use that.*/
+								idx = nearest_palette_color_rgb(r, g, b);
+								attribute = cell_video_attr_set_fg_color(attribute,idx);
+								}
+							}
+							else if (pecount >= 5 && pe[1] == 2 && !semicolons) {
+								int r = pe[3], g = pe[4], b = pe[5], idx;
+#ifdef CK_COLORS_24BIT
+								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+									/* TODO: rgb colour stuff.
+										pe[2] is the colour space id (ignored) */
+                                } else
+#endif /* CK_COLORS_24BIT */
+                                {
+									/* Can't store 24-bit color, so look for the nearest
+								 	* color in the current palette and use that.*/
+									idx = nearest_palette_color_rgb(r, g, b);
+									attribute = cell_video_attr_set_fg_color(attribute,idx);
+                                }
+							}
+
+                            debug(F111, "SGR 38", "attribute", attribute);
+                            debug(F111, "SGR 38", "foreground", cell_video_attr_foreground(attribute));
                             break;
+							}
                         case 39:  /* disable underline option */
                             /* Supported by SCO ANSI */
                             /* QANSI - restore fg color saved with */
@@ -16684,13 +18039,32 @@ vtcsi(void)
                                 break;
 
                             if (decscnm) {
-                                l = (defaultattribute & 0x70);
-                                i = (attribute & 0x8F);
-                                attribute = (i | l);
+                                /* Copy the 3-bit background color from defaultattribute
+                                 * to attribute */
+
+                                int def_bg;
+
+                                /* Get the 3-bit default BG color*/
+                                def_bg = cell_video_attr_background(defaultattribute);
+
+                                /* only try to preserve the intensity bit if the
+                                 * saved color is within the 16-color range */
+                                if (def_bg < 16) {
+                                    def_bg &= 0x07;
+                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, def_bg);
+                                } else {
+                                    attribute = cell_video_attr_set_bg_color(attribute, def_bg);
+                                }
                             } else {
-                                l = defaultattribute & 0x07;
-                                i = (attribute & 0xF8);
-                                attribute = (i | l);
+                                int def_bg = cell_video_attr_foreground(defaultattribute);
+                                /* only try to preserve the intensity bit if the
+                                 * saved color is within the 16-color range */
+                                if (def_bg < 16) {
+                                    def_bg &= 0x07;
+                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, def_bg);
+                                } else {
+                                    attribute = cell_video_attr_set_fg_color(attribute, def_bg);
+                                }
                             }
                             break;
                         case 40:
@@ -16713,43 +18087,119 @@ vtcsi(void)
                             else */
                                 l = sgrcols[pn[j] - 40];
                             if (!decscnm) {
-                                i = (attribute & 0x8F);
-                                attribute = (i | ((l << 4)));
+                                attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
 
                                 if ( tt_type_mode == TT_SCOANSI ) {
                                     /* set the default attribute as well */
-                                    i = (defaultattribute & 0x8F);
-                                    defaultattribute = (i | (l << 4));
-                                    i = (graphicattribute & 0x8F);
-                                    graphicattribute = (i | (l << 4));
+                                    defaultattribute = cell_video_attr_set_3bit_bg_color(defaultattribute, l);
+
+                                    graphicattribute = cell_video_attr_set_3bit_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    i = (reverseattribute & 0x8F);
-                                    reverseattribute = (i | (l << 4));
+                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
 #else
-                                    i = (reverseattribute & 0xF8);
-                                    reverseattribute = (i | l);
+                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
 #endif
                                 }
                             } else {
-                                i = (attribute & 0xF8);
-                                attribute = (i | l);
+                                attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
 
                                 if ( tt_type_mode == TT_SCOANSI ) {
                                     /* set the default attribute as well */
-                                    i = (defaultattribute & 0xF8);
-                                    defaultattribute = (i | l);
-                                    i = (graphicattribute & 0xF8);
-                                    graphicattribute = (i | l);
+                                    defaultattribute = cell_video_attr_set_3bit_fg_color(defaultattribute, l);
+
+                                    graphicattribute = cell_video_attr_set_3bit_fg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    i = (reverseattribute & 0xF8);
-                                    reverseattribute = (i | l);
+                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
 #else
-                                    i = (reverseattribute & 0x8F);
-                                    reverseattribute = (i | (l << 4));
+                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
 #endif
                                 }
                             }
                             break;
+                        case 48: {  /* Extended Color */
+							/* if pecount > 0 then we're using parameter elements
+								seperated by colons. If pecount is 0, then we're
+								incorrectly using semicolons to separate the
+								parameter elements for compatibility with old xterm.
+								In that case, collect up the parameter elements from
+								the parameter list. */
+
+							int semicolons = FALSE;
+                            int max_colors = 16;  /* CK_PALETTE_16 */
+
+                            if ( !sgrcolors )
+                                break;
+
+                            max_colors = palette_max_index();
+
+							if (pecount == 0) {
+								int i, elreq = 0;
+								semicolons = TRUE;
+
+								if (pn[j+1] == 2) elreq = 5;
+								else if (pn[j+1] == 5) elreq = 2;
+
+								for (i = 0; i < elreq; i++) {
+									j++;
+									pecount++;
+									pe[pecount] = pn[j];
+								}
+							}
+
+							if (pecount >= 2 && pe[1] == 5) {
+
+                                /* K95s color IDs for colors 1-15 are different
+								 * from those used by xterm due to its OS/2
+								 * origins.
+								 */
+                                int index = color_index_to_vio(pe[2]);
+
+                                if (index <= max_colors) {
+#ifdef CK_COLORS_16
+                                    /* For 16-color builds, map from the currently
+									 * set palette on to the aixterm-16 palette.
+                                     */
+                                    index = nearest_palette_color_palette(colorpalette, index);
+#endif /* CK_COLORS_16 */
+									attribute = cell_video_attr_set_bg_color(attribute,index);
+                                }
+							}
+							/* Direct (24-bit) color value? */
+							else if (pecount >= 4 && pe[1] == 2 && semicolons) {
+								int r = pe[2], g = pe[3], b = pe[4], idx;
+#ifdef CK_COLORS_24BIT
+								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+									/* TODO: rgb colour stuff */
+                            	} else
+#endif /* CK_COLORS_24BIT */
+								{
+									/* Can't store 24-bit color, so look for the nearest
+								 	* color in the current palette and use that.*/
+									idx = nearest_palette_color_rgb(r, g, b);
+									attribute = cell_video_attr_set_bg_color(attribute,idx);
+                                }
+							}
+							else if (pecount >= 5 && pe[1] == 2 && !semicolons) {
+								int r = pe[3], g = pe[4], b = pe[5], idx;
+#ifdef CK_COLORS_24BIT
+								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+									/* TODO: rgb colour stuff.
+										pe[2] is the colour space id (ignored) */
+                                } else
+#endif /* CK_COLORS_24BIT */
+                                {
+									/* Can't store 24-bit color, so look for the nearest
+								 	* color in the current palette and use that.*/
+									idx = nearest_palette_color_rgb(r, g, b);
+									attribute = cell_video_attr_set_bg_color(attribute,idx);
+                                }
+
+							}
+							debug(F111, "SGR 48", "attribute", attribute);
+                            debug(F111, "SGR 48", "background", cell_video_attr_background(attribute));
+                            break;
+							}
+
                         case 49:
                             /* Supported by SCO ANSI */
                             /* QANSI - restore bg color saved with */
@@ -16758,13 +18208,29 @@ vtcsi(void)
                                 break;
 
                             if (!decscnm) {
-                                l = defaultattribute & 0x70;
-                                i = (attribute & 0x8F);
-                                attribute = (i | l);
+                                int def_bg;
+
+                                /* Get the 3-bit default BG color*/
+                                def_bg = cell_video_attr_background(defaultattribute);
+
+                                /* only try to preserve the intensity bit if the
+                                 * saved color is within the 16-color range */
+                                if (def_bg < 16) {
+                                    def_bg &= 0x07;
+                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, def_bg);
+                                } else {
+                                    attribute = cell_video_attr_set_bg_color(attribute, def_bg);
+                                }
                             } else {
-                                l = defaultattribute & 0x07;
-                                i = (attribute & 0xF8);
-                                attribute = (i | l);
+                                int def_bg = cell_video_attr_foreground(defaultattribute);
+                                /* only try to preserve the intensity bit if the
+                                 * saved color is within the 16-color range */
+                                if (def_bg < 16) {
+                                    def_bg &= 0x07;
+                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, def_bg);
+                                } else {
+                                    attribute = cell_video_attr_set_fg_color(attribute, def_bg);
+                                }
                             }
                             break;
                         case 50:
@@ -16825,39 +18291,31 @@ vtcsi(void)
                                  !decscnm && attrib.reversed
 #endif
                                  ) {
-                                i = (attribute & 0x8F);
-                                attribute = (i | ((l << 4)));
+                                attribute = cell_video_attr_set_bg_color(attribute, l);
 
                                 if ( tt_type_mode == TT_SCOANSI ) {
                                     /* set the default attribute as well */
-                                    i = (defaultattribute & 0x8F);
-                                    defaultattribute = (i | (l << 4));
-                                    i = (graphicattribute & 0x8F);
-                                    graphicattribute = (i | (l << 4));
+                                    defaultattribute = cell_video_attr_set_bg_color(defaultattribute, l);
+
+                                    graphicattribute = cell_video_attr_set_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    i = (reverseattribute & 0x8F);
-                                    reverseattribute = (i | (l << 4));
+                                    reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
 #else
-                                    i = (reverseattribute & 0xF8);
-                                    reverseattribute = (i | l);
+                                    reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #endif
                                 }
                                 } else {
-                                    i = (attribute & 0xF8);
-                                    attribute = (i | l);
+                                    attribute = cell_video_attr_set_fg_color(attribute, l);
 
                                     if ( tt_type_mode == TT_SCOANSI ) {
                                         /* set the default attribute as well */
-                                        i = (defaultattribute & 0xF8);
-                                        defaultattribute = (i | l);
-                                        i = (graphicattribute & 0xF8);
-                                        graphicattribute = (i | l);
+                                        defaultattribute = cell_video_attr_set_fg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_fg_color(graphicattribute, l);
 #ifdef COMMENT
-                                        i = (reverseattribute & 0xF8);
-                                        reverseattribute = (i | l);
+                                        reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #else
-                                        i = (reverseattribute & 0x8F);
-                                        reverseattribute = (i | (l << 4));
+                                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
 #endif
                                     }
                                 }
@@ -16888,39 +18346,31 @@ vtcsi(void)
                                  decscnm && attrib.reversed
 #endif
                                 ) {
-                                i = (attribute & 0x8F);
-                                attribute = (i | ((l << 4)));
+                                attribute = cell_video_attr_set_bg_color(attribute, l);
 
                                 if ( tt_type_mode == TT_SCOANSI ) {
                                     /* set the default attribute as well */
-                                    i = (defaultattribute & 0x8F);
-                                    defaultattribute = (i | (l << 4));
-                                    i = (graphicattribute & 0x8F);
-                                    graphicattribute = (i | (l << 4));
+                                    defaultattribute = cell_video_attr_set_bg_color(defaultattribute, l);
+
+                                    graphicattribute = cell_video_attr_set_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    i = (reverseattribute & 0x8F);
-                                    reverseattribute = (i | (l << 4));
+                                    reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
 #else
-                                    i = (reverseattribute & 0xF8);
-                                    reverseattribute = (i | l);
+                                    reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #endif
                                 }
                                 } else {
-                                    i = (attribute & 0xF8);
-                                    attribute = (i | l);
+                                    attribute = cell_video_attr_set_fg_color(attribute, l);
 
                                     if ( tt_type_mode == TT_SCOANSI ) {
                                         /* set the default attribute as well */
-                                        i = (defaultattribute & 0xF8);
-                                        defaultattribute = (i | l);
-                                        i = (graphicattribute & 0xF8);
-                                        graphicattribute = (i | l);
+                                        defaultattribute = cell_video_attr_set_fg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_fg_color(graphicattribute, l);
 #ifdef COMMENT
-                                        i = (reverseattribute & 0xF8);
-                                        reverseattribute = (i | l);
+                                        reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #else
-                                        i = (reverseattribute & 0x8F);
-                                        reverseattribute = (i | (l << 4));
+                                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
 #endif 
                                     }
                                 }
@@ -17046,8 +18496,7 @@ vtcsi(void)
                     if ( ISANSI(tt_type_mode) ) {
                         /* pn[1] contains new color */
                         l = pn[1];
-                        i = (graphicattribute & 0xF0);
-                        graphicattribute = (i | l);
+                        graphicattribute = cell_video_attr_set_fg_color(graphicattribute, l);
                     }
                 }
                 else if ( private == TRUE ) {
@@ -17461,8 +18910,7 @@ vtcsi(void)
                     if ( ISANSI(tt_type_mode) ) {
                         /* pn[1] contains new color */
                         l = pn[1];
-                        i = (graphicattribute & 0x0F);
-                        graphicattribute = (i | (l << 4));
+                        graphicattribute = cell_video_attr_set_bg_color(graphicattribute, l);
                     }
                     else if ( ISBA80(tt_type_mode) ) {
                         /* Begin Reading Function Labels */
@@ -17695,13 +19143,13 @@ vtcsi(void)
                         switch ( pn[1] ) {
                         case 0: /* Normal */
                         case 2: /* Graphic - ??? */
-                            sprintf(buf,"%d %d\n",defaultattribute&0x0F,
-                                     (defaultattribute&0xF0)>>4);
+                            sprintf(buf,"%d %d\n",cell_video_attr_background(defaultattribute),
+                                     cell_video_attr_background(defaultattribute));
                             break;
                         case 1: /* Reverse */
                             sprintf(buf,"%d %d\n",
-                                     (defaultattribute&0xF0)>>4,
-                                     defaultattribute&0x0F);
+                                     cell_video_attr_background(defaultattribute),
+                                     cell_video_attr_foreground(defaultattribute));
                             break;
                         default:
                             *buf = '\0';
@@ -17737,7 +19185,7 @@ vtcsi(void)
                      private == FALSE &&
                      ansiext == FALSE ) {
                     blankvcell.c = SP;
-                    blankvcell.a = attribute;
+                    blankvcell.video_attr = attribute;
                     if (pn[1] > VscrnGetWidth(VTERM) + 1 -
                          wherex[VTERM])
                         pn[1] = VscrnGetWidth(VTERM) + 1 -
@@ -17757,7 +19205,7 @@ vtcsi(void)
                     /* EF - Erase Field */
                     int start, end, width;
                     blankvcell.c = ' ' ;
-                    blankvcell.a = geterasecolor(VTERM) ;
+                    blankvcell.video_attr = geterasecolor(VTERM) ;
                     start = end = wherex[VTERM];
                     width = VscrnGetWidth(VTERM);
                     if (start > 1) {
@@ -17836,7 +19284,7 @@ vtcsi(void)
                      private == FALSE &&
                      ansiext == FALSE ) {
                     blankvcell.c = SP;
-                    blankvcell.a = geterasecolor(VTERM);
+                    blankvcell.video_attr = geterasecolor(VTERM);
                     if (pn[1] > VscrnGetWidth(VTERM) + 1 -
                          wherex[VTERM])
                         pn[1] = VscrnGetWidth(VTERM) + 1 -
@@ -18385,7 +19833,7 @@ vtcsi(void)
                      ansiext == FALSE ) {
                     /* Erase characters (ECH) VT200 */
                     blankvcell.c = ' ' ;
-                    blankvcell.a = geterasecolor(VTERM);
+                    blankvcell.video_attr = geterasecolor(VTERM);
                     if ( pn[1] == 0 ) pn[1] = 1 ;
                     if ( pn[1] >
                          VscrnGetWidth(VTERM) + 1
@@ -18576,7 +20024,7 @@ vtcsi(void)
                         /* DECDC - Delete Column */
                         viocell cell ;
                         cell.c = SP ;
-                        cell.a = geterasecolor(VTERM) ;
+                        cell.video_attr = geterasecolor(VTERM) ;
                         if ( k < 1 || pn[0] == 0 )
                             pn[1] = 1;
                         else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
@@ -18598,7 +20046,7 @@ vtcsi(void)
                         /* DECIC - Insert Column */
                         viocell cell ;
                         cell.c = SP ;
-                        cell.a = geterasecolor(VTERM) ;
+                        cell.video_attr = geterasecolor(VTERM) ;
                         if ( k < 1 || pn[0] == 0 )
                             pn[1] = 1;
                         else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
@@ -18632,7 +20080,7 @@ vtcsi(void)
                     /* Scroll Left - Pan Right */
                     viocell cell ;
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( pn[1] == 0 )
                         pn[1] = 1 ;
                     else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
@@ -18651,7 +20099,7 @@ vtcsi(void)
                     /* Scroll Right - Pan Left */
                     viocell cell ;
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( pn[1] == 0 )
                         pn[1] = 1 ;
                     else if ( pn[1] > VscrnGetWidth(VTERM)-1 )
@@ -19234,7 +20682,7 @@ vtescape( void )
                     cursorleft(0);
                 else {
                     blankvcell.c = SP;
-                    blankvcell.a = geterasecolor(VTERM);
+                    blankvcell.video_attr = geterasecolor(VTERM);
                     VscrnScrollRt(VTERM,
                                wherey[VTERM] - 1,
                                0,
@@ -19279,7 +20727,7 @@ vtescape( void )
 			x < (start_y == end_y ? end_x : MAXTERMCOL); 
 			x++ ) {
 		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1);
-		      pcell->a = attribute;
+		      pcell->video_attr = attribute;
 		      VscrnWrtCell( VTERM, *pcell, attrib,
 				    start_y - 1,
 				    x - 1);
@@ -19288,7 +20736,7 @@ vtescape( void )
 		      for ( y=start_y+1; y<end_y; y++) {
 			  for ( x=0; x<MAXTERMCOL; x++ ) {
 			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1);
-			      pcell->a = attribute;
+			      pcell->video_attr = attribute;
 			      VscrnWrtCell( VTERM, *pcell, attrib,
 					    y - 1,
 					    x - 1);
@@ -19298,7 +20746,7 @@ vtescape( void )
 			    x <= end_x; 
 			    x++ ) {
 			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1);
-			  pcell->a = attribute;
+			  pcell->video_attr = attribute;
 			  VscrnWrtCell( VTERM, *pcell, attrib,
 					end_y - 1,
 					x - 1);
@@ -19310,7 +20758,7 @@ vtescape( void )
                       cursorright(0);
                   else {
                       blankvcell.c = SP;
-                      blankvcell.a = geterasecolor(VTERM);
+                      blankvcell.video_attr = geterasecolor(VTERM);
                       VscrnScrollLf(VTERM,
                                  wherey[VTERM] - 1,
                                  0,
@@ -19808,7 +21256,7 @@ vtescape( void )
                     short x,y ;
 
                     cell.c = 'E';
-                    cell.a = defaultattribute; /* was 0x07 */
+                    cell.video_attr = defaultattribute; /* was 0x07 */
                     /* Self Test */
                     /* 24 lines of MAXTERMCOL cols of cells */
                     for ( y=0 ; y < 24 ; y++ ) {
@@ -20035,7 +21483,7 @@ vtescape( void )
               else if ( ISH19(tt_type_mode) ) {
                   /* H19 - Delete Character */
                   blankvcell.c = SP;
-                  blankvcell.a = geterasecolor(VTERM);
+                  blankvcell.video_attr = geterasecolor(VTERM);
                   if (pn[1] > VscrnGetWidth(VTERM) + 1 -
                        wherex[VTERM])
                       pn[1] = VscrnGetWidth(VTERM) + 1 -
@@ -20346,7 +21794,7 @@ vt100(unsigned short vtch) {
                     wrapit = FALSE;     /* Remember wrapping is done */
                 } else {                /* Not time to wrap */
                     cell.c = vtch;
-                    cell.a = attribute ;
+                    cell.video_attr = attribute ;
                     if (isdoublewidth(wherey[vmode]))
                         VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1,
                                       VscrnGetWidth(vmode)/2-1);

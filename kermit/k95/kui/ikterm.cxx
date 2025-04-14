@@ -6,16 +6,15 @@ extern videobuffer vscrn[VNUM]; /* = {0,0,0,0,0,0,{0,0},0,-1,-1}; */
 extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
 extern int priority ;
-extern unsigned char defaultattribute ;
+extern cell_video_attr_t defaultattribute ;
 extern int cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[];
 extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor, scrninitialized[], ttyfd, viewonly, carrier, network,
            tt_scrsize[], tt_modechg, pheight, pwidth, tt_status[], screenon, 
            decssdt, tt_url_hilite, tt_url_hilite_attr, tt_type_mode, ttnum;
 extern TID tidTermScrnUpd ;
-extern unsigned char     colorstatus;
-extern unsigned char     colorselect;
-extern unsigned char     colorborder;
+extern cell_video_attr_t     colorstatus;
+extern cell_video_attr_t     colorselect;
 extern BYTE vmode;
 extern int tcsl;
 extern int nt351;
@@ -188,7 +187,7 @@ BOOL IKTerm::getDrawInfo()
 
                     textBuffer[c+x] = cell.c;
                     attrBuffer[c+x] = ComputeColorFromAttr( vnum,
-                                cell.a,
+                                cell.video_attr,
                                 vt_char_attrs);
                     effectBuffer[c+x] = vt_char_attrs;
                 }
@@ -197,8 +196,15 @@ BOOL IKTerm::getDrawInfo()
             {
                 /* In case we are in the middle of a scroll */
                 memset( &(textBuffer[c]), ' ', xs );
-                memset( &(attrBuffer[c]), defaultattribute, xs );
                 memset( &(effectBuffer[c]), '\0', xs );
+
+                // memset( &(attrBuffer[c]), defaultattribute, xs );
+                {
+                    cell_video_attr_t* str = &(attrBuffer[c]);
+                    for (int i = 0; i < xs; i++) {
+                        str[i] = defaultattribute;
+                    }
+                }
 
 #ifdef VSCRN_DEBUG
                 debug(F101,"OUCH!","",(scrollflag?(vbuf->scrolltop+y)
@@ -222,7 +228,7 @@ BOOL IKTerm::getDrawInfo()
                     }
                     else
                         textBuffer[c+xo+i] = vscrn[vnum].popup->c[y-yo][i];
-                    attrBuffer[c+xo+i] = vscrn[vnum].popup->a;
+                    attrBuffer[c+xo+i] = vscrn[vnum].popup->video_attr;
                     effectBuffer[c+xo+i] = '\0';
                 }
             }
@@ -284,7 +290,7 @@ BOOL IKTerm::getDrawInfo()
 
                             textBuffer[c+x] = line->cells[x+xho].c;
                             attrBuffer[c+x] = ComputeColorFromAttr( vnum,
-                                    line->cells[x+xho].a,
+                                    line->cells[x+xho].video_attr,
                                     vt_char_attrs );
                             effectBuffer[c+x] = vt_char_attrs;
                         }
@@ -315,7 +321,7 @@ BOOL IKTerm::getDrawInfo()
 
                         textBuffer[c+x] = line->cells[x+xho].c;
                         attrBuffer[c+x] = ComputeColorFromAttr(vnum,
-                            line->cells[x+xho].a,
+                            line->cells[x+xho].video_attr,
                             vt_char_attrs);
                         effectBuffer[c+x] = vt_char_attrs;
                     }
@@ -352,7 +358,7 @@ BOOL IKTerm::getDrawInfo()
             for ( x = 0 ; x < xs ; x++ ) {
                 textBuffer[c+x] = line->cells[x].c;
                 attrBuffer[c+x] = ComputeColorFromAttr(vnum,
-                                                        line->cells[x].a,
+                                                        line->cells[x].video_attr,
                                                         line->vt_char_attrs[x]);
                 effectBuffer[c+x] = line->vt_char_attrs[x];
             }

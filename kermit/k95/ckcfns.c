@@ -948,7 +948,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 #ifndef IKSDONLY
 #ifdef OS2
             extern int k95stdout,wherex[],wherey[];
-			extern unsigned char colorcmd;
+			extern cell_video_attr_t colorcmd;
             union {
                 USHORT ucs2;
                 UCHAR  bytes[2];

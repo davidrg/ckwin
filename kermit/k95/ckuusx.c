@@ -359,7 +359,7 @@ extern struct csinfo fcsinfo[], tcsinfo[];
 #endif /* NOCSETS */
 
 #ifdef OS2
-extern unsigned char colorcmd;
+extern cell_video_attr_t colorcmd;
 #endif /* OS2 */
 
 #ifdef NOXFER
@@ -6555,7 +6555,7 @@ clear() {
     }
 #else
     cell.c = ' ';
-    cell.a = colorcmd;
+    cell.video_attr = colorcmd;
     WrtNCell(cell, cmd_rows * cmd_cols, 0, 0);
 #endif /* ONETERMUPD */
     return(0);
@@ -6569,7 +6569,7 @@ clrtoeol() {
     viocell cell;
 
     cell.c = ' ';
-    cell.a = colorcmd;
+    cell.video_attr = colorcmd;
 #ifndef ONETERMUPD
     GetCurPos(&row, &col );
     WrtNCell(cell, cmd_cols - col -1, row, col);

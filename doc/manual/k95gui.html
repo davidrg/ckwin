@@ -529,15 +529,24 @@ COMMON, APPDATA, etc (explained in the <a href="readme.html">README</a>
 document). -->
 <p>
 
-<dt><b>SET GUI RGB-COLORS</b> &nbsp;
+<dt><b>SET GUI RGBCOLOR</b> &nbsp;
 <i>ansi-color-name &nbsp;
 red-value &nbsp; green-value &nbsp; blue-value</i></dt>
 
-<dd>Changes the definition of the given ANSI color.  The RGB values are
-numbers between 0 and 255.  The ANSI color names are
+<dd>Changes the definition of the given ANSI color in the current color palette.
+The RGB values are numbers between 0 and 255.  The ANSI color names are
 black, darkgray, lightgreen, magenta, blue, green, lightgray, red, brown,
 lightblue, lightmagenta, white, cyan, lightcyan, lightred, and yellow.
+<p>
 
+<dt><b>SET GUI RGBCOLOR INDEX</b> &nbsp;
+    <i>color-index &nbsp;
+        red-value &nbsp; green-value &nbsp; blue-value</i></dt>
+
+<dd>Changes the definition of the given color index in the current color
+    palette. The range of the color-index depends on the current color palette;
+    0-15 for aixterm-16, 0-87 for xterm-88 and 0-255 for xterm-256. The RGB values are
+    numbers between 0 and 255.
 <p>
 
 <dt><b>SET GUI FONT</b> <i>name [ size ]</i></dt>
@@ -653,6 +662,15 @@ the GUI page.
 Command Screen, and they always affect the number of screen rows and columns,
 regardless of the GUI WINDOW RESIZE-MODE setting.
 
+<p>
+
+<dt><b>SET TERMINAL COLOR PALETTE</b>
+    <i>{</i> <b>AIXTERM-16</b>, <b>XTERM-88</b>, <b>XTERM-256</b> <i>}</i></dt>
+
+<dd>Specifies the color palette Kermit 95 should use. The first 16 colours are
+    the same for all three, while the colours above that vary. RGB values set
+    by SET GUI RGBCOLOR are only set for the current color palette.
+
 <!-- Not GUI specific so doesn't belong in the GUI features doc
 <p>
 <dt><b>SET TITLE</b> <i>text</i>
@@ -672,7 +690,9 @@ is used.
 <p>
 <dt><b>SHOW GUI</b></dt>
 
-<dd>Displays SET GUI values, and shows the actual color values.
+<dd>Displays SET GUI values, and shows the actual color values for the first
+    16 colors. If given the /PALETTE switch, color values are shown by palette
+    index number rather than name along with color cubes for that palette.
 
 </dl>
 <p>

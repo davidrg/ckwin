@@ -10,6 +10,40 @@ log living in the [Whats New in 3.0](whats-new.md) document. When the final
 release of v3.0 eventually happens, the details about the various v3.0 
 eventually be moved elsewhere, with the full v3.0 change log taking their place.
 
+## Kermit 95 v3.0 beta 8 - Date TBD, likely late 2025
+
+This release comes with *significant* changes to the way Kermit 95 handles
+color. While every effort has been made to ensure there are no unexpected
+behaviour changes to applications and terminal emulations not using more than
+16 colours, these are big changes so its not impossible something may have been
+missed. If you notice any unexpected color changes from beta 7 in applications 
+and terminal emulations that *do not* use the new 256-color mode,
+*please log a bug* so it can be fixed!
+
+### New Features
+ - Support for the xterm 88-color and 256-color palettes via SGR 38 and SGR 48
+   - The active color palette can be chosen with the new `SET TERM COLOR PALETTE`
+     command. This allows disabling the new higher-color modes. The currently
+     set palette is available to scripts via `\v(color_palette)`. 
+   - In console versions of K95 (the OS/2 version, or k95.exe on windows), the
+     nearest color in the 16-color palette is used.
+   - The `SET GUI RGBCOLOR` command now changes the color values for the current
+     color palette
+   - RGB values for colors 16 and up can be customised with the new 
+     `SET GUI RGBCOLOR INDEX` command 
+   - RGB values for colors 16 and up can now be shown with `SHOW GUI /PALETTE`
+ - Support xterm OSC-4 operating system command for changing the color palette
+ - Support xterm OSC-104 operating system command for resetting the color palette
+ - Support xterm OSC-2 and OSC-l operating system commands for setting the 
+   window title (in addition to existing support for OSC-0 and OSC-21)
+ - Support for two highly non-standard linux OSC sequences that are not terminated
+   with an ST or BEL. K95 previously detected these and ignored them to prevent
+   the terminal escape sequence parser being stuck in the OSC absorption state
+   waiting for an ST or BEL that was never going to arrive.
+   - `OSC P nrrggbb` - set colour palette entry _n_ to color _rrggbb_ (all 
+     parameters are hex digits) 
+   - `OSC R` - reset colour palette 
+
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
 As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name

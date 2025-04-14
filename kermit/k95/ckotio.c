@@ -212,6 +212,17 @@ static char *ckxrev = "32-bit";
 #include "ckokey.h"
 #include "ckoslp.h"
 
+#ifdef KUI
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+#endif /* KUI */
+extern ULONG RGBTable[], RGBTable256[], RGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+
 #ifdef CK_XYZ
 #include "p.h"
 #include "ckop.h"
@@ -2134,6 +2145,19 @@ sysinit() {
         if ( !row_init && !col_init )
             ttgwsiz() ;
     }
+
+#ifdef KUI
+    {
+        int i;
+        // Initialise the backup copies of the RGB colour tables
+        for (i = 0; i < 256; i++) SavedRGBTable256[i] = RGBTable256[i];
+        for (i = 0; i < 88; i++) SavedRGBTable88[i] = RGBTable88[i];
+        for (i = 0; i < 16; i++) SavedRGBTable[i] = RGBTable[i];
+#ifdef CK_PALETTE_WY370
+        for (i = 0; i < 65; i++) SavedWY370RGBTable[i] = WY370RGBTable[i];
+#endif /* CK_PALETTE_WY370 */
+    }
+#endif /* KUI*/
 
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
@@ -7445,7 +7469,7 @@ loadtod( int hh, int mm )
 
 int
 conoc(char c) {
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
     extern int wherex[];    /* Screen column, 1-based */
     extern int wherey[];        /* Screen row, 1-based */
 
@@ -7494,7 +7518,7 @@ conxo(int x, char *s) {
 
 int
 conol(char *s) {
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
 
     if ( s == NULL )
         return(-1);

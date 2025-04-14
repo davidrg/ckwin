@@ -1402,7 +1402,7 @@ int tt_senddata = 0;                    /* Let host read terminal data */
 extern int wy_blockend;                 /* Terminal Send Data EOB type */
 int tt_hidattr = 1;                     /* Attributes are hidden */
 
-extern unsigned char colornormal, colorselect,
+extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic;
 
@@ -1444,6 +1444,7 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLITA  9
 #define TTCOLRES  10
 #define TTCOLERA  11
+#define TTCOLPAL  12
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
@@ -1453,6 +1454,7 @@ struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "help-text",          TTCOLHLP, 0 },      /* Help screens */
     { "italic",             TTCOLITA, 0 },      /* Italic Color */
     { "normal",             TTCOLNOR, CM_INV }, /* Normal screen text */
+    { "palette",            TTCOLPAL, 0 },      /* Color palette */
     { "reset-on-esc[0m",    TTCOLRES, 0 },      /* Reset on ESC [ 0 m */
     { "reverse-video",      TTCOLREV, 0 },      /* Reverse video */
     { "status-line",        TTCOLSTA, 0 },      /* Status line */
@@ -1461,6 +1463,20 @@ struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "underlined-text",    TTCOLUND, 0 }       /* Underlined text */
 };
 int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
+
+struct keytab ttypaltab[] = {
+    { "aixterm-16", CK_PALETTE_16,    0 },
+    { "xterm-256",  CK_PALETTE_XT256, 0 },
+    { "xterm-88",   CK_PALETTE_XT88,  0 },
+#ifdef CK_COLORS_24BIT
+    { "xterm-rgb",  CK_PALETTE_XTRGB, 0 },
+    { "xterm-88rgb", CK_PALETTE_XTRGB88, CM_INV },
+#endif /* CK_COLORS_24BIT */
+#ifdef CK_PALETTE_WY370
+    { "wy-370",     CK_PALETTE_WY370, 0 },
+#endif
+};
+int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 
 #define TTATTNOR  0
 #define TTATTBLI  1
@@ -4369,6 +4385,20 @@ settrm() {
               return(z);
             user_erasemode = y;
             return(success=1);
+        } else if (x == TTCOLPAL) {
+          extern int colorpalette;
+          y = cmkey(ttypaltab, npalette, "Color palette to use",
+#ifdef CK_COLORS_24BIT
+                    "xterm-rgb",
+#else /* CK_COLORS_24BIT*/
+                    "xterm-256",
+#endif	/* CK_COLORS_24BIT*/
+                    xxstring);
+          if (y < 0) return y;
+          /* TODO: We should backup attribute colors set below on changing */
+          colorpalette = y;
+          return(success=1);
+          break;
         } else {                        /* No parse error */
             int fg = 0, bg = 0;
             fg = cmkey(ttyclrtab, nclrs,
@@ -4387,36 +4417,36 @@ settrm() {
               return(y);
             switch (x) {
               case TTCOLNOR:
-                colornormal = fg | bg << 4;
+                colornormal = cell_video_attr_set_colors(fg, bg);
                 fgi = fg & 0x08;
                 bgi = bg & 0x08;
                 break;
               case TTCOLREV:
-                colorreverse = fg | bg << 4;
+                colorreverse = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLITA:
-                coloritalic = fg | bg << 4;
+                coloritalic = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLUND:
-                colorunderline = fg | bg << 4;
+                colorunderline = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLGRP:
-                colorgraphic = fg | bg << 4;
+                colorgraphic = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLDEB:
-                colordebug = fg | bg << 4;
+                colordebug = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLSTA:
-                colorstatus = fg | bg << 4;
+                colorstatus = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLHLP:
-                colorhelp = fg | bg << 4;
+                colorhelp = cell_video_attr_set_colors(fg, bg);
                 break;
               case TTCOLBOR:
-                colorborder = fg;
+                colorborder = cell_video_attr_from_vio_attribute(fg);
                 break;
               case TTCOLSEL:
-                colorselect = fg | bg << 4;
+                colorselect = cell_video_attr_set_colors(fg, bg);
                 break;
               default:
                 printf("%s - invalid\n",cmdbuf);
