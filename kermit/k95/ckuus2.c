@@ -736,7 +736,15 @@ static char * hmxygui[] = {
 "SET GUI RGBCOLOR colorname redvalue greenvalue bluevalue",
 "  Specifies the red-green-blue mixture to be used to render the given",
 "  color name.  Type \"set gui rgbcolor\" to see a list of colornames.",
-"  the RGB values are whole numbers from 0 to 255.",
+"  The RGB values are whole numbers from 0 to 255.",
+" ",
+"SET GUI RGBCOLOR INDEX colornumber redvalue greenvalue bluevalue",
+"  Specifies the red-green-blue mixture to be used to render the given",
+"  color number. This is primarily for setting how colors from the xterm",
+"  extended color palettes are rendered. The range for colornumber depends",
+"  on the current palette set by SET TERM COLOR PALETTE. To view current",
+"  settings, you can use the SHOW GUI command. The RGB values are whole",
+"  numbers from 0 to 255.",
 " ",
 "SET GUI TOOLBAR DISABLED",
 "  Disables toolbar functions which could be used to modify the Kermit",
@@ -8076,6 +8084,16 @@ static char *hxyterm[] = {
 "  Determines whether the current color as set by the host or the default",
 "  color as set by the user (SET TERMINAL COLOR TERMINAL) is used to clear",
 "  the screen when erase commands are received from the host.",
+" ",
+
+#ifdef CK_COLORS_24BIT
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88, XTERM-RGB }",
+#else
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88 }",
+#endif
+"  Sets the active color palette. In the Windows Console and OS/2 versions of",
+"  Kermit 95 (or K95G built with only 16-color support), colors are mapped",
+"  from the chosen palette into AIXTERM-16 for display.",
 " ",
 
 "SET TERMINAL COLOR RESET-ON-ESC[0m { CURRENT-COLOR, DEFAULT-COLOR }",

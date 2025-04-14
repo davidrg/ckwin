@@ -718,7 +718,7 @@ static gss_OID ck_gss_nt_service_name_v2 = ck_oids+5;
 #include "ckcfnp.h"                     /* Prototypes */
 
 extern int k95stdout, wherex[], wherey[];
-extern unsigned char colorcmd;
+extern cell_video_attr_t colorcmd;
 #endif /* OS2 */
 
 #ifdef FTP_KRB4

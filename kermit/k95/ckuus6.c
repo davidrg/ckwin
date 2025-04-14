@@ -3759,7 +3759,7 @@ typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp;
     /* that was requested by the user. */
     if (!inserver && !k95stdout) {
         extern int wherex[], wherey[];
-        extern unsigned char colorcmd;
+        extern cell_video_attr_t colorcmd;
 
         VscrnWrtUCS2StrAtt( VCMD, (unsigned short *)buf, len/2,
                            wherey[VCMD], wherex[VCMD], &colorcmd);

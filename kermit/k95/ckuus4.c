@@ -93,6 +93,9 @@ DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
 #include "ckossh.h"
 #endif /* SSHBUILTIN */
 
+#include "ckocon.h"
+extern int colorpalette;
+
 #endif /* OS2 */
 
 #ifdef KUI
@@ -641,6 +644,7 @@ struct keytab vartab[] = {
     { "cmdfile",   VN_CMDF,  0},
     { "cmdlevel",  VN_CMDL,  0},
     { "cmdsource", VN_CMDS,  0},
+    { "color_palette", VN_PALETTE, 0},  /* K95 3.0 beta.8 */
     { "cols",      VN_COLS,  0},        /* 190 */
 #ifdef NT
     { "common",    VN_COMMON, 0},       /* 201 */
@@ -3301,7 +3305,7 @@ xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout;
 #ifdef OS2
     extern int k95stdout;
     extern int wherex[], wherey[];
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
 #ifdef NT
     SIGTYP (* oldsig)(int);             /* For saving old interrupt trap. */
 #else /* NT */
@@ -15444,6 +15448,41 @@ char *                                  /* Evaluate builtin variable */
           return(vvbuf);
     }
 #endif /* KUI */
+
+#ifdef OS2
+    switch(y) {
+        case VN_PALETTE:
+            switch(colorpalette) {
+                case CK_PALETTE_XTRGB:
+                    sprintf(vvbuf,"xterm-rgb");
+                    break;
+                case CK_PALETTE_XT256:
+                    sprintf(vvbuf,"xterm-256");
+                    break;
+                case CK_PALETTE_XT88:
+                    sprintf(vvbuf,"xterm-88");
+                    break;
+#ifdef CK_PALETTE_WY370
+                case CK_PALETTE_WY370:
+                    sprintf(vvbuf,"wy-370");
+                    break;
+#endif /* CK_PALETTE_WY370 */
+                case CK_PALETTE_16:
+                    sprintf(vvbuf,"aixterm-16");
+                    break;
+                case CK_PALETTE_8:
+                    sprintf(vvbuf,"ansi");
+                    break;
+                case CK_PALETTE_XTRGB88:
+                    sprintf(vvbuf,"xterm-88rgb");
+                    break;
+                default:
+                    sprintf(vvbuf,"unknown");
+                    break;
+            }
+            return(vvbuf);
+    }
+#endif /* OS2 */
 
     fnsuccess = 0;
     if (fnerror) {

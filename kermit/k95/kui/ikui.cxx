@@ -12,6 +12,9 @@ extern "C" {
 #include "ikui.h"
 }
 
+
+
+
 // there is only one K_GLOBAL shared by all objects.
 // this is used so that C functions (mostly wndprocs) have access to
 // the KWin class pointers
@@ -53,6 +56,8 @@ int KuiInit( void* hInstance, struct _kui_init * kui_init )
     //int numadded = AddFontResource( outfile );
 
     //DeleteFile( filename );
+
+
 
     // intialize K_GLOBAL
     //

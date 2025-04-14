@@ -3532,10 +3532,10 @@ tn_debug(s) char *s;
     debug(F111,"tn_debug",s,what);
 #ifdef OS2
     if (1) {
-        extern unsigned char colorcmd;
-        colorcmd ^= 0x8 ;
+        extern cell_video_attr_t colorcmd;
+        colorcmd = cell_video_attr_with_fg_intensity_toggled(colorcmd);
         printf("%s\r\n",s);
-        colorcmd ^= 0x8 ;
+        colorcmd = cell_video_attr_with_fg_intensity_toggled(colorcmd);
     }
     if (!scrninitialized[VTERM]) {
         USHORT x,y;

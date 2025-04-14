@@ -99,7 +99,7 @@ extern bool cursorena[] ;
 int cktomsk(int);   /* ckokey.c */
 
 #ifdef KUI
-void shogui();      /* ckuus3.c */
+int shogui();      /* ckuus3.c */
 #endif /* KUI */
 
 #endif /* OS2 */
@@ -354,7 +354,7 @@ extern struct keytab * term_font;
 #endif /* KUI */
 #endif /* PCFONTS */
 extern int ntermfont, tt_font, tt_font_size;
-extern unsigned char colornormal, colorunderline, colorstatus,
+extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
     colorreverse, colorcmd, coloritalic;
 extern int priority;
@@ -6039,6 +6039,7 @@ shotrm() {
       decscnm, decscnm_usr, tt_diff_upd, tt_senddata,
       wy_blockend, marginbell, marginbellcol, tt_modechg, dgunix;
     int lines = 0;
+    extern int colorpalette;
 #ifdef KUI
     extern CKFLOAT tt_linespacing[];
     extern int tt_cursor_blink;
@@ -6165,9 +6166,15 @@ shotrm() {
     printf(" %19s: %-13s  %13s: %-15s\n","SGR Colors",showoff(sgrcolors),
            "ESC[0m color",colorreset?"default-color":"current-color");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (colorpalette == CK_PALETTE_16) s = "aixterm-16";
+    if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) s = "xterm-88";
+    if (colorpalette == CK_PALETTE_XT256 || CK_PALETTE_XTRGB) s = "xterm-256";
+#ifdef CK_PALETTE_WY370
+    if (colorpalette == CK_PALETTE_WY370) s = "wy-370";
+#endif /* CK_PALETTE_WY370 */
     printf(" %19s: %-13s  %13s: %-15s\n",
             "Erase color",user_erasemode?"default-color":"current-color",
-           "Screen mode",decscnm?"reverse":"normal");
+            "Color palette", s);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
     printf(" %19s: %-13d  %13s: %-15d\n","Transmit-timeout",tt_ctstmo,
@@ -6255,8 +6262,10 @@ shotrm() {
            "Screen-optimization",showoff(tt_diff_upd),
            "Status line",showoff(tt_status[VTERM]));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf(" %19s: %-13s  %13s: %-15s\n","Debug",
-           showoff(debses),"Session log", seslog? sesfil : "(none)" );
+    printf(" %19s: %-13s  %13s: %-15s\n","Screen mode",decscnm?"reverse":"normal",
+           "Session log", seslog? sesfil : "(none)" );
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    printf(" %19s: %-13s  \n", "Debug", showoff(debses));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
     /* Display colors (should become SHOW COLORS) */
@@ -6299,25 +6308,25 @@ shotrm() {
         /* Foreground color names */
         printf("%6s: %-8s%-8s%-9s%-8s%-8s%-8s%-9s%-9s\n","fore",
                 "",
-                colors[colordebug&0x0F],
-                colors[colorhelp&0x0F],
-                colors[colorreverse&0x0F],
-                colors[colorselect&0x0F],
-                colors[colorstatus&0x0F],
-                colors[colornormal&0x0F],
-                colors[colorunderline&0x0F]);
+                cell_video_attr_foreground_color_name(colordebug),
+                cell_video_attr_foreground_color_name(colorhelp),
+                cell_video_attr_foreground_color_name(colorreverse),
+                cell_video_attr_foreground_color_name(colorselect),
+                cell_video_attr_foreground_color_name(colorstatus),
+                cell_video_attr_foreground_color_name(colornormal),
+                cell_video_attr_foreground_color_name(colorunderline));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
         printf("%6s: %-8s%-8s%-9s%-8s%-8s%-8s%-9s%-9s\n","back",
-                colors[colorborder],
-                colors[colordebug>>4],
-                colors[colorhelp>>4],
-                colors[colorreverse>>4],
-                colors[colorselect>>4],
-                colors[colorstatus>>4],
-                colors[colornormal>>4],
-                colors[colorunderline>>4] );
+                cell_video_attr_foreground_color_name(colorborder),
+                cell_video_attr_background_color_name(colordebug),
+                cell_video_attr_background_color_name(colorhelp),
+                cell_video_attr_background_color_name(colorreverse),
+                cell_video_attr_background_color_name(colorselect),
+                cell_video_attr_background_color_name(colorstatus),
+                cell_video_attr_background_color_name(colornormal),
+                cell_video_attr_background_color_name(colorunderline) );
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6337,16 +6346,16 @@ shotrm() {
 
         /* Foreground color names */
         printf("%6s: %-8s%-8s%-8s\n","fore",
-                colors[colorgraphic&0x0F],
-                colors[colorcmd&0x0F],
-                colors[coloritalic&0x0F]);
+                cell_video_attr_foreground_color_name(colorgraphic),
+                cell_video_attr_foreground_color_name(colorcmd),
+                cell_video_attr_foreground_color_name(coloritalic));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
         printf("%6s: %-8s%-8s%-8s\n","back",
-                colors[colorgraphic>>4],
-                colors[colorcmd>>4],
-                colors[coloritalic>>4]);
+                cell_video_attr_background_color_name(colorgraphic),
+                cell_video_attr_background_color_name(colorcmd),
+                cell_video_attr_background_color_name(coloritalic));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
@@ -6965,6 +6974,12 @@ doshow(x) int x;
 #endif /* OS2 */
 #endif /* NOKVERBS */
 #endif /* NOSETKEY */
+
+#ifdef KUI
+    if (x == SHOGUI) {
+        return(shogui());
+    }
+#endif /* KUI */
 
 #ifndef NOSPL
     if (x == SHMAC) {                   /* SHOW MACRO */
@@ -8441,12 +8456,6 @@ doshow(x) int x;
         (VOID) shossh();
         break;
 #endif /* ANYSSH */
-
-#ifdef KUI
-      case SHOGUI:
-        (VOID) shogui();
-        break;
-#endif /* KUI */
 
 #ifndef NOFRILLS
 #ifndef NORENAME
@@ -12712,6 +12721,18 @@ printf("NOWTMP not defined\n");
 #endif /* SUPERLAT */
 #endif /* NT */
 
+#ifdef OS2
+#ifdef CK_COLORS_24BIT
+    printf(" 24-bit RGB color support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#else
+#ifdef CK_COLORS_256
+    printf(" 256-color support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* CK_COLORS_256 */
+#endif /* CK_COLORS_24BIT */
+#endif /* OS2 */
+
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     printf("Major optional features not included:\n");
@@ -13098,6 +13119,13 @@ printf("NOWTMP not defined\n");
     flag = 1;
 #endif /* SUPERLAT */
 #endif /* NT */
+
+#ifdef OS2
+#ifndef CK_COLORS_24BIT
+    printf(" No 24-bit RGB color support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* CK_COLORS_24BIT */
+#endif /* OS2 */
 
     if (flag == 0) {
         printf(" None\n");

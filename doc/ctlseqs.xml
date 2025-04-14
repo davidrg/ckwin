@@ -3614,6 +3614,18 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <section role="ctlseq" id="ansi-sfc" title="Set Normal Foreground Color (ANSI)" groups="isansi" badges="qansi">
             <ctlseq>CSI = <param-single/> F</ctlseq>
             <p>Set Normal Foreground Color to <param-single/>.</p>
+            <p>
+                If the display is in reverse video mode (DECSCNM), in Kermit 95 beta 7 and
+                earlier this clears the foreground colour, and ORs <param-single/>
+                with the existing background colour. The resulting background colour will
+                not necessarily be the same as value supplied as <param-single/>,
+                while the foreground colour will be black. <em>This may be a bug!</em>
+            </p>
+            <p>
+                With the addition of support for more than 16 colours, in reverse video mode
+                it now sets the background colour to <param-single/> while
+                preserving the foreground color.
+            </p>
         </section>
 
         <!-- ######################### G ######################### -->
@@ -4431,8 +4443,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <section role="ctlseq" id="ansi-rca" title="Report Color Attributes (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> M</ctlseq>
             <p>
-                The response is the background and
-                foreground colours separated by a space. The value of <param-single/>
+                The response is the background and foreground colours numbers
+                separated by a space. The value of <param-single/>
                 should be 0, 1 or 2. <param-single/> = 1 for the reverse color
                 attribute, 0 or 2 for the normal attribute (2 should probably be
                 the graphic attribute, but K95 doesn't do that currently).
@@ -8189,12 +8201,16 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt"/>
                 <p>Turns on the Bold attribute</p>
             </section>
-            <section role="parameter" id="sgr-2-sco" badges="scoansi" title="Set Foreground and Background Colour">
+            <section role="parameter" id="sgr-2-sco" badges="scoansi"
+                     title="Set Foreground and Background Colour">
                 <ctlseq><param-single/> = 2</ctlseq>
                 <p>
                     If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
-                    sets the foreground (1st parameter) and background (2nd parameter) colors.
-                    The intensity bit is not altered. The colour codes are:
+                    the following two parameters are taken as the foreground (1st parameter)
+                    and background (2nd parameter) colors. The current intensity setting is
+                    preserved (if the previous foreground colour was intense blue, and the new
+                    one is green then the result will be intense green).
+                    Valid colour codes are:
                 </p>
                 <table>
                     <tr>
@@ -8390,7 +8406,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </p>
             </section>
             <section role="parameter" id="sgr-12-vt" title="Map 80-FF"
-                not-implemented="true" toc="true">
+                not-implemented="true">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
@@ -8600,7 +8616,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <termsupp first="vt525" series="vt" additional="tt"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
-                        sets the foreground color.
+                        sets the foreground color preserving its intensity.
                     </p>
                     <p badges="scoansi">
                         Also sets the default foreground color, reverse video
@@ -8616,29 +8632,95 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     Comment for this one says "Enable underline option". The terminal type this
                     behaviour should be for is not mentioned. It is not implemented in any case.
                 </p>
-                <!-- TODO: From Linux 3.16 - 256/24-bit foreground color
-                    follows, shoehorned into 16 basic colors -->
             </section>
             <section role="parameter" id="sgr-38-rgb" mnemonic=""
-                     title="Set foreground to RGB values"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 38 : 2 : Pi : Pr : Pg : Pb</ctlseq>
+                     title="Set foreground to RGB values">
+                <ctlseq><param-single/> = 38 : 2 : <param-single symbol="Pi"/> :
+                    <param-single symbol="Pr"/> : <param-single symbol="Pg"/> :
+                    <param-single symbol="Pb"/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8-colon-2-colon-Pi-colon-Pr-colon-Pg-colon-Pb.2DC0"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Sets the foreground color to the supplied 24-bit RGB value.
+                    <param-single symbol="Pi"/> is the color space ID which is
+                    currently ignored, and
+                    <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
+                    are the red, green and blue components (0-255).
+                </p>
+                <p>
+                    If Kermit 95 has not been compiled with 24-bit RGB color
+                    support, the nearest color in the current palette (as set
+                    by SET TERM COLOR PALETTE) is used instead. In console
+                    builds of Kermit 95 (k95.exe, k2.exe), this will always be
+                    the 16-color aixterm palette.
+                </p>
             </section>
             <section role="parameter" id="sgr-38-ic" mnemonic=""
-                     title="Set foreground to indexed color"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 38 : 5 : Ps</ctlseq>
+                     title="Set foreground to indexed color">
+                <ctlseq><param-single/> = 38 : 5 : <param-single/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8-colon-5-colon-Ps.2443"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Sets the foreground color to the specified color in the
+                    current color palette (as set by SET TERM COLOR PALETTE).
+                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
+                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                </p>
+                <p>
+                    Console builds of Kermit 95 (k95.exe, k2.exe) only support
+                    the aixterm 16-color palette. If the current color palette
+                    is something other than aixterm-16, the specified color will
+                    be looked up in that palette, and then the nearest match in
+                    the aixterm-16 palette will be used instead.
+                </p>
             </section>
             <section role="parameter" id="sgr-38-rgb-alt" mnemonic=""
-                     title="Set foreground to RGB values"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 38 ; 2 ; Pr ; Pg ; Pb</ctlseq>
+                     title="Set foreground to RGB values">
+                <ctlseq><param-single/> = 38 ; 2 ;  <param-single symbol="Pr"/> ;
+                    <param-single symbol="Pg"/> ; <param-single symbol="Pb"/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8;2;Pr;Pg;Pb.21AA"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    This does not properly conform to ISO-8613-6 and is implemented
+                    only for compatibility with older xterm releases and Konsole.
+                    Using <a href="#sgr-38-rgb">the standard syntax</a> is recommended.
+                </p>
+                <p>
+                    Sets the foreground color to the supplied 24-bit RGB value.
+                    <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
+                    are the red, green and blue components (0-255).
+                </p>
+                <p>
+                    If Kermit 95 has not been compiled with 24-bit RGB color
+                    support, the nearest color in the current palette (as set
+                    by SET TERM COLOR PALETTE) is used instead. In console
+                    builds of Kermit 95 (k95.exe, k2.exe), this will always be
+                    the 16-color aixterm palette.
+                </p>
+            </section>
+            <section role="parameter" id="sgr-38-ic-alt" mnemonic=""
+                     title="Set foreground to indexed color">
+                <ctlseq><param-single/> = 38 ; 5 ; <param-single/></ctlseq>
+                <!-- xterm documentation doesn't mention support for this -->
+                <termsupp first="tt" series="xt" additional=""/>
+                <p>
+                    This does not properly conform to ISO-8613-6 and is implemented
+                    only for compatibility other terminal emulators.
+                    Using <a href="#sgr-38-ic">the standard syntax</a> is recommended.
+                </p>
+                <p>
+                    Sets the foreground color to the specified color in the
+                    current color palette (as set by SET TERM COLOR PALETTE).
+                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
+                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                </p>
+                <p>
+                    Console builds of Kermit 95 (k95.exe, k2.exe) only support
+                    the aixterm 16-color palette. If the current color palette
+                    is something other than aixterm-16, the specified color will
+                    be looked up in that palette, and then the nearest match in
+                    the aixterm-16 palette will be used instead.
+                </p>
             </section>
             <section role="parameter" id="sgr-39"
                      title="Set foreground color to default">
@@ -8650,7 +8732,14 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>This is processed for all terminal types, where it resets the foreground
                     color to the default value. The comments say:
                     Supported by SCO ANSI, for QANSI restore
-                    foreground color saved with <tt>CSI = Pn F</tt>. </p>
+                    foreground color saved with <tt>CSI = Pn F</tt>.
+                </p>
+                <p>
+                    If the default foreground color is one of the standard 16
+                    colors, the foregrounds existing intensity bit is preserved.
+                    (for example, if the default FG color is green, and the current
+                    FG color is intense blue, then the result will be intense green).
+                </p>
                 <p>
                     The comments also indicate this is used for "disable underline option"
                     on some unspecified terminal - presumably the inverse of <tt>CSI 38 m</tt>
@@ -8714,7 +8803,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <termsupp first="vt525" series="vt" additional="tt"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
-                        sets the background color.
+                        sets the background color preserving its intensity.
                     </p>
                     <p badges="scoansi">
                         Also sets the default background color, reverse video
@@ -8724,31 +8813,96 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </section>
             </section>
 
-            <!-- TODO - linux - 48 - 256/24-bit background color follows,
-                    shoehorned into 8 basic colors -->
             <section role="parameter" id="sgr-48-rgb" mnemonic=""
-                     title="Set background to RGB values"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 48 : 2 : Pi : Pr : Pg : Pb </ctlseq>
+                     title="Set background to RGB values">
+                <ctlseq><param-single/> = 48 : 2 : <param-single symbol="Pi"/> :
+                    <param-single symbol="Pr"/> : <param-single symbol="Pg"/> :
+                    <param-single symbol="Pb"/> </ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-8-colon-2-colon-Pi-colon-Pr-colon-Pg-colon-Pb.2DC1"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Sets the background color to the supplied 24-bit RGB value.
+                    <param-single symbol="Pi"/> is the color space ID which is
+                    currently ignored, and
+                    <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
+                    are the red, green and blue components (0-255).
+                </p>
+                <p>
+                    If Kermit 95 has not been compiled with 24-bit RGB color
+                    support, the nearest color in the current palette (as set
+                    by SET TERM COLOR PALETTE) is used instead. In console
+                    builds of Kermit 95 (k95.exe, k2.exe), this will always be
+                    the 16-color aixterm palette.
+                </p>
             </section>
             <section role="parameter" id="sgr-48-ic" mnemonic=""
-                     title="Set background to indexed color"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 48 : 5 : Ps</ctlseq>
+                     title="Set background to indexed color">
+                <ctlseq><param-single/> = 48 : 5 : <param-single/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-8-colon-5-colon-Ps.2444"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Sets the background color to the specified color in the
+                    current color palette (as set by SET TERM COLOR PALETTE).
+                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
+                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                </p>
+                <p>
+                    Console builds of Kermit 95 (k95.exe, k2.exe) only support
+                    the aixterm 16-color palette. If the current color palette
+                    is something other than aixterm-16, the specified color will
+                    be looked up in that palette, and then the nearest match in
+                    the aixterm-16 palette will be used instead.
+                </p>
             </section>
 
             <section role="parameter" id="sgr-48-rgb-alt" mnemonic=""
-                     title="Set background to RGB values"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 48 ; 2 ; Pr ; Pg ; Pb</ctlseq>
+                     title="Set background to RGB values">
+                <ctlseq><param-single/> = 48 ; 2 ; <param-single symbol="Pr"/> ;
+                    <param-single symbol="Pg"/> ; <param-single symbol="Pb"/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-8;2;Pr;Pg;Pb.21AB"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    This does not properly conform to ISO-8613-6 and is implemented
+                    only for compatibility with older xterm releases and Konsole.
+                    Using <a href="#sgr-48-rgb">the standard syntax</a> is recommended.
+                </p>
+                <p>
+                    Sets the background color to the supplied 24-bit RGB value.
+                    <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
+                    are the red, green and blue components (0-255).
+                </p>
+                <p>
+                    If Kermit 95 has not been compiled with 24-bit RGB color
+                    support, the nearest color in the current palette (as set
+                    by SET TERM COLOR PALETTE) is used instead. In console
+                    builds of Kermit 95 (k95.exe, k2.exe), this will always be
+                    the 16-color aixterm palette.
+                </p>
             </section>
-
+            <section role="parameter" id="sgr-48-ic-alt" mnemonic=""
+                     title="Set background to indexed color">
+                <ctlseq><param-single/> = 34 ; 5 ; <param-single/></ctlseq>
+                <!-- xterm documentation doesn't mention support for this -->
+                <termsupp first="tt" series="xt" additional=""/>
+                <p>
+                    This does not properly conform to ISO-8613-6 and is implemented
+                    only for compatibility other terminal emulators.
+                    Using <a href="#sgr-48-ic">the standard syntax</a> is recommended.
+                </p>
+                <p>
+                    Sets the background color to the specified color in the
+                    current color palette (as set by SET TERM COLOR PALETTE).
+                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
+                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                </p>
+                <p>
+                    Console builds of Kermit 95 (k95.exe, k2.exe) only support
+                    the aixterm 16-color palette. If the current color palette
+                    is something other than aixterm-16, the specified color will
+                    be looked up in that palette, and then the nearest match in
+                    the aixterm-16 palette will be used instead.
+                </p>
+            </section>
             <section role="parameter" id="sgr-49"
                      title="Set background color to default">
                 <ctlseq><param-single/> = 49</ctlseq>
@@ -12714,46 +12868,96 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
             <p><param-single/> specifies the type of operation:</p>
 
-            <section role="parameter" id="xt-wt"
-                     title="Window title (xterm)">
+            <section role="parameter" id="xt-wti"
+                     title="Set Icon Name and Window Title (xterm)">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-0.FB7"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <p>Sets the window title to the value supplied, up to 63 characters.</p>
             </section>
             <section role="parameter" id="osc-1" mnemonic=""
-                     title="Change icon name"
-                     not-implemented="true" todo="true">
+                     title="Change icon name" not-implemented="true">
                 <ctlseq><param-single/> = 1</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1.FB8"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Not supported: Windows doesn't provide a way of setting a
+                    value for the task bar label that is different from the
+                    window title.
+                </p>
+            </section>
+            <section role="parameter" id="xt-wt"
+                     title="Window title (xterm)">
+                <ctlseq><param-single/> = 2</ctlseq>
+                <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-2.FB9"/>
+                <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Sets the window title to the value supplied, up to 63 characters.</p>
             </section>
             <section role="parameter" not-implemented="true" id="decsin"
                      mnemonic="DECSIN" title="Set Icon Title">
-                <ctlseq><param-single/> = 2</ctlseq>
-                <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-2.FB9"/>
+                <ctlseq><param-single/> = 2L</ctlseq>
+
                 <ref src="vt52x:288"/>
                 <termsupp first="vt520" series="vt" additional="tt"/>
                 <p>Set Icon Title (VT520)</p>
+                <p>Not supported: Windows doesn't provide a way of setting a
+                    value for the task bar label that is different from the
+                    window title.</p>
             </section>
             <section role="parameter" id="osc-3" mnemonic=""
-                     title="change window title"
-                     not-implemented="true" todo="true">
+                     title="Set X property on top-level window"
+                     not-implemented="true">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-3.FBA"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="osc-4" mnemonic=""
-                     title="Change color number"
-                     not-implemented="true" todo="true">
+                     title="Change color number">
                 <ctlseq><param-single/> = 4 ; c ; spec</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-4;c;spec.123F"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Changes the RGB value for one or more colors in the color
+                    palette. Multiple <tt><param-single symbol="c"/> ; <param-single symbol="spec"/> </tt>
+                    pairs can be supplied separated by ';' to change multiple
+                    entries in the color palette. Only supported in GUI versions
+                    of Kermit 95.
+                </p>
+                <p>
+                    The <tt><param-single symbol="c"/></tt> component is the
+                    color index to change. Valid values depend on which color
+                    palette is currently active: 0-15 for aixterm-16, 0-87 for
+                    xterm-88, and 0-255 for xterm-256.
+                </p>
+                <p>
+                    The <tt><param-single symbol="spec"/></tt> component is an
+                    RGB color specification in the form supported by XParseColor.
+                    Both the newer <tt>rgb:RRRR/GGGG/BBBB</tt> and older
+                    <tt>#RRRRGGGGBBBB</tt> formats are supported, where R/G/B
+                    are hex digits (case doesn't matter). For more information
+                    on this colour specification, see the XParseColor man page.
+                    Other XParseColor specifications such as <tt>rgbi:</tt>
+                    and <tt>CIEuvY:</tt> are not currently supported.
+                </p>
+                <p>
+                    If the <tt><param-single symbol="spec"/></tt> component is
+                    a '?' character, then instead of setting a color for the
+                    specified color index, the current color is returned in the
+                    form of an OSC sequence suitable for restoring the current
+                    value. The returned OSC sequence uses the same terminator
+                    (BEL or ST) as the original query OSC sequence.
+                </p>
+                <p>For example, <tt>OSC 4 ; 1 ; ? ST</tt> will cause K95 to
+                    send back <tt>OSC 4 ; 1 ; r g b : 0 0 0 0 / 0 0 0 0 / 8 0 8 0 ST</tt>
+                    for the default RGB value of 0/0/128 for color index 1.
+                    If multiple query parameters are supplied (eg <tt>OSC 4 ; 1 ; ? ; 2 ; ? ; 3 ; ? ST</tt>
+                    then multiple responses will be sent back.
+                </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""
                      title="Change special color number"
                      not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 5  ;c ; spec</ctlseq>
+                <ctlseq><param-single/> = 5  ; c ; spec</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5;c;spec.1240"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
@@ -12890,11 +13094,21 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="osc-104" mnemonic=""
-                     title="Reset color number"
-                     not-implemented="true" todo="true">
+                     title="Reset color number">
                 <ctlseq><param-single/> = 104 ; c</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-0-4;c.1114"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Resets one or more colors in the color palette to defaults
+                    or values specified by the user via <tt>SET GUI RGBCOLOR</tt>.
+                    Multiple color numbers can be specified separated by ';'
+                    (eg, <tt>OSC 1 0 4 ; 1 ; 2 ; 3 ST</tt>).  Only supported in GUI versions
+                    of Kermit 95.
+                </p>
+                <p>
+                    If no parameters are given (eg, <tt>OSC 104 ST</tt>), then
+                    the entire color palette is reset.
+                </p>
             </section>
             <section role="parameter" id="osc-105" mnemonic=""
                      title="Reset special color number"
@@ -12982,24 +13196,61 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </section>
             <section role="parameter" id="osc-I" mnemonic=""
                      title="Set icon to file"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = I ; c</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-I;c.106E"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Not supported as the specified icon file specification is
+                    likely reside on a remote host which K95 has no reasonable
+                    way of accessing.
+                </p>
             </section>
             <section role="parameter" id="osc-l" mnemonic=""
-                     title="set Window title"
-                     not-implemented="true" todo="true">
+                     title="set Window title">
                 <ctlseq><param-single/> = l ; c</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-l;c.1091"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Sets the window title to the value supplied, up to 63 characters.</p>
             </section>
             <section role="parameter" id="osc-L" mnemonic=""
                      title="set icon label"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = L ; c</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-L;c.1071"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Not supported: Windows doesn't provide a way of setting a
+                value for the task bar label that is different from the
+                window title.</p>
+            </section>
+            <section role="parameter" id="osc-R" mnemonic=""
+                     title="Reset palette (linux)" badges="linux">
+                <ctlseq><param-single/> = R</ctlseq>
+                <p>
+                    This OSC <em>is not terminated!</em> At all! The OSC is,
+                    verbatim, <tt>OSC R</tt> - no ST or BEL to terminate! For
+                    this reason its limited to the linux terminal type.
+                </p>
+                <p>
+                    In GUI versions of Kermit 95, this resets all color palettes
+                    to defaults or values specified by the user via
+                    <tt>SET GUI RGBCOLOR</tt>. In console versions, this OSC
+                    is not acted upon.
+                </p>
+            </section>
+            <section role="parameter" id="osc-P" mnemonic=""
+                     title="Set palette (linux)" badges="linux">
+                <ctlseq><param-single/> = R nrrggbb</ctlseq>
+                <p>
+                    This OSC <em>is not terminated!</em> At all!
+                    No ST or BEL to terminate! For this reason its limited to
+                    the linux terminal type.
+                </p>
+                <p>
+                    In GUI versions of Kermit 95, this sets the RGB value for
+                    color index <em>n</em> (0-15 in hex) to the RGB value
+                    <em>rrggbb</em> (0-255 in hex). In console versions of
+                    Kermit 95, this OSC is not acted upon.
+                </p>
             </section>
         </section>
     </section>
@@ -13009,6 +13260,154 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
     </section>
 
     </section> <!-- END of ANSI-compatbile, VT52 and H19 emulations -->
+
+    <section toc="true" role="text" id="color" formats="html:document"
+             title="Color Support in Kermit 95">
+        <p>
+            Prior to Kermit 95 v3.0 beta.8, Kermit 95 was limited to 16 colors
+            (the 8 standard ANSI colours, plus the additional 8 "intense" colors
+            from aixterm). Kermit 95 now supports being built with
+            multiple distinct color palettes and 24-bit RGB support:
+        </p>
+        <ul>
+            <li><b>aixterm-16</b> - The aixterm 16-color palette (8 standard ANSI colors plus their intense variants)</li>
+            <li><b>xterm-88</b> - Xterms 88-color palette</li>
+            <li><b>xterm-256</b> - Xterms 256-color palette</li>
+            <li><b>xterm-rgb</b> - Xterms 256-color palette, with direct RGB colour support enabled</li>
+        </ul>
+
+        <p> The first 16 colors are the same in each palette.
+            You can change the currently active color palette via the
+            <tt>SET TERM COLOR PALETTE</tt> command. This setting is primarily
+            for the GUI version of K95 and affects:
+        </p>
+        <ul>
+            <li>How the terminal is rendered</li>
+            <li>The range of color indexes available for customisation via
+                <a href="#osc-4">OSC-4</a></li>
+            <li>The range of color indexes that can be set via
+                <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>
+            </li>
+        </ul>
+        <p>
+            As Kermit 95 does not store a palette ID alongside each color attribute
+            (this would waste too much RAM), changing the active color palette has
+            an immediate effect on the current contents of the terminal and the
+            scroll-back buffer. Switching from a larger palette to a smaller one
+            mid-session will result in incorrect colors being displayed. As this
+            is just a rendering setting, switching back to the previous palette will
+            imediately restore correct color for the terminal screen and scrollback
+            buffer.
+        </p>
+
+        <p>
+            The color related build options primarily affect the size of the
+            data structure used for storing color information for each cell in the
+            terminal buffer:
+        </p>
+        <ul>
+            <li>8-bits (2x4-bit colors: 16 color palette only)</li>
+            <li>16-bits (2x8-bit colors: 16-color, 88-color and 256-color palettes)</li>
+            <li>56-bits (8-bits for flags, and two 24-bit colors which can each store either a
+                24-bit RGB value, or an 8-bit color (as above) in the blue channel).</li>
+        </ul>
+
+        <section id="rgbcolor" title="24-bit RGB support" role="text">
+            <p>
+                If Kermit 95 was not compiled with 24-bit RGB support, or the current
+                color palette is not one with RGB support (something other than
+                <tt>xterm-rgb</tt>), Kermit 95 uses color quantization to select
+                the nearest color in the current color palette to 24bit RGB colors
+                set via <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>.
+                That palette color is then stored, rather than the RGB value.
+            </p>
+            <p>
+                As Kermit 95 uses the same data structure for storing
+                attributes-as-colors (special colors in xterm) as it does for
+                storing color attributes in the terminal buffer, Kermit 95 only
+                supports <a href="#osc-5">OSC-5</a> (Change special color number)
+                when built with 24-bit RGB support as OSC-5 does not support
+                setting color indexes, only RGB values.
+            </p>
+        </section>
+
+        <section id="customcolor" title="Customising the Color Palette" role="text">
+            <p>
+                GUI versions of Kermit 95 keep <em>two</em> copies of each color
+                palette in memory: the active copy, and the saved copy. When
+                Kermit 95 is launched both copies contain the same data. At any time,
+                you can change the RGB value in both copies of the <em>current</em>
+                color palette with the <tt>SET GUI RGBCOLOR</tt> command, and the <em>active</em>
+                copy of the current color palette only with <a href="#osc-4">OSC-4</a>.
+            </p>
+            <p>
+                When the terminal is reset, the contents of the active copy of the
+                all color palettes is overwritten by their saved copies. This results
+                in changes made via <a href="#osc-4">OSC-4</a> being undone without
+                affecting changes made via <tt>SET GUI RGBCOLOR</tt>.
+            </p>
+            <p>
+                As <tt>SET GUI RGBCOLOR</tt> and <a href="#osc-4">OSC-4</a> only
+                affect the <em>current</em> palette, if you make a change while
+                the <tt>aixterm-16</tt> palette is selected you only made a change
+                to the definition of the <tt>aixterm-16</tt> palette specifically.
+                If you switch to the <tt>xterm-256</tt> palette, your change will
+                not be visible until you switch back to the <tt>aixterm-16</tt> palette.
+            </p>
+        </section>
+        <section id="consolecolor" title="Color in Console versions of Kermit 95" role="text">
+            <p>
+                Console builds of Kermit 95 (or custom 16-color builds of GUI Kermit 95)
+                only support 16 colors max. This is a limitation in the OS/2 VIO Window,
+                and the Windows NT/9x console host prior to Windows 10 v1809. This is
+                stored as a pair of 4-bit values packed into an 8-bit integer.
+            </p>
+            <p>
+                Console versions of Kermit 95 have no control over the appearance
+                of these 16 colors - that is up to the console environment K95 is
+                running under. Because of this, console builds of K95 do not support
+                customising the color palette via <a href="#osc-4">OSC-4</a> or
+                <tt>SET GUI RGBCOLOR</tt>.
+            </p>
+
+            <p>
+                To retain compatibility with software blindly expecting 256-color or
+                24-bit RGB color support, 16-color versions of Kermit 95 still
+                support the <tt>SET TERM COLOR PALETTE</tt> command and implement
+                <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>.
+                When the host tries to set a color via SGR-38 or SGR-48, that
+                request is translated into something valid for the aixterm-16
+                color palette.
+            </p>
+            <p>
+                If a color index was specified for SGR-38 or SGR-48, then the
+                RGB value for that color is looked up in the current color
+                palette, then the aixterm-16 palette is searched for the
+                nearest match to that RGB value. If a 24bit RGB value was
+                specified for SGR-38 or SGR-48, then the aixterm-16 palette is
+                searched for the nearest match to that RGB value.
+            </p>
+            <p>
+                Once the nearest match in the aixterm-16 palette is found, that
+                color index is then stored <em>rather than the supplied index
+                or RGB value</em>. To not waste memory storing color indexes
+                the console environment can't actually display, 16-color builds
+                of K95 only have 4 bits each for the foreground and background
+                colors, making them incapable of actually storing color indexes
+                above 16 or per-cell RGB values.
+            </p>
+            <p>
+                16-color builds do not support <a href="#osc-4">OSC-4</a>
+                or the <tt>SET GUI RGBCOLOR</tt> command as the color palettes
+                are only used to get an RGB value to use for color quantization.
+                K95 has no control over how the console host/VIO window renders
+                colors, so the RGB values in the color palettes are never used
+                for display - only to map indexes from a larger palette on to
+                the smaller 4-bit aixterm-16 palette.
+            </p>
+        </section>
+    </section>
+
     <!-- TODO: Special Keyboard Keys -->
     <!-- Document what all the kverbs (like K_UPARR) send -->
     <!--<p>Special keys (those that don't send letters, numbers and punctuation, etc.)-->

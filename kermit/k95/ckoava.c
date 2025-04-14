@@ -37,7 +37,7 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
+extern cell_video_attr_t attribute;
 
 extern int autoscroll, protect ;
 
@@ -96,7 +96,7 @@ avatar(void)
         int attr = avainc(1) ;
         if ( debses )
             break;
-        attribute = attr ;
+        attribute = cell_video_attr_from_vio_attribute(attr);
         attrib.blinking = FALSE ;
         insertmode = FALSE ;
         break;
@@ -179,7 +179,7 @@ avatar(void)
             break;
 
         cell.c = SP ;
-        cell.a = attribute ;
+        cell.video_attr = attribute ;
 
         VscrnScrollUp( VTERM, upper-1, left-1, lower-1, right-1,
                        numlines, cell ) ;
@@ -199,7 +199,7 @@ avatar(void)
             break;
 
         cell.c = SP ;
-        cell.a = attribute ;
+        cell.video_attr = attribute ;
 
         VscrnScrollDn( VTERM, upper-1, left-1, lower-1, right-1,
                        numlines, cell ) ;
@@ -218,11 +218,11 @@ avatar(void)
         if ( debses )
             break;
 
-        attribute = attr ;
+        attribute = cell_video_attr_from_vio_attribute(attr) ;
         attrib.blinking = FALSE ;
 
         cell.c = SP ;
-        cell.a = attribute ;
+        cell.video_attr = attribute ;
 
         for ( y=0 ; y < lines ; y++ )
             for ( x=0 ; x < cols ; x++ )
@@ -245,11 +245,11 @@ avatar(void)
         if ( debses )
             break;
 
-        attribute = attr ;
+        attribute = cell_video_attr_from_vio_attribute(attr) ;
         attrib.blinking = FALSE ;
 
         cell.c = ch ;
-        cell.a = attribute ;
+        cell.video_attr = attribute ;
 
         for ( y=0 ; y < lines ; y++ )
             for ( x=0 ; x < cols ; x++ )
@@ -264,7 +264,7 @@ avatar(void)
         if ( debses )
             break;
         cell.c = SP ;
-        cell.a = attribute ;
+        cell.video_attr = attribute ;
         VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                        wherex[VTERM] - 1,
                        wherey[VTERM] - 1,
