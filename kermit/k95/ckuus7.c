@@ -1404,9 +1404,11 @@ int tt_hidattr = 1;                     /* Attributes are hidden */
 
 extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
-colorgraphic, colordebug, colorreverse, coloritalic;
+colorgraphic, colordebug, colorreverse, coloritalic,
+colorblink;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim;
+extern int blink_is_color;
 
 extern int bgi, fgi;
 extern int scrninitialized[];
@@ -1445,8 +1447,10 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLRES  10
 #define TTCOLERA  11
 #define TTCOLPAL  12
+#define TTCOLBLI  13
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
+    { "blink",              TTCOLBLI, 0 },      /* Blink color */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
     { "debug-terminal",     TTCOLDEB, 0 },      /* Debug color */
     { "erase",              TTCOLERA, 0 },      /* Erase mode */
@@ -1502,6 +1506,12 @@ struct keytab ttyattrtab[] = {
     { "underline", TTATTUND, 0 }
 };
 int nattrib = (sizeof(ttyattrtab) / sizeof(struct keytab));
+
+struct keytab ttyattrblinktab[] = {
+    { "bright",    FALSE, 0 },
+    { "color",     TRUE,  0 },
+};
+int nattrblink = (sizeof(ttyattrblinktab) / sizeof(struct keytab));
 
 struct keytab ttyprotab[] = {
     { "blink",       TTATTBLI,  0 },
@@ -4452,6 +4462,9 @@ settrm() {
               case TTCOLSEL:
                 colorselect = cell_video_attr_set_colors(fg, bg);
                 break;
+              case TTCOLBLI:
+                colorblink = cell_video_attr_set_colors(fg, bg);
+                break;
               default:
                 printf("%s - invalid\n",cmdbuf);
                 return(-9);
@@ -5436,14 +5449,28 @@ settrm() {
         switch (x) {
           case TTATTBLI:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
-            if ((x = cmcfm()) < 0) return(x);
             trueblink = y;
+            /* Ask how blink should be simulated - a bright color, or a fixed
+             * color. This option is new in K95 3.0 beta.8 which added support
+             * for more than 16 colors as toggling the intensity/brightness bit
+             * doesn't work when the color isn't in the 0-7 range. We'll default
+             * to "bright" to avoid any surprises as this is what K95 did in the
+             * past.  */
+            if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+              return(y);
+            if ((x = cmcfm()) < 0) return(x);
+            blink_is_color = y;
 #ifndef KUI
             if ( !trueblink && trueunderline ) {
-                trueunderline = 0;
-                printf("Warning: Underline being simulated by color.\n");
+                /* In the console version, true underline is really implemented
+                 * as a bright foreground (or background) color. We can't do
+                 * both that *and* simulate blink with a bright foreground (or
+                 * background) color. */
+                if (!blink_is_color) {
+                    trueunderline = 0;
+                    printf("Warning: Underline being simulated by color.\n");
+                }
             }
-
 #endif /* KUI */
             break;
 
@@ -5465,8 +5492,10 @@ settrm() {
             trueunderline = y;
 #ifndef KUI
             if (!trueblink && trueunderline) {
-                trueblink = 1;
-                printf("Warning: True blink mode is active.\n");
+                if (!blink_is_color) {
+                    trueblink = 1;
+                    printf("Warning: True blink mode is active.\n");
+                }
             }
 #endif /* KUI */
             break;

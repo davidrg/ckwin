@@ -274,6 +274,7 @@ cell_video_attr_t     colorhelp       = cell_video_attr_init_vio_attribute(0x71)
 cell_video_attr_t     colorselect     = cell_video_attr_init_vio_attribute(0xe0);
 cell_video_attr_t     colorborder     = cell_video_attr_init_vio_attribute(0x01);
 cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27);
+cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 
 int bgi = FALSE, fgi = FALSE ;
 cell_video_attr_t colorcmd        = cell_video_attr_init_vio_attribute(0x07);
@@ -281,6 +282,8 @@ int colorreset    = TRUE ;  /* reset on CSI 0 m - use normal colors */
 int erasemode     = FALSE ; /* Use current colors when erasing characters */
 int user_erasemode= FALSE ; /* Use current colors when erasing characters */
 int trueblink     = TRUE ;
+int blink_is_color = FALSE ;  /* Use a color rather than intensity for simulated blink */
+int bold_is_color = FALSE ;   /* Use a color rather than intensity for bold blink */
 int truereverse   = TRUE ;
 int trueunderline = TRUE ;
 int truedim       = TRUE ;
@@ -357,7 +360,9 @@ cell_video_attr_t                       /* Video attribute bytes */
     graphicattribute=cell_video_attr_init_vio_attribute(0),
     savedgraphicattribute[VNUM]={0,0,0,0},
     borderattribute=cell_video_attr_init_vio_attribute(0),
-    savedborderattribute[VNUM]={0,0,0,0};
+    savedborderattribute[VNUM]={0,0,0,0},
+    blinkattribute=cell_video_attr_init_vio_attribute(0),
+    savedblinkattribute[VNUM]={0,0,0,0};
 
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
          savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
@@ -6605,6 +6610,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
         savedreverseattribute[vmode]= reverseattribute;
         savedgraphicattribute[vmode]= graphicattribute;
         savedborderattribute[vmode]= borderattribute;
+        savedblinkattribute[vmode]= blinkattribute;
         savedattrib[vmode] = attrib;            /* Current DEC character attributes */
         saverelcursor[vmode] = relcursor;       /* Cursor addressing mode */
         savedwrap[vmode]     = tt_wrap;         /* Wrap mode */
@@ -6635,6 +6641,7 @@ restorecurpos(int vmode, int x) {
             reverseattribute=savedreverseattribute[vmode];
             graphicattribute=savedgraphicattribute[vmode];
             borderattribute=savedborderattribute[vmode];
+            blinkattribute=savedblinkattribute[vmode];
             attrib = savedattrib[vmode];
             relcursor = saverelcursor[vmode];   /* Restore cursor addressing mode */
             tt_wrap = savedwrap[vmode] ;       /* Restore wrap mode */
@@ -6725,6 +6732,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     graphicattribute = colorgraphic;
     borderattribute  = colorborder;
     italicattribute  = coloritalic;
+    blinkattribute   = colorblink;
 
     saveddefaultattribute[VTERM] = colornormal; /* Default saved values */
     savedunderlineattribute[VTERM] = colorunderline ;
@@ -6732,6 +6740,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedreverseattribute[VTERM] = colorreverse;
     savedgraphicattribute[VTERM] = colorgraphic;
     savedborderattribute[VTERM]  = colorborder;
+    savedblinkattribute[VTERM] = colorblink;
     savedattribute[VTERM] = attribute;
 
     /* Reset the color palettes */
@@ -8065,6 +8074,8 @@ resetcolors( int x )
                 byteswapcolors(colorreverse);
             graphicattribute =
                 byteswapcolors(colorgraphic);
+            blinkattribute =
+                byteswapcolors(colorblink);
         }
         else {
             defaultattribute = colornormal ;
@@ -8072,6 +8083,7 @@ resetcolors( int x )
             italicattribute = coloritalic;
             reverseattribute = colorreverse;
             graphicattribute = colorgraphic;
+            blinkattribute = colorblink;
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
@@ -13613,6 +13625,7 @@ settermtype( int x, int prompts )
     static cell_video_attr_t savcolor = cell_video_attr_init_vio_attribute(0);   /* Terminal color */
     static cell_video_attr_t savgrcol = cell_video_attr_init_vio_attribute(0);   /* Graphics color */
     static cell_video_attr_t savulcol = cell_video_attr_init_vio_attribute(0);   /* Underline color */
+    static cell_video_attr_t savblcol = cell_video_attr_init_vio_attribute(0);   /* Blink color */
     static int savulatt = 0;                 /* Underline attribute */
     static int savrvatt = 0;                 /* Reverse attribute */
     static int savblatt = 0;                 /* Blink attribute */
@@ -13633,6 +13646,7 @@ settermtype( int x, int prompts )
         colornormal = savcolor; /* were ANSI before... */
         colorgraphic = savgrcol;
         colorunderline = savulcol;
+        colorblink = savblcol;
 
         trueblink     = savblatt ;
         truereverse   = savrvatt ;
@@ -13641,6 +13655,7 @@ settermtype( int x, int prompts )
         savcolor = cell_video_attr_from_vio_attribute(0);
         savgrcol = cell_video_attr_from_vio_attribute(0);
         savulcol = cell_video_attr_from_vio_attribute(0);
+        savblcol = cell_video_attr_from_vio_attribute(0);
         scrninitialized[VTERM] = 0;
         tt_status_usr[VTERM] = savstatus ;
         settermstatus(tt_status_usr[VTERM]) ;
@@ -13677,6 +13692,7 @@ settermtype( int x, int prompts )
             savcolor = colornormal;     /* Save coloration */
             savgrcol = colorgraphic ;
             savulcol = colorunderline ;
+            savblcol = colorblink ;
 
             savulatt = trueunderline ;
             savblatt = trueblink ;
@@ -13685,7 +13701,7 @@ settermtype( int x, int prompts )
             colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
             colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
             colorunderline = cell_video_attr_from_vio_attribute(0x47);      /* Light gray on Red */
-
+            colorblink = cell_video_attr_from_vio_attribute(0x87);          /* Bright White on light gray */
 #ifndef KUI
             trueunderline = FALSE ;     /* Simulate underline */
 #endif /* KUI */
@@ -13876,6 +13892,7 @@ settermtype( int x, int prompts )
             savcolor = colornormal;     /* Save coloration */
             savgrcol = colorgraphic ;
             savulcol = colorunderline ;
+            savblcol = colorblink;
 
             savulatt = trueunderline ;
             savblatt = trueblink ;
@@ -13884,6 +13901,7 @@ settermtype( int x, int prompts )
             colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
             colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
             colorunderline = cell_video_attr_from_vio_attribute(0x47);      /* Light gray on Red */
+            colorblink = cell_video_attr_from_vio_attribute(0x87);          /* Bright wight on light gray*/
 
 #ifndef KUI
             trueunderline = FALSE ;     /* Simulate underline */
@@ -14028,12 +14046,16 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
         else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
             /* a graphic character */
             colorval = graphicattribute ;
+        else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                !trueblink && blink_is_color)
+            /* a blinking character */
+            colorval = blinkattribute ;
         else
             colorval = colorattr ;
 
 
         if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-            !trueblink /* blink simulated by BGI */
+            !trueblink && !blink_is_color /* blink simulated by BGI */
 #ifndef KUI
             || (vtattr & VT_CHAR_ATTR_UNDERLINE) &&
             trueunderline /* underline simulated by BGI */

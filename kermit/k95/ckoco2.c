@@ -4844,11 +4844,12 @@ VscrnInit( BYTE vmode )
    extern cell_video_attr_t           /* Video attribute bytes */
       attribute,                      /* Current video attribute byte */
       underlineattribute,
+      blinkattribute,
       savedattribute,                 /* Saved video attribute byte */
       defaultattribute;               /* Default video attribute byte */
    extern int scrninitialized[] ;
    extern cell_video_attr_t colornormal, colorunderline, colorborder,
-    colorreverse, colorgraphic, colorcmd, coloritalic ;
+    colorreverse, colorgraphic, colorcmd, coloritalic, colorblink ;
    BYTE clrscr = 0 ;
 #ifndef KUI
    CK_VIDEOMODEINFO m;
@@ -4899,6 +4900,7 @@ VscrnInit( BYTE vmode )
           italicattribute = coloritalic;
           graphicattribute = colorgraphic ;
           borderattribute = colorborder ;
+          blinkattribute = colorblink ;
           updmode = tt_updmode ;  /* Set screen update mode */
       }
       if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0) ||

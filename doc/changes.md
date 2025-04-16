@@ -47,6 +47,9 @@ and terminal emulations that *do not* use the new 256-color mode,
    - `OSC P nrrggbb` - set colour palette entry _n_ to color _rrggbb_ (all 
      parameters are hex digits) 
    - `OSC R` - reset colour palette 
+ - Blinking text can now be configured to show in a specific color rather than
+   intense reverse foreground, via the new commands `SET TERM COLOR BLINK` to
+   set the color, and `SET TERM ATTRIBUTE BLINK OFF COLOR` to use color.  
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
