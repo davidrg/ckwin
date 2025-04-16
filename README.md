@@ -58,7 +58,7 @@ with some other terminal emulators/SSH clients is available on the Wiki.
 Documentation
 -------------
 Kermit 95 comes with a full users guide - just type `manual` at the K-95 prompt,
-or choose the *Manual* option form the Help menu.
+or choose the *Manual* option from the Help menu.
 
 For convenience, three versions of the users guide are also available online:
 
