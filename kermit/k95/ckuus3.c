@@ -9247,8 +9247,12 @@ int nshoguisw = (sizeof(shoguiswtab) / sizeof(struct keytab)) - 1;
  * foreground colour that will stand out from the background */
 int color_is_light(int index) {
     int blue, green, red;
-	int bgr = cell_video_attr_foreground_rgb(color_index_to_vio(index));
+	int bgr;
     double intensity;
+    cell_video_attr_t attr;
+
+    attr = cell_video_attr_set_fg_color(attr, color_index_to_vio(index));
+    bgr = cell_video_attr_foreground_rgb(attr);
 
     blue = (bgr & 0x00FF0000)>>16;
 	green = (bgr & 0x0000FF00)>>8;
@@ -9516,7 +9520,7 @@ shogui() {
             printf("RGB Color Table for xterm 88-Color Palette:\n");
 #ifdef CK_PALETTE_WY370
         } else if (colorpalette == CK_PALETTE_WY370) {
-            printf9"RGB Color Table for Wyse WY-370 Palette:\n");
+            printf("RGB Color Table for Wyse WY-370 Palette:\n");
 #endif /* CK_PALETTE_WY370 */
         } else {
             printf("RGB Color Table for aixterm 16-Color Palette:\n");

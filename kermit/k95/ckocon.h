@@ -153,9 +153,36 @@ typedef int bool;
 #endif
 #endif
 
-/* ----------------------------------------------------- */
-/* TODO: All of the stuff below will need to change for supporting higher
- *       colour depths
+/* ------------------------------------------------------------------------- */
+/* Kermit 95 supports being built with one of three levels of colour support
+ *   16-colours  - The *only* option prior to K95 3.0 beta.8. Only used for the
+ *                 console and OS/2 versions now, but it remains a custom build
+ *                 option for K95G. Uses an unsigned char for storage. Uses the
+ *                 macro CK_COLORS_16.
+ *   256-colours - The default option for K95G. Supports color palettes up to
+ *                 256-colors. SGR-38/48 RGB values are mapped on to the current
+ *                 color palette. Memory usage is about the same as the 16-color
+ *                 version due to structure padding. Uses an unsigned short for
+ *                 storage. Uses the macro CK_COLORS_256
+ *   24-bit RGB  - The default option for K95G on modern windows where the
+ *                 signifciantly higher memory needs of the terminal buffers are
+ *                 less likely to be an issue. Uses a struct containing seven
+ *                 unsigned chars (FG R/G/B, BG R/G/B, and flags) for storage.
+ *                 Uses the macro CK_COLORS_24BIT.
+ * The details of how colour information is largely hidden behind a series of
+ * increasingly complex and awful macros in this header. In hindsight some of
+ * these macros probably should have been functions. Maybe some day they will
+ * be.
+ *
+ * To have *some* level of confidence that these macros all behave as expected,
+ * there is a set of unit tests in color_tests.c - if you're making changes to
+ * any of the colour macros in here its worth running those tests to make sure
+ * everything is still working properly.
+ *
+ * In all builds, multiple different colour palettes are now supported, which
+ * can be chosen with SET TERM COLOR PALETTE. In 16-colour builds, they're only
+ * used as a source of RGB values for mapping on to the 16-colour palette, while
+ * in 256-colour and 24-bit RGB builds they're used for display.
  */
 
 /* Colour palettes available */
@@ -214,32 +241,54 @@ typedef int bool;
 /* ***************************** RGB-COLORS *****************************/
 #define CK_DEFAULT_PALETTE CK_PALETTE_XTRGB
 
-#define CK_RGB_FLAG_RGB = 0
-#define CK_RGB_FLAG_FG_INDEXED = 1
-#define CK_RGB_FLAG_BG_INDEXED = 2
-#define CK_RGB_FLAG_INDEXED = CK_RGB_FLAG_FG_INDEXED | CK_RGB_FLAG_BG_INDEXED
+#define CK_RGB_FLAG_RGB         0
+#define CK_RGB_FLAG_FG_INDEXED  1
+#define CK_RGB_FLAG_BG_INDEXED  2
+#define CK_RGB_FLAG_INDEXED (CK_RGB_FLAG_FG_INDEXED | CK_RGB_FLAG_BG_INDEXED)
 
-/* Foreground R/G/B, Background R/G/B */
+/* Foreground R/G/B, Background R/G/B
+   Flags:
+     0x01 - Foreground is indexed colour (not RGB)
+     0x02 - Backgroudn is indexed colour (not RGB)
+   Foreground RGB value is stored in: fg_r, fg_g, fg_b
+   Foreground indexed value is stored in: fg_b
+   Background RGb value is stored in: bg_r, bg_g, bg_b
+   Background indexed value is stored in: bg_b
+ */
 typedef struct struct_cell_video_attr_t {
     unsigned char flags;
-    unsigned char fg_r;
-	unsigned char fg_g;
-	unsigned char fg_b;
-	unsigned char bg_r;
-	unsigned char bg_g;
-	unsigned char bg_b;
+    unsigned char fg_r;  /* Foreground red */
+	unsigned char fg_g;  /* Foreground green */
+	unsigned char fg_b;  /* Foreground blue *or* foreground indexed color */
+	unsigned char bg_r;  /* Background red */
+	unsigned char bg_g;  /* Background blue */
+	unsigned char bg_b;  /* Background blue *or* background indexed color */
 } cell_video_attr_t;
 
-/** Sets the foreground and background to the supplied 16-colour values.
+
+/* Checks if the foreground or background colour is indexed rather than RGB */
+#define cell_video_attr_fg_is_indexed(att) ((att).flags & CK_RGB_FLAG_FG_INDEXED)
+#define cell_video_attr_bg_is_indexed(att) ((att).flags & CK_RGB_FLAG_BG_INDEXED)
+
+/* Checks if *both* the foreground and background colour are indexed rather than
+ * RGB */
+#define cell_video_attr_is_indexed(att) (cell_video_attr_fg_is_indexed(att) && cell_video_attr_bg_is_indexed(att))
+
+#define cell_video_attr_is_rgb(att) (!cell_video_attr_fg_is_indexed(att) && !cell_video_attr_bg_is_indexed(att))
+
+/** Sets all values in a video attribute */
+#define cell_video_attr_set(flags, fg_r, fg_g, fg_b, bg_r, bg_g, bg_b) ( \
+    (cell_video_attr_t) { (flags), (fg_r), (fg_g), (fg_b), (bg_r), (bg_g), (bg_b) })
+
+/** Sets the foreground and background to the supplied indexed colour values.
  * Used by:
  *     QNX terminal emulation (ckoqnx.c)
  *     CSI = Ps F   (Set Normal Foreground Color, ANSI)
  *     SET COMMAND COLOR
  *     SET TERMINAL COLOR
- * TODO: RGB: Set indexed color bit
  */
-#define cell_video_attr_set_colors(fg, bg) (cell_video_attr_t){ \
-    CK_RGB_FLAG_INDEXED, 0, 0, fg, 0, 0, bg  }
+#define cell_video_attr_set_colors(fg, bg) ( \
+    cell_video_attr_set(CK_RGB_FLAG_INDEXED, 0, 0, (fg), 0, 0, (bg)))
 
 /* Unlike the rest of the macros here, these to intentionally operate on
  * VIO 4-bit colour pairs */
@@ -262,75 +311,127 @@ typedef struct struct_cell_video_attr_t {
 /* Set a colour attribute to a 16-colour value pair packed into an unsigned
  * char
  */
-#define cell_video_attr_from_vio_attribute(value) ((cell_video_attr_t) { \
-    (value).flags, (value).fg_r, (value).fg_g, (value).fg_b, \
-    (value).bg_r, (value).bg_g, (value).bg_b  }
+#define cell_video_attr_from_vio_attribute(value) ( \
+    cell_video_attr_set_colors(cell_video_attr8_foreground((value)), \
+                               cell_video_attr8_background((value))))
 
 /* Sets the foreground colour to an indexed value preserving the background colour
  */
-#define cell_video_attr_set_fg_color(att, fgc) ((cell_video_attr_t) { \
-    (value).flags | CK_RGB_FLAG_FG_INDEXED, \
-    0, 0, fgc, (value).bg_r, (value).bg_g, (value).bg_b  }
+#define cell_video_attr_set_fg_color(att, fgc) ( \
+    cell_video_attr_set((att).flags | CK_RGB_FLAG_FG_INDEXED, \
+                        0, 0, (fgc), \
+                        (att).bg_r, (att).bg_g, (att).bg_b) )
 
 /* Sets the background colour to an indexed value preserving the foreground colour
  * Used by CSI = Ps K   (Set Graphic Background Color, ANSI)
  */
-#define cell_video_attr_set_bg_color(att, bgc) ((cell_video_attr_t) { \
-    (value).flags | CK_RGB_FLAG_BG_INDEXED, \
-    (value).fg_r, (value).fg_g, (value).fg_b, 0, 0, bgc  }
+#define cell_video_attr_set_bg_color(att, bgc) ( \
+    cell_video_attr_set((att).flags | CK_RGB_FLAG_BG_INDEXED, \
+    (att).fg_r, (att).fg_g, (att).fg_b, \
+    0, 0, (bgc)) )
 
 /* Returns the foreground (by clearing the background)
- * TODO: The following places will need updating when 24-bit color is introduced
+ *
  * This is used by:
  *    DECRQCRA   - the color indexes (if less than 16) are included in the
  *                 checksum calculation
  *    SGR 39     - Restore default FG color
  *    ANSI Report Color Attributes
  */
-#define cell_video_attr_foreground(value) ( \
-    (value).flags & CK_RGB_FLAG_FG_INDEXED ? (value).fg_b : 0)
+#define cell_video_attr_foreground(att) ( \
+    cell_video_attr_fg_is_indexed(att) ? (att).fg_b : 0)
 
 
 /* Returns the background colour
  * The & 0xF0 is probably unnecessary. The only place that did it was ckoco3.c at
  * around line 17698 (case 'M')
- * TODO: The following places will need updating when 24-bit color is introduced
+ *
  * This is used by:
  *    DECRQCRA   - the color indexes (if less than 16) are included in the
  *                 checksum calculation
  *    SGR 39     - Restore default FG color
  *    ANSI Report Color Attributes
  */
-#define cell_video_attr_background(value) ( \
-    (value).flags & CK_RGB_FLAG_BG_INDEXED ? (value).bg_b : 0)
+#define cell_video_attr_background(att) ( \
+    cell_video_attr_bg_is_indexed(att) ? (att).bg_b : 0)
 
-/*
-  The swapcolors macro exchanges the fore- and background colors, but leaves
-  the intensity/blink bits where there are if the color index is below 16. Thus
-  if the foreground color is bold and the background color is not bold, the same
-  will be true after swapcolors().
-*/
-/* TODO: Higher color depths: Update the documentation for every place these are used
- *        to mention the intensity bit is only preserved for indexes below 16
+/* Checks if the foreground or background currently contains an indexed colour
+ * compatile with the 16-colour aixterm palette */
+#define cell_video_attr_fg_is_16colors(att) ( \
+    cell_video_attr_fg_is_indexed(att) && cell_video_attr_foreground(att) < 16)
+#define cell_video_attr_bg_is_16colors(att) ( \
+    cell_video_attr_bg_is_indexed(att) && cell_video_attr_background(att) < 16)
+
+#define cell_video_attr_fgbg_are_16colors(att) ( \
+    cell_video_attr_fg_is_16colors(att) && cell_video_attr_bg_is_16colors(att) )
+
+
+/**** Helper macros to make swapcolors() readable */
+
+/* Swap the lower 3 bits of the two indexed colours perserving the 4th bit */
+#define rgbsc_swap_4b(x) (                                                     \
+    cell_video_attr_set((x).flags,                                             \
+                         0, 0, ((x).fg_b & 0x08) | ((x).bg_b & 0x07),          \
+                         0, 0, ((x).bg_b & 0x08) | ((x).fg_b & 0x07) )    )
+
+#define rgbsc_swap_flags(flags) (                                              \
+    /* If both indexed bits are set, nothing to swap */                        \
+    ((flags) & CK_RGB_FLAG_INDEXED) == CK_RGB_FLAG_INDEXED ? flags             \
+         /* if neither indexed bits are set, nothing to swap */                \
+        : ((flags) & CK_RGB_FLAG_INDEXED) == CK_RGB_FLAG_RGB ? flags           \
+            /* Else, if FG is indexed, set BG indexed and vice versa */        \
+            : (flags) & CK_RGB_FLAG_FG_INDEXED                                 \
+                ? ((flags) & ~CK_RGB_FLAG_INDEXED) | CK_RGB_FLAG_BG_INDEXED    \
+                : ((flags) & ~CK_RGB_FLAG_INDEXED) | CK_RGB_FLAG_FG_INDEXED    \
+)
+
+/* Swap 3 bits of the background with all bits of the foreground preserving
+ * nothing of the backgrounds remaining bits
  */
-/* TODO: Test this a whole bunch in isolation */
-#define swapcolors(x) ( \
-    /* If one of the colors is not an indexed color */ \
-    !((x).flags & CK_RGB_FLAG_FG_INDEXED) || !((x).flags & CK_RGB_FLAG_BG_INDEXED || \
-    /* or one of the colors is outside the aixterm palette */
-     cell_video_attr_background(x) > 15 || cell_video_attr_foreground(x) > 15 \
-    /* Then just swap the colors verbatim */ \
-    ?  ((cell_video_attr_t) { \
-        /* Swap the FG and BG indexed flags */ \
-        ((value).flags ^ CK_RGB_FLAG_INDEXED) | \
-        ((value).flags & CK_RGB_FLAG_FG_INDEXED ? CK_RGB_FLAG_BG_INDEXED : 0) | \
-        ((value).flags & CK_RGB_FLAG_BG_INDEXED ? CK_RGB_FLAG_FG_INDEXED : 0) , \
-    (value).bg_r, (value).bg_g, (value).bg_b, \
-    (value).fg_r, (value).fg_g, (value).fg_b  }\
-    /* Else swap indexed colors preserving intensity bit */ \
-    : ((cell_video_attr_t) { (value).flags, \
-    0, 0, ((value).fg_b & 0x08) | ((value).bg_b & 0x07), \
-    0, 0, ((value).bg_b & 0x08) | ((value).fg_b & 0x07)  } \
+#define rgbsc_swap_4b_bg(x) (                                                  \
+    cell_video_attr_set(rgbsc_swap_flags((x).flags),                           \
+                            0, 0, (x).bg_b & 0x07,                             \
+                        (x).fg_r, (x).fg_g, (x).fg_b)    )
+
+/* Swap 3 bits of the foreground with all bits of the background preserving
+ * nothing of the foregrounds remaining bits */
+#define rgbsc_swap_4b_fg(x) (                                                  \
+    cell_video_attr_set(rgbsc_swap_flags((x).flags),                           \
+                        (x).bg_r, (x).bg_g, (x).bg_b,                          \
+                        0, 0, (x).fg_b & 0x07) )
+
+/* Swap everything */
+#define rgbsc_swap_all(x) (                                                    \
+    cell_video_attr_set((x).flags, (x).bg_r, (x).bg_g, (x).bg_b,               \
+                        (x).fg_r, (x).fg_g, (x).fg_b)   )
+
+
+/* The swapcolors macro exchanges the fore- and background colors, *possibly*
+ * preserving the 4th bit in the fore- and background.
+ *
+ * The 4th bit for 4-bit indexed colors can have significant meaning - some
+ * emulations display bold as an intense colour (4th bit set). So when swapping
+ * the FG and BG colour, we want to leave the 4th bit where it is so that the
+ * foreground text remains bold rather than ending up with a "bold" background.
+ *
+ * Things get more difficult with 256-color & RGB support. If the index is 16 or
+ * above then we can't assume the 4th bit holds any special significance. So
+ * if both colors are 16 or above they'll be swapped verbatim. If only one of
+ * the colours is below 16, that colour will have its 4th bit thrown away and
+ * only the bottom 3 bits will be swapped over, while the other larger colour
+ * will be sawpped over verbatim.
+ *
+ * I don't know if this is the *correct* strategy. Perhaps if one colour is
+ * above 16 we should assume both are from a larger palette and so swap both
+ * over verbatim. Or perhaps we need to track how each individual colour was
+ * set so we know *why* the 4th bit is set.
+*/
+#define swapcolors(x) (                                          \
+      cell_video_attr_is_rgb(x)            ? rgbsc_swap_all(x)   \
+    : cell_video_attr_fgbg_are_16colors(x) ? rgbsc_swap_4b(x)    \
+    : cell_video_attr_bg_is_16colors(x)    ? rgbsc_swap_4b_bg(x) \
+    : cell_video_attr_fg_is_16colors(x)    ? rgbsc_swap_4b_fg(x) \
+    : /* fg and bg are indexed && > 15 ? */  rgbsc_swap_all(x)   \
 )
 
 /* In the original K95 open-source release of the v2.2 code, swapcolors() and
@@ -344,11 +445,13 @@ typedef struct struct_cell_video_attr_t {
  * can't really ever change the structure of viocell, so this will always do
  * effectively nothing. It exists only to make it clear we aren't accidentally
  * passing a 16-colour value off to somewhere else.
- * TODO: On 256-color or 24-bit color builds, this macro should either be defined in such
- *       a way as to produce an error, or simply not defined at all (which would itself
- *       produce an error anywhere its used)
+ *
+ * On 256-color and 24-bit color builds, it is undefined so as to produce a
+ * build error anywhere it is used.
+ *
  * TODO: In the future on Windows we *could* issue SGR colours; The windows 10 v1809
- *       or higher console does support >16 colours.
+ *       or higher console does support it. But thats not something that could be done
+ *       here with a simple macro.
  */
 /*
 #define cell_video_attr_to_win32_console(value) (value)
@@ -360,10 +463,8 @@ typedef struct struct_cell_video_attr_t {
  * TODO: For higher colour depths: ??? Maybe use a VT attribute ???
  */
 #define cell_video_attr_with_fg_intensity_toggled(attr) ( \
-	((x).flags & CK_RGB_FLAG_FG_INDEXED && cell_video_attr_foreground(attr) < 16 \
-    ? ((cell_video_attr_t) { \
-    (value).flags, 0, 0, (value).fg_b ^ 0x0008, \
-    (value).bg_r, (value).bg_g, (value).bg_b  } \
+	cell_video_attr_fg_is_16colors(attr) \
+	? cell_video_attr_set_fg_color((attr), cell_video_attr_foreground(attr) ^ 0x0008) \
     : attr )
 
 /* These turn the 4th bit on or off if the current color index is less than 16.
@@ -372,26 +473,37 @@ typedef struct struct_cell_video_attr_t {
  * has the intensity bit set. This initial normal foreground/background
  * intensity is stored in the fgi and bgi globals.
  * Its used to simulate bold/dim via intensity for when the dim attribute is off.
- * TODO: 24-bit color
  */
-#define cell_video_attr_with_bg_intensity_set(attr)   ( cell_video_attr_background(attr) < 16 ? ((attr) | 0x0800 ) : attr)
-#define cell_video_attr_with_bg_intensity_unset(attr) ( cell_video_attr_background(attr) < 16 ? ((attr) & 0x07FF ) : attr)
-#define cell_video_attr_with_fg_intensity_set(attr)   ( cell_video_attr_foreground(attr) < 16 ? ((attr) | 0x0008 ) : attr)
-#define cell_video_attr_with_fg_intensity_unset(attr) ( cell_video_attr_foreground(attr) < 16 ? ((attr) & 0xFF07 ) : attr)
+#define cell_video_attr_with_bg_intensity_set(attr) ( \
+    cell_video_attr_bg_is_16colors(attr) \
+    ? cell_video_attr_set_bg_color((attr), cell_video_attr_background(attr) | 0x08) \
+    : attr )
+#define cell_video_attr_with_bg_intensity_unset(attr) ( \
+    cell_video_attr_bg_is_16colors(attr) \
+    ? cell_video_attr_set_bg_color((attr), cell_video_attr_background(attr) & 0x07) \
+    : attr)
+#define cell_video_attr_with_fg_intensity_set(attr)   ( \
+    cell_video_attr_fg_is_16colors(attr) \
+    ? cell_video_attr_set_fg_color((attr), cell_video_attr_foreground(attr) | 0x08) \
+    : attr)
+#define cell_video_attr_with_fg_intensity_unset(attr) ( \
+    cell_video_attr_fg_is_16colors(attr) \
+    ? cell_video_attr_set_fg_color((attr), cell_video_attr_foreground(attr) & 0x07) \
+    : attr)
 
 /* Sets the background colour to a 3-bit value preserving the background
  * intensity bit if the current background color index is less than 16
  * Equivalent to: attribute = (attribute & 0x8F) | (l << 4);
  * Or:  i = (attribute & 0x8F)
  *      attribute = i | (l << 4)
- * TODO: 24-bit color
  * Used by:
  *   Faking the WY-370 64-color palette
  *   SGR 30-37: Select foreground color
  *   SGR 40-47: Select background color
  * */
 #define cell_video_attr_set_3bit_bg_color(attr, bg) ( \
-	cell_video_attr_background(attr) < 16 ? ((attr) & 0x08FF) | ((bg) << 8) \
+	cell_video_attr_bg_is_16colors(attr) \
+	? cell_video_attr_set_bg_color((attr), (cell_video_attr_background(attr) & 0x08) | ((bg) & 0x07) ) \
 	: cell_video_attr_set_bg_color(attr, bg) \
 )
 
@@ -400,14 +512,14 @@ typedef struct struct_cell_video_attr_t {
  * Equivalent to:  attribute = (attribute & 0xF8) | l
  * Or:  i = (attribute & 0xF8);
  *      attribute = (i | l);
- * TODO: 24-bit color
  * Used by:
  *   Faking the WY-370 64-color palette
  *   SGR 30-37: Select foreground color
  *   SGR 40-47: Select background color
  */
 #define cell_video_attr_set_3bit_fg_color(attr, fg) ( \
-	cell_video_attr_foreground(attr) < 16 ? (((attr) & 0xFF08) | (fg)) \
+	cell_video_attr_fg_is_16colors(attr) \
+	? cell_video_attr_set_fg_color((attr), (cell_video_attr_foreground(attr) & 0x08) | ((fg) & 0x07) ) \
 	: cell_video_attr_set_fg_color(attr, fg) \
 )
 
@@ -441,48 +553,105 @@ typedef struct struct_cell_video_attr_t {
 #define cell_video_attr_background_color_name(value) (colors[cell_video_attr_background(value)])
 #define cell_video_attr_foreground_color_name(value) (colors[cell_video_attr_foreground(value)])
 
+#define cell_video_attr_fg_to_rgb(value) ( \
+    (unsigned)(((unsigned)(value).fg_b << 16) | \
+    (unsigned)((unsigned)(value).fg_g << 8) | \
+    (unsigned)(value).fg_r) \
+)
+
+#define cell_video_attr_bg_to_rgb(value) ( \
+    (unsigned)(((unsigned)(value).bg_b << 16) | \
+    (unsigned)((unsigned)(value).bg_g << 8) | \
+    (unsigned)(value).bg_r) \
+)
+
+#define cell_video_attr_bg_rgb_r(value) ( \
+    cell_video_attr_bg_is_indexed(value) ? 0 : (value).bg_r )
+
+#define cell_video_attr_bg_rgb_g(value) ( \
+    cell_video_attr_bg_is_indexed(value) ? 0 : (value).bg_g )
+
+#define cell_video_attr_bg_rgb_b(value) ( \
+    cell_video_attr_bg_is_indexed(value) ? 0 : (value).bg_b )
+
+#define cell_video_attr_fg_rgb_r(value) ( \
+    cell_video_attr_fg_is_indexed(value) ? 0 : (value).fg_r )
+
+#define cell_video_attr_fg_rgb_g(value) ( \
+    cell_video_attr_fg_is_indexed(value) ? 0 : (value).fg_g )
+
+#define cell_video_attr_fg_rgb_b(value) ( \
+    cell_video_attr_fg_is_indexed(value) ? 0 : (value).fg_b )
 
 /* Returns the background colour as an RGB value
  * Called by the terminal rendering code in kclient.cxx
- * TODO: 24-bit color
  * TODO: WY370 palette
  */
 #define cell_video_attr_foreground_rgb(value) ( \
-    (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
-	? RGBTable256[cell_video_attr_foreground((value))%256] \
-	: ((colorpalette == CK_PALETTE_XT88 || colorpalette = =CK_PALETTE_XTRGB88) \
-	    ? RGBTable88[cell_video_attr_foreground((value))%88] \
-		: RGBTable[cell_video_attr_foreground((value))%16]) \
+    cell_video_attr_fg_is_indexed(value) \
+    ? (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
+	  ? RGBTable256[cell_video_attr_foreground((value))%256] \
+	  : ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
+	      ? RGBTable88[cell_video_attr_foreground((value))%88] \
+  		  : RGBTable[cell_video_attr_foreground((value))%16]) \
+  	: cell_video_attr_fg_to_rgb(value) \
 )
 
 
 /* Returns the background colour as an RGB value
  * Called by the terminal rendering code in kclient.cxx
- * TODO: 24-bit color
  * TODO: WY370 palette
  */
 #define cell_video_attr_background_rgb(value) ( \
-    (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
-	? RGBTable256[cell_video_attr_background((value))%256] \
-	: ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
-	    ? RGBTable88[cell_video_attr_background((value))%88] \
-		: RGBTable[cell_video_attr_background((value))%16]) \
+    cell_video_attr_bg_is_indexed(value) \
+    ? (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) \
+	  ? RGBTable256[cell_video_attr_background((value))%256] \
+	  : ((colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) \
+	      ? RGBTable88[cell_video_attr_background((value))%88] \
+		  : RGBTable[cell_video_attr_background((value))%16]) \
+	: cell_video_attr_bg_to_rgb(value) \
 )
 
+/* Sets the foreground to an RGB value */
+#define cell_video_attr_set_fg_rgb(attr, r, g, b) ( \
+    cell_video_attr_set((attr).flags & ~CK_RGB_FLAG_FG_INDEXED, \
+        (r), (g), (b), (attr).bg_r, (attr).bg_g, (attr).bg_b) \
+)
+
+/* Sets the background to an RGB value */
+#define cell_video_attr_set_bg_rgb(attr, r, g, b) ( \
+    cell_video_attr_set((attr).flags & ~CK_RGB_FLAG_BG_INDEXED, \
+        (attr).fg_r, (attr).fg_g, (attr).fg_b, (r), (g), (b) ) \
+)
 
 /* Checks to see if the attribute is currently null (black)
  * Its called in a few places in ckoco3.c to see if a colour was previously
  * saved in savcolor and can be overwritten or restored.
  */
-#define cell_video_attr_is_null(attr) (attr == 0)
+#define cell_video_attr_is_null(attr) ( \
+ ( cell_video_attr_fg_is_indexed(attr) ? (attr).fg_b == 0 \
+     : ((attr).fg_r == 0 && (attr).fg_g == 0 && (attr).fg_b == 0) \
+ ) && ( cell_video_attr_bg_is_indexed(attr) ? (attr).bg_b == 0 \
+     : ((attr).bg_r == 0 && (attr).bg_g == 0 && (attr).bg_b == 0)) \
+)
 
 /* Checks if two given colour attributes are equal.
  * Its used in WrtCellStrDiff to help determine if two cells are equal,
  * VscrnIsClear to determine if the screen is clear, ComputeColorFromAttr to
  * detemine if a color needs to be computed from the attribute, and the rendering
- * code in KClient  */
-#define cell_video_attr_equal(attr_a, attr_b) ((attr_a) == (attr_b))
-
+ * code in KClient
+ */
+#define cell_video_attr_equal(attr_a, attr_b) ( \
+  /* Flags must be the same */ \
+  (attr_a).flags == (attr_b).flags && \
+  /* If FG is indexed, FG must be the same */ \
+  (cell_video_attr_fg_is_indexed(attr_a) && cell_video_attr_fg_is_indexed(attr_b)    \
+     ?  cell_video_attr_foreground(attr_a) == cell_video_attr_foreground(attr_b)     \
+     :  cell_video_attr_fg_to_rgb(attr_a) == cell_video_attr_fg_to_rgb(attr_b)  ) && \
+  (cell_video_attr_bg_is_indexed(attr_a) && cell_video_attr_bg_is_indexed(attr_b)    \
+     ?  cell_video_attr_background(attr_a) == cell_video_attr_background(attr_b)     \
+     :  cell_video_attr_bg_to_rgb(attr_a) == cell_video_attr_bg_to_rgb(attr_b)  ) \
+)
 
 #else /* 256 or 16 colors */
 #ifdef CK_COLORS_256
@@ -503,13 +672,12 @@ typedef struct struct_cell_video_attr_t {
 typedef unsigned short cell_video_attr_t;
 
 
-/** Sets the foreground and background to the supplied 16-colour values.
+/** Sets the foreground and background to the supplied  indexed colour values.
  * Used by:
  *     QNX terminal emulation (ckoqnx.c)
  *     CSI = Ps F   (Set Normal Foreground Color, ANSI)
  *     SET COMMAND COLOR
  *     SET TERMINAL COLOR
- * TODO: RGB: Set indexed color bit
  */
 #define cell_video_attr_set_colors(fg, bg) (((bg)<<8 | (fg)))
 
@@ -537,18 +705,16 @@ typedef unsigned short cell_video_attr_t;
 #define cell_video_attr_from_vio_attribute(value) (cell_video_attr_init_vio_attribute(value))
 
 /* Sets the foreground colour to an indexed value preserving the background colour
- * TODO: RGB: Set indexed color bit
  */
 #define cell_video_attr_set_fg_color(att, fgc) (((att) & 0xFF00) | ((fgc) & 0x00FF))
 
 /* Sets the background colour to an indexed value preserving the foreground colour
  * Used by CSI = Ps K   (Set Graphic Background Color, ANSI)
- * TODO: RGB: Set indexed color bit
  */
 #define cell_video_attr_set_bg_color(att, bgc) (((att) & 0x00FF) | ((bgc) << 8))
 
 /* Returns the foreground (by clearing the background)
- * TODO: The following places will need updating when 24-bit color is introduced
+ *
  * This is used by:
  *    DECRQCRA   - the color indexes (if less than 16) are included in the
  *                 checksum calculation
@@ -560,7 +726,7 @@ typedef unsigned short cell_video_attr_t;
 /* Returns the background colour
  * The & 0xF0 is probably unnecessary. The only place that did it was ckoco3.c at
  * around line 17698 (case 'M')
- * TODO: The following places will need updating when 24-bit color is introduced
+ *
  * This is used by:
  *    DECRQCRA   - the color indexes (if less than 16) are included in the
  *                 checksum calculation
@@ -569,20 +735,37 @@ typedef unsigned short cell_video_attr_t;
  */
 #define cell_video_attr_background(value) (((value) & 0xFF00) >> 8)
 
-/*
-  The swapcolors macro exchanges the fore- and background colors, but leaves
-  the intensity/blink bits where there are if the color index is below 16. Thus
-  if the foreground color is bold and the background color is not bold, the same
-  will be true after swapcolors().
+/* The swapcolors macro exchanges the fore- and background colors, *possibly*
+ * preserving the 4th bit in the fore- and background.
+ *
+ * The 4th bit for 4-bit indexed colors can have significant meaning - some
+ * emulations display bold as an intense colour (4th bit set). So when swapping
+ * the FG and BG colour, we want to leave the 4th bit where it is so that the
+ * foreground text remains bold rather than ending up with a "bold" background.
+ *
+ * Things get more difficult with 256-color support. If the index is 16 or
+ * above then we can't assume the 4th bit holds any special significance. So
+ * if both colors are 16 or above they'll be swapped verbatim. If only one of
+ * the colours is below 16, that colour will have its 4th bit thrown away and
+ * only the bottom 3 bits will be swapped over, while the other larger colour
+ * will be sawpped over verbatim.
+ *
+ * I don't know if this is the *correct* strategy. Perhaps if one colour is
+ * above 16 we should assume both are from a larger palette and so swap both
+ * over verbatim. Or perhaps we need to track how each individual colour was
+ * set so we know *why* the 4th bit is set.
 */
-/* TODO: Higher color depths: Update the documentation for every place these are used
- *        to mention the intensity bit is only preserved for indexes below 16
- * TODO: Detect RGB colors
- */
+#define swap_colors_verbatim(x) (((((x)&0xFF00)>>8)|(((x)&0x00FF)<<8)))
+#define swap_colors_3bit(x) (((x)&(unsigned short)0x0808)|(((x)&0x0700)>>8)|(((x)&0x0007)<<8))
 #define swapcolors(x) ( \
 	(cell_video_attr_background(x) < 16 && cell_video_attr_foreground(x) < 16) \
-	? (((x)&(unsigned short)0x0808)|(((x)&0x0700)>>8)|(((x)&0x0007)<<8)) \
-	: ((((x)&0xFF00)>>8)|(((x)&0x00FF)<<8)) \
+	/* Both colors under 16, preserve intensity bits of both */ \
+	? swap_colors_3bit(x) \
+	: (cell_video_attr_background(x) > 15 && cell_video_attr_foreground(x) > 15) \
+	     ? swap_colors_verbatim(x) /* Both colors 16 or over - swap verbatim */ \
+	     : cell_video_attr_background(x) < 16 \
+	         ? ((((x)&0x0700)>>8)|(((x)&0x00FF)<<8)) /* BG < 16, discard BG 4th bit */ \
+	         : ((((x)&0xFF00)>>8)|(((x)&0x0007)<<8)) /* FG < 16, discard FG 4th bit */ \
 )
 
 /* In the original K95 open-source release of the v2.2 code, swapcolors() and
@@ -596,9 +779,10 @@ typedef unsigned short cell_video_attr_t;
  * can't really ever change the structure of viocell, so this will always do
  * effectively nothing. It exists only to make it clear we aren't accidentally
  * passing a 16-colour value off to somewhere else.
- * TODO: On 256-color or 24-bit color builds, this macro should either be defined in such
- *       a way as to produce an error, or simply not defined at all (which would itself
- *       produce an error anywhere its used)
+ *
+ * On 256-color and 24-bit color builds, it is undefined so as to produce a
+ * build error anywhere it is used.
+ *
  * TODO: In the future on Windows we *could* issue SGR colours; The windows 10 v1809
  *       or higher console does support >16 colours.
  */
@@ -631,15 +815,14 @@ typedef unsigned short cell_video_attr_t;
  * Equivalent to: attribute = (attribute & 0x8F) | (l << 4);
  * Or:  i = (attribute & 0x8F)
  *      attribute = i | (l << 4)
- * TODO: Using this for SGR 90-97 and 100-107 seems odd. Surely we can just
- *       directly set indexed colour values.
+ *
  * Used by:
  *   Faking the WY-370 64-color palette
  *   SGR 30-37: Select foreground color
  *   SGR 40-47: Select background color
  * */
 #define cell_video_attr_set_3bit_bg_color(attr, bg) ( \
-	cell_video_attr_background(attr) < 16 ? ((attr) & 0x08FF) | ((bg) << 8) \
+	cell_video_attr_background(attr) < 16 ? ((attr) & 0x08FF) | (((bg) & 0x07) << 8) \
 	: cell_video_attr_set_bg_color(attr, bg) \
 )
 
@@ -648,15 +831,14 @@ typedef unsigned short cell_video_attr_t;
  * Equivalent to:  attribute = (attribute & 0xF8) | l
  * Or:  i = (attribute & 0xF8);
  *      attribute = (i | l);
- * TODO: Using this for SGR 90-97 and 100-107 seems odd. Surely we can just
- *       directly set indexed colour values.*
+ *
  * Used by:
  *   Faking the WY-370 64-color palette
  *   SGR 30-37: Select foreground color
  *   SGR 40-47: Select background color
  */
 #define cell_video_attr_set_3bit_fg_color(attr, fg) ( \
-	cell_video_attr_foreground(attr) < 16 ? (((attr) & 0xFF08) | (fg)) \
+	cell_video_attr_foreground(attr) < 16 ? (((attr) & 0xFF08) | ((fg) & 0x07)) \
 	: cell_video_attr_set_fg_color(attr, fg) \
 )
 
@@ -849,7 +1031,7 @@ typedef unsigned char cell_video_attr_t;  /* this really should be color_attr_t 
  *   SGR 30-37: Select foreground color
  *   SGR 40-47: Select background color
  * */
-#define cell_video_attr_set_3bit_bg_color(attr, bg) (((attr) & 0x8F) | ((bg) << 4))
+#define cell_video_attr_set_3bit_bg_color(attr, bg) (((attr) & 0x8F) | (((bg) & 0x07) << 4))
 
 /* Sets the foreground colour to a 3-bit value preserving the foreground
  * intensity bit and the background colour
@@ -862,7 +1044,7 @@ typedef unsigned char cell_video_attr_t;  /* this really should be color_attr_t 
  *   SGR 30-37: Select foreground color
  *   SGR 40-47: Select background color
  */
-#define cell_video_attr_set_3bit_fg_color(attr, fg) ((((attr) & 0xF8) | (fg)))
+#define cell_video_attr_set_3bit_fg_color(attr, fg) ((((attr) & 0xF8) | ((fg) & 0x07)))
 
 /* Returns the foreground (by clearing the background)
  *
@@ -958,9 +1140,9 @@ typedef struct {
 #define cell_video_attr_foreground_rgb(value) (RGBTable256[cell_video_attr_foreground((value))])
 #define cell_video_attr_set_colors(fg, bg) ((cell_video_attr_t){((bg)<<4 | (fg)), 0})
 #define cell_video_attr_set_fg_color(attr, fg) ((cell_video_attr_t){(((attr).a & 0xF0) | ((fg) & 0x0F)), 0})
-#define cell_video_attr_set_3bit_fg_color(attr, fg) ((cell_video_attr_t){(((attr).a & 0xF8) | (fg) ), 0})
+#define cell_video_attr_set_3bit_fg_color(attr, fg) ((cell_video_attr_t){(((attr).a & 0xF8) | ((fg) & 0x07) ), 0})
 #define cell_video_attr_set_bg_color(attr, bg) ((cell_video_attr_t){(((attr).a & 0x0F) | ((bg) << 4)), 0})
-#define cell_video_attr_set_3bit_bg_color(attr, bg) ((cell_video_attr_t){((attr).a & 0x8F) | ((bg) << 4), 0})
+#define cell_video_attr_set_3bit_bg_color(attr, bg) ((cell_video_attr_t){((attr).a & 0x8F) | (((bg) & 0x07) << 4), 0})
 #define cell_video_attr_is_null(attr) ((attr).a == 0)
 #define cell_video_attr_equal(attr_a, attr_b) ((attr_a).a == (attr_b).a)
 #define swapcolors(x) cell_video_attr_from_vio_attribute((((x.a)&(unsigned)0x88)|(((x.a)&0x70)>>4)|(((x.a)&0x07)<<4)))
@@ -972,7 +1154,7 @@ typedef struct {
 
 int color_index_to_vio(int index);
 
-int nearest_palette_color_rgb(unsigned char r, unsigned char g, unsigned char b);
+int nearest_palette_color_rgb(int palette_id, unsigned char r, unsigned char g, unsigned char b);
 int nearest_palette_color_palette(int palette_id, int palette_index);
 
 #ifndef KUI
