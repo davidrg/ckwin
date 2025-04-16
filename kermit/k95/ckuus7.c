@@ -1465,15 +1465,19 @@ struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
 int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
 
 struct keytab ttypaltab[] = {
-    { "aixterm-16", CK_PALETTE_16,    0 },
-    { "xterm-256",  CK_PALETTE_XT256, 0 },
-    { "xterm-88",   CK_PALETTE_XT88,  0 },
+    { "aixterm-16",   CK_PALETTE_16,     0 },
+    { "rgb",          CK_PALETTE_XTRGB,  CM_INV|CM_ABR },
+    { "xt256",        CK_PALETTE_XT256,  CM_INV|CM_ABR },
+    { "xt88",         CK_PALETTE_XT88,   CM_INV|CM_ABR },
+    { "xterm-256",    CK_PALETTE_XT256,  0 },
+    { "xterm-88",     CK_PALETTE_XT88,   0 },
 #ifdef CK_COLORS_24BIT
-    { "xterm-rgb",  CK_PALETTE_XTRGB, 0 },
-    { "xterm-88rgb", CK_PALETTE_XTRGB88, CM_INV },
+    { "xterm-rgb",    CK_PALETTE_XTRGB,   0 },
+    { "xterm-rgb256", CK_PALETTE_XTRGB,   CM_INV|CM_ABR },
+    { "xterm-rgb88",  CK_PALETTE_XTRGB88, CM_INV },
 #endif /* CK_COLORS_24BIT */
 #ifdef CK_PALETTE_WY370
-    { "wy-370",     CK_PALETTE_WY370, 0 },
+    { "wy-370",       CK_PALETTE_WY370,   0 },
 #endif
 };
 int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
