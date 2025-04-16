@@ -128,7 +128,7 @@ extern char
   sesfil[];
 
 extern cell_video_attr_t
-  colornormal, colorunderline, colorstatus,
+  colornormal, colorunderline, colorstatus, colorblink,
   colorhelp,   colorselect,    colorborder, coloritalic;
 
 extern int
@@ -342,6 +342,8 @@ getVar(unsigned int idx) {
             strcat(buf,",");
             strcat(buf,cell_video_attr_background_color_name(coloritalic));
             break;
+
+        /* TODO: TERM_COLOR_BLINK */
 
         case TERM_CPLIST: {
             int cplist[8], cps;
