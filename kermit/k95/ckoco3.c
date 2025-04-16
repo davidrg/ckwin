@@ -1814,6 +1814,29 @@ int nearest_palette_color_palette(int palette_id, int palette_index) {
     return nearest_palette_color_rgb(colorpalette, r, g, b);
 }
 
+/* Only required for Visual C++ 2012 and older which don't support compound
+ * literals. For 2013 and up, a macro is used. */
+#if _MSC_VER < 1800
+#ifdef CK_COLORS_24BIT
+/* Sets all values in a 24-bit color attribute */
+cell_video_attr_t cell_video_attr_set(unsigned char flags,
+        unsigned char fg_r, unsigned char fg_g, unsigned char fg_b,
+        unsigned char bg_r, unsigned char bg_g, unsigned char bg_b) {
+    cell_video_attr_t value = { flags, fg_r, fg_g, fg_b, bg_r, bg_g, bg_b };
+    return value;
+}
+#else
+#ifdef CK_COLORS_DEBUG
+cell_video_attr_t cell_video_attr_set(unsigned char value) {
+    cell_video_attr_t x;
+    x.a = value;
+    x.b = 0;
+    return x;
+}
+#endif /* CK_COLORS_DEBUG */
+#endif /* CK_COLORS_24BIT */
+#endif /* _MSC_VER < 1800 */
+
 USHORT
 xldecgrph( CHAR c ) {
 #ifdef COMMENT
@@ -4947,8 +4970,11 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys ;
     int x  = wherex[VTERM]-1 ;
     int y ;
-    viocell cell = { fillchar, geterasecolor(vmode) } ;
     vtattrib vta ={0,0,0,0,0,0,0,0,0,0};
+    viocell cell;
+
+    cell.c = fillchar;
+    cell.video_attr = geterasecolor(vmode);
 
     if ( fillchar == NUL )
         cell.c = SP ;
@@ -5207,8 +5233,11 @@ selclrcol_escape( BYTE vmode, CHAR fillchar ) {
     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
     int x  = wherex[VTERM]-1 ;
     int y ;
-    viocell cell = { fillchar, geterasecolor(vmode) } ;
     vtattrib vta ={0,0,0,0,0,0,0,0,0,0};
+    viocell cell;
+
+    cell.c = fillchar;
+    cell.video_attr = geterasecolor(vmode);
 
     if ( fillchar == NUL )
         cell.c = SP ;

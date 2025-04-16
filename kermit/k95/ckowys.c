@@ -2030,9 +2030,12 @@ wyseascii( int ch )
             case 'V':
                 if ( ISWY60(tt_type_mode) ) {
                     /* Clear cursor column - wy60 */
-                    viocell cell = {SP,geterasecolor(VTERM)};
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                     vtattrib vta = attrib;
+                    viocell cell;
+
+                    cell.c = SP;
+                    cell.video_attr = geterasecolor(VTERM);
 
                     debug(F110,"Wyse Escape","Clear cursor column",0);
                     if ( debses )
@@ -2047,8 +2050,11 @@ wyseascii( int ch )
                 else {
                     /* Sets a protected column */
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                    viocell cell = {SP,geterasecolor(VTERM)};
                     vtattrib vta ;
+                    viocell cell;
+
+                    cell.c = SP;
+                    cell.video_attr = geterasecolor(VTERM);
 
                     debug(F110,"Wyse Escape","Sets a protected column",0);
                     if ( debses )

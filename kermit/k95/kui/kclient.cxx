@@ -132,7 +132,9 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , saveHorzIsV(0)
     , font( 0 )
     , processKey( FALSE )
+#ifndef CK_COLORS_24BIT
     , prevAttr( cell_video_attr_init_vio_attribute(255) )
+#endif /* CK_COLORS_24BIT */
     , prevEffect( uchar(-1) )
     , _xoffset( 0 )
     , _yoffset( 0 )
@@ -140,6 +142,13 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , ws_blinking( 0 )
     , cursor_displayed( 0 )
 {
+#ifdef CK_COLORS_24BIT
+#if _MSC_VER < 1800
+    prevAttr = cell_video_attr_from_vio_attribute(255);
+#else
+     prevAttr = cell_video_attr_init_vio_attribute(255);
+#endif
+#endif /* CK_COLORS_24BIT */
     vert = new KScroll( kg, TRUE, TRUE );
     horz = new KScroll( kg, FALSE, TRUE );
 

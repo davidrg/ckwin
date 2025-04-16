@@ -276,9 +276,17 @@ typedef struct struct_cell_video_attr_t {
 
 #define cell_video_attr_is_rgb(att) (!cell_video_attr_fg_is_indexed(att) && !cell_video_attr_bg_is_indexed(att))
 
-/** Sets all values in a video attribute */
+/** Sets all values in a video attribute. For Visual C++ 2013 and up, we just
+ * use a compound literal. For older compilers, a function. */
+#if _MSC_VER < 1800
+cell_video_attr_t cell_video_attr_set(
+    unsigned char flags, unsigned char fg_r, unsigned char fg_g,
+    unsigned char fg_b, unsigned char bg_r, unsigned char bg_g, unsigned char bg_b);
+#else
 #define cell_video_attr_set(flags, fg_r, fg_g, fg_b, bg_r, bg_g, bg_b) ( \
     (cell_video_attr_t) { (flags), (fg_r), (fg_g), (fg_b), (bg_r), (bg_g), (bg_b) })
+#endif
+
 
 /** Sets the foreground and background to the supplied indexed colour values.
  * Used by:
@@ -1123,9 +1131,17 @@ typedef struct {
     int b; /* This is just junk to make compile errors */
 } cell_video_attr_t;
 
+/** Sets all values in a video attribute. For Visual C++ 2013 and up, we just
+ * use a compound literal. For older compilers, a function. */
+#if _MSC_VER < 1800
+cell_video_attr_t cell_video_attr_set(unsigned char value);
+#else
+#define cell_video_attr_set(value) ((cell_video_attr_t){value,0})
+#endif
+
 #define cell_video_attr_init_vio_attribute(value) {value, 0}
-#define cell_video_attr_from_vio_attribute(value) ((cell_video_attr_t){value,0})
-#define cell_video_attr_set_vio_3bit_colors(attr, value) ((cell_video_attr_t){(((attr).a & 0x88) | (value)),0})
+#define cell_video_attr_from_vio_attribute(value) (cell_video_attr_set(value))
+#define cell_video_attr_set_vio_3bit_colors(attr, value) (cell_video_attr_set((((attr).a & 0x88) | (value))))
 #define cell_video_attr_to_win32_console(value) ((value).a)
 #define cell_video_attr_with_fg_intensity_toggled(attr) (cell_video_attr_from_vio_attribute((attr).a ^ 0x8))
 #define cell_video_attr_with_bg_intensity_set(attr) (cell_video_attr_from_vio_attribute((attr).a | 0x80 ))
@@ -1138,11 +1154,11 @@ typedef struct {
 #define cell_video_attr_foreground_color_name(value) (colors[cell_video_attr_foreground(value)])
 #define cell_video_attr_background_rgb(value) (RGBTable256[cell_video_attr_background((value))])
 #define cell_video_attr_foreground_rgb(value) (RGBTable256[cell_video_attr_foreground((value))])
-#define cell_video_attr_set_colors(fg, bg) ((cell_video_attr_t){((bg)<<4 | (fg)), 0})
-#define cell_video_attr_set_fg_color(attr, fg) ((cell_video_attr_t){(((attr).a & 0xF0) | ((fg) & 0x0F)), 0})
-#define cell_video_attr_set_3bit_fg_color(attr, fg) ((cell_video_attr_t){(((attr).a & 0xF8) | ((fg) & 0x07) ), 0})
-#define cell_video_attr_set_bg_color(attr, bg) ((cell_video_attr_t){(((attr).a & 0x0F) | ((bg) << 4)), 0})
-#define cell_video_attr_set_3bit_bg_color(attr, bg) ((cell_video_attr_t){((attr).a & 0x8F) | (((bg) & 0x07) << 4), 0})
+#define cell_video_attr_set_colors(fg, bg) (cell_video_attr_set(((bg)<<4 | (fg))))
+#define cell_video_attr_set_fg_color(attr, fg) (cell_video_attr_set((((attr).a & 0xF0) | ((fg) & 0x0F))))
+#define cell_video_attr_set_3bit_fg_color(attr, fg) (cell_video_attr_set((((attr).a & 0xF8) | ((fg) & 0x07) )))
+#define cell_video_attr_set_bg_color(attr, bg) (cell_video_attr_set((((attr).a & 0x0F) | ((bg) << 4))))
+#define cell_video_attr_set_3bit_bg_color(attr, bg) (cell_video_attr_set(((attr).a & 0x8F) | (((bg) & 0x07) << 4)))
 #define cell_video_attr_is_null(attr) ((attr).a == 0)
 #define cell_video_attr_equal(attr_a, attr_b) ((attr_a).a == (attr_b).a)
 #define swapcolors(x) cell_video_attr_from_vio_attribute((((x.a)&(unsigned)0x88)|(((x.a)&0x70)>>4)|(((x.a)&0x07)<<4)))
