@@ -6167,8 +6167,10 @@ shotrm() {
            "ESC[0m color",colorreset?"default-color":"current-color");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     if (colorpalette == CK_PALETTE_16) s = "aixterm-16";
-    if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) s = "xterm-88";
-    if (colorpalette == CK_PALETTE_XT256 || CK_PALETTE_XTRGB) s = "xterm-256";
+    if (colorpalette == CK_PALETTE_XT88) s = "xterm-88";
+    if (colorpalette == CK_PALETTE_XTRGB88) s = "xterm-88 + 24-bit color";
+    if (colorpalette == CK_PALETTE_XT256) s = "xterm-256";
+    if (colorpalette == CK_PALETTE_XTRGB) s = "xterm-256 + 24-bit color";
 #ifdef CK_PALETTE_WY370
     if (colorpalette == CK_PALETTE_WY370) s = "wy-370";
 #endif /* CK_PALETTE_WY370 */
