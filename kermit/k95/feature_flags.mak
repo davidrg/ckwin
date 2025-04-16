@@ -293,7 +293,8 @@ WART=ckwart
 # Color support (CF_COLORS). Options are:
 #   "rgb"       24-bit RGB support, plus color palettes up to 256-colors, and
 #               support for setting attribute colors to any 24-bit color value
-#               via SET TERMINAL COLOR or OSC-5
+#               via SET TERMINAL COLOR or OSC-5. Requires an additional 3MB or
+#               so for the vscrn buffers.
 #   "256"       Color palettes up to 256-colors. RGB values set via
 #               SGR-38/SGR-48 are quantized to the selected color palette.
 #   "16"        16-color aixterm palette only. RGB values set via SGR-38/SGR-48
@@ -303,8 +304,14 @@ WART=ckwart
 # values to the aixterm palette which is the only one the console version is
 # capable of using for display.
 !if "$(CKF_COLORS)" == ""
-# Default to 256-color build if nothing else is specified.
+# If nothing else is specified, defualt to RGB for Visual C++ 2013 or newer,
+# and 256-color build for everything else. RGB support requires around 3MB of
+# additional memory for the vscrn buffers.
+!if ($(MSC_VER) >= 180)
+CKF_COLORS=rgb
+!else
 CKF_COLORS=256
+!endif
 !endif
 
 !if "$(CKF_COLORS)" == "rgb"
