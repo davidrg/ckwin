@@ -4449,6 +4449,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 attribute, 0 or 2 for the normal attribute (2 should probably be
                 the graphic attribute, but K95 doesn't do that currently).
             </p>
+            <p>
+                In versions of Kermit 95 supporting 24-bit RGB color, any colors
+                that hold a 24-bit RGB color rather than an indexed color will
+                be converted to the nearest color in the 16-color palette for
+                return.
+            </p>
         </section>
 
         <!-- ######################### N ######################### -->

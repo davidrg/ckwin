@@ -1667,8 +1667,8 @@ int color_index_to_vio(int index) {
     return index;
 }
 
-unsigned char palette_max_index() {
-    switch(colorpalette) {
+unsigned char palette_max_index(int palette_id) {
+    switch(palette_id) {
         case CK_PALETTE_XT88:
         case CK_PALETTE_XTRGB88:
             return 87;
@@ -1683,8 +1683,12 @@ unsigned char palette_max_index() {
     return 15;
 }
 
-ULONG* palette_rgb_table() {
-    switch(colorpalette) {
+unsigned char current_palette_max_index() {
+    return palette_max_index(colorpalette);
+}
+
+ULONG* palette_rgb_table(int palette_id) {
+    switch(palette_id) {
         case CK_PALETTE_XT88:
         case CK_PALETTE_XTRGB88:
             return RGBTable88;
@@ -1699,9 +1703,13 @@ ULONG* palette_rgb_table() {
     return RGBTable;
 }
 
+ULONG* current_palette_rgb_table() {
+    return palette_rgb_table(colorpalette);
+}
+
 #ifdef KUI
-ULONG* palette_saved_rgb_table() {
-    switch(colorpalette) {
+ULONG* palette_saved_rgb_table(int palette_id) {
+    switch(palette_id) {
         case CK_PALETTE_XT88:
         case CK_PALETTE_XTRGB88:
             return SavedRGBTable88;
@@ -1714,6 +1722,10 @@ ULONG* palette_saved_rgb_table() {
             return SavedRGBTable256;
     }
     return SavedRGBTable;
+}
+
+ULONG* current_palette_saved_rgb_table() {
+    return palette_saved_rgb_table(colorpalette);
 }
 #endif /* KUI */
 
@@ -1734,20 +1746,23 @@ void reset_palettes() {
  * palettes. In 16-color builds, this always maps on to the aixterm-16 palette
  * regardless of the currently chosen palette.
  */
-int nearest_palette_color_rgb(unsigned char r, unsigned char g, unsigned char b) {
+int nearest_palette_color_rgb(int palette_id, unsigned char r, unsigned char g, unsigned char b) {
     ULONG *palette = NULL;
     int palette_max = 15;
     int min = 0xfffffff;
     int result = 0;
     int i;
 
-    /* Figure out which palette we're using */
+    /* Figure out which palette we're using. In 16-color builds, there are only
+     * 4-bits per color in cell_video_attr_t, so we always convert to the
+     * 16-color palette. The other palettes only exist in such builds as a
+     * source of RGB values to convert *from*. */
 #ifdef CK_COLORS_16
     palette = RGBTable;
     palette_max = 15;
 #else /* CK_COLORS_16 */
-    palette_max = palette_max_index();
-    palette = palette_rgb_table();
+    palette_max = palette_max_index(palette_id);
+    palette = palette_rgb_table(palette_id);
 #endif /* CK_COLORS_16 */
 
 	for (i = 0; i < palette_max; i++) {
@@ -1796,7 +1811,7 @@ int nearest_palette_color_palette(int palette_id, int palette_index) {
 	g = (palette[palette_index] & 0x0000FF00)>>8;
     r = (palette[palette_index] & 0x000000FF);
 
-    return nearest_palette_color_rgb(r, g, b);
+    return nearest_palette_color_rgb(colorpalette, r, g, b);
 }
 
 USHORT
@@ -11105,8 +11120,8 @@ doosc( void ) {
 
         debug(F111, "OSC 4/5: Change color number", apcbuf, apclength);
 
-        palette_max = palette_max_index();
-        palette = palette_rgb_table();
+        palette_max = current_palette_max_index();
+        palette = current_palette_rgb_table();
 
         if (num == 5) {  /* Change Special Color Number */
 			palette_max = 0;
@@ -11263,9 +11278,9 @@ doosc( void ) {
 		/* 104     - reset all color numbers */
 
         ULONG *palette = NULL, *saved = NULL;
-        int palette_max = palette_max_index();
-        palette = palette_rgb_table();
-        saved = palette_saved_rgb_table();
+        int palette_max = current_palette_max_index();
+        palette = current_palette_rgb_table();
+        saved = current_palette_saved_rgb_table();
 
         debug(F111, "OSC 104/105: Reset color number", apcbuf, apclength);
 
@@ -12598,7 +12613,7 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
                     color = (unsigned)(((unsigned)b << 16) |
                             (unsigned)((unsigned)g << 8) |
                             (unsigned)r);
-                    palette = palette_rgb_table();
+                    palette = current_palette_rgb_table();
                     index = color_index_to_vio(index);
                     palette[index] = color;
                 }
@@ -15063,8 +15078,7 @@ vtcsi(void)
                                 c = line->cells[x].c;
                                 a = line->vt_char_attrs[x];
 
-                                /* TODO: 24-bit color: skip dealing with the color
-                                 *       attribute if its not an indexed color. */
+                                /* These return 0 for RGB colors */
                                 fgcoloridx = cell_video_attr_foreground(line->cells[x].video_attr);
                                 bgcoloridx = cell_video_attr_background(line->cells[x].video_attr);
 
@@ -17462,7 +17476,7 @@ vtcsi(void)
                         int bg_index, fg_index, max_colors;
 
 
-                        max_colors = palette_max_index();
+                        max_colors = current_palette_max_index();
 
                         bg_index = (decscnm?pn[2]:pn[1]);
                         fg_index = (decscnm?pn[1]:pn[2]);
@@ -17959,7 +17973,7 @@ vtcsi(void)
 								the parameter list. */
 
 							int semicolons = FALSE;
-							int max_colors = palette_max_index();
+							int max_colors = current_palette_max_index();
 
                             if ( !sgrcolors )
                                 break;
@@ -18001,13 +18015,13 @@ vtcsi(void)
 								int r = pe[2], g = pe[3], b = pe[4], idx;
 #ifdef CK_COLORS_24BIT
 								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									/* TODO: rgb colour stuff */
+									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
                             	} else
 #endif /* CK_COLORS_24BIT */
 								{
 								/* Can't store 24-bit color, so look for the nearest
 								 * color in the current palette and use that.*/
-								idx = nearest_palette_color_rgb(r, g, b);
+								idx = nearest_palette_color_rgb(colorpalette, r, g, b);
 								attribute = cell_video_attr_set_fg_color(attribute,idx);
 								}
 							}
@@ -18015,19 +18029,21 @@ vtcsi(void)
 								int r = pe[3], g = pe[4], b = pe[5], idx;
 #ifdef CK_COLORS_24BIT
 								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									/* TODO: rgb colour stuff.
-										pe[2] is the colour space id (ignored) */
+									/* pe[2] is the colour space id (ignored) */
+									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
                                 } else
 #endif /* CK_COLORS_24BIT */
                                 {
 									/* Can't store 24-bit color, so look for the nearest
 								 	* color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(r, g, b);
+									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
 									attribute = cell_video_attr_set_fg_color(attribute,idx);
                                 }
 							}
 
+#ifndef CK_COLORS_24BIT
                             debug(F111, "SGR 38", "attribute", attribute);
+#endif /* CK_COLORS_24BIT */
                             debug(F111, "SGR 38", "foreground", cell_video_attr_foreground(attribute));
                             break;
 							}
@@ -18130,7 +18146,7 @@ vtcsi(void)
                             if ( !sgrcolors )
                                 break;
 
-                            max_colors = palette_max_index();
+                            max_colors = current_palette_max_index();
 
 							if (pecount == 0) {
 								int i, elreq = 0;
@@ -18169,13 +18185,13 @@ vtcsi(void)
 								int r = pe[2], g = pe[3], b = pe[4], idx;
 #ifdef CK_COLORS_24BIT
 								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									/* TODO: rgb colour stuff */
+									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
                             	} else
 #endif /* CK_COLORS_24BIT */
 								{
 									/* Can't store 24-bit color, so look for the nearest
 								 	* color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(r, g, b);
+									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
 									attribute = cell_video_attr_set_bg_color(attribute,idx);
                                 }
 							}
@@ -18183,19 +18199,21 @@ vtcsi(void)
 								int r = pe[3], g = pe[4], b = pe[5], idx;
 #ifdef CK_COLORS_24BIT
 								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									/* TODO: rgb colour stuff.
-										pe[2] is the colour space id (ignored) */
+									/* pe[2] is the colour space id (ignored) */
+									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
                                 } else
 #endif /* CK_COLORS_24BIT */
                                 {
 									/* Can't store 24-bit color, so look for the nearest
 								 	* color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(r, g, b);
+									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
 									attribute = cell_video_attr_set_bg_color(attribute,idx);
                                 }
 
 							}
+#ifndef CK_COLORS_24BIT
 							debug(F111, "SGR 48", "attribute", attribute);
+#endif /* CK_COLORS_24BIT */
                             debug(F111, "SGR 48", "background", cell_video_attr_background(attribute));
                             break;
 							}
@@ -19140,17 +19158,86 @@ vtcsi(void)
                     {
                         char buf[32] ;
 
+                        /* This really should only return a 16-color value, but
+                         * in 256-color builds if a value is outside that range
+                         * we'll return it anyway. Its a little unlikely an
+                         * application expecting this to return a 16-color value
+                         * would go setting colors outside that range.
+                         *
+                         * In 24-bit RGB builds, if the current value is an RGB
+                         * color, we'll convert it to something in the current
+                         * palette for return. */
+
                         switch ( pn[1] ) {
                         case 0: /* Normal */
-                        case 2: /* Graphic - ??? */
-                            sprintf(buf,"%d %d\n",cell_video_attr_background(defaultattribute),
-                                     cell_video_attr_background(defaultattribute));
+                        case 2: { /* Graphic - ??? */
+                            int fg, bg;
+
+#ifdef CK_COLORS_24BIT
+                            if (!cell_video_attr_fg_is_indexed(defaultattribute)) {
+                                /* FG is a 24-bit RGB value. Convert it to */
+                                fg = nearest_palette_color_rgb(
+                                    colorpalette,
+                                    cell_video_attr_fg_rgb_r(defaultattribute),
+                                    cell_video_attr_fg_rgb_g(defaultattribute),
+                                    cell_video_attr_fg_rgb_b(defaultattribute));
+                            } else
+#endif
+                            {
+                                fg = cell_video_attr_foreground(defaultattribute);
+                            }
+
+#ifdef CK_COLORS_24BIT
+                            if (!cell_video_attr_bg_is_indexed(defaultattribute)) {
+                                /* FG is a 24-bit RGB value. Convert it to */
+                                bg = nearest_palette_color_rgb(
+                                    colorpalette,
+                                    cell_video_attr_bg_rgb_r(defaultattribute),
+                                    cell_video_attr_bg_rgb_g(defaultattribute),
+                                    cell_video_attr_bg_rgb_b(defaultattribute));
+                            } else
+#endif
+                            {
+                                bg = cell_video_attr_background(defaultattribute);
+                            }
+
+                            sprintf(buf,"%d %d\n", fg, bg);
                             break;
-                        case 1: /* Reverse */
-                            sprintf(buf,"%d %d\n",
-                                     cell_video_attr_background(defaultattribute),
-                                     cell_video_attr_foreground(defaultattribute));
+                            }
+                        case 1: { /* Reverse */
+                            int fg, bg;
+
+#ifdef CK_COLORS_24BIT
+                            if (!cell_video_attr_bg_is_indexed(defaultattribute)) {
+                                /* FG is a 24-bit RGB value. Convert it to */
+                                fg = nearest_palette_color_rgb(
+                                    colorpalette,
+                                    cell_video_attr_bg_rgb_r(defaultattribute),
+                                    cell_video_attr_bg_rgb_g(defaultattribute),
+                                    cell_video_attr_bg_rgb_b(defaultattribute));
+                            } else
+#endif
+                            {
+                                fg = cell_video_attr_background(defaultattribute);
+                            }
+
+#ifdef CK_COLORS_24BIT
+                            if (!cell_video_attr_fg_is_indexed(defaultattribute)) {
+                                /* FG is a 24-bit RGB value. Convert it to */
+                                bg = nearest_palette_color_rgb(
+                                    colorpalette,
+                                    cell_video_attr_fg_rgb_r(defaultattribute),
+                                    cell_video_attr_fg_rgb_g(defaultattribute),
+                                    cell_video_attr_fg_rgb_b(defaultattribute));
+                            } else
+#endif
+                            {
+                                bg = cell_video_attr_foreground(defaultattribute);
+                            }
+
+                            sprintf(buf,"%d %d\n", fg, bg);
                             break;
+                            }
                         default:
                             *buf = '\0';
                         }
