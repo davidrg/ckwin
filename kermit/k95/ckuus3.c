@@ -9567,15 +9567,7 @@ setrgb() {
     extern int colorpalette;  /* ckoco3.c */
     int cxmax = 15;
 
-    if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
-    	cxmax = 255;
-#ifdef CK_PALETTE_WY370
-    } else if (colorpalette == CK_PALETTE_WY370) {
-        cmax = 64;
-#endif
-    } else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
-    	cxmax = 87;
-    }
+    cxmax = current_palette_max_index();
 
     if ((cx = cmkey(rgbtab,nrgb,"","",xxstring)) < 0) {
       	return(cx);
@@ -9590,17 +9582,7 @@ setrgb() {
 
         /* The first 16 colour indexes of the color tables aren't in SGR order */
         if (cx < 16) {
-            switch(cx) {
-          	    case 1: cx = 4; break;
-                case 3: cx = 6; break;
-                case 4: cx = 1; break;
-                case 6: cx = 3; break;
-                case 9: cx = 12; break;
-                case 11:cx = 14; break;
-                case 12: cx = 9; break;
-                case 14: cx = 11; break;
-                default: break;
-            }
+            cx = color_index_to_vio(cx);
         }
     }
     if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
