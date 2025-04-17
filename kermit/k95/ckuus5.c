@@ -356,7 +356,7 @@ extern struct keytab * term_font;
 extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
-    colorreverse, colorcmd, coloritalic, colorblink;
+    colorreverse, colorcmd, coloritalic, colorblink, colorbold;
 extern int priority;
 extern struct keytab prtytab[];
 extern int nprty;
@@ -6287,51 +6287,52 @@ shotrm() {
         printf(" Color:");
 #ifndef ONETERMUPD
         GetCurPos(&row, &col);
-        WrtCharStrAtt("blink",     5, row, 9, &colorblink );
-        WrtCharStrAtt("border",    6, row, 17, &colorborder );
-        WrtCharStrAtt("debug",     5, row, 25, &colordebug );
-        WrtCharStrAtt("helptext",  8, row, 34, &colorhelp );
-        WrtCharStrAtt("reverse",   7, row, 43, &colorreverse );
-        WrtCharStrAtt("select",    6, row, 51, &colorselect );
-        WrtCharStrAtt("status",    6, row, 59, &colorstatus );
-        WrtCharStrAtt("terminal",  8, row, 68, &colornormal );
+        WrtCharStrAtt("blink",     5, row,  9, &colorblink );
+        WrtCharStrAtt("bold",      4, row, 17, &colorbold );
+        WrtCharStrAtt("border",    6, row, 25, &colorborder );
+        WrtCharStrAtt("debug",     5, row, 33, &colordebug );
+        WrtCharStrAtt("helptext",  8, row, 41, &colorhelp );
+        WrtCharStrAtt("reverse",   7, row, 50, &colorreverse );
+        WrtCharStrAtt("select",    6, row, 58, &colorselect );
+        WrtCharStrAtt("status",    6, row, 66, &colorstatus );
+
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
-        VscrnWrtCharStrAtt(VCMD, "blink",     5, row, 9, &colorblink );
-        VscrnWrtCharStrAtt(VCMD, "border",    6, row, 17, &colorborder );
-        VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 25, &colordebug );
-        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 33, &colorhelp );
-        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 42, &colorreverse );
-        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 50, &colorselect );
-        VscrnWrtCharStrAtt(VCMD, "status",    6, row, 58, &colorstatus );
-        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 67, &colornormal );
+        VscrnWrtCharStrAtt(VCMD, "blink",     5, row,  9, &colorblink );
+        VscrnWrtCharStrAtt(VCMD, "bold",      4, row, 17, &colorbold );
+        VscrnWrtCharStrAtt(VCMD, "border",    6, row, 25, &colorborder );
+        VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 33, &colordebug );
+        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 41, &colorhelp );
+        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 50, &colorreverse );
+        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 58, &colorselect );
+        VscrnWrtCharStrAtt(VCMD, "status",    6, row, 66, &colorstatus );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Foreground color names */
         /*           Bli Bor Deb Hel Rev Sel Sta Ter */
-        printf("%6s: %-8s%-8s%-8s%-9s%-8s%-8s%-9s%-9s\n","fore",
+        printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","fore",
                 cell_video_attr_foreground_color_name(colorblink),
+                cell_video_attr_foreground_color_name(colorbold),
                 "",
                 cell_video_attr_foreground_color_name(colordebug),
                 cell_video_attr_foreground_color_name(colorhelp),
                 cell_video_attr_foreground_color_name(colorreverse),
                 cell_video_attr_foreground_color_name(colorselect),
-                cell_video_attr_foreground_color_name(colorstatus),
-                cell_video_attr_foreground_color_name(colornormal));
+                cell_video_attr_foreground_color_name(colorstatus));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
         /*           Bli Bor Deb Hel Rev Sel Sta Ter */
-        printf("%6s: %-8s%-8s%-8s%-9s%-8s%-8s%-9s%-9s\n","back",
+        printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","back",
                 cell_video_attr_background_color_name(colorblink),
+                cell_video_attr_background_color_name(colorbold),
                 cell_video_attr_foreground_color_name(colorborder),
                 cell_video_attr_background_color_name(colordebug),
                 cell_video_attr_background_color_name(colorhelp),
                 cell_video_attr_background_color_name(colorreverse),
                 cell_video_attr_background_color_name(colorselect),
-                cell_video_attr_background_color_name(colorstatus),
-                cell_video_attr_background_color_name(colornormal));
+                cell_video_attr_background_color_name(colorstatus));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6342,53 +6343,53 @@ shotrm() {
         WrtCharStrAtt("graphic",   7, row, 17, &colorgraphic );
         WrtCharStrAtt("italic",    6, row, 25, &coloritalic );
         WrtCharStrAtt("underline", 9, row, 33, &colorunderline );
+
+        WrtCharStrAtt("terminal",  8, row, 67, &colornormal );
 #endif /* ONETERMUPD */
-        row = VscrnGetCurPos(VCMD)->y+1;  /* 17, 9, 26, ? */
-        VscrnWrtCharStrAtt(VCMD, "command",   7, row, 9, &colorcmd );
-        VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 17,  &colorgraphic );
+        row = VscrnGetCurPos(VCMD)->y+1;
+        VscrnWrtCharStrAtt(VCMD, "command",   7, row,  9, &colorcmd );
+        VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 17, &colorgraphic );
         VscrnWrtCharStrAtt(VCMD, "italic",    6, row, 25, &coloritalic );
-        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 33, &colorunderline );
+        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 33, &colornormal );
+        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 42, &colorunderline );
+
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Foreground color names */
-        printf("%6s: %-8s%-8s%-8s%-8s\n","fore",
+        printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","fore",
                 cell_video_attr_foreground_color_name(colorcmd),
                 cell_video_attr_foreground_color_name(colorgraphic),
                 cell_video_attr_foreground_color_name(coloritalic),
+                cell_video_attr_foreground_color_name(colornormal),
                 cell_video_attr_foreground_color_name(colorunderline));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
-        printf("%6s: %-8s%-8s%-8s%-8s\n","back",
+        printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","back",
                 cell_video_attr_background_color_name(colorcmd),
                 cell_video_attr_background_color_name(colorgraphic),
                 cell_video_attr_background_color_name(coloritalic),
+                cell_video_attr_background_color_name(colornormal),
                 cell_video_attr_background_color_name(colorunderline));
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
-        extern int trueblink, truedim, truereverse, trueunderline, trueitalic;
-        extern int blink_is_color;
+        extern int trueblink, truedim, truebold, truereverse, trueunderline, trueitalic;
+        extern int blink_is_color, bold_is_color;
         printf(
-	    " Attribute:  blink: %-3s  dim: %-3s  italic: %-3s  reverse: %-3s",
-	        trueblink?"on": (blink_is_color?"off (color)":"off"), truedim?"on":"off", trueitalic?"on":"off",
-	        truereverse?"on":"off");
-
-        /* If trueblink is off and set to simulate with color, then there won't
-           be enough room on the line for the underline status... */
-	    if (trueblink || (!trueblink && !blink_is_color)) {
-	        printf("  underline: %-3s\n", trueunderline?"on":"off");
-	    } else { printf("\n"); }
+	    " Attribute:  blink: %-3s  bold: %-3s  dim: %-3s  italic: %-3s\n",
+	        trueblink?"on": (blink_is_color?"off (color)":"off"),
+	        truebold?"on": (bold_is_color?"off (color)":"off"),
+	        truedim?"on":"off", trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-        /* So push underline on to the next line */
-        if (!trueblink && blink_is_color) {
-            printf("             underline: %-3s\n", trueunderline?"on":"off");
-            if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-        }
+        printf("             reverse: %-3s  underline: %-3s\n",
+                truereverse?"on":"off",
+                trueunderline?"on":"off");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {
         extern vtattrib WPattrib;

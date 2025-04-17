@@ -50,6 +50,13 @@ and terminal emulations that *do not* use the new 256-color mode,
  - Blinking text can now be configured to show in a specific color rather than
    intense reverse foreground, via the new commands `SET TERM COLOR BLINK` to
    set the color, and `SET TERM ATTRIBUTE BLINK OFF COLOR` to use color.  
+ - True bold text (using a bold font) can now be turned off in K95G with the 
+   new command `SET TERM ATTRIBUTE BOLD OFF`. Bold text still shows with
+   foreground intensity set if the current foreground color is an indexed color
+   less than 16. For situations where the foreground may be an RGB value, or
+   a color from the xterm-88 or -256 color palette, you can now set Bold to
+   use a different color with `SET TERM ATTRIBUTE BOLD OFF COLOR` and set the
+   color with `SET TERM COLOR BOLD` 
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

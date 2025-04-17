@@ -309,6 +309,7 @@ extern cell_video_attr_t colorstatus;       /* SET TERM COLOR STATUS-LINE (N/A?)
 extern cell_video_attr_t colorhelp;         /* SET TERM COLOR HELP */
 extern cell_video_attr_t colorborder;       /* SET TERM COLOR BORDER (N/A) */
 extern cell_video_attr_t colorblink;        /* SET TERM COLOR BLINK */
+extern cell_video_attr_t colorbold;         /* SET TERM COLOR BOLD */
 
 #ifdef OS2
 extern int tt_rows[];           /* Terminal rows = SET TERM HEIGHT */
