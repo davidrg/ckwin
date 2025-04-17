@@ -11650,11 +11650,51 @@ case XYCARR:                            /* CARRIER-WATCH */
                          xxstring);
               if (fg < 0)
                 return(fg);
+              if (fg == 16) {
+                  /* Indexed color from current palette */
+                  int cmax = current_palette_max_index();
+                  int z;
+
+                  if ((z = cmnum(cmax == 15
+                              ? "Foreground color index, 0-15"
+                              : cmax == 87 ? "Foreground color index, 0-87"
+                                            : "Foreground color index, 0-255"
+                         ,"",10,&fg,xxstring)) < 0) return(z);
+
+                  if (fg < 16) fg = color_index_to_vio(fg);
+
+                  if (fg < 0 || fg > cmax) {
+                      printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                      return(-9);
+                  }
+              }
+
               if ((bg = cmkey(ttyclrtab,nclrs,
                               "background color","black",xxstring)) < 0)
                 return(bg);
+
+              if (bg == 16) {
+                  /* Indexed color from current palette */
+                  int cmax = current_palette_max_index();
+                  int z;
+
+                  if ((z = cmnum(cmax == 15
+                              ? "Background color index, 0-15"
+                              : cmax == 87 ? "Background color index, 0-87"
+                                            : "Background color index, 0-255"
+                         ,"",10,&bg,xxstring)) < 0) return(z);
+
+                  if (fg < 16) bg = color_index_to_vio(fg);
+
+                  if (bg < 0 || bg > cmax) {
+                      printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                      return(-9);
+                  }
+              }
+
               if ((y = cmcfm()) < 0)
                 return(y);
+
               colorcmd = cell_video_attr_set_colors(fg, bg);
               return(success = 1);
           }

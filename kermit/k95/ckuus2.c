@@ -7624,8 +7624,12 @@ static char *hsetcmd[] = {
 #ifdef OS2
 "SET COMMAND COLOR <foreground-color> <background-color>",
 "  Lets you choose colors for Command screen.  Use ? in the color fields to",
-"  to get lists of available colors.",
+"  to get lists of available colors. If INDEX is specified, it must be",
+"  followed by the number of a color from the current color palette. For",
+"  example: ",
+"    SET COMMAND COLOR INDEX 85 INDEX 20",
 " ",
+
 "SET COMMAND CURSOR-POSITION <row> <column>",
 "  Moves the command-screen cursor to the given position (1-based).  This",
 "  command should be used in scripts instead of relying on ANSI.SYS escape",
