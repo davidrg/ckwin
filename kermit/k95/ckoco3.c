@@ -11541,7 +11541,7 @@ doosc( void ) {
 						defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
 #else
 						defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
-								nearest_palette_color_rgb(currentpalette, r, g, b));
+								nearest_palette_color_rgb(colorpalette, r, g, b));
 #endif
 						break;
                    	case 11: /* defaultattribute background */
@@ -11549,7 +11549,7 @@ doosc( void ) {
 						defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
 #else
 						defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
-								nearest_palette_color_rgb(currentpalette, r, g, b));
+								nearest_palette_color_rgb(colorpalette, r, g, b));
 #endif
 						break;
 					case 17: /* colorselect background */
@@ -11557,7 +11557,7 @@ doosc( void ) {
 						colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
 #else
 						colorselect = cell_video_attr_set_bg_color(colorselect,
-								nearest_palette_color_rgb(currentpalette, r, g, b));
+								nearest_palette_color_rgb(colorpalette, r, g, b));
 #endif
 		 				break;
 					case 19: /* colorselect foreground */
@@ -11565,7 +11565,7 @@ doosc( void ) {
 						colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
 #else
 						colorselect = cell_video_attr_set_fg_color(colorselect,
-								nearest_palette_color_rgb(currentpalette, r, g, b));
+								nearest_palette_color_rgb(colorpalette, r, g, b));
 #endif
 						break;
 				    default:
