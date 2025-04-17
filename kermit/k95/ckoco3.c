@@ -275,6 +275,7 @@ cell_video_attr_t     colorselect     = cell_video_attr_init_vio_attribute(0xe0)
 cell_video_attr_t     colorborder     = cell_video_attr_init_vio_attribute(0x01);
 cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27);
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
+cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
 
 int bgi = FALSE, fgi = FALSE ;
 cell_video_attr_t colorcmd        = cell_video_attr_init_vio_attribute(0x07);
@@ -287,6 +288,7 @@ int bold_is_color = FALSE ;   /* Use a color rather than intensity for bold blin
 int truereverse   = TRUE ;
 int trueunderline = TRUE ;
 int truedim       = TRUE ;
+int truebold      = TRUE ;
 #ifdef KUI
 int trueitalic    = TRUE ;
 #else /* KUI */
@@ -362,7 +364,10 @@ cell_video_attr_t                       /* Video attribute bytes */
     borderattribute=cell_video_attr_init_vio_attribute(0),
     savedborderattribute[VNUM]={0,0,0,0},
     blinkattribute=cell_video_attr_init_vio_attribute(0),
-    savedblinkattribute[VNUM]={0,0,0,0};
+    savedblinkattribute[VNUM]={0,0,0,0},
+    boldattribute=cell_video_attr_init_vio_attribute(0),
+    savedboldattribute[VNUM]={0,0,0,0}
+    ;
 
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
          savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
@@ -6611,6 +6616,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
         savedgraphicattribute[vmode]= graphicattribute;
         savedborderattribute[vmode]= borderattribute;
         savedblinkattribute[vmode]= blinkattribute;
+        savedboldattribute[vmode] = boldattribute;
         savedattrib[vmode] = attrib;            /* Current DEC character attributes */
         saverelcursor[vmode] = relcursor;       /* Cursor addressing mode */
         savedwrap[vmode]     = tt_wrap;         /* Wrap mode */
@@ -6642,6 +6648,7 @@ restorecurpos(int vmode, int x) {
             graphicattribute=savedgraphicattribute[vmode];
             borderattribute=savedborderattribute[vmode];
             blinkattribute=savedblinkattribute[vmode];
+            boldattribute=savedboldattribute[vmode];
             attrib = savedattrib[vmode];
             relcursor = saverelcursor[vmode];   /* Restore cursor addressing mode */
             tt_wrap = savedwrap[vmode] ;       /* Restore wrap mode */
@@ -6733,6 +6740,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     borderattribute  = colorborder;
     italicattribute  = coloritalic;
     blinkattribute   = colorblink;
+    boldattribute    = colorbold;
 
     saveddefaultattribute[VTERM] = colornormal; /* Default saved values */
     savedunderlineattribute[VTERM] = colorunderline ;
@@ -6741,6 +6749,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedgraphicattribute[VTERM] = colorgraphic;
     savedborderattribute[VTERM]  = colorborder;
     savedblinkattribute[VTERM] = colorblink;
+    savedboldattribute[VTERM]  = colorbold;
     savedattribute[VTERM] = attribute;
 
     /* Reset the color palettes */
@@ -8076,6 +8085,8 @@ resetcolors( int x )
                 byteswapcolors(colorgraphic);
             blinkattribute =
                 byteswapcolors(colorblink);
+            boldattribute =
+                byteswapcolors(colorbold);
         }
         else {
             defaultattribute = colornormal ;
@@ -8084,6 +8095,7 @@ resetcolors( int x )
             reverseattribute = colorreverse;
             graphicattribute = colorgraphic;
             blinkattribute = colorblink;
+            boldattribute  = colorbold;
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
@@ -13626,6 +13638,7 @@ settermtype( int x, int prompts )
     static cell_video_attr_t savgrcol = cell_video_attr_init_vio_attribute(0);   /* Graphics color */
     static cell_video_attr_t savulcol = cell_video_attr_init_vio_attribute(0);   /* Underline color */
     static cell_video_attr_t savblcol = cell_video_attr_init_vio_attribute(0);   /* Blink color */
+    static cell_video_attr_t savbocol = cell_video_attr_init_vio_attribute(0);   /* Blink color */
     static int savulatt = 0;                 /* Underline attribute */
     static int savrvatt = 0;                 /* Reverse attribute */
     static int savblatt = 0;                 /* Blink attribute */
@@ -13647,6 +13660,7 @@ settermtype( int x, int prompts )
         colorgraphic = savgrcol;
         colorunderline = savulcol;
         colorblink = savblcol;
+        colorbold = savbocol;
 
         trueblink     = savblatt ;
         truereverse   = savrvatt ;
@@ -13656,6 +13670,7 @@ settermtype( int x, int prompts )
         savgrcol = cell_video_attr_from_vio_attribute(0);
         savulcol = cell_video_attr_from_vio_attribute(0);
         savblcol = cell_video_attr_from_vio_attribute(0);
+        savbocol = cell_video_attr_from_vio_attribute(0);
         scrninitialized[VTERM] = 0;
         tt_status_usr[VTERM] = savstatus ;
         settermstatus(tt_status_usr[VTERM]) ;
@@ -13693,6 +13708,7 @@ settermtype( int x, int prompts )
             savgrcol = colorgraphic ;
             savulcol = colorunderline ;
             savblcol = colorblink ;
+            savbocol = colorbold;
 
             savulatt = trueunderline ;
             savblatt = trueblink ;
@@ -13701,7 +13717,8 @@ settermtype( int x, int prompts )
             colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
             colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
             colorunderline = cell_video_attr_from_vio_attribute(0x47);      /* Light gray on Red */
-            colorblink = cell_video_attr_from_vio_attribute(0x87);          /* Bright White on light gray */
+            colorblink = cell_video_attr_from_vio_attribute(0x87);          /* Light gray on dark gray */
+            colorbold = cell_video_attr_from_vio_attribute(0x0F);          /* Bright White on black */
 #ifndef KUI
             trueunderline = FALSE ;     /* Simulate underline */
 #endif /* KUI */
@@ -13893,6 +13910,7 @@ settermtype( int x, int prompts )
             savgrcol = colorgraphic ;
             savulcol = colorunderline ;
             savblcol = colorblink;
+            savbocol = colorbold;
 
             savulatt = trueunderline ;
             savblatt = trueblink ;
@@ -13901,8 +13919,8 @@ settermtype( int x, int prompts )
             colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
             colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
             colorunderline = cell_video_attr_from_vio_attribute(0x47);      /* Light gray on Red */
-            colorblink = cell_video_attr_from_vio_attribute(0x87);          /* Bright wight on light gray*/
-
+            colorblink = cell_video_attr_from_vio_attribute(0x87);          /* Light gray on dark gray*/
+            colorbold = cell_video_attr_from_vio_attribute(0x0F);           /* Bright wight on black*/
 #ifndef KUI
             trueunderline = FALSE ;     /* Simulate underline */
 #endif /* KUI */
@@ -14050,6 +14068,10 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
                 !trueblink && blink_is_color)
             /* a blinking character */
             colorval = blinkattribute ;
+        else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
+                !truebold && bold_is_color)
+            /* a blinking character */
+            colorval = boldattribute ;
         else
             colorval = colorattr ;
 
@@ -14079,7 +14101,13 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
             }
         }
 
-        if ( vtattr & VT_CHAR_ATTR_BOLD ||
+        /* Unlike the others, we still *try* to set the intensity bit for bold
+         * if the current FG/BG color is <16, because some applications use
+         * the bold attribute to access the 8 intense colors. So in K95G,
+         * turning off truebold just turns off the bold font without affecting
+         * color (unlike turning off trueblink).
+         */
+        if ( (vtattr & VT_CHAR_ATTR_BOLD && !bold_is_color) ||
              ( vtattr & VT_CHAR_ATTR_DIM 
 #ifdef KUI
                && !truedim

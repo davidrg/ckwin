@@ -33,7 +33,7 @@ extern int tt_update;
 extern int scrollflag[];
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
-extern int trueblink, trueunderline, trueitalic;
+extern int trueblink, trueunderline, trueitalic, truedim, truebold;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 
@@ -844,7 +844,7 @@ void KClient::writeMe()
         {
             prevEffect = kws->effect;
             Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
-            Bool bold = (prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE;
+            Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
             Bool dim = (prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE;
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);

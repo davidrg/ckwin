@@ -128,7 +128,7 @@ extern char
   sesfil[];
 
 extern cell_video_attr_t
-  colornormal, colorunderline, colorstatus, colorblink,
+  colornormal, colorunderline, colorstatus, colorblink, colorbold,
   colorhelp,   colorselect,    colorborder, coloritalic;
 
 extern int
