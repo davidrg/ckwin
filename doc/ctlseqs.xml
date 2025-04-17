@@ -12933,7 +12933,10 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     The <tt><param-single symbol="c"/></tt> component is the
                     color index to change. Valid values depend on which color
                     palette is currently active: 0-15 for aixterm-16, 0-87 for
-                    xterm-88, and 0-255 for xterm-256.
+                    xterm-88, and 0-255 for xterm-256. The first five values
+                    above the range of the current palette (eg, for the
+                    xterm-256 palette: 256, 257, 258, 259, 260) set attribute
+                    colors. See <a href="#osc-5">OSC-5</a> for more details.
                 </p>
                 <p>
                     The <tt><param-single symbol="spec"/></tt> component is an
@@ -12961,18 +12964,51 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""
-                     title="Change special color number"
-                     not-implemented="true" todo="true">
+                     title="Change special color number">
                 <ctlseq><param-single/> = 5  ; c ; spec</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5;c;spec.1240"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Changes the foreground color (background color for reverse)
+                    of an attribute (<em>special color</em> in xterm),
+                    equivalent to <tt>SET TERM COLOR</tt>. Has no visible
+                    effect until that attribute is turned off (
+                    <a href="#osc-6">OSC-6</a> or <tt>SET TERM ATTRIBUTE</tt>).
+                    In the case of Bold and Blink, the attribute must be turned
+                    off with <tt>SET TERM ATTRIBUTE {BOLD,BLINK} OFF COLOR</tt>
+                    (OSC-6 does this). Changes are reverted on terminal reset
+                    or via <a href="#osc-104">OSC-104</a>/<a href="#osc-105">OSC-105</a>.
+                </p>
+                <p>
+                    Multiple c;spec pairs can be supplied in the same fashion
+                    as <a href="#osc-4">OSC-4</a>, and the supported formats for
+                    <em>spec</em> are the same. The attributes that can be set
+                    are:
+                </p>
+                <ul>
+                    <li>0 - bold</li>
+                    <li>1 - underline</li>
+                    <li>2 - blink</li>
+                    <li>3 - reverse</li>
+                    <li>4 - italic</li>
+                </ul>
+                <p>
+                    These values can also be set via <a href="#osc-4">OSC-4</a>
+                    by adding the above numbers to the maximum number of colors
+                    in the current palette (as set by <tt>SET TERM COLOR PALETTE</tt>).
+                    For example, if the current palette is xterm-256, then
+                    <tt>OSC 4 ; 257 ; r g b : f f f f / 0 0 0 0 / 0 0 0 0</tt>
+                    would set the underline attribute to red.
+                </p>
             </section>
             <section role="parameter" id="osc-6" mnemonic=""
-                     title="Enable/disable special color number"
-                     not-implemented="true" todo="true">
+                     title="Enable/disable special color number">
                 <ctlseq><param-single/> = 6 ; c ; f</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-6;c;f.10FC"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>This is a synonym for <a href="#osc-106">OSC-106</a>
+                    (OSC-6 and OSC-106 have identical implementations).
+                </p>
             </section>
             <section role="parameter" id="osc-10" mnemonic=""
                      title="Change VT100 text foreground color"
@@ -13108,27 +13144,71 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     Resets one or more colors in the color palette to defaults
                     or values specified by the user via <tt>SET GUI RGBCOLOR</tt>.
                     Multiple color numbers can be specified separated by ';'
-                    (eg, <tt>OSC 1 0 4 ; 1 ; 2 ; 3 ST</tt>).  Only supported in GUI versions
-                    of Kermit 95.
+                    (eg, <tt>OSC 1 0 4 ; 1 ; 2 ; 3 ST</tt>).  Only supported in
+                    GUI versions of Kermit 95.
                 </p>
                 <p>
                     If no parameters are given (eg, <tt>OSC 104 ST</tt>), then
                     the entire color palette is reset.
                 </p>
+                <p>
+                    The first five color numbers above the range of the current
+                    palette allow resetting attribute colors in the same way
+                    <a href="#osc-4">OSC-4</a> allows setting attribute colors.
+                    OSC-104 will not reset all attribute colors in the absence
+                    of any parameters however; for that OSC-105 must be used.
+                </p>
             </section>
             <section role="parameter" id="osc-105" mnemonic=""
-                     title="Reset special color number"
-                     not-implemented="true" todo="true">
+                     title="Reset special color number">
                 <ctlseq><param-single/> = 105 ; c</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-0-5;c.1115"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Resets one or more attribute colors (<em>special colors</em>
+                    in xterm) to their default/user set values. Any number of
+                    colors can be specified using the same numberas as for
+                    <a href="#osc-5">OSC-5</a>. If none are specified, all
+                    attribute colors are reset.
+                </p>
             </section>
             <section role="parameter" id="osc-106" mnemonic=""
-                     title="Enable/disable special color number"
-                     not-implemented="true" todo="true">
+                     title="Enable/disable special color number">
                 <ctlseq><param-single/> = 106 ; c ; f</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-0-6;c;f.11B7"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Enables rendering attributes as color (<em>special color</em>
+                    in xterm) - equivalent to <tt>SET TERM ATTRIBUTE x OFF</tt>
+                    or, in the case of blink and bold,
+                    <tt>SET TERM ATTRIBUTE {BLINK,BOLD} OFF COLOR</tt>. The
+                    <em>c</em> parameter is the attribute to enable or disable,
+                    and the second parameter, <em>f</em> is if it should be
+                    enabled (0) or disabled and shown as color (any other value):
+                </p>
+                <ul>
+                    <li>0 - bold</li>
+                    <li>1 - underline</li>
+                    <li>2 - blink</li>
+                    <li>3 - reverse</li>
+                    <li>4 - italic</li>
+                </ul>
+                <!-- TODO: 5 - colorAttrMode
+                        We really should support this, but I'm not 100% sure of
+                        xterms behaviour when it come to this setting. The xterm
+                        code looks like it just skips applying attribute colors
+                        when its set to false (equivalent to skipping
+                        ComputeColorFromAttr) but when I attempted to test this,
+                        xterm *appeared* to do nothing at all. The version of
+                        xterm I have seems to be a bit unreliable when it comes
+                        to setting and resetting colors for attributes and
+                        turning those colors on and off, so perhaps I'm just
+                        hitting an xterm bug
+                -->
+                <p>
+                    xterm supports an additional option here: 5 - colorAttrMode.
+                    Kermit 95 does not currently implement this option.
+                </p>
             </section>
             <section role="parameter" id="osc-110" mnemonic=""
                      title="Reset VT100 text foreground color"
