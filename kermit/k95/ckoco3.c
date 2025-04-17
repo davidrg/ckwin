@@ -277,6 +277,8 @@ cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27)
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
 
+cell_video_attr_t     savedcolorselect = cell_video_attr_init_vio_attribute(0xe0);
+
 int bgi = FALSE, fgi = FALSE ;
 cell_video_attr_t colorcmd        = cell_video_attr_init_vio_attribute(0x07);
 int colorreset    = TRUE ;  /* reset on CSI 0 m - use normal colors */
@@ -6778,6 +6780,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	trueitalic = savedtrueitalic;
 	trueblink = savedtrueblink;
 
+	/* Reset select color in case it was changed by OSC-17/OSC-19 */
+	colorselect = savedcolorselect;
+
     /* Reset the color palettes */
     reset_palettes();
 
@@ -11164,7 +11169,16 @@ doosc( void ) {
     }
     case 1: /* dtterm, xterm - set Icon Name */
         debug(F111, "OSC 1: set icon name", apcbuf, apclength);
-        break; /* teraterm - set window title */
+		/* Not currently supported as Win32 doesn't provide a way of setting the
+         * task bar button label to something other than the window title.
+		 * Chances are effectively nothing happens here with xterm too for
+		 * similar reasons - most modern window manages probably don't support
+		 * it either.
+		 *
+		 * Tera Term overwrites the window title with this value.
+		 * iTerm2 uses this to set the tab name rather than window title
+		 */
+        break;
 
 #ifdef KUI
 	case 5:   /* xterm : Change Special Color Number*/
@@ -11252,7 +11266,6 @@ doosc( void ) {
                 /* Query */
                 debug(F100, "OSC 4/5: got query", 0, 0);
 
-				/* TODO: Make sure querying special colors works too! */
 				if (idx > palette_max || num == 5) {
 #ifdef CK_COLORS_24BIT
 					int r, g, b, ok = TRUE;
@@ -11333,10 +11346,6 @@ doosc( void ) {
 					/* Aside from the reverse attribute, these all set the
 					 * foreground only. */
                     case 0: /* Bold attribute */
-						debug(F111, "OSC 4/5: Set special color", "color", idx);
-						debug(F111, "OSC 4/5: Set special color", "r", r);
-						debug(F111, "OSC 4/5: Set special color", "g", g);
-						debug(F111, "OSC 4/5: Set special color", "b", b);
 						boldattribute = cell_video_attr_set_fg_rgb(boldattribute, r, g, b);
 						break;
                     case 1: /* underline attribute */
@@ -11441,43 +11450,132 @@ doosc( void ) {
 
         break;
     }
-    case 7: /* Misc - inform current working directory */
+    case 7: /* TODO - Misc - inform current working directory */
 		break; /* https://github.com/davidrg/ckwin/issues/413 */
-	case 8: /* misc - hyperlink */
+	case 8: /* TODO - misc - hyperlink */
 		break; /* https://github.com/davidrg/ckwin/issues/123 */
-    /* TODO: Set various special colors. Each one consumes one parameter, sets
+    /* Set various special colors. Each one consumes one parameter, sets
      *  the associated color, then if there are further parameters remaining in
      *  the osc string it falls through to the next case */
-	case 10:
-         /* set defaultattribute foreground */
- 		 /* fall through */
-	case 11:
-         /* set defaultattribute background */
- 		 /* fall through */
-	case 12:
-         /* set set text cursor color */
- 		 /* fall through */
-	case 13:
-         /* set pointer color foreground*/
- 		 /* fall through */
-	case 14:
-         /* set pointer color background */
- 		 /* fall through */
-	case 15:
-         /* set tektronix foreground */
- 		 /* fall through */
-	case 16:
-         /* set tektronix background */
- 		 /* fall through */
-	case 17:
-         /* set highlight background */
- 		 /* fall through */
-	case 18:
-         /* set set tektronix cursor color */
- 		 /* fall through */
-	case 19:
-         /* set highlight foreground color */
-         break;
+	case 10: /* set defaultattribute foreground */
+	case 11: /* set defaultattribute background */
+	case 12: /* TODO: set set text cursor color */
+	case 13: /* TODO: set pointer color foreground*/
+	case 14: /* TODO: set pointer color background */
+	case 15: /* TODO: set tektronix foreground */
+	case 16: /* TODO: set tektronix background */
+	case 17: /* set colorselect background (will need to setup a backup copy)*/
+	case 18: /* TODO: set set tektronix cursor color */
+	case 19: { /* set colorselect foreground color (will need to setup a backup copy) */
+		int current_color_id = num - 1;
+		char buf[256];
+
+		debug(F101, "OSC 10-19: Change dynamic color, starting from:", 0, num);
+
+		/* Format of string is:
+    		c;spec;spec;spec...
+         */
+        do {
+			int color = 0;
+			current_color_id++;
+
+			if (current_color_id > 19) break; /* finished */
+
+            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+			/* Get spec */
+			color = colorspec(&achar, &apcnext);
+
+			if (color == COLORSPEC_INVALID) continue;  /* Invalid colorspec */
+
+			if (color == COLORSPEC_QUERY) {  /* ? */
+                /* Query */
+				int r, g, b, ok = TRUE;
+				cell_video_attr_t attr;
+
+				debug(F100, "OSC 10-19: got query", 0, 0);
+
+                switch(current_color_id) {
+                    case 10: /* defaultattribute foreground */
+						color = cell_video_attr_foreground_rgb(defaultattribute);
+						break;
+                   	case 11: /* defaultattribute background */
+						color = cell_video_attr_background_rgb(defaultattribute);
+						break;
+					case 17: /* colorselect background */
+						color = cell_video_attr_background_rgb(colorselect);
+		 				break;
+					case 19: /* colorselect foreground */
+						color = cell_video_attr_foreground_rgb(colorselect);
+						break;
+					default:
+						color = 0;
+						debug(F101, "OSC 10-19: Unknown or Unsupported Dynamic Color Number", 0, current_color_id);
+						ok = FALSE;
+				}
+
+				if (ok) {
+					r =  color & 0x000000FF;
+                	g = (color & 0x0000FF00)>>8;
+                	b = (color & 0x00FF0000)>>16;
+					_snprintf(buf, sizeof(buf),
+	                          	oscterm == BEL ? "\033]%d;rgb:%04x/%04x/%04x\07"
+                            	      	       : "\033]%d;rgb:%04x/%04x/%04x\033\\",
+                       	      	current_color_id, r * 257,g * 257,b * 257);
+					buf[255] = 0;
+					sendcharsduplex(buf, strlen(buf), TRUE);
+				}
+            } else {  /* OSC 10-19: Set attribute color */
+				int r,g,b;
+
+                debug(F111, "OSC 10-19: Set dynamic color", "current_color_id", current_color_id);
+                debug(F111, "OSC 10-19: Set dynamic color", "color", color);
+
+				r =  color & 0x000000FF;
+                g = (color & 0x0000FF00)>>8;
+                b = (color & 0x00FF0000)>>16;
+
+                switch(current_color_id) {
+                    case 10: /* defaultattribute foreground */
+#ifdef CK_COLORS_24BIT
+						defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
+#else
+						defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
+								nearest_palette_color_rgb(currentpalette, r, g, b));
+#endif
+						break;
+                   	case 11: /* defaultattribute background */
+#ifdef CK_COLORS_24BIT
+						defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
+#else
+						defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
+								nearest_palette_color_rgb(currentpalette, r, g, b));
+#endif
+						break;
+					case 17: /* colorselect background */
+#ifdef CK_COLORS_24BIT
+						colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
+#else
+						colorselect = cell_video_attr_set_bg_color(colorselect,
+								nearest_palette_color_rgb(currentpalette, r, g, b));
+#endif
+		 				break;
+					case 19: /* colorselect foreground */
+#ifdef CK_COLORS_24BIT
+						colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
+#else
+						colorselect = cell_video_attr_set_fg_color(colorselect,
+								nearest_palette_color_rgb(currentpalette, r, g, b));
+#endif
+						break;
+				    default:
+						debug(F101, "OSC 10-19: Unknown or Unsupported Special Color Number", 0, current_color_id);
+                }
+            }
+        } while (achar == ';');
+
+        break;
+		}
 	case 22: /* xterm - Change pointer shape */
 	case 46: /* xterm - change log file */
 	case 50: /* xterm - set font */
@@ -11596,10 +11694,62 @@ doosc( void ) {
 #endif /* KUI */
 
 	case 110: /* xterm - reset attribute foreground */
-		/* TODO */
+		if ( decscnm ) {  /* Reverse screen? Set FG to colornormal BG*/
+#ifdef CK_COLORS_24BIT
+			if (!cell_video_attr_bg_is_indexed(colornormal)) {
+				/* Background has an RGB color */
+				int r, g, b;
+				r = cell_video_attr_bg_rgb_r(colornormal);
+				g = cell_video_attr_bg_rgb_r(colornormal);
+				g = cell_video_attr_bg_rgb_r(colornormal);
+				defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
+			} else
+#endif
+				defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
+						cell_video_attr_background(colornormal));
+		} else {
+#ifdef CK_COLORS_24BIT
+			if (!cell_video_attr_fg_is_indexed(colornormal)) {
+				/* Foreground has an RGB color */
+				int r, g, b;
+				r = cell_video_attr_fg_rgb_r(colornormal);
+				g = cell_video_attr_fg_rgb_r(colornormal);
+				g = cell_video_attr_fg_rgb_r(colornormal);
+				defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
+			} else
+#endif
+				defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
+					cell_video_attr_foreground(colornormal));
+		}
 		break;
 	case 111: /* xterm - reset attribute background */
-		/* TODO */
+		if ( decscnm ) {  /* Reverse screen? Set VG to colornormal FG*/
+#ifdef CK_COLORS_24BIT
+			if (!cell_video_attr_fg_is_indexed(colornormal)) {
+				/* Foreground has an RGB color */
+				int r, g, b;
+				r = cell_video_attr_fg_rgb_r(colornormal);
+				g = cell_video_attr_fg_rgb_r(colornormal);
+				g = cell_video_attr_fg_rgb_r(colornormal);
+				defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
+			} else
+#endif
+				defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
+						cell_video_attr_foreground(colornormal));
+		} else {
+#ifdef CK_COLORS_24BIT
+			if (!cell_video_attr_bg_is_indexed(colornormal)) {
+				/* Background has an RGB color */
+				int r, g, b;
+				r = cell_video_attr_bg_rgb_r(colornormal);
+				g = cell_video_attr_bg_rgb_r(colornormal);
+				g = cell_video_attr_bg_rgb_r(colornormal);
+				defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
+			} else
+#endif
+				defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
+					cell_video_attr_background(colornormal));
+		}
 		break;
 	case 112: /* xterm - reset text cursor color */
 		/* TODO */
@@ -11610,12 +11760,34 @@ doosc( void ) {
 	case 116: /* xterm - reset tektronix background */
 		break;
 	case 117: /* xterm - reset highlight background color */
-		/* TODO */
+#ifdef CK_COLORS_24BIT
+		if (!cell_video_attr_bg_is_indexed(savedcolorselect)) {
+			/* Background has an RGB color */
+			int r, g, b;
+			r = cell_video_attr_bg_rgb_r(savedcolorselect);
+			g = cell_video_attr_bg_rgb_r(savedcolorselect);
+			g = cell_video_attr_bg_rgb_r(savedcolorselect);
+			colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
+		} else
+#endif
+			colorselect = cell_video_attr_set_bg_color(colorselect,
+				cell_video_attr_background(savedcolorselect));
 		break;
 	case 118: /* xterm - reset tektronix cursor color */
 		break;
 	case 119: /* xterm - reset highlight foreground color */
-		/* TODO */
+#ifdef CK_COLORS_24BIT
+		if (!cell_video_attr_fg_is_indexed(savedcolorselect)) {
+			/* Background has an RGB color */
+			int r, g, b;
+			r = cell_video_attr_fg_rgb_r(savedcolorselect);
+			g = cell_video_attr_fg_rgb_r(savedcolorselect);
+			g = cell_video_attr_fg_rgb_r(savedcolorselect);
+			colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
+		} else
+#endif
+			colorselect = cell_video_attr_set_fg_color(colorselect,
+				cell_video_attr_foreground(savedcolorselect));
 		break;
     }
 }

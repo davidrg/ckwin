@@ -357,6 +357,7 @@ extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
     colorreverse, colorcmd, coloritalic, colorblink, colorbold;
+extern cell_video_attr_t savedcolorselect;
 extern int priority;
 extern struct keytab prtytab[];
 extern int nprty;
@@ -6361,7 +6362,7 @@ shotrm() {
         WrtCharStrAtt("debug",     5, row, 33, &colordebug );
         WrtCharStrAtt("helptext",  8, row, 41, &colorhelp );
         WrtCharStrAtt("reverse",   7, row, 50, &colorreverse );
-        WrtCharStrAtt("select",    6, row, 58, &colorselect );
+        WrtCharStrAtt("select",    6, row, 58, &savedcolorselect );
         WrtCharStrAtt("status",    6, row, 66, &colorstatus );
 
 #endif /* ONETERMUPD */
@@ -6372,10 +6373,15 @@ shotrm() {
         VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 33, &colordebug );
         VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 41, &colorhelp );
         VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 50, &colorreverse );
-        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 58, &colorselect );
+        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 58, &savedcolorselect );
         VscrnWrtCharStrAtt(VCMD, "status",    6, row, 66, &colorstatus );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+		/* We use savedcolorselect below (and above) because the current value
+		 * in colorselect may be temporarily overriden by OSC-17/OSC-19 and
+		 * we'd rather show the *default* value here like with everything else
+		 */
 
         /* Foreground color names */
         printf("%6s: ", "fore");
@@ -6385,7 +6391,7 @@ shotrm() {
         print_color("%-8s", TRUE, colordebug);
         print_color("%-9s", TRUE, colorhelp);
         print_color("%-8s", TRUE, colorreverse);
-        print_color("%-8s", TRUE, colorselect);
+        print_color("%-8s", TRUE, savedcolorselect);
         print_color("%-9s", TRUE, colorstatus);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6398,7 +6404,7 @@ shotrm() {
         print_color("%-8s", FALSE, colordebug);
         print_color("%-9s", FALSE, colorhelp);
         print_color("%-8s", FALSE, colorreverse);
-        print_color("%-8s", FALSE, colorselect);
+        print_color("%-8s", FALSE, savedcolorselect);
         print_color("%-9s", FALSE, colorstatus);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6450,16 +6456,26 @@ shotrm() {
     {
         extern int trueblink, truedim, truebold, truereverse, trueunderline, trueitalic;
         extern int blink_is_color, bold_is_color;
+		extern int savedtruereverse, savedtrueunderline, savedtruedim,
+					savedtruebold, savedtrueitalic, savedtrueblink;
+
+		/* The saved values are initialised to the same values as the non-saved
+		 * variants, and *only* updated by the "SET TERM ATTR" command, where
+	     * as the non-saved versions may also be updated by OSC-6/OSC-106.
+		 * On terminal reset, the non-saved versions are overwritten with the
+		 * saved versions. So saved is the default/set value, and non-saved is
+		 * the current active value */
+
         printf(
 	    " Attribute:  blink: %-3s  bold: %-3s  dim: %-3s  italic: %-3s\n",
-	        trueblink?"on": (blink_is_color?"off (color)":"off"),
-	        truebold?"on": (bold_is_color?"off (color)":"off"),
-	        truedim?"on":"off", trueitalic?"on":"off");
+	        savedtrueblink?"on": (blink_is_color?"off (color)":"off"),
+	        savedtruebold?"on": (bold_is_color?"off (color)":"off"),
+	        savedtruedim?"on":"off", trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         printf("             reverse: %-3s  underline: %-3s\n",
-                truereverse?"on":"off",
-                trueunderline?"on":"off");
+                savedtruereverse?"on":"off",
+                savedtrueunderline?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {

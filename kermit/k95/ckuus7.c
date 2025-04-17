@@ -1405,7 +1405,7 @@ int tt_hidattr = 1;                     /* Attributes are hidden */
 extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
-colorblink, colorbold;
+colorblink, colorbold, savedcolorselect;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
@@ -4581,7 +4581,7 @@ settrm() {
                 colorborder = attr;
                 break;
               case TTCOLSEL:
-                colorselect = attr;
+                colorselect = colorselect = attr;
                 break;
               case TTCOLBLI:
                 colorblink = attr;
