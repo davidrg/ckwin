@@ -4439,7 +4439,8 @@ settrm() {
                        ,"",10,&fg,xxstring)) < 0) return(z);
 
                 if (fg < 16) fg = color_index_to_vio(fg);
-                else {
+
+                if (fg < 0 || fg > cmax) {
                     printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
                     return(-9);
                 }
@@ -4462,7 +4463,8 @@ settrm() {
                            ,"",10,&bg,xxstring)) < 0) return(z);
 
                     if (fg < 16) bg = color_index_to_vio(fg);
-                    else {
+
+                    if (bg < 0 || bg > cmax) {
                         printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
                         return(-9);
                     }
