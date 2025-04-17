@@ -1558,6 +1558,9 @@ struct keytab ttyclrtab[] = {           /* Colors */
     { "lred",         12, CM_INV },
     { "magenta",       5, 0      },
     { "red",           4, 0      },
+#ifdef CK_COLORS_24BIT
+    { "rgb",          17, 0      },     /* Direct RGB value */
+#endif /* CK_COLORS_24BIT */
     { "white",        15, 0      },
     { "yellow",       14, 0      }
 };
@@ -4419,6 +4422,8 @@ settrm() {
           break;
         } else {                        /* No parse error */
             int fg = 0, bg = 0;
+            cell_video_attr_t attr = cell_video_attr_from_vio_attribute(0);
+
             fg = cmkey(ttyclrtab, nclrs,
                        (x == TTCOLBOR ?
                         "color for screen border" :
@@ -4444,6 +4449,41 @@ settrm() {
                     printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
                     return(-9);
                 }
+
+                attr = cell_video_attr_set_fg_color(attr, fg);
+            }
+#ifdef CK_COLORS_24BIT
+            else if (fg == 17) {
+                /* Direct RGB value. Three colors needed. */
+                int red, green, blue;
+
+                if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                return(z);
+                if (red < 0 || red > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                    return(-9);
+                }
+
+                if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                return(z);
+                if (green < 0 || green > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                    return(-9);
+                }
+
+                if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                return(z);
+                if (blue < 0 || blue > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                    return(-9);
+                }
+
+                attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
+                fg = -1;
+            }
+#endif /* CK_COLORS_24BIT */
+            else {
+                attr = cell_video_attr_set_fg_color(attr, fg);
             }
 
             if (x != TTCOLBOR) {
@@ -4468,6 +4508,40 @@ settrm() {
                         printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
                         return(-9);
                     }
+                    attr = cell_video_attr_set_bg_color(attr, bg);
+                }
+#ifdef CK_COLORS_24BIT
+                else if (bg == 17) {
+                    /* Direct RGB value. Three colors needed. */
+                    int red, green, blue;
+
+                    if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                    return(z);
+                    if (red < 0 || red > 255) {
+                        printf("\n?Red value outside valid range (0-255)\n");
+                        return(-9);
+                    }
+
+                    if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                    return(z);
+                    if (green < 0 || green > 255) {
+                        printf("\n?Red value outside valid range (0-255)\n");
+                        return(-9);
+                    }
+
+                    if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                    return(z);
+                    if (blue < 0 || blue > 255) {
+                        printf("\n?Red value outside valid range (0-255)\n");
+                        return(-9);
+                    }
+
+                    attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
+                    bg = -1;
+                }
+#endif /* CK_COLORS_24BIT */
+                else {
+                    attr = cell_video_attr_set_bg_color(attr, bg);
                 }
             }
             if ((y = cmcfm()) < 0)
@@ -4475,43 +4549,43 @@ settrm() {
 
             switch (x) {
               case TTCOLNOR:
-                colornormal = cell_video_attr_set_colors(fg, bg);
+                colornormal = attr;
                 fgi = 0; bgi = 0;
-                if (fg < 16) fgi = fg & 0x08;
-                if (bg < 16) bgi = bg & 0x08;
+                if (fg < 16 && fg >= 0) fgi = fg & 0x08;
+                if (bg < 16 && bg >= 0) bgi = bg & 0x08;
                 break;
               case TTCOLREV:
-                colorreverse = cell_video_attr_set_colors(fg, bg);
+                colorreverse = attr;
                 break;
               case TTCOLITA:
-                coloritalic = cell_video_attr_set_colors(fg, bg);
+                coloritalic = attr;
                 break;
               case TTCOLUND:
-                colorunderline = cell_video_attr_set_colors(fg, bg);
+                colorunderline = attr;
                 break;
               case TTCOLGRP:
-                colorgraphic = cell_video_attr_set_colors(fg, bg);
+                colorgraphic = attr;
                 break;
               case TTCOLDEB:
-                colordebug = cell_video_attr_set_colors(fg, bg);
+                colordebug = attr;
                 break;
               case TTCOLSTA:
-                colorstatus = cell_video_attr_set_colors(fg, bg);
+                colorstatus = attr;
                 break;
               case TTCOLHLP:
-                colorhelp = cell_video_attr_set_colors(fg, bg);
+                colorhelp = attr;
                 break;
               case TTCOLBOR:
-                colorborder = cell_video_attr_from_vio_attribute(fg);
+                colorborder = attr;
                 break;
               case TTCOLSEL:
-                colorselect = cell_video_attr_set_colors(fg, bg);
+                colorselect = attr;
                 break;
               case TTCOLBLI:
-                colorblink = cell_video_attr_set_colors(fg, bg);
+                colorblink = attr;
                 break;
               case TTCOLBOL:
-                colorbold = cell_video_attr_set_colors(fg, bg);
+                colorbold = attr;
                 break;
               default:
                 printf("%s - invalid\n",cmdbuf);

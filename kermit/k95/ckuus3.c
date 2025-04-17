@@ -11644,12 +11644,15 @@ case XYCARR:                            /* CARRIER-WATCH */
 #ifndef NOLOCAL
           case SCMD_COL: {              /* Command-screen colors */
               int fg, bg;
+              cell_video_attr_t attr = cell_video_attr_from_vio_attribute(0);
+
               fg = cmkey(ttyclrtab, nclrs,
                          "foreground color and then background color",
                          "white",
                          xxstring);
               if (fg < 0)
                 return(fg);
+
               if (fg == 16) {
                   /* Indexed color from current palette */
                   int cmax = current_palette_max_index();
@@ -11667,6 +11670,39 @@ case XYCARR:                            /* CARRIER-WATCH */
                       printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
                       return(-9);
                   }
+              }
+#ifdef CK_COLORS_24BIT
+              else if (fg == 17) {
+                  /* Direct RGB value. Three colors needed. */
+                  int red, green, blue;
+
+                  if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                  return(z);
+                  if (red < 0 || red > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                  return(z);
+                  if (green < 0 || green > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                  return(z);
+                  if (blue < 0 || blue > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
+                  fg = -1;
+              }
+#endif /* CK_COLORS_24BIT */
+              else {
+                  attr = cell_video_attr_set_fg_color(attr, fg);
               }
 
               if ((bg = cmkey(ttyclrtab,nclrs,
@@ -11691,11 +11727,44 @@ case XYCARR:                            /* CARRIER-WATCH */
                       return(-9);
                   }
               }
+#ifdef CK_COLORS_24BIT
+              else if (bg == 17) {
+                  /* Direct RGB value. Three colors needed. */
+                  int red, green, blue;
+
+                  if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                  return(z);
+                  if (red < 0 || red > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                  return(z);
+                  if (green < 0 || green > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                  return(z);
+                  if (blue < 0 || blue > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
+                  bg = -1;
+              }
+#endif /* CK_COLORS_24BIT */
+              else {
+                  attr = cell_video_attr_set_bg_color(attr, bg);
+              }
 
               if ((y = cmcfm()) < 0)
                 return(y);
 
-              colorcmd = cell_video_attr_set_colors(fg, bg);
+              colorcmd = attr;
               return(success = 1);
           }
           case SCMD_SCR:                /* Command Scrollback size */

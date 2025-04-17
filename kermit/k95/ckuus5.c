@@ -6032,26 +6032,59 @@ void print_color(char* format, int foreground, cell_video_attr_t attr) {
     };
 
     if (foreground) {
+#ifdef CK_COLORS_24BIT
+        if (!cell_video_attr_fg_is_indexed(attr)) { color = -1; } else {
+#endif /* CK_COLORS_24BIT */
         color = cell_video_attr_foreground(attr);
         if (color < 16) {
             printf(format, cell_video_attr_foreground_color_name(attr));
             return;
         }
+#ifdef CK_COLORS_24BIT
+        }
+#endif /* CK_COLORS_24BIT */
     } else {
+#ifdef CK_COLORS_24BIT
+        if (!cell_video_attr_bg_is_indexed(attr)) { color = -1; } else {
+#endif /* CK_COLORS_24BIT */
         color = cell_video_attr_background(attr);
         if (color < 16) {
             printf(format, cell_video_attr_background_color_name(attr));
             return;
         }
+#ifdef CK_COLORS_24BIT
+        }
+#endif /* CK_COLORS_24BIT */
     }
 
-    if (color < 256) {
+    if (color >= 0 && color < 256) {
         /* The color is outside the 0-15 range, so we don't have a name for it.
          * Just output the number. */
         sprintf(buf, "%d", color);
         printf(format, buf);
         return;
     }
+#ifdef CK_COLORS_24BIT
+    if (color == -1) {
+        int r, g, b;
+        if (foreground) {
+            r = cell_video_attr_fg_rgb_r(attr);
+            g = cell_video_attr_fg_rgb_g(attr);
+            b = cell_video_attr_fg_rgb_b(attr);
+        } else {
+            r = cell_video_attr_bg_rgb_r(attr);
+            g = cell_video_attr_bg_rgb_g(attr);
+            b = cell_video_attr_bg_rgb_b(attr);
+        }
+
+        color = (unsigned)(((unsigned)r << 16) |
+                (unsigned)((unsigned)g << 8) |
+                (unsigned)b);
+        sprintf(buf, "#%06x", color);
+        printf(format, buf);
+        return;
+    }
+#endif
 
     /* Error - output blank */
     printf(format, "");
