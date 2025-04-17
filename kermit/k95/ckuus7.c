@@ -1408,7 +1408,9 @@ colorgraphic, colordebug, colorreverse, coloritalic,
 colorblink, colorbold;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
-extern int blink_is_color, bold_is_color;
+extern int savedtrueblink, savedtrueunderline, savedtruereverse,
+		   savedtrueitalic, savedtruedim, savedtruebold;
+extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr;
 
 extern int bgi, fgi;
 extern int scrninitialized[];
@@ -5571,7 +5573,7 @@ settrm() {
         switch (x) {
           case TTATTBLI:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
-            trueblink = y;
+            savedtrueblink = trueblink = y;
             /* Ask how blink should be simulated - a bright color, or a fixed
              * color. This option is new in K95 3.0 beta.8 which added support
              * for more than 16 colors as toggling the intensity/brightness bit
@@ -5581,7 +5583,7 @@ settrm() {
             if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
               return(y);
             if ((x = cmcfm()) < 0) return(x);
-            blink_is_color = y;
+            use_blink_attr = blink_is_color = y;
 #ifndef KUI
             if ( !trueblink && trueunderline ) {
                 /* In the console version, true underline is really implemented
@@ -5589,7 +5591,7 @@ settrm() {
                  * both that *and* simulate blink with a bright foreground (or
                  * background) color. */
                 if (!blink_is_color) {
-                    trueunderline = 0;
+                    savedtrueunderline = trueunderline = 0;
                     printf("Warning: Underline being simulated by color.\n");
                 }
             }
@@ -5598,7 +5600,7 @@ settrm() {
 
           case TTATTBLD:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
-            truebold = y;
+            savedtruebold = truebold = y;
             /* Ask how bold should be simulated - a bright color, or a fixed
              * color. This option is new in K95 3.0 beta.8 which added support
              * for more than 16 colors as toggling the intensity/brightness bit
@@ -5608,29 +5610,29 @@ settrm() {
             if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
               return(y);
             if ((x = cmcfm()) < 0) return(x);
-            bold_is_color = y;
+            use_bold_attr = bold_is_color = y;
             break;
 
           case TTATTDIM:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             if ((x = cmcfm()) < 0) return(x);
-            truedim = y;
+            savedtruedim = truedim = y;
             break;
 
           case TTATTREV:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             if ((x = cmcfm()) < 0) return(x);
-            truereverse = y;
+            savedtruereverse = truereverse = y;
             break;
 
           case TTATTUND:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             if ((x = cmcfm()) < 0) return(x);
-            trueunderline = y;
+            savedtrueunderline = trueunderline = y;
 #ifndef KUI
             if (!trueblink && trueunderline) {
                 if (!blink_is_color) {
-                    trueblink = 1;
+                    savedtrueblink = trueblink = 1;
                     printf("Warning: True blink mode is active.\n");
                 }
             }
@@ -5640,7 +5642,7 @@ settrm() {
           case TTATTITA:
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
-              trueitalic = y;
+              savedtrueitalic = trueitalic = y;
             break;
 
           case TTATTPRO: {      /* Set default Protected Character attribute */

@@ -285,6 +285,8 @@ int user_erasemode= FALSE ; /* Use current colors when erasing characters */
 int trueblink     = TRUE ;
 int blink_is_color = FALSE ;  /* Use a color rather than intensity for simulated blink */
 int bold_is_color = FALSE ;   /* Use a color rather than intensity for bold blink */
+int use_bold_attr = FALSE;
+int use_blink_attr = FALSE;
 int truereverse   = TRUE ;
 int trueunderline = TRUE ;
 int truedim       = TRUE ;
@@ -293,6 +295,19 @@ int truebold      = TRUE ;
 int trueitalic    = TRUE ;
 #else /* KUI */
 int trueitalic    = FALSE ;
+#endif /* KUI */
+
+/* These are so that any changes to the true* attribute settings by OSC6/106
+ * or similar can be reverted on terminal reset. */
+int savedtrueblink     = TRUE;
+int savedtruereverse   = TRUE;
+int savedtrueunderline = TRUE;
+int savedtruedim       = TRUE ;
+int savedtruebold      = TRUE ;
+#ifdef KUI
+int savedtrueitalic    = TRUE ;
+#else /* KUI */
+int savedtrueitalic    = FALSE ;
 #endif /* KUI */
 
 enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
@@ -4583,6 +4598,8 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
         italicattribute = swapcolors(italicattribute);
         reverseattribute=swapcolors(reverseattribute);
         graphicattribute=swapcolors(graphicattribute);
+		boldattribute=swapcolors(boldattribute);
+		blinkattribute=swapcolors(blinkattribute);
         attribute = swapcolors( attribute );
     } else if ( vmode == VCMD ) {
         colorcmd = swapcolors(colorcmd);
@@ -6751,6 +6768,17 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedblinkattribute[VTERM] = colorblink;
     savedboldattribute[VTERM]  = colorbold;
     savedattribute[VTERM] = attribute;
+	use_bold_attr = bold_is_color;
+	use_blink_attr = blink_is_color;
+
+	truereverse = savedtruereverse;
+	trueunderline = savedtrueunderline;
+	truedim = savedtruedim;
+	truebold = savedtruebold ;
+	trueitalic = savedtrueitalic;
+	trueblink = savedtrueblink;
+
+	attributes_override_colors = TRUE;
 
     /* Reset the color palettes */
     reset_palettes();
@@ -8099,6 +8127,8 @@ resetcolors( int x )
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
+		use_bold_attr = bold_is_color;
+		use_blink_attr = blink_is_color;
     }
 }
 
@@ -11152,16 +11182,16 @@ doosc( void ) {
          * K95 responds with the escape sequence for setting that color pair.
 		 *
          * Special Color Numbers (case 5):
-         *    0   - Bold color (TODO: cant be simulated by attribute yet)
+         *    0   - Bold color (boldattribute)
          *    1   - Underline color (underlineattribute)
-         *    2   - Blink color (TODO: cant be simulated by attribute yet)
+         *    2   - Blink color (blinkattribute_
          *    3   - Reverse color (reverseattribute)
          *    4   - Italic color (italicattribute)
          *
 		 * Special Color Numbers (case 4, example for the 256-color palette):
-         *    256   - Bold color (TODO: cant be simulated by attribute yet)
+         *    256   - Bold color (boldattribute))
          *    257   - Underline color (underlineattribute)
-         *    258   - Blink color (TODO: cant be simulated by attribute yet)
+         *    258   - Blink color (blinkattribute)
          *    259   - Reverse color (reverseattribute)
          *    260   - Italic color (italicattribute)
  	     */
@@ -11175,6 +11205,8 @@ doosc( void ) {
 
         palette_max = current_palette_max_index();
         palette = current_palette_rgb_table();
+
+		debug(F101, "OSC 4/5 palette_max", 0, palette_max);
 
         if (num == 5) {  /* Change Special Color Number */
 			palette_max = 0;
@@ -11222,7 +11254,51 @@ doosc( void ) {
                 /* Query */
                 debug(F100, "OSC 4/5: got query", 0, 0);
 
-                if (idx <= palette_max || num == 5) {
+				/* TODO: Make sure querying special colors works too! */
+				if (idx > palette_max || num == 5) {
+#ifdef CK_COLORS_24BIT
+					int r, g, b, ok = TRUE;
+					cell_video_attr_t attr;
+
+					if (num != 5) idx -= palette_max + 1;
+                	switch(idx) {
+						/* These all set the foreground only. */
+                    	case 0: /* Bold attribute */
+							attr = boldattribute;
+							break;
+                   		case 1: /* underline attribute */
+							attr = underlineattribute;
+							break;
+                		case 2: /* blink attribute */
+							attr = blinkattribute;
+							break;
+    	                case 3: /* Reverse attribute */
+							attr = reverseattribute;
+							break;
+						case 4: /* Italic attribute */
+							attr = italicattribute;
+							break;
+					    default:
+							debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
+							ok = FALSE;
+					}
+
+					if (ok) {
+						int color = cell_video_attr_foreground_rgb(attr);
+						r =  color & 0x000000FF;
+                		g = (color & 0x0000FF00)>>8;
+                		b = (color & 0x00FF0000)>>16;
+						_snprintf(buf, sizeof(buf),
+	                          		oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
+                            	      	           : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
+                       	      		num, idx,r * 257,g * 257,b * 257);
+						buf[255] = 0;
+						sendcharsduplex(buf, strlen(buf), TRUE);
+					}
+#else
+					debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
+#endif /* CK_COLORS_24BIT */
+				} else if (idx >= 0) {
                 	color = palette[pal_idx];
 					_snprintf(buf, sizeof(buf),
                               oscterm == BEL ? "\033]%d;%d;rgb:%04x/%04x/%04x\07"
@@ -11237,7 +11313,10 @@ doosc( void ) {
                   	debug(F111, "OSC 4/5: query index out of range for current palette", "index", idx);
                 }
             } else if (idx > palette_max || num == 5) {  /* OSC 4/5: Set attribute color */
-				idx -= palette_max;
+#ifdef CK_COLORS_24BIT
+				int r,g,b;
+#endif /* CK_COLORS_24BIT */
+				if (num != 5) idx -= palette_max + 1;
                 debug(F111, "OSC 4/5: Set special color", "idx", idx);
                 debug(F111, "OSC 4/5: Set special color", "color", color);
 
@@ -11245,16 +11324,35 @@ doosc( void ) {
 				 * 16/256 color builds, the color attribute isn't capable of
 				 * storing RGB values.
                  */
+#ifdef CK_COLORS_24BIT
+				r =  color & 0x000000FF;
+                g = (color & 0x0000FF00)>>8;
+                b = (color & 0x00FF0000)>>16;
+#endif /* CK_COLORS_24BIT */
 
                 switch(idx) {
 #ifdef CK_COLORS_24BIT
-                  	/* TODO: Original values for these attributes should be backed up
-				     * and restored on terminal reset */
-                    case 0: /* TODO Bold attribute */
-                    case 1: /* TODO underline attribute */
-                	case 2: /* TODO blink attribute */
-                    case 3: /* TODO Reverse attribute */
-					case 4: /* TODO Italic attribute */
+					/* Aside from the reverse attribute, these all set the
+					 * foreground only. */
+                    case 0: /* Bold attribute */
+						debug(F111, "OSC 4/5: Set special color", "color", idx);
+						debug(F111, "OSC 4/5: Set special color", "r", r);
+						debug(F111, "OSC 4/5: Set special color", "g", g);
+						debug(F111, "OSC 4/5: Set special color", "b", b);
+						boldattribute = cell_video_attr_set_fg_rgb(boldattribute, r, g, b);
+						break;
+                    case 1: /* underline attribute */
+						underlineattribute = cell_video_attr_set_fg_rgb(underlineattribute, r, g, b);
+						break;
+                	case 2: /* blink attribute */
+						blinkattribute = cell_video_attr_set_fg_rgb(blinkattribute, r, g, b);
+						break;
+                    case 3: /* Reverse attribute */
+						reverseattribute = cell_video_attr_set_bg_rgb(reverseattribute, r, g, b);
+						break;
+					case 4: /* Italic attribute */
+						italicattribute = cell_video_attr_set_fg_rgb(italicattribute, r, g, b);
+						break;
 #endif /* CK_COLORS_24BIT */
 				    default:
 						debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
@@ -11272,9 +11370,77 @@ doosc( void ) {
 
     case 6:
     case 106: { /* xterm : Enable/disable special color number */
-    	/* TODO: 6 or 106   xterm : Enable/disable special color number
-     	*   I guess this just turns truebold, etc, on or off? Need to check the
-     	*   xterm sources to confirm */
+		int idx = 0, f = 0;
+
+    	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+        if (!isdigit(achar)) {
+			debug(F111, "OSC 6/106: Expected digit", "apcnext", apcnext);
+            debug(0, "OSC 6/106: Expected digit", "achar", achar);
+			break;
+        }
+
+        /* Get c */
+		while (isdigit(achar)) {
+        	idx = (idx * 10) + achar - 48;
+           	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+    	}
+
+        if (achar != ';') {
+			/* Xterm does nothing if no parameter is received after the special
+			 * color number */
+            debug(0, "OSC 6/106: Expected ';' following color index, got", "achar", achar);
+			break;
+        }
+        achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+        /* Get f */
+		while (isdigit(achar)) {
+        	f = (f * 10) + achar - 48;
+           	achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+    	}
+
+		if (f < 0) {
+			debug(F100, "OSC 6/106: Missing second parameter", 0, 0);
+			break;
+		}
+
+		if (!f) debug(F111, "OSC 6/106: Enable true attribute", "idx", idx);
+		else debug(F111, "OSC 6/106: Disable true attribute", "idx", idx);
+
+		switch(idx) {
+            case 0: /* Bold attribute */
+				truebold = !f;
+				use_bold_attr = f;
+				break;
+            case 1: /* underline attribute */
+				trueunderline = !f;
+				break;
+            case 2: /* blink attribute */
+				trueblink = !f;
+				use_blink_attr = f;
+				break;
+            case 3: /* Reverse attribute */
+				truereverse = !f;
+				break;
+			case 4: /* Italic attribute */
+				trueitalic = !f;
+				break;
+			case 5: /* TODO - xterm - colorAttrMode
+                        We really should support this, but I'm not 100% sure of
+                        xterms behaviour when it come to this setting. The xterm
+                        code looks like it just skips applying attribute colors
+                        when its set to false (equivalent to skipping
+                        ComputeColorFromAttr) but when I attempted to test this,
+                        xterm *appeared* to do nothing at all. The version of
+                        xterm I have seems to be a bit unreliable when it comes
+                        to setting and resetting colors for attributes and
+                        turning those colors on and off, so perhaps I'm just
+                        hitting an xterm bug */
+			default:
+				debug(F101, "OSC 6/106: Unknown or Unsupported Special Color Number", 0, idx);
+        }
+
         break;
     }
     case 7: /* Misc - inform current working directory */
@@ -11346,7 +11512,20 @@ doosc( void ) {
                 for (i = 0; i <= palette_max; i++) palette[i] = saved[i];
 			} else {
                 debug(F100, "OSC 105: Resetting special colors", 0, 0);
-				/* TODO: reset all special color numbers */
+				if (decscnm) boldattribute = byteswapcolors(colorbold);
+				else boldattribute  = colorbold;
+
+				if (decscnm) underlineattribute = byteswapcolors(colorunderline);
+				else underlineattribute  = colorunderline;
+
+				if (decscnm) blinkattribute = byteswapcolors(colorblink);
+				else blinkattribute  = colorblink;
+
+				if (decscnm) reverseattribute = byteswapcolors(colorreverse);
+				else reverseattribute  = colorreverse;
+
+				if (decscnm) italicattribute = byteswapcolors(coloritalic);
+				else italicattribute  = coloritalic;
 			}
         }
 
@@ -11375,7 +11554,7 @@ doosc( void ) {
             pal_idx = color_index_to_vio(idx);
 
             if (idx > palette_max || num == 105) {
-                idx -= palette_max;
+                if (num == 105) idx -= palette_max + 1;
                 debug(F111, "OSC 104/105: Reset special color", "idx", idx);
 
                 /* This is only available in builds with 24-bit RGB support. In
@@ -11384,13 +11563,26 @@ doosc( void ) {
                  */
 
                 switch(idx) {
-#ifdef CK_COLORS_24BIT
-                    case 0: /* TODO Bold attribute */
-                    case 1: /* TODO underline attribute */
-                	case 2: /* TODO blink attribute */
-                    case 3: /* TODO Reverse attribute */
-					case 4: /* TODO Italic attribute */
-#endif /* CK_COLORS_24BIT */
+                    case 0: /* Bold attribute */
+						if (decscnm) boldattribute = byteswapcolors(colorbold);
+						else boldattribute  = colorbold;
+						break;
+                    case 1: /* underline attribute */
+						if (decscnm) underlineattribute = byteswapcolors(colorunderline);
+						else underlineattribute  = colorunderline;
+						break;
+                	case 2: /* blink attribute */
+						if (decscnm) blinkattribute = byteswapcolors(colorblink);
+						else blinkattribute  = colorblink;
+						break;
+                    case 3: /* Reverse attribute */
+						if (decscnm) reverseattribute = byteswapcolors(colorreverse);
+						else reverseattribute  = colorreverse;
+						break;
+					case 4: /* Italic attribute */
+						if (decscnm) italicattribute = byteswapcolors(coloritalic);
+						else italicattribute  = coloritalic;
+						break;
 				    default:
 						debug(F101, "OSC 104/105: Unknown or Unsupported Special Color Number", 0, idx);
                 }
@@ -14065,11 +14257,11 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
             /* a graphic character */
             colorval = graphicattribute ;
         else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                !trueblink && blink_is_color)
+                !trueblink && use_blink_attr)
             /* a blinking character */
             colorval = blinkattribute ;
         else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
-                !truebold && bold_is_color)
+                !truebold && use_bold_attr)
             /* a blinking character */
             colorval = boldattribute ;
         else
@@ -14077,7 +14269,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 
 
         if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-            !trueblink && !blink_is_color /* blink simulated by BGI */
+            !trueblink && !use_blink_attr /* blink simulated by BGI */
 #ifndef KUI
             || (vtattr & VT_CHAR_ATTR_UNDERLINE) &&
             trueunderline /* underline simulated by BGI */
@@ -14107,7 +14299,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
          * turning off truebold just turns off the bold font without affecting
          * color (unlike turning off trueblink).
          */
-        if ( (vtattr & VT_CHAR_ATTR_BOLD && !bold_is_color) ||
+        if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
              ( vtattr & VT_CHAR_ATTR_DIM 
 #ifdef KUI
                && !truedim
