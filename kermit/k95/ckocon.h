@@ -558,8 +558,10 @@ cell_video_attr_t cell_video_attr_set(
  *     a function somewhere to return names for values > 15? Would need to come
  *     from an array as multiple colour names may be live simultaneously
  */
-#define cell_video_attr_background_color_name(value) (colors[cell_video_attr_background(value)])
-#define cell_video_attr_foreground_color_name(value) (colors[cell_video_attr_foreground(value)])
+#define cell_video_attr_background_color_name(value) ( \
+    cell_video_attr_bg_is_16colors(value) ? colors[cell_video_attr_background(value)] : "")
+#define cell_video_attr_foreground_color_name(value) ( \
+    cell_video_attr_fg_is_16colors(value) ? colors[cell_video_attr_foreground(value)] : "")
 
 #define cell_video_attr_fg_to_rgb(value) ( \
     (unsigned)(((unsigned)(value).fg_b << 16) | \
@@ -877,8 +879,10 @@ typedef unsigned short cell_video_attr_t;
  *     a function somewhere to return names for values > 15? Would need to come
  *     from an array as multiple colour names may be live simultaneously
  */
-#define cell_video_attr_background_color_name(value) (colors[cell_video_attr_background(value)])
-#define cell_video_attr_foreground_color_name(value) (colors[cell_video_attr_foreground(value)])
+#define cell_video_attr_background_color_name(value) ( \
+    cell_video_attr_background(value) < 15 ? colors[cell_video_attr_background(value)] : "")
+#define cell_video_attr_foreground_color_name(value) ( \
+    cell_video_attr_foreground(value) < 15 ? colors[cell_video_attr_foreground(value)] : "")
 
 
 /* Returns the background colour as an RGB value
@@ -1172,6 +1176,8 @@ int color_index_to_vio(int index);
 
 int nearest_palette_color_rgb(int palette_id, unsigned char r, unsigned char g, unsigned char b);
 int nearest_palette_color_palette(int palette_id, int palette_index);
+unsigned char current_palette_max_index();
+int color_index_to_vio(int index);
 
 #ifndef KUI
 #ifdef OS2ONLY

@@ -6021,6 +6021,44 @@ shomou() {
 #endif /* OS2MOUSE */
 
 #ifndef NOLOCAL
+#ifdef OS2
+
+void print_color(char* format, int foreground, cell_video_attr_t attr) {
+    int color;
+    char buf[10];
+    static char * colors[16] = {
+        "black","blue","green","cyan","red","magenta","brown","lgray",
+        "dgray","lblue","lgreen","lcyan","lred","lmagent","yellow","white"
+    };
+
+    if (foreground) {
+        color = cell_video_attr_foreground(attr);
+        if (color < 16) {
+            printf(format, cell_video_attr_foreground_color_name(attr));
+            return;
+        }
+    } else {
+        color = cell_video_attr_background(attr);
+        if (color < 16) {
+            printf(format, cell_video_attr_background_color_name(attr));
+            return;
+        }
+    }
+
+    if (color < 256) {
+        /* The color is outside the 0-15 range, so we don't have a name for it.
+         * Just output the number. */
+        sprintf(buf, "%d", color);
+        printf(format, buf);
+        return;
+    }
+
+    /* Error - output blank */
+    printf(format, "");
+}
+
+#endif
+
 VOID
 shotrm() {
     char *s;
@@ -6276,10 +6314,10 @@ shotrm() {
 #ifndef ONETERMUPD
         USHORT col;
 #endif /* ONETERMUPD */
-        char * colors[16] = {
+/*        char * colors[16] = {
             "black","blue","green","cyan","red","magenta","brown","lgray",
             "dgray","lblue","lgreen","lcyan","lred","lmagent","yellow","white"
-        };
+        };*/
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6310,8 +6348,19 @@ shotrm() {
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Foreground color names */
+        printf("%6s: ", "fore");
+        print_color("%-8s", TRUE, colorblink);
+        print_color("%-8s", TRUE, colorbold);
+        printf("%-8s", "");
+        print_color("%-8s", TRUE, colordebug);
+        print_color("%-9s", TRUE, colorhelp);
+        print_color("%-8s", TRUE, colorreverse);
+        print_color("%-8s", TRUE, colorselect);
+        print_color("%-9s", TRUE, colorstatus);
+        printf("\n");
+
         /*           Bli Bor Deb Hel Rev Sel Sta Ter */
-        printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","fore",
+        /*printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","fore",
                 cell_video_attr_foreground_color_name(colorblink),
                 cell_video_attr_foreground_color_name(colorbold),
                 "",
@@ -6319,12 +6368,22 @@ shotrm() {
                 cell_video_attr_foreground_color_name(colorhelp),
                 cell_video_attr_foreground_color_name(colorreverse),
                 cell_video_attr_foreground_color_name(colorselect),
-                cell_video_attr_foreground_color_name(colorstatus));
+                cell_video_attr_foreground_color_name(colorstatus));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
+        printf("%6s: ", "back");
+        print_color("%-8s", FALSE, colorblink);
+        print_color("%-8s", FALSE, colorbold);
+        print_color("%-8s", TRUE, colorborder);
+        print_color("%-8s", FALSE, colordebug);
+        print_color("%-9s", FALSE, colorhelp);
+        print_color("%-8s", FALSE, colorreverse);
+        print_color("%-8s", FALSE, colorselect);
+        print_color("%-9s", FALSE, colorstatus);
+        printf("\n");
         /*           Bli Bor Deb Hel Rev Sel Sta Ter */
-        printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","back",
+        /*printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","back",
                 cell_video_attr_background_color_name(colorblink),
                 cell_video_attr_background_color_name(colorbold),
                 cell_video_attr_foreground_color_name(colorborder),
@@ -6332,7 +6391,7 @@ shotrm() {
                 cell_video_attr_background_color_name(colorhelp),
                 cell_video_attr_background_color_name(colorreverse),
                 cell_video_attr_background_color_name(colorselect),
-                cell_video_attr_background_color_name(colorstatus));
+                cell_video_attr_background_color_name(colorstatus));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6343,8 +6402,7 @@ shotrm() {
         WrtCharStrAtt("graphic",   7, row, 17, &colorgraphic );
         WrtCharStrAtt("italic",    6, row, 25, &coloritalic );
         WrtCharStrAtt("underline", 9, row, 33, &colorunderline );
-
-        WrtCharStrAtt("terminal",  8, row, 67, &colornormal );
+        WrtCharStrAtt("terminal",  8, row, 42, &colornormal );
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "command",   7, row,  9, &colorcmd );
@@ -6357,21 +6415,35 @@ shotrm() {
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Foreground color names */
-        printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","fore",
+        printf("%6s: ", "fore");
+        print_color("%-8s", TRUE, colorcmd);
+        print_color("%-8s", TRUE, colorgraphic);
+        print_color("%-8s", TRUE, coloritalic);
+        print_color("%-9s", TRUE, colornormal);
+        print_color("%-8s", TRUE, colorunderline);
+        printf("\n");
+        /*printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","fore",
                 cell_video_attr_foreground_color_name(colorcmd),
                 cell_video_attr_foreground_color_name(colorgraphic),
                 cell_video_attr_foreground_color_name(coloritalic),
                 cell_video_attr_foreground_color_name(colornormal),
-                cell_video_attr_foreground_color_name(colorunderline));
+                cell_video_attr_foreground_color_name(colorunderline));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
-        printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","back",
+        printf("%6s: ", "back");
+        print_color("%-8s", FALSE, colorcmd);
+        print_color("%-8s", FALSE, colorgraphic);
+        print_color("%-8s", FALSE, coloritalic);
+        print_color("%-9s", FALSE, colornormal);
+        print_color("%-8s", FALSE, colorunderline);
+        printf("\n");
+        /*printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","back",
                 cell_video_attr_background_color_name(colorcmd),
                 cell_video_attr_background_color_name(colorgraphic),
                 cell_video_attr_background_color_name(coloritalic),
                 cell_video_attr_background_color_name(colornormal),
-                cell_video_attr_background_color_name(colorunderline));
+                cell_video_attr_background_color_name(colorunderline));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");

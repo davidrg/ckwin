@@ -1543,6 +1543,7 @@ struct keytab ttyclrtab[] = {           /* Colors */
     { "darkgray",      8, CM_INV },
     { "dgray",         8, 0      },
     { "green",         2, 0      },
+    { "index",        16, 0      },     /* Indexed color from current palette */
     { "lblue",         9, CM_INV },
     { "lcyan",        11, CM_INV },
     { "lgray",         7, CM_INV },
@@ -4425,18 +4426,57 @@ settrm() {
                        "lgray", xxstring);
             if (fg < 0)
               return(fg);
+
+            if (fg == 16) {
+                /* Indexed color from current palette */
+                int cmax = current_palette_max_index();
+                int z;
+
+                if ((z = cmnum(cmax == 15
+                            ? "Foreground color index, 0-15"
+                            : cmax == 87 ? "Foreground color index, 0-87"
+                                          : "Foreground color index, 0-255"
+                       ,"",10,&fg,xxstring)) < 0) return(z);
+
+                if (fg < 16) fg = color_index_to_vio(fg);
+                else {
+                    printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                    return(-9);
+                }
+            }
+
             if (x != TTCOLBOR) {
                 if ((bg = cmkey(ttyclrtab,nclrs,
                                 "background color","blue",xxstring)) < 0)
                   return(bg);
+
+                if (bg == 16) {
+                    /* Indexed color from current palette */
+                    int cmax = current_palette_max_index();
+                    int z;
+
+                    if ((z = cmnum(cmax == 15
+                                ? "Background color index, 0-15"
+                                : cmax == 87 ? "Background color index, 0-87"
+                                              : "Background color index, 0-255"
+                           ,"",10,&bg,xxstring)) < 0) return(z);
+
+                    if (fg < 16) bg = color_index_to_vio(fg);
+                    else {
+                        printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                        return(-9);
+                    }
+                }
             }
             if ((y = cmcfm()) < 0)
               return(y);
+
             switch (x) {
               case TTCOLNOR:
                 colornormal = cell_video_attr_set_colors(fg, bg);
-                fgi = fg & 0x08;
-                bgi = bg & 0x08;
+                fgi = 0; bgi = 0;
+                if (fg < 16) fgi = fg & 0x08;
+                if (bg < 16) bgi = bg & 0x08;
                 break;
               case TTCOLREV:
                 colorreverse = cell_video_attr_set_colors(fg, bg);
