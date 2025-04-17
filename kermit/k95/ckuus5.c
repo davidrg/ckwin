@@ -6347,10 +6347,7 @@ shotrm() {
 #ifndef ONETERMUPD
         USHORT col;
 #endif /* ONETERMUPD */
-/*        char * colors[16] = {
-            "black","blue","green","cyan","red","magenta","brown","lgray",
-            "dgray","lblue","lgreen","lcyan","lred","lmagent","yellow","white"
-        };*/
+
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6391,17 +6388,6 @@ shotrm() {
         print_color("%-8s", TRUE, colorselect);
         print_color("%-9s", TRUE, colorstatus);
         printf("\n");
-
-        /*           Bli Bor Deb Hel Rev Sel Sta Ter */
-        /*printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","fore",
-                cell_video_attr_foreground_color_name(colorblink),
-                cell_video_attr_foreground_color_name(colorbold),
-                "",
-                cell_video_attr_foreground_color_name(colordebug),
-                cell_video_attr_foreground_color_name(colorhelp),
-                cell_video_attr_foreground_color_name(colorreverse),
-                cell_video_attr_foreground_color_name(colorselect),
-                cell_video_attr_foreground_color_name(colorstatus));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
@@ -6415,19 +6401,11 @@ shotrm() {
         print_color("%-8s", FALSE, colorselect);
         print_color("%-9s", FALSE, colorstatus);
         printf("\n");
-        /*           Bli Bor Deb Hel Rev Sel Sta Ter */
-        /*printf("%6s: %-8s%-8s%-8s%-8s%-9s%-8s%-8s%-9s\n","back",
-                cell_video_attr_background_color_name(colorblink),
-                cell_video_attr_background_color_name(colorbold),
-                cell_video_attr_foreground_color_name(colorborder),
-                cell_video_attr_background_color_name(colordebug),
-                cell_video_attr_background_color_name(colorhelp),
-                cell_video_attr_background_color_name(colorreverse),
-                cell_video_attr_background_color_name(colorselect),
-                cell_video_attr_background_color_name(colorstatus));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
         printf(" Color:");
 #ifndef ONETERMUPD
         GetCurPos(&row, &col);
@@ -6455,12 +6433,6 @@ shotrm() {
         print_color("%-9s", TRUE, colornormal);
         print_color("%-8s", TRUE, colorunderline);
         printf("\n");
-        /*printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","fore",
-                cell_video_attr_foreground_color_name(colorcmd),
-                cell_video_attr_foreground_color_name(colorgraphic),
-                cell_video_attr_foreground_color_name(coloritalic),
-                cell_video_attr_foreground_color_name(colornormal),
-                cell_video_attr_foreground_color_name(colorunderline));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Background color names */
@@ -6471,12 +6443,6 @@ shotrm() {
         print_color("%-9s", FALSE, colornormal);
         print_color("%-8s", FALSE, colorunderline);
         printf("\n");
-        /*printf("%6s: %-8s%-8s%-8s%-9s%-8s\n","back",
-                cell_video_attr_background_color_name(colorcmd),
-                cell_video_attr_background_color_name(colorgraphic),
-                cell_video_attr_background_color_name(coloritalic),
-                cell_video_attr_background_color_name(colornormal),
-                cell_video_attr_background_color_name(colorunderline));*/
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");

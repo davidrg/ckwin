@@ -11451,10 +11451,10 @@ doosc( void ) {
      *  the associated color, then if there are further parameters remaining in
      *  the osc string it falls through to the next case */
 	case 10:
-         /* set attribute foreground */
+         /* set defaultattribute foreground */
  		 /* fall through */
 	case 11:
-         /* set attribute background */
+         /* set defaultattribute background */
  		 /* fall through */
 	case 12:
          /* set set text cursor color */
