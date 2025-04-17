@@ -13010,76 +13010,167 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     (OSC-6 and OSC-106 have identical implementations).
                 </p>
             </section>
+
+            <section role="group" style="group">
             <section role="parameter" id="osc-10" mnemonic=""
-                     title="Change VT100 text foreground color"
-                     not-implemented="true" todo="true">
+                     title="Change VT100 text foreground color">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-0.1015"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Requires one parameter: a new default foreground color, which
+                    does not take effect until attributes are set (eg, with
+                    <a href="#sgr-0">SGR-0</a>) and is reset on terminal reset.
+                    Format of the color parameter is the same color spec format
+                    as <a href="#osc-4">OSC-4</a> (rgb:RRRR/BBBB/GGGG), and if
+                    the text parameter is a `?` then the response will be an OSC-10
+                    sequence to set the current color.</p>
+                <p>Up to nine additional color parameters can be supplied which
+                    will be applied to OSC-11 through OSC-19 in order. For
+                    example, the sequence
+                    <tt>\033]10;rgb:ffff/0000/0000;rgb:0000/ffff/0000\07</tt>
+                    would set the foreground to red and background to green.
+                    If any of these parameters are `?` they will be included in
+                    the query color response.
+                </p>
             </section>
             <section role="parameter" id="osc-11" mnemonic=""
-                     title="Change VT100 text background color"
-                     not-implemented="true" todo="true">
+                     title="Change VT100 text background color">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1.1016"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Requires one parameter: a new default background color, which
+                    does not take effect until attributes are set (eg, with
+                    <a href="#sgr-0">SGR-0</a>) and is reset on terminal reset.
+                    Format of the color parameter is the same color spec format
+                    as <a href="#osc-4">OSC-4</a> (rgb:RRRR/BBBB/GGGG), and if
+                    the text parameter is a `?` then the response will be an OSC-11
+                    sequence to set the current color.</p>
+                <p>Up to eight additional color parameters can be supplied which
+                    will be applied to OSC-12 through OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-12" mnemonic=""
                      title="Chance text cursor color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-2.1017"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Not supported. Consumes one color parameter in the same color
+                    spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
+                    K95 does not currently support changing the text cursor
+                    color.
+                </p>
+                <p>Up to seven additional color parameters can be supplied which
+                    will be applied to OSC-13 through OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-13" mnemonic=""
                      title="Change pointer foreground color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 13</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-3.1018"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Not supported. Consumes one color parameter in the same color
+                    spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
+                    K95 does not support changing the pointer color.
+                </p>
+                <p>Up to six additional color parameters can be supplied which
+                    will be applied to OSC-14 through OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-14" mnemonic=""
                      title="Change pointer background color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 14</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-4.1019"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Not supported. Consumes one color parameter in the same color
+                    spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
+                    K95 does not support changing the pointer color.
+                </p>
+                <p>Up to five additional color parameters can be supplied which
+                    will be applied to OSC-15 through OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-15" mnemonic=""
                      title="Change tektronix foreground color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 15</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-5.101A"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Not supported. Consumes one color parameter in the same color
+                    spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
+                    K95 does not support Tektronix emulation.
+                </p>
+                <p>Up to four additional color parameters can be supplied which
+                    will be applied to OSC-16 through OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-16" mnemonic=""
                      title="Change tektronix background color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 16</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-6.101B"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Not supported. Consumes one color parameter in the same color
+                    spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
+                    K95 does not support Tektronix emulation.
+                </p>
+                <p>Up to three additional color parameters can be supplied which
+                    will be applied to OSC-17 through OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-17" mnemonic=""
-                     title="Change highlight background color"
-                     not-implemented="true" todo="true">
+                     title="Change highlight background color">
                 <ctlseq><param-single/> = 17</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-7.101C"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Sets the selection background color. Reset on terminal reset.</p>
+                <p>Requires one parameter: a new text selection background color,
+                    which is reset on terminal reset. Format of the color
+                    parameter is the same color spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), and if
+                    the text parameter is a `?` then the response will be an OSC-17
+                    sequence to set the current color.</p>
+
+                <p>Up to two additional color parameters can be supplied which
+                    will be applied to OSC-18 and OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-18" mnemonic=""
                      title="Change tektronix cursor color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 18</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-8.101D"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>Not supported. Consumes one color parameter in the same color
+                    spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
+                    K95 does not support Tektronix emulation.
+                </p>
+                <p>One additional color parameters can be supplied which
+                    will be applied to OSC-19 in order.
+                </p>
             </section>
             <section role="parameter" id="osc-19" mnemonic=""
-                     title="Change highlight foreground color"
-                     not-implemented="true" todo="true">
+                     title="Change highlight foreground color">
                 <ctlseq><param-single/> = 19</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-9.101E"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>Requires one parameter: a new text selection foreground color,
+                    which is reset on terminal reset. Format of the color
+                    parameter is the same color spec format as <a href="#osc-4">OSC-4</a>
+                    (rgb:RRRR/BBBB/GGGG), and if
+                    the text parameter is a `?` then the response will be an OSC-19
+                    sequence to set the current color.</p>
             </section>
+            </section>
+
             <section role="parameter" id="decswt" mnemonic="DECSWT" title="Set Window Title">
                 <ctlseq><param-single/> = 21</ctlseq>
                 <ref src="vt52x:310"/>
@@ -13210,75 +13301,73 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     Kermit 95 does not currently implement this option.
                 </p>
             </section>
+            <section role="group" style="group">
             <section role="parameter" id="osc-110" mnemonic=""
-                     title="Reset VT100 text foreground color"
-                     not-implemented="true" todo="true">
+                     title="Reset VT100 text foreground color">
                 <ctlseq><param-single/> = 110</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-0.1073"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             <section role="parameter" id="osc-111" mnemonic=""
-                     title="Reset VT100 text background color"
-                     not-implemented="true" todo="true">
+                     title="Reset VT100 text background color">
                 <ctlseq><param-single/> = 111</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-1.1074"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             <section role="parameter" id="osc-112" mnemonic=""
                      title="Reset text cursor color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 112</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-2.1075"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="osc-113" mnemonic=""
                      title="Reset pointer foreground color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 113</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-3.1076"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="osc-114" mnemonic=""
                      title="Reset pointer background color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-4.1077"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="osc-115" mnemonic=""
                      title="Reset tektronix foreground color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-5.1078"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             <section role="parameter" id="osc-116" mnemonic=""
                      title="Reset Tektronix background color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 116</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-6.1079"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             <section role="parameter" id="osc-117" mnemonic=""
-                     title="Reset highlight color"
-                     not-implemented="true" todo="true">
+                     title="Reset highlight color">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-7.107A"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             <section role="parameter" id="osc-118" mnemonic=""
                      title="Reset tektronix cursor color"
-                     not-implemented="true" todo="true">
+                     not-implemented="true">
                 <ctlseq><param-single/> = 118</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-8.107B"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="osc-119" mnemonic=""
-                     title="Reset highlight foreground"
-                     not-implemented="true" todo="true">
+                     title="Reset highlight foreground">
                 <ctlseq><param-single/> = 119</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-9.107C"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+            </section>
             </section>
             <section role="parameter" id="osc-I" mnemonic=""
                      title="Set icon to file"

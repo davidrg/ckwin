@@ -44,6 +44,12 @@ and terminal emulations that *do not* use the new 256-color mode,
  - Support xterm OSC-104 operating system command for resetting the color palette
  - Support xterm OSC-2 and OSC-l operating system commands for setting the 
    window title (in addition to existing support for OSC-0 and OSC-21)
+ - Support xterm OSC-5 for setting attribute colors, and OSC-105 for resetting them
+ - Support xterm OSC-6 for enabling and disabling attributes as colors
+ - Support xterm OSC-10 and 110 for setting and resetting the default text foreground color
+ - Support xterm OSC-11 and 111 for setting and resetting the default text background color
+ - Support xterm OSC-17 and 117 for setting and resetting the text selection background color
+ - Support xterm OSC-19 and 119 for setting and resetting the text selection foreground color
  - Support for two highly non-standard linux OSC sequences that are not terminated
    with an ST or BEL. K95 previously detected these and ignored them to prevent
    the terminal escape sequence parser being stuck in the OSC absorption state
