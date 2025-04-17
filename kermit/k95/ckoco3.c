@@ -6778,8 +6778,6 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	trueitalic = savedtrueitalic;
 	trueblink = savedtrueblink;
 
-	attributes_override_colors = TRUE;
-
     /* Reset the color palettes */
     reset_palettes();
 
