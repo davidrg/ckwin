@@ -35,7 +35,8 @@ and terminal emulations that *do not* use the new 256-color mode,
    - Terminal colors can be set to values from the current palette with the
      new INDEX keyword, eg `SET TERM COLOR UNDERLINED INDEX 82 INDEX 208`
    - Terminal colors can also be set to direct RGB values with the new RGB
-     keyword, eg `SET TERM TERM COLOR UNDERLINED RGB 255 110 0 BLACK`
+     keyword, eg `SET TERM TERM COLOR UNDERLINED RGB 255 110 0 BLACK` - in
+     builds without 24-bit color support, this picks the nearest palette color.
  - Support for direct 24-bit color via SGR-38/SGR-48 in K95G on newer versions 
    of Windows. On older windows releases, the nearest color in the current color
    palette is used when a 24-bit color is set. In the OS/2 and Windows console

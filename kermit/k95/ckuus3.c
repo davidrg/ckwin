@@ -11671,7 +11671,6 @@ case XYCARR:                            /* CARRIER-WATCH */
                       return(-9);
                   }
               }
-#ifdef CK_COLORS_24BIT
               else if (fg == 17) {
                   /* Direct RGB value. Three colors needed. */
                   int red, green, blue;
@@ -11700,7 +11699,6 @@ case XYCARR:                            /* CARRIER-WATCH */
                   attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
                   fg = -1;
               }
-#endif /* CK_COLORS_24BIT */
               else {
                   attr = cell_video_attr_set_fg_color(attr, fg);
               }
@@ -11727,7 +11725,6 @@ case XYCARR:                            /* CARRIER-WATCH */
                       return(-9);
                   }
               }
-#ifdef CK_COLORS_24BIT
               else if (bg == 17) {
                   /* Direct RGB value. Three colors needed. */
                   int red, green, blue;
@@ -11756,7 +11753,6 @@ case XYCARR:                            /* CARRIER-WATCH */
                   attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
                   bg = -1;
               }
-#endif /* CK_COLORS_24BIT */
               else {
                   attr = cell_video_attr_set_bg_color(attr, bg);
               }

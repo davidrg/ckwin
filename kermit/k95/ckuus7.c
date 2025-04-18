@@ -85,6 +85,8 @@ int setguifont();                                   /* ckuus3.c */
 
 extern int mskkeys;
 extern int mskrename;
+
+extern int colorpalette;
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
@@ -1560,9 +1562,7 @@ struct keytab ttyclrtab[] = {           /* Colors */
     { "lred",         12, CM_INV },
     { "magenta",       5, 0      },
     { "red",           4, 0      },
-#ifdef CK_COLORS_24BIT
     { "rgb",          17, 0      },     /* Direct RGB value */
-#endif /* CK_COLORS_24BIT */
     { "white",        15, 0      },
     { "yellow",       14, 0      }
 };
@@ -4454,7 +4454,6 @@ settrm() {
 
                 attr = cell_video_attr_set_fg_color(attr, fg);
             }
-#ifdef CK_COLORS_24BIT
             else if (fg == 17) {
                 /* Direct RGB value. Three colors needed. */
                 int red, green, blue;
@@ -4483,7 +4482,6 @@ settrm() {
                 attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
                 fg = -1;
             }
-#endif /* CK_COLORS_24BIT */
             else {
                 attr = cell_video_attr_set_fg_color(attr, fg);
             }
@@ -4512,7 +4510,6 @@ settrm() {
                     }
                     attr = cell_video_attr_set_bg_color(attr, bg);
                 }
-#ifdef CK_COLORS_24BIT
                 else if (bg == 17) {
                     /* Direct RGB value. Three colors needed. */
                     int red, green, blue;
@@ -4541,7 +4538,6 @@ settrm() {
                     attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
                     bg = -1;
                 }
-#endif /* CK_COLORS_24BIT */
                 else {
                     attr = cell_video_attr_set_bg_color(attr, bg);
                 }

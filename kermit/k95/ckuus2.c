@@ -7628,13 +7628,11 @@ static char *hsetcmd[] = {
 "  followed by the number of a color from the current color palette. For",
 "  example: ",
 "    SET COMMAND COLOR INDEX 85 INDEX 20",
-#ifdef CK_COLORS_24BIT
 "  If RGB is specified for a color, it must be followed by three numbers -",
 "  a red value, a green value and a blue value. This allows setting the",
 "  command screen to any color by its RGB value. For example, the following",
 "  would set it to an amber color:",
 "    SET COMMAND COLOR RGB 255 110 0 black",
-#endif /* CK_COLORS_24BIT */
 " ",
 
 "SET COMMAND CURSOR-POSITION <row> <column>",
@@ -8095,26 +8093,18 @@ static char *hxyterm[] = {
 "  TERMINAL-SCREEN, or UNDERLINED-TEXT.",
 " <foreground> and <background> may be any of:",
 "  BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, BROWN, LGRAY, DGRAY, LBLUE,",
-#ifdef CK_COLORS_24BIT
 "  LGREEN, LCYAN, LRED, LMAGENTA, YELLOW, WHITE, INDEX, or RGB",
-#else
-"  LGREEN, LCYAN, LRED, LMAGENTA, YELLOW, WHITE, or INDEX",
-#endif /* CK_COLORS_24BIT */
 " The L prefix for the color names means Light. If INDEX is specified then ",
 " it must be followed by the number of a color from the current color palette",
 " as set by SET TERMINAL COLOR PALETTE. For example:",
 "   SET TERMINAL COLOR SELECTION INDEX 82 INDEX 208",
 " would set the SELECTION foreground color to a shade of green and background",
-" color to amber in the xterm-256 palette."
-#ifdef CK_COLORS_24BIT
-" If RGB is specified then it must be",
+" color to amber in the xterm-256 palette. If RGB is specified then it must be",
 " followed by three numbers - a red value, a green value and a blue value.",
 " This allows setting the foreground and background colors to any color by its",
 " RGB value. For example:",
-"  SET TERMINAL COLOR TERMINAL RGB 255 110 0 black",
-" would give the terminal an amber foreground and black background"
-#endif
-,
+"   SET TERMINAL COLOR TERMINAL RGB 255 110 0 black",
+" would give the terminal an amber foreground and black background",
 " ",
 
 "SET TERMINAL COLOR ERASE { CURRENT-COLOR, DEFAULT-COLOR }",
