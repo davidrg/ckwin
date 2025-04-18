@@ -18331,12 +18331,19 @@ vtcsi(void)
                                     charset(cs94,'U',&G[i]);
                             }
 
-                        case 21: /* Set Normal Intensity */
-                            if (attrib.bold)
-                                attrib.bold = FALSE;
-                            if (attrib.dim)
-                                attrib.dim = FALSE;
+                        case 21: { /* Set Normal Intensity */
+							if (ISLINUX(tt_type_mode)) {
+								/* Since linux 4.17. Prior to this, it was normal
+								 * intensity */
+								attrib.underlined = TRUE;
+							} else {
+	                            if (attrib.bold)
+	                                attrib.bold = FALSE;
+                            	if (attrib.dim)
+                            	    attrib.dim = FALSE;
+							}
                             break;
+							}
                         case 22: /* Turn BOLD Off */
                             if (attrib.bold)
                                 attrib.bold = FALSE;
@@ -18434,7 +18441,7 @@ vtcsi(void)
                             break;
 						case 48:    /* 48 - Extended color - background */
                         case 38: {  /* 38 - Extended Color */
-									/* 38 - Enable underline option (for what terminal?) */
+									/* 38 - Enable underline option (for what terminal? linux console before 3.16 probably) */
 							int mode=0, index=0, r=0, g=0, b=0;
 							int fg = (pn[j] == 38);
 
@@ -19933,7 +19940,8 @@ vtcsi(void)
                 }
                 else if ( ISANSI(tt_type_mode) ||
                             IS97801(tt_type_mode) ||
-                            ISSCO(tt_type_mode) ) {
+                            ISSCO(tt_type_mode) ||
+							ISLINUX(tt_type_mode)) {
                     /* Save Cursor Position */
                     savecurpos(VTERM,0);
                 }
@@ -20340,7 +20348,8 @@ vtcsi(void)
                 }
                 else if ( ISANSI(tt_type_mode) ||
                           ISHFT(tt_type_mode) ||
-                          ISSCO(tt_type_mode) ) {
+                          ISSCO(tt_type_mode) ||
+						  ISLINUX(tt_type_mode) ) {
                     /* Restore Cursor Position */
                     restorecurpos(VTERM,0);
                     break;
