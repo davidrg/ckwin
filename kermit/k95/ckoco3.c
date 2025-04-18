@@ -601,6 +601,7 @@ extern int tt_wrap;                     /* Autowrap */
 extern int tt_type;                     /* Terminal type */
 extern int tt_cursor_usr;               /* Cursor type */
 extern int tt_cursorena_usr;            /* Cursor enabled by user */
+extern int tt_cursor_blink;             /* Cursor blinks? */
 extern int tt_cursor;                   /* Active cursor mode */
 extern int tt_answer;                   /* Answerback enabled/disabled */
 extern int tt_scrsize[];                /* Scrollback buffer size */
@@ -20663,18 +20664,22 @@ vtcsi(void)
                     case 1:
                         /* Blinking Block */
                         tt_cursor = TTC_BLOCK ;
+						tt_cursor_blink = 1 ;
                         break;
                     case 2:
                         /*  Steady Block */
                         tt_cursor = TTC_BLOCK ;
+						tt_cursor_blink = 0 ;
                         break;
                     case 3:
                         /* Blinking Underline */
                         tt_cursor = TTC_ULINE ;
+						tt_cursor_blink = 1 ;
                         break;
                     case 4:
                         /* Steady Underline */
                         tt_cursor = TTC_ULINE ;
+						tt_cursor_blink = 0 ;
                         break;
                     }
                     setcursormode() ;
