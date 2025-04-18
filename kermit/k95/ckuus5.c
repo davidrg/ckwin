@@ -356,7 +356,7 @@ extern struct keytab * term_font;
 extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
-    colorreverse, colorcmd, coloritalic, colorblink, colorbold;
+    colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim;
 extern cell_video_attr_t savedcolorselect;
 extern int priority;
 extern struct keytab prtytab[];
@@ -6360,21 +6360,20 @@ shotrm() {
         WrtCharStrAtt("bold",      4, row, 17, &colorbold );
         WrtCharStrAtt("border",    6, row, 25, &colorborder );
         WrtCharStrAtt("debug",     5, row, 33, &colordebug );
-        WrtCharStrAtt("helptext",  8, row, 41, &colorhelp );
-        WrtCharStrAtt("reverse",   7, row, 50, &colorreverse );
-        WrtCharStrAtt("select",    6, row, 58, &savedcolorselect );
-        WrtCharStrAtt("status",    6, row, 66, &colorstatus );
-
+		WrtCharStrAtt("dim",       3, row, 41, &colordebug );
+        WrtCharStrAtt("helptext",  8, row, 50, &colorhelp );
+        WrtCharStrAtt("reverse",   7, row, 58, &colorreverse );
+        WrtCharStrAtt("select",    6, row, 66, &savedcolorselect );
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "blink",     5, row,  9, &colorblink );
         VscrnWrtCharStrAtt(VCMD, "bold",      4, row, 17, &colorbold );
         VscrnWrtCharStrAtt(VCMD, "border",    6, row, 25, &colorborder );
         VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 33, &colordebug );
-        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 41, &colorhelp );
-        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 50, &colorreverse );
-        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 58, &savedcolorselect );
-        VscrnWrtCharStrAtt(VCMD, "status",    6, row, 66, &colorstatus );
+		VscrnWrtCharStrAtt(VCMD, "dim",       3, row, 41, &colordim );
+        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 49, &colorhelp );
+        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 58, &colorreverse );
+        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 66, &savedcolorselect );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6389,10 +6388,10 @@ shotrm() {
         print_color("%-8s", TRUE, colorbold);
         printf("%-8s", "");
         print_color("%-8s", TRUE, colordebug);
+		print_color("%-8s", TRUE, colordim);
         print_color("%-9s", TRUE, colorhelp);
         print_color("%-8s", TRUE, colorreverse);
         print_color("%-8s", TRUE, savedcolorselect);
-        print_color("%-9s", TRUE, colorstatus);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6402,10 +6401,10 @@ shotrm() {
         print_color("%-8s", FALSE, colorbold);
         print_color("%-8s", TRUE, colorborder);
         print_color("%-8s", FALSE, colordebug);
+		print_color("%-8s", FALSE, colordim);
         print_color("%-9s", FALSE, colorhelp);
         print_color("%-8s", FALSE, colorreverse);
         print_color("%-8s", FALSE, savedcolorselect);
-        print_color("%-9s", FALSE, colorstatus);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6418,16 +6417,19 @@ shotrm() {
         WrtCharStrAtt("command",   7, row, 9, &colorcmd );
         WrtCharStrAtt("graphic",   7, row, 17, &colorgraphic );
         WrtCharStrAtt("italic",    6, row, 25, &coloritalic );
-        WrtCharStrAtt("underline", 9, row, 33, &colorunderline );
-        WrtCharStrAtt("terminal",  8, row, 42, &colornormal );
+		WrtCharStrAtt("status",    6, row, 33, &colorstatus );
+		WrtCharStrAtt("terminal",  8, row, 42, &colornormal );
+		WrtCharStrAtt("underline", 9, row, 50, &colorunderline );
+
+
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "command",   7, row,  9, &colorcmd );
         VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 17, &colorgraphic );
         VscrnWrtCharStrAtt(VCMD, "italic",    6, row, 25, &coloritalic );
-        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 33, &colornormal );
-        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 42, &colorunderline );
-
+		VscrnWrtCharStrAtt(VCMD, "status",    6, row, 33, &colorstatus );
+        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 42, &colornormal );
+        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 51, &colorunderline );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6436,8 +6438,11 @@ shotrm() {
         print_color("%-8s", TRUE, colorcmd);
         print_color("%-8s", TRUE, colorgraphic);
         print_color("%-8s", TRUE, coloritalic);
+		print_color("%-9s", TRUE, colorstatus);
         print_color("%-9s", TRUE, colornormal);
         print_color("%-8s", TRUE, colorunderline);
+
+
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6446,6 +6451,7 @@ shotrm() {
         print_color("%-8s", FALSE, colorcmd);
         print_color("%-8s", FALSE, colorgraphic);
         print_color("%-8s", FALSE, coloritalic);
+		print_color("%-9s", FALSE, colorstatus);
         print_color("%-9s", FALSE, colornormal);
         print_color("%-8s", FALSE, colorunderline);
         printf("\n");
@@ -6455,7 +6461,8 @@ shotrm() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
         extern int trueblink, truedim, truebold, truereverse, trueunderline, trueitalic;
-        extern int blink_is_color, bold_is_color;
+        extern int blink_is_color, bold_is_color, dim_is_color, use_blink_attr,
+				   use_bold_attr;
 		extern int savedtruereverse, savedtrueunderline, savedtruedim,
 					savedtruebold, savedtrueitalic, savedtrueblink;
 
@@ -6468,9 +6475,10 @@ shotrm() {
 
         printf(
 	    " Attribute:  blink: %-3s  bold: %-3s  dim: %-3s  italic: %-3s\n",
-	        savedtrueblink?"on": (blink_is_color?"off (color)":"off"),
-	        savedtruebold?"on": (bold_is_color?"off (color)":"off"),
-	        savedtruedim?"on":"off", trueitalic?"on":"off");
+	        savedtrueblink?"on": (use_blink_attr?"off (color)":"off"),
+	        savedtruebold?"on": (use_bold_attr?"off (color)":"off"),
+	        savedtruedim?"on": (dim_is_color?"off (color)":"off"),
+			trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         printf("             reverse: %-3s  underline: %-3s\n",
