@@ -14461,7 +14461,17 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
             colorval = byteswapcolors(colorval);
 
         if ( vtattr & VT_CHAR_ATTR_INVISIBLE ) {
-            colorval = cell_video_attr_set_fg_color(colorval,cell_video_attr_background(colorval));
+#ifdef CK_COLORS_24BIT
+			if (!cell_video_attr_bg_is_indexed(colorval)) {
+				/* colorval background has an RGB color */
+				int r, g, b;
+				r = cell_video_attr_bg_rgb_r(colorval);
+				g = cell_video_attr_bg_rgb_r(colorval);
+				g = cell_video_attr_bg_rgb_r(colorval);
+				colorval = cell_video_attr_set_fg_color(colorval, r, g, b);
+			} else
+#endif
+            	colorval = cell_video_attr_set_fg_color(colorval,cell_video_attr_background(colorval));
             /* Formerly:
              * colorval = (colorval&0xF0)|((colorval&0xF0)>>4) ;
              *             ^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^
@@ -15999,8 +16009,7 @@ vtcsi(void)
                      ansiext ) {
                     /* pn[1] contains new color */
                     l = pn[1];
-                    i = cell_video_attr_background(reverseattribute);
-                    reverseattribute = cell_video_attr_set_colors(l, i);
+					reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
                     break;
                 }
                 /* 'H' is also CUP - Direct cursor address for */
@@ -16057,8 +16066,7 @@ vtcsi(void)
                     {
                         /* pn[1] contains new color */
                         l = pn[1];
-                        i = cell_video_attr_foreground(reverseattribute);
-                        reverseattribute = cell_video_attr_set_colors(i, l);
+                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
                     }
                 }
                 else {
@@ -18474,32 +18482,56 @@ vtcsi(void)
                                 break;
 
                             if (decscnm) {
-                                /* Copy the 3-bit background color from defaultattribute
-                                 * to attribute */
+#ifdef CK_COLORS_24BIT
+								if (!cell_video_attr_bg_is_indexed(defaultattribute)) {
+									/* Background has an RGB color */
+									int r, g, b;
+									r = cell_video_attr_bg_rgb_r(defaultattribute);
+									g = cell_video_attr_bg_rgb_r(defaultattribute);
+									g = cell_video_attr_bg_rgb_r(defaultattribute);
+									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
+								} else
+#endif
+								{   /* Else background has an indexed color */
+	                                /* Copy the 3-bit background color from defaultattribute
+	                                 * to attribute */
 
-                                int def_bg;
+	                                int def_bg;
 
-                                /* Get the 3-bit default BG color*/
-                                def_bg = cell_video_attr_background(defaultattribute);
+	                                /* Get the 3-bit default BG color*/
+	                                def_bg = cell_video_attr_background(defaultattribute);
 
-                                /* only try to preserve the intensity bit if the
-                                 * saved color is within the 16-color range */
-                                if (def_bg < 16) {
-                                    def_bg &= 0x07;
-                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, def_bg);
-                                } else {
-                                    attribute = cell_video_attr_set_bg_color(attribute, def_bg);
-                                }
+	                                /* only try to preserve the intensity bit if the
+	                                 * saved color is within the 16-color range */
+	                                if (def_bg < 16) {
+	                                    def_bg &= 0x07;
+	                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, def_bg);
+	                                } else {
+	                                    attribute = cell_video_attr_set_bg_color(attribute, def_bg);
+	                                }
+								}
                             } else {
-                                int def_bg = cell_video_attr_foreground(defaultattribute);
-                                /* only try to preserve the intensity bit if the
-                                 * saved color is within the 16-color range */
-                                if (def_bg < 16) {
-                                    def_bg &= 0x07;
-                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, def_bg);
-                                } else {
-                                    attribute = cell_video_attr_set_fg_color(attribute, def_bg);
-                                }
+#ifdef CK_COLORS_24BIT
+								if (!cell_video_attr_fg_is_indexed(defaultattribute)) {
+									/* Foreground has an RGB color */
+									int r, g, b;
+									r = cell_video_attr_fg_rgb_r(defaultattribute);
+									g = cell_video_attr_fg_rgb_r(defaultattribute);
+									g = cell_video_attr_fg_rgb_r(defaultattribute);
+									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
+								} else
+#endif
+								{   /* Else foreground has an indexed color */
+	                                int def_bg = cell_video_attr_foreground(defaultattribute);
+	                                /* only try to preserve the intensity bit if the
+	                                 * saved color is within the 16-color range */
+	                                if (def_bg < 16) {
+	                                    def_bg &= 0x07;
+	                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, def_bg);
+	                                } else {
+	                                    attribute = cell_video_attr_set_fg_color(attribute, def_bg);
+                                	}
+								}
                             }
                             break;
                         case 40:
@@ -18645,29 +18677,54 @@ vtcsi(void)
                                 break;
 
                             if (!decscnm) {
-                                int def_bg;
+#ifdef CK_COLORS_24BIT
+								if (!cell_video_attr_bg_is_indexed(defaultattribute)) {
+									/* Background has an RGB color */
+									int r, g, b;
+									r = cell_video_attr_bg_rgb_r(defaultattribute);
+									g = cell_video_attr_bg_rgb_r(defaultattribute);
+									g = cell_video_attr_bg_rgb_r(defaultattribute);
+									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
+								} else
+#endif
+								{   /* Else background has an indexed color */
+            	                    int def_bg;
 
-                                /* Get the 3-bit default BG color*/
-                                def_bg = cell_video_attr_background(defaultattribute);
+        	                        /* Get the 3-bit default BG color*/
+    	                            def_bg = cell_video_attr_background(defaultattribute);
 
-                                /* only try to preserve the intensity bit if the
-                                 * saved color is within the 16-color range */
-                                if (def_bg < 16) {
-                                    def_bg &= 0x07;
-                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, def_bg);
-                                } else {
-                                    attribute = cell_video_attr_set_bg_color(attribute, def_bg);
-                                }
+                	                /* only try to preserve the intensity bit if the
+            	                     * saved color is within the 16-color range */
+        	                        if (def_bg < 16) {
+    	                                def_bg &= 0x07;
+	                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, def_bg);
+                                	} else {
+                                    	attribute = cell_video_attr_set_bg_color(attribute, def_bg);
+                                	}
+								}
                             } else {
-                                int def_bg = cell_video_attr_foreground(defaultattribute);
-                                /* only try to preserve the intensity bit if the
-                                 * saved color is within the 16-color range */
-                                if (def_bg < 16) {
-                                    def_bg &= 0x07;
-                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, def_bg);
-                                } else {
-                                    attribute = cell_video_attr_set_fg_color(attribute, def_bg);
-                                }
+#ifdef CK_COLORS_24BIT
+								if (!cell_video_attr_fg_is_indexed(defaultattribute)) {
+									/* Foreground has an RGB color */
+									int r, g, b;
+									r = cell_video_attr_fg_rgb_r(defaultattribute);
+									g = cell_video_attr_fg_rgb_r(defaultattribute);
+									g = cell_video_attr_fg_rgb_r(defaultattribute);
+									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
+								} else
+#endif
+								{   /* Else foreground has an indexed color */
+                        	        int def_bg = cell_video_attr_foreground(defaultattribute);
+
+                    	            /* only try to preserve the intensity bit if the
+                	                 * saved color is within the 16-color range */
+            	                    if (def_bg < 16) {
+        	                            def_bg &= 0x07;
+    	                                attribute = cell_video_attr_set_3bit_fg_color(attribute, def_bg);
+	                                } else {
+                                    	attribute = cell_video_attr_set_fg_color(attribute, def_bg);
+                                	}
+								}
                             }
                             break;
                         case 50:
