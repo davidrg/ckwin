@@ -4440,20 +4440,30 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <section role="ctlseq" id="ba80-sl" ctlseq="CSI = M" title="Go to status line (BA80)" badges="ba80">
             <p>Go to status line</p>
         </section>
-        <section role="ctlseq" id="ansi-rca" title="Report Color Attributes (ANSI)" groups="isansi">
+        <section role="ctlseq" id="ansi-rca" title="Report Color Attributes (ANSI)"
+                 groups="isansi">
             <ctlseq>CSI = <param-single/> M</ctlseq>
             <p>
-                The response is the background and foreground colours numbers
-                separated by a space. The value of <param-single/>
+                The response is the default background and foreground colors
+                numbers separated by a space. The value of <param-single/>
                 should be 0, 1 or 2. <param-single/> = 1 for the reverse color
                 attribute, 0 or 2 for the normal attribute (2 should probably be
                 the graphic attribute, but K95 doesn't do that currently).
             </p>
             <p>
-                In versions of Kermit 95 supporting 24-bit RGB color, any colors
-                that hold a 24-bit RGB color rather than an indexed color will
-                be converted to the nearest color in the 16-color palette for
-                return.
+                In versions of Kermit 95 supporting color palettes larger than
+                16 colors, the current palette index will be returned exactly,
+                so if a color > 15 is set, then a color > 15 will be returned.
+                It is assumed that any application that sets a color outside the
+                16-color range will handle receiving a color outside this range.
+                Otherwise, for best compatibility stick to 16-color or RGB values
+                for <tt>SET TERMINAL COLOR TERMINAL</tt> when using ANSI emulation.
+            </p>
+            <p>
+                In versions of Kermit 95 supporting 24-bit RGB color, if the
+                default foreground or background color is a 24-bit RGB value,
+                then the nearest color from the 16-color palette is returned
+                regardless of the current palette setting.
             </p>
         </section>
 
