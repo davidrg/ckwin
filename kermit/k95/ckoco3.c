@@ -276,6 +276,7 @@ cell_video_attr_t     colorborder     = cell_video_attr_init_vio_attribute(0x01)
 cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27);
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
+cell_video_attr_t     colordim        = cell_video_attr_init_vio_attribute(0x08);
 
 cell_video_attr_t     savedcolorselect = cell_video_attr_init_vio_attribute(0xe0);
 
@@ -286,7 +287,8 @@ int erasemode     = FALSE ; /* Use current colors when erasing characters */
 int user_erasemode= FALSE ; /* Use current colors when erasing characters */
 int trueblink     = TRUE ;
 int blink_is_color = FALSE ;  /* Use a color rather than intensity for simulated blink */
-int bold_is_color = FALSE ;   /* Use a color rather than intensity for bold blink */
+int bold_is_color = FALSE ;   /* Use a color rather than intensity for bold */
+int dim_is_color = FALSE ;    /* Use a color rather than intensity for dim */
 int use_bold_attr = FALSE;
 int use_blink_attr = FALSE;
 int truereverse   = TRUE ;
@@ -383,7 +385,9 @@ cell_video_attr_t                       /* Video attribute bytes */
     blinkattribute=cell_video_attr_init_vio_attribute(0),
     savedblinkattribute[VNUM]={0,0,0,0},
     boldattribute=cell_video_attr_init_vio_attribute(0),
-    savedboldattribute[VNUM]={0,0,0,0}
+    savedboldattribute[VNUM]={0,0,0,0},
+	dimattribute=cell_video_attr_init_vio_attribute(0),
+    saveddimattribute[VNUM]={0,0,0,0}
     ;
 
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
@@ -4601,6 +4605,7 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
         reverseattribute=swapcolors(reverseattribute);
         graphicattribute=swapcolors(graphicattribute);
 		boldattribute=swapcolors(boldattribute);
+		dimattribute=swapcolors(dimattribute);
 		blinkattribute=swapcolors(blinkattribute);
         attribute = swapcolors( attribute );
     } else if ( vmode == VCMD ) {
@@ -6636,6 +6641,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
         savedborderattribute[vmode]= borderattribute;
         savedblinkattribute[vmode]= blinkattribute;
         savedboldattribute[vmode] = boldattribute;
+		saveddimattribute[vmode] = dimattribute;
         savedattrib[vmode] = attrib;            /* Current DEC character attributes */
         saverelcursor[vmode] = relcursor;       /* Cursor addressing mode */
         savedwrap[vmode]     = tt_wrap;         /* Wrap mode */
@@ -6668,6 +6674,7 @@ restorecurpos(int vmode, int x) {
             borderattribute=savedborderattribute[vmode];
             blinkattribute=savedblinkattribute[vmode];
             boldattribute=savedboldattribute[vmode];
+			dimattribute=saveddimattribute[vmode];
             attrib = savedattrib[vmode];
             relcursor = saverelcursor[vmode];   /* Restore cursor addressing mode */
             tt_wrap = savedwrap[vmode] ;       /* Restore wrap mode */
@@ -6760,6 +6767,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     italicattribute  = coloritalic;
     blinkattribute   = colorblink;
     boldattribute    = colorbold;
+	dimattribute     = colordim;
 
     saveddefaultattribute[VTERM] = colornormal; /* Default saved values */
     savedunderlineattribute[VTERM] = colorunderline ;
@@ -6769,6 +6777,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedborderattribute[VTERM]  = colorborder;
     savedblinkattribute[VTERM] = colorblink;
     savedboldattribute[VTERM]  = colorbold;
+	saveddimattribute[VTERM] = colordim;
     savedattribute[VTERM] = attribute;
 	use_bold_attr = bold_is_color;
 	use_blink_attr = blink_is_color;
@@ -8118,6 +8127,8 @@ resetcolors( int x )
                 byteswapcolors(colorblink);
             boldattribute =
                 byteswapcolors(colorbold);
+			dimattribute =
+				byteswapcolors(colordim);
         }
         else {
             defaultattribute = colornormal ;
@@ -8127,6 +8138,7 @@ resetcolors( int x )
             graphicattribute = colorgraphic;
             blinkattribute = colorblink;
             boldattribute  = colorbold;
+			dimattribute   = colordim;
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
@@ -13967,7 +13979,8 @@ settermtype( int x, int prompts )
     static cell_video_attr_t savgrcol = cell_video_attr_init_vio_attribute(0);   /* Graphics color */
     static cell_video_attr_t savulcol = cell_video_attr_init_vio_attribute(0);   /* Underline color */
     static cell_video_attr_t savblcol = cell_video_attr_init_vio_attribute(0);   /* Blink color */
-    static cell_video_attr_t savbocol = cell_video_attr_init_vio_attribute(0);   /* Blink color */
+    static cell_video_attr_t savbocol = cell_video_attr_init_vio_attribute(0);   /* Bold color */
+	static cell_video_attr_t savdicol = cell_video_attr_init_vio_attribute(0);   /* Blink color */
     static int savulatt = 0;                 /* Underline attribute */
     static int savrvatt = 0;                 /* Reverse attribute */
     static int savblatt = 0;                 /* Blink attribute */
@@ -13990,6 +14003,7 @@ settermtype( int x, int prompts )
         colorunderline = savulcol;
         colorblink = savblcol;
         colorbold = savbocol;
+		colordim = savdicol;
 
         trueblink     = savblatt ;
         truereverse   = savrvatt ;
@@ -14000,6 +14014,7 @@ settermtype( int x, int prompts )
         savulcol = cell_video_attr_from_vio_attribute(0);
         savblcol = cell_video_attr_from_vio_attribute(0);
         savbocol = cell_video_attr_from_vio_attribute(0);
+		savdicol = cell_video_attr_from_vio_attribute(0);
         scrninitialized[VTERM] = 0;
         tt_status_usr[VTERM] = savstatus ;
         settermstatus(tt_status_usr[VTERM]) ;
@@ -14038,10 +14053,22 @@ settermtype( int x, int prompts )
             savulcol = colorunderline ;
             savblcol = colorblink ;
             savbocol = colorbold;
+			savdicol = colordim;
 
             savulatt = trueunderline ;
             savblatt = trueblink ;
             savrvatt = truereverse ;
+
+			/* real linux console colors, on debian in virtualbox at least, are:
+		     *   dim - 85/85/85 (probably darkgrey) on black
+			 *   underlined - 0/170/170 (cyan) on black
+			 *   italic - 0/170/0 (green) on black
+			 *   blink -  170/170/170 (lightgray) on 85/85/85 (probably darkgrey)
+			 *   reverse - black on 170/170/170 (lightgray)
+			 *   normal - 170/170/170 (lightgray) on black
+			 * Probably not something we should default to until we've got a
+			 * better alternative terminal type for people to use.
+			 */
 
             colornormal = cell_video_attr_from_vio_attribute(0x07);         /* Light gray on black */
             colorgraphic = cell_video_attr_from_vio_attribute(0x07);        /* Light gray on black */
@@ -14240,6 +14267,7 @@ settermtype( int x, int prompts )
             savulcol = colorunderline ;
             savblcol = colorblink;
             savbocol = colorbold;
+			savdicol = colordim;
 
             savulatt = trueunderline ;
             savblatt = trueblink ;
@@ -14399,8 +14427,10 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
             colorval = blinkattribute ;
         else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
                 !truebold && use_bold_attr)
-            /* a blinking character */
             colorval = boldattribute ;
+		else if ((vtattr & VT_CHAR_ATTR_DIM) &&
+				!truedim && dim_is_color)
+			colorval = dimattribute;
         else
             colorval = colorattr ;
 
@@ -14437,7 +14467,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
          * color (unlike turning off trueblink).
          */
         if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
-             ( vtattr & VT_CHAR_ATTR_DIM 
+             ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
 #ifdef KUI
                && !truedim
 #endif /* KUI */
@@ -20822,6 +20852,22 @@ vtcsi(void)
                         }
                     }
                 } else if ( ISLINUX(tt_type_mode) ) {
+					switch(pn[1]) {
+					case 1:  /* Set color n as the underline color */
+						/* underline color in pn[2] */
+						underlineattribute = cell_video_attr_set_fg_color(
+							underlineattribute, pn[2]);
+						break;
+					case 2:	 /* Set color n as the dim color */
+						/* dim color in pn[2] */
+						dimattribute = cell_video_attr_set_fg_color(
+							dimattribute, pn[2]);
+						break;
+					case 8:  /* Make the current color pair the default attributes. */
+						defaultattribute = attribute;
+						break;
+					}
+
                     /*
                     ESC [ 1 ; n ]       Set color n as the underline color
                     ESC [ 2 ; n ]       Set color n as the dim color

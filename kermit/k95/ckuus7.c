@@ -1407,12 +1407,13 @@ int tt_hidattr = 1;                     /* Attributes are hidden */
 extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
-colorblink, colorbold, savedcolorselect;
+colorblink, colorbold, savedcolorselect, colordim;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
 		   savedtrueitalic, savedtruedim, savedtruebold;
-extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr;
+extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
+		   dim_is_color;
 
 extern int bgi, fgi;
 extern int scrninitialized[];
@@ -1453,12 +1454,14 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLPAL  12
 #define TTCOLBLI  13
 #define TTCOLBOL  14
+#define TTCOLDIM  15
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "blink",              TTCOLBLI, 0 },      /* Blink color */
     { "bold",               TTCOLBOL, 0 },      /* Bold color */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
     { "debug-terminal",     TTCOLDEB, 0 },      /* Debug color */
+    { "dim",                TTCOLDIM, 0 },      /* Dim color */
     { "erase",              TTCOLERA, 0 },      /* Erase mode */
     { "graphic",            TTCOLGRP, 0 },      /* Graphic Color */
     { "help-text",          TTCOLHLP, 0 },      /* Help screens */
@@ -4577,13 +4580,16 @@ settrm() {
                 colorborder = attr;
                 break;
               case TTCOLSEL:
-                colorselect = colorselect = attr;
+                savedcolorselect = colorselect = attr;
                 break;
               case TTCOLBLI:
                 colorblink = attr;
                 break;
               case TTCOLBOL:
                 colorbold = attr;
+                break;
+              case TTCOLDIM:
+                colordim = attr;
                 break;
               default:
                 printf("%s - invalid\n",cmdbuf);
@@ -5611,8 +5617,17 @@ settrm() {
 
           case TTATTDIM:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
-            if ((x = cmcfm()) < 0) return(x);
             savedtruedim = truedim = y;
+            /* Ask how dim should be simulated - a bright color, or a fixed
+             * color. This option is new in K95 3.0 beta.8 which added support
+             * for more than 16 colors as toggling the intensity/brightness bit
+             * doesn't work when the color isn't in the 0-7 range. We'll default
+             * to "bright" to avoid any surprises as this is what K95 did in the
+             * past.  */
+            if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+              return(y);
+            if ((x = cmcfm()) < 0) return(x);
+            dim_is_color = y;
             break;
 
           case TTATTREV:

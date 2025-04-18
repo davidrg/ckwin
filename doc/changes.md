@@ -67,7 +67,18 @@ and terminal emulations that *do not* use the new 256-color mode,
    less than 16. For situations where the foreground may be an RGB value, or
    a color from the xterm-88 or -256 color palette, you can now set Bold to
    use a different color with `SET TERM ATTRIBUTE BOLD OFF COLOR` and set the
-   color with `SET TERM COLOR BOLD` 
+   color with `SET TERM COLOR BOLD`
+ - True dim text (using a bold font) can now be turned off in K95G with the new
+   command `SET TERM ATTRIBUTE DIM OFF`. Dim text still shows with foreground
+   intensity set if the current foreground color is an indexed color less than 16.
+   For situations where the foreground may be an RGB value, or a color from
+   the xterm-88 or -256 color palette, you can now set Dim to use a different
+   (perhaps dim) color with `SET TERM ATTRIBUTE DIM OFF COLOR` and set the color
+   with the new `SET TERM COLOD DIM` command
+ - Implemented three new linux console terminal control sequences:
+   - `CSI 1 ; n ]` - Set underline color (requires `SET TERM ATTRIBUTE UNDERLINE OFF`)
+   - `CSI 2 ; n ]` - Set dim color (requires `SET TERM ATTRIBUTE DIM OFF COLOR`)
+   - `CSI 8 ]` - Set current color attribute as the default color attribute
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

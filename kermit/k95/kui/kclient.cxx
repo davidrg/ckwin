@@ -845,7 +845,7 @@ void KClient::writeMe()
             prevEffect = kws->effect;
             Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
             Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
-            Bool dim = (prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE;
+            Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);

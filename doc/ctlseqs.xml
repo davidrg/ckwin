@@ -4869,21 +4869,73 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 directional characters, ...).
             </p>
         </section>
-        <section role="ctlseq" not-implemented="true" badges="linux"
-                 id="linux-disp" title="Various display settings">
+        <section role="ctlseq" badges="linux" id="linux-disp"
+                 title="Linux display settings">
             <ctlseq>CSI <param-single/> ; <param-single/> ]</ctlseq>
-            <!-- TODO
-                    ESC [ 1 ; n ]       Set color n as the underline color
-                    ESC [ 2 ; n ]       Set color n as the dim color
-                    ESC [ 8 ]           Make the current color pair the default attributes.
-                    ESC [ 9 ; n ]       Set screen blank timeout to n minutes.
-                    ESC [ 10 ; n ]      Set bell frequency in Hz.
-                    ESC [ 11 ; n ]      Set bell duration in msec.
-                    ESC [ 12 ; n ]      Bring specified console to the front.
-                    ESC [ 13 ]          Unblank the screen.
-                    ESC [ 14 ; n ]      Set the VESA powerdown interval in minutes.
 
-            -->
+            <section role="parameter" title="Set underline color">
+                <ctlseq><param-single/> = 1 ; <param-single symbol="n"/></ctlseq>
+                <p>
+                    Sets color <param-single symbol="n"/> as the current underline
+                    foreground color. In the GUI version of Kermit 95, this only
+                    has an effect if true underline has been turned off with
+                    <tt>SET TERMINAL ATTRIBUTE UNDERLINE OFF</tt>
+                </p>
+                <p>
+                    Kermit 95 allows any indexed color valid in the current
+                    color palette here, while the real linux console (as of
+                    linux 6.1 at least) only supports the 16-color palette.
+                </p>
+            </section>
+            <section role="parameter" title="Set dim color">
+                <ctlseq><param-single/> = 2 ; <param-single symbol="n"/></ctlseq>
+                <p>
+                    Sets color <param-single symbol="n"/> as the current dim
+                    foreground color. In both the GUI and Console versions
+                    of Kermit 95, this only has an effect if the true dim
+                    attribute has been turned off and set to a fixed color
+                    rather than foreground intensity with <tt>SET TERMINAL
+                    ATTRIBUTE DIM OFF COLOR</tt>.
+                </p>
+                <p>
+                    Kermit 95 allows any indexed color valid in the current
+                    color palette here, while the real linux console (as of
+                    linux 6.1 at least) only supports the 16-color palette.
+                </p>
+            </section>
+            <section role="parameter" title="Set current color pair as the default attribute">
+                <ctlseq><param-single/> = 8</ctlseq>
+                <p>
+                    Makes the current foreground and background color the default
+                    foreground and background color (the color that is restored
+                    with <a href="#sgr-0">SGR-0</a>).
+                </p>
+            </section>
+            <section role="group" style="group">
+                <section role="parameter" not-implemented="true"
+                         title="Set screen blank timeout to n minutes">
+                    <ctlseq><param-single/> = 9 ; <param-single symbol="n"/></ctlseq>
+                </section>
+                <section role="parameter" not-implemented="true"
+                         title="Set bell frequency in Hz">
+                    <ctlseq><param-single/> = 10 ; <param-single symbol="n"/></ctlseq>
+                </section>
+                <section role="parameter" not-implemented="true"
+                         title="Set bell duration in msec">
+                    <ctlseq><param-single/> = 11 ; <param-single symbol="n"/></ctlseq>
+                </section>
+                <section role="parameter" not-implemented="true"
+                         title="Bring specified console to the front">
+                    <ctlseq><param-single/> = 12 ; <param-single symbol="n"/></ctlseq>
+                </section>
+                <section role="parameter" not-implemented="true" title="Unblank the screen">
+                    <ctlseq><param-single/> = 13</ctlseq>
+                </section>
+                <section role="parameter" not-implemented="true"
+                         title="Set the VESA powerdown interval in minutes">
+                    <ctlseq><param-single/> = 14 ; <param-single symbol="n"/></ctlseq>
+                </section>
+            </section>
         </section>
 
         <!-- ######################### ^ ######################### -->
