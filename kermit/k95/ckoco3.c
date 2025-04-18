@@ -14817,10 +14817,12 @@ vtcsi(void)
             pn[1] = pnumber(&achar);
             k = 1;
           LB2002:
-            while (achar == ';') { /* get Pn[k] */
+			pecount=0;
+            while (achar == ';' || achar == ':') { /* get Pn[k] */
+				int is_pe = (achar == ':');
                 achar = (escnext<=esclast)?
                     escbuffer[escnext++]:0;
-                if (k < PN_MAX-1) k++;
+
                 /* If there is a '?' at this point it is a protocol */
                 /* error.  We will skip over it since this appears  */
                 /* to be a frequent mistake that people make when   */
@@ -14828,10 +14830,12 @@ vtcsi(void)
                 if (achar == '?')
                     achar = (escnext<=esclast)?
                         escbuffer[escnext++]:0;
-                pn[k] = pnumber(&achar);
-				while (achar == ':' && pecount <= PE_MAX) {
-					/* Handle parameter elements */
-					pecount++;
+
+				if (!is_pe) { /* Handle parameter */
+					if (k < PN_MAX-1) k++;
+                	pn[k] = pnumber(&achar);
+				} else { /* Handle parameter element */
+					if (pecount < PE_MAX - 1) pecount++;
 					pe[pecount] = pnumber(&achar);
 				}
             }
@@ -18416,12 +18420,15 @@ vtcsi(void)
 							int semicolons = FALSE;
 							int max_colors = current_palette_max_index();
 
+							debug(F111, "SGR 38", "pecount", pecount);
+
                             if ( !sgrcolors )
                                 break;
 
 							if (pecount == 0) {
 								int i, elreq = 0;
 								semicolons = TRUE;
+								debug(F100, "Using semicolons (pecount=0)", 0, 0);
 
 								if (pn[j+1] == 2) elreq = 5;
 								else if (pn[j+1] == 5) elreq = 2;
@@ -18440,7 +18447,12 @@ vtcsi(void)
 								 */
                                 int index = color_index_to_vio(pe[2]);
 
+								debug(F100, "SGR 38: pecount >= 2 && pe[1] == 5", 0, 0);
+								debug(F111, "SGR 38", "pe[2]", pe[2]);
+								debug(F111, "SGR 38", "index", index);
+
                                 if (index <= max_colors) {
+									debug(F100, "SGR 38: set indexed color", 0, 0);
 #ifdef CK_COLORS_16
                                     /* For 16-color builds, map from the currently
 									 * set palette on to the aixterm-16 palette.
@@ -18450,7 +18462,6 @@ vtcsi(void)
 									attribute = cell_video_attr_set_fg_color(attribute,index);
                                 }
 							}
-
 							/* Direct (24-bit) color value? */
 							else if (pecount >= 4 && pe[1] == 2 && semicolons) {
 								int r = pe[2], g = pe[3], b = pe[4], idx;
