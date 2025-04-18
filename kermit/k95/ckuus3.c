@@ -65,6 +65,7 @@ extern cell_video_attr_t colorcmd;  /* Command-screen colors */
 extern struct keytab ttyclrtab[];
 extern int nclrs;
 extern int tt_cols[], tt_rows[], tt_szchng[], tt_status[];
+extern int colorpalette;
 #endif /* NOTERM */
 _PROTOTYP(int setprty, (void));
 extern char startupdir[], exedir[];
