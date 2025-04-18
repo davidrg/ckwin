@@ -10912,18 +10912,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="vt52x:281"/>
                 <termsupp first="vt510" series="vt" additional="tt"/>
             </section>
-            <section role="parameter" id="cursor-steady-block" not-implemented="true" title="Steady Block">
+            <section role="parameter" id="cursor-steady-block" title="Steady Block">
                 <ctlseq><param-single/> = 2</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q:Ps-=-2.1ED5"/>
                 <ref src="vt510:DECSCUSR.html"/>
                 <ref src="vt52x:281"/>
                 <termsupp first="vt510" series="vt" additional="tt"/>
-                <p>
-                    While K95G does support non-blinking cursors, it doesn't
-                    handle them here so this currently gives the same result as
-                    <param-single/> = 0 or <param-single/> = 1
-                    <!-- TODO: We should be able to implement this easily! -->
-                </p>
             </section>
             <section role="parameter" id="decscusr-blink-ul" title="Blinking Underline">
                 <ctlseq><param-single/> = 3</ctlseq>
@@ -10932,18 +10926,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="vt52x:281"/>
                 <termsupp first="vt510" series="vt" additional="tt"/>
             </section>
-            <section role="parameter" id="steady-underline" not-implemented="true" title="Steady Underline">
+            <section role="parameter" id="steady-underline" title="Steady Underline">
                 <ctlseq><param-single/> = 4</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q:Ps-=-4.1ED7"/>
                 <ref src="vt510:DECSCUSR.html"/>
                 <ref src="vt52x:281"/>
                 <termsupp first="vt510" series="vt" additional="tt"/>
-                <p>
-                    While K95G does support non-blinking cursors, it doesn't
-                    handle them here so this currently gives the same result as
-                    <param-single/> = 3
-                    <!-- TODO: We should be able to implement this easily! -->
-                </p>
             </section>
             <section role="parameter" id="decscusr-5" mnemonic=""
                      title="Blinking bar"
