@@ -79,6 +79,8 @@ and terminal emulations that *do not* use the new 256-color mode,
    - `CSI 1 ; n ]` - Set underline color (requires `SET TERM ATTRIBUTE UNDERLINE OFF`)
    - `CSI 2 ; n ]` - Set dim color (requires `SET TERM ATTRIBUTE DIM OFF COLOR`)
    - `CSI 8 ]` - Set current color attribute as the default color attribute
+ - Enabled SCOSC and SCORC for the linux console terminal emulation
+ - Support SGR-21 as underline attribute in linux console emulation
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
