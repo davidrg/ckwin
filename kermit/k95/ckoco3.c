@@ -11267,7 +11267,6 @@ doosc( void ) {
                 debug(F100, "OSC 4/5: got query", 0, 0);
 
 				if (idx > palette_max || num == 5) {
-#ifdef CK_COLORS_24BIT
 					int r, g, b, ok = TRUE;
 					cell_video_attr_t attr;
 
@@ -11306,9 +11305,6 @@ doosc( void ) {
 						buf[255] = 0;
 						sendcharsduplex(buf, strlen(buf), TRUE);
 					}
-#else
-					debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
-#endif /* CK_COLORS_24BIT */
 				} else if (idx >= 0) {
                 	color = palette[pal_idx];
 					_snprintf(buf, sizeof(buf),
@@ -11324,25 +11320,17 @@ doosc( void ) {
                   	debug(F111, "OSC 4/5: query index out of range for current palette", "index", idx);
                 }
             } else if (idx > palette_max || num == 5) {  /* OSC 4/5: Set attribute color */
-#ifdef CK_COLORS_24BIT
 				int r,g,b;
-#endif /* CK_COLORS_24BIT */
+
 				if (num != 5) idx -= palette_max + 1;
                 debug(F111, "OSC 4/5: Set special color", "idx", idx);
                 debug(F111, "OSC 4/5: Set special color", "color", color);
 
-                /* This is only available in builds with 24-bit RGB support. In
-				 * 16/256 color builds, the color attribute isn't capable of
-				 * storing RGB values.
-                 */
-#ifdef CK_COLORS_24BIT
 				r =  color & 0x000000FF;
                 g = (color & 0x0000FF00)>>8;
                 b = (color & 0x00FF0000)>>16;
-#endif /* CK_COLORS_24BIT */
 
                 switch(idx) {
-#ifdef CK_COLORS_24BIT
 					/* Aside from the reverse attribute, these all set the
 					 * foreground only. */
                     case 0: /* Bold attribute */
@@ -11360,7 +11348,6 @@ doosc( void ) {
 					case 4: /* Italic attribute */
 						italicattribute = cell_video_attr_set_fg_rgb(italicattribute, r, g, b);
 						break;
-#endif /* CK_COLORS_24BIT */
 				    default:
 						debug(F101, "OSC 4/5: Unknown or Unsupported Special Color Number", 0, idx);
                 }
@@ -11537,36 +11524,16 @@ doosc( void ) {
 
                 switch(current_color_id) {
                     case 10: /* defaultattribute foreground */
-#ifdef CK_COLORS_24BIT
 						defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
-#else
-						defaultattribute = cell_video_attr_set_fg_color(defaultattribute,
-								nearest_palette_color_rgb(colorpalette, r, g, b));
-#endif
 						break;
                    	case 11: /* defaultattribute background */
-#ifdef CK_COLORS_24BIT
 						defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
-#else
-						defaultattribute = cell_video_attr_set_bg_color(defaultattribute,
-								nearest_palette_color_rgb(colorpalette, r, g, b));
-#endif
 						break;
 					case 17: /* colorselect background */
-#ifdef CK_COLORS_24BIT
 						colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
-#else
-						colorselect = cell_video_attr_set_bg_color(colorselect,
-								nearest_palette_color_rgb(colorpalette, r, g, b));
-#endif
 		 				break;
 					case 19: /* colorselect foreground */
-#ifdef CK_COLORS_24BIT
 						colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
-#else
-						colorselect = cell_video_attr_set_fg_color(colorselect,
-								nearest_palette_color_rgb(colorpalette, r, g, b));
-#endif
 						break;
 				    default:
 						debug(F101, "OSC 10-19: Unknown or Unsupported Special Color Number", 0, current_color_id);
@@ -18471,10 +18438,10 @@ vtcsi(void)
                             	} else
 #endif /* CK_COLORS_24BIT */
 								{
-								/* Can't store 24-bit color, so look for the nearest
-								 * color in the current palette and use that.*/
-								idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-								attribute = cell_video_attr_set_fg_color(attribute,idx);
+									/* Can't store 24-bit color, so look for the nearest
+									 * color in the current palette and use that.*/
+									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
+									attribute = cell_video_attr_set_fg_color(attribute,idx);
 								}
 							}
 							else if (pecount >= 5 && pe[1] == 2 && !semicolons) {

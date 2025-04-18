@@ -235,6 +235,12 @@ typedef int bool;
 #endif /* CK_COLORS_256 */
 #endif
 
+int color_index_to_vio(int index);
+int nearest_palette_color_rgb(int palette_id, unsigned char r, unsigned char g, unsigned char b);
+int nearest_palette_color_palette(int palette_id, int palette_index);
+unsigned char current_palette_max_index();
+int color_index_to_vio(int index);
+
 #ifdef CK_COLORS_24BIT
 /* ***************************** RGB-COLORS *****************************/
 /* ***************************** RGB-COLORS *****************************/
@@ -1167,17 +1173,23 @@ cell_video_attr_t cell_video_attr_set(unsigned char value);
 #define cell_video_attr_equal(attr_a, attr_b) ((attr_a).a == (attr_b).a)
 #define swapcolors(x) cell_video_attr_from_vio_attribute((((x.a)&(unsigned)0x88)|(((x.a)&0x70)>>4)|(((x.a)&0x07)<<4)))
 #define byteswapcolors(x) cell_video_attr_from_vio_attribute(((((x.a)&0x70)>>4)|(((x.a)&0x07)<<4)|((x.a)&(unsigned char)0x88)))
-
 #endif /* CK_COLORS_DEBUG */
 #endif /* CK_COLORS_256 */
 #endif /* CK_COLORS_24BIT */
 
-int color_index_to_vio(int index);
+/* Sets the foreground to the nearest color palette entry to the supplied RGB value */
+#ifndef cell_video_attr_set_fg_rgb
+#define cell_video_attr_set_fg_rgb(attr, r, g, b) ( \
+	cell_video_attr_set_fg_color((attr), nearest_palette_color_rgb(colorpalette, (r), (g), (b))) \
+)
+#endif /* cell_video_attr_set_fg_rgb */
 
-int nearest_palette_color_rgb(int palette_id, unsigned char r, unsigned char g, unsigned char b);
-int nearest_palette_color_palette(int palette_id, int palette_index);
-unsigned char current_palette_max_index();
-int color_index_to_vio(int index);
+/* Sets the background to the nearest color palette entry to the supplied RGB value */
+#ifndef cell_video_attr_set_bg_rgb
+#define cell_video_attr_set_bg_rgb(attr, r, g, b) ( \
+	cell_video_attr_set_bg_color((attr), nearest_palette_color_rgb(colorpalette, (r), (g), (b))) \
+)
+#endif /* cell_video_attr_set_bg_rgb */
 
 #ifndef KUI
 #ifdef OS2ONLY
