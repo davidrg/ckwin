@@ -14468,7 +14468,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 				r = cell_video_attr_bg_rgb_r(colorval);
 				g = cell_video_attr_bg_rgb_r(colorval);
 				g = cell_video_attr_bg_rgb_r(colorval);
-				colorval = cell_video_attr_set_fg_color(colorval, r, g, b);
+				colorval = cell_video_attr_set_fg_rgb(colorval, r, g, b);
 			} else
 #endif
             	colorval = cell_video_attr_set_fg_color(colorval,cell_video_attr_background(colorval));
@@ -14503,11 +14503,25 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
   many more VT320 specific stuff
 */
 
-#define PE_MAX 5
-#define PN_MAX 11
+/* This used to be 11, but with the addition of SGR-38 and SGR-48 it needed
+ * to be bumped up as using the old xterm syntax was bumping up against this
+ * limit. For example, this resets everything then sets an RGB FG and RGB BG
+ * using 11 PNs:  0;38;2;30;229;12;48;2;163;180;241
+ */
+#define PN_MAX 22
 
-static int   pn[11]={0,0,0,0,0,0,0,0,0,0,0};
-static int   pe[PE_MAX]={0,0,0,0,0};
+/* Room for each PN to have 5 elements, not that we'll *ever* need anywhere
+ * near this many. The only CSI that uses parameter elements is SGR, and it only
+ * uses them  for SGR-38 and SRG-48, so unless someone is intentionally probing
+ * for bugs at most only 10 items (5 to set foreground to RGB, 5 to set
+ * background to RGB) will ever appear in this list. */
+#define PE_MAX 110
+
+static int   pn[PN_MAX]={0,0,0,0,0,0,0,0,0,0,0};
+static int   pe[PE_MAX];
+/* Where in pe each pn's list of pe's starts. -1 for no list of pe. */
+static int   pn_pe_start[PN_MAX]={-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+static int   pn_pe_count[PN_MAX]={0,0,0,0,0,0,0,0,0,0,0};
 static bool  private=FALSE;
 static bool  ansiext=FALSE;
 static bool  zdsext=FALSE;
@@ -14811,9 +14825,13 @@ vtcsi(void)
 				if (!is_pe) { /* Handle parameter */
 					if (k < PN_MAX-1) k++;
                 	pn[k] = pnumber(&achar);
+					pn_pe_start[k] = -1;
+					pn_pe_count[k] = 0;
 				} else { /* Handle parameter element */
 					if (pecount < PE_MAX - 1) pecount++;
 					pe[pecount] = pnumber(&achar);
+					if (pn_pe_start[k] == -1) pn_pe_start[k] = pecount;
+					pn_pe_count[k]++;
 				}
             }
             pn[k + 1] = 1;
@@ -18033,7 +18051,8 @@ vtcsi(void)
                         break;
                     }
                 } else { /* Select Graphic Rendition (SGR) */
-                    for (j = 1; j <= k; ++j) /* Go thru all Pn's */
+                    for (j = 1; j <= k; ++j) { /* Go thru all Pn's */
+						debug(F111, "------ SGR ------", "SGR", pn[j]);
                         switch ((pn[j])) {   /* This one... */
                         case 0: /* Set all attributes to normal */
                             if (colorreset)
@@ -18383,95 +18402,102 @@ vtcsi(void)
                                 }
                             }
                             break;
-                        case 38: {  /* enable underline option (for what terminal?) */
-									/* Extended Color */
-							/* if pecount > 0 then we're using parameter elements
-								seperated by colons. If pecount is 0, then we're
-								incorrectly using semicolons to separate the
-								parameter elements for compatibility with old xterm.
-								In that case, collect up the parameter elements from
-								the parameter list. */
+						case 48:    /* 48 - Extended color - background */
+                        case 38: {  /* 38 - Extended Color */
+									/* 38 - Enable underline option (for what terminal?) */
+							int mode=0, index=0, r=0, g=0, b=0;
+							int fg = (pn[j] == 38);
 
-							int semicolons = FALSE;
-							int max_colors = current_palette_max_index();
-
-							debug(F111, "SGR 38", "pecount", pecount);
+							debug(F111, "SGR 38/48", "SGR", pn[j]);
 
                             if ( !sgrcolors )
                                 break;
 
-							if (pecount == 0) {
-								int i, elreq = 0;
-								semicolons = TRUE;
-								debug(F100, "Using semicolons (pecount=0)", 0, 0);
+							if (pn_pe_start[j] == -1) {
+								int i, pn_rem = 0;
+								debug(F111, "SGR 38/48: Using semicolons", "pn_pe_start[j]", pn_pe_start[j]);
 
-								if (pn[j+1] == 2) elreq = 5;
-								else if (pn[j+1] == 5) elreq = 2;
+								mode = pn[j+1];
+								pn_rem = k - j;   /* for (j = 1; j <= k; ++j) */
 
-								for (i = 0; i < elreq; i++) {
-									j++;
-									pecount++;
-									pe[pecount] = pn[j];
+								if (mode == 2 && pn_rem >= 3) {
+									j+=2; /* SGR 38/48 + mode */
+									r = pn[j]; j++;
+									g = pn[j]; j++;
+									b = pn[j];
+								} else if (mode == 5 && pn_rem >= 1) {
+									j+=2; /* mode */
+									index = pn[j];
+								}
+								debug(F111, "SGR 38/48: Using semicolons", "j", j);
+								debug(F111, "SGR 38/48: Using semicolons", "k", k);
+							} else {
+								int st = pn_pe_start[j];
+								int c = pn_pe_count[j];
+								debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_start[j]", st);
+								debug(F111, "SGR 38/48: Using parameter elements", "pn_pe_count[j]", c);
+
+								if (c == 4 && pe[st] == 2) {
+									mode = pe[st];
+									r = pe[st+1];
+									g = pe[st+2];
+									b = pe[st+3];
+								} else if (c == 2 && pe[st] == 5) {
+									mode = pe[st];
+									index = pe[st+1];
+								} else {
+									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-count", c);
+									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "pe-start", st);
+									debug(F111, "SGR 38/48 - ERROR - insufficient or invalid mode", "mode", pe[st]);
 								}
 							}
 
-							if (pecount >= 2 && pe[1] == 5) {
+						debug(F111, "SGR 38/48:", "mode", mode);
+
+							if (mode == 5) {
+								int max_colors = current_palette_max_index();
                                 /* K95s color IDs for colors 1-15 are different
 								 * from those used by xterm due to its OS/2
 								 * origins.
 								 */
-                                int index = color_index_to_vio(pe[2]);
+                                index = color_index_to_vio(index);
 
-								debug(F100, "SGR 38: pecount >= 2 && pe[1] == 5", 0, 0);
-								debug(F111, "SGR 38", "pe[2]", pe[2]);
-								debug(F111, "SGR 38", "index", index);
+								debug(F111, "SGR 38/48:", "index", index);
 
                                 if (index <= max_colors) {
-									debug(F100, "SGR 38: set indexed color", 0, 0);
+									debug(F111, "SGR 38/48: set indexed color", "index", index);
 #ifdef CK_COLORS_16
                                     /* For 16-color builds, map from the currently
 									 * set palette on to the aixterm-16 palette.
                                      */
                                     index = nearest_palette_color_palette(colorpalette, index);
 #endif /* CK_COLORS_16 */
-									attribute = cell_video_attr_set_fg_color(attribute,index);
+									if (fg) attribute = cell_video_attr_set_fg_color(attribute,index);
+									else	attribute = cell_video_attr_set_bg_color(attribute,index);
                                 }
 							}
 							/* Direct (24-bit) color value? */
-							else if (pecount >= 4 && pe[1] == 2 && semicolons) {
-								int r = pe[2], g = pe[3], b = pe[4], idx;
+							else if (mode == 2) {
+								debug(F111, "SGR 38/48: set RGB color", "r", r);
+								debug(F111, "SGR 38/48: set RGB color", "g", g);
+								debug(F111, "SGR 38/48: set RGB color", "b", b);
 #ifdef CK_COLORS_24BIT
 								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
+									if (fg) attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
+									else    attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
                             	} else
 #endif /* CK_COLORS_24BIT */
 								{
+									int idx;
 									/* Can't store 24-bit color, so look for the nearest
 									 * color in the current palette and use that.*/
 									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-									attribute = cell_video_attr_set_fg_color(attribute,idx);
+									if (fg) attribute = cell_video_attr_set_fg_color(attribute,idx);
+									else    attribute = cell_video_attr_set_bg_color(attribute,idx);
 								}
+							} else {
+								debug(F111, "SGR 38/48 - ERROR - invalid mode", "mode", mode);
 							}
-							else if (pecount >= 5 && pe[1] == 2 && !semicolons) {
-								int r = pe[3], g = pe[4], b = pe[5], idx;
-#ifdef CK_COLORS_24BIT
-								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									/* pe[2] is the colour space id (ignored) */
-									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
-                                } else
-#endif /* CK_COLORS_24BIT */
-                                {
-									/* Can't store 24-bit color, so look for the nearest
-								 	* color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-									attribute = cell_video_attr_set_fg_color(attribute,idx);
-                                }
-							}
-
-#ifndef CK_COLORS_24BIT
-                            debug(F111, "SGR 38", "attribute", attribute);
-#endif /* CK_COLORS_24BIT */
-                            debug(F111, "SGR 38", "foreground", cell_video_attr_foreground(attribute));
                             break;
 							}
                         case 39:  /* disable underline option */
@@ -18583,92 +18609,6 @@ vtcsi(void)
                                 }
                             }
                             break;
-                        case 48: {  /* Extended Color */
-							/* if pecount > 0 then we're using parameter elements
-								seperated by colons. If pecount is 0, then we're
-								incorrectly using semicolons to separate the
-								parameter elements for compatibility with old xterm.
-								In that case, collect up the parameter elements from
-								the parameter list. */
-
-							int semicolons = FALSE;
-                            int max_colors = 16;  /* CK_PALETTE_16 */
-
-                            if ( !sgrcolors )
-                                break;
-
-                            max_colors = current_palette_max_index();
-
-							if (pecount == 0) {
-								int i, elreq = 0;
-								semicolons = TRUE;
-
-								if (pn[j+1] == 2) elreq = 5;
-								else if (pn[j+1] == 5) elreq = 2;
-
-								for (i = 0; i < elreq; i++) {
-									j++;
-									pecount++;
-									pe[pecount] = pn[j];
-								}
-							}
-
-							if (pecount >= 2 && pe[1] == 5) {
-
-                                /* K95s color IDs for colors 1-15 are different
-								 * from those used by xterm due to its OS/2
-								 * origins.
-								 */
-                                int index = color_index_to_vio(pe[2]);
-
-                                if (index <= max_colors) {
-#ifdef CK_COLORS_16
-                                    /* For 16-color builds, map from the currently
-									 * set palette on to the aixterm-16 palette.
-                                     */
-                                    index = nearest_palette_color_palette(colorpalette, index);
-#endif /* CK_COLORS_16 */
-									attribute = cell_video_attr_set_bg_color(attribute,index);
-                                }
-							}
-							/* Direct (24-bit) color value? */
-							else if (pecount >= 4 && pe[1] == 2 && semicolons) {
-								int r = pe[2], g = pe[3], b = pe[4], idx;
-#ifdef CK_COLORS_24BIT
-								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
-                            	} else
-#endif /* CK_COLORS_24BIT */
-								{
-									/* Can't store 24-bit color, so look for the nearest
-								 	* color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-									attribute = cell_video_attr_set_bg_color(attribute,idx);
-                                }
-							}
-							else if (pecount >= 5 && pe[1] == 2 && !semicolons) {
-								int r = pe[3], g = pe[4], b = pe[5], idx;
-#ifdef CK_COLORS_24BIT
-								if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
-									/* pe[2] is the colour space id (ignored) */
-									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
-                                } else
-#endif /* CK_COLORS_24BIT */
-                                {
-									/* Can't store 24-bit color, so look for the nearest
-								 	* color in the current palette and use that.*/
-									idx = nearest_palette_color_rgb(colorpalette, r, g, b);
-									attribute = cell_video_attr_set_bg_color(attribute,idx);
-                                }
-
-							}
-#ifndef CK_COLORS_24BIT
-							debug(F111, "SGR 48", "attribute", attribute);
-#endif /* CK_COLORS_24BIT */
-                            debug(F111, "SGR 48", "background", cell_video_attr_background(attribute));
-                            break;
-							}
-
                         case 49:
                             /* Supported by SCO ANSI */
                             /* QANSI - restore bg color saved with */
@@ -18872,6 +18812,7 @@ vtcsi(void)
                         default:
                             break;
                         }
+					}
                 }
                 break;
             case 'r':   /* Proprietary */
