@@ -4427,6 +4427,13 @@ settrm() {
           if (y < 0) return y;
           /* TODO: We should backup attribute colors set below on changing */
           colorpalette = y;
+#ifdef SSHBUILTIN
+          if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+              ssh_set_environment_variable("COLORTERM", "truecolor");
+          } else {
+              ssh_set_environment_variable("COLORTERM", 0);
+          }
+#endif
           return(success=1);
           break;
         } else {                        /* No parse error */

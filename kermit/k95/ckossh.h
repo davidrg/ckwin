@@ -47,6 +47,8 @@ typedef struct ssh_port_forward {
 #define SSH_ERR_TOO_MANY_FORWARDS 1
 #define SSH_ERR_DUPLICATE_PORT_FWD 2
 
+#define SSH_ERR_TOO_MANY_VARIABLES 1
+
 /* Integer parameters. Set with ssh_set_iparam, get with ssh_get_iparam */
 #define SSH_IPARAM_AFW      1       /* agent forwarding */
 #define SSH_IPARAM_XFW      2       /* x11 forwarding   */
@@ -145,6 +147,10 @@ _PROTOTYP(int ssh_agent_delete_all, (VOID));
 _PROTOTYP(int ssh_agent_add_file, (const char *filename));
 _PROTOTYP(int ssh_agent_list_identities,(int do_fp));
 
+/* Environment Variables */
+_PROTOTYP(int ssh_set_environment_variable,(const char * name, const char * value));
+_PROTOTYP(int ssh_clear_environment_variables,(VOID));
+
 /* Information */
 _PROTOTYP(const char * ssh_proto_ver,(VOID));
 _PROTOTYP(const char * ssh_impl_ver,(VOID));
@@ -188,6 +194,7 @@ _PROTOTYP(ktab_ret ssh_get_keytab,(int keytab_id));
 #define SSH_FEAT_DYN_PORT_FWD   16
 #define SSH_FEAT_X11_XAUTH      17
 #define SSH_FEAT_AGENT_LOC      18
+#define SSH_FEAT_ENVIRONMENT    19
 
 _PROTOTYP(int ssh_feature_supported,(int feature_id));
 
@@ -332,6 +339,8 @@ typedef int CKSSHAPI ssh_agent_delete_file_dllfunc(const char *);
 typedef int CKSSHAPI ssh_agent_delete_all_dllfunc(void);
 typedef int CKSSHAPI ssh_agent_add_file_dllfunc(const char*);
 typedef int CKSSHAPI ssh_agent_list_identities_dllfunc(int);
+typedef int CKSSHAPI ssh_set_environment_variable_dllfunc(const char *, const char *);
+typedef int CKSSHAPI ssh_clear_environment_variables_dllfunc(void);
 typedef void CKSSHAPI ssh_unload_dllfunc(void);
 typedef const char* CKSSHAPI ssh_dll_ver_dllfunc(void);
 typedef ktab_ret CKSSHAPI ssh_get_keytab_dllfunc(int keytab_id);

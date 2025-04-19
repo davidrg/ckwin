@@ -90,6 +90,13 @@ and terminal emulations that *do not* use the new 256-color mode,
    and terminfo/termcap which may or may not be correct consider how many
    terminals just claim to be xterm. In the unlikely event this new behavior
    causes problems, it can be disabled with `SET TELNET SEND-COLORTERM OFF`
+ - The SSH client will also now attempt to set `COLORTERM=truecolor` on the
+   remote host when 24-bit color is enabled via `SET TERM COLOR PALETTE`. There
+   is no option to disable this behavior at this time (aside from turning off
+   RGB support via `SET TERM COLOR PALETTE`) as most SSH servers will reject
+   the COLORTERM environment variable by default. To make it work, you'll likely
+   need to add COLORTERM to the `AcceptEnv` list in `/etc/ssh/sshd_config` on
+   the server.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

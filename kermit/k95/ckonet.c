@@ -4477,6 +4477,11 @@ netinit() {
         ssh_initialise();
 #endif /* SSHBUILTIN */
 #endif /* SSH_DLL */
+#ifdef SSHBUILTIN
+#ifdef CK_COLORS_24BIT
+        ssh_set_environment_variable("COLORTERM", "truecolor");
+#endif /* CK_COLORS_24BIT */
+#endif /* SSHBUILTIN */
     }
 
 #ifdef TCPSOCKET
