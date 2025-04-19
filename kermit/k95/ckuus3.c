@@ -1420,6 +1420,9 @@ int nls = (sizeof(lstab) / sizeof(struct keytab));
 extern int tn_nlm, tn_b_nlm, tn_b_meu, tn_b_ume, tn_b_xfer, tn_sb_bug;
 extern int tn_no_encrypt_xfer, tn_auth_krb5_des_bug;
 extern int tn_wait_flg, tn_duplex, tn_delay_sb, tn_sfu;
+#ifdef OS2
+extern int tn_colorterm;
+#endif
 extern int sl_tn_saved;
 extern int tn_infinite;
 extern int tn_rem_echo;
@@ -1824,6 +1827,9 @@ struct keytab tntab[] = {
     "no-encrypt-during-xfer", CK_TN_NE, CM_INV,
     "prompt-for-userid",CK_TN_PUID,0,
     "remote-echo",     CK_TN_RE,   0,
+#ifdef OS2
+    "send-colorterm",  CK_TN_COLORTERM, 0,
+#endif /* OS2 */
 #ifdef CK_SSL
     "start-tls",       CK_TN_TLS,  CM_INV,
 #endif /* CK_SSL */
@@ -11504,6 +11510,15 @@ case XYCARR:                            /* CARRIER-WATCH */
             tn_sfu = z;
             return(success = 1);
             break;
+
+#ifdef OS2
+          case CK_TN_COLORTERM:    /* Send COLORTERM environment variable */
+            if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);
+            if ((y = cmcfm()) < 0) return(y);
+            tn_colorterm = z;
+            return(success = 1);
+            break;
+#endif /* OS2 */
 
           case CK_TN_WAIT:              /* WAIT-FOR-NEGOTIATIONS */
             if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);

@@ -9414,6 +9414,15 @@ static char *hxytel[] = {
 "  is ON.  Remote echoing may be turned off when it is necessary to read",
 "  a password with the INPUT command.",
 " ",
+#ifdef OS2
+"SET TELNET SEND-COLORTERM { ON, OFF }",
+"  When ON, Kermit 95 will attempt set the COLORTERM environment variable on",
+"  the remote host to \"truecolor\" if 24-bit RGB color is currently enabled",
+"  via the SET TERMINAL COLOR PALETTE command. Some applications use the",
+"  COLORTERM environment variable to determine if the terminal in use",
+"  supports 24-bit color, rather than relying on $TERM and terminfo/termcap",
+" ",
+#endif
 "SET TELNET TERMINAL-TYPE name",
 "  The terminal type to send to the remote TELNET host.  If none is given,",
 #ifdef OS2

@@ -1548,6 +1548,9 @@ struct stringint {			/* String and (wide) integer */
 #define  CK_TN_DL     29  /* TELNET DELAY-SB */
 #define  CK_TN_SFU    30  /* TELNET SFU-COMPATIBILITY */
 #define  CK_TN_LOG    31  /* TELNET LOGOUT */
+#ifdef OS2
+#define  CK_TN_COLORTERM 32 /* TELNET SEND-COLORTERM */
+#endif /* OS2 */
 #endif /* TNCODE */
 #define XYOUTP 68	/* OUTPUT command parameters */
 #define   OUT_PAC 0	/*   OUTPUT PACING */
