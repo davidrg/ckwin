@@ -1407,7 +1407,8 @@ int tt_hidattr = 1;                     /* Attributes are hidden */
 extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
-colorblink, colorbold, savedcolorselect, colordim;
+colorblink, colorbold, savedcolorselect, colordim,
+colorcursor;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
@@ -1455,11 +1456,13 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLBLI  13
 #define TTCOLBOL  14
 #define TTCOLDIM  15
+#define TTCOLCUR  16
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "blink",              TTCOLBLI, 0 },      /* Blink color */
     { "bold",               TTCOLBOL, 0 },      /* Bold color */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
+	{ "cursor", 			TTCOLCUR, 0 },		/* Cursor color */
     { "debug-terminal",     TTCOLDEB, 0 },      /* Debug color */
     { "dim",                TTCOLDIM, 0 },      /* Dim color */
     { "erase",              TTCOLERA, 0 },      /* Erase mode */
@@ -1572,11 +1575,12 @@ struct keytab ttyclrtab[] = {           /* Colors */
 int nclrs = (sizeof (ttyclrtab) / sizeof (struct keytab));
 
 struct keytab ttycurtab[] = {
+	{ "block",       TTC_BLOCK, CM_INV|CM_ABR },
     { "full",        TTC_BLOCK, 0 },
     { "half",        TTC_HALF,  0 },
     { "underline",   TTC_ULINE, 0 }
 };
-int ncursors = 3;
+int ncursors = 4;
 
 struct keytab ttyptab[] = {
     { "aaa",      TT_AAA,     CM_INV },     /* AnnArbor */
@@ -4591,6 +4595,9 @@ settrm() {
               case TTCOLDIM:
                 colordim = attr;
                 break;
+			  case TTCOLCUR:
+				colorcursor = attr;
+			    break;
               default:
                 printf("%s - invalid\n",cmdbuf);
                 return(-9);

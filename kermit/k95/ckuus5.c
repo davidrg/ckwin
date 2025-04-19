@@ -356,8 +356,9 @@ extern struct keytab * term_font;
 extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
-    colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim;
-extern cell_video_attr_t savedcolorselect;
+    colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim,
+	colorcursor;
+extern cell_video_attr_t savedcolorselect, savedcolorcursor;
 extern int priority;
 extern struct keytab prtytab[];
 extern int nprty;
@@ -6359,27 +6360,28 @@ shotrm() {
         WrtCharStrAtt("blink",     5, row,  9, &colorblink );
         WrtCharStrAtt("bold",      4, row, 17, &colorbold );
         WrtCharStrAtt("border",    6, row, 25, &colorborder );
-        WrtCharStrAtt("debug",     5, row, 33, &colordebug );
-		WrtCharStrAtt("dim",       3, row, 41, &colordebug );
-        WrtCharStrAtt("helptext",  8, row, 50, &colorhelp );
-        WrtCharStrAtt("reverse",   7, row, 58, &colorreverse );
-        WrtCharStrAtt("select",    6, row, 66, &savedcolorselect );
+		WrtCharStrAtt("cursor",    6, row, 33, &savedcolorcursor );
+        WrtCharStrAtt("debug",     5, row, 41, &colordebug );
+		WrtCharStrAtt("dim",       3, row, 50, &colordebug );
+        WrtCharStrAtt("helptext",  8, row, 58, &colorhelp );
+        WrtCharStrAtt("reverse",   7, row, 66, &colorreverse );
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "blink",     5, row,  9, &colorblink );
         VscrnWrtCharStrAtt(VCMD, "bold",      4, row, 17, &colorbold );
         VscrnWrtCharStrAtt(VCMD, "border",    6, row, 25, &colorborder );
-        VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 33, &colordebug );
-		VscrnWrtCharStrAtt(VCMD, "dim",       3, row, 41, &colordim );
-        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 49, &colorhelp );
-        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 58, &colorreverse );
-        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 66, &savedcolorselect );
+		VscrnWrtCharStrAtt(VCMD, "cursor",    6, row, 33, &savedcolorcursor );
+        VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 41, &colordebug );
+		VscrnWrtCharStrAtt(VCMD, "dim",       3, row, 49, &colordim );
+        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 57, &colorhelp );
+        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 66, &colorreverse );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-		/* We use savedcolorselect below (and above) because the current value
-		 * in colorselect may be temporarily overriden by OSC-17/OSC-19 and
-		 * we'd rather show the *default* value here like with everything else
+		/* We use savedcolorselect and savedcolorcusor below (and above) because
+		 * the current value in these may be temporarily overriden by
+		 * OSC-17/OSC-19 and we'd rather show the *default* value here like with
+		 * everything else
 		 */
 
         /* Foreground color names */
@@ -6387,11 +6389,11 @@ shotrm() {
         print_color("%-8s", TRUE, colorblink);
         print_color("%-8s", TRUE, colorbold);
         printf("%-8s", "");
-        print_color("%-8s", TRUE, colordebug);
+		print_color("%-8s", TRUE, savedcolorcursor);
+		print_color("%-8s", TRUE, colordebug);
 		print_color("%-8s", TRUE, colordim);
         print_color("%-9s", TRUE, colorhelp);
         print_color("%-8s", TRUE, colorreverse);
-        print_color("%-8s", TRUE, savedcolorselect);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6399,12 +6401,12 @@ shotrm() {
         printf("%6s: ", "back");
         print_color("%-8s", FALSE, colorblink);
         print_color("%-8s", FALSE, colorbold);
-        print_color("%-8s", TRUE, colorborder);
+        print_color("%-8s", TRUE,  colorborder);
+		print_color("%-8s", FALSE, savedcolorcursor);
         print_color("%-8s", FALSE, colordebug);
 		print_color("%-8s", FALSE, colordim);
         print_color("%-9s", FALSE, colorhelp);
         print_color("%-8s", FALSE, colorreverse);
-        print_color("%-8s", FALSE, savedcolorselect);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6417,19 +6419,20 @@ shotrm() {
         WrtCharStrAtt("command",   7, row, 9, &colorcmd );
         WrtCharStrAtt("graphic",   7, row, 17, &colorgraphic );
         WrtCharStrAtt("italic",    6, row, 25, &coloritalic );
-		WrtCharStrAtt("status",    6, row, 33, &colorstatus );
-		WrtCharStrAtt("terminal",  8, row, 42, &colornormal );
-		WrtCharStrAtt("underline", 9, row, 50, &colorunderline );
-
+		WrtCharStrAtt("select",    6, row, 33, &savedcolorselect );
+		WrtCharStrAtt("status",    6, row, 42, &colorstatus );
+		WrtCharStrAtt("terminal",  8, row, 49, &colornormal );
+		WrtCharStrAtt("underline", 9, row, 58, &colorunderline );
 
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
         VscrnWrtCharStrAtt(VCMD, "command",   7, row,  9, &colorcmd );
         VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 17, &colorgraphic );
         VscrnWrtCharStrAtt(VCMD, "italic",    6, row, 25, &coloritalic );
-		VscrnWrtCharStrAtt(VCMD, "status",    6, row, 33, &colorstatus );
-        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 42, &colornormal );
-        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 51, &colorunderline );
+		VscrnWrtCharStrAtt(VCMD, "select",    6, row, 33, &savedcolorselect );
+		VscrnWrtCharStrAtt(VCMD, "status",    6, row, 41, &colorstatus );
+        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 49, &colornormal );
+        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 58, &colorunderline );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6438,10 +6441,10 @@ shotrm() {
         print_color("%-8s", TRUE, colorcmd);
         print_color("%-8s", TRUE, colorgraphic);
         print_color("%-8s", TRUE, coloritalic);
-		print_color("%-9s", TRUE, colorstatus);
+		print_color("%-8s", TRUE, savedcolorselect);
+		print_color("%-8s", TRUE, colorstatus);
         print_color("%-9s", TRUE, colornormal);
         print_color("%-8s", TRUE, colorunderline);
-
 
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6451,7 +6454,8 @@ shotrm() {
         print_color("%-8s", FALSE, colorcmd);
         print_color("%-8s", FALSE, colorgraphic);
         print_color("%-8s", FALSE, coloritalic);
-		print_color("%-9s", FALSE, colorstatus);
+		print_color("%-8s", FALSE, savedcolorselect);
+		print_color("%-8s", FALSE, colorstatus);
         print_color("%-9s", FALSE, colornormal);
         print_color("%-8s", FALSE, colorunderline);
         printf("\n");

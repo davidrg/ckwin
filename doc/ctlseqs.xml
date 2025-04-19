@@ -13118,17 +13118,16 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </p>
             </section>
             <section role="parameter" id="osc-12" mnemonic=""
-                     title="Chance text cursor color"
-                     not-implemented="true">
+                     title="Change text cursor color">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-2.1017"/>
                 <termsupp first="xterm" series="xt" additional=""/>
-                <p>Not supported. Consumes one color parameter in the same color
-                    spec format as <a href="#osc-4">OSC-4</a>
-                    (rgb:RRRR/BBBB/GGGG), but does not apply it to anything as
-                    K95 does not currently support changing the text cursor
-                    color.
-                </p>
+                <p>Requires one parameter: a new text cursor background color,
+                    which takes effect immediately and is reset on terminal reset.
+                    Format of the color parameter is the same color spec format
+                    as <a href="#osc-4">OSC-4</a> (rgb:RRRR/BBBB/GGGG), and if
+                    the text parameter is a `?` then the response will be an OSC-12
+                    sequence to set the current color.</p>
                 <p>Up to seven additional color parameters can be supplied which
                     will be applied to OSC-13 through OSC-19 in order.
                 </p>
@@ -13383,8 +13382,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             <section role="parameter" id="osc-112" mnemonic=""
-                     title="Reset text cursor color"
-                     not-implemented="true">
+                     title="Reset text cursor color">
                 <ctlseq><param-single/> = 112</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1-2.1075"/>
                 <termsupp first="xterm" series="xt" additional=""/>

@@ -277,8 +277,10 @@ cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27)
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
 cell_video_attr_t     colordim        = cell_video_attr_init_vio_attribute(0x08);
+cell_video_attr_t     colorcursor     = cell_video_attr_init_vio_attribute(0x80);
 
 cell_video_attr_t     savedcolorselect = cell_video_attr_init_vio_attribute(0xe0);
+cell_video_attr_t     savedcolorcursor = cell_video_attr_init_vio_attribute(0x80);
 
 int bgi = FALSE, fgi = FALSE ;
 cell_video_attr_t colorcmd        = cell_video_attr_init_vio_attribute(0x07);
@@ -6792,6 +6794,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
 	/* Reset select color in case it was changed by OSC-17/OSC-19 */
 	colorselect = savedcolorselect;
+	colorcursor = savedcolorcursor;
 
     /* Reset the color palettes */
     reset_palettes();
@@ -11459,14 +11462,14 @@ doosc( void ) {
      *  the osc string it falls through to the next case */
 	case 10: /* set defaultattribute foreground */
 	case 11: /* set defaultattribute background */
-	case 12: /* TODO: set set text cursor color */
+	case 12: /* set set text cursor color */
 	case 13: /* TODO: set pointer color foreground*/
 	case 14: /* TODO: set pointer color background */
 	case 15: /* TODO: set tektronix foreground */
 	case 16: /* TODO: set tektronix background */
-	case 17: /* set colorselect background (will need to setup a backup copy)*/
+	case 17: /* set colorselect background */
 	case 18: /* TODO: set set tektronix cursor color */
-	case 19: { /* set colorselect foreground color (will need to setup a backup copy) */
+	case 19: { /* set colorselect foreground color */
 		int current_color_id = num - 1;
 		char buf[256];
 
@@ -11501,6 +11504,9 @@ doosc( void ) {
 						break;
                    	case 11: /* defaultattribute background */
 						color = cell_video_attr_background_rgb(defaultattribute);
+						break;
+					case 12: /* colorcursor background */
+						color = cell_video_attr_background_rgb(colorcursor);
 						break;
 					case 17: /* colorselect background */
 						color = cell_video_attr_background_rgb(colorselect);
@@ -11542,6 +11548,9 @@ doosc( void ) {
                    	case 11: /* defaultattribute background */
 						defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
 						break;
+					case 12: /* colorcursor background */
+						colorcursor = cell_video_attr_set_bg_rgb(colorcursor, r, g, b);
+		 				break;
 					case 17: /* colorselect background */
 						colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
 		 				break;
@@ -11732,7 +11741,18 @@ doosc( void ) {
 		}
 		break;
 	case 112: /* xterm - reset text cursor color */
-		/* TODO */
+#ifdef CK_COLORS_24BIT
+		if (!cell_video_attr_bg_is_indexed(savedcolorcursor)) {
+			/* Background has an RGB color */
+			int r, g, b;
+			r = cell_video_attr_bg_rgb_r(savedcolorcursor);
+			g = cell_video_attr_bg_rgb_r(savedcolorcursor);
+			g = cell_video_attr_bg_rgb_r(savedcolorcursor);
+			colorcursor = cell_video_attr_set_bg_rgb(savedcolorcursor, r, g, b);
+		} else
+#endif
+			colorcursor = cell_video_attr_set_bg_color(colorcursor,
+				cell_video_attr_background(savedcolorcursor));
 		break;
 	case 113: /* xterm - reset pointer foreground color */
 	case 114: /* xterm - reset pointer background color */
