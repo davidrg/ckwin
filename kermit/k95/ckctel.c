@@ -83,6 +83,7 @@ extern struct tt_info_rec tt_info[];
 #ifdef SSHBUILTIN
 #include "ckossh.h"
 #endif /* SSHBUILTIN */
+extern int colorpalette;
 #endif /* OS2 */
 #endif /* NOTERM */
 
@@ -136,6 +137,9 @@ int tn_auth_how = TN_AUTH_HOW_ANY;
 int tn_auth_enc = TN_AUTH_ENC_ANY;
 int tn_deb = 0;                         /* Telnet Debug mode */
 int tn_sfu = 0;                         /* Microsoft SFU compatibility */
+#ifdef OS2
+int tn_colorterm = 1;                   /* Send COLORTERM environment variable */
+#endif /* OS2 */
 #ifdef CK_FORWARD_X
 char * tn_fwdx_xauthority = NULL;       /* Xauthority File */
 int    fwdx_no_encrypt = 0;             /* Forward-X requires encryption */
@@ -5950,6 +5954,12 @@ tn_rnenv(sb, len) CHAR * sb; int len;
 #define SFUTLNTVER_VALUE  "2"
 #define SFUTLNTMODE_VALUE "console"	/* The other value is "stream" */
 
+#ifdef OS2
+/* These are for indicating terminal capabilities */
+#define K95COLORTERM "COLORTERM"
+#define K95COLORTERM_VALUE "truecolor"
+#endif
+
 /* Telnet send new environment */
 /* Returns -1 on error, 0 if nothing happens, 1 on success */
 /* In order for this code to work, sb[len] == IAC          */
@@ -6060,6 +6070,12 @@ tn_snenv(sb, len) CHAR * sb; int len;
                         n += strlen(SFUTLNTMODE) +
                           strlen(SFUTLNTMODE_VALUE) + 2;
                     }
+#ifdef OS2
+                    if (tn_colorterm && (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88)) {
+                        /* For indicating 24-bit RGB color support */
+                        n += strlen(K95COLORTERM) + strlen(K95COLORTERM_VALUE) + 2;
+                    }
+#endif
 #ifdef CK_SNDLOC
                     if ( tn_loc && tn_loc[0] )
                         n += strlen("LOCATION") + strlen(tn_loc) + 2;
@@ -6254,6 +6270,16 @@ tn_snenv(sb, len) CHAR * sb; int len;
                           strcpy(&reply[n+13],SFUTLNTMODE_VALUE);
                           n += strlen(SFUTLNTMODE)+strlen(SFUTLNTMODE_VALUE)+2;
                       }
+#ifdef OS2
+                      if (tn_colorterm && (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88)) {
+                          /* Signal 24-bit color support */
+                          reply[n] = TEL_ENV_USERVAR;     /* VAR */
+                          strcpy(&reply[n+1],K95COLORTERM);
+                          reply[n+10] = TEL_ENV_VALUE; /* VALUE */
+                          strcpy(&reply[n+11],K95COLORTERM_VALUE);
+                          n += strlen(K95COLORTERM)+strlen(K95COLORTERM_VALUE)+2;
+                      }
+#endif
                       if (tn_loc && tn_loc[0]) {
                           reply[n] = TEL_ENV_USERVAR;     /* VAR */
                           strcpy(&reply[n+1],"LOCATION");

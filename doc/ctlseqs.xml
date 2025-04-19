@@ -13570,6 +13570,13 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 when built with 24-bit RGB support as OSC-5 does not support
                 setting color indexes, only RGB values.
             </p>
+            <p>
+                To help applications on the remote host detect 24-bit color support,
+                Kermit 95 will automatically set the <tt>COLORTERM</tt> environment
+                variable to <tt>truecolor</tt> on the remote host when making a
+                telnet connection. In the unlikely event this behavior causes
+                problems, it can be disabled with <tt>SET TELNET SEND-COLORTERM OFF</tt>
+            </p>
         </section>
 
         <section id="customcolor" title="Customising the Color Palette" role="text">

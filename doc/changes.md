@@ -84,6 +84,12 @@ and terminal emulations that *do not* use the new 256-color mode,
  - Fix DECSCUSR not turning the blinking cursor on or off
  - Implement support for setting the text cursor color with `SET TERM COLOR CURSOR`
  - Implement xterm OSC-12 and OSC-112 for setting and resetting the text cursor color
+ - The telnet client can now set `COLORTERM=truecolor` on the remote host when
+   24-bit color is enabled via `SET TERM COLOR PALETTE` as some applications use
+   `$COLORTERM` to detect 24-bit color support, rather than relying on `$TERM` 
+   and terminfo/termcap which may or may not be correct consider how many
+   terminals just claim to be xterm. In the unlikely event this new behavior
+   causes problems, it can be disabled with `SET TELNET SEND-COLORTERM OFF`
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
