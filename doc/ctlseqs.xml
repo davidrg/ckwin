@@ -8449,7 +8449,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <!-- Copies QsavedG[] into G[] -->
                 </p>
             </section>
-            <section role="parameter" badges="isansi" id="sgr-11-ansi"
+            <section role="parameter" groups="isansi" id="sgr-11-ansi"
                      title="Display GL Control Characters as Graphic Characters">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="vt510:SGR.html"/>
@@ -8963,7 +8963,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </section>
             <section role="parameter" id="sgr-48-ic-alt" mnemonic=""
                      title="Set background to indexed color">
-                <ctlseq><param-single/> = 34 ; 5 ; <param-single/></ctlseq>
+                <ctlseq><param-single/> = 48 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
                 <termsupp first="tt" series="xt" additional="linux"/>
                 <p>
