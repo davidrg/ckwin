@@ -42,6 +42,7 @@ extern void scrollback( BYTE, int );
 extern DWORD VscrnIsDirty( int );
 
 extern int colorpalette; /* ckoco3.c */
+extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
 
 /* Copies of the RGB tables so that resetting the terminal can reset the
  * the colour palettes. */
@@ -630,8 +631,9 @@ void KClient::ToggleCursor( HDC hdc, LPRECT lpRect )
     for (int y = lpRect->top; y < lpRect->bottom; y++) {
         for ( int x = lpRect->left ; x < lpRect->right ; x++ ) {
             COLORREF color = GetPixel(_hdcScratch, x, y);
+			int cursorbg = cell_video_attr_background_rgb(colorcursor);
 
-            SetPixel(_hdcScratch, x, y, color^0x00808080);
+            SetPixel(_hdcScratch, x, y, color^cursorbg);
         }
     }
     BitBlt(hdc,
