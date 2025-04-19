@@ -164,7 +164,8 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
         const char** identity_files, SOCKET socket,
-        const char* agent_location, int agent_forwarding) {
+        const char* agent_location, int agent_forwarding,
+        const char* environment_variables[MAX_ENVIRONMENT_VARIABLES][2]) {
     ssh_parameters_t* params;
 
     params = (ssh_parameters_t*)malloc(sizeof(ssh_parameters_t));
@@ -239,6 +240,17 @@ ssh_parameters_t* ssh_parameters_new(
     params->pty_width = pty_width;
     params->pty_height = pty_height;
     params->port_forwards = port_forwards;
+
+    /* Grab a copy of the environment variables */
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        if (environment_variables[i][0] != NULL && environment_variables[i][1] != NULL) {
+            params->environment_variables[i][0] = _strdup(environment_variables[i][0]);
+            params->environment_variables[i][1] = _strdup(environment_variables[i][1]);
+        } else {
+            params->environment_variables[i][0] = NULL;
+            params->environment_variables[i][1] = NULL;
+        }
+    }
 
     /* If the user has supplied a list of authentication types then only those
      * types specified will be allowed.*/
@@ -353,6 +365,17 @@ void ssh_parameters_free(ssh_parameters_t* parameters) {
         free(parameters->xauth_location);
     if (parameters->agent_location)
         free(parameters->agent_location);
+
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        if (parameters->environment_variables[i][1] != NULL) {
+            free(parameters->environment_variables[i][1]);
+            parameters->environment_variables[i][1] = NULL;
+        }
+        if (parameters->environment_variables[i][0] != NULL) {
+            free(parameters->environment_variables[i][0]);
+            parameters->environment_variables[i][0] = NULL;
+        }
+    }
 
     /* Note: parameters->identity_files should *not* be freed as we're not
      *       currently taking a copy of it */
@@ -779,6 +802,8 @@ static int verify_known_host(ssh_client_state_t * state) {
                             sizeof(msg) - strlen(msg) - 1);
                 }
                 state->forwarding_ok = FALSE;
+
+                /* TODO: Should we also forbid sending environment variables? */
 
                 /* Otherwise we allow connection to proceed */
                 rc = SSH_ERR_NO_ERROR;
@@ -1459,6 +1484,24 @@ static int open_shell(ssh_client_state_t * state) {
     if (rc != SSH_OK) {
         debug(F111, "sshsubsys - PTY request failed", "rc", rc);
         return rc;
+    }
+
+    /* Send environment varaibles */
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        if (state->parameters->environment_variables[i][0] != NULL &&
+            state->parameters->environment_variables[i][1] != NULL) {
+
+            rc = ssh_channel_request_env(
+                state->ttyChannel,
+                state->parameters->environment_variables[i][0],  /* name */
+                state->parameters->environment_variables[i][1]); /* value */
+
+            if (rc != SSH_OK) {
+                debug(F111, "sshsubsys - failed to set environment variable", "rc", rc);
+                debug(F110, "sshsubsys - failed to set environment variable",
+                        state->parameters->environment_variables[i][0], 0);
+            }
+        }
     }
 
     rc = ssh_channel_request_shell(state->ttyChannel);

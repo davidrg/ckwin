@@ -13574,8 +13574,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 To help applications on the remote host detect 24-bit color support,
                 Kermit 95 will automatically set the <tt>COLORTERM</tt> environment
                 variable to <tt>truecolor</tt> on the remote host when making a
-                telnet connection. In the unlikely event this behavior causes
-                problems, it can be disabled with <tt>SET TELNET SEND-COLORTERM OFF</tt>
+                telnet or SSH connection. In the unlikely event this behavior causes
+                problems, it can be disabled for telnet connections with
+                <tt>SET TELNET SEND-COLORTERM OFF</tt>. For SSH connections there
+                is no disable option as SSH servers will usually reject this
+                environment variable by default unless its added to <tt>AcceptEnv</tt>
+                in <tt>/etc/ssh/sshd_config</tt>
             </p>
         </section>
 

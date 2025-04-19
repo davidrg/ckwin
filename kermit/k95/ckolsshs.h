@@ -173,6 +173,8 @@ typedef struct ssh_port_forward {
 
 #define MAX_AUTH_METHODS 10
 
+#define MAX_ENVIRONMENT_VARIABLES 10
+
 /** Parameters passed to the SSH thread on startup telling it what to connect
  * to, settings, etc.
  */
@@ -202,7 +204,7 @@ typedef struct {
     int nodelay;                                /* Set to disable nagles agorithm */
     char* proxy_command;                        /* Command to execute to connect to the server */
     char* ssh_dir;                              /* SSH Directory */
-    char** identity_files;                      /* SSH Identity Files */
+    const char** identity_files;                /* SSH Identity Files */
     SOCKET existing_socket;                     /* Connect with an existing socket */
     char* agent_location;                       /* SSH Agent Location */
     int agent_forwarding;                       /* Enable agent forwarding */
@@ -217,6 +219,9 @@ typedef struct {
     BOOL allow_password_auth;
 
     const ssh_port_forward_t *port_forwards;
+
+    /* Environment variables */
+    char* environment_variables[MAX_ENVIRONMENT_VARIABLES][2];
 
     BOOL forward_x;             /* Forward X11 ? */
     char* x11_host;             /* Host where the X server is running */
@@ -308,6 +313,7 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param socket Existing socket to use for the connection
  * @param agent_location SSH agent location
  * @param agent_forwarding Enable agent forwarding
+ * @param environment_variables Environment variables to send
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -323,7 +329,8 @@ ssh_parameters_t* ssh_parameters_new(
         BOOL forward_x, const char* display_host, int display_number,
         const char* xauth_location, const char* ssh_dir,
         const char** identity_files, SOCKET socket,
-        const char* agent_location, int agent_forwarding);
+        const char* agent_location, int agent_forwarding,
+        const char* environment_variables[MAX_ENVIRONMENT_VARIABLES][2]);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *
