@@ -11689,8 +11689,8 @@ doosc( void ) {
 				/* Background has an RGB color */
 				int r, g, b;
 				r = cell_video_attr_bg_rgb_r(colornormal);
-				g = cell_video_attr_bg_rgb_r(colornormal);
-				g = cell_video_attr_bg_rgb_r(colornormal);
+				g = cell_video_attr_bg_rgb_g(colornormal);
+				b = cell_video_attr_bg_rgb_b(colornormal);
 				defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
 			} else
 #endif
@@ -11702,8 +11702,8 @@ doosc( void ) {
 				/* Foreground has an RGB color */
 				int r, g, b;
 				r = cell_video_attr_fg_rgb_r(colornormal);
-				g = cell_video_attr_fg_rgb_r(colornormal);
-				g = cell_video_attr_fg_rgb_r(colornormal);
+				g = cell_video_attr_fg_rgb_g(colornormal);
+				b = cell_video_attr_fg_rgb_b(colornormal);
 				defaultattribute = cell_video_attr_set_fg_rgb(defaultattribute, r, g, b);
 			} else
 #endif
@@ -11718,8 +11718,8 @@ doosc( void ) {
 				/* Foreground has an RGB color */
 				int r, g, b;
 				r = cell_video_attr_fg_rgb_r(colornormal);
-				g = cell_video_attr_fg_rgb_r(colornormal);
-				g = cell_video_attr_fg_rgb_r(colornormal);
+				g = cell_video_attr_fg_rgb_g(colornormal);
+				b = cell_video_attr_fg_rgb_b(colornormal);
 				defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
 			} else
 #endif
@@ -11731,8 +11731,8 @@ doosc( void ) {
 				/* Background has an RGB color */
 				int r, g, b;
 				r = cell_video_attr_bg_rgb_r(colornormal);
-				g = cell_video_attr_bg_rgb_r(colornormal);
-				g = cell_video_attr_bg_rgb_r(colornormal);
+				g = cell_video_attr_bg_rgb_g(colornormal);
+				b = cell_video_attr_bg_rgb_b(colornormal);
 				defaultattribute = cell_video_attr_set_bg_rgb(defaultattribute, r, g, b);
 			} else
 #endif
@@ -11746,8 +11746,8 @@ doosc( void ) {
 			/* Background has an RGB color */
 			int r, g, b;
 			r = cell_video_attr_bg_rgb_r(savedcolorcursor);
-			g = cell_video_attr_bg_rgb_r(savedcolorcursor);
-			g = cell_video_attr_bg_rgb_r(savedcolorcursor);
+			g = cell_video_attr_bg_rgb_g(savedcolorcursor);
+			b = cell_video_attr_bg_rgb_b(savedcolorcursor);
 			colorcursor = cell_video_attr_set_bg_rgb(savedcolorcursor, r, g, b);
 		} else
 #endif
@@ -11765,8 +11765,8 @@ doosc( void ) {
 			/* Background has an RGB color */
 			int r, g, b;
 			r = cell_video_attr_bg_rgb_r(savedcolorselect);
-			g = cell_video_attr_bg_rgb_r(savedcolorselect);
-			g = cell_video_attr_bg_rgb_r(savedcolorselect);
+			g = cell_video_attr_bg_rgb_g(savedcolorselect);
+			b = cell_video_attr_bg_rgb_b(savedcolorselect);
 			colorselect = cell_video_attr_set_bg_rgb(colorselect, r, g, b);
 		} else
 #endif
@@ -11781,8 +11781,8 @@ doosc( void ) {
 			/* Background has an RGB color */
 			int r, g, b;
 			r = cell_video_attr_fg_rgb_r(savedcolorselect);
-			g = cell_video_attr_fg_rgb_r(savedcolorselect);
-			g = cell_video_attr_fg_rgb_r(savedcolorselect);
+			g = cell_video_attr_fg_rgb_g(savedcolorselect);
+			b = cell_video_attr_fg_rgb_b(savedcolorselect);
 			colorselect = cell_video_attr_set_fg_rgb(colorselect, r, g, b);
 		} else
 #endif
@@ -14517,8 +14517,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 				/* colorval background has an RGB color */
 				int r, g, b;
 				r = cell_video_attr_bg_rgb_r(colorval);
-				g = cell_video_attr_bg_rgb_r(colorval);
-				g = cell_video_attr_bg_rgb_r(colorval);
+				g = cell_video_attr_bg_rgb_g(colorval);
+				b = cell_video_attr_bg_rgb_b(colorval);
 				colorval = cell_video_attr_set_fg_rgb(colorval, r, g, b);
 			} else
 #endif
@@ -18103,7 +18103,6 @@ vtcsi(void)
                     }
                 } else { /* Select Graphic Rendition (SGR) */
                     for (j = 1; j <= k; ++j) { /* Go thru all Pn's */
-						debug(F111, "------ SGR ------", "SGR", pn[j]);
                         switch ((pn[j])) {   /* This one... */
                         case 0: /* Set all attributes to normal */
                             if (colorreset)
@@ -18571,8 +18570,8 @@ vtcsi(void)
 									/* Background has an RGB color */
 									int r, g, b;
 									r = cell_video_attr_bg_rgb_r(defaultattribute);
-									g = cell_video_attr_bg_rgb_r(defaultattribute);
-									g = cell_video_attr_bg_rgb_r(defaultattribute);
+									g = cell_video_attr_bg_rgb_g(defaultattribute);
+									b = cell_video_attr_bg_rgb_b(defaultattribute);
 									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
 								} else
 #endif
@@ -18600,8 +18599,8 @@ vtcsi(void)
 									/* Foreground has an RGB color */
 									int r, g, b;
 									r = cell_video_attr_fg_rgb_r(defaultattribute);
-									g = cell_video_attr_fg_rgb_r(defaultattribute);
-									g = cell_video_attr_fg_rgb_r(defaultattribute);
+									g = cell_video_attr_fg_rgb_g(defaultattribute);
+									b = cell_video_attr_fg_rgb_b(defaultattribute);
 									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
 								} else
 #endif
@@ -18680,8 +18679,8 @@ vtcsi(void)
 									/* Background has an RGB color */
 									int r, g, b;
 									r = cell_video_attr_bg_rgb_r(defaultattribute);
-									g = cell_video_attr_bg_rgb_r(defaultattribute);
-									g = cell_video_attr_bg_rgb_r(defaultattribute);
+									g = cell_video_attr_bg_rgb_g(defaultattribute);
+									b = cell_video_attr_bg_rgb_b(defaultattribute);
 									attribute = cell_video_attr_set_bg_rgb(attribute, r, g, b);
 								} else
 #endif
@@ -18706,8 +18705,8 @@ vtcsi(void)
 									/* Foreground has an RGB color */
 									int r, g, b;
 									r = cell_video_attr_fg_rgb_r(defaultattribute);
-									g = cell_video_attr_fg_rgb_r(defaultattribute);
-									g = cell_video_attr_fg_rgb_r(defaultattribute);
+									g = cell_video_attr_fg_rgb_g(defaultattribute);
+									b = cell_video_attr_fg_rgb_b(defaultattribute);
 									attribute = cell_video_attr_set_fg_rgb(attribute, r, g, b);
 								} else
 #endif
