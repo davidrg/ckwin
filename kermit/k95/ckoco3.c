@@ -7489,7 +7489,7 @@ scriptwrtbuf(unsigned short word)
     extern char * tt_trigger[], * triggerval;
 #endif /* CK_TRIGGER */
 
-    debug(F111,"scriptwrtbuf","word",word);
+    /*debug(F111,"scriptwrtbuf","word",word);*/
 
     /* Close Printer if necessary */
     if ( printerclose_t ) {
@@ -7711,7 +7711,7 @@ pushed:
     if (f_pushed)
         goto pushed ;
 
-    debug(F100,"scriptwrtbuf returns","",0);
+    /*debug(F100,"scriptwrtbuf returns","",0);*/
     return(0);
 }
 
@@ -11893,10 +11893,26 @@ dodcs( void )
           LB4003:
             switch (achar) { /* Third level */
             case '$': {
-                char decrpss[12] = "";
+                /* This has to be long to account for SGR at a minimum. */
+#define DECRPSS_LEN 100
+                char decrpss[DECRPSS_LEN];
+                decrpss[0] = '\0';
+
                 achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                 switch ( achar ) {
-                case 'q':               /* DECRQSS */
+                case 'q': {              /* DECRQSS */
+                    char fmt[10];
+                    memset(fmt,0,sizeof(fmt));
+
+                    /* Resulting format string has three parameters:
+                     *  %d - 0 for valid, 1 for invalid
+                     *  %s - the response string including any final characters
+                     */
+                    if (send_c1)
+                        snprintf(fmt, 10, "%c%%d$r%%s%c", _DCS, _ST8);
+                    else
+                        snprintf(fmt, 10, "%cP%%d$r%%s%c\\", ESC, ESC);
+
                     /* The next set of characters are the D...D portion */
                     /* of the DECRQSS request */
                     achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
@@ -11976,12 +11992,161 @@ dodcs( void )
                             break;
                         }
                         break;
-                    case 'm':           /* SGR */
-                        if ( send_c1 )
-                            sprintf(decrpss,"%c0$rm%c",_DCS,_ST8);
-                        else
-                            sprintf(decrpss,"%cP0$rm%c\\",ESC,ESC);
+                    case 'm': {          /* SGR */
+                        char sgrbuf[80];
+                        int sgrbuf_len=0;
+
+                        memset(sgrbuf,0,sizeof(sgrbuf));
+
+                        strcat(sgrbuf, "0");
+
+                        if (attrib.bold)  strcat(sgrbuf, ";1");
+
+                        if (ISSCO(tt_type_mode)) {
+                            /* TODO: 2;fg;bg;  - fg/bg color (SCOANSI only)
+                               (If the FG/BG colors are not the default) */
+                        } else if (attrib.dim) {
+                            strcat(sgrbuf, ";2");
+                        }
+
+                        if (attrib.italic) strcat(sgrbuf, ";3");
+                        if (attrib.underlined) strcat(sgrbuf, ";4");
+                        if (attrib.blinking) strcat(sgrbuf, ";5");
+                        if (attrib.reversed) strcat(sgrbuf, ";7");
+                        if (attrib.invisible) strcat(sgrbuf, ";8");
+
+#ifdef COMMENT
+                        /* We don't really have a *good* way of knowing if these
+                         * were given previously. The code below is at best an
+                         * approximation - really we need these SGR parameters
+                         * to set an attribute or something. But is unlikely that
+                         * these terminal types actually supported DECRQSS in the
+                         * real world (the linux console terminal in 2025 doesn't
+                         * claim to), so its unlikely that any applications actually
+                         * using these SGR parameters would expect DECRQSS to do
+                         * anything. */
+
+                        if (ISANSI(tt_type_mode) || ISBEOS(tt_type_mode)) {
+                            if (!sco8bit && !crm && !attrib.graphic && GR = &G[1])
+                                sgrcat(sgrbuf, ";10");
+                        } else if (ISLINUX(tt_type_mode) || ISQANSI(tt_type_mode) {
+                            if (!sco8bit && !crm)
+                                sgrcat(sgrbuf, ";10");
+                        }
+
+                        if ( ISANSI(tt_type_mode) ) {
+                            if (!sco8bit && crm && GR == &G[2]) strcat(sgrbuf, ";11");
+                        } else if (ISLINUX(tt_type_mode) || ISQANSI(tt_type_mode)) {
+                            if (sco8bit && crm) strcat(sgrbuf, ";11");
+                        }
+
+                        if (ISLINUX(tt_type_mode) && sco8bit && crm && attrib.graphic = FALSE) {
+                            strcat(sgrbuf, ";12");
+                        }
+
+                        if ((ISANSI(tt_type_mode) || ISBEOS(tt_type_mode)) &&
+                            sco8bit && !crm && !attrib.graphic && GR == &G[3]) {
+                            strcat(sgrbuf, ";17");
+                        } else if (ISQANSI(tt_type_mode) && sco8bit && !crm) {
+                            strcat(sgrbuf, ";17");
+                        }
+#endif
+
+                        /* Now we do color. Foreground first. */
+#ifdef CK_COLORS_24BIT
+                        if (!cell_video_attr_fg_is_indexed(attribute)) {
+                            char fgbuf[20];
+                            int r, g, b;
+
+                            memset(fgbuf,0,sizeof(fgbuf));
+
+                            r = cell_video_attr_fg_rgb_r(attribute);
+                            g = cell_video_attr_fg_rgb_g(attribute);
+                            b = cell_video_attr_fg_rgb_b(attribute);
+
+                            if (cell_video_attr_fg_is_indexed(defaultattribute) ||
+                                cell_video_attr_fg_rgb_r(defaultattribute) != r ||
+                                cell_video_attr_fg_rgb_g(defaultattribute) != g ||
+                                cell_video_attr_fg_rgb_b(defaultattribute) != b) {
+
+                                _snprintf(fgbuf, sizeof(fgbuf), ";38:2:0:%d:%d:%d", r, g, b);
+                                strcat(sgrbuf, fgbuf);
+                            }
+                        } else
+#endif
+                        {
+                            int fg = cell_video_attr_foreground(attribute);
+                            int def_fg = cell_video_attr_foreground(defaultattribute);
+                            char fgbuf[10];
+
+                            memset(fgbuf,0,sizeof(fgbuf));
+
+                            if (fg != def_fg) {
+                                if (fg > 15) {
+                                    _snprintf(fgbuf, sizeof(fgbuf), ";38:5:%d", fg);
+                                } else if (fg > 7) {
+                                    fg -= 8;
+                                    fg = sgrindex[fg%8];
+                                    _snprintf(fgbuf, sizeof(fgbuf), ";%d", 90+fg);
+                                } else {
+                                    fg = sgrindex[fg%8];
+                                    _snprintf(fgbuf, sizeof(fgbuf), ";%d", 30+fg);
+                                }
+                                strcat(sgrbuf, fgbuf);
+                            }
+                        }
+
+                        /* Now we do color. Now backgroudn. */
+#ifdef CK_COLORS_24BIT
+                        if (!cell_video_attr_bg_is_indexed(attribute)) {
+                            char bgbuf[20];
+                            int r, g, b;
+
+                            memset(bgbuf,0,sizeof(bgbuf));
+
+                            r = cell_video_attr_bg_rgb_r(attribute);
+                            g = cell_video_attr_bg_rgb_g(attribute);
+                            b = cell_video_attr_bg_rgb_b(attribute);
+
+                            if (cell_video_attr_bg_is_indexed(defaultattribute) ||
+                                cell_video_attr_bg_rgb_r(defaultattribute) != r ||
+                                cell_video_attr_bg_rgb_g(defaultattribute) != g ||
+                                cell_video_attr_bg_rgb_b(defaultattribute) != b) {
+
+                                _snprintf(bgbuf, sizeof(bgbuf), ";48:2:0:%d:%d:%d", r, g, b);
+                                strcat(sgrbuf, bgbuf);
+                            }
+                        } else
+#endif
+                        {
+                            int bg = cell_video_attr_background(attribute);
+                            char bgbuf[10];
+
+                            memset(bgbuf,0,sizeof(bgbuf));
+
+                            if (bg != cell_video_attr_background(defaultattribute)) {
+                                if (bg > 15) {
+                                    _snprintf(bgbuf, sizeof(bgbuf), ";48:5:%d", bg);
+                                } else if (bg > 7) {
+                                    bg -= 8;
+                                    bg = sgrindex[bg%8];
+                                    _snprintf(bgbuf, sizeof(bgbuf), ";%d", 100+bg);
+                                } else {
+                                    bg = sgrindex[bg%8];
+                                    _snprintf(bgbuf, sizeof(bgbuf), ";%d", 40+bg);
+                                }
+                            }
+                            strcat(sgrbuf, bgbuf);
+                        }
+
+                        /* Append final character (overwriting the trailing ';'),
+                         * then assemble full DECRPSS response */
+                        strcat(sgrbuf, "m");
+
+                        snprintf(decrpss, DECRPSS_LEN, fmt, 1, sgrbuf);
+
                         break;
+                        }
                     case 's':           /* DECSLRM - Set Left and Right Margins */
                         if ( send_c1 )
                             sprintf(decrpss,"%c1$rs%c",_DCS,_ST8);
@@ -12033,17 +12198,20 @@ dodcs( void )
                             break;
                         }
                         break;
-                    }
-                    if ( decrpss[0] ) {
+                    } /* end switch */
+
+                    /* Unrecognised request */
+                    if ( decrpss[0] == '\0') {
                         if ( send_c1 )
                             sprintf(decrpss,"%c1$r%c",_DCS,_ST8);
                         else
                             sprintf(decrpss,"%cP1$r%c\\",ESC,ESC);
                     }
-                    if (decrpss[0])
-                        sendchars(decrpss,strlen(decrpss));
+
+                    sendchars(decrpss,strlen(decrpss));
                     break;
-                }
+                    }  /* 'q' - DECRQSS */
+                } /* switch on character afer '$' */
 				break;
             } /* $ */
             case '|': {    /* DECUDK */
@@ -20942,8 +21110,13 @@ vtescape( void )
     int             i;
 
     /* Initialize default values */
-    for (i=0;i<11;i++)
+    for (i=0;i<PN_MAX;i++) {
         pn[i]=0;
+        pn_pe_start[i]=-1;
+        pn_pe_count[i]=0;
+    }
+    for (i=0;i<PE_MAX;i++)
+        pe[i]=0;
     private = ansiext = zdsext = kermext = FALSE;
 
     escstate = ES_NORMAL;               /* Set escape state back to normal */
