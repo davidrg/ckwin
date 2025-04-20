@@ -9303,8 +9303,16 @@ void output_index_colors(int start, int increment, int max) {
     }
 }
 
+void output_palette_segment_256_wide(int index);
+
 /* Output one line of the 256 colour palette cubes */
 void output_palette_segment_256(int index) {
+    // if width is 108 or greater, output in a wider format
+    if (tt_cols[VCMD] >= 108) {
+        output_palette_segment_256_wide(index);
+        return;
+    }
+
 	switch(index) {
         case 0: printf("System colors:"); break;
         case 1: output_index_colors(0, 1, 7); break;
@@ -9364,6 +9372,85 @@ void output_palette_segment_256(int index) {
 		case 49: output_index_colors(238, 1, 243); break;
         case 50: output_index_colors(244, 1, 249); break;
 		case 51: output_index_colors(250, 1, 255); break;
+    }
+}
+
+/* Output one line of the 256 colour palette cubes */
+void output_palette_segment_256_wide(int index) {
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("6x6x6 color cubes:"); break;
+        /* Color cube 1, 2, 3 */
+        case 5:
+            output_index_colors(16, 6, 46); printf(" ");
+            output_index_colors(52, 6, 82); printf(" ");
+            output_index_colors(88, 6, 118);
+            break;
+        case 6:
+            output_index_colors(17, 6, 47); printf(" ");
+            output_index_colors(53, 6, 83); printf(" ");
+            output_index_colors(89, 6, 119);
+            break;
+        case 7:
+            output_index_colors(18, 6, 48); printf(" ");
+            output_index_colors(54, 6, 84); printf(" ");
+            output_index_colors(90, 6, 120);
+            break;
+        case 8:
+            output_index_colors(19, 6, 49); printf(" ");
+            output_index_colors(55, 6, 85); printf(" ");
+            output_index_colors(91, 6, 121);
+            break;
+        case 9:
+            output_index_colors(20, 6, 50); printf(" ");
+            output_index_colors(56, 6, 86); printf(" ");
+            output_index_colors(92, 6, 122);
+            break;
+        case 10:
+            output_index_colors(21, 6, 51); printf(" ");
+            output_index_colors(57, 6, 87); printf(" ");
+            output_index_colors(93, 6, 123);
+            break;
+        case 11: break;
+        /* Color cube 4, 5, 6 */
+        case 12:
+            output_index_colors(124, 6, 154); printf(" ");
+            output_index_colors(160, 6, 190); printf(" ");
+            output_index_colors(196, 6, 226);
+            break;
+        case 13:
+            output_index_colors(125, 6, 155); printf(" ");
+            output_index_colors(161, 6, 191); printf(" ");
+            output_index_colors(197, 6, 227);
+            break;
+        case 14:
+            output_index_colors(126, 6, 156); printf(" ");
+            output_index_colors(162, 6, 192); printf(" ");
+            output_index_colors(198, 6, 228);
+            break;
+        case 15:
+            output_index_colors(127, 6, 157); printf(" ");
+            output_index_colors(163, 6, 193); printf(" ");
+            output_index_colors(199, 6, 229);
+            break;
+        case 16:
+            output_index_colors(128, 6, 158); printf(" ");
+            output_index_colors(164, 6, 194); printf(" ");
+            output_index_colors(200, 6, 230);
+            break;
+        case 17:
+            output_index_colors(129, 6, 159); printf(" ");
+            output_index_colors(165, 6, 195); printf(" ");
+            output_index_colors(201, 6, 231);
+            break;
+        case 18:
+            break;
+        case 19: printf("Grey ramp:"); break;
+        case 20: output_index_colors(232, 1, 243); break;
+        case 21: output_index_colors(244, 1, 255); break;
     }
 }
 
