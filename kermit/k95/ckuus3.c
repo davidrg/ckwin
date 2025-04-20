@@ -9256,7 +9256,7 @@ int color_is_light(int index) {
     int blue, green, red;
 	int bgr;
     double intensity;
-    cell_video_attr_t attr;
+    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(0x00);
 
     attr = cell_video_attr_set_fg_color(attr, color_index_to_vio(index));
     bgr = cell_video_attr_foreground_rgb(attr);
@@ -9285,10 +9285,10 @@ int fg_color_for_bg_index(int bg_index) {
  * increment. The background colour will be the colour for that index. */
 void output_index_colors(int start, int increment, int max) {
     cell_video_attr_t cmdsav = colorcmd;
-    int j;
+    int j = 0;
 
     for (j = start; j <= max; j += increment) {
-        int bg_index, fg_index;
+        int bg_index = 0, fg_index = 0;
         bg_index = color_index_to_vio(j);
 
 #ifdef CK_COLORS_16
