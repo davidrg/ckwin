@@ -11951,21 +11951,67 @@ dodcs( void )
                             break;
                         }
                         break;
-                    case '"':
+                    case '"': {
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case 'q':       /* DECSCA */
                             snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                 attrib.unerasable? "1\"q" : "0\"q");
                             break;
-                        case 'p':       /* DECSCL */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c0$r\"p%c",_DCS,_ST8);
-                            else
-                                sprintf(decrpss,"%cP0$r\"p%c\\",ESC,ESC);
+                        case 'p': {     /* DECSCL */
+                            int m = 0;
+
+                            /* The 61 and 62 cases shoud never happen in practice.
+                             * The only time a VT520, VT420 or presumably a VT320
+                             * reports itse compatibility level at anything less than
+                             * itself is if its emulating the VT100, and the VT100
+                             * doesn't support DECRQSS (nor does the VT220. And so
+                             * when the VT520 has been put in VT100 compatibility
+                             * mode, it doesn't respond to DECRQSS.
+                             */
+                            switch(tt_type_mode) {
+                            case TT_VT100:
+                            case TT_VT102:
+                                m = 61;
+                                break;
+                            case TT_VT220:
+                            case TT_VT220PC:
+                                m = 62;
+                                break;
+                            case TT_VT320:
+                            case TT_VT320PC:
+                            case TT_WY370:
+                                m = 63;
+                                break;
+                            case TT_K95:
+                            case TT_XTERM:
+                            case TT_VT420:
+                                m = 64;
+                                break;
+                            case TT_VT520:
+                                m = 65;
+                                break;
+                            } /* tt_type_mode */
+
+                            printf("tt_type: %d\ttt_type_mode: %d\tm: %d\n",
+                                    tt_type, tt_type_mode, m);
+
+                            if (m != 0) {
+                                char buf[10];
+                                _snprintf(buf, sizeof(buf), "%d;%d\"p",
+                                    m, send_c1 ? 2 : 1);
+                                snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
+                            } else {
+                                char buf[10];
+                                _snprintf(buf, sizeof(buf), "\"p");
+                                snprintf(decrpss, DECRPSS_LEN, fmt, 0, buf);
+                            }
+
                             break;
-                        }
+                            } /* 'p' */
+                        } /* achar */
                         break;
+                    } /* '"' */
                     case 't': {          /* DECSLPP */
                         char buf[10];
                         _snprintf(buf, sizeof(buf), "%dt", tt_rows[VTERM]);
