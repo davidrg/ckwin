@@ -11935,12 +11935,12 @@ dodcs( void )
                             snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                 decsasd == SASD_TERMINAL? "0$}" : "1$}");
                             break;
-                        case '|':       /* DECSCPP */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c0$r$|%c",_DCS,_ST8);
-                            else
-                                sprintf(decrpss,"%cP0$r$|%c\\",ESC,ESC);
+                        case '|': {     /* DECSCPP */
+                            char buf[10];
+                            _snprintf(buf, sizeof(buf), "%d$|", tt_cols[VTERM]);
+                            snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                             break;
+                        }
                         case '~':       /* DECSSDT */
                             snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                   decssdt == SSDT_BLANK ? "0$~"
