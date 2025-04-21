@@ -3357,12 +3357,18 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     via DECRQSS is the 8-bit/7-bit controls setting.
                 </p>
             </section>
-            <section not-implemented="true" todo="true" role="parameter" id="decrqss-decscusr"
-                     mnemonic="DECSCUSR" title="Set Cursor Style">
+            <section role="parameter" id="decrqss-decscusr" mnemonic="DECSCUSR"
+                     title="Set Cursor Style">
                 <ctlseq><param-text/> = SP q</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <p>
+                    Reports the current <a href="#decslpp">DECSCUSR</a> setting -
+                    the cursor style. A response for a blinking block, for example,
+                    looks like <tt>DCS 1 $ r 1 SP q ST</tt> (where SP is the space
+                    character)
+                </p>
             </section>
             <section role="parameter" id="decrqss-decstbm" mnemonic="DECSTBM"
                      title="Set Top and Bottom Margins">
@@ -11095,6 +11101,9 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt52x:281"/>
             <termsupp first="vt510" series="vt" additional="tt"/>
             <p>Set Cursor Type (VT520)</p>
+            <p>You can query the current state of DECSCUSR with
+                <a href="#decrqss">DECRQSS</a></p>
+
             <section role="parameter" id="decscusr-blink-bl" title="Blinking Block">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-SP-q:Ps-=-0.1ED3"/>

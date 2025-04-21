@@ -12257,6 +12257,22 @@ dodcs( void )
                         } /* achar */
                         break;
                     } /* ')' */
+                    case SP: {
+                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        switch ( achar ) {
+                        case 'q': {    /*  DECSCUSR  */
+                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                                 (tt_cursor == TTC_BLOCK && tt_cursor_blink == 1) ? "1 q"
+                                :(tt_cursor == TTC_BLOCK && tt_cursor_blink == 0) ? "2 q"
+                                :(tt_cursor == TTC_ULINE && tt_cursor_blink == 1) ? "3 q"
+                                :(tt_cursor == TTC_ULINE && tt_cursor_blink == 0) ? "4 q"
+                                :"0 q"
+                                );
+                            break;
+                        } /* 'q' */
+                        } /* achar */
+                        break;
+                    } /* SP */
                     } /* end switch */
 
                     /* Unrecognised request */
@@ -20961,7 +20977,7 @@ vtcsi(void)
                                        cell);
                         break;
                 }
-                case 'q':       /* Set Cursor Type - VT520 */
+                case 'q':       /* DECSCUSR - Set Cursor Type - VT520 */
                     switch ( pn[1] ) {
                     case 0:
                     case 1:
