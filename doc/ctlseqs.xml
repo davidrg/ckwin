@@ -3423,25 +3423,31 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r $ | ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsasd"
-                     mnemonic="DECSASD" title="Select Active Status Display">
+            <section role="parameter" id="decrqss-decsasd" mnemonic="DECSASD"
+                     title="Select Active Status Display">
                 <ctlseq><param-text/> = $ }</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 0 $ r $ } ST</pre>
+                <p>
+                    Responds with the current <a href="#decsasd">DECSASD</a>
+                    selection. If DECSASD is set to Terminal (the default), the
+                    response would be: <tt>DCS 1 $ r 0 $ } ST</tt>
+                </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decssdt"
-                     mnemonic="DECSSDT" title="">
+            <section role="parameter" id="decrqss-decssdt" mnemonic="DECSSDT"
+                     title="Select Status Line Type">
                 <ctlseq><param-text/> = $ ~</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 0 $ r $ ~ ST</pre>
+                <p>
+                    Responds with the current <a href="#decssdt">DECSSDT</a>
+                    selection. If DECSSD is set to Indicator (the default), the
+                    response would be: <tt>DCS 1 $ r 1 $ ~ ST</tt>
+                </p>
             </section>
             <section role="parameter" id="decrqss-decstglt" mnemonic="DECSTGLT"
                      title="Select Color Lookup Table">
@@ -12888,6 +12894,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:DECSASD.html"/>
             <ref src="vt52x:274"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt"/>
+            <p>You can query the current state of DECSASD with
+                <a href="#decrqss">DECRQSS</a></p>
             <section role="parameter" id="decsasd-term" title="Terminal">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="070:1047"/>
@@ -13086,6 +13094,9 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:DECSSDT.html"/>
             <ref src="vt52x:301"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt"/>
+            <p>You can query the current state of DECSSDT with
+                <a href="#decrqss">DECRQSS</a></p>
+
             <section role="parameter" id="decssdt-blank" title="Blank">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="070:1048"/>
