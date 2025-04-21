@@ -11967,17 +11967,18 @@ dodcs( void )
                             break;
                         }
                         break;
-                    case 't':           /* DECSLPP */
+                    case 't': {          /* DECSLPP */
                         char buf[10];
                         _snprintf(buf, sizeof(buf), "%dt", tt_rows[VTERM]);
                         snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                         break;
-                    case 'r':           /* DECSTBM */
-                        if ( send_c1 )
-                            sprintf(decrpss,"%c0$rr%c",_DCS,_ST8);
-                        else
-                            sprintf(decrpss,"%cP0$rr%c\\",ESC,ESC);
+                    }
+                    case 'r': {         /* DECSTBM */
+                        char buf[20];
+                        _snprintf(buf, sizeof(buf), "%d;%dr", margintop, marginbot);
+                        snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                         break;
+                    }
                     case '|':           /* DECTTC */
                         if ( send_c1 )
                             sprintf(decrpss,"%c0$r|%c",_DCS,_ST8);
@@ -19160,7 +19161,7 @@ vtcsi(void)
                     }
                 }
                 else {
-                    /* Set margin (scrolling region) */
+                    /*  DECSTBM - Set margin (scrolling region) */
                     int h = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                     int w = VscrnGetWidth(VTERM);
 
