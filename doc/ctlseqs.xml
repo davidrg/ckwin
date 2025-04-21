@@ -3298,15 +3298,15 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             -->
 
             <section role="parameter" id="decrqss-sgr" mnemonic="SGR"
-                     title="Set Graphic Rendirion">
+                     title="Set Graphic Rendition">
                 <ctlseq><param-text/> = m</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <p>
-                    Returns selected graphic rendition. Only the following are
-                    currently supported:
+                    Returns currently <a href="#sgr">selected graphic rendition</a>.
+                    Only the following are currently reported:
                     <a href="#sgr-0">0</a>, <a href="#sgr-1">1</a>,
                     <a href="#sgr-2-dim">2 (dim)</a>, <a href="#sgr-3">3</a>,
                     <a href="#sgr-4">4</a>, <a href="#sgr-5-sb">5 (slow blink)</a>,
@@ -3318,15 +3318,18 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <a href="#sgr-90">90-97</a>, <a href="#sgr-100">100-107</a>.
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsca"
-                     mnemonic="DECSCA" title="Set Character Attribute">
+            <section role="parameter" id="decrqss-decsca" mnemonic="DECSCA"
+                     title="Set Character Attribute">
                 <ctlseq><param-text/> = &quot; q</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 0 $ r " q ST</pre>
+                <p>
+                    Responds with the current state of <a href="decsca">DECSCA</a>.
+                    For example, if DECSCA is set to Designate Character
+                    Erasable (2), then the response will be: <tt>DCS 1 $ r 1 " q ST</tt>
+                </p>
             </section>
             <section not-implemented="true" role="parameter" id="decrqss-decscl"
                      mnemonic="DECSCL" title="Set Conformance Level">
@@ -3466,6 +3469,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r * | ST</pre>
+                <!-- VT520 responds with 26*| by default -->
             </section>
             <section not-implemented="true" todo="true" role="parameter" id="decrqss-decac"
                      mnemonic="DECAC" title="Assign Color">
@@ -11111,6 +11115,10 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:DECSCA.html"/>
             <ref src="vt52x:275"/>
             <termsupp first="vt220" series="vt" additional="vt420 vt510"/>
+
+            <p>You can query the current state of DECSCA with
+                <a href="#decrqss">DECRQSS</a></p>
+
             <section style="group" role="group">
                 <section role="parameter" id="decsca-0" title="Designate character erasable">
                     <ctlseq><param-single/> = 0</ctlseq>
