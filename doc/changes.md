@@ -97,6 +97,8 @@ and terminal emulations that *do not* use the new 256-color mode,
    the COLORTERM environment variable by default. To make it work, you'll likely
    need to add COLORTERM to the `AcceptEnv` list in `/etc/ssh/sshd_config` on
    the server.
+ - Implemented DECRQSS for: SGR, DECSCA, DECSCL, DECSCUSR, DECSTBM, DECSLPP, 
+   DECSCPP, DECSASD, DECSSDT, DECSTGLT and DECSACE
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
