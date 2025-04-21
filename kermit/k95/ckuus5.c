@@ -6108,7 +6108,7 @@ shotrm() {
     extern int tt_idlelimit, tt_idleact;
 #endif /* CKTIDLE */
 #ifdef OS2
-    extern int wy_autopage, autoscroll, sgrcolors, colorreset, user_erasemode,
+    extern int wy_autopage, autoscroll, savedsgrcolors, colorreset, user_erasemode,
       decscnm, decscnm_usr, tt_diff_upd, tt_senddata,
       wy_blockend, marginbell, marginbellcol, tt_modechg, dgunix;
     int lines = 0;
@@ -6236,7 +6236,7 @@ shotrm() {
     printf(" %19s: %-13s  %13s: %-15s\n","Autopage",showoff(wy_autopage),
            "Autoscroll",showoff(autoscroll));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf(" %19s: %-13s  %13s: %-15s\n","SGR Colors",showoff(sgrcolors),
+    printf(" %19s: %-13s  %13s: %-15s\n","SGR Colors",showoff(savedsgrcolors),
            "ESC[0m color",colorreset?"default-color":"current-color");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     if (colorpalette == CK_PALETTE_16) s = "aixterm-16";
