@@ -670,6 +670,7 @@ unsigned short escbuffer[ESCBUFLEN+1];
 static int f_pushed = 0, c_pushed = 0, f_popped = 0;
 
 int sgrcolors = TRUE;                   /* Process SGR Color Commands */
+int savedsgrcolors = TRUE;
 
 int colorpalette = CK_DEFAULT_PALETTE;  /* Color palette to use */
 #ifdef KUI
@@ -6762,6 +6763,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     tt_type_mode = tt_type ;
 
+    /* Turn color back on if that was the users setting */
+    sgrcolors = savedsgrcolors;
+
     attribute = defaultattribute = colornormal; /* Normal colors */
     underlineattribute = colorunderline ;
     reverseattribute = colorreverse;
@@ -11964,10 +11968,9 @@ dodcs( void )
                         }
                         break;
                     case 't':           /* DECSLPP */
-                        if ( send_c1 )
-                            sprintf(decrpss,"%c0$rt%c",_DCS,_ST8);
-                        else
-                            sprintf(decrpss,"%cP0$rt%c\\",ESC,ESC);
+                        char buf[10];
+                        _snprintf(buf, sizeof(buf), "%dt", tt_rows[VTERM]);
+                        snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                         break;
                     case 'r':           /* DECSTBM */
                         if ( send_c1 )
@@ -12198,6 +12201,20 @@ dodcs( void )
                             break;
                         }
                         break;
+                    case ')': {
+                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        switch ( achar ) {
+                        case '{': {    /* DECSTGLT */
+                            /* TODO: This may not be entirely correct. Its possible
+                                 this setting is really controlling the current
+                                 color palette, not whether the color SGRs do anything */
+                            snprintf(decrpss, DECRPSS_LEN,
+                                    fmt, 1, sgrcolors ? "3){" : "0){");
+                            break;
+                        } /* '}' */
+                        } /* achar */
+                        break;
+                    } /* ')' */
                     } /* end switch */
 
                     /* Unrecognised request */
@@ -15636,6 +15653,63 @@ vtcsi(void)
                     break;
                 }
                 break;
+            case ')': {
+                achar = (escnext<=esclast)?escbuffer[escnext++]:0;
+                switch (achar) {
+
+                    case '{': {        /* DECSTGLT - VT525  (and VT340?) */
+#ifdef COMMENT
+                    /* TODO: The code below currently:
+                        - Turns sgr-colors on or off
+                        - Turns truereverse/trueunderline/truebold/trueblink
+                          on or off
+                        It has been tested and it *does* work for the above, but
+                        I'm not sure if this is actually the correct behaviour.
+                        I don't have access to a VT525 and I can't find anything
+                        (free) that emulates one and implements DECSTGLT. I'd
+                        hate to have an incorrect implementation that something
+                        comes to depend on, so for now its commented out until
+                        it can be verified as correct.
+                     */
+                        /* New mode is in pn[1] */
+                        switch (pn[1]) {
+                        case 1:   /* Alternate Color */
+                        case 2:   /* Alternate Color */
+                            /* Show attributes as colors. The VT525 manual only
+                             * documents this behaviour for blink, bold, reverse
+                             * and underline. */
+                            truereverse = FALSE;
+                            trueunderline = FALSE;
+                            truebold = FALSE;
+                            trueblink = FALSE;
+                            use_bold_attr = TRUE;
+                            use_blink_attr = TRUE;
+
+                            /* fall through */
+                        case 0:   /* Monochrome */
+                            sgrcolors=FALSE;
+                            /* TODO: should this affect the entire display, or
+                             *   just new text as it appears? If its the entire
+                             *   display, then we'll need a new RGBTable populated
+                             *   with only monochrome colors and we switch to that
+                             *   RGB table here.    */
+                            break;
+                        case 3:   /* ANSI SGR */
+                            truereverse = savedtruereverse;
+                            trueunderline = savedtrueunderline;
+                            truebold = savedtruebold;
+                            trueblink = savedtrueblink;
+                            use_bold_attr = bold_is_color;
+                            use_blink_attr = blink_is_color;
+                            sgrcolors=TRUE;
+                            break;
+                        } /* pn[1] */
+#endif /* COMMENT */
+                        break;
+                    } /* '}' */
+                } /* achar */
+                break;
+            } /* ')' */
             case '*':
                 achar = (escnext<=esclast)?escbuffer[escnext++]:0;
                 switch (achar) {

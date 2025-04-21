@@ -3267,9 +3267,43 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </p>
             <pre>DCS 1 $ r 0 ; 1 ; 3 ; 4 m ST</pre>
 
-            <section role="parameter" id="decrqss-sg" mnemonic="SGR" title="">
+            <!--
+                Not implemented from the VT520/VT525 manual
+                    DECCRTST    - q         CRT Saver Timer
+                    DECSEST     - r         Energy Save Timing
+                    DECARR      - p         Select Auto Repeat Rate
+                    DECSTGLT    ) {         Select Color Lookup Table
+                    DECSCP      * u         Select Communication Port
+                    DECSCS      * r         Select Communication Speed
+                    DECSDPT     ( p         Select Digital Printed Data Type
+                    DECSDDT     $ q         Select Disconnect Delay Time
+                    DECSFC      * s         Select Flow Control Type
+                    DECSPRTT    $ s         Select Printer Type
+                    DECSPPCS    * p         Select ProPrinter Character Set
+                    DECSSL        p         Select Set-Up Language
+                    DECSZS      , {         Select Zero Symbol
+                    DECSPMA     , x         Session Page Memory Allocation
+                    DECSKCV    SP r         Set Key Click Volume
+                    DECSLCK    SP v         Set Lock Key Style
+                    DECSMBV    SP u         Set Margin Bell Volume
+                    DECSPP      + w         Set Port Parameter
+                    DECSSCLS   SP p         Set Scroll Speed
+                    DECSTRL     " u         Set Transmit Rate Limit
+                    DECSWBV    SP t         Set Warning Bell Volume
+                    DECTME     SP ~         Terminal Mode Emulation
+               Not implemented from xterm
+                    XTQFMTKEYS > Pm f
+                    XTQMODKEYS > Pm m
+                    XTSMTITLE  > Pm t
+            -->
+
+            <section role="parameter" id="decrqss-sgr" mnemonic="SGR"
+                     title="Set Graphic Rendirion">
                 <ctlseq><param-text/> = m</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>
                     Returns selected graphic rendition. Only the following are
                     currently supported:
@@ -3284,94 +3318,189 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <a href="#sgr-90">90-97</a>, <a href="#sgr-100">100-107</a>.
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsca" mnemonic="DECSCA" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-decsca"
+                     mnemonic="DECSCA" title="Set Character Attribute">
                 <ctlseq><param-text/> = &quot; q</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r " q ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decscl"  mnemonic="DECSCL" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-decscl"
+                     mnemonic="DECSCL" title="Set Conformance Level">
                 <ctlseq><param-text/> = &quot; p</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre> DCS 0 $ r " p ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decstbm" mnemonic="DECSTBM" title="">
+            <section not-implemented="true" todo="true" role="parameter" id="decrqss-decscusr"
+                     mnemonic="DECSCUSR" title="Set Cursor Style">
+                <ctlseq><param-text/> = SP q</ctlseq>
+                <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
+            </section>
+            <section not-implemented="true" role="parameter" id="decrqss-decstbm"
+                     mnemonic="DECSTBM" title="Set Top and Bottom Margins">
                 <ctlseq><param-text/> = r</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r r ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decslrm" mnemonic="DECSLRM" title="Set Left and Right Margins">
+            <section not-implemented="true" role="parameter" id="decrqss-decslrm"
+                     mnemonic="DECSLRM" title="Set Left and Right Margins">
                 <ctlseq><param-text/> = s</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r s ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decslpp" mnemonic="DECSLPP" title="">
+            <section role="parameter" id="decrqss-decslpp" mnemonic="DECSLPP"
+                     title="Set Lines Per Page">
                 <ctlseq><param-text/> = t</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 0 $ r t ST</pre>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
+                <p>
+                    Reports the current <a href="#decslpp">DECSLPP</a> setting -
+                    the number of lines in the terminal screen. A response for
+                    a terminal with a height of 24 lines looks
+                    like: <tt>DCS 1 $ r 2 4 t ST</tt>
+                </p>
+                <p>
+                    Unlike a real terminal, Kermit 95s terminal height is not
+                    constrained to the options 24, 25, 36, 41, 42, 48, 52, 53
+                    and 72. If your K95 terminal happens to be 10, or 100 lines
+                    tall that is the number Kermit 95 will respond with.
+                </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decpro"  mnemonic="DECPRO" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-decpro"
+                     mnemonic="DECPRO" title="">
                 <ctlseq><param-text/> = }</ctlseq>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r } ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decpro2" mnemonic="DECPRO" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-decscpp"
+                     mnemonic="DECSCPP" title="">
                 <ctlseq><param-text/> = $ |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r $ | ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsasd" mnemonic="DECSASD" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-decsasd"
+                     mnemonic="DECSASD" title="Select Active Status Display">
                 <ctlseq><param-text/> = $ }</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r $ } ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decssdt" mnemonic="DECSSDT" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-decssdt"
+                     mnemonic="DECSSDT" title="">
                 <ctlseq><param-text/> = $ ~</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r $ ~ ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsace" mnemonic="DECSACE" title="Select Attrib Change Extent">
+            <section role="parameter" id="decrqss-decstglt" mnemonic="DECSTGLT"
+                     title="Select Color Lookup Table">
+                <ctlseq><param-text/> = ) {</ctlseq>
+                <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="vt52x:266"/>
+                <p>
+                    As Kermit 95 does not currently implement
+                    <a href="#decstglt">DECSTGLT</a>, this response is currently
+                    controlled with the <tt>SET TERMINAL SGR-COLORS</tt> setting
+                    which controls whether the color-related SGR parameters do
+                    anything. Note tha this may not be how a real VT525 responds
+                    to turning off color via DECSTGLT.
+                </p>
+                <p>
+                    If SGR Colors are ON, Kermit 95 responds with a 3 to indicate
+                    SGR colors are ON(<tt>DCS 1 $ r 3 ) { ST</tt>),
+                    otherwise it will be 0 (<tt>DCS 1 $ r 0 ) { ST</tt>) to
+                    indicate SGR colors are OFF.
+                </p>
+            </section>
+            <section not-implemented="true" role="parameter" id="decrqss-decsace"
+                     mnemonic="DECSACE" title="Select Active Status Display">
                 <ctlseq><param-text/> = * x</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: If DECSACE is on, K95 responds with:</p>
                 <pre>DCS 2 $ r * x ST</pre>
                 <p>otherwise, K95 responds with:</p>
                 <pre>DCS 1 $ r * x ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsnls" mnemonic="DECSNLS" title="Set Num Lines Per Screen">
+            <section not-implemented="true" role="parameter" id="decrqss-decsnls"
+                     mnemonic="DECSNLS" title="Set Number of Lines per Screen">
                 <ctlseq><param-text/> = * |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="070:451"/>
+                <ref src="vt510:DECRQSS.html"/>
+                <ref src="vt52x:266"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r * | ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decttc"  mnemonic="DECTTC" title="">
+            <section not-implemented="true" todo="true" role="parameter" id="decrqss-decac"
+                     mnemonic="DECAC" title="Assign Color">
+                <ctlseq><param-text/> = , |</ctlseq>
+                <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="vt52x:266"/>
+            </section>
+            <section not-implemented="true" todo="true" role="parameter" id="decrqss-decatc"
+                     mnemonic="DECATC" title="Alternate Text Color">
+                <ctlseq><param-text/> = , }</ctlseq>
+                <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
+                <ref src="vt52x:266"/>
+            </section>
+            <section not-implemented="true" role="parameter" id="decrqss-decttc"
+                     mnemonic="DECTTC" title="">
                 <ctlseq><param-text/> = |</ctlseq>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r | ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-dectltc" mnemonic="DECTLTC" title="">
+            <section not-implemented="true" role="parameter" id="decrqss-dectltc"
+                     mnemonic="DECTLTC" title="">
                 <ctlseq><param-text/> = ' s</ctlseq>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r ' s ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decelf"  mnemonic="DECELF" title="Enable Local Functions">
+            <section not-implemented="true" role="parameter" id="decrqss-decelf"
+                     mnemonic="DECELF" title="Enable Local Functions">
                 <ctlseq><param-text/> = + q</ctlseq>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r + q ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsmkr" mnemonic="DECSMKR" title="Select modifier key reporting">
+            <section not-implemented="true" role="parameter" id="decrqss-decsmkr"
+                     mnemonic="DECSMKR" title="Select modifier key reporting">
                 <ctlseq><param-text/> = + r</ctlseq>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r + r ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-declfkc" mnemonic="DECLFKC" title="Local Function Key Control">
+            <section not-implemented="true" role="parameter" id="decrqss-declfkc"
+                     mnemonic="DECLFKC" title="Local Function Key Control">
                 <ctlseq><param-text/> = = }</ctlseq>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r = } ST</pre>
@@ -11381,8 +11510,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <param-single/> below 24 may be interpreted as
                 <a href="#xtwinops">XTWINOPS</a>
             </p>
+            <p>
+                You can query the current state of DECSLPP with
+                <a href="#decrqss">DECRQSS</a>.
+            </p>
             <p badges="s97801">
-                This does not apply to SNI-97801 emulation which uses the
+                DECSLPP does not apply to SNI-97801 emulation which uses the
                 <tt>CSI <param-single/> t</tt> control sequence for
                 querying an ID card reader (see above).
             </p>
@@ -12536,11 +12669,42 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         </section>
         <section role="ctlseq" id="decstglt" mnemonic="DECSTGLT"
                  title="Select Color Look-Up Table"
-                 not-implemented="true" todo="true">
+                 not-implemented="true">
             <ctlseq>CSI <param-single/> ) {</ctlseq>
             <ref src="070:368"/>
             <ref src="vt52x:305"/>
             <termsupp first="vt520" series="vt" additional=""/>
+            <p>You can query the current state of DECSTGLT with <a href="#decrqss">DECRQSS</a></p>
+
+            <!-- TODO: There is a partial implementation of this now, but its
+                    unknown if it is correct or not, so it is currently commented
+                    out. Before it can be enabled we need to confirm if:
+                       * This affects the entire screen, or just new text as it
+                         arrives
+                       * If parameter 0 is greyscale or monochrome
+            -->
+
+            <section role="parameter" not-implemented="true" id="decstglt-0"
+                    title="Mono">
+                <ctlseq><param-text/> = 0</ctlseq>
+                <!--<p>Disables SGR colors. Does not effect existing screen contents</p>-->
+            </section>
+            <section style="group" role="group">
+                <section role="parameter" not-implemented="true" id="decstglt-1"
+                         title="Alternate Color">
+                    <ctlseq><param-text/> = 1</ctlseq>
+                </section>
+                <section role="parameter" not-implemented="true" id="decstglt-2"
+                         title="Alternate Color">
+                    <ctlseq><param-text/> = 2</ctlseq>
+                    <!--<p>Show text attributes as specified by <a href="#decatc">DECATC</a></p>-->
+                </section>
+            </section>
+            <section role="parameter" not-implemented="true" id="decstglt-3"
+                     title="ANSI SGR color">
+                <ctlseq><param-text/> = 3</ctlseq>
+                <!--<p>ANSI SGR color</p>-->
+            </section>
         </section>
         <section role="ctlseq" id="decszs" mnemonic="DECSZS"
                  title="Select Zero Symbol"
