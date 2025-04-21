@@ -11932,10 +11932,8 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case '}':       /* DECSASD */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c0$r$}%c",_DCS,_ST8);
-                            else
-                                sprintf(decrpss,"%cP0$r$}%c\\",ESC,ESC);
+                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                                decsasd == SASD_TERMINAL? "0$}" : "1$}");
                             break;
                         case '|':       /* DECSCPP */
                             if ( send_c1 )
@@ -11944,10 +11942,10 @@ dodcs( void )
                                 sprintf(decrpss,"%cP0$r$|%c\\",ESC,ESC);
                             break;
                         case '~':       /* DECSSDT */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c0$r$~%c",_DCS,_ST8);
-                            else
-                                sprintf(decrpss,"%cP0$r$~%c\\",ESC,ESC);
+                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                                  decssdt == SSDT_BLANK ? "0$~"
+                                : decssdt == SSDT_INDICATOR ? "1$~"
+                                : "2$~");
                             break;
                         }
                         break;
