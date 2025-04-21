@@ -11955,10 +11955,8 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case 'q':       /* DECSCA */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c0$r\"q%c",_DCS,_ST8);
-                            else
-                                sprintf(decrpss,"%cP0$r\"q%c\\",ESC,ESC);
+                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                                attrib.unerasable? "1\"q" : "0\"q");
                             break;
                         case 'p':       /* DECSCL */
                             if ( send_c1 )
