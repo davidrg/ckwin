@@ -11905,7 +11905,7 @@ dodcs( void )
                 achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                 switch ( achar ) {
                 case 'q': {              /* DECRQSS */
-                    char fmt[10];
+                    char fmt[15];
                     memset(fmt,0,sizeof(fmt));
 
                     /* Resulting format string has three parameters:
@@ -11913,9 +11913,10 @@ dodcs( void )
                      *  %s - the response string including any final characters
                      */
                     if (send_c1)
-                        snprintf(fmt, 10, "%c%%d$r%%s%c", _DCS, _ST8);
-                    else
-                        snprintf(fmt, 10, "%cP%%d$r%%s%c\\", ESC, ESC);
+                        snprintf(fmt, sizeof(fmt), "%c%%d$r%%s%c", _DCS, _ST8);
+                    else {
+                        snprintf(fmt, sizeof(fmt), "%cP%%d$r%%s%c\\", ESC, ESC);
+                    }
 
                     /* The next set of characters are the D...D portion */
                     /* of the DECRQSS request */
@@ -12161,10 +12162,8 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case 'x':       /* DECSACE - Select Attrib Change Extent */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c%d$r*x%c",_DCS,decsace?2:1,_ST8);
-                            else
-                                sprintf(decrpss,"%cP%d$r*x%c\\",ESC,decsace?2:1,ESC);
+                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                                decsace? "2*x" : "1*x");
                             break;
                         case '|':       /* DECSNLS - Set Num Lines Per Screen */
                             if ( send_c1 )

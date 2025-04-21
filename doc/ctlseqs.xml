@@ -3444,17 +3444,18 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     indicate SGR colors are OFF.
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decsace"
-                     mnemonic="DECSACE" title="Select Active Status Display">
+            <section role="parameter" id="decrqss-decsace" mnemonic="DECSACE"
+                     title="Select Attribute Change Extent">
                 <ctlseq><param-text/> = * x</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: If DECSACE is on, K95 responds with:</p>
-                <pre>DCS 2 $ r * x ST</pre>
-                <p>otherwise, K95 responds with:</p>
-                <pre>DCS 1 $ r * x ST</pre>
+                <p>
+                    Reports the current <a href="#decsace">DECSACE</a> setting.
+                    For example, if DECSACE is set to 2 (Rectangle, exact) then
+                    the response would be <tt>DCS 1 $ r 2 * x ST</tt>
+                </p>
             </section>
             <section not-implemented="true" role="parameter" id="decrqss-decsnls"
                      mnemonic="DECSNLS" title="Set Number of Lines per Screen">
@@ -12366,6 +12367,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 available to VT320-compatible terminal types. In the future,
                 this will only be available to VT420 and higher emulations.
             </p>
+            <p>You can query the current state of DECSACE with <a href="#decrqss">DECRQSS</a></p>
 
             <section style="group" role="group">
                 <section role="parameter" id="decsace-0" title="from start to end position, wrapped">
