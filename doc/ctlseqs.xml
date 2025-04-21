@@ -3331,15 +3331,31 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     Erasable (2), then the response will be: <tt>DCS 1 $ r 1 " q ST</tt>
                 </p>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decscl"
-                     mnemonic="DECSCL" title="Set Conformance Level">
+            <section role="parameter" id="decrqss-decscl" mnemonic="DECSCL"
+                     title="Set Conformance Level">
                 <ctlseq><param-text/> = &quot; p</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre> DCS 0 $ r " p ST</pre>
+                <p>Reports the conformance level set with <a href="#decscl">DECSCL</a>,
+                    the result of which <em>may</em> be non-obvious!
+                </p>
+                <p>
+                    A real DEC VT520 has two conformance levels: VT100 mode, and
+                    VT520 mode. So setting the conformance level to 62, 63, 64 or 65
+                    will result in the conformance level being set to 65 giving you
+                    a response of <tt>DCS 1 $ r 6 5 ; 1 " p ST</tt> if using 7 bit
+                    controls. And if you set the conformance level to 61 (VT100),
+                    a real VT520 will not respond to DECRQSS because a real VT100
+                    wouldn't.
+                </p>
+                <p>
+                    As a result you'll only get a response on a VT320 or higher,
+                    and the conformance level will reflect the chosen terminal
+                    type. The only part of this response you can actually change
+                    via DECRQSS is the 8-bit/7-bit controls setting.
+                </p>
             </section>
             <section not-implemented="true" todo="true" role="parameter" id="decrqss-decscusr"
                      mnemonic="DECSCUSR" title="Set Cursor Style">
@@ -9721,14 +9737,25 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:DECSCL.html"/>
             <ref src="vt52x:276"/>
             <termsupp first="vt220" series="vt" additional="vt420 vt510 tt"/>
-            <!-- TODO: Note: Which terminal type is switched to here depens on
-                    the current tt_type, *not* the current tt_type_mode. A WYSE
-                    emulating a VT220 can only switch into other modes a real
-                    WYSE supports, not the other modes a real VT220 supports
-            -->
             <p>
-                Set compatibility level and set active status display to terminal.
-                The second parameter is only recognised in combination with levels 2 and 3.
+                This lets you switch in and out of VT100 mode, and change between
+                7-bit controls and 8-bit controls.
+            </p>
+            <p>
+                A real VT520 at least, and the documentation suggests this is
+                the case for older models too, can only switch between the VT100
+                conformance level and its own conformance level. On a VT520,
+                trying to set a conformance level of 62, 63, 64 or 65 will all
+                get you 65. You get to choose between the lowest level (61) and
+                the highest level for your terminal - the in between options are
+                all the same as the highest level.
+            </p>
+            <p>
+                So the conformance levels you're switching to here depend on
+                which terminal type Kermit 95 is emulating.
+            </p>
+            <p>If Kermit 95 is emulating a VT320 or higher, you can query the
+                state of DECSCL with with <a href="#decrqss">DECRQSS</a>
             </p>
             <section role="parameter" title="level 1" id="decscl-l1-vt100" badges="vt100">
                 <ctlseq><param-single symbol="Pl"/> = 61</ctlseq>
