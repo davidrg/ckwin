@@ -3413,15 +3413,22 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r } ST</pre>
             </section>
-            <section not-implemented="true" role="parameter" id="decrqss-decscpp"
-                     mnemonic="DECSCPP" title="">
+            <section role="parameter" id="decrqss-decscpp" mnemonic="DECSCPP"
+                     title="Set Columns Per Page">
                 <ctlseq><param-text/> = $ |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 0 $ r $ | ST</pre>
+                <p>Kermit 95 response with the width of the terminal Window. If,
+                for example, the terminal is 132 columns wide the response would
+                be: <tt>DCS 1 $ r 1 3 2 $ | ST</tt></p>
+                <p>
+                    Unlike a real terminal, Kermit 95s terminal width is not
+                    limited to being only 80 or 132 columns wide. If the
+                    terminal window is some other width, such as 200 columns,
+                    it will be reported here also.
+                </p>
             </section>
             <section role="parameter" id="decrqss-decsasd" mnemonic="DECSASD"
                      title="Select Active Status Display">
