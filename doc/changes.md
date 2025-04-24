@@ -99,6 +99,12 @@ and terminal emulations that *do not* use the new 256-color mode,
    the server.
  - Implemented DECRQSS for: SGR, DECSCA, DECSCL, DECSCUSR, DECSTBM, DECSLPP, 
    DECSCPP, DECSASD, DECSSDT, DECSTGLT and DECSACE
+ - Implemented DECSTGLT, DECATC, DECATCBM and DECATCUM. DECSTGLT allows
+   switching to a monochrome mode where SGR colors are not rendered, or an
+   alternate color mode where colors (selected via DECATC) are specified using
+   attribute combinations rather than, eg, SGR30-38. DECATCBM and DECATCUM
+   enable true-blink and true-underline respectively while in alternate color
+   mode.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

@@ -1096,10 +1096,12 @@ struct stringint {			/* String and (wide) integer */
 #define ISTVI950(x) (x == TT_TVI950)
 #define ISVT52(x)  (x == TT_VT52 || x == TT_H19)
 #ifdef COMMENT
+#define ISVT525(x) (x == TT_VT525)
 #define ISVT520(x) (x == TT_VT520)
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
 #else /* COMMENT */
-/* Since we do not yet support 420/520 extend 320 */
+/* Since we do not yet support 420/520/525 extend 320 */
+#define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
 #endif /* COMMENT */

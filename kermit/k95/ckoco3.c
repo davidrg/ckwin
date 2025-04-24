@@ -392,6 +392,8 @@ cell_video_attr_t                       /* Video attribute bytes */
     saveddimattribute[VNUM]={0,0,0,0}
     ;
 
+cell_video_attr_t decatc_colors[16];
+
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
          savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
                             {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}},
@@ -676,6 +678,12 @@ int sgrcolors = TRUE;                   /* Process SGR Color Commands */
 #define DECSTGLT_ALTERNATE_2    2
 #define DECSTGLT_COLOR          3
 int decstglt = DECSTGLT_COLOR;
+
+/* These only apply to decstgly == DECSTGLT_ALTERNATE.
+ * TODO: Does a real VT525 default these to ON or OFF?
+ * If we have to deault these */
+int decatcbm = FALSE;        /* True blink as well as blink color */
+int decatcum = FALSE;        /* True underline as well as underline color */
 
 int colorpalette = CK_DEFAULT_PALETTE;  /* Color palette to use */
 #ifdef KUI
@@ -1702,6 +1710,22 @@ int color_index_to_vio(int index) {
         case 11: return 14; break;
         case 12: return 9; break;
         case 14: return 11; break;
+        default: break;
+    }
+    return index;
+}
+
+int color_index_from_vio(int index) {
+	if (index > 15) return index;
+	switch(index) {
+        case 4: return 1; break;
+        case 6: return 3; break;
+        case 1: return 4; break;
+        case 3: return 6; break;
+        case 12: return 9; break;
+        case 14: return 11; break;
+        case 9: return 12; break;
+        case 11: return 14; break;
         default: break;
     }
     return index;
@@ -6769,6 +6793,28 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     tt_type_mode = tt_type ;
 
     decstglt = DECSTGLT_COLOR;
+
+    /* TODO: What are the defaults for these on a VT525? No idea, I don't have
+             access to one to test against, which is proving painful. These
+             below are just some, I hope, sensible defaults.
+       TODO: All of these should probably be customisable by the user via
+             SET TERMINAL COLOR. At the moment only the first five are.*/
+    decatc_colors[0] = colornormal;
+    decatc_colors[1] = colorbold;
+    decatc_colors[2] = colorreverse;
+    decatc_colors[3] = colorunderline;
+    decatc_colors[4] = colorblink;
+    decatc_colors[5] = swapcolors(colorbold);
+    decatc_colors[6] = colorbold;  /* TODO: Bold+Underline */
+    decatc_colors[7] = colorbold;  /* TODO: Bold+Blink */
+    decatc_colors[8] = swapcolors(colorunderline); /* Reverse+Underline */
+    decatc_colors[9] = swapcolors(colorblink); /* Reverse+Blink */
+    decatc_colors[10] = colorunderline; /* TODO: Underline+Blink */
+    decatc_colors[11] = swapcolors(colorbold); /* TODO: Reverse+Bold+Underline */
+    decatc_colors[12] = swapcolors(colorbold); /* TODO: Reverse+Bold+Blink */
+    decatc_colors[13] = colorbold; /* TODO: Bold+Underline+Blink */
+    decatc_colors[14] = swapcolors(colorunderline); /* TODO: Reverse+Underline+Blink */
+    decatc_colors[15] = swapcolors(colorbold); /* TODO: Reverse+Bold+Underline+Blink */
 
     attribute = defaultattribute = colornormal; /* Normal colors */
     underlineattribute = colorunderline ;
@@ -11888,10 +11934,10 @@ dodcs( void )
           LB4002:
             while (achar == ';') { /* get Pn[k] */
                 achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
-                k++;
+                if (k < 10) k++;
                 if (achar == '?')
                   achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
-                                pn[k] = 0 ;
+                pn[k] = 0 ;
                 while (isdigit(achar)) {                /* Get number */
                     pn[k] = (pn[k] * 10) + achar - 48;
                     achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
@@ -11923,8 +11969,37 @@ dodcs( void )
                     }
 
                     /* The next set of characters are the D...D portion */
-                    /* of the DECRQSS request */
+                    /* of the DECRQSS request. */
                     achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+
+                    /* The Windows Terminal, and possibly a real VT525, allows
+                     * parameter numbers to be here too. That is, both of these
+                     * are recognised as valid:
+                     *     DCS 1 $ q ' } ST
+                     *     DCS $ q 1 ' } ST
+                     * So if we found no parameters before the '$', check for any
+                     * after the 'q' */
+                    if (k == 0) { /* No parameters? Look again. */
+                        pn[1] = 0;
+                        while (isdigit(achar)) {            /* Get number */
+                            pn[1] = (pn[1] * 10) + achar - 48;
+                            achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        }
+                        k = 1;
+                        while (achar == ';') { /* get Pn[k] */
+                            achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                            if (k < 10) k++;
+                            if (achar == '?')
+                              achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                            pn[k] = 0 ;
+                            while (isdigit(achar)) {                /* Get number */
+                                pn[k] = (pn[k] * 10) + achar - 48;
+                                achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                            }
+                        }
+                        pn[k + 1] = 1;
+                    }
+
                     switch ( achar ) {
                     case '}':           /* DECPRO */
                         if ( send_c1 )
@@ -12251,10 +12326,15 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case '{': {    /* DECSTGLT */
-                            char buf[10];
-                            snprintf(buf, sizeof(buf), "%d){", decstglt);
-                            snprintf(decrpss, DECRPSS_LEN,
-                                    fmt, 1, buf);
+                            if (ISVT525(tt_type_mode)) {
+                                char buf[10];
+                                snprintf(buf, sizeof(buf), "%d){", decstglt);
+                                snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+                            } else {
+                                snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 0, "){");
+                            }
                             break;
                         } /* '}' */
                         } /* achar */
@@ -12276,14 +12356,39 @@ dodcs( void )
                         } /* achar */
                         break;
                     } /* SP */
+                    case ',': {
+                        achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        switch ( achar ) {
+                        case '}': {    /*  DECATC  */
+                            char buf[20];
+
+                            if (k >= 1 && pn[1] >= 0 && pn[1] <= 15 && ISVT525(tt_type_mode)) {
+                                cell_video_attr_t att = decatc_colors[pn[1]];
+
+                                snprintf(buf, sizeof(buf), "%d;%d;%d,}",
+                                    pn[1],
+                                    color_index_from_vio(cell_video_attr_foreground(att)),
+                                    color_index_from_vio(cell_video_attr_background(att)));
+                                snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 1, buf);
+                            } else {
+                                snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 0, ",}");
+                            }
+
+                            break;
+                        } /* '}' */
+                        } /* achar */
+                        break;
+                    } /* ',' */
                     } /* end switch */
 
                     /* Unrecognised request */
                     if ( decrpss[0] == '\0') {
                         if ( send_c1 )
-                            sprintf(decrpss,"%c1$r%c",_DCS,_ST8);
+                            sprintf(decrpss,"%c0$r%c",_DCS,_ST8);
                         else
-                            sprintf(decrpss,"%cP1$r%c\\",ESC,ESC);
+                            sprintf(decrpss,"%cP0$r%c\\",ESC,ESC);
                     }
 
                     sendchars(decrpss,strlen(decrpss));
@@ -14646,14 +14751,11 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 
     /* We've been asked to be monochrome (or monochrome plus
      * attributes-as-color). Rather than forcing everything to black and white,
-     * we'll force it to the default colors as set by SET TERM COLOR TERMINAL,
-     * this still leaves the user with control over appearance.
+     * we'll force it to the default attribute. This still leaves the user (or
+     * application via DECATC) some level of control.
      *
-     * TODO: If decstglt == DECSTGLT_MONO, we should perhaps also prevent
-             application of attributes-as-color below (there is a separate
-             DECSTGLT setting for that)
      */
-    if (decstglt != DECSTGLT_COLOR) {
+    if (decstglt == DECSTGLT_MONO) {
         if (decscnm) colorattr = byteswapcolors(colornormal);
         else colorattr = colornormal;
     }
@@ -14690,92 +14792,156 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
         if (vtattr & VT_CHAR_ATTR_HYPERLINK)
             vtattr |= tt_url_hilite_attr;
 
-        if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-            (!trueunderline ||  /* underline simulated by color */
-                decstglt == DECSTGLT_ALTERNATE) )
-            colorval = underlineattribute ;
-        else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
-                 (!truereverse || /* reverse simulated by color */
-                    decstglt == DECSTGLT_ALTERNATE))
-            colorval = reverseattribute ;
-        else if ((vtattr & VT_CHAR_ATTR_ITALIC) &&
-                 (!trueitalic || /* italic simulated by color */
-                    decstglt == DECSTGLT_ALTERNATE))
-            colorval = italicattribute;
-        else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
-            /* a graphic character */
-            colorval = graphicattribute ;
-        else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                ((!trueblink && use_blink_attr) || decstglt == DECSTGLT_ALTERNATE))
-            /* a blinking character */
-            colorval = blinkattribute ;
-        else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
-                ((!truebold && use_bold_attr) || decstglt == DECSTGLT_ALTERNATE))
-            colorval = boldattribute ;
-		else if ((vtattr & VT_CHAR_ATTR_DIM) &&
-				((!truedim && dim_is_color) || decstglt == DECSTGLT_ALTERNATE))
-			colorval = dimattribute;
-        else
-            colorval = colorattr ;
+        if (decstglt == DECSTGLT_ALTERNATE) {
+            /* VT525 attributes as colors: This goes beyond what K95 normally
+               supports, assigning colors to *combinations* of attributes. Four
+               attributes makes 16 different foreground+background combinations.
 
-
-        if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-            !trueblink && !use_blink_attr && /* blink simulated by BGI */
-            decstglt != DECSTGLT_ALTERNATE
-#ifndef KUI
-            || (vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-            trueunderline /* underline simulated by BGI */
-#endif /* KUI */
-             )
-        {
-            /* Make the color values intensity bit the opposite of whatever the
-             * current normal foreground (or background in the case of reverse
-             * video) intensity bit is set to.
+               These are all stored in decatc_colors which is initialised by
+               doreset() and can be set by DECATC only - there is no SET TERMINAL
+               command for customising these at this time, as they're only ever
+               used when the terminal is put specially in the DECSTGLT alternate
+               color mode. This is really only here for VT525-compatibility.
              */
-            if (decscnm) {
-                if ( fgi )
-                    colorval = cell_video_attr_with_fg_intensity_unset(colorval);  /* Toggle FGI */
-                else
-                    colorval = cell_video_attr_with_fg_intensity_set(colorval);
-            } else {
-                if (bgi)
-                    colorval = cell_video_attr_with_bg_intensity_unset(colorval);  /* Toggle BGI */
-                else
-                    colorval = cell_video_attr_with_bg_intensity_set(colorval);
-            }
-        }
 
-        /* Unlike the others, we still *try* to set the intensity bit for bold
-         * if the current FG/BG color is <16, because some applications use
-         * the bold attribute to access the 8 intense colors. So in K95G,
-         * turning off truebold just turns off the bold font without affecting
-         * color (unlike turning off trueblink).
-         */
-        if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
-             ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color &&
-                decstglt != DECSTGLT_ALTERNATE
-#ifdef KUI
-               && !truedim
+            int idx;
+
+            if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_BLINK) &&
+                        (vtattr & VT_CHAR_ATTR_REVERSE) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 15;
+            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_BLINK) &&
+                        (vtattr & VT_CHAR_ATTR_REVERSE))
+                idx = 14;
+            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_BLINK) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 13;
+            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                        (vtattr & VT_CHAR_ATTR_REVERSE ) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 12;
+            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_REVERSE) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 11;
+            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_BLINK))
+                idx = 10;
+            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                        (vtattr & VT_CHAR_ATTR_REVERSE))
+                idx = 9;
+            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_REVERSE))
+                idx = 8;
+            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 7;
+            else if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 6;
+            else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
+                        (vtattr & VT_CHAR_ATTR_BOLD))
+                idx = 5;
+            else if (vtattr & VT_CHAR_ATTR_BLINK)
+                idx = 4;
+            else if (vtattr & VT_CHAR_ATTR_UNDERLINE)
+                idx = 3;
+            else if (vtattr & VT_CHAR_ATTR_REVERSE)
+                idx = 2;
+            else if (vtattr & VT_CHAR_ATTR_BOLD)
+                idx = 1;
+            else idx = 0;
+
+            colorval = decatc_colors[idx];
+
+        } else {  /* decstglt != DECSTGLT_ALTERNATE */
+
+            if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                !trueunderline /* underline simulated by color */ )
+                colorval = underlineattribute ;
+            else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
+                     !truereverse /* reverse simulated by color */ )
+                colorval = reverseattribute ;
+            else if ((vtattr & VT_CHAR_ATTR_ITALIC) &&
+                     !trueitalic /* italic simulated by color */ )
+                colorval = italicattribute;
+            else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
+                /* a graphic character */
+                colorval = graphicattribute ;
+            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                    !trueblink && use_blink_attr)
+                /* a blinking character */
+                colorval = blinkattribute ;
+            else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
+                    !truebold && use_bold_attr)
+                colorval = boldattribute ;
+    		else if ((vtattr & VT_CHAR_ATTR_DIM) &&
+    				!truedim && dim_is_color)
+    			colorval = dimattribute;
+            else
+                colorval = colorattr ;
+
+
+            if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                !trueblink && !use_blink_attr /* blink simulated by BGI */
+#ifndef KUI
+                || (vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                trueunderline /* underline simulated by BGI */
 #endif /* KUI */
-               )
-             ) {
-            if (decscnm) {
-                if (bgi)
-                    colorval = cell_video_attr_with_bg_intensity_unset(colorval);  /* Toggle BGI */
-                else
-                    colorval = cell_video_attr_with_bg_intensity_set(colorval);
-            } else {
-                if ( fgi )
-                    colorval = cell_video_attr_with_fg_intensity_unset(colorval);  /* Toggle FGI */
-                else
-                    colorval = cell_video_attr_with_fg_intensity_set(colorval);
+                 )
+            {
+                /* Make the color values intensity bit the opposite of whatever the
+                 * current normal foreground (or background in the case of reverse
+                 * video) intensity bit is set to.
+                 */
+                if (decscnm) {
+                    if ( fgi )
+                        colorval = cell_video_attr_with_fg_intensity_unset(colorval);  /* Toggle FGI */
+                    else
+                        colorval = cell_video_attr_with_fg_intensity_set(colorval);
+                } else {
+                    if (bgi)
+                        colorval = cell_video_attr_with_bg_intensity_unset(colorval);  /* Toggle BGI */
+                    else
+                        colorval = cell_video_attr_with_bg_intensity_set(colorval);
+                }
             }
-        }
 
-        if ( vtattr & VT_CHAR_ATTR_REVERSE &&
-            truereverse /* not being simulated */ &&
-            decstglt != DECSTGLT_ALTERNATE )
-            colorval = byteswapcolors(colorval);
+            /* Unlike the others, we still *try* to set the intensity bit for bold
+             * if the current FG/BG color is <16, because some applications use
+             * the bold attribute to access the 8 intense colors. So in K95G,
+             * turning off truebold just turns off the bold font without affecting
+             * color (unlike turning off trueblink).
+             */
+            if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
+                 ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
+#ifdef KUI
+                   && !truedim
+#endif /* KUI */
+                   )
+                 ) {
+                if (decscnm) {
+                    if (bgi)
+                        colorval = cell_video_attr_with_bg_intensity_unset(colorval);  /* Toggle BGI */
+                    else
+                        colorval = cell_video_attr_with_bg_intensity_set(colorval);
+                } else {
+                    if ( fgi )
+                        colorval = cell_video_attr_with_fg_intensity_unset(colorval);  /* Toggle FGI */
+                    else
+                        colorval = cell_video_attr_with_fg_intensity_set(colorval);
+                }
+            }
+
+            if ( vtattr & VT_CHAR_ATTR_REVERSE &&
+                truereverse /* not being simulated */ &&
+                decstglt != DECSTGLT_ALTERNATE )
+                colorval = byteswapcolors(colorval);
+
+        } /* not decstglt == DECSTGLT_ALTERNATE */
 
         if ( vtattr & VT_CHAR_ATTR_INVISIBLE ) {
 #ifdef CK_COLORS_24BIT
@@ -14795,7 +14961,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
              *             Select BG        Select BG as FG
              * So this copies the current background color to the foreground.
              */
-            }
+        }
     }
 
   done:
@@ -15317,6 +15483,15 @@ vtcsi(void)
                         case 68: /* DECKBUM */
                             pn[2] = 3 ; /* permanently set */
                             break;
+                        case 114: /* DECATCUM */
+                            pn[2] = decatcum ? 1 : 2;
+                            break;
+                        case 115: /* DECATCBM */
+                            pn[2] = decatcbm ? 1 : 2;
+                            break;
+                        /* TODO: Also report on:
+                            Mouse tracking, bracketed paste
+                         */
                         default:
                             pn[2] = 0 ; /* Unrecognized mode */
                             break;
@@ -15739,22 +15914,24 @@ vtcsi(void)
                 switch (achar) {
 
                     case '{': {        /* DECSTGLT - VT525  (and VT340?) */
-                        /* New mode is in pn[1] */
-                        switch (pn[1]) {
-                        case 0:   /* Monochrome */
-                            decstglt = DECSTGLT_MONO;
-                            break;
-                        case 1:   /* Alternate Color */
-                        case 2:   /* Alternate Color */
-                            /* Show attributes as colors. The VT525 manual only
-                             * documents this behaviour for blink, bold, reverse
-                             * and underline. */
-                            decstglt = DECSTGLT_ALTERNATE;
-                            break;
-                        case 3:   /* ANSI SGR */
-                            decstglt = DECSTGLT_COLOR;
-                            break;
-                        } /* pn[1] */
+                        if (ISVT525(tt_type_mode)) {
+                            /* New mode is in pn[1] */
+                            switch (pn[1]) {
+                            case 0:   /* Monochrome */
+                                decstglt = DECSTGLT_MONO;
+                                break;
+                            case 1:   /* Alternate Color */
+                            case 2:   /* Alternate Color */
+                                /* Show attributes as colors. The VT525 manual only
+                                 * documents this behaviour for blink, bold, reverse
+                                 * and underline. */
+                                decstglt = DECSTGLT_ALTERNATE;
+                                break;
+                            case 3:   /* ANSI SGR */
+                                decstglt = DECSTGLT_COLOR;
+                                break;
+                            } /* pn[1] */
+                        }
                         break;
                     } /* '}' */
                 } /* achar */
@@ -16775,6 +16952,12 @@ vtcsi(void)
                                 /* color */
                                 ;
                             break;
+                        case 114:      /* DECATCUM */
+                            decatcum = TRUE;
+                            break;
+                        case 115:      /* DECATCBM */
+                            decatcbm = TRUE;
+                            break;
                         case 1000:
                             /* XTERM - Send Mouse X&Y on button press and release */
 #ifdef OS2MOUSE
@@ -17360,6 +17543,12 @@ vtcsi(void)
                                    /* color map background color   */
                                    ;
                                break;
+                            case 114:      /* DECATCUM */
+                                decatcum = FALSE;
+                                break;
+                            case 115:      /* DECATCBM */
+                                decatcbm = FALSE;
+                                break;
                            case 1000:
                                /* XTERM - Don't Send Mouse X&Y on button press and release */
 #ifdef OS2MOUSE
@@ -20868,7 +21057,23 @@ vtcsi(void)
                         pn[1] = 8 ;
                     loadtod( pn[1], pn[2] ) ;
                     break;
-                }
+                case '}': {    /* DECATC - Alternate Text Color */
+                    if (ISVT525(tt_type_mode)) {
+                        cell_video_attr_t att = cell_video_attr_init_vio_attribute(0x00);
+                        int pmax = current_palette_max_index();
+
+                        if (pn[2] < pmax && pn[3] < pmax) {
+                            att = cell_video_attr_set_fg_color(att, color_index_to_vio(pn[2]));
+                            att = cell_video_attr_set_bg_color(att, color_index_to_vio(pn[3]));
+
+                            decatc_colors[pn[1]] = att;
+                            printf("Set color %d fg %d bg %d\n", pn[1], pn[2], pn[3]);
+                        }
+                    }
+
+                    break;
+                } /* '}' */
+                } /* switch (achar) */
                 break;
             }
             case '\'':
