@@ -38,7 +38,7 @@ extern int scrollflag[];
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic, truedim, truebold;
-extern int decstglt;
+extern int decstglt, decatcbm, decatcum;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 
@@ -858,9 +858,15 @@ void KClient::writeMe()
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
             if (decstglt == DECSTGLT_ALTERNATE) {
-                // DECSTGLT says we should show attributes as colors
-                normal = TRUE; bold = FALSE; dim = FALSE; underline = FALSE;
-                italic = FALSE; blink = FALSE;
+                // DECSTGLT says we should show attributes as colors. DECATCUM
+                // and DECATCBM *may* say we should still do true underline and
+                // true blink even while doing these as colors.
+                bold = FALSE; dim = FALSE; italic = FALSE;
+
+                underline = decatcum && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
+                blink = decatcbm && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+
+                normal = !underline && !blink;
             }
 
             if( normal )

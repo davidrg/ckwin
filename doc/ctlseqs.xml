@@ -540,6 +540,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         </badgegroup>
         <badgegroup name="isvt320">
             <!-- When these are implemented enough
+            <badge name="vt525"/>
             <badge name="vt520"/>
             <badge name="vt420"/>-->
             <badge name="vt320"/>
@@ -547,6 +548,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <badge name="wy370"/>
             <badge name="s97801"/>
             <badge name="aaa"/>
+        </badgegroup>
+
+        <badgegroup name="isvt525">
+            <!-- When VT525 is implemented enough, this should contain
+                 only <badge name="vt525"/> -->
+            <badgegroup-ref name="isvt320"/>
         </badgegroup>
         <badgegroup name="isvt520">
             <!-- When VT520 is implemented enough, this should contain
@@ -3272,7 +3279,6 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     DECCRTST    - q         CRT Saver Timer
                     DECSEST     - r         Energy Save Timing
                     DECARR      - p         Select Auto Repeat Rate
-                    DECSTGLT    ) {         Select Color Lookup Table
                     DECSCP      * u         Select Communication Port
                     DECSCS      * r         Select Communication Speed
                     DECSDPT     ( p         Select Digital Printed Data Type
@@ -3463,7 +3469,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </p>
             </section>
             <section role="parameter" id="decrqss-decstglt" mnemonic="DECSTGLT"
-                     title="Select Color Lookup Table">
+                     title="Select Color Lookup Table" groups="isvt525">
                 <ctlseq><param-text/> = ) {</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
@@ -3502,11 +3508,24 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
             </section>
-            <section not-implemented="true" todo="true" role="parameter" id="decrqss-decatc"
-                     mnemonic="DECATC" title="Alternate Text Color">
+            <section role="parameter" id="decrqss-decatc" mnemonic="DECATC"
+                     title="Alternate Text Color" groups="isvt525">
                 <ctlseq><param-text/> = , }</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
+                <p>
+                    Reports one of the 16 color pairs set with
+                    <a href="#decatc">DECATC</a>. A parameter must be supplied
+                    to specify <em>which</em> color pair to report. For
+                    compatibility with other terminals, <!-- (Windows Terminal
+                    specifically, and quite possibly the VT525 too) --> that
+                    parameter can appear either before the '$q' or after it.
+                    For example, both of the following will request the color
+                    pair for Underline (3):
+                </p>
+                <pre>DCS 3 $ q , } ST
+DCS $ q 3 , } ST</pre>
+                <p>And the response might be something like: <tt>DCS 1 $ r 3 ; 1 4 ; 4 , } ST</tt></p>
             </section>
             <section not-implemented="true" role="parameter" id="decrqss-decttc"
                      mnemonic="DECTTC" title="">
@@ -6382,18 +6401,26 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <termsupp first="vt520" series="vt" additional=""/>
             </section>
             <section role="parameter" id="decatcum" mnemonic="DECATCUM"
-                     title="Set/Reset Alternate Text Underline Mode"
-                     not-implemented="true" todo="true">
+                     title="Set/Reset Alternate Text Underline Mode">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="vt52x:177"/>
                 <termsupp first="vt520" series="vt" additional=""/>
+                <p>
+                    Enables true underline when in <a href="#decstglt-2">DECSTGLT
+                    Alternate Color mode</a> allowing underlined text combined with
+                    the underline color set via <a href="#decatc">DECATC</a>.
+                </p>
             </section>
             <section role="parameter" id="decatcbm" mnemonic="DECATCBM"
-                     title="Set/Reset Alternate Text Color Blink Mode"
-                     not-implemented="true" todo="true">
+                     title="Set/Reset Alternate Text Color Blink Mode">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="vt52x:177"/>
                 <termsupp first="vt520" series="vt" additional=""/>
+                <p>
+                    Enables true blink when in <a href="#decstglt-2">DECSTGLT
+                    Alternate Color mode</a> allowing blinking text combined with
+                    the blink color set via <a href="#decatc">DECATC</a>.
+                </p>
             </section>
             <section role="parameter" id="decbbsm" mnemonic="DECBBSM"
                      title="Bold and Blink Style Mode"
@@ -7940,18 +7967,26 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <termsupp first="vt520" series="vt" additional=""/>
             </section>
             <section role="parameter" id="r-decatcum" mnemonic="DECATCUM"
-                     title="Set/Reset Alternate Text Underline Mode"
-                     not-implemented="true" todo="true">
+                     title="Set/Reset Alternate Text Underline Mode">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="vt52x:177"/>
                 <termsupp first="vt520" series="vt" additional=""/>
+                <p>
+                    Disables true underline when in <a href="#decstglt-2">DECSTGLT
+                    Alternate Color mode</a> causing the underline attribute to only
+                    change the text color to that set via <a href="#decatc">DECATC</a>.
+                </p>
             </section>
             <section role="parameter" id="r-decatcbm" mnemonic="DECATCBM"
-                     title="Set/Reset Alternate Text Color Blink Mode"
-                     not-implemented="true" todo="true">
+                     title="Set/Reset Alternate Text Color Blink Mode">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="vt52x:177"/>
                 <termsupp first="vt520" series="vt" additional=""/>
+                <p>
+                    Disables true blink when in <a href="#decstglt-2">DECSTGLT
+                    Alternate Color mode</a> causing the blink attribute to only
+                    change the text color to that set via <a href="#decatc">DECATC</a>.
+                </p>
             </section>
             <section role="parameter" id="r-decbbsm" mnemonic="DECBBSM"
                      title="Bold and Blink Style Mode"
@@ -10601,18 +10636,18 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <termsupp first="vt520" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-114" mnemonic="DECATCUM"
-                         title="Alternate Text Underline Mode"
-                         not-implemented="true" todo="true">
+                         title="Alternate Text Underline Mode">
                     <ctlseq><param-single/> = 114</ctlseq>
                     <ref src="vt52x:177"/>
                     <termsupp first="vt520" series="vt" additional=""/>
+                    <p>Reports the current DECATCUM setting</p>
                 </section>
                 <section role="parameter" id="rqm-115" mnemonic="DECATCBM"
-                         title="Alternate Text Color Blink Mode"
-                         not-implemented="true" todo="true">
+                         title="Alternate Text Color Blink Mode">
                     <ctlseq><param-single/> = 115</ctlseq>
                     <ref src="vt52x:177"/>
                     <termsupp first="vt520" series="vt" additional=""/>
+                    <p>Reports the current DECATCBM setting</p>
                 </section>
                 <section role="parameter" id="rqm-116" mnemonic="DECBBSM"
                          title="Bold and Blink Style Mode"
@@ -12722,20 +12757,20 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </p>
         </section>
         <section role="ctlseq" id="decstglt" mnemonic="DECSTGLT"
-                 title="Select Color Look-Up Table">
+                 title="Select Color Look-Up Table" groups="isvt525">
             <ctlseq>CSI <param-single/> ) {</ctlseq>
             <ref src="070:368"/>
             <ref src="vt52x:305"/>
-            <termsupp first="vt520" series="vt" additional=""/>
+            <termsupp first="vt525" series="vt" additional=""/>
             <p>You can query the current state of DECSTGLT with <a href="#decrqss">DECRQSS</a></p>
 
             <p>
-                Warning: The behaviour of the implementation described here has
+                <b>Warning:</b> The behavior of the implementation described here has
                 not been checked against a real VT525 and as such is subject to
                 change should it turn out the real terminal behaves differently.
             </p>
 
-            <section role="parameter" not-implemented="true" id="decstglt-0"
+            <section role="parameter" id="decstglt-0"
                     title="Mono">
                 <ctlseq><param-text/> = 0</ctlseq>
                 <p>
@@ -12749,22 +12784,33 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </p>
             </section>
             <section style="group" role="group">
-                <section role="parameter" not-implemented="true" id="decstglt-1"
+                <section role="parameter" id="decstglt-1"
                          title="Alternate Color">
                     <ctlseq><param-text/> = 1</ctlseq>
                 </section>
-                <section role="parameter" not-implemented="true" id="decstglt-2"
+                <section role="parameter" id="decstglt-2"
                          title="Alternate Color">
                     <ctlseq><param-text/> = 2</ctlseq>
                     <p>
-                        Displays reverse, underline, bold and blink attributes
-                        as their set colors. Colors set directly via SGR 30-38,
-                        40-48, 90-97 and 100-107 are not displayed as with the
-                        monochrome option.
+                        Uses the Bold, Underline, Reverse and Blink attributes
+                        to specify text colors from a table of 16
+                        foreground-background color pairs, rather than showing
+                        text as bold/underline/reverse/blinking. Other text
+                        attributes (eg, italic) are shown as normal text.
+                    </p>
+                    <p>
+                        When in this mode, <a href="#decatcum">DECATCUM</a>
+                        and <a href="#decatcbm">DECATCBM</a> can be set to allow
+                        text to be blinking and/or underlined <em>in addition to</em>
+                        the color associated with those attribute combinations.
+                    </p>
+                    <p>
+                        To set colors for attribute combinations, see
+                        <a href="#decatc">DECATC</a>.
                     </p>
                 </section>
             </section>
-            <section role="parameter" not-implemented="true" id="decstglt-3"
+            <section role="parameter" id="decstglt-3"
                      title="ANSI SGR color">
                 <ctlseq><param-text/> = 3</ctlseq>
                 <p>
@@ -12881,12 +12927,111 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <p>Not Implemented: K95 does not support the VT132 block mode</p>
         </section>
         <section role="ctlseq" id="decatc" mnemonic="DECATC"
-                 title="Alternate Text Color"
-                 not-implemented="true" todo="true">
+                 title="Alternate Text Color" groups="isvt525">
             <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> , }</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Pf;Pb_-%7D.1F1D"/>
             <ref src="vt52x:176"/>
-            <termsupp first="vt520" series="vt" additional=""/>
+            <termsupp first="vt525" series="vt" additional=""/>
+            <p>
+                Sets colors used for text attribute combinations when in
+                <a href="#decstglt-2">DECSTGLT Alternate Color Mode</a>.
+                The first parameter specifies an attribute combination from
+                the table below, the second parameter is the foreground color
+                index, and the third parameter is the background color index.
+            </p>
+            <p>
+                While a real VT525 limits you to the 16-color palette for the
+                foreground and background color values, in Kermit 95 you can
+                use any color from the current palette chosen with
+                <tt>SET TERMINAL COLOR PALETTE</tt>.
+            </p>
+            <p>
+                DECATC only affects a separate table of colors that Kermit 95
+                maintains for use by the <em>DECSTGLT Alternate Color Mode</em>.
+                These colors are not used when attributes are turned off via
+                <tt>SET TERMINAL ATTRIBUTE</tt>, and except for the first five
+                entries in the table they cannot be set via the
+                <tt>SET TERMINAL COLOR</tt> command. The remaining eleven table
+                entries can only be changed via DECATC. The DECATC color table
+                is reset on terminal reset.
+            </p>
+            <p>
+                <b>Warning:</b> Initial color assignments for these attribute
+                combinations are subject to change! The current default color
+                assignments are arbitrary and will likely change in the future
+                if the proper assignments can be obtained from someone with
+                access to a real VT525 for testing.
+            </p>
+            <table>
+                <tr>
+                    <th>Ps1</th>
+                    <th>Attributes</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>Normal text</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Bold</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Reverse</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Underline</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Blink</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Bold + Reverse</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Bold + Underline</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Bold + Blink</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>Reverse + Underline</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>Reverse + Blink</td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td>Underline + Blink</td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td>Bold + Reverse + Underline</td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td>Bold + Reverse + Blink</td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td>Bold + Underline + Blink</td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td>Reverse + Underline + Blink</td>
+                </tr>
+                <tr>
+                    <td>15</td>
+                    <td>Bold + Reverse + Underline + Blink</td>
+                </tr>
+            </table>
         </section>
         <section role="ctlseq" groups="isvt420" id="decic"
                  mnemonic="DECIC" title="Insert Column">
