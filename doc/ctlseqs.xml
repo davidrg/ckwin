@@ -3468,18 +3468,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
                 <p>
-                    As Kermit 95 does not currently implement
-                    <a href="#decstglt">DECSTGLT</a>, this response is currently
-                    controlled with the <tt>SET TERMINAL SGR-COLORS</tt> setting
-                    which controls whether the color-related SGR parameters do
-                    anything. Note tha this may not be how a real VT525 responds
-                    to turning off color via DECSTGLT.
-                </p>
-                <p>
-                    If SGR Colors are ON, Kermit 95 responds with a 3 to indicate
-                    SGR colors are ON(<tt>DCS 1 $ r 3 ) { ST</tt>),
-                    otherwise it will be 0 (<tt>DCS 1 $ r 0 ) { ST</tt>) to
-                    indicate SGR colors are OFF.
+                    Returns the current <a href="#decstglt">DECSTGLT</a>
+                    setting.
                 </p>
             </section>
             <section role="parameter" id="decrqss-decsace" mnemonic="DECSACE"
@@ -12732,26 +12722,31 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </p>
         </section>
         <section role="ctlseq" id="decstglt" mnemonic="DECSTGLT"
-                 title="Select Color Look-Up Table"
-                 not-implemented="true">
+                 title="Select Color Look-Up Table">
             <ctlseq>CSI <param-single/> ) {</ctlseq>
             <ref src="070:368"/>
             <ref src="vt52x:305"/>
             <termsupp first="vt520" series="vt" additional=""/>
             <p>You can query the current state of DECSTGLT with <a href="#decrqss">DECRQSS</a></p>
 
-            <!-- TODO: There is a partial implementation of this now, but its
-                    unknown if it is correct or not, so it is currently commented
-                    out. Before it can be enabled we need to confirm if:
-                       * This affects the entire screen, or just new text as it
-                         arrives
-                       * If parameter 0 is greyscale or monochrome
-            -->
+            <p>
+                Warning: The behaviour of the implementation described here has
+                not been checked against a real VT525 and as such is subject to
+                change should it turn out the real terminal behaves differently.
+            </p>
 
             <section role="parameter" not-implemented="true" id="decstglt-0"
                     title="Mono">
                 <ctlseq><param-text/> = 0</ctlseq>
-                <!--<p>Disables SGR colors. Does not effect existing screen contents</p>-->
+                <p>
+                    Disables <em>display</em> of SGR colors. All text on screen
+                    and in the scrollback buffer immediately appears in the
+                    default terminal colors as set by <tt>SET TERMINAL COLOR TERMINAL</tt>.
+                </p>
+                <p>
+                    While in this mode you can still use SGR to set colors, they
+                    just won't appear until display of SGR colors is re-enabled.
+                </p>
             </section>
             <section style="group" role="group">
                 <section role="parameter" not-implemented="true" id="decstglt-1"
@@ -12761,13 +12756,22 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <section role="parameter" not-implemented="true" id="decstglt-2"
                          title="Alternate Color">
                     <ctlseq><param-text/> = 2</ctlseq>
-                    <!--<p>Show text attributes as specified by <a href="#decatc">DECATC</a></p>-->
+                    <p>
+                        Displays reverse, underline, bold and blink attributes
+                        as their set colors. Colors set directly via SGR 30-38,
+                        40-48, 90-97 and 100-107 are not displayed as with the
+                        monochrome option.
+                    </p>
                 </section>
             </section>
             <section role="parameter" not-implemented="true" id="decstglt-3"
                      title="ANSI SGR color">
                 <ctlseq><param-text/> = 3</ctlseq>
-                <!--<p>ANSI SGR color</p>-->
+                <p>
+                    Enables <em>display</em> of SGR colors. Returns display of
+                    reverse, underline, bold and blink attributes to their normal
+                    status.
+                </p>
             </section>
         </section>
         <section role="ctlseq" id="decszs" mnemonic="DECSZS"

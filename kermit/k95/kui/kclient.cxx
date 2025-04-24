@@ -24,6 +24,10 @@ extern "C" {
 #define K_DNONE      110		/* Screen rollback: down one line */
 #define K_UPONE      112		/* Screen rollback: Up one line */
 
+#define DECSTGLT_MONO           0
+#define DECSTGLT_ALTERNATE      1
+#define DECSTGLT_COLOR          3
+
 extern int tt_cursor;
 extern int cursorena[];
 extern int tt_cursor_blink;
@@ -34,6 +38,7 @@ extern int scrollflag[];
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic, truedim, truebold;
+extern int decstglt;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 
@@ -851,6 +856,12 @@ void KClient::writeMe()
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+
+            if (decstglt == DECSTGLT_ALTERNATE) {
+                // DECSTGLT says we should show attributes as colors
+                normal = TRUE; bold = FALSE; dim = FALSE; underline = FALSE;
+                italic = FALSE; blink = FALSE;
+            }
 
             if( normal )
                 getFont()->resetFont( hdc() );
