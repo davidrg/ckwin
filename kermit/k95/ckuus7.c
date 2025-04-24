@@ -493,7 +493,7 @@ extern struct _vtG G[4];
 extern int priority;
 extern bool send_c1;
 int send_c1_usr = FALSE;
-extern int sgrcolors, savedsgrcolors;
+extern int sgrcolors;
 extern int marginbell, marginbellcol;
 extern int autoscroll, wy_autopage;
 extern int tt_sac;
@@ -5520,7 +5520,7 @@ settrm() {
       case XYTSGRC:
         if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
         if ((x = cmcfm()) < 0) return(x);
-        savedsgrcolors = sgrcolors = y;
+        sgrcolors = y;
         return(1);
 
       case XYTSEND:

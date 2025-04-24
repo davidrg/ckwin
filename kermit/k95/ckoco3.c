@@ -670,7 +670,12 @@ unsigned short escbuffer[ESCBUFLEN+1];
 static int f_pushed = 0, c_pushed = 0, f_popped = 0;
 
 int sgrcolors = TRUE;                   /* Process SGR Color Commands */
-int savedsgrcolors = TRUE;
+
+#define DECSTGLT_MONO           0
+#define DECSTGLT_ALTERNATE      1
+#define DECSTGLT_ALTERNATE_2    2
+#define DECSTGLT_COLOR          3
+int decstglt = DECSTGLT_COLOR;
 
 int colorpalette = CK_DEFAULT_PALETTE;  /* Color palette to use */
 #ifdef KUI
@@ -6763,8 +6768,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     tt_type_mode = tt_type ;
 
-    /* Turn color back on if that was the users setting */
-    sgrcolors = savedsgrcolors;
+    decstglt = DECSTGLT_COLOR;
 
     attribute = defaultattribute = colornormal; /* Normal colors */
     underlineattribute = colorunderline ;
@@ -12247,11 +12251,10 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case '{': {    /* DECSTGLT */
-                            /* TODO: This may not be entirely correct. Its possible
-                                 this setting is really controlling the current
-                                 color palette, not whether the color SGRs do anything */
+                            char buf[10];
+                            snprintf(buf, sizeof(buf), "%d){", decstglt);
                             snprintf(decrpss, DECRPSS_LEN,
-                                    fmt, 1, sgrcolors ? "3){" : "0){");
+                                    fmt, 1, buf);
                             break;
                         } /* '}' */
                         } /* achar */
@@ -14641,6 +14644,20 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     static cell_video_attr_t _colorattr = cell_video_attr_init_vio_attribute(0x00);
     static USHORT _vtattr=0x00;
 
+    /* We've been asked to be monochrome (or monochrome plus
+     * attributes-as-color). Rather than forcing everything to black and white,
+     * we'll force it to the default colors as set by SET TERM COLOR TERMINAL,
+     * this still leaves the user with control over appearance.
+     *
+     * TODO: If decstglt == DECSTGLT_MONO, we should perhaps also prevent
+             application of attributes-as-color below (there is a separate
+             DECSTGLT setting for that)
+     */
+    if (decstglt != DECSTGLT_COLOR) {
+        if (decscnm) colorattr = byteswapcolors(colornormal);
+        else colorattr = colornormal;
+    }
+
     if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr )
         goto done;
 
@@ -14674,33 +14691,37 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
             vtattr |= tt_url_hilite_attr;
 
         if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-            !trueunderline /* underline simulated by color */ )
+            (!trueunderline ||  /* underline simulated by color */
+                decstglt == DECSTGLT_ALTERNATE) )
             colorval = underlineattribute ;
         else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
-                 !truereverse /* reverse simulated by color */ )
+                 (!truereverse || /* reverse simulated by color */
+                    decstglt == DECSTGLT_ALTERNATE))
             colorval = reverseattribute ;
         else if ((vtattr & VT_CHAR_ATTR_ITALIC) &&
-                 !trueitalic /* italic simulated by color */ )
+                 (!trueitalic || /* italic simulated by color */
+                    decstglt == DECSTGLT_ALTERNATE))
             colorval = italicattribute;
         else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
             /* a graphic character */
             colorval = graphicattribute ;
         else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                !trueblink && use_blink_attr)
+                ((!trueblink && use_blink_attr) || decstglt == DECSTGLT_ALTERNATE))
             /* a blinking character */
             colorval = blinkattribute ;
         else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
-                !truebold && use_bold_attr)
+                ((!truebold && use_bold_attr) || decstglt == DECSTGLT_ALTERNATE))
             colorval = boldattribute ;
 		else if ((vtattr & VT_CHAR_ATTR_DIM) &&
-				!truedim && dim_is_color)
+				((!truedim && dim_is_color) || decstglt == DECSTGLT_ALTERNATE))
 			colorval = dimattribute;
         else
             colorval = colorattr ;
 
 
         if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-            !trueblink && !use_blink_attr /* blink simulated by BGI */
+            !trueblink && !use_blink_attr && /* blink simulated by BGI */
+            decstglt != DECSTGLT_ALTERNATE
 #ifndef KUI
             || (vtattr & VT_CHAR_ATTR_UNDERLINE) &&
             trueunderline /* underline simulated by BGI */
@@ -14731,7 +14752,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
          * color (unlike turning off trueblink).
          */
         if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
-             ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
+             ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color &&
+                decstglt != DECSTGLT_ALTERNATE
 #ifdef KUI
                && !truedim
 #endif /* KUI */
@@ -14751,7 +14773,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
         }
 
         if ( vtattr & VT_CHAR_ATTR_REVERSE &&
-            truereverse /* not being simulated */ )
+            truereverse /* not being simulated */ &&
+            decstglt != DECSTGLT_ALTERNATE )
             colorval = byteswapcolors(colorval);
 
         if ( vtattr & VT_CHAR_ATTR_INVISIBLE ) {
@@ -15716,53 +15739,22 @@ vtcsi(void)
                 switch (achar) {
 
                     case '{': {        /* DECSTGLT - VT525  (and VT340?) */
-#ifdef COMMENT
-                    /* TODO: The code below currently:
-                        - Turns sgr-colors on or off
-                        - Turns truereverse/trueunderline/truebold/trueblink
-                          on or off
-                        It has been tested and it *does* work for the above, but
-                        I'm not sure if this is actually the correct behaviour.
-                        I don't have access to a VT525 and I can't find anything
-                        (free) that emulates one and implements DECSTGLT. I'd
-                        hate to have an incorrect implementation that something
-                        comes to depend on, so for now its commented out until
-                        it can be verified as correct.
-                     */
                         /* New mode is in pn[1] */
                         switch (pn[1]) {
+                        case 0:   /* Monochrome */
+                            decstglt = DECSTGLT_MONO;
+                            break;
                         case 1:   /* Alternate Color */
                         case 2:   /* Alternate Color */
                             /* Show attributes as colors. The VT525 manual only
                              * documents this behaviour for blink, bold, reverse
                              * and underline. */
-                            truereverse = FALSE;
-                            trueunderline = FALSE;
-                            truebold = FALSE;
-                            trueblink = FALSE;
-                            use_bold_attr = TRUE;
-                            use_blink_attr = TRUE;
-
-                            /* fall through */
-                        case 0:   /* Monochrome */
-                            sgrcolors=FALSE;
-                            /* TODO: should this affect the entire display, or
-                             *   just new text as it appears? If its the entire
-                             *   display, then we'll need a new RGBTable populated
-                             *   with only monochrome colors and we switch to that
-                             *   RGB table here.    */
+                            decstglt = DECSTGLT_ALTERNATE;
                             break;
                         case 3:   /* ANSI SGR */
-                            truereverse = savedtruereverse;
-                            trueunderline = savedtrueunderline;
-                            truebold = savedtruebold;
-                            trueblink = savedtrueblink;
-                            use_bold_attr = bold_is_color;
-                            use_blink_attr = blink_is_color;
-                            sgrcolors=TRUE;
+                            decstglt = DECSTGLT_COLOR;
                             break;
                         } /* pn[1] */
-#endif /* COMMENT */
                         break;
                     } /* '}' */
                 } /* achar */
