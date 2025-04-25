@@ -5958,7 +5958,7 @@ tn_rnenv(sb, len) CHAR * sb; int len;
 /* These are for indicating terminal capabilities */
 #define K95COLORTERM "COLORTERM"
 #define K95COLORTERM_VALUE "truecolor"
-#endif
+#endif /* OS2 */
 
 /* Telnet send new environment */
 /* Returns -1 on error, 0 if nothing happens, 1 on success */
@@ -6075,7 +6075,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
                         /* For indicating 24-bit RGB color support */
                         n += strlen(K95COLORTERM) + strlen(K95COLORTERM_VALUE) + 2;
                     }
-#endif
+#endif /* OS2 */
 #ifdef CK_SNDLOC
                     if ( tn_loc && tn_loc[0] )
                         n += strlen("LOCATION") + strlen(tn_loc) + 2;
@@ -6279,7 +6279,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
                           strcpy(&reply[n+11],K95COLORTERM_VALUE);
                           n += strlen(K95COLORTERM)+strlen(K95COLORTERM_VALUE)+2;
                       }
-#endif
+#endif /* OS2 */
                       if (tn_loc && tn_loc[0]) {
                           reply[n] = TEL_ENV_USERVAR;     /* VAR */
                           strcpy(&reply[n+1],"LOCATION");
