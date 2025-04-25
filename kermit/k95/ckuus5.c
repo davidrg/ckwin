@@ -6062,7 +6062,7 @@ void print_color(char* format, int foreground, cell_video_attr_t attr) {
     if (color >= 0 && color < 256) {
         /* The color is outside the 0-15 range, so we don't have a name for it.
          * Just output the number. */
-        sprintf(buf, "%d", color);
+        _snprintf(buf, sizeof(buf), "%d", color);
         printf(format, buf);
         return;
     }
@@ -6082,17 +6082,17 @@ void print_color(char* format, int foreground, cell_video_attr_t attr) {
         color = (unsigned)(((unsigned)r << 16) |
                 (unsigned)((unsigned)g << 8) |
                 (unsigned)b);
-        sprintf(buf, "#%06x", color);
+        _snprintf(buf, sizeof(buf), "#%06x", color);
         printf(format, buf);
         return;
     }
-#endif
+#endif /* CK_COLORS_24BIT */
 
     /* Error - output blank */
     printf(format, "");
 }
 
-#endif
+#endif /* OS2 */
 
 VOID
 shotrm() {
