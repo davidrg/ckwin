@@ -4647,8 +4647,17 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
     reversescreen(vmode);
 }
 
+/* Saves scrollback Vscrn (vmode) to the file (name), either overwriting or
+ * appending depending on the (disp) parameter.
+ *
+ * When term is TRUE, only what is currently visible on screen will be saved,
+ * rather than the entire scrollback buffer.
+ *
+ * The last line in the scrollback buffer is not saved as that would prevent
+ * append from working nicely.
+ */
 int
-savscrbk(mode,name,disp) int mode; char * name; int disp; {
+savscrbk(mode,name,disp,term) int mode; char * name; int disp; int term; {
     static struct filinfo xx;
     int savfil;
 
@@ -4673,7 +4682,7 @@ savscrbk(mode,name,disp) int mode; char * name; int disp; {
         end = VscrnGetEnd(mode);
 
         n = VscrnGetWidth(mode) * sizeof(viocell);      /* Line width, incl attributes */
-        for (i = beg; i != end; i = (i+1)%VscrnGetBufferSize(mode)) {
+        for (i = term ? top : beg; i != end; i = (i+1)%VscrnGetBufferSize(mode)) {
             /* For each scrollback line, i... */
             memcpy(cells,VscrnGetCells(mode,i-top),n);
 
