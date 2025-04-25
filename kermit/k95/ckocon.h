@@ -169,10 +169,10 @@ typedef int bool;
  *                 less likely to be an issue. Uses a struct containing seven
  *                 unsigned chars (FG R/G/B, BG R/G/B, and flags) for storage.
  *                 Uses the macro CK_COLORS_24BIT.
- * The details of how colour information is largely hidden behind a series of
- * increasingly complex and awful macros in this header. In hindsight some of
- * these macros probably should have been functions. Maybe some day they will
- * be.
+ * The details of how colour information is stored is largely hidden behind a
+ * series of increasingly complex and awful macros in this header. In hindsight
+ * some of these macros probably should have been functions. Maybe some day they
+ * will be.
  *
  * To have *some* level of confidence that these macros all behave as expected,
  * there is a set of unit tests in color_tests.c - if you're making changes to

@@ -3188,7 +3188,7 @@ int ssh_set_environment_variable(const char * name, const char * value) {
 
     /* Attempt to remove the named variable if it exists */
     for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
-        /* Make a note that this slot is slot is available in case we need to
+        /* Make a note that this slot is available in case we need to
          * add this as a new entry rather than updating an existing one */
         if (ssh_environment_variables[i][0] == NULL && first_free_slot == -1) {
             first_free_slot = i;
