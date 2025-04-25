@@ -302,6 +302,8 @@ int trueitalic    = TRUE ;
 #else /* KUI */
 int trueitalic    = FALSE ;
 #endif /* KUI */
+int colorAttPriority = TRUE ; /* Attribute colors take priority over SGR colors */
+/* xterm defaults this to FALSE, while K95 defaults it to TRUE */
 
 /* These are so that any changes to the true* attribute settings by OSC6/106
  * or similar can be reverted on terminal reset. */
@@ -6848,6 +6850,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	use_bold_attr = bold_is_color;
 	use_blink_attr = blink_is_color;
 
+    /* TODO: For xterm, this should default to false */
+    colorAttPriority = TRUE;
+
 	truereverse = savedtruereverse;
 	trueunderline = savedtrueunderline;
 	truedim = savedtruedim;
@@ -11499,17 +11504,13 @@ doosc( void ) {
 			case 4: /* Italic attribute */
 				trueitalic = !f;
 				break;
-			case 5: /* TODO - xterm - colorAttrMode
-                        We really should support this, but I'm not 100% sure of
-                        xterms behaviour when it come to this setting. The xterm
-                        code looks like it just skips applying attribute colors
-                        when its set to false (equivalent to skipping
-                        ComputeColorFromAttr) but when I attempted to test this,
-                        xterm *appeared* to do nothing at all. The version of
-                        xterm I have seems to be a bit unreliable when it comes
-                        to setting and resetting colors for attributes and
-                        turning those colors on and off, so perhaps I'm just
-                        hitting an xterm bug */
+			case 5: /* colorAttrMode */
+                /* When this is turned on via .Xresources, it causes attribute
+                 * colors to take priority over SGR colors (K95s default
+                 * behaviour), while when off SGR colors take priority.
+                 * When this is turned on or off via OSC-106, xterm(390) doesn't
+                 * obviously change its behaviour - possibly a bug. */
+                colorAttPriority = f;
 			default:
 				debug(F101, "OSC 6/106: Unknown or Unsupported Special Color Number", 0, idx);
         }
@@ -14888,31 +14889,37 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 
         } else {  /* decstglt != DECSTGLT_ALTERNATE */
 
-            if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
-                !trueunderline /* underline simulated by color */ )
-                colorval = underlineattribute ;
-            else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
-                     !truereverse /* reverse simulated by color */ )
-                colorval = reverseattribute ;
-            else if ((vtattr & VT_CHAR_ATTR_ITALIC) &&
-                     !trueitalic /* italic simulated by color */ )
-                colorval = italicattribute;
-            else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
-                /* a graphic character */
-                colorval = graphicattribute ;
-            else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
-                    !trueblink && use_blink_attr)
-                /* a blinking character */
-                colorval = blinkattribute ;
-            else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
-                    !truebold && use_bold_attr)
-                colorval = boldattribute ;
-    		else if ((vtattr & VT_CHAR_ATTR_DIM) &&
-    				!truedim && dim_is_color)
-    			colorval = dimattribute;
-            else
-                colorval = colorattr ;
+            /* Only do attributes-as-colorsif either attribute colors always
+             * override SGR colors, or if the current characters colors are
+             * the default/normal colors */
+            if (cell_video_attr_equal(colorattr, defaultattribute)
+                || colorAttPriority) {
 
+                if ((vtattr & VT_CHAR_ATTR_UNDERLINE) &&
+                    !trueunderline /* underline simulated by color */ )
+                    colorval = underlineattribute ;
+                else if ((vtattr & VT_CHAR_ATTR_REVERSE) &&
+                         !truereverse /* reverse simulated by color */ )
+                    colorval = reverseattribute ;
+                else if ((vtattr & VT_CHAR_ATTR_ITALIC) &&
+                         !trueitalic /* italic simulated by color */ )
+                    colorval = italicattribute;
+                else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
+                    /* a graphic character */
+                    colorval = graphicattribute ;
+                else if ((vtattr & VT_CHAR_ATTR_BLINK) &&
+                        !trueblink && use_blink_attr)
+                    /* a blinking character */
+                    colorval = blinkattribute ;
+                else if ((vtattr & VT_CHAR_ATTR_BOLD) &&
+                        !truebold && use_bold_attr)
+                    colorval = boldattribute ;
+        		else if ((vtattr & VT_CHAR_ATTR_DIM) &&
+        				!truedim && dim_is_color)
+        			colorval = dimattribute;
+                else
+                    colorval = colorattr ;
+            }
 
             if ((vtattr & VT_CHAR_ATTR_BLINK) &&
                 !trueblink && !use_blink_attr /* blink simulated by BGI */

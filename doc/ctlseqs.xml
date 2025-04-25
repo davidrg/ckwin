@@ -13793,12 +13793,13 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
                 <p>
                     Enables rendering attributes as color (<em>special color</em>
-                    in xterm) - equivalent to <tt>SET TERM ATTRIBUTE x OFF</tt>
+                    in xterm)—equivalent to <tt>SET TERM ATTRIBUTE x OFF</tt>
                     or, in the case of blink and bold,
-                    <tt>SET TERM ATTRIBUTE {BLINK,BOLD} OFF COLOR</tt>. The
-                    <em>c</em> parameter is the attribute to enable or disable,
+                    <tt>SET TERM ATTRIBUTE {BLINK,BOLD} OFF COLOR</tt>.</p>
+                <p>
+                    The <em>c</em> parameter is the attribute to enable or disable,
                     and the second parameter, <em>f</em> is if it should be
-                    enabled (0) or disabled and shown as color (any other value):
+                    disabled (0) or enabled and shown as color (any other value):
                 </p>
                 <ul>
                     <li>0 - bold</li>
@@ -13806,22 +13807,18 @@ DCS $ q 3 , } ST</pre>
                     <li>2 - blink</li>
                     <li>3 - reverse</li>
                     <li>4 - italic</li>
+                    <li>5 - colorAttMode</li>
                 </ul>
-                <!-- TODO: 5 - colorAttrMode
-                        We really should support this, but I'm not 100% sure of
-                        xterms behaviour when it come to this setting. The xterm
-                        code looks like it just skips applying attribute colors
-                        when its set to false (equivalent to skipping
-                        ComputeColorFromAttr) but when I attempted to test this,
-                        xterm *appeared* to do nothing at all. The version of
-                        xterm I have seems to be a bit unreliable when it comes
-                        to setting and resetting colors for attributes and
-                        turning those colors on and off, so perhaps I'm just
-                        hitting an xterm bug
-                -->
                 <p>
-                    xterm supports an additional option here: 5 - colorAttrMode.
-                    Kermit 95 does not currently implement this option.
+                    The colorAttMode (off by default in xterm, on by default in
+                    Kermit 95) controls whether attribute colors (when enabled)
+                    take priority over SGR colors. When OFF, only text that has
+                    the same color as the default attribute (settable with
+                    <a href="#decac">DECAC</a>, <a href="#snf">SNF</a>,
+                    <a href="#snb">SNB</a>, <a href="#osc-10">OSC-10/11</a>, etc)
+                    will show in its attribute color. When ON, it will show in
+                    its attribute color regardless of whether some other SGR color
+                    was assigned to that text.
                 </p>
             </section>
             <section role="group" style="group">
