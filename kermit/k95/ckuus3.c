@@ -1422,7 +1422,7 @@ extern int tn_no_encrypt_xfer, tn_auth_krb5_des_bug;
 extern int tn_wait_flg, tn_duplex, tn_delay_sb, tn_sfu;
 #ifdef OS2
 extern int tn_colorterm;
-#endif
+#endif /* OS2 */
 extern int sl_tn_saved;
 extern int tn_infinite;
 extern int tn_rem_echo;
