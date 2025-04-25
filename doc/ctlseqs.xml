@@ -3843,16 +3843,15 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### G ######################### -->
-        <section role="ctlseq" id="cha" mnemonic="CHA" title="Cursor Horizontal Absolute" groups="ishft isansi" badges="qansi linux">
+        <section role="ctlseq" id="cha" mnemonic="CHA" title="Cursor Horizontal Absolute"
+                 groups="ishft isansi isvt520 isxterm" badges="qansi linux">
             <ref src="e48:48"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-G.1C87"/>
             <ref src="vt510:CHA.html"/>
             <ref src="vt52x:157"/>
-            <termsupp first="vt510" series="vt" additional="tt linux"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco xt"/>
             <ctlseq>CSI <param-single/> G</ctlseq>
             <p>Move cursor to column <param-single/></p>
-            <!-- TODO: This is in the VT510 manual - why is it not allowed for VTxxx? -->
-            <!-- TODO: xterm: allow this -->
         </section>
         <section role="ctlseq" id="ansi-snbc" title="Set Normal Background Color (ANSI)" groups="isansi" badges="qansi">
             <ctlseq>CSI = <param-single/> G</ctlseq>

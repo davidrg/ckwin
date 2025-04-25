@@ -16570,7 +16570,9 @@ vtcsi(void)
                     if ( ISHFT(tt_type_mode) ||
                          ISLINUX(tt_type_mode) ||
                          ISQANSI(tt_type_mode) ||
-                         ISANSI(tt_type_mode)) {
+                         ISANSI(tt_type_mode) ||
+                         ISVT520(tt_type_mode) ||
+                         ISXTERM(tt_type_mode)) {
                         if ( pn[1] < 1 || pn[1] > VscrnGetWidth(VTERM) )
                             break;
                         lgotoxy(VTERM,pn[1],wherey[VTERM]);
