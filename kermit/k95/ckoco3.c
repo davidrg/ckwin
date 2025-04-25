@@ -11963,9 +11963,9 @@ dodcs( void )
                      *  %s - the response string including any final characters
                      */
                     if (send_c1)
-                        snprintf(fmt, sizeof(fmt), "%c%%d$r%%s%c", _DCS, _ST8);
+                        _snprintf(fmt, sizeof(fmt), "%c%%d$r%%s%c", _DCS, _ST8);
                     else {
-                        snprintf(fmt, sizeof(fmt), "%cP%%d$r%%s%c\\", ESC, ESC);
+                        _snprintf(fmt, sizeof(fmt), "%cP%%d$r%%s%c\\", ESC, ESC);
                     }
 
                     /* The next set of characters are the D...D portion */
@@ -12011,17 +12011,17 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case '}':       /* DECSASD */
-                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                            _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                 decsasd == SASD_TERMINAL? "0$}" : "1$}");
                             break;
                         case '|': {     /* DECSCPP */
                             char buf[10];
                             _snprintf(buf, sizeof(buf), "%d$|", tt_cols[VTERM]);
-                            snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
+                            _snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                             break;
                         }
                         case '~':       /* DECSSDT */
-                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                            _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                   decssdt == SSDT_BLANK ? "0$~"
                                 : decssdt == SSDT_INDICATOR ? "1$~"
                                 : "2$~");
@@ -12032,7 +12032,7 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case 'q':       /* DECSCA */
-                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                            _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                 attrib.unerasable? "1\"q" : "0\"q");
                             break;
                         case 'p': {     /* DECSCL */
@@ -12077,11 +12077,11 @@ dodcs( void )
                                 char buf[10];
                                 _snprintf(buf, sizeof(buf), "%d;%d\"p",
                                     m, send_c1 ? 2 : 1);
-                                snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
+                                _snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                             } else {
                                 char buf[10];
                                 _snprintf(buf, sizeof(buf), "\"p");
-                                snprintf(decrpss, DECRPSS_LEN, fmt, 0, buf);
+                                _snprintf(decrpss, DECRPSS_LEN, fmt, 0, buf);
                             }
 
                             break;
@@ -12092,13 +12092,13 @@ dodcs( void )
                     case 't': {          /* DECSLPP */
                         char buf[10];
                         _snprintf(buf, sizeof(buf), "%dt", tt_rows[VTERM]);
-                        snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
+                        _snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                         break;
                     }
                     case 'r': {         /* DECSTBM */
                         char buf[20];
                         _snprintf(buf, sizeof(buf), "%d;%dr", margintop, marginbot);
-                        snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
+                        _snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                         break;
                     }
                     case '|':           /* DECTTC */
@@ -12269,7 +12269,7 @@ dodcs( void )
                          * then assemble full DECRPSS response */
                         strcat(sgrbuf, "m");
 
-                        snprintf(decrpss, DECRPSS_LEN, fmt, 1, sgrbuf);
+                        _snprintf(decrpss, DECRPSS_LEN, fmt, 1, sgrbuf);
 
                         break;
                         }
@@ -12283,7 +12283,7 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case 'x':       /* DECSACE - Select Attrib Change Extent */
-                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                            _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                 decsace? "2*x" : "1*x");
                             break;
                         case '|':       /* DECSNLS - Set Num Lines Per Screen */
@@ -12328,11 +12328,11 @@ dodcs( void )
                         case '{': {    /* DECSTGLT */
                             if (ISVT525(tt_type_mode)) {
                                 char buf[10];
-                                snprintf(buf, sizeof(buf), "%d){", decstglt);
-                                snprintf(decrpss, DECRPSS_LEN,
+                                _snprintf(buf, sizeof(buf), "%d){", decstglt);
+                                _snprintf(decrpss, DECRPSS_LEN,
                                         fmt, 1, buf);
                             } else {
-                                snprintf(decrpss, DECRPSS_LEN,
+                                _snprintf(decrpss, DECRPSS_LEN,
                                          fmt, 0, "){");
                             }
                             break;
@@ -12344,7 +12344,7 @@ dodcs( void )
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
                         case 'q': {    /*  DECSCUSR  */
-                            snprintf(decrpss, DECRPSS_LEN, fmt, 1,
+                            _snprintf(decrpss, DECRPSS_LEN, fmt, 1,
                                  (tt_cursor == TTC_BLOCK && tt_cursor_blink == 1) ? "1 q"
                                 :(tt_cursor == TTC_BLOCK && tt_cursor_blink == 0) ? "2 q"
                                 :(tt_cursor == TTC_ULINE && tt_cursor_blink == 1) ? "3 q"
@@ -12365,14 +12365,14 @@ dodcs( void )
                             if (k >= 1 && pn[1] >= 0 && pn[1] <= 15 && ISVT525(tt_type_mode)) {
                                 cell_video_attr_t att = decatc_colors[pn[1]];
 
-                                snprintf(buf, sizeof(buf), "%d;%d;%d,}",
+                                _snprintf(buf, sizeof(buf), "%d;%d;%d,}",
                                     pn[1],
                                     color_index_from_vio(cell_video_attr_foreground(att)),
                                     color_index_from_vio(cell_video_attr_background(att)));
-                                snprintf(decrpss, DECRPSS_LEN,
+                                _snprintf(decrpss, DECRPSS_LEN,
                                          fmt, 1, buf);
                             } else {
-                                snprintf(decrpss, DECRPSS_LEN,
+                                _snprintf(decrpss, DECRPSS_LEN,
                                          fmt, 0, ",}");
                             }
 
@@ -12385,14 +12385,14 @@ dodcs( void )
 								if (pn[1] == 1) att = defaultattribute;
 								/* TODO: pn[1] == 2: Window Frame */
 
-                                snprintf(buf, sizeof(buf), "%d;%d;%d,|",
+                                _snprintf(buf, sizeof(buf), "%d;%d;%d,|",
                                     pn[1],
                                     color_index_from_vio(cell_video_attr_foreground(att)),
                                     color_index_from_vio(cell_video_attr_background(att)));
-                                snprintf(decrpss, DECRPSS_LEN,
+                                _snprintf(decrpss, DECRPSS_LEN,
                                          fmt, 1, buf);
 							} else {
-                                snprintf(decrpss, DECRPSS_LEN,
+                                _snprintf(decrpss, DECRPSS_LEN,
                                          fmt, 0, ",|");
                             }
 							break;
