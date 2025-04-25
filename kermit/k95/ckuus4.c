@@ -644,7 +644,9 @@ struct keytab vartab[] = {
     { "cmdfile",   VN_CMDF,  0},
     { "cmdlevel",  VN_CMDL,  0},
     { "cmdsource", VN_CMDS,  0},
+#ifdef OS2
     { "color_palette", VN_PALETTE, 0},  /* K95 3.0 beta.8 */
+#endif /* OS2 */
     { "cols",      VN_COLS,  0},        /* 190 */
 #ifdef NT
     { "common",    VN_COMMON, 0},       /* 201 */
