@@ -304,7 +304,7 @@ WART=ckwart
 # values to the aixterm palette which is the only one the console version is
 # capable of using for display.
 !if "$(CKF_COLORS)" == ""
-# If nothing else is specified, defualt to RGB for Visual C++ 2013 or newer,
+# If nothing else is specified, default to RGB for Visual C++ 2013 or newer,
 # and 256-color build for everything else. RGB support requires around 3MB of
 # additional memory for the vscrn buffers.
 !if ($(MSC_VER) >= 180)
