@@ -12380,6 +12380,7 @@ dodcs( void )
                         } /* '}' */
 						case '|': {    /*  DECAC  */
 							if (k >= 1 && pn[1] >= 1 && pn[1] <= 2 && ISVT525(tt_type_mode)) {
+                                char buf[20];
 								cell_video_attr_t att = cell_video_attr_init_vio_attribute(0x00);
 
 								if (pn[1] == 1) att = defaultattribute;
