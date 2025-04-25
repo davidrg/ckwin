@@ -1494,7 +1494,7 @@ struct keytab ttypaltab[] = {
 #endif /* CK_COLORS_24BIT */
 #ifdef CK_PALETTE_WY370
     { "wy-370",       CK_PALETTE_WY370,   0 },
-#endif
+#endif /* CK_PALETTE_WY370 */
 };
 int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 
@@ -4433,7 +4433,7 @@ settrm() {
           } else {
               ssh_set_environment_variable("COLORTERM", 0);
           }
-#endif
+#endif /* SSHBUILTIN */
           return(success=1);
           break;
         } else {                        /* No parse error */
