@@ -105,6 +105,8 @@ and terminal emulations that *do not* use the new 256-color mode,
    attribute combinations rather than, eg, SGR30-38. DECATCBM and DECATCUM
    enable true-blink and true-underline respectively while in alternate color
    mode.
+ - Implemented DECAC for setting normal text color. Setting window frame color
+   remains unsupported for now
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

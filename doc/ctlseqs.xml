@@ -3502,11 +3502,24 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <pre>DCS 1 $ r * | ST</pre>
                 <!-- VT520 responds with 26*| by default -->
             </section>
-            <section not-implemented="true" todo="true" role="parameter" id="decrqss-decac"
-                     mnemonic="DECAC" title="Assign Color">
+            <section role="parameter" id="decrqss-decac" mnemonic="DECAC"
+                     title="Assign Color">
                 <ctlseq><param-text/> = , |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
+                <p>
+                    Reports one of the 16 color pairs set with
+                    <a href="#decac">DECAC</a>. A parameter must be supplied
+                    to specify <em>which</em> color pair to report. For
+                    compatibility with other terminals, <!-- (Windows Terminal
+                    specifically, and quite possibly the VT525 too) --> that
+                    parameter can appear either before the '$q' or after it.
+                    For example, both of the following will request the color
+                    pair for Normal Text (1):
+                </p>
+                <pre>DCS 1 $ q , } ST
+                    DCS $ q 1 , } ST</pre>
+                <p>And the response might be something like: <tt>DCS 1 $ r 1 ; 1 4 ; 4 , } ST</tt></p>
             </section>
             <section role="parameter" id="decrqss-decatc" mnemonic="DECATC"
                      title="Alternate Text Color" groups="isvt525">
@@ -12911,11 +12924,46 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="xterm" series="xt" additional=""/>
         </section>
         <section role="ctlseq" id="decac" mnemonic="DECAC" title="Assign Color"
-                 not-implemented="true" todo="true">
+                groups="isvt525">
             <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> , |</ctlseq>
             <ref src="vt52x:170"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Pf;Pb_-%7C.1F1C"/>
-            <termsupp first="vt520" series="vt" additional=""/>
+            <termsupp first="vt525" series="vt" additional=""/>
+
+            <p>
+                The first parameter specifies the item the color is being assigned
+                to, while the second and third parameters are the foreground and
+                background color indices respectively.
+            </p>
+            <p>
+                While a real VT525 is limited to 16 colors (0...15), Kermit 95
+                accepts any color index that is valid for the current palette
+                as chosen by <tt>SET TERMINAL COLOR PALETTE</tt>.
+            </p>
+
+            <p>
+                You can query the current state of DECAC with
+                <a href="#decrqss">DECRQSS</a>
+            </p>
+
+            <p>
+                <b>Warning:</b> The behavior described here has not been
+                checked against a real VT525 and is subject to change should it
+                turn out that a VT525 behaves differently.
+            </p>
+
+            <section role="parameter" id="decac-1" title="Normal Text">
+                <ctlseq><param-text/> = 1</ctlseq>
+                <p>
+                    Assigns the colors for normal text. This is the default text
+                    color for any text that hasn't had some other color specified
+                    via SGR or some other mechanism.
+                </p>
+            </section>
+            <section role="parameter" id="decac-2" title="Window Frame"
+                not-implemented="true">
+                <ctlseq><param-text/> = 2</ctlseq>
+            </section>
         </section>
 
         <!-- ######################### } ######################### -->
@@ -12955,6 +13003,12 @@ DCS $ q 3 , } ST</pre>
                 entries can only be changed via DECATC. The DECATC color table
                 is reset on terminal reset.
             </p>
+
+            <p>
+                You can query the current state of DECATC with
+                <a href="#decrqss">DECRQSS</a>
+            </p>
+
             <p>
                 <b>Warning:</b> Initial color assignments for these attribute
                 combinations are subject to change! The current default color
