@@ -12378,6 +12378,25 @@ dodcs( void )
 
                             break;
                         } /* '}' */
+						case '|': {    /*  DECAC  */
+							if (k >= 1 && pn[1] >= 1 && pn[1] <= 2 && ISVT525(tt_type_mode)) {
+								cell_video_attr_t att = cell_video_attr_init_vio_attribute(0x00);
+
+								if (pn[1] == 1) att = defaultattribute;
+								/* TODO: pn[1] == 2: Window Frame */
+
+                                snprintf(buf, sizeof(buf), "%d;%d;%d,|",
+                                    pn[1],
+                                    color_index_from_vio(cell_video_attr_foreground(att)),
+                                    color_index_from_vio(cell_video_attr_background(att)));
+                                snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 1, buf);
+							} else {
+                                snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 0, ",|");
+                            }
+							break;
+						} /* '|' */
                         } /* achar */
                         break;
                     } /* ',' */
@@ -21073,6 +21092,31 @@ vtcsi(void)
 
                     break;
                 } /* '}' */
+				case '|': {    /*  DECAC - Assign Color */
+					if (ISVT525(tt_type_mode)) {
+						cell_video_attr_t att = cell_video_attr_init_vio_attribute(0x00);
+                    	int pmax = current_palette_max_index();
+
+						if (pn[2] < pmax && pn[3] < pmax) {
+                            att = cell_video_attr_set_fg_color(att, color_index_to_vio(pn[2]));
+                            att = cell_video_attr_set_bg_color(att, color_index_to_vio(pn[3]));
+
+                            if (pn[1] == 1) {
+								/* Normal text */
+								defaultattribute = att;
+							} else if (pn[1] == 2) {
+								/* Window frame.
+							     TODO: I'm not sure what exactly this does on the
+								     VT525, but in the Windows Terminal it sets
+								     the tab color. We don't have tabs, but we
+                                     could set the border color (not used on Windows
+									 currently), or the status line color.
+								 */
+							}
+                        }
+					}
+					break;
+				} /* '|' */
                 } /* switch (achar) */
                 break;
             }
