@@ -14321,10 +14321,12 @@ savkeys(name,disp) char * name; int disp;
 
 #define SV_SCRL 0
 #define SV_HIST 1
+#define SV_SCRN 2
 
 #ifdef OS2
 #ifndef NOLOCAL
 static struct keytab trmtrmopt[] = {
+    { "screen",     SV_SCRN, CM_INV },  /* For future save-as-image feature */
     { "scrollback", SV_SCRL, 0 }
 };
 #endif /* NOLOCAL */
@@ -14345,7 +14347,7 @@ static int ncmdtrmopt = (sizeof (cmdtrmopt) / sizeof (struct keytab)) - 1;
 
 #ifdef OS2
 #ifndef NOLOCAL
-_PROTOTYP(int savscrbk, (int, char *, int));
+_PROTOTYP(int savscrbk, (int, char *, int, int));
 #endif /* NOLOCAL */
 #endif /* OS2 */
 
@@ -14382,7 +14384,7 @@ dosave(xx) int xx;
 #ifdef OS2
 #ifndef NOLOCAL
           case XSTERM:                  /* SAVE TERMINAL.. */
-            if ((y = cmkey(trmtrmopt,1,
+            if ((y = cmkey(trmtrmopt,2,
                            "What to save","scrollback",xxstring)) < 0)
               return(y);
             break;
@@ -14390,7 +14392,8 @@ dosave(xx) int xx;
 #endif /* OS2 */
         }
         z = cmofi("Filename",
-                  ((y == SV_SCRL) ? "scrollbk.txt" : "history.txt"),
+                  ((y == SV_SCRL) ? "scrollbk.txt" :
+                    (y == SV_SCRN) ? "screen.txt" : "history.txt"),
                   &s,
                   xxstring
                   );
@@ -14434,7 +14437,7 @@ dosave(xx) int xx;
 #ifdef OS2
 #ifndef NOLOCAL
         if (y == SV_SCRL)               /* .. SCROLLBACK */
-          return(success = savscrbk(VCMD,s,disp));
+          return(success = savscrbk(VCMD,s,disp,FALSE));
 #endif /* NOLOCAL */
 #endif /* OS2 */
 #ifndef NORECALL
@@ -14445,8 +14448,14 @@ dosave(xx) int xx;
 
 #ifdef OS2
 #ifndef NOLOCAL
-      case XSTERM:                      /* SAVE TERMINAL SCROLLBACK */
-        return(success = savscrbk(VTERM,s,disp));
+      case XSTERM: {                    /* SAVE TERMINAL SCROLLBACK */
+        switch(y) {
+          case SV_SCRL:
+            return(success = savscrbk(VTERM,s,disp,FALSE));
+          case SV_SCRN:
+            return(success = savscrbk(VTERM,s,disp,TRUE));
+        }
+      }
 #endif /* NOLOCAL */
 #endif /* OS2 */
     }
