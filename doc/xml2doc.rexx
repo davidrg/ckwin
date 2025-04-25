@@ -886,7 +886,13 @@ getSectionSupportedTerminals: procedure expose g. refSet.
             addit = getAttribute(child, "additional")
             ex = getAttribute(child, "excluded")
 
-            tt = tt' 'first' 'addit
+            termsupp = first' 'addit
+
+            /* scoansi goes by just "sco" in the termsupp tags */
+            /* TODO: Store synonyms in the document alongside the badge definitions */
+            termsupp = changestr("sco",termsupp,"scoansi")
+
+            tt = tt' 'termsupp
             excl = excl' 'ex
         end
 
