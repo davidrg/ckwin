@@ -17,97 +17,160 @@ color. While every effort has been made to ensure there are no unexpected
 behaviour changes to applications and terminal emulations not using more than
 16 colours, these are big changes so its not impossible something may have been
 missed. If you notice any unexpected color changes from beta 7 in applications 
-and terminal emulations that *do not* use the new 256-color mode,
+and terminal emulations that *do not* use the new 256-color/24-bit color modes,
 *please log a bug* so it can be fixed!
 
 ### New Features
- - Support for the xterm 88-color and 256-color palettes via SGR 38 and SGR 48
-   - The active color palette can be chosen with the new `SET TERM COLOR PALETTE`
-     command. This allows disabling the new higher-color modes. The currently
-     set palette is available to scripts via `\v(color_palette)`. 
-   - In console versions of K95 (the OS/2 version, or k95.exe on windows), the
-     nearest color in the 16-color palette is used.
-   - The `SET GUI RGBCOLOR` command now changes the color values for the current
-     color palette
-   - RGB values for colors 16 and up can be customised with the new 
-     `SET GUI RGBCOLOR INDEX` command 
-   - RGB values for colors 16 and up can now be shown with `SHOW GUI /PALETTE`
-   - Terminal colors can be set to values from the current palette with the
-     new INDEX keyword, eg `SET TERM COLOR UNDERLINED INDEX 82 INDEX 208`
-   - Terminal colors can also be set to direct RGB values with the new RGB
-     keyword, eg `SET TERM TERM COLOR UNDERLINED RGB 255 110 0 BLACK` - in
-     builds without 24-bit color support, this picks the nearest palette color.
- - Support for direct 24-bit color via SGR-38/SGR-48 in K95G on newer versions 
-   of Windows. On older windows releases, the nearest color in the current color
-   palette is used when a 24-bit color is set. In the OS/2 and Windows console
-   versions, the nearest color in the 16-color palette is always used.
- - Support xterm OSC-4 operating system command for changing the color palette
- - Support xterm OSC-104 operating system command for resetting the color palette
- - Support xterm OSC-2 and OSC-l operating system commands for setting the 
-   window title (in addition to existing support for OSC-0 and OSC-21)
- - Support xterm OSC-5 for setting attribute colors, and OSC-105 for resetting them
- - Support xterm OSC-6 for enabling and disabling attributes as colors
- - Support xterm OSC-10 and 110 for setting and resetting the default text foreground color
- - Support xterm OSC-11 and 111 for setting and resetting the default text background color
- - Support xterm OSC-17 and 117 for setting and resetting the text selection background color
- - Support xterm OSC-19 and 119 for setting and resetting the text selection foreground color
- - Support for two highly non-standard linux OSC sequences that are not terminated
-   with an ST or BEL. K95 previously detected these and ignored them to prevent
-   the terminal escape sequence parser being stuck in the OSC absorption state
-   waiting for an ST or BEL that was never going to arrive.
-   - `OSC P nrrggbb` - set colour palette entry _n_ to color _rrggbb_ (all 
-     parameters are hex digits) 
-   - `OSC R` - reset colour palette 
- - Blinking text can now be configured to show in a specific color rather than
-   intense reverse foreground, via the new commands `SET TERM COLOR BLINK` to
-   set the color, and `SET TERM ATTRIBUTE BLINK OFF COLOR` to use color.  
- - True bold text (using a bold font) can now be turned off in K95G with the 
-   new command `SET TERM ATTRIBUTE BOLD OFF`. Bold text still shows with
-   foreground intensity set if the current foreground color is an indexed color
-   less than 16. For situations where the foreground may be an RGB value, or
-   a color from the xterm-88 or -256 color palette, you can now set Bold to
-   use a different color with `SET TERM ATTRIBUTE BOLD OFF COLOR` and set the
-   color with `SET TERM COLOR BOLD`
- - True dim text (using a bold font) can now be turned off in K95G with the new
-   command `SET TERM ATTRIBUTE DIM OFF`. Dim text still shows with foreground
-   intensity set if the current foreground color is an indexed color less than 16.
-   For situations where the foreground may be an RGB value, or a color from
-   the xterm-88 or -256 color palette, you can now set Dim to use a different
-   (perhaps dim) color with `SET TERM ATTRIBUTE DIM OFF COLOR` and set the color
-   with the new `SET TERM COLOD DIM` command
- - Implemented three new linux console terminal control sequences:
-   - `CSI 1 ; n ]` - Set underline color (requires `SET TERM ATTRIBUTE UNDERLINE OFF`)
-   - `CSI 2 ; n ]` - Set dim color (requires `SET TERM ATTRIBUTE DIM OFF COLOR`)
-   - `CSI 8 ]` - Set current color attribute as the default color attribute
- - Enabled SCOSC and SCORC for the linux console terminal emulation
- - Support SGR-21 as underline attribute in linux console emulation
- - Fix DECSCUSR not turning the blinking cursor on or off
- - Implement support for setting the text cursor color with `SET TERM COLOR CURSOR`
- - Implement xterm OSC-12 and OSC-112 for setting and resetting the text cursor color
- - The telnet client can now set `COLORTERM=truecolor` on the remote host when
-   24-bit color is enabled via `SET TERM COLOR PALETTE` as some applications use
-   `$COLORTERM` to detect 24-bit color support, rather than relying on `$TERM` 
-   and terminfo/termcap which may or may not be correct consider how many
-   terminals just claim to be xterm. In the unlikely event this new behavior
-   causes problems, it can be disabled with `SET TELNET SEND-COLORTERM OFF`
- - The SSH client will also now attempt to set `COLORTERM=truecolor` on the
-   remote host when 24-bit color is enabled via `SET TERM COLOR PALETTE`. There
-   is no option to disable this behavior at this time (aside from turning off
-   RGB support via `SET TERM COLOR PALETTE`) as most SSH servers will reject
-   the COLORTERM environment variable by default. To make it work, you'll likely
-   need to add COLORTERM to the `AcceptEnv` list in `/etc/ssh/sshd_config` on
-   the server.
- - Implemented DECRQSS for: SGR, DECSCA, DECSCL, DECSCUSR, DECSTBM, DECSLPP, 
-   DECSCPP, DECSASD, DECSSDT, DECSTGLT and DECSACE
- - Implemented DECSTGLT, DECATC, DECATCBM and DECATCUM. DECSTGLT allows
-   switching to a monochrome mode where SGR colors are not rendered, or an
-   alternate color mode where colors (selected via DECATC) are specified using
-   attribute combinations rather than, eg, SGR30-38. DECATCBM and DECATCUM
-   enable true-blink and true-underline respectively while in alternate color
-   mode.
- - Implemented DECAC for setting normal text color. Setting window frame color
-   remains unsupported for now
+ - Support for multiple color palettes of up to 256 colors, switchable at runtime
+   with the new `SET TERM COLOR PALETTE` command. _Display_ of more than 16 colors
+   is limited to the Windows GUI version of K95, with the Windows and OS/2 Console
+   versions picking the nearest color from the 16-color palette for display
+   - Included palettes are: 
+     - xterm 256-colors (the new default palette)
+     - xterm 88-colors
+     - aixterm 16-colors (the palette used by prior Kermit 95 releases)
+   - Screen colors can be set to values from the larger palette with the
+     `SET TERMINAL COLOR` command by using the new INDEX keyword followed by
+     color number. For example: `SET TERM COLOR TERM INDEX 15 black` would set the
+     foreground to color 15 in the current palette, and the background to black.
+   - You can change colors in the larger palette with 
+     `SET GUI RGBCOLOR INDEX <colornumber>`
+   - You can show the full color palette with `SHOW GUI /PALETTE`
+   - You can find out the currently set color palette with either the `SHOW TERMINAL`
+     command, or the new `\v(color_palette)` variable.
+   - You can still select the 88-color or 256-color palette in console versions
+     of K95, but this is only for compatibility purposes. On display, the nearest
+     color in the 16-color palette will be used instead.
+ - Support for full 24-bit color is now available in GUI versions of Kermit 95 
+   for Windows XP SP3 or newer. This is enabled by picking the `xterm-rgb`
+   (256-colors + RGB) color palette, and disabled by picking any other color palette.
+   - 24-bit color *can* be supported on older Windows releases, but is disabled
+     for now to reduce memory requirements. If there is demand, 24-bit color 
+     versions for vintage windows can be provided in the future.
+   - Screen colors can be set to any 24-bit RGB color with the `SET TERMINAL COLOR`
+     command by using the new RGB keyword, for example: `SET TERM COLOR TERM RGB 255 110 00 black`
+     would set the foreground to an amber color, and the background to black.
+   - If 24-bit color is enabled, the telnet client will try to set the 
+     `COLORTERM=truecolor` environment variable if it can and if this behavior 
+     is not turned off with `SET TELNET SEND-COLORTERM OFF`. The COLORTERM
+     environment variable is used by some applications rather than relying on
+     potentially out-of-date terminfo/termcap entries to detect 24-bit color
+     support.
+   - The SSH client will also try to set the `COLORTERM=truecolor` environment
+     variable if it can, but this will only work if the SSH server has been 
+     configured to accept the COLORTERM environment variable; to make it work, 
+     it will likely have to be added to the `AcceptEnv` list in 
+     `/etc/ssh/sshd_config` on the server.
+ - New screen elements can be given color via `SET TERMINAL COLOR`
+   - Blinking text (if the blink attribute is disabled with the new 
+     `SET TERMINAL ATTRIBUTE BLINK OFF COLOR` command)
+   - Bold text (if the bold attribute is disabled with the new
+     `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` command)
+   - The text cursor
+   - Dim text (if the dim attribute is disabled with the new
+     `SET TERMINAL ATTRIBUTE DIM OFF COLOR` command)
 
+
+### Enhancements
+ - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
+   has been _heavily_ revised. The whole document was converted from HTML to
+   a more bespoke format from which various HTML documents are now generated
+   allowing for more consistent styling and easier maintenance. The
+   new documentation now includes, where possible, references to terminal 
+   documentation for the various control sequences K95 implements (or doesn't).
+ - The way terminal operating system commands are parsed has been rewritten to 
+   be more flexible and to make adding support for new operating system commands
+   easier.
+ - True bold can now be turned off in K95G with the new command 
+   `SET TERMINAL ATTRIBUTE BOLD OFF`. When off, it still affects text
+   color unless its turned off with `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` in
+   which case the color set with `SET TERMINAL COLOR BOLD` is used.
+ - True dim is now turned off in K95G when `SET TERMINAL ATTRIBUTE DIM OFF` is
+   given. Like with bold, it still affects color unless turned off with
+   `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
+   `SET TERMINAL COLOR DIM` is used.
+
+### New terminal control sequences
+> [!NOTE]
+> Until Kermit 95 gets a VT525 terminal type option, control sequences marked
+> as requiring a VT525 are temporarily available under the existing VT320 
+> terminal type instead.
+
+ - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-ic) and 
+   [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-ic) are 
+   now supported for setting colors by number using both the standard 
+   parameter-element (colon) syntax, and the old but still widely used 
+   non-standard xterm (semicolon) syntax.
+ - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-rgb) and 
+   [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-rgb) are 
+   now supported for setting direct 24-bit RGB colors using both the standard 
+   parameter-element (colon) syntax, and the old but still widely used 
+   non-standard xterm (semicolon) syntax. If 24-bit RGB color is not enabled or 
+   not available (eg, in the console version of K95), the nearest color in the 
+   current palette is used instead (in console versions, this is always the 
+   16-color palette).
+ - [DECSCUSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decscusr) can now
+   control cursor blinking
+ - [DECRQSS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss) is now
+   implemented for the following (VT320+ terminal type):
+   - [SGR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-sgr)
+   - [DECSCA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsca)
+   - [DECSCL](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscl)
+   - [DECSCUSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscusr)
+   - [DECSTBM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decstbm)
+   - [DECSLPP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decslpp)
+   - [DECSCPP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscpp)
+   - [DECSASD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsasd)
+   - [DECSSDT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decssdt)
+   - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decstglt) (VT525 terminal type)
+   - [DECSACE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsace)
+   - [DECAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decac) (VT525 terminal type)
+   - [DECATC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decatc) (VT525 terminal type)
+ - The linux console terminal emulation has been brought up to date with:
+    - Support for [SCOSC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#scosc)
+    - Support for [SCORC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#scorc)
+    - [SGR-21](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-21-ul) is now underline
+    - Three parameters for the [linux display settings](https://davidrg.github.io/ckwin/dev/ctlseqs.html#linux-disp)
+      control sequence are now supported (linux terminal type only):
+        - Ps = 1 - set underline color
+        - Ps = 2 - set dim color
+        - Ps = 3 - set current color pair as the default attribute
+    - [OSC-R: Reset palette (linux)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-R) (linux terminal type only)
+    - [OSC-P: Set palette (linux)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-P) (linux terminal type only)
+    - SGR-38/48
+ - Various xterm Operating System Commands are now supported:
+   - [OSC-2: Set Window Title](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-wt)
+   - [OSC-l: Set Window Title](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-l)
+   - [OSC-4: Change Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-4)
+     (both RGB values and X11 color names accepted)
+   - [OSC-104: Reset Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-104)
+   - [OSC-5: Change Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-5)
+   - [OSC-105: Reset Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-105)
+   - [OSC-6: Enable/Disable Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-6) (including colorAttrMode)
+   - [OSC-10: Change text foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-10)
+   - [OSC-110: Reset text foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-110)
+   - [OSC-11: Change text background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-11)
+   - [OSC-111: Reset text background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-111)
+   - [OSC-12: Change text cursor color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-12)
+   - [OSC-112: Reset text cursor color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-112)
+   - [OSC-17: Change text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-17)
+   - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
+   - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
+   - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
+ - A few VT525 control sequences _based on documented behaviour_; there may be
+   differences from the real thing (donations of a VT525 accepted!):
+   - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
+     all three modes are supported (mono, alternate color, SGR color) (VT525 terminal type only)
+   - [DECATC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatc) 
+     for setting DECSTGLT alternate color mode colors (VT525 terminal type only)
+   - [DECAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decac) 
+     for setting the text foreground and background color only (VT525 terminal type only)
+   - [DECATCBM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcbm) 
+     enables or disables true blink in DECSTGLT alternate color mode
+   - [DECATCUM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcum) 
+     enables or disables true underline in DECSTGLT alternate color mode
+ - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
+   available for VT520 (and so, temporarily, VT320)
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
 As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name

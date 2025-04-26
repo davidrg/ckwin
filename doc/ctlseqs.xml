@@ -11679,7 +11679,7 @@ DCS $ q 3 , } ST</pre>
         </section>
         <section role="ctlseq" ctlseq="CSI s" badges="aaa" mnemonic="zPSH"
                  not-implemented="true" title="Push Line"/>
-        <section role="ctlseq" ctlseq="CSI s" id="scp-sco" mnemonic="SCP"
+        <section role="ctlseq" ctlseq="CSI s" id="scosc" mnemonic="SCOSC"
                  title="Save Cursor Position" badges="linux" groups="isansi">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-s.1BC3"/>
             <ref src="vt52x:371"/>
@@ -12079,8 +12079,8 @@ DCS $ q 3 , } ST</pre>
         <!-- ######################### u ######################### -->
         <section role="ctlseq" not-implemented="true" badges="aaa" id="zstp"
                  ctlseq="CSI u" mnemonic="zSTP" title="Set Transfer Point"/>
-        <section role="ctlseq" ctlseq="CSI u" groups="isansi ishft" id="sco-rcp"
-                 mnemonic="RCP"
+        <section role="ctlseq" ctlseq="CSI u" groups="isansi ishft" id="scorc"
+                 mnemonic="SCORC"
                  badges="scoansi linux" title="Restore cursor position">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-u.1BC5"/>
             <ref src="vt52x:371"/>
