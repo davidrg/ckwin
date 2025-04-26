@@ -13637,13 +13637,16 @@ DCS $ q 3 , } ST</pre>
                     colors. See <a href="#osc-5">OSC-5</a> for more details.
                 </p>
                 <p>
-                    The <tt><param-single symbol="spec"/></tt> component is an
-                    RGB color specification in the form supported by XParseColor.
+                    The <tt><param-single symbol="spec"/></tt> component is a
+                    color specification in the form supported by XParseColor.
                     Both the newer <tt>rgb:RRRR/GGGG/BBBB</tt> and older
                     <tt>#RRRRGGGGBBBB</tt> formats are supported, where R/G/B
-                    are hex digits (case doesn't matter). For more information
-                    on this colour specification, see the XParseColor man page.
-                    Other XParseColor specifications such as <tt>rgbi:</tt>
+                    are hex digits (case doesn't matter). X11 color names are
+                    also accepted and parsed case-insensitively. For more
+                    information on this color specification, see the XParseColor
+                    man page, while a list of X11 color names and values can
+                    be found <a href="https://en.wikipedia.org/wiki/X11_color_names">on Wikipedia</a>.
+                    Other XParseColor formats such as <tt>rgbi:</tt>
                     and <tt>CIEuvY:</tt> are not currently supported.
                 </p>
                 <p>
@@ -13659,6 +13662,10 @@ DCS $ q 3 , } ST</pre>
                     for the default RGB value of 0/0/128 for color index 1.
                     If multiple query parameters are supplied (eg <tt>OSC 4 ; 1 ; ? ; 2 ; ? ; 3 ; ? ST</tt>
                     then multiple responses will be sent back.
+                </p>
+                <p>If a color was set by name, then when queried that colors RGB
+                    value will be returned; Kermit 95 does not remember the
+                    original color name used.
                 </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""
@@ -14107,7 +14114,7 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="osc-P" mnemonic=""
                      title="Set palette (linux)" badges="linux">
-                <ctlseq><param-single/> = R nrrggbb</ctlseq>
+                <ctlseq><param-single/> = P nrrggbb</ctlseq>
                 <p>
                     This OSC <em>is not terminated!</em> At all!
                     No ST or BEL to terminate! For this reason its limited to
@@ -14151,7 +14158,7 @@ DCS $ q 3 , } ST</pre>
         </p>
         <ul>
             <li>How the terminal is rendered</li>
-            <li>The range of color indexes available for customisation via
+            <li>The range of color indexes available for customization via
                 <a href="#osc-4">OSC-4</a></li>
             <li>The range of color indexes that can be set via
                 <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>
@@ -14214,15 +14221,17 @@ DCS $ q 3 , } ST</pre>
             <p>
                 GUI versions of Kermit 95 keep <em>two</em> copies of each color
                 palette in memory: the active copy, and the saved copy. When
-                Kermit 95 is launched both copies contain the same data. At any time,
+                Kermit 95 is launched, both copies contain the same data. At any time,
                 you can change the RGB value in both copies of the <em>current</em>
-                color palette with the <tt>SET GUI RGBCOLOR</tt> command, and the <em>active</em>
-                copy of the current color palette only with <a href="#osc-4">OSC-4</a>.
+                color palette with the <tt>SET GUI RGBCOLOR</tt> command, and
+                the <em>active</em> copy of the current color palette only with
+                <a href="#osc-4">OSC-4</a> or (for the linux terminal type)
+                <a href="#osc-P">OSC-P</a>.
             </p>
             <p>
-                When the terminal is reset, the contents of the active copy of the
-                all color palettes is overwritten by their saved copies. This results
-                in changes made via <a href="#osc-4">OSC-4</a> being undone without
+                When the terminal is reset, the active copies of all color palettes
+                are overwritten by their saved copies. This results in changes
+                made via <a href="#osc-4">OSC-4</a> being undone without
                 affecting changes made via <tt>SET GUI RGBCOLOR</tt>.
             </p>
             <p>
@@ -14243,7 +14252,7 @@ DCS $ q 3 , } ST</pre>
             </p>
             <p>
                 Console versions of Kermit 95 have no control over the appearance
-                of these 16 colors - that is up to the console environment K95 is
+                of these 16 colors; that is up to the console environment K95 is
                 running under. Because of this, console builds of K95 do not support
                 customising the color palette via <a href="#osc-4">OSC-4</a> or
                 <tt>SET GUI RGBCOLOR</tt>.
@@ -14281,7 +14290,7 @@ DCS $ q 3 , } ST</pre>
                 are only used to get an RGB value to use for color quantization.
                 K95 has no control over how the console host/VIO window renders
                 colors, so the RGB values in the color palettes are never used
-                for display - only to map indexes from a larger palette on to
+                for display; only to map indexes from a larger palette on to
                 the smaller 4-bit aixterm-16 palette.
             </p>
         </section>
