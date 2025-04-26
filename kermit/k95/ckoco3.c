@@ -11387,7 +11387,7 @@ doosc( void ) {
                             	      	           : "\033]%d;%d;rgb:%04x/%04x/%04x\033\\",
                        	      		num, idx,r * 257,g * 257,b * 257);
 						buf[255] = 0;
-						sendchars(buf, strlen(buf), TRUE);
+						sendchars(buf, strlen(buf));
 					}
 				} else if (idx >= 0) {
                 	color = palette[pal_idx];
@@ -11399,7 +11399,7 @@ doosc( void ) {
                               ((palette[idx] & 0x0000FF00)>>8) * 257, /* Green */
                               ((palette[idx] & 0x00FF0000)>>16) * 257); /* Blue */
 					buf[255] = 0;
-					sendchars(buf, strlen(buf), TRUE);
+					sendchars(buf, strlen(buf));
                 } else {
                   	debug(F111, "OSC 4/5: query index out of range for current palette", "index", idx);
                 }
@@ -11593,7 +11593,7 @@ doosc( void ) {
                             	      	       : "\033]%d;rgb:%04x/%04x/%04x\033\\",
                        	      	current_color_id, r * 257,g * 257,b * 257);
 					buf[255] = 0;
-					sendchars(buf, strlen(buf), TRUE);
+					sendchars(buf, strlen(buf));
 				}
             } else {  /* OSC 10-19: Set attribute color */
 				int r,g,b;
