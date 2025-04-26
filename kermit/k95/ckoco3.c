@@ -12080,9 +12080,6 @@ dodcs( void )
                                 break;
                             } /* tt_type_mode */
 
-                            printf("tt_type: %d\ttt_type_mode: %d\tm: %d\n",
-                                    tt_type, tt_type_mode, m);
-
                             if (m != 0) {
                                 char buf[10];
                                 _snprintf(buf, sizeof(buf), "%d;%d\"p",
@@ -16516,7 +16513,7 @@ vtcsi(void)
                           * seems like very odd behaviour for "Set Normal
                           * Foreground Color".
                           *
-                          * The replacement code instead clears just sets the supplied
+                          * The replacement code instead just sets the supplied
                           * color as the new background color preserving the current
                           * foreground color, the opposite of the non-reverse-video
                           * operation. This seems more likely to be correct.
@@ -21105,7 +21102,6 @@ vtcsi(void)
                             att = cell_video_attr_set_bg_color(att, color_index_to_vio(pn[3]));
 
                             decatc_colors[pn[1]] = att;
-                            printf("Set color %d fg %d bg %d\n", pn[1], pn[2], pn[3]);
                         }
                     }
 
