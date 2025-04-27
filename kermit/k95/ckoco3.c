@@ -15023,6 +15023,9 @@ line25(int vmode) {
             strinsert(&s[exittext_field_position], exittext);
         if (show_hostname_field) {
             strinsert(&s[end_field_position], hostnameCopy);
+        }
+
+        if (hostnameCopy != 0) {
             free(hostnameCopy);
         }
 

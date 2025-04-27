@@ -171,6 +171,10 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
      enables or disables true underline in DECSTGLT alternate color mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
+
+### Fixed Bugs
+ - Fixed a potential memory leak in the status line display
+
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
 As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name
