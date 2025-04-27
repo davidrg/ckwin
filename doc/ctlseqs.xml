@@ -938,7 +938,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
              against the control sequence.
         -->
         <html type="todo" filename="todo.html" title="TO-DO"
-              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar sgr-9-co sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window"
+              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar sgr-9-co sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window osc-8"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
               todo-terminals="vt102 vt220 vt420 xterm tt">
             <style>
@@ -13735,6 +13735,34 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
 
+            <section role="parameter" id="osc-7" mnemonic=""
+                     title="Inform current working directory" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 7 ; ...</ctlseq>
+                <!-- More info:
+                https://github.com/davidrg/ckwin/issues/413
+                https://gitlab.freedesktop.org/terminal-wg/specifications/-/issues/20 -->
+            </section>
+            <section role="parameter" id="osc-8" mnemonic=""
+                     title="Hyperlink" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 8 ; params ; URI</ctlseq>
+                <!-- More info:
+                https://github.com/davidrg/ckwin/issues/123
+                https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
+                https://github.com/Alhadis/OSC8-Adoption -->
+            </section>
+
+            <section role="parameter" id="osc-9" mnemonic=""
+                     title="ConEMU" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 9 ; Ps ; Ps</ctlseq>
+                <!-- More info:
+                    https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+                    Also mentioned in: https://github.com/davidrg/ckwin/issues/413
+
+                    Some of these features are a security risk.
+                    Ps = 7 ; cmd - should only be if APC is set to unsafe
+                -->
+            </section>
+
             <section role="group" style="group">
             <section role="parameter" id="osc-10" mnemonic=""
                      title="Change VT100 text foreground color">
@@ -13893,7 +13921,7 @@ DCS $ q 3 , } ST</pre>
                     sequence to set the current color.</p>
             </section>
             </section>
-
+            <!-- OSC-20 - not used? -->
             <section role="parameter" id="decswt" mnemonic="DECSWT" title="Set Window Title">
                 <ctlseq><param-single/> = 21</ctlseq>
                 <ref src="vt52x:310"/>
@@ -13927,6 +13955,8 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 51</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5-1.101A"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <!-- Reserved, but possibly never actually used?
+                    https://www.reddit.com/r/emacs/comments/7rxv6d/comment/lpigict/ -->
             </section>
             <section role="parameter" id="osc-52" mnemonic=""
                      title="Manipulate selection data"
@@ -14088,6 +14118,24 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
             </section>
+            <section role="parameter" id="osc-133" mnemonic=""
+                     title="FinalTerm Shell Integration" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 133 ; ...</ctlseq>
+                <!--
+                    Some info here - iTerm2 suggests it might come from FinalTerm?
+                    https://iterm2.com/3.0/documentation-escape-codes.html
+                    Konsole implements it too:
+                    https://docs.kde.org/stable5/en/konsole/konsole/semantic-shell-integration.html
+                -->
+            </section>
+            <section role="parameter" id="osc-1337" mnemonic=""
+                     title="iTerm2" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 1337 ; ...</ctlseq>
+                <!-- Various iTerm2 operations. We could *probably* support some
+                        https://iterm2.com/3.0/documentation-escape-codes.html
+                  -->
+            </section>
+
             <section role="parameter" id="osc-I" mnemonic=""
                      title="Set icon to file"
                      not-implemented="true">

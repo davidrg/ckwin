@@ -1271,8 +1271,8 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 #define VT_CHAR_ATTR_ITALIC           ((USHORT) 0x0800)
 #define VT_CHAR_ATTR_HYPERLINK        ((USHORT) 0x1000)
 /* These three are available for use */
-#define VT_CHAR_RESERVED_3            ((USHORT) 0x2000)
-#define VT_CHAR_RESERVED_2            ((USHORT) 0x4000)
+#define VT_CHAR_RESERVED_3            ((USHORT) 0x2000)  /* Crossed-out */
+#define VT_CHAR_RESERVED_2            ((USHORT) 0x4000)  /* Doubly-underlined */
 #define VT_CHAR_RESERVED_1            ((USHORT) 0x8000)
 
 #define VT_LINE_ATTR_NORMAL           ((USHORT) 0x00)
