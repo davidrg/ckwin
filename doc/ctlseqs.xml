@@ -164,7 +164,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
     ////////////////////////////// README //////////////////////////////
     This is the source document used to generate ctlseqs.html and a few other
     related files. This XML file is *not* some variant of XHTML, even if some
-    of the tags kind of look like XHTML. It is a custom XML document format
+    tags kind of look like XHTML. It is a custom XML document format
     and converter tool built specifically for this document.
 
     Why use a custom XML format for ctlseqs.html? For easier long-term
@@ -179,26 +179,24 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
       - To support generation of multiple different documents from a single
         source
 
-    The document is organised thusly:
+    The document is organized thusly:
       - Reference sources: locations for various terminal and terminal
         emulator documentation
       - Badges and badge groups: identifiers for K95s various terminal
         emulation profiles
       - Outputs: definitions and stylesheets for the various documents
-        that will be geneated
+        that will be generated
       - Sections that make up the document itself
 
     About Sections:
       Sections are the basic blocks that make up the document. All content
-      that is included in the output (aside from CSS) lives within a
-      section.
+      included in the output (aside from CSS) lives within a section.
 
       Sections can optionally have a title. Where one is specified, it will
       be included in the generated document as a heading or, if the section
       is nested within another section, a subheading. Sections can also be
       used without a heading simply to group content together within the
-      document for the purpose of applying common attributes. Attributes
-      such as:
+      document for applying common attributes. Attributes such as:
 
         - Which terminal types the sections content is relevant to (badges)
         - Whether the content described by the section has actually been
@@ -236,24 +234,24 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
       Ctlseq, ctlchar and parameter sections can still have textual content
       just like a regular section with the text role. This textual content
       should describe the control sequence/character or its parameters, what
-      restrictions and behaviours apply, etc. But for some outputs generated
+      restrictions and behaviors apply, etc. But for some outputs generated
       from this file that textual content may be excluded.
 
     What are these badges and groups anyway?
-      A badge is used to indicate terminal-type-specific behaviour.
+      A badge is used to indicate terminal-type-specific behavior.
       Maybe a particular control sequence is only available if your
       terminal type is SNI-97801, or maybe it behaves slightly
       differently if your terminal type is SCOANSI.
 
-      In K95, some behaviour isn't assigned to specific terminal types,
+      In K95, some behavior isn't assigned to specific terminal types,
       but specific *groups* of terminal types. A lot of terminal types
       behave *like* a VT100 (such as the linux console terminal). So
       rather than checking for 20 different terminal types everywhere
-      VT100-like behaviour is needed, it just checks if the current
+      VT100-like behavior is needed, it just checks if the current
       terminal type "ISVT100" - this means it actually *is* a VT100, or
-      it's something *compatible* with a VT100.
+      it's *compatible* with a VT100.
 
-      The (badge) groups let that behaviour be replicated here.
+      The (badge) groups let that behavior be replicated here.
       Putting the "isvt100" group on a section applies all the badges in
       the "isvt100" group to that section. If the meaning of "ISVT100"
       in K95 changes someday to include an extra terminal type, all we
@@ -312,6 +310,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                - Update term references/termsupp elements for everything in this
                  spreadsheet
                  https://invisible-island.net/xterm/ctlseqs/dec_term_function_checklist.pdf
+               - It would be neat if terminfo/termcap capability names/codes could
+                 be stored against control sequences where they exist. This might
+                 allow for interesting things like comparing K95 terminal
+                 descriptions (as described by this document) with terminfo/termcap
+                 descriptions, or generating a starting point for terminfo/termcap
+                 descriptions from this document.
     -->
 
     <!-- References to similar documentation elsewhere. This helps to identify
@@ -455,7 +459,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
     <badges>
         <!-- These are all the terminal types supported by K95.
-             If a colour is not set, the badge will not be visible -->
+             If a color is not set, the badge will not be visible -->
         <badge-def sort-order="1"  name="aaa" colour="#9E9E9E" comment="Ann Arbor Ambassador"/>
         <badge-def sort-order="2"  name="adm3a" colour="dimgray" comment="LSI ADM 3A"/>
         <badge-def sort-order="3"  name="adm5" colour="dimgray" comment="LSI ADM 5"/>
@@ -1005,13 +1009,13 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             for which of the terminal type emulations supported by Kermit 95.
             Only those control sequences that are actually implemented are
             listed here. These tables are <em>wide</em> so you'll want to
-            maximise the window and even then you will likely find yourself
+            maximize the window, and even then you will likely find yourself
             scrolling sideways.
         </p>
         <p>
             For ANSI-like, VT52 and H19 emulations, many control sequences are
             not restricted to any particular terminal type and so are available
-            to all emulations even if the real terminal doesn't actually
+            to all emulations even if the real terminal doesn't
             implement that control sequence. For a table of what the (some of
             the) real terminals <em>actually</em> implement, whether it's
             supported by Kermit 95 or not, see
@@ -1077,7 +1081,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             Whether a terminal appears here or not depends on whether good
             enough documentation can be found to provide references for all the
             control sequences it implements. The DEC VT320 is notably excluded
-            here for that reason - no copy of EK-VT320-RM (the VT320 programmers
+            here for that reason—no copy of EK-VT320-RM (the VT320 programmers
             reference manual) is available online.
         </p>
         <p>
@@ -1094,14 +1098,14 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 sequence giving its name and mnemonic (if they're known) and
                 control sequence. This is followed by multiple columns, each
                 one representing a particular terminal (or terminal emulator).
-                If the background colour of the row is <em>orange</em>, that
+                If the background color of the row is <em>orange</em>, that
                 indicates Kermit 95 does not currently implement that control
                 sequence.
             </p>
             <p>
                 If an 'X' or an 'O' appears in one of the terminal columns, that
                 means the control sequence represented by that row is supported
-                by that terminal (according to that terminals documentation at
+                by that terminal (according to that terminals' documentation at
                 least). The 'X' means that K95s emulation of that terminal also
                 supports that control sequence (if K95 supports it at all),
                 while the 'O' means K95s emulation of it does not (or at least
@@ -1142,7 +1146,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             This document is a subset of <a href="term-ctlseqs.html">Control
             Sequences by Terminal</a>, filtered to show only currently
             unimplemented control sequences (and parameters) that are perhaps
-            worth prioritising for future implementation to improve Kermit 95s
+            worth prioritizing for future implementation to improve Kermit 95s
             compatibility with other terminals.
         </p>
         <p>
@@ -1156,12 +1160,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <li>Must be supported by VT220 <b>OR</b></li>
             <li>Must be supported by VT420 <b>OR</b></li>
             <li>Must be supported by both xterm and teraterm <b>OR</b></li>
-            <li>Must be one of a selection of other misc control sequences that
+            <li>Must be one of a few other misc control sequences that
                 would be easy to implement
             </li>
         </ul>
         <p>
-            The reasoning for this criteria is:
+            The reasoning for the criteria is:
         </p>
         <ul>
             <li>K95s emulation of the VT102 and VT220 terminals is very complete.
@@ -1174,7 +1178,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 so it makes sense to try and target those things.
             </li>
             <li>Implementing <em>everything</em> that xterm supports would be
-                a huge undertaking, but it seems likely that many of xterms
+                a very large undertaking, but it seems likely that many of xterms
                 features are rarely used. So it may be more effective to start
                 with the xterm features that other terminals, like tera term,
                 have also chosen to implement as those are more likely to
@@ -1203,16 +1207,16 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             Prior to 2025 there was no documentation on the control sequences supported
             by Kermit 95. This document was produced by reading through <em>several
             thousand lines of ANSI C</em> recording what appeared to be implemented and
-            what, if any, terminal type restrictions applied to various behaviours.
-            There are sure to be errors and the styling is a bit inconsistent at the
-            moment.
+            what, if any, terminal type restrictions applied to various behaviors.
+            There is sure to be errors, and many of the descriptions are unhelpfully
+            brief.
         </p>
         <p>
             Importantly, this document describes what Kermit 95 currently
             does (or <em>appears</em> to do) for a control sequence, not necessarily
             what it <em>should</em> do for a given control sequence and terminal
             emulation. There are no doubt bugs in Kermit 95s implementation of
-            some escape sequences, and errors this documents description of Kermit 95s
+            some escape sequences, and errors in this documents description of Kermit 95s
             implementation. If you notice any errors or omissions <em>please log
             a bug to have it corrected!</em> Its important to remember this
             is not documenting what real terminals do, just what Kermit 95s
@@ -1220,14 +1224,14 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         </p>
         <p>
             Kermit 95 emulates many different terminal types.
-            Where a control sequence, or some specific behaviour, is specific
+            Where a control sequence, or some specific behavior, is specific
             to one or more terminal types it is marked with badges such
             as these:
             <badge name="vt320"/> <badge name="wy370"/>.
 
             Anything not marked with a terminal-type badge is available under all
-            terminal type modes, even if a particular control sequence wasn't
-            supported by the real terminal.
+            terminal type modes, even if a particular control sequence was not
+            supported by a particular terminal.
         </p>
         <p>
             Where possible, links to applicable standards and terminal
@@ -1239,7 +1243,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <dt>ecma-48</dt>
             <dd><a href="https://ecma-international.org/wp-content/uploads/ECMA-48_5th_edition_june_1991.pdf">
                 Standard ECMA-48: Control Functions for Coded Character Sets</a>
-                - both the PDF page number and document page number is given (eg, p35/49 - numbered page 35,
+                - both the PDF page number and document page number is given (e.g., p35/49—numbered page 35,
                 PDF page 49)</dd>
             <dt>dec-std-070</dt>
             <dd><a href="https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf">
@@ -1255,7 +1259,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <dt>vt132</dt>
             <dd><a href="https://bitsavers.org/pdf/dec/terminal/vt132/EK-VT132-UG-002_VT132_User_Guide_Nov79.pdf">
                 VT132 User Guide</a>
-                - both the PDF page number and document page number is given (eg, p35/49 - numbered page 35,
+                - both the PDF page number and document page number is given (e.g., p35/49—numbered page 35,
                 PDF page 49)</dd>
             <dt>vt420</dt>
             <dd><a href="https://vt100.net/mirror/mds-199909/cd3/term/vt420rm2.pdf">DEC VT420 Reference Manual</a></dd>
@@ -1296,7 +1300,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!--
         This section largely covers stuff implemented in vtescape() and cwrite().
 
-        Certain emulations are handled emulator, such as hpterm and hp2621.
+        Certain emulations are handled elsewhere, such as hpterm and hp2621.
         These are implemented by the hpascii() function which is called by
         cwrite() fairly early on, and when hpascii() returns, so does cwrite()
         preventing execution from ever ending up in vtescape().
@@ -1365,7 +1369,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt52x:338"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
             <p>If the cursor is at the bottom margin, the screen is
-                scrolled upwards, otherwise the cursor is moved down one.</p>
+                scrolled upwards; otherwise the cursor is moved down one.</p>
         </section>
         <section role="ctlseq" id="nel" ctlseq="ESC E" mnemonic="NEL" title="Next Line">
             <ref src="e48:65"/>
@@ -1409,7 +1413,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:111"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
-            <p>Reverse Index - moves the cursor up one, scrolling the screen
+            <p>Reverse Index—moves the cursor up one, scrolling the screen
                 if the cursor is already at the top margin.</p>
         </section>
         <section role="ctlseq" id="ssg2l" ctlseq="ESC N" mnemonic="SS2" title="Single shift G2, left" groups="isvt220 isansi">
@@ -1575,7 +1579,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 is moved to the end of the previous line
             </p>
             <p badges="s97801" groups="ishp">
-                Moves the cursor left 1 column if it is currently to the right of the left
+                Moves the cursor left one column if it is currently to the right of the left
                 margin
             </p>
         </section>
@@ -1641,7 +1645,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 Instead, this clears screen and homes cursor
             </p>
             <p badges="avatar">
-                Instead, this clear screen, home cursor, and reset colour attribute
+                Instead, this clear screen, home cursor, and reset color attribute
             </p>
 
             <p badges="s97801" groups="ishp">
@@ -1759,7 +1763,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
             <ref src="vt52x:336"/>
-            <p>Horizontal Tab - sends the cursor to the next tabstop</p>
+            <p>Horizontal Tab—sends the cursor to the next tabstop</p>
         </section>
         <section id="vt" role="ctlchar" mnemonic="VT" ctlseq="VT" title="Vertical Tab">
             <ref src="e48:88"/>
@@ -1860,7 +1864,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 for unknown reasons.</p>
         </section>
         <section role="ctlseq" id="h19-transmit-page" ctlseq="ESC #" title="Transmit Page (H19)" not-implemented="true" badges="h19">
-            <p>Transmit page (lines 1-24) to host</p>
+            <p>Transmit page (lines 1–24) to host</p>
         </section>
         <!-- TODO: Are these really not guarded for some VT terminal? -->
         <section role="ctlseq" id="decdhl-top" ctlseq="ESC # 3" mnemonic="DECDHL" title="double-height line, top half">
@@ -1973,7 +1977,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <tr>
                     <td>@</td>
                     <td>No</td>
-                    <td>United Kingdom (UK). SNI-97801 - Not quite US ASCII, but close</td>
+                    <td>United Kingdom (UK). SNI-97801—Not quite US ASCII, but close</td>
                 </tr>
                 <tr>
                     <td>A</td>
@@ -2641,7 +2645,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt50" series="vt"/>
-            <p>Clear to end of screen</p>
+            <p>Clear to the end of the screen</p>
         </section>
         <section role="ctlseq" id="vt52-ceol" ctlseq="ESC K" title="VT52 Clear to end of line" groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
@@ -2652,7 +2656,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt50" series="vt"/>
-            <p>Clear to end of line</p>
+            <p>Clear to the end of the line</p>
         </section>
         <section role="ctlseq" id="h19-il" ctlseq="ESC L" title="Insert line (H19)" badges="h19">
             <p>Insert line</p>
@@ -2755,21 +2759,21 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <termsupp first="vt102" series="vt" excluded="vt132"/>
             <p>Print Screen</p>
         </section>
-        <section role="ctlseq" id="vt52-ap" ctlseq="ESC ^" title="VT52 Enable Autoprint" groups="isvt52">
+        <section role="ctlseq" id="vt52-ap" ctlseq="ESC ^" title="VT52 Enable Auto-print" groups="isvt52">
             <ref src="vt102:SC.2.3.5"/>
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt102" series="vt" excluded="vt132"/>
-            <p>Turn on Autoprint</p>
+            <p>Turn on Auto-print</p>
         </section>
-        <section role="ctlseq" id="vt52-dap" ctlseq="ESC _" title="VT52 Disable Autoprint" groups="isvt52">
+        <section role="ctlseq" id="vt52-dap" ctlseq="ESC _" title="VT52 Disable Auto-print" groups="isvt52">
             <ref src="vt102:SC.2.3.5"/>
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <termsupp first="vt102" series="vt" excluded="vt132"/>
-            <p>Turn off Autoprint</p>
+            <p>Turn off Auto-print</p>
         </section>
         <section role="ctlseq" id="vip-cls" ctlseq="ESC `" title="Clear screen (VIP7809)" badges="vip7809">
             <p>Clears the screen, cursor does not move</p>
@@ -2782,7 +2786,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <p>Interrupt</p>
         </section>
         <section role="ctlseq" id="h19-erb" ctlseq="ESC b" title="Erase to beginning of display" badges="h19">
-            <p>Erase to beginning of display</p>
+            <p>Erase to the beginning of the display</p>
         </section>
         <section role="ctlseq" id="kl-dis" ctlseq="ESC b" title="Disable key lock" groups="ishft" badges="s97801 aaa">
             <p>Disables the key lock</p>
@@ -2817,7 +2821,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <termsupp series="sco" first="sco"/>
             <p>Lock Memory Area (sets margins)</p>
         </section>
-        <section role="ctlseq" id="lma" ctlseq="ESC l"
+        <section role="ctlseq" id="hpterm-lma" ctlseq="ESC l"
                  title="Lock Memory (HPTERM)"
                  not-implemented="true" todo="true">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-l.C9A"/>
@@ -2853,7 +2857,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <p>Lock shift G2, left</p>
         </section>
         <section role="ctlseq" id="h19-ebol" ctlseq="ESC o" title="Erase to beginning of line (H19)" badges="h19">
-            <p>Erase to beginning of line</p>
+            <p>Erase to the beginning of the line</p>
         </section>
         <section role="ctlseq" id="lsg3l" ctlseq="ESC o" mnemonic="LS3" title="Lock shift G3, left" groups="isvt220 isansi">
             <ref src="e48:64"/>
@@ -2881,10 +2885,10 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <p>Exit Keypad Shift Mode</p>
         </section>
         <section role="ctlseq" id="h19-weol" ctlseq="ESC v" title="Enable wrap around at end of line (H19)" badges="h19">
-            <p>Enable wrap around at end of line</p>
+            <p>Enable wrap around at the end of the line</p>
         </section>
         <section role="ctlseq" id="h19-deol" ctlseq="ESC w" title="Discard at end of line" badges="h19">
-            <p>Discard at end of line (don't wrap)</p>
+            <p>Discard at the end of the line (don't wrap)</p>
         </section>
         <section role="ctlseq" id="h19-ms" ctlseq="ESC x" title="Set modes (H19)" badges="h19">
             <p>Set modes. Next character should be one of the following</p>
@@ -2899,7 +2903,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 </tr>
                 <tr>
                     <td>2</td>
-                    <td>Turn off key click</td>
+                    <td>Turn off key-click</td>
                 </tr>
                 <tr not-implemented="true">
                     <td>3</td>
@@ -3036,7 +3040,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         </p>
 
         <p>With APC sequences on, the remote host can request the execution of any
-            Kermit command except those considered dangerous, such as: push, run, !,
+            Kermit command except those considered dangerous, such as push, run, !,
             redirect, delete, rename, output, enable, disable, script and set terminal apc.</p>
 
         <p>The <em>unchecked</em> option removes the above safety mechanism allowing the
@@ -3076,9 +3080,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                        don't appear to support this currently. K95 also does not allow
                        specifying the direction of the key. -->
 
-            <p>The third parameter is a ;-seperated list of key definitions. A key
+            <p>
+                The third parameter is a ;-seperated list of key definitions. A key
                 definition consists of the key code for one of the function keys, a / character
-                and then the string to send in response to that function key being pressed.</p>
+                and then the string to send in response to that function key being pressed.
+            </p>
 
             <section role="text" title="Not Implemented">
             <p>K95 does not currently
@@ -3215,12 +3221,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 DCS <param-single/> + m <param-text/> ST
             </ctlseq>
             <p>Kermit 95 Hyperlink Extension. This pre-dates the now widely
-                implemented OSC 8 hyperlink escape sequence, but it works much the same way
-                - you specify a destination for the hyperlink and some text. Where it
+                implemented OSC 8 hyperlink escape sequence, but it works much the same
+                way—you specify a destination for the hyperlink and some text. Where it
                 differs from OSC 8 is that you can specify the type of hyperlink with both
                 URI and UNC path destinations supported.</p>
             <p>The parameter <param-single/> specifies the type of link - a
-                value of 1 indicates a URI to be opened in a browser (eg,
+                value of 1 indicates a URI to be opened in a browser (e.g.,
                 https://www.kermitproject.com), while a value of 2 indicates a UNC path
                 to be opened in the file manager or the application associated with the
                 file specified. A value of 0 is used to terminate a hyperlink.
@@ -3247,8 +3253,6 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </section>
         </section>
 
-        <!-- TODO: Is this stuff *actually* unimplemented? The values returned
-                   aren't all the same regardless of request... -->
         <section role="ctlseq" id="decrqss" mnemonic="DECRQSS"
                  title="Request Selection or Setting"
                  badges="vt320 vt320pc wy370 xterm">
@@ -3263,7 +3267,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </ctlseq>
             <p>
                 <tt>D...D</tt> specifies the setting or selection being
-                requested - this usually consts of the final characters of
+                requested - this usually consts of the final characters from
                 whatever control sequence makes the setting or selection.
             </p>
             <p>For example, to request the current SGR selection:</p>
@@ -3368,7 +3372,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     A real DEC VT520 has two conformance levels: VT100 mode, and
                     VT520 mode. So setting the conformance level to 62, 63, 64 or 65
                     will result in the conformance level being set to 65 giving you
-                    a response of <tt>DCS 1 $ r 6 5 ; 1 " p ST</tt> if using 7 bit
+                    a response of <tt>DCS 1 $ r 6 5 ; 1 " p ST</tt> if using 7-bit
                     controls. And if you set the conformance level to 61 (VT100),
                     a real VT520 will not respond to DECRQSS because a real VT100
                     wouldn't.
@@ -3449,8 +3453,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Kermit 95 response with the width of the terminal Window. If,
-                for example, the terminal is 132 columns wide the response would
+                <p>Kermit 95 responds with the width of the terminal Window. If,
+                for example, the terminal is 132 columns wide, the response would
                 be: <tt>DCS 1 $ r 1 3 2 $ | ST</tt></p>
                 <p>
                     Unlike a real terminal, Kermit 95s terminal width is not
@@ -3529,7 +3533,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <a href="#decac">DECAC</a>. A parameter must be supplied
                     to specify <em>which</em> color pair to report. For
                     compatibility with other terminals, <!-- (Windows Terminal
-                    specifically, and quite possibly the VT525 too) --> that
+                    specifically, and quite possibly the VT525 too) -->that
                     parameter can appear either before the '$q' or after it.
                     For example, both of the following will request the color
                     pair for Normal Text (1):
@@ -3548,7 +3552,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                     <a href="#decatc">DECATC</a>. A parameter must be supplied
                     to specify <em>which</em> color pair to report. For
                     compatibility with other terminals, <!-- (Windows Terminal
-                    specifically, and quite possibly the VT525 too) --> that
+                    specifically, and quite possibly the VT525 too) -->that
                     parameter can appear either before the '$q' or after it.
                     For example, both of the following will request the color
                     pair for Underline (3):
@@ -3796,7 +3800,7 @@ DCS $ q 3 , } ST</pre>
                  title="Turn on/off background colour intensity (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> D</ctlseq>
             <termsupp series="sco" first="sco"/>
-            <p>Turn on/off background colour intensity</p>
+            <p>Turn on/off background color intensity</p>
         </section>
         <section role="ctlseq" id="cub-ext" title="Cursor Backward">
             <ctlseq>CSI = <param-single/> D</ctlseq>
@@ -3859,14 +3863,14 @@ DCS $ q 3 , } ST</pre>
             <p>Set Normal Foreground Color to <param-single/>.</p>
             <p>
                 If the display is in reverse video mode (DECSCNM), in Kermit 95 beta 7 and
-                earlier this clears the foreground colour, and ORs <param-single/>
-                with the existing background colour. The resulting background colour will
+                earlier this clears the foreground color, and ORs <param-single/>
+                with the existing background color. The resulting background color will
                 not necessarily be the same as value supplied as <param-single/>,
-                while the foreground colour will be black. <em>This may be a bug!</em>
+                while the foreground color will be black. <em>This may be a bug!</em>
             </p>
             <p>
-                With the addition of support for more than 16 colours, in reverse video mode
-                it now sets the background colour to <param-single/> while
+                With the addition of support for more than 16 colors, in reverse video mode
+                it now sets the background color to <param-single/> while
                 preserving the foreground color.
             </p>
         </section>
@@ -3937,7 +3941,7 @@ DCS $ q 3 , } ST</pre>
                  title="Set Reverse background colour" groups="isansi">
             <ctlseq>CSI = <param-single/> I</ctlseq>
             <termsupp series="sco" first="sco"/>
-            <p>Set Reverse background colour to <param-single/></p>
+            <p>Set Reverse background color to <param-single/></p>
         </section>
         <section role="ctlseq" id="ba80-sso" not-implemented="true" title="Screen saver off (BA80)" badges="ba80">
             <ctlseq>CSI = ? I</ctlseq>
@@ -4045,7 +4049,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                     Additionally, attributes should
                     be reset to the last valid attribute (if attributes are not stored). K95 does
-                    not do this - attributes are just reset to normal - same behaviour as
+                    not do this—attributes are just reset to normal - same behavior as
                     <param-single/> = 0.
                     </p>
                 </section>
@@ -4058,7 +4062,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                     Additionally, attributes should
                     be reset to the last valid attribute (if attributes are not stored). K95 does
-                    not do this - attributes are just reset to normal - same behaviour as
+                    not do this—attributes are just reset to normal - same behavior as
                     <param-single/> = 1.
                     </p>
                 </section>
@@ -4071,7 +4075,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes should
                         be reset to the last valid attribute (if attributes are not stored). K95 does
-                        not do this - attributes are just reset to normal - same behaviour as
+                        not do this—attributes are just reset to normal - same behavior as
                         <param-single/> = 2.
                     </p>
                 </section>
@@ -4086,7 +4090,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes should
                         be reset to the last valid attribute (if attributes are not stored). K95 does
-                        not do this - attributes are just reset to normal.
+                        not do this—attributes are just reset to normal.
                     </p>
                 </section>
             </section>
@@ -4100,7 +4104,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes should
                         be reset to the last valid attribute (if attributes are not stored). K95 does
-                        not do this - attributes are just reset to normal.
+                        not do this—attributes are just reset to normal.
                     </p>
                 </section>
             </section>
@@ -4114,7 +4118,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes should
                         be reset to the last valid attribute (if attributes are not stored). K95 does
-                        not do this - attributes are just reset to normal.
+                        not do this—attributes are just reset to normal.
                     </p>
                 </section>
             </section>
@@ -4127,7 +4131,7 @@ DCS $ q 3 , } ST</pre>
                 <section role="text" not-implemented="true">
                     <p>
                         Additionally, attributes should
-                        be preserved. K95 resets attributes normal - same behaviour as
+                        be preserved. K95 resets attributes normal - same behavior as
                         <param-single/> = 0.
                     </p>
                 </section>
@@ -4141,7 +4145,7 @@ DCS $ q 3 , } ST</pre>
                 <section role="text" not-implemented="true">
                     <p>
                         Additionally, attributes should
-                        be preserved. K95 resets attributes normal - same behaviour as
+                        be preserved. K95 resets attributes normal - same behavior as
                         <param-single/> = 1.
                     </p>
                 </section>
@@ -4155,7 +4159,7 @@ DCS $ q 3 , } ST</pre>
                 <section role="text" not-implemented="true">
                     <p>
                         Additionally, attributes should
-                        be preserved. K95 resets attributes normal - same behaviour as
+                        be preserved. K95 resets attributes normal - same behavior as
                         <param-single/> = 2.
                     </p>
                 </section>
@@ -4305,7 +4309,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:334"/>
                 <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt sco"/>
                 <p>
-                    Clears to the end of the line with the space character. Clears attributes.
+                    Clears to the end of the line with the space character, and clears attributes.
                 </p>
             </section>
             <section role="parameter" id="el-1" title="Clear to beginning of line with Space">
@@ -4321,7 +4325,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:334"/>
                 <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux sco"/>
                 <p>
-                    Clears to the beginning of the line with the space character. Clears attributes.
+                    Clears to the beginning of the line with the space character, and clears attributes.
                 </p>
             </section>
             <section role="parameter" id="el-2" title="Clear whole cursor line with Space">
@@ -4337,31 +4341,31 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:334"/>
                 <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux sco"/>
                 <p>
-                    Clears the entire currently line with the space character. Clears attributes.
+                    Clears the entire current line with the space character, and clears attributes.
                 </p>
             </section>
             <section role="parameter" id="el-3" title="Clear to end of line with NUL (SNI-97801)">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <p>
-                    Clears to the end of the line with the NUL character. Clears attributes.
+                    Clears to the end of the line with the NUL character, and clears attributes.
                 </p>
             </section>
             <section role="parameter" id="el-4" title="Clears to beginning of line with NUL (SNI-97801)">
                 <ctlseq><param-single/> = 4</ctlseq>
                 <p>
-                    Clears to the beginning of the line with the NUL character. Clears attributes.
+                    Clears to the beginning of the line with the NUL character, and clears attributes.
                 </p>
             </section>
             <section role="parameter" id="el-5" title="Clears entire line with NUL (SNI-97801)">
                 <ctlseq><param-single/> = 5</ctlseq>
                 <p>
-                    Clears the entire line with the NUL character. Clears attributes.
+                    Clears the entire line with the NUL character, and clears attributes.
                 </p>
             </section>
             <section role="parameter" id="el-6" title="Clear to end of line with Space (SNI-97801)">
                 <ctlseq><param-single/> = 6</ctlseq>
                 <p>
-                    Clear to end of line with the space character.
+                    Clear to the end of the line with the space character.
                 </p>
                 <section role="text" not-implemented="true">
                     <p>
@@ -4381,7 +4385,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes
                         should be preset to the last valid SGR attribute (if attributes are not
-                        stored). K95 instead clears attributes giving the same behaviour
+                        stored). K95 instead clears attributes giving the same behavior
                         as <param-single/> = 1
                     </p>
                 </section>
@@ -4395,7 +4399,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes
                         should be preset to the last valid SGR attribute (if attributes are not
-                        stored). K95 instead clears attributes giving the same behaviour
+                        stored). K95 instead clears attributes giving the same behavior
                         as <param-single/> = 2
                     </p>
                 </section>
@@ -4403,7 +4407,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="el-9" title="Clear to end of line with NUL (SNI-97801)">
                 <ctlseq><param-single/> = 9</ctlseq>
                 <p>
-                    Clear to end of line with the NUL character.
+                    Clear to the end of the line with the NUL character.
                 </p>
                 <section role="text" not-implemented="true">
                     <p>
@@ -4442,13 +4446,13 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="el-12" title="Clear to end of line with Space (SNI-97801)">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <p>
-                    Clear to end of line with the Space character.
+                    Clear to the end of the line with the Space character.
                 </p>
                 <section role="text" not-implemented="true">
                     <p>
                         Additionally, attributes
                         should be preserved. K95 instead clears attributes resulting in the same
-                        behaviour as <param-single/> = 0.
+                        behavior as <param-single/> = 0.
                     </p>
                 </section>
             </section>
@@ -4461,7 +4465,7 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes
                         should be preserved. K95 instead clears attributes resulting in the same
-                        behaviour as <param-single/> = 1.
+                        behavior as <param-single/> = 1.
                     </p>
                 </section>
             </section>
@@ -4474,14 +4478,14 @@ DCS $ q 3 , } ST</pre>
                     <p>
                         Additionally, attributes
                         should be preserved. K95 instead clears attributes resulting in the same
-                        behaviour as <param-single/> = 2.
+                        behavior as <param-single/> = 2.
                     </p>
                 </section>
             </section>
             <section role="parameter" id="el-15" title="Clear to end of line with NUL (SNI-97801">
                 <ctlseq><param-single/> = 15</ctlseq>
                 <p>
-                    Clear to end of line with the NUL character.
+                    Clear to the end of the line with the NUL character.
                 </p>
                 <section role="text" not-implemented="true">
                     <p>
@@ -4608,7 +4612,7 @@ DCS $ q 3 , } ST</pre>
                 Only two of these are currently implemented.
                 <param-single/> = 6 turns off backwards compatibility mode,
                 while <param-single/> = 7 turns it on. AT this time when
-                enabled, backwards compatibility mode causes colours to be reset
+                enabled, backwards compatibility mode causes colors to be reset
                 by SGR Select Primary Font and Display GL Control Characters as Graphic
                 Characters.
             </p>
@@ -4731,7 +4735,7 @@ DCS $ q 3 , } ST</pre>
                 so if a color > 15 is set, then a color > 15 will be returned.
                 It is assumed that any application that sets a color outside the
                 16-color range will handle receiving a color outside this range.
-                Otherwise, for best compatibility stick to 16-color or RGB values
+                Otherwise, for the best compatibility stick to 16-color or RGB values
                 for <tt>SET TERMINAL COLOR TERMINAL</tt> when using ANSI emulation.
             </p>
             <p>
@@ -4905,12 +4909,12 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="sco-dl" title="Delete lines (SCO)" badges="scoansi">
             <ctlseq>CSI <param-single/> $ R</ctlseq>
-            <p>Delete lines - alternate form of <tt>CSI <param-single/> M</tt></p>
+            <p>Delete lines—alternate form of <tt>CSI <param-single/> M</tt></p>
         </section>
         <section role="ctlseq" id="sco-dl2" title="Delete lines (SCO)"
                 badges="scoansi" not-implemented="true" todo="true">
             <ctlseq>CSI <param-single/> R</ctlseq>
-            <p>Delete lines - alternate form of <tt>CSI <param-single/> M</tt></p>
+            <p>Delete lines—alternate form of <tt>CSI <param-single/> M</tt></p>
             <!-- TODO: The CSI Ps $ R variant is not mentioned below, but this is:
                 http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html -->
         </section>
@@ -5225,7 +5229,7 @@ DCS $ q 3 , } ST</pre>
                     <ctlseq><param-single/> = 13</ctlseq>
                 </section>
                 <section role="parameter" not-implemented="true"
-                         title="Set the VESA powerdown interval in minutes">
+                         title="Set the VESA power-down interval in minutes">
                     <ctlseq><param-single/> = 14 ; <param-single symbol="n"/></ctlseq>
                 </section>
                 <section role="parameter" not-implemented="true" title="Bring previous console to front">
@@ -5243,9 +5247,9 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> ^</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-%5E.1CDF"/>
             <p> Scroll Down <param-single/> lines. This was apparently an error
-                in the first printed version of the ECMA-48 5th edition and
+                in the first printed version of the ECMA-48 fifth edition and
                 the initial PDF version from April 1998. The VT420,
-                subsequent PDF versions of the standard, and other terminals
+                later PDF versions of the standard, and other terminals
                 use <a href="#sd">CSI <param-single/> T</a>
             </p>
         </section>
@@ -5280,7 +5284,7 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### b ######################### -->
-        <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi">
+        <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi xterm">
             <ref src="e48:69"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-b.1CA2"/>
             <termsupp first="xterm" series="vt" additional="tt xterm"/>
@@ -5494,7 +5498,7 @@ DCS $ q 3 , } ST</pre>
                 Set Cursor appearance. Parameter <param-single/>
                 sets the cursor size and other settings, while <param-single symbol="Pa"/>
                 and <param-single symbol="Pc" /> specify character attributes.
-                Kermit 95 only supports setting the cursor size and visibiltiy - the other
+                Kermit 95 only supports setting the cursor size and visibiltiy—the other
                 bits in <param-single/> are ignored, while the
                 <param-single symbol="Pa"/> and <param-single symbol="Pc" /> parameters
                 are ignored entirely.
@@ -5544,7 +5548,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:362"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco"/>
             <ctlseq>CSI <param-single/> e</ctlseq>
-            <p>Vertical Position Relative - moves active position <param-single/>
+            <p>Vertical Position Relative—moves active position <param-single/>
                 rows down</p>
         </section>
 
@@ -5919,7 +5923,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:172"/>
                 <termsupp first="vt100" series="vt" additional="vt220 vt510"/>
-                <p>Returns to which ever ANSI mode K95 was in before switching to
+                <p>Returns to whichever ANSI mode K95 was in before switching to
                     VT52 emulation.
                 </p>
                 <p badges="h19">If the current terminal type is H19, then K95
@@ -6755,7 +6759,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-1060" mnemonic=""
-                     title="set legacy keboard emulation, i.e, X11R6"
+                     title="set legacy keyboard emulation, i.e, X11R6"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1060</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-6-0.1F7E"/>
@@ -7050,7 +7054,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:343"/>
                 <p>Described in the VT125 manual, these are really ANSI Media Copy sequences
-                    which should control the flow of data from the printer port to the host. In
+                    that should control the flow of data from the printer port to the host. In
                     Kermit 95, they just turn the screen off and on.</p>
             </section>
             <section role="parameter" id="mc-10" mnemonic=""
@@ -7086,7 +7090,7 @@ DCS $ q 3 , } ST</pre>
                 <p>Sends the line the cursor is currently on to the configured printer</p>
                 <!-- New in cko190. Apparently caused stack overflow on 16-bit OS/2 -->
             </section>
-            <section role="parameter" id="decmc-4" title="Turn off Autoprint">
+            <section role="parameter" id="decmc-4" title="Turn off Auto-print">
                 <ctlseq><param-single/> = 4</ctlseq>
                 <ref src="070:714"/>
                 <ref src="vt102:SC.2.2.14"/>
@@ -7095,10 +7099,10 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:343"/>
                 <termsupp first="vt102" series="vt" additional="vt420 vt510 tt"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-i:Ps-=-4.1DFF"/>
-                <p>Turns off Autoprint</p>
+                <p>Turns off Auto-print</p>
                 <!-- New in cko191 -->
             </section>
-            <section role="parameter" id="decmc-5" title="Autoprint">
+            <section role="parameter" id="decmc-5" title="Auto-print">
                 <ctlseq><param-single/> = 5</ctlseq>
                 <ref src="070:714"/>
                 <ref src="vt102:SC.2.2.14"/>
@@ -7108,7 +7112,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:343"/>
                 <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-i:Ps-=-5.1E00"/>
-                <p>Enables Autoprint mode - sends each line to the configured printer as the
+                <p>Enables Auto-print mode - sends each line to the configured printer as the
                     cursor leaves it (line feed, form feed, vertical tab, wrap)</p>
                 <!-- New in cko191 -->
             </section>
@@ -7425,7 +7429,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" not-implemented="true" id="rm-50"
                      title="97801-5XX - Compose key table off">
                 <ctlseq><param-single/> = 50</ctlseq>
-                <p>Make compose key send Compse Key String</p>
+                <p>Make compose key send Compose Key String</p>
             </section>
             <section role="parameter" id="rm-51" title="97801-5XX - Dead key table off">
                 <ctlseq><param-single/> = 51</ctlseq>
@@ -7517,8 +7521,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:277"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
                 <p>
-                    Switches to Jump (fast) scrolling. Only has an effect on the console version
-                    of K95 - the GUI version (K95G) only supports jump scrolling at the moment so
+                    Switches to Jump (fast) scrolling. Only affects the console version
+                    of K95—the GUI version (K95G) only supports jump scrolling at the moment so
                     is always in this mode
                 </p>
             </section>
@@ -8626,11 +8630,11 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>
                     If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
-                    the following two parameters are taken as the foreground (1st parameter)
-                    and background (2nd parameter) colors. The current intensity setting is
-                    preserved (if the previous foreground colour was intense blue, and the new
-                    one is green then the result will be intense green).
-                    Valid colour codes are:
+                    the following two parameters are taken as the foreground (first parameter)
+                    and background (second parameter) colors. The current intensity setting is
+                    preserved (if the previous foreground color was intense blue, and the new
+                    one is green, then the result will be intense green).
+                    Valid color codes are:
                 </p>
                 <table>
                     <tr>
@@ -8783,7 +8787,7 @@ DCS $ q 3 , } ST</pre>
                 <p> The ASCII Character Set is the current 7-bit display character
                     set (SCO Console Emulation).
                     <!--Disables sco8bit and crm modes, turns off the graphic attribute, switches
-                    to graphic set G1. If in SCOANSI backwards compatibility mode, colours
+                    to graphic set G1. If in SCOANSI backwards compatibility mode, colors
                     are reset.-->
                 </p>
             </section>
@@ -8803,11 +8807,11 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:355"/>
                 <termsupp first="vt510" series="sco" additional="sco"/>
                 <p>
-                    Hex 00-7F of the PC character set codes are mapped to the
+                    Hex 00–7F of the PC character set codes are mapped to the
                     current 7-bit display character set.
                     <!--Turns off sco8bit, turns on crm, switches to graphic set G2, and switches
-                    colours to the color set with <tt>set term color graphic</tt>. if in SCOANSI
-                    backwards compatibility mode, colours are reset.-->
+                    colors to the color set with <tt>set term color graphic</tt>. If in SCOANSI
+                    backwards compatibility mode, colors are reset.-->
                 </p>
             </section>
             <section role="parameter" badges="linux" id="sgr-11-linux"
@@ -8936,7 +8940,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgr-26-blink-on"
                      badges="scoansi" title="Turn on Blink">
                 <ctlseq><param-single/> = 26</ctlseq>
-                '<termsupp first="sco" series="sco" additional=""/>
+                <termsupp first="sco" series="sco" additional=""/>
                 <p>Turns on the Blink attribute</p>
             </section>
             <section role="parameter" id="sgr-26-blink-off" title="Turn off Blink">
@@ -9051,7 +9055,7 @@ DCS $ q 3 , } ST</pre>
                     </p>
                     <p badges="scoansi">
                         Also sets the default foreground color, reverse video
-                        background colour, and the graphic attribute foreground
+                        background color, and the graphic attribute foreground
                         colour
                     </p>
                 </section>
@@ -9060,8 +9064,8 @@ DCS $ q 3 , } ST</pre>
                      title="Enable Underline Option">
                 <ctlseq><param-single/> = 38</ctlseq>
                 <p>
-                    Comment for this one says "Enable underline option". The terminal type this
-                    behaviour should be for is not mentioned, but it was probably for linux pre-3.16.
+                    Comment for this one says, "Enable underline option." The terminal type this
+                    behavior should be for is not mentioned, but it was probably for linux pre-3.16.
                     It is not implemented in any case.
                 </p>
             </section>
@@ -9077,7 +9081,7 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pi"/> is the color space ID which is
                     currently ignored, and
                     <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
-                    are the red, green and blue components (0-255).
+                    are the red, green and blue components (0–255).
                 </p>
                 <p>
                     If Kermit 95 has not been compiled with 24-bit RGB color
@@ -9095,13 +9099,13 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Sets the foreground color to the specified color in the
                     current color palette (as set by SET TERM COLOR PALETTE).
-                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
-                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                    Valid range is 0–15 for the aixterm-16 palette, 0–87 for the
+                    xterm-88 palette, and 0–255 for the xterm-256 palette.
                 </p>
                 <p>
                     Console builds of Kermit 95 (k95.exe, k2.exe) only support
                     the aixterm 16-color palette. If the current color palette
-                    is something other than aixterm-16, the specified color will
+                    is not aixterm-16, the specified color will
                     be looked up in that palette, and then the nearest match in
                     the aixterm-16 palette will be used instead.
                 </p>
@@ -9120,7 +9124,7 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Sets the foreground color to the supplied 24-bit RGB value.
                     <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
-                    are the red, green and blue components (0-255).
+                    are the red, green and blue components (0–255).
                 </p>
                 <p>
                     If Kermit 95 has not been compiled with 24-bit RGB color
@@ -9143,13 +9147,13 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Sets the foreground color to the specified color in the
                     current color palette (as set by SET TERM COLOR PALETTE).
-                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
-                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                    Valid range is 0–15 for the aixterm-16 palette, 0–87 for the
+                    xterm-88 palette, and 0–255 for the xterm-256 palette.
                 </p>
                 <p>
                     Console builds of Kermit 95 (k95.exe, k2.exe) only support
                     the aixterm 16-color palette. If the current color palette
-                    is something other than aixterm-16, the specified color will
+                    is not aixterm-16, the specified color will
                     be looked up in that palette, and then the nearest match in
                     the aixterm-16 palette will be used instead.
                 </p>
@@ -9168,13 +9172,13 @@ DCS $ q 3 , } ST</pre>
                 </p>
                 <p>
                     If the default foreground color is one of the standard 16
-                    colors, the foregrounds existing intensity bit is preserved.
+                    colors, the foregrounds' existing intensity bit is preserved.
                     (for example, if the default FG color is green, and the current
                     FG color is intense blue, then the result will be intense green).
                 </p>
                 <p>
                     The comments also indicate this is used for "disable underline option"
-                    on some unspecified terminal - presumably the inverse of <tt>CSI 38 m</tt>
+                    on some unspecified terminal; presumably the inverse of <tt>CSI 38 m</tt>
                 </p>
             </section>
             <section style="group" role="group">
@@ -9239,7 +9243,7 @@ DCS $ q 3 , } ST</pre>
                     </p>
                     <p badges="scoansi">
                         Also sets the default background color, reverse video
-                        foreground colour, and the graphic attribute background
+                        foreground color, and the graphic attribute background
                         colour
                     </p>
                 </section>
@@ -9257,7 +9261,7 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pi"/> is the color space ID which is
                     currently ignored, and
                     <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
-                    are the red, green and blue components (0-255).
+                    are the red, green and blue components (0–255).
                 </p>
                 <p>
                     If Kermit 95 has not been compiled with 24-bit RGB color
@@ -9275,13 +9279,13 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Sets the background color to the specified color in the
                     current color palette (as set by SET TERM COLOR PALETTE).
-                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
-                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                    Valid range is 0–15 for the aixterm-16 palette, 0–87 for the
+                    xterm-88 palette, and 0–255 for the xterm-256 palette.
                 </p>
                 <p>
                     Console builds of Kermit 95 (k95.exe, k2.exe) only support
                     the aixterm 16-color palette. If the current color palette
-                    is something other than aixterm-16, the specified color will
+                    is not aixterm-16, the specified color will
                     be looked up in that palette, and then the nearest match in
                     the aixterm-16 palette will be used instead.
                 </p>
@@ -9301,7 +9305,7 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Sets the background color to the supplied 24-bit RGB value.
                     <param-single symbol="Pr"/>/<param-single symbol="Pg"/>/<param-single symbol="Pb"/>
-                    are the red, green and blue components (0-255).
+                    are the red, green and blue components (0–255).
                 </p>
                 <p>
                     If Kermit 95 has not been compiled with 24-bit RGB color
@@ -9324,15 +9328,15 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Sets the background color to the specified color in the
                     current color palette (as set by SET TERM COLOR PALETTE).
-                    Valid range is 0-15 for the aixterm-16 palette, 0-87 for the
-                    xterm-88 palette, and 0-255 for the xterm-256 palette.
+                    Valid range is 0–15 for the aixterm-16 palette, 0–87 for the
+                    xterm-88 palette, and 0–255 for the xterm-256 palette.
                 </p>
                 <p>
                     Console builds of Kermit 95 (k95.exe, k2.exe) only support
                     the aixterm 16-color palette. If the current color palette
-                    is something other than aixterm-16, the specified color will
-                    be looked up in that palette, and then the nearest match in
-                    the aixterm-16 palette will be used instead.
+                    is not aixterm-16, the specified color will be looked up in
+                    that palette, and then the nearest match in the aixterm-16
+                    palette will be used instead.
                 </p>
             </section>
             <section role="parameter" id="sgr-49"
@@ -9343,8 +9347,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:356"/>
                 <termsupp first="vt525" series="vt" additional="tt linux sco"/>
                 <p>This is processed for all terminal types, where it resets the background
-                    color to the default value. The comemnts say: Supported by SCO ANSI.
-                    QANSI - restore bg color saved with <tt>CSI = Pn G</tt>
+                    color to the default value. The comments say: &quot;Supported by SCO ANSI.
+                    QANSI - restore bg color saved with <tt>CSI = Pn G</tt>&quot;
                 </p>
             </section>
             <section role="parameter" not-implemented="true" badges="s97801" title="Save Attributes">
@@ -9443,7 +9447,7 @@ DCS $ q 3 , } ST</pre>
                     </p>
                     <p badges="scoansi">
                         Also sets the default foreground color, reverse video
-                        background colour, and the graphic attribute foreground
+                        background color, and the graphic attribute foreground
                         colour
                     </p>
                 </section>
@@ -9518,7 +9522,7 @@ DCS $ q 3 , } ST</pre>
                     </p>
                     <p badges="scoansi">
                         Also sets the default background color, reverse video
-                        foreground colour, and the graphic attribute background
+                        foreground color, and the graphic attribute background
                         colour
                     </p>
                 </section>
@@ -9780,7 +9784,7 @@ DCS $ q 3 , } ST</pre>
         <!-- ######################### p ######################### -->
 
         <section role="ctlseq" ctlseq="CSI p" not-implemented="true" badges="sun"
-                 mnemonic="SUNBOW" id="sunbow" title="Black On White." >
+                 mnemonic="SUNBOW" id="sunbow" title="Black On White" >
             <!-- TODO: This should be easy to implement!
                     If we don't want to override colour attributes, we
                    could treat it as a reverse-mode thing like we do
@@ -9804,11 +9808,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> p</ctlseq>
             <section role="parameter" not-implemented="true" title="Blinking on">
                 <ctlseq><param-single/> = 0</ctlseq>
-                <p>Blinking on, lines 1-25 or 1-24</p>
+                <p>Blinking on, lines 1–25 or 1–24</p>
             </section>
             <section role="parameter" not-implemented="true" title="Blinking off">
                 <ctlseq><param-single/> = 1</ctlseq>
-                <p>Blinking off, lines 1-25 or 1-24</p>
+                <p>Blinking off, lines 1–25 or 1–24</p>
             </section>
             <section role="parameter" not-implemented="true" title="Blinking on, line 25">
                 <ctlseq><param-single/> = 2</ctlseq>
@@ -9918,7 +9922,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
             </table>
             <p>As K956 doesn't support memory pages different from the actual screen
-                size, the behaviour isn't quite right here.
+                size, the behavior isn't quite right here.
                 <param-single symbol="Pa"/> sets the number of rows,
                 and the bottom margin is set to <param-single symbol="Ps"/>. The number
                 of screen columns is set to <param-single symbol="Pc"/>. In K95G, if
@@ -9972,7 +9976,7 @@ DCS $ q 3 , } ST</pre>
                 conformance level and its own conformance level. On a VT520,
                 trying to set a conformance level of 62, 63, 64 or 65 will all
                 get you 65. You get to choose between the lowest level (61) and
-                the highest level for your terminal - the in between options are
+                the highest level for your terminal—the in between options are
                 all the same as the highest level.
             </p>
             <p>
@@ -10138,7 +10142,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:147"/>
             <ref src="070:448"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-$-p.1D01"/>
-            <ref src="vt420:279"/>p
+            <ref src="vt420:279"/>
             <ref src="vt510:DECRQM.html"/>
             <ref src="vt52x:262"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt"/>
@@ -11174,8 +11178,8 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:226"/>
             <termsupp first="vt510" series="vt" additional=""/>
             <p>K95 will attempt to set the local system time
-                (your computers clock) to the time supplied if it can. First parameter
-                is hour (0-23), second parameter is minute (0-59).
+                (your computers' clock) to the time supplied if it can. First parameter
+                is hour (0–23), second parameter is minute (0–59).
             </p>
             <!-- TODO: If this actually works, we should probably have a setting to forbid
                     this, and have it off by default -->
@@ -11211,15 +11215,15 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" ctlseq="CSI q" badges="sun" mnemonic="SUNWOB"
                  not-implemented="true" id="sunwob" title="White On Black">
             <p>
-                Takes no parameters.  Sets the screen  mode  to  white-
-                on-black.   If  the  screen  mode  is already white-on-
-                black, has no effect.  In this mode spaces  display  as
-                solid  black,  other characters as white-on-black.  The
-                cursor is a solid white block.  Characters displayed in
-                negative  image  rendition  (see `Select Graphic Rendi-
-                tion' above) is black-on-white in this mode.  The  ini-
-                tial  setting of the screen mode on reset is the alter-
-                native mode, black on white.
+                Takes no parameters. Sets the screen mode to white-on-black.
+                If the screen mode is already white-on-black, has no effect.
+                In this mode spaces display as
+                solid black, other characters as white-on-black. The
+                cursor is a solid white block. Characters displayed in
+                negative image rendition (see 'Select Graphic Rendition'
+                above) is black-on-white in this mode. The initial
+                setting of the screen mode on reset is the alternative mode,
+                black on white.
                 <!-- TODO: This should be easy to implement!
                        If we don't want to override colour attributes, we
                        could treat it as a reverse-mode thing like we do
@@ -11420,12 +11424,13 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional="tt"/>
         </section>
 
-        <section role="ctlseq" id="" mnemonic="XTPOPSGR"
+        <section role="ctlseq" id="xtpopsgr-alt" mnemonic="XTPOPSGR"
                  title="Pop video attributes from stack"
                  not-implemented="true" todo="true">
             <ctlseq>CSI # q</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-pound-q.1E14"/>
             <termsupp first="xterm" series="xt" additional=""/>
+            <p>This is a synonym for <a href="#xtpopsgr">XTPOPSGR</a>.</p>
         </section>
 
         <section role="ctlseq" id="decelf" mnemonic="DECELF"
@@ -11476,10 +11481,10 @@ DCS $ q 3 , } ST</pre>
                 when a line-feed function is performed with the cursor on the bottom line.
                 A parameter of 2 or 3 introduces a small "jump" when a scroll occurs, while
                 a parameter of 34 clears the screen rather than scrolling. A parameter of
-                0 initiates "wrap mode". In  wrap mode, if a linefeed occurs on the
-                bottom line, the cursor  goes  to  the  same  character
-                position  in  the  top  line  of  the screen.  When any
-                linefeed occurs, the line that the cursor moves  to  is
+                0 initiates "wrap mode". In wrap mode, if a linefeed occurs on the
+                bottom line, the cursor goes to the same character
+                position in the top line of the screen. When any
+                linefeed occurs, the line that the cursor moves to is
                 cleared.
             </p>
         </section>
@@ -11679,14 +11684,14 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" ctlseq="CSI s" badges="aaa" mnemonic="zPSH"
                  not-implemented="true" title="Push Line"/>
         <section role="ctlseq" ctlseq="CSI s" id="scosc" mnemonic="SCOSC"
-                 title="Save Cursor Position" badges="linux" groups="isansi">
+                 title="Save Cursor Position" badges="linux xterm" groups="isansi">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-s.1BC3"/>
             <ref src="vt52x:371"/>
             <termsupp first="sco" series="sco" additional="xterm tt linux"/>
                 <!-- Supposedly for SNI-97801 too, but for that the `CSI Ps s`
                      code path will be taken first resulting in this being
                      skipped -->
-            <!-- TODO: xterm: CSI s: Save cursor, available only when DECLRMM is disabled (SCOSC, also ANSI.SYS) -->
+            <!-- TODO: xterm: available only when DECLRMM is disabled (SCOSC, also ANSI.SYS) -->
         </section>
         <section role="ctlseq" id="sunreset" ctlseq="CSI s"
                  mnemonic="SUNRESET" title="Reset terminal emulator" badges="sun">
@@ -11760,7 +11765,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 3</ctlseq>
                 <p>
                     K95 provides the &quot;ID Card Reader broken or missing&quot; response.
-                    If 8 bit controls are enabled, that is:
+                    If 8-bit controls are enabled, that is:
                     <tt>DCS P t A ST</tt>
                     Otherwise its;
                     <tt>ESC P P t A ESC</tt>
@@ -11803,7 +11808,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1.2003"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <p>
-                    K95G only: Deiconify/restore/un-minimise window. Ignored by the console
+                    K95G only: Deiconify/restore/un-minimize window. Ignored by the console
                     version of K95.
                 </p>
             </section>
@@ -11865,7 +11870,7 @@ DCS $ q 3 , } ST</pre>
                 <!-- TODO: should be separate refs for 0, 1, 2, 3 -->
                 <p>
                     Maximise window in method specified by the second
-                    parameter (maximise, maximise vertically, maximise horizontally,
+                    parameter (maximize, maximize vertically, maximize horizontally,
                     or restore if the parameter is 0).
                 </p>
                 <!-- TODO: We should be able to implement this just fine -->
@@ -11876,8 +11881,8 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <!-- TODO: should be separate refs for 0, 1, 2 -->
                 <p>
-                    Undo full screen mode, Change to full screen mode,
-                    toggle full screen mode - the second parameter (0-2) indicates which
+                    Undo full-screen mode, Change to full-screen mode,
+                    toggle full-screen mode. The second parameter (0–2) indicates which
                     one.
                 </p>
                 <!-- TODO: We don't have a full-screen option, but we could certainly implement
@@ -11950,8 +11955,8 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <!-- TODO: should be separate refs for 22 ; 0, 22 ; 1, 22 ; 2 -->
                 <p>
-                    The second parameter (0-2) indicates which to save:
-                    icon and title, icon, title. The optional third parameter (1-10)
+                    The second parameter (0–2) indicates which to save:
+                    icon and title, icon, title. The optional third parameter (1–10)
                     indicates which position in the stack to store to rather than pushing
                     on to the stack.
                 </p>
@@ -11962,8 +11967,8 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <!-- TODO: should be separate refs for 23 ; 0, 23 ; 1, 23 ; 2 -->
                 <p>
-                    The second parameter (0-2) indicates which to restore:
-                    icon and title, icon, title. The optional third parameter (1-10)
+                    The second parameter (0–2) indicates which to restore:
+                    icon and title, icon, title. The optional third parameter (1–10)
                     indicates which position in the stack to restore from rather than
                     popping from the top of the stack.
                 </p>
@@ -11985,9 +11990,9 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="xtsmtitle-qwhex"
                      title="Query window/icon labels using hexadecimal"
                      not-implemented="true">
-                not-implemented="true"
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-gt-Pm-t:Ps-=-1.1F09"/>
-                <ctlseq><param-single/> = 1</ctlseq></section>
+                <ctlseq><param-single/> = 1</ctlseq>
+            </section>
             <section role="parameter" id="xtsmtitle-swutf8"
                      title="Set window/icon labels using UTF-8"
                      not-implemented="true">
@@ -12080,11 +12085,10 @@ DCS $ q 3 , } ST</pre>
                  ctlseq="CSI u" mnemonic="zSTP" title="Set Transfer Point"/>
         <section role="ctlseq" ctlseq="CSI u" groups="isansi ishft" id="scorc"
                  mnemonic="SCORC"
-                 badges="scoansi linux" title="Restore cursor position">
+                 badges="scoansi linux xterm" title="Restore cursor position">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-u.1BC5"/>
             <ref src="vt52x:371"/>
             <termsupp first="sco" series="sco" additional="tt xterm linux"/>
-                 <!-- TODO: xterm: Restore cursor position (SCOSC, also ANSI.SYS) -->
         </section>
         <section role="ctlseq" badges="s97801" id="sni-mode" title="SNI97801 Various mode options">
             <ctlseq>CSI <param-single/> u</ctlseq>
@@ -12173,7 +12177,7 @@ DCS $ q 3 , } ST</pre>
                  title="User-Preferred Supplemental Set"
                  not-implemented="true" todo="true">
             <ctlseq>CSI &amp; u</ctlseq>
-            <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI&u.1D37"/>
+            <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI&amp;u.1D37"/>
             <ref src="070:380"/>
             <ref src="vt420:295"/>
             <ref src="vt510:DECRQUPSS.html"/>
@@ -12358,8 +12362,8 @@ DCS $ q 3 , } ST</pre>
             </ctlseq>
             <p>
                 First parameter is printed
-                lines per page (1-126), second parameter is total lines per page (1-126),
-                third parameter is left margin (0-254).
+                lines per page (1–126), second parameter is total lines per page (1–126),
+                third parameter is left margin (0–254).
             </p>
         </section>
 
@@ -12430,16 +12434,16 @@ DCS $ q 3 , } ST</pre>
             </ctlseq>
             <ref src="wy370:94"/>
             <p>
-                Set color and attribute. The first two
-                parameters are foreground and background colour, a value from 0-64
-                (the WY370 supports a 64-color colour palette). K95 currently maps
-                whatever colour is specified to one of the 8 standard colours. The
+                Set color and attribute. The first two parameters are foreground
+                and background color, a value from 0 to 64
+                (the WY370 supports a 64-color color palette). K95 currently maps
+                whatever color is specified to one of the eight standard colors. The
                 third parameter, <param-single symbol="Pa"/>, specifies an attribute.
             </p>
             <!-- TODO: When we do 256-color and 24bit-color modes we can actually support
                     the WY370 palette properly -->
             <p>K95 currently assigns different meanings to the attribute numbers
-                than described in the WY370 programmers guide (Table 5-9, page 5-19):</p>
+                than described in the WY370 programmer's guide (Table 5–9, page 5–19):</p>
             <table>
                 <tr>
                     <th><param-single symbol="Pa"/> </th>
@@ -12495,7 +12499,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt132:87"/>
             <termsupp first="vt100" series="vt" additional="vt132"/>
             <p><param-single/>
-                can either be a 0 or a 1 - any other value will result in the request being
+                can either be a 0 or a 1; any other value will result in the request being
                 ignored. If <param-single/> is a 0, then the first parameter
                 in the response will be a 2, otherwise it will be a 3.</p>
 
@@ -12523,7 +12527,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td><param-single symbol="Pb"/></td>
-                    <td>Terminal byte size - 1 for 8 bit, 2 for 7 bit</td>
+                    <td>Terminal byte size minus 1 for 8-bit, 2 for 7-bit</td>
                 </tr>
                 <tr>
                     <td><param-single symbol="Px"/><br/>
@@ -12600,7 +12604,7 @@ DCS $ q 3 , } ST</pre>
                             </tr>
                             <tr>
                                 <td>128</td>
-                                <td>38400 or 57600 or 115200 or 230400 or any other
+                                <td>38400 or 57,600 or 115,200 or 230,400 or any other
                                     serial interface speed or a network connection</td>
                             </tr>
                         </table>
@@ -12711,7 +12715,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" badges="s97801" id="sni-test">
             <ctlseq>CSI <param-single/> y</ctlseq>
             <p>Mostly various test functions most of which don't make a lot of sense
-                for a terminal emulator (eg, "Execute hardware test for terminal").
+                for a terminal emulator (e.g., "Execute hardware test for terminal").
                 Only three of the possible values of <param-single/> are
                 implemented:
             </p>
@@ -12741,7 +12745,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:DECTST.html"/>
             <ref src="vt52x:316"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
-            <p>power-up self test,
+            <p>power-up self-test,
                 data loop back test, EIA modem control test,
                 repeat selected tests indefinitely</p>
         </section>
@@ -12982,7 +12986,7 @@ DCS $ q 3 , } ST</pre>
                         to specify text colors from a table of 16
                         foreground-background color pairs, rather than showing
                         text as bold/underline/reverse/blinking. Other text
-                        attributes (eg, italic) are shown as normal text.
+                        attributes (e.g., italic) are shown as normal text.
                     </p>
                     <p>
                         When in this mode, <a href="#decatcum">DECATCUM</a>
@@ -13562,10 +13566,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST.E65"/>
             <termsupp first="vt520" series="vt" additional="tt"/>
 
-            <p>Kermit k95 currently only supports a limited selection of Operating System
-                Commands for the purpose of setting the window title. These can be terminated
-                with either an ST (<tt>OSC <param-single/> ; <param-text/> ST)</tt>
-                or, for compatibility purposes, a BEL
+            <p>Kermit 95 supports a selection of operating system commands for
+                setting the window title and manipulating color handling. These
+                can be terminated with either an ST
+                (<tt>OSC <param-single/> ; <param-text/> ST)</tt>
+                or, for compatibility with other terminal emulators, a BEL
                 (<tt>OSC <param-single/> ; <param-text/> BEL</tt>)
             </p>
 
@@ -13629,9 +13634,9 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     The <tt><param-single symbol="c"/></tt> component is the
                     color index to change. Valid values depend on which color
-                    palette is currently active: 0-15 for aixterm-16, 0-87 for
-                    xterm-88, and 0-255 for xterm-256. The first five values
-                    above the range of the current palette (eg, for the
+                    palette is currently active: 0–15 for aixterm-16, 0–87 for
+                    xterm-88, and 0–255 for xterm-256. The first five values
+                    above the range of the current palette (e.g., for the
                     xterm-256 palette: 256, 257, 258, 259, 260) set attribute
                     colors. See <a href="#osc-5">OSC-5</a> for more details.
                 </p>
@@ -13650,7 +13655,7 @@ DCS $ q 3 , } ST</pre>
                 </p>
                 <p>
                     If the <tt><param-single symbol="spec"/></tt> component is
-                    a '?' character, then instead of setting a color for the
+                    a '?' character then instead of setting a color for the
                     specified color index, the current color is returned in the
                     form of an OSC sequence suitable for restoring the current
                     value. The returned OSC sequence uses the same terminator
@@ -13662,9 +13667,9 @@ DCS $ q 3 , } ST</pre>
                     If multiple query parameters are supplied (eg <tt>OSC 4 ; 1 ; ? ; 2 ; ? ; 3 ; ? ST</tt>
                     then multiple responses will be sent back.
                 </p>
-                <p>If a color was set by name, then when queried that colors RGB
-                    value will be returned; Kermit 95 does not remember the
-                    original color name used.
+                <p>If a color was set by name rather than an RGB value, then
+                    when queried that colors RGB value will be returned;
+                    Kermit 95 does not remember the original color name used.
                 </p>
             </section>
             <section role="parameter" id="osc-5" mnemonic=""
@@ -13733,7 +13738,7 @@ DCS $ q 3 , } ST</pre>
                     example, the sequence
                     <tt>\033]10;rgb:ffff/0000/0000;rgb:0000/ffff/0000\07</tt>
                     would set the foreground to red and background to green.
-                    If any of these parameters are `?` they will be included in
+                    If any of these parameters are `?`, they will be included in
                     the query color response.
                 </p>
             </section>
@@ -13743,7 +13748,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1-1.1016"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <p>Requires one parameter: a new default background color, which
-                    does not take effect until attributes are set (eg, with
+                    does not take effect until attributes are set (e.g., with
                     <a href="#sgr-0">SGR-0</a>) and is reset on terminal reset.
                     Format of the color parameter is the same color spec format
                     as <a href="#osc-4">OSC-4</a> (rgb:RRRR/BBBB/GGGG), and if
@@ -13938,7 +13943,7 @@ DCS $ q 3 , } ST</pre>
                     Resets one or more colors in the color palette to defaults
                     or values specified by the user via <tt>SET GUI RGBCOLOR</tt>.
                     Multiple color numbers can be specified separated by ';'
-                    (eg, <tt>OSC 1 0 4 ; 1 ; 2 ; 3 ST</tt>).  Only supported in
+                    (e.g., <tt>OSC 1 0 4 ; 1 ; 2 ; 3 ST</tt>).  Only supported in
                     GUI versions of Kermit 95.
                 </p>
                 <p>
@@ -13995,7 +14000,7 @@ DCS $ q 3 , } ST</pre>
                     take priority over SGR colors. When OFF, only text that has
                     the same color as the default attribute (settable with
                     <a href="#decac">DECAC</a>, <a href="#snf">SNF</a>,
-                    <a href="#snb">SNB</a>, <a href="#osc-10">OSC-10/11</a>, etc)
+                    <a href="#snb">SNB</a>, <a href="#osc-10">OSC-10/11</a>, etc.)
                     will show in its attribute color. When ON, it will show in
                     its attribute color regardless of whether some other SGR color
                     was assigned to that text.
@@ -14075,7 +14080,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-I;c.106E"/>
                 <termsupp first="xterm" series="xt" additional=""/>
                 <p>Not supported as the specified icon file specification is
-                    likely reside on a remote host which K95 has no reasonable
+                    likely to reside on a remote host which K95 has no reasonable
                     way of accessing.
                 </p>
             </section>
@@ -14101,7 +14106,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = R</ctlseq>
                 <p>
                     This OSC <em>is not terminated!</em> At all! The OSC is,
-                    verbatim, <tt>OSC R</tt> - no ST or BEL to terminate! For
+                    verbatim, <tt>OSC R</tt>. No ST or BEL to terminate! For
                     this reason its limited to the linux terminal type.
                 </p>
                 <p>
@@ -14121,8 +14126,8 @@ DCS $ q 3 , } ST</pre>
                 </p>
                 <p>
                     In GUI versions of Kermit 95, this sets the RGB value for
-                    color index <em>n</em> (0-15 in hex) to the RGB value
-                    <em>rrggbb</em> (0-255 in hex). In console versions of
+                    color index <em>n</em> (0–15 in hex) to the RGB value
+                    <em>rrggbb</em> (0–255 in hex). In console versions of
                     Kermit 95, this OSC is not acted upon.
                 </p>
             </section>
@@ -14139,15 +14144,16 @@ DCS $ q 3 , } ST</pre>
              title="Color Support in Kermit 95">
         <p>
             Prior to Kermit 95 v3.0 beta.8, Kermit 95 was limited to 16 colors
-            (the 8 standard ANSI colours, plus the additional 8 "intense" colors
+            (the 8 standard ANSI colors, plus the additional 8 "intense" colors
             from aixterm). Kermit 95 now supports being built with
             multiple distinct color palettes and 24-bit RGB support:
         </p>
         <ul>
-            <li><b>aixterm-16</b> - The aixterm 16-color palette (8 standard ANSI colors plus their intense variants)</li>
+            <li><b>aixterm-16</b> - The aixterm 16-color palette (eight standard
+                ANSI colors plus their intense variants)</li>
             <li><b>xterm-88</b> - Xterms 88-color palette</li>
             <li><b>xterm-256</b> - Xterms 256-color palette</li>
-            <li><b>xterm-rgb</b> - Xterms 256-color palette, with direct RGB colour support enabled</li>
+            <li><b>xterm-rgb</b> - Xterms 256-color palette, with direct RGB color support enabled</li>
         </ul>
 
         <p> The first 16 colors are the same in each palette.
@@ -14253,7 +14259,7 @@ DCS $ q 3 , } ST</pre>
                 Console versions of Kermit 95 have no control over the appearance
                 of these 16 colors; that is up to the console environment K95 is
                 running under. Because of this, console builds of K95 do not support
-                customising the color palette via <a href="#osc-4">OSC-4</a> or
+                customizing the color palette via <a href="#osc-4">OSC-4</a> or
                 <tt>SET GUI RGBCOLOR</tt>.
             </p>
 
