@@ -153,6 +153,9 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST html filename CDATA #REQUIRED>
         <!ATTLIST html type (document|outline|ctlseq-table|term-ctlseqs|todo) #REQUIRED>
         <!ATTLIST html title CDATA #IMPLIED>
+        <!ATTLIST html todo-terminals CDATA #IMPLIED>  <!-- for "todo" type only -->
+        <!ATTLIST html todo-ids CDATA #IMPLIED>  <!-- for "todo" type only -->
+        <!ATTLIST html todo-mnemonics CDATA #IMPLIED>  <!-- for "todo" type only -->
 
         <!ELEMENT outputs (html)*>
 
@@ -925,7 +928,19 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             </style>
         </html>
 
-        <html type="todo" filename="todo.html" title="TO-DO">
+        <!-- The todo-* attributes filter what is included in todo.html. A
+             control sequence or parameter must be marked for one of the listed
+             terminals, or have one of the listed mnemonics or IDs. For anything
+             that doesn't have one of the listed ids or mnemonics, additional
+             filtering is done by the todoOutputFilter in xml2doc.rexx which
+             currently requires either vt102, vt220 or vt420 to be listed against
+             the control sequence or parameter, or both xterm and tt to be listed
+             against the control sequence.
+        -->
+        <html type="todo" filename="todo.html" title="TO-DO"
+              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar sgr-9-co sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window"
+              todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
+              todo-terminals="vt102 vt220 vt420 xterm tt">
             <style>
                 table {
                 border-collapse: collapse;

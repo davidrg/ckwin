@@ -69,10 +69,12 @@ settings.output_file = ""            /* Comes from the XML file */
 /* Which terminals should be included in the term-ctlseqs comparison tables */
 settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt420 vt510 vt520 vt525 xterm tt'
 
-/* Filtering for the to-do output. The following terminals will be eligible to
- * be included in the output. Additional filtering can be done by the
- * "todoOutputFilter" procedure further down. */
-settings.todo_terminals = 'vt102 vt220 vt420 xterm tt'
+/* Filtering for the to-do output - these are stored in the XML document.
+ * Additional filtering is included in the "todoOutputFilter" procedure
+ * further down. */
+settings.todo_terminals = ''
+settings.todo_ids = ''
+settings.todo_mnemonics = ''
 
 /* Settings set via command line arguments */
 settings.dev_mode = param_devmode    /* Use 'DEV' as the release tag */
@@ -221,9 +223,7 @@ exit 0
 todoOutputFilter: procedure expose g.
     parse arg el, supportedTerminals, badges, mnemonic, ctlseqs
 
-    /* TODO: Require VT420 in supportedTerminals, or xterm+tt in supported
-     * TODO: terminals, or any Sun control sequences and other easy things.
-     */
+    /* Require VT420 in supportedTerminals, or xterm+tt in supported */
 
     is_vt102 = 0
     is_vt220 = 0
@@ -240,11 +240,6 @@ todoOutputFilter: procedure expose g.
     if is_vt102 = 1 | is_vt220 = 1 | is_vt420 = 1 | (is_xterm = 1 & is_tt = 1) then do
         return 1
     end
-
-    if wordpos(mnemonic, 'SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC') <> 0 then return 1
-
-    id = getAttribute(el, "id")
-    if wordpos(id, 'rxvt-stbt rxvt-stbk sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window') <> 0 then return 1
 
     return 0
 
@@ -628,6 +623,10 @@ produceOutputs: procedure expose g. toc. badgeSet. settings. refSet. k95info.
                     script = ""
                     settings.title = docTitle
                     if hasAttribute(outChild, "title") then settings.title = getAttribute(outChild, "title")
+
+                    if hasAttribute(outChild, "todo-terminals") then settings.todo_terminals = getAttribute(outChild, "todo-terminals")
+                    if hasAttribute(outChild, "todo-mnemonics") then settings.todo_mnemonics = getAttribute(outChild, "todo-mnemonics")
+                    if hasAttribute(outChild, "todo-ids") then settings.todo_ids = getAttribute(outChild, "todo-ids")
 
                     htmlChild = getFirstChild(outChild)
                     do while htmlChild <> ''
@@ -1537,6 +1536,8 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
         exclusions = getAttribute(el, 'exclude-badges')
     end
 
+    todo_id_allowed = 0
+
     if docType = 'term-ctlseqs' | docType = 'todo' then do
         /* Output a generic title if none is present for a parameter */
         if title = '' & role = 'parameter' then title = 'Parameter'
@@ -1556,6 +1557,18 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
             end
         end
 
+        if docType = 'todo' then do
+            if wordpos(mnemonic, settings.todo_mnemonics) <> 0 then do
+                found = 1
+                todo_id_allowed = 1
+            end
+
+            if wordpos(id, settings.todo_ids) <> 0 then do
+                found = 1
+                todo_id_allowed = 1
+            end
+        end
+
         /* If none of the sections supported terminals are in the list of
            terminals being included in the table, then don't output it */
         if found = 0 then return
@@ -1572,7 +1585,7 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
                     implicitly means in the absence of any exclusions) */
     end
 
-    if docType = 'todo' then do
+    if docType = 'todo' & todo_id_allowed = 0 then do
         if todoOutputFilter(el, badges, sectionBadges, mnemonic, ctlseqs) = 0 then return
     end
 
