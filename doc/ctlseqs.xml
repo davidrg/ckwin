@@ -5283,10 +5283,9 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi">
             <ref src="e48:69"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-b.1CA2"/>
-            <termsupp first="xterm" series="vt" additional="tt"/>
+            <termsupp first="xterm" series="vt" additional="tt xterm"/>
             <ctlseq>CSI <param-single/> b</ctlseq>
             <p>Repeat previous character <param-single/> times.</p>
-            <!-- TODO: xterm: This should also be enabled for xterm -->
         </section>
         <section role="ctlseq" id="RCH" mnemonic="RCH" title="Repeat character" badges="scoansi aaa">
             <ctlseq>CSI <param-single symbol="Pc"/> ; <param-single symbol="Pn"/> b </ctlseq>

@@ -17062,7 +17062,7 @@ vtcsi(void)
                 break;
             case 'b':
                 /* QANSI - Repeat previous character Pn times */
-                if ( ISQANSI(tt_type_mode) ) {
+                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) ) {
                     while ( pn[1] ) {
                         wrtch(prevchar);
                         pn[1] = pn[1] - 1;
