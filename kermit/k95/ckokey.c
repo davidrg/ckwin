@@ -7714,6 +7714,7 @@ defaultkeymap( int terminal ) {
     case TT_VT220:
     case TT_VT320:
     case TT_WY370:
+    case TT_K95:
         return defvt200km( terminal );
     case TT_VT220PC:
     case TT_VT320PC:

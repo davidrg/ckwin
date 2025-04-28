@@ -1056,18 +1056,18 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_WY370   33	/*    WYSE 370 ANSI Terminal */
 #define     TT_97801   34       /*    Sinix 97801-5xx terminal */
 #define     TT_AAA     35       /*    Ann Arbor Ambassador */
-#define     TT_TVI910  36	/*    TVI 910+ */
-#define     TT_TVI925  37       /*    TVI 925  */
-#define     TT_TVI950  38       /*    TVI950   */
-#define     TT_ADM3A   39       /*    LSI ADM 3A */
-#define     TT_ADM5    40		/*    LSI ADM 5 */
-#define     TT_VTNT    41       /*    Microsoft NT Virtual Terminal */
+#define     TT_K95     36       /*    Kermit 95 self-personality */
+#define     TT_TVI910  37	/*    TVI 910+ */
+#define     TT_TVI925  38       /*    TVI 925  */
+#define     TT_TVI950  39       /*    TVI950   */
+#define     TT_ADM3A   40       /*    LSI ADM 3A */
+#define     TT_ADM5    41		/*    LSI ADM 5 */
+#define     TT_VTNT    42       /*    Microsoft NT Virtual Terminal */
 #define     TT_MAX   TT_VTNT
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
 #define     TT_XTERM   98   /*    XTerm */
 #define     TT_TEK40   99	/*    Tektronix 401x */
-#define     TT_K95    100   /* Kermit 95 self-personality */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3
@@ -1096,6 +1096,8 @@ struct stringint {			/* String and (wide) integer */
 #define ISTVI950(x) (x == TT_TVI950)
 #define ISVT52(x)  (x == TT_VT52 || x == TT_H19)
 #ifdef COMMENT
+/* TODO: Add VT420/520/525 to the list of terminals
+ * that get DCS / DECRQSS / etc */
 #define ISVT525(x) (x == TT_VT525)
 #define ISVT520(x) (x == TT_VT520)
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
@@ -1105,8 +1107,8 @@ struct stringint {			/* String and (wide) integer */
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
 #endif /* COMMENT */
-#define ISVT320(x) (x >= TT_VT320 && x <= TT_AAA)
-#define ISVT220(x) (x >= TT_VT220 && x <= TT_AAA || \
+#define ISVT320(x) (x >= TT_VT320 && x <= TT_K95)
+#define ISVT220(x) (x >= TT_VT220 && x <= TT_K95 || \
                     ISBEOS(x) || ISQANSI(x) || \
                     ISLINUX(x) || ISSUN(x))
 #define ISVT102(x) (x >= TT_VIP7809 && x <= TT_BA80 || \
@@ -1130,6 +1132,7 @@ struct stringint {			/* String and (wide) integer */
 #define ISADM3A(x) (x == TT_ADM3A)
 #define ISADM5(x)  (x == TT_ADM5)
 #define ISXTERM(x) (x == TT_XTERM)
+#define ISK95(x)   (x == TT_K95)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */

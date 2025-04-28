@@ -588,6 +588,9 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;44c",     /* Kermit 95 self-personality */
+            /* K95 Device Attributes: VT320;132-columns;printer;selective-erase;user-defined-keys;
+                                      national-replacement-character-sets;technical-characters;PCTerm */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
@@ -12723,9 +12726,17 @@ dodcs( void )
     char c;
 
     /*
-    we haven't coded this yet
-    but what would go here would be DECUDK, DECRSPS, DECRQSS, ....
-    */
+     * Originally this function was only available to:
+     *     tt_type_mode >= TT_VT320 && tt_type_mode <= TT_WY370
+     * Compared to ISVT320() this excludes TT_97801 and TT_AAA. I have no idea
+     * what those terminals implement or if there was any particular reason for
+     * their exclusion, but excluding TT_VT220 was almost certainly by accient
+     * as it *does* support at least one DCS sequence here - DECUDK.
+     * So now we allow ISVT320() in here, plus TT_VT220 and a few others, but
+     * exclude TT_97801 and TT_AAA as before just in case there was some
+     * particular reason for their exclusion.
+     */
+
     debug( F111,"DCS string",apcbuf,apclength ) ;
 
     if ( debses )              /* If TERMINAL DEBUG ON */
@@ -12767,7 +12778,8 @@ dodcs( void )
             pn[k + 1] = 1;
           LB4003:
             switch (achar) { /* Third level */
-            case '$': {
+            case '$':
+                if (ISVT320(tt_type_mode)) {
                 /* This has to be long to account for SGR at a minimum. */
 #define DECRPSS_LEN 100
                 char decrpss[DECRPSS_LEN];
@@ -14254,8 +14266,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             else if ( dcsrecv ) /* it was a DCS string, */
             {
                 apcbuf[apclength] = NUL; /* terminate it */
-                if ( tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
-                     tt_type_mode <= TT_WY370 )
+
+                if ( tt_type_mode >= TT_VT220 && /* and if we are a VT320 */
+                     tt_type_mode <= TT_WY370 || /* Or K95 or xterm */
+                     ISK95(tt_type_mode) || ISXTERM(tt_type_mode))
                 {                            /* process it */
                     if (!debses)
                       dodcs() ;
@@ -15255,7 +15269,42 @@ settermtype( int x, int prompts )
     }
 #endif /* COMMENT */
 
-    if (ISANSI(tt_type) || ISLINUX(tt_type)) {
+    if (ISK95(tt_type) && cell_video_attr_is_null(savcolor) ) {
+        savcolor = colornormal;     /* Save coloration */
+        savgrcol = colorgraphic ;
+        savulcol = colorunderline ;
+        savblcol = colorblink ;
+        savbocol = colorbold;
+		savdicol = colordim;
+
+        savulatt = trueunderline ;
+        savblatt = trueblink ;
+        savrvatt = truereverse ;
+
+        /* 0xc0c0c0 on 0x000000 */
+        colornormal = cell_video_attr_from_vio_attribute(0x07);     /* Light gray on black */
+        colorgraphic = cell_video_attr_from_vio_attribute(0x07);    /* Light gray on black */
+        colorunderline = cell_video_attr_from_vio_attribute(0x47);  /* Light gray on Red */
+        colorblink = cell_video_attr_from_vio_attribute(0x87);      /* Light gray on dark gray */
+        colorbold = cell_video_attr_from_vio_attribute(0x0F);       /* Bright White on black */
+
+#ifndef KUI
+        trueunderline = TRUE ;     /* Simulate underline */
+#endif /* KUI */
+
+        scrninitialized[VTERM] = 0; /* To make it take effect */
+
+        /* Turn off the status line */
+        savstatus = tt_status_usr[VTERM] ;
+        tt_status_usr[VTERM] = FALSE ;
+        settermstatus( tt_status_usr[VTERM] ) ;
+
+        VscrnInit(VTERM);           /* Reinit the screen buffer */
+
+        savcmask = cmask;           /* Go to 8 bits */
+        cmask = 0xFF;
+    }
+    else if (ISANSI(tt_type) || ISLINUX(tt_type)) {
         if (parity && prompts) {
  printf("WARNING, ANSI terminal emulation works right only if PARITY is NONE.\n");
  printf("HELP SET PARITY for further information.\n");
@@ -17065,7 +17114,7 @@ vtcsi(void)
                 break;
             case 'b':
                 /* QANSI - Repeat previous character Pn times */
-                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) ) {
+                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) || ISK95(tt_type_mode) ) {
                     while ( pn[1] ) {
                         wrtch(prevchar);
                         pn[1] = pn[1] - 1;
