@@ -16421,6 +16421,7 @@ vtcsi(void)
                         sprintf(buf,"[%d;%d$y",pn[1],pn[2]);
                     }
                     sendescseq(buf);
+                    break;
                 }
                 case 'R':
                     if ( ISBA80(tt_type_mode) && ansiext ) {
