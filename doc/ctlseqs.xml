@@ -113,8 +113,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST ref comment CDATA #IMPLIED>
 
         <!ELEMENT termsupp EMPTY>
-        <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382) #REQUIRED>
+        <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -517,6 +517,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <badge-def sort-order="47" name="wy370" colour="#004D40" comment="WYSE 370 ANSI Terminal"/>
         <badge-def sort-order="48" name="xterm" colour="#F44336" comment="Xterm"/>
         <badge-def sort-order="49" name="tt" colour="" comment="Tera Term"/> <!-- Not implemented -->
+        <badge-def sort-order="50" name="putty" colour="" comment="PuTTY"/> <!-- Not implemented -->
 
     </badges>
     <!--
@@ -940,7 +941,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar sgr-9-co sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window osc-8"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
-              todo-terminals="vt102 vt220 vt420 xterm tt">
+              todo-terminals="vt102 vt220 vt420 xterm tt putty">
             <style>
                 table {
                 border-collapse: collapse;
@@ -1090,6 +1091,13 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 Not currently emulated by Kermit 95. Supported features based
                 on <a href="https://web.archive.org/web/20250328104755/https://teratermproject.github.io/manual/5/en/about/ctrlseq.html">
                 Documentation as of 28 March 2025</a>.
+            </dd>
+            <dt>PuTTY</dt>
+            <dd>
+                Not currently emulated by Kermit 95. Supported features based on
+                reading the code as of commit 01043ce4fc90cee578a00872a64fd69e4bb7203a
+                (27 April 2025). If this date is long in the past, PuTTY may have
+                gained more control sequences than indicated here.
             </dd>
         </dl>
         <p>
@@ -1382,7 +1390,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:IND.html"/>
             <ref src="vt52x:111"/>
             <ref src="vt52x:338"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <p>If the cursor is at the bottom margin, the screen is
                 scrolled upwards; otherwise the cursor is moved down one.</p>
         </section>
@@ -1398,7 +1406,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:NEL.html"/>
             <ref src="vt52x:111"/>
             <ref src="vt52x:345"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <p>Next Line</p>
         </section>
         <section role="ctlseq" id="hts" ctlseq="ESC H" mnemonic="HTS" title="Set Tab Stop" groups="isvt100">
@@ -1413,7 +1421,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:HTS.html"/>
             <ref src="vt52x:111"/>
             <ref src="vt52x:336"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <p>Set Tab Stop</p>
         </section>
         <section role="ctlseq" id="ri" ctlseq="ESC M" mnemonic="RI" title="Reverse Index" groups="isvt100">
@@ -1427,7 +1435,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:56"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:111"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <p>Reverse Index—moves the cursor up one, scrolling the screen
                 if the cursor is already at the top margin.</p>
         </section>
@@ -1501,7 +1509,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:111"/>
             <ref src="vt52x:214"/>
-            <termsupp first="vt50" series="vt" additional="vt100 vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt50" series="vt" additional="vt100 vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>
                 DECID (0x9A) - Identify Terminal. While the VT420 and VT520 manuals claim
                 that DECID is ignored in VT400 or higher mode, K95 doesn't enforce this
@@ -1892,7 +1900,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:167"/>
             <ref src="vt510:DECDHL.html"/>
             <ref src="vt52x:192"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 putty"/>
             <p>DEC double-height line, top half</p>
         </section>
         <section role="ctlseq" id="decdhl-bottom" ctlseq="ESC # 4" mnemonic="DECDHL" title="double-height line, bottom half">
@@ -1905,7 +1913,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:167"/>
             <ref src="vt510:DECDHL.html"/>
             <ref src="vt52x:192"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 putty"/>
             <p>DEC double-height line, bottom half</p>
         </section>
         <section role="ctlseq" id="decswl" ctlseq="ESC # 5" mnemonic="DECSWL" title="single width line">
@@ -1917,7 +1925,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.10.2"/>
             <ref src="vt420:166"/>
             <ref src="vt510:DECSWL.html"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 putty"/>
             <p>DEC Single Width line</p>
         </section>
         <section role="ctlseq" id="decdwl" ctlseq="ESC # 6" mnemonic="DECDWL" title="double width line">
@@ -1930,7 +1938,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:167"/>
             <ref src="vt510:DECDWL.html"/>
             <ref src="vt52x:202"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 putty"/>
             <p>DEC Double Width line</p>
         </section>
         <section role="ctlseq" id="vt100-hardcopy" ctlseq="ESC # 7"
@@ -1949,7 +1957,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:313"/>
             <ref src="vt510:DECALN.html"/>
             <ref src="vt52x:171"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>Fills the screen with "E"</p>
         </section>
         <section role="ctlseq" id="wydhl-top" ctlseq="ESC # :" mnemonic="WYDHL" title="Wyse double-height line, top half">
@@ -1960,12 +1968,19 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="wy370:99"/>
             <p>Wyse double-height line, bottom half, single-wide characters</p>
         </section>
+        <section role="ctlseq" ctlseq="ESC % 8" title="Select default character set"
+                 badges="putty" not-implemented="true" todo="true">
+            <termsupp first="putty" series="putty" additional=""/>
+            <p>other coding system/old linux code</p>
+        </section>
         <section role="ctlseq" id="sdc" ctlseq="ESC % @" title="Select default character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
+            <termsupp first="xterm" series="xt" additional="putty"/>
             <p>Return to ISO 2002 mode</p>
         </section>
         <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-G.F93"/>
+            <termsupp first="xterm" series="xt" additional="putty"/>
             <p>Select UTF-8 character set with standard return</p>
         </section>
         <section role="ctlseq" id="sg0" ctlseq="ESC ( C" mnemonic="SCS" title="Designate G0 Character Set">
@@ -1978,7 +1993,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:115"/>
             <ref src="vt510:SCS.html"/>
             <ref src="vt52x:351"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt putty"/>
             <p>Select 94 Character Set into G0. If in National Replacement Character Set
                 mode, and parameter <em>C</em> is a valid NRC, then
                 this is also selected into G1, G2 and G3. Valid values are:
@@ -2191,7 +2206,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:115"/>
             <ref src="vt510:SCS.html"/>
             <ref src="vt52x:351"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt putty"/>
             <p>Select 94 Character Set into G1. If in National Replacement Character Set
                 mode, and parameter c is a valid NRC, then this is also selected into G0,
                 G2 and G3. Valid values for parameter <em>C</em> are the same as for
@@ -2440,7 +2455,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:292"/>
             <ref src="vt510:DECSC.html"/>
             <ref src="vt52x:274"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 linux tt putty"/>
             <p>Saves the cursor position and attributes</p>
         </section>
         <section role="ctlseq" id="rcp" mnemonic="RCP" ctlseq="ESC 8" title="Restore Cursor (ANSI)"
@@ -2458,7 +2473,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:292"/>
             <ref src="vt510:DECRC.html"/>
             <ref src="vt52x:246"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>Restores the cursor position and attributes</p>
         </section>
         <section role="ctlseq" id="zcgr" ctlseq="ESC 9" mnemonic="zCGR"
@@ -2487,7 +2502,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <ref src="vt52x:173"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt510"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt510 putty"/>
             <p>Switches from VT52 mode to VT102 mode</p>
             <p badges="h19">If the true terminal type is H19, then K95 switches
                 to VT100 mode instead of VT102</p>
@@ -2504,7 +2519,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:214"/>
             <ref src="vt510:DECKPAM.html"/>
             <ref src="vt52x:220"/>
-            <termsupp first="vt52" series="vt" additional="vt100 vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt52" series="vt" additional="vt100 vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>Set keypad to application mode</p>
         </section>
         <section role="ctlseq" id="deckpnm" ctlseq="ESC &gt;" mnemonic="DECKPNM" title="Set keypad to numeric mode">
@@ -2519,7 +2534,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:214"/>
             <ref src="vt510:DECKPNM.html"/>
             <ref src="vt52x:221"/>
-            <termsupp first="vt50" series="vt" additional="vt100 vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt50" series="vt" additional="vt100 vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>Set keypad to numeric mode</p>
         </section>
         <section role="ctlseq" id="h19-insert-char" ctlseq="ESC @" title="Enter insert character mode (H19)" badges="h19">
@@ -2533,7 +2548,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50" series="vt" additional="vt132 vt510"/>
+            <termsupp first="vt50" series="vt" additional="vt132 vt510 putty"/>
             <p>Cursor Up</p>
         </section>
         <section role="ctlseq" id="vt52-cd" ctlseq="ESC B" title="VT52 Cursor Down" groups="isvt52">
@@ -2544,7 +2559,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50h" series="vt"/>
+            <termsupp first="vt50h" series="vt" additional="putty"/>
             <p>Cursor Down</p>
         </section>
         <section role="ctlseq" id="vt52-cr" ctlseq="ESC C" title="VT52 Cursor Right" groups="isvt52">
@@ -2555,7 +2570,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50" series="vt"/>
+            <termsupp first="vt50" series="vt" additional="putty"/>
             <p>Cursor Right</p>
         </section>
         <section role="ctlseq" id="vt52-cl" ctlseq="ESC D" title="VT52 Cursor Left" groups="isvt52">
@@ -2566,7 +2581,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50h" series="vt" additional="tt"/>
+            <termsupp first="vt50h" series="vt" additional="putty"/>
             <p>Cursor Left</p>
         </section>
         <section role="ctlseq" id="h19-cls" ctlseq="ESC E" title="Clear screen (H19)" badges="h19">
@@ -2580,7 +2595,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt52" series="vt" additional="tt"/>
+            <termsupp first="vt52" series="vt" additional="putty"/>
             <p>Enable VT52 Graphics</p>
         </section>
         <section role="ctlseq" id="saa" ctlseq="ESC F" mnemonic="SSA" title="Start Selected Area" not-implemented="true" groups="isvt220">
@@ -2614,7 +2629,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt52" series="vt"/>
+            <termsupp first="vt52" series="vt" additional="putty"/>
             <p>Disable VT52 Graphics</p>
         </section>
         <section role="ctlseq" id="esa" ctlseq="ESC G" mnemonic="ESA" title="End selected area" not-implemented="true" groups="isvt220">
@@ -2628,7 +2643,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50" series="vt"  additional="tt"/>
+            <termsupp first="vt50" series="vt"  additional="putty"/>
             <p>Cursor Home</p>
         </section>
         <section role="ctlseq" id="vt52-rlf" ctlseq="ESC I" title="VT52 Reverse Linefeed" groups="isvt52">
@@ -2639,7 +2654,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt52" series="vt"/>
+            <termsupp first="vt52" series="vt" additional="putty"/>
             <p>Reverse Linefeed</p>
         </section>
         <section role="ctlseq" id="htj" ctlseq="ESC I" mnemonic="HTJ"
@@ -2659,7 +2674,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50" series="vt"/>
+            <termsupp first="vt50" series="vt" additional="putty"/>
             <p>Clear to the end of the screen</p>
         </section>
         <section role="ctlseq" id="vt52-ceol" ctlseq="ESC K" title="VT52 Clear to end of line" groups="isvt52">
@@ -2670,7 +2685,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50" series="vt"/>
+            <termsupp first="vt50" series="vt" additional="putty"/>
             <p>Clear to the end of the line</p>
         </section>
         <section role="ctlseq" id="h19-il" ctlseq="ESC L" title="Insert line (H19)" badges="h19">
@@ -2741,7 +2756,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt220:S4.20"/>
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
-            <termsupp first="vt50h" series="vt"/>
+            <termsupp first="vt50h" series="vt" additional="putty"/>
             <ctlseq>
                 ESC Y <param-single/> <param-single/>
             </ctlseq>
@@ -2818,7 +2833,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt420:308"/>
             <ref src="vt510:RIS.html"/>
             <ref src="vt52x:348"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
         </section>
         <section role="ctlseq" id="h19-scp" ctlseq="ESC j" title="Save cursor position (H19)" badges="h19">
             <p>Save cursor position</p>
@@ -3346,6 +3361,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>
                     Returns currently <a href="#sgr">selected graphic rendition</a>.
                     Only the following are currently reported:
@@ -3367,6 +3383,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>
                     Responds with the current state of <a href="decsca">DECSCA</a>.
                     For example, if DECSCA is set to Designate Character
@@ -3380,6 +3397,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>Reports the conformance level set with <a href="#decscl">DECSCL</a>,
                     the result of which <em>may</em> be non-obvious!
                 </p>
@@ -3405,6 +3423,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>
                     Reports the current <a href="#decslpp">DECSCUSR</a> setting -
                     the cursor style. A response for a blinking block, for example,
@@ -3419,6 +3438,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>
                     Reports the current <a href="#decstbm">DECSTBM</a> setting.
                     For example, if the top margin is 5 and the bottom margin
@@ -3432,6 +3452,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 1 $ r s ST</pre>
             </section>
@@ -3521,6 +3542,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt510" series="vt" additional="tt"/>
                 <p>
                     Reports the current <a href="#decsace">DECSACE</a> setting.
                     For example, if DECSACE is set to 2 (Rectangle, exact) then
@@ -3661,7 +3683,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:174"/>
             <ref src="vt510:ICH.html"/>
             <ref src="vt52x:337"/>
-            <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux"/>
+            <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux putty"/>
             <ctlseq>CSI <param-single/> @</ctlseq>
             <p>Insert <param-single/> characters.</p>
         </section>
@@ -3685,7 +3707,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:202"/>
             <ref src="vt510:CUU.html"/>
             <ref src="vt52x:162"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> A</ctlseq>
             <p>Cursor Up <param-single/> lines (default = 1)</p>
 
@@ -3732,7 +3754,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:202"/>
             <ref src="vt510:CUD.html"/>
             <ref src="vt52x:161"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> B</ctlseq>
             <p>Cursor Down <param-single/> lines (default = 1)</p>
             <p badges="s97801">Ignored if outside scroll region</p>
@@ -3775,7 +3797,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:201"/>
             <ref src="vt510:CUF.html"/>
             <ref src="vt52x:161"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt220 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt220 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> C</ctlseq>
             <p>Cursor Right <param-single/> times (default = 1) staying on the
             same line.</p>
@@ -3786,7 +3808,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="scs" title="Set Cursor Height (ANSI)"
                  mnemonic="SCS" groups="isansi">
             <ctlseq>CSI = <param-single symbol="Pa"/> ; <param-single symbol="Pb"/> C</ctlseq>
-            <termsupp series="sco" first="sco"/>
+            <termsupp series="sco" first="sco" additional="putty"/>
             <p>Set Cursor Height. If
                 <param-single symbol="Pa"/> &gt; <param-single symbol="Pb"/> then
                 the cursor is disabled. If <param-single symbol="Pb"/> -
@@ -3807,15 +3829,16 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:201"/>
             <ref src="vt510:CUB.html"/>
             <ref src="vt52x:161"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> D</ctlseq>
             <p>Cursor left <param-single/> characters</p>
         </section>
         <section role="ctlseq" id="sbi" mnemonic="SBI"
                  title="Turn on/off background colour intensity (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> D</ctlseq>
-            <termsupp series="sco" first="sco"/>
+            <termsupp series="sco" first="sco" additional="putty"/>
             <p>Turn on/off background color intensity</p>
+            <!-- TODO: PuTTY implements this as changing cursor blink. -->
         </section>
         <section role="ctlseq" id="cub-ext" title="Cursor Backward">
             <ctlseq>CSI = <param-single/> D</ctlseq>
@@ -3837,7 +3860,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-E.1C85"/>
             <ref src="vt510:CNL.html"/>
             <ref src="vt52x:158"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco putty"/>
             <ctlseq>CSI <param-single/> E</ctlseq>
             <p>Cursor next line <param-single/> times (default = 1)</p>
         </section>
@@ -3846,7 +3869,7 @@ DCS $ q 3 , } ST</pre>
         </section>
         <section role="ctlseq" id="sbb" mnemonic="SBB" title="Set Blink (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> E</ctlseq>
-            <termsupp series="sco" first="sco"/>
+            <termsupp series="sco" first="sco" additional="putty"/>
             <p>If <param-single/> is 0 then blink is simulated with bold
                 background intensity, any other value enables true blink.
             </p>
@@ -3861,7 +3884,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-F.1C86"/>
             <ref src="vt510:CPL.html"/>
             <ref src="vt52x:159"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco putty"/>
             <ctlseq>CSI <param-single/> F</ctlseq>
             <p>Cursor previous line <param-single/> times (default = 1)</p>
         </section>
@@ -3874,7 +3897,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="snf" title="Set Normal Foreground Color (ANSI)"
                  mnemonic="SNF" groups="isansi" badges="qansi">
             <ctlseq>CSI = <param-single/> F</ctlseq>
-            <termsupp series="sco" first="sco"/>
+            <termsupp series="sco" first="sco" additional="putty"/>
             <p>Set Normal Foreground Color to <param-single/>.</p>
             <p>
                 If the display is in reverse video mode (DECSCNM), in Kermit 95 beta 7 and
@@ -3897,14 +3920,14 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-G.1C87"/>
             <ref src="vt510:CHA.html"/>
             <ref src="vt52x:157"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco xterm"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco xterm putty"/>
             <ctlseq>CSI <param-single/> G</ctlseq>
             <p>Move cursor to column <param-single/></p>
         </section>
         <section role="ctlseq" id="snb" title="Set Normal Background Color (ANSI)"
                  mnemonic="SNB" groups="isansi" badges="qansi">
             <ctlseq>CSI = <param-single/> G</ctlseq>
-            <termsupp series="sco" first="sco"/>
+            <termsupp series="sco" first="sco" additional="putty"/>
             <p>Set Normal Background Color to <param-single/></p>
         </section>
 
@@ -3920,7 +3943,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:200"/>
             <ref src="vt510:CUP.html"/>
             <ref src="vt52x:162"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> ; <param-single/> H</ctlseq>
             <p>Send cursor to row;column. Default is 1;1. Implementation is
             shared with <a href="#hvp">HVP</a></p>
@@ -3977,7 +4000,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:175"/>
             <ref src="vt510:ED.html"/>
             <ref src="vt52x:334"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <p>Erases an area within the display (including attributes)</p>
 
             <!-- TODO: When we do DECSLRM, we can do this too perhaps -->
@@ -3996,7 +4019,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:175"/>
                 <ref src="vt510:ED.html"/>
                 <ref src="vt52x:334"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt sco"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt sco putty"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-J:Ps-=-0.1DDC"/>
                 <p badges="s97801">Only clears to end of scroll region</p>
             </section>
@@ -4011,7 +4034,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:175"/>
                 <ref src="vt510:ED.html"/>
                 <ref src="vt52x:334"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-J:Ps-=-1.1DDD"/>
                 <p badges="s97801">Only clears to start of scroll region</p>
             </section>
@@ -4026,7 +4049,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:175"/>
                 <ref src="vt510:ED.html"/>
                 <ref src="vt52x:334"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco" />
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty" />
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-J:Ps-=-2.1DDE"/>
                 <p>Clears within the cursors current screen area (terminal or status line),
                     the cursor is not moved</p>
@@ -4039,7 +4062,7 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 3</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-J:Ps-=-3.1DDF"/>
-                <termsupp first="xterm" series="xt" additional="linux"/>
+                <termsupp first="xterm" series="xt" additional="linux putty"/>
             </section>
             <section role="parameter" badges="s97801" id="ed-3" title="Clear to end of screen with Space">
                 <ctlseq><param-single/> = 3</ctlseq>
@@ -4308,7 +4331,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:176"/>
             <ref src="vt510:EL.html"/>
             <ref src="vt52x:334"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> K</ctlseq>
             <p>Erase in Line. Erases within a single line.</p>
             <section role="parameter" id="el-0" title="Clear to end of line with space">
@@ -4322,7 +4345,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:176"/>
                 <ref src="vt510:EL.html"/>
                 <ref src="vt52x:334"/>
-                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt sco"/>
+                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt sco putty"/>
                 <p>
                     Clears to the end of the line with the space character, and clears attributes.
                 </p>
@@ -4338,7 +4361,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:176"/>
                 <ref src="vt510:EL.html"/>
                 <ref src="vt52x:334"/>
-                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux sco putty"/>
                 <p>
                     Clears to the beginning of the line with the space character, and clears attributes.
                 </p>
@@ -4354,7 +4377,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:176"/>
                 <ref src="vt510:EL.html"/>
                 <ref src="vt52x:334"/>
-                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux sco putty"/>
                 <p>
                     Clears the entire current line with the space character, and clears attributes.
                 </p>
@@ -4611,12 +4634,13 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:173"/>
             <ref src="vt510:IL.html"/>
             <ref src="vt52x:338"/>
-            <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> L</ctlseq>
             <p>Insert <param-single/> lines.</p>
         </section>
         <section role="ctlseq" id="ansi-fe" title="Fill mode on (ANSI)" groups="isansi" exclude-badges="scoansi">
             <ctlseq>CSI = <param-single/> L</ctlseq>
+            <termsupp first="sco" series="sco" additional="putty"/>
             <p>Turn fill (erase?) mode on (use normal color) or off (use current color).</p>
         </section>
         <section role="ctlseq" id="sef" mnemonic="SEF"
@@ -4726,7 +4750,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:172"/>
             <ref src="vt510:DL.html"/>
             <ref src="vt52x:326"/>
-            <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> M</ctlseq>
             <p>Delete <param-single/> lines.</p>
         </section>
@@ -4825,7 +4849,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:174"/>
             <ref src="vt510:DCH.html"/>
             <ref src="vt52x:167"/>
-            <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> P</ctlseq>
             <p>Delete <param-single/> characters.</p>
         </section>
@@ -4969,7 +4993,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:203"/>
             <ref src="vt510:SU.html"/>
             <ref src="vt52x:361"/>
-            <termsupp first="vt420" series="vt" additional="vt510 tt"/>
+            <termsupp first="vt420" series="vt" additional="vt510 tt putty"/>
             <ctlseq>CSI <param-single/> S</ctlseq>
             <p>
                 Scrolls the characters up <param-single/> lines.
@@ -5028,7 +5052,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:204"/>
             <ref src="vt510:SD.html"/>
             <ref src="vt52x:354"/>
-            <termsupp first="vt420" series="vt" additional="vt510 tt"/>
+            <termsupp first="vt420" series="vt" additional="vt510 tt putty"/>
             <ctlseq>CSI <param-single/> T</ctlseq>
             <p>
                 Scroll down <param-single/> lines. The top
@@ -5132,7 +5156,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:176"/>
             <ref src="vt510:ECH.html"/>
             <ref src="vt52x:333"/>
-            <termsupp first="vt220" series="vt" additional="vt420 vt510 tt sco"/>
+            <termsupp first="vt220" series="vt" additional="vt420 vt510 tt sco putty"/>
             <ctlseq>CSI <param-single/> X</ctlseq>
             <p>Erase <param-single/> characters</p>
         </section>
@@ -5150,7 +5174,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-Z.1C9A"/>
             <ref src="vt510:CBT.html"/>
             <ref src="vt52x:157"/>
-            <termsupp first="vt510" series="vt" additional="tt sco"/>
+            <termsupp first="vt510" series="vt" additional="tt sco putty"/>
             <ctlseq>CSI <param-single/> Z</ctlseq>
             <p>
                 Moves active cursor position back <param-single/> tab stops.
@@ -5276,7 +5300,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-%60.1CCB"/>
             <ref src="vt510:HPA.html"/>
             <ref src="vt52x:335"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco putty"/>
             <p>
                 Moves active position to column <param-single/>.
             </p>
@@ -5290,7 +5314,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:120"/>
             <ref src="vt510:HPR.html"/>
             <ref src="vt52x:335"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco putty"/>
             <ctlseq>CSI <param-single/> a</ctlseq>
             <p>
                 Horizontal Position Relative - moves active position
@@ -5302,7 +5326,7 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi xterm">
             <ref src="e48:69"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-b.1CA2"/>
-            <termsupp first="xterm" series="vt" additional="tt xterm"/>
+            <termsupp first="xterm" series="vt" additional="tt xterm putty"/>
             <ctlseq>CSI <param-single/> b</ctlseq>
             <p>Repeat previous character <param-single/> times.</p>
         </section>
@@ -5333,7 +5357,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:251"/>
             <ref src="vt510:DA1.html"/>
             <ref src="vt52x:163"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <ctlseq>CSI <param-single/> c</ctlseq>
             <p>
                 Device Attributes (Primary). Kermit 95s response depends on the selected
@@ -5476,7 +5500,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:254"/>
             <ref src="vt510:DA2.html"/>
             <ref src="vt52x:165"/>
-            <termsupp first="vt220" series="vt" additional="vt420 tt"/>
+            <termsupp first="vt220" series="vt" additional="vt420 tt putty"/>
             <ctlseq>CSI &gt; <param-single/> c</ctlseq>
             <!--
                 TODO: If K95 is emulating some terminal that is not ISVT220(),
@@ -5495,7 +5519,7 @@ DCS $ q 3 , } ST</pre>
         </section>
         <section role="ctlseq" id="hsc" mnemonic="HSC" title="Set cursor type (SCO)" badges="scoansi">
             <ctlseq>CSI = <param-single/> c</ctlseq>
-            <termsupp series="sco" first="sco"/>
+            <termsupp series="sco" first="sco" additional="putty"/>
             <!-- TODO The OpenServer documentations description of this is quite
                     different:
                     http://web.archive.org/web/20220523211603/http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html
@@ -5549,7 +5573,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:120"/>
             <ref src="vt510:VPA.html"/>
             <ref src="vt52x:362"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco putty"/>
             <ctlseq>CSI <param-single/> d</ctlseq>
             <p>Vertical Position Absolute: Moves active position to row <param-single/></p>
         </section>
@@ -5561,7 +5585,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:119"/>
             <ref src="vt510:VPR.html"/>
             <ref src="vt52x:362"/>
-            <termsupp first="vt510" series="vt" additional="tt linux sco"/>
+            <termsupp first="vt510" series="vt" additional="tt linux sco putty"/>
             <ctlseq>CSI <param-single/> e</ctlseq>
             <p>Vertical Position Relative—moves active position <param-single/>
                 rows down</p>
@@ -5579,7 +5603,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:200"/>
             <ref src="vt510:HVP.html"/>
             <ref src="vt52x:337"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> ; <param-single/> f</ctlseq>
             <p>Send cursor to row;column. Default is 1;1.</p>
             <p badges="s97801">
@@ -5608,7 +5632,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:312"/>
             <ref src="vt510:TBC.html"/>
             <ref src="vt52x:361"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <ctlseq>CSI <param-single/> g</ctlseq>
             <p>Tab clear at position <param-single/></p>
 
@@ -5664,7 +5688,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:285"/>
             <ref src="vt510:SM.html"/>
             <ref src="vt52x:360"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-multi/> h</ctlseq>
             <p>Non-private / ANSI Set Mode</p>
 
@@ -5721,7 +5745,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:171"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:339"/>
-                <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt102" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>
                     Enable insert mode
                 </p>
@@ -5753,7 +5777,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:238"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:358"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt putty"/>
                 <p>Switches to full duplex mode</p>
                 <p badges="scoansi">Ignored</p>
             </section>
@@ -5782,7 +5806,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:211"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:340"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turns on terminal new line and display crlf
                     (equivalent to <tt>set terminal cr-display crlf</tt> and
                     <tt>set terminal newline on</tt>
@@ -5827,7 +5851,7 @@ DCS $ q 3 , } ST</pre>
                      groups="wy370" title="Underline cursor">
                 <ctlseq><param-single/> = 34</ctlseq>
                 <ref src="wy370:26"/>
-                <termsupp first="wy370" series="wyse" additional="tt"/>
+                <termsupp first="wy370" series="wyse" additional="tt putty"/>
                 <p>Changes to the underline cursor</p>
             </section>
             <section role="parameter" mnemonic="WYCLRM" id="sm-35"
@@ -5912,7 +5936,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:25"/>
             <ref src="070:388"/>
             <ref src="vt510:SM.html"/>
-            <termsupp first="vt100" series="vt" additional="tt"/>
+            <termsupp first="vt100" series="vt" additional="tt putty"/>
             <ctlseq>CSI ? <param-multi/> h</ctlseq>
             <p>DEC Private Mode Set</p>
 
@@ -5927,7 +5951,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:214"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:186"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             </section>
             <section role="parameter" id="decanm" mnemonic="DECANM" title="Return from VT52 emulation">
                 <ctlseq><param-single/> = 2</ctlseq>
@@ -5937,7 +5961,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt220:S4.6.9"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:172"/>
-                <termsupp first="vt100" series="vt" additional="vt220 vt510"/>
+                <termsupp first="vt100" series="vt" additional="vt220 vt510 putty"/>
                 <p>Returns to whichever ANSI mode K95 was in before switching to
                     VT52 emulation.
                 </p>
@@ -5956,7 +5980,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:153"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:188"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Switches the screen to 132 columns and moves homes the cursor</p>
             </section>
             <section role="parameter" id="decsclm" mnemonic="DECSCLM" title="Smooth scroll">
@@ -5986,7 +6010,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:238"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:277"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt150 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt150 tt linux putty"/>
                 <p>Switches to reverse video</p>
             </section>
             <section role="parameter" id="decom" mnemonic="DECOM" title="Relative origin">
@@ -6000,7 +6024,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:157"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:231"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Switches to relative origin mode</p>
             </section>
             <section role="parameter" id="decawm" mnemonic="DECAWM" title="Auto Wrap mode">
@@ -6014,7 +6038,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:213"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:179"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turns auto-wrap mode on</p>
             </section>
             <section role="parameter" id="decarm" not-implemented="true" mnemonic="DECARM" title="Autorepeat">
@@ -6028,7 +6052,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:212"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:173"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Enable auto-repeat mode</p>
             </section>
             <section role="parameter" id="x10mr" title="X10 mouse reporting" groups="isansi" badges="linux">
@@ -6147,7 +6171,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:198"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:311"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux putty"/>
                 <p>Turn on the cursor</p>
             </section>
             <section role="parameter" id="rxvt-show-scrollbar" mnemonic=""
@@ -6247,7 +6271,7 @@ DCS $ q 3 , } ST</pre>
                      title="Use alternate screen buffer (xterm)">
                 <ctlseq><param-single/> = 47</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-4-7.1EC8"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" not-implemented="true" id="dec131tm"
                      mnemonic="DEC131TM" title="VT131 Transmit">
@@ -6566,7 +6590,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="xt-sxym" title="XTERM - Send Mouse X&amp;Y on button press and release">
                 <ctlseq><param-single/> = 1000</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-0.1F78"/>
-                <termsupp first="xterm" series="xt" additional="tt linux"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>Sends mouse X &amp; Y on button press and release</p>
             </section>
             <section role="parameter" id="xt-hilite" not-implemented="true" title="XTERM - Use Hilite Mouse Tracking">
@@ -6576,13 +6600,13 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="xt-cmt" title="XTERM - Cell Motion Mouse Tracking">
                 <ctlseq><param-single/> = 1002</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-2.1F7A"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables button event mouse reporting</p>
             </section>
             <section role="parameter" id="xt-ammt" title="XTERM - All Motion Mouse Tracking">
                 <ctlseq><param-single/> = 1003</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-3.1F7B"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables all motion mouse tracking</p>
             </section>
             <section role="parameter" id="xt-sf" not-implemented="true" title="XTERM - Send FocusIn / FocusOut events">
@@ -6598,7 +6622,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="xt-sgrm" title="XTERM - Enable SGR Mouse Mode">
                 <ctlseq><param-single/> = 1006</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-6.1F7E"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables SGR mouse reporting</p>
             </section>
             <section role="parameter" id="xt-asm" not-implemented="true"
@@ -6629,7 +6653,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="urxvt-mm" title="URXVT - Enable URXVT Mouse Mode">
                 <ctlseq><param-single/> = 1015</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-5.1F7E"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables URXVT mouse reporting</p>
             </section>
             <section role="parameter" id="xt-sgr-mouse-pixelmode" mnemonic=""
@@ -6729,21 +6753,21 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1047</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-7.1F83"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="xt-1048" mnemonic=""
                      title="Save cursor as in DECSC"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1048</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-8.1F84"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="xt-1049" mnemonic=""
                      title="Save cursor as in DECSC"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1049</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-9.1F85"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="xt-1050" mnemonic=""
                      title="Set terminfo/termcap function-key mode"
@@ -6811,7 +6835,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="xt-bpm" title="XTERM - Enable Bracketed Paste Mode">
                 <ctlseq><param-single/> = 2004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-4.1F7D"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables bracketed paste mode. <tt>ESC [ 2 0 0 ~</tt> will be sent before the
                     pasted text, and <tt>ESC [ 2 0 1 ~</tt> after it.
                 </p>
@@ -7006,7 +7030,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:233"/>
             <ref src="vt510:MC.html"/>
             <ref src="vt52x:342"/>
-            <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt sco"/>
+            <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt sco putty"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-i.1CA9"/>
 
             <section role="parameter" id="mc-0" title="Print whole screen (default)">
@@ -7044,7 +7068,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:234"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
-                <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt"/>
+                <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt putty"/>
                 <p>Turns off Printer Controller (Transparent Print) mode</p>
             </section>
             <section role="parameter" id="mc-5" title="Printer Controller (Transparent Print)">
@@ -7056,7 +7080,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:234"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
-                <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt"/>
+                <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt putty"/>
                 <p>Sends every character received to the configured printer</p>
             </section>
             <section role="parameter" id="mc-6" title="Turn off screen display">
@@ -7228,7 +7252,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:286"/>
             <ref src="vt510:RM.html"/>
             <ref src="vt52x:349"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
 
             <section role="parameter" id="r-gatm" mnemonic="GATM" title="Guarded Area Transfer Mode"
                      not-implemented="true" todo="true" >
@@ -7277,7 +7301,7 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
             <section role="parameter" mnemonic="IRM" id="rm-4"
-                     title="ANSI Insert Mode" groups="isvt102 isansi">
+                     title="ANSI Insert Mode" groups="isvt102 isansi putty">
                 <ctlseq><param-single/> = 4</ctlseq>
                 <ref src="e48:56"/>
                 <ref src="070:393"/>
@@ -7325,7 +7349,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:238"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:358"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt putty"/>
                 <p>Turns on local echo</p>
                 <p badges="scoansi">Ignored</p>
             </section>
@@ -7359,7 +7383,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:211"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:340"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turns off terminal new line and display crlf</p>
                 <p badges="scoansi">Ignored</p>
             </section>
@@ -7401,7 +7425,7 @@ DCS $ q 3 , } ST</pre>
                      title="Block cursor">
                 <ctlseq><param-single/> = 34</ctlseq>
                 <ref src="wy370:26"/>
-                <termsupp first="wy370" series="wyse" additional="tt"/>
+                <termsupp first="wy370" series="wyse" additional="tt putty"/>
                 <p>Switch to block cursor</p>
             </section>
             <section role="parameter" not-implemented="true" id="rm-35"
@@ -7479,7 +7503,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:287"/>
             <ref src="vt510:RM.html"/>
             <ref src="vt52x:349"/>
-            <termsupp first="vt100" series="vt" additional="tt linux"/>
+            <termsupp first="vt100" series="vt" additional="tt linux putty"/>
 
             <p>DEC Private Mode Reset</p>
             <section role="parameter" id="r-decckm" mnemonic="DECCKM" title="Cursor key mode">
@@ -7493,7 +7517,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:214"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:186"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Sets the arrow keys to normal</p>
             </section>
             <section role="parameter" id="r-decanm" mnemonic="DECANM" title="ANSI/VT52">
@@ -7506,7 +7530,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:349"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:172"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 putty"/>
                 <p>Switches to VT52 mode</p>
             </section>
             <section role="parameter" id="r-deccolm" mnemonic="DECCOLM" title="80 Columns">
@@ -7520,7 +7544,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:153"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:188"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Switches to 80 column mode</p>
             </section>
             <section role="parameter" id="r-decsclm" mnemonic="DECSCLM" title="Jump scrolling">
@@ -7552,7 +7576,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:238"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:277"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Normal screen</p>
             </section>
             <section role="parameter" mnemonic="DECOM" id="r-decom" title="Absolute origin">
@@ -7566,7 +7590,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:157"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:231"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Normal cursor mode</p>
             </section>
             <section role="parameter" mnemonic="DECAWM" id="r-decawm" title="Auto wrap">
@@ -7580,7 +7604,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:213"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:179"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turn off autowrap</p>
             </section>
             <section role="parameter" not-implemented="true" mnemonic="DECARM"
@@ -7595,7 +7619,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:212"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:173"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turn off auto-repeat</p>
             </section>
             <section role="parameter" not-implemented="true" mnemonic="DECINLM" id="r-decinlm" title="Interlace">
@@ -7715,7 +7739,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt220:S4.6.7"/>
                 <ref src="vt420:198"/>
                 <ref src="vt510:DECRQM.html#T5-8"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux putty"/>
                 <p>Turn off cursor</p>
             </section>
             <section role="parameter" id="decrst-30" mnemonic=""
@@ -7820,7 +7844,7 @@ DCS $ q 3 , } ST</pre>
                      title="Use normal screen buffer (xterm)">
                 <ctlseq><param-single/> = 47</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-4-7.1ECC"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-53"
                      mnemonic="DEC131TM" title="VT131 Transmit">
@@ -8142,7 +8166,7 @@ DCS $ q 3 , } ST</pre>
                      title="XTERM - Don't Send Mouse X&amp;Y on button press and release">
                 <ctlseq><param-single/> = 1000</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-0-0.1F7C"/>
-                <termsupp first="xterm" series="xt" additional="tt linux"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>Disable X11 mouse reporting</p>
             </section>
             <section role="parameter" id="decrst-1001"
@@ -8154,14 +8178,14 @@ DCS $ q 3 , } ST</pre>
                      title="XTERM - Cell Motion Mouse Tracking">
                 <ctlseq><param-single/> = 1002</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-0-2.1F7E"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Turns off button-event mouse reporting</p>
             </section>
             <section role="parameter" id="decrst-1003"
                      title="XTERM - All Motion Mouse Tracking">
                 <ctlseq><param-single/> = 1003</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-0-3.1F7F"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Turns off all mose reporting</p>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-1004"
@@ -8180,7 +8204,7 @@ DCS $ q 3 , } ST</pre>
                      title="XTERM - Disable SGR Mouse Mode">
                 <ctlseq><param-single/> = 1006</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-0-6.1F82"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Turns off SGR mouse reporting</p>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-1007"
@@ -8210,7 +8234,7 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1015</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-1-5.1F82"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="decrst-1016" mnemonic=""
                      title="Disable SGR mouse PixelMode"
@@ -8301,21 +8325,21 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1047</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-7.1F87"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="decrst-1048" mnemonic=""
                      title="Restore cursor as in DECSC"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1048</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-8.1F88"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="decrst-1049" mnemonic=""
                      title="Normal screen buffer and restore cursor as in DECSC"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 1049</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-9.1F89"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
             <section role="parameter" id="decrst-1050" mnemonic=""
                      title="Reset terminfo/termcap function-key mode"
@@ -8383,7 +8407,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="decrst-2004" title="XTERM - Disable Bracketed Paste Mode">
                 <ctlseq><param-single/> = 2004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-2-0-0-4.1F81"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Disable bracketed paste mode</p>
             </section>
             <section role="parameter" id="decrst-2005" mnemonic=""
@@ -8603,7 +8627,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:165"/>
             <ref src="vt510:SGR.html"/>
             <ref src="vt52x:355"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
 
             <p>Character Attributes (SGR)</p>
             <section role="parameter" id="sgr-0" title="Normal (default), VT100">
@@ -8618,7 +8642,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
                 <p>Sets all attributes to normal (off/false): blinking, italic, bold, invisible,
                     underlined, reversed, graphic, dim, wyse, hyperlink, sco8bit.</p>
                 <p groups="isansi">
@@ -8636,7 +8660,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
                 <p>Turns on the Bold attribute</p>
             </section>
             <section role="parameter" id="sgr-2-sco" badges="scoansi"
@@ -8671,7 +8695,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:75"/>
                 <ref src="wy370:78"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-2.1DFB"/>
-                <termsupp first="xterm" series="xt" additional="linux"/>
+                <termsupp first="xterm" series="xt" additional="linux putty"/>
                 <p>Turns on the Faint/Dim (decreased intensity) attribute.</p>
             </section>
             <section role="parameter" id="sgr-3" title="Turn on Italic">
@@ -8698,7 +8722,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
                 <p>Turns on the Underline attribute</p>
                 <p badges="at386">
                     If underline support is disabled
@@ -8726,7 +8750,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>
                     K95 does not currently differentiate between Blink and
                     Slow Blink, so this just sets the blink attribute.
@@ -8735,7 +8759,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" badges="scoansi" id="sgr-6-nb"
                      title="Turn off Blink">
                 <ctlseq><param-single/> = 6</ctlseq>
-                <termsupp first="sco" series="sco" additional=""/>
+                <termsupp first="sco" series="sco" additional="putty"/>
                 <p>Turns off the blink attribute</p>
             </section>
             <section role="parameter" title="Turn on Fast Blink" id="sgr-6-fb">
@@ -8760,7 +8784,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco"/>
+                <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
                 <p>Turns on the Reverse Video attribute.</p>
             </section>
             <section role="parameter" id="sgr-8" title="Turn on Invisible attribute">
@@ -8789,6 +8813,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:75"/>
                 <ref src="wy370:78"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9.1E02"/>
+                <termsupp first="xterm" series="xt" additional="putty"/>
                 <!-- TODO: Currently a value of 9 is treated the same as 8
                         regardless of term type - this should be qansi-only.
                        -->
@@ -8798,7 +8823,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt510" series="sco" additional="sco"/>
+                <termsupp first="vt510" series="sco" additional="sco putty"/>
                 <p> The ASCII Character Set is the current 7-bit display character
                     set (SCO Console Emulation).
                     <!--Disables sco8bit and crm modes, turns off the graphic attribute, switches
@@ -8820,7 +8845,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt510" series="sco" additional="sco"/>
+                <termsupp first="vt510" series="sco" additional="sco putty"/>
                 <p>
                     Hex 00–7F of the PC character set codes are mapped to the
                     current 7-bit display character set.
@@ -8853,7 +8878,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt510" series="sco" additional="sco"/>
+                <termsupp first="vt510" series="sco" additional="sco putty"/>
                 <p>
                     <!-- TODO: Is this the same as above currently flagged for
                             linux only? -->
@@ -8896,6 +8921,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgr-21-ul"
                      badges="linux" title="Set Underlined">
                 <ctlseq><param-single/> = 21</ctlseq>
+                <termsupp first="linux" series="linux" additional="putty"/>
                 <p>Set underlined attribute (since linux 4.17)</p>
             </section>
             <section role="parameter" id="sgr-21-ecma" mnemonic=""
@@ -8915,7 +8941,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux putty"/>
                 <p>Turns off the bold and dim attributes</p>
                 <!-- Linux: Set normal intensity -->
             </section>
@@ -8936,7 +8962,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux sco"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux sco putty"/>
                 <p>Turns off the underline attribute</p>
             </section>
             <section role="parameter" id="sgr-25" title="Turn off Blink">
@@ -8949,7 +8975,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux sco"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux sco putty"/>
                 <p>Turns off the blink attribute</p>
             </section>
             <section role="parameter" id="sgr-26-blink-on"
@@ -8972,7 +8998,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux sco"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt linux sco putty"/>
                 <p>Turns off the Reverse Video attribute</p>
             </section>
             <section role="parameter"  id="sgr-28" title="Turn off Invisible">
@@ -9003,6 +9029,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:75"/>
                 <ref src="wy370:78"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-2-9.1E61"/>
+                <termsupp first="xterm" series="xt" additional="putty"/>
                 <!-- TODO: This is currently treated the same as 28. It should
                         be gated to QANSI only, and on all other terminals
                         turn off crossed-out characters
@@ -9014,56 +9041,56 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-0.1E59"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-31" title="Set Red Foreground">
                     <ctlseq><param-single/> = 31</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-1.1E5A"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-32" title="Set Green Foreground">
                     <ctlseq><param-single/> = 32</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-2.1E5B"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-33" title="Set Brown Foreground">
                     <ctlseq><param-single/> = 33</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-3.1E5C"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-34" title="Set Blue Foreground">
                     <ctlseq><param-single/> = 34</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-4.1E5D"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-35" title="Set Magenta Foreground">
                     <ctlseq><param-single/> = 35</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-5.1E5E"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-36" title="Set Cyan Foreground">
                     <ctlseq><param-single/> = 36</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-6.1E5F"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-37" title="Set White Foreground">
                     <ctlseq><param-single/> = 37</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-7.1E60"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
                         sets the foreground color preserving its intensity.
@@ -9130,7 +9157,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 38 ; 2 ;  <param-single symbol="Pr"/> ;
                     <param-single symbol="Pg"/> ; <param-single symbol="Pb"/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8;2;Pr;Pg;Pb.21AA"/>
-                <termsupp first="xterm" series="xt" additional="tt linux"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility with older xterm releases and Konsole.
@@ -9153,7 +9180,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set foreground to indexed color">
                 <ctlseq><param-single/> = 38 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
-                <termsupp first="tt" series="xt" additional="linux"/>
+                <termsupp first="tt" series="xt" additional="linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility other terminal emulators.
@@ -9179,7 +9206,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-9.1E62"/>
                 <ref src="e48:75"/>
                 <ref src="vt52x:356"/>
-                <termsupp first="vt525" series="vt" additional="tt sco"/>
+                <termsupp first="vt525" series="vt" additional="tt sco putty"/>
                 <p>This is processed for all terminal types, where it resets the foreground
                     color to the default value. The comments say:
                     Supported by SCO ANSI, for QANSI restore
@@ -9202,56 +9229,56 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-0.1E5A"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-41" title="Set Red Background">
                     <ctlseq><param-single/> = 41</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-1.1E5B"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-42" title="Set Green Background">
                     <ctlseq><param-single/> = 42</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-2.1E5C"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-43" title="Set Brown Background">
                     <ctlseq><param-single/> = 43</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-3.1E5D"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-44" title="Set Blue Background">
                     <ctlseq><param-single/> = 44</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-4.1E5E"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-45" title="Set Magenta Background">
                     <ctlseq><param-single/> = 45</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-5.1E5F"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-46" title="Set Cyan Background">
                     <ctlseq><param-single/> = 46</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-6.1E60"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-47" title="Set White Background">
                     <ctlseq><param-single/> = 47</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-7.1E61"/>
                     <ref src="vt52x:356"/>
-                    <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                    <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
                         sets the background color preserving its intensity.
@@ -9311,7 +9338,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 48 ; 2 ; <param-single symbol="Pr"/> ;
                     <param-single symbol="Pg"/> ; <param-single symbol="Pb"/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-8;2;Pr;Pg;Pb.21AB"/>
-                <termsupp first="xterm" series="xt" additional="tt linux"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility with older xterm releases and Konsole.
@@ -9334,7 +9361,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set background to indexed color">
                 <ctlseq><param-single/> = 48 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
-                <termsupp first="tt" series="xt" additional="linux"/>
+                <termsupp first="tt" series="xt" additional="linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility other terminal emulators.
@@ -9360,7 +9387,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:75"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-9.1E63"/>
                 <ref src="vt52x:356"/>
-                <termsupp first="vt525" series="vt" additional="tt linux sco"/>
+                <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 <p>This is processed for all terminal types, where it resets the background
                     color to the default value. The comments say: &quot;Supported by SCO ANSI.
                     QANSI - restore bg color saved with <tt>CSI = Pn G</tt>&quot;
@@ -9406,12 +9433,12 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-90" title="Set Bright Black Foreground">
                     <ctlseq><param-single/> = 90</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-0.1E5F"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-91" title="Set Bright Red Foreground">
                     <ctlseq><param-single/> = 91</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-1.1E60"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 </section>
                 <section role="parameter" id="sgr-91-sco" title="Set Bright Blue Foreground"
                         not-implemented="true" todo="true">
@@ -9421,17 +9448,17 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-92" title="Set Bright Green Foreground">
                     <ctlseq><param-single/> = 92</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-2.1E61"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-93" title="Set Bright Brown Foreground">
                     <ctlseq><param-single/> = 93</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-3.1E62"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-94" title="Set Bright Blue Foreground">
                     <ctlseq><param-single/> = 94</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-4.1E63"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 </section>
                 <section role="parameter" id="sgr-94-sco" title="Set Bright Red Foreground"
                         not-implemented="true" todo="true">
@@ -9441,17 +9468,17 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-95" title="Set Bright Magenta Foreground">
                     <ctlseq><param-single/> = 95</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-5.1E64"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-96" title="Set Bright Cyan Foreground">
                     <ctlseq><param-single/> = 96</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-6.1E65"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-97" title="Set Bright White Foreground">
                     <ctlseq><param-single/> = 97</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9-7.1E66"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
                         sets the foreground color.
@@ -9471,12 +9498,12 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-100" title="Set Bright Black Background">
                     <ctlseq><param-single/> = 100</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-0.1EB4"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-101" title="Set Bright Red Background">
                     <ctlseq><param-single/> = 101</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-1.1EB5"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 </section>
                 <section role="parameter" id="sgr-101-sco" title="Set Bright Blue Background"
                         not-implemented="true" todo="true">
@@ -9486,12 +9513,12 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-102" title="Set Bright Green Background">
                     <ctlseq><param-single/> = 102</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-2.1EB6"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-103" title="Set Bright Brown Background">
                     <ctlseq><param-single/> = 103</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-3.1EB7"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 </section>
                 <section role="parameter" id="sgr-103-sco" title="Set Bright Cyan Background"
                          not-implemented="true" todo="true">
@@ -9501,7 +9528,7 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-104" title="Set Bright Blue Background">
                     <ctlseq><param-single/> = 104</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-4.1EB8"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 </section>
                 <section role="parameter" id="sgr-104-sco" title="Set Bright Red Background"
                          not-implemented="true" todo="true">
@@ -9511,12 +9538,12 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-105" title="Set Bright Magenta Background">
                     <ctlseq><param-single/> = 105</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-5.1EB9"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-106" title="Set Bright Cyan Background">
                     <ctlseq><param-single/> = 106</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-6.1EBA"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 </section>
                 <section role="parameter" id="sgr-106-sco" title="Set Bright Yellow Background"
                          not-implemented="true" todo="true">
@@ -9526,7 +9553,7 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-107" title="Set Bright White Background">
                     <ctlseq><param-single/> = 107</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-1-0-7.1EBB"/>
-                    <termsupp first="xterm" series="xt" additional="tt linux sco"/>
+                    <termsupp first="xterm" series="xt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
                         sets the background color.
@@ -9584,7 +9611,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:257"/>
             <ref src="vt510:DSR.html"/>
             <ref src="vt52x:327"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>
                 K95 does not currently differentiate between the standard and DEC
                 private DSR control sequences. Using the DEC private control sequence
@@ -9622,7 +9649,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:258"/>
                 <ref src="vt510:DSR-CPR.html"/>
                 <ref src="vt52x:327"/>
-                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux"/>
+                <termsupp first="vt100" series="vt" additional="vt220 vt420 vt510 tt linux putty"/>
                 <p>If the request was <tt>CSI 6 n</tt>, transmits the cursor
                     position is transmitted to the host. Response is:
                     <tt>CSI x ; y R</tt> where x and y are the cursor coordinates
@@ -9980,7 +10007,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:109"/>
             <ref src="vt510:DECSCL.html"/>
             <ref src="vt52x:276"/>
-            <termsupp first="vt220" series="vt" additional="vt420 vt510 tt"/>
+            <termsupp first="vt220" series="vt" additional="vt420 vt510 tt putty"/>
             <p>
                 This lets you switch in and out of VT100 mode, and change between
                 7-bit controls and 8-bit controls.
@@ -10001,6 +10028,21 @@ DCS $ q 3 , } ST</pre>
             <p>If Kermit 95 is emulating a VT320 or higher, you can query the
                 state of DECSCL with with <a href="#decrqss">DECRQSS</a>
             </p>
+            <section role="parameter" title="Putty VT" id="putty-decscl-40"
+                     badges="putty" not-implemented="true" todo="true">
+                <ctlseq><param-single symbol="Pl"/> = 40</ctlseq>
+                <p>Sets the terminal conformance level to all VT levels</p>
+            </section>
+            <section role="parameter" title="Putty" id="putty-decscl-41"
+                     badges="putty" not-implemented="true" todo="true">
+                <ctlseq><param-single symbol="Pl"/> = 41</ctlseq>
+                <p>Sets the terminal conformance level to PuTTY</p>
+            </section>
+            <section role="parameter" title="Putty SCOANSI" id="putty-decscl-42"
+                     badges="putty" not-implemented="true" todo="true">
+                <ctlseq><param-single symbol="Pl"/> = 42</ctlseq>
+                <p>Sets the terminal conformance level to SCOANSI</p>
+            </section>
             <section role="parameter" title="level 1" id="decscl-l1-vt100" badges="vt100">
                 <ctlseq><param-single symbol="Pl"/> = 61</ctlseq>
                 <ref src="070:226"/>
@@ -10015,7 +10057,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:109"/>
                 <ref src="vt510:DECSCL.html"/>
                 <ref src="vt52x:276"/>
-                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt"/>
+                <termsupp first="vt220" series="vt" additional="vt420 vt510 tt putty"/>
                 <p>
                     Sets the terminal type mode to VT102
                 </p>
@@ -10025,6 +10067,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="070:226"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pl;Pc-dq-p:Pl-=-6-2.2049"/>
                 <ref src="vt220:S4.3"/>
+                <termsupp first="vt220" series="vt" additional="putty"/>
                 <p>Sets the terminal type to VT220</p>
             </section>
             <section role="parameter" title="level 2 - VT320" id="decscl-l2-vt320" badges="vt320 vt320pc">
@@ -11514,7 +11557,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:156"/>
             <ref src="vt510:DECSTBM.html"/>
             <ref src="vt52x:303"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <p>Sets the scrolling region (top;bottom). You can query the
                 current state of DECSTBM with <a href="#decrqss">DECRQSS</a>.
             </p>
@@ -11702,7 +11745,7 @@ DCS $ q 3 , } ST</pre>
                  title="Save Cursor Position" badges="linux xterm" groups="isansi">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-s.1BC3"/>
             <ref src="vt52x:371"/>
-            <termsupp first="sco" series="sco" additional="xterm tt linux"/>
+            <termsupp first="sco" series="sco" additional="xterm tt linux putty"/>
                 <!-- Supposedly for SNI-97801 too, but for that the `CSI Ps s`
                      code path will be taken first resulting in this being
                      skipped -->
@@ -11794,7 +11837,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:154"/>
             <ref src="vt510:DECSLPP.html"/>
             <ref src="vt52x:290"/>
-            <termsupp first="vt420" series="vt" additional="vt510 tt"/>
+            <termsupp first="vt420" series="vt" additional="vt510 tt putty"/>
             <p>
                 Sets the screen height to <param-single/> rows. Valid options
                 are: 24, 25, 36, 41, 42, 48, 52, 53 and 72. Values for
@@ -12103,7 +12146,7 @@ DCS $ q 3 , } ST</pre>
                  badges="scoansi linux xterm" title="Restore cursor position">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-u.1BC5"/>
             <ref src="vt52x:371"/>
-            <termsupp first="sco" series="sco" additional="tt xterm linux"/>
+            <termsupp first="sco" series="sco" additional="tt xterm linux putty"/>
         </section>
         <section role="ctlseq" badges="s97801" id="sni-mode" title="SNI97801 Various mode options">
             <ctlseq>CSI <param-single/> u</ctlseq>
@@ -12512,7 +12555,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-x.1CB8"/>
             <ref src="vt100:DECREQTPARM"/>
             <ref src="vt132:87"/>
-            <termsupp first="vt100" series="vt" additional="vt132"/>
+            <termsupp first="vt100" series="vt" additional="vt132 putty"/>
             <p><param-single/>
                 can either be a 0 or a 1; any other value will result in the request being
                 ignored. If <param-single/> is a 0, then the first parameter
@@ -13056,7 +13099,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:152"/>
             <ref src="vt510:DECSCPP.html"/>
             <ref src="vt52x:279"/>
-            <termsupp first="vt420" series="vt" additional="v510"/>
+            <termsupp first="vt420" series="vt" additional="v510 putty"/>
             <p>
                 The parameter <param-single/>
                 is required and specifies the new width of the terminal. Supplying 0, which
@@ -13106,7 +13149,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:240"/>
             <ref src="vt510:DECSNLS.html"/>
             <ref src="vt52x:294"/>
-            <termsupp first="vt420" series="vt" additional="vt510"/>
+            <termsupp first="vt420" series="vt" additional="vt510 putty"/>
         </section>
         <section role="ctlseq" id="xtpopsgr" mnemonic="XTPOPSGR"
                  title="Pop video attributes from stack"
@@ -13595,14 +13638,14 @@ DCS $ q 3 , } ST</pre>
                      title="Set Icon Name and Window Title (xterm)">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-0.FB7"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Sets the window title to the value supplied, up to 63 characters.</p>
             </section>
             <section role="parameter" id="osc-1" mnemonic=""
                      title="Change icon name" not-implemented="true">
                 <ctlseq><param-single/> = 1</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-1.FB8"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>
                     Not supported: Windows doesn't provide a way of setting a
                     value for the task bar label that is different from the
@@ -13613,7 +13656,7 @@ DCS $ q 3 , } ST</pre>
                      title="Window title (xterm)">
                 <ctlseq><param-single/> = 2</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-2.FB9"/>
-                <termsupp first="xterm" series="xt" additional="tt"/>
+                <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Sets the window title to the value supplied, up to 63 characters.</p>
             </section>
             <section role="parameter" not-implemented="true" id="decsin"
@@ -13639,6 +13682,9 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 4 ; c ; spec</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-4;c;spec.123F"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <!-- PuTTY only implements the query part of OSC-4. It does not
+                     support setting colors. As a result, its not listed above
+                     as supporting this OSC. -->
                 <p>
                     Changes the RGB value for one or more colors in the color
                     palette. Multiple <tt><param-single symbol="c"/> ; <param-single symbol="spec"/> </tt>
@@ -13925,7 +13971,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="decswt" mnemonic="DECSWT" title="Set Window Title">
                 <ctlseq><param-single/> = 21</ctlseq>
                 <ref src="vt52x:310"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt520" series="vt" additional="putty"/>
                 <p>Sets the window title to the value supplied, up to 63 characters.</p>
             </section>
             <section role="parameter" id="osc-22" mnemonic=""
@@ -14166,6 +14212,7 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="osc-R" mnemonic=""
                      title="Reset palette (linux)" badges="linux">
+                <termsupp first="linux" series="linux" additional="putty"/>
                 <ctlseq><param-single/> = R</ctlseq>
                 <p>
                     This OSC <em>is not terminated!</em> At all! The OSC is,
@@ -14181,6 +14228,7 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="osc-P" mnemonic=""
                      title="Set palette (linux)" badges="linux">
+                <termsupp first="linux" series="linux" additional="putty"/>
                 <ctlseq><param-single/> = P nrrggbb</ctlseq>
                 <p>
                     This OSC <em>is not terminated!</em> At all!
@@ -14192,6 +14240,17 @@ DCS $ q 3 , } ST</pre>
                     color index <em>n</em> (0–15 in hex) to the RGB value
                     <em>rrggbb</em> (0–255 in hex). In console versions of
                     Kermit 95, this OSC is not acted upon.
+                </p>
+            </section>
+            <section role="parameter" id="osc-W" mnemonic=""
+                     title="Set Wordness?" badges="putty"
+                     not-implemented="true" todo="true">
+                <termsupp first="putty" series="putty" additional=""/>
+                <ctlseq><param-single/> = W ...</ctlseq>
+                <p>
+                    PuTTY extension for doing things to its "wordness" array?
+                    "The wordness array is mainly for deciding the disposition of the
+                     US-ASCII characters."
                 </p>
             </section>
         </section>

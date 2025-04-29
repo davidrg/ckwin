@@ -67,7 +67,7 @@ parse arg param_devmode, param_bannerfile, param_verbose, param_inputfile
 settings.output_file = ""            /* Comes from the XML file */
 
 /* Which terminals should be included in the term-ctlseqs comparison tables */
-settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt420 vt510 vt520 vt525 xterm tt'
+settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt420 vt510 vt520 vt525 xterm tt putty'
 
 /* Filtering for the to-do output - these are stored in the XML document.
  * Additional filtering is included in the "todoOutputFilter" procedure
@@ -230,14 +230,18 @@ todoOutputFilter: procedure expose g.
     is_vt420 = 0
     is_xterm = 0
     is_tt = 0
+    is_linux = 0
+    is_putty = 0
 
     if wordpos('vt102', supportedTerminals) <> 0 then is_vt102 = 1
     if wordpos('vt220', supportedTerminals) <> 0 then is_vt220 = 1
     if wordpos('vt420', supportedTerminals) <> 0 then is_vt420 = 1
     if wordpos('xterm', supportedTerminals) <> 0 then is_xterm = 1
     if wordpos('tt', supportedTerminals) <> 0 then is_tt = 1
+    if wordpos('putty', supportedTerminals) <> 0 then is_putty = 1
+    if wordpos('linux', supportedTerminals) <> 0 then is_linux = 1
 
-    if is_vt102 = 1 | is_vt220 = 1 | is_vt420 = 1 | (is_xterm = 1 & is_tt = 1) then do
+    if is_vt102 = 1 | is_vt220 = 1 | is_vt420 = 1 | (is_xterm = 1 & is_tt = 1) | (is_xterm = 1 & is_putty = 1) | (is_xterm = 1 & is_linux = 1) then do
         return 1
     end
 
