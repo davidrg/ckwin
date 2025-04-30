@@ -1673,6 +1673,7 @@ int ssh_open(void) {
             if (rc != SSH_ERR_NO_ERROR) {
                 /* Failed to close the existing connection. Can't start a new one.*/
                 if (socket != INVALID_SOCKET) closesocket(socket);
+                if (user) free(user);
                 return rc;
             }
         } else {
