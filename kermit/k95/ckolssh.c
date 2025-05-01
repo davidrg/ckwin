@@ -2734,6 +2734,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     rc = ssh_pki_generate(ktype, bits, &key);
     if (rc != SSH_OK) {
         printf("Failed to generate private key\n");
+        free(passphrase);
         free(output_filename);
         return SSH_ERR_UNSPECIFIED;
     }

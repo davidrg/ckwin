@@ -176,8 +176,8 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - Fixed a potential memory leak in the status line display. Cov-462304.
  - Fix control flow issue which could cause a DECRQM to do both the DECRQM
    and a Delete lines. Cov-462454.
- - Fix potential memory leak if SSH key generation fails. Cov-462508.
- - Fix potential memory leak on ssh connect if existing connection fails to close. Cov-462163. 
+ - Fix potential memory leak if SSH key generation fails. Cov-462508, Cov-462436
+ - Fix potential memory leak on ssh connect if existing connection fails to close. Cov-462163.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
