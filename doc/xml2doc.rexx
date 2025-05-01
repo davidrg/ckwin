@@ -89,6 +89,12 @@ if settings.input_file = '' then settings.input_file = "ctlseqs.xml"
  * script: */
 settings.preliminary_banner_file = strip(param_bannerfile)
 
+/* TODO: The main ctlseqs.xml file is getting *massive* - over 20k lines and
+         counting. While it still processes in a reasonable time, its size is
+         getting awkward to work with. It would be handy if sections could live
+         in separate files.
+ */
+
 /* TODO: - It would be nice to issue a warning on conflicting control sequences
  *       - Hide not-implemented things by default
  *       - Javascript to show/hide not-implemented things
@@ -1480,12 +1486,18 @@ doTableHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
                     call outputHtml indentLevel,'</th>'
                 end
                 else if name = 'td' then do
+                    attrs = ''
+
                     if hasAttribute(trChild, 'not-implemented') then do
                         ni = getAttribute(trChild, 'not-implemented')
-                        if ni = 'true' then call outputHtml indentLevel,'<td class="not-implemented">'
-                        else call outputHtml indentLevel,'<td>'
+                        if ni = 'true' then attrs = attrs' class="not-implemented"'
                     end
-                    else call outputHtml indentLevel,'<td>'
+                    if hasAttribute(trChild, 'colspan') then do
+                        cs = getAttribute(trChild, 'colspan')
+                        attrs = attrs' colspan="'cs'"'
+                    end
+
+                    call outputHtml indentLevel,'<td'attrs'>'
                     indentLevel = indentLevel + 1
 
                     call doTextHtml trChild, indentLevel, '', ''
