@@ -163,6 +163,7 @@ k95.exe %docs_root%\mkdocs.ksc -Y -# 94 = %docs_root%\manual %OUT_DIR% %GIT_DATE
 REM Build the control-sequences documentation
 pushd %docs_root%
 %dist_root%\k95.exe -Y -# 94 -C "take xml2doc.ksc %DEV_MODE% {preliminary-ctlseqs.html} 1, exit" || goto :failed
+%dist_root%\k95.exe -Y -# 94 -C "take xml2doc.ksc %DEV_MODE% {preliminary-ctlseqs.html} 1 keyb.xml, exit" || goto :failed
 popd
 
 REM the control-sequences documentation isn't currently a part of the manual,
