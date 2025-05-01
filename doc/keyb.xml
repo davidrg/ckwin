@@ -6667,7 +6667,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>Sends one of the following depending on the SET TERM ARROW setting</p>
                 <dl>
                     <dt>Application Mode</dt>
-                    <dd><tt>\{27}0B</tt></dd>
+                    <dd><tt>\{27}OB</tt></dd>
                     <dt>Normal (Cursor) Mode</dt>
                     <dd><tt>\{27}[B</tt></dd>
                 </dl>
@@ -7276,7 +7276,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>Sends one of the following depending on the SET TERM ARROW setting</p>
                 <dl>
                     <dt>Application Mode</dt>
-                    <dd><tt>\{27}0D</tt></dd>
+                    <dd><tt>\{27}OD</tt></dd>
                     <dt>Normal (Cursor) Mode</dt>
                     <dd><tt>\{27}[D</tt></dd>
                 </dl>
@@ -7391,7 +7391,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>Sends one of the following depending on the SET TERM ARROW setting</p>
                 <dl>
                     <dt>Application Mode</dt>
-                    <dd><tt>\{27}0C</tt></dd>
+                    <dd><tt>\{27}OC</tt></dd>
                     <dt>Normal (Cursor) Mode</dt>
                     <dd><tt>\{27}[C</tt></dd>
                 </dl>
@@ -8098,7 +8098,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <p>Sends one of the following depending on the SET TERM ARROW setting</p>
                 <dl>
                     <dt>Application Mode</dt>
-                    <dd><tt>\{27}0A</tt></dd>
+                    <dd><tt>\{27}OA</tt></dd>
                     <dt>Normal (Cursor) Mode</dt>
                     <dd><tt>\{27}[A</tt></dd>
                 </dl>
