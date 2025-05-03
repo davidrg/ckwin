@@ -5312,7 +5312,7 @@ static struct keytab shokeytab[] = {    /* SHOW KEY modes */
 };
 static int nshokey = (sizeof(shokeytab) / sizeof(struct keytab));
 
-#define SHKEYDEF TT_MAX+5
+#define SHKEYDEF TT_MAX+7
 struct keytab shokeymtab[] = {
     "aaa",       TT_AAA,     CM_INV,    /* AnnArbor */
     "adm3a",     TT_ADM3A,   0,         /* LSI ADM-3A */
@@ -5344,6 +5344,8 @@ struct keytab shokeymtab[] = {
     "ibm3151",   TT_IBM31,   0,         /* IBM 3101-xx,3161 */
     "k95",       TT_K95,     0,         /* Kermit 95 */
     "linux",     TT_LINUX,   0,         /* Linux */
+	"meta",      TT_KBM_META,   0,     /* Meta key mode (subset of emacs mode) */
+    "metaesc",   TT_KBM_METAESC,   0,     /* Meta sends ESC mode */
     "qansi",     TT_QANSI,   0,         /* QNX ANSI */
     "qnx",       TT_QNX,     0,         /* QNX */
     "russian",   TT_KBM_RUSSIAN, 0,     /* Russian mode */
@@ -6994,6 +6996,12 @@ doshow(x) int x;
           case KBM_RU:
             s = "russian";
             break;
+		  case KBM_ME:
+			s = "metaesc";
+			break;
+		  case KBM_MM:
+			s = "meta";
+			break;
           case KBM_EN:
           default:
             s = "default";

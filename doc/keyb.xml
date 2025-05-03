@@ -3410,2121 +3410,2262 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             changes, rather than modifying it directly -->
         <!-- TODO: it would be rather handy if this *didn't* need to live here
              in this file... -->
+
         <table>
             <tr>
                 <th>Key</th>
                 <th>Key Code</th>
-                <th>wp</th>
                 <th>emacs</th>
+                <th>metaesc</th>
+                <th>meta</th>
+                <th>wp</th>
                 <th>hebrew</th>
                 <th>russian</th>
             </tr>
             <tr>
                 <td>#</td>
                 <td>\35</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{252}</td>
             </tr>
             <tr>
                 <td>$</td>
                 <td>\36</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{37}</td>
             </tr>
             <tr>
                 <td>'</td>
                 <td>\39</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{44}</td>
                 <td style="not-mapped"/>
             </tr>
             <tr>
                 <td>,</td>
                 <td>\44</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{154}</td>
                 <td>\{161}</td>
             </tr>
             <tr>
                 <td>.</td>
                 <td>\46</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{149}</td>
                 <td>\{238}</td>
             </tr>
             <tr>
                 <td>/</td>
                 <td>\47</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td colspan="2">\{46}</td>
             </tr>
             <tr>
                 <td>:</td>
                 <td>\58</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{157}</td>
             </tr>
             <tr>
                 <td>;</td>
                 <td>\59</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{147}</td>
                 <td>\{237}</td>
             </tr>
             <tr>
                 <td>&amp;lt;</td>
                 <td>\60</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{129}</td>
             </tr>
             <tr>
                 <td>></td>
                 <td>\62</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{158}</td>
             </tr>
             <tr>
                 <td>?</td>
                 <td>\63</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{44}</td>
             </tr>
             <tr>
                 <td>@</td>
                 <td>\64</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{34}</td>
             </tr>
             <tr>
                 <td>A</td>
                 <td>\65</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{148}</td>
             </tr>
             <tr>
                 <td>B</td>
                 <td>\66</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{136}</td>
             </tr>
             <tr>
                 <td>C</td>
                 <td>\67</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{145}</td>
             </tr>
             <tr>
                 <td>D</td>
                 <td>\68</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{130}</td>
             </tr>
             <tr>
                 <td>E</td>
                 <td>\69</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{147}</td>
             </tr>
             <tr>
                 <td>F</td>
                 <td>\70</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{128}</td>
             </tr>
             <tr>
                 <td>G</td>
                 <td>\71</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{143}</td>
             </tr>
             <tr>
                 <td>H</td>
                 <td>\72</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{144}</td>
             </tr>
             <tr>
                 <td>I</td>
                 <td>\73</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{152}</td>
             </tr>
             <tr>
                 <td>J</td>
                 <td>\74</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{142}</td>
             </tr>
             <tr>
                 <td>K</td>
                 <td>\75</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{139}</td>
             </tr>
             <tr>
                 <td>L</td>
                 <td>\76</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{132}</td>
             </tr>
             <tr>
                 <td>M</td>
                 <td>\77</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{156}</td>
             </tr>
             <tr>
                 <td>N</td>
                 <td>\78</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{146}</td>
             </tr>
             <tr>
                 <td>O</td>
                 <td>\79</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{153}</td>
             </tr>
             <tr>
                 <td>P</td>
                 <td>\80</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{135}</td>
             </tr>
             <tr>
                 <td>Q</td>
                 <td>\81</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{137}</td>
             </tr>
             <tr>
                 <td>R</td>
                 <td>\82</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{138}</td>
             </tr>
             <tr>
                 <td>S</td>
                 <td>\83</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{155}</td>
             </tr>
             <tr>
                 <td>T</td>
                 <td>\84</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{133}</td>
             </tr>
             <tr>
                 <td>U</td>
                 <td>\85</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{131}</td>
             </tr>
             <tr>
                 <td>V</td>
                 <td>\86</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{140}</td>
             </tr>
             <tr>
                 <td>W</td>
                 <td>\87</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{150}</td>
             </tr>
             <tr>
                 <td>X</td>
                 <td>\88</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{151}</td>
             </tr>
             <tr>
                 <td>Y</td>
                 <td>\89</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{141}</td>
             </tr>
             <tr>
                 <td>Z</td>
                 <td>\90</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{159}</td>
             </tr>
             <tr>
                 <td>[</td>
                 <td>\91</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{229}</td>
             </tr>
             <tr>
                 <td>\</td>
                 <td>\92</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{47}</td>
             </tr>
             <tr>
                 <td>]</td>
                 <td>\93</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{234}</td>
             </tr>
             <tr>
                 <td>^</td>
                 <td>\94</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{58}</td>
             </tr>
             <tr>
                 <td>`</td>
                 <td>\96</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{241}</td>
             </tr>
             <tr>
                 <td>a</td>
                 <td>\97</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{153}</td>
                 <td>\{228}</td>
             </tr>
             <tr>
                 <td>b</td>
                 <td>\98</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{144}</td>
                 <td>\{168}</td>
             </tr>
             <tr>
                 <td>c</td>
                 <td>\99</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{129}</td>
                 <td>\{225}</td>
             </tr>
             <tr>
                 <td>d</td>
                 <td>\100</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{130}</td>
                 <td>\{162}</td>
             </tr>
             <tr>
                 <td>e</td>
                 <td>\101</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{151}</td>
                 <td>\{227}</td>
             </tr>
             <tr>
                 <td>f</td>
                 <td>\102</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{139}</td>
                 <td>\{160}</td>
             </tr>
             <tr>
                 <td>g</td>
                 <td>\103</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{146}</td>
                 <td>\{175}</td>
             </tr>
             <tr>
                 <td>h</td>
                 <td>\104</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{137}</td>
                 <td>\{224}</td>
             </tr>
             <tr>
                 <td>i</td>
                 <td>\105</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{143}</td>
                 <td>\{232}</td>
             </tr>
             <tr>
                 <td>j</td>
                 <td>\106</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{135}</td>
                 <td>\{174}</td>
             </tr>
             <tr>
                 <td>k</td>
                 <td>\107</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{140}</td>
                 <td>\{171}</td>
             </tr>
             <tr>
                 <td>l</td>
                 <td>\108</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{138}</td>
                 <td>\{164}</td>
             </tr>
             <tr>
                 <td>m</td>
                 <td>\109</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{150}</td>
                 <td>\{236}</td>
             </tr>
             <tr>
                 <td>n</td>
                 <td>\110</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{142}</td>
                 <td>\{226}</td>
             </tr>
             <tr>
                 <td>o</td>
                 <td>\111</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{141}</td>
                 <td>\{233}</td>
             </tr>
             <tr>
                 <td>p</td>
                 <td>\112</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{148}</td>
                 <td>\{167}</td>
             </tr>
             <tr>
                 <td>q</td>
                 <td>\113</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{47}</td>
                 <td>\{169}</td>
             </tr>
             <tr>
                 <td>r</td>
                 <td>\114</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{152}</td>
                 <td>\{170}</td>
             </tr>
             <tr>
                 <td>s</td>
                 <td>\115</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{131}</td>
                 <td>\{235}</td>
             </tr>
             <tr>
                 <td>t</td>
                 <td>\116</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{128}</td>
                 <td>\{165}</td>
             </tr>
             <tr>
                 <td>u</td>
                 <td>\117</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{133}</td>
                 <td>\{163}</td>
             </tr>
             <tr>
                 <td>v</td>
                 <td>\118</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{132}</td>
                 <td>\{172}</td>
             </tr>
             <tr>
                 <td>w</td>
                 <td>\119</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{39}</td>
                 <td>\{230}</td>
             </tr>
             <tr>
                 <td>x</td>
                 <td>\120</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{145}</td>
                 <td>\{231}</td>
             </tr>
             <tr>
                 <td>y</td>
                 <td>\121</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{136}</td>
                 <td>\{173}</td>
             </tr>
             <tr>
                 <td>z</td>
                 <td>\122</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="4"/>
                 <td>\{134}</td>
                 <td>\{239}</td>
             </tr>
             <tr>
                 <td>{</td>
                 <td>\123</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{149}</td>
             </tr>
             <tr>
                 <td>}</td>
                 <td>\125</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{154}</td>
             </tr>
             <tr>
                 <td>~</td>
                 <td>\126</td>
-                <td style="not-mapped" colspan="3"/>
+                <td style="not-mapped" colspan="5"/>
                 <td>\{240}</td>
             </tr>
             <tr>
                 <td>Clear</td>
                 <td>\268</td>
-                <td>\{27}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{27}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>PageUp</td>
                 <td>\289</td>
-                <td><tt>\{27}$2</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}$2</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>PageDown</td>
                 <td>\290</td>
-                <td><tt>\{27}$5</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}$5</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>End</td>
                 <td>\291</td>
-                <td><tt>\{27}$4</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}$4</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Home</td>
                 <td>\292</td>
-                <td><tt>\{27}$1</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}$1</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>LeftArrow</td>
                 <td>\293</td>
-                <td><a href="#kverb_Klfarr">\Klfarr</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Klfarr">\Klfarr</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>UpArrow</td>
                 <td>\294</td>
-                <td><a href="#kverb_Kuparr">\Kuparr</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kuparr">\Kuparr</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>RightArrow</td>
                 <td>\295</td>
-                <td><a href="#kverb_Krtarr">\Krtarr</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Krtarr">\Krtarr</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>DownArrow</td>
                 <td>\296</td>
-                <td><a href="#kverb_Kdnarr">\Kdnarr</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kdnarr">\Kdnarr</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Insert</td>
                 <td>\301</td>
-                <td><tt>\{27}$0</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}$0</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Delete</td>
                 <td>\302</td>
-                <td><tt>\{27}$3</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}$3</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-0</td>
                 <td>\352</td>
-                <td>\{48}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{48}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-1</td>
                 <td>\353</td>
-                <td>\{49}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{49}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-2</td>
                 <td>\354</td>
-                <td>\{50}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{50}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-3</td>
                 <td>\355</td>
-                <td>\{51}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{51}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-4</td>
                 <td>\356</td>
-                <td>\{52}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{52}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-5</td>
                 <td>\357</td>
-                <td>\{53}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{53}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-6</td>
                 <td>\358</td>
-                <td>\{54}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{54}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-7</td>
                 <td>\359</td>
-                <td>\{55}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{55}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-8</td>
                 <td>\360</td>
-                <td>\{56}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{56}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Keypad-9</td>
                 <td>\361</td>
-                <td>\{57}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{57}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Multiply</td>
                 <td>\362</td>
-                <td>\{42}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{42}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Add</td>
                 <td>\363</td>
-                <td>\{43}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{43}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Subtract</td>
                 <td>\365</td>
-                <td>\{45}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{45}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Decimal</td>
                 <td>\366</td>
-                <td>\{46}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{46}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F5</td>
                 <td>\372</td>
-                <td><a href="#kverb_Kkp7">\Kkp7</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp7">\Kkp7</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F6</td>
                 <td>\373</td>
-                <td><a href="#kverb_Kkp8">\Kkp8</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp8">\Kkp8</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F7</td>
                 <td>\374</td>
-                <td><a href="#kverb_Kkp9">\Kkp9</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp9">\Kkp9</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F8</td>
                 <td>\375</td>
-                <td><a href="#kverb_Kkpminus">\Kkpminus</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkpminus">\Kkpminus</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F9</td>
                 <td>\376</td>
-                <td><a href="#kverb_Kkp4">\Kkp4</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp4">\Kkp4</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F10</td>
                 <td>\377</td>
-                <td><a href="#kverb_Kkp5">\Kkp5</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp5">\Kkp5</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F11</td>
                 <td>\378</td>
-                <td><tt>\{27}~A</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}~A</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>F12</td>
                 <td>\379</td>
-                <td><tt>\{27}~B</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}~B</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F1</td>
                 <td>\880</td>
-                <td><a href="#kverb_Kkp6">\Kkp6</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp6">\Kkp6</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F2</td>
                 <td>\881</td>
-                <td><a href="#kverb_Kkpcoma">\Kkpcoma</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkpcoma">\Kkpcoma</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F3</td>
                 <td>\882</td>
-                <td><a href="#kverb_Kkp1">\Kkp1</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp1">\Kkp1</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F4</td>
                 <td>\883</td>
-                <td><a href="#kverb_Kkp2">\Kkp2</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp2">\Kkp2</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F5</td>
                 <td>\884</td>
-                <td><a href="#kverb_Kkp3">\Kkp3</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp3">\Kkp3</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F6</td>
                 <td>\885</td>
-                <td><a href="#kverb_Kkpenter">\Kkpenter</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkpenter">\Kkpenter</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F7</td>
                 <td>\886</td>
-                <td><a href="#kverb_Kkp0">\Kkp0</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkp0">\Kkp0</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F8</td>
                 <td>\887</td>
-                <td><a href="#kverb_Kkpdot">\Kkpdot</a></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><a href="#kverb_Kkpdot">\Kkpdot</a></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F9</td>
                 <td>\888</td>
-                <td><tt>\{27}!8</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}!8</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-F10</td>
                 <td>\889</td>
-                <td><tt>\{27}!9</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}!9</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>EOT</td>
                 <td>\1028</td>
-                <td>\{4}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{4}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>BS</td>
                 <td>\1032</td>
-                <td><tt>\{27})h</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})h</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>HT</td>
                 <td>\1033</td>
-                <td><tt>\{27})i</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})i</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>LF</td>
                 <td>\1034</td>
-                <td><tt>\{27})\{13}</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})\{13}</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>CR</td>
                 <td>\1037</td>
-                <td><tt>\{27})m</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})m</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>DC1</td>
                 <td>\1041</td>
-                <td><tt>\{27})q</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})q</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>DC3</td>
                 <td>\1043</td>
-                <td><tt>\{27})s</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})s</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>DEL</td>
                 <td>\1151</td>
-                <td><tt>\{27})</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Enter</td>
                 <td>\1293</td>
-                <td><tt>\{27})\{13}</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})\{13}</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-PageUp</td>
                 <td>\1313</td>
-                <td><tt>\{27}^2</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^2</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-PageDown</td>
                 <td>\1314</td>
-                <td><tt>\{27}^5</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^5</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-End</td>
                 <td>\1315</td>
-                <td><tt>\{27}^4</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^4</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Home</td>
                 <td>\1316</td>
-                <td><tt>\{27}^1</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^1</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-LeftArrow</td>
                 <td>\1317</td>
-                <td><tt>\{27}^L</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^L</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-UpArrow</td>
                 <td>\1318</td>
-                <td><tt>\{27}^U</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^U</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-RightArrow</td>
                 <td>\1319</td>
-                <td><tt>\{27}^R</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^R</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-DownArrow</td>
                 <td>\1320</td>
-                <td><tt>\{27}^D</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^D</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Insert</td>
                 <td>\1325</td>
-                <td><tt>\{27}^0</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^0</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F1</td>
                 <td>\1392</td>
-                <td><tt>\{27}@0</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@0</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F2</td>
                 <td>\1393</td>
-                <td><tt>\{27}@1</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@1</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F3</td>
                 <td>\1394</td>
-                <td><tt>\{27}@2</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@2</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F4</td>
                 <td>\1395</td>
-                <td><tt>\{27}@3</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@3</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F5</td>
                 <td>\1396</td>
-                <td><tt>\{27}@4</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@4</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F6</td>
                 <td>\1397</td>
-                <td><tt>\{27}@5</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@5</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F7</td>
                 <td>\1398</td>
-                <td><tt>\{27}@6</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@6</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F8</td>
                 <td>\1399</td>
-                <td><tt>\{27}@7</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@7</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F9</td>
                 <td>\1400</td>
-                <td><tt>\{27}@8</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@8</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-F10</td>
                 <td>\1401</td>
-                <td><tt>\{27}@9</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}@9</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-!</td>
                 <td>\2081</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{33}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{33}</tt></td>
+                <td>\{161}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-"</td>
                 <td>\2082</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{34}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{34}</tt></td>
+                <td>\{162}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-#</td>
                 <td>\2083</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{35}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{35}</tt></td>
+                <td>\{163}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-$</td>
                 <td>\2084</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{36}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{36}</tt></td>
+                <td>\{164}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-%</td>
                 <td>\2085</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{37}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{37}</tt></td>
+                <td>\{165}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-&amp;</td>
                 <td>\2086</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{38}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{38}</tt></td>
+                <td>\{166}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-'</td>
                 <td>\2087</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{39}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{39}</tt></td>
+                <td>\{167}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-(</td>
                 <td>\2088</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{40}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{40}</tt></td>
+                <td>\{168}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-)</td>
                 <td>\2089</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{41}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{41}</tt></td>
+                <td>\{169}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-*</td>
                 <td>\2090</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{42}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{42}</tt></td>
+                <td>\{170}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-+</td>
                 <td>\2091</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{43}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{43}</tt></td>
+                <td>\{171}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-,</td>
                 <td>\2092</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{44}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{44}</tt></td>
+                <td>\{172}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt--</td>
                 <td>\2093</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{45}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{45}</tt></td>
+                <td>\{173}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-.</td>
                 <td>\2094</td>
+                <td colspan="2"><tt>\{27}\{46}</tt></td>
+                <td>\{174}</td>
                 <td><a href="#kverb_Kexit">\Kexit</a></td>
-                <td><tt>\{27}\{46}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-/</td>
                 <td>\2095</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{47}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{47}</tt></td>
+                <td>\{175}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-0</td>
                 <td>\2096</td>
+                <td colspan="2"><tt>\{27}\{48}</tt></td>
+                <td>\{176}</td>
                 <td><tt>\{27}|9</tt></td>
-                <td><tt>\{27}\{48}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-1</td>
                 <td>\2097</td>
+                <td colspan="2"><tt>\{27}\{49}</tt></td>
+                <td>\{177}</td>
                 <td><tt>\{27}|0</tt></td>
-                <td><tt>\{27}\{49}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-2</td>
                 <td>\2098</td>
+                <td colspan="2"><tt>\{27}\{50}</tt></td>
+                <td>\{178}</td>
                 <td><tt>\{27}|1</tt></td>
-                <td><tt>\{27}\{50}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-3</td>
                 <td>\2099</td>
+                <td colspan="2"><tt>\{27}\{51}</tt></td>
+                <td>\{179}</td>
                 <td><tt>\{27}|2</tt></td>
-                <td><tt>\{27}\{51}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-4</td>
                 <td>\2100</td>
+                <td colspan="2"><tt>\{27}\{52}</tt></td>
+                <td>\{180}</td>
                 <td><tt>\{27}|3</tt></td>
-                <td><tt>\{27}\{52}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-5</td>
                 <td>\2101</td>
+                <td colspan="2"><tt>\{27}\{53}</tt></td>
+                <td>\{181}</td>
                 <td><tt>\{27}|4</tt></td>
-                <td><tt>\{27}\{53}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-6</td>
                 <td>\2102</td>
+                <td colspan="2"><tt>\{27}\{54}</tt></td>
+                <td>\{182}</td>
                 <td><tt>\{27}|5</tt></td>
-                <td><tt>\{27}\{54}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-7</td>
                 <td>\2103</td>
+                <td colspan="2"><tt>\{27}\{55}</tt></td>
+                <td>\{183}</td>
                 <td><tt>\{27}|6</tt></td>
-                <td><tt>\{27}\{55}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-8</td>
                 <td>\2104</td>
+                <td colspan="2"><tt>\{27}\{56}</tt></td>
+                <td>\{184}</td>
                 <td><tt>\{27}|7</tt></td>
-                <td><tt>\{27}\{56}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-9</td>
                 <td>\2105</td>
+                <td colspan="2"><tt>\{27}\{57}</tt></td>
+                <td>\{185}</td>
                 <td><tt>\{27}|8</tt></td>
-                <td><tt>\{27}\{57}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-:</td>
                 <td>\2106</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{58}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{58}</tt></td>
+                <td>\{186}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-;</td>
                 <td>\2107</td>
+                <td colspan="2"><tt>\{27}\{59}</tt></td>
+                <td>\{187}</td>
                 <td><a href="#kverb_Kdump">\Kdump</a></td>
-                <td><tt>\{27}\{59}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-&amp;lt;</td>
                 <td>\2108</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{60}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{60}</tt></td>
+                <td>\{188}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-=</td>
                 <td>\2109</td>
+                <td colspan="2"><tt>\{27}\{61}</tt></td>
+                <td>\{189}</td>
                 <td><tt>\{27}|=</tt></td>
-                <td><tt>\{27}\{61}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-></td>
                 <td>\2110</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{62}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{62}</tt></td>
+                <td>\{190}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-?</td>
                 <td>\2111</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{63}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{63}</tt></td>
+                <td>\{191}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-@</td>
                 <td>\2112</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{64}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{64}</tt></td>
+                <td>\{192}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-A</td>
                 <td>\2113</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{65}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{65}</tt></td>
+                <td>\{193}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-B</td>
                 <td>\2114</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{66}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{66}</tt></td>
+                <td>\{194}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-C</td>
                 <td>\2115</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{67}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{67}</tt></td>
+                <td>\{195}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-D</td>
                 <td>\2116</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{68}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{68}</tt></td>
+                <td>\{196}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-E</td>
                 <td>\2117</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{69}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{69}</tt></td>
+                <td>\{197}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-F</td>
                 <td>\2118</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{70}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{70}</tt></td>
+                <td>\{198}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-G</td>
                 <td>\2119</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{71}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{71}</tt></td>
+                <td>\{199}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-H</td>
                 <td>\2120</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{72}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{72}</tt></td>
+                <td>\{200}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-I</td>
                 <td>\2121</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{73}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{73}</tt></td>
+                <td>\{201}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-J</td>
                 <td>\2122</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{74}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{74}</tt></td>
+                <td>\{202}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-K</td>
                 <td>\2123</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{75}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{75}</tt></td>
+                <td>\{203}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-L</td>
                 <td>\2124</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{76}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{76}</tt></td>
+                <td>\{204}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-M</td>
                 <td>\2125</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{77}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{77}</tt></td>
+                <td>\{205}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-N</td>
                 <td>\2126</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{78}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{78}</tt></td>
+                <td>\{206}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-O</td>
                 <td>\2127</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{79}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{79}</tt></td>
+                <td>\{207}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-P</td>
                 <td>\2128</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{80}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{80}</tt></td>
+                <td>\{208}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Q</td>
                 <td>\2129</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{81}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{81}</tt></td>
+                <td>\{209}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-R</td>
                 <td>\2130</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{82}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{82}</tt></td>
+                <td>\{210}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-S</td>
                 <td>\2131</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{83}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{83}</tt></td>
+                <td>\{211}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-T</td>
                 <td>\2132</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{84}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{84}</tt></td>
+                <td>\{212}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-U</td>
                 <td>\2133</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{85}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{85}</tt></td>
+                <td>\{213}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-V</td>
                 <td>\2134</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{86}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{86}</tt></td>
+                <td>\{214}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-W</td>
                 <td>\2135</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{87}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{87}</tt></td>
+                <td>\{215}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-X</td>
                 <td>\2136</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{88}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{88}</tt></td>
+                <td>\{216}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Y</td>
                 <td>\2137</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{89}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{89}</tt></td>
+                <td>\{217}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Z</td>
                 <td>\2138</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{90}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{90}</tt></td>
+                <td>\{218}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-[</td>
                 <td>\2139</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{91}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{91}</tt></td>
+                <td>\{219}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-\</td>
                 <td>\2140</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{92}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{92}</tt></td>
+                <td>\{220}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-]</td>
                 <td>\2141</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{93}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{93}</tt></td>
+                <td>\{221}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-^</td>
                 <td>\2142</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{94}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{94}</tt></td>
+                <td>\{222}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-_</td>
                 <td>\2143</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{95}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{95}</tt></td>
+                <td>\{223}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-`</td>
                 <td>\2144</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{96}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{96}</tt></td>
+                <td>\{224}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-a</td>
                 <td>\2145</td>
+                <td colspan="2"><tt>\{27}\{97}</tt></td>
+                <td>\{225}</td>
                 <td><tt>\{27}|a</tt></td>
-                <td><tt>\{27}\{97}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-b</td>
                 <td>\2146</td>
+                <td colspan="2"><tt>\{27}\{98}</tt></td>
+                <td>\{226}</td>
                 <td><tt>\{27}|b</tt></td>
-                <td><tt>\{27}\{98}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-c</td>
                 <td>\2147</td>
+                <td colspan="2"><tt>\{27}\{99}</tt></td>
+                <td>\{227}</td>
                 <td><tt>\{27}|c</tt></td>
-                <td><tt>\{27}\{99}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-d</td>
                 <td>\2148</td>
+                <td colspan="2"><tt>\{27}\{100}</tt></td>
+                <td>\{228}</td>
                 <td><tt>\{27}|d</tt></td>
-                <td><tt>\{27}\{100}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-e</td>
                 <td>\2149</td>
+                <td colspan="2"><tt>\{27}\{101}</tt></td>
+                <td>\{229}</td>
                 <td><tt>\{27}|e</tt></td>
-                <td><tt>\{27}\{101}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-f</td>
                 <td>\2150</td>
+                <td colspan="2"><tt>\{27}\{102}</tt></td>
+                <td>\{230}</td>
                 <td><tt>\{27}|f</tt></td>
-                <td><tt>\{27}\{102}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-g</td>
                 <td>\2151</td>
+                <td colspan="2"><tt>\{27}\{103}</tt></td>
+                <td>\{231}</td>
                 <td><tt>\{27}|g</tt></td>
-                <td><tt>\{27}\{103}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-h</td>
                 <td>\2152</td>
+                <td colspan="2"><tt>\{27}\{104}</tt></td>
+                <td>\{232}</td>
                 <td><tt>\{27}|h</tt></td>
-                <td><tt>\{27}\{104}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-i</td>
                 <td>\2153</td>
+                <td colspan="2"><tt>\{27}\{105}</tt></td>
+                <td>\{233}</td>
                 <td><tt>\{27}|i</tt></td>
-                <td><tt>\{27}\{105}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-j</td>
                 <td>\2154</td>
+                <td colspan="2"><tt>\{27}\{106}</tt></td>
+                <td>\{234}</td>
                 <td><tt>\{27}|j</tt></td>
-                <td><tt>\{27}\{106}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-k</td>
                 <td>\2155</td>
+                <td colspan="2"><tt>\{27}\{107}</tt></td>
+                <td>\{235}</td>
                 <td><tt>\{27}|k</tt></td>
-                <td><tt>\{27}\{107}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-l</td>
                 <td>\2156</td>
+                <td colspan="2"><tt>\{27}\{108}</tt></td>
+                <td>\{236}</td>
                 <td><tt>\{27}|l</tt></td>
-                <td><tt>\{27}\{108}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-m</td>
                 <td>\2157</td>
+                <td colspan="2"><tt>\{27}\{109}</tt></td>
+                <td>\{237}</td>
                 <td><tt>\{27}|m</tt></td>
-                <td><tt>\{27}\{109}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-n</td>
                 <td>\2158</td>
+                <td colspan="2"><tt>\{27}\{110}</tt></td>
+                <td>\{238}</td>
                 <td><tt>\{27}|n</tt></td>
-                <td><tt>\{27}\{110}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-o</td>
                 <td>\2159</td>
+                <td colspan="2"><tt>\{27}\{111}</tt></td>
+                <td>\{239}</td>
                 <td><tt>\{27}|o</tt></td>
-                <td><tt>\{27}\{111}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-p</td>
                 <td>\2160</td>
+                <td colspan="2"><tt>\{27}\{112}</tt></td>
+                <td>\{240}</td>
                 <td><tt>\{27}|p</tt></td>
-                <td><tt>\{27}\{112}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-q</td>
                 <td>\2161</td>
+                <td colspan="2"><tt>\{27}\{113}</tt></td>
+                <td>\{241}</td>
                 <td><tt>\{27}|q</tt></td>
-                <td><tt>\{27}\{113}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-r</td>
                 <td>\2162</td>
+                <td colspan="2"><tt>\{27}\{114}</tt></td>
+                <td>\{242}</td>
                 <td><tt>\{27}|r</tt></td>
-                <td><tt>\{27}\{114}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-s</td>
                 <td>\2163</td>
+                <td colspan="2"><tt>\{27}\{115}</tt></td>
+                <td>\{243}</td>
                 <td><tt>\{27}|s</tt></td>
-                <td><tt>\{27}\{115}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-t</td>
                 <td>\2164</td>
+                <td colspan="2"><tt>\{27}\{116}</tt></td>
+                <td>\{244}</td>
                 <td><tt>\{27}|t</tt></td>
-                <td><tt>\{27}\{116}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-u</td>
                 <td>\2165</td>
+                <td colspan="2"><tt>\{27}\{117}</tt></td>
+                <td>\{245}</td>
                 <td><tt>\{27}|u</tt></td>
-                <td><tt>\{27}\{117}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-v</td>
                 <td>\2166</td>
+                <td colspan="2"><tt>\{27}\{118}</tt></td>
+                <td>\{246}</td>
                 <td><tt>\{27}|v</tt></td>
-                <td><tt>\{27}\{118}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-w</td>
                 <td>\2167</td>
+                <td colspan="2"><tt>\{27}\{119}</tt></td>
+                <td>\{247}</td>
                 <td><tt>\{27}|w</tt></td>
-                <td><tt>\{27}\{119}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-x</td>
                 <td>\2168</td>
+                <td colspan="2"><tt>\{27}\{120}</tt></td>
+                <td>\{248}</td>
                 <td><tt>\{27}|x</tt></td>
-                <td><tt>\{27}\{120}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-y</td>
                 <td>\2169</td>
+                <td colspan="2"><tt>\{27}\{121}</tt></td>
+                <td>\{249}</td>
                 <td><tt>\{27}|y</tt></td>
-                <td><tt>\{27}\{121}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-z</td>
                 <td>\2170</td>
+                <td colspan="2"><tt>\{27}\{122}</tt></td>
+                <td>\{250}</td>
                 <td><tt>\{27}|z</tt></td>
-                <td><tt>\{27}\{122}</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-{</td>
                 <td>\2171</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{123}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{123}</tt></td>
+                <td>\{251}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-|</td>
                 <td>\2172</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{124}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{124}</tt></td>
+                <td>\{252}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-}</td>
                 <td>\2173</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{125}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{125}</tt></td>
+                <td>\{253}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-~</td>
                 <td>\2174</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{126}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{126}</tt></td>
+                <td>\{254}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Backspace</td>
                 <td>\2312</td>
-                <td style="not-mapped"/>
                 <td><tt>\{27}\{8}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
             <tr>
                 <td>Alt-Delete</td>
                 <td>\2350</td>
-                <td style="not-mapped"/>
                 <td><tt>\{27}\{127}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
             <tr>
                 <td>Alt-F1</td>
                 <td>\2416</td>
-                <td><tt>\{27}\{35}0</tt></td>
                 <td><a href="#kverb_Khelp">\Khelp</a></td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}\{35}0</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F2</td>
                 <td>\2417</td>
-                <td><tt>\{27}\{35}1</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}1</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F3</td>
                 <td>\2418</td>
-                <td><tt>\{27}\{35}2</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}2</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F4</td>
                 <td>\2419</td>
-                <td><tt>\{27}\{35}3</tt></td>
                 <td><a href="#kverb_Kexit">\Kexit</a></td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}\{35}3</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F5</td>
                 <td>\2420</td>
-                <td><tt>\{27}\{35}4</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}4</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F6</td>
                 <td>\2421</td>
-                <td><tt>\{27}\{35}5</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}5</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F7</td>
                 <td>\2422</td>
-                <td><tt>\{27}\{35}6</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}6</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F8</td>
                 <td>\2423</td>
-                <td><tt>\{27}\{35}7</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}7</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F9</td>
                 <td>\2424</td>
-                <td><tt>\{27}\{35}8</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}8</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-F10</td>
                 <td>\2425</td>
-                <td><tt>\{27}\{35}9</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}\{35}9</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Shift-0</td>
                 <td>\2608</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{41}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{41}</tt></td>
+                <td>\{169}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-1</td>
                 <td>\2609</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{33}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{33}</tt></td>
+                <td>\{161}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-2</td>
                 <td>\2610</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{64}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{64}</tt></td>
+                <td>\{192}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-3</td>
                 <td>\2611</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{35}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{35}</tt></td>
+                <td>\{163}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-4</td>
                 <td>\2612</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{36}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{36}</tt></td>
+                <td>\{164}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-5</td>
                 <td>\2613</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{37}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{37}</tt></td>
+                <td>\{165}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-6</td>
                 <td>\2614</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{94}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{94}</tt></td>
+                <td>\{222}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-7</td>
                 <td>\2615</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{38}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{38}</tt></td>
+                <td>\{166}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-8</td>
                 <td>\2616</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{42}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{42}</tt></td>
+                <td>\{170}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Alt-Shift-9</td>
                 <td>\2617</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{40}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{40}</tt></td>
+                <td>\{168}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-A</td>
                 <td>\3393</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{1}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{1}</tt></td>
+                <td>\{129}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-B</td>
                 <td>\3394</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{2}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{2}</tt></td>
+                <td>\{130}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-C</td>
                 <td>\3395</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{3}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{3}</tt></td>
+                <td>\{131}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-D</td>
                 <td>\3396</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{4}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{4}</tt></td>
+                <td>\{132}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-E</td>
                 <td>\3397</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{5}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{5}</tt></td>
+                <td>\{133}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-F</td>
                 <td>\3398</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{6}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{6}</tt></td>
+                <td>\{134}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-G</td>
                 <td>\3399</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{7}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{7}</tt></td>
+                <td>\{135}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-H</td>
                 <td>\3400</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{8}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{8}</tt></td>
+                <td>\{136}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-I</td>
                 <td>\3401</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{9}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{9}</tt></td>
+                <td>\{137}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-J</td>
                 <td>\3402</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{10}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{10}</tt></td>
+                <td>\{138}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-K</td>
                 <td>\3403</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{11}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{11}</tt></td>
+                <td>\{139}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-L</td>
                 <td>\3404</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{12}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{12}</tt></td>
+                <td>\{140}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-M</td>
                 <td>\3405</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{13}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{13}</tt></td>
+                <td>\{141}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-N</td>
                 <td>\3406</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{14}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{14}</tt></td>
+                <td>\{142}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-O</td>
                 <td>\3407</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{15}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{15}</tt></td>
+                <td>\{143}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-P</td>
                 <td>\3408</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{16}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{16}</tt></td>
+                <td>\{144}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-Q</td>
                 <td>\3409</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{17}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{17}</tt></td>
+                <td>\{145}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-R</td>
                 <td>\3410</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{18}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{18}</tt></td>
+                <td>\{146}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-S</td>
                 <td>\3411</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{19}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{19}</tt></td>
+                <td>\{147}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-T</td>
                 <td>\3412</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{20}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{20}</tt></td>
+                <td>\{148}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-U</td>
                 <td>\3413</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{21}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{21}</tt></td>
+                <td>\{149}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-V</td>
                 <td>\3414</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{22}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{22}</tt></td>
+                <td>\{150}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-W</td>
                 <td>\3415</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{23}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{23}</tt></td>
+                <td>\{151}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-X</td>
                 <td>\3416</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{24}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{24}</tt></td>
+                <td>\{152}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-Y</td>
                 <td>\3417</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{25}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{25}</tt></td>
+                <td>\{153}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-Z</td>
                 <td>\3418</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{26}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{26}</tt></td>
+                <td>\{154}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-OEM.US.LeftBracket</td>
                 <td>\3547</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{27}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{27}</tt></td>
+                <td>\{155}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-OEM.US.BackSlash</td>
                 <td>\3548</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{28}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{28}</tt></td>
+                <td>\{156}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-OEM.US.RightBracket</td>
                 <td>\3549</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{29}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{29}</tt></td>
+                <td>\{157}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-Shift-6</td>
                 <td>\3894</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{30}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{30}</tt></td>
+                <td>\{158}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-Shift-OEM.US.Subtract</td>
                 <td>\4029</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{31}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{31}</tt></td>
+                <td>\{159}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Ctrl-Alt-Shift-OEM.US.Period</td>
                 <td>\4030</td>
-                <td style="not-mapped"/>
-                <td><tt>\{27}\{32}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td colspan="2"><tt>\{27}\{32}</tt></td>
+                <td>\{160}</td>
+                <td style="not-mapped" colspan="3"/>
             </tr>
             <tr>
                 <td>Gray-Enter</td>
                 <td>\4365</td>
-                <td>\{13}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{13}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-PageUp</td>
                 <td>\4385</td>
-                <td><tt>\{27}$2</tt></td>
                 <td><tt>\{27}\{118}</tt></td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}$2</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-PageDown</td>
                 <td>\4386</td>
-                <td><tt>\{27}$5</tt></td>
                 <td>\{22}</td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}$5</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-End</td>
                 <td>\4387</td>
-                <td><tt>\{27}$4</tt></td>
                 <td><tt>\{27}\{62}</tt></td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}$4</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-Home</td>
                 <td>\4388</td>
-                <td><tt>\{27}$1</tt></td>
                 <td><tt>\{27}\{60}</tt></td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}$1</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-LeftArrow</td>
                 <td>\4389</td>
-                <td style="not-mapped"/>
                 <td>\{2}</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
             <tr>
                 <td>Gray-UpArrow</td>
                 <td>\4390</td>
-                <td style="not-mapped"/>
                 <td>\{16}</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
             <tr>
                 <td>Gray-RightArrow</td>
                 <td>\4391</td>
-                <td style="not-mapped"/>
                 <td>\{6}</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
             <tr>
                 <td>Gray-DownArrow</td>
                 <td>\4392</td>
-                <td style="not-mapped"/>
                 <td>\{14}</td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
             <tr>
                 <td>Gray-Insert</td>
                 <td>\4397</td>
-                <td><tt>\{27}$0</tt></td>
                 <td><a href="#kverb_Kemacs_overwrite">\Kemacs_overwrite</a></td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}$0</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-Delete</td>
                 <td>\4398</td>
-                <td><tt>\{27}$3</tt></td>
                 <td>\{127}</td>
+                <td style="not-mapped" colspan="2"/>
+                <td><tt>\{27}$3</tt></td>
                 <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Gray-OEM.US.Slash</td>
                 <td>\4543</td>
-                <td>\{47}</td>
                 <td style="not-mapped" colspan="3"/>
+                <td>\{47}</td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-Gray-Insert</td>
                 <td>\4909</td>
-                <td><tt>\{27}%0</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}%0</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Shift-Gray-Delete</td>
                 <td>\4910</td>
-                <td><tt>\{27}%3</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}%3</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-Enter</td>
                 <td>\5389</td>
-                <td><tt>\{27})\{13}</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27})\{13}</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-PageUp</td>
                 <td>\5409</td>
-                <td><tt>\{27}^2</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^2</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-PageDown</td>
                 <td>\5410</td>
-                <td><tt>\{27}^5</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^5</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-End</td>
                 <td>\5411</td>
-                <td><tt>\{27}^4</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^4</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-Home</td>
                 <td>\5412</td>
-                <td><tt>\{27}^1</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^1</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-LeftArrow</td>
                 <td>\5413</td>
-                <td><tt>\{27}^L</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^L</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-UpArrow</td>
                 <td>\5414</td>
-                <td><tt>\{27}^U</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^U</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-RightArrow</td>
                 <td>\5415</td>
-                <td><tt>\{27}^R</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^R</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-DownArrow</td>
                 <td>\5416</td>
-                <td><tt>\{27}^D</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^D</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Ctrl-Gray-Insert</td>
                 <td>\5421</td>
-                <td><tt>\{27}^0</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}^0</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Gray-Home</td>
                 <td>\6436</td>
-                <td><tt>\{27}&amp;1</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}&amp;1</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Gray-LeftArrow</td>
                 <td>\6437</td>
-                <td><tt>\{27}&amp;L</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}&amp;L</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Gray-UpArrow</td>
                 <td>\6438</td>
-                <td><tt>\{27}&amp;U</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}&amp;U</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Gray-RightArrow</td>
                 <td>\6439</td>
-                <td><tt>\{27}&amp;R</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}&amp;R</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Gray-DownArrow</td>
                 <td>\6440</td>
-                <td><tt>\{27}&amp;D</tt></td>
                 <td style="not-mapped" colspan="3"/>
+                <td><tt>\{27}&amp;D</tt></td>
+                <td style="not-mapped" colspan="2"/>
             </tr>
             <tr>
                 <td>Alt-Gray-Delete</td>
                 <td>\6446</td>
-                <td style="not-mapped"/>
                 <td><tt>\{27}\{127}</tt></td>
-                <td style="not-mapped" colspan="2"/>
+                <td style="not-mapped" colspan="5"/>
             </tr>
         </table>
     </section>

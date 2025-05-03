@@ -4369,10 +4369,14 @@ ipadl25() {
             ckstrncat(usertext,"-R",(MAXTERMCOL) + 1);
             break;
         case KBM_EM:
+		case KBM_ME:
             ckstrncat(usertext,"-E",(MAXTERMCOL) + 1);
             break;
         case KBM_WP:
             ckstrncat(usertext,"-W",(MAXTERMCOL) + 1);
+            break;
+		case KBM_MM:
+			ckstrncat(usertext,"-M",(MAXTERMCOL) + 1);
             break;
         }
     }
@@ -8097,6 +8101,10 @@ ltorxlat( int c, CHAR ** bytes )
             {
                 xkey7 = xkey = xl_u[TX_CP866](xkey);
             }
+			else if ( tt_kb_mode == KBM_MM )
+            {
+                xkey7 = xkey = xl_u[TX_CP437](xkey);
+            }
             else {
                 if (GL->ltoi)
                     xkey7 = (*GL->ltoi)(xkey);
@@ -8139,6 +8147,10 @@ ltorxlat( int c, CHAR ** bytes )
             else if ( tt_kb_mode == KBM_RU )
             {
                 xkey = xl_u[TX_CP866](xkey);
+            }
+			else if ( tt_kb_mode == KBM_MM )
+            {
+                xkey = xl_u[TX_CP1252](xkey);
             }
             else if ( IS97801(tt_type_mode) ) {
                 debug(F111,"ltorxlat()","xkey > 127",xkey);
@@ -16388,6 +16400,12 @@ vtcsi(void)
                         /* TODO: Also report on:
                             Mouse tracking, bracketed paste
                          */
+						case 1034:  /* xterm - Interpret "meta" key */
+							pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
+							break;
+						case 1036:  /* xterm - Send esc when Meta modifies a key */
+							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
+							break;
                         default:
                             pn[2] = 0 ; /* Unrecognized mode */
                             break;
@@ -17906,10 +17924,18 @@ vtcsi(void)
                         case 1015:
                             /* URXVT - Enable URXVT Mosue Mode */
 #ifdef OS2MOUSE
-                           debug(F100, "URXVT mouse tracking now OFF", "", 0);
+                           debug(F100, "URXVT mouse tracking now ON", "", 0);
                            mouse_reporting_mode |= MOUSEREPORTING_URXVT;
 #endif
                             break;
+						case 1034:  /* xterm - Interpret "meta" key - sets 8th bit */
+							tt_kb_mode = KBM_MM;
+							ipadl25();  /* Update the status line */
+							break;
+						case 1036:  /* xterm - send esc when Meta modifies a key */
+							tt_kb_mode = KBM_ME;
+							ipadl25();;  /* Update the status line */
+							break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
@@ -18501,7 +18527,14 @@ vtcsi(void)
                                mouse_reporting_mode &= ~MOUSEREPORTING_URXVT;
 #endif
                                break;
-
+							case 1034:  /* xterm - turn off Interpret "meta" key */
+								tt_kb_mode = KBM_EN;
+								ipadl25();  /* Update the status line */
+								break;
+							case 1036:  /* xterm - Turn off Send esc when Meta modifies a key */
+								tt_kb_mode = KBM_EN;
+								ipadl25();  /* Update the status line */
+								break;
                             case 2004:
                             	/* xterm - Disable Bracketed Paste Mode */
                             	bracketed_paste[vmode] = FALSE;

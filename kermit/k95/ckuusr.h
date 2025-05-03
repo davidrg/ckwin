@@ -1072,6 +1072,8 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3
 #define     TT_KBM_WP      TT_MAX+4
+#define     TT_KBM_METAESC TT_MAX+5
+#define     TT_KBM_META    TT_MAX+6
 
 #define ISAAA(x)   (x == TT_AAA)
 #define ISANSI(x)  (x >= TT_SCOANSI && x <= TT_ANSI)

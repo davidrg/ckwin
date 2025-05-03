@@ -6701,11 +6701,16 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-interpret-meta" mnemonic=""
-                     title="Interpret &quot;meta&quot; key"
-                     not-implemented="true" todo="true">
+                     title="Interpret &quot;meta&quot; key">
                 <ctlseq><param-single/> = 1034</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-4.1F7F"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Switches to the <tt>META</tt> special keyboard mode, equivalent
+                    to typing <tt>SET TERMINAL KEYBOARD-MODE META</tt>. Causes
+                    the meta key (Alt) to set the 8th bit on printable and control
+                    characters shifting them into the 127-255 range.
+                </p>
             </section>
             <section role="parameter" id="xt-ena-alt-numlk-mod" mnemonic=""
                      title="Enable special modifiers for alt and numlock keys"
@@ -6715,11 +6720,15 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-send-esc-meta" mnemonic=""
-                     title="Send Esc when meta modifies a key"
-                     not-implemented="true" todo="true">
+                     title="Send Esc when meta modifies a key">
                 <ctlseq><param-single/> = 1036</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-6.1F81"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Switches to the <tt>METAESC</tt> special keyboard mode, equivalent
+                    to typing <tt>SET TERMINAL KEYBOARD-MODE METAESC</tt>. Causes
+                    the meta key (Alt) to send ESC. For example, Alt+x becomes ESC x.
+                </p>
             </section>
             <!-- TODO: xterm -  -  -->
             <section role="parameter" id="xt-edit-keypad-delete-sends-del" mnemonic=""
@@ -8281,12 +8290,14 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1034" mnemonic=""
-                     title="Don't Interpret &quot;meta&quot; key"
-                     not-implemented="true" todo="true">
+                     title="Don't Interpret &quot;meta&quot; key">
                 <ctlseq><param-single/> = 1034</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-3-4.1F83"/>
                 <termsupp first="xterm" series="xt" additional=""/>
                 <!-- This is used for terminfo 'rmm' -->
+                <p>
+                    Switches the keyboard mode back to normal (english).
+                </p>
             </section>
             <section role="parameter" id="decrst-1035" mnemonic=""
                      title="Disable special modifiers for alt and numlock keys"
@@ -8296,11 +8307,13 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1036" mnemonic=""
-                     title="Don't Send Esc when meta modifies a key"
-                     not-implemented="true" todo="true">
+                     title="Don't Send Esc when meta modifies a key">
                 <ctlseq><param-single/> = 1036</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-3-6.1F85"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Switches the keyboard mode back to normal (english).
+                </p>
             </section>
             <section role="parameter" id="decrst-1037" mnemonic=""
                      title="Send VT220 Remove from the editing-keypad Delete key"
@@ -10245,8 +10258,41 @@ DCS $ q 3 , } ST</pre>
             <p><param-single/> is the mode number as in
                 <a href="#sm">SM</a>/<a href="#rm">RM</a>. Only those listed
                 below are currently supported by DECRQM in K95 at this time.
-                Response is in the form: <tt>CSI Ps; Pm $ y</tt>
+                Kermit 95 response with a DECRPM response in the form:
+                <tt>CSI Ps; Ps $ y</tt>
             </p>
+            <p>
+                In the DECRPPM response, the first parameter is the mode being
+                reported on, while the second indicates its current staus:
+            </p>
+            <table>
+                <tr>
+                   <th>Ps</th>
+                   <th>Ps</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>Mode not recognised/not supported</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Mode is set</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Mode is reset</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Mode is permanently set (can not be affected by
+                        SM/DECSET/RM/DECRST)</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Mode is permanently reset (can not be affected by
+                        SM/DECSET/RM/DECRST)</td>
+                </tr>
+            </table>
             <!-- TODO: Everything supported by RM/SM should be supported here! -->
             <section style="group" role="group">
                 <section role="parameter" id="rqm-1" mnemonic="GATM"
@@ -11028,11 +11074,14 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-1034" mnemonic=""
-                         title="Interpret &quot;meta&quot; key"
-                         not-implemented="true" todo="true">
+                         title="Interpret &quot;meta&quot; key">
                     <ctlseq><param-single/> = 1034</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-4.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if the META special keyboard mode is
+                        currently set or not.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1035" mnemonic=""
                          title="Special modifiers for alt and numlock keys"
@@ -11042,11 +11091,14 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-1036" mnemonic=""
-                         title="Send Esc when meta modifies a key"
-                         not-implemented="true" todo="true">
+                         title="Send Esc when meta modifies a key">
                     <ctlseq><param-single/> = 1036</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-6.1F81"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if the METAESC special keyboard mode is
+                        currently set or not.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1037" mnemonic=""
                          title="Send DEL from the editing-keypad delete key"

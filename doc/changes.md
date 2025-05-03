@@ -69,7 +69,14 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    - The text cursor
    - Dim text (if the dim attribute is disabled with the new
      `SET TERMINAL ATTRIBUTE DIM OFF COLOR` command)
-
+ - New "k95" terminal type. This aims to be generally compatible with modern
+   xterm-like terminal emulators, rather than emulating a specific hardware or 
+   unix console terminal.
+ - Two new special keyboard modes
+   - `METAESC` - This is a subset of the `EMACS` keyboard mode which does not
+     modify any function keys.
+   - `META` - This sets the 8th bit for keyboard input, equivalent to xterms
+     "interpret 'meta' key" option.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -171,6 +178,12 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
      enables or disables true underline in DECSTGLT alternate color mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
+ - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
+   now switches to the META special keyboard mode, and returns to the normal
+   keyboard mode when reset. It can be queried with DECRQM
+ - [DECSET-1036](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-send-esc-meta)
+   now switches to the METAESC special keyboard mode, and returns to the normal
+   keyboard mode when reset. It can be queried with DECRQM
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.
