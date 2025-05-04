@@ -16370,6 +16370,9 @@ vtcsi(void)
                         case 8: /* DECARM */
                             pn[2] = 3 ; /* permanently set */
                             break;
+						case 12: /* AT&T 610/xterm - cusro blinking */
+							pn[2] = tt_cursor_blink == 1 ? 1 : 2;
+							break;
                         case 18: /* DECPFF */
                             pn[2] = xprintff ? 1 : 2 ;
                             break;
@@ -17675,6 +17678,9 @@ vtcsi(void)
                             break;
                         case 10:        /* DECEDM - Block Mode On */
                             break;
+						case 12:  		/* AT&T 610/xterm - Blinking cursor on */
+							tt_cursor_blink = 1;
+							break;
                         case 18:  /* DECPFF - Print Form Feed */
                             xprintff = TRUE;
                             break;
@@ -18305,6 +18311,9 @@ vtcsi(void)
                                break;
                            case 10:        /* DECEDM - Block mode off */
                                break;
+						   case 12:			/* AT&T 610/xterm - Blinking cursor off */
+							   tt_cursor_blink = 0;
+							   break;
                            case 18: /* DECPFF - Print Form Feed */
                                xprintff = FALSE;
                                break;

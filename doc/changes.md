@@ -184,6 +184,8 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - [DECSET-1036](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-send-esc-meta)
    now switches to the METAESC special keyboard mode, and returns to the normal
    keyboard mode when reset. It can be queried with DECRQM
+ - [DECSET-12](https://davidrg.github.io/ckwin/dev/ctlseqs.html#att610-sbc) for
+   turning cursor blink on/off for xterm compatibility
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

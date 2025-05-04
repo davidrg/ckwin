@@ -6127,15 +6127,15 @@ DCS $ q 3 , } ST</pre>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
             <section role="parameter" id="att610-sbc" mnemonic=""
-                     title="Start blinking cursor (AT&amp;T 610)"
-                     not-implemented="true" todo="true">
+                     title="Start blinking cursor (AT&amp;T 610)">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-2.1EC0"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
-                <!--
-                    TODO: Implementing this has an effect on the terminfo file,
-                        capabilities cnorm, cvvis
-                 -->
+                <p>
+                    Turns on cursor blinking without affecting the cursor shape.
+                    Both cursor shape and blink can be set with
+                    <a href="#decscusr">DECSCUSR</a>.
+                </p>
             </section>
             <section role="parameter" id="sbc-mrc" mnemonic=""
                      title="Start blinking cursor (set only via resource or menu)"
@@ -7702,11 +7702,15 @@ DCS $ q 3 , } ST</pre>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
             <section role="parameter" id="decrst-12" mnemonic=""
-                     title="Stop blinking cursor (AT&amp;T 610)"
-                     not-implemented="true" todo="true">
+                     title="Stop blinking cursor (AT&amp;T 610)">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-2.1EC4"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Turns off cursor blinking without affecting the cursor shape.
+                    Both cursor shape and blink can be set with
+                    <a href="#decscusr">DECSCUSR</a>.
+                </p>
             </section>
             <section role="parameter" id="r-decscfdm" mnemonic="DECSCFDM" title="Space Compression/Field Delimiting Mode"
                      not-implemented="true" todo="true" >
@@ -10586,8 +10590,7 @@ DCS $ q 3 , } ST</pre>
                     <p>Not Implemented: K95 does not support the VT132 block mode</p>
                 </section>
                 <section role="parameter" id="decrqm-12p" mnemonic=""
-                         title="Blinking cursor (AT&amp;T 610)"
-                         not-implemented="true" todo="true">
+                         title="Blinking cursor (AT&amp;T 610)">
                     <ctlseq><param-single/> = 12</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-2.1EC4"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
