@@ -22888,7 +22888,7 @@ vtescape( void )
               if ( ISH19(tt_type_mode) ) {
                   /* Erase Entire Line */
                   clrline_escape(VTERM,SP);
-              } else if ( ISSCO(tt_type_mode) ) {
+              } else if ( ISSCO(tt_type_mode)) {
                   /* Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, relcursor ? marginleft : 1,
@@ -23164,6 +23164,8 @@ vtescape( void )
         case ']':
             if ( ISH19(tt_type_mode) ) {
                 /* Transmit 25th line to host */
+				/* Note: If we were to ever support this, it would only be if
+				   senddata is enabled - for security */
                 ;
             }
             else if (ISVT52(tt_type_mode)) /* VT52 control */
