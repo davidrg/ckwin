@@ -588,6 +588,9 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;44c",     /* Kermit 95 self-personality */
+            /* K95 Device Attributes: VT320;132-columns;printer;selective-erase;user-defined-keys;
+                                      national-replacement-character-sets;technical-characters;PCTerm */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
@@ -4366,10 +4369,14 @@ ipadl25() {
             ckstrncat(usertext,"-R",(MAXTERMCOL) + 1);
             break;
         case KBM_EM:
+		case KBM_ME:
             ckstrncat(usertext,"-E",(MAXTERMCOL) + 1);
             break;
         case KBM_WP:
             ckstrncat(usertext,"-W",(MAXTERMCOL) + 1);
+            break;
+		case KBM_MM:
+			ckstrncat(usertext,"-M",(MAXTERMCOL) + 1);
             break;
         }
     }
@@ -8094,6 +8101,10 @@ ltorxlat( int c, CHAR ** bytes )
             {
                 xkey7 = xkey = xl_u[TX_CP866](xkey);
             }
+			else if ( tt_kb_mode == KBM_MM )
+            {
+                xkey7 = xkey = xl_u[TX_CP437](xkey);
+            }
             else {
                 if (GL->ltoi)
                     xkey7 = (*GL->ltoi)(xkey);
@@ -8136,6 +8147,10 @@ ltorxlat( int c, CHAR ** bytes )
             else if ( tt_kb_mode == KBM_RU )
             {
                 xkey = xl_u[TX_CP866](xkey);
+            }
+			else if ( tt_kb_mode == KBM_MM )
+            {
+                xkey = xl_u[TX_CP1252](xkey);
             }
             else if ( IS97801(tt_type_mode) ) {
                 debug(F111,"ltorxlat()","xkey > 127",xkey);
@@ -12723,9 +12738,17 @@ dodcs( void )
     char c;
 
     /*
-    we haven't coded this yet
-    but what would go here would be DECUDK, DECRSPS, DECRQSS, ....
-    */
+     * Originally this function was only available to:
+     *     tt_type_mode >= TT_VT320 && tt_type_mode <= TT_WY370
+     * Compared to ISVT320() this excludes TT_97801 and TT_AAA. I have no idea
+     * what those terminals implement or if there was any particular reason for
+     * their exclusion, but excluding TT_VT220 was almost certainly by accient
+     * as it *does* support at least one DCS sequence here - DECUDK.
+     * So now we allow ISVT320() in here, plus TT_VT220 and a few others, but
+     * exclude TT_97801 and TT_AAA as before just in case there was some
+     * particular reason for their exclusion.
+     */
+
     debug( F111,"DCS string",apcbuf,apclength ) ;
 
     if ( debses )              /* If TERMINAL DEBUG ON */
@@ -12767,7 +12790,8 @@ dodcs( void )
             pn[k + 1] = 1;
           LB4003:
             switch (achar) { /* Third level */
-            case '$': {
+            case '$':
+                if (ISVT320(tt_type_mode)) {
                 /* This has to be long to account for SGR at a minimum. */
 #define DECRPSS_LEN 100
                 char decrpss[DECRPSS_LEN];
@@ -14254,8 +14278,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             else if ( dcsrecv ) /* it was a DCS string, */
             {
                 apcbuf[apclength] = NUL; /* terminate it */
-                if ( tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
-                     tt_type_mode <= TT_WY370 )
+
+                if ( tt_type_mode >= TT_VT220 && /* and if we are a VT320 */
+                     tt_type_mode <= TT_WY370 || /* Or K95 or xterm */
+                     ISK95(tt_type_mode) || ISXTERM(tt_type_mode))
                 {                            /* process it */
                     if (!debses)
                       dodcs() ;
@@ -15255,7 +15281,42 @@ settermtype( int x, int prompts )
     }
 #endif /* COMMENT */
 
-    if (ISANSI(tt_type) || ISLINUX(tt_type)) {
+    if (ISK95(tt_type) && cell_video_attr_is_null(savcolor) ) {
+        savcolor = colornormal;     /* Save coloration */
+        savgrcol = colorgraphic ;
+        savulcol = colorunderline ;
+        savblcol = colorblink ;
+        savbocol = colorbold;
+		savdicol = colordim;
+
+        savulatt = trueunderline ;
+        savblatt = trueblink ;
+        savrvatt = truereverse ;
+
+        /* 0xc0c0c0 on 0x000000 */
+        colornormal = cell_video_attr_from_vio_attribute(0x07);     /* Light gray on black */
+        colorgraphic = cell_video_attr_from_vio_attribute(0x07);    /* Light gray on black */
+        colorunderline = cell_video_attr_from_vio_attribute(0x47);  /* Light gray on Red */
+        colorblink = cell_video_attr_from_vio_attribute(0x87);      /* Light gray on dark gray */
+        colorbold = cell_video_attr_from_vio_attribute(0x0F);       /* Bright White on black */
+
+#ifndef KUI
+        trueunderline = TRUE ;     /* Simulate underline */
+#endif /* KUI */
+
+        scrninitialized[VTERM] = 0; /* To make it take effect */
+
+        /* Turn off the status line */
+        savstatus = tt_status_usr[VTERM] ;
+        tt_status_usr[VTERM] = FALSE ;
+        settermstatus( tt_status_usr[VTERM] ) ;
+
+        VscrnInit(VTERM);           /* Reinit the screen buffer */
+
+        savcmask = cmask;           /* Go to 8 bits */
+        cmask = 0xFF;
+    }
+    else if (ISANSI(tt_type) || ISLINUX(tt_type)) {
         if (parity && prompts) {
  printf("WARNING, ANSI terminal emulation works right only if PARITY is NONE.\n");
  printf("HELP SET PARITY for further information.\n");
@@ -16309,6 +16370,9 @@ vtcsi(void)
                         case 8: /* DECARM */
                             pn[2] = 3 ; /* permanently set */
                             break;
+						case 12: /* AT&T 610/xterm - cusro blinking */
+							pn[2] = tt_cursor_blink == 1 ? 1 : 2;
+							break;
                         case 18: /* DECPFF */
                             pn[2] = xprintff ? 1 : 2 ;
                             break;
@@ -16339,6 +16403,12 @@ vtcsi(void)
                         /* TODO: Also report on:
                             Mouse tracking, bracketed paste
                          */
+						case 1034:  /* xterm - Interpret "meta" key */
+							pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
+							break;
+						case 1036:  /* xterm - Send esc when Meta modifies a key */
+							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
+							break;
                         default:
                             pn[2] = 0 ; /* Unrecognized mode */
                             break;
@@ -17066,7 +17136,7 @@ vtcsi(void)
                 break;
             case 'b':
                 /* QANSI - Repeat previous character Pn times */
-                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) ) {
+                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) || ISK95(tt_type_mode) ) {
                     while ( pn[1] ) {
                         wrtch(prevchar);
                         pn[1] = pn[1] - 1;
@@ -17608,6 +17678,9 @@ vtcsi(void)
                             break;
                         case 10:        /* DECEDM - Block Mode On */
                             break;
+						case 12:  		/* AT&T 610/xterm - Blinking cursor on */
+							tt_cursor_blink = 1;
+							break;
                         case 18:  /* DECPFF - Print Form Feed */
                             xprintff = TRUE;
                             break;
@@ -17857,10 +17930,18 @@ vtcsi(void)
                         case 1015:
                             /* URXVT - Enable URXVT Mosue Mode */
 #ifdef OS2MOUSE
-                           debug(F100, "URXVT mouse tracking now OFF", "", 0);
+                           debug(F100, "URXVT mouse tracking now ON", "", 0);
                            mouse_reporting_mode |= MOUSEREPORTING_URXVT;
 #endif
                             break;
+						case 1034:  /* xterm - Interpret "meta" key - sets 8th bit */
+							tt_kb_mode = KBM_MM;
+							ipadl25();  /* Update the status line */
+							break;
+						case 1036:  /* xterm - send esc when Meta modifies a key */
+							tt_kb_mode = KBM_ME;
+							ipadl25();;  /* Update the status line */
+							break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
@@ -18230,6 +18311,9 @@ vtcsi(void)
                                break;
                            case 10:        /* DECEDM - Block mode off */
                                break;
+						   case 12:			/* AT&T 610/xterm - Blinking cursor off */
+							   tt_cursor_blink = 0;
+							   break;
                            case 18: /* DECPFF - Print Form Feed */
                                xprintff = FALSE;
                                break;
@@ -18452,7 +18536,14 @@ vtcsi(void)
                                mouse_reporting_mode &= ~MOUSEREPORTING_URXVT;
 #endif
                                break;
-
+							case 1034:  /* xterm - turn off Interpret "meta" key */
+								tt_kb_mode = KBM_EN;
+								ipadl25();  /* Update the status line */
+								break;
+							case 1036:  /* xterm - Turn off Send esc when Meta modifies a key */
+								tt_kb_mode = KBM_EN;
+								ipadl25();  /* Update the status line */
+								break;
                             case 2004:
                             	/* xterm - Disable Bracketed Paste Mode */
                             	bracketed_paste[vmode] = FALSE;
@@ -22888,7 +22979,8 @@ vtescape( void )
               if ( ISH19(tt_type_mode) ) {
                   /* Erase Entire Line */
                   clrline_escape(VTERM,SP);
-              } else if ( ISSCO(tt_type_mode) ) {
+              } else if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
+							|| ISXTERM(tt_type_mode) ) {
                   /* Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, relcursor ? marginleft : 1,
@@ -22922,7 +23014,8 @@ vtescape( void )
             }
             break;
         case 'm':
-              if ( ISSCO(tt_type_mode) ) {
+              if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
+					|| ISXTERM(tt_type_mode)  ) {
                   /* Unlock Memory Area */
                   setmargins(1,VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, 1, 1);

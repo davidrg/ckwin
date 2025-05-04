@@ -1609,6 +1609,7 @@ struct keytab ttyptab[] = {
     { "hpterm",   TT_HPTERM,  0 },          /* HP TERM */
     { "hz1500",   TT_HZL1500, 0 },          /* Hazeltine 1500 */
     { "ibm3151",  TT_IBM31,   0 },          /* IBM 3101-xx,3161 */
+    { "k95",      TT_K95,     0 },          /* Kermit 95 */
     { "linux",    TT_LINUX,   0 },          /* Linux */
     { "qansi",    TT_QANSI,   0 },          /* QNX ANSI */
     { "qnx",      TT_QNX,     0 },          /* QNX Console */
@@ -1699,7 +1700,10 @@ struct keytab ttkeytab[] = {
     { "hpterm",    TT_HPTERM,     0 },             /* HP TERM */
     { "hz1500",    TT_HZL1500,    0 },             /* Hazeltine 1500 */
     { "ibm3151",   TT_IBM31,      0 },             /* IBM 3101-xx,3161 */
+    { "k95",       TT_K95,        0 },             /* Kermit 95 */
     { "linux",     TT_LINUX,      0 },             /* Linux */
+	{ "meta",      TT_KBM_META,   0, },            /* Meta key mode (subset of emacs mode) */
+    { "metaesc",   TT_KBM_METAESC, 0, },           /* Meta sends ESC mode */
     { "qansi",     TT_QANSI,      0 },             /* QNX ANSI */
     { "qnx",       TT_QNX,        0 },             /* QNX */
     { "russian",   TT_KBM_RUSSIAN,0 },             /* Russian mode */
@@ -1744,6 +1748,8 @@ struct keytab kbmodtab[] = {
     { "emacs",   KBM_EM, 0      },
     { "english", KBM_EN, CM_INV },
     { "hebrew",  KBM_HE, 0      },
+	{ "meta",    KBM_MM, 0      },
+    { "metaesc", KBM_ME, 0      },
     { "normal",  KBM_EN, 0      },
     { "none",    KBM_EN, CM_INV },
     { "russian", KBM_RU, 0      },

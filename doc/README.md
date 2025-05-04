@@ -7,7 +7,7 @@ This directory contains documentation for Kermit 95:
 * [SSH Readme](ssh-readme.md) (slowly becoming obsolete)
 * [The User Manual](#the-user-manual)
 * [Quick History of Open Source Kermit 95](k95-open.md)
-* [Supported Control Sequences](ctlseqs.html) - Also [available online!](https://davidrg.github.io/ckwin/dev/ctlseqs.html)
+* [Supported Control Sequences](#control-sequences)
 * Build instructions
   * [Supported Compilers](compilers.md)
   * [Building for Windows with Visual C++ or Open Watcom](building.md)
@@ -80,3 +80,49 @@ mkdocs.bat /I
 
 Regardless of how you build it, the manual will end up in the dist directory, 
 under `\docs\manual`
+
+Control Sequences
+-----------------
+
+Kermit 95 includes extensive documentation on the various control sequences it
+supports in its ANSI terminal emulations, similar in nature to xterms excellent 
+[ctlseqs document](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html).
+This documentation includes, where possible, references to original terminal
+documentation for more information on the various control sequences implemented
+
+The documentation also includes references for many control sequences *not*
+implemented by Kermit 95. This allows you to easily see not only what *is*
+supported, but also what *is not*. 
+
+This documentation lives in two XML files:
+ - ctlseqs.xml covers implemented (and not implemented) control sequences for
+ - keyb.xml covers the default keymaps for the terminals discussed in ctlseqs.xml
+
+These documents must be converted to HTML using a REXX-enabled build of Kermit 
+95 and the following scripts:
+ - xml2doc.rexx processes the XML files into HTML
+ - xml2doc.ksc is a convenience wrapper script for running xml2doc.rexx
+
+The REXX script cannot be run from a stand-alone REXX interpreter as it relies
+on calling in to Kermit 95 to get version information and other details.
+
+To build the HTML control sequences documentation, either run mkdocs.bat, or do 
+something like the following:
+```
+k95.exe -Y -# 94 -C "take xml2doc.ksc true {preliminary.html} 0, exit"
+k95.exe -Y -# 94 -C "take xml2doc.ksc true {preliminary.html} 0 keyb.xml, exit"
+```
+
+This will result in the following files:
+ - `ctlseqs.html` - the main document
+ - `outline.html` - an outline of the main document
+ - `keyb.html` - covers keymaps
+ - `tt-ctlseqs.html` - a table showing which control sequences and parameters are
+   enabled for each terminal type
+ - `term-ctlseqs.html` - a table of all control sequences that ctlseqs.xml knows
+   about from a selection of terminals whether Kermit 95 implements them or not
+ - `todo.html` - a table of control sequences K95 does not currently implement
+   but probably should for improved compatibility.
+ 
+The HTML conversion of this documentation is available on the web for the code
+currently on the main branch here: https://davidrg.github.io/ckwin/dev/ctlseqs.html
