@@ -22979,7 +22979,8 @@ vtescape( void )
               if ( ISH19(tt_type_mode) ) {
                   /* Erase Entire Line */
                   clrline_escape(VTERM,SP);
-              } else if ( ISSCO(tt_type_mode) ) {
+              } else if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
+							|| ISXTERM(tt_type_mode) ) {
                   /* Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, relcursor ? marginleft : 1,
@@ -23013,7 +23014,8 @@ vtescape( void )
             }
             break;
         case 'm':
-              if ( ISSCO(tt_type_mode) ) {
+              if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
+					|| ISXTERM(tt_type_mode)  ) {
                   /* Unlock Memory Area */
                   setmargins(1,VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, 1, 1);

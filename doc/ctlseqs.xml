@@ -2611,7 +2611,8 @@ DECTSR		462
         <section role="ctlseq" id="h19-cls" ctlseq="ESC E" title="Clear screen (H19)" badges="h19">
             <p>Clear display and home cursor</p>
         </section>
-        <section role="ctlseq" id="vt52-egr" ctlseq="ESC F" title="VT52 Enable Graphics" groups="isvt52">
+        <section role="ctlseq" id="vt52-egr" ctlseq="ESC F" title="VT52 Enable Graphics"
+                 groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
             <ref src="vt52:25"/>
             <ref src="vt100:VT52EGM"/>
@@ -2622,28 +2623,29 @@ DECTSR		462
             <termsupp first="vt52" series="vt" additional="putty"/>
             <p>Enable VT52 Graphics</p>
         </section>
-        <section role="ctlseq" id="saa" ctlseq="ESC F" mnemonic="SSA" title="Start Selected Area" not-implemented="true" groups="isvt220">
+        <section role="ctlseq" id="saa" ctlseq="ESC F" mnemonic="SSA"
+                 title="Start Selected Area" not-implemented="true" groups="isvt220">
             <p>Start Selected Area</p>
         </section>
         <section role="ctlseq" id="HPLH" ctlseq="ESC F"
                  title="Cursor Home Down (HPTERM)"
-                 not-implemented="true" todo="true">
+                 not-implemented="true">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-F.C74"/>
-            <!-- TODO: xterm: ESC F: Cursor to lower left corner of screen. Enabled
-                       by hpLowerLeftBugCompat resource
-
-                       This appears to be an hpterm escape sequence
-                       ("Cursor Home Down") which we do implement as part of our
-                       hpterm emulation.
-
-                       xterm optionally implements it because apparently HP's xdb
-                       ignores termcap and always sends it to send the cursor to the
-                       lower left corner.
-
-                       We can probably get away with not implementing it as users
-                       who need this behaviour can just switch to K95s hpterm
-                       emulation.
-                 -->
+            <p>
+                Sends the cursor to the lower left corner of the screen. Xterm
+                implements this as a workaround for HPs xdb utility which ignores
+                termcap and always uses this HPTERM escape sequence.
+            </p>
+            <p>
+                In xterm, this control sequence is disabled by default and must
+                be enabled by setting a resource (hpLowerleftBugCompat).
+            </p>
+            <p>
+                As it is disabled by default in xterm, Kermit 95 does not bother
+                to implement it. Instead, it is recommended you use Kermit 95s
+                <em>hpterm</em> emulation if you run into this problem with the
+                xdb utility (<tt>SET TERM TYPE hpterm</tt>).
+            </p>
         </section>
         <section role="ctlseq" id="vt52-dgr" ctlseq="ESC G" title="VT52 Disable Graphics" groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
@@ -2871,29 +2873,16 @@ DECTSR		462
             <p>Erase entire line</p>
         </section>
         <section role="ctlseq" id="lma" mnemonic="LMA" ctlseq="ESC l"
-                 title="Lock Memory Area (SCO)" badges="scoansi">
-            <termsupp series="sco" first="sco"/>
+                 title="Lock Memory Area (SCO/HPTERM)" badges="scoansi k95 xterm">
+            <termsupp series="sco" first="sco" additional="xterm"/>
+            <ref src="xt:h4-Controls-beginning-with-ESC:ESC-l.C9A"/>
             <p>Lock Memory Area (sets margins)</p>
         </section>
-        <section role="ctlseq" id="hpterm-lma" ctlseq="ESC l"
-                 title="Lock Memory (HPTERM)"
-                 not-implemented="true" todo="true">
-            <ref src="xt:h4-Controls-beginning-with-ESC:ESC-l.C9A"/>
-            <!-- xterm: ESC l: Memory Lock (per HP terminals)
-                "Locks memory above the cursor."
-                This appears to be an hpterm escape which we don't implement.
-            -->
-        </section>
         <section role="ctlseq" id="usr" mnemonic="USR" ctlseq="ESC m"
-                 title="Unlock Memory Area (SCO)" badges="scoansi">
-            <termsupp series="sco" first="sco"/>
-            <p>Unlock Memory Area (sets margins)</p>
-        </section>
-        <section role="ctlseq" id="uma" ctlseq="ESC m"
-                 title="Unlock Memory (HPTERM)"
-                 not-implemented="true" todo="true">
+                 title="Unlock Memory Area (SCO/HPTERM)" badges="scoansi k95 xterm">
+            <termsupp series="sco" first="sco" additional="xterm"/>
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-m.C9B"/>
-            <!-- xterm: ESC m: Memory unlock (per HP terminals) - see above -->
+            <p>Unlock Memory Area (sets margins)</p>
         </section>
         <section role="ctlseq" id="h19-cpr" ctlseq="ESC n" title="Cursor Position Report (H19)" badges="h19">
             <p>Cursor Position Report</p>
