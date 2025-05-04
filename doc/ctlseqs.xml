@@ -9224,7 +9224,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set foreground to indexed color">
                 <ctlseq><param-single/> = 38 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
-                <termsupp first="tt" series="xt" additional="linux putty"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility other terminal emulators.
@@ -9405,7 +9405,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set background to indexed color">
                 <ctlseq><param-single/> = 48 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
-                <termsupp first="tt" series="xt" additional="linux putty"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility other terminal emulators.
