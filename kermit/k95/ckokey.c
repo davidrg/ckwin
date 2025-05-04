@@ -922,24 +922,17 @@ clickkeys(void)
 }
 #endif /* NOLOCAL */
 
+#ifdef OS2ONLY
 USHORT
 getshiftstate( void ) {
-#ifdef NT
-    /* ??? returns VK_SHIFT, VK_CONTROL, VK_MENU (ALT) */
-    /* ??? these probably do not match OS/2 */
-    BYTE keystate = 0;
-    GetKeyboardState(&keystate);
-    return keystate;
-#else /* NT */
     KBDINFO k ;
 
     memset( &k, 0, sizeof(k) ) ;
     k.cb = sizeof(k) ;
     KbdGetStatus( &k, KbdHandle ) ;
     return k.fsState ;
-#endif  /* NT */
 }
-
+#endif  /* NT */
 
 /* Begin Keyboard Buffer Code
    This is a simple implementation of a circular queue with access

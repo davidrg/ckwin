@@ -1518,7 +1518,9 @@ _PROTOTYP( void   markselect, ( BYTE, int ) ) ;
 _PROTOTYP( void   markcopyhost, ( BYTE, int ) ) ;
 _PROTOTYP( void   markprint, ( BYTE, int ) ) ;
 
+#ifdef OS2ONLY
 _PROTOTYP( USHORT getshiftstate, ( void ) ) ;
+#endif /* OS2ONLY */
 
 _PROTOTYP(int popuphelp, (int,enum helpscreen));/* Pop-up help panel maker */
 _PROTOTYP(int popuperror, (int,char *));        /* Pop-up error message */
