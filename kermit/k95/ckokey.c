@@ -5224,6 +5224,12 @@ int
 defmetaesckm( int tt ) {
 if (
         /* Alt key = Meta key, and Meta sends escape */
+
+		/* Not ideal as some terminals use BS for backspace... */
+		insertkeymap( tt, 2312, mkkeyevt(F_ESC | DEL      )) || /* Alt-Backspace sends Meta-DEL         */
+
+		insertkeymap( tt, 2317, mkkeyevt(F_ESC | CK_CR    )) || /* Alt-Enter sends Meta-CR              */
+
         insertkeymap( tt, 2145, mkkeyevt(F_ESC | 'a'      )) || /* Alt-a sends Meta-a (i.e. ESC a)      */
         insertkeymap( tt, 2146, mkkeyevt(F_ESC | 'b'      )) || /* Alt-b sends Meta-b (ESC b)   */
         insertkeymap( tt, 2147, mkkeyevt(F_ESC | 'c'      )) || /* Alt-c etc etc...             */

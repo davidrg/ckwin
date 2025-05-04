@@ -3410,7 +3410,6 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             changes, rather than modifying it directly -->
         <!-- TODO: it would be rather handy if this *didn't* need to live here
              in this file... -->
-
         <table>
             <tr>
                 <th>Key</th>
@@ -5082,7 +5081,14 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <td>Alt-Backspace</td>
                 <td>\2312</td>
                 <td><tt>\{27}\{8}</tt></td>
-                <td style="not-mapped" colspan="5"/>
+                <td><tt>\{27}\{127}</tt></td>
+                <td style="not-mapped" colspan="4"/>
+            </tr>
+            <tr>
+                <td>Alt-Enter</td>
+                <td>\2317</td>
+                <td colspan="2"><tt>\{27}\{13}</tt></td>
+                <td style="not-mapped" colspan="4"/>
             </tr>
             <tr>
                 <td>Alt-Delete</td>
