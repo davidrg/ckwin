@@ -8908,6 +8908,7 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
             if (bchar == '5') {
                 cs = TX_DECMCS ;
             }
+			break;
         case '*':
             cs = TX_IBMC0GRPH;  /* QANSI/Linux */
             break;
