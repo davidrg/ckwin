@@ -8163,9 +8163,9 @@ ltorxlat( int c, CHAR ** bytes )
                 return(0);
             }
             /* otherwise, we use US-ASCII - no translation necessary */
-        } else if ( cs_is_nrc(dec_kbd) ) {
+        } else if ( cs_is_nrc(dec_kbd) && xl_tx[dec_kbd] ) {
             xkey = xl_tx[dec_kbd](xkey);
-        } else if ( xkey > 127 ) {
+        } else if ( xkey > 127 && xl_tx[dec_kbd] ) {
             xkey = xl_tx[dec_kbd](xkey);
         }
     }
