@@ -10732,7 +10732,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                     int dup_sav = duplex;
                     duplex = 0;
                     sprintf(escbuf,
-                             "%c%M",
+                             "%cM",
                              (ISVT100(tt_type_mode) ? 'O' : '?')
                              );
                     sendescseq(escbuf);
