@@ -184,6 +184,7 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #else /* NT */
 #define INCL_VIO
 #define INCL_WINERRORS
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #endif /* NT */
 #ifdef COMMENT                          /* Would you believe */
