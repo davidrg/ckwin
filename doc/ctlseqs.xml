@@ -2860,6 +2860,11 @@ DECTSR		462
             <ref src="vt510:RIS.html"/>
             <ref src="vt52x:348"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
+            <p>
+                Performs a hard reset. Compared to a soft reset, this also
+                resets the status line type, clears the screen and homes the
+                cursor.
+            </p>
         </section>
         <section role="ctlseq" id="h19-scp" ctlseq="ESC j" title="Save cursor position (H19)" badges="h19">
             <p>Save cursor position</p>
