@@ -7783,6 +7783,8 @@ congev( int vmode, int timo ) {
     con_event evt ;
     int tt,tr,interval,i ;
 
+    memset(&evt,0,sizeof(con_event));
+
 #ifdef IKSD
     if ( inserver ) {
         int ch;
