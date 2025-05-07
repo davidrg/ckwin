@@ -1432,6 +1432,9 @@ int deblog = 0,                         /* Debug log is open */
     cnflg  = 0,                         /* Connect after transaction */
     cxseen = 0,                         /* Flag for cancelling a file */
     czseen = 0,                         /* Flag for cancelling file group */
+#ifdef OS2
+    ccseen = 0,                         /* Flag for canceling autodownload */
+#endif /* OS2 */
     fatalio = 0,                        /* Flag for fatal i/o error */
     discard = 0,                        /* Flag for file to be discarded */
     keep = SET_AUTO,                    /* Keep incomplete files = AUTO */

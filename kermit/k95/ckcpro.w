@@ -175,6 +175,9 @@ _PROTOTYP( int cmdsrc, (void) );
 #endif /* TCPSOCKET */
 
   extern int cxseen, czseen, server, srvdis, local, displa, bctu, bctr, bctl;
+#ifdef OS2
+  extern int ccseen;
+#endif /* OS2 */
   extern int bctf;
   extern int quiet, tsecs, parity, backgrd, nakstate, atcapu, wslotn, winlo;
   extern int wslots, success, xitsta, rprintf, discard, cdtimo, keep, fdispla;
@@ -1721,6 +1724,15 @@ _PROTOTYP(int sndwho,(char *));
 	} else
 #endif /* STREAMING */
 	  ack1(msg);
+#ifdef OS2
+    } else if (ccseen) {    /* K95 auto-download canceled with Ctrl+C */
+        timint = s_timint;
+        window(1);				/* Set window size back to 1... */
+        czseen = 1;
+        ccseen = 0;             /* We've seen and responded to the Ctrl+C */
+        x = clsof(1);			/* Close file */
+        return(success = 0);		/* Failed */
+#endif /* OS2 */
     } else {				/* No interruption */
 	int rc, qf;
 #ifndef NOSPL
@@ -1735,6 +1747,20 @@ _PROTOTYP(int sndwho,(char *));
 #else
 	rc = decode(rdatap, qf ? puttrm : putfil, 1);
 #endif /* CKTUNING */
+#ifdef OS2
+    if (ccseen) {
+        /* if the user canceled an autodownload with Ctrl+C, it could cause
+         * decode to fail due to the output file being closed by trap(). Just
+         * give up here - we're not supposed to send anything in response to
+         * Ctrl+C anyway. */
+        timint = s_timint;
+        window(1);				/* Set window size back to 1... */
+        czseen = 1;
+        ccseen = 0;             /* We've seen and responded to the Ctrl+C */
+        x = clsof(1);			/* Close file */
+        return(success = 0);		/* Failed */
+    }
+#endif /* OS2 */
 	if (rc < 0) {
 	    discard = (keep == 0 || (keep == SET_AUTO && binary != XYFT_T));
 	    errpkt((CHAR *)"Error writing data"); /* If failure, */
