@@ -1008,6 +1008,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b833">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
 <li><tt>[ ] (K)</tt> <a href="#b834">834. Switching between command and terminal via \Kexit doesn't toggle the toolbar button</a>
 <li><tt>[ ] (K)</tt> <a href="#b835">835. The SET HOST command does nothing when the network type is NETBIOS</a>
+<li><tt>[ ] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -7864,8 +7865,8 @@ crashes. This has been fixed in version 3.0.
 
 <h3><a name="b821">821. Receiving files with non-ascii names can result in garbled filenames</a></h3>
 
-Receiving a file named "Grüße" may result in a saved file called something like
-"GrÃ¼Ã\237e". There are likely two factors that contribute to this problem:
+Receiving a file named "Grï¿½ï¿½e" may result in a saved file called something like
+"GrÃ¼ï¿½\237e". There are likely two factors that contribute to this problem:
 
 <ol>
     <li>The Kermit Protocol has
@@ -8047,6 +8048,18 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/339">Issue #339 on Github</a>
+
+<h3><a name="b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a></h3>
+<p>
+    When canceling an autodownload with Ctrl+C, Kermit 95 either crashes or gets
+    into a state where the file transfer is canceled but the File Transfer
+    Display remains on screen with no way to exit it. The bug has been present
+    since at least Kermit 95 v2.1, but may have been present in earlier releases
+    as well.
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/99">Issue #99 on Github</a>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
