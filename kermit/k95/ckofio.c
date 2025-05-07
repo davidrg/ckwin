@@ -1010,7 +1010,7 @@ zclose(n) int n; {
         debug(F101,"zclose zclosf","",x);
         debug(F101,"zclose zclosf fp[n]","",fp[n]);
     } else {
-        if ((fp[n] != stdout) && (fp[n] != stdin))
+        if ((fp[n] != stdout) && (fp[n] != stdin) && (fp[n] != NULL))
           x = fclose(fp[n]);
         fp[n] = NULL;
 #ifdef CK_LABELED
@@ -1504,6 +1504,19 @@ zoutdump() {
     }
 #endif /* IKSD */
 
+    /* If an autodownload is underway and the user kills it with Ctrl+C, the
+     * SIGINT handler will run on the keyboard input thread and close ZOUTFILE
+     * without warning. We don't want that happening between checking if its
+     * open and trying to write to the file otherwise it results in a crash.
+     */
+    RequestZoutDumpMutex( SEM_INDEFINITE_WAIT );
+
+    if (fp[ZOFILE] == 0) {       /* File already closed. Fail. */
+        zoutcnt = 0;
+        ReleaseZoutDumpMutex();
+        return(-1);
+    }
+
 #ifndef COMMENT
     /*
       Frank Prindle suggested that replacing this fwrite() by an fflush()
@@ -1512,11 +1525,15 @@ zoutdump() {
 
       This appears to slow down NT.  So I changed it back.
     */
+
     x = fwrite(zoutbuffer, 1, zoutcnt, fp[ZOFILE]);
 #else /* COMMENT */
     fflush(fp[ZOFILE]);
     x = write(fileno(fp[ZOFILE]),zoutbuffer,zoutcnt)
 #endif /* COMMENT */
+
+    ReleaseZoutDumpMutex();
+
     if (x == zoutcnt) {
 #ifdef DEBUG
         if (deblog)                     /* Save a function call... */

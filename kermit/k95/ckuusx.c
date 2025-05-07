@@ -474,6 +474,9 @@ extern int server, bctu, rptflg, ebqflg, spsiz, urpsiz, wmax, czseen, cxseen,
   pktlog, lscapu, dest, srvdis, wslots, spackets, spktl, rpktl,
   retrans, wcur, numerrs, fsecs, whatru, crunched, timeouts,
   rpackets, fncnv, bye_active, discard, inserver, diractive, cdactive;
+#ifdef OS2
+extern int ccseen;
+#endif /* OS2 */
 
 extern long filcnt, filrej, rptn, filcps, tfcps, cps, peakcps;
 extern CK_OFF_T ffc, tfc, fsize; 
@@ -3285,6 +3288,12 @@ trap(sig) int sig;
     zchkod = 0;                         /* Or file expansion interrupted... */
     zchkid = 0;
     interrupted = 1;
+#ifdef OS2
+	/* This signals to file transfer in progress on the connect mode thread that
+     * it should stop immediately */
+	ccseen = 1;
+#endif
+
 
     if (what & W_CONNECT) {		/* Are we in CONNECT mode? */
 /*
@@ -3310,8 +3319,17 @@ trap(sig) int sig;
     diractive = 0;
     cdactive = 0;
 #endif /* NOXFER */
+#ifdef OS2
+	/* Because this is running on the keyboard input thread, we need to make
+     * sure no other threads are about to write to ZOFILE before we go closing
+     * it without warning as that would be a crash */
+	RequestZoutDumpMutex( SEM_INDEFINITE_WAIT );
+#endif /* OS2 */
     zclose(ZIFILE);                     /* If we were transferring a file, */
     zclose(ZOFILE);                     /* close it. */
+#ifdef OS2
+	ReleaseZoutDumpMutex();
+#endif /* OS2 */
 #ifndef NOICP
     cmdsquo(cmd_quoting);               /* If command quoting was turned off */
 #ifdef CKLEARN
@@ -3327,8 +3345,30 @@ trap(sig) int sig;
 #endif /* CKLEARN */
 #endif /* NOICP */
 #ifdef CK_APC
+#ifdef OS2
+    /* In Kermit 95, we can't just force APC to inactive as APCs run on the
+     * connect mode (terminal emulator) thread rather than on the command mode
+     * thread and whatever we do here (on the keyboard event thread) isn't going
+     * to impact that immediately.
+     *
+     * To make matters worse, the parser normally sits waiting for an event that
+     * signals that the user has switched from connect mode to command mode, and
+     * it won't do anything until it receives that event.
+     *
+	 * If APC is active, the parser knows not to wait for that event as its on
+     * the connect mode thread and so is already on screen. Forcing APC off
+     * tricks the parser into blocking on an event signalling an exit from
+     * command mode, an event that will never come because that exit has already
+     * happened. This results in both the command and connect threads blocking
+     * and no way for the user to get them unstuck.
+     */
+    if (apcactive == APC_INACTIVE ) {
+        delmac("_apc_commands", 1);
+    }
+#else /* OS2 */
     delmac("_apc_commands",1);
     apcactive = APC_INACTIVE;
+#endif /* OS2 */
 #endif /* CK_APC */
 
 #ifdef VMS
