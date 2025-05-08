@@ -1811,7 +1811,7 @@ case 60:
         timint = s_timint;
         window(1);				/* Set window size back to 1... */
         czseen = 1;
-        ccseen = 0;
+        ccseen = 0;             /* We've seen and responded to the Ctrl+C */
         x = clsof(1);			/* Close file */
         return(success = 0);		/* Failed */
 #endif /* OS2 */
@@ -1838,7 +1838,7 @@ case 60:
         timint = s_timint;
         window(1);				/* Set window size back to 1... */
         czseen = 1;
-        ccseen = 0;
+        ccseen = 0;             /* We've seen and responded to the Ctrl+C */
         x = clsof(1);			/* Close file */
         return(success = 0);		/* Failed */
     }
