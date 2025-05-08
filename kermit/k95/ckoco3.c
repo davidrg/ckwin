@@ -14729,7 +14729,6 @@ lgotoxy(BYTE vmode, int x, int y) {
             if ( x > width ) {
                 y++;
                 if ( y > marginbot ) {
-                    x=0 ;
                     y=margintop ;
                 }
                 x = 1 ;
