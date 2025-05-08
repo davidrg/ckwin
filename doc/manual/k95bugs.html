@@ -986,7 +986,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b812">812. Autodownload GUI Dialog needs more buttons</a>
 <li><tt>[+] (K)</tt> <a href="#b813">813. Kermit 95 and large files</a>
 <li><tt>[+] ( )</tt> <a href="#b814">814. Using K95 as a terminal emulator to Red Hat Enterprise Linux 5</a>
-<li><tt>[ ] (K)</tt> <a href="#b815">815. Incoming Ctrl-Z (SUB) character not properly displayed in VT emulation</a>
+<li><tt>[+] (K)</tt> <a href="#b815">815. Incoming Ctrl-Z (SUB) character not properly displayed in VT emulation</a>
 <li><tt>[+] ( )</tt> <a href="#b816">816. 80/132 column switching and Resize Mode</a>
 <li><tt>[+] (K)</tt> <a href="#b817">817. Columns can be lost if K95G window wider than physical screen</a>
 <li><tt>[+] (M)</tt> <a href="#b818">818. Ghost tool tips</a>
@@ -1008,7 +1008,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b833">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
 <li><tt>[ ] (K)</tt> <a href="#b834">834. Switching between command and terminal via \Kexit doesn't toggle the toolbar button</a>
 <li><tt>[ ] (K)</tt> <a href="#b835">835. The SET HOST command does nothing when the network type is NETBIOS</a>
-<li><tt>[ ] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
+<li><tt>[+] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -7797,6 +7797,12 @@ The Ctrl-Z character, SUB, ASCII 26 (decimal) is supposed to be displayed
 as a reverse question mark in VT320 emulation but it is not displayed at
 all.  Reportedly this causes major discomfort when using the VMS TPU editor.
 There doesn't seem to be a workaround for this.
+
+<p>Fixed in Kermit 95 3.0 which uses unicode character 0x2426 (Symbol For
+    Substitute Form Two) for the reverse question-mark. Many fonts don't include
+    this character, but on Windows 10 and up Cascadia Mono (also used by the
+    Windows Terminal) does.
+</p>
 
 <h3><a name="b816">816. 80/132 column switching and Resize Mode</a></h3>
 

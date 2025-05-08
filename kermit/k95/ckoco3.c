@@ -13792,6 +13792,17 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         return;
     }
 
+    /* The VT100 and up output a SUB character *in addition to* acting on it
+     * to cancel any escape sequence in progress */
+    if (ch == SUB && ISVT100(tt_type_mode)) {
+        if (ISVT220(tt_type_mode)) {
+            wrtch(0x2426);    /* Unicode backwards questionmark for VT220+*/
+        }
+        else {
+            wrtch(0x2592);    /* Unicode half-tone block for VT100*/
+        }
+    }
+
 /*
   Even if debugging, we still plow through the escape-sequence state table
   switcher, but we don't call any of the action routines.

@@ -179,6 +179,12 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - Fix potential memory leak if SSH key generation fails. Cov-462508, Cov-462436
  - Fix potential memory leak on ssh connect if existing connection fails to close. Cov-462163.
  - Fix Ctrl+C during an autodownload causing a crash
+ - Fixed VT emulations not rendering SUB. When the VT100 and up receive a SUB
+   character they render it as a shaded block for the VT1xx, and a backwards
+   question-mark for the VT220 and up, as well as canceling any escape sequence.
+   K95 will now do the same, using unicode character 0x2426 for VT220 and up.
+   Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
+   (K95 bug 815).
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
