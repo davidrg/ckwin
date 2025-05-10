@@ -1568,7 +1568,6 @@ _PROTOTYP(void flipscreen, (BYTE));
 _PROTOTYP(void killcursor, (BYTE));
 _PROTOTYP(void lgotoxy, (BYTE, int, int));
 _PROTOTYP(void markmode, ( BYTE, int ) );
-_PROTOTYP(void movetoscreen, (char *, int, int, int));
 _PROTOTYP(void newcursor, (BYTE));
 _PROTOTYP(void printeron, (void));
 _PROTOTYP(int  printeropen, (void));

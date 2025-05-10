@@ -9015,29 +9015,6 @@ resetcolors( int x )
     }
 }
 
-/*---------------------------------------------------------------------------*/
-/* movetoscreen                                                              */
-/*---------------------------------------------------------------------------*/
-void
-movetoscreen(char *source, int x, int y, int len) {
-   /* x and y begin at 1 */
-
-   int l=0 ;
-   videoline * line = NULL ;
-
-   line = VscrnGetLineFromTop(VTERM, y-1) ;
-   while (l<len) {
-      if ( x-1 == VscrnGetWidth(VTERM) ) {
-         x=1 ;
-         y++ ;
-         line = VscrnGetLineFromTop(VTERM, y-1) ;
-         }
-      line->cells[x-1].c = source[l] ;
-      x++ ;
-      }
-    VscrnIsDirty(VTERM);
-}
-
 void
 os2debugoff() {                         /* Turn off debugging from outside */
     debug(F100,"os2debugoff","",0);
