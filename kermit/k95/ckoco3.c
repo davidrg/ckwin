@@ -15331,10 +15331,24 @@ settermtype( int x, int prompts )
 
         scrninitialized[VTERM] = 0; /* To make it take effect */
 
+#ifdef COMMENT
+		/* I *was* going to have the status line off-by-default like it is on
+         * the linux terminal, but I've changed my mind for now. It may end up
+		 * being off by default eventually, but I think to do that acceptably
+	 	 * requires further work. Because of the way the K95 terminal type
+		 * resizes the window rather than then VSCRN when the status line is
+		 * turned on or off, having it off by default forces us to choose
+		 * between either having a non-standard 25 line default height, or
+		 * tring to "fix" the default to 24 lines (potentially overriding the
+		 * users prior window size choice) clearing the command screen in the
+		 * process. I think if we wanted to keep it off by default *and* 24
+		 * lines by default it will require a smarter implementation. */
+
         /* Turn off the status line */
         savstatus = tt_status_usr[VTERM] ;
         tt_status_usr[VTERM] = FALSE ;
         settermstatus( tt_status_usr[VTERM] ) ;
+#endif /* COMMENT */
 
         VscrnInit(VTERM);           /* Reinit the screen buffer */
 
