@@ -15108,7 +15108,32 @@ esc25(int h) {
 void
 settermstatus( int y )
 {
-    if ( y != tt_status[VTERM] ) {
+	/* The VT520 doesn't change the number of lines on screen in response to
+ 	 * turning the status line on or off, and DEC-STD-070 says "Visual side
+	 * effects caused by enabling or disabling the Status Display should
+	 * be minimized". Changing the number of terminal lines requires doing
+	 * VScrnInit() which wipes the screen - certainly not minimal, and it
+	 * breaks terminfo applications that want to turn on the status line. So
+	 * instead for the K95 terminal type we'll do as the VT520 does - show
+	 * and hide the status line while leaving the number of terminal lines
+	 * alone. The VT520 reserves space at the bottom of the screen for the
+	 * status line which is simply blank if its off. Instead we'll grow and
+	 * shrink the window height as necessary to accommodate it.
+	 *
+	 * This behaviour should *probably* apply to the VT320 and VT420, but
+	 * as I don't have either of them I can't confirm they behave the same
+	 * as the VT520. So for now this is for the K95 terminal type only, and
+	 * if/when a VT520 terminal type appears it will probably be for that
+	 * too. For everything else, well leave the window size alone and instead
+	 * add or remove one line from the terminal as K95 has always done in the
+	 * past */
+
+	if (ISK95(tt_type_mode)) {
+		/* Change screen height only - not terminal height */
+		tt_status[VTERM] = y;
+		VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
+	}
+	else if ( y != tt_status[VTERM] ) {
         /* might need to fixup the margins */
         if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
             if ( y ) {

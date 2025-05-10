@@ -13637,6 +13637,20 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt420" series="vt" additional="vt510 tt"/>
             <p>You can query the current state of DECSSDT with
                 <a href="#decrqss">DECRQSS</a></p>
+            <p>
+                When the status line is hidden (blank), the height of the
+                terminal is increased by one line. When the status line is
+                shown, the height of the terminal is decreased by one line. This
+                differs in behavior from the VT520 which reserves space on the
+                screen for the status line and just shows/hides it as required
+                without changing the number of terminal lines.
+            </p>
+            <p badges="k95">
+                Instead of changing the height of the terminal when showing or
+                hiding the status line, the K95 terminal type changes the height
+                of the window keeping the number of terminal lines constant,
+                matching the VT520s behavior.
+            </p>
 
             <section role="parameter" id="decssdt-blank" title="Blank">
                 <ctlseq><param-single/> = 0</ctlseq>
