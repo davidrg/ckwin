@@ -7146,10 +7146,24 @@ Support for using UNC paths with FTP operations has been added to version 3.0.
 
 <h3><a name="b748">748. Dialer QUICK Command improvements</a></h3>
 
-The dialer QUICK command <!--did-->does not allow connections to be based on
-existing template and <!--could-->can not be saved for later use.  <!--The next
+<!-- The dialer QUICK command did not allow connections to be based on
+existing template and could not be saved for later use.  The next
 release supports the use of templates in the QUICK command and allows
 the command to be used as a poor man's CLONE.-->
+
+The dialer QUICK command does not allow connections to be based on an
+existing template and can not be saved for later use. An enhancement
+to resolve this was originally developed as part of the Kermit 95 v2.2
+work, but those changes have been lost and there are <em>at this time</em> no
+plans to redevelop that feature from scratch. Instead due to the
+aging framework and compilers the Dialer depends on, the Windows version
+of the Dialer will eventually be replaced by an entirely new and more
+fit-for-purpose application (see Github issue
+    <a href="https://github.com/davidrg/ckwin/issues/317">#317</a> for
+    more information).
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/267">Issue #267 on Github</a></p>
 
 <h3><a name="b749">749. Linux Character Set handling bugs</a></h3>
 
