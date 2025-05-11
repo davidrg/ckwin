@@ -903,7 +903,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (M)</tt> <a href="#b729">729. Display of Plane-1-and-beyond Unicode characters</a>
 <li><tt>[+] (K)</tt> <a href="#b730">730. k95g.exe ssh://xyzcorp.com --nobars causes invalid memory reference</a>
 <li><tt>[+] (K)</tt> <a href="#b731">731. Long Read Delays when using USB Serial Ports or Modems</a>
-<li><tt>[ ] (K)</tt> <a href="#b732">732. Backspace Key setting in Dialer -> Keyboard might be ignored</a>
+<li><tt>[+] (K)</tt> <a href="#b732">732. Backspace Key setting in Dialer -&gt; Keyboard might be ignored</a>
 <li><tt>[ ] (C)</tt> <a href="#b733">733. SET PRINTER command in Dialer-generated scripts</a>
 <li><tt>[+] (K)</tt> <a href="#b734">734. Sessions Logs are always 8-bit</a>
 <li><tt>[+] (K)</tt> <a href="#b735">735. Macros on Keys broken</a>
@@ -7012,15 +7012,14 @@ When a serial port or modem uses the USB bus rather than the PCI bus,
 this can result in a 500 second delay between reads unless the buffer
 is filled.  This is fixed in version 3.0.
 
-<h3><a name="b732">732. Backspace Key setting in Dialer -> Keyboard might be ignored</a></h3>
+<h3><a name="b732">732. Backspace Key setting in Dialer -&gt; Keyboard might be ignored</a></h3>
 
 If you have a SET KEY \127 xxx command in your K95.INI, K95SITE.INI,
 or K95CUSTOM.INI file, this overrides the Backspace Key setting in the
 Dialer's Keyboard Settings page, even though the Dialer script is
-executed AFTER the INI file.  <!--Fixed in the next release.-->
+executed AFTER the INI file.
 
-<!-- The K95 side of the fix is perhaps the "set dialer backspace" command,
-     not sure if our version of the dialer currently uses it though -->
+<p>This is fixed in version 3.0.
 
 <h3><a name="b733">733. SET PRINTER command in Dialer-generated scripts</a></h3>
 
