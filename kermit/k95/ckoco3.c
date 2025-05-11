@@ -15354,6 +15354,15 @@ settermtype( int x, int prompts )
 
         savcmask = cmask;           /* Go to 8 bits */
         cmask = 0xFF;
+
+#ifdef UNICODE
+#ifdef CKOUNI
+		/* Assume UTF-8 remote by default. Second parameter is ignored for
+		 * TX_UTF8. */
+		setremcharset(TX_UTF8, -1);
+#endif /* CKOUNI */
+#endif /* UNICODE */
+
     }
     else if (ISANSI(tt_type) || ISLINUX(tt_type)) {
         if (parity && prompts) {
