@@ -1056,18 +1056,51 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_WY370   33	/*    WYSE 370 ANSI Terminal */
 #define     TT_97801   34       /*    Sinix 97801-5xx terminal */
 #define     TT_AAA     35       /*    Ann Arbor Ambassador */
-#define     TT_TVI910  36	/*    TVI 910+ */
-#define     TT_TVI925  37       /*    TVI 925  */
-#define     TT_TVI950  38       /*    TVI950   */
-#define     TT_ADM3A   39       /*    LSI ADM 3A */
-#define     TT_ADM5    40		/*    LSI ADM 5 */
-#define     TT_VTNT    41       /*    Microsoft NT Virtual Terminal */
+
+#define     TT_VT420   36	    /*    DEC VT-420 */
+#define     TT_VT420PC 37       /*    DEC VT-420 with PC keyboard */
+#define     TT_VT520   38	    /*    DEC VT-520/525 */
+#define     TT_VT520PC 39       /*    DEC VT-520/525 with PC keyboard */
+
+#define     TT_TVI910  40	    /*    TVI 910+ */
+#define     TT_TVI925  41       /*    TVI 925  */
+#define     TT_TVI950  42       /*    TVI950   */
+#define     TT_ADM3A   43       /*    LSI ADM 3A */
+#define     TT_ADM5    44		/*    LSI ADM 5 */
+#define     TT_VTNT    45       /*    Microsoft NT Virtual Terminal */
+
+#ifdef CK_XTERM_EMULATION
+#define     TT_XTERM   46       /*    xterm! */
+#else  /* CK_XTERM_EMULATION */
+#define     TT_XTERM   97       /*    xterm! */
+#endif /* CK_XTERM_EMULATION */
+
+/* TODO: Graphics!
+ *  -> This would be Windows/KUI only - no way of supporting it in
+ *     the console or OS/2 versions
+ *  -> Need to figure out how to implement graphics at all
+ *      -> How do we represent graphics in the screen buffer?
+ *      -> How do we render and scroll text + graphics?
+ *  -> Sixel is the priority and probably the easiest. The rest are rarely used.
+ *  -> The following graphics terminals require:
+ *     VT125: ReGIS
+ *     VT241: All of the above plus Sixel (VT240: no colour)
+ *     VT340: All of the above plus Tektronix 4010 graphics (VT330: no colour)
+ *     TEK40: 4010, 4014 emulation. If 4010 gets implemented for VT340 emulation
+ *            we may as well go all the way and provide Tektronix emulation directly too.
+ *     VT55, VT105: waveform graphics
+ *     XTerm: Sixel, ReGIS, Tektronix 4015
+ */
+
+#ifdef CK_XTERM_EMULATION
+#define     TT_MAX   TT_XTERM
+#else /* CK_XTERM_EMULATION */
 #define     TT_MAX   TT_VTNT
-#define     TT_VT420   96	/*    DEC VT-420 */
-#define     TT_VT520   97	/*    DEC VT-520/525 */
-#define     TT_XTERM   98   /*    XTerm */
-#define     TT_TEK40   99	/*    Tektronix 401x */
-#define     TT_K95    100   /* Kermit 95 self-personality */
+#endif /* CK_XTERM_EMULATION */
+
+#define     TT_IBM3101 98       /*    IBM 3101 - not implemented */
+#define     TT_TEK40 99	        /*    Tektronix 401x */
+#define     TT_K95 100          /*    K95 native personality */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3
@@ -1094,21 +1127,22 @@ struct stringint {			/* String and (wide) integer */
 #define ISTVI910(x) (x == TT_TVI910)
 #define ISTVI925(x) (x == TT_TVI925)
 #define ISTVI950(x) (x == TT_TVI950)
+#define ISXTERM(x) (x == TT_XTERM)
 #define ISVT52(x)  (x == TT_VT52 || x == TT_H19)
-#ifdef COMMENT
+#ifdef CK_VT420_520_EMULATION
+#define ISVT520(x) (x == TT_VT520 || x == TT_VT520PC)
+#define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520PC)
 #define ISVT525(x) (x == TT_VT525)
-#define ISVT520(x) (x == TT_VT520)
-#define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520)
-#else /* COMMENT */
+#else /* CK_VT420_520_EMULATION */
 /* Since we do not yet support 420/520/525 extend 320 */
 #define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
-#endif /* COMMENT */
+#endif /* CK_VT420_520_EMULATION */
 #define ISVT320(x) (x >= TT_VT320 && x <= TT_AAA)
 #define ISVT220(x) (x >= TT_VT220 && x <= TT_AAA || \
                     ISBEOS(x) || ISQANSI(x) || \
-                    ISLINUX(x) || ISSUN(x))
+                    ISLINUX(x) || ISSUN(x) || ISXTERM(x))
 #define ISVT102(x) (x >= TT_VIP7809 && x <= TT_BA80 || \
 		    x == TT_VT102 || ISVT220(x))
 #define ISVT100(x) (x == TT_VT100 || ISVT102(x))
@@ -1129,7 +1163,6 @@ struct stringint {			/* String and (wide) integer */
 #define ISVTNT(x)  (x == TT_VTNT)
 #define ISADM3A(x) (x == TT_ADM3A)
 #define ISADM5(x)  (x == TT_ADM5)
-#define ISXTERM(x) (x == TT_XTERM)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */

@@ -1653,6 +1653,12 @@ struct keytab ttyptab[] = {
     { "vt220pc", TT_VT220PC,0 },
     { "vt320",   TT_VT320,  0 },
     { "vt320pc", TT_VT320PC,0 },
+#ifdef CK_VT420_520_EMULATION
+    { "vt420",     TT_VT420,      0 },
+    { "vt420pc",   TT_VT420PC,    0 },
+    { "vt520",     TT_VT520,      0 },
+    { "vt520pc",   TT_VT520PC,    0 },
+#endif /* CK_VT420_520_EMULATION */
     { "vt52",    TT_VT52,   0 },
 #ifdef NT
     { "vtnt",    TT_VTNT,   0 },
@@ -1667,7 +1673,10 @@ struct keytab ttyptab[] = {
     { "wyse30",  TT_WY30,   CM_INV },
     { "wyse370", TT_WY370,  CM_INV },
     { "wyse50",  TT_WY50,   CM_INV },
-    { "wyse60",  TT_WY60,   CM_INV }
+    { "wyse60",  TT_WY60,   CM_INV },
+#ifdef CK_XTERM_EMULATION
+    { "xterm",   TT_XTERM,  0 }
+#endif
 };
 int nttyp = (sizeof(ttyptab) / sizeof(struct keytab));
 
@@ -1724,6 +1733,12 @@ struct keytab ttkeytab[] = {
     { "vt220pc",   TT_VT220PC,    0 },
     { "vt320",     TT_VT320,      0 },
     { "vt320pc",   TT_VT320PC,    0 },
+#ifdef CK_VT420_520_EMULATION
+    { "vt420",     TT_VT420,      0 },
+    { "vt420pc",   TT_VT420PC,    0 },
+    { "vt520",     TT_VT520,      0 },
+    { "vt520pc",   TT_VT520PC,    0 },
+#endif /* CK_VT420_520_EMULATION */
     { "vt52",      TT_VT52,       0 },
     { "vtnt",      TT_VTNT,       CM_INV },
     { "wp",        TT_KBM_WP,     0 },             /* Word Perfect mode */
@@ -1735,7 +1750,10 @@ struct keytab ttkeytab[] = {
     { "wyse30",    TT_WY30,       CM_INV },
     { "wyse370",   TT_WY370,      CM_INV },
     { "wyse50",    TT_WY50,       CM_INV },
-    { "wyse60",    TT_WY60,       CM_INV }
+    { "wyse60",    TT_WY60,       CM_INV },
+#ifdef CK_XTERM_EMULATION
+    { "xterm",   TT_XTERM,  0 }
+#endif
 };
 int nttkey = (sizeof(ttkeytab) / sizeof(struct keytab));
 
