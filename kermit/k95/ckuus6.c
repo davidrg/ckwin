@@ -9,12 +9,14 @@
     Jeffrey E Altman <jaltman@secure-endpoints.com>
       Secure Endpoints Inc., New York City
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
 
   Last updates:
+    Tue Mar 26 15:00:12 2024 (fix debug(F110,"GREP tmpstr","",tmpstr);)
+    Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Mon Aug 22 20:11:01 2022 (for TYPE /INTERPRET)
     Wed Aug 31 15:46:35 2022 (to disable TYPE /INTERPRET in Windows)
     Tue Sep 20 15:40:49 2022 (for COPY /TOSCREEN and /INTERPRET)
@@ -89,10 +91,10 @@ extern int k95stdout;
 #else
 #define APIRET ULONG
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif  /* NODIAL */
+#endif  /* CK_TAPI */
 #ifndef isatty
 /* This usually isn't required as oldnames.lib handles it - except in some
  * very old Windows SDKs where it doesn't - David Goodwin 2 July 2023 */
@@ -3757,7 +3759,7 @@ typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp;
     /* that was requested by the user. */
     if (!inserver && !k95stdout) {
         extern int wherex[], wherey[];
-        extern unsigned char colorcmd;
+        extern cell_video_attr_t colorcmd;
 
         VscrnWrtUCS2StrAtt( VCMD, (unsigned short *)buf, len/2,
                            wherey[VCMD], wherex[VCMD], &colorcmd);
@@ -5045,7 +5047,7 @@ dogrep() {
                     } else {
                         ckmakmsg(tmpstr,tmplen,rp3,NULL,NULL,NULL);
                     }
-                    debug(F110,"GREP tmpstr","",tmpstr);
+                    debug(F110,"GREP tmpstr",tmpstr,"");
                     makestr(&(ap[arrayslot++]),tmpstr);
                 } else {
 #endif  /* NOSPL */
@@ -9688,16 +9690,20 @@ static char * pcvtbufin = NULL;
 static char * pcvtbufout = NULL;
 
 static int				/* Input function xgnbyte() */
-cvtfnin() {
+#ifdef CK_ANSIC
+cvtfnin(void)
+#else
+cvtfnin()
+#endif	/* CK_ANSIC */
+{
     CHAR c;
     c = *pcvtbufin++;
     return(c ? c : -1);
 }
 
-_PROTOTYP(int cvtfnout,(char));		/* Output function for xpnbyte() */
-int
+static int
 #ifdef CK_ANSIC
-cvtfnout(char c)
+cvtfnout(char c)			/* Output function for xpnbyte() */
 #else
 cvtfnout(c) char c;
 #endif	/* CK_ANSIC */

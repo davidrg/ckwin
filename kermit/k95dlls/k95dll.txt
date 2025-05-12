@@ -1,0 +1,335 @@
+/* Kermit 95 - External Network DLL specification
+ * July 16 1998 
+ * Jeffrey Altman <jaltman@columbia.edu>
+ *
+ * The following specification defines a set of functions to be exported from 
+ * a DLL in order for the DLL to work with Kermit 95 version 1.1.17 or higher.
+ *
+ * The DLL is loaded by Kermit 95 via use of the command:
+ *   SET NETWORK TYPE DLL <dllname>
+ *
+ * Notes:
+ *   The functions specified here must be thread safe.  It is possible 
+ *   for multiple threads to be calling any combination of functions
+ *   simultaneously.
+ *
+ *   The 1.1.17 interface does not provide for the ability of the
+ *   DLL to query the user with echoing input, nor is the a method 
+ *   for querying the values of Kermit variables such as 'userid'
+ *   or Kermit version number.  This will be added in a later release.
+ */
+
+
+/* 
+ * N E T O P E N - Network Open 
+ *
+ * The network open function is called by Kermit 95 when a new connection
+ * is desired.  Usually in response to:
+ *    SET HOST <command_line>
+ * 
+ * Parameters:
+ *   command_line - the command line specified in the SET HOST command
+ *                  after quoting rules and variables have been applied.
+ *   termtype     - a string representing either the currently selected
+ *                  terminal type or a user specified string as per
+ *                  SET TELNET TERMINAL <string>
+ *   height       - initial height of the terminal window (chars)
+ *   width        - initial width of the terminal window (chars)
+ *   readpass     - a pointer to a function to be used to read a password
+ *                  without echoing
+ *
+ * Return values:
+ *   0   on success
+ *   < 0 on failure
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netopen(char * command_line, char * termtype, int height, int width,
+        int (* readpass)(char * prompt,char * buffer, int length));
+
+/* 
+ * N E T C L O S - Network Close
+ *
+ * The network close function is called by Kermit 95 when the user requests
+ * a disconnect or in response to fatal error.
+ * 
+ * Parameters: None
+ *
+ * Return values:
+ *   0   on success
+ *   < 0 on failure
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netclos(void) ;
+
+/* 
+ * N E T T C H K - Network Terminal I/O Check
+ *
+ * The network terminal i/o check function is called regularly by Kermit 95
+ * to poll the status of the connection and to retrieve the number of input
+ * characters waiting to be processed.  Because it is called frequently this
+ * function should be designed to be low cost.
+ * 
+ * Parameters: None
+ *
+ * Return values:
+ *   >= 0 number of characters waiting in the input queue
+ *   < 0  indicates a fatal error on the connection and the connection 
+ *        should be closed.
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+nettchk(void);
+
+/* 
+ * N E T F L U I - Network Flush Input
+ *
+ * The network flush input function should clear the connection's input
+ * queue.
+ * 
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netflui(void);
+
+
+/* 
+ * N E T B R E A K - Network Break
+ *
+ * The network break signal is called in response to a user initiated
+ * break command.  For example, on a serial device this should result in 
+ * a Break signal and on a Telnet connection a Break Command is sent.
+ * For connection types without an equivalent simply return 0.
+ * 
+ * Parameters: None
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netbreak(void);
+
+
+/* 
+ * N E T I N C - Network Input Character
+ *
+ * The network input character is used to read the next character from
+ * the input queue.
+ * 
+ * Parameters: 
+ *   timeout - 0   indicates no timeout, block until the next character
+ *                 is available;
+ *             > 0 indicates a timeout value in seconds;
+ *             < 0 indicates a timeout value in milliseconds;
+ *
+ * Return values:
+ *   >= 0 is interpreted as a valid character
+ *   -1   is a timeout [errorstr() is not called]
+ *   < -1 is a fatal error
+ *   
+ *   return codes < -1 should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netinc(int timeout);
+
+
+/* 
+ * N E T X I N - Network Extended Input
+ *
+ * The network extended input is called to read a large number of waiting
+ * input characters.  It will never be called with a number larger than
+ * reported as available and waiting by nettchk().  The function may return
+ * fewer characters than is requested.  This function should not block.
+ * 
+ * Parameters: 
+ *   count  - number of characters to be read
+ *   buffer - buffer of length count to be used to store the data
+ *
+ * Return values:
+ *   >= 0  the number of characters actually returned by the function
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+netxin(int count, char * buffer);
+
+/* 
+ * N E T T O C - Network Terminal Output Character
+ *
+ * The network terminal output character transmits a single character
+ * 
+ * Parameters: 
+ *   c - a single character to be output
+ *
+ * Return values:
+ *   0    indicates success
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+nettoc(int c);
+
+/* 
+ * N E T T O L - Network Terminal Output Line
+ *
+ * The network terminal output line is used to output one or more
+ * characters.
+ * 
+ * Parameters: 
+ *   buffer - contains the characters to be output
+ *   count  - the number of characters to be output from buffer
+ *
+ * Return values:
+ *   >= 0 the number of characters actually output.  The function
+ *        should make its best attempt to transmit all 'count' 
+ *        characters.
+ *   < 0  indicates a fatal error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+nettol(char * buffer, int count);
+
+/* 
+ * T T V T - Terminal to Virtual Terminal Mode
+ *
+ * Terminal to Virtual Terminal Mode is called to notify the DLL that
+ * Kermit 95 is about to enter terminal mode communications.  This means
+ * either the CONNECT or DIAL commands will be sending output.  In most
+ * cases, this will be either printable text or escape sequences.
+ * 
+ * Parameters: None
+ *
+ * Return values: 
+ *   0    indicates success
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+ttvt(void);
+
+/* 
+ * T T P K T - Terminal to Packet Mode
+ *
+ * Terminal to Packet Mode is called to notify the DLL that
+ * Kermit 95 is about to enter file transfer operations.
+ * 
+ * Parameters: None
+ *
+ * Return values: 
+ *   0    indicates success
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+ttpkt(void);
+
+/* 
+ * T T R E S - Terminal Restore Mode
+ *
+ * Terminal Restore Mode is called to notify the DLL that it should 
+ * Kermit 95 restore to default settings.
+ * 
+ * Parameters: None
+ *
+ * Return values: 
+ *   0    indicates success
+ *   < 0  indicates an error
+ *   
+ *   return codes should be defined such that they can be passed to 
+ *   errorstr() to retrieve an appropriate error message for the user.
+ */
+
+int
+ttres(void);
+
+
+/* 
+ * T E R M I N F O - Terminal Information
+ *
+ * The terminal information function is called whenever the terminal
+ * type or window size is changed.
+ * 
+ * Parameters: 
+ *   termtype     - a string representing either the currently selected
+ *                  terminal type or a user specified string as per
+ *                  SET TELNET TERMINAL <string>
+ *   height       - initial height of the terminal window (chars)
+ *   width        - initial width of the terminal window (chars)
+ *
+ * Return values: None
+ */
+
+void
+terminfo(char * termtype, int height, int width);
+
+/* 
+ * V E R S I O N - Version String
+ *
+ * Version is called to get a user displayable version string for use
+ * as part of the SHOW NETWORK command.
+ * 
+ * Parameters: None
+ *
+ * Return values: 
+ *   a string which will not be deleted by the caller.
+ */
+
+const char * 
+version(void);
+
+/* 
+ * E R R O R S T R - Error String
+ *
+ * Error string is called to retrieve a user displayable error message
+ * describing the type of error being reported by the function.
+ * 
+ * Parameters: 
+ *   error - the error value reported by the DLL function.
+ *
+ * Return values: 
+ *   a string which will not be deleted by the caller.
+ */
+
+const char *
+errorstr(int error) ;
+

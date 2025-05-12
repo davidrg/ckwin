@@ -1,0 +1,26 @@
+diff -crB rexxre/regex/regcomp.c rexxre-patched/regex/regcomp.c
+*** rexxre/regex/regcomp.c	Thu May  1 09:58:20 2003
+--- rexxre-patched/regex/regcomp.c	Mon Oct 28 20:38:26 2024
+***************
+*** 61,70 ****
+  
+  /* microsoft's c library misses isblank() */
+  #if defined(_WIN32) || defined(__EMX__)
+! static int isblank(int c)
+  {
+     return c == ' ' || c == '\t';
+! }
+  #endif
+  
+  
+--- 61,70 ----
+  
+  /* microsoft's c library misses isblank() */
+  #if defined(_WIN32) || defined(__EMX__)
+! /*static int isblank(int c)
+  {
+     return c == ' ' || c == '\t';
+! }*/
+  #endif
+  
+  

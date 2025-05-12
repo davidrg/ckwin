@@ -1,5 +1,5 @@
 /*
- * Windows ConPTY DLL for Kermit 95 / C-Kermit for Windows
+ * Windows ConPTY DLL for Kermit 95
  * Copyright (C) 1985, 2004, Trustees of Columbia University in the City of New York.
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *

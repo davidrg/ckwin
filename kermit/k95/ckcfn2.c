@@ -232,6 +232,9 @@ extern int hcflg, server, cxseen, czseen, discard, slostart;
 extern int nakstate, quiet, success, xitsta, what, filestatus;
 extern int spackets, rpackets, timeouts, retrans, crunched, urpsiz;
 extern int carrier, fdispla, srvidl;
+#ifdef OS2
+extern int ccseen;
+#endif /* OS2 */
 
 #ifdef GFTIMER
 extern CKFLOAT fptsecs, fpfsecs, fpxfsecs;
@@ -528,6 +531,13 @@ input() {
 	    fatalio = 1;
 	    return('q');
 	}
+#ifdef OS2
+	if (ccseen) {
+		debug(F100, "Canceled by Ctrl+C","",0);
+		ccseen = 0; /* we've seen it now, don't need to see it again */
+		return('q');
+	}
+#endif /* OS2 */
 	if (sstate != 0) {		/* If a start state is in effect, */
 	    type = sstate;		/* return it like a packet type, */
 	    sstate = 0;			/* and then nullify it. */

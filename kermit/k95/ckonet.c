@@ -92,9 +92,9 @@ os2_netxout(char *s, int n) {
 extern char pipename[PIPENAML+1];
 #endif /* NPIPE */
 
+#include <process.h>
 #ifdef NT
 #include <windows.h>
-#include <process.h>
 #define itoa _itoa
 #else /* NT */
 #define INCL_NOPM
@@ -138,6 +138,10 @@ BOOL conpty_open = FALSE;
 #undef CK_CONPTY
 #endif /* NT */
 #endif /* CK_CONPTY */
+
+#ifdef SSH_DLL
+#include "ckossh.h"
+#endif /* SSH_DLL */
 
 extern int ttnproto, tn_deb;
 #ifndef NOTERM
@@ -462,14 +466,14 @@ NetCmdGetChar( char * pch )
 
 #ifdef NT
 void
-NetCmdReadThread( HANDLE pipe )
+NetCmdReadThread( void *pipe )
 {
     int success = 1;
     CHAR c;
     DWORD io;
 
     while ( success && ttyfd != -1 ) {
-        if ( success = ReadFile(pipe, &c, 1, &io, NULL ) )
+        if ( success = ReadFile((HANDLE)pipe, &c, 1, &io, NULL ) )
         {
             NetCmdPutChar(c);
         }
@@ -477,14 +481,14 @@ NetCmdReadThread( HANDLE pipe )
 }
 #else /* NT */
 void
-NetCmdReadThread( HFILE pipe )
+NetCmdReadThread( void *pipe )
 {
     int success = 1;
     CHAR c;
     ULONG io;
 
     while ( success && ttyfd != -1 ) {
-        if ( success = !DosRead(pipe, &c, 1, &io) )
+        if ( success = !DosRead((HFILE)pipe, &c, 1, &io) )
         {
             NetCmdPutChar(c);
         }
@@ -767,7 +771,14 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
         if ( !netbiosAvail )
           return -1 ;
 
-        ckstrncpy( RemoteName, name, NETBIOS_NAME_LEN+1 ) ;
+        /*
+         * RemoteName must be padded with spaces to NETBIOS_NAME_LEN characters.
+         */
+        if (strlen(name) < NETBIOS_NAME_LEN) {
+            strncpy( RemoteName, name, strlen(name) ) ;
+        } else {
+            ckstrncpy( RemoteName, name, NETBIOS_NAME_LEN+1 ) ;
+        }
 
         if ( NetBiosLSN > 0             /* Make sure a handle doesn't exist */
              || ttyfd > -1 )
@@ -775,7 +786,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
         DosResetEventSem( hevNetBiosLSN, &PostCount ) ;
 
-        if ( !strcmp( "*               ", RemoteName ) ) { /* Server Mode */
+        if ( !strcmp( "*", RemoteName ) ) { /* Server Mode */
             if ( pListenNCB->basic_ncb.bncb.ncb_retcode == NB_COMMAND_IN_PROCESS)
               return 0 ;
 
@@ -788,7 +799,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 
             ttyfd = NetBiosLSN = 0 ;
 
-            ListenThreadID = _beginthread( &NetbiosListenThread, 0, 16384, 0 );
+            ListenThreadID = _beginthread( &NetbiosListenThread, 0, 16384, NULL );
             if ( ListenThreadID == -1 ) {
                 Dos16SemWait( pListenNCB->basic_ncb.ncb_semaphore,
                               SEM_INDEFINITE_WAIT ) ;
@@ -809,8 +820,11 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
             printf("Calling \"%s\" via NetBios\n", RemoteName ) ;
             rc = NCBCall( NetbeuiAPI, pWorkNCB, NetBiosAdapter, NetBiosName,
                           RemoteName, NB_RECV_TIMEOUT, NB_SEND_TIMEOUT, FALSE ) ;
+            debug(F100,"Dos16Semwait...",NULL,0);
             rc = Dos16SemWait( pWorkNCB->basic_ncb.ncb_semaphore,
                                SEM_INDEFINITE_WAIT ) ;
+            debug(F101,"Dos16Semwait...done: ncb_retcode","",pWorkNCB->basic_ncb.bncb.ncb_retcode);
+
             if (rc)
               return -1 ;
 
@@ -1347,6 +1361,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
                     size, cmd_line, &procinfo, &hChildStdinWrDup, &hChildStdoutRdDup)) {
                 conpty_open = TRUE;
                 fSuccess = TRUE;
+            } else {
+                conpty_open = FALSE;
+                fSuccess = FALSE;
             }
         } else {
             conpty_open = FALSE;
@@ -1601,7 +1618,7 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifndef NT
                      0,
 #endif /* NT */
-                     65536, hChildStdoutRdDup );
+                     65536, (void *)hChildStdoutRdDup );
         rc = 0;
     }
 #endif /* NETCMD */
@@ -2129,7 +2146,8 @@ os2_nettchk() {                         /* for reading from network */
 #ifdef NETCMD
     if ( nettype == NET_CMD || nettype == NET_PTY ) {
 #ifdef NT
-        if (WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
+        if (procinfo.hProcess == NULL ||
+                WaitForSingleObject(procinfo.hProcess, 0L) == WAIT_OBJECT_0) {
             ttclos(0);
             return(-1);
         }
@@ -3939,6 +3957,8 @@ os2_tcpipinit() {
     if ( CKTCPIPDLL ) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, CKTCPIPDLL, _MAX_PATH );
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if (!rc) {
             if (deblog)
@@ -3948,6 +3968,7 @@ os2_tcpipinit() {
         } else {
             debug(F110,"CKTCPIPDLL",CKTCPIPDLL,0);
             debug(F111,"CKTCPIPDLL DosLoadModule failed",fail,rc);
+            debug(F110, "Object contributing to load failure", fail, 0);
         }
     } else
         debug(F100,"CKTCPIPDLL not defined","",0);
@@ -3956,13 +3977,35 @@ os2_tcpipinit() {
 /*
   Attempt to load in the following order:
   1. CKTCPIPDLL environment variable
-  2. IBM 2.0
-  3. FTP 1.3
-  4. IBM 1.2
+  2. IBM 4.1+ (the new 32bit TCP/IP stack in Warp Server for eBusiness)
+  3. IBM 2.0-4.0
+  4. FTP 1.3
+  5. IBM 1.2
 */
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
+        ckstrncat(dll, "CKO32I41.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
+        rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
+        if ( rc ) {
+            ckstrncpy(dll,"CKO32I41", _MAX_PATH);
+            rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
+        }
+        if (!rc) {
+            if (deblog) printf( "32bit IBM TCP/IP 4.1 or higher loaded...") ;
+            sprintf(tcpname,"%s = 32-bit IBM TCP/IP 4.1 or higher", dll);
+            debug(F111,"32bit IBM TCP/IP 4.1 or higher loaded",dll,rc);
+        } else {
+          debug(F111,"32bit IBM TCP/IP 4.1 or higher load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
+    }
+    if (rc != 0) {
+        ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32I20.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll,"CKO32I20", _MAX_PATH);
@@ -3972,12 +4015,16 @@ os2_tcpipinit() {
             if (deblog) printf( "32bit IBM TCP/IP 2.0 or higher loaded...") ;
             sprintf(tcpname,"%s = 32-bit IBM TCP/IP 2.0 or higher", dll);
             debug(F111,"32bit IBM TCP/IP 2.0 or higher loaded",dll,rc);
-        } else
+        } else {
           debug(F111,"32bit IBM TCP/IP 2.0 or higher load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32F13.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll, "CKO32F13", _MAX_PATH);
@@ -3987,12 +4034,16 @@ os2_tcpipinit() {
             if (deblog) printf( "32bit FTP PC/TCP 1.3 loaded...") ;
             sprintf(tcpname,"%s = 32-bit FTP PC/TCP 1.3", dll);
             debug(F111,"32bit FTP PC/TCP 1.3 loaded",dll,rc);
-        } else
+        } else {
           debug(F111,"32bit FTP PC/TCP 1.3 load failed",dll,rc);
+          debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
     if (rc != 0) {
         ckstrncpy(dll, p, _MAX_PATH);
         ckstrncat(dll, "CKO32I12.DLL", _MAX_PATH);
+        if (deblog)
+            debug(F110, "Trying TCP/IP DLL", dll, 0);
         rc = DosLoadModule(fail, sizeof(fail), dll, &library) ;
         if ( rc ) {
             ckstrncpy(dll, "CKO32I12", _MAX_PATH);
@@ -4010,9 +4061,11 @@ os2_tcpipinit() {
                 printf( "32bit IBM TCP/IP 1.2 (or compatible) loaded...") ;
             sprintf(tcpname,"%s = 32-bit IBM TCP/IP 1.2 (or compatible)", dll);
             debug(F111,"32bit IBM TCP/IP 1.2 (or compatible) loaded",dll,rc);
-        } else
+        } else {
             debug(F111,
                    "32bit IBM TCP/IP 1.2 (or compatible) load failed",dll,rc);
+            debug(F110, "Object contributing to load failure", fail, 0);
+        }
     }
 #else
 /*
@@ -4402,6 +4455,33 @@ netinit() {
             ttyfd = -1 ;
         }
 #endif /* SUPERLAT */
+
+#ifdef SSH_DLL
+        if (deblog) {
+            printf("  SSH support..." ) ;
+            debug(F100,"SSH support...","",0);
+        }
+        if (ssh_dll_load(SSH_AUTO_DLLS, FALSE) >= 0) {
+            if (deblog) {
+                printf("OK\n") ;
+                debug(F100,"SSH OK","",0);
+            }
+        } else {
+            if (deblog) {
+                printf("Not installed\n" ) ;
+                debug(F100,"SSH not installed","",0) ;
+            }
+        }
+#else
+#ifdef SSHBUILTIN
+        ssh_initialise();
+#endif /* SSHBUILTIN */
+#endif /* SSH_DLL */
+#ifdef SSHBUILTIN
+#ifdef CK_COLORS_24BIT
+        ssh_set_environment_variable("COLORTERM", "truecolor");
+#endif /* CK_COLORS_24BIT */
+#endif /* SSHBUILTIN */
     }
 
 #ifdef TCPSOCKET

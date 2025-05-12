@@ -161,6 +161,7 @@ char *ckftpv = "FTP Client, 10.0.281, 18 Sep 2023";
 #ifdef OS2ONLY
 #define INCL_WINERRORS
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -717,7 +718,7 @@ static gss_OID ck_gss_nt_service_name_v2 = ck_oids+5;
 #include "ckcfnp.h"                     /* Prototypes */
 
 extern int k95stdout, wherex[], wherey[];
-extern unsigned char colorcmd;
+extern cell_video_attr_t colorcmd;
 #endif /* OS2 */
 
 #ifdef FTP_KRB4
@@ -2151,8 +2152,13 @@ static int rfnlen = 0;
 static char rfnbuf[RFNBUFSIZ];          /* Remote filename translate buffer */
 static char * xgnbp = NULL;
 
-static int
-strgetc() {                             /* Helper function for xgnbyte() */
+static int                              /* Helper function for xgnbyte() */
+#ifdef CK_ANSIC
+strgetc(void)
+#else
+strgetc()
+#endif /* CK_ANSIC */
+{
     int c;
     if (!xgnbp)
       return(-1);
@@ -4978,6 +4984,7 @@ check_data_connection(fd,fc) int fd, fc;
 #endif /* CK_ANSIC */
 {
     int x;
+#ifdef BSDSELECT
     struct timeval tv;
     fd_set in, out, err;
 
@@ -4996,19 +5003,30 @@ check_data_connection(fd,fc) int fd, fc;
 #else
     x = select(FD_SETSIZE,&in,&out,&err,&tv);
 #endif /* INTSELECT */
+#else /* BSDSELECT */
+#ifdef IBMSELECT
+    if (ftp_timeout < 1L)
+        return(0);
 
+    if (fc) { /* write */
+        x = select(&fd, 0, 1, 0, ftp_timeout * 1000L);
+    } else { /* read */
+        x = select(&fd, 1, 0, 0, ftp_timeout * 1000L);
+    }
+#endif /* IBMSELECT */
+#endif /* BSDSELECT */
     if (x == 0) {
 #ifdef EWOULDBLOCK
-	errno = EWOULDBLOCK;
+        errno = EWOULDBLOCK;
 #else
 #ifdef EAGAIN
-	errno = EAGAIN;
+        errno = EAGAIN;
 #else
-	errno = 11;
+        errno = 11;
 #endif	/* EAGAIN */
 #endif	/* EWOULDBLOCK */
-	debug(F100,"ftp check_data_connection TIMOUT","",0);
-	return(-3);
+        debug(F100,"ftp check_data_connection TIMOUT","",0);
+        return(-3);
     }
     return(0);
 }
@@ -10745,7 +10763,7 @@ ssl_auth() {
         SSL_set_cipher_list(ssl_ftp_con,ssl_cipher_list);
     } else {
         char * p;
-        if (p = getenv("SSL_CIPHER")) {
+        if ((p = getenv("SSL_CIPHER"))) {
             SSL_set_cipher_list(ssl_ftp_con,p);
         } else {
             SSL_set_cipher_list(ssl_ftp_con,DEFAULT_CIPHER_LIST);
@@ -12550,7 +12568,12 @@ cancelrecv(sig) int sig;
 /* Argumentless front-end for secure_getc() */
 
 static int
-netgetc() {
+#ifdef CK_ANSIC
+netgetc(void)				/* Input function to point to... */
+#else  /* CK_ANSIC */
+netgetc()
+#endif /* CK_ANSIC */
+{
     return(secure_getc(globaldin,0));
 }
 
@@ -13167,15 +13190,17 @@ Please confirm output file specification or supply an alternative:";
                             return;
                         }
                         if (c < 0 || c == EOF)
-                          goto break2;
+                            break;
                         if (c == '\0') {
                             bytes++;
-                            goto contin2;
+                            break;
                         }
                     }
                 }
-                if (c < 0)
-                  break;
+                if (c < 0 || c == EOF)
+                    break;
+                if (c == '\0')
+                    continue;
 #endif /* UNX */
 
                 if (out2screen && !ftprecv.pipename)
@@ -13189,10 +13214,7 @@ Please confirm output file specification or supply an alternative:";
                     break;
                 bytes++;
                 ffc++;
-              contin2:
-                ;
             }
-          break2:
             if (bare_lfs && (!dpyactive || ftp_deb)) {
                 printf("WARNING! %d bare linefeeds received in ASCII mode\n",
                        bare_lfs);

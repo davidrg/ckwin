@@ -1,0 +1,1663 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 READ ME</title></head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2><a name="top">WELCOME TO KERMIT 95 <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--></a></h2>
+
+<blockquote>
+<i><!--$ver-date$-->27 October 2024<!--/$ver-date$--></i>
+</blockquote>
+
+<p>
+
+<big><big>K</big></big>ermit 95<b>:</b> Powerful, flexible, customizable,
+secure 32-bit communications software for Microsoft Windows, now in open source
+form.
+
+<p>
+<big>
+
+Unlike the K95 1.1.x and 2.x releases, <b>K95 3.0 and later are fully open-source</b>
+under the 3-clause BSD license!
+  <!--
+Unlike the K95 1.1.x releases, <b>K95 2.0 and later run in a GUI window</b>
+(a Console version is available too).  A description of the
+Graphical User Interface is <a href="k95gui.html">HERE</a> and also in the
+updated Kermit 95 manual.-->
+
+</big>
+<p>
+
+Copyright &#169; 1995, 2003, the Trustees of Columbia University
+in the City of New York, all rights reserved.
+<p>
+<blockquote><small>
+Portions Copyright &#169; 1986 Gary S. Brown.<br>
+Portions Copyright &#169; 1990, Massachusetts Institute of Technology.<br>
+Portions Copyright &#169; 1991, 1993 Regents of the University of California.<br>
+Portions Copyright &#169; 1991, 1992, 1993, 1994, 1995 by AT&#38;T.<br>
+Portions Copyright &#169; 1995 Tatu Ylonen
+<tt>&lt;ylo@cs.hut.fi&gt;</tt>, Espoo, Finland.<br>
+Portions Copyright &#169; 1995, Oy Online Solutions Ltd., Jyvaskyla, Finland.<br>
+Portions Copyright &#169; 1995-1998, Eric Young
+<tt>&#60;eay@cryptosoft.com&#62;</tt>.<br>
+Portions Copyright &#169; 1997, Stanford University.<br>
+Portions Copyright &#169; 1998 CORE SDI S.A., Buenos Aires, Argentina.<br>
+Portions Copyright &#169; 1998-2001 The OpenSSL Project.<br>
+Portions Copyright &#169; (date unspecified) Markus Friedl, Theo de Raadt,
+Niels Provos, Dug Song, Aaron Campbell.<br>
+Portions Copyright &#169; The Kermit Project Contributors
+</small></blockquote>
+
+<h3><hr><a name="contents">CONTENTS</a></h3>
+
+<ol>
+<li><a href="#x1">WHAT'S WHAT</a>
+<li><a href="#x2">WHAT'S NEW</a>
+<li><a href="#x3">SYSTEM REQUIREMENTS</a>
+<li><a href="#x4">SECURITY AND ENCRYPTION</a>
+<li><a href="#x5">INSTALLING KERMIT 95</a>
+<li><a href="#x6">UNINSTALLING KERMIT 95</a>
+<li><a href="#x7">REGISTRATION</a>
+<li><a href="#x8">RESOURCES</a>
+<li><a href="#x9">FILES AND DIRECTORIES</a>
+<ol>
+<li><a href="#x9.1">The New Directory Structure</a>
+<li><a href="#x9.2">Patches and Search Order</a>
+<li><a href="#x9.3">Important K95 Files</a>
+</ol>
+<li><a href="#x10">ORIENTATION AND NAVIGATION</a>
+<ol>
+<li><a href="#x10.1">K95's Initial Directory</a>
+<li><a href="#x10.2">K95's CD Command</a>
+<li><a href="#x10.3">Where Is My Customization File?</a>
+<li><a href="#x10.4">Structure of <tt>.</tt>INI Files</a>
+<li><a href="#x10.5">Where is the File I Just Downloaded?</a>
+
+</ol>
+</ol>
+
+<h3><hr><a name="x1">1. WHAT'S WHAT</a></h3>
+
+Kermit 95 Version 3.0.0, the twenty-fifth update since the
+original release in September 1995, is currently in development with periodic
+beta releases to fix issues, restore missing functionality and add new
+features now expected of modern terminal emulators. This is currently release:
+<!--$ver-full$-->3.0.0 DEV<!--/$ver-full$-->
+
+<p>Some features are still missing from the current beta release - it is
+hoped that most of them, where possible, will return before the final stable
+3.0 release.
+</p>
+
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x2">2. WHAT'S NEW</a></h3>
+
+Kermit 95 3.0 is the first open source release of K95. Differences from the
+last commercial release, 2.1.3, include:
+
+<p>
+<ul>
+
+<li>Improved compatibility and appearance on modern Windows versions including
+  large file support and ports to 64bit Windows on: x86-64, ARM64 and Itanium
+<li>Support for Windows NT on Alpha and PowerPC has been restored
+<li>New ports to 32bit Windows on: MIPS and ARM32, and new support for Windows NT 3.50</li>
+<li>PTYs are now supported on Windows 10 v1809 and newer</li>
+<li>Mouse Wheel support</li>
+<li>Terminal Mouse Reporting</li>
+<li>REXX is now supported on x86 and x86-64 Windows XP and newer as well as OS/2</li>
+<li>Named Pipe connections are now supported on Windows as well as OS/2</li>
+<li>New modern SSH implementation based on libssh</li>
+<li>Support for the latest versions of OpenSSL and MIT Kerberos for Windows</li>
+<li>TLS SNI support in the http and telnet clients</li>
+<li>A number of new escape sequences are supported in the ANSI terminal
+  emulator to improve xterm and linux compatibility</li>
+<li>The screen update interval is no longer fixed at 100ms in K95G - it can be
+  changed with <tt>set terminal screen-update fast</tt></li>
+<li>New ADM5 terminal type</li>
+<li>New SKERMIT command</li>
+<li>Updated to C-Kermit 10</li>
+</ul>
+<p>
+
+Unfortunately some features have had to be removed from v3.0 due to changing
+  3rd party dependencies and licensing concerns:
+
+<p>
+<ul>
+  <li>SSHv1 and some Kerberos-related SSH commands and options are no longer
+    supported as the new SSH backend (libssh) doesn't support them</li>
+  <li>SSH and SSL/TLS are no longer supported on Windows versions older than XP
+    as OpenSSL and libssh no longer support these platforms.</li>
+  <li>SSL/TLS is no longer supported on IBM OS/2 as the compiler now used,
+    Open Watcom, is not compatible with OpenSSL</li>
+  <li>SRP and Kerberos IV support is no longer included as these 3rd-party
+    libraries have been unmaintained for some years now.
+  </li>
+  <li>SuperLAT and TES32 support is no longer included by default due to unclear
+    header licensing. This may change in the future.
+  </li>
+</ul>
+<p>As Kermit 95 is open-source now, if you <em>need</em> support for SRP,
+  Kerberos IV, SuperLAT or TES32 it is still possible to compile Kermit 95 with
+  these features by using an older compiler and supplying the now unmaintained
+  3rd-party libraries required to support them. Instructions for doing so are
+  included with the source code.
+
+<p>For a full list of everything that's changed since Kermit 95 2.1.3, consult
+  the change log that you should have received with your copy of Kermit 95.
+</p>
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x3">3. SYSTEM REQUIREMENTS</a></h3>
+
+All you need to use Kermit 95 are:
+
+<ul>
+
+<li>Any 32bit or 64bit Windows compatible computer running any 32bit or 64bit
+  version of Windows except for Windows NT 3.1 or MIPS Windows NT 3.50, or a
+  PC running IBM OS/2 2.0 or later.
+</li>
+
+<!--<li>An Intel-based or compatible PC running Microsoft Windows 95, 98, ME, NT-->
+<!--4.0 or later, Windows 2000, or Windows XP, or IBM OS/2 3.0 or later.-->
+
+<li>The normal amount of memory and swap space for those platforms
+(as with any Windows application, K95 works best when there is plenty
+of memory and a fast processor).
+
+<li>For making connections: A serial port and/or modem, and/or a network
+connection.
+
+</ul>
+
+
+
+<p>
+
+The following are not supported:
+<p>
+
+<ul>
+<li>Windows NT 3.10</li>
+<li>MIPS Windows NT 3.50</li>
+<li>Alpha Windows NT 3.50 is console-mode only (no K95G)</li>
+<li>Win32s (Win32 on Windows 3.1x) due to lack of support for threading</li>
+<li>Windows CE and Pocket PC are not supported.
+</ul>
+
+<p>
+<!-- TODO: update memory and disk requirements -->
+Windows 95/98/ME and Windows NT/2000/XP are demand-paged virtual memory
+operating systems, and so the time-honored question, "How much RAM is
+required?" does not strictly apply to Kermit 95.  But as with most Windows
+applications: the more the better.  K95 together with all the DLLs it might
+use (which in turns depend on which features you elected during installation
+or invoke at runtime) needs between 5 and 30MB, most of which is (a) shared
+among multiple copies of K95 and other applications, and (b) usually paged out
+to disk.  Thus the incremental cost of running two, three, four, or more
+copies of K95 is small.
+
+<p>
+
+Kermit 95's total disk footprint after installation is about 32MB.
+  Approximately one additional megabyte is needed when
+the Dialer is active, for backup and temporary files, depending on the size of
+your Dialer database.
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x4">4. SECURITY AND ENCRYPTION</a></h3>
+
+Kermit 95 contains strong cryptography and its legality may vary from country
+to country. You may find the information at
+<a href="http://www.cryptolaw.org/">cryptolaw.org</a> useful but the Kermit
+Project can not vouch for its correctness.
+
+<p>
+
+See the Kermit 95 Online Manual's <a href="security.html">Network Security
+Methods Reference</a> for further information on Authentication and Encryption
+methods supported by Kermit 95.
+
+<p>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x5">5. INSTALLING KERMIT 95</a></h3>
+
+Current releases of Kermit 95 do not yet have an installation procedure.
+Beta releases are currently distributed as &quot;portable&quot; applications -
+just unzip the release to somewhere convenient and create a shortcut or
+run k95g.exe. Kermit 95 isn't specifically designed as a portable application
+however, and it <em>will</em> create a few registry keys under
+<tt>\HKCU\Software\Kermit</tt> on first run.
+
+<p>If you would like to have shortcuts and file associations created, the old
+  K95 Registry Tool is included with current K95 3.0 betas so you can create
+  these by running k95regtl.exe and choosing which things to create.
+
+<p>
+  There are no particular procedures <em>required</em> when upgrading from
+  Kermit 95 v2.1.3 but due to changes in the dialer it is advised you
+  take a backup of your dialer data files if you use the dialer. Otherwise, you
+  should be able to run K95 2.1.3 and 3.0 side-by-side.
+</p>
+
+<!-- TODO: More info on upgrading from K95 2.1.3 -->
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x6">6. UNINSTALLING KERMIT 95</a></h3>
+
+For the current release uninstalling is the reverse of installing. If you used
+the K95 Registry Tool (k95regtl.exe) to setup associations, etc, run it again
+to undo those things, then delete the K95 files you originally extracted from
+the release archive along with any shortcuts you created.
+
+<p>One other bit of cleanup you may want to do: K95 creates a few of registry
+  keys under <tt>\HKCU\Software\Kermit</tt> which can be deleted if you wish.
+</p>
+
+<!--
+Should you wish to remove Kermit 95 from your Windows 95 system, it depends on
+how you installed it in the first place.  In both cases you should exit from
+all Kermit programs (K95, the Dialer) first.  Then:
+
+<p>
+<dl>
+<dt><i>If you installed K95 with the text-mode installer</i>
+(<tt>SETUP.EXE</tt>):
+<dd>
+<ol>
+<li>If you used K95 Registry Tool to add Kermit 95 configuration information
+into the Windows Registry, run it again to remove the information from the
+Registry.
+<li>Drag the Kermit 95 folder to the Recycle Bin.  Do the same with any
+shortcuts you might have created to Kermit 95.
+</ol>
+
+<p>
+
+<dt><i>If you installed K95 with the GUI InstallShield installer:</i>
+<dd>Simply use
+Add/Remove Programs in the Windows Control Panel to remove it:
+<ol>
+<li>Press the Change/Remove button to re-start the installer.
+
+<li>Select Remove all installed components
+
+<li>The uninstall process deliberately leaves behind certain files
+associated with Kermit 95, in case you ever re-install K95 and want your
+customizations intact, or you want to keep files that you downloaded, etc:
+<ul>
+<li><tt>IKSD.KSC</tt>
+<li><tt>K95CUSTOM.INI</tt>
+<li><tt>DIALUSR.DAT</tt>
+<li><tt>KRB.CON</tt>
+<li><tt>KRBREALM.CON</tt>
+<li><tt>KRB5.INI</tt>
+<li>Each user's <a href="#files">application data directory</a>
+and subdirectories.
+<li>Each user's <tt>DOWNLOAD</tt> directory.
+<li>Any files the K95 Installer didn't install.
+</ul>
+If you wish to remove these files you may do so after the uninstall is
+complete by deleting the files in the Windows Explorer.
+
+<li>If you have installed Kerberos the uninstall might require a reboot
+to remove the <tt>krbcc32s.exe</tt> application that stores your
+Kerberos credentials in memory.
+</ol>
+
+</dl>
+-->
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x7">7. REGISTRATION</a></h3>
+
+Registration of Kermit 95 v3.0 and newer is no longer required - starting with
+this release it is completely free and open source.
+
+<p>This does not apply to Kermit 95 v2.1.3 and earlier releases -
+those are <em>not</em> free. Columbia may still sell bulk licenses for K95
+v2.1.3 if you need an older version for some reason.
+</p>
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><hr><a name="x8">8. RESOURCES</a></h3>
+
+<dl>
+<dt><a href="uck2epdf.html"><i>Using C-Kermit</i>, 2nd Edition</a>
+<dd>The user manual for C-Kermit and the technical reference manual for
+Kermit95 in PDF format.  This is <a href="https://kermitproject.org/booksonline.html">
+    available from the Kermit Project Website
+  </a>.
+
+<p>
+
+<dt><a href="https://www.kermitproject.org/ckermit70.html"><i>The C-Kermit 7.0 Update Notes</i></a>
+<dt><a href="https://www.kermitproject.org/ckermit80.html"><i>The C-Kermit 8.0 Update Notes</i></a>
+<dt><a href="https://www.kermitproject.org/ckermit90.html"><i>The C-Kermit 9.0 Update Notes</i></a>
+
+<dd> Kermit 95 3.0 is based on C-Kermit 10.0, but <cite>Using
+C-Kermit</cite> is current with C-Kermit 6.0.  The C-Kermit 7.0, 8.0 and 9.0 update
+notes document all the features added to C-Kermit since the second edition of
+the book was published in 1997.  These are fully cross-linked HTML documents,
+rather than plain text as in earlier K95 releases.  Access them via the link
+in the References section at the top your K95 manual.
+
+<p>
+<dt><a href="k95faq.html"><i>The Kermit 95 FAQ</i></a>
+<dd>Frequently Asked Questions (and answers) about Kermit 95.
+If you have a question about Kermit 95, look here first.  Access the K95 FAQ
+via the link in the References section at the top your K95 manual.
+
+
+<p>
+<dt><a href="k95bugs.html"><i>The Kermit 95 Bug List</i></a>
+<dd>A chronological list of bugs in all the Kermit 95 releases.  Most of
+them have been fixed; most of those that remain are due to bugs or limitations
+in the underlying operating system.  In many cases, workarounds are
+suggested.  If you have problems with Kermit 95, be sure to look here for a
+discussion of it and a possible solution.  This is a fully indexed and
+crosslinked HTML document, rather than plain text.  Access it via the link in
+the References section at the top your K95 manual.
+
+<p>
+<dt><a href="security.html"><i>The Kermit Security Reference</i></a>
+<dd>A detailed explanation of Kermit's many security methods, with command
+lists for each.
+
+<p>
+<dt><a href="http://www.kermitproject.org/"><tt>http://www.kermitproject.org/</tt></a>
+<dd>The Kermit Project website on the Internet.  Here you will find
+information about Kermit software for other platforms, news about Kermit 95,
+hints and tips, script programming examples, and lots more.  Internet
+connection required.  Here are some points of interest:
+<p>
+<dl>
+<dt>The <a href="https://github.com/davidrg/ckwin/issues?q=is%3Aissue+label%3Abug+created%3A%3E%3D$!ver-date-iso$">
+  Github Issue Tracker</a></a></dt>
+<dd>Which lists bugs or other information discovered after this version of Kermit
+95 was released.
+<p>
+<dt><a href="http://www.kermitproject.org/k95.html">
+<tt>http://www.kermitproject.org/k95.html</tt></a>
+<dd>The Kermit 95 page.
+<p>
+
+<!--<dt><a href="http://www.columbia.edu/kermit/k95next.html">
+<tt>http://www.columbia.edu/kermit/k95next.html</tt></a>
+<dd>News about upcoming K95 releases.-->
+
+<p>
+<dt><a href="http://www.kermitproject.org/ckermit.html">
+<tt>http://www.kermitproject.org/ckermit.html</tt></a>
+<dd>The C-Kermit page, K95's companion software for UNIX, VMS, and
+other platforms.
+<p>
+<dt><a href="http://www.kermitproject.org/support.html">
+<tt>http://www.kermitproject.org/support.html</tt></a>
+<dd>The technical support page, explaining how to get technical support,
+and including some hints and tips to save you some time. For Kermit 95-specific
+    help, you can also try asking a question on Github at: <a href="https://github.com/davidrg/ckwin/discussions">https://github.com/davidrg/ckwin/discussions</a>
+<p>
+<dt><a href="https://kermitproject.org/scriptlib.html">
+<tt>https://kermitproject.org/scriptlib.html</tt></a>
+<dd>The Kermit Script Library.
+Lots of sample scripts demonstrating how to automate everything from dialing
+to Internet sessions to complex file-management and computation tasks.
+</dl>
+<!--<p>
+<dt><a href="news:comp.protocols.kermit.announce">
+<tt>comp.protocols.kermit.announce</tt></a>
+<dd>The Kermit software announcements newsgroup (moderated).-->
+<p>
+<dt><a href="news:comp.protocols.kermit.misc">
+<tt>comp.protocols.kermit.misc</tt></a>
+<dd>The Kermit software discussion newsgroup (unmoderated).
+</dl>
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+
+<h3><a name="files"><a name="directories"><a name="x9"><hr>9. FILES AND DIRECTORIES</a></a></a></h3>
+
+<b><u>NOTE: Section 9 (and 9.1/9.2/9.3) has not been updated for K95 v3.0 yet!</u></b>
+  The plan is for K95 v3.0 to largely match what is described here when it's
+  installed via an installer, but installers haven't been built yet. If you've
+  upgraded from K95 v2.1.3 then your setup will end up looking like that
+  described in section 9.2 as the current distribution method of K95 v3.0 betas
+  is more similar to that of K95 v1.1.20 and earlier.
+
+
+<pre>
+  9.1. <a href="#x9.1"><b>The New Directory Structure</b></a>
+  9.2. <a href="#x9.2"><b>Patches and Search Order</b></a>
+  9.3. <a href="#x9.3"><b>Important K95 Files</b></a>
+</pre>
+<p>
+
+Version 1.1.21 of Kermit 95 marks a dramatic departure from earlier versions
+in file and directory structure.  1.1.20 and earlier stored everything in a
+single directory tree, such as <tt>C:\K95</tt>.  This was simple to explain,
+short to type, kept everything together in one place, and made your Kermit
+files easy to find; for example, when you wanted to 
+<a href="#x10.3">edit your <tt>K95CUSTOM.INI</tt> file</a>.  However, the
+original scheme does mesh with multiuser file systems like the ones on Windows
+XP or Terminal Server.  Not only does it prevent users from having their own
+separate customization files, dialing directories, download areas, and so on,
+it also prevents system administrators from being able to enforce appropriate
+file access permissions on the program tree.
+
+<p>
+
+The new directory structure makes server installation much more natural.  The
+Program files directory goes on the server, read-only.  The Global (All Users)
+K95 data directory goes on the server too, with any desired site-specific
+customizations, and then made read-only too.  Then the user-specific K95 data
+tree goes with the user's other data files in the user's Application Data
+tree, read/write.
+
+<h3><a name="x9.1"><hr>9.1. The New Directory Structure</a></h3>
+
+As of version 1.1.21, Kermit 95 is installed just like any other Windows
+application.  Parts of it go into "Program Files", other parts into the All
+Users data area, and still others into the user's directory tree.  This is the
+Windows Way of installing applications.  The Windows directory paths are long
+and contain spaces, which tends to confuse text-based programs -- not just
+Kermit 95, but any program that has commands composed of fields
+separated by spaces.  For this reason Kermit 95 represents these directories
+by variables that expand into Windows "short names" such as
+"<tt>MYDOCU~1</tt>" rather than long names like "My Documents".  Kermit
+95's new directory structure is as follows:
+
+<p>
+
+<dl>
+<dt><i>The Program Directory</i>
+<dd>
+<table>
+<tr>
+<td>Created by:
+<td>InstallShield (the Kermit 95 installer)
+<tr>
+<td>Purpose:
+<td>Read/Execute-only software, DLLs, icons, documentation.
+<tr>
+<td>Win9x/ME:
+<td><tt>C:\Program Files\Kermit 95\</tt>
+<tr>
+<td>NT/2000/XP:<tt>&nbsp;&nbsp;</tt>
+<td><tt>C:\Program Files\Kermit 95\</tt>
+<tr>
+<td>Symbolic Name:
+<td><tt>EXEDIR</tt>
+<tr>
+<td>Variable:
+<td><tt>\v(exedir)</tt>
+<tr valign="top">
+<td>Contents:
+<td><ul>
+<li>The Kermit 95 executable, <tt>K95.EXE</tt>
+<li>The Dialer, <tt>K95DIAL.EXE</tt>, and its supporting resources (but not
+data)
+<li>Any DLLs needed by Kermit 95 or the Dialer
+<li>Assorted utilities and scripts
+<li>The following subdirectories:
+<table>
+<td><tt>DOCS:</tt>
+<td>Kermit 95 Documentation
+<tr>
+<td><tt>ICONS:&nbsp;&nbsp;&nbsp;</tt>
+<td>Kermit 95 Icons
+</table>
+</ul>
+</table>
+<p>
+
+<dt><i>Global (All Users) data for K95</i>
+<dd>
+<table>
+<tr>
+<td>Created by:
+<td>InstallShield
+<tr>
+<td>Purpose:
+<td>Read-only site-specific, site-wide configurations and data.
+<tr>
+<td>Win9x/ME:
+<td><tt>C:\WINDOWS\All Users\Application Data\Kermit 95\</tt><br>
+<tr>
+<td>NT/2000/XP:<tt>&nbsp;&nbsp;</tt>
+<td><tt>C:\Documents and Settings\All Users\Application Data\Kermit 95\</tt><br>
+<tr>
+<td>Symbolic Name:
+<td><tt>COMMON</tt>
+<tr>
+<td>Variable:
+<td><tt>\v(common)</tt>
+<tr valign="top">
+<td>Contents:
+<td><ul>
+<li>Kermit 95's initialization file, <tt>K95.INI</tt>.
+<li>Site-specific customization file, <tt>K95SITE.INI</tt> (<i>new</i>).
+<li>The <tt>DIALINF.DAT</tt> Dialer database (factory predefined entries).
+<li>The <tt>DIALORG.DAT</tt> Dialer database
+(organizational predefined entries).
+<li>The following subdirectories containing data for all users at the site.
+The files in these directories are initially as distributed with K95, but
+might be modified by the site administrator:
+<table>
+<tr>
+<td><tt>CERTS</tt>
+<td>Site-wide X.509 certificates for SSL/TLS.
+<tr>
+<td><tt>CRLS</tt>
+<td>Site-wide X.509 certificate revocation lists for SSL/TLS.
+<tr>
+<td><tt>KEYMAPS&nbsp;&nbsp;&nbsp;</tt>
+<td>Site-wide key mapping files and information.
+<tr>
+<td><tt>PHONES</tt>
+<td>Site-wide dialing directories.
+<tr>
+<td><tt>PRINTER</tt>
+<td>Printer-related utilities and information
+<tr>
+<td><tt>SCRIPTS</tt>
+<td>Sample and/or production scripts
+<tr>
+<td><tt>SSH</tt>
+<td>Site-specific SSH host keys
+</table>
+</ul>
+</table>
+</dl>
+
+<p>
+<blockquote>
+<i>
+
+NOTE: On Windows NT, 2000, and XP, if the person installing Kermit 95
+does not have write access to the All Users tree (e.g. because Administrator
+privilege is lacking), all of the items listed above for the
+<tt>\v(common)</tt> tree are placed instead in the <tt>\v(appdata)</tt>
+tree (next item).  In Windows 95, 98, and ME, the <tt>\v(common)</tt> tree is
+always used as described above.
+
+</i>
+</blockquote>
+<p>
+
+<dl>
+<dt><i>User-specific data for all applications (s = single-user, m = multiuser):</i>
+<dd><table>
+<tr>
+<td>Created by:
+<td>Windows 98 and higher when your ID is created.  Not standard in Windows 95.
+<tr>
+<td>Purpose:
+<td>Read/Write user-specific data for all applications.
+<tr>
+<td>Win95:
+<td><tt>C:\My Documents\</tt> (if it exists).
+<tr>
+<td>Win98/ME (s):
+<td><tt>C:\My Documents\</tt>
+<tr>
+<td>Win98/ME (m):
+<td><tt>C:\WINDOWS\Profiles\<i>username</i>\My Documents\</tt>
+<tr>
+<td>NT/2000/XP:<tt>&nbsp;&nbsp;</tt>
+<td><tt><tt>C:\Documents and Settings\<i>username</i>\My Documents\</tt>
+<tr>
+<td>Symbolic Name:
+<td><tt>PERSONAL</tt>
+<tr>
+<td>Variable:
+<td><tt>\v(personal)</tt> (might be empty in Win95).
+<tr valign="top">
+<td>Contents:
+<td><ul>
+<li>Kermit's <tt>DOWNLOAD</tt> directory, possibly shared with AOL, MSN,
+and other applications.
+<li>Other data or subdirectories not specific to any particular application.
+</ul>
+</table>
+
+
+<p>
+<dt><i>User-specific data for K95 (s = single-user, m = multiuser):</i>
+<dd><table>
+<tr>
+<td>Created by:
+<td>Kermit 95 upon first use.
+<tr>
+<td>Purpose:
+<td>Read/Write user-specific configurations and data.
+<tr>
+<td>Win9x/ME (s):
+<td><tt>C:\WINDOWS\Application Data\Kermit 95\</tt>
+<tr>
+<td>Win9x/ME (m):
+<td><tt>C:\WINDOWS\Profiles\<i>username</i>\Application Data\Kermit 95\</tt>
+<tr>
+<td>NT/2000/XP:<tt>&nbsp;&nbsp;</tt>
+<td><tt><tt>C:\Documents and Settings\<i>username</i>\Application Data\Kermit 95\</tt>
+<tr>
+<td>Symbolic Name
+<td><tt>APPDATA</tt>
+<tr>
+<td>Variable:
+<td><tt>\v(appdata)</tt>
+<tr valign="top">
+<td>Contents:
+<td><ul>
+<li>Each user's customization file, <tt>K95CUSTOM.INI</tt>
+<li>Each user's <tt>DIALUSR.DAT</tt> Dialer database
+<li>For each user, the following subdirectories, initially empty; can be
+populated by the user:
+<table>
+<tr>
+<td><tt>CERTS</tt>
+<td>Your personal X.509 certificates for SSL/TSL.
+<tr>
+<td><tt>CRLS</tt>
+<td>Your personal X.509 certificate revocation lists for SSL/TSL.
+<tr>
+<td><tt>DOWNLOAD&nbsp;&nbsp;</tt>
+<td>Your personal download directory.
+<tr>
+<td><tt>KEYMAPS</tt>
+<td>Your personal key mapping files.
+<tr>
+<td><tt>PHONES</tt>
+<td>Your personal dialing directories.
+<tr>
+<td><tt>SCRIPTS</tt>
+<td>Your personal scripts.
+<tr>
+<td><tt>SSH</tt>
+<td>Your personal SSH host keys.
+<tr>
+<td><tt>TMP</tt>
+<td>Your personal Temporary directory.
+</table>
+</ul>
+</table>
+</dl>
+<p>
+
+The symbolic names are used in K95's new KCD command
+(<a href="#x10.2">Section 10.2</a>) for convenient navigation.
+
+<p>
+
+To alleviate confusion, Kermit 95 1.1.21 has a new <tt>ORIENTATION</tt>
+command that gives this information as it applies to your computer.  Here's
+an example from Windows XP:
+
+<p>
+<pre>
+  [C:\Documents and Settings\Olga\] K-95&gt; <u>orient</u> 
+
+  Program name:
+    k95
+
+  Your home directory:
+    Variable:   \v(home)
+    Long name:  C:/Documents and Settings/Olga/
+    Short name: C:/DOCUME~1/OLGA/
+
+  K95's current directory:
+    Variable:   \v(directory)
+    Long name:  C:/Documents and Settings/Olga/
+    Short name: C:/DOCUME~1/OLGA/
+
+  K95 Program directory:
+    Variable:   \v(exedir)
+    Long name:  C:/Program Files/Kermit 95/
+    Short name: C:/PROGRAM~/KERMIT~/
+
+  K95 Initialization file directory:
+    Variable:   \v(inidir)
+    Long name:  C:/Documents and Settings/All Users/Application Data/Kermit 95/
+    Short name: C:/DOCUME~1/ALLUSE~1/APPLIC~1/KERMIT~1/
+
+  Current directory when started:
+    Variable:   \v(startup)
+    Long name:  C:/tmp/
+    Short name: C:/tmp/
+
+  K95 data for all users:
+    Variable:   \v(common)
+    Long name:  C:/Documents and Settings/All Users/Application Data/Kermit 95/
+    Short name: C:/DOCUME~1/ALLUSE~1/APPLIC~1/KERMIT~1/
+
+  Your personal data directory tree:
+    Variable:   \v(personal)
+    Long name:  C:/Documents and Settings/Olga/My Documents/
+    Short name: C:/DOCUME~1/OLGA/MYDOCU~1/
+
+  Your deskop directory tree:
+    Variable:   \v(desktop)
+    Long name:  C:/Documents and Settings/Olga/Desktop/
+    Short name: C:/DOCUME~1/OLGA/DESKTOP/
+
+  Your personal K95 data tree:
+    Variable:   \v(appdata)
+    Long name:  C:/Documents and Settings/Olga/Application Data/Kermit 95/
+    Short name: C:/DOCUME~1/OLGA/APPLIC~1/KERMIT~1/
+
+  Your K95 download directory:
+    Variable:   \v(download)
+    Long name:
+    Short name:
+</pre>
+<p>
+
+For script writers, a pair of new functions has been added to convert between
+Windows long and short names:
+
+<p>
+<dl>
+
+<dt><tt>\flongpathname(<i>path</i>)</tt><dt>
+
+<dd>Converts the given <i>path</i> (file or directory name) from whatever
+format it's in (short or long) to long format, except in Windows 95 and NT,
+which do not have this capability, and therefore simply return the
+<i>path</i> as it was given.
+
+<p>
+
+<dt><tt>\fshortpathname(<i>path</i>)</tt><dt>
+
+<dd>Converts the given <i>path</i> to short format.
+
+</dl>
+<p>
+
+<tt>\flongpathname()</tt> (except in Windows 95 and NT) can be used in
+conjunction with <tt>\fpathname()</tt>, which returns the full pathname of a
+given file in short format, to show the full long path for a given file, e.g.:
+
+<p>
+<pre>
+  K95&gt; <u>cd \v(exedir)</u>
+  K95&gt; <u>echo \flongpathname(\fpathname(k95.exe))</u>
+  C:\Program Files\Kermit 95\k95.exe
+  K95&gt; 
+</pre>
+
+<h3><a name="x9.2"><hr>9.2. Patches and Search Order</a></h3>
+
+<b>Those who patch</b> up to version 1.1.21 from earlier releases will have a
+hybrid structure; the old structure remains as it was, but the new structure
+is created upon first use of the new <tt>K95.EXE</tt> or Dialer.  This adds an
+element of doubt as to where a particular file is or, if there are multiple
+copies, which one is used?  The following rules apply:
+
+<p>
+<ul>
+
+<li>The original directory structure is preserved and all your customized
+files are left intact (<tt>K95[CUSTOM].INI</tt>, <tt>DIALUSR.DAT</tt>, etc)
+in their original locations.
+
+<p>
+
+<li>Upon first use of the patched K95 or K95DIAL prorgram:
+
+<ol>
+
+<li>The <tt>\v(common)</tt> and <tt>\v(appdata)</tt> directories are created
+automatically.  The <tt>\v(common)</tt> and <tt>\v(appdata)</tt> directories
+are each populated with the following empty subdirectories: CERTS, CRLS,
+KEYMAPS, PHONES, SCRIPTS, SSH, and (<tt>\v(appdata)</tt> only) TMP, some of
+which (KEYMAPS, PHONES, SCRIPTS, and TMP) duplicate directories that already
+exist in your <tt>\v(exedir)</tt> tree.  The CERTS, CRLS, and SSH directories
+are new so there should be no confusion about them.
+
+<li>The <tt>\v(personal)</tt> directory is created if it does not exist
+(except in Windows 95 versions that do not support it) and a DOWNLOAD
+subdirectory is created in it.
+
+</ol>
+<p>
+
+<li>Kermit searches for its initialization file, <tt>K95.INI</tt>,
+in the following order:
+<ol>
+<li>The global (All Users) Kermit 95 data directory: <tt>\v(common)</tt>.
+<li>Program directory: <tt>\v(exedir)</tt>.
+</ol>
+
+<p>
+
+<li>Your initialization file looks for the site-specific customization file,
+<tt>K95SITE.INI</tt>, in its <tt>\v(common)</tt> (All Users) directory and, if
+found, executes it.  Note: if <tt>K95SITE.INI</tt> exists, it should end with
+a TAKE command for the user's customization file,
+<tt>\v(appdata)K95CUSTOM.INI</tt>.  If <tt>K95SITE.INI</tt> is not found,
+<tt>K95.INI</tt> searches for the user's customization file,
+<tt>K95CUSTOM.INI</tt>, in the following order: <tt>\v(appdata)</tt>,
+<tt>\v(inidir)</tt>, <tt>\v(exedir)</tt> and, if found, executes it.
+
+<p>
+
+<li>If the <tt>K95.INI</tt> file was <i>not</i> found, K95 searches for
+the user's customization file anyway, and if found, executes it.
+
+<p>
+
+<li>After installing the 1.1.21 patch, your <tt>DIALUSR.DAT</tt> file,
+which contains all the entries you have defined or changed, remains in
+Kermit's program directory <tt>\v(exedir)</tt>.
+
+<p>
+
+<li>The Dialer searches for your <tt>DIALUSR.DAT</tt> file
+in the following order:
+<ol>
+<li>User-specific Kermit 95 data directory: <tt>\v(appdata)</tt>.
+<li>Global (All Users) Kermit 95 data directory: <tt>\v(common)</tt>.
+<li>Program directory: <tt>\v(exedir)</tt>.
+<li>If no <tt>DIALUSR.DAT</tt> file is found a new one is created in
+your <tt>\v(appdata)</tt> directory.
+</ol>
+<p>
+
+<li>Old (pre-patch) scripts remain in <tt>\v(exedir)SCRIPTS</tt>, but
+post-patch Dialer-generated scripts go in <tt>\v(appdata)SCRIPTS</tt>.  When a
+script is executed with Kermit's <tt>TAKE</tt> command, and a specific path is
+not given, Kermit searches for the script first in the current directory, then
+in the same order as the customization file: <tt>\v(appdata)</tt> first,
+<tt>\v(exedir)</tt> last.  For safety and sanity, it is better to give a full
+pathname for script files that are not in K95's current directory.
+
+<p>
+
+<li>Dialing and network directory files are not searched for; you must tell
+Kermit exactly where they are; either in the Dialer entry or in the
+<tt>K95SITE.INI</tt> or <tt>K95CUSTOM.INI</tt> file.
+
+<p>
+
+<li>Each user's SSH-related files generated by Kermit go into the user's
+<tt>\v(appdata)SSH</tt> directory, which is also where Kermit looks for them.
+Site-wide SSH files can be placed into <tt>\v(common)SSH</tt> by the system
+administrator.
+
+<p>
+
+<li>Each user's SSL/TLS-related X.509 certificate files should go into
+<tt>\v(appdata)CERTS</tt>, which is also where Kermit looks for them.
+Similarly, X.509 Certificate Revocation Lists should go in
+<tt>\v(appdata)CRLS</tt>.  Site-wide certificates and CRLs can be placed in
+<tt>\v(common)CERTS</tt> and <tt>\v(common)CRLS</tt> by the system
+administrator.
+
+</ul>
+<p>
+
+If you patch up to version 1.1.21 from an earlier version, it is recommended
+that you convert the old structure to the new one to <i>(a)</i> allow multiple
+user arrangements, <i>(b)</i> reduce confusion arising from multiple copies of
+files and directories, and <i>(c)</i> to prepare for an easy transition to K95
+2.0.  Here's a table summarizing what should be moved where, which can be
+done at your convenience.
+
+<p>
+<blockquote>
+
+<table border>
+<tr>
+<th align="left">File
+<th align="left">Old
+<th align="left">New
+<th align="left">Description
+<tr>
+<td><tt>K95.INI</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Standard Initialization File
+<tr>
+<td><tt>K95SITE.INI</tt>
+<td>---
+<td><tt>\v(common)</tt>
+<td>Site-Wide Customization File
+<tr>
+<td><tt>K95CUSTOM.INI&nbsp;&nbsp;</tt>
+<td><tt>\v(exedir)&nbsp;&nbsp;&nbsp;</tt>
+<td><tt>\v(appdata)</tt>
+<td>Per-User Customization File
+<tr>
+<td><tt>DIALINF.DAT</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Built-in Dialer Entries
+<tr>
+<td><tt>DIALORG.DAT</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Site-Wide Dialer Entries
+<tr>
+<td><tt>DIALUSR.DAT</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(appdata)</tt>
+<td>Per-User Dialer Entries
+<tr>
+<th align="left">Directory
+<th align="left">Old
+<th align="left">New
+<th align="left">Description
+<tr>
+<td><tt>DOCS</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(exedir)</tt>
+<td>K95 Documentation
+<tr>
+<td><tt>DOWNLOAD</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(personal)</tt>
+<td>Download Directory
+<tr>
+<td><tt>ICONS</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(exedir)</tt>
+<td>Icons
+<tr>
+<td><tt>INCOMING</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Host Mode Upload Directory (2)
+<tr>
+<td><tt>KEYMAPS</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt> or <tt>\v(appdata)&nbsp;&nbsp;</tt>
+<td>Key maps and info (1)
+<tr>
+<td><tt>PHONES</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt> or <tt>\v(appdata)</tt>
+<td>Dialing and Network Directories (1)
+<tr>
+<td><tt>PRINTER</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Printer Utilties and Info
+<tr>
+<td><tt>PUBLIC</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Host Mode Public Directory (2)
+<tr>
+<td><tt>SCRIPTS</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt> or <tt>\v(appdata)</tt>
+<td>Kermit Scripts (1)
+<tr>
+<td><tt>TMP</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(appdata)</tt>
+<td>Directory for Temporary Files
+<tr>
+<td><tt>USERS</tt>
+<td><tt>\v(exedir)</tt>
+<td><tt>\v(common)</tt>
+<td>Root of Host Mode User Tree (2)
+</table>
+</blockquote>
+
+<p>
+
+Notes:
+
+<ol>
+
+<li>In entries that give "<tt>\v(common)</tt> or <tt>\v(appdata)</tt>" as
+new location choices, pick the destination for each file according to
+whether it's for all users or only for you.
+
+<li>Host Mode should be considered obsolescent, replaceable by WIKSD, at
+least in Windows NT, 2000, and XP.
+
+</ol>
+
+<p>
+
+HINT: Entire directories and directory trees can be moved with the MOVE
+command in the Windows Command Prompt or CMD window, provided you have
+shut down any applications that might be using any of the affected directories
+or files.  Example:
+
+<p>
+<pre>
+  C:\&gt; <u>cd \k95</u>
+  C:\K95\&gt; <u>move phones "\C:\Documents and Settings\Olga\Application Data\Kermit 95\Phones"</u>
+</pre>
+
+
+<h3><a name="x9.3"><hr>9.3. Important K95 Files</a></h3>
+
+<pre>
+  9.3.1. <a href="#x9.3.1"><b>In the Program Directory</b></a>
+  9.3.2. <a href="#x9.3.2"><b>In the All Users Kermit 95 Directory</b></a>
+  9.3.3. <a href="#x9.3.3"><b>In Each User's My Documents Directory</b></a>
+  9.3.4. <a href="#x9.3.4"><b>In Each User's K95 Application Data Directory</b></a>
+</pre>
+
+<h3><a name="x9.3.1"><i>9.3.1. In the Program Directory</i></a></h3>
+
+In multiuser Windows installation, this directory should be writeable only
+by the system administrator.
+
+<dl>
+
+<dt><tt>SETUP.EXE</tt>
+
+<dd>The Kermit 95 setup (installation) program.  This is the old text-based
+one, which is being phased out in favor a GUI InstallShield procedure (Windows
+only).  It is not yet clear at this writing whether version 1.1.21 will be
+packaged for retail, or only downloadable as a patch; it depends on when 2.0
+is released.  If it is packaged for retail, it will have the GUI installation
+rather than the text one (except if OS/2).
+
+<dt><tt>K95DIAL.EXE</tt>
+
+<dd>The Kermit 95 Dialer.  This is the GUI program that gives you
+point-and-click access to all your connections.  It is normally found in the 
+Program Files Kermit 95 directory.    Depending on your selections
+at install time, you might have a desktop icon and/or Start menu entry for
+this, as well as for <tt>K95.EXE</tt> (next item).  Location: Program
+Directory.
+
+<dt><tt>K95.EXE</tt>
+
+<dd>The Kermit 95 program.  You can run this directly to bypass the Dialer
+(normally only Kermit veterans would do this).  In version 1.1.21 and earlier,
+this is the console version of K95.
+
+<dt><tt>K95G.EXE</tt>
+
+<dd>The GUI version of the Kermit 95 program (<i>for future reference</i>).
+
+<dt><tt>K95.EXE</tt>
+
+<dd>The Console version of the Kermit 95 program.
+
+<dt><tt>K95D.EXE</tt>
+
+<dd>An Internet Listener for incoming Host Mode connections.
+
+<dt><tt>K95D.CFG</tt>
+
+<dd>The configuration file for <tt>K95D.EXE</tt>.
+
+<dt><tt>DIALER.DAT</tt>
+
+<dd>Dialer screen definitions.  Note: All <tt>*.DAT</tt> and
+<tt>*.ZNC</tt> files, as well as <tt>*.BK<i>n</i></tt> files, are associated
+with the Dialer.
+
+<dt><tt>TELNET.EXE</tt>
+
+<dd>A "stub" that lets you use Kermit 95 as though its name and command-line
+personality were those of Telnet.
+
+<dt><tt>RLOGIN.EXE</tt>
+
+<dd>A "stub" that lets you use Kermit 95 as though its name and command-line
+personality were those of Rlogin.
+
+<dt><tt>SSH-AGENT.EXE</tt>
+
+<dd>The SSH Agent program (explained in the
+<a href="sshclien.html">SSH Client</a> documentation.
+
+<dt><tt>HOSTMODE.BAT</tt>
+
+<dd>Run this to start the host-mode management program.
+
+</dl>
+
+The Program Directory also includes the following subdirectories:
+
+<dl>
+<dt><tt>DOCS</tt>
+<dd>Supplemental documentation on various topics.
+
+<dt><tt>DOCS\MANUAL</tt>
+
+<dd>(under the Kermit 95 Program directory) The <a href="index.html">Kermit
+95 Manual</a>, to be accessed with your Web browser.  This is done most
+conveniently from the Dialer's Help menu.
+
+<dt><tt>ICONS</tt>
+<dd>Icons for use with K95 data files such as scripts.
+
+</dl>
+
+<h3><a name="x9.3.2"><hr><i>9.3.2. In the All Users Kermit 95 Directory</i></a></h3>
+
+In multiuser Windows installation, this directory should be writeable only
+by the system administrator.
+
+<dl>
+
+<dt><tt>K95.INI</tt>
+
+<dd>Initialization file for <tt>K95.EXE</tt>, normally found in the All Users
+directory for Kermit 95, but in patched versions is likely to be in the
+Program Directory.  Contains commands that are to be executed every time
+<tt>K95.EXE</tt> is started.  See <a href="uck2epdf.html">
+<cite>Using C-Kermit</cite></a> for more about
+initialization files.  In Kermit 95, however, most of the traditional
+functions of initialization files are taken over by the Dialer.  In any case,
+you should not change or delete this file; all customizations should be made
+in:
+
+<dt><tt>K95SITE.INI</tt>
+
+<dd>Site-specific customizations.  If this file exists, it is executed by 
+the standard <tt>K95.INI</tt> file and, in turn, it executes the user's
+customization file, <tt>K95CUSTOM.INI</tt>.  If this file does not exist,
+the user's customization file is executed directly.  As shipped, Kermit 95
+includes a skeleton version of this file that simply prints a message
+and executes the user's customization file.
+
+<dt><tt>CA_CERTS.PEM</tt>
+
+<dd>Site-wide OpenSSL X.509 Certificate Authority certificates.
+
+<dt><tt>DIALINF.DAT</tt>
+
+<dd>The Kermit 95 Dialer preloaded database (read-only).
+
+<dt><tt>DIALORG.DAT</tt>
+
+<dd>This file is not shipped from the factory.  If you wish to have
+organization/site-wide Dialer entries, they can be created by adding new
+entries to the Dialer and then renaming the resulting <tt>DIALUSR.DAT</tt>
+file to <tt>DIALORG.DAT</tt>, from which point it is read-only.
+
+</dl>	
+<p>
+
+The All Users K95 directory also contains the subdirectories listed in
+the previous section.  Of particular interest are:
+
+<p>
+<dl>
+<dt><tt>PHONES</tt>
+<dd>Dialing and network directories for use by everybody at the site.
+<dt><tt>SCRIPTS</tt>
+<dd>Kermit scripts for use by everybody at the site.
+<dt><tt>PRINTER</tt>
+<dd>Printer-related utilities, e.g. shell scripts for Unix to send Unix
+files to your PC printer via K95's Pass-Through Printing feature.
+<dt><tt>KEYMAPS</tt>
+<dd>Sample and default key maps for reference and/or copying and modification
+to suit your needs and preferences.
+</dl>
+
+Files in the <tt>KEYMAPS</tt> directory include:
+
+<dl>
+<dt><tt>CTRL2CAP.*</tt>
+<dd>A utility for Win9x/ME for swapping the Ctrl and Caps Lock keys,
+and optionally the Esc and <tt>`/~</tt> keys.
+<dt><tt>KEYCODES.TXT</tt>
+<dd>A reference listing of K95 and MS-DOS Kermit keycodes (plain text, wide).
+
+<dt><tt>DEFAULT.KSC</tt>
+<dd>A listing of K95's default Key mappings for each of its terminal types.
+<dt><tt>EMACS.KSC</tt>
+<dd>A sample key map for use with the EMACS fullscreen text editor on the host.
+<dt><tt>SNI.KSC</tt>
+<dd>A sample key map for Siemens-Nixdorf 97801 terminal emulation.
+<dt><tt>VT220.KSC</tt>
+<dd>A sample key map for Digital Equipment Corporation VT220 terminal
+emulation.
+
+</dl>
+
+
+<h3><i><a name="x9.3.3"><hr>9.3.3. In Each User's My Documents Directory</a></i></h3>
+
+This directory is for keeping data files that are not necessarily associated
+with a particular application.  This is where K95's DOWNLOAD directory goes,
+since the files you download with Kermit might be for any application at all.
+For this reason, your My Documents directory can also contain other material,
+unrelated to K95.
+
+<p>
+
+In Windows 95, the user's My Documents directory does not necessarily exist,
+since it is not part of the standard Windows 95 directory layout (it was first
+added in Windows 98).  But it still might have been created by a Microsoft
+Office component, Internet Explorer, or some other Microsoft application.  If
+it does exist, and it does not already have a DOWNLOAD subdirectory, K95
+installation creates one.  If it does not exist, no DOWNLOAD directory is
+created.
+
+<p>
+
+Note that the <tt>\v(download)</tt> variable does not necessarily denote
+Kermit's download directory.  Initially, this variable has no value.  It takes
+on a value only when you have designated a download directory, either on the
+General page of a Dialer entry, or with Kermit's SET FILE DOWNLOAD-DIRECTORY
+command.  The <tt>\v(personal)DOWNLOAD</tt> directory is an obvious choice,
+but you can designate any directory you like for this purpose, or none at all,
+in which case downloaded files go into K95's <i>current</i> directory, in the
+absence of explicit instructions to the contrary.
+
+<p>
+
+If you want K95 to save downloaded files in its current directory by default,
+leave its out-of-the-box configuration alone.  If you want it to save all
+downloaded files in one specific directory by default, then do this in the
+Dialer, or edit your <tt>K95CUSTOM.INI</tt> file (next section) to
+include a SET FILE DOWNLOAD-DIRECTORY command.
+
+<h3><i><a name="x9.3.4"><hr>9.3.4. In Each User's K95 Application Data Directory</a></i></h3>
+
+In multiuser Windows installation, each Kermit 95 user automatically gets
+her/his own K95 application data directory upon first use of K95 1.1.21 or
+later.  This directory tree allows full read/write access to its owner.
+
+<dl>
+
+<dt><tt>K95CUSTOM.INI</tt>
+
+<dd>Customization file for <tt>K95.EXE</tt>, normally found in the
+user-specific data directory for Kermit 95 (<tt>\v(appdata)</tt>), or in
+patched versions in the Program Directory (<tt>\v(exedir)</tt>).  On multiuser
+file systems, each user should have her/his own copy of this file.  You may
+edit your copy to change your customizations, add new ones, define macros,
+special keys, and so on.  In newly installed copies of K95 1.1.21, a sample
+copy of this file is copied from the <tt>\v(common)</tt> directory to the
+user's <tt>\v(appdata)</tt> directory the first time the user starts K95.  The
+customization file is never modifed by Patch or InstallShield.
+
+<p>
+
+<dt><tt>DIALUSR.DAT</tt>
+
+<dd>Your personal Dialer database (read/write).  The K95 Dialer
+creates this file for you the first time you add, clone, or change an entry.
+
+<p>
+
+<dt><i>Your Personal K95 Read/Write Subdirectories:</i></dt>
+<dd><tt>CERTS</tt> (X.509 certificates for SSL/TLS),
+<tt>CRLS</tt> (X.509 certificate revocation lists for SSL/TLS),
+<tt>KEYMAPS</tt> (key mapping files),
+<tt>PHONES</tt> (dialing and network directories),
+<tt>SCRIPTS</tt> (scripts),
+<tt>SSH</tt> (SSH host keys),
+<tt>TMP</tt> (temporary directory).  These are initially empty.  Some of them
+are used by K95; for example to when adding SSH host keys when you make a
+connection to a new host.  Others are for your own use; for example, for
+installing X.509 certificates for hosts that you visit, personalized key
+maps, your own scripts, etc.
+
+</dl>
+
+<h3><hr><a name="x10">10. ORIENTATION AND NAVIGATION</a></h3>
+
+<pre>
+  10.1. <a href="#x10.1"><b>K95's Initial Directory</b></a>
+  10.2. <a href="#x10.2"><b>K95's CD Command</b></a>
+  10.3. <a href="#x10.3"><b>Where Is My Customization File?</b></a>
+  10.4. <a href="#x10.4"><b>Where is the File I Just Downloaded?</b></a>
+  10.5. <a href="#x10.5"><b>Structure of <tt>.</tt>INI Files</b></a>
+</pre>
+
+The new directory structure, although necessary for all the reasons listed
+above, can bewilder even seasoned K95 users.  Here we try to clarify some
+confusing points, primarily for those who use K95 directly at its command
+prompt.
+
+<h3><a name="x10.1">10.1. K95's Initial Directory</a></h3>
+
+Kermit 95's current directory when you first start it depends on how
+you started it, which initialization files it executed, and whether an
+environment variable named HOME is defined to be a valid directory name.
+
+<p>
+
+<ul>
+<li>If you start K95 from a command window, it inherits its
+initial directory from the command window's current directory.
+
+<p>
+
+<li>If you start K95 from the Dialer, its initial directory is your home
+directory, which in turn is the value of the built-in Kermit variable,
+<tt>\v(home)</tt>, unless the Dialer entry includes a login script that CD's
+somewhere else.  <tt>\v(home)</tt> inherits the value of the environment
+variable HOME, if it is defined, otherwise it is the root of your user
+tree, e.g.:
+<p>
+<pre>
+  C:\Documents and Settings\Olga\
+</pre>
+<p>
+
+<li>If you start K95 from the Start menu, its initial directory is its
+program directory.
+
+<p>
+
+<li>If you start K95 from a desktop shortcut, its initial directory is K95's
+program directory, unless you have changed the properties of the shortcut to
+specify a "Start in" directory.
+
+<p>
+
+<li>If you make a connection to WIKSD from outside and log in as yourself,
+WIKSD's initial directory is the one specified in your Windows user profile,
+if any, otherwise <tt>\WINDOWS\SYSTEM32\</tt>.
+
+<p>
+
+<li>If you make an anonymous connection to WIKSD, its initial directory is
+whatever the system administrator configured for anonymous users.
+
+</ul>
+<p>
+
+Any of these can be changed by the initialization file sequence, except when
+starting from the Dialer since, in that case, the instructions emitted by the
+Dialer are executed <i>after</i> the initialization files.
+
+<h3><a name="x10.2"><hr>10.2. K95's CD Command</a></h3>
+
+To simplify navigation among K95's many directories, Kermit 95 has a new KCD
+command that takes as an operand the symbolic name of any of the directories
+that are significant to K95:
+
+<p>
+<pre>
+  [C:\Tmp\] K-95&gt; <u>kcd ?</u> Symbolic directory name, one of the following:
+   appdata   desktop   exedir    inidir    startup   tmpdir
+   common    download  home      personal  textdir
+  [C:\Tmp\] K-95&gt; kcd <u>exedir</u>
+  [C:\Program Files\Kermit 95\] K-95&gt;
+</pre>
+<p>
+
+Unlike the variable names described below, such as <tt>\v(exedir)</tt>,
+you can abbreviate symbolic names, use completion on them, etc, just like
+any other command keyword.
+
+<p>
+
+The remainder of this section was written for version 1.1.21, but still
+applies to version 2.00.
+
+<p>
+
+When Kermit 95 is installed the new way described in the <a
+href="#files">previous section</a>, the CD command can be confusing.  Here
+are a few tips that might help:
+
+<p>
+<ul>
+
+<li>The CD command, when given with no operand, returns K95 to its
+<tt>\v(home)</tt> directory.  If you don't like how <tt>\v(home)</tt> is
+defined, you can always override it by defining a HOME environment variable
+with the desired value.  This is done in <b>Control Panel . . System . .
+Advanced . . Environment Variables</b> in newer Windows versions, or by
+adding SET commands to <tt>C:\AUTOEXEC.BAT</tt> in older ones.
+
+<p>
+
+<li>Remember that in K95 commands, directory or pathnames that contain spaces
+must be enclosed in quotes or braces, e.g.:
+
+<p>
+<pre>
+  K-95&gt; <u>cd "c:/Documents and Settings/Olga/My Documents/"</u>
+</pre>
+<p>
+
+<li>Since it is difficult and annoying to type such long pathnames, you
+can use the K95 variables shown in the ORIENTATION command (example in 
+previous section), for example:
+
+<p>
+<pre>
+  K-95&gt; <u>cd \v(personal)</u>               ; My personal Windows data tree
+  K-95&gt; <u>cd \v(appdata)</u>                ; My personal K95 data tree
+  K-95&gt; <u>cd \v(common)</u>                 ; K95 data tree for all users
+  K-95&gt; <u>cd \v(exedir)</u>                 ; Directory where K95.EXE is started from
+  K-95&gt; <u>cd \v(download)</u>               ; My personal K95 download directory
+  K-95&gt; <u>cd \v(tmpdir)</u>                 ; My personal directory for temporary files
+</pre>
+<p>
+
+<li>You can also refer to Windows environment variables in the CD or any
+other command, as in the these examples:
+
+<p>
+<pre>
+  K-95&gt; <u>cd \$(HOMEDRIVE)\$(HOMEPATH)</u>  ; My Windows HOMEPATH
+  K-95&gt; <u>cd \$(ALLUSERSPROFILE)</u>        ; Windows All Users
+  K-95&gt; <u>cd \$(CommonProgramFiles)</u>     ; Common Program Files
+  K-95&gt; <u>cd \$(TEMP)</u>                   ; Personal temporary directory
+  K-95&gt; <u>cd \$(USERPROFILE)</u>            ; Personal Windows data tree
+</pre>
+<p>
+
+You can get a listing of Windows environment variables by typing SET in a
+CMD or Command Prompt or other shell window.
+
+<p>
+
+<li>You can define macros that take you to commonly visited directories:
+
+<p>
+<pre>
+  K-95&gt; <u>define appdata cd \v(appdata)</u>
+  K-95&gt; <u>appdata</u>
+</pre>
+<p>
+
+<li>You can take advantage of the SET CD PATH command, which lets you
+type just the rightmost path segments in your CD commands.  Example:
+
+<p>
+<pre>
+  K-95&gt; <u>set cd path \v(appdata);\v(personal)</u> ; With this in effect...
+  K-95&gt; <u>cd download</u>                          ; This works from anywhere
+</pre>
+<p>
+
+<li>Remember you can use <tt>?</tt> for file/directory lists and Tab or Esc
+for completion anywhere within a path, which can save you some head-scratching
+and/or typing:
+
+<p>
+<pre>
+  K-95&gt; <u>cd /</u>
+  K-95&gt; <u>cd "Doc&lt;Tab&gt;</u>uments and Settings/"<u>Olga/App&lt;Tab&gt;</u>ication Data/"...
+</pre>
+<p>
+
+Actually it's a bit more complicated than shown because of the doublequotes;
+at each step you have to delete the closing doublequote before proceeding to
+the next path segment, but you'll get the hang of it quickly enough.
+
+<p>
+
+<li>Remember that K95 has a BACK command that returns you to its previous
+directory.
+
+<p>
+
+<li>There is also a CDUP command that changes to the current directory's
+superior directory (if any).
+
+</ul>
+<p>
+
+You can get additional information about CD, BACK, CDUP, SET CD, or any other
+command, by giving a HELP command for it at the K-95&gt; prompt, e.g.
+"help set cd".
+
+<h3><a name="x10.3"><hr>10.3. Where Is My Customization File?</a></h3>
+
+K95 1.1.21 (and later), when installed from scratch, looks for your
+<tt>K95CUSTOM.INI</tt> file in your <tt>\v(appdata)</tt> directory.  If it
+does not find it there, it looks in K95's program directory,
+<tt>\v(exedir)</tt>.  In the old days, when we said "edit your customization
+file", this generally meant something simple like:
+
+<p>
+<pre>
+  K-95&gt; <u>edit c:/k95/k95custom.ini</u>
+</pre>
+<p>
+
+Now it means something like this:
+
+<p>
+<pre>
+  K-95&gt; <u>edit "C:/Documents and Settings/Olga/Application Data/Kermit 95/k95custom.ini"</u>
+</pre>
+<p>
+
+But who wants to type all that?  Instead you can use this:
+
+<p>
+<pre>
+  K-95&gt; <u>edit \v(appdata)k95custom.ini</u>
+</pre>
+<p>
+
+Of course if that's not where it really is you might need something more
+elaborate, like this:
+
+<p>
+<pre>
+  if exist \v(appdata)k95custom.ini edit \v(appdata)k95custom.ini
+  else if exist \v(exedir)k95custom.ini edit \v(exedir)k95custom.ini
+  else echo "Where is it?"
+</pre>
+<p>
+
+<b>HINT:</b> If you installed K95 1.1.21 from patches and fear that you might
+have multiple <tt>K95CUSTOM.INI</tt> files lurking in various directories, of
+course you can find them all with Windows Search or Find.  Then edit each one
+to include a line like this:
+
+<p>
+<pre>
+  echo EXECUTING \v(user)'s \flongpathname(\fpathname(\v(cmdfile)))...
+</pre>
+<p>
+
+Then when K95 starts, this line prints the full pathname of the
+customization file that was actually executed.
+
+<h3><a name="x10.4"><hr>10.4. Structure of <tt>.</tt>INI Files</a></h3>
+
+In K95 1.1.21 and later, which can run remotely in its WIKSD guise,
+adds a new complication to construction of K95's <tt>.INI</tt> files
+because certain K95 commands are not legal in WIKSD.  These include:
+
+<p>
+<ul>
+<li>Any commands that set up or make connections.
+<li>Any commands having to do with terminal emulation or key mapping.
+<li>Any commands related to printers.
+<li>Any commands that access subprocesses or external programs.
+<li>Probably some others too...
+</ul>
+<p>
+
+Yet if you log in through WIKSD using your own Windows ID, then your own
+<tt>K95CUSTOM.INI</tt> file -- which is likely to contain many such commands
+-- is executed.  If you are going to be accessing the same computer from its
+physical keyboard and screen (or facsimile thereof) <i>and</i> remotely
+via WIKSD, your <tt>K95CUSTOM.INI</tt> file should separate the commonly valid
+commands from the ones that can only be executed by <tt>K95.EXE</tt> and not
+by WIKSD.  It's easy.  Just put the common commands at the top, then:
+
+<p>
+<pre>
+  if iksd end 0 IKSD Setup Complete.
+</pre>
+<p>
+
+And then the rest of your K95 customizations.  If you do not protect commands
+like SET TERMINAL, SET KEY, and so on, by IF [ NOT ] IKSD, you'll get tons of
+error messages when you log in to WIKSD.  The same guidelines should be
+followed by the system administrator when setting up the
+<tt>K95.INI</tt> and <tt>K95SITE.INI</tt> files.  The <tt>K95*.INI</tt> files
+that we distribute with version 1.1.21 have this structure already, but if
+you install 1.1.21 by patching, your old <tt>.INI</tt> files are preserved.
+
+<h3><a name="x10.5"><hr>10.5. Where is the File I Just Downloaded?</a></h3>
+
+Rather than try to enumerate the rules and their relative precedence,
+let's just say how to get this information during the transfer and after
+the transfer:
+
+<p>
+<ul>
+<li>While the transfer is in progress, the full path of the downloaded
+file should be visible on your screen in the file-transfer display.
+<li>When the transfer is complete, the file-transfer display should still
+be visible in the Command screen (you might have to Alt-x back from the
+Terminal screen to see it).  And of course you can always scroll back to
+it with the Page Up key.
+<li>At the <tt>K-95&gt;</tt> prompt, type the WHERE command, which tells you
+where your files went.
+</ul>
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="index.html">K95 Manual</a> ]
+<hr>
+<address>
+Kermit 95 README / <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--> /
+<!--$ver-date$-->27 October 2024<!--/$ver-date$-->
+</address>
+</body></html>

@@ -2301,7 +2301,7 @@ ckround(fpnum,places,obuf,obuflen)
 	}
     }
     if (minus) number--;                /* Back up to minus sign, if any. */
-#ifdef __alpha
+#ifdef FLT_NOT_DBL
     sscanf(number,"%f",&value);		/* Convert back to floating point */
 #else
     sscanf(number,"%lf",&value);        /* Convert back to floating point */
@@ -3365,8 +3365,9 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4,n5)
 			  break;
 		    }
 		    s2 = s+1;		/* Then forwards... */
-		    while (*s2 && (*s2 == SP || *s2 == HT))
-		      *s2++;
+		    while (*s2 && (*s2 == SP || *s2 == HT)) {
+		      s2++;
+		    }
 		    s = s2-1;
 		}
 		if (!csv || prevstate != ST_IG) {

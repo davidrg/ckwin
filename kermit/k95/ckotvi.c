@@ -27,6 +27,9 @@
 #include "ckotvi.h"
 #include "ckctel.h"
 #include "ckokvb.h"
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -40,7 +43,7 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute, colorstatus;
+extern cell_video_attr_t colorstatus;
 extern char * udkfkeys[];
 extern int tt_senddata ;
 extern int tt_hidattr;
@@ -76,7 +79,7 @@ extern int wy_nullsuppress ;
 extern int wy_monitor ;
 extern int wy_block;
 extern vtattrib WPattrib ;
-extern tt_sac;
+extern int tt_sac;
 extern bool xprintff; /* Print formfeed */
 
 int tvi_ic = SP;
@@ -1223,7 +1226,7 @@ tviascii( int ch )
                 if ( ISTVI925(tt_type_mode) ||
                      ISTVI950(tt_type_mode) ) {
                     blankvcell.c = SP;
-                    blankvcell.a = geterasecolor(VTERM);
+                    blankvcell.video_attr = geterasecolor(VTERM);
                     VscrnScrollRt(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1, wherey[VTERM] - 1,
                                VscrnGetWidth(VTERM) - 1, 1, blankvcell);
@@ -1390,7 +1393,7 @@ tviascii( int ch )
                 if ( ISTVI925(tt_type_mode) ||
                      ISTVI950(tt_type_mode) ) {
                     blankvcell.c = SP;
-                    blankvcell.a = geterasecolor(VTERM);
+                    blankvcell.video_attr = geterasecolor(VTERM);
                     VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,

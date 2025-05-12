@@ -292,8 +292,13 @@ K_DIALOG_GENERAL_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
         prompt->DataSet("Hostname or IP Address:");
 
         combo = (UIW_COMBO_BOX *) Get( COMBO_TCP_PROTOCOL );
-	combo->woFlags |= WOF_NON_SELECTABLE ;
+	    combo->woFlags |= WOF_NON_SELECTABLE ;
         combo->Information(I_CHANGED_FLAGS,NULL) ;
+
+        string = (UIW_STRING *) Get( ENTRY_IPPORT ) ;
+        string->DataSet( entry->_ftpport, 32 ) ;
+        string->woFlags |= WOF_AUTO_CLEAR ;
+        string->Information(I_CHANGED_FLAGS,NULL) ;
 
         button = (UIW_BUTTON *) Get( RADIO_FTP ) ;
         break;
@@ -912,7 +917,7 @@ InitTCPProtoList()
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_TCP_PROTOCOL ) ;
-    while ( button = (UIW_BUTTON *) list->First() ) {
+    while ( (button = (UIW_BUTTON *)list->First()) != NULL ) {
         *list - button;
         delete button;
     }
@@ -995,7 +1000,7 @@ InitSSHProtoList()
 {
     UIW_BUTTON * button;
     UIW_VT_LIST * list = (UIW_VT_LIST *) Get( LIST_TCP_PROTOCOL ) ;
-    while ( button = (UIW_BUTTON *) list->First() ) {
+    while ( (button = (UIW_BUTTON *)list->First()) != NULL ) {
         *list - button;
         delete button;
     }

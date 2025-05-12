@@ -1,0 +1,406 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>Kermit 95 - Cyrillic Character Sets</title>
+<LINK REL="stylesheet" TYPE="text/css" HREF="kermit.css">
+<body style="margin:12">
+
+<h2>Cyrillic Character Sets in Kermit 95</h2>
+
+Frank da Cruz
+<div style="font-size:12">
+Updated 19 November 2016 for minimally 21st-century HTML.
+</div>
+
+<p>
+<div style="font-size:18">
+<b>Contents</b>
+<ul>
+<li><a href="#cyrxfer">Cyrillic File Transfer</a>
+<li><a href="#cyrterm">Cyrillic Terminal Emulation</a>
+<li><a href="#cyrcfg">Configuring K95 for Cyrillic Terminal Emulation</a>
+<li><a href="#cyrkey">Entering Cyrillic Characters on the Keyboard</a>
+<li><a href="#cyrkbmode">Using Kermit 95's Russian Keyboard Mode</a>
+</ul>
+</div>
+
+<p>
+The Cyrillic character sets known to Kermit 95 are:
+<p><pre>
+  <i>Kermit Name    Type   Description</i>
+   CYRILLIC-ISO  8-bit    <a href="gloss.html#g_iso">ISO</a> 8859-5 Latin/Cyrillic, also called "New KOI8"
+   KOI8          8-bit    USSR Standard GOST 19768-76 ("Old KOI8")
+   KOI8R         8-bit    A new version of KOI used in Russia
+   KOI8U         8-bit    A new version of KOI used in the Ukraine
+   KOI7          7-bit    <a href="gloss.html#g_ascii">ASCII</a> with lowercase letters replaced by Cyrillic
+   CP855         8-bit    Cyrillic PC Code Page
+   BULGARIA-PC   8-bit    Cyrillic PC Code Page used in Bulgaria
+   CP866         8-bit    Cyrillic PC Code Page used in former Soviet Union
+   CP1251        8-bit    Cyrillic Code Page for Windows
+</pre>
+
+<p>
+
+KOI8 is (or was) the character set most widely used in newsgroups and email,
+but KOI8R and KOI8U are becoming more popular since the breakup of the
+Soviet Union.  CP1251 is sometimes seen in newsgroups -- its encoding is
+partly the same as ISO Latin/Cyrillic, partly different, plus it includes
+some graphic characters in the C1 control area.
+
+<p>
+
+ISO Latin/Cyrilic, CP855, and CP1251 include the Cyrillic letters needed for
+modern Belorussian, Bulgarian, Macedonian, Russian, Serbian, and Ukrainian.
+KOI8U includes the characters needed for Ukrainian.  The others contain only
+the Cyrillic characters used in modern Russian orthography.  KOI-7 contains
+only uppercase Roman and Cyrillic letters.
+
+<h3 id="cyrxfer">Cyrillic File Transfer</h3>
+
+This is described fully in <cite>Using C-Kermit</cite> (both 1st and 2nd
+editions).  <a href="http://www.kermitproject.org/booksonline.html">CLICK HERE</a>
+to access the book online as a PDF file.
+
+<h3 id="cyrterm">Cyrillic Terminal Emulation</h3>
+
+Kermit 95 can be used to display Cyrillic text from the host if you have a
+Cyrillic font or code page on your PC, but the conditions under which you may
+send Cyrillic letters from your keyboard depend on the specific operating
+system.
+
+<h4>Windows 95/98/ME</h4>
+
+In Windows 9x and ME, Cyrillic terminal is possible if you have a
+Cyrillic code page, CP855, BULGARIA-PC (known in Bulgaria itself, erroneously,
+as CP856), or CP866 loaded on your PC.  However, it is
+not likely that you have one of these code pages, or can have it, unless you
+have installed a Cyrillic version of Windows; see the 
+<a href="k95bugs.html">Kermit 95 Bug List</a> for more
+information about this.  As noted, BULGARIA-PC and CP866 are sufficient only
+for modern Russian; CP855, though not widely used, includes the additional
+characters needed for Ukrainian, Belorussian, etc.
+
+<h4>Windows NT/2000/XP</h4>
+
+The Windows NT family, unlike Windows 9x/NT, supports Unicode in a Console
+window.  You should be using Lucida Console as your font, in which case you'll
+always have Cyrillic terminal emulation available.  Lucida Console also has a
+wider selection of Cyrillic letters, at least the full repertoire of ISO
+8859-5, which, as noted, is sufficient for Bulgarian, Byelorussian,
+Macedonian, Serbocroatian, and Ukrainian, as well as Russian, and possibly
+also pre-1918 Russian and maybe other, more archaic forms.
+
+<p>
+
+Also unlike Windows 9x/ME, Windows NT/2000/XP allows the application to set
+the Code Page to be used for delivering keystrokes.  The code page may be set
+in Kermit 95 with the:
+
+<p><pre>
+  SET TERMINAL CODE-PAGE <i>code-page</i>
+</pre><p>
+
+command.  <i>code-page</i> could be replaced with either CP866 or CP1251 or any
+other code page available on your system.  Use SHOW CHARACTER-SETS to view
+a list of available code pages.
+
+<p>
+
+The SET TERMINAL LOCAL-CHARACTER-SET command must be used to set the local
+character-set to the code page that was set with SET TERMINAL CODE-PAGE.
+Otherwise, keyboard to host translation will not properly work.
+
+<h4>OS/2</h4>
+
+The OS/2 version of Kermit 95 comes with a Cyrillic "PC font" equivalent to
+Code Page 866, that you can load if you don't have a Russian version of OS/2.
+You can use this in fullscreen sessions only -- NOT in an OS/2 Window, and
+even then it works only if your video driver allows it.  In Kermit/2, the
+command:
+
+<p><pre>
+  SET TERMINAL CODE-PAGE 866
+</pre><p>
+
+actually attempts to load the Cyrillic CP866 font into your video adapter
+(this can't be done in Windows 95 or Windows 98).
+
+<h3 id="cyrcfg">Configuring K95 for Cyrillic Terminal Emulation</h3>
+
+Use the following commands to enable Cyrillic terminal emulation in Kermit 95:
+<p><pre>
+  SET TERMINAL TYPE VT220     ; (or other desired terminal type)
+  SET TERMINAL LOCAL-CHARACTER-SET { CP855, BULGARIA-PC, CP866, CP1251 }
+  SET TERMINAL REMOTE-CHARACTER-SET -
+   { CYRILLIC-ISO, KOI8, KOI8R, KOI8R, SHORT-KOI, CP855, CP856, CP866, CP1251 }
+  SET TERMINAL BYTESIZE 8     ; Not needed for Short-KOI
+</pre><p>
+Check your Kermit 95 character-set selection with SHOW CHARACTER-SETS.
+<p>
+<h4>The Local Character Set (Windows 95/98 Only)</h4>
+<p>
+At the DOS prompt, type "CHCP" to see what Windows think your Console
+Code page is.  If it reports CP866 or BULGARIA-PC correctly, then you don't
+need to give a SET TERMINAL LOCAL-CHARACTER-SET, since Kermit 95 will find this
+out by itself.  Otherwise, tell Kermit to:
+<p><pre>
+  SET TERMINAL LOCAL-CHARACTER-SET CP866 ; (or CP855, or CP866)
+</pre><p>
+to let K95 know what the Console window is using, since in this case Windows
+will not report it correctly to Kermit.  You should only specify the one that
+is actually used in your Console window.  Windows does not give Kermit any
+ability to change it.
+<p>
+<h4>The Remote Character Set</h4>
+
+Choose the remote character set that is appropriate for the host or service
+you are connecting to.  If you are using an 8-bit remote character set
+(i.e. any Cyrillic set except SHORT-KOI), you must also make sure that the
+remote host and the connection itself are set up for 8 data bits, no parity.
+Examples:
+<p><pre>
+  stty pass8               <i>(Some UNIX)</i>
+  stty -parenb             <i>(Some other UNIX)</i>
+  stty -evenp -oddp        <i>(Maybe another UNIX)</i>
+  stty cs8                 <i>(Another UNIX)</i>
+  stty -istrip             <i>(And another UNIX)</i>
+  char/on/8bt              <i>(AOS/VS)</i>
+  set terminal /eightbit   <i>(VMS)</i>
+</pre><p>
+Some of the UNIX stty options might need to be used in combination, e.g.:
+<p><pre>
+  stty cs8 -istrip         (for example, on HP-UX 10.20)
+</pre><p>
+If you are going through a terminal server or other intermediate device, it
+too might need to be commanded into 8-bit transparency.
+
+<h3 id="cyrkey">Entering Cyrillic Characters on the Keyboard</h3>
+
+In Windows, it is possible to install more than one
+keyboard layout in the Keyboard Control Panel on the Input Locales
+page.  When more than one Input Locale/Layout combination is defined,
+you are required to choose one of them as the default, and to choose a
+key combination (such as Left Alt + Shift) to switch among them.  This
+is called the Switch-Locale key sequence.  The default Input-Locale is
+the Input-Locale that each Window uses when it is opened.
+<p>
+For instance, it is possible to install:
+<p><pre>
+  Input Locale                                  Layout
+  ------------------------------------------    ---------------
+  English (United States)                       US
+  Russian                                       Russian
+</pre><p>
+with "English (United States)" as the default input locale and a
+Switch-Locale key sequence of "Left_Alt+Shift".  Since the keyboard
+only has one alphabet on it, this "alphabet shift" key is needed to
+switch between the two defined alphabets.  In Russian Windows, for
+example, it is necessary to type Roman letters when you type Windows
+file names or Kermit 95 commands and Cyrillic letters when writing in
+the Russian language.
+<p>
+Although the behavior is supposed to be the same on Windows 95/98/ME and
+Windows NT/2000/XP, it turns out that it is not.
+
+<h4>Keyboard Shifting in Windows NT/2000/XP</h4>
+
+In Windows NT/2000/XP, you can give the following commands to Kermit 95:
+<p><pre>
+  SET TERMINAL CODE-PAGE 1251
+  SET TERMINAL LOCAL-CHARACTER-SET CP1251
+  SET TERMINAL REMOTE-CHARACTER-SET CP866
+</pre><p>
+
+When the current locale is "English (United States)" K95 receives
+Roman characters from the keyboard.  When the current locale is
+"Russian" K95 receives Cyrillic characters from the keyboard.  To
+toggle between the two, press the Switch-Locale key sequence.
+<p>
+When issuing commands to K95 switch to the "English" locale and when
+sending Cyrillic characters to the host switch to the "Russian"
+locale.  There is no limitation to mixing Roman and Cyrillic
+characters via this method at the K95 command prompt or in terminal
+mode.
+<p>
+Note that only characters that are in the active code page may be
+delivered to K95 from the keyboard.  In the above example code page
+1251 is used because it is available on all versions of NT, and it
+contains all of the Roman characters needed for U.S. English and the
+Cyrillic characters used by CP866.  (CP866 is not available on the
+U.S. version of NT but may be available on some international
+versions.)
+
+<h4>Windows 95/98/ME</h4>
+
+When using Windows 9x/ME, locale switching does not work
+properly in 32-bit console applications so Kermit 95 has to simulate
+the switching of keyboard layouts.  The Russian Windows 95 uses
+CP866 as its default code page for the DOS and Windows-32 Console
+environments.  Therefore, both Roman and Cyrillic characters are
+available for display.
+<p>
+<p>
+For 16-bit DOS applications the current locale is ignored.  All keystrokes
+generate Roman letters regardless of what locales are installed.
+<p>
+In Windows 9x, both Left Alt-Shift and Ctrl-Shift are "hotkeys" that
+toggle the Keyboard Input-Locale among those installed.  When K95
+is started it uses the Default Input-Locale as set in the 
+Keyboard Control Panel, and then you can change to another input locale
+with the hotkeys.
+<p>
+When K95 starts it will auto-detect CP866 as the code page and configure
+the Local Character-set to the same value.
+
+<h3 id="cyrkbmode">Using Kermit 95's Russian Keyboard Mode</h3>
+
+If you have a font with Cyrillic characters, but lack
+a Cyrillic keyboard and driver, you
+can use Kermit 95's built-in Russian keyboard mode
+(it is called "Russian" because only the letters of the modern Russian
+alphabet are handled, due to lack of knowledge about where to put other
+Cyrillic letters such as Dje, Gje, Lje, Kje, Kze, Nje, I, Yi, Je, Ie, Tshe,
+etc -- or for that matter, lack of enough keys on Roman keyboards to
+accommodate them):
+
+<p>
+<ul>
+<li>The <tt>\KkbRussian</tt> verb controls Russian keyboard mode.  By default,
+it is assigned to Ctrl-Alt-Shift-R but it may be assigned to any other key or
+key combination.  It switches the main keypad into Russian mode (see keymap
+below).  When the keyboard is in Russian mode, the terminal type in the status
+line has "-R" appended to it, for example "VT220-R".
+<p>
+<li>The <tt>\KkbEnglish</tt> verb to switch the main keypad back to English
+mode.  The <tt>\KkbRussian</tt> verb can do this too, since it acts as an
+on/off switch.
+<p>
+<li>Russian keyboard mode is cleared when you execute the <tt>\Kreset</tt>
+(reset terminal) function, which is assigned to Alt-r by default.
+</ul><p>
+Of course, you can assign these verbs to any other keys of your choice:
+<p><pre>
+  SET TERM KEY RUSSIAN \368 \KkbRussian  ; F1 enters Russian keyboard mode
+  SET TERM KEY ENGLISH \369 \KkbEnglish  ; F2 enters English keyboard mode
+</pre> <p>
+The default Cyrillic key layout follows the one used by Microsoft Russian DOS
+and throughout the former USSR.  The names of the Cyrillic letters are from
+the ISO 8859-5 Standard.  The following table shows the key assignments when
+the keyboard is in Russian mode.  If you do not like them, you can use the SET
+TERMINAL KEY command (new to Kermit 95 1.1.8) to create your own layout.  The
+"code" is the CP866 value, which applies no matter what the remote terminal
+character set is (Kermit will translate).
+<p>
+<pre><hr><i>US key   Scan   Russian    CP866  Equivalent SET TERM KEY RUSSIAN command</i><hr>  `       96    io          241   SET TERM KEY RUSSIAN  \96 \241
+  ~      126    Io          240   SET TERM KEY RUSSIAN \126 \240
+  @       64    "            34   etc...
+  #       35    No          252   (Numero sign)
+  $       36    %            37
+  ^       94    :            58
+  q      113    i-kratkoye  169   (Lowercase Short i)
+  Q       81    I-Kratkoye  137   (Uppercase Short I)
+  w      119    tse         230
+  W       87    Tse         150
+  e      101    u           227
+  E       69    U           147
+  r      114    ka          170
+  R       82    Ka          138
+  t      116    ie          165
+  T       84    Ie          133
+  y      121    en          173
+  Y       89    En          141
+  u      117    ghe         163
+  U       85    Ghe         131
+  i      105    sha         232
+  I       73    Sha         152
+  o      111    shcha       233  <i>(See Note 1)</i>
+  O       79    Shcha       153  <i>(See Note 1)</i>
+  p      112    ze          167
+  P       80    Ze          135
+  [       91    ha          229
+  {      123    Ha          149
+  ]       93    hard sign   234  <i>(See Note 2)</i>
+  }      125    Hard Sign   154  <i>(See Note 2)</i>
+  \       92    /            47
+  a       97    ef          228
+  A       65    Ef          148
+  s      115    yeri        235
+  S       83    Yeri        155
+  d      100    ve          162
+  D       68    Ve          130
+  f      102    a           160
+  F       70    A           128
+  g      103    pe          175
+  G       71    Pe          143
+  h      104    er          224
+  H       72    Er          144
+  j      106    o           174
+  J       74    O           142
+  k      107    el          171
+  K       75    El          139
+  l      108    de          164
+  L       76    De          132
+  ;       59    e           237
+  :       58    E           157
+  z      122    ya          239
+  Z       90    Ya          159
+  x      120    che         231
+  X       88    Che         151
+  c       99    es          225
+  C       67    Es          145
+  v      118    em          172
+  V       86    Em          140
+  b       98    i           168
+  B       66    I           136
+  n      110    te          226
+  N       78    Te          146
+  m      109    soft sign   236
+  M       77    Soft Sign   156
+  ,       44    be          161
+  &#60;       60    Be          129
+  .       46    yu          238
+  &#62;       62    Yu          158
+  /       47    .            46
+  ?       63    ,            44<hr>
+</pre> 
+<p>
+<dl>
+<dt><i>Note 1:</i>
+<dd>
+On Belorussian keyboards, upper and lowercase letter shcha is replaced by
+upper and lowercase Cyrillic letter I (the one that looks just like a Roman I,
+not the one that looks like a reverse Roman N).  This letter does not exist
+in code page 866, but you can substitute Roman letter I if desired.
+<p>
+<dt><i>Note 2:</i>
+<dd>
+On Belorussian keyboards, upper and lowercase hard sign is replaced
+by upper and lowercase Belorussian letter Short U:
+<p><pre>
+  SET TERM KEY RUSSIAN  \93 \247  ; Map ] to lowercase Short u
+  SET TERM KEY RUSSIAN \125 \246  ; Map } to uppercase Short U
+</pre> <p>
+On Ukrainian keyboards, these same keys are mapped to Ukrainian letter Yi
+(looks like Roman I with two dots instead of one):
+<p><pre>
+  SET TERM KEY RUSSIAN  \93 \244  ; Map ] to lowercase yi
+  SET TERM KEY RUSSIAN \125 \245  ; Map } to uppercase Yi
+</pre> <p> 
+See <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=566">
+Table VII-6 in <cite>Using C-Kermit</cite> pp.566-569</a> for complete Cyrillic
+character-set listings for ISO 8859-5, CP866, KOI-8, and Short KOI.
+</dl>
+<p>
+
+
+To define your own Cyrillic key map, create a file containing the desired
+<tt>SET TERM KEY RUSSIAN</tt> commands, in which the assigned values are CP866
+values.  <tt>TAKE</tt> this file (or enter its name in the Dialer entry,
+Keyboard page, Key map "Read from File" box), and then whenever you execute the
+<tt>\KkbRussian</tt> verb, your keyboard will have the mappings defined in
+this file.
+
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

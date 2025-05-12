@@ -1,6 +1,6 @@
 File SCRIPTS\README.TXT
 
-The C-Kermit for Windows scripts directory is the default location for script
+The Kermit 95 scripts directory is the default location for script
 programs to be executed by C-Kermits TAKE command.
 
 LOGIN.KSC
@@ -25,6 +25,9 @@ HOSTMDM.KSC
 
 HOSTCOM.KSC
   Host-mode listener for incoming direct serial connections
+
+IKSDPY.KSC
+A script that reads the IKSD database to show information on active sessions.
 
 NPAGE.KSC
   A script for sending numeric pages (to a pager)

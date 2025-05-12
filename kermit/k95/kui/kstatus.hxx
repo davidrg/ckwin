@@ -28,6 +28,9 @@ enum eAction { NOACTION, REMOVEPANE, ADDPANE };
     void createWin( KWin* par );
     void size( int width, int height );
 
+    void setVisible(Bool visible);
+    BOOL isVisible() { return visible; }
+
     void setParts( int numParts, int* partWidths );
     void setText( int part, char* text );
     void customize();
@@ -64,6 +67,7 @@ private:
     int partDrag;
     Bool mouseOverPart;
 
+    int visible;
 };
 
 #endif

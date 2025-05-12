@@ -10,12 +10,12 @@
 #include "ikextern.h"
 
 typedef struct _K_WORK_STORE {
-    int             offset;
-    int             length;
-    int             x;
-    int             y;
-    unsigned char   attr;
-    unsigned short  effect;
+    int               offset;
+    int               length;
+    int               x;
+    int               y;
+    cell_video_attr_t attr;
+    unsigned short    effect;
 } K_WORK_STORE;
 
 extern UINT keyArray [];    // from kuikey.cxx
@@ -23,6 +23,10 @@ extern UINT keyArray [];    // from kuikey.cxx
 extern "C" {
 #define K_DNONE      110		/* Screen rollback: down one line */
 #define K_UPONE      112		/* Screen rollback: Up one line */
+
+#define DECSTGLT_MONO           0
+#define DECSTGLT_ALTERNATE      1
+#define DECSTGLT_COLOR          3
 
 extern int tt_cursor;
 extern int cursorena[];
@@ -33,32 +37,34 @@ extern int tt_update;
 extern int scrollflag[];
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
-extern int trueblink, trueunderline, trueitalic;
-unsigned char geterasecolor(int);
+extern int trueblink, trueunderline, trueitalic, truedim, truebold;
+extern int decstglt, decatcbm, decatcum;
+cell_video_attr_t geterasecolor(int);
 int tt_old_update;
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
 extern DWORD VscrnIsDirty( int );
 
-ULONG RGBTable[16] = {
-    0x00000000,
-    0x00800000,                
-    0x00008000,
-    0x00808000,
-    0x00000080,
-    0x00800080,
-    0x00008080,
-    0x00c0c0c0,
-    0x00808080,
-    0x00ff0000,
-    0x0000ff00,
-    0x00ffff00,
-    0x000000ff,
-    0x00ff00ff,
-    0x0000ffff,
-    0x00ffffff
-};
+extern int colorpalette; /* ckoco3.c */
+extern cell_video_attr_t  colorcursor;  /* ckoco3.c */
+
+/* Copies of the RGB tables so that resetting the terminal can reset the
+ * the colour palettes. */
+ULONG SavedRGBTable256[256];
+ULONG SavedRGBTable88[88];
+ULONG SavedRGBTable[16];
+#ifdef CK_PALETTE_WY370
+ULONG SavedWY370RGBTable[65];
+#endif /* CK_PALETTE_WY370 */
+
+/* And the working copies which may be modified by the remote host */
+extern ULONG RGBTable256[256];
+extern ULONG RGBTable88[88];
+extern ULONG RGBTable[16];
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[65];
+#endif /* CK_PALETTE_WY370 */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
@@ -132,7 +138,9 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , saveHorzIsV(0)
     , font( 0 )
     , processKey( FALSE )
-    , prevAttr( uchar(-1) )
+#ifndef CK_COLORS_24BIT
+    , prevAttr( cell_video_attr_init_vio_attribute(255) )
+#endif /* CK_COLORS_24BIT */
     , prevEffect( uchar(-1) )
     , _xoffset( 0 )
     , _yoffset( 0 )
@@ -140,6 +148,13 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , ws_blinking( 0 )
     , cursor_displayed( 0 )
 {
+#ifdef CK_COLORS_24BIT
+#if _MSC_VER < 1800
+    prevAttr = cell_video_attr_from_vio_attribute(255);
+#else
+     prevAttr = cell_video_attr_init_vio_attribute(255);
+#endif
+#endif /* CK_COLORS_24BIT */
     vert = new KScroll( kg, TRUE, TRUE );
     horz = new KScroll( kg, FALSE, TRUE );
 
@@ -153,14 +168,16 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     long maxcells = ::getMaxDim();
     int column, row;
     ::getMaxSizes( &column, &row );
-    workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));
+    //  workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));  // This seems to allocate almost twice as much memory as actually needed!
+    workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t))) + (MAXSCRNROW * sizeof(ushort));
     workTemp = new uchar[ workTempSize ];
     memset( workTemp, '\0', workTempSize);
 
-    clientPaint->textBuffer = textBuffer = (ushort*) &(workTemp[0]);
-    clientPaint->attrBuffer = attrBuffer = &(workTemp[ maxcells * sizeof(ushort)]);
-    clientPaint->effectBuffer = effectBuffer = (ushort*) &(workTemp[maxcells * (sizeof(uchar) + sizeof(ushort))]);
-    clientPaint->lineAttr = lineAttr = (ushort*) &(workTemp[ maxcells * (sizeof(uchar) + 2 * sizeof(ushort))]);
+    clientPaint->textBuffer = textBuffer     = (ushort*)            &(workTemp[0]); /* One per cell */
+    clientPaint->attrBuffer = attrBuffer     = (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
+    clientPaint->effectBuffer = effectBuffer = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
+    clientPaint->lineAttr = lineAttr         = (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
+
 
     workStore = new K_WORK_STORE[ maxcells ];
     memset( workStore, '\0', sizeof(K_WORK_STORE) * maxcells );
@@ -362,7 +379,7 @@ void KClient::createWin( KWin* par )
 
     HBITMAP bitmap = LoadBitmap( hInst, MAKEINTRESOURCE(IDB_BITMAP1) );
     disabledBrush = CreatePatternBrush( bitmap );
-    DWORD rgb = RGBTable[(geterasecolor(vmode)&0xF0)>>4];
+    DWORD rgb = cell_video_attr_background_rgb(geterasecolor(vmode));
     bgBrush = CreateSolidBrush( rgb );
     savebgcolor = rgb;
 
@@ -619,8 +636,9 @@ void KClient::ToggleCursor( HDC hdc, LPRECT lpRect )
     for (int y = lpRect->top; y < lpRect->bottom; y++) {
         for ( int x = lpRect->left ; x < lpRect->right ; x++ ) {
             COLORREF color = GetPixel(_hdcScratch, x, y);
+			int cursorbg = cell_video_attr_background_rgb(colorcursor);
 
-            SetPixel(_hdcScratch, x, y, color^0x00808080);
+            SetPixel(_hdcScratch, x, y, color^cursorbg);
         }
     }
     BitBlt(hdc,
@@ -749,7 +767,7 @@ void KClient::writeMe()
     r.right = w;
     r.bottom = h;
 
-    DWORD rgb = RGBTable[(geterasecolor(vmode)&0xF0)>>4];
+    DWORD rgb = cell_video_attr_background_rgb(geterasecolor(vmode));
     if ( rgb != savebgcolor ) {
         DeleteObject( bgBrush );
         bgBrush = CreateSolidBrush( rgb );
@@ -761,13 +779,13 @@ void KClient::writeMe()
     wc = 0;
     int xpos, i;
     int totlen = clientPaint->len;
-    uchar attr = uchar(-1);
+    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
     ushort effect = ushort(-1);
     for( i = 0; i < totlen; i++ )
     {
         xpos = i % twid;
-        if( !xpos || attrBuffer[i] != attr || effectBuffer[i] != effect )
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
         {
             kws = &(workStore[wc]);
 
@@ -817,7 +835,7 @@ void KClient::writeMe()
     for( i = 0; i < wc; i++ )
     {
         kws = &(workStore[i]);
-        if( prevAttr != kws->attr )
+        if( !cell_video_attr_equal(prevAttr, kws->attr) )
         {
             prevAttr = kws->attr;
 
@@ -825,19 +843,31 @@ void KClient::writeMe()
             /* This needs to be replaced by a class that allows the color values */
             /* to be set by the user and stored somewhere.                       */
             /* The RGBTable is now set via SET GUI RGB commands.                 */
-            SetBkColor( hdc(), RGBTable[(prevAttr&0xF0)>>4]);
-            SetTextColor( hdc(), RGBTable[(prevAttr&0x0F)]);
+            SetBkColor( hdc(), cell_video_attr_background_rgb(prevAttr));
+            SetTextColor( hdc(), cell_video_attr_foreground_rgb(prevAttr));
         }
 
         if( prevEffect != kws->effect )
         {
             prevEffect = kws->effect;
             Bool normal = (prevEffect == VT_CHAR_ATTR_NORMAL) ? TRUE : FALSE;
-            Bool bold = (prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE;
-            Bool dim = (prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE;
+            Bool bold = truebold && ((prevEffect & VT_CHAR_ATTR_BOLD) ? TRUE : FALSE);
+            Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+
+            if (decstglt == DECSTGLT_ALTERNATE) {
+                // DECSTGLT says we should show attributes as colors. DECATCUM
+                // and DECATCBM *may* say we should still do true underline and
+                // true blink even while doing these as colors.
+                bold = FALSE; dim = FALSE; italic = FALSE;
+
+                underline = decatcum && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
+                blink = decatcbm && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
+
+                normal = !underline && !blink;
+            }
 
             if( normal )
                 getFont()->resetFont( hdc() );

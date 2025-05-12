@@ -42,7 +42,6 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern int ttpush;
 extern int autoscroll, protect ;
 

@@ -1,8 +1,13 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#define EDITDATE  "06 Feb 2024"       /* Last edit date dd mmm yyyy */
-#define EDITNDATE "20240206"          /* Keep them in sync */
-/* Tue Feb  6 11:41:35 2024 */
+#ifdef COMMENT
+#define EDITDATE  "22 Mar 2025"       /* Last edit date dd mmm yyyy */
+#else
+#define EDITDATE  "2025/03/22"       /* Last edit date ISO format */
+#endif  /* COMMENT */
+
+#define EDITNDATE "20250322"          /* Keep them in sync */
+/* Thu Aug  8 12:25:04 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
   because it's also used in other modules.
@@ -13,7 +18,7 @@ FOR NEW VERSION (development, alpha, beta, release candidate, formal release):
   . Change the 3 dates just above;
   . Change ck_cryear = "xxxx"; (copyright year) just below, if necessary;
   . For test versions change ck_s_test and ck_s_tver (below) appropriately:
-     Dev, Alpha, Beta, or RC (Release Candidate);
+     Dev, Alpha, Pre-Beta, Beta, or RC (Release Candidate);
   . Change makefile CKVER and BUILDID definitions and timestamp at top.
 
 If the version number has changed, also:
@@ -40,11 +45,16 @@ If the version number has changed, also:
 */
 #include "ckcdeb.h"                     /* Debug & other symbols */
 
-char * ck_cryear = "2024"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2025"; 		/* C-Kermit copyright year */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
 */
+
+#ifdef OS2
+/* Kermit 95 version numbers come from here */
+#include "ckover.h"
+#endif
 
 #ifdef BETATEST
 #ifdef OS2
@@ -52,17 +62,16 @@ char * ck_cryear = "2024"; 		/* C-Kermit copyright year */
 #define BETADATE
 #endif /* __DATE__ */
 /*
-   Temporary from July 2022...
-   the Windows version is currently seeing monthly beta releases.
-   As 3 March 2024 the Windows Beta is based on C-Kermit 10.0 Beta.11.
-   The Windows and non-Windows Betas happen at different times.
+   Kermit 95 releases on a different schedule from C-Kermit on other
+   platforms. As 3 March 2024 the Windows Beta is based on
+   C-Kermit 10.0 Beta.11.
 */
-char *ck_s_test = "Beta";
-char *ck_s_tver = "11/Windows-06";
+char *ck_s_test = K95_TEST;
+char *ck_s_tver = K95_TEST_VER_S;
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
-char *ck_s_test = "pre-Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
-char *ck_s_tver = "11";                 /* Test version number */
+char *ck_s_test = "Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
+char *ck_s_tver = "12";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -98,23 +107,39 @@ int offtsize = 0;                       /* Size of OFF_T */
   and it should always be incremented, for the benefit of packagers like
   Debian who depend on it.
   
-  Also the custom-format version numbers for OS/2, Windows, and the
-  original 1980s Macintosh are gone.  There are no more Kermit-2,
-  Kermit 95 for Windows 95 and later, and Mac Kermit (for the original
-  Macintosh), just C-Kermit for each platform (except the original Mac).
+  Also the custom-format version numbers for the original 1980s Macintosh is
+  gone as there is no more Mac Kermit (for the original Macintosh), just
+  C-Kermit for each platform (except the original Mac) and Kermit 95.
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "408";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.408";           /* eXtended version string */
-long  ck_l_ver = 1000408L;              /* C-Kermit version number */
+char *ck_s_edit = "416";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.416";           /* eXtended version string */
+long  ck_l_ver = 1000415L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
 
+long  ck_l_xver;
+
+#ifdef OS2
+/* Kermit 95 for Windows and OS/2 */
+char *ck_s_k95ver = K95_VERSION_MAJ_MIN_REV; /* Product-specific version string */
+long  ck_l_k95ver = K95_VERSION_L;           /* Product-specific version number */
+#ifdef IKSDONLY
+#ifdef NT
+char *ck_s_k95name = "IKS-NT";
+#else /* NT */
+char *ck_s_k95name = "IKS-OS/2";
+#endif /* NT */
+#else /* IKSDONLY */
+char *ck_s_k95name = "Kermit 95";          /* Program name */
+#endif /* IKSDONLY */
+#endif /* OS2 */
+
 #define CKVERLEN 128
 char versiox[CKVERLEN];                 /* Version string buffer  */
 char *versio = versiox;                 /* These are filled in at */
-long vernum;                            /* runtime from above.    */
+long vernum, xvernum;                   /* runtime from above.    */
 
 #define CKCMAI
 
@@ -585,16 +610,17 @@ ACKNOWLEDGMENTS:
 #ifdef OS2ONLY
 #define INCL_VIO                        /* Needed for ckocon.h */
 #include <os2.h>
+#include <process.h>                    /* for getpid() */
 #undef COMMENT
 #endif /* OS2ONLY */
 
 #ifdef NT
 #include <windows.h>
 #include <process.h>                    /* for getpid() */
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 
 int setOSVer();                         /* ckotio.c */
 int ttgcwsz();                          /* ckocon.c */
@@ -1357,6 +1383,9 @@ int deblog = 0,                         /* Debug log is open */
     dest   = DEST_D,                    /* Destination for packet data */
     zchkod = 0,                         /* zchko() should work for dirs too? */
     zchkid = 0,                         /* zchki() should work for dirs too? */
+#ifdef VMS
+    vms_text = VMSTFS,                  /* VMS text file dflt fmt: Stream_LF */
+#endif /* VMS */
 
 /* If you change this, also see struct ptab above... */
 
@@ -1403,6 +1432,9 @@ int deblog = 0,                         /* Debug log is open */
     cnflg  = 0,                         /* Connect after transaction */
     cxseen = 0,                         /* Flag for cancelling a file */
     czseen = 0,                         /* Flag for cancelling file group */
+#ifdef OS2
+    ccseen = 0,                         /* Flag for canceling autodownload */
+#endif /* OS2 */
     fatalio = 0,                        /* Flag for fatal i/o error */
     discard = 0,                        /* Flag for file to be discarded */
     keep = SET_AUTO,                    /* Keep incomplete files = AUTO */
@@ -2721,10 +2753,18 @@ makever ( )
     char * krb5;
     char * b64;
 
+#ifdef OS2
+    ck_s_xver = ck_s_k95ver;
+    ck_l_xver = ck_l_k95ver;
+    ck_s_name = ck_s_k95name;
+#else /* OS2 */
+    ck_l_xver = ck_l_ver;
+#endif /* OS2 */
+
     x = strlen(ck_s_name);
     y = strlen(ck_s_ver);
     if (y + x + 1 < CKVERLEN) {
-        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_ver,NULL);
+        ckmakmsg(versio,CKVERLEN,ck_s_name," ",ck_s_xver,NULL);
     } else {
         ckstrncpy(versio,"C-Kermit",CKVERLEN);
         return;
@@ -2757,6 +2797,7 @@ makever ( )
         ckstrncat(versio,ck_s_date,CKVERLEN);
     }
     vernum = ck_l_ver;
+    xvernum = ck_l_xver;
     debug(F110,"makever Kermit version",versio,0);
 
 #ifdef COMMENT

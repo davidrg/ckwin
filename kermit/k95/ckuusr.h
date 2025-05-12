@@ -1131,11 +1131,13 @@ struct stringint {			/* String and (wide) integer */
 #ifdef CK_VT420_520_EMULATION
 #define ISVT520(x) (x == TT_VT520 || x == TT_VT520PC)
 #define ISVT420(x) (x >= TT_VT420 && x <= TT_VT520PC)
-#else /* COMMENT */
-/* Since we do not yet support 420/520 extend 320 */
+#define ISVT525(x) (x == TT_VT525)
+#else /* CK_VT420_520_EMULATION */
+/* Since we do not yet support 420/520/525 extend 320 */
+#define ISVT525(x) (ISVT320(x))
 #define ISVT520(x) (ISVT320(x))
 #define ISVT420(x) (ISVT320(x))
-#endif /* COMMENT */
+#endif /* CK_VT420_520_EMULATION */
 #define ISVT320(x) (x >= TT_VT320 && x <= TT_AAA)
 #define ISVT220(x) (x >= TT_VT220 && x <= TT_AAA || \
                     ISBEOS(x) || ISQANSI(x) || \
@@ -1581,6 +1583,9 @@ struct stringint {			/* String and (wide) integer */
 #define  CK_TN_DL     29  /* TELNET DELAY-SB */
 #define  CK_TN_SFU    30  /* TELNET SFU-COMPATIBILITY */
 #define  CK_TN_LOG    31  /* TELNET LOGOUT */
+#ifdef OS2
+#define  CK_TN_COLORTERM 32 /* TELNET SEND-COLORTERM */
+#endif /* OS2 */
 #endif /* TNCODE */
 #define XYOUTP 68	/* OUTPUT command parameters */
 #define   OUT_PAC 0	/*   OUTPUT PACING */
@@ -1805,6 +1810,11 @@ struct stringint {			/* String and (wide) integer */
 #define XYEXTRN  135    /* SET EXTERNAL-PROTOCOL */
 #define XYVAREV  136    /* SET VARIABLE-EVALUATION */
 #define XYLOCALE 137    /* SET LOCALE */
+#ifdef VMS
+#define XYVMSTF  138    /* SET VMS_TEXT */
+#define  VMSTFS    1    /*  STREAM_LF */
+#define  VMSTFV    2    /*  VARIABLE */
+#endif /* VMS */
 
 /* End of SET commands */
 
@@ -2056,6 +2066,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOREN    72			/* SHOW RENAME */
 #define SHOLOC    73			/* SHOW LOCALE */
 #define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
+#define SHOVMSTXT 75			/* SHOW VMS_TEXT */
 
 /* REMOTE command symbols */
 
@@ -2464,6 +2475,9 @@ struct stringint {			/* String and (wide) integer */
 #define VN_MONTH    256			/* This month (name) */
 #define VN_NMONTH   257			/* This month (numeric) */
 #define VN_FULLVER  258			/* Full version number */
+#ifdef OS2
+#define VN_PALETTE  259         /* Terminal emulator color palette */
+#endif
 #endif /* NOSPL */
 
 /* INPUT status values */
@@ -2748,6 +2762,8 @@ struct stringint {			/* String and (wide) integer */
 #define XSSH_KEY 6
 #define XSSH_CLR 7
 #define XSSH_AGT 8
+#define XSSH_LOAD 9
+#define XSSH_REM 10
 
 #ifdef COMMENT
 #define SSHKT_1R   0			/* SSH KEY TYPE symbols */
@@ -2791,6 +2807,9 @@ struct stringint {			/* String and (wide) integer */
 
 #define SSHC_LPF 1
 #define SSHC_RPF 2
+
+#define SSHR_LPF 1
+#define SSHR_RPF 2
 
 #define XSSH2_RKE 1
 
@@ -2924,6 +2943,7 @@ _PROTOTYP( int setnum, (int *, int, int, int) );
 _PROTOTYP( int seton, (int *) );
 _PROTOTYP( int setonaut, (int *) );
 _PROTOTYP( VOID shmdmlin, (void) );
+_PROTOTYP( VOID slrestor, (void) );
 _PROTOTYP( VOID initmdm, (int) );
 _PROTOTYP( char * showoff, (int) );
 _PROTOTYP( char * showooa, (int) );

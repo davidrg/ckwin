@@ -1,0 +1,1725 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>The Kermit 95 GUI</title></head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2><a name="top">THE KERMIT 95 GUI</a></h2>
+
+<blockquote>
+<i>As of:</i> Kermit 95 <!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--><br>
+<!--$ver-date$-->1 January 2003<!--/$ver-date$-->
+</blockquote>
+
+[ <a href="http://www.kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://www.kermitproject.org/index.html">Kermit Home</a> ]
+
+<h3><hr><a name="contents">CONTENTS</a></h3>
+
+<ol>
+<li><a href="#x1">INTRODUCTION</a>
+<li><a href="#x2">MAKING CONNECTIONS</a>
+<li><a href="#x3">STARTING AND STOPPING K95G</a>
+<li><a href="#x4">THE DIALER</a>
+<li><a href="#x5">NEW COMMANDS AND VARIABLES</a>
+<li><a href="#x6">THE STATUS BAR</a>
+<li><a href="#x7">THE MENU BAR</a>
+<li><a href="#x8">THE TOOL BAR</a>
+<li><a href="#x9">SCROLL BARS</a>
+<li><a href="#x10">DIALOGS</a>
+<li><a href="#x11">WINDOW SIZE</a>
+<li><a href="#x12">TERMINAL EMULATION FEATURES</a>
+<li><a href="#x13">FONTS AND CHARACTER SETS</a>
+<li><a href="#x14">(NOT) BUGS</a>
+</ol>
+
+<h3><hr><a name="x1">1. INTRODUCTION</a></h3>
+
+<img src="logo.gif" align="left" hspace="12">
+
+<b><big><big>K</big></big>ermit 95 2.0</b> was the first K95 release that runs
+in a graphical user interface (GUI) window.  The GUI version of Kermit 95 is
+called K95G.  A console-window version remains available; it is called K95, as
+before.  This document describes the GUI-specific features of K95G.
+
+<!--K95G has a new icon: the Columbia University crown.  Please do not attribute
+any religious or political significance to this symbol, beyond the fact that
+it is the emblem of <a href="http://www.columbia.edu/">Columbia University</a>,
+representing the crown of
+<a href="http://www.britannia.com/history/monarchs/mon54.html">George II</a>,
+King of England, who founded the University in 1754 (more about the crown
+<a href="http://www.royal.gov.uk/output/Page450.asp">HERE</a>).-->
+
+<br clear="left">
+<p>
+
+The user interface of K95G is the same as K95:
+text-mode commands and prompts plus a separate full-GUI connection manager
+(Dialer).  But K95G also has a new, more "native-Windows" look, font
+selections, a closer connection to the Dialer, and new GUI-based controls and
+dialogs for its most essential functions.  Conversion to a GUI window solves
+numerous problems that affect all Windows Console applications, especially in
+Windows 95/98/ME: the disappearing cursor, Caps Lock confusion, the
+"incredible shrinking window", extraneous or out-of-order characters on
+screen, loss of focus when started from a GUI application, various Copy/Paste
+problems, inability to use Input Method Editors, ghost images on the screen,
+and on and on and on.  Here's a capsule comparison of the GUI and Console
+versions:
+
+<p>
+<blockquote>
+<table border>
+<tr>
+<th>Feature
+<th>GUI<br>
+All Windows
+<th>Console<br>
+Win9x/ME
+<th>Console<br>
+NT/2000/XP/7/8/10/11
+<tr>
+<td><i>Kermit Menu</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Kermit Toolbar</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Scrollbars</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Font Selection</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">Limited
+<tr>
+<td><i>Multiple Scripts</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">Limited
+<tr>
+<td><i>Save Font Preferences</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Stretch Screen Dimensions</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Stretch Font Size</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Maximize/Restore</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>True Fullscreen</i>
+<td align="center">No
+<td align="center">Yes
+<td align="center">Yes
+<tr>
+<td><i>True Underlining</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><i>Double High/Wide Characters</i>&nbsp;
+<td align="center">Yes
+<td align="center">No
+<td align="center">No
+<tr>
+<td><tt>[x]</tt> <i>Box Works</i>
+<td align="center">Yes
+<td align="center">No
+<td align="center">Yes
+</table>
+</blockquote>
+
+<!--<p>
+
+The form and substance of subsequent K95G releases will be determined by
+customer response to version 2.0: should we concentrate on adding features
+such as graphics terminal emulation, 3270 and 5250 terminal emulation, etc, or
+should we chase after new standards such as IPv6 and IPsec, or should we add
+more GUI dialogs and Windows conveniences?  (Of course these aren't the only
+choices.)-->
+
+<p>
+
+<a name="newscreen">Here's the K95G Terminal screen</a>:
+
+<p>
+
+<img src="lynx.gif">
+
+<p>
+
+Quick tour:
+
+<p>
+<dl>
+<dt><i>The Title Bar</i></dt>
+<dd><!--Shows the new crown icon.-->  Shows how window title can be set (with
+<tt>--title:</tt> command-line option or the SET TITLE command).  Minimize,
+Maximize/Restore, and Exit controls on the right all work.
+
+<p>
+<dt><i>The Menu Bar</i></dt>
+<dd>File, Edit, Actions, and Help menus are provided.
+<p>
+
+<dt><i>The Tool Bar</i></dt> <dd>The left button (Dial icon) brings up the
+Dialer.  The button next to it switches between the Terminal (&rarr;) and
+Command (&larr;) screens.  Combo boxes are provided to choose (and show) the
+terminal emulation, font, font size, and host character set.
+
+<p>
+
+<dt><i>The Terminal Screen</i></dt>
+
+<dd>Commonly called the "blue screen" since that's the default background
+color for non-ANSI terminal emulations.  Of course you can choose any colors
+you like, such as white as in this example, which shows an SSH session to
+Linux, emulating the Linux console, running the text-mode Lynx web browser to
+access the Kermit website.
+
+<p>
+
+<dt><i>The Vertical Scroll Bar</i></dt>
+<dd>Use this in both the Terminal and Command windows to access previous
+screens, up to two million lines worth.  The scroll bar also shows whether
+the current screen is scrolled back, and how far.
+<p>
+
+<dt><i>The Status Bar</i></dt>
+<dd>Indicates K95G's current active screen (Command or
+Terminal), the communications protocol (in this case SSH2), the cursor coordinates, and the screen dimensions.  The lower right
+corner lets you stretch or shrink the screen.
+
+</dl>
+<p>
+
+These are discussed below, along with various other screen elements not
+shown: popup dialogs and help screens, etc.
+
+
+<h3><hr><a name="x2">2. MAKING CONNECTIONS</a></h3>
+
+The graphical method for making connections remains the K95 Dialer, but now it
+is available directly from the K95G Menu bar and Tool bar.  As always, the
+Dialer it lets you define, set up, configure, and launch connections, and
+manages a persistent database of connections and their settings for you, so
+once you set up a connection the way you want it, all its characteristics
+are remembered and you can re-launch it any time in the
+future with just a couple mouse clicks.
+
+<p>
+<blockquote>
+<img src="guiopen.gif">
+
+<p>
+
+<i>
+Remember: Toolbar buttons act on a single
+click.  If you double-click the Dialer's CONNECT button, you get two sessions.
+</i>
+</blockquote>
+<p>
+
+When you start the Dialer from K95G and then launch a connection from the
+Dialer, the connection reuses the same instance of K95G if there is no active
+connection.  If you launch second or subsequent connection from the Dialer, it
+starts a new copy of K95G (or K95, depending on the connection).  If you exit
+from the Dialer, the K95[G] sessions are not affected.  If you exit from K95G,
+the Dialer is not affected.  Only one copy of the Dialer can be active at one
+time; all copies of K95G share the same copy of the Dialer.
+
+<p>
+
+If you bring the Dialer to the foreground by using K95G's Dial toolbar button,
+the next session started from the Dialer reuses the current K95G instance if 
+there is no active session.
+If you bring the dialer to the foreground using any other method, the next
+connection launched from the Dialer starts a new copy of K95G.
+
+<p>
+
+As always, the Dialer can <i>not</i> be used for changing settings of an
+active connection.  Any changes made to a connection's settings take effect
+the next time you launch the connection.  To change settings of the active
+connection, you must use K95G's Menu or Tool bar or its Command Screen.
+
+<h3><hr><a name="x3">3. STARTING AND STOPPING K95G</a></h3>
+
+Kermit 95 2.0+ has several command-line options, some of them GUI-specific,
+which are used by the Dialer when you specify the associated values in the
+Dialer's <a href="#x4">GUI page</a> or Terminal page:
+
+<p>
+<dl>
+
+<dt><tt>--xpos:<i>n</i></tt> (K95G only)</dt>
+<dd>X-coordinate of window position, expressed as the number of pixels
+to the right of the upper left screen corner
+
+<p>
+
+<dt><tt>--ypos:<i>n</i></tt> (K95G only)</dt>
+<dd>Y-coordinate of window position, expressed as the number of pixels
+below the upper left screen corner.
+<p>
+
+<dt><tt>--fontname:<i>s</i> (or --facename:<i>s</i>)</tt> (K95G only)</dt>
+<dd>Font/typeface name: string with <tt>_</tt> (underscore) replacing blank.
+<p>
+
+<dt><tt>--fontsize:<i>n</i></tt> (K95G only)</dt>
+<dd>Font point size, number, such as 14.  Half sizes can be given; e.g. 14.5.
+<p>
+
+<dt><tt>--height:<i>n</i></tt></dt>
+<dd>Screen height (number of rows).
+<p>
+
+<dt><tt>--width:<i>n</i></tt></dt>
+<dd>Screen width (number of columns).
+<p>
+
+<dt><tt>--termtype:<i>name</i></tt></dt>
+<dd>Terminal emulation name, such as vt220.
+<p>
+
+<dt><tt>--title:<i>string</i></tt></dt>
+<dd>Window title (string may contain spaces, which case you should
+enclose the the entire option in doublequotes:
+<tt>"--title:This&nbsp;Is&nbsp;the&nbsp;Title"</tt>.
+</dl>
+<p>
+
+The following options were added in K95 2.1.3:
+
+<p>
+<dl>
+<dt><tt>--nomenubar</tt></dt>
+<dd>The K95G window is to include no menu bar.
+<p>
+<dt><tt>--notoolbar</tt></dt>
+<dd>The K95G window is to include no tool bar.
+<p>
+<dt><tt>--nostatusbar</tt></dt>
+<dd>The K95G window is to include no status bar.
+
+<p>
+<dt><tt>--nobars</tt></dt>
+<dd>Equivalant to
+<tt>--nomenubar</tt> <tt>--notoolbar</tt> <tt>--nostatusbar</tt>.
+
+<p>
+<dt><tt>--nopush</tt></dt>
+<dd>Disallows invocation of external applications or commands
+from within Kermit 95 (GUI or Console).  This also disables K95G's
+Dialer button.
+
+<p>
+<dt><tt>--noescape</tt></dt>
+<dd>Prevents the user from manually returning to the Command screen from the
+Terminal screen: disables the CONNECT-mode escape sequence as well as
+the <tt>\Kexit</tt> keyboard verb.
+
+<p>
+<dt><tt>--noscroll</tt></dt>
+<dd>Prevents the user from scrolling back to previous screens: disables
+the scrollback-related keyboard verbs as well as the GUI scrollbars (but
+does not make the scrollbars disappear).
+
+<p>
+<dt><tt>--lockdown</tt></dt>
+<dd>Combines <tt>--noscroll</tt>,
+<tt>--noescape</tt>,
+<tt>--nopush</tt>,
+<tt>--nobars</tt> and to create a "captive" session.
+
+<p>
+<dt><tt>--maximize</tt></dt>
+<dd>Starts K95G maximized (full screen).
+Equivalent to SET GUI WINDOW RUN-MODE MAXIMIZE.
+
+<p>
+<dt><tt>--minimize</tt></dt>
+<dd>Starts K95G minimized (i.e. appearing only on the Windows task bar).
+Equivalent to SET GUI WINDOW RUN-MODE MINIMIZE.
+
+<p>
+<dt><tt>--scalefont</tt></dt>
+<dd>Screen size changes are to result in font scaling (this is the default).
+
+<p>
+<dt><tt>--changedim</tt></dt>
+<dd>Screen size changes are to leave the font size alone and change the
+number screen rows and columns.
+
+</dl>
+<p>
+
+You can also use these yourself when starting K95G from a command prompt,
+batch file, VB program, etc. and you can use them in desktop shortcuts
+(right-click on the shortcut, choose properties, and fill in the desired
+command-line options).
+
+<p>
+
+K95G can be safely stopped by clicking the <tt>[x]</tt> box on the Title bar
+in any Windows version, even Windows 95, 98, or ME; this is not safe in
+the Console version in Win9x/ME because Windows does not notify the
+application that it is being closed, so locked resources can be left behind.
+This is why the <tt>[x]</tt> box is grayed out in Console version
+on Win9x/ME.
+
+<p>
+
+When you exit from K95G, several tidbits are stored in the Windows Registry:
+
+<p>
+<ul>
+<li>Screen position.
+<li>Font.
+<li>Font size.
+</ul>
+<p>
+
+Next time you start K95G, in the absence of other instructions (e.g. from
+a Dialer entry or desktop shortcut), it uses the most recently stored screen
+position and font information.
+
+<h3><hr><a name="x4">4. THE DIALER</a></h3>
+
+<img src="dial_ico.gif" align="left" hspace="12">
+
+The Dialer icon is a rotary telephone dial.  Although we don't use rotary
+phones much anymore, the telephone dial was a universally recognizable symbol
+for making connections.  The Dialer has a GUI settings page, shown below.
+Each connection can have its own separate GUI settings.
+
+<!-- TODO: The rest of this section is a duplicate of section 5.14 in
+     index.html / k95manual.htm -->
+
+<br clear="left">
+<p>
+
+<img src="guipage.gif" hspace="12">
+
+<p>
+
+The items on the page are:
+
+<p>
+<dl>
+<dt><b><tt>[ ]</tt> Use GUI Kermit 95</b></dt>
+<dd>Check to use K95G for this connection (default); uncheck to use the
+Console version of K95.  If you uncheck this box, the rest of the page
+is grayed out, since these settings do not apply to the Console version.
+<p>
+
+<dt><b>Facename</b></dt>
+<dd>The font to be used on this connection.
+<p>
+
+<dt><b>Font Size</b></dt>
+<dd>The font size, in points.
+<p>
+
+<dt><b>Resize Mode:</b></dt>
+<dd>How K95 should react when its screen is resized with the mouse:
+Change dimensions (i.e. the number of character rows and columns on the
+screen) or Scale font (keep the rows and columns constant and scale the
+font to fit the new screen size as closely as possible).
+<p>
+
+<dt><b>Run:</b></dt>
+<dd>The run mode for K95's window: Normal, Maximized, or Minimized.
+<p>
+
+<dt><b>Startup Position: <tt>[ ]</tt> Default</b></dt>
+<dd>Check this box to let Windows decide where the K95 screen should be
+located on the desktop when it starts.  Uncheck this box to specify a
+startup location.
+
+<p>
+
+<dt><b>X-pos: <tt>[   ] </tt> Y-pos <tt>[   ]</tt></b></dt>
+<dd>(Only if Startup Default is unchecked) The horizontal (X) and vertical (Y)
+positions for the upper-left corner of the K95G window at startup, measured
+in pixels from the upper-left screen corner.  The actual values depend on
+your monitor and Windows display settings; some trial and error is required
+to achieve a particular placement, and the coordinates are not necessarily
+compatible from one PC to another.
+
+<p>
+
+<dt><b><tt>[ ]</tt> Menu Bar</b></dt>
+<dt><b><tt>[ ]</tt> Tool Bar</b></dt>
+<dt><b><tt>[ ]</tt> Status Bar</b></dt>
+
+<dd>These are normally checked.  To remove the Menu bar from the K95 window,
+uncheck Menu Bar; ditto for the Tool and Status bars.
+
+<p>
+
+<dt><b><i>The Color Table</i></b></dt>
+
+<dd>Terminal/Host connections allow the host to control the colors on your
+terminal screen using "ANSI color" escape sequences.  These allow the
+specification of 16 colors: black, blue, green, cyan, red, magenta, etc.  Each
+of these is defined by a particular mixture of Red, Green, and Blue (RGB) hues
+whose intensities are specified by a number, 0-255.  You can alter the
+definitions for each "ANSI" color in this table by changing the numbers.  The
+column to the right is reserved; in a future release it will show the actual
+color of the result.
+
+</dl>
+
+<h3><hr><a name="x5">5. GUI COMMANDS AND VARIABLES</a></h3>
+
+<dl>
+
+<dt><b>ASK /GUI</b> <i>variable prompt</i>
+<dt><b>ASKQ /GUI</b> <i>variable prompt</i>
+<dd>A version of the ASK and ASKQ commands that uses a GUI popup in
+which the user can enter text.  It succeeds if the user clicks OK (regardless
+of whether the text box was filled in) and fails if Cancel was clicked.
+At present there is no way to specify a default answer.
+
+<p>
+
+<dt><b>DIALER</b></dt>
+<dd>If the K95 Dialer is loaded, brings it to the foreground.  If it isn't,
+loads and starts it.
+
+<p>
+
+<dt><b>GETOK /GUI</b> <i>prompt</i>
+<dd>A version of the GETOK command (asks a Yes/No question)
+that uses a GUI popup.  Succeeds if user clicked OK or Yes; fails if user
+clicked No or Cancel.  The default answer is always No (a future release
+might include a way to specify a default answer).
+
+<p>
+<dt><b>IF GUI</b> <i>command</i>
+<dd>Only runs the specified command under K95G. For example, placing
+    <tt>if gui set gui window resize-mode change-dimensions</tt> in your
+    k95custom.ini will set the resize-mode for K95G and do nothing in K95.
+
+<!-- Not GUI related, and K95 2.0 was ~22 years ago now --
+<p>
+
+<dt><b>KCD</b> <i>symbolic-directory-name</i></dt>
+
+<dd><i>(Not strictly GUI related, but new to version 2.0)</i> Changes Kermit
+95's working directory to the given symbolically named directory: EXEDIR,
+COMMON, APPDATA, etc (explained in the <a href="readme.html">README</a>
+document). -->
+<p>
+
+<dt><b>SET GUI RGBCOLOR</b> &nbsp;
+<i>ansi-color-name &nbsp;
+red-value &nbsp; green-value &nbsp; blue-value</i></dt>
+
+<dd>Changes the definition of the given ANSI color in the current color palette.
+The RGB values are numbers between 0 and 255.  The ANSI color names are
+black, darkgray, lightgreen, magenta, blue, green, lightgray, red, brown,
+lightblue, lightmagenta, white, cyan, lightcyan, lightred, and yellow.
+<p>
+
+<dt><b>SET GUI RGBCOLOR INDEX</b> &nbsp;
+    <i>color-index &nbsp;
+        red-value &nbsp; green-value &nbsp; blue-value</i></dt>
+
+<dd>Changes the definition of the given color index in the current color
+    palette. The range of the color-index depends on the current color palette;
+    0-15 for aixterm-16, 0-87 for xterm-88 and 0-255 for xterm-256. The RGB values are
+    numbers between 0 and 255.
+<p>
+
+<dt><b>SET GUI FONT</b> <i>name [ size ]</i></dt>
+
+<dd>Chooses a monospace font to be used in K95G's Terminal and Command
+windows.  The size can be an integer (whole number) such as 12, or a
+fractional number, such as 12.4, which is rounded to the nearest half
+point.  The font name and size can also be specified on the Dialer GUI
+page, on the K95G Toolbar, and in K95G command-line options.
+
+<p>
+
+<dt><b>SET GUI DIALOGS</b> <i>{</i> <b>ON</b>, <b>OFF</b> <i>}</i>
+
+<dd>Tells whether popups should use GUI dialogs (ON) or text-mode popups (OFF).
+GUI DIALOGS are ON by default.  OFF might be more comfortable for touch
+typists and old Kermit hands (OFF allows typeahead).
+
+<p>
+
+<dt><b>SET GUI MENUBAR DISABLED</b></dt>
+
+<dd>Disables items on K95s Menu bar which allow the current session
+configuration to be altered (2.1).  The menu bar does not
+disappear but disabled actions are grayed out and cannot be selected.
+Prior to K95 3.0, this command was named <tt>SET GUI MENUBAR OFF</tt>
+which is still accepted for compatibility with existing scripts.
+To make the menu bar totally disappear, use the <tt>--nomenubar</tt>
+command-line option (2.1.3).
+
+<p>
+
+<dt><b>SET GUI MENUBAR VISIBLE { OFF, ON }</b></dt>
+
+<dd>Shows the menu bar, or hides it and moves important menu items on
+    to the <a href="gloss.html#g_winmenu">Window Menu</a>. Has no effect
+    if the menu bar was hidden with the <tt>--nomenubar</tt> or
+    <tt>--nobars</tt> command line options (3.0)
+
+<p>
+
+<dt><b>SET GUI TOOLBAR DISABLED</b></dt>
+
+<dd>Disables the Terminal Type, Font, and Character-set selection items on
+K95s Tool bar (2.1).  The tool bar does not disappear or stop responding to
+mouse actions, but Terminal Type, Font, or Character-set selections in the
+tool bar have no effect. Prior to K95 3.0, this command was named <tt>SET
+GUI TOOLBAR OFF</tt> which is still accepted for compatibility with existing
+scripts. To make the tool bar totally disappear, use the
+<tt>--notoolbar</tt> command-line option (2.1.3).
+
+<p>
+
+<dt><b>SET GUI TOOLBAR VISIBLE { OFF, ON }</b></dt>
+
+<dd>Shows or hides the status bar. Has no effect
+    if the status bar was hidden with the <tt>--nostatusbar</tt> or
+    <tt>--nobars</tt> command line options (3.0)
+
+<p>
+
+<dt><b>SET GUI STATUSBAR { OFF, ON }</b></dt>
+
+<dd>Shows or hides the status bar. Has no effect
+    if the tool bar was hidden with the <tt>--notoolbar</tt> or
+    <tt>--nobars</tt> command line options (3.0)
+
+<p>
+
+<dt><b>SET GUI WINDOW POSITION <i>x y</i></b></dt>
+
+<dd>Moves the K95 window to the given coordinates (expressed in pixels
+from the top left corner).  If you put this command in your
+<tt>K95CUSTOM.INI</tt> file, the specified position becomes the default
+K95G startup position.  You can specify the startup position for a
+particular K95G connection on the Dialer GUI page for that connection.
+You can also specify the startup coordinates for a particular K95G
+instance on the <a href="#x3">command line</a>.
+
+<p>
+
+<dt><b>SET GUI WINDOW RESIZE-MODE</b>
+<i>{</i> <b>CHANGE-DIMENSIONS</b>, <b>SCALE-FONT</b>, <b>NONE</b> <i>}</i></dt>
+
+<dd>Tells K95 how to respond to resize events: CHANGE-DIMENSIONS changes the
+number of rows and columns on the screen to fit the new size, keeping the font
+size constant; SCALE-FONT keeps the rows and columns constant, changing the
+font size to make them fit as well as possible into the new window size.  NONE
+prevents manual window resizing by the user and prevents the window from
+covering the entire screen when maximized.  SCALE-FONT is the default.  You
+can specify the resizing behavior for a particular K95G connection on the
+Dialer GUI page for that connection.  If you put a SET GUI WINDOW RESIZE-MODE
+command in your <tt>K95CUSTOM.INI</tt> file, this sets the default resizing
+behavior for K95G for when you make connections directly, rather than from
+the Dialer.
+
+<p>
+
+<dt><b>SET GUI WINDOW RUN-MODE</b>
+<i>{</i> <b>MAXIMIZE</b>, <b>MINIMIZE</b>, <b>RESTORE</b> <i>}</i></dt>
+
+<dd>Allows K95 to do to itself what you would do by clicking the respective
+title-bar buttons.  You can also put this command in your
+<tt>K95CUSTOM.INI</tt> file to have K95 start in the desired format, and
+specify the desired run mode for a particular connection in the Dialer on
+the GUI page.
+
+<p>
+
+<dt><b>SET TERMINAL HEIGHT</b> <i>rows</i>
+<dt><b>SET TERMINAL WIDTH</b> <i>columns</i>
+<dd>In K95G, these commands affect both the Terminal Screen and the
+Command Screen, and they always affect the number of screen rows and columns,
+regardless of the GUI WINDOW RESIZE-MODE setting.
+
+<p>
+
+<dt><b>SET TERMINAL COLOR PALETTE</b>
+    <i>{</i> <b>AIXTERM-16</b>, <b>XTERM-88</b>, <b>XTERM-256</b> <i>}</i></dt>
+
+<dd>Specifies the color palette Kermit 95 should use. The first 16 colours are
+    the same for all three, while the colours above that vary. RGB values set
+    by SET GUI RGBCOLOR are only set for the current color palette.
+
+<!-- Not GUI specific so doesn't belong in the GUI features doc
+<p>
+<dt><b>SET TITLE</b> <i>text</i>
+
+<dd><i>(Not new; also works in Console version)</i> Sets the Window title
+for the Title bar, Task bar, Task list, etc.  You can also specify the
+window title on the <a href="#x3">command line</a>.  If you don't specify
+a window title, the name of the connection, host, or communication device
+is used.
+-->
+
+<p>
+<dt><b>NOSCROLL</b>
+<dd>Disables scrollback.
+<p>
+
+<p>
+<dt><b>SHOW GUI</b></dt>
+
+<dd>Displays SET GUI values, and shows the actual color values for the first
+    16 colors. If given the /PALETTE switch, color values are shown by palette
+    index number rather than name along with color cubes for that palette.
+
+</dl>
+<p>
+
+GUI-related variables include:
+
+<p>
+<dl>
+<dt><tt><b>\v(gui_fontname)</b></tt></dt>
+<dd>Name of current font.
+<p>
+
+<dt><tt><b>\v(gui_fontsize)</b></tt></dt>
+<dd>Size of current font in points, perhaps with a fractional part,
+e.g. 12.5.
+<p>
+
+<dt><tt><b>\v(gui_runmode)</b></tt></dt>
+<dd>Current window status: Minized, Maximized, or Restored.
+<p>
+
+<dt><tt><b>\v(gui_xpos)</b></tt></dt>
+<dd>Current x-coordinate of terminal-screen cursor.
+<p>
+
+<dt><tt><b>\v(gui_xres)</b></tt></dt>
+<dd>Screen resolution in the X (horizontal) direction,
+number of pixels across the screen.
+
+<p>
+
+<dt><tt><b>\v(gui_ypos)</b></tt></dt>
+<dd>Current x-coordinate of terminal-screen cursor.
+<p>
+
+<dt><tt><b>\v(gui_yres)</b></tt></dt>
+<dd>Screen resolution in the Y (vertical) direction,
+number of pixels from screen top to bottom.
+</dl>
+
+<h3><hr><a name="x6">6. THE STATUS BAR</a></h3>
+
+<!-- TODO: This is basically a duplicate of index.html#k95gstatus -->
+
+<img src="guistat.gif">
+
+<p>
+
+The status bar at the bottom of the window is divided into six sections;
+from left to right:
+
+<ol>
+<li>Screen indicator (Terminal Screen or Command Screen).
+<li>Current Locus for file management commands
+(remote or local, explained in <a href="#x7.3">Section 7.3</a>).
+<li>Network protocol (such as Telnet, SSH, Rlogin), along with an indication
+of authentication and encryption methods used, if any.
+<li>Cursor coordinates in 1-based column,row (X,Y) notation.
+<li>Terminal screen dimensions, rows &times; columns.
+<li>Pull corner for changing screen dimension or font size.
+</ol>
+<p>
+
+Locus is explained
+<a href="https://www.kermitproject.org/ckermit80.html">HERE</a>.
+
+Items 4-6 are explained in <a href="#x11">Section 11</a>.
+
+<h3><hr><a name="x7">7. THE MENU BAR</a></h3>
+
+<!-- TODO: This is basically a duplicate of index.html#k95gmenu -->
+
+The K95G menu is clean and simple: File, Edit, Actions, Help.
+There are no keyboard shortcuts for K95G's menu items, since every key and
+key combination already has application-specific uses.
+
+<h3>7.1. The File Menu</h3>
+
+<dl><dt><i>Connections</i></dt>
+<dd>Invokes the Kermit 95 Dialer so you can make a connection, or use it in
+any other desired way.
+<p>
+<dt><i>Hangup</i></dt>
+<dd>Closes the current connection.
+<p>
+<dt><i>Exit</i></dt>
+<dd>Exits from K95G.
+</dl>
+
+<h3>7.2. The Edit Menu</h3>
+
+<dl>
+
+<dt><i>Paste</i></dt>
+
+<dd>Copies the text (if any) from
+the clipboard into the current window (Command or Terminal).
+
+<p>
+
+<dt><i>Mark Mode</i></dt>
+
+<dd>Lets you use your keyboard to mark text for copying to the clipboard
+or transmission to the host.  The particular action is controlled by the
+submenu: Start, Cancel, Copy to Clipboard, Copy to Host.  More about
+mark mode <a href="scroll.html">HERE</a>.
+
+</dl>
+
+<h3><a name="x7.3">7.3. The Actions Menu</a></h3>
+
+The following actions take place when you choose them in the Actions menu:
+
+<dl>
+<dt><i>Clear Screen</i></dt>
+<dd>Clears (blanks) the current screen
+<p>
+<dt><i>Clear Scrollback</i></dt>
+<dd>Clears (erases) the scrollback buffer for the current screen
+<p>
+<dt><i>Reset Terminal</i></dt>
+<dd>Resets the terminal emulator (e.g. in case "garbage" from the host has
+put it into an unwanted state).
+<p>
+<dt><i>Send...</i></dt>
+<dd>Use the submenu to select what to send to the host: Break, Long Break,
+NUL (ASCII 0), Telnet Are You There, Telnet Interrupt Process.
+<p>
+<dt><i>Compose (character)</i></dt>
+<dd>Lets you compose a West or East European accented Roman or special
+character.
+<p>
+<dt><i>Unicode Compose (character)</i></dt>
+<dd>Lets you enter any Unicode Base Multilingual Plane character by its
+4-digit hexademical code value.
+</dl>
+
+<p>
+
+The following are "toggles", which you turn on and off in the menu.  An option
+is checked when it's on, unchecked when it's off; click an option to toggle it
+between off and on.  Those with an ellipsis ( . . . ) lead to a small submenu.
+The menu is arranged alphabetically.
+
+<dl>
+<dt><i>Autodownload</i></dt>
+
+<dd>Turns automatic recognition of Kermit and Zmodem file-transfer packets off
+and on.  When on, which is the default, all Kermit-protocol file transfers can
+be initiated by the host-resident Kermit program, such as C-Kermit on Unix,
+and all Zmodem downloads (but not uploads) can be initiated by the
+host-resident Zmodem program.  When Autodownload is set to "Ask", a file
+dialog pops up when the download begins, to allow you to choose the name
+and location for the incoming file.  When Autodownload is set to "On",
+incoming files are accepted automatically under the name they were sent with
+and stored in K95's download directory if one has been specified, or else in
+its current directory.
+
+<p>
+<dt><i>Automatic Locus Switching...</i></dt>
+<dd>Explained below.
+
+<p>
+<dt><i>Bytesize...</i></dt>
+<dd>Switches terminal bytesize between 7 and 8.  These days 8 is the norm.
+7 is normally used only on direct or directly dialed serial connections where
+the host is using even parity.
+
+<p>
+<dt><i>Capture</i></dt>
+
+<dd>Turns session logging on and off.  If a session log has not been opened,
+the first time you turn capture on, a dialog pops up to allow you to choose
+the name and location of the session log file.
+
+<p>
+<dt><i>Copy to printer</i></dt>
+<dd>Turns printing of incoming material on and off.
+
+<p>
+<dt><i>Debug</i></dt>
+<dd>Turns terminal-screen debugging on and off.  When debugging is on,
+control characters and escape sequences are shown, rather than acted upon.
+
+<p>
+<dt><i>Exit Warnings</i></dt>
+<dd>Enables/Disables warning dialogs if you try to exit K95G when a connection
+is active.  Exit warnings are enabled by default.  Equivalent to SET EXIT
+WARNING.
+
+<p>
+<dt><i>GUI Dialogs</i></dt>
+<dd>Enables/Disables GUI dialogs; equivalent to SET GUI DIALOGS.  ON
+by default; when OFF, text-mode popups or prompts are used, which (unlike
+GUI dialogs) accept typeahead.
+
+<p>
+<dt><i>Keyclick</i></dt>
+<dd>Turns software keyclick on and off.
+
+<p>
+<dt><i>Locus:Local</i></dt>
+<dd>Changes Locus for file management commands, explained below.
+Checked means Local, unchecked means Remote.
+
+<p>
+<dt><i>PCTERM keyboard</i></dt>
+<dd>Terns PCTERM keyboard mode on and off, in which Kermit sends up/down
+make/break codes for each key, rather than the associated character codes
+or Kverbs.
+
+<p>
+<dt><i>Resize mode...</i></dt>
+<dd>Switches the screen-stretch action between changing the font size and
+changing the number of rows and columns (but note that holding Shift while
+resizing always changes screen dimensions and holding Ctrl always changes
+font size).
+
+<p>
+<dt><i>URL highlighting</i></dt>
+<dd>Turns automatic URL highlighting off and on.  It's on by default.
+
+</dl>
+<p>
+
+<i>Locus</i> refers to the target of file management commands when Kermit has
+a connection to a server on another computer.  Historically, commands such as
+CD, DIRECTORY, DELETE, RENAME, and MKDIR have always acted locally in all
+Kermit programs.  To ask a remote server to do these things required a REMOTE
+or "R" prefix: e.g. REMOTE CD or RCD.
+
+<p>
+
+When the FTP client was added to Kermit in 2002, this behavior seemed
+unnatural to users of text-mode FTP clients.  Thus the notion of <i>Locus</i>
+was introduced: Local means that unprefixed file management commands are
+executed on the local computer; Remote means they are sent to the remote FTP
+or Kermit server for execution.  By default, Kermit switches Locus
+automatically every time you make or break a connection, depending on what
+kind of connection it is.  When you make an FTP connection, Kermit switches
+its Locus to Remote.  When you make any other kind of connection, or when you
+break any connection, its Locus switches back to Local.
+
+<p>
+
+In K95G, automatic Locus switching is accompanied by a popup dialog, informing
+you of the switch and asking if it is OK.  This is to make sure you know
+<i>where</i> commands such as DELETE will be executed!  If you would rather
+not be bothered by the popups, use the Actions menu to change the Automatic
+Locus Switching to On or Off, rather than Ask, or put the appropriate SET LOCUS
+command in your <tt>K95CUSTOM.INI</tt> file.  Type HELP LOCUS at the K-95&gt;
+prompt for details.
+
+<p>
+
+The "Locus: Local" item in the Actions menu actually changes the current
+Locus, toggling it between Local and Remote (it is checked when local,
+unchecked when remote).
+
+<p>
+
+The Console version of K95 behaves the same way, but without the GUI
+popups.
+
+<h3>7.4. The Help Menu</h3>
+
+The Help menu gives access to help text and documents:
+<p>
+<dl><dt><i>Context</i></dt>
+<dd>Gives popup help on the current context, primarily key assignments.
+<p>
+<dt><i>Kermit 95 Manual</i></dt>
+<dd>Access the Kermit 95 manual on your local disk through your web browser.
+<p>
+<dt><i>Via the Web</i></dt>
+<dd>Access the Kermit Project website (Internet connection required).
+<p>
+<dt><i>About...</i></dt>
+<dd>Displays the Kermit version number, date, and copyright.
+</dl>
+
+<h3><hr><a name="x8">8. THE TOOL BAR</a></h3>
+
+<!-- TODO: This is pretty much a copy of index.html#k95gtool -->
+
+<img src="guitools.gif">
+
+<p>
+
+Like the Menu bar, K95G's Toolbar is minimal yet highly functional.
+It consists of two buttons and four combo boxes:
+
+<p>
+
+<dl>
+<dt><b>Button 1</b></dt>
+
+<dd>If you look closely, it's a telephone dial.
+Invokes the graphical Dialer (same as File &rarr; Connections), used mainly
+for opening connections, but also for configuring and managing them.  If the
+Dialer is not loaded, this button loads and starts it.  If the Dialer is
+loaded, this button brings it to the foreground.  Only one copy of the Dialer
+can be active at a time.
+<p>
+
+<dt><b>Button 2</b></dt>
+
+<dd>Switches back and forth between the Terminal and Command screens, same as
+Alt-x.
+
+<p>
+
+<dt><b>The Terminal Type Combo Box</b></dt>
+
+<dd>Displays the current terminal emulation and lets you change it.  This,
+like the remaining boxes on the Toolbar, is a <i>combo box</i>.  If you click
+on the little triangle, a list pops up that you can scroll through (if
+necessary) using its scrollbar.  Click on any entry to select it.  You can
+also use arrow keys, Page Up, Page Down, Home, End, etc, to go down and up.
+
+<p>
+
+<dt><b>The Font Combo Box</b></dt>
+
+<dd>Displays the current font (facename) and lets you change it.  Fonts are
+discussed in <a href="#x12">Section&nbsp;12</a>.
+
+<p>
+
+<dt><b>The Font Size Combo Box</b></dt>
+
+<dd>Displays the current font size and lets you change it to any value between
+1 and 47.5, in increments of one half point (a&nbsp;point is about 1/72 inch,
+and about 1/3 mm).  Not all font sizes are valid for a given set of
+dimensions, facename, and height/width.  When you select a facename or height,
+Windows performs a best fit and then the chosen size is automatically updated
+with the actual height that windows selected.  Changing the font or font size
+repaints the current screen in the new font or size, and affects all
+subsequent new or scrolled-back screens.
+
+<p>
+
+<dt><b>The Character Set Combo Box</b></dt>
+
+<dd>Displays remote terminal character set selected by you, and lets you
+change it.  More about fonts and character sets in
+<a href="#x12">Section&nbsp;12</a>.  Changing the character set does not affect
+current or previous screens, only material that arrives after the change.
+
+</dl>
+<p>
+
+The Toolbar gives you a capsule definition of what you see on the screen and a
+mini control panel for making adjustments:
+
+<p>
+<ul>
+
+<li>If the Terminal screen format or layout is wrong, the host and K95G
+might have a terminal-type mismatch.
+
+<p>
+
+<li>The font selection determines which characters can be viewed, and the font
+size determines how big and/or readable the screen can be.  If you see lots of
+hollow boxes or question marks on the screen, you might need to switch to a
+more complete or appropriate font.
+
+<p>
+
+<li>The character set tells K95G how to interpret the codes sent by the host
+(i.e. how to map them to glyphs in the current font) and which codes to send
+to the host.  If you see garbage where "special" characters (such as accented
+or non-Roman letters, Kanji, math symbols, etc) should be, the character set
+probably needs changing.
+
+</ul>
+
+<h3><hr><a name="x9">9. SCROLL BARS</a></h3>
+
+K95G lets you scroll back and forth through both the Terminal and Command
+screens using the scroll bar in the normal Windows way: push the slider in the
+desired direction; click on the the little arrowheads at top or bottom of the
+scrollbar; click above or below the slider; or use your mouse wheel if you
+have one.  This is not possible in the Console version of K95.
+
+<p>
+
+Of course the keyboard-driven methods work as before.  For most terminal
+emulations, the keys are Page Up, Ctrl-PageUp, Page Down, Ctrl-PageDown,
+Home, and End.
+
+<p>
+
+Scrollback can be disabled by including the <tt>--noscroll</tt> command-line
+option when Kermit is started or with the NOSCROLL command (2.1.3).
+
+
+<h3><hr><a name="x10">10. DIALOGS</a></h3>
+
+Aside from what's on the menu and toolbar, the only GUI dialogs are help
+screens and program-generated popups that require action or information from
+the user such as username or password prompts during the secure authentication
+process; choosing Yes/No in some particular situation; for example, when you
+try to exit with a connection still active:
+
+<p>
+<blockquote>
+<img src="guipopup.gif">
+</blockquote>
+<p>
+
+Popup context-sensitive help dialogs in response to Alt-h have been converted
+to GUI popups.  The help-screen buttons might be a bit counterintuitive.
+Presently the OK button is equivalent to the Alt-H key: it cycles through
+through the screens (one or more) of the current help topic.  The Cancel
+button is equivalent to the Space key, which makes the Console-mode
+help screen disappear.
+
+<p>
+
+When a K95G GUI dialog contains multiple buttons (such OK and Cancel), the
+default response button is highlighted; pressing the Space bar or Enter key
+"pushes" it.  To press a different button from the keyboard, you can use the
+Tab or Right-Arrow key to move the highlighting, and then Space or Enter to
+push the button, or you can type the first letter of the word on the button
+(if it is underlined).  You can also use Esc or Alt-F4 to make any Help screen
+or sequence go away.
+
+<p>
+
+You can generate popups yourself in scripts, using the new /GUI switch
+on the <a href="#x5">ASK, ASKQ, and GETOK commands</a>, for example:
+
+<p>
+<pre>
+  ASK /GUI name " What is your name? "
+  if success echo " Your name is \m(name)."
+</pre>
+
+<h3><hr><a name="x11">11. WINDOW SIZE</a></h3>
+
+K95G's window size is a function of three factors:
+
+<ul>
+<li>The font
+<li>The font size
+<li>The screen rows and columns
+</ul>
+<p>
+
+The font and size can be set in the Toolbar as described in <a
+href="#x8">Section 8</a>, or with the SET GUI FONT command described in <a
+href="#x5">Section 5</a>, or from the K95 command line
+as described in <a href="#x3">Section 3</a>.
+
+<p>
+
+The screen dimensions can be set with the SET TERMINAL HEIGHT and SET TERMINAL
+WIDTH commands, as before, and also by stretching the K95G window with the
+mouse when <a href="#x7">Resize Mode</a> in the Actions menu is set to Changes
+Dimensions (but note that holding Shift while resizing always changes screen
+dimensions and holding Ctrl always changes font size):
+
+<p>
+<ul>
+
+<li>To change the <b>width</b> (the number of columns), position the mouse
+pointer over the left or right K95G screen border, hold down the left mouse
+button, and drag the border in the desired direction.  As you drag, a little
+popup shows the changing dimensions as
+<i>columns</i>&nbsp;&times;&nbsp;<i>rows</i> (the first number changes).  Let
+go of the mouse when you have the desired number of columns.
+
+<p>
+
+<li>To change the <b>height</b> (the number of rows), drag the bottom screen
+edge and watch the row count change in the little popup.
+
+<p>
+
+<li>To change the <b>height and width</b> at the same time, drag the lower
+right corner of the K95G window in the desired (diagonal) direction; watch
+both numbers change in the popup.
+
+</ul>
+<p>
+
+It is often desirable to achieve the tallest possible Terminal window that is
+also easily legible.  To do this, first pick the font and size that are most
+comfortable for you, then position the title bar at the top of your screen,
+and then stretch the bottom window border to the bottom of the screen.
+Alternatively, maximize the window and then drag a vertical edge to achieve
+the desired width.
+
+<p>
+
+You can also <b>maximize and restore</b> the K95G window using the the middle
+button at the right of the Title bar.  Maximize (clicking the button when it
+contains a single box) expands the K95G window to fill the whole screen,
+adjusting the screen dimensions or the font size (according to your Resize
+Mode setting in the Action menu) to achieve the best possible fit.  Restore
+(clicking the button when it shows two boxes) puts the K95G back as it was
+before you maximized it.  Note that it is not always possible to achieve a
+perfect fit because the size units (rows and columns or font points) can be
+too granular.
+
+<p>
+
+The terminal dimensions (rows &times; columns) are shown in the rightmost
+position of the status bar.  If the terminal window includes a Kermit 95
+status line, this line is not included (since it is not part of the terminal).
+
+<h3><hr><a name="x12">12. TERMINAL EMULATION FEATURES</a></h3>
+
+<blockquote>
+<img src="guiscrn.gif"><br>
+</blockquote>
+
+<p>
+
+GUI windows allow several effects not possible in Console windows, and
+K95G takes advantage of them:
+
+<p>
+<ul>
+<li>True underlining.  When the emulated terminal type supports underlining
+and the host sends underlined text, K95G shows underlined text.  The Console
+version of K95 uses special colors to simulate underlining.  K95G also uses
+underlining as part of its default presentation method for URL hotspots
+(you can change the presentation method with the SET TERMINAL URL-HIGHLIGHT
+command).  In ANSI X3.64 based emulations underlining
+is selected with <tt>&lt;CSI&gt;4m</tt>.
+
+<p>
+
+<li>Italics (slanted writing).  In ANSI X3.64 based emulations italics
+are selected with <tt>&lt;CSI&gt;3m</tt>.
+
+<p>
+
+<li>Double-width characters.  These are used by the VT100-series terminals
+for emphasis.  In the Console version, these are simulated by wide spacing
+of regular characters.
+
+<p>
+
+<li>Double-height-and-width characters, used by VT100-series terminals for
+extra emphasis, simulated in the Console version by a double row of spaced
+characters.
+
+<p>
+
+<li>Text in many languages and writing systems (next section).
+
+</ul>
+<p>
+
+<b>Colors</b> are set in the GUI the same way they are set in the console
+version:
+
+<p>
+<ul>
+<li>In the Dialer, on the Terminal Settings page; or:
+<li>Via the SET TERMINAL COLOR command.
+</ul>
+<p>
+
+These are both described in the Kermit 95 manual.  In addition, as noted in <a
+href="#x4">Section 4</a>, in K95G only, you can change the <i>value</i> of
+each color. <!-- A GUI color dialog in K95G itself is a wish-list item for future
+releases.-->
+
+<h3><hr><a name="x13">13. FONTS AND CHARACTER SETS</a></h3>
+
+<p>
+    See: <a href="index.html#c7guicset">Character Sets and Fonts in K95G</a>
+</p>
+
+<!--
+<img src="glass2.gif">
+
+<p>
+
+Perhaps the greatest functional advantage of K95G over the Console version
+is its ability to use any Windows font, and therefore to display text in
+many languages and writing systems simultaneously on the same screen, even
+in Windows 9x and ME.  This is a rather complex topic, but we'll try to 
+summarize it briefly here.
+
+<p>
+
+You can select the font to be used by K95G in the Font and Font Size combo
+boxes on the <a href="#x8">K95G Toolbar</a>, or with the <tt>--fontname</tt>
+and <tt>--fontsize</tt> <a href="#x3">command-line options</a>, or with
+the <a href="#x5">SET GUI FONT</a> command.  You should experiment with
+different fonts to find the one that includes all the characters you need,
+is most readable for you at the desired size, and the least impact on system
+performance (some fonts can be up to 20MB in size).
+
+<p>
+
+When K95G starts on your PC for the first time, it looks to see what fonts are
+available and picks what it believes is the best one.  You can try other ones
+if you wish.  When you exit from K95G, the font and size are remembered for
+next time.
+
+<h3>Monospace Fonts</h3>
+
+Kermit 95 is a terminal emulator, and as such it expects to have a
+<i>monospace</i> font; that is, one in which each character has the same
+width, just like real terminals (and like most typewriters before them).  Thus
+its initial font selection is the best populated monospace font it can find on
+your PC.  Examples of monospace fonts include Andale Mono, Andale Mono WT J,
+Courier, Courier New, Everson Mono Terminal, Fixedsys, Lucida Console,
+Monotype.com, System, and Terminal.  This is not an exhaustive list.  Some of
+these are Unicode fonts, some are ASCII only, some correspond to Microsoft or
+PC code pages.  Some come with Windows, some are freely downloadable from
+Microsoft or other Web sites; some must be purchased.
+
+<p>
+
+Courier New, a Unicode font standard with recent Windows releases, includes
+Roman, Greek, Cyrillic, Hebrew, Arabic, and a pretty good selection of math,
+technical, and box- and line-drawing characters.  If your PC doesn't have
+Courier New installed, you can download it from the Microsoft website.
+
+<p>
+
+If Courier New is not installed, another common choice is Lucida Console,
+which supports Roman, Greek, and Cyrillic, plus a limited repertoire of
+math/technical and line/box-drawing characters.
+
+<p>
+
+Third-party commercial fonts are available with much broader coverage.  An
+example is <a href="http://www.monotype.com">Agfa Monotype</a>'s Andale
+Mono WT J (pronounced as in Spanish: <i>&Aacute;ndale</i>), which supports
+practically all there is to support, including Armenian, Georgian, Chinese,
+Japanese, Korean, Thai, and the Indic scripts: very close to every single
+character in the <a href="utf8.html">Kermit
+UTF-8 Sampler</a>, plus a wider variety of symbols, including those needed for
+APL programming.  NOTE: Andale Mono WT J is currently not advertised on the
+Agfa/Monotype website; send inquiries to:
+<a href="mailto:oem.sales@agfamonotype.com">oem.sales@agfamonotype.com</a> and
+indicate whether you are interested in an OEM or end-user license.
+
+<p>
+
+An excellent compromise is a new font developed especially for Kermit 95 by <a
+href="http://www.evertype.com">Everson Typography</a>:
+<a href="http://www.evertype.com/emono/">Everson Mono Terminal</a>
+(EMT), which supports most of the non-Han characters in the Base Multilingual
+Plane of Unicode, including Latin, Cyrillic, Greek, Arabic, Hebrew, Coptic,
+Armenian, Georgian, Runes, Ogham, Canadian Syllabics, Cherokee, Tibetan,
+Katakana, Hiragana, Math, Symbols, Line and Box Drawing, Dingbats, and APL
+(not supported, besides Han, are Indic, Hangul, Ethiopic, Syriac, Thai, Lao,
+Myanmar, and Braille).  This is not a free font; it comes with Kermit 95 2.0
+but may not be further redistributed.  <a href="glass.html#emt">CLICK HERE</a>
+for a sample.
+<p>
+
+<h3>Proportional Fonts</h3>
+
+Kermit 95 lets you choose any font installed on your PC, even
+proportionally-spaced fonts such as Times New Roman, in which (for example)
+the letter "i" is narrower than the letter "m".  However, K95G is not designed
+to use proportional fonts so if you pick one, spacing won't be correct in
+most cases.
+
+<p>
+
+<h3>Font Resources</h3>
+
+<ul>
+<li><a href="utf8.html">UTF-8 sampler</a>
+<li><a href="glass.html">K95G screenshots with different fonts</a>
+<li><a href="http://www.alanwood.net/unicode/fonts.html">Unicode
+Fonts for Windows</a> (Alan Wood)
+<li><a href="http://www.evertype.com">Everson Typography</a> (Michael Everson)
+<li><a href="http://www.microsoft.com/truetype/fontpack/">Microsoft font
+download site</a>
+<li><a href="http://www.monotype.com">Agfa Monotype</a>
+<li><a href="mailto:oem.sales@agfamonotype.com"><tt>mailto:oem.sales@agfamonotype.com</tt></a>
+</ul>
+
+<h3>Character Sets</h3>
+
+The font used by K95G has a particular encoding, either Unicode (many writing
+systems) or else one of the many PC or Microsoft code pages (one language,
+region, or writing system each).  The host to which K95G is connected is most
+likely using a different character encoding, such as ISO 8859-1 Latin Alphabet
+1 (or one of the other Latin Alphabets); some proprietary host character set
+like HP Roman8 or Data General Multinational; some national standard set like
+JIS X 0201; perhaps even Unicode in its UTF-8 format (among many other
+possibilities).  Kermit 95's job is to convert between the two encodings.  It
+already knows its own font and encoding; <i>your job</i> is to inform Kermit
+95 of the encoding used on the host.  You can do this in the Character Set
+combo box on the K95G Toolbar, with the SET TERMINAL CHARACTER-SET command, or
+(when finer-grained control is needed) with the SET TERMINAL
+REMOTE-CHARACTER-SET command.  If host text contains characters that are not
+also in your current font, K95G displays an empty box or a question mark; in
+that case, you should try (or obtain) another, more appropriate font.
+
+<p>
+
+Note that the character-set combo box does not reflect host-initiated
+character-set switching since, in certain applications, this could change on a
+per-character basis, e.g. with ISO 2022 line/box-drawing applications.  It
+shows the latest user-selected character set, either by the combo box or by
+the SET TERMINAL CHARACTER-SET or SET TERMINAL REMOTE-CHARACTER-SET command,
+or when implied by a terminal emulation selection (such as ANSI, which expects
+the host character set to be CP437).  You can see the current detailed
+character set assignments with the SHOW CHARACTER-SETS command.
+
+<h3>Unicode</h3>
+
+Not so long ago, terminals and terminal emulators &ndash; and the host
+applications that they access &ndash; used only single-byte 7-bit or 8-bit
+character sets such as ASCII, ISO 646, or ISO 8859.  More recently, there is a
+movement to make Unicode available in the terminal-to-host setting, in which
+the Kermit Project is an
+<a href="http://www.columbia.edu/kermit/standards.html">active participant</a>.
+The encoding used "on the wire" is called UTF-8 (Unicode Transformation Format
+8), which is compatible with ASCII; that is, all ASCII text is automatically
+also UTF-8 text.  More and more host-based applications understand UTF-8,
+including the Linux Console, xFree86 xterm, EMACS 21.1, Python, Tcl/Tk, etc.
+(More about UTF-8 in Linux and Unix in general
+<a href="http://www.cl.cam.ac.uk/~mgk25/unicode.html">HERE</a>).
+
+<p>
+
+It is always best to use a Unicode monospace font such as Everson Mono
+Terminal, Andale Mono (or Andale Mono WT J), Courier New, or Lucida Console,
+because it is most likely to contain all the characters that are in the host
+character set, no matter what the host character set is.
+
+<p>
+
+When using UTF8 as your terminal character-set, you should be aware of some
+new wrinkles.  First of all, there is no ISO 2022 character-set switching
+because <i>(a)</i> UTF8 is incompatible with ISO 2022 (except insofar as ISO
+2022 can be used to switch into and out of UTF8), and <i>(b)</i> UTF8 doesn't
+need to switch character sets, since by definition, it already contains all
+the characters that are in any set you would switch to.  However, this also
+means that host-based software that uses ISO 2022 to put up forms, math, and
+so on, doesn't work when your terminal character-set is UTF8.  In other words,
+for anything beyond ordinary plain-text display, UTF8-aware host applications
+are required.
+
+<p>
+
+To illustrate, you can use UTF8 safely to TYPE (cat) files, read email, and so
+on, but you can't use ANSI X3.64 / ISO 2022 forms-based software with UTF8 as
+your terminal-character-set.  It's also problematic in text editors like EMACS
+(at least prior to UTF8-aware versions) or VI, because they don't know (for
+example) that three bytes make one character -- they think it's three
+characters -- so screen positioning and formatting don't work as you might
+expect, nor do word or line wrap, character deletion, or other character
+operations.  Entering UTF8 characters (anything beyond ASCII) into
+applications might or might not work, depending on the application, the major
+impediment being that UTF-8 uses C1 control codes (0x80-0x9F) in its
+representations for graphic characters.
+
+<p>
+
+Of course host-based forms-filling applications can be written using
+UTF-8 rather than ISO 2022, but you probably won't find any, except maybe
+in new or experimental versions of Linux and perhaps in Plan 9.
+
+
+<h3>Switching Fonts</h3>
+
+If you are displaying text a language or script that is not covered by
+your font, you will see lots question marks or empty boxes on your terminal
+screen, which means the font does not contain a character that needs to be
+displayed.  If you change to a more appropriate font, the screen is
+automatically repainted and the missing characters show up if they are in
+the font.  Conversely, if you change to a more restrictive font, some
+characters might change into empty boxes or question marks.
+
+<p>
+
+The same considerations hold for line- and box-drawing characters, math and
+technical characters, etc.  Some fonts have them, some don't.  ANSI terminal
+emulation (used with BBS's, SCO operating systems, etc), with its "PC
+graphics" use of single and double lines, borders, "shadows", etc, works with
+fonts like Andale Mono, Courier New, Lucida Console, and Everson Mono
+Terminal, but not (for example) with Courier or Terminal.
+
+<h3>Switching Character Sets</h3>
+
+To say that a particular host uses a particular character set is an
+oversimplification.  Host computers, in general, are totally ignorant of
+character sets.  They simply store and send bytes blindly.  The interpretation
+is up to the display device, such as a terminal, terminal emulator, or
+printer.  If you set K95G's TERMINAL CHARACTER-SET to LATIN1, and you type
+text in Spanish, Italian, or German, everything looks right to you.  But if
+somebody else accesses the same files on the same host with some other
+TERMINAL CHARACTER-SET, the "special" (accented) letters will be wrong.  Data
+does not identify its own character set &ndash; it's always up to the display
+device or application to use the same character set that was used by the
+creator of the data.
+
+<p>
+
+A good case in point is text-based e-mail or netnews, using a client that is
+ignorant of character sets.  When you are using a terminal emulator to read
+e-mail or netnews on the host, you are very likely to encounter messages with
+different encodings: Latin-1, Latin/Cyrillic, Japanese EUC, UTF-8.  If you're
+interested in viewing these messages correctly, you'll need to have a Unicode
+font (so you don't have to be constantly changing fonts), but you will still
+have to change K95G's character set for each message, which, presumably, is
+indicated in the message headers, e.g.:
+
+<p>
+<pre>
+  Content-Type: text/plain; charset="iso-8859-1"
+</pre>
+<p>
+
+This is a bit inconvenient, especially since MIME (more precisely, IANA)
+character set names do not necessarily correspond to Kermit names, and because
+you'll need to redisplay the message after changing to the appropriate
+character set.  But it's still a great leap forward from the old days, when
+you didn't have a prayer of reading a message in the "wrong" character set,
+let alone in an entirely different script!  To ease the pain somewhat, here's
+a table showing the correspondence of the Kermit and MIME names (Kermit names
+predate MIME names):
+
+<p>
+<blockquote>
+<table border>
+<tr>
+<th>IANA
+<th>Kermit
+<th>Description
+<tr>
+<td>iso-8859-1
+<td>latin1
+<td>ISO 8859-1 Latin Alphabet 1 (West European)
+<tr>
+<td>iso-8859-2
+<td>latin2
+<td>ISO 8859-2 Latin Alphabet 2 (East European)
+<tr>
+<td>iso-8859-5
+<td>cyrillic-iso
+<td>ISO 8859-5 Latin/Cyrillic Alphabet
+<tr>
+<td>iso-8859-6
+<td>arabic-iso
+<td>ISO 8859-6 Latin/Arabic Alphabet
+<tr>
+<td>iso-8859-7
+<td>greek-iso
+<td>ISO 8859-7 Latin/Greek Alphabet
+<tr>
+<td>iso-8859-8
+<td>hebrew-iso
+<td>ISO 8859-8 Latin/Hebrew Alphabet
+<tr>
+<td>iso-8859-15
+<td>latin9
+<td>ISO 8859-15 Latin Alphabet 9 (West European + Euro)
+<tr>
+<td>utf-8
+<td>utf8
+<td>Unicode UTF-8
+</table>
+</blockquote>
+<p>
+
+This is just a sampling, but you get the idea.  You can see the list of
+K95G's available terminal character-set names in the character-set combo
+box on the Toolbar, or by typing "set terminal char ?" at the K-95&gt; prompt.
+
+<h3>Entering Non-ASCII Characters</h3>
+
+When your font and character-set are chosen appropriately, you have four
+ways of typing "special" (accented or non-Roman) characters:
+
+<p>
+<ol>
+
+<li>If the characters are on your national keyboard, just type them.
+
+<p>
+
+<li>Choose the appropriate keyboard driver in Windows and use whatever input
+method is available.  Kermit 95 automatically converts the characters you type
+to the host character set.  
+
+<p>
+
+
+<li>For Latin-1 (West European) and Latin-2 (East European Roman alphabet)
+languages, use K95G's "Compose Key" (Alt-c, also found in the Actions menu).
+
+<p>
+
+<li>For any language at all, use K95G's Unicode "compose key" (Alt-n, also
+in the Actions menu).
+
+</ol>
+
+
+<h3>Limitations</h3>
+
+<ul>
+
+<li>K95G does not support Japanese, Chinese, Korean, Indic, Thai, Armenian,
+Georgian, Khmer, Ethiopic, or many other scripts directly as terminal
+character sets, in the sense that it can convert between different encodings
+for them, but you can still have UTF-8 terminal sessions in these scripts if
+your font includes them.  Although Kermit knows how to convert several
+Japanese character sets in file transfer, it does not handle them in terminal
+emulation since they require a duospace font, and as far as we know, none is
+available for Windows.
+
+<p>
+
+<li>Combining characters are not handled in UTF-8 sessions.
+
+<p>
+
+<li>K95G does not handle bidirectionality, e.g. in Arabic or Hebrew terminal
+emulation; that is the responsibility of the host application (you can see
+this in the screen shot too; the Unix "cat" command does not handle Hebrew
+and Arabic text, thus it comes out backwards in this example, whereas a
+Hebrew-or-Arabic aware application would send the characters to the terminal
+in display order).
+
+<p>
+
+<li>K95G's terminal emulator works just like the terminal it is emulating
+as far as printing is concerned; it does not recode or reformat the host
+bytes in any way, thus non-ASCII text can be printed only if the printer
+supports the host character set (or, beginning in K95 2.1, if you tell
+Kermit the printer's character with SET PRINTER
+<tt>/</tt>CHARACTER-SET<tt>:</tt><i>name</i>).
+
+</ul>
+<p>
+
+Some of these limitations might be lifted in future releases.
+
+-->
+
+<h3><hr><a name="x14">14. (NOT) BUGS</a></h3>
+
+Most of these are not bugs, but are listed here in case you think they are.
+
+<ul>
+
+<li>As noted elsewhere, there can be some dexterity issues with the Dial
+button and the Dialer; e.g. double-clicking rather than single-clicking can
+produce surprising (but proper) results such as multiple K95G windows.
+Clicking on the Dialer's main (white) screen to bring it to foreground changes
+the highlighted entry.  Double-clicking on the Dialer's main screen to
+bring it to the foreground actually opens a session to whetever entry you
+happened to click on.  And so on.
+
+<p>
+
+<li>When you click the Dial button to invoke the Dialer when the Dialer is not
+already loaded, a Console screen appears momentarily, due to the API used to
+start the Dialer.  If you have configured your console sessions to be
+fullscreen, then your entire screen goes black (or other color you have
+configured) for a second.
+
+<p>
+
+<li>Some confusion can ensue if you launch the Dialer from K95G, launch
+sessions from the Dialer, close the Dialer, open another Dialer, and try to
+control (e.g. Hangup) sessions created by the earlier Dialer -- it won't work,
+but should not do any harm either.  A particular instance of the Dialer only
+knows about the sessions it launched.
+
+<p>
+
+<li>As also noted (and <a href="#x10">explained</a>) elsewhere, clicking OK on
+a popup Help screen does not make the help screen go away; for this, use the
+Cancel button or the Esc key.  Also, some of the text in the popup help screens
+is oriented towards the Console version; e.g. it gives the wrong instructions
+for how to make the popup go away in the GUI version.
+
+<p>
+
+<li>If you disable screen updates while moving windows (e.g. in Windows XP
+<i>Desktop &rarr; Properties &rarr; Appearrance &rarr; Show window contents
+while dragging</i>), then in K95G when <i>Actions &rarr; Resize Mode &rarr;
+Changes Dimensions</i> is selected the popup that shows the changing
+dimensions is not updated, and with <i>Actions &rarr; Resize Mode &rarr;
+Scales Font</i>, you can't watch the font change size.
+
+<p>
+
+<li>If the Windows font size is too big and/or the K95G window is too narrow,
+the Toolbar can be truncated.  This is true of almost any Windows application.
+
+<p>
+
+<li>During file transfer initiated by automatic packet recognition in the
+Terminal window (autodownload or autoupload), the Status bar says Terminal
+screen rather than Command screen.  That's because this type of file transfer
+occurs in the Terminal screen's context.
+
+<p>
+
+<li>The <tt>telnet.exe</tt> and <tt>rlogin.exe</tt> stubs are Console
+applications and therefore can load only the Console version of K95.
+
+</ul>
+<!--<p>-->
+<!--Also see:-->
+<!--<a href="ftp://kermit.columbia.edu/kermit/k95/newbugs.txt"><tt>ftp://kermit.columbia.edu/kermit/k95/newbugs.txt</tt></a>-->
+
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="http://www.kermitproject.org/k95.html">K95 Home</a> ]
+[ <a href="http://www.kermitproject.org/">Kermit Home</a> ]
+<hr>
+<address>
+Kermit 95 GUI / The Kermit Project /
+<!--$ver-date$-->1 January 2003<!--/$ver-date$-->
+</address>
+</body></html>

@@ -23,15 +23,14 @@
 #include <process.h>
 
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
-#endif
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 
-#ifdef CK_TAPI
+
 #include "ckntap.h"             /* Kermit Telephony */
 #include "cknwin.h"
 #include "ckntapi.h"            /* TAPI function typedefs */
@@ -111,39 +110,38 @@ char   tapiSameAreaRule[65] = "";
 char   tapiLongDistanceRule[65] = "";
 char   tapiInternationalRule[65] = "";
 
-cklineInitialize_t cklineInitialize = NULL ;
-cklineNegotiateAPIVersion_t cklineNegotiateAPIVersion = NULL ;
-cklineGetDevCaps_t cklineGetDevCaps = NULL ;
-cklineShutdown_t cklineShutdown = NULL ;
-cklineOpen_t cklineOpen = NULL ;
-cklineMakeCall_t cklineMakeCall = NULL ;
-cklineDial_t cklineDial = NULL ;
-cklineDrop_t cklineDrop = NULL ;
-cklineAnswer_t cklineAnswer = NULL ;
-cklineAccept_t cklineAccept = NULL ;
-cklineDeallocateCall_t cklineDeallocateCall = NULL ;
-cklineSetCallPrivilege_t cklineSetCallPrivilege = NULL ;
-cklineClose_t cklineClose = NULL ;
-cklineHandoff_t cklineHandoff = NULL ;
-cklineGetID_t cklineGetID = NULL ;
-cklineGetTranslateCaps_t cklineGetTranslateCaps = NULL ;
-cklineSetCurrentLocation_t cklineSetCurrentLocation = NULL ;
-cklineSetStatusMessages_t cklineSetStatusMessages = NULL ;
-cklineConfigDialog_t cklineConfigDialog = NULL ;
-cklineTranslateDialog_t cklineTranslateDialog = NULL ;
-cklineTranslateAddress_t cklineTranslateAddress = NULL ;
-cklineGetCountry_t cklineGetCountry = NULL;
-cklineGetDevConfig_t cklineGetDevConfig = NULL;
-cklineGetLineDevStatus_t cklineGetLineDevStatus=NULL;
-cklineSetDevConfig_t cklineSetDevConfig=NULL;
-cklineGetCallInfo_t cklineGetCallInfo=NULL;
-cklineMonitorMedia_t cklineMonitorMedia=NULL;
-cklineGetAppPriority_t cklineGetAppPriority=NULL;
-cklineSetAppPriority_t cklineSetAppPriority=NULL;
-cklineGetNumRings_t cklineGetNumRings=NULL;
-cklineSetNumRings_t cklineSetNumRings=NULL;
-cklineSetCallParams_t cklineSetCallParams=NULL;
-
+static cklineInitialize_t cklineInitialize = NULL ;
+static cklineNegotiateAPIVersion_t cklineNegotiateAPIVersion = NULL ;
+static cklineGetDevCaps_t cklineGetDevCaps = NULL ;
+static cklineShutdown_t cklineShutdown = NULL ;
+static cklineOpen_t cklineOpen = NULL ;
+static cklineMakeCall_t cklineMakeCall = NULL ;
+static cklineDial_t cklineDial = NULL ;
+static cklineDrop_t cklineDrop = NULL ;
+static cklineAnswer_t cklineAnswer = NULL ;
+static cklineAccept_t cklineAccept = NULL ;
+static cklineDeallocateCall_t cklineDeallocateCall = NULL ;
+static cklineSetCallPrivilege_t cklineSetCallPrivilege = NULL ;
+static cklineClose_t cklineClose = NULL ;
+static cklineHandoff_t cklineHandoff = NULL ;
+static cklineGetID_t cklineGetID = NULL ;
+static cklineGetTranslateCaps_t cklineGetTranslateCaps = NULL ;
+static cklineSetCurrentLocation_t cklineSetCurrentLocation = NULL ;
+static cklineSetStatusMessages_t cklineSetStatusMessages = NULL ;
+static cklineConfigDialog_t cklineConfigDialog = NULL ;
+static cklineTranslateDialog_t cklineTranslateDialog = NULL ;
+static cklineTranslateAddress_t cklineTranslateAddress = NULL ;
+static cklineGetCountry_t cklineGetCountry = NULL;
+static cklineGetDevConfig_t cklineGetDevConfig = NULL;
+static cklineGetLineDevStatus_t cklineGetLineDevStatus=NULL;
+static cklineSetDevConfig_t cklineSetDevConfig=NULL;
+static cklineGetCallInfo_t cklineGetCallInfo=NULL;
+static cklineMonitorMedia_t cklineMonitorMedia=NULL;
+static cklineGetAppPriority_t cklineGetAppPriority=NULL;
+static cklineSetAppPriority_t cklineSetAppPriority=NULL;
+static cklineGetNumRings_t cklineGetNumRings=NULL;
+static cklineSetNumRings_t cklineSetNumRings=NULL;
+static cklineSetCallParams_t cklineSetCallParams=NULL;
 
 int
 cktapiunload(void)
@@ -4654,7 +4652,7 @@ cktapidisconnect( void )
 {
     int i=5;
     if ( !g_bHangingUp && !g_bClosing ) {
-        _beginthread( cktapihangup_thr, 65535, 0 );
+        _beginthread( cktapihangup_thr, 65535, NULL );
     }
     do {
         msleep(50);
@@ -4667,7 +4665,7 @@ cktapicloseasync( void )
 {
     int i=5;
     if ( !g_bClosing ) {
-        _beginthread( cktapiclose_thr, 65535, 0 );
+        _beginthread( cktapiclose_thr, 65535, NULL );
     }
     do {
         msleep(50);

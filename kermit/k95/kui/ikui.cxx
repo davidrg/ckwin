@@ -12,6 +12,9 @@ extern "C" {
 #include "ikui.h"
 }
 
+
+
+
 // there is only one K_GLOBAL shared by all objects.
 // this is used so that C functions (mostly wndprocs) have access to
 // the KWin class pointers
@@ -24,7 +27,7 @@ static HANDLE hevKuiInitialized = NULL;
 
 const char KWinClassName[] = "KERMIT95:UI";
 const char CmdTitle[] = "K95 Command Window";
-const char TermTitle[] = "C-Kermit Terminal Window";
+const char TermTitle[] = "K95 Terminal Window";
 const char CServerTitle[] = "K95 Client Server Window";
 
 void KuiWindowThread( void* param );
@@ -53,6 +56,8 @@ int KuiInit( void* hInstance, struct _kui_init * kui_init )
     //int numadded = AddFontResource( outfile );
 
     //DeleteFile( filename );
+
+
 
     // intialize K_GLOBAL
     //
@@ -157,15 +162,9 @@ void KuiSetTerminalStatusText(int item, char * buf)
 
 void KuiSetTerminalConnectButton(int on) 
 {
-#ifndef NOTOOLBAR
     if (kui) {
-        KToolBar * toolbar = kui->getTerminal()->getToolbar();
-        if ( toolbar )
-            SendMessage(toolbar->hwnd(),
-                     TB_CHECKBUTTON, ID_ACTION_EXIT, 
-                     MAKELONG(on,0));
+        kui->getTerminal()->setConnectMode(on);
     }
-#endif
 }
 
 void 

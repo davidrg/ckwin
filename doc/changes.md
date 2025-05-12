@@ -1,21 +1,389 @@
 # Change Log
-This document covers what has changed in each release of C-Kermit for Windows 
-(formerly known as Kermit 95). For a more in-depth look at what has changed, 
-check the git commit log.
+This document covers what has changed in each release of Kermit 95 since its
+first open-source release in 2022.  For a more in-depth look at what has 
+changed, check the git commit log.
 
-## C-Kermit for Windows 10.0b10 beta 6 - coming soon
+Because it's been over 20 years since the last stable release of K95, changes
+for the Kermit 95 v3.0 beta releases (which are already more usable than the
+last stable release) are temporarily included here, with the full v3.0 change 
+log living in the [Whats New in 3.0](whats-new.md) document. When the final 
+release of v3.0 eventually happens, the details about the various v3.0 
+eventually be moved elsewhere, with the full v3.0 change log taking their place.
+
+## Kermit 95 v3.0 beta 8 - Date TBD, likely late 2025
+
+This release comes with *significant* changes to the way Kermit 95 handles
+color. While every effort has been made to ensure there are no unexpected
+behaviour changes to applications and terminal emulations not using more than
+16 colours, these are big changes so its not impossible something may have been
+missed. If you notice any unexpected color changes from beta 7 in applications 
+and terminal emulations that *do not* use the new 256-color/24-bit color modes,
+*please log a bug* so it can be fixed!
+
+### New Features
+ - Support for multiple color palettes of up to 256 colors, switchable at runtime
+   with the new `SET TERM COLOR PALETTE` command. _Display_ of more than 16 colors
+   is limited to the Windows GUI version of K95, with the Windows and OS/2 Console
+   versions picking the nearest color from the 16-color palette for display
+   - Included palettes are: 
+     - xterm 256-colors (the new default palette)
+     - xterm 88-colors
+     - aixterm 16-colors (the palette used by prior Kermit 95 releases)
+   - Screen colors can be set to values from the larger palette with the
+     `SET TERMINAL COLOR` command by using the new INDEX keyword followed by
+     color number. For example: `SET TERM COLOR TERM INDEX 15 black` would set the
+     foreground to color 15 in the current palette, and the background to black.
+   - You can change colors in the larger palette with 
+     `SET GUI RGBCOLOR INDEX <colornumber>`
+   - You can show the full color palette with `SHOW GUI /PALETTE`
+   - You can find out the currently set color palette with either the `SHOW TERMINAL`
+     command, or the new `\v(color_palette)` variable.
+   - You can still select the 88-color or 256-color palette in console versions
+     of K95, but this is only for compatibility purposes. On display, the nearest
+     color in the 16-color palette will be used instead.
+ - Support for full 24-bit color is now available in GUI versions of Kermit 95 
+   for Windows XP SP3 or newer. This is enabled by picking the `xterm-rgb`
+   (256-colors + RGB) color palette, and disabled by picking any other color palette.
+   - 24-bit color *can* be supported on older Windows releases, but is disabled
+     for now to reduce memory requirements. If there is demand, 24-bit color 
+     versions for vintage windows can be provided in the future.
+   - Screen colors can be set to any 24-bit RGB color with the `SET TERMINAL COLOR`
+     command by using the new RGB keyword, for example: `SET TERM COLOR TERM RGB 255 110 00 black`
+     would set the foreground to an amber color, and the background to black.
+   - If 24-bit color is enabled, the telnet client will try to set the 
+     `COLORTERM=truecolor` environment variable if it can and if this behavior 
+     is not turned off with `SET TELNET SEND-COLORTERM OFF`. The COLORTERM
+     environment variable is used by some applications rather than relying on
+     potentially out-of-date terminfo/termcap entries to detect 24-bit color
+     support.
+   - The SSH client will also try to set the `COLORTERM=truecolor` environment
+     variable if it can, but this will only work if the SSH server has been 
+     configured to accept the COLORTERM environment variable; to make it work, 
+     it will likely have to be added to the `AcceptEnv` list in 
+     `/etc/ssh/sshd_config` on the server.
+ - New screen elements can be given color via `SET TERMINAL COLOR`
+   - Blinking text (if the blink attribute is disabled with the new 
+     `SET TERMINAL ATTRIBUTE BLINK OFF COLOR` command)
+   - Bold text (if the bold attribute is disabled with the new
+     `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` command)
+   - The text cursor
+   - Dim text (if the dim attribute is disabled with the new
+     `SET TERMINAL ATTRIBUTE DIM OFF COLOR` command)
+
+
+### Enhancements
+ - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
+   has been _heavily_ revised. The whole document was converted from HTML to
+   a more bespoke format from which various HTML documents are now generated
+   allowing for more consistent styling and easier maintenance. The
+   new documentation now includes, where possible, references to terminal 
+   documentation for the various control sequences K95 implements (or doesn't).
+ - The way terminal operating system commands are parsed has been rewritten to 
+   be more flexible and to make adding support for new operating system commands
+   easier.
+ - True bold can now be turned off in K95G with the new command 
+   `SET TERMINAL ATTRIBUTE BOLD OFF`. When off, it still affects text
+   color unless its turned off with `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` in
+   which case the color set with `SET TERMINAL COLOR BOLD` is used.
+ - True dim is now turned off in K95G when `SET TERMINAL ATTRIBUTE DIM OFF` is
+   given. Like with bold, it still affects color unless turned off with
+   `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
+   `SET TERMINAL COLOR DIM` is used.
+
+### New terminal control sequences
+> [!NOTE]
+> Until Kermit 95 gets a VT525 terminal type option, control sequences marked
+> as requiring a VT525 are temporarily available under the existing VT320 
+> terminal type instead.
+
+ - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-ic) and 
+   [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-ic) are 
+   now supported for setting colors by number using both the standard 
+   parameter-element (colon) syntax, and the old but still widely used 
+   non-standard xterm (semicolon) syntax.
+ - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-rgb) and 
+   [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-rgb) are 
+   now supported for setting direct 24-bit RGB colors using both the standard 
+   parameter-element (colon) syntax, and the old but still widely used 
+   non-standard xterm (semicolon) syntax. If 24-bit RGB color is not enabled or 
+   not available (eg, in the console version of K95), the nearest color in the 
+   current palette is used instead (in console versions, this is always the 
+   16-color palette).
+ - [DECSCUSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decscusr) can now
+   control cursor blinking
+ - [DECRQSS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss) is now
+   implemented for the following (VT320+ terminal type):
+   - [SGR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-sgr)
+   - [DECSCA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsca)
+   - [DECSCL](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscl)
+   - [DECSCUSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscusr)
+   - [DECSTBM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decstbm)
+   - [DECSLPP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decslpp)
+   - [DECSCPP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscpp)
+   - [DECSASD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsasd)
+   - [DECSSDT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decssdt)
+   - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decstglt) (VT525 terminal type)
+   - [DECSACE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsace)
+   - [DECAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decac) (VT525 terminal type)
+   - [DECATC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decatc) (VT525 terminal type)
+ - The linux console terminal emulation has been brought up to date with:
+    - Support for [SCOSC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#scosc)
+    - Support for [SCORC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#scorc)
+    - [SGR-21](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-21-ul) is now underline
+    - Three parameters for the [linux display settings](https://davidrg.github.io/ckwin/dev/ctlseqs.html#linux-disp)
+      control sequence are now supported (linux terminal type only):
+        - Ps = 1 - set underline color
+        - Ps = 2 - set dim color
+        - Ps = 3 - set current color pair as the default attribute
+    - [OSC-R: Reset palette (linux)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-R) (linux terminal type only)
+    - [OSC-P: Set palette (linux)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-P) (linux terminal type only)
+    - SGR-38/48
+ - Various xterm Operating System Commands are now supported:
+   - [OSC-2: Set Window Title](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-wt)
+   - [OSC-l: Set Window Title](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-l)
+   - [OSC-4: Change Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-4)
+     (both RGB values and X11 color names accepted)
+   - [OSC-104: Reset Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-104)
+   - [OSC-5: Change Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-5)
+   - [OSC-105: Reset Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-105)
+   - [OSC-6: Enable/Disable Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-6) (including colorAttrMode)
+   - [OSC-10: Change text foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-10)
+   - [OSC-110: Reset text foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-110)
+   - [OSC-11: Change text background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-11)
+   - [OSC-111: Reset text background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-111)
+   - [OSC-12: Change text cursor color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-12)
+   - [OSC-112: Reset text cursor color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-112)
+   - [OSC-17: Change text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-17)
+   - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
+   - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
+   - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
+ - A few VT525 control sequences _based on documented behaviour_; there may be
+   differences from the real thing (donations of a VT525 accepted!):
+   - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
+     all three modes are supported (mono, alternate color, SGR color) (VT525 terminal type only)
+   - [DECATC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatc) 
+     for setting DECSTGLT alternate color mode colors (VT525 terminal type only)
+   - [DECAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decac) 
+     for setting the text foreground and background color only (VT525 terminal type only)
+   - [DECATCBM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcbm) 
+     enables or disables true blink in DECSTGLT alternate color mode
+   - [DECATCUM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcum) 
+     enables or disables true underline in DECSTGLT alternate color mode
+ - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
+   available for VT520 (and so, temporarily, VT320)
+
+### Fixed Bugs
+ - Fixed a potential memory leak in the status line display. Cov-462304.
+ - Fix control flow issue which could cause a DECRQM to do both the DECRQM
+   and a Delete lines. Cov-462454.
+ - Fix potential memory leak if SSH key generation fails. Cov-462508, Cov-462436
+ - Fix potential memory leak on ssh connect if existing connection fails to close. Cov-462163.
+ - Fix Ctrl+C during an autodownload causing a crash
+ - Fixed VT emulations not rendering SUB. When the VT100 and up receive a SUB
+   character they render it as a shaded block for the VT1xx, and a backwards
+   question-mark for the VT220 and up, as well as canceling any escape sequence.
+   K95 will now do the same, using unicode character 0x2426 for VT220 and up.
+   Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
+   (K95 bug 815).
+
+## Kermit 95 v3.0 beta 7 - 27 January 2025
+
+As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name
+it carried from 1995 through to 2013.
+
+### Things to be aware of when upgrading
+* K95G no longer opens COM1 by default. If you previously depended on this, 
+  you'll need to add `set port com1` to your k95custom.ini
+* The mouse wheel now scrolls half a screen at time, rather than one line at
+  a time. If you'd prefer to retain the old default, put the following in your
+  k95custom.ini:
+  ```
+  set mouse wheel up none \Kupone
+  set mouse wheel down none \Kdnone
+  ```
+
+#### The default SSH directory has changed!
+The default SSH directory in beta 7 has changed from `\v(home).ssh` back to
+`\v(appdata)ssh`, the location used by Kermit 95 2.1.3 and earlier.
+
+This means Kermit 95 may not find your known hosts file, or your identity 
+(public key authentication) files after upgrading to beta 7.
+
+If you'd prefer to keep these files in `\v(home).ssh`, the same location used
+by OpenSSH on modern versions of windows, add the command 
+`set ssh directory \v(home).ssh` to your k95custom.ini
+
+> [!TIP]
+> To find out where `\v(appdata)`, `\v(home)` and other such directories are
+> on your disk, you can use the `orient` command.
+
+
+### New features
+* SSH Port forwarding (tunneling) is now supported again in both
+  the Direct/Local and Reverse/Remote forms. You can add forwards before
+  establishing a connection with `SSH ADD { local, remote }` and remove all
+  forwards of a given type with `SSH CLEAR { local, remote }`. As in past releases
+  of Kermit 95, these commands don't have any effect on an already established SSH
+  connection - this may be changed in the future.
+* New command to allow removing individual port forwards (`SSH REMOVE 
+  { local, remote }`) - previously Kermit 95 only had commands to remove *all*
+  forwarded ports of a given type.
+* X11 forwarding is back. Turn on with `SET SSH X11 ON`, and set your display
+  with `SET TELNET ENV DISPLAY`
+* The SSH backend has been moved into a DLL. On startup, K95 attempts to
+  load the backend DLL provided the `-#2` command line argument has not been
+  supplied. If no SSH backend gets loaded, you can load one manually with the new
+  `ssh load` command. This allows K95 to load the appropriate backend automatically
+  based on operating system (Windows XP or not) and presence of MIT Kerberos for
+  Windows. This removes the need to manually shuffle around ssh.dll variants, and
+  also means that alternative SSH backends not based on libssh can now be supported
+  should anyone want to build one, opening the door to SSH on vintage windows or
+  OS/2 systems.
+* SSH is now supported on 32bit ARM devices (Windows RT) for the first time
+* Initial very limited SSH agent support has been added. Libssh is currently the
+  limiting factor here and SSH agent support in K95 likely won't get much better
+  without significant improvements to libssh in this area. See the SSH Readme
+  for more details.
+* REXX support has been extended to x86 systems running Windows XP or newer. This
+  was previously an OS/2-only feature. You can now run REXX scripts and commands
+  from the K95 command mode with the `rexx` command, and REXX scripts run from 
+  K95 can execute any Kermit 95 command by enclosing the K95 command in single
+  quotes (eg, `'set parity none'`). For full details, see the REXX section of
+  the K95 manual: https://kermitproject.org/k95manual/os2k95.html#os2rexx. The
+  REXX implementation is the current Regina REXX release. regutil.dll is included
+  but note that the Console I/O Routines it provides are not currently compatible 
+  with K95. The rexxre.dll external function package is also included providing
+  support for POSIX regular expressions.
+* New command to turn the menubar on or off: `set gui menubar visible { on, off }`
+  When the menubar is turned off in this way (rather than with the command line 
+  parameter), important menu items are moved on to the system/control/window menu
+  (right-click on the title bar for the actions menu and a few other things):
+  ![k95-sysmenu](https://github.com/user-attachments/assets/4a016ca5-f339-43c5-83e8-7b899b28d117)
+* New command to turn the toolbar on or off: `set gui toolbar visible { on, off }`
+* New command to turn the statusbar on or off: `set gui statusbar { on, off }`
+* New screen scroll kverbs:
+  * `\Kuphscn` - Scroll up half a screen
+  * `\Kdnhscn` - Scroll down half a screen
+* IBM OS/2 support is back! It should work on IBM OS/2 2.0 or newer with 
+  optional TCP/IP support provided by IBM TCP/IP 2.0 or newer. No SSH or 
+  Presentation Manager GUI as in past Kermit/2 releases. Additionally:
+  * No PC/TCP 1.2 or IBM TCP/IP 1.2.1 support (no SDK license; the DLLs from 
+    K95 2.1.2 should work if you need it)
+  * No dialer yet (crashes when built with Open Watcom)
+  * No SSL/TLS support (can't be built with Open Watcom)
+  * No legacy telnet encryption (no longer useful, but may return in a future
+    release anyway)
+* Reimplemented the three checkboxes in the Dialers GUI settings page for the
+  menu bar, toolbar and status bar. These options were new in Kermit 95 2.1.3
+  but were not present in previous open source releases of the dialer as it's
+  based on code from K95 2.1.2. Any dialer entries edited with the dialer from 
+  C-Kermit for Windows betas 4-6, or Kermit 95 2.1.2 or older, will have these 
+  checkboxes default to ON. Entries last edited with the K95 2.1.3 dialer will 
+  have these three settings preserved. Turning off the GUI bars in this way does
+  so via command line arguments rather than the new `set gui` commands so they
+  can't be turned back on with the new `set gui` commands.
+* Added support xterms Bracketed Paste feature
+* Most of the users guide has been revised for this release and is now included
+  as part of the release. The _Kermit Security Reference_ and sections dealing
+  with installing and uninstalling kermit 95 are still waiting to be overhauled.
+
+### Minor Enhancements and other changes
+* All executables (*.exe, *.dll) now have proper versioninfo resources
+* Upgraded to OpenSSL 3.4 which fixes a number of bugs and security issues and
+  will receive security fixes until October 2026. 
+* K95G no longer opens COM1 by default. If you still want this behaviour, add
+  `set port com1` to your k95custom.ini
+* The command `set gui toolbar off` has been renamed to
+  `set gui toolbar disabled` to better describe what it actually does and to
+  make room for new commands to turn it on and off. The previous syntax
+  (`set gui toolbar { off, on }`) is still accepted for compatibility with 
+  existing scripts. `set gui toolbar on` still does nothing as it always has
+  (disabling the toolbar is a session lockdown feature)
+* The command `set gui menubar off` has been renamed to
+  `set gui menubar disabled` to better describe what it actually does and to
+  make room for new commands to turn it on and off. The previous syntax
+  (`set gui menubar { off, on }`) is still accepted for compatibility with
+  existing scripts. `set gui menubar on` still does nothing as it always has
+  (disabling the menubar is a session lockdown feature)
+* Implemented the `set ssh identity-file` command
+* Added new command `set ssh directory` which allows you to set the default
+  location where K95 looks for user known hosts and identity files.
+* The default SSH directory has changed from `\v(home).ssh` back to
+  `\v(appdata)ssh`
+* The `ssh key` commands will now default to opening or saving keys in the
+  SSH directory.
+* The `skermit` command now has help text
+* The default mouse wheel configuration has changed:
+  * Wheel up/down now scrolls up/down half a screen (like PuTTY) rather than a
+    single line. This provides better much speed than a line at a time with
+    better usability than a screen at a time.
+  * Shift+Wheel up/down now scrolls up/down one line
+* Improve exit time when the console version (k95.exe) is just being run to show
+  usage information (`k95.exe -h` or `k95.exe --help`). Previously K95 would 
+  pause for about 5 seconds after printing usage information before returning 
+  you to the shell.
+* Fixed the `telnet.exe` and `rlogin.exe` stubs - these now behave as in K95  
+  2.1.3
+* Added the `ssh.exe`, `ftp.exe` and `http.exe` stubs that were included in
+  K95 2.1.3 
+* `iksdnt.exe` is now included.
+
+### Fixed bugs
+* Fix `fopen` causing a crash. This issue seems to have come in some recent 
+  version of the Microsoft C Runtime.
+* Fix hitting backspace in an empty search-in-buffer crashing
+* Fix `pty dir` (or trying to run anything else that isn't a valid program)
+  causing a crash
+* Fixed POTS modem support not being available on NT 3.50
+* Fixed OpenSSL libraries not being included in the ARM32 distribution
+* Fixed \Kexit (Alt+x by default) not updating the state of the associated
+  toolbar button
+* Fix the SSH global known hosts file not being set to something sensible
+  on windows. It's now set to the value used by past Kermit 95 releases by
+  default: `\v(common)ssh\known_hosts2`
+* Fixed generation of 4096 RSA SSH keys
+* Fixed stdout parameter not working correctly
+* Fixed a pair of issues in the OS/2 NetBIOS implementation which has likely
+  been totally broken since Kermit 95 v1.1.17:
+  * `SET HOST` doing nothing for NetBIOS connections
+  * NetBIOS name not being correctly padded when making a connection to
+    a NetBIOS Server
+* Fixed emacs turning off mouse reporting when started
+* Fixed K95G hanging when closing the window or using File->Exit with when
+  a connection is active and GUI dialogs are turned off
+* Fixed K95 bug 797: Dialer generated connection scripts will no longer include
+  `SET LOGIN PROMPT` or `SET LOGIN PASSWORD` commands if those fields do not
+  have a value as this broke the use of the standard login.ksc script.
+* Fixed K95 bug 770: When editing an FTP entry in the dialer the general settings
+  page doesn't load the port number causing it to be cleared on save.
+* Fixed `TYPE` command error "The /HEIGHT switch is not supported without /GUI"
+  when the `/HEIGHT` switch has not been supplied.
+
+### Other Source Changes
+* Fixed a selection of build warnings, and improved compatibility with the 
+  Open Watcom compiler.
+
+
+## C-Kermit for Windows 10.0b11 beta 6 - 11 August 2024
 
 This is a minor release focused on upgrading from OpenSSL 1.1.1 (which is
-now out of support) to OpenSSL 3.0.x. Also included are a selection of bug
-fixes and other minor enhancements. 
+now out of support) to OpenSSL 3.0.x, and libssh 0.10.5 to 0.10.6. Also 
+included are a selection of bug fixes and other minor enhancements. 
 
 Also in this release: official support for Windows NT on Alpha and PowerPC
 has returned after being discontinued in March 2000 and April 1998 
 respectively. And for the first time ever, C-Kermit is now supported on
 Windows NT for MIPS computers, though without TAPI support.
 
-### Fixed Bugs
+This is also the last release carrying the "C-Kermit for Windows" name. The
+next release will be Kermit 95 3.0 beta 7.
 
+### Things to be aware of when upgrading
+Windows XP users: current versions of libssh are no longer compatible with 
+Windows XP. See the included SSH Readme for a workaround for SSH support on
+Windows XP.
+
+### Fixed Bugs
 * Fixed directory listings not reporting a size or modified time for files
   requiring more than 32 bits to store the file size on Windows NT 3.51 and
   newer. This issue will remain on NT 3.1/3.50.
@@ -39,11 +407,21 @@ Windows NT for MIPS computers, though without TAPI support.
   in builds that *do* have SSH support
 * Fixed `show network` command showing "SSH V1 and V2 protocols" when SSH V1 is
   no longer supported in C-Kermit for Windows.
+* Fixed not being able to resize the terminal area to greater than the primary
+  display in K95G. For example, if the window was moved on to a display that
+  was taller than the primary display and maximised the bottom of the terminal
+  screen would not be correctly rendered. This fix only applies to modern
+  versions of Windows.
+* Fixed included openssl.exe not working on Windows XP
+* Fixed paging for the "help options all" command where argument help contains
+  line breaks
 
 ### Minor Enhancements and other changes
 
 * Upgraded to OpenSSL 3.0.14, the current long term support release 
   (supported until 7 September 2026)
+* Updated to libssh 0.10.6
+* Updated to zlib 1.3.1
 * Help text for "set gui window position" updated: this command *is* supported
   and it does work.
 * The default k95custom.ini now displays a message the console-mode version
@@ -54,8 +432,16 @@ Windows NT for MIPS computers, though without TAPI support.
   public key, keyboard-interactive, password.
 * Binaries are now provided for Windows NT running on Alpha, MIPS and PowerPC
   systems.
-* Upgraded to C-Kermit 10.0 Pre-Beta.11
+* Upgraded to C-Kermit 10.0 Beta.11
 * About window (Help -> About) now includes the beta number
+* Added help text for `set terminal autopage` and `set terminal autoscroll`
+* Increased the maximum number of terminal columns from 256 to 512 in K95G.
+  This should be enough to fill a 4K display at with a 10pt font or larger.
+  As this change increases memory requirements by around 1MB whether the extra
+  columns are used or not, it has only been increased in builds targeting
+  modern PCs. Vintage PCs will still be limited to 256 columns.
+* CKW no longer rejects updated OpenSSL DLLs provided the major and minor
+  versions match.
 
 ### New features
 
@@ -305,14 +691,14 @@ slipping somewhat.
   to match what CKW actually supports
 
 ### Source Changes:
-* The Dialer now builds with OpenWatcom 1.9 and Visual C++ 2.0
+* The Dialer now builds with Open Watcom 1.9 and Visual C++ 2.0
 * dropped the /ALIGN linker flag which has produced a linker warning since 
   Visual C++ 5.0 SP3 (November 1997)
 
 ## C-Kermit for Windows 10.0b4 beta 3 - 14 September 2022
 This release focused on improving SSH support, returning SSL support, minor
 enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
-(Visual C++ 2.0, OpenWatcom 2.0, OpenWatcom 1.9 for OS/2)
+(Visual C++ 2.0, Open Watcom 2.0, Open Watcom 1.9 for OS/2)
 
 ### New Features:
 * Idle SSH sessions can now be prevented from timing out by supplying some
@@ -363,7 +749,7 @@ enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
   terminal type.
 * Fixed terminal being cleared the first time you move the K95G window and
   possibly the other random occurrences of this happening
-* Fixed terminal scrolling bug in OpenWatcom! Builds done with OpenWatcom are
+* Fixed terminal scrolling bug in Open Watcom! Builds done with Open Watcom are
   now functionally equivalent to Visual C++ 6 in platform support and features
   and have no known issues unique to that compiler.
 * Fixed auto-download "ask" setting not working on Windows NT 3.51
@@ -392,11 +778,11 @@ enhancements, porting to new platforms (NT 3.50, OS/2) and new compilers
     * ssh v2 rekey
 
 ### Source Changes:
-* Fixed compatibility with the OpenWatcom 2.0 fork
+* Fixed compatibility with the Open Watcom 2.0 fork
 * Added support for building with Visual C++ 2.0
-* Added support for targeting Windows NT 3.50 with either OpenWatcom 1.9 or
+* Added support for targeting Windows NT 3.50 with either Open Watcom 1.9 or
   Visual C++ 2.0
-* Now builds on OS/2 with OpenWatcom 1.9. Only minimal testing has been done.
+* Now builds on OS/2 with Open Watcom 1.9. Only minimal testing has been done.
   Networking does not work and the builds are done without optimisations.
   Further work is required, likely by someone with OS/2 development knowledge,
   to get it back to the Kermit-95 level of functionality.
@@ -413,14 +799,14 @@ the end so focus shifted to built-in SSH using libssh.
 
 Support for some older Visual C++ releases (4.0 and 5.0) was added to enable 
 RISC NT builds in the future (Visual C++ 4.0 was the last release to support 
-MIPS and PowerPC), and OpenWatcom 1.9 support was added to enable future OS/2 
+MIPS and PowerPC), and Open Watcom 1.9 support was added to enable future OS/2 
 work.
 
  * Fixed builds with Visual C++ 14.x (2015-2022)
  * Fixed file transfer crash on builds done with Visual C++ 2008 and newer
  * Fixed builds with free versions of Visual C++ that don't include MFC
  * PTY support on Windows 10 v1809 and newer
- * Added OpenWatcom 1.9 support (win32 target only)
+ * Added Open Watcom 1.9 support (win32 target only)
  * Fixed building with Visual C++ 97 (5.0)
  * Fixed building with Visual C++ 4.0
  * Fixed building with the free Visual C++ 2003 toolkit & Platform SDK
@@ -483,17 +869,66 @@ Kermit 95 v2.2 was never publicly released, but
 [this file](https://www.kermitproject.org/k95-fixes-since-213.txt) documents 
 what's new since Kermit 95 v2.1.3.
 
-Not every change for K95 v2.2 has made it in to C-Kermit for Windows due to the 
+Not every change for K95 v2.2 has made it in to Kermit 95 v3.0 due to the 
 removal of some components that could not be open-sourced. In particular,
-changes for the Dialer in K95 v2.2 do not apply as the CKW dialer is based on
-K95 v2.1.3, and changes for the SSH subsystem don't apply to CKW as CKW uses an
-entirely new SSH implementation.
+changes for the Dialer in K95 v2.2 do not apply as the K95 3.0 dialer is based on
+K95 v2.1.2, and changes for the SSH subsystem don't apply to K95 3.0 as v3.0 uses an
+entirely new SSH implementation. In particular, the following entries from the K95 2.2
+change log should be disregarded:
+ * *Not implemented*: the dialer's QUICK command now supports connections based on
+   templates and includes a SaveAs operation (a poor man's clone)
 
 ## Previous Kermit 95 releases
- * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html)
- * [1.1.17 to 1.1.20 Change Log](https://web.archive.org/web/20010405154138/http://www.columbia.edu/kermit/k95news.html)
- * [1.1.16 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/8jaYcOv0cvo/m/Er5rCyp_xG8J)
- * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ)
- * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J)
- * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html)
- * 1.1.1 Changes - ?
+Change logs going back to the release of the first version in October 1995 (1.1)
+
+ * [1.1.21 to 2.1.3 Change Log](http://www.columbia.edu/kermit/k95news.html) - 2 April 2002 to 21 January 2003
+ * [1.1.20 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/gpLy0vTV1Ug/m/hHFQqajRe98J) - 4 April 2000 ([k95news](https://web.archive.org/web/20010405154138/http://www.columbia.edu/kermit/k95news.html))
+ * [1.1.19 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/uN9G8fp84nY/m/53HTzJvYQdgJ) - 17 February 2000
+ * 1.1.18 - Internal CU release
+ * [1.1.17 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/0mZIfP_LspA/m/cqLPWLsJiFYJ) - 21 June 1998
+ * [1.1.16 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/8jaYcOv0cvo/m/Er5rCyp_xG8J) - 8 April 1998
+ * [1.1.15 Changes](https://groups.google.com/g/comp.os.ms-windows.announce/c/IDbj1Dl16aU/m/WmJlmGtSY5cJ) - 3 October 1997
+ * [1.1.14 Changes](https://groups.google.com/g/comp.protocols.kermit.announce/c/KWT_5sYXeC8/m/AGvXUCtXSh4J) - 25 September 1997
+ * [1.1.2 to 1.1.13 Change Log](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 24 July 1996 to 24 June 1997
+   * v1.1.11 of February 1997 restored OS/2 support replacing OS/2 C-Kermit 5A(191)
+ * [1.1.6 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/Yb8oikR0uuQ/m/kVDydxVQKT4J) - 18 July 1996
+ * [1.1.5 Announce](https://groups.google.com/g/comp.protocols.kermit.announce/c/L9wpCZEBw4Q/m/Y89bIR-wp3UJ) - 2 July 1996
+ * [1.1.2 to 1.1.4 Change Log (down the bottom)](https://web.archive.org/web/19970815161519/http://www.columbia.edu/kermit/k95news.html) - 18 December 1995 to 7 March 1996
+ * 1.1.1 - 3 November 1995:
+   * Attempts to remove preloaded entries from Dialer caused a crash
+   * Alphabetization of Dialer entries fixed not to be case-sensitive
+   * Download directory specification in Dialer no longer ignored
+   * Dial prefix no longer also treated as dial suffix by Dialer
+   * Kermit BBS Dialer entry fixed to have Backspace key send Backspace
+   * Range checking of various numbers by Dialer fixed
+   * SET MODEM commands in K95CUSTOM.INI no longer ignored
+   * Improved search technique for command files
+   * Accuracy of Dialer status line online timer improved
+   * ZMODEM downloads fixed to work when FILE COLLISION is BACKUP or RENAME
+   * ZMODEM transfers fixed to work over various types of TELNET connections
+   * Faster detection of lost connections during file transfer
+ * 1.1 - First Release - 2 October 1995
+ * [OS/2 C-Kermit 5A(191)](https://www.columbia.edu/kermit/cko191.html) - 23 April 1995
+   * Last free release before it was renamed [Kermit 95 for OS/2](https://www.columbia.edu/kermit/os2.html), ported to Windows and sold commercially
+ * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
+   * Last release to include 16-bit OS/2 1.x support
+   * Last release for which source code was publicly available until the Kermit 95 2.2 code was open-sourced in 2011
+ * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
+ * [OS/2 C-Kermit 5A(188) (update)](https://groups.google.com/g/comp.os.os2.apps/c/DesD23imeHI/m/I6-udyEnNhAJ) - 3 February 1993
+ * [OS/2 C-Kermit 5A(188)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
+ * [OS/2 C-Kermit 5A(179)](https://groups.google.com/g/fj.kermit/c/rG6d5lpJilI/m/b94gm9h4XgIJ) - 14 February 1992
+ * OS/2 C-Kermit 4F(091) (OS/2 Kermit 1.00) - ??
+   * Probably not an "official release" - by this point the OS/2 code was just part of the regular C-Kermit codebase
+   * Files: [ckoker.doc](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.doc),
+            [ckoker.bwr](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.bwr),
+            [ckoker.boo](http://www.columbia.edu/kermit/ftp/old/ckermit4f/ckoker.boo) (encoded version of kermit.exe, see [ckboo.txt](https://www.columbia.edu/kermit/ftp/boo/ckboo.txt))
+ * [OS/2 C-Kermit 4E(070) (OS/2 Kermit 1.00)](https://groups.google.com/g/comp.protocols.kermit/c/BXydCmAjmxo/m/jBWCa9BNkvwJ) - 10 May 1989
+   * First release for which the OS/2 code was publicly available. 
+ * [OS/2 C-Kermit 4E(070) (OS/2 beta test version 1.0p](https://groups.google.com/g/comp.protocols.kermit/c/M8vYD4F-nBc/m/N4WrA1DpwaIJ) - 15 March 1989
+   * For OS/2 1.0+: 
+     [ckoker.ann](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.ann),
+     [ckoker.boo](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.boo) (encoded version of ckoker.exe, see [ckboo.txt](https://www.columbia.edu/kermit/ftp/boo/ckboo.txt)),
+     [ckoker.bwr](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.bwr),
+     [ckoker.doc](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.doc)
+ * [OS/2 C-Kermit 1.0b](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.ann) - 5 August 1988
+ * [OS/2 C-Kermit 1.0a](https://groups.google.com/g/comp.protocols.kermit/c/KZ0P49Za-JA/m/ZpzhtBJOyT4J) - 29 July 1988

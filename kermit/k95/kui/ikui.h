@@ -35,6 +35,10 @@
 #define KUI_GUI_TOOLBAR     1018
 #define KUI_GUI_MENUBAR     1019
 #define KUI_GUI_CLOSE       1020
+#define KUI_GUI_TOOLBAR_VIS 1021
+#define KUI_GUI_STATBAR_VIS 1022
+#define KUI_GUI_MENUBAR_VIS 1023
+
 
 struct _kui_init {
     char pos_init;		/* boolean if position set */

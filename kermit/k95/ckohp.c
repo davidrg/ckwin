@@ -44,7 +44,7 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute, colorstatus;
+extern cell_video_attr_t colorstatus;
 extern char * udkfkeys[];
 extern int tt_senddata;
 extern struct _vtG G[4];
@@ -2566,7 +2566,7 @@ hpascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,

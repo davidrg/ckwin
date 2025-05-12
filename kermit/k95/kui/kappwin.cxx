@@ -85,9 +85,9 @@ void KAppWin::size( int width, int height )
     if( inCreate() )
         return;
 
-    if ( toolbar )
+    if ( toolbar && toolbar->isVisible() )
         toolbar->size( width, height );
-    if ( status )
+    if ( status && status->isVisible() )
         status->size( width, height );
 
     if( client ) {
@@ -103,11 +103,11 @@ void KAppWin::size( int width, int height )
 void KAppWin::getClientCoord( int& x, int& y, int& w, int& h )
 {
     int tbh = 0, tbw = 0;
-    if ( toolbar )
+    if ( toolbar && toolbar->isVisible() )
         toolbar->getSize( tbw, tbh );
 
     int sth = 0, stw = 0;
-    if ( status )
+    if ( status && status->isVisible() )
         status->getSize( stw, sth );
 
     RECT rect;
@@ -530,7 +530,7 @@ int KAppWin::readManual(void)
     /* before starting the manual.  Otherwise, Netscape may   */
     /* be unable to find the referential links.               */
 
-    ckmakmsg(manpath,512, exedir, "DOCS\\MANUAL\\CKWIN.HTM", NULL, NULL);
+    ckmakmsg(manpath,512, exedir, "DOCS\\MANUAL\\INDEX.HTM", NULL, NULL);
     for ( i=strlen(manpath); i > 0 && manpath[i] != '\\'; i-- )
         if (manpath[i] == '/')
             manpath[i] = '\\';
@@ -734,6 +734,7 @@ Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         initMenu();
         break;
 
+    case WM_SYSCOMMAND:
     case WM_COMMAND:
         //debug(F111,"KAppWin::message","WM_COMMAND",msg);
         {
@@ -801,6 +802,13 @@ Bool KAppWin::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             }
             break;
         }
+    }
+
+    if (msg == WM_SYSCOMMAND) {
+        // For WM_SYSCOMMAND, a return value of 0 indicates the message was
+        // processed.
+        if (done) return 0;
+        return 1;
     }
 
     return done;

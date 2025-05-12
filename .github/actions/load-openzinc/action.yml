@@ -1,0 +1,43 @@
+name: load-open-zinc
+description: Load Open Zinc
+inputs:
+  nocache:
+    description: 'skip cache'
+    default: ''
+    required: false
+    type: string
+  ver:
+    description: 'version'
+    default: ''
+    required: false
+    type: string
+  id:
+    description: 'Identification'
+    default: ''
+    required: false
+    type: string
+#
+# expected filename: https://ftp.zx.net.nz/pub/dev/openzinc/oz1/OZ1.zip
+#
+# OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
+# But we don't want to waste the resources of the generous OpenZinc developer,
+# so we grab it from a mirror
+#
+runs:
+  using: composite
+  steps:
+    - name: Load Cache Open Zinc
+      if: inputs.nocache != 'true'
+      uses: actions/cache@v4
+      id: cache-openzinc
+      with:
+        path: ${{github.workspace}}/zinc
+        key: all-openzinc
+    - name: Get and unpack Open Zinc
+      if: steps.cache-openzinc.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p zinc
+        curl -LsS -o oz1.zip ${{env.OPENZINC}}
+        7z x oz1.zip -ozinc
+        rm -f oz1.zip
+      shell: bash

@@ -1,0 +1,294 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 - File-Transfer Pipes and Filters</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>File-Transfer Pipes and Filters</h2>
+
+<b>Contents:</b>
+<ul>
+<li><a href="#pipeuse">Platform Differences</a>
+<li><a href="#pipeapps">Applications for Use with Pipes</a>
+<li><a href="#pipecmds">Related Commands and Functions</a>
+</ul>
+
+This is a supplement to <a href="https://www.kermitproject.org/ckermit70.html#x4.2">Section 4.2</a> of
+the C-Kermit 7.0 Update Notes, containing information
+specific to Kermit 95 in Windows 95, Windows NT, and OS/2.
+<p><blockquote>
+IMPORTANT WARNING: In Windows 95, any command used in a pipeline must NOT be
+a 16-bit program, such as SORT.  If it is, K95 will hang and must be killed
+from the task list, and your system will need to be rebooted.  This is a
+Microsoft bug, discussed in many spots in the 
+<a href="k95bugs.html">K95 Bugs List</a>.
+For this reason,
+examples are shown for UNIX rather than Windows 95, since in practice there
+are very few standard utilities that can be used in this way (but keep
+reading, because luckily some of the most useful ones, such as GZIP and
+GUNZIP, can be):
+</blockquote><p>
+NOTE: 
+<a href="https://www.kermitproject.org/ckermit70.html#x4.2.7">Section 4.2.7</a>, Pipes and
+Encryption, of the C-Kermit 7.0 Update Notes,
+should be read in light of the availability of built-in Kerberos
+authentication and encryption, added in 1.1.16.  Encryption through pipes is
+not needed when Telnet encryption is available.
+
+<p>
+<hr>
+<h3><a name="pipeuse">Platform Differences</h3>
+
+The SEND /COMMAND, RECEIVE /COMMAND, GET /COMMAND, and ! (bang) methods may be
+used with Kermit protocol transfers in all K95 versions with the cautions and
+restrictions noted in this section.
+<p>
+Since Windows 95, Windows NT, and OS/2 each support a wide range of
+application types (DOS 16-bit, DOS 32-bit, Windows 16-bit, Windows 32-bit,
+OS/2 16-bit, and OS/2 32-bit) it is important to be aware of the ways that each
+operating environment supports them.  In all situations, K95 can pipe data
+only to or from other applications that use Standard Input and Standard Ouput
+(Stdin/Stdout).  In most cases this means only Console applications, not GUI
+ones.
+
+<h4>Windows 95</h4>
+
+Windows 95 relies on its shell, <tt>COMMAND.COM</tt>, or a replacement such as
+4DOS.COM, to form intermediary pipe connections between processes, but these
+pipes are implemented as temporary files.  Thus each process in a pipeline
+runs to completion, writing a (possibly huge) file to disk before the next
+process starts.  This means your disk can fill up, or that it could take a
+very long time for file transfer to start, because all the processes in the
+pipe must complete first.
+<p>
+While it is possible to mix and match DOS and Win32 console applications, we
+recommend sticking with 32-bit applications when piping data to/from
+Kermit-95, since mixing a 16-bit application with a 32-bit application
+requires running the 16-bit application under <tt>CONAGENT.EXE</tt>, which has
+numerous dangerous bugs, some acknowledged and documented by Microsoft, others
+not.
+
+<h4>Windows NT</h4>
+
+Windows NT supports DOS, Win32, and 16-bit OS/2 applications.  All may be used
+to pipe data successfully to/from Kermit 95 without difficulties.
+
+<h4>OS/2</h4>
+
+OS/2 supports DOS applications and 16-bit and 32-bit OS/2 applications.  It is
+not possible to pipe data to/from a DOS application from/to Kermit-95 in OS/2;
+DOS applications run in a different session type than OS/2 applications and
+are not accessible to Kermit 95 through pipes.  However, both 16-bit and 32-bit
+OS/2 applications may be mixed freely.
+		
+<p>
+<hr>
+<h3><a name="pipeapps">Applications for Use with Pipes</h3>
+
+None of the operating systems that Kermit-95 runs on come with the strong set
+of command line utilities (filters) that we see on UNIX systems.  However,
+many of the traditional UNIX filters are available as ports of the Free
+Software Foundation's GNU Project or as products of third-party companies.
+<p>
+Note, however, that the FSF does not support PC operating systems such as
+Windows, DOS, and OS/2, nor did it sanction adaptation of its utilities to
+these platforms.  The GNU utilities for DOS, Windows, and OS/2 are available
+from non-FSF sites.
+
+<h4>GNU Software</h4>
+
+Third parties have ported many of the FSF GNU Project filter-like programs to
+Windows 95, Windows NT, and OS/2, including cat, cksum, comm, csplit, cut,
+expand, fmt, fold, head, join, md5sum, nl, od, paste, pr, sort, split, sum,
+tac, tail, tr, unexpand, uniq, wc, gzip, gunzip, gawk, and sed.
+<p>
+
+In the 90s, Windows 95 and NT versions could be found at popular Windows ftp sites such
+as <a href="https://ftp.zx.net.nz/pub/archive/simtel.net/pub/simtelnet/">ftp.cdrom.com (simtel)</a>
+and
+<a href="https://ftp.zx.net.nz/pub/archive/ftp.winsite.com/">ftp.winsite.com</a>,
+while <a href="https://gnuwin32.sourceforge.net/">GnuWin32</a> (now unmaintained)
+and <a href="https://www.cygwin.com/">Cygwin</a> provide more recent
+Windows ports of various GNU software.  OS/2 versions, from Kai
+Uwe Rommel, can be found at:
+<p><pre>
+  <a href="https://ftp.zx.net.nz/pub/archive/ftp.leo.org/pub/comp/os/os2/leo/gnu/">ftp.leo.org/pub/comp/os/os2/leo/gnu/</a>
+</pre><p>
+These implementations are freely available on the Internet but might have
+some problems.  For example, "creceive cat &#62; filename" on Windows 95 or NT
+results in an incorrect error stating that the input and output pipes are the
+same (using cat version 1.6).
+<p>
+Gzip/Gunzip (GNU ZIP and UNZIP) archiving and compression software for Windows
+95 and NT is available from:
+<p><pre>
+  <a href="https://winsite.retropc.se/winsite-mar96-4/winnt/misc/gzip.zip">ftp.winsite.com/pub/pc/winnt/misc/gzip.zip</a>
+</pre><p>
+And for OS/2 from:
+<p><pre>
+  <a href="https://ftp.zx.net.nz/pub/archive/ftp.leo.org/pub/comp/os/os2/leo/gnu/archiver/">ftp.leo.org/pub/comp/os/os2/leo/gnu/archiver/</a>
+</pre><p>
+Unlike the Info-Zip tools (Section 5.10.8.4.3), this package was designed from
+the beginning to handle pipes.  So using Gzip and Gunzip on Windows 95,
+Windows NT, or OS/2, along with GNU or Hamilton tar, you may:
+<p><pre>
+  <i>Machine One:</i> CSEND {tar cf - . | gzip} {archive.tgz} 
+  <i>Machine Two:</i> CRECEIVE {gzip -d | tar xf -}
+</pre><p>
+Or:
+<p><pre>
+  CSEND {tar cf - . | gzip} {!gzip -d | tar xf -}
+</pre><p>
+This should work between K95 (any platform) and K95, or between K95 (any
+platform) and UNIX or VMS that have gzip/gunzip installed, with the cautions
+noted in section 5.10.6 for cross-platform archive transfers.
+<p>
+Note: As of GZIP version 1.2.4, there are various bugs in these programs: the
+same crashing bug as noted for Info-ZIP zip/unzip (see 5.10.8.4.3), plus a
+failure of the OS/2 version to open pipes in binary mode (depending on which
+compiler it was built with), thus corrupting the ZIP format, rendering the
+result useless.  These bugs have been reported to the maintainers, along with
+fixes.
+
+<h4>The Hamilton C Shell</h4>
+
+One source of high-quality filters that was in the distant past tested successfully with
+K95's pipes is from Hamilton Laboratories, Inc:
+<p><pre>
+  <a href="http://www.hamiltonlabs.com">http://www.hamiltonlabs.com</a>
+</pre><p>
+The Hamilton C Shell package includes a version of the Berkeley UNIX C-Shell
+<!-- [not anymore] for Windows 95, Windows NT (i386, alpha, mips, and ppc), and OS/2,--> and comes
+with an extensive array of UNIX filters and utilities, including all that you
+would expect to find in UNIX and many original additions, including a DES
+encryption filter.  Using this filter we could support the following syntax
+for encrypted file transfers across the Internet:
+<p><pre>
+  CSEND des -e -k &#60; filename   
+</pre><p>
+or, more ambitiously, an entire directory tree archived, compressed, and
+encrypted:
+<p><pre>
+  CSEND {tar cf - . | gzip -c | des -e -k key} -
+        {!des -d -k key | gunzip -c | tar xf -}
+</pre><p>
+But here we have the same problem regarding transmission of keys we discussed
+elsewhere: the encryption key must be included on the command line
+or the user is prompted for it.
+<p>
+By the way, the Hamilton version of tar also supports Windows NT tape drives,
+which could be used for remote backups to tape.
+
+<h4>Info-ZIP Utilities</h4>
+
+The Info-ZIP project writes portable Zip/Unzip software for many platforms.
+More info at:
+<p><pre>
+   <a href="https://infozip.sourceforge.net/">https://infozip.sourceforge.net/</a>
+</pre><p>
+Ideally, it should be possible to use the Info-ZIP utilities to send an entire
+directory tree from one machine to another in compressed form.  (NOTE: See
+<a href="https://www.kermitproject.org/ckermit70.html#x4.11">Section 4.11</a> of the C-Kermit 7.0 Update Notes
+for another method of
+sending directory trees that does not depend on external utilities like ZIP.)
+This would
+provide better compression than found in modems, and it would also provide
+compression over network connections where compression normally does not take
+place.  And it would allow the data to be sent encrypted and confer other
+benefits as well.
+<p>
+But it turns out that although the Info-ZIP ZIP program has no problem
+creating a ZIP archive to Stdout ("<tt>zip - filelist</tt>") and can even
+compress Stdin to Stdout ("zip") or read the filelist to be compressed from
+Stdin and output the archive to Stdout ("<tt>zip -@ -</tt>"), the UNZIP
+program can't handle an archive as input from Stdin. <!--
+ Previously:
+    (this feature is on the list for version 6).
+ Well, version 6 is out and I can see no sign of unzip supporting reading from
+ stdin
+ -->
+<p>
+However, an FUNZIP (unzip filter) program is also provided as part of the
+Info-Zip package.  But it has some major limitations.  First, it can only
+output to Stdout.  Second, it will only extract the first entry in an archive.
+This means that it is possible to do the following (be sure to use binary
+mode):
+<p><pre>
+  <i>Machine One:</i>  CSEND {tar ... | zip} {archive.zip} 
+  <i>Machine Two:</i>  CRECEIVE {funzip | tar ...}
+</pre><p>
+The output from tar is stored as the first entry in the archive under the name
+"-", which is extracted on Machine Two and fed to 'tar'.  So you might as well
+use Gzip/Gunzip instead of zip/unzip in this situation.
+<p>
+Also, it should be noted that it is not possible to use encryption with the
+Info-Zip utilities when used as above since the password(s) must be issued
+interactively.
+<p>
+Finally, note that there is a bug in all versions of Unzip and Funzip up to
+5.20 that can result in either memory exceptions or incorrect "invalid
+archive" errors.  The bug has been reported, and a fix sent, to the
+maintainers, and the fix is available in version Unzip 5.30.  For versions
+prior to 5.30, the following workaround can be used with 4NT:
+<p><pre>
+  CSEND {zip -9 temp.zip ckc*.h &#62; nul & cat temp.zip & del temp.zip} -
+        {!cat &#62; temp.zip ; unzip temp.zip &#62; errors}
+</pre><p>
+This syntax only gets around the pipe bug in Zip 2.1 for NT and the Funzip
+5.2 pipe bug, but notice it uses Unzip instead of Funzip, so this notation
+allows entire directory trees to be sent.  But you need to know the command
+separator used on the remote system which is not only shell-dependent but can
+usually be reconfigured by the user.
+<p>
+NOTE: As of this writing, Zip 2.2 and Unzip 5.32 are current.
+<p>
+<hr>
+<h3><a name="pipecmds">Related Commands and Functions</h3>
+
+Can one reverse the procedure described at the end of 
+<a href="https://www.kermitproject.org/ckermit70.html#x4.2.8.2">Section 4.2.8.2</a> of the C-Kermit 7.0
+Update Notes, thus
+providing a Telnet server for Windows 95, Windows NT, or OS/2 by
+telling Kermit 95 to "redirect command" (i.e. <tt>COMMAND.COM</tt>) or
+"redirect 4dos", etc?  Not quite...
+<p>
+While it might be possible to set up an incoming TCP/IP or serial connection
+with Kermit-95 and then REDIRECT a shell (<tt>COMMAND.COM</tt>,
+<tt>CMD.EXE</tt>, <tt>4DOS.COM</tt>, <tt>4NT.EXE</tt>, <tt>4OS2.EXE</tt>,
+. . .) we recommend against redirecting 16-bit DOS Shells (anything ending in
+<tt>.COM</tt>).  In OS/2 it isn't even possible since Kermit and the shell run
+in separate environments.  In Windows 95, the DOS Shell is tightly tied to the
+old DOS structures and the BIOS which are not entirely accessible when running
+within a 32-bit Console session, as Kermit 95 does.  While DOS and 32-bit
+Console windows may look alike, they are very different underneath.
+REDIRECTing 32-bit shells such as CMD.EXE on NT or OS/2 and <tt>4NT.EXE</tt> or
+<tt>4OS2.EXE</tt> from JP Software appears to work, but still might behave
+unpredictably because they are not designed to be receiving their input from
+Standard Input but want to read keystrokes directly; thus Backspace, F-keys,
+arrow keys, Page Up, etc, could not work in any case.
+<p>
+Do not start processes with the REDIRECT command, or from a command started
+with the REDIRECT command, that do not read from Standard Input and write to
+Standard Output.  If you do, you won't be able to communicate with them.  You
+might not be able to shut them down even when sitting in front of the machine.
+Ctrl-Alt-Del might be the only way.  (Unless of course you have a port of the
+Unix 'kill' command.)
+<p>
+Kermit-95 itself (in its present form) is a perfect example of a program you
+cannot normally execute with a REDIRECT command.  Kermit-95 reads directly
+from the keyboard and writes directly to the screen buffers.  HOWEVER...
+beginning in version 1.1.16, it can be forced to use stdio, and is therefore
+redirectable.  The command-line switch is "-# 96" (see Section 12).  If you
+are in a whimsical mood, try this on a PC that's connected to the Internet:
+<p><ol>
+<li> Start K95.
+<li> Tell it to "set host * 2000".
+<li> Make a Telnet connection to it from somewhere else (say, UNIX).
+<li> When the K-95> reappears, type "redirect k95.exe -#96".
+<li> Go back to the Telnet client from step (3) and see what you can do.
+</ol><p>
+Results are not guaranteed, except to be interesting.
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

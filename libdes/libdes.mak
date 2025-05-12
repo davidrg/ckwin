@@ -18,6 +18,9 @@ CFG=Release
 !ERROR An invalid configuration is specified.
 !ENDIF 
 
+# This is needed by compiler_detect.mak
+PLATFORM=NT
+
 !message Attempting to detect compiler...
 !include ..\kermit\k95\compiler_detect.mak
 
@@ -121,7 +124,7 @@ CFLAGS=$(CFLAGS) /YX
 CFLAGS=$(CFLAGS) /EHsc
 !endif
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
@@ -137,7 +140,7 @@ COMMON_CFLAGS = $(COMMON_CFLAGS) /Ap64 -DCK_HAVE_INTPTR_T
 CFLAGS=$(CFLAGS) /O2 /D "NDEBUG"
 
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MT
 !else
@@ -149,7 +152,7 @@ CPP_OBJS=.\Release/
 !ELSE
 CFLAGS=$(CFLAGS) /Z7 /Od /D "_DEBUG"
 
-!if "$(CKB_STATIC_CRT)"=="yes"
+!if "$(CKB_STATIC_CRT_NT)"=="yes"
 !message Building with statically linked native CRT as requested.
 COMMON_CFLAGS = /MTd
 !else

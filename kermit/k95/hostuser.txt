@@ -1,17 +1,15 @@
 KERMIT 95 HOST MODE USER'S GUIDE
 
-  ---   PREPUBLICATION DRAFT   ---
-
-  Copyright (C) 1996, 1999, Frank da Cruz and Christine M. Gianone.
+  Copyright (C) 1996, 2002, Frank da Cruz and Christine M. Gianone.
   All rights reserved.
 
 Creation: February 8, 1996.
-Most recent update: Thu Aug  5 11:02:06 1999
+Most recent update: 2 April 2002
 
 Applies to:
   Kermit 95 1.1.3 or later,
-  Host Mode script version 1.00,
-  Microsoft Windows 95, 98, NT, or 2000 or IBM OS/2.
+  Host Mode script version 1.00.
+  Microsoft Windows 95/NT or newer, or IBM OS/2.
 
 CONTENTS
 
@@ -178,7 +176,7 @@ then press the Enter or Return key.
     Kermit, ZMODEM, YMODEM, YMODEM-G, and XMODEM.  Make sure your client
     software is set up to use the same protocol.
 
-2 - Change transfer mode    
+2 - Change transfer mode
 
     The current default transfer mode, text or binary, is shown above the
     menu.  Use this option to change it.
@@ -200,7 +198,7 @@ then press the Enter or Return key.
     back to the directory listing).
 
 5 - Download a file
-  
+
     Prompts you for a filename.  If the file exists in the current PC host
     directory, it is sent to you in the current transfer mode using the
     current protocol.  The transfer happens automatically if the protocol is
@@ -211,7 +209,7 @@ then press the Enter or Return key.
     should do using whatever method is required by your terminal program.
 
 2 - Upload a file
-  
+
     Works only if the current directory is your own private directory or the
     INCOMING directory.  Prompts you for a filename.  If the file exists and
     is accessible on your computer, it is sent using the current protocol
@@ -237,7 +235,7 @@ then press the Enter or Return key.
 
     Deletes a file on the Kermit 95 host PC.  This is permitted only in
     your own private directory.  Prompts you for the filename.
-    
+
 9 - Read messages
 
     If you have one or more messages from the PC owner, the main menu says
@@ -373,7 +371,7 @@ is not ready, and not a complete list, and with no guarantees):
 
   echo
   fc
-  find  
+  find
   mem
   rename
   dir        (without /P, but possibly with other switches)
