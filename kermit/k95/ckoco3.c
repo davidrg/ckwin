@@ -21717,7 +21717,6 @@ vtcsi(void)
                         break;
                         }
                     }
-                    }
                 }
                 break;
             case 'u':

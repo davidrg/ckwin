@@ -1071,9 +1071,9 @@ struct stringint {			/* String and (wide) integer */
 
 #ifdef CK_XTERM_EMULATION
 #define     TT_XTERM   46       /*    xterm! */
-#else
+#else  /* CK_XTERM_EMULATION */
 #define     TT_XTERM   97       /*    xterm! */
-#endif
+#endif /* CK_XTERM_EMULATION */
 
 /* TODO: Graphics!
  *  -> This would be Windows/KUI only - no way of supporting it in
@@ -1094,12 +1094,13 @@ struct stringint {			/* String and (wide) integer */
 
 #ifdef CK_XTERM_EMULATION
 #define     TT_MAX   TT_XTERM
-#else
+#else /* CK_XTERM_EMULATION */
 #define     TT_MAX   TT_VTNT
 #endif /* CK_XTERM_EMULATION */
 
 #define     TT_IBM3101 98       /*    IBM 3101 - not implemented */
-#define     TT_TEK40 99	/*    Tektronix 401x */
+#define     TT_TEK40 99	        /*    Tektronix 401x */
+#define     TT_K95 100          /*    K95 native personality */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3
