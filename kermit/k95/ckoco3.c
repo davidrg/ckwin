@@ -21552,8 +21552,8 @@ vtcsi(void)
                         KuiGetTerminalMaximisedSize(FALSE, &w, &h);
 
                         if (w < 50000 && h < 50000) { /* Limit response length */
-                            sprintf(buf, "%c5;%d;%dt", _CSI, h, w);
-                            sendchars(buf, strlen(buf));
+                            sprintf(buf, "[5;%d;%dt", h, w);
+                            sendescseq(buf);
                         }
                         break;
                     }
@@ -21566,8 +21566,8 @@ vtcsi(void)
                         KuiGetTerminalMaximisedSize(TRUE, &w, &h);
 
                         if (w < 50000 && h < 50000) { /* Limit response length */
-                            sprintf(buf, "%c9;%d;%dt", _CSI, h, w);
-                            sendchars(buf, strlen(buf));
+                            sprintf(buf, "[9;%d;%dt", h, w);
+                            sendescseq(buf);
                         }
 #endif
                         break;
@@ -21608,8 +21608,8 @@ vtcsi(void)
                         width = VscrnGetWidth(vmode);
                         height = VscrnGetHeight(vmode);
 
-                        sprintf(buf, "%c8;%d;%dt", _CSI, height, width);
-                        sendchars(buf, strlen(buf));
+                        sprintf(buf, "[8;%d;%dt", height, width);
+                        sendescseq(buf);
 
                         break;
                     }
@@ -21631,11 +21631,12 @@ vtcsi(void)
 #ifdef KUI
                         char buf[20];
                         if (gui_get_win_run_mode() == 2) {
-                            sprintf(buf, "%c%dt", _CSI, 2); /* Iconified */
+                            sprintf(buf, "[%dt", 2); /* Iconified */
                         } else {
-                            sprintf(buf, "%c%dt", _CSI, 1); /* Not iconified */
+                            sprintf(buf, "[%dt", 1); /* Not iconified */
                         }
-                        sendchars(buf, strlen(buf));
+
+                        sendescseq(buf);
 #endif
                         break;
                     }

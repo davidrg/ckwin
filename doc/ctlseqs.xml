@@ -11980,10 +11980,19 @@ DCS $ q 3 , } ST</pre>
                 <!-- TODO: We don't have a full-screen option, but we could certainly implement
                     one. -->
             </section>
-            <section role="parameter" not-implemented="true" todo="true" title="Report state of window (normal/iconified)">
+            <section role="parameter" title="Report state of window (normal/iconified)">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-1.2061"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Kermit 95 responds with the current state of the window:
+                    <tt>CSI 1 t</tt> (normal), or <tt>CSI 2 t</tt> (minimized).
+                </p>
+                <p>
+                    This is supported on Windows only in the GUI version of
+                    Kermit 95 (k95g.exe). Ignored in the console version for
+                    Windows or OS/2.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" todo="true" title="Report position of window in pixels">
                 <ctlseq><param-single/> = 13</ctlseq>
@@ -12005,11 +12014,19 @@ DCS $ q 3 , } ST</pre>
                     pixels, otherwise report text area size in pixels.
                 </p>
             </section>
-            <section role="parameter" not-implemented="true"
-                     title="Report size of the screen in pixels">
+            <section role="parameter" title="Report size of the screen in pixels">
                 <ctlseq><param-single/> = 15</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-5.2065"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Kermit 95 responds with the screen size in characters:
+                    <tt>CSI 9 ; height ; width t</tt>
+                </p>
+                <p>
+                    This is supported on Windows only in the GUI version of
+                    Kermit 95 (k95g.exe). Ignored in the console version for
+                    Windows or OS/2.
+                </p>
             </section>
             <section role="parameter" not-implemented="true"
                      title="Report xterm character cell size in pixels">
@@ -12026,10 +12043,19 @@ DCS $ q 3 , } ST</pre>
                     Responds with: <tt>CSI 8 ; height ; width t</tt>
                 </p>
             </section>
-            <section role="parameter" not-implemented="true" title="Report the size of the screen in characters">
+            <section role="parameter" title="Report the size of the screen in characters">
                 <ctlseq><param-single/> = 19</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-9.2069"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Kermit 95 responds with the size its window would be if it
+                    were maximized, in pixels: <tt>CSI 9 ; height ; width t</tt>
+                </p>
+                <p>
+                    This is supported on Windows only in the GUI version of
+                    Kermit 95 (k95g.exe). Ignored in the console version for
+                    Windows or OS/2.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" title="Report icon label">
                 <ctlseq><param-single/> = 20</ctlseq>
