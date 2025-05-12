@@ -21546,12 +21546,34 @@ vtcsi(void)
                                 break;
                         }
                     }
-                    case 15: /* Report size of the screen in pixels */
+                    case 15: { /* Report size of the screen in pixels */
+#ifdef KUI
+                        int w, h;
+                        char buf[30];
+                        KuiGetTerminalMaximisedSize(FALSE, &w, &h);
+
+                        if (w < 50000 && h < 50000) { /* Limit response length */
+                            sprintf(buf, "[5;%d;%dt", h, w);
+                            sendescseq(buf);
+                        }
+#endif /* KUI */
                         break;
+                    }
                     case 16: /* Report xterm character cell size in pixels */
                         break;
-                    case 19: /* Report the size of the screen in characters */
+                    case 19: { /* Report the size of the screen in characters */
+#ifdef KUI
+                        int w, h;
+                        char buf[30];
+                        KuiGetTerminalMaximisedSize(TRUE, &w, &h);
+
+                        if (w < 50000 && h < 50000) { /* Limit response length */
+                            sprintf(buf, "[9;%d;%dt", h, w);
+                            sendescseq(buf);
+                        }
+#endif
                         break;
+                    }
                     case 20: /* Report Icon Label */
                         break;
                     case 21: /* Report Window Label */
@@ -21588,8 +21610,8 @@ vtcsi(void)
                         width = VscrnGetWidth(vmode);
                         height = VscrnGetHeight(vmode);
 
-                        sprintf(buf, "%c8;%d;%dt", _CSI, height, width);
-                        sendchars(buf, strlen(buf));
+                        sprintf(buf, "[8;%d;%dt", height, width);
+                        sendescseq(buf);
 
                         break;
                     }
@@ -21607,8 +21629,19 @@ vtcsi(void)
                             /* Report xterm window position */
                         }
                         break;
-                    case 11: /* Report state of Window (normal/iconified) */
+                    case 11: { /* Report state of Window (normal/iconified) */
+#ifdef KUI
+                        char buf[20];
+                        if (gui_get_win_run_mode() == 2) {
+                            sprintf(buf, "[%dt", 2); /* Iconified */
+                        } else {
+                            sprintf(buf, "[%dt", 1); /* Not iconified */
+                        }
+
+                        sendescseq(buf);
+#endif
                         break;
+                    }
                     }
                 }
                 break;

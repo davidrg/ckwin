@@ -234,6 +234,35 @@ KuiSetTerminalRunMode(int x)
     }
 }
 
+int KuiGetTerminalRunMode() {
+    long ret = GetWindowLong(kui->getTerminal()->hwnd(), GWL_STYLE);
+
+    if (ret & WS_MINIMIZE) return 2;
+    return 1;
+}
+
+int widthToChars(int width) {
+    return width / kui->getTerminal()->getKFont()->getFontW();
+}
+
+int heightToChars(int height) {
+    return height / kui->getTerminal()->getKFont()->getFontSpacedH();
+}
+
+void KuiGetTerminalMaximisedSize(BOOL inChars, int* width, int* height) {
+    RECT rec;
+    BOOL r = SystemParametersInfo(
+            SPI_GETWORKAREA,0, &rec, 0);
+
+    *width = rec.right - rec.left;
+    *height = rec.bottom - rec.top;
+
+    if (inChars) {
+        *width = widthToChars(*width);
+        *height = heightToChars(*height);
+    }
+}
+
 int
 KuiFileDialog(char * title, char * def, char * result, int rlen,
                   BOOL downloadButton, BOOL openFile)
