@@ -11980,7 +11980,7 @@ DCS $ q 3 , } ST</pre>
                 <!-- TODO: We don't have a full-screen option, but we could certainly implement
                     one. -->
             </section>
-            <section role="parameter" title="Report state of window (normal/iconified)">
+            <section role="parameter" id="xtwinops-11" title="Report state of window (normal/iconified)">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-1.2061"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
@@ -12014,7 +12014,7 @@ DCS $ q 3 , } ST</pre>
                     pixels, otherwise report text area size in pixels.
                 </p>
             </section>
-            <section role="parameter" title="Report size of the screen in pixels">
+            <section role="parameter" id="xtwinops-15" title="Report size of the screen in pixels">
                 <ctlseq><param-single/> = 15</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-5.2065"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
@@ -12043,7 +12043,7 @@ DCS $ q 3 , } ST</pre>
                     Responds with: <tt>CSI 8 ; height ; width t</tt>
                 </p>
             </section>
-            <section role="parameter" title="Report the size of the screen in characters">
+            <section role="parameter" id="xtwinops-19" title="Report the size of the screen in characters">
                 <ctlseq><param-single/> = 19</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-9.2069"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
