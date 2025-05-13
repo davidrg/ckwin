@@ -480,6 +480,7 @@ bool     saverelcursor[VNUM]={FALSE,FALSE,FALSE,FALSE},
 int      savedwrap[VNUM]={FALSE,FALSE,FALSE,FALSE} ;
 int      savedrow[VNUM] = {0,0,0,0};
 int      savedcol[VNUM] = {0,0,0,0};
+extern int      tt_rkeys_saved[], tt_rkeys[];
 
 bool     deccolm = FALSE;               /* 80/132-column mode */
 bool     decscnm = FALSE;               /* Normal/reverse screen mode */
@@ -7658,6 +7659,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	/* Reset select color in case it was changed by OSC-17/OSC-19 */
 	colorselect = savedcolorselect;
 	colorcursor = savedcolorcursor;
+
+    /* Reset screen roll keys */
+    tt_rkeys[VTERM] = tt_rkeys_saved[VTERM];
 
     /* Reset the color palettes */
     reset_palettes();
@@ -16324,6 +16328,9 @@ vtcsi(void)
                         case 115: /* DECATCBM */
                             pn[2] = decatcbm ? 1 : 2;
                             break;
+                        case 1011:
+                            pn[2] = tt_rkeys[VTERM] == TTRK_RST ? 1 : 2 ;
+                            break;
                         /* TODO: Also report on:
                             Mouse tracking, bracketed paste
                          */
@@ -17841,6 +17848,7 @@ vtcsi(void)
                             break;
                         case 1011:
                             /* RXVT - Scroll to bottom on key press */
+                            tt_rkeys[VTERM] = TTRK_RST;
                             break;
                         case 1015:
                             /* URXVT - Enable URXVT Mosue Mode */
@@ -18431,7 +18439,8 @@ vtcsi(void)
                                /* RXVT - Scroll to bottom on tty output */
                                break;
                            case 1011:
-                               /* RXVT - Scroll to bottom on key press */
+                               /* RXVT - Don't Scroll to bottom on key press */
+                               tt_rkeys[VTERM] = TTRK_SND;
                                break;
                            case 1015:
                                /* URXVT - Disable URXVT Mosue Mode */

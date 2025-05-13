@@ -171,6 +171,8 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
      enables or disables true underline in DECSTGLT alternate color mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
+ - DECSM/DECRM/DECRQM modes
+   - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

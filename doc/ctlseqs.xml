@@ -6668,14 +6668,21 @@ DCS $ q 3 , } ST</pre>
                      title="RXVT - Scroll to bottom on tty output">
                 <ctlseq><param-single/> = 1010</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-0.1F79"/>
-                <!-- TODO: but we could easily support this feature - we have a "set terminal"
-                        setting for it. We might want to preserve whatever the original setting
-                        was though, so it can be restored on undo or terminal reset. -->
+                <!-- TODO: but we could fairly support this feature. I don't see
+                     a SET TERMINAL setting for it, but we could probably add
+                     something under SET TERMINAL ROLL-MODE and do the same thing
+                     that tt_rkeys[VTERM] does whenever a character arrives if
+                     the user is currently viewing scrollback.
+                     -->
             </section>
-            <section role="parameter" id="rxvt-stbk" not-implemented="true" title="RXVT - Scroll to bottom on key press">
+            <section role="parameter" id="rxvt-stbk"
+                     title="RXVT - Scroll to bottom on key press">
                 <ctlseq><param-single/> = 1011</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-1.1F7A"/>
-                <!-- TODO: but we could easily support this feature, as above. -->
+                <p>
+                    Causes the terminal screen to scroll to the bottom on keypress,
+                    equivalent to <tt>set terminal roll-mode keystrokes restore-and-send</tt>.
+                </p>
             </section>
             <section role="parameter" id="xt-fastscroll" mnemonic=""
                      title="Enable fastScroll resource"
@@ -8251,10 +8258,15 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 1010</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-1-0.1F7D"/>
             </section>
-            <section role="parameter" not-implemented="true"  id="decrst-1011"
+            <section role="parameter" id="decrst-1011"
                      title="RXVT - Scroll to bottom on key press">
                 <ctlseq><param-single/> = 1011</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-1-1.1F7E"/>
+                <p>
+                    When viewing scrollback, causes the terminal screen to remain
+                    where it is rather than scrolling to the bottom on keypress.
+                    Equivalent to <tt>set terminal roll-mode keystrokes send</tt>.
+                </p>
             </section>
             <section role="parameter" id="decrst-1014" mnemonic=""
                      title="disable fastScroll resource"
@@ -10997,10 +11009,13 @@ DCS $ q 3 , } ST</pre>
                     <ctlseq><param-single/> = 1010</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-0.1F79"/>
                 </section>
-                <section role="parameter" id="rqm-1011" not-implemented="true"
+                <section role="parameter" id="rqm-1011"
                          title="RXVT - Scroll to bottom on key press">
                     <ctlseq><param-single/> = 1011</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-1.1F7A"/>
+                    <p>Responds with Set if <tt>set terminal roll-mode keystrokes</tt>
+                        is set to <tt>restore-and-send</tt>, or not set otherwise.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1014" mnemonic=""
                          title="fastScroll resource"

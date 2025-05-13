@@ -1380,6 +1380,7 @@ int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
 int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
+int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */
 int tt_pacing = 0;                      /* Terminal output-pacing (none) */
 int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
@@ -5152,7 +5153,7 @@ settrm() {
 	    if ((x = cmkey(rollkeytab,nrollkey,"","send",xxstring))<0)
 	      return(x);
 	    if ((z = cmcfm()) < 0) return(z);
-	    tt_rkeys[VTERM] = x;
+	    tt_rkeys[VTERM] = tt_rkeys_saved[VTERM] = x;
 	} else {
 	    if ((x = cmcfm()) < 0) return(x);
 	    tt_roll[VTERM] = y;
