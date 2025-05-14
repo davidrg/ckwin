@@ -393,10 +393,14 @@ void Kui::setProperty( int propid, intptr_t param1, intptr_t param2 )
 int Kui::getProperty( int propid, void* out )
 {
     switch (propid) {
-        case KUI_GUI_TOOLBAR_VIS: {
+#ifndef NOTOOLBAR
+        case KUI_GUI_TOOLBAR_VIS:
             return terminal->getToolbarVisible();
-        }
+#endif /* NOTOOLBAR */
+        default:
+            return 0;
     }
+    return 0;
 }
 
 /*------------------------------------------------------------------------
