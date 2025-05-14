@@ -174,6 +174,7 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - DECSM/DECRM/DECRQM modes
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
+ - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

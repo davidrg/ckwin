@@ -10524,8 +10524,8 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt420" series="vt" additional="tt"/>
                 </section>
                 <section role="parameter" title="X10 mouse reporting"
-                         id="decrqm-9-x10" groups="isansi" badges="linux"
-                         not-implemented="true" todo="true" >
+                         id="decrqm-9-x10" groups="isansi"
+                         badges="linux k95 xterm">
                     <ctlseq><param-single/> = 9</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9.1E6D"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -10960,9 +10960,9 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt52x:202"/>
                     <termsupp first="vt520" series="vt" additional=""/>
                 </section>
-                <section role="parameter" id="rqm-1000"
-                         title="XTERM - Send Mouse X&amp;Y on button press and release"
-                         not-implemented="true" todo="true">
+                <section role="parameter" id="rqm-1000" groups="isansi"
+                         badges="linux xterm k95"
+                         title="XTERM - Send Mouse X&amp;Y on button press and release">
                     <ctlseq><param-single/> = 1000</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-0.1F78"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -10975,14 +10975,14 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="rqm-1002"
                          title="XTERM - Cell Motion Mouse Tracking"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1002</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-2.1F7A"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
                 </section>
                 <section role="parameter" id="rqm-1003"
                          title="XTERM - All Motion Mouse Tracking"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1003</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-3.1F7B"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -11002,7 +11002,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="rqm-1006"
                          title="XTERM - SGR Mouse Mode"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1006</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-6.1F7E"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -11034,7 +11034,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="rqm-1015"
                          title="URXVT Mouse Mode"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1015</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-5.1F7E"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>

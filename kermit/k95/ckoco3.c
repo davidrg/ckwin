@@ -16301,6 +16301,18 @@ vtcsi(void)
                         case 8: /* DECARM */
                             pn[2] = 3 ; /* permanently set */
                             break;
+                        case 9: /* DECINLM - Interlace */
+#ifdef OS2MOUSE
+                            /* X10 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_X10) ? 1 : 2;
+                            }
+#endif
+                            break;
                         case 10:        /* DECEDM - Block mode off */
                             if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
                                 /* Toolbar off (rxvt) */
@@ -16341,12 +16353,73 @@ vtcsi(void)
                         case 115: /* DECATCBM */
                             pn[2] = decatcbm ? 1 : 2;
                             break;
+                        case 1000:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_X11) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1002:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_BTNEVENT) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1003:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_ANYEVENT) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1006:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_SGR) ? 1 : 2;
+                            }
+#endif
+                            break;
                         case 1011:
                             pn[2] = tt_rkeys[VTERM] == TTRK_RST ? 1 : 2 ;
                             break;
-                        /* TODO: Also report on:
-                            Mouse tracking, bracketed paste
-                         */
+                        case 1015:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_URXVT) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 2004:
+                            pn[2] = bracketed_paste[vmode] ? 1 : 2;
+                            break;
+
                         default:
                             pn[2] = 0 ; /* Unrecognized mode */
                             break;
