@@ -16301,6 +16301,19 @@ vtcsi(void)
                         case 8: /* DECARM */
                             pn[2] = 3 ; /* permanently set */
                             break;
+                        case 10:        /* DECEDM - Block mode off */
+                            if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                /* Toolbar off (rxvt) */
+                                /* Default to permanently reset in case not KUI
+                                 * or NOTOOLBAR */
+                                pn[2] = 4;
+ #ifdef KUI
+ #ifndef NOTOOLBAR
+                                pn[2] = KuiGetProperty(KUI_GUI_TOOLBAR_VIS, 0L) ? 1 : 2;
+ #endif
+ #endif
+                            }
+                            break;
                         case 18: /* DECPFF */
                             pn[2] = xprintff ? 1 : 2 ;
                             break;
@@ -17602,6 +17615,14 @@ vtcsi(void)
 #endif
                             break;
                         case 10:        /* DECEDM - Block Mode On */
+                            if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                /* Toolbar on (rxvt) */
+#ifdef KUI
+#ifndef NOTOOLBAR
+                                KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)1, 0L);
+#endif
+#endif
+                            }
                             break;
                         case 18:  /* DECPFF - Print Form Feed */
                             xprintff = TRUE;
@@ -18225,7 +18246,15 @@ vtcsi(void)
 #endif
                                break;
                            case 10:        /* DECEDM - Block mode off */
-                               break;
+                               if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                   /* Toolbar off (rxvt) */
+#ifdef KUI
+#ifndef NOTOOLBAR
+                                   KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)0, 0L);
+#endif
+#endif
+                            }
+                            break;
                            case 18: /* DECPFF - Print Form Feed */
                                xprintff = FALSE;
                                break;

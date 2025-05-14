@@ -57,7 +57,7 @@ struct _kui_init {
 };
 
 void KuiSetProperty( int propid, intptr_t param1, intptr_t param2 );
-void KuiGetProperty( int propid, intptr_t param1, intptr_t param2 );
+int KuiGetProperty( int propid, void* out );
 
 int KuiInit( void* hInstance, struct _kui_init * );
 HANDLE KuiThreadInit( void* hInstance );

@@ -6112,13 +6112,14 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional=""/>
                 <p>Not Implemented: K95 does not support the VT132 block editing mode</p>
             </section>
-            <!-- TODO: xterm: 10: show toolbar (rxvt) -->
             <section role="parameter" id="rxvt-show-toolbar" mnemonic=""
-                     title="Show Toolbar (rxvt)"
-                     not-implemented="true" todo="true">
+                     title="Show Toolbar (rxvt)" badges="k95 xterm">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0.1EBE"/>
                 <termsupp first="xterm" series="rxvt" additional=""/>
+                <p>
+                    K95G Only: Shows the toolbar if it is currently hidden.
+                </p>
             </section>
             <section role="parameter" id="decltm" mnemonic="DECLTM" title="Line Transmit Mode"
                      not-implemented="true" todo="true">
@@ -7683,11 +7684,13 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional=""/>
             </section>
             <section role="parameter" id="decrst-10" mnemonic=""
-                     title="Hide toolbar (rxvt)"
-                     not-implemented="true" todo="true">
+                     title="Hide toolbar (rxvt)" badges="xterm k95">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0.1EC2"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    K95G only: hides the toolbar if it is currently visible
+                </p>
             </section>
             <section role="parameter" id="r-decltm" mnemonic="DECLTM" title="Line Transmit Mode"
                      not-implemented="true" todo="true" >
@@ -10521,7 +10524,8 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt420" series="vt" additional="tt"/>
                 </section>
                 <section role="parameter" title="X10 mouse reporting"
-                         id="decrqm-9-x10" groups="isansi" badges="linux">
+                         id="decrqm-9-x10" groups="isansi" badges="linux"
+                         not-implemented="true" todo="true" >
                     <ctlseq><param-single/> = 9</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9.1E6D"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -10534,11 +10538,15 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt132" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="decrqm-10-rxvt" mnemonic=""
-                         title="Hide toolbar (rxvt)"
-                         not-implemented="true" todo="true">
+                         title="Toolbar (rxvt)" badges="xterm k95">
                     <ctlseq><param-single/> = 10</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0.1EC2"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        K95G only: reports if the toolbar is currently visible or not.
+                        In the console versions of Kermit 95 (OS/2, Windows), it
+                        reports permanently reset as these versions have no toolbar.
+                    </p>
                 </section>
                 <section role="parameter" id="decrqm-11" mnemonic="DECLTM" title="Line Transmit Mode"
                          not-implemented="true" todo="true" >

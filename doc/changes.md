@@ -172,6 +172,7 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - DECSM/DECRM/DECRQM modes
+   - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
 
 ### Fixed Bugs

@@ -496,6 +496,15 @@ void KTerminal::setToolbarVisible(Bool visible) {
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
+BOOL KTerminal::getToolbarVisible() {
+#ifndef NOTOOLBAR
+    if (toolbar) return toolbar->isVisible();
+#endif
+    return FALSE;
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
 void KTerminal::setStatusbarVisible(Bool visible) {
     if ( status ) {
         int sbwid = 0, sbhi = 0;

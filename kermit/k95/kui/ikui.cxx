@@ -306,8 +306,9 @@ void KuiSetProperty( int propid, intptr_t param1, intptr_t param2 )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KuiGetProperty( int propid, intptr_t param1, intptr_t param2 )
+int KuiGetProperty( int propid, void* out )
 {
     if( kui )
-        kui->getProperty( propid, param1, param2 );
+        return kui->getProperty( propid, out );
+    return 0;
 }

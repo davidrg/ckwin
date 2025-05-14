@@ -1130,6 +1130,7 @@ struct stringint {			/* String and (wide) integer */
 #define ISADM3A(x) (x == TT_ADM3A)
 #define ISADM5(x)  (x == TT_ADM5)
 #define ISXTERM(x) (x == TT_XTERM)
+#define ISK95(x)   (x == TT_K95)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
