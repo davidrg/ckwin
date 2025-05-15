@@ -85,6 +85,10 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    `SET TERMINAL ATTRIBUTE BOLD OFF`. When off, it still affects text
    color unless its turned off with `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` in
    which case the color set with `SET TERMINAL COLOR BOLD` is used.
+ - True bold can now be turned on such that it only affects the font and not
+   the texts color with `SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY` (this is of
+   course incompatible with applications that use the bold attribute to access
+   the upper eight colors)
  - True dim is now turned off in K95G when `SET TERMINAL ATTRIBUTE DIM OFF` is
    given. Like with bold, it still affects color unless turned off with
    `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 

@@ -8710,7 +8710,24 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
-                <p>Turns on the Bold attribute</p>
+                <p>
+                    Turns on the Bold attribute. ECMA-48 leaves presentation up
+                    to the implementation saying it can be a bold font or
+                    increased intensity. <em>Usually</em> it was implemented as
+                    increased intensity on hardware terminals, and when color
+                    appeared it was often used to gain access to brighter
+                    versions of the standard eight colors specified by ECMA-48.
+                    <a href="#sgr-90">SGR-90 to 97</a> and
+                    <a href="#sgr-100">SGR-100 to 107</a> which provide direct
+                    access to these eight brighter colors are a later
+                    non-standard extension from IBMs aixterm terminal
+                </p>
+                <p>
+                    In the Console version of Kermit 95 (OS/2, Windows), bold
+                    is always shown as a more intense color. The Windows GUI
+                    version of Kermit 95 (K95G) by default uses a bold font in
+                    addition to the more intense color.
+                </p>
             </section>
             <section role="parameter" id="sgr-2-sco" badges="scoansi"
                      title="Set Foreground and Background Colour">

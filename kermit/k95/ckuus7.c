@@ -1415,7 +1415,7 @@ extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
 		   savedtrueitalic, savedtruedim, savedtruebold;
 extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
-		   dim_is_color;
+		   dim_is_color, bold_font_only;
 
 extern int bgi, fgi;
 extern int scrninitialized[];
@@ -1512,7 +1512,11 @@ int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 
 struct keytab ttyattrtab[] = {
     { "blink",     TTATTBLI, 0 },
+#ifdef KUI
     { "bold",      TTATTBLD, 0 },
+#else  /* KUI */
+    { "bold",      TTATTBLD, CM_INV },
+#endif /* KUI */
     { "dim",       TTATTDIM, 0 },
     { "italic",    TTATTITA, 0 },
     { "protected", TTATTPRO, 0 },
@@ -1526,6 +1530,12 @@ struct keytab ttyattrblinktab[] = {
     { "color",     TRUE,  0 },
 };
 int nattrblink = (sizeof(ttyattrblinktab) / sizeof(struct keytab));
+
+struct keytab ttyattrboldtab[] = {
+    { "bright",    FALSE, 0 },
+    { "font-only", TRUE,  0 },
+};
+int nattrbold = (sizeof(ttyattrboldtab) / sizeof(struct keytab));
 
 struct keytab ttyprotab[] = {
     { "blink",       TTATTBLI,  0 },
@@ -5618,16 +5628,27 @@ settrm() {
           case TTATTBLD:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             savedtruebold = truebold = y;
-            /* Ask how bold should be simulated - a bright color, or a fixed
-             * color. This option is new in K95 3.0 beta.8 which added support
-             * for more than 16 colors as toggling the intensity/brightness bit
-             * doesn't work when the color isn't in the 0-7 range. We'll default
-             * to "bright" to avoid any surprises as this is what K95 did in the
-             * past.  */
-            if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
-              return(y);
-            if ((x = cmcfm()) < 0) return(x);
-            use_bold_attr = bold_is_color = y;
+
+            if (y) {
+                /* Ask if we should still do bright colors for true bold */
+                if ((y = cmkey(ttyattrboldtab,nattrbold,"","bright",xxstring)) < 0) return(y);
+                if ((x = cmcfm()) < 0) return(x);
+
+                bold_font_only = y;
+            }
+            else {
+                /* Ask how bold should be simulated - a bright color, or a fixed
+                 * color. This option is new in K95 3.0 beta.8 which added support
+                 * for more than 16 colors as toggling the intensity/brightness bit
+                 * doesn't work when the color isn't in the 0-7 range. We'll default
+                 * to "bright" to avoid any surprises as this is what K95 did in the
+                 * past.  */
+                if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+                  return(y);
+                if ((x = cmcfm()) < 0) return(x);
+                use_bold_attr = bold_is_color = y;
+            }
+
             break;
 
           case TTATTDIM:

@@ -7948,6 +7948,16 @@ static char *hxyterm[] = {
 "  while bold and dim are simulated with foreground intensity/brightness. This",
 "  command affects the entire current screen and terminal scrollback buffer.",
 " ",
+#ifdef KUI
+"SET TERMINAL ATTRIBUTE BOLD ON BRIGHT",
+"  Shows the bold attribute in both a bold font and with a brighter color (if ",
+"  the current color is one of the 8 standard ANSI colors).",
+" ",
+"SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY",
+"  Shows the bold attribute in a bold font only without changing the texts",
+"  color. This may cause compatibility issues with some applications.",
+" ",
+#endif /* KUI */
 "SET TERMINAL ATTRIBUTE PROTECTED [ -",
 "   { BOLD, DIM, INVISIBLE, NORMAL, REVERSE, UNDERLINED } ]",
 "  Sets the attributes used to represent Protected text in Wyse and Televideo",

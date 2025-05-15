@@ -297,6 +297,7 @@ int truereverse   = TRUE ;
 int trueunderline = TRUE ;
 int truedim       = TRUE ;
 int truebold      = TRUE ;
+int bold_font_only = FALSE;    /* Only do a bold font, not bold + bright? */
 #ifdef KUI
 int trueitalic    = TRUE ;
 #else /* KUI */
@@ -15755,8 +15756,11 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
              * turning off truebold just turns off the bold font without affecting
              * color (unlike turning off trueblink).
              */
-            if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
-                 ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
+            if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr
+#ifdef KUI
+                    && !bold_font_only
+#endif /* KUI */
+                ) || ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
 #ifdef KUI
                    && !truedim
 #endif /* KUI */
