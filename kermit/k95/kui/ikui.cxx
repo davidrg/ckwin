@@ -282,3 +282,11 @@ void KuiGetProperty( int propid, intptr_t param1, intptr_t param2 )
     if( kui )
         kui->getProperty( propid, param1, param2 );
 }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+#ifdef CK_SHELL_NOTIFY
+void KuiShowNotification(int icon, char* title, char * message) {
+    kui->getTerminal()->showNotification(icon, title, message);
+}
+#endif /* CK_SHELL_NOTIFY */

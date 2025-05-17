@@ -498,6 +498,7 @@ extern int marginbell, marginbellcol;
 extern int autoscroll, wy_autopage;
 extern int tt_sac;
 extern int dec_nrc, dec_lang, dec_kbd;
+int tt_clipboard_read, tt_clipboard_write;
 #else /* OS2 */
 extern int tt_rows, tt_cols;
 #endif /*  OS2 */
@@ -972,6 +973,7 @@ static struct keytab trmtab[] = {
     { "character-set", XYTCS,     0 },
 #endif /* NOCSETS */
 #ifdef OS2
+    { "clipboard-access",  XYTCLP,    0 },
     { "code-page",     XYTCPG,    0 },
     { "color",         XYTCOL,    0 },
     { "controls",      XYTCTRL,   0 },
@@ -1112,6 +1114,30 @@ static struct keytab trmtab[] = {
 int ntrm = (sizeof(trmtab) / sizeof(struct keytab)) - 1;
 
 #ifdef OS2
+struct keytab termclipacc[] = {    /* SET TERM CLIPBOARD-ACCESS */
+    { "allow-both",  0, 0 },
+    { "allow-read",  1, 0 },
+    { "allow-write", 2, 0 },
+    { "both",        0, CM_INV },
+    { "read",        1, CM_INV },
+    { "write",       2, CM_INV },
+};
+int ntermclipacc = (sizeof(termclipacc) / sizeof(struct keytab));
+
+struct keytab termclipnotify[] = {
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+    { "notify", 0, 0 },
+#else /* CK_SHELL_NOTIFY */
+    { "notify", 0, CM_INV },
+#endif /* CK_SHELL_NOTIFY */
+#else /* KUI */
+    { "notify", 0, CM_INV },
+#endif /* KUI */
+    { "silent", 1, 0 },
+};
+int ntermclipnotify = (sizeof(termclipnotify) / sizeof(struct keytab));
+
 struct keytab termctrl[] = {    /* SET TERM CONTROLS */
     { "7",      7, 0 },
     { "8",      8, 0 }
@@ -1398,6 +1424,7 @@ int tt_status_usr[VNUM] = {1,1,0,0};
 #else /* K95G */
 int tt_status[VNUM] = {0,0,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {0,0,0,0};
+int tt_clipboard_read = 1, tt_clipboard_write = 1; /* Host clipboard access */
 #endif /* K95G */
 #endif /* KUI */
 int tt_senddata = 0;                    /* Let host read terminal data */
@@ -5163,6 +5190,35 @@ settrm() {
         y = cmnum("Maximum seconds to allow CTS off during CONNECT",
                   "5",10,&x,xxstring);
         return(setnum(&tt_ctstmo,x,y,10000));
+
+      case XYTCLP: {    /* SET TERMINAL CLIPBOARD-ACCESS */
+            int zz;
+
+            if ((x = cmkey(termclipacc, ntermclipacc,"clipboard access","allow-both",xxstring))<0)
+              return(x);
+
+            if ((y = cmkey(onoff,2,"","on",xxstring)) < 0)
+                return(y);
+
+            if ((z = cmkey(termclipnotify, ntermclipnotify,"notify on access","silent",xxstring))<0)
+              return(z);
+
+            if ((zz = cmcfm()) < 0) return(zz);
+
+            if (y == 1 && z == 1) zz = CLIPBOARD_ALLOW;
+            else if (y == 1 && z == 0) zz = CLIPBOARD_ALLOW_NOTIFY;
+            else if (y == 0 && z == 1) zz = CLIPBOARD_DENY;
+            else if (y == 0 && z == 0) zz = CLIPBOARD_DENY_NOTIFY;
+
+            if (x == 0 || x == 1) {
+                /* Allow both or allow read */
+                tt_clipboard_read = zz;
+            }
+            if (x == 0 || x == 2) {
+                /* Allow both or allow write */
+                tt_clipboard_write = zz;
+            }
+      }
 
       case XYTCPG: {                    /* SET TERMINAL CODE-PAGE */
         int i;

@@ -1374,6 +1374,12 @@ typedef struct videobuffer_struct {
 _PROTOTYP( void setdecssdt, (int));
 _PROTOTYP( void setdecsasd, (bool));
 
+/* Clipboard Access settings */
+#define CLIPBOARD_ALLOW 1
+#define CLIPBOARD_ALLOW_NOTIFY 2
+#define CLIPBOARD_DENY 0
+#define CLIPBOARD_DENY_NOTIFY -1
+
 enum charsetsize { cs94, cs96, cs128, csmb } ;
 struct _vtG {
     unsigned char designation, def_designation ;
@@ -1485,6 +1491,7 @@ _PROTOTYP( void JumpScroll, (void ) ) ;
 _PROTOTYP( APIRET VscrnSelect, ( BYTE, int ) ) ;
 _PROTOTYP( APIRET VscrnURL, ( BYTE, USHORT, USHORT       ) ) ;
 _PROTOTYP( APIRET CopyVscrnToKbdBuffer, ( BYTE, int ) ) ;
+_PROTOTYP( APIRET CopyToClipboard, ( BYTE* data, ULONG length ) ) ;
 _PROTOTYP( APIRET CopyVscrnToClipboard, ( BYTE, int ) ) ;
 _PROTOTYP( APIRET CopyVscrnToPrinter, ( BYTE, int ) ) ;
 _PROTOTYP( APIRET CopyClipboardToKbdBuffer, ( BYTE ) ) ;

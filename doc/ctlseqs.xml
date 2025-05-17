@@ -14034,16 +14034,55 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 51</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5-1.101A"/>
-                <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Reserved for Emacs Shell in January 2000 for a similar
+                    purpose to OSC-7 that was never implemented. Not
+                    <em>known</em> to be in use anywhere.
+                </p>
                 <!-- Reserved, but possibly never actually used?
                     https://www.reddit.com/r/emacs/comments/7rxv6d/comment/lpigict/ -->
             </section>
             <section role="parameter" id="osc-52" mnemonic=""
-                     title="Manipulate selection data"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 52</ctlseq>
+                     title="Manipulate selection (clipboard) data">
+                <ctlseq><param-single/> = 52 ; Pc ; Pd</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5-2.101B"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    The first parameter, <param-single symbol="Pc"/>, specifies
+                    which of xterms buffers are being manipulated. One or more
+                    of the following can be specified: c p q s 0 1 2 3 4 5 6 7
+                </p>
+                <p>
+                    As Windows and OS/2 only have the clipboard, Kermit 95
+                    validates the first parameter but otherwise ignores it.
+                    As the first parameter is optional, no value needs to be
+                    supplied for it.
+                </p>
+                <p>
+                    The second parameter, <param-single symbol="Pd"/>, is the
+                    new base64-encoded <em>text</em> to place in the clipboard.
+                    The text (before being base64 encoded) is assumed to be in
+                    the same character set as current remote character set.
+                    Kermit 95 will attempt to convert it to the local codepage
+                    if Unicode is disabled or Kermit 95 is running on a version
+                    of Windows that does not support Unicode (Windows 95/98/ME).
+                    Kermit 95 does not attempt to convert the character
+                    encoding.
+                </p>
+                <p>
+                    If, rather than a base64-encoded string, the second
+                    parameter is the question-mark character (?), Kermit 95 will
+                    convert the current clipboard data to the remote character
+                    set, base64 encode it, and return it in the form:
+                    <tt>OSC 52 ; Pd ST</tt>
+                </p>
+                <p>
+                    By default, aside from producing a notification in K95G on
+                    Windows 2000 or newer Kermit 95 ignores OSC-52 unless the
+                    user has chosen to enable it. Read and Write can be enabled
+                    individually via the <tt>SET TERMINAL CLIPBOARD-ACCESS</tt>
+                    command.
+                </p>
             </section>
             <section role="parameter" id="osc-60" mnemonic="XTQALLOWED"
                      title="Query allowed features"

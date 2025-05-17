@@ -55,6 +55,15 @@
 #define WMSZ_BOTTOMRIGHT    8
 #endif
 
+#define KUI_NOTIF_I_NONE   0
+#define KUI_NOTIF_I_INFO   1
+#define KUI_NOTIF_I_WARN   2
+#define KUI_NOTIF_I_ERR    3
+#define KUI_NOTIF_I_USER   4
+
+#ifdef CK_SHELL_NOTIFY
+#define WMAPP_NOTIFYCALLBACK (WM_APP + 1)
+#endif /* CK_SHELL_NOTIFY */
 
 class KSizePopup;
 class KMenu;
@@ -88,6 +97,10 @@ public:
     virtual void sizeFontSetDim( UINT fwSide, LPRECT lpr );
     void    createMenu(void);
     void    destroyMenu(void);
+#ifdef CK_SHELL_NOTIFY
+    void    showNotification(int icon, char* title, char * message);
+    void    destroyNotificationIcon();
+#endif /* CK_SHELL_NOTIFY */
 
   protected:
     int Win32ShellExecute( char * );
@@ -97,6 +110,9 @@ public:
     KMenu* menu;
     KToolBar* toolbar;
     KStatus* status;
+#ifdef CK_SHELL_NOTIFY
+    BOOL     iconCreated;
+#endif /* CK_SHELL_NOTIFY */
 
   private:
     KClient* client;

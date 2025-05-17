@@ -740,6 +740,9 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_CLOSE:
         debug(F111,"KTerminal::message","WM_CLOSE",msg);
         PostMessage( hWnd, WM_REQUEST_CLOSE_KERMIT, 0, 0 );
+#ifdef CK_SHELL_NOTIFY
+        destroyNotificationIcon();
+#endif /* CK_SHELL_NOTIFY */
         done = TRUE;
         break;
 
@@ -805,6 +808,24 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             }
         }
         break;
+
+#ifdef CK_SHELL_NOTIFY
+    case WMAPP_NOTIFYCALLBACK:
+        switch (LOWORD(lParam))
+        {
+            case WM_LBUTTONDOWN:
+            case NIN_BALLOONUSERCLICK:
+                /* User clicked the notification */
+                takeFocus();
+            case WM_RBUTTONDOWN:
+            case NIN_BALLOONTIMEOUT:
+                /* Get rid of the notification icon */
+                destroyNotificationIcon();
+                break;
+        }
+        done = TRUE;
+        break;
+#endif /* CK_SHELL_NOTIFY */
 
     case WM_SYSCOMMAND:
     case WM_COMMAND:

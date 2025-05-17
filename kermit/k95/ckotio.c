@@ -460,6 +460,7 @@ int dfloc = 0;
 
 int OSVer = 0;
 int nt351 = 0;
+int nt5 = 0;
 
 #ifdef NTSIG
 int TlsIndex = 0;
@@ -1710,6 +1711,7 @@ sysinit() {
                 OSVer = osverinfo.dwPlatformId ;
 
             if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
+            if (osverinfo.dwMajorVersion > 4) nt5 = 1; /* We're on Win2k or newer */
 
 #ifndef CK_UTSNAME
             sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",

@@ -67,6 +67,18 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 !if "$(PLATFORM)" == "NT"
 WIN32_VERSION=0x0400
 
+!if ($(MSC_VER) >= 150)
+# Visual C++ 2008 can't target anything older than Windows 2000, so bump the
+# WINVER up to that to get some extra shell notification icon features.
+!message Targeting Windows 2000 or newer
+WIN32_VERSION=0x0500
+!endif
+
+!if ($(MSC_VER) > 120)
+# Shell Notify requires Windows 2000 and Visual C++ 2002 (7.0) or newer
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY
+!endif
+
 !if "$(CMP)" == "OWCL"
 # No built-in SSH support for Open Watcom (yet), so if SSH support has been
 # requested, turn Dynamic SSH on.

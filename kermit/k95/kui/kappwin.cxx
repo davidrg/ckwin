@@ -18,6 +18,7 @@ extern "C" {
     extern BYTE vmode;
     extern char exedir[];
     extern int  tt_status[];
+    extern int  nt5;
 };
 
 /*------------------------------------------------------------------------
@@ -562,6 +563,62 @@ int KAppWin::readManual(void)
     }
     return(0);
 }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+#ifdef CK_SHELL_NOTIFY
+/* Shell Notifications require Visual C++ 2002 (7.0) and Windows 2000
+ * or newer */
+
+/* This is new in Windows XP SP2 (Visual C++ 2008) */
+#ifndef NIIF_USER
+#define NIIF_USER 0x00000004
+#endif
+
+void KAppWin::showNotification( int icon, char* title, char * message ) {
+    NOTIFYICONDATA nid = {sizeof(nid)};
+
+    if (!nt5) return;  /* Notifications require Windows 2000 or newer */
+
+    nid.hWnd = hWnd;
+    nid.uID = 1;
+    nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_INFO;
+    nid.uCallbackMessage = WMAPP_NOTIFYCALLBACK;
+    switch(icon) {
+        case KUI_NOTIF_I_INFO: nid.dwInfoFlags = NIIF_INFO; break;
+        case KUI_NOTIF_I_WARN: nid.dwInfoFlags = NIIF_WARNING; break;
+        case KUI_NOTIF_I_ERR: nid.dwInfoFlags = NIIF_ERROR; break;
+        case KUI_NOTIF_I_USER: nid.dwInfoFlags = NIIF_USER; break;
+        default: nid.dwInfoFlags = NIIF_NONE; break;
+    }
+    strncpy(nid.szInfoTitle, title, sizeof(nid.szInfoTitle) / sizeof(nid.szInfoTitle[0]));
+    strncpy(nid.szInfo, message, sizeof(nid.szInfo) / sizeof(nid.szInfo[0]));
+    nid.hIcon = LoadIcon(kglob->hInst, MAKEINTRESOURCE(IDI_ICONK95));
+
+    // If there is already a notification on screen, then a notificaiton icon
+    // will already be present. We can't (and shouldn't) add another (it will
+    // fail), so modify the existing one.
+    if (iconCreated) {
+        if (!Shell_NotifyIcon(NIM_MODIFY, &nid)) {
+            iconCreated = FALSE;
+        }
+    }
+
+    if (!iconCreated){
+        iconCreated = Shell_NotifyIcon(NIM_ADD, &nid);
+    }
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KAppWin::destroyNotificationIcon() {
+    NOTIFYICONDATA nid = {sizeof(nid)};
+    nid.hWnd = hWnd;
+    nid.uID = 1;
+    Shell_NotifyIcon(NIM_DELETE, &nid);
+}
+
+#endif /* CK_SHELL_NOTIFY */
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/

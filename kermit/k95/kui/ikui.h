@@ -77,3 +77,15 @@ void KuiSetTerminalRunMode(int);
 #define STATUS_HW         4
 
 int KuiFileDialog(char *, char *, char *, int, BOOL, BOOL);
+
+#ifdef CK_SHELL_NOTIFY
+#ifndef KUI_NOTIF_I_NONE
+#define KUI_NOTIF_I_NONE   0
+#define KUI_NOTIF_I_INFO   1
+#define KUI_NOTIF_I_WARN   2
+#define KUI_NOTIF_I_ERR    3
+#define KUI_NOTIF_I_USER   4
+#endif /* KUI_NOTIF_I_NONE */
+
+void KuiShowNotification(int icon, char* title, char * message);
+#endif /* CK_SHELL_NOTIFY */

@@ -1301,6 +1301,7 @@ struct stringint {			/* String and (wide) integer */
 #define   XYTIACT   63  /* SET TERM IDLE-ACTION  */
 #define   XYTLSP    64  /* SET TERM LINE-SPACING */
 #define   XYTLFD    65	/* SET TERM LF-DISPLAY   */
+#define   XYTCLP    66  /* SET TERM CLIPBOARD-ACCESS */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */
@@ -2035,6 +2036,7 @@ struct stringint {			/* String and (wide) integer */
 #define SHOLOC    73			/* SHOW LOCALE */
 #define SHOTMPDIR 74			/* SHOW TEMP-DIRECTORY */
 #define SHOVMSTXT 75			/* SHOW VMS_TEXT */
+#define SHONOTIF  76            /* SHOW NOTIFICATION */
 
 /* REMOTE command symbols */
 
