@@ -12644,8 +12644,9 @@ doosc( void ) {
                         if (use_unicode) {
                             rc = CopyToClipboard((BYTE*)ucs2_string,
                                                  sizeof(USHORT) * cliplen);
-                        } else {
+                        } else
 #endif /* NT */
+                        {
                             /* We've now got the clipboard data as a UCS-2
                              * string, but we're on Windows 9x or OS/2 (or NT
                              * with Unicode support turned off), so we need to
