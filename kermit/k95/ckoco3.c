@@ -19693,6 +19693,7 @@ vtcsi(void)
                                 }
                             }
                             break;
+							/* IBM HFT - we *should* fall through here */
 
                         case 11:  /* Display GL Control Characters */
                             /* as Graphic Characters */
@@ -19731,6 +19732,7 @@ vtcsi(void)
                                     charset(cs94,'*',&G[i]);
                             }
                             break;
+							/* IBM HFT - we *should* fall through here */
 
                         case 12:
                             if (ISLINUX(tt_type_mode)) {
@@ -19754,6 +19756,7 @@ vtcsi(void)
                                     charset(cs94,'U',&G[i]);
                                 break;
                             }
+							/* fall through - IBM HFT */
                         case 13: /* IBM HFT */
                         case 14: /* IBM HFT */
                         case 15: /* IBM HFT */
@@ -19784,6 +19787,7 @@ vtcsi(void)
                                 for ( i=1;i<3;i++ )
                                     charset(cs94,'U',&G[i]);
                             }
+							break;
 
                         case 21: { /* Set Normal Intensity */
 							if (ISLINUX(tt_type_mode)) {
