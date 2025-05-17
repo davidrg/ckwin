@@ -1656,6 +1656,12 @@ _PROTOTYP( int os2_setcmdwidth,(int));
 _PROTOTYP( int kui_setheightwidth,(int,int));
 #endif /* KUI */
 
+_PROTOTYP( APIRET CopyToClipboard, ( BYTE* data, ULONG length ));
+_PROTOTYP( BYTE * GetClipboardContent, (void));
+#ifdef NT
+_PROTOTYP( USHORT * GetUnicodeClipboardContent, (void));
+#endif /* NT */
+
 typedef struct _hyperlink {
     int index;
     int type;

@@ -884,7 +884,7 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
         return -1 ;
 
     return CopyToClipboard(
-        use_unicode ? Uselection : selection,
+        use_unicode ? (unsigned char*)Uselection : selection,
         use_unicode ? 2 * nselect : nselect);
 }
 
