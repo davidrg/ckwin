@@ -312,3 +312,11 @@ int KuiGetProperty( int propid, void* out )
         return kui->getProperty( propid, out );
     return 0;
 }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+#ifdef CK_SHELL_NOTIFY
+void KuiShowNotification(int icon, char* title, char * message) {
+    kui->getTerminal()->showNotification(icon, title, message);
+}
+#endif /* CK_SHELL_NOTIFY */

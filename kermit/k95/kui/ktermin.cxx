@@ -1,3 +1,15 @@
+#ifndef CKT_NT35
+#ifdef CK_SHELL_NOTIFY
+#ifdef __WATCOMC__
+/* The Watcom headers need this defined for shell notifications */
+#ifdef _WIN32_IE
+#undef _WIN32_IE
+#endif /* _WIN32_IE */
+#define _WIN32_IE 0x0501
+#endif /* __WATCOMC__ */
+#endif /* CK_SHELL_NOTIFY */
+#endif /* CKT_NT35 */
+
 #include <windowsx.h>
 #include "ktermin.hxx"
 #include "kmenu.hxx"
@@ -749,6 +761,9 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_CLOSE:
         debug(F111,"KTerminal::message","WM_CLOSE",msg);
         PostMessage( hWnd, WM_REQUEST_CLOSE_KERMIT, 0, 0 );
+#ifdef CK_SHELL_NOTIFY
+        destroyNotificationIcon();
+#endif /* CK_SHELL_NOTIFY */
         done = TRUE;
         break;
 
@@ -814,6 +829,24 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             }
         }
         break;
+
+#ifdef CK_SHELL_NOTIFY
+    case WMAPP_NOTIFYCALLBACK:
+        switch (LOWORD(lParam))
+        {
+            case WM_LBUTTONDOWN:
+            case NIN_BALLOONUSERCLICK:
+                /* User clicked the notification */
+                takeFocus();
+            case WM_RBUTTONDOWN:
+            case NIN_BALLOONTIMEOUT:
+                /* Get rid of the notification icon */
+                destroyNotificationIcon();
+                break;
+        }
+        done = TRUE;
+        break;
+#endif /* CK_SHELL_NOTIFY */
 
     case WM_SYSCOMMAND:
     case WM_COMMAND:

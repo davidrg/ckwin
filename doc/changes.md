@@ -69,7 +69,11 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    - The text cursor
    - Dim text (if the dim attribute is disabled with the new
      `SET TERMINAL ATTRIBUTE DIM OFF COLOR` command)
-
+ - Clipboard access for the remote host is now supported via OSC-52. This can be
+   enabled or disabled for read, write or both with 
+   `SET TERMINAL CLIPBOARD-ACCESS`. You can optionally choose to be notified
+   when the remote host attempts to access your clipboard. For security, the
+   default is disabled with a notification.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))

@@ -124,7 +124,7 @@ MSC_VER = 80
 TARGET_CPU = x86
 !endif
 
-WIN32_VERSION=0x0400
+WIN32_VERSION=0x0400]
 
 # So that we can set the minimum subsystem version when needed
 SUBSYSTEM_CONSOLE=console
