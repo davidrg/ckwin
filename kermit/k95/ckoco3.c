@@ -12532,8 +12532,8 @@ doosc( void ) {
 
                         /* Encode it... */
                         if ((rc = b8tob64(clipboardData, -1, encodedData, encodedLen)) >= 0) {
-                            /* Send it in the form: OSC 52 ; data ST */
-                            sendchars("\033]52;", 5);
+                            /* Send it in the form: OSC 52 ;; data ST */
+                            sendchars("\033]52;;", 6);
                             sendchars(encodedData, rc);
                             sendchars("\033\\", 2);
                         } else {
