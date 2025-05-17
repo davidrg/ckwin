@@ -14074,7 +14074,7 @@ DCS $ q 3 , } ST</pre>
                     parameter is the question-mark character (?), Kermit 95 will
                     convert the current clipboard data to the remote character
                     set, base64 encode it, and return it in the form:
-                    <tt>OSC 52 ; Pd ST</tt>
+                    <tt>OSC 52 ;; Pd ST</tt>
                 </p>
                 <p>
                     By default, aside from producing a notification in K95G on
