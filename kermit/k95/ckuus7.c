@@ -1424,7 +1424,8 @@ int tt_status_usr[VNUM] = {1,1,0,0};
 #else /* K95G */
 int tt_status[VNUM] = {0,0,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {0,0,0,0};
-int tt_clipboard_read = 1, tt_clipboard_write = 1; /* Host clipboard access */
+int tt_clipboard_read = CLIPBOARD_DENY_NOTIFY,
+    tt_clipboard_write = CLIPBOARD_DENY_NOTIFY; /* Host clipboard access */
 #endif /* K95G */
 #endif /* KUI */
 int tt_senddata = 0;                    /* Let host read terminal data */

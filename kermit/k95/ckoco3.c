@@ -188,8 +188,8 @@ extern int tt_status[VNUM];           /* Terminal status line displayed */
 extern int tt_status_usr[VNUM];
 extern int tt_modechg;          /* Terminal Video-Change (80 or 132 cols) */
 extern int tt_senddata;         /* May data be sent to the host */
-extern int tt_clipboard_read = CLIPBOARD_DENY_NOTIFY,
-           tt_clipboard_write = CLIPBOARD_DENY_NOTIFY; /* OSC-52 */
+extern int tt_clipboard_read,
+           tt_clipboard_write;  /* OSC-52 */
 extern int tt_hidattr;          /* Attributes do not occupy a space */
 #ifdef PCTERM
 extern int tt_pcterm;
