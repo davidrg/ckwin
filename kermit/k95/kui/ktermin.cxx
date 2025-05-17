@@ -5,7 +5,7 @@
 #ifdef _WIN32_IE
 #undef _WIN32_IE
 #endif /* _WIN32_IE */
-#define _WIN32_IE 0x0500
+#define _WIN32_IE 0x0501
 #endif /* __WATCOMC__ */
 #endif /* CK_SHELL_NOTIFY */
 #endif /* CKT_NT35 */
