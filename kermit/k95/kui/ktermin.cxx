@@ -1,3 +1,15 @@
+#ifndef CKT_NT35
+#ifdef CK_SHELL_NOTIFY
+#ifdef __WATCOMC__
+/* The Watcom headers need this defined for shell notifications */
+#ifdef _WIN32_IE
+#undef _WIN32_IE
+#endif /* _WIN32_IE */
+#define _WIN32_IE 0x0500
+#endif /* __WATCOMC__ */
+#endif /* CK_SHELL_NOTIFY */
+#endif /* CKT_NT35 */
+
 #include <windowsx.h>
 #include "ktermin.hxx"
 #include "kmenu.hxx"
