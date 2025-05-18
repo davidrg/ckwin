@@ -1630,6 +1630,20 @@ DECTSR		462
                 margin
             </p>
         </section>
+        <section id="can" role="ctlchar" mnemonic="CAN" ctlseq="CAN" title="Cancel">
+            <ref src="e48:48"/>
+            <ref src="070:124"/>
+            <ref src="wy370:36"/>
+            <ref src="vt100:S3.3.1"/>
+            <ref src="vt132:78"/>
+            <ref src="vt220:T4-1"/>
+            <ref src="vt420:55"/>
+            <ref src="vt510:chapter4.html#S4.2"/>
+            <ref src="vt52x:110"/>
+            <p>
+                Cancels any in-progress escape sequence.
+            </p>
+        </section>
         <section id="cr" role="ctlchar" mnemonic="CR" ctlseq="CR" title="Carriage Return">
             <ref src="e48:49"/>
             <ref src="070:313"/>
@@ -1645,6 +1659,26 @@ DECTSR		462
 
             <p badges="s97801" groups="ishp">
                 Sends the cursor to the left margin
+            </p>
+        </section>
+        <section id="sub" role="ctlchar" mnemonic="SUB" ctlseq="SUB" title="Substitute">
+            <ref src="e48:48"/>
+            <ref src="070:387"/>
+            <ref src="wy370:36"/>
+            <ref src="vt100:S3.3.1"/>
+            <ref src="vt132:78"/>
+            <ref src="vt220:T4-1"/>
+            <ref src="vt420:55"/>
+            <ref src="vt510:chapter4.html#S4.2"/>
+            <ref src="vt52x:110"/>
+            <p>
+                Cancels any in-progress escape sequences. In VT100 emulations,
+                it also outputs a sahded box (U+2592). In VT220 or higher
+                emulations, a reverse question-mark character (U+2426) is output
+                instad. Many fonts don't include character U+2426 in which
+                case a box or some other character may be displayed. On recent
+                Windows releases, the <em>Cascadia Mono</em> font includes this
+                symbol.
             </p>
         </section>
         <section id="enq-vip7809" role="ctlchar" mnemonic="ENQ" ctlseq="ENQ" title="Return Terminal Status (VIP7809)" badges="vip7809">

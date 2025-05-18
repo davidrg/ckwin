@@ -8178,9 +8178,9 @@ ltorxlat( int c, CHAR ** bytes )
                 return(0);
             }
             /* otherwise, we use US-ASCII - no translation necessary */
-        } else if ( cs_is_nrc(dec_kbd) ) {
+        } else if ( cs_is_nrc(dec_kbd) && xl_tx[dec_kbd] ) {
             xkey = xl_tx[dec_kbd](xkey);
-        } else if ( xkey > 127 ) {
+        } else if ( xkey > 127 && xl_tx[dec_kbd] ) {
             xkey = xl_tx[dec_kbd](xkey);
         }
     }
@@ -8923,6 +8923,7 @@ charset( enum charsetsize size, unsigned short achar, struct _vtG * pG )
             if (bchar == '5') {
                 cs = TX_DECMCS ;
             }
+			break;
         case '*':
             cs = TX_IBMC0GRPH;  /* QANSI/Linux */
             break;
@@ -9027,29 +9028,6 @@ resetcolors( int x )
 		use_bold_attr = bold_is_color;
 		use_blink_attr = blink_is_color;
     }
-}
-
-/*---------------------------------------------------------------------------*/
-/* movetoscreen                                                              */
-/*---------------------------------------------------------------------------*/
-void
-movetoscreen(char *source, int x, int y, int len) {
-   /* x and y begin at 1 */
-
-   int l=0 ;
-   videoline * line = NULL ;
-
-   line = VscrnGetLineFromTop(VTERM, y-1) ;
-   while (l<len) {
-      if ( x-1 == VscrnGetWidth(VTERM) ) {
-         x=1 ;
-         y++ ;
-         line = VscrnGetLineFromTop(VTERM, y-1) ;
-         }
-      line->cells[x-1].c = source[l] ;
-      x++ ;
-      }
-    VscrnIsDirty(VTERM);
 }
 
 void
@@ -10746,7 +10724,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                     int dup_sav = duplex;
                     duplex = 0;
                     sprintf(escbuf,
-                             "%c%M",
+                             "%cM",
                              (ISVT100(tt_type_mode) ? 'O' : '?')
                              );
                     sendescseq(escbuf);
@@ -13815,6 +13793,17 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         return;
     }
 
+    /* The VT100 and up output a SUB character *in addition to* acting on it
+     * to cancel any escape sequence in progress */
+    if (ch == SUB && ISVT100(tt_type_mode)) {
+        if (ISVT220(tt_type_mode)) {
+            wrtch(0x2426);    /* Unicode backwards questionmark for VT220+*/
+        }
+        else {
+            wrtch(0x2592);    /* Unicode half-tone block for VT100*/
+        }
+    }
+
 /*
   Even if debugging, we still plow through the escape-sequence state table
   switcher, but we don't call any of the action routines.
@@ -14743,7 +14732,6 @@ lgotoxy(BYTE vmode, int x, int y) {
             if ( x > width ) {
                 y++;
                 if ( y > marginbot ) {
-                    x=0 ;
                     y=margintop ;
                 }
                 x = 1 ;
@@ -23305,6 +23293,8 @@ vtescape( void )
         case ']':
             if ( ISH19(tt_type_mode) ) {
                 /* Transmit 25th line to host */
+				/* Note: If we were to ever support this, it would only be if
+				   senddata is enabled - for security */
                 ;
             }
             else if (ISVT52(tt_type_mode)) /* VT52 control */

@@ -194,6 +194,15 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - Fixed a potential memory leak in the status line display. Cov-462304.
  - Fix control flow issue which could cause a DECRQM to do both the DECRQM
    and a Delete lines. Cov-462454.
+ - Fix potential memory leak if SSH key generation fails. Cov-462508, Cov-462436
+ - Fix potential memory leak on ssh connect if existing connection fails to close. Cov-462163.
+ - Fix Ctrl+C during an autodownload causing a crash
+ - Fixed VT emulations not rendering SUB. When the VT100 and up receive a SUB
+   character they render it as a shaded block for the VT1xx, and a backwards
+   question-mark for the VT220 and up, as well as canceling any escape sequence.
+   K95 will now do the same, using unicode character 0x2426 for VT220 and up.
+   Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
+   (K95 bug 815).
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
@@ -878,11 +887,14 @@ Kermit 95 v2.2 was never publicly released, but
 [this file](https://www.kermitproject.org/k95-fixes-since-213.txt) documents 
 what's new since Kermit 95 v2.1.3.
 
-Not every change for K95 v2.2 has made it in to C-Kermit for Windows due to the 
+Not every change for K95 v2.2 has made it in to Kermit 95 v3.0 due to the 
 removal of some components that could not be open-sourced. In particular,
-changes for the Dialer in K95 v2.2 do not apply as the CKW dialer is based on
-K95 v2.1.3, and changes for the SSH subsystem don't apply to CKW as CKW uses an
-entirely new SSH implementation.
+changes for the Dialer in K95 v2.2 do not apply as the K95 3.0 dialer is based on
+K95 v2.1.2, and changes for the SSH subsystem don't apply to K95 3.0 as v3.0 uses an
+entirely new SSH implementation. In particular, the following entries from the K95 2.2
+change log should be disregarded:
+ * *Not implemented*: the dialer's QUICK command now supports connections based on
+   templates and includes a SaveAs operation (a poor man's clone)
 
 ## Previous Kermit 95 releases
 Change logs going back to the release of the first version in October 1995 (1.1)

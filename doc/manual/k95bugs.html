@@ -903,7 +903,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (M)</tt> <a href="#b729">729. Display of Plane-1-and-beyond Unicode characters</a>
 <li><tt>[+] (K)</tt> <a href="#b730">730. k95g.exe ssh://xyzcorp.com --nobars causes invalid memory reference</a>
 <li><tt>[+] (K)</tt> <a href="#b731">731. Long Read Delays when using USB Serial Ports or Modems</a>
-<li><tt>[ ] (K)</tt> <a href="#b732">732. Backspace Key setting in Dialer -> Keyboard might be ignored</a>
+<li><tt>[+] (K)</tt> <a href="#b732">732. Backspace Key setting in Dialer -&gt; Keyboard might be ignored</a>
 <li><tt>[ ] (C)</tt> <a href="#b733">733. SET PRINTER command in Dialer-generated scripts</a>
 <li><tt>[+] (K)</tt> <a href="#b734">734. Sessions Logs are always 8-bit</a>
 <li><tt>[+] (K)</tt> <a href="#b735">735. Macros on Keys broken</a>
@@ -986,7 +986,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b812">812. Autodownload GUI Dialog needs more buttons</a>
 <li><tt>[+] (K)</tt> <a href="#b813">813. Kermit 95 and large files</a>
 <li><tt>[+] ( )</tt> <a href="#b814">814. Using K95 as a terminal emulator to Red Hat Enterprise Linux 5</a>
-<li><tt>[ ] (K)</tt> <a href="#b815">815. Incoming Ctrl-Z (SUB) character not properly displayed in VT emulation</a>
+<li><tt>[+] (K)</tt> <a href="#b815">815. Incoming Ctrl-Z (SUB) character not properly displayed in VT emulation</a>
 <li><tt>[+] ( )</tt> <a href="#b816">816. 80/132 column switching and Resize Mode</a>
 <li><tt>[+] (K)</tt> <a href="#b817">817. Columns can be lost if K95G window wider than physical screen</a>
 <li><tt>[+] (M)</tt> <a href="#b818">818. Ghost tool tips</a>
@@ -1008,6 +1008,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b833">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
 <li><tt>[ ] (K)</tt> <a href="#b834">834. Switching between command and terminal via \Kexit doesn't toggle the toolbar button</a>
 <li><tt>[ ] (K)</tt> <a href="#b835">835. The SET HOST command does nothing when the network type is NETBIOS</a>
+<li><tt>[+] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -7011,15 +7012,14 @@ When a serial port or modem uses the USB bus rather than the PCI bus,
 this can result in a 500 second delay between reads unless the buffer
 is filled.  This is fixed in version 3.0.
 
-<h3><a name="b732">732. Backspace Key setting in Dialer -> Keyboard might be ignored</a></h3>
+<h3><a name="b732">732. Backspace Key setting in Dialer -&gt; Keyboard might be ignored</a></h3>
 
 If you have a SET KEY \127 xxx command in your K95.INI, K95SITE.INI,
 or K95CUSTOM.INI file, this overrides the Backspace Key setting in the
 Dialer's Keyboard Settings page, even though the Dialer script is
-executed AFTER the INI file.  <!--Fixed in the next release.-->
+executed AFTER the INI file.
 
-<!-- The K95 side of the fix is perhaps the "set dialer backspace" command,
-     not sure if our version of the dialer currently uses it though -->
+<p>This is fixed in version 3.0.
 
 <h3><a name="b733">733. SET PRINTER command in Dialer-generated scripts</a></h3>
 
@@ -7145,10 +7145,24 @@ Support for using UNC paths with FTP operations has been added to version 3.0.
 
 <h3><a name="b748">748. Dialer QUICK Command improvements</a></h3>
 
-The dialer QUICK command <!--did-->does not allow connections to be based on
-existing template and <!--could-->can not be saved for later use.  <!--The next
+<!-- The dialer QUICK command did not allow connections to be based on
+existing template and could not be saved for later use.  The next
 release supports the use of templates in the QUICK command and allows
 the command to be used as a poor man's CLONE.-->
+
+The dialer QUICK command does not allow connections to be based on an
+existing template and can not be saved for later use. An enhancement
+to resolve this was originally developed as part of the Kermit 95 v2.2
+work, but those changes have been lost and there are <em>at this time</em> no
+plans to redevelop that feature from scratch. Instead due to the
+aging framework and compilers the Dialer depends on, the Windows version
+of the Dialer will eventually be replaced by an entirely new and more
+fit-for-purpose application (see Github issue
+    <a href="https://github.com/davidrg/ckwin/issues/317">#317</a> for
+    more information).
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/267">Issue #267 on Github</a></p>
 
 <h3><a name="b749">749. Linux Character Set handling bugs</a></h3>
 
@@ -7797,6 +7811,15 @@ as a reverse question mark in VT320 emulation but it is not displayed at
 all.  Reportedly this causes major discomfort when using the VMS TPU editor.
 There doesn't seem to be a workaround for this.
 
+<p>Fixed in Kermit 95 3.0 which uses unicode character 0x2426 (Symbol For
+    Substitute Form Two) for the reverse question-mark. Many fonts don't include
+    this character, but on Windows 10 and up Cascadia Mono (also used by the
+    Windows Terminal) does.
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/285">Issue #285 on Github</a>
+
 <h3><a name="b816">816. 80/132 column switching and Resize Mode</a></h3>
 
 Clarification: At present, the command
@@ -7864,8 +7887,8 @@ crashes. This has been fixed in version 3.0.
 
 <h3><a name="b821">821. Receiving files with non-ascii names can result in garbled filenames</a></h3>
 
-Receiving a file named "Grüße" may result in a saved file called something like
-"GrÃ¼Ã\237e". There are likely two factors that contribute to this problem:
+Receiving a file named "Grï¿½ï¿½e" may result in a saved file called something like
+"GrÃ¼ï¿½\237e". There are likely two factors that contribute to this problem:
 
 <ol>
     <li>The Kermit Protocol has
@@ -8047,6 +8070,20 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/339">Issue #339 on Github</a>
+
+<h3><a name="b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a></h3>
+<p>
+    When canceling an autodownload with Ctrl+C, Kermit 95 either crashes or gets
+    into a state where the file transfer is canceled but the File Transfer
+    Display remains on screen with no way to exit it. The bug has been present
+    since at least Kermit 95 v2.1, but may have been present in earlier releases
+    as well.
+</p>
+
+<p>Fixed in 3.0.</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/99">Issue #99 on Github</a>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>

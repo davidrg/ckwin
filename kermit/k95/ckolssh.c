@@ -1673,6 +1673,7 @@ int ssh_open(void) {
             if (rc != SSH_ERR_NO_ERROR) {
                 /* Failed to close the existing connection. Can't start a new one.*/
                 if (socket != INVALID_SOCKET) closesocket(socket);
+                if (user) free(user);
                 return rc;
             }
         } else {
@@ -2733,6 +2734,8 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     rc = ssh_pki_generate(ktype, bits, &key);
     if (rc != SSH_OK) {
         printf("Failed to generate private key\n");
+        free(passphrase);
+        free(output_filename);
         return SSH_ERR_UNSPECIFIED;
     }
 

@@ -1518,7 +1518,9 @@ _PROTOTYP( void   markselect, ( BYTE, int ) ) ;
 _PROTOTYP( void   markcopyhost, ( BYTE, int ) ) ;
 _PROTOTYP( void   markprint, ( BYTE, int ) ) ;
 
+#ifdef OS2ONLY
 _PROTOTYP( USHORT getshiftstate, ( void ) ) ;
+#endif /* OS2ONLY */
 
 _PROTOTYP(int popuphelp, (int,enum helpscreen));/* Pop-up help panel maker */
 _PROTOTYP(int popuperror, (int,char *));        /* Pop-up error message */
@@ -1566,7 +1568,6 @@ _PROTOTYP(void flipscreen, (BYTE));
 _PROTOTYP(void killcursor, (BYTE));
 _PROTOTYP(void lgotoxy, (BYTE, int, int));
 _PROTOTYP(void markmode, ( BYTE, int ) );
-_PROTOTYP(void movetoscreen, (char *, int, int, int));
 _PROTOTYP(void newcursor, (BYTE));
 _PROTOTYP(void printeron, (void));
 _PROTOTYP(int  printeropen, (void));

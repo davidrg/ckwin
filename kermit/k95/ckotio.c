@@ -1906,6 +1906,7 @@ sysinit() {
     CreateKeyMapInitSem( FALSE ) ;
     CreateVscrnDirtySem( TRUE );
 #endif /* NOLOCAL */
+    CreateZoutDumpMutex( FALSE );
 
 #ifndef NOSETKEY
     keymapinit();                       /* Initialize key maps */
@@ -2509,6 +2510,7 @@ syscleanup() {
     VioHandle = 0 ;
 #endif /* NT */
     CloseThreadMgmtMutex() ;
+    CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);
 
 #ifndef NOLOCAL
@@ -7780,6 +7782,8 @@ congev( int vmode, int timo ) {
     ULONG timeout = 0;
     con_event evt ;
     int tt,tr,interval,i ;
+
+    memset(&evt,0,sizeof(con_event));
 
 #ifdef IKSD
     if ( inserver ) {
