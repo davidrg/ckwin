@@ -6644,10 +6644,16 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables all motion mouse tracking</p>
             </section>
-            <section role="parameter" id="xt-sf" not-implemented="true" title="XTERM - Send FocusIn / FocusOut events">
+            <section role="parameter" id="xt-sf" title="XTERM - Send FocusIn / FocusOut events">
                 <ctlseq><param-single/> = 1004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-4.1F7C"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    K95G (Windows) only: send Focus-In and Focus-Out events.
+                    When the Kermit terminal window is given focus, K95 will
+                    transmit <tt>CSI I</tt>, and when it looses focus it will
+                    transmit <tt>CSI O</tt>
+                </p>
             </section>
             <section role="parameter" id="xt-utf8m" title="XTERM - Enable UTF-8 Mouse Mode">
                 <ctlseq><param-single/> = 1005</ctlseq>
@@ -8232,11 +8238,15 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Turns off all mose reporting</p>
             </section>
-            <section role="parameter" not-implemented="true" id="decrst-1004"
+            <section role="parameter" id="decrst-1004"
                      title="XTERM - Send FocusIn/FocusOut events">
                 <ctlseq><param-single/> = 1004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-0-4.1F80"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    K95G (Windows) only: stops transmitting Focus-In and
+                    Focus-Out events.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-1005"
                      title="XTERM - UTF-8 Mouse Mode">
@@ -11004,11 +11014,17 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-3.1F7B"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
                 </section>
-                <section role="parameter" id="rqm-1004" not-implemented="true"
+                <section role="parameter" id="rqm-1004"
                          title="XTERM - Send FocusIn / FocusOut events">
                     <ctlseq><param-single/> = 1004</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-4.1F7C"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
+                    <p>
+                        K95G (Windows): reports if Focus In/Focus Out reporting
+                        is currently enabled. In the OS/2 and Windows Console
+                        versions of K95G, Kermit 95 will return 4 (permanently
+                        reset).
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1005"
                          title="XTERM - UTF-8 Mouse Mode"

@@ -252,6 +252,10 @@ extern int beepfreq, beeptime ;
 extern int pwidth, pheight;
 extern int win95lucida, win95hsl;
 
+#ifdef KUI
+int transmit_focus_change = FALSE;
+#endif /* KUI */
+
 /*
  * =============================variables==============================
  */
@@ -10309,6 +10313,21 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             mouseurl(mode,vscrn[mode].cursor.y,vscrn[mode].cursor.x);
             break;
 
+        case K_FOCUS_IN:
+#ifdef KUI
+            if (transmit_focus_change) {
+                sendescseq("[I");
+            }
+#endif /* KUI */
+            break;
+        case K_FOCUS_OUT:
+#ifdef KUI
+            if (transmit_focus_change) {
+                sendescseq("[O");
+            }
+#endif /* KUI */
+            break;
+
         default:                        /* None of the above */
             return;                     /* Ignore this key and return. */
         }
@@ -16656,6 +16675,13 @@ vtcsi(void)
                             }
 #endif
                             break;
+                        case 1004:
+#ifdef KUI
+                            pn[2] = transmit_focus_change ? 1 : 2;
+#else /* KUI */
+                            pn[2] = 4; /* permanently reset */
+#endif /* KUI */
+                            break;
                         case 1006:
 #ifdef OS2MOUSE
                             /* X11 mouse reporting */
@@ -18190,6 +18216,9 @@ vtcsi(void)
                             break;
                         case 1004:
                             /* XTERM - Send FocusIn/FocusOut events*/
+#ifdef KUI
+                            transmit_focus_change = TRUE;
+#endif /* KUI */
                             break;
                         case 1005:
                             /* XTERM - Enable UTF-8 Mouse Mode */
@@ -18790,6 +18819,9 @@ vtcsi(void)
                                break;
                            case 1004:
                                /* XTERM - Send FocusIn/FocusOut events*/
+#ifdef KUI
+                                transmit_focus_change = FALSE;
+#endif /* KUI */
                                break;
                            case 1005:
                                /* XTERM - UTF-8 Mouse Mode */

@@ -74,6 +74,7 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    `SET TERMINAL CLIPBOARD-ACCESS`. You can optionally choose to be notified
    when the remote host attempts to access your clipboard. For security, the
    default is disabled with a notification.
+ - Support for xterm focus tracking (mode 1004)
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -165,6 +166,7 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
    - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
    - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
+   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52)
  - A few VT525 control sequences _based on documented behaviour_; there may be
    differences from the real thing (donations of a VT525 accepted!):
    - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
@@ -181,6 +183,7 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    available for VT520 (and so, temporarily, VT320)
  - DECSM/DECRM/DECRQM modes
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
+   - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
 

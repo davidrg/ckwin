@@ -1141,11 +1141,13 @@ Bool KClient::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_SETFOCUS:
         //debug(F111,"KClient::message","WM_SETFOCUS",msg);
         _inFocus = TRUE;
+        ::dokverb(vmode, K_FOCUS_IN );
         break;
 
     case WM_KILLFOCUS:
         //debug(F111,"KClient::message","WM_KILLFOCUS",msg);
         _inFocus = FALSE;
+        ::dokverb(vmode, K_FOCUS_OUT );
         break;
 
     case WM_VSCROLL:
