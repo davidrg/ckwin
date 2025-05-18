@@ -41,6 +41,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <math.h>
 
 #define DECLED
 
@@ -12522,7 +12523,7 @@ doosc( void ) {
                     }
 #endif /* NT */
 
-                    if (clipboardData) {
+                    if (clipboardData != NULL) {
                         /* Allocate memory for the maximum length the base64
                          * encoded data could be */
                         int rc;
