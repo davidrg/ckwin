@@ -167,6 +167,16 @@ you must not have <tt>PARITY</tt> set to anything other than <tt>NONE</tt>.
 <i>remote-set</i></tt>
 
 <p>
+<dt><tt>SET TERMINAL CLIPBOARD-ACCESS <i>{</i> ALLOW-BOTH, ALLOW-READ,
+    ALLOW-WRITE <i>}</i> <i>{</i> ON, OFF <i>} NOTIFY</i></tt>
+<dd>
+    Enable or disable clipboard access by the remote host using OSC-52. You can
+    turn read and write on or off individually, or you can set both at once with
+    the <tt>ALLOW-BOTH</tt> option. You can optionally choose to be notified
+    when theremote host attempts to access the clipboard with the
+    <tt>NOTIFY</tt> option. This requires Windows 2000 or newer.
+</dd>
+<p>
 <dt><tt>SET TERMINAL CODE-PAGE nnn</tt>
 <dd>This command can not be used in Windows 95.  In OS/2 and Windows NT, it
 actually loads the given code page into your session.  Make sure to also give a

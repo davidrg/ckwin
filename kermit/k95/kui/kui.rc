@@ -680,7 +680,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "The Kermit Project"
-            VALUE "FileDescription", "Kermit 95, Graphical executable"
+            VALUE "FileDescription", "Kermit 95"
             VALUE "FileVersion", RC_FILE_VERSION_STR
             VALUE "InternalName", "k95g"
             VALUE "LegalCopyright", "Portions (C) Copyright 1995-2013 The Trustees of Columbia University in the City of New York. Portions (C) Copyright 2013-2022 The Kermit Project contributors."
