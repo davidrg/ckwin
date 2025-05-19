@@ -196,11 +196,6 @@ RCDEFINES = $(RCDEFINES) /dWIN32 /dWINVER=0x0400 /dCOMPILER_$(CMP)
 # Customise for the compiler version we're using
 !if "$(CMP)" == "VCXX"
 
-!if ($(MSC_VER) > 102)
-# This switch is new to Visual C++ 5.0 (along with bool support)
-# (102 == Visual C++ 4.2) noBool
-CFLAGS = $(CFLAGS) /noBool
-!endif
 !IF ($(MSC_VER) < 131)
 # Visual C++ 7.0 (2002) and earlier
 # Visual C++ 7.1 - nothing required
