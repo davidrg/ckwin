@@ -12,9 +12,11 @@ excluded_terminals = ['wy30', 'wy60', 'wy160', 'dg210', 'dg200', 'dg217', 'adm5'
 
 # These are ordered to try and use colspan as much as possible to reduce table width. As a side effect, terminals with
 # the most similar key maps tend to be clustered together.
-std_terminals = [ 'heath19', 'vt52', 'vt100', 'vt102', 'vt220', 'vt320', 'vt320pc', 'vt220pc', 'wy370', 'ansi-bbs',
-                  'vip7809', 'sni-97801', 'scoansi', 'at386', 'linux', 'beterm', 'qansi',  'tty', 'annarbor', 'ibm3151',
-                  'ba80', 'aixterm', 'hft', 'sun' ]
+std_terminals = [ 'heath19', 'vt52', 'vt100', 'vt102', 'vt220', 'vt320', 'vt320pc', 'vt220pc', 'wy370', 'k95',
+                  'ansi-bbs', 'vip7809', 'sni-97801', 'scoansi', 'at386', 'linux', 'beterm', 'qansi',  'tty',
+                  'annarbor', 'ibm3151', 'ba80', 'aixterm', 'hft', 'sun' ]
+
+table_borders = False
 
 # Special keyboard modes
 modes = ['emacs', 'metaesc', 'meta', 'wp',  'hebrew', 'russian']
@@ -130,11 +132,15 @@ def output_keys_table(fn, keys, terminals):
             print(h)
             f.write(h + "\n")
 
+        b = ''
+        if table_borders:
+            b = ' border="1"'
+
         write_html("""
-        <table>
+        <table{0}>
             <tr>
                 <th>Key</th>
-                <th>Key Code</th>""")
+                <th>Key Code</th>""".format(b))
         for t in terminals:
             write_html("                <th>{0}</th>".format(t))
         write_html("            </tr>")
