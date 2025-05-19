@@ -5824,6 +5824,265 @@ defvtpckm( int tt )
 }
 
 int
+defk95km( int tt) {
+	/* This is a largely (but not entirely) xterm-compatible keymap, as the K95
+	 * terminal type aims to match what modern linux software expects (which is
+	 * largely "xterm-like") */
+
+    if ( defvt200km( tt ) ||
+		 /* Numeric Keypad - DEC Function keys via Shift */
+		insertkeymap( tt, 5008, mkkeyevt(F_KVERB | K_DECF1  )) || /* Shift+Gray-NumLock */
+		insertkeymap( tt, 4975, mkkeyevt(F_KVERB | K_DECF2  )) || /* Shift+Gray-Divide */
+		insertkeymap( tt, 874,  mkkeyevt(F_KVERB | K_DECF3  )) || /* Shift+Multiply */
+		insertkeymap( tt, 877,  mkkeyevt(F_KVERB | K_DECF4  )) || /* Shift+Subtract */
+		insertkeymap( tt, 875,  mkkeyevt(F_KVERB | K_KPCOMA )) || /* Shift+Add sends DEC , */
+		/* 2411 (Alt+Add) -> \Kkpminus */
+		/* 4365 (Gray-Enter) -> \Kkpenter */
+
+		/* Numeric keypad - Numlock on */
+		/* \366 (Decimal)  -> \Kkpdot
+		   \352 (Keypad-0) -> \Kkp0
+		   \353 (Keypad-1) -> \Kkp1
+		   \354 (Keypad-2) -> \Kkp2
+		   \355 (Keypad-3) -> \Kkp3
+		   \356 (Keypad-4) -> \Kkp4
+		   \357 (Keypad-5) -> \Kkp5
+		   \358 (Keypad-6) -> \Kkp6
+		   \359 (Keypad-7) -> \Kkp7
+		   \360 (Keypad-8) -> \Kkp8
+		   \361 (Keypad-9) -> \Kkp9
+		 */
+
+		/* Numeric Keypad - Numlock off */
+		/* \302 (Delete (.))   -> \Kkpdot
+		   \1326 (Ctrl-Delete) -> \{8}
+		   \301 (Insert     (0)) -> \Kkp0
+		   \291 (End        (1)) -> \Kkp1
+		   \296 (DownArrow  (2)) -> \Kkp2
+		   \290 (PageDown   (3)) -> \Kkp3
+		   \293 (LeftArrow  (4)) -> \Kkp4
+		   \268 (Clear      (5)) -> \Kkp5
+		   \295 (RightArrow (6)) -> \Kkp6
+		   \292 (Home       (7)) -> \Kkp7
+		   \294 (UpArrow    (8)) -> \Kkp8
+		   \289 (PageUp     (9)) -> \Kkp9
+		*/
+
+		/* Arrow keys */
+		/* \4390 (Gray-UpArrow) -> \kuparr */
+		insertkeymap( tt, 4902, mkliteralevt("\033[1;2A")) || /* Shift+Gray-UpArrow */
+		insertkeymap( tt, 6438, mkliteralevt("\033[1;3A")) || /* Alt+Gray-UpArrow */
+		insertkeymap( tt, 6950, mkliteralevt("\033[1;4A")) || /* Alt+Shift+Gray-UpArrow */
+		insertkeymap( tt, 5414, mkliteralevt("\033[1;5A")) || /* Ctrl+Gray-UpArrow */
+		insertkeymap( tt, 5926, mkliteralevt("\033[1;6A")) || /* Ctrl+Shift+Gray-UpArrow */
+		insertkeymap( tt, 7462, mkliteralevt("\033[1;7A")) || /* Ctrl+Alt+Gray-UpArrow */
+		insertkeymap( tt, 7974, mkliteralevt("\033[1;8A")) || /* Ctrl+Alt+Shift+Gray-UpArrow */
+		/* \4392 (Gray-DownArrow) -> \kdnarr*/
+		insertkeymap( tt, 4904, mkliteralevt("\033[1;2B")) || /* Shift+Gray-DownArrow */
+		insertkeymap( tt, 6440, mkliteralevt("\033[1;3B")) || /* Alt+Gray-DownArrow */
+		insertkeymap( tt, 6952, mkliteralevt("\033[1;4B")) || /* Alt+Shift+Gray-DownArrow */
+		insertkeymap( tt, 5416, mkliteralevt("\033[1;5B")) || /* Ctrl+Gray-DownArrow */
+		insertkeymap( tt, 5928, mkliteralevt("\033[1;6B")) || /* Ctrl+Shift+Gray-DownArrow */
+		insertkeymap( tt, 7464, mkliteralevt("\033[1;7B")) || /* Ctrl+Alt+Gray-DownArrow */
+		insertkeymap( tt, 7976, mkliteralevt("\033[1;8B")) || /* Ctrl+Alt+Shift+Gray-DownArrow */
+		/* \4389 (Gray-LeftArrow) -> \klfarr */
+		insertkeymap( tt, 4901, mkliteralevt("\033[1;2D")) || /* Shift+Gray-LeftArrow */
+		insertkeymap( tt, 6437, mkliteralevt("\033[1;3D")) || /* Alt+Gray-LeftArrow */
+		insertkeymap( tt, 6949, mkliteralevt("\033[1;4D")) || /* Alt+Shift+Gray-LeftArrow */
+		insertkeymap( tt, 5413, mkliteralevt("\033[1;5D")) || /* Ctrl+Gray-LeftArrow */
+		insertkeymap( tt, 5925, mkliteralevt("\033[1;6D")) || /* Ctrl+Shift+Gray-LeftArrow */
+		insertkeymap( tt, 7461, mkliteralevt("\033[1;7D")) || /* Ctrl+Alt+Gray-LeftArrow */
+		insertkeymap( tt, 7973, mkliteralevt("\033[1;8D")) || /* Ctrl+Alt+Shift+Gray-LeftArrow */
+		/* \4391 (Gray-RightArrow) -> \krtarr */
+		insertkeymap( tt, 4903, mkliteralevt("\033[1;2C")) || /* Shift+Gray-RightArrow */
+		insertkeymap( tt, 6439, mkliteralevt("\033[1;3C")) || /* Alt+Gray-RightArrow */
+		insertkeymap( tt, 6951, mkliteralevt("\033[1;4C")) || /* Alt+Shift+Gray-RightArrow */
+		insertkeymap( tt, 5415, mkliteralevt("\033[1;5C")) || /* Ctrl+Gray-RightArrow */
+		insertkeymap( tt, 5927, mkliteralevt("\033[1;6C")) || /* Ctrl+Shift+Gray-RightArrow */
+		insertkeymap( tt, 7463, mkliteralevt("\033[1;7C")) || /* Ctrl+Alt+Gray-RightArrow */
+		insertkeymap( tt, 7975, mkliteralevt("\033[1;8C")) || /* Ctrl+Alt+Shift+Gray-RightArrow */
+
+		/* Editing Cluster */
+		insertkeymap( tt, 4397, mkkeyevt(F_KVERB | K_DECINSERT )) || /* Gray-Insert */
+		insertkeymap( tt, 4909, mkliteralevt("\033[2;2~")) || /* Shift-Gray-Insert */
+		insertkeymap( tt, 6445, mkliteralevt("\033[2;3~")) || /* Alt+Gray-Insert */
+		insertkeymap( tt, 6957, mkliteralevt("\033[2;4~")) || /* Alt-Shift-Gray-Insert */
+		insertkeymap( tt, 5421, mkliteralevt("\033[2;5~")) || /* Ctrl+Gray-Insert */
+		insertkeymap( tt, 5933, mkliteralevt("\033[2;6~")) || /* Ctrl-Shift-Gray-Insert */
+		insertkeymap( tt, 7469, mkliteralevt("\033[2;7~")) || /* Ctrl+Alt+Gray-Insert */
+		insertkeymap( tt, 4398, mkkeyevt(F_KVERB | K_DECREMOVE )) || /* Gray-Delete */
+		insertkeymap( tt, 4910, mkliteralevt("\033[3;2~")) || /* Shift-Gray-Delete */
+		insertkeymap( tt, 6446, mkliteralevt("\033[3;3~")) || /* Alt+Gray-Delete */
+		insertkeymap( tt, 6958, mkliteralevt("\033[3;4~")) || /* Alt-Shift-Gray-Delete */
+		insertkeymap( tt, 5422, mkliteralevt("\033[3;5~")) || /* Ctrl+Gray-Delete */
+		insertkeymap( tt, 5934, mkliteralevt("\033[3;6~")) || /* Ctrl+Shift+Gray-Delete */
+		insertkeymap( tt, 7982, mkliteralevt("\033[3;8~")) || /* Ctrl+Alt+Shift+Gray-Delete */
+		insertkeymap( tt, 4388, mkliteralevt("\033OH"   )) || /* Gray-Home */
+		insertkeymap( tt, 4900, mkliteralevt("\033[1;2H")) || /* Shift-Gray-Home */
+		insertkeymap( tt, 6436, mkliteralevt("\033[1;3H")) || /* Alt+Gray-Home */
+		insertkeymap( tt, 6948, mkliteralevt("\033[1;4H")) || /* Alt+Shift+Gray-Home */
+		insertkeymap( tt, 5412, mkliteralevt("\033[1;5H")) || /* Ctrl+Gray-Home */
+		insertkeymap( tt, 5924, mkliteralevt("\033[1;6H")) || /* Ctrl+Shift+Gray-Home */
+		insertkeymap( tt, 7460, mkliteralevt("\033[1;7H")) || /* Ctrl-Alt-Gray-Home */
+		insertkeymap( tt, 4387, mkliteralevt("\033OF"   )) || /* Gray-End */
+		insertkeymap( tt, 4899, mkliteralevt("\033[1;2F")) || /* Shift-Gray-End */
+		insertkeymap( tt, 6435, mkliteralevt("\033[1;3F")) || /* Alt+Gray-End */
+		insertkeymap( tt, 6947, mkliteralevt("\033[1;4F")) || /* Alt+Shift+Gray-End */
+		insertkeymap( tt, 5411, mkliteralevt("\033[1;5F")) || /* Ctrl+Gray-End */
+		insertkeymap( tt, 5923, mkliteralevt("\033[1;6F")) || /* Ctrl+Shift+Gray-End */
+		insertkeymap( tt, 7459, mkliteralevt("\033[1;7F")) || /* Ctrl+Alt+Gray-End */
+		insertkeymap( tt, 7971, mkliteralevt("\033[1;8F")) || /* Ctrl+Alt+Shift+Gray-End */
+		insertkeymap( tt, 4385, mkkeyevt(F_KVERB | K_DECPREV)) || /* Gray-PageUp */
+		insertkeymap( tt, 4897, mkliteralevt("\033[5;2~")) || /* Shift-Gray-PageUp */
+		insertkeymap( tt, 6433, mkliteralevt("\033[5;3~")) || /* Alt+Gray-PageUp */
+		insertkeymap( tt, 6945, mkliteralevt("\033[5;4~")) || /* Alt-Shift-Gray-PageUp */
+		insertkeymap( tt, 5409, mkliteralevt("\033[5;5~")) || /* Ctrl+Gray-PageUp */
+		insertkeymap( tt, 5921, mkliteralevt("\033[5;6~")) || /* Ctrl-Shift-Gray-PageUp */
+		insertkeymap( tt, 7457, mkliteralevt("\033[5;7~")) || /* Ctrl+Alt+Gray-PageUp */
+		insertkeymap( tt, 4386, mkkeyevt(F_KVERB | K_DECNEXT )) || /* Gray-PageDown */
+		insertkeymap( tt, 4898, mkliteralevt("\033[6;2~")) || /* Shift-Gray-PageDown */
+		insertkeymap( tt, 6434, mkliteralevt("\033[6;3~")) || /* Alt+Gray-PageDown */
+		insertkeymap( tt, 6946, mkliteralevt("\033[6;4~")) || /* Alt-Shift-Gray-PageDown */
+		insertkeymap( tt, 5410, mkliteralevt("\033[6;5~")) || /* Ctrl+Gray-PageDown */
+		insertkeymap( tt, 5922, mkliteralevt("\033[6;6~")) || /* Ctrl-Shift-Gray-PageDown */
+		insertkeymap( tt, 7458, mkliteralevt("\033[6;7~")) || /* Ctrl+Alt+Gray-PageDown */
+
+		/* Other Misc Keys */
+		/* \539 (Shift-ESC) -> \033
+		   \264 (Backspace) -> \{127}
+		   \776 (Shift+Backspace) -> \{127}
+		   \269 (Enter) -> \{13}
+		*/
+		insertkeymap( tt, 269,  mkkeyevt(CK_CR )) || /* Enter */
+		insertkeymap( tt, 1805, mkkeyevt(CK_CR )) || /* Ctrl-Shift-Enter */
+		insertkeymap( tt, 265,  mkkeyevt(HT    )) || /* Tab */
+		insertkeymap( tt, 777,  mkliteralevt("\033[Z")) || /* Shift+Tab */
+		/* \276 (CapsLock) -> \Kignore */
+		insertkeymap( tt, 1056, mkkeyevt(F_KVERB | K_NULL )) || /* Ctrl+Space */
+		/* \4443 (Gray-LeftMSWindows) -> \Kignore
+		   \4444 (Gray-RightMSWindows) -> \Kignore
+		   \4445 (Gray-TaskList) -> \Kignore
+		 */
+
+		/* Control Characters */
+		/* \1330 (Ctrl-2) -> \Knull
+		   \1842 (Ctrl-Shift-2) -> \Knull
+		   \1334 (Ctrl-6       (^^ is RS)) -> \{30}
+		   \1846 (Ctrl-Shift-6 (^^ is RS)) -> \{30}
+		   \2011 (Ctrl-Shift-OEM.US.LeftBracket   (^[ is ESC)) -> \{27}
+		   \2013 (Ctrl-Shift-OEM.US.RightBracket  (^] is GS)) -> \{29}
+		   \1469 (Ctrl-OEM.US.Subtract            (^_ is US)) -> \{31}
+		   \1981 (Ctrl-Shift-OEM.US.Subtract      (^_ is US)) -> \{31}
+		   \2012 (Ctrl-Shift-OEM.US.BackSlash     (^\ is FS)) -> \{28}
+		   \1471 (Ctrl-OEM.US.Slash        (^])) -> \{29}
+		   \1983 (Ctrl-Shift-OEM.US.Slash  (^_)) -> \{31}
+		 */
+
+		/* Function Keys 1-12*/
+		insertkeymap( tt, 368, mkkeyevt(F_KVERB | K_GOLD   )) || /* F1 */
+		insertkeymap( tt, 369, mkkeyevt(F_KVERB | K_PF2    )) || /* F2 */
+		insertkeymap( tt, 370, mkkeyevt(F_KVERB | K_PF3    )) || /* F3 */
+		insertkeymap( tt, 371, mkkeyevt(F_KVERB | K_PF4    )) || /* F4 */
+		insertkeymap( tt, 372, mkkeyevt(F_KVERB | K_DECF5  )) || /* F5 */
+		insertkeymap( tt, 373, mkkeyevt(F_KVERB | K_DECF6  )) || /* F6 */
+		insertkeymap( tt, 374, mkkeyevt(F_KVERB | K_DECF7  )) || /* F7 */
+		insertkeymap( tt, 375, mkkeyevt(F_KVERB | K_DECF8  )) || /* F8 */
+		insertkeymap( tt, 376, mkkeyevt(F_KVERB | K_DECF9  )) || /* F9 */
+		insertkeymap( tt, 377, mkkeyevt(F_KVERB | K_DECF10 )) || /* F10 */
+		insertkeymap( tt, 378, mkkeyevt(F_KVERB | K_DECF11 )) || /* F11 */
+		insertkeymap( tt, 379, mkkeyevt(F_KVERB | K_DECF12 )) || /* F12 */
+
+		/* Function Keys 13-24 */
+		insertkeymap( tt, 880, mkliteralevt("\033[1;2P")) || /* Shift+F1 */
+		insertkeymap( tt, 881, mkliteralevt("\033[1;2Q")) || /* Shift+F2 */
+		insertkeymap( tt, 882, mkliteralevt("\033[1;2R")) || /* Shift+F3 */
+		insertkeymap( tt, 883, mkliteralevt("\033[1;2S")) || /* Shift+F4 */
+		insertkeymap( tt, 884, mkliteralevt("\033[15;2~")) || /* Shift+F5 */
+		insertkeymap( tt, 885, mkliteralevt("\033[17;2~")) || /* Shift+F6 */
+		insertkeymap( tt, 886, mkliteralevt("\033[18;2~")) || /* Shift+F7 */
+		insertkeymap( tt, 887, mkliteralevt("\033[19;2~")) || /* Shift+F8 */
+		insertkeymap( tt, 888, mkliteralevt("\033[20;2~")) || /* Shift+F9 */
+		insertkeymap( tt, 889, mkliteralevt("\033[21;2~")) || /* Shift+F10 */
+		insertkeymap( tt, 890, mkliteralevt("\033[23;2~")) || /* Shift+F11 */
+		insertkeymap( tt, 891, mkliteralevt("\033[24;2~")) || /* Shift+F12 */
+
+		/* Function Keys 25-36 */
+		insertkeymap( tt, 1392, mkliteralevt("\033[1;5P" )) || /* Ctrl+F1 */
+		insertkeymap( tt, 1393, mkliteralevt("\033[1;5Q" )) || /* Ctrl+F2 */
+		insertkeymap( tt, 1394, mkliteralevt("\033[1;5R" )) || /* Ctrl+F3 */
+		insertkeymap( tt, 1395, mkliteralevt("\033[1;5S" )) || /* Ctrl+F4 */
+		insertkeymap( tt, 1396, mkliteralevt("\033[15;5~")) || /* Ctrl+F5 */
+		insertkeymap( tt, 1397, mkliteralevt("\033[17;5~")) || /* Ctrl+F6 */
+		insertkeymap( tt, 1398, mkliteralevt("\033[18;5~")) || /* Ctrl+F7 */
+		insertkeymap( tt, 1399, mkliteralevt("\033[19;5~")) || /* Ctrl+F8 */
+		insertkeymap( tt, 1400, mkliteralevt("\033[20;5~")) || /* Ctrl+F9 */
+		insertkeymap( tt, 1401, mkliteralevt("\033[21;5~")) || /* Ctrl+F10 */
+		insertkeymap( tt, 1402, mkliteralevt("\033[23;5~")) || /* Ctrl+F11 */
+		insertkeymap( tt, 1403, mkliteralevt("\033[24;5~")) || /* Ctrl+F12 */
+
+		/* Function Keys 37-48 */
+		insertkeymap( tt, 1904, mkliteralevt("\033[1;6P" )) || /* Ctrl+Shift+F1 */
+		insertkeymap( tt, 1905, mkliteralevt("\033[1;6Q" )) || /* Ctrl+Shift+F2 */
+		insertkeymap( tt, 1906, mkliteralevt("\033[1;6R" )) || /* Ctrl+Shift+F3 */
+		insertkeymap( tt, 1907, mkliteralevt("\033[1;6S" )) || /* Ctrl+Shift+F4 */
+		insertkeymap( tt, 1908, mkliteralevt("\033[15;6~")) || /* Ctrl+Shift+F5 */
+		insertkeymap( tt, 1909, mkliteralevt("\033[17;6~")) || /* Ctrl+Shift+F6 */
+		insertkeymap( tt, 1910, mkliteralevt("\033[18;6~")) || /* Ctrl+Shift+F7 */
+		insertkeymap( tt, 1911, mkliteralevt("\033[19;6~")) || /* Ctrl+Shift+F8 */
+		insertkeymap( tt, 1912, mkliteralevt("\033[20;6~")) || /* Ctrl+Shift+F9 */
+		insertkeymap( tt, 1913, mkliteralevt("\033[21;6~")) || /* Ctrl+Shift+F10 */
+		insertkeymap( tt, 1914, mkliteralevt("\033[23;6~")) || /* Ctrl+Shift+F11 */
+		insertkeymap( tt, 1915, mkliteralevt("\033[24;6~")) || /* Ctrl+Shift+F12 */
+
+		/* Function Keys 49-60 */
+		insertkeymap( tt, 2416, mkliteralevt("\033[1;3P" )) || /* Alt+F1 */
+		insertkeymap( tt, 2417, mkliteralevt("\033[1;3Q" )) || /* Alt+F2 */
+		insertkeymap( tt, 2418, mkliteralevt("\033[1;3R" )) || /* Alt+F3 */
+		insertkeymap( tt, 2419, mkliteralevt("\033[1;3S" )) || /* Alt+F4 */
+		insertkeymap( tt, 2420, mkliteralevt("\033[15;3~")) || /* Alt+F5 */
+		insertkeymap( tt, 2421, mkliteralevt("\033[17;3~")) || /* Alt+F6 */
+		insertkeymap( tt, 2422, mkliteralevt("\033[18;3~")) || /* Alt+F7 */
+		insertkeymap( tt, 2423, mkliteralevt("\033[19;3~")) || /* Alt+F8 */
+		insertkeymap( tt, 2424, mkliteralevt("\033[20;3~")) || /* Alt+F9 */
+		insertkeymap( tt, 2425, mkliteralevt("\033[21;3~")) || /* Alt+F10 */
+		insertkeymap( tt, 2426, mkliteralevt("\033[23;3~")) || /* Alt+F11 */
+		insertkeymap( tt, 2427, mkliteralevt("\033[24;3~")) || /* Alt+F12 */
+
+		/* Function Keys 61-63, Alt+Shift+F4-12 */
+		insertkeymap( tt, 2928, mkliteralevt("\033[1;4P" )) || /* Alt+Shift+F1 */
+		insertkeymap( tt, 2929, mkliteralevt("\033[1;4Q" )) || /* Alt+Shift+F2 */
+		insertkeymap( tt, 2930, mkliteralevt("\033[1;4R" )) || /* Alt+Shift+F3 */
+		insertkeymap( tt, 2931, mkliteralevt("\033[1;4S" )) || /* Alt+Shift+F4 */
+		insertkeymap( tt, 2932, mkliteralevt("\033[15;4~")) || /* Alt+Shift+F5 */
+		insertkeymap( tt, 2933, mkliteralevt("\033[17;4~")) || /* Alt+Shift+F6 */
+		insertkeymap( tt, 2934, mkliteralevt("\033[18;4~")) || /* Alt+Shift+F7 */
+		insertkeymap( tt, 2935, mkliteralevt("\033[19;4~")) || /* Alt+Shift+F8 */
+		insertkeymap( tt, 2936, mkliteralevt("\033[20;4~")) || /* Alt+Shift+F9 */
+		insertkeymap( tt, 2937, mkliteralevt("\033[21;4~")) || /* Alt+Shift+F10 */
+		insertkeymap( tt, 2938, mkliteralevt("\033[23;4~")) || /* Alt+Shift+F11 */
+		insertkeymap( tt, 2939, mkliteralevt("\033[24;4~")) || /* Alt+Shift+F12 */
+
+		/* Ctrl+Alt+Shift+F1-12*/
+		insertkeymap( tt, 3952, mkliteralevt("\033[1;8P" )) || /* Ctrl+Alt+Shift+F1 */
+		insertkeymap( tt, 3953, mkliteralevt("\033[1;8Q" )) || /* Ctrl+Alt+Shift+F2 */
+		insertkeymap( tt, 3954, mkliteralevt("\033[1;8R" )) || /* Ctrl+Alt+Shift+F3 */
+		insertkeymap( tt, 3955, mkliteralevt("\033[1;8S" )) || /* Ctrl+Alt+Shift+F4 */
+		insertkeymap( tt, 3956, mkliteralevt("\033[15;8~")) || /* Ctrl+Alt+Shift+F5 */
+		insertkeymap( tt, 3957, mkliteralevt("\033[17;8~")) || /* Ctrl+Alt+Shift+F6 */
+		insertkeymap( tt, 3958, mkliteralevt("\033[18;8~")) || /* Ctrl+Alt+Shift+F7 */
+		insertkeymap( tt, 3959, mkliteralevt("\033[19;8~")) || /* Ctrl+Alt+Shift+F8 */
+		insertkeymap( tt, 3960, mkliteralevt("\033[20;8~")) || /* Ctrl+Alt+Shift+F9 */
+		insertkeymap( tt, 3961, mkliteralevt("\033[21;8~")) || /* Ctrl+Alt+Shift+F10 */
+		insertkeymap( tt, 3962, mkliteralevt("\033[23;8~")) || /* Ctrl+Alt+Shift+F11 */
+		insertkeymap( tt, 3963, mkliteralevt("\033[24;8~"))    /* Ctrl+Alt+Shift+F12 */
+
+         )
+       return(-1);
+
+    return(0);
+}
+
+int
 defdgkm( int tt )
 {
     if ( defbasekm(tt) ||
@@ -7879,11 +8138,12 @@ defaultkeymap( int terminal ) {
     case TT_VT220:
     case TT_VT320:
     case TT_WY370:
-    case TT_K95:
         return defvt200km( terminal );
     case TT_VT220PC:
     case TT_VT320PC:
         return defvtpckm( terminal );
+    case TT_K95:
+		return defk95km( terminal );
     case TT_97801:
         return defsnikm( terminal );
     case TT_TVI910:
