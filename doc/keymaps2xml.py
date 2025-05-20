@@ -19,7 +19,7 @@ std_terminals = [ 'heath19', 'vt52', 'vt100', 'vt102', 'vt220', 'vt320', 'vt320p
 table_borders = False
 
 # Special keyboard modes
-modes = ['emacs', 'metaesc', 'meta', 'wp',  'hebrew', 'russian']
+modes = ['emacs', 'meta', 'xterm-meta', 'wp',  'hebrew', 'russian']
 
 def get_keymap_for_terminals(fn, terminals):
     """

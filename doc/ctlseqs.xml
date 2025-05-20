@@ -6734,8 +6734,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-4.1F7F"/>
                 <termsupp first="xterm" series="xt" additional=""/>
                 <p>
-                    Switches to the <tt>META</tt> special keyboard mode, equivalent
-                    to typing <tt>SET TERMINAL KEYBOARD-MODE META</tt>. Causes
+                    Switches to the <tt>XTERM-META</tt> special keyboard mode, equivalent
+                    to typing <tt>SET TERMINAL KEYBOARD-MODE XTERM-META</tt>. Causes
                     the meta key (Alt) to set the 8th bit on printable and control
                     characters shifting them into the 127-255 range.
                 </p>
@@ -6753,8 +6753,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-6.1F81"/>
                 <termsupp first="xterm" series="xt" additional=""/>
                 <p>
-                    Switches to the <tt>METAESC</tt> special keyboard mode, equivalent
-                    to typing <tt>SET TERMINAL KEYBOARD-MODE METAESC</tt>. Causes
+                    Switches to the <tt>META</tt> special keyboard mode, equivalent
+                    to typing <tt>SET TERMINAL KEYBOARD-MODE META</tt>. Causes
                     the meta key (Alt) to send ESC. For example, Alt+x becomes ESC x.
                 </p>
             </section>
@@ -11110,7 +11110,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-4.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
                     <p>
-                        Indicates if the META special keyboard mode is
+                        Indicates if the XTERM-META special keyboard mode is
                         currently set or not.
                     </p>
                 </section>
@@ -11127,7 +11127,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-6.1F81"/>
                     <termsupp first="xterm" series="xt" additional=""/>
                     <p>
-                        Indicates if the METAESC special keyboard mode is
+                        Indicates if the META special keyboard mode is
                         currently set or not.
                     </p>
                 </section>

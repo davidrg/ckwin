@@ -3836,8 +3836,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 <th>Key</th>
                 <th>Key Code</th>
                 <th>emacs</th>
-                <th>metaesc</th>
                 <th>meta</th>
+                <th>xterm-meta</th>
                 <th>wp</th>
                 <th>hebrew</th>
                 <th>russian</th>

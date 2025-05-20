@@ -5344,8 +5344,7 @@ struct keytab shokeymtab[] = {
     "ibm3151",   TT_IBM31,   0,         /* IBM 3101-xx,3161 */
     "k95",       TT_K95,     0,         /* Kermit 95 */
     "linux",     TT_LINUX,   0,         /* Linux */
-	"meta",      TT_KBM_META,   0,     /* Meta key mode (subset of emacs mode) */
-    "metaesc",   TT_KBM_METAESC,   0,     /* Meta sends ESC mode */
+    "meta",      TT_KBM_METAESC,   0,   /* Meta sends ESC mode (subset of emacs mode) */
     "qansi",     TT_QANSI,   0,         /* QNX ANSI */
     "qnx",       TT_QNX,     0,         /* QNX */
     "russian",   TT_KBM_RUSSIAN, 0,     /* Russian mode */
@@ -5380,7 +5379,8 @@ struct keytab shokeymtab[] = {
     "wyse30",  TT_WY30,  CM_INV,
     "wyse370", TT_WY370, CM_INV,
     "wyse50",  TT_WY50,  CM_INV,
-    "wyse60",  TT_WY60,  CM_INV
+    "wyse60",  TT_WY60,  CM_INV,
+	"xterm-meta",TT_KBM_META,   0,     /* Meta key mode (sends 8 bit characters) */
 };
 int nshokeym = (sizeof(shokeymtab) / sizeof(struct keytab));
 #endif /* OS2 */
@@ -6997,10 +6997,10 @@ doshow(x) int x;
             s = "russian";
             break;
 		  case KBM_ME:
-			s = "metaesc";
+			s = "meta";
 			break;
 		  case KBM_MM:
-			s = "meta";
+			s = "xterm-meta";
 			break;
           case KBM_EN:
           default:

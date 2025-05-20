@@ -73,10 +73,10 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    xterm-like terminal emulators, rather than emulating a specific hardware or 
    unix console terminal.
  - Two new special keyboard modes
-   - `METAESC` - This is a subset of the `EMACS` keyboard mode which does not
+   - `META` - This is a subset of the `EMACS` keyboard mode which does not
      modify any function keys.
-   - `META` - This sets the 8th bit for keyboard input, equivalent to xterms
-     "interpret 'meta' key" option.
+   - `XTERM-META` - This sets the 8th bit for keyboard input, equivalent to 
+     xterms "interpret 'meta' key" option.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -179,10 +179,10 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
  - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
-   now switches to the META special keyboard mode, and returns to the normal
+   now switches to the XTERM-META special keyboard mode, and returns to the normal
    keyboard mode when reset. It can be queried with DECRQM
  - [DECSET-1036](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-send-esc-meta)
-   now switches to the METAESC special keyboard mode, and returns to the normal
+   now switches to the META special keyboard mode, and returns to the normal
    keyboard mode when reset. It can be queried with DECRQM
  - [DECSET-12](https://davidrg.github.io/ckwin/dev/ctlseqs.html#att610-sbc) for
    turning cursor blink on/off for xterm compatibility
