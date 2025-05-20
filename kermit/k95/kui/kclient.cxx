@@ -107,7 +107,7 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     }
 #endif /* NOKVERBS */
 
-    if ( tt_update != tt_old_update ) {
+    if (client && tt_update != tt_old_update ) {
         // Interval has changed, restart the timer.
         client->startTimer();
     }
