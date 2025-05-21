@@ -498,6 +498,7 @@ extern int marginbell, marginbellcol;
 extern int autoscroll, wy_autopage;
 extern int tt_sac;
 extern int dec_nrc, dec_lang, dec_kbd;
+int tt_clipboard_read, tt_clipboard_write;
 #else /* OS2 */
 extern int tt_rows, tt_cols;
 #endif /*  OS2 */
@@ -972,6 +973,7 @@ static struct keytab trmtab[] = {
     { "character-set", XYTCS,     0 },
 #endif /* NOCSETS */
 #ifdef OS2
+    { "clipboard-access",  XYTCLP,    0 },
     { "code-page",     XYTCPG,    0 },
     { "color",         XYTCOL,    0 },
     { "controls",      XYTCTRL,   0 },
@@ -1112,6 +1114,30 @@ static struct keytab trmtab[] = {
 int ntrm = (sizeof(trmtab) / sizeof(struct keytab)) - 1;
 
 #ifdef OS2
+struct keytab termclipacc[] = {    /* SET TERM CLIPBOARD-ACCESS */
+    { "allow-both",  0, 0 },
+    { "allow-read",  1, 0 },
+    { "allow-write", 2, 0 },
+    { "both",        0, CM_INV },
+    { "read",        1, CM_INV },
+    { "write",       2, CM_INV },
+};
+int ntermclipacc = (sizeof(termclipacc) / sizeof(struct keytab));
+
+struct keytab termclipnotify[] = {
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+    { "notify", 0, 0 },
+#else /* CK_SHELL_NOTIFY */
+    { "notify", 0, CM_INV },
+#endif /* CK_SHELL_NOTIFY */
+#else /* KUI */
+    { "notify", 0, CM_INV },
+#endif /* KUI */
+    { "silent", 1, 0 },
+};
+int ntermclipnotify = (sizeof(termclipnotify) / sizeof(struct keytab));
+
 struct keytab termctrl[] = {    /* SET TERM CONTROLS */
     { "7",      7, 0 },
     { "8",      8, 0 }
@@ -1380,6 +1406,7 @@ int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
 int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
+int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */
 int tt_pacing = 0;                      /* Terminal output-pacing (none) */
 int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
@@ -1398,6 +1425,8 @@ int tt_status_usr[VNUM] = {1,1,0,0};
 #else /* K95G */
 int tt_status[VNUM] = {0,0,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {0,0,0,0};
+int tt_clipboard_read = CLIPBOARD_DENY_NOTIFY,
+    tt_clipboard_write = CLIPBOARD_DENY_NOTIFY; /* Host clipboard access */
 #endif /* K95G */
 #endif /* KUI */
 int tt_senddata = 0;                    /* Let host read terminal data */
@@ -1414,7 +1443,7 @@ extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
 		   savedtrueitalic, savedtruedim, savedtruebold;
 extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
-		   dim_is_color;
+		   dim_is_color, bold_font_only;
 
 extern int bgi, fgi;
 extern int scrninitialized[];
@@ -1511,7 +1540,11 @@ int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 
 struct keytab ttyattrtab[] = {
     { "blink",     TTATTBLI, 0 },
+#ifdef KUI
     { "bold",      TTATTBLD, 0 },
+#else  /* KUI */
+    { "bold",      TTATTBLD, CM_INV },
+#endif /* KUI */
     { "dim",       TTATTDIM, 0 },
     { "italic",    TTATTITA, 0 },
     { "protected", TTATTPRO, 0 },
@@ -1525,6 +1558,12 @@ struct keytab ttyattrblinktab[] = {
     { "color",     TRUE,  0 },
 };
 int nattrblink = (sizeof(ttyattrblinktab) / sizeof(struct keytab));
+
+struct keytab ttyattrboldtab[] = {
+    { "bright",    FALSE, 0 },
+    { "font-only", TRUE,  0 },
+};
+int nattrbold = (sizeof(ttyattrboldtab) / sizeof(struct keytab));
 
 struct keytab ttyprotab[] = {
     { "blink",       TTATTBLI,  0 },
@@ -5158,7 +5197,7 @@ settrm() {
 	    if ((x = cmkey(rollkeytab,nrollkey,"","send",xxstring))<0)
 	      return(x);
 	    if ((z = cmcfm()) < 0) return(z);
-	    tt_rkeys[VTERM] = x;
+	    tt_rkeys[VTERM] = tt_rkeys_saved[VTERM] = x;
 	} else {
 	    if ((x = cmcfm()) < 0) return(x);
 	    tt_roll[VTERM] = y;
@@ -5169,6 +5208,35 @@ settrm() {
         y = cmnum("Maximum seconds to allow CTS off during CONNECT",
                   "5",10,&x,xxstring);
         return(setnum(&tt_ctstmo,x,y,10000));
+
+      case XYTCLP: {    /* SET TERMINAL CLIPBOARD-ACCESS */
+            int zz;
+
+            if ((x = cmkey(termclipacc, ntermclipacc,"clipboard access","allow-both",xxstring))<0)
+              return(x);
+
+            if ((y = cmkey(onoff,2,"","on",xxstring)) < 0)
+                return(y);
+
+            if ((z = cmkey(termclipnotify, ntermclipnotify,"notify on access","silent",xxstring))<0)
+              return(z);
+
+            if ((zz = cmcfm()) < 0) return(zz);
+
+            if (y == 1 && z == 1) zz = CLIPBOARD_ALLOW;
+            else if (y == 1 && z == 0) zz = CLIPBOARD_ALLOW_NOTIFY;
+            else if (y == 0 && z == 1) zz = CLIPBOARD_DENY;
+            else if (y == 0 && z == 0) zz = CLIPBOARD_DENY_NOTIFY;
+
+            if (x == 0 || x == 1) {
+                /* Allow both or allow read */
+                tt_clipboard_read = zz;
+            }
+            if (x == 0 || x == 2) {
+                /* Allow both or allow write */
+                tt_clipboard_write = zz;
+            }
+      }
 
       case XYTCPG: {                    /* SET TERMINAL CODE-PAGE */
         int i;
@@ -5623,16 +5691,27 @@ settrm() {
           case TTATTBLD:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             savedtruebold = truebold = y;
-            /* Ask how bold should be simulated - a bright color, or a fixed
-             * color. This option is new in K95 3.0 beta.8 which added support
-             * for more than 16 colors as toggling the intensity/brightness bit
-             * doesn't work when the color isn't in the 0-7 range. We'll default
-             * to "bright" to avoid any surprises as this is what K95 did in the
-             * past.  */
-            if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
-              return(y);
-            if ((x = cmcfm()) < 0) return(x);
-            use_bold_attr = bold_is_color = y;
+
+            if (y) {
+                /* Ask if we should still do bright colors for true bold */
+                if ((y = cmkey(ttyattrboldtab,nattrbold,"","bright",xxstring)) < 0) return(y);
+                if ((x = cmcfm()) < 0) return(x);
+
+                bold_font_only = y;
+            }
+            else {
+                /* Ask how bold should be simulated - a bright color, or a fixed
+                 * color. This option is new in K95 3.0 beta.8 which added support
+                 * for more than 16 colors as toggling the intensity/brightness bit
+                 * doesn't work when the color isn't in the 0-7 range. We'll default
+                 * to "bright" to avoid any surprises as this is what K95 did in the
+                 * past.  */
+                if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+                  return(y);
+                if ((x = cmcfm()) < 0) return(x);
+                use_bold_attr = bold_is_color = y;
+            }
+
             break;
 
           case TTATTDIM:

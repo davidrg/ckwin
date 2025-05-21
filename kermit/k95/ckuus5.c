@@ -6114,6 +6114,7 @@ shotrm() {
     extern int wy_autopage, autoscroll, sgrcolors, colorreset, user_erasemode,
       decscnm, decscnm_usr, tt_diff_upd, tt_senddata,
       wy_blockend, marginbell, marginbellcol, tt_modechg, dgunix;
+    extern int tt_clipboard_read, tt_clipboard_write;
     int lines = 0;
     extern int colorpalette;
 #ifdef KUI
@@ -6255,8 +6256,8 @@ shotrm() {
             "Color palette", s);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-    printf(" %19s: %-13d  %13s: %-15d\n","Transmit-timeout",tt_ctstmo,
-           "Output-pacing",tt_pacing);
+    printf(" %19s: %-13d  %13s: %-15s\n","Transmit-timeout",tt_ctstmo,
+           "Screen mode",decscnm?"reverse":"normal");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
     printf(" %19s: %-13d  %13s: %s\n","Idle-timeout",tt_idlelimit,
@@ -6265,6 +6266,40 @@ shotrm() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Send data",
           showoff(tt_senddata),"End of Block", wy_blockend?"crlf/etx":"us/cr");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+    /* Shell notifications only in K95G on Windows 2000 or newer */
+#ifndef KUI
+#ifdef CK_SHELL_NOTIFY
+#undef CK_SHELL_NOTIFY
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+
+#ifdef CK_SHELL_NOTIFY
+    printf(" %19s: %-13s  %13s: %-15s\n",
+            "Clipboard: Read",
+                tt_clipboard_read == CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_read == CLIPBOARD_ALLOW_NOTIFY ? "allow, notify"
+              : tt_clipboard_read == CLIPBOARD_DENY ? "deny"
+              : tt_clipboard_read == CLIPBOARD_DENY_NOTIFY ? "deny, notify"
+              : "",
+            "Write",
+                tt_clipboard_write == CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_write == CLIPBOARD_ALLOW_NOTIFY ? "allow, notify"
+              : tt_clipboard_write == CLIPBOARD_DENY ? "deny"
+              : tt_clipboard_write == CLIPBOARD_DENY_NOTIFY ? "deny, notify"
+              : "");
+#else /* CK_SHELL_NOTIFY */
+    printf(" %19s: %-13s  %13s: %-15s\n",
+            "Clipboard: Read",
+                tt_clipboard_read >= CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_read <= CLIPBOARD_DENY ? "deny"
+              : "",
+            "Write",
+                tt_clipboard_write >= CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_write <= CLIPBOARD_DENY ? "deny"
+              : "");
+#endif /* CK_SHELL_NOTIFY */
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 #ifndef NOTRIGGER
     printf(" %19s: %-13s  %13s: %d seconds\n","Auto-exit trigger",
@@ -6340,10 +6375,8 @@ shotrm() {
            "Screen-optimization",showoff(tt_diff_upd),
            "Status line",showoff(tt_status[VTERM]));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf(" %19s: %-13s  %13s: %-15s\n","Screen mode",decscnm?"reverse":"normal",
+    printf(" %19s: %-13s  %13s: %-15s\n","Debug", showoff(debses),
            "Session log", seslog? sesfil : "(none)" );
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf(" %19s: %-13s  \n", "Debug", showoff(debses));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
     /* Display colors (should become SHOW COLORS) */

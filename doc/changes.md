@@ -100,6 +100,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      modify any function keys.
    - `XTERM-META` - This sets the 8th bit for keyboard input, equivalent to 
      xterms "interpret 'meta' key" option.
+ - Clipboard access for the remote host is now supported via OSC-52. This can be
+   enabled or disabled for read, write or both with 
+   `SET TERMINAL CLIPBOARD-ACCESS`. You can optionally choose to be notified
+   when the remote host attempts to access your clipboard. For security, the
+   default is disabled with a notification.
+ - Support for xterm focus tracking (mode 1004)
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -115,6 +121,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    `SET TERMINAL ATTRIBUTE BOLD OFF`. When off, it still affects text
    color unless its turned off with `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` in
    which case the color set with `SET TERMINAL COLOR BOLD` is used.
+ - True bold can now be turned on such that it only affects the font and not
+   the texts color with `SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY` (this is of
+   course incompatible with applications that use the bold attribute to access
+   the upper eight colors)
  - True dim is now turned off in K95G when `SET TERMINAL ATTRIBUTE DIM OFF` is
    given. Like with bold, it still affects color unless turned off with
    `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
@@ -187,6 +197,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
    - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
    - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
+   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52)
  - A few VT525 control sequences _based on documented behaviour_; there may be
    differences from the real thing (donations of a VT525 accepted!):
    - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
@@ -212,6 +223,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Enable [LMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#lma)
    and [UMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#usr) for K95 and
    xterm terminal types
+ - DECSM/DECRM/DECRQM modes
+   - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
+   - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
+   - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
+ - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

@@ -391,6 +391,8 @@ struct keytab kverbs[] = {
     "exit",       K_EXIT,        0,
     "flipscn",    K_FLIPSCN,     0,
     "fnkeys",     K_FNKEYS,      0,
+    "focus_in",   K_FOCUS_IN,    CM_INV,
+    "focus_out",  K_FOCUS_OUT,   CM_INV,
     "fwdnext",    K_FWDNEXT,     0,
     "fwdsearch",  K_FWDSRCH,     0,
     "gold",       K_GOLD,        0,

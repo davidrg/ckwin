@@ -41,6 +41,7 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <math.h>
 
 #define DECLED
 
@@ -188,6 +189,8 @@ extern int tt_status[VNUM];           /* Terminal status line displayed */
 extern int tt_status_usr[VNUM];
 extern int tt_modechg;          /* Terminal Video-Change (80 or 132 cols) */
 extern int tt_senddata;         /* May data be sent to the host */
+extern int tt_clipboard_read,
+           tt_clipboard_write;  /* OSC-52 */
 extern int tt_hidattr;          /* Attributes do not occupy a space */
 #ifdef PCTERM
 extern int tt_pcterm;
@@ -249,6 +252,10 @@ extern int beepfreq, beeptime ;
 extern int pwidth, pheight;
 extern int win95lucida, win95hsl;
 
+#ifdef KUI
+int transmit_focus_change = FALSE;
+#endif /* KUI */
+
 /*
  * =============================variables==============================
  */
@@ -297,6 +304,7 @@ int truereverse   = TRUE ;
 int trueunderline = TRUE ;
 int truedim       = TRUE ;
 int truebold      = TRUE ;
+int bold_font_only = FALSE;    /* Only do a bold font, not bold + bright? */
 #ifdef KUI
 int trueitalic    = TRUE ;
 #else /* KUI */
@@ -480,6 +488,7 @@ bool     saverelcursor[VNUM]={FALSE,FALSE,FALSE,FALSE},
 int      savedwrap[VNUM]={FALSE,FALSE,FALSE,FALSE} ;
 int      savedrow[VNUM] = {0,0,0,0};
 int      savedcol[VNUM] = {0,0,0,0};
+extern int      tt_rkeys_saved[], tt_rkeys[];
 
 bool     deccolm = FALSE;               /* 80/132-column mode */
 bool     decscnm = FALSE;               /* Normal/reverse screen mode */
@@ -7666,6 +7675,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	colorselect = savedcolorselect;
 	colorcursor = savedcolorcursor;
 
+    /* Reset screen roll keys */
+    tt_rkeys[VTERM] = tt_rkeys_saved[VTERM];
+
     /* Reset the color palettes */
     reset_palettes();
 
@@ -10316,6 +10328,21 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
             mouseurl(mode,vscrn[mode].cursor.y,vscrn[mode].cursor.x);
             break;
 
+        case K_FOCUS_IN:
+#ifdef KUI
+            if (transmit_focus_change) {
+                sendescseq("[I");
+            }
+#endif /* KUI */
+            break;
+        case K_FOCUS_OUT:
+#ifdef KUI
+            if (transmit_focus_change) {
+                sendescseq("[O");
+            }
+#endif /* KUI */
+            break;
+
         default:                        /* None of the above */
             return;                     /* Ignore this key and return. */
         }
@@ -12437,8 +12464,268 @@ doosc( void ) {
 	case 46: /* xterm - change log file */
 	case 50: /* xterm - set font */
 	case 51: /* xterm - reserved for emacs shell */
-	case 52: /* xterm - manipulate selection data */
-             /* teraterm only implements the  clipboard feature */
+	case 52: { /* xterm - manipulate selection data */
+        /* Format is OSC 52 ; Pc ; Pd ST
+           Where Pc is some combination of zero or more of:
+                c, p, q, s, 0, 1, 2, 3, 4, 5, 6, 7
+           This specifies which of xterms various buffers we're manipulating.
+           Windows only has one (the clipboard), and its not worth emulating
+           the rest unless someone can point at an application that uses them.
+           So we just ignore this first parameter */
+
+        /* Don't use any of the code here as a good example for how to properly
+            do character set/unicode conversion in Kermit 95. I just copied
+            how it *appears* to be done elsewhere - I don't know if any of this
+            is truly correct -- DG */
+
+#ifdef NT
+        int use_unicode = (ck_isunicode() && !isWin95());
+#endif /* NT */
+
+        achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+        while (strchr("cps01234567", achar)) {
+            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+        }
+
+        if (achar == ';') {
+            /* Pd is either '?' to query the current clipboard contents, or
+             * it contains base64 encoded data to set the clipboard to.
+             */
+            achar = (apcnext<=apclength)?apcbuf[apcnext++]:0;
+
+            if (achar == '?' && apcnext == apclength) {
+
+                /* Its a query */
+                if (tt_clipboard_read >= CLIPBOARD_ALLOW) {
+                    char* clipboardData = 0;
+                    int clipboardDataLen = 0;
+
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+                    if (tt_clipboard_read == CLIPBOARD_ALLOW_NOTIFY) {
+                        KuiShowNotification(
+                            KUI_NOTIF_I_INFO,
+                            "Clipboard Read",
+                            "Clipboard read by remote host allowed");
+                    }
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+
+                    /* Get data from the clipboard. On Windows NT, this will
+                     * be Unicode text and will need converting to the remote
+                     * character set. On Windows 9x and OS/2, we just send the
+                     * clipboard text as-is after base64-encoding*/
+#ifdef NT
+                    if (use_unicode) {
+                        USHORT * pUClipbrdData = GetUnicodeClipboardContent();
+
+                        /* Convert from UCS-2 to whatever the remote charset is */
+                        if ( pUClipbrdData ) {
+                            int i=0, j=0, len = 0, nbytes;
+                            unsigned char * bytes;
+
+                            len = wcslen(pUClipbrdData);
+                            debug(F111,"Clipboard","pUClipbrdData length",len);
+
+                            nbytes = utorxlat(pUClipbrdData[0], &bytes);
+                            if ( nbytes > 0 )
+                                clipboardDataLen = nbytes;
+                            for ( i=1; i<len; i++ ) {
+                                if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
+                                    nbytes = utorxlat(pUClipbrdData[i], &bytes);
+                                    if ( nbytes > 0 )
+                                        clipboardDataLen += nbytes;
+                                }
+                            }
+
+                            clipboardData = (unsigned char *) malloc(clipboardDataLen+1);
+                            memset(clipboardData, 0, clipboardDataLen+1);
+
+                            nbytes = utorxlat(pUClipbrdData[0], &bytes);
+                            while ( nbytes-- > 0 )
+                                clipboardData[j++] = *bytes++;
+                            for ( i=1; i<len; i++ ) {
+                                if ( pUClipbrdData[i-1] != CK_CR || pUClipbrdData[i] != LF ) {
+                                    nbytes = utorxlat(pUClipbrdData[i], &bytes);
+                                    while ( nbytes-- > 0 )
+                                        clipboardData[j++] = *bytes++;
+                                }
+                            }
+
+                            free( pUClipbrdData ) ;
+                        }
+                    } else {
+#endif /* NT */
+                        clipboardData = GetClipboardContent();
+                        clipboardDataLen = strlen(clipboardData);
+#ifdef NT
+                    }
+#endif /* NT */
+
+                    if (clipboardData != NULL) {
+                        /* Allocate memory for the maximum length the base64
+                         * encoded data could be */
+                        int rc;
+                        int encodedLen = 1 + ceil(clipboardDataLen/3.0)*4;
+                        char* encodedData = malloc(encodedLen);
+                        memset(encodedData, 0, encodedLen);
+
+                        /* Encode it... */
+                        if ((rc = b8tob64(clipboardData, -1, encodedData, encodedLen)) >= 0) {
+                            /* Send it in the form: OSC 52 ;; data ST */
+                            sendchars("\033]52;;", 6);
+                            sendchars(encodedData, rc);
+                            sendchars("\033\\", 2);
+                        } else {
+                            debug(F111, "base64 encode of clipboard data failed", "rc", rc);
+                        }
+
+                        free(clipboardData);
+                        free(encodedData);
+                    }
+                }
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+                else if (tt_clipboard_read == CLIPBOARD_DENY_NOTIFY) {
+                    KuiShowNotification(
+                        KUI_NOTIF_I_WARN,
+                        "Clipboard Read",
+                        "Clipboard read by remote host denied. You can enable "
+                        "clipboard access (or disable this "
+                        "notification) with the SET TERM CLIPBOARD-ACCESS "
+                        "command");
+                }
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+            } else {
+                /* Its a clipboard write */
+                if (tt_clipboard_write >= CLIPBOARD_ALLOW) {
+                    /* +1 for null termination, +1 because apcnext is already
+                     * pointing one character in */
+                    int cliplen = (apclength - apcnext) + 2;
+                    char* encoded = malloc(cliplen);
+                    char* decoded = malloc(cliplen);
+                    int rc;
+
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+                    if (tt_clipboard_write == CLIPBOARD_ALLOW_NOTIFY) {
+                        KuiShowNotification(
+                            KUI_NOTIF_I_INFO,
+                            "Clipboard Write",
+                            "Clipboard write by remote host allowed");
+                    }
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+
+                    strncpy(encoded, apcbuf+apcnext - 1, cliplen);
+
+                    /* Base64 decode the clipboard data and set it */
+                    rc = b64tob8(encoded, cliplen, decoded, cliplen);
+                    if (rc > 0) {
+                        /* Worst case: each UTF-8 character becomes one UCS-2
+                         * character. */
+                        USHORT* ucs2_string = malloc(sizeof(USHORT) * cliplen);
+                        memset(ucs2_string, 0, sizeof(USHORT) * cliplen);
+
+                        /* Ok, now we have a slight difficulty: the new data for
+                         * the clipboard has bypassed all normal characterset
+                         * translation/unicode conversion because it was hidden
+                         * away in base64 form. So now we've got to do all that
+                         * work here */
+
+                        /* The code here all works with UCS-2 because,
+                         * unfortunately, thats all Kermit 95 supports at
+                         * present. At some point we need a utf8-to-utf16
+                         * conversion function so we can support more than just
+                         * the basic multilingual plane, but thats a big job. */
+
+                        if (tt_utf8) {
+                            /* We're in UTF-8 mode - everything else the host is
+                             * sending us is assumed to be in UTF-8, so the new
+                             * text for the clipboard probably is too. So we
+                             * now need to convert it to UCS-2 to hand off to
+                             * Windows. */
+
+                            int utf8_idx, ucs2_idx = 0, rc;
+                            USHORT *us = NULL;
+
+                            for (utf8_idx = 0; decoded[utf8_idx] != '\0'; utf8_idx++) {
+                                rc = utf8_to_ucs2(decoded[utf8_idx], &us);
+                                if (rc == 0) {
+                                    /* UTF-8 sequence decoded, we have a UCS-2
+                                       character */
+                                    ucs2_string[ucs2_idx] = *us;
+                                    ucs2_idx++;
+                                } else if (rc < 0) {
+                                    /* Decoding failed. Output U+FFFD */
+                                    ucs2_string[ucs2_idx] = 0xfffd;
+                                    ucs2_idx++;
+                                }
+                                /* Else more UTF-8 bytes are needed to assemble
+                                 * the UCS-2 character. Continue. */
+                            }
+                        } else {
+                            int i;
+                            /* Remote is some 7-bit or 8-bit character set.
+                             * Windows wants UCS-2, so we need to convert it. */
+
+                            for (i = 0; decoded[i] != '\0'; i++) {
+                                if (decoded[i] >= 128)
+                                    ucs2_string[i] = (*xl_u[tcsr])(decoded[i]);
+                                else
+                                    ucs2_string[i] = decoded[i];
+                                    /* Some other code passes it through TX_IBMC0GRPH
+                                        if its not a control character we act on */
+                            }
+                        }
+
+#ifdef NT
+                        if (use_unicode) {
+                            rc = CopyToClipboard((BYTE*)ucs2_string,
+                                                 sizeof(USHORT) * cliplen);
+                        } else
+#endif /* NT */
+                        {
+                            /* We've now got the clipboard data as a UCS-2
+                             * string, but we're on Windows 9x or OS/2 (or NT
+                             * with Unicode support turned off), so we need to
+                             * now convert it back from UCS-2 to whatever the
+                             * local character set is */
+                            int i;
+
+                            memset(decoded, 0, cliplen);
+                            for (i = 0; ucs2_string[i] != NULL; i++) {
+                                decoded[i] = ucs2_string[i] >= 128 ?
+                                    (*xl_tx[tcsl])(ucs2_string[i]) : ucs2_string[i];
+                            }
+
+                            rc = CopyToClipboard(decoded, cliplen);
+                        }
+                    } else {
+                        CopyToClipboard("", 1);
+                    }
+
+                    free(encoded);
+                    free(decoded);
+                }
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+                else if (tt_clipboard_write == CLIPBOARD_DENY_NOTIFY) {
+                    KuiShowNotification(
+                            KUI_NOTIF_I_WARN,
+                            "Clipboard Write",
+                            "Clipboard write by remote host denied. You can "
+                            "enable clipboard access (or disable this "
+                            "notification) with the SET TERM CLIPBOARD-ACCESS "
+                            "command");
+                }
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+            }
+        }
+        break;
+    }
 	case 60: /* XTQALLOWED - query allowed features */
 	case 61: /* XTQDISALLOWED - query disallowed features */
         break;
@@ -15860,8 +16147,11 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
              * turning off truebold just turns off the bold font without affecting
              * color (unlike turning off trueblink).
              */
-            if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr) ||
-                 ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
+            if ( (vtattr & VT_CHAR_ATTR_BOLD && !use_bold_attr
+#ifdef KUI
+                    && !bold_font_only
+#endif /* KUI */
+                ) || ( vtattr & VT_CHAR_ATTR_DIM && !dim_is_color
 #ifdef KUI
                    && !truedim
 #endif /* KUI */
@@ -16406,7 +16696,32 @@ vtcsi(void)
                         case 8: /* DECARM */
                             pn[2] = 3 ; /* permanently set */
                             break;
-						case 12: /* AT&T 610/xterm - cusro blinking */
+                        case 9: /* DECINLM - Interlace */
+#ifdef OS2MOUSE
+                            /* X10 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_X10) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 10:        /* DECEDM - Block mode off */
+                            if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                /* Toolbar off (rxvt) */
+                                /* Default to permanently reset in case not KUI
+                                 * or NOTOOLBAR */
+                                pn[2] = 4;
+ #ifdef KUI
+ #ifndef NOTOOLBAR
+                                pn[2] = KuiGetProperty(KUI_GUI_TOOLBAR_VIS, 0L) ? 1 : 2;
+ #endif
+ #endif
+                            }
+                            break;
+						case 12: /* AT&T 610/xterm - cursor blinking */
 							pn[2] = tt_cursor_blink == 1 ? 1 : 2;
 							break;
                         case 18: /* DECPFF */
@@ -16436,15 +16751,86 @@ vtcsi(void)
                         case 115: /* DECATCBM */
                             pn[2] = decatcbm ? 1 : 2;
                             break;
-                        /* TODO: Also report on:
-                            Mouse tracking, bracketed paste
-                         */
+                        case 1000:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_X11) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1002:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_BTNEVENT) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1003:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_ANYEVENT) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1004:
+#ifdef KUI
+                            pn[2] = transmit_focus_change ? 1 : 2;
+#else /* KUI */
+                            pn[2] = 4; /* permanently reset */
+#endif /* KUI */
+                            break;
+                        case 1006:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_SGR) ? 1 : 2;
+                            }
+#endif
+                            break;
+                        case 1011:
+                            pn[2] = tt_rkeys[VTERM] == TTRK_RST ? 1 : 2 ;
+                            break;
+                        case 1015:
+#ifdef OS2MOUSE
+                            /* X11 mouse reporting */
+                            if (ISLINUX(tt_type_mode) || ISANSI(tt_type_mode) ||
+                                ISXTERM(tt_type_mode) || ISK95(tt_type_mode)) {
+
+                                pn[2] = MOUSE_REPORTING_TEST_FLAG(
+                                    mouse_reporting_mode,
+                                    MOUSEREPORTING_URXVT) ? 1 : 2;
+                            }
+#endif
+                            break;
 						case 1034:  /* xterm - Interpret "meta" key */
 							pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
 							break;
 						case 1036:  /* xterm - Send esc when Meta modifies a key */
 							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
 							break;
+                        case 2004:
+                            pn[2] = bracketed_paste[vmode] ? 1 : 2;
+                            break;
+
                         default:
                             pn[2] = 0 ; /* Unrecognized mode */
                             break;
@@ -17713,6 +18099,14 @@ vtcsi(void)
 #endif
                             break;
                         case 10:        /* DECEDM - Block Mode On */
+                            if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                /* Toolbar on (rxvt) */
+#ifdef KUI
+#ifndef NOTOOLBAR
+                                KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)1, 0L);
+#endif
+#endif
+                            }
                             break;
 						case 12:  		/* AT&T 610/xterm - Blinking cursor on */
 							tt_cursor_blink = 1;
@@ -17943,6 +18337,9 @@ vtcsi(void)
                             break;
                         case 1004:
                             /* XTERM - Send FocusIn/FocusOut events*/
+#ifdef KUI
+                            transmit_focus_change = TRUE;
+#endif /* KUI */
                             break;
                         case 1005:
                             /* XTERM - Enable UTF-8 Mouse Mode */
@@ -17962,6 +18359,7 @@ vtcsi(void)
                             break;
                         case 1011:
                             /* RXVT - Scroll to bottom on key press */
+                            tt_rkeys[VTERM] = TTRK_RST;
                             break;
                         case 1015:
                             /* URXVT - Enable URXVT Mosue Mode */
@@ -18350,6 +18748,15 @@ vtcsi(void)
 						   case 12:			/* AT&T 610/xterm - Blinking cursor off */
 							   tt_cursor_blink = 0;
 							   break;
+                               if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                   /* Toolbar off (rxvt) */
+#ifdef KUI
+#ifndef NOTOOLBAR
+                                   KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)0, 0L);
+#endif
+#endif
+                            }
+                            break;
                            case 18: /* DECPFF - Print Form Feed */
                                xprintff = FALSE;
                                break;
@@ -18545,6 +18952,9 @@ vtcsi(void)
                                break;
                            case 1004:
                                /* XTERM - Send FocusIn/FocusOut events*/
+#ifdef KUI
+                                transmit_focus_change = FALSE;
+#endif /* KUI */
                                break;
                            case 1005:
                                /* XTERM - UTF-8 Mouse Mode */
@@ -18563,7 +18973,8 @@ vtcsi(void)
                                /* RXVT - Scroll to bottom on tty output */
                                break;
                            case 1011:
-                               /* RXVT - Scroll to bottom on key press */
+                               /* RXVT - Don't Scroll to bottom on key press */
+                               tt_rkeys[VTERM] = TTRK_SND;
                                break;
                            case 1015:
                                /* URXVT - Disable URXVT Mosue Mode */
@@ -19717,6 +20128,7 @@ vtcsi(void)
                                 }
                             }
                             break;
+							/* IBM HFT - we *should* fall through here */
 
                         case 11:  /* Display GL Control Characters */
                             /* as Graphic Characters */
@@ -19755,6 +20167,7 @@ vtcsi(void)
                                     charset(cs94,'*',&G[i]);
                             }
                             break;
+							/* IBM HFT - we *should* fall through here */
 
                         case 12:
                             if (ISLINUX(tt_type_mode)) {
@@ -19778,6 +20191,7 @@ vtcsi(void)
                                     charset(cs94,'U',&G[i]);
                                 break;
                             }
+							/* fall through - IBM HFT */
                         case 13: /* IBM HFT */
                         case 14: /* IBM HFT */
                         case 15: /* IBM HFT */
@@ -19808,6 +20222,7 @@ vtcsi(void)
                                 for ( i=1;i<3;i++ )
                                     charset(cs94,'U',&G[i]);
                             }
+							break;
 
                         case 21: { /* Set Normal Intensity */
 							if (ISLINUX(tt_type_mode)) {
@@ -21685,12 +22100,34 @@ vtcsi(void)
                                 break;
                         }
                     }
-                    case 15: /* Report size of the screen in pixels */
+                    case 15: { /* Report size of the screen in pixels */
+#ifdef KUI
+                        int w, h;
+                        char buf[30];
+                        KuiGetTerminalMaximisedSize(FALSE, &w, &h);
+
+                        if (w < 50000 && h < 50000) { /* Limit response length */
+                            sprintf(buf, "[5;%d;%dt", h, w);
+                            sendescseq(buf);
+                        }
+#endif /* KUI */
                         break;
+                    }
                     case 16: /* Report xterm character cell size in pixels */
                         break;
-                    case 19: /* Report the size of the screen in characters */
+                    case 19: { /* Report the size of the screen in characters */
+#ifdef KUI
+                        int w, h;
+                        char buf[30];
+                        KuiGetTerminalMaximisedSize(TRUE, &w, &h);
+
+                        if (w < 50000 && h < 50000) { /* Limit response length */
+                            sprintf(buf, "[9;%d;%dt", h, w);
+                            sendescseq(buf);
+                        }
+#endif
                         break;
+                    }
                     case 20: /* Report Icon Label */
                         break;
                     case 21: /* Report Window Label */
@@ -21727,8 +22164,8 @@ vtcsi(void)
                         width = VscrnGetWidth(vmode);
                         height = VscrnGetHeight(vmode);
 
-                        sprintf(buf, "%c8;%d;%dt", _CSI, height, width);
-                        sendchars(buf, strlen(buf));
+                        sprintf(buf, "[8;%d;%dt", height, width);
+                        sendescseq(buf);
 
                         break;
                     }
@@ -21746,8 +22183,19 @@ vtcsi(void)
                             /* Report xterm window position */
                         }
                         break;
-                    case 11: /* Report state of Window (normal/iconified) */
+                    case 11: { /* Report state of Window (normal/iconified) */
+#ifdef KUI
+                        char buf[20];
+                        if (gui_get_win_run_mode() == 2) {
+                            sprintf(buf, "[%dt", 2); /* Iconified */
+                        } else {
+                            sprintf(buf, "[%dt", 1); /* Not iconified */
+                        }
+
+                        sendescseq(buf);
+#endif
                         break;
+                    }
                     }
                 }
                 break;

@@ -107,7 +107,7 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
     }
 #endif /* NOKVERBS */
 
-    if ( tt_update != tt_old_update ) {
+    if (client && tt_update != tt_old_update ) {
         // Interval has changed, restart the timer.
         client->startTimer();
     }
@@ -1141,11 +1141,13 @@ Bool KClient::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_SETFOCUS:
         //debug(F111,"KClient::message","WM_SETFOCUS",msg);
         _inFocus = TRUE;
+        ::dokverb(vmode, K_FOCUS_IN );
         break;
 
     case WM_KILLFOCUS:
         //debug(F111,"KClient::message","WM_KILLFOCUS",msg);
         _inFocus = FALSE;
+        ::dokverb(vmode, K_FOCUS_OUT );
         break;
 
     case WM_VSCROLL:

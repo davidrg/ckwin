@@ -6139,13 +6139,14 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional=""/>
                 <p>Not Implemented: K95 does not support the VT132 block editing mode</p>
             </section>
-            <!-- TODO: xterm: 10: show toolbar (rxvt) -->
             <section role="parameter" id="rxvt-show-toolbar" mnemonic=""
-                     title="Show Toolbar (rxvt)"
-                     not-implemented="true" todo="true">
+                     title="Show Toolbar (rxvt)" badges="k95 xterm">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0.1EBE"/>
                 <termsupp first="xterm" series="rxvt" additional=""/>
+                <p>
+                    K95G Only: Shows the toolbar if it is currently hidden.
+                </p>
             </section>
             <section role="parameter" id="decltm" mnemonic="DECLTM" title="Line Transmit Mode"
                      not-implemented="true" todo="true">
@@ -6674,10 +6675,16 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Enables all motion mouse tracking</p>
             </section>
-            <section role="parameter" id="xt-sf" not-implemented="true" title="XTERM - Send FocusIn / FocusOut events">
+            <section role="parameter" id="xt-sf" title="XTERM - Send FocusIn / FocusOut events">
                 <ctlseq><param-single/> = 1004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-4.1F7C"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    K95G (Windows) only: send Focus-In and Focus-Out events.
+                    When the Kermit terminal window is given focus, K95 will
+                    transmit <tt>CSI I</tt>, and when it looses focus it will
+                    transmit <tt>CSI O</tt>
+                </p>
             </section>
             <section role="parameter" id="xt-utf8m" title="XTERM - Enable UTF-8 Mouse Mode">
                 <ctlseq><param-single/> = 1005</ctlseq>
@@ -6699,14 +6706,21 @@ DCS $ q 3 , } ST</pre>
                      title="RXVT - Scroll to bottom on tty output">
                 <ctlseq><param-single/> = 1010</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-0.1F79"/>
-                <!-- TODO: but we could easily support this feature - we have a "set terminal"
-                        setting for it. We might want to preserve whatever the original setting
-                        was though, so it can be restored on undo or terminal reset. -->
+                <!-- TODO: but we could fairly support this feature. I don't see
+                     a SET TERMINAL setting for it, but we could probably add
+                     something under SET TERMINAL ROLL-MODE and do the same thing
+                     that tt_rkeys[VTERM] does whenever a character arrives if
+                     the user is currently viewing scrollback.
+                     -->
             </section>
-            <section role="parameter" id="rxvt-stbk" not-implemented="true" title="RXVT - Scroll to bottom on key press">
+            <section role="parameter" id="rxvt-stbk"
+                     title="RXVT - Scroll to bottom on key press">
                 <ctlseq><param-single/> = 1011</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-1.1F7A"/>
-                <!-- TODO: but we could easily support this feature, as above. -->
+                <p>
+                    Causes the terminal screen to scroll to the bottom on keypress,
+                    equivalent to <tt>set terminal roll-mode keystrokes restore-and-send</tt>.
+                </p>
             </section>
             <section role="parameter" id="xt-fastscroll" mnemonic=""
                      title="Enable fastScroll resource"
@@ -7716,11 +7730,13 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional=""/>
             </section>
             <section role="parameter" id="decrst-10" mnemonic=""
-                     title="Hide toolbar (rxvt)"
-                     not-implemented="true" todo="true">
+                     title="Hide toolbar (rxvt)" badges="xterm k95">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0.1EC2"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    K95G only: hides the toolbar if it is currently visible
+                </p>
             </section>
             <section role="parameter" id="r-decltm" mnemonic="DECLTM" title="Line Transmit Mode"
                      not-implemented="true" todo="true" >
@@ -8266,11 +8282,15 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Turns off all mose reporting</p>
             </section>
-            <section role="parameter" not-implemented="true" id="decrst-1004"
+            <section role="parameter" id="decrst-1004"
                      title="XTERM - Send FocusIn/FocusOut events">
                 <ctlseq><param-single/> = 1004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-0-4.1F80"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    K95G (Windows) only: stops transmitting Focus-In and
+                    Focus-Out events.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-1005"
                      title="XTERM - UTF-8 Mouse Mode">
@@ -8295,10 +8315,15 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 1010</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-1-0.1F7D"/>
             </section>
-            <section role="parameter" not-implemented="true"  id="decrst-1011"
+            <section role="parameter" id="decrst-1011"
                      title="RXVT - Scroll to bottom on key press">
                 <ctlseq><param-single/> = 1011</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-1-1.1F7E"/>
+                <p>
+                    When viewing scrollback, causes the terminal screen to remain
+                    where it is rather than scrolling to the bottom on keypress.
+                    Equivalent to <tt>set terminal roll-mode keystrokes send</tt>.
+                </p>
             </section>
             <section role="parameter" id="decrst-1014" mnemonic=""
                      title="disable fastScroll resource"
@@ -8744,7 +8769,24 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
-                <p>Turns on the Bold attribute</p>
+                <p>
+                    Turns on the Bold attribute. ECMA-48 leaves presentation up
+                    to the implementation saying it can be a bold font or
+                    increased intensity. <em>Usually</em> it was implemented as
+                    increased intensity on hardware terminals, and when color
+                    appeared it was often used to gain access to brighter
+                    versions of the standard eight colors specified by ECMA-48.
+                    <a href="#sgr-90">SGR-90 to 97</a> and
+                    <a href="#sgr-100">SGR-100 to 107</a> which provide direct
+                    access to these eight brighter colors are a later
+                    non-standard extension from IBMs aixterm terminal
+                </p>
+                <p>
+                    In the Console version of Kermit 95 (OS/2, Windows), bold
+                    is always shown as a more intense color. The Windows GUI
+                    version of Kermit 95 (K95G) by default uses a bold font in
+                    addition to the more intense color.
+                </p>
             </section>
             <section role="parameter" id="sgr-2-sco" badges="scoansi"
                      title="Set Foreground and Background Colour">
@@ -10591,7 +10633,8 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt420" series="vt" additional="tt"/>
                 </section>
                 <section role="parameter" title="X10 mouse reporting"
-                         id="decrqm-9-x10" groups="isansi" badges="linux">
+                         id="decrqm-9-x10" groups="isansi"
+                         badges="linux k95 xterm">
                     <ctlseq><param-single/> = 9</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9.1E6D"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -10604,11 +10647,15 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt132" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="decrqm-10-rxvt" mnemonic=""
-                         title="Hide toolbar (rxvt)"
-                         not-implemented="true" todo="true">
+                         title="Toolbar (rxvt)" badges="xterm k95">
                     <ctlseq><param-single/> = 10</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0.1EC2"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        K95G only: reports if the toolbar is currently visible or not.
+                        In the console versions of Kermit 95 (OS/2, Windows), it
+                        reports permanently reset as these versions have no toolbar.
+                    </p>
                 </section>
                 <section role="parameter" id="decrqm-11" mnemonic="DECLTM" title="Line Transmit Mode"
                          not-implemented="true" todo="true" >
@@ -11021,9 +11068,9 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt52x:202"/>
                     <termsupp first="vt520" series="vt" additional=""/>
                 </section>
-                <section role="parameter" id="rqm-1000"
-                         title="XTERM - Send Mouse X&amp;Y on button press and release"
-                         not-implemented="true" todo="true">
+                <section role="parameter" id="rqm-1000" groups="isansi"
+                         badges="linux xterm k95"
+                         title="XTERM - Send Mouse X&amp;Y on button press and release">
                     <ctlseq><param-single/> = 1000</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-0.1F78"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -11036,23 +11083,29 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="rqm-1002"
                          title="XTERM - Cell Motion Mouse Tracking"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1002</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-2.1F7A"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
                 </section>
                 <section role="parameter" id="rqm-1003"
                          title="XTERM - All Motion Mouse Tracking"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1003</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-3.1F7B"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
                 </section>
-                <section role="parameter" id="rqm-1004" not-implemented="true"
+                <section role="parameter" id="rqm-1004"
                          title="XTERM - Send FocusIn / FocusOut events">
                     <ctlseq><param-single/> = 1004</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-4.1F7C"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
+                    <p>
+                        K95G (Windows): reports if Focus In/Focus Out reporting
+                        is currently enabled. In the OS/2 and Windows Console
+                        versions of K95G, Kermit 95 will return 4 (permanently
+                        reset).
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1005"
                          title="XTERM - UTF-8 Mouse Mode"
@@ -11063,7 +11116,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="rqm-1006"
                          title="XTERM - SGR Mouse Mode"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1006</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-0-6.1F7E"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -11078,10 +11131,13 @@ DCS $ q 3 , } ST</pre>
                     <ctlseq><param-single/> = 1010</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-0.1F79"/>
                 </section>
-                <section role="parameter" id="rqm-1011" not-implemented="true"
+                <section role="parameter" id="rqm-1011"
                          title="RXVT - Scroll to bottom on key press">
                     <ctlseq><param-single/> = 1011</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-1.1F7A"/>
+                    <p>Responds with Set if <tt>set terminal roll-mode keystrokes</tt>
+                        is set to <tt>restore-and-send</tt>, or not set otherwise.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1014" mnemonic=""
                          title="fastScroll resource"
@@ -11092,7 +11148,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" id="rqm-1015"
                          title="URXVT Mouse Mode"
-                         not-implemented="true" todo="true">
+                         groups="isansi" badges="linux xterm k95">
                     <ctlseq><param-single/> = 1015</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-1-5.1F7E"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -12067,10 +12123,19 @@ DCS $ q 3 , } ST</pre>
                 <!-- TODO: We don't have a full-screen option, but we could certainly implement
                     one. -->
             </section>
-            <section role="parameter" not-implemented="true" todo="true" title="Report state of window (normal/iconified)">
+            <section role="parameter" id="xtwinops-11" title="Report state of window (normal/iconified)">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-1.2061"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Kermit 95 responds with the current state of the window:
+                    <tt>CSI 1 t</tt> (normal), or <tt>CSI 2 t</tt> (minimized).
+                </p>
+                <p>
+                    This is supported on Windows only in the GUI version of
+                    Kermit 95 (k95g.exe). Ignored in the console version for
+                    Windows or OS/2.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" todo="true" title="Report position of window in pixels">
                 <ctlseq><param-single/> = 13</ctlseq>
@@ -12092,11 +12157,19 @@ DCS $ q 3 , } ST</pre>
                     pixels, otherwise report text area size in pixels.
                 </p>
             </section>
-            <section role="parameter" not-implemented="true"
-                     title="Report size of the screen in pixels">
+            <section role="parameter" id="xtwinops-15" title="Report size of the screen in pixels">
                 <ctlseq><param-single/> = 15</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-5.2065"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Kermit 95 responds with the screen size in characters:
+                    <tt>CSI 9 ; height ; width t</tt>
+                </p>
+                <p>
+                    This is supported on Windows only in the GUI version of
+                    Kermit 95 (k95g.exe). Ignored in the console version for
+                    Windows or OS/2.
+                </p>
             </section>
             <section role="parameter" not-implemented="true"
                      title="Report xterm character cell size in pixels">
@@ -12113,10 +12186,19 @@ DCS $ q 3 , } ST</pre>
                     Responds with: <tt>CSI 8 ; height ; width t</tt>
                 </p>
             </section>
-            <section role="parameter" not-implemented="true" title="Report the size of the screen in characters">
+            <section role="parameter" id="xtwinops-19" title="Report the size of the screen in characters">
                 <ctlseq><param-single/> = 19</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-9.2069"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Kermit 95 responds with the size its window would be if it
+                    were maximized, in pixels: <tt>CSI 9 ; height ; width t</tt>
+                </p>
+                <p>
+                    This is supported on Windows only in the GUI version of
+                    Kermit 95 (k95g.exe). Ignored in the console version for
+                    Windows or OS/2.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" title="Report icon label">
                 <ctlseq><param-single/> = 20</ctlseq>
@@ -14135,16 +14217,55 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 51</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5-1.101A"/>
-                <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Reserved for Emacs Shell in January 2000 for a similar
+                    purpose to OSC-7 that was never implemented. Not
+                    <em>known</em> to be in use anywhere.
+                </p>
                 <!-- Reserved, but possibly never actually used?
                     https://www.reddit.com/r/emacs/comments/7rxv6d/comment/lpigict/ -->
             </section>
             <section role="parameter" id="osc-52" mnemonic=""
-                     title="Manipulate selection data"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 52</ctlseq>
+                     title="Manipulate selection (clipboard) data">
+                <ctlseq><param-single/> = 52 ; Pc ; Pd</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-5-2.101B"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    The first parameter, <param-single symbol="Pc"/>, specifies
+                    which of xterms buffers are being manipulated. One or more
+                    of the following can be specified: c p q s 0 1 2 3 4 5 6 7
+                </p>
+                <p>
+                    As Windows and OS/2 only have the clipboard, Kermit 95
+                    validates the first parameter but otherwise ignores it.
+                    As the first parameter is optional, no value needs to be
+                    supplied for it.
+                </p>
+                <p>
+                    The second parameter, <param-single symbol="Pd"/>, is the
+                    new base64-encoded <em>text</em> to place in the clipboard.
+                    The text (before being base64 encoded) is assumed to be in
+                    the same character set as current remote character set.
+                    Kermit 95 will attempt to convert it to the local codepage
+                    if Unicode is disabled or Kermit 95 is running on a version
+                    of Windows that does not support Unicode (Windows 95/98/ME).
+                    Kermit 95 does not attempt to convert the character
+                    encoding.
+                </p>
+                <p>
+                    If, rather than a base64-encoded string, the second
+                    parameter is the question-mark character (?), Kermit 95 will
+                    convert the current clipboard data to the remote character
+                    set, base64 encode it, and return it in the form:
+                    <tt>OSC 52 ;; Pd ST</tt>
+                </p>
+                <p>
+                    By default, aside from producing a notification in K95G on
+                    Windows 2000 or newer Kermit 95 ignores OSC-52 unless the
+                    user has chosen to enable it. Read and Write can be enabled
+                    individually via the <tt>SET TERMINAL CLIPBOARD-ACCESS</tt>
+                    command.
+                </p>
             </section>
             <section role="parameter" id="osc-60" mnemonic="XTQALLOWED"
                      title="Query allowed features"

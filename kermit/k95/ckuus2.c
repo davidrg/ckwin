@@ -7948,6 +7948,16 @@ static char *hxyterm[] = {
 "  while bold and dim are simulated with foreground intensity/brightness. This",
 "  command affects the entire current screen and terminal scrollback buffer.",
 " ",
+#ifdef KUI
+"SET TERMINAL ATTRIBUTE BOLD ON BRIGHT",
+"  Shows the bold attribute in both a bold font and with a brighter color (if ",
+"  the current color is one of the 8 standard ANSI colors).",
+" ",
+"SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY",
+"  Shows the bold attribute in a bold font only without changing the texts",
+"  color. This may cause compatibility issues with some applications.",
+" ",
+#endif /* KUI */
 "SET TERMINAL ATTRIBUTE PROTECTED [ -",
 "   { BOLD, DIM, INVISIBLE, NORMAL, REVERSE, UNDERLINED } ]",
 "  Sets the attributes used to represent Protected text in Wyse and Televideo",
@@ -8078,7 +8088,28 @@ static char *hxyterm[] = {
 #endif /* NOCSETS */
 
 #ifdef OS2
-
+"SET TERMINAL CLIPBOARD-ACCESS { ALLOW-BOTH, ALLOW-READ, ALLOW-WRITE } ",
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+"  { ON, OFF } NOTIFY",
+#else /* CK_SHELL_NOTIFY */
+"  { ON, OFF }",
+#endif /* CK_SHELL_NOTIFY */
+#else /* KUI */
+"  { ON, OFF }",
+#endif /* KUI */
+" Enable or disable clipboard access by the remote host using OSC-52. You can",
+" turn read and write on or off individually, or you can set both at once with",
+" the ALLOW-BOTH option. ",
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+" ",
+" You can optionally choose to be notified when the remote host attempts to ",
+" access the clipboard with the NOTIFY option. This requires Windows 2000 or ",
+" newer",
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+" ",
 "SET TERMINAL CODE-PAGE <number>",
 "  Lets you change the PC code page.  Only works for code pages that are",
 "  successfully prepared in CONFIG.SYS.  Use SHOW TERMINAL to list the",
