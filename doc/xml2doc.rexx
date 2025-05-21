@@ -67,7 +67,7 @@ parse arg param_devmode, param_bannerfile, param_verbose, param_inputfile
 settings.output_file = ""            /* Comes from the XML file */
 
 /* Which terminals should be included in the term-ctlseqs comparison tables */
-settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt420 vt510 vt520 vt525 xterm tt putty'
+settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt420 vt510 vt520 vt525 k95 xterm tt putty'
 
 /* Filtering for the to-do output - these are stored in the XML document.
  * Additional filtering is included in the "todoOutputFilter" procedure
@@ -88,6 +88,12 @@ if settings.input_file = '' then settings.input_file = "ctlseqs.xml"
 /* Optional preliminary information banner, compatible with the K95 mkdocs
  * script: */
 settings.preliminary_banner_file = strip(param_bannerfile)
+
+/* TODO: The main ctlseqs.xml file is getting *massive* - over 20k lines and
+         counting. While it still processes in a reasonable time, its size is
+         getting awkward to work with. It would be handy if sections could live
+         in separate files.
+ */
 
 /* TODO: - It would be nice to issue a warning on conflicting control sequences
  *       - Hide not-implemented things by default
@@ -1480,12 +1486,18 @@ doTableHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
                     call outputHtml indentLevel,'</th>'
                 end
                 else if name = 'td' then do
+                    attrs = ''
+
                     if hasAttribute(trChild, 'not-implemented') then do
                         ni = getAttribute(trChild, 'not-implemented')
-                        if ni = 'true' then call outputHtml indentLevel,'<td class="not-implemented">'
-                        else call outputHtml indentLevel,'<td>'
+                        if ni = 'true' then attrs = attrs' class="not-implemented"'
                     end
-                    else call outputHtml indentLevel,'<td>'
+                    if hasAttribute(trChild, 'colspan') then do
+                        cs = getAttribute(trChild, 'colspan')
+                        attrs = attrs' colspan="'cs'"'
+                    end
+
+                    call outputHtml indentLevel,'<td'attrs'>'
                     indentLevel = indentLevel + 1
 
                     call doTextHtml trChild, indentLevel, '', ''
@@ -1548,6 +1560,22 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
 
         badges = getSectionSupportedTerminals(el)
 
+        sectionBadges = getSectionBadges(el)
+        /* TODO: If there are no specific badges applied, then perhaps we
+                should apply *all* badges (as thats what no badges
+                implicitly means in the absence of any exclusions) */
+
+        /* K95 could support for its terminal type *anything* it implements,
+           but we don't really want to list a bunch of random escape sequences
+           for obscure terminals, so we'll only mark a control sequence as
+           supported by 'k95' if it is either badged for k95, or entirely
+           unbaged, and 'k95' isn't explicitly excluded. */
+        if wordpos('k95',exclusions) = 0 && is_implemented = 0 then do
+            if sectionBadges = '' | wordpos('k95',sectionBadges) <> 0 then do
+                badges = badges' k95'
+            end
+        end
+
         /* Check to see that at least one of the badges is in the list of
            allowed badges */
 
@@ -1576,11 +1604,6 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
         /* If none of the sections supported terminals are in the list of
            terminals being included in the table, then don't output it */
         if found = 0 then return
-
-        sectionBadges = getSectionBadges(el)
-        /* TODO: If there are no specific badges applied, then perhaps we
-                    should apply *all* badges (as thats what no badges
-                    implicitly means in the absence of any exclusions) */
     end
     else do
         badges = getSectionBadges(el)

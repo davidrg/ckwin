@@ -20,6 +20,29 @@ missed. If you notice any unexpected color changes from beta 7 in applications
 and terminal emulations that *do not* use the new 256-color/24-bit color modes,
 *please log a bug* so it can be fixed!
 
+### A New Terminal Type: K95
+This release of Kermit 95 includes a new "K95" terminal type which aims for
+compatibility with modern terminal software expecting something
+"xterm-compatible". It provides many more features and a more compatible default
+keymap than the previously recommended "linux" terminal type.
+
+It is, at the time of writing, *generally* compatible with xterms
+"xterm-256color" terminfo description, but there is always the possibility that 
+xterm (and its terminfo description) will change in some incompatible way in the
+future, and Kermit 95 does a few things differently from xterm. So for the best
+results and fewest compatibility issues rather than just claiming to be xterm 
+like some other terminals, Kermit 95 includes its own terminfo description.
+
+For the time being, this terminfo entry must be manually installed on any hosts
+you connect to. This can be easily done by just running `take terminfo.ksc` from
+the K95 command screen if you've got both `kermit` and `tic` on the remote host.
+Otherwise, you can transfer `k95.src` (included with the K95 distribution) to 
+the remote host and run `tic -x k95.src` to install it.
+
+This will likely become the default terminal type in some future release of
+Kermit 95. But as the required terminfo description isn't distributed except 
+as part of K95 at this time, the default terminal remains VT220 for now.
+
 ### New Features
  - Support for multiple color palettes of up to 256 colors, switchable at runtime
    with the new `SET TERM COLOR PALETTE` command. _Display_ of more than 16 colors
@@ -69,6 +92,14 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
    - The text cursor
    - Dim text (if the dim attribute is disabled with the new
      `SET TERMINAL ATTRIBUTE DIM OFF COLOR` command)
+ - New "k95" terminal type with its own terminfo description. This aims to be 
+   generally compatible with modern xterm-like terminal emulators, rather than 
+   emulating a specific hardware or unix console terminal.
+ - Two new special keyboard modes
+   - `META` - This is a subset of the `EMACS` keyboard mode which does not
+     modify any function keys.
+   - `XTERM-META` - This sets the 8th bit for keyboard input, equivalent to 
+     xterms "interpret 'meta' key" option.
  - Clipboard access for the remote host is now supported via OSC-52. This can be
    enabled or disabled for read, write or both with 
    `SET TERMINAL CLIPBOARD-ACCESS`. You can optionally choose to be notified
@@ -181,6 +212,17 @@ and terminal emulations that *do not* use the new 256-color/24-bit color modes,
      enables or disables true underline in DECSTGLT alternate color mode
  - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
    available for VT520 (and so, temporarily, VT320)
+ - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
+   now switches to the XTERM-META special keyboard mode, and returns to the normal
+   keyboard mode when reset. It can be queried with DECRQM
+ - [DECSET-1036](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-send-esc-meta)
+   now switches to the META special keyboard mode, and returns to the normal
+   keyboard mode when reset. It can be queried with DECRQM
+ - [DECSET-12](https://davidrg.github.io/ckwin/dev/ctlseqs.html#att610-sbc) for
+   turning cursor blink on/off for xterm compatibility
+ - Enable [LMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#lma)
+   and [UMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#usr) for K95 and
+   xterm terminal types
  - DECSM/DECRM/DECRQM modes
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events

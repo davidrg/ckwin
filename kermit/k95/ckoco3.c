@@ -597,6 +597,9 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;44c",     /* Kermit 95 self-personality */
+            /* K95 Device Attributes: VT320;132-columns;printer;selective-erase;user-defined-keys;
+                                      national-replacement-character-sets;technical-characters;PCTerm */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
@@ -4375,10 +4378,14 @@ ipadl25() {
             ckstrncat(usertext,"-R",(MAXTERMCOL) + 1);
             break;
         case KBM_EM:
+		case KBM_ME:
             ckstrncat(usertext,"-E",(MAXTERMCOL) + 1);
             break;
         case KBM_WP:
             ckstrncat(usertext,"-W",(MAXTERMCOL) + 1);
+            break;
+		case KBM_MM:
+			ckstrncat(usertext,"-M",(MAXTERMCOL) + 1);
             break;
         }
     }
@@ -8106,6 +8113,10 @@ ltorxlat( int c, CHAR ** bytes )
             {
                 xkey7 = xkey = xl_u[TX_CP866](xkey);
             }
+			else if ( tt_kb_mode == KBM_MM )
+            {
+                xkey7 = xkey = xl_u[TX_CP437](xkey);
+            }
             else {
                 if (GL->ltoi)
                     xkey7 = (*GL->ltoi)(xkey);
@@ -8148,6 +8159,10 @@ ltorxlat( int c, CHAR ** bytes )
             else if ( tt_kb_mode == KBM_RU )
             {
                 xkey = xl_u[TX_CP866](xkey);
+            }
+			else if ( tt_kb_mode == KBM_MM )
+            {
+                xkey = xl_u[TX_CP1252](xkey);
             }
             else if ( IS97801(tt_type_mode) ) {
                 debug(F111,"ltorxlat()","xkey > 127",xkey);
@@ -12988,9 +13003,17 @@ dodcs( void )
     char c;
 
     /*
-    we haven't coded this yet
-    but what would go here would be DECUDK, DECRSPS, DECRQSS, ....
-    */
+     * Originally this function was only available to:
+     *     tt_type_mode >= TT_VT320 && tt_type_mode <= TT_WY370
+     * Compared to ISVT320() this excludes TT_97801 and TT_AAA. I have no idea
+     * what those terminals implement or if there was any particular reason for
+     * their exclusion, but excluding TT_VT220 was almost certainly by accient
+     * as it *does* support at least one DCS sequence here - DECUDK.
+     * So now we allow ISVT320() in here, plus TT_VT220 and a few others, but
+     * exclude TT_97801 and TT_AAA as before just in case there was some
+     * particular reason for their exclusion.
+     */
+
     debug( F111,"DCS string",apcbuf,apclength ) ;
 
     if ( debses )              /* If TERMINAL DEBUG ON */
@@ -13032,7 +13055,8 @@ dodcs( void )
             pn[k + 1] = 1;
           LB4003:
             switch (achar) { /* Third level */
-            case '$': {
+            case '$':
+                if (ISVT320(tt_type_mode)) {
                 /* This has to be long to account for SGR at a minimum. */
 #define DECRPSS_LEN 100
                 char decrpss[DECRPSS_LEN];
@@ -14530,8 +14554,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             else if ( dcsrecv ) /* it was a DCS string, */
             {
                 apcbuf[apclength] = NUL; /* terminate it */
-                if ( tt_type_mode >= TT_VT320 && /* and if we are a VT320 */
-                     tt_type_mode <= TT_WY370 )
+
+                if ( tt_type_mode >= TT_VT220 && /* and if we are a VT320 */
+                     tt_type_mode <= TT_WY370 || /* Or K95 or xterm */
+                     ISK95(tt_type_mode) || ISXTERM(tt_type_mode))
                 {                            /* process it */
                     if (!debses)
                       dodcs() ;
@@ -15357,7 +15383,32 @@ esc25(int h) {
 void
 settermstatus( int y )
 {
-    if ( y != tt_status[VTERM] ) {
+	/* The VT520 doesn't change the number of lines on screen in response to
+ 	 * turning the status line on or off, and DEC-STD-070 says "Visual side
+	 * effects caused by enabling or disabling the Status Display should
+	 * be minimized". Changing the number of terminal lines requires doing
+	 * VScrnInit() which wipes the screen - certainly not minimal, and it
+	 * breaks terminfo applications that want to turn on the status line. So
+	 * instead for the K95 terminal type we'll do as the VT520 does - show
+	 * and hide the status line while leaving the number of terminal lines
+	 * alone. The VT520 reserves space at the bottom of the screen for the
+	 * status line which is simply blank if its off. Instead we'll grow and
+	 * shrink the window height as necessary to accommodate it.
+	 *
+	 * This behaviour should *probably* apply to the VT320 and VT420, but
+	 * as I don't have either of them I can't confirm they behave the same
+	 * as the VT520. So for now this is for the K95 terminal type only, and
+	 * if/when a VT520 terminal type appears it will probably be for that
+	 * too. For everything else, well leave the window size alone and instead
+	 * add or remove one line from the terminal as K95 has always done in the
+	 * past */
+
+	if (ISK95(tt_type_mode)) {
+		/* Change screen height only - not terminal height */
+		tt_status[VTERM] = y;
+		VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
+	}
+	else if ( y != tt_status[VTERM] ) {
         /* might need to fixup the margins */
         if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
             if ( y ) {
@@ -15530,7 +15581,65 @@ settermtype( int x, int prompts )
     }
 #endif /* COMMENT */
 
-    if (ISANSI(tt_type) || ISLINUX(tt_type)) {
+    if (ISK95(tt_type) && cell_video_attr_is_null(savcolor) ) {
+        savcolor = colornormal;     /* Save coloration */
+        savgrcol = colorgraphic ;
+        savulcol = colorunderline ;
+        savblcol = colorblink ;
+        savbocol = colorbold;
+		savdicol = colordim;
+
+        savulatt = trueunderline ;
+        savblatt = trueblink ;
+        savrvatt = truereverse ;
+
+        /* 0xc0c0c0 on 0x000000 */
+        colornormal = cell_video_attr_from_vio_attribute(0x07);     /* Light gray on black */
+        colorgraphic = cell_video_attr_from_vio_attribute(0x07);    /* Light gray on black */
+        colorunderline = cell_video_attr_from_vio_attribute(0x47);  /* Light gray on Red */
+        colorblink = cell_video_attr_from_vio_attribute(0x87);      /* Light gray on dark gray */
+        colorbold = cell_video_attr_from_vio_attribute(0x0F);       /* Bright White on black */
+
+#ifndef KUI
+        trueunderline = TRUE ;     /* Simulate underline */
+#endif /* KUI */
+
+        scrninitialized[VTERM] = 0; /* To make it take effect */
+
+#ifdef COMMENT
+		/* I *was* going to have the status line off-by-default like it is on
+         * the linux terminal, but I've changed my mind for now. It may end up
+		 * being off by default eventually, but I think to do that acceptably
+	 	 * requires further work. Because of the way the K95 terminal type
+		 * resizes the window rather than then VSCRN when the status line is
+		 * turned on or off, having it off by default forces us to choose
+		 * between either having a non-standard 25 line default height, or
+		 * tring to "fix" the default to 24 lines (potentially overriding the
+		 * users prior window size choice) clearing the command screen in the
+		 * process. I think if we wanted to keep it off by default *and* 24
+		 * lines by default it will require a smarter implementation. */
+
+        /* Turn off the status line */
+        savstatus = tt_status_usr[VTERM] ;
+        tt_status_usr[VTERM] = FALSE ;
+        settermstatus( tt_status_usr[VTERM] ) ;
+#endif /* COMMENT */
+
+        VscrnInit(VTERM);           /* Reinit the screen buffer */
+
+        savcmask = cmask;           /* Go to 8 bits */
+        cmask = 0xFF;
+
+#ifdef UNICODE
+#ifdef CKOUNI
+		/* Assume UTF-8 remote by default. Second parameter is ignored for
+		 * TX_UTF8. */
+		setremcharset(TX_UTF8, -1);
+#endif /* CKOUNI */
+#endif /* UNICODE */
+
+    }
+    else if (ISANSI(tt_type) || ISLINUX(tt_type)) {
         if (parity && prompts) {
  printf("WARNING, ANSI terminal emulation works right only if PARITY is NONE.\n");
  printf("HELP SET PARITY for further information.\n");
@@ -16612,6 +16721,9 @@ vtcsi(void)
  #endif
                             }
                             break;
+						case 12: /* AT&T 610/xterm - cursor blinking */
+							pn[2] = tt_cursor_blink == 1 ? 1 : 2;
+							break;
                         case 18: /* DECPFF */
                             pn[2] = xprintff ? 1 : 2 ;
                             break;
@@ -16709,6 +16821,12 @@ vtcsi(void)
                             }
 #endif
                             break;
+						case 1034:  /* xterm - Interpret "meta" key */
+							pn[2] = tt_kb_mode == KBM_MM ? 1 : 2;
+							break;
+						case 1036:  /* xterm - Send esc when Meta modifies a key */
+							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
+							break;
                         case 2004:
                             pn[2] = bracketed_paste[vmode] ? 1 : 2;
                             break;
@@ -17440,7 +17558,7 @@ vtcsi(void)
                 break;
             case 'b':
                 /* QANSI - Repeat previous character Pn times */
-                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) ) {
+                if ( ISQANSI(tt_type_mode) || ISXTERM(tt_type_mode) || ISK95(tt_type_mode) ) {
                     while ( pn[1] ) {
                         wrtch(prevchar);
                         pn[1] = pn[1] - 1;
@@ -17990,6 +18108,9 @@ vtcsi(void)
 #endif
                             }
                             break;
+						case 12:  		/* AT&T 610/xterm - Blinking cursor on */
+							tt_cursor_blink = 1;
+							break;
                         case 18:  /* DECPFF - Print Form Feed */
                             xprintff = TRUE;
                             break;
@@ -18243,10 +18364,18 @@ vtcsi(void)
                         case 1015:
                             /* URXVT - Enable URXVT Mosue Mode */
 #ifdef OS2MOUSE
-                           debug(F100, "URXVT mouse tracking now OFF", "", 0);
+                           debug(F100, "URXVT mouse tracking now ON", "", 0);
                            mouse_reporting_mode |= MOUSEREPORTING_URXVT;
 #endif
                             break;
+						case 1034:  /* xterm - Interpret "meta" key - sets 8th bit */
+							tt_kb_mode = KBM_MM;
+							ipadl25();  /* Update the status line */
+							break;
+						case 1036:  /* xterm - send esc when Meta modifies a key */
+							tt_kb_mode = KBM_ME;
+							ipadl25();;  /* Update the status line */
+							break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
@@ -18615,6 +18744,10 @@ vtcsi(void)
 #endif
                                break;
                            case 10:        /* DECEDM - Block mode off */
+                               break;
+						   case 12:			/* AT&T 610/xterm - Blinking cursor off */
+							   tt_cursor_blink = 0;
+							   break;
                                if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
                                    /* Toolbar off (rxvt) */
 #ifdef KUI
@@ -18850,7 +18983,14 @@ vtcsi(void)
                                mouse_reporting_mode &= ~MOUSEREPORTING_URXVT;
 #endif
                                break;
-
+							case 1034:  /* xterm - turn off Interpret "meta" key */
+								tt_kb_mode = KBM_EN;
+								ipadl25();  /* Update the status line */
+								break;
+							case 1036:  /* xterm - Turn off Send esc when Meta modifies a key */
+								tt_kb_mode = KBM_EN;
+								ipadl25();  /* Update the status line */
+								break;
                             case 2004:
                             	/* xterm - Disable Bracketed Paste Mode */
                             	bracketed_paste[vmode] = FALSE;
@@ -23323,7 +23463,8 @@ vtescape( void )
               if ( ISH19(tt_type_mode) ) {
                   /* Erase Entire Line */
                   clrline_escape(VTERM,SP);
-              } else if ( ISSCO(tt_type_mode)) {
+              } else if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
+							|| ISXTERM(tt_type_mode) ) {
                   /* Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, relcursor ? marginleft : 1,
@@ -23357,7 +23498,8 @@ vtescape( void )
             }
             break;
         case 'm':
-              if ( ISSCO(tt_type_mode) ) {
+              if ( ISSCO(tt_type_mode) || ISK95(tt_type_mode)
+					|| ISXTERM(tt_type_mode)  ) {
                   /* Unlock Memory Area */
                   setmargins(1,VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
                   lgotoxy(VTERM, 1, 1);

@@ -43,3 +43,6 @@ REVIEW.KSC
 
 RGREP.KSC
   Recursive "grep" (like UNIX grep, but recursive)
+
+TERMINFO.KSC
+  Send the K95 terminfo entry to the remote host and install it with tic

@@ -100,6 +100,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ELEMENT td (#PCDATA|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info|br|table)*>
         <!ATTLIST td not-implemented (true|false) "false">
         <!ATTLIST td style CDATA #IMPLIED>
+        <!ATTLIST td colspan CDATA #IMPLIED>
 
         <!ELEMENT tr (th|td)*>
         <!ATTLIST tr not-implemented (true|false) "false">
@@ -268,8 +269,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
       converting source of the document from HTML to XML.
     -->
 
-    <!-- TODO  - Document K95s keyboard (what all the kverbs send)
-               - Add reference links for everything in the designate character
+    <!-- TODO  - Add reference links for everything in the designate character
                  set tables
                - Add reference links to and any new escape sequences found in:
                    - The VT320 manual: EK-VT320-RM manual (if/when it turns up online)
@@ -320,6 +320,23 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                  descriptions, or generating a starting point for terminfo/termcap
                  descriptions from this document.
     -->
+
+    <!-- Page numbers for std 070
+>> page 388, 389 references can be replaced <<
+
+DECRPDE		343     Not in this document currently
+C1 Control 	385		IND, NEL, HTS, RI, SS2, SS3, DCS, SOS, DECID, CSI, ST, OSC, PM, APC
+SUB			387
+DEC Priv	388		DECCKM, DECCOLM, DECSCLM, DECSCNM, DECOM, DECAWM, DECARM, DECPFF, DECPEX, DECCEM, DECTEK, DECNRCM, DECVCCM, DECPCCM, DECKBUM, DECLRMM, DECXRLM
+DECRPM		450
+DECRPSS		452
+DECRQOSR	453
+DECPSR		454
+DECCIR		455
+DECTSR		462
+-->
+
+
 
     <!-- References to similar documentation elsewhere. This helps to identify
          other terminals (or terminal emulators) that support a given feature,
@@ -559,8 +576,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <badge name="wy370"/>
             <badge name="s97801"/>
             <badge name="aaa"/>
+            <badge name="k95"/>
         </badgegroup>
-
         <badgegroup name="isvt525">
             <!-- When VT525 is implemented enough, this should contain
                  only <badge name="vt525"/> -->
@@ -588,6 +605,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <badge name="qansi"/>
             <badge name="linux"/>
             <badge name="sun"/>
+            <badgegroup-ref name="isvt320"/>
             <!-- Why no AIXTERM? -->
         </badgegroup>
         <badgegroup name="isvt102">
@@ -648,6 +666,10 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                 dl { margin-left: 2em; }
                 pre { margin-left: 5em; }
                 table, th, td { border: 1px solid black; border-collapse: collapse; }
+                tr:hover {
+                background-color: #4C8BF5;
+                color: #fff;
+                }
                 .param { font-style: italic; }
                     span.sec_ctlseq {
                     margin-right: 5em;
@@ -941,7 +963,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar sgr-9-co sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window osc-8"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
-              todo-terminals="vt102 vt220 vt420 xterm tt putty">
+              todo-terminals="vt102 vt220 vt420 k95 xterm tt putty">
             <style>
                 table {
                 border-collapse: collapse;
@@ -1224,7 +1246,9 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             sequences easier. For quicker lookup,
             <a href="outline.html">An Outline of this document is available</a>,
             as well as a <a href="tt-ctlseqs.html">Table of Control Sequences
-            by Terminal Type</a>.
+            by Terminal Type</a>. For information on the default keymaps for
+            the various terminal types, see
+            <a href="keyb.html">Kermit 95 Default Keymaps</a>
         </p>
         <p>
             Prior to 2025 there was no documentation on the control sequences supported
@@ -1317,7 +1341,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
     <section role="text"
              formats="html:document html:outline html:ctlseq-table html:term-ctlseqs html:todo"
              hide-groups="ishp iswyse isdg200 istvi"
-             hide-badges="qnx ibm31 vc4404 adm3a adm5 hzl1500 vc4404 vtnt xterm k95 tek40">
+             hide-badges="qnx ibm31 vc4404 adm3a adm5 hzl1500 vc4404 vtnt xterm tek40">
         <!-- ANSI-compatible, VT52 and H19 emulations -->
 
         <!--
@@ -2621,7 +2645,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <section role="ctlseq" id="h19-cls" ctlseq="ESC E" title="Clear screen (H19)" badges="h19">
             <p>Clear display and home cursor</p>
         </section>
-        <section role="ctlseq" id="vt52-egr" ctlseq="ESC F" title="VT52 Enable Graphics" groups="isvt52">
+        <section role="ctlseq" id="vt52-egr" ctlseq="ESC F" title="VT52 Enable Graphics"
+                 groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
             <ref src="vt52:25"/>
             <ref src="vt100:VT52EGM"/>
@@ -2632,28 +2657,29 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <termsupp first="vt52" series="vt" additional="putty"/>
             <p>Enable VT52 Graphics</p>
         </section>
-        <section role="ctlseq" id="saa" ctlseq="ESC F" mnemonic="SSA" title="Start Selected Area" not-implemented="true" groups="isvt220">
+        <section role="ctlseq" id="saa" ctlseq="ESC F" mnemonic="SSA"
+                 title="Start Selected Area" not-implemented="true" groups="isvt220">
             <p>Start Selected Area</p>
         </section>
         <section role="ctlseq" id="HPLH" ctlseq="ESC F"
                  title="Cursor Home Down (HPTERM)"
-                 not-implemented="true" todo="true">
+                 not-implemented="true">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-F.C74"/>
-            <!-- TODO: xterm: ESC F: Cursor to lower left corner of screen. Enabled
-                       by hpLowerLeftBugCompat resource
-
-                       This appears to be an hpterm escape sequence
-                       ("Cursor Home Down") which we do implement as part of our
-                       hpterm emulation.
-
-                       xterm optionally implements it because apparently HP's xdb
-                       ignores termcap and always sends it to send the cursor to the
-                       lower left corner.
-
-                       We can probably get away with not implementing it as users
-                       who need this behaviour can just switch to K95s hpterm
-                       emulation.
-                 -->
+            <p>
+                Sends the cursor to the lower left corner of the screen. Xterm
+                implements this as a workaround for HPs xdb utility which ignores
+                termcap and always uses this HPTERM escape sequence.
+            </p>
+            <p>
+                In xterm, this control sequence is disabled by default and must
+                be enabled by setting a resource (hpLowerleftBugCompat).
+            </p>
+            <p>
+                As it is disabled by default in xterm, Kermit 95 does not bother
+                to implement it. Instead, it is recommended you use Kermit 95s
+                <em>hpterm</em> emulation if you run into this problem with the
+                xdb utility (<tt>SET TERM TYPE hpterm</tt>).
+            </p>
         </section>
         <section role="ctlseq" id="vt52-dgr" ctlseq="ESC G" title="VT52 Disable Graphics" groups="isvt52">
             <ref src="xt:h4-VT52-Mode:ESC-A.50F"/>
@@ -2868,6 +2894,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <ref src="vt510:RIS.html"/>
             <ref src="vt52x:348"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux sco putty"/>
+            <p>
+                Performs a hard reset. Compared to a soft reset, this also
+                resets the status line type, clears the screen and homes the
+                cursor.
+            </p>
         </section>
         <section role="ctlseq" id="h19-scp" ctlseq="ESC j" title="Save cursor position (H19)" badges="h19">
             <p>Save cursor position</p>
@@ -2881,29 +2912,16 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
             <p>Erase entire line</p>
         </section>
         <section role="ctlseq" id="lma" mnemonic="LMA" ctlseq="ESC l"
-                 title="Lock Memory Area (SCO)" badges="scoansi">
-            <termsupp series="sco" first="sco"/>
+                 title="Lock Memory Area (SCO/HPTERM)" badges="scoansi k95 xterm">
+            <termsupp series="sco" first="sco" additional="xterm"/>
+            <ref src="xt:h4-Controls-beginning-with-ESC:ESC-l.C9A"/>
             <p>Lock Memory Area (sets margins)</p>
         </section>
-        <section role="ctlseq" id="hpterm-lma" ctlseq="ESC l"
-                 title="Lock Memory (HPTERM)"
-                 not-implemented="true" todo="true">
-            <ref src="xt:h4-Controls-beginning-with-ESC:ESC-l.C9A"/>
-            <!-- xterm: ESC l: Memory Lock (per HP terminals)
-                "Locks memory above the cursor."
-                This appears to be an hpterm escape which we don't implement.
-            -->
-        </section>
         <section role="ctlseq" id="usr" mnemonic="USR" ctlseq="ESC m"
-                 title="Unlock Memory Area (SCO)" badges="scoansi">
-            <termsupp series="sco" first="sco"/>
-            <p>Unlock Memory Area (sets margins)</p>
-        </section>
-        <section role="ctlseq" id="uma" ctlseq="ESC m"
-                 title="Unlock Memory (HPTERM)"
-                 not-implemented="true" todo="true">
+                 title="Unlock Memory Area (SCO/HPTERM)" badges="scoansi k95 xterm">
+            <termsupp series="sco" first="sco" additional="xterm"/>
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-m.C9B"/>
-            <!-- xterm: ESC m: Memory unlock (per HP terminals) - see above -->
+            <p>Unlock Memory Area (sets margins)</p>
         </section>
         <section role="ctlseq" id="h19-cpr" ctlseq="ESC n" title="Cursor Position Report (H19)" badges="h19">
             <p>Cursor Position Report</p>
@@ -3120,11 +3138,19 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
     </section>
 
     <section toc="true" role="text" id="s_dcs"  formats="html:document"
-             title="Device-Control functions">
+             title="Device-Control functions"
+             groups="isvt320" badges="vt220" exclude-badges="aaa s97801">
 
         <!-- TODO: This section needs sorting -->
 
-        <section role="ctlseq" id="decudk" mnemonic="DECUDK" title="User Defined Keys">
+        <!-- ================================================================
+             NOTE: Device Control Functions of any kind are currently
+             restricted to: vt220 vt220pc vt320 vt320pc wy370 xterm k95
+             The dodcs() function is not called for any other terminal types!
+             ================================================================ -->
+
+        <section role="ctlseq" id="decudk" mnemonic="DECUDK" title="User Defined Keys"
+                 badges="vt220 vt220pc vt320 vt320pc wy370 xterm k95">
             <ref src="070:976"/>
             <ref src="xt:h4-Device-Control-functions:DCS-Ps;Ps-%7C-Pt-ST.FC0"/>
             <ref src="vt220:S4.15"/>
@@ -3280,7 +3306,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         </section>
 
         <section role="ctlseq" id="k95link" mnemonic="K95LINK"
-                 title="Kermit 95 Hyperlink Extension">
+                 title="Kermit 95 Hyperlink Extension"
+                 badges="vt320 vt320pc wy370 xterm k95">
             <ctlseq>
                 DCS <param-single/> + m <param-text/> ST
             </ctlseq>
@@ -3319,7 +3346,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <section role="ctlseq" id="decrqss" mnemonic="DECRQSS"
                  title="Request Selection or Setting"
-                 badges="vt320 vt320pc wy370 xterm">
+                 badges="vt320 vt320pc wy370 xterm k95">
             <ref src="070:451"/>
             <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
             <ref src="vt420:289"/>
@@ -5357,7 +5384,7 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### b ######################### -->
-        <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi xterm">
+        <section role="ctlseq" id="rep" mnemonic="REP" title="Repeat" badges="qansi xterm k95">
             <ref src="e48:69"/>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-b.1CA2"/>
             <termsupp first="xterm" series="vt" additional="tt xterm putty"/>
@@ -5970,7 +5997,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:25"/>
             <ref src="070:388"/>
             <ref src="vt510:SM.html"/>
-            <termsupp first="vt100" series="vt" additional="tt putty"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt320 vt420 vt510 vt520 tt putty"/>
             <ctlseq>CSI ? <param-multi/> h</ctlseq>
             <p>DEC Private Mode Set</p>
 
@@ -6129,11 +6156,15 @@ DCS $ q 3 , } ST</pre>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
             <section role="parameter" id="att610-sbc" mnemonic=""
-                     title="Start blinking cursor (AT&amp;T 610)"
-                     not-implemented="true" todo="true">
+                     title="Start blinking cursor (AT&amp;T 610)">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-2.1EC0"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Turns on cursor blinking without affecting the cursor shape.
+                    Both cursor shape and blink can be set with
+                    <a href="#decscusr">DECSCUSR</a>.
+                </p>
             </section>
             <section role="parameter" id="sbc-mrc" mnemonic=""
                      title="Start blinking cursor (set only via resource or menu)"
@@ -6712,11 +6743,16 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-interpret-meta" mnemonic=""
-                     title="Interpret &quot;meta&quot; key"
-                     not-implemented="true" todo="true">
+                     title="Interpret &quot;meta&quot; key">
                 <ctlseq><param-single/> = 1034</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-4.1F7F"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Switches to the <tt>XTERM-META</tt> special keyboard mode, equivalent
+                    to typing <tt>SET TERMINAL KEYBOARD-MODE XTERM-META</tt>. Causes
+                    the meta key (Alt) to set the 8th bit on printable and control
+                    characters shifting them into the 127-255 range.
+                </p>
             </section>
             <section role="parameter" id="xt-ena-alt-numlk-mod" mnemonic=""
                      title="Enable special modifiers for alt and numlock keys"
@@ -6726,11 +6762,15 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-send-esc-meta" mnemonic=""
-                     title="Send Esc when meta modifies a key"
-                     not-implemented="true" todo="true">
+                     title="Send Esc when meta modifies a key">
                 <ctlseq><param-single/> = 1036</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-6.1F81"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Switches to the <tt>META</tt> special keyboard mode, equivalent
+                    to typing <tt>SET TERMINAL KEYBOARD-MODE META</tt>. Causes
+                    the meta key (Alt) to send ESC. For example, Alt+x becomes ESC x.
+                </p>
             </section>
             <!-- TODO: xterm -  -  -->
             <section role="parameter" id="xt-edit-keypad-delete-sends-del" mnemonic=""
@@ -7706,11 +7746,15 @@ DCS $ q 3 , } ST</pre>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
             <section role="parameter" id="decrst-12" mnemonic=""
-                     title="Stop blinking cursor (AT&amp;T 610)"
-                     not-implemented="true" todo="true">
+                     title="Stop blinking cursor (AT&amp;T 610)">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-2.1EC4"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Turns off cursor blinking without affecting the cursor shape.
+                    Both cursor shape and blink can be set with
+                    <a href="#decscusr">DECSCUSR</a>.
+                </p>
             </section>
             <section role="parameter" id="r-decscfdm" mnemonic="DECSCFDM" title="Space Compression/Field Delimiting Mode"
                      not-implemented="true" todo="true" >
@@ -8303,11 +8347,14 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1034" mnemonic=""
-                     title="Don't Interpret &quot;meta&quot; key"
-                     not-implemented="true" todo="true">
+                     title="Don't Interpret &quot;meta&quot; key">
                 <ctlseq><param-single/> = 1034</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-3-4.1F83"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <!-- This is used for terminfo 'rmm' -->
+                <p>
+                    Switches the keyboard mode back to normal (english).
+                </p>
             </section>
             <section role="parameter" id="decrst-1035" mnemonic=""
                      title="Disable special modifiers for alt and numlock keys"
@@ -8317,11 +8364,13 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1036" mnemonic=""
-                     title="Don't Send Esc when meta modifies a key"
-                     not-implemented="true" todo="true">
+                     title="Don't Send Esc when meta modifies a key">
                 <ctlseq><param-single/> = 1036</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-3-6.1F85"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Switches the keyboard mode back to normal (english).
+                </p>
             </section>
             <section role="parameter" id="decrst-1037" mnemonic=""
                      title="Send VT220 Remove from the editing-keypad Delete key"
@@ -9256,7 +9305,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set foreground to indexed color">
                 <ctlseq><param-single/> = 38 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
-                <termsupp first="tt" series="xt" additional="linux putty"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility other terminal emulators.
@@ -9437,7 +9486,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set background to indexed color">
                 <ctlseq><param-single/> = 48 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
-                <termsupp first="tt" series="xt" additional="linux putty"/>
+                <termsupp first="xterm" series="xt" additional="tt linux putty"/>
                 <p>
                     This does not properly conform to ISO-8613-6 and is implemented
                     only for compatibility other terminal emulators.
@@ -10283,8 +10332,41 @@ DCS $ q 3 , } ST</pre>
             <p><param-single/> is the mode number as in
                 <a href="#sm">SM</a>/<a href="#rm">RM</a>. Only those listed
                 below are currently supported by DECRQM in K95 at this time.
-                Response is in the form: <tt>CSI Ps; Pm $ y</tt>
+                Kermit 95 response with a DECRPM response in the form:
+                <tt>CSI Ps; Ps $ y</tt>
             </p>
+            <p>
+                In the DECRPPM response, the first parameter is the mode being
+                reported on, while the second indicates its current staus:
+            </p>
+            <table>
+                <tr>
+                   <th>Ps</th>
+                   <th>Ps</th>
+                </tr>
+                <tr>
+                    <td>0</td>
+                    <td>Mode not recognised/not supported</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Mode is set</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Mode is reset</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Mode is permanently set (can not be affected by
+                        SM/DECSET/RM/DECRST)</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Mode is permanently reset (can not be affected by
+                        SM/DECSET/RM/DECRST)</td>
+                </tr>
+            </table>
             <!-- TODO: Everything supported by RM/SM should be supported here! -->
             <section style="group" role="group">
                 <section role="parameter" id="rqm-1" mnemonic="GATM"
@@ -10583,8 +10665,7 @@ DCS $ q 3 , } ST</pre>
                     <p>Not Implemented: K95 does not support the VT132 block mode</p>
                 </section>
                 <section role="parameter" id="decrqm-12p" mnemonic=""
-                         title="Blinking cursor (AT&amp;T 610)"
-                         not-implemented="true" todo="true">
+                         title="Blinking cursor (AT&amp;T 610)">
                     <ctlseq><param-single/> = 12</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-2.1EC4"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
@@ -11080,11 +11161,14 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-1034" mnemonic=""
-                         title="Interpret &quot;meta&quot; key"
-                         not-implemented="true" todo="true">
+                         title="Interpret &quot;meta&quot; key">
                     <ctlseq><param-single/> = 1034</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-4.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if the XTERM-META special keyboard mode is
+                        currently set or not.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1035" mnemonic=""
                          title="Special modifiers for alt and numlock keys"
@@ -11094,11 +11178,14 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-1036" mnemonic=""
-                         title="Send Esc when meta modifies a key"
-                         not-implemented="true" todo="true">
+                         title="Send Esc when meta modifies a key">
                     <ctlseq><param-single/> = 1036</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-3-6.1F81"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if the META special keyboard mode is
+                        currently set or not.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1037" mnemonic=""
                          title="Send DEL from the editing-keypad delete key"
@@ -13666,6 +13753,20 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt420" series="vt" additional="vt510 tt"/>
             <p>You can query the current state of DECSSDT with
                 <a href="#decrqss">DECRQSS</a></p>
+            <p>
+                When the status line is hidden (blank), the height of the
+                terminal is increased by one line. When the status line is
+                shown, the height of the terminal is decreased by one line. This
+                differs in behavior from the VT520 which reserves space on the
+                screen for the status line and just shows/hides it as required
+                without changing the number of terminal lines.
+            </p>
+            <p badges="k95">
+                Instead of changing the height of the terminal when showing or
+                hiding the status line, the K95 terminal type changes the height
+                of the window keeping the number of terminal lines constant,
+                matching the VT520s behavior.
+            </p>
 
             <section role="parameter" id="decssdt-blank" title="Blank">
                 <ctlseq><param-single/> = 0</ctlseq>
@@ -14415,7 +14516,7 @@ DCS $ q 3 , } ST</pre>
         <p>Kermit 95 does not implement any privacy message functions</p>
     </section>
 
-    </section> <!-- END of ANSI-compatbile, VT52 and H19 emulations -->
+    </section> <!-- END of ANSI-compatible, VT52 and H19 emulations -->
 
     <section toc="true" role="text" id="color" formats="html:document"
              title="Color Support in Kermit 95">
@@ -14577,95 +14678,4 @@ DCS $ q 3 , } ST</pre>
             </p>
         </section>
     </section>
-
-    <!-- TODO: Special Keyboard Keys -->
-    <!-- Document what all the kverbs (like K_UPARR) send -->
-    <!--<p>Special keys (those that don't send letters, numbers and punctuation, etc.)-->
-    <!--    are mapped to a <em>KVerb</em> by the default keymap for each terminal type-->
-    <!--    supported by Kermit 95. -->
-    <!--</p>-->
-
-    <!--
-    The code lives in dokverb(int mode..  in ckoco3.c
-    Currently up to line 9059
-
-    udkfkeys[] is initialised by udkreset( void ) in ckoco3.c
-
-\Kuparr         Transmit Terminal Up Arrow sequence
-		ISDG200 && dgunix && !udfkeys: \036PA
-		ISDG200 && !dgunix: ETB
-		ISQNX: \377\241
-		ISHP || ISIBM31: \{ESC}A
-		ISHZL: ~\x0C
-		ISVC: SUB
-		ISWYSE && !udfkeys: VT
-		ISTVI && !udfkeys: DLE
-		IS97801 && !udfkeys: \033[A
-		ISVT100 || ISANSI || ISQANSI || ISBEOS || ISHFT:
-			Application: \{ESC}OA	/* SS3 A */
-			Normal: \{ESC}[A		/* CSI A */
-		else: \{ESC}A
-   \Krtarr         Transmit Terminal Right Arrow sequence
-		ISDG200 && dgunix && !udfkeys: \036PC
-		ISDG200 && !dgunix: CAN
-		ISQNX: \377\246
-		ISHP || ISIBM31: \{ESC}C
-		ISHZL: DLE
-		ISVC: NAK
-		ISWYSE && !udfkeys: FF
-		ISTVI && !udfkeys: ACK
-		IS97801 && !udfkeys: \033[C
-		ISVT100 || ISANSI || ISQANSI || ISBEOS || ISHFT:
-			Application: \{ESC}OC
-			Normal: \{ESC}[C
-		else: \{ESC}C
-   \Klfarr         Transmit Terminal Left Arrow sequence
-		ISDG200 && dgunix && !udfkeys: \036PD
-		ISDG200 && !dgunix: XEM
-		ISQNX: \377\244
-		ISHP || ISIBM31:  \{ESC}D
-		ISHZL: BS
-		ISVC: BS
-		ISWYSE && !udfkeys: BS
-		ISTVI && !udfkeys: STX
-		IS97801 && !udfkeys: \033[D
-		ISVT100 || ISANSI || ISQANSI || ISBEOS || ISHFT:
-			Application: \{ESC}OD
-			Normal: \{ESC}[D
-		else: \{ESC}D
-   \Kdnarr         Transmit Terminal Down Arrow sequence
-		ISDG200 && dgunix && !udfkeys: \36PB
-		ISDG200 && !dgunix: SUB
-		ISQNX: \377\251
-		ISHP || ISIBM31: \{ESC}B
-		ISHZL: ~\x0B
-		ISVC: LF
-		ISWYSE && !udfkeys: LF
-		ISTVI && !udfkeys: SO
-		IS97801 && !udfkeys: \033[B
-		ISVT100 || ISANSI || ISQANSI || ISBEOS || ISHFT:
-			Application: \{ESC}OB
-			Normal: \{ESC}[B
-		else: \{ESC}B
-   \Knull          Transmit Null to host
-		Sends: \0
--->
-
-
-
-    <!-- Page numbers for std 070
-    >> page 388, 389 references can be replaced <<
-
-DECRPDE		343     Not in this document currently
-C1 Control 	385		IND, NEL, HTS, RI, SS2, SS3, DCS, SOS, DECID, CSI, ST, OSC, PM, APC
-SUB			387
-DEC Priv	388		DECCKM, DECCOLM, DECSCLM, DECSCNM, DECOM, DECAWM, DECARM, DECPFF, DECPEX, DECCEM, DECTEK, DECNRCM, DECVCCM, DECPCCM, DECKBUM, DECLRMM, DECXRLM
-DECRPM		450
-DECRPSS		452
-DECRQOSR	453
-DECPSR		454
-DECCIR		455
-DECTSR		462
-    -->
-
 </document>

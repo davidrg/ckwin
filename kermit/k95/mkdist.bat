@@ -47,6 +47,9 @@ if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
 @echo Copy resources...
 copy k95d.cfg dist
 
+REM Terminfo description
+copy k95.src dist
+
 REM ----------------------------------------------------------
 REM The following should go in: %ALLUSERSPROFILE%\Kermit 95
 copy k95.ini dist
@@ -155,7 +158,7 @@ for %%I in (%CK_DIST_PUBLIC%) do copy %%I dist\public\
 
 REM SCRIPTS directory
 @echo Copy scripts...
-set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc
+set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc terminfo.ksc
 set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% npage.ksc recover.ksc review.ksc rgrep.ksc host.cfg
 for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
 copy scripts-readme.txt dist\scripts\readme.txt
