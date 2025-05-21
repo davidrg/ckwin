@@ -168,7 +168,7 @@ i31rdctrl( int m, int * pa1, int * pa2, int * pa3, int * pa4, int * op )
             p = pa4;
             break;
         }
-        if ( (*p & 0x60) == 0x20 ) {
+        if ( (p != NULL) && (*p & 0x60) == 0x20 ) {
             *op  = i31inc();
             if ( (*op) < 0 )
                 return(n);
