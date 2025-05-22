@@ -98,7 +98,7 @@ int  verbose = 0;
 int  composite = 0;
 
 /* Some C-Kermit modules redefine printf to Vscrnprintf which normally only
- * exists within the main CKW (k95g.exe/k95.exe) so we've got to provide a
+ * exists within the main K95 (k95g.exe/k95.exe) so we've got to provide a
  * compatible definition here.
  */
 int Vscrnprintf(const char * format, ...) {

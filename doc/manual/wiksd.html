@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Windows Internet Kermit Service - Overview</title>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">
+<tt>Windows Internet Kermit Service - Overview</tt></a></h2>
+
+Internet Kermit Service (IKS) is an Internet standard file transfer and 
+management service defined in
+<a href="https://www.rfc-editor.org/rfc/rfc2839">RFC2839</a> and
+<a href="https://www.rfc-editor.org/rfc/rfc2840">RFC2840</a>.  It's similar
+to an FTP server except:
+
+<p>
+<ul>
+
+<li>It uses Kermit protocol instead of FTP protocol, thus offering numerous
+capabilities scarce or totally lacking in FTP.
+
+<li>It offers not only the FTP-like client/server mode of operation,
+but also an interactive file-transfer and management shell to Telnet clients.
+
+<li>The server can be automated by client-provided scripts.
+
+</ul>
+<p>
+
+A well-known publicly accessible Internet Kermit Service <em>was</em>
+<a href="https://kermitproject.org/cuiksd.html">the Unix-based
+one at Columbia University</a>.
+
+<p>
+
+As of Kermit 95 1.1.21, Internet Kermit Service is also available for Windows.
+The <b>Windows Internet Kermit Service Daemon</b> (WIKSD):
+
+<p>
+<ul>
+<li>Is available only for Windows NT, 2000, XP and newer.
+<li>Runs as a service.
+<li>Accepts connections only from the Internet.
+<li>Authenticates against the Windows user database.
+<li>Offers scriptable Kermit-based file-transfer and management services.
+<li>A secure version is available.
+</ul>
+<p>
+
+WIKSD is new with Kermit 95 1.1.21 (April 2002).  Previously Kermit 95
+handled remote access through a "host mode" script:
+
+<p>
+<ul>
+<li>Host mode is available for Windows 95, 98, ME, NT, 2000, XP and newer.
+<li>It runs as a user process.
+<li>It accepts both Internet and serial (modem or direct) connections.
+<li>It authenticates against its own user database.
+<li>It offers limited functionality through a simple menu.
+<li>Secure versions are not available.
+</ul>
+<p>
+
+Although host mode is still available, it is "deprecated" in favor of WIKSD.
+It is documented in the Kermit 95 manual.
+
+<p>
+
+The WIKSD documentation is:
+
+<p>
+<dl>
+
+<dt><a href="wiksdadm.html">The WIKSD Administrator's Guide</a>
+<dd>Setting up and administering remote access with WIKSD.
+
+<p>
+
+<dt><a href="wiksduse.html">The WIKSD User's Guide</a>
+<dd>How to use WIKSD to manage and transfer files.
+
+</dl>
+<p>
+
+WIKSD is simply Kermit 95 (<tt>K95.EXE</tt>), accessed remotely.  When K95 is
+acting as WIKSD, it is strictly a "remote mode Kermit" -- that is, it can
+not make connections, and you can not activate its terminal emulator.  For
+this reason, certain Kermit 95 commands don't work and generate error messages
+when given to IKSD, for example:
+
+<p>
+<ul>
+<li>SET PORT, SET HOST, TELNET, SSH, RLOGIN, ...
+<li>SET TERMINAL, SET KEY. ...
+<li>SET DIAL, SET MODEM, ...
+<li>SET NETWORK, SET TELNET, SET TELOPT, SET AUTHENTICATION, ...
+</ul>
+<p>
+
+In other words, any commands having to do with setting up, making, or
+using connections.  Also RUN and PUSH are disallowed.
+
+<p>
+
+WIKSD's command restrictions can cause problems for people who use the
+same PC locally (from its physical keyboard, mouse, and screen) and remotely
+(who come in through WIKSD): if their K95CUSTOM.INI files contains any of
+the above commands, lots of error messages will appear when logging in to
+WIKSD.  The way to avoid this is to separate the forbidden commands from
+the always-legal ones, as in this example:
+
+<p>
+<pre>
+  ; FILE K95CUSTOM.INI -- Kermit 95 Customizations
+  ;
+  <i>(Commands acceptable to both K95 and WIKSD here)</i>
+
+  IF IKSD END 0 IKSD Setup Complete.
+
+  <i>(Commands not acceptable WIKSD here)</i>
+</pre>
+
+
+<p>
+[ <a href="#top">Top</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
+<hr noshade>
+<address>
+Windows Internet Kermit Service - Overview /
+The Kermit Project /
+<!--$last-update-short$-->2 April 2002<!--/$last-update-short$-->
+</address></body></html>

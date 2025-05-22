@@ -1,3 +1,15 @@
+#ifndef CKT_NT35
+#ifdef CK_SHELL_NOTIFY
+#ifdef __WATCOMC__
+/* The Watcom headers need this defined for shell notifications */
+#ifdef _WIN32_IE
+#undef _WIN32_IE
+#endif /* _WIN32_IE */
+#define _WIN32_IE 0x0501
+#endif /* __WATCOMC__ */
+#endif /* CK_SHELL_NOTIFY */
+#endif /* CKT_NT35 */
+
 #include <windowsx.h>
 #include "ktermin.hxx"
 #include "kmenu.hxx"
@@ -20,6 +32,11 @@
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER < 1300
+#ifndef UINT_PTR
+#define UINT_PTR UINT
+#endif
+#endif
 
 #ifndef NOTOOLBAR
 const int numButtons = 3;
@@ -45,11 +62,21 @@ extern int nt351;
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
 KTerminal::KTerminal( K_GLOBAL* kg )
-    : KAppWin( kg, kg->noClose ? IDR_TERMMENU_NOCLOSE : IDR_TERMMENU, IDR_TOOLBARTERMINAL ),
-    toolbar_disabled(FALSE), menuInitialized(FALSE), firstShow(TRUE)
+    : KAppWin( kg, kg->noClose ? IDR_TERMMENU_NOCLOSE : IDR_TERMMENU, IDR_TOOLBARTERMINAL )
+    , toolbar_disabled(FALSE)
+    , menuInitialized(FALSE)
+    , firstShow(TRUE)
+    , menuDisabled(FALSE)
+    , sysActions(NULL)
 {
     client = new KClient( kg, VTERM );
     setClient( client );
+
+    // These menu items all default to FALSE
+    menuCapture = menuPrinterCopy = menuDebug = menuPcTerm = menuKeyClick =
+            menuTerminalScreen = FALSE;
+    // And this one to TRUE
+    menuGuiDialogs = TRUE;
 
 	// Disable toolbar button & menu item for dialer
 	if (!DialerExists() && toolbar) {
@@ -148,124 +175,127 @@ void KTerminal::getCreateInfo( K_CREATEINFO* info )
 void KTerminal::initMenu(void)
 {
     KAppWin::initMenu();
-    if (!menu)
-        return;
-    menu->createMenu( hInst, this );
+
+    if (menu && menu->isVisible()) {
+        menu->createMenu(hInst, this);
+    }
 
     if ( autodl && !adl_ask ) {
-        menu->setCheck(ID_ACTION_AUTODOWNLOAD_ON);
-        menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_OFF);
-        menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_ASK);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ON, TRUE);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ASK, FALSE);
     } else if ( autodl && adl_ask ){
-        menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_ON);
-        menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_OFF);
-        menu->setCheck(ID_ACTION_AUTODOWNLOAD_ASK);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ON, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ASK, TRUE);
     } else {
-        menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_ON);
-        menu->unsetCheck(ID_ACTION_AUTODOWNLOAD_OFF);
-        menu->setCheck(ID_ACTION_AUTODOWNLOAD_ASK);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ON, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTODOWNLOAD_ASK, TRUE);
     }
 
     if ( cmask == 0177 ) {
-        menu->setCheck(ID_ACTION_7BIT);
-        menu->unsetCheck(ID_ACTION_8BIT);
+        setMenuItemChecked(ID_ACTION_7BIT, TRUE);
+        setMenuItemChecked(ID_ACTION_8BIT, FALSE);
     } else {
-        menu->unsetCheck(ID_ACTION_7BIT);
-        menu->setCheck(ID_ACTION_8BIT);
+        setMenuItemChecked(ID_ACTION_7BIT, FALSE);
+        setMenuItemChecked(ID_ACTION_8BIT, TRUE);
     }
 
-    menu->unsetCheck(ID_ACTION_CAPTURE);
-    menu->unsetCheck(ID_ACTION_PRINTERCOPY);
-    menu->unsetCheck(ID_ACTION_DEBUG);
-    menu->unsetCheck(ID_ACTION_PCTERM);
-    menu->unsetCheck(ID_ACTION_KEYCLICK);
-    if ( kglob->mouseEffect == TERM_MOUSE_CHANGE_FONT )
-        menu->setCheck(ID_ACTION_RESIZE_FONT);
-    else
-        menu->unsetCheck(ID_ACTION_RESIZE_FONT);
-    if ( kglob->mouseEffect == TERM_MOUSE_CHANGE_DIMENSION )
-        menu->setCheck(ID_ACTION_RESIZE_DIMENSION);
-    else
-        menu->unsetCheck(ID_ACTION_RESIZE_DIMENSION);
-    menu->setCheck(ID_ACTION_GUI_DIALOGS);
+    setMenuItemChecked(ID_ACTION_CAPTURE, menuCapture);
+    setMenuItemChecked(ID_ACTION_PRINTERCOPY, menuPrinterCopy);
+    setMenuItemChecked(ID_ACTION_DEBUG, menuDebug);
+    setMenuItemChecked(ID_ACTION_PCTERM, menuPcTerm);
+    setMenuItemChecked(ID_ACTION_KEYCLICK, menuKeyClick);
 
-    if ( tt_url_hilite ) 
-        menu->setCheck(ID_ACTION_URL_HIGHLIGHT);
+    if ( kglob->mouseEffect == TERM_MOUSE_CHANGE_FONT )
+        setMenuItemChecked(ID_ACTION_RESIZE_FONT, TRUE);
     else
-        menu->unsetCheck(ID_ACTION_URL_HIGHLIGHT);
+        setMenuItemChecked(ID_ACTION_RESIZE_FONT, FALSE);
+
+    if ( kglob->mouseEffect == TERM_MOUSE_CHANGE_DIMENSION )
+        setMenuItemChecked(ID_ACTION_RESIZE_DIMENSION, TRUE);
+    else
+        setMenuItemChecked(ID_ACTION_RESIZE_DIMENSION, FALSE);
+
+    setMenuItemChecked(ID_ACTION_GUI_DIALOGS, menuGuiDialogs);
+
+    if ( tt_url_hilite )
+        setMenuItemChecked(ID_ACTION_URL_HIGHLIGHT, TRUE);
+    else
+        setMenuItemChecked(ID_ACTION_URL_HIGHLIGHT, FALSE);
 
     if ( xitwarn == 1 ) {
-        menu->setCheck(ID_ACTION_WARNING_ON);
-        menu->unsetCheck(ID_ACTION_WARNING_OFF);
-        menu->unsetCheck(ID_ACTION_WARNING_ALWAYS);
+        setMenuItemChecked(ID_ACTION_WARNING_ON, TRUE);
+        setMenuItemChecked(ID_ACTION_WARNING_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_WARNING_ALWAYS, FALSE);
     } else if ( xitwarn == 2 ){
-        menu->unsetCheck(ID_ACTION_WARNING_ON);
-        menu->unsetCheck(ID_ACTION_WARNING_OFF);
-        menu->setCheck(ID_ACTION_WARNING_ALWAYS);
+        setMenuItemChecked(ID_ACTION_WARNING_ON, FALSE);
+        setMenuItemChecked(ID_ACTION_WARNING_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_WARNING_ALWAYS, TRUE);
     } else {
-        menu->unsetCheck(ID_ACTION_WARNING_ON);
-        menu->unsetCheck(ID_ACTION_WARNING_OFF);
-        menu->setCheck(ID_ACTION_WARNING_ALWAYS);
+        setMenuItemChecked(ID_ACTION_WARNING_ON, FALSE);
+        setMenuItemChecked(ID_ACTION_WARNING_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_WARNING_ALWAYS, TRUE);
     }
 
     if ( autolocus == 1 ) {
-        menu->setCheck(ID_ACTION_AUTO_LOCUS_ON);
-        menu->unsetCheck(ID_ACTION_AUTO_LOCUS_OFF);
-        menu->unsetCheck(ID_ACTION_AUTO_LOCUS_ASK);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ON, TRUE);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ASK, FALSE);
     } else if ( autolocus == 2 ){
-        menu->unsetCheck(ID_ACTION_AUTO_LOCUS_ON);
-        menu->unsetCheck(ID_ACTION_AUTO_LOCUS_OFF);
-        menu->setCheck(ID_ACTION_AUTO_LOCUS_ASK);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ON, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ASK, TRUE);
     } else {
-        menu->unsetCheck(ID_ACTION_AUTO_LOCUS_ON);
-        menu->unsetCheck(ID_ACTION_AUTO_LOCUS_OFF);
-        menu->setCheck(ID_ACTION_AUTO_LOCUS_ASK);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ON, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
+        setMenuItemChecked(ID_ACTION_AUTO_LOCUS_ASK, TRUE);
     }
 
-    if ( locus )
-        menu->setCheck(ID_ACTION_LOCUS);
-    else
-        menu->unsetCheck(ID_ACTION_LOCUS);
+    setMenuItemChecked(ID_ACTION_LOCUS, locus);
+
+    setMenuItemChecked(ID_ACTION_EXIT, menuTerminalScreen);
 
 	if (noDialer)
-		getMenu()->enable(ID_CONNECT, FALSE);
+        setMenuItemChecked(ID_CONNECT, FALSE);
 }
 
 void KTerminal::disableMenu( void )
 {
-    if (!menu)
-        return;
-
 #ifndef COMMENT
-    menu->enable(ID_CONNECT,FALSE);
-    menu->enable(ID_FILE_HANGUP, FALSE);
-    menu->enable(ID_FILE_EXIT,FALSE);
-    menu->enable(ID_ACTION_AUTODOWNLOAD_ON, FALSE);
-    menu->enable(ID_ACTION_AUTODOWNLOAD_OFF, FALSE);
-    menu->enable(ID_ACTION_AUTODOWNLOAD_ASK, FALSE);
-    // menu->enable(ID_AUTO_LOCUS, FALSE);
-    menu->enable(ID_ACTION_AUTO_LOCUS_ON, FALSE);
-    menu->enable(ID_ACTION_AUTO_LOCUS_OFF, FALSE);
-    menu->enable(ID_ACTION_AUTO_LOCUS_ASK, FALSE);
-    // menu->enable(ID_BYTESIZE, FALSE);
-    menu->enable(ID_ACTION_7BIT, FALSE);
-    menu->enable(ID_ACTION_8BIT, FALSE);
-    menu->enable(ID_ACTION_CAPTURE, FALSE);
-    menu->enable(ID_ACTION_PRINTERCOPY, FALSE);
-    menu->enable(ID_ACTION_DEBUG, FALSE);
-    // menu->enable(ID_WARNING, FALSE);
-    menu->enable(ID_ACTION_WARNING_ALWAYS, FALSE);
-    menu->enable(ID_ACTION_WARNING_OFF, FALSE);
-    menu->enable(ID_ACTION_WARNING_ON, FALSE);
-    menu->enable(ID_ACTION_GUI_DIALOGS, FALSE);
-    menu->enable(ID_ACTION_KEYCLICK, FALSE);
-    menu->enable(ID_ACTION_LOCUS, FALSE);
-    menu->enable(ID_ACTION_PCTERM, FALSE);
-    // menu->enable(ID_RESIZE, FALSE);
-    menu->enable(ID_ACTION_RESIZE_FONT, FALSE);
-    menu->enable(ID_ACTION_RESIZE_DIMENSION, FALSE);
-    menu->enable(ID_ACTION_URL_HIGHLIGHT, FALSE);
-	menu->enable(ID_DOWNLOAD, FALSE);
+    // Note: the same menu items may also need to be disabled
+    //       in setMenubarVisible()
+    menuDisabled = TRUE;
+    disableMenuItem(ID_CONNECT);
+    disableMenuItem(ID_FILE_HANGUP);
+    disableMenuItem(ID_FILE_EXIT);
+    disableMenuItem(ID_ACTION_AUTODOWNLOAD_ON);
+    disableMenuItem(ID_ACTION_AUTODOWNLOAD_OFF);
+    disableMenuItem(ID_ACTION_AUTODOWNLOAD_ASK);
+    // disableMenuItem(ID_AUTO_LOCUS);
+    disableMenuItem(ID_ACTION_AUTO_LOCUS_ON);
+    disableMenuItem(ID_ACTION_AUTO_LOCUS_OFF);
+    disableMenuItem(ID_ACTION_AUTO_LOCUS_ASK);
+    // disableMenuItem(ID_BYTESIZE);
+    disableMenuItem(ID_ACTION_7BIT);
+    disableMenuItem(ID_ACTION_8BIT);
+    disableMenuItem(ID_ACTION_CAPTURE);
+    disableMenuItem(ID_ACTION_PRINTERCOPY);
+    disableMenuItem(ID_ACTION_DEBUG);
+    // disableMenuItem(ID_WARNING);
+    disableMenuItem(ID_ACTION_WARNING_ALWAYS);
+    disableMenuItem(ID_ACTION_WARNING_OFF);
+    disableMenuItem(ID_ACTION_WARNING_ON);
+    disableMenuItem(ID_ACTION_GUI_DIALOGS);
+    disableMenuItem(ID_ACTION_KEYCLICK);
+    disableMenuItem(ID_ACTION_LOCUS);
+    disableMenuItem(ID_ACTION_PCTERM);
+    // disableMenuItem(ID_RESIZE);
+    disableMenuItem(ID_ACTION_RESIZE_FONT);
+    disableMenuItem(ID_ACTION_RESIZE_DIMENSION);
+    disableMenuItem(ID_ACTION_URL_HIGHLIGHT);
+    disableMenuItem(ID_DOWNLOAD);
 #else
     destroyMenu();
     client->endSizing(TRUE);
@@ -312,6 +342,214 @@ void KTerminal::disableToolbar( void )
     newtb->createWin( this );
     toolbar = newtb;
 #endif
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KTerminal::setMenuItemChecked(UINT menuItemId, Bool checked) {
+    if (menu) {
+        if (checked) {
+            menu->setCheck(menuItemId);
+        } else {
+            menu->unsetCheck(menuItemId);
+        }
+    }
+
+    if (sysActions != NULL) {
+        UINT stat = GetMenuState( sysActions, menuItemId, MF_BYCOMMAND );
+        UINT newstat;
+        if ( !(stat & (checked ? MF_CHECKED : MF_UNCHECKED)) ) {
+            newstat = (checked ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND;
+            int rc = CheckMenuItem( sysActions, menuItemId, newstat );
+        }
+    }
+
+    // Store state for menu items that don't have an associated global
+    switch(menuItemId) {
+        case ID_ACTION_CAPTURE:
+            menuCapture = checked;
+            break;
+        case ID_ACTION_PRINTERCOPY:
+            menuPrinterCopy = checked;
+            break;
+        case ID_ACTION_DEBUG:
+            menuDebug = checked;
+            break;
+        case ID_ACTION_PCTERM:
+            menuPcTerm = checked;
+            break;
+        case ID_ACTION_KEYCLICK:
+            menuKeyClick = checked;
+            break;
+        case ID_ACTION_GUI_DIALOGS:
+            menuGuiDialogs = checked;
+            break;
+        case ID_ACTION_EXIT:
+            menuTerminalScreen = checked;
+            break;
+    }
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KTerminal::disableMenuItem(UINT menuItemId) {
+    if (menu) {
+        menu->enable(menuItemId, FALSE);
+    }
+
+    if (sysActions != NULL) {
+        EnableMenuItem( sysActions, menuItemId, MF_BYCOMMAND | MF_GRAYED );
+    }
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KTerminal::setMenubarVisible(Bool visible) {
+    if (!menu)
+        return;
+
+    // Get menubar height
+    int mbhi = kglob->sysMets->menuHeight();
+
+    // Get terminal window height
+    int twid = 0, thi = 0;
+    getSize(twid, thi);
+
+    // Figure out appropriate new size for the window without
+    // the menubar
+    int newWindowHeight = visible ? thi + mbhi : thi - mbhi;
+
+    // Get rid of the menubar
+    menu->setVisible(visible);
+
+    // Resize the window and the client
+    size(twid, newWindowHeight);
+    client->setDimensions(TRUE);
+
+    if (visible) {
+        // Get rid of the customised system menu
+        sysActions = NULL;
+        GetSystemMenu(hwnd(), TRUE);
+    } else {
+        // If we're hiding the menu bar then move important menu items
+        // on to the system menu:
+        /*
+         * 		---
+         *  	Connections
+         *		Hangup
+         *		--
+         *		Mark Mode >
+         *		Paste
+         *		--
+         *		Actions >
+         *		--
+         *		Context Help
+         *		About
+         */
+        HMENU hSys = GetSystemMenu(hwnd(), FALSE);
+        AppendMenu(hSys, MF_SEPARATOR, NULL, NULL);
+        AppendMenu(hSys, MF_STRING | ( noDialer ? MF_DISABLED : MF_ENABLED),
+                   ID_CONNECT, "Connections");
+        AppendMenu(hSys, MF_STRING | MF_UNCHECKED, ID_ACTION_EXIT,
+                   "Terminal Screen");
+        AppendMenu(hSys, MF_STRING, ID_FILE_HANGUP, "Hangup");
+        AppendMenu(hSys, MF_SEPARATOR, NULL, NULL);
+
+        HMENU mm = LoadMenu(hInst, MAKEINTRESOURCE(IDR_TERMMENU_SYSTEM_MARK));
+        AppendMenu(hSys, MF_POPUP, (UINT_PTR)mm, "Mark Mode");
+        AppendMenu(hSys, MF_STRING, ID_ACTION_PASTE, "Paste");
+        AppendMenu(hSys, MF_SEPARATOR, NULL, NULL);
+
+        sysActions = LoadMenu(hInst, MAKEINTRESOURCE(IDR_TERMMENU_SYSTEM_ACTIONS));
+        AppendMenu(hSys, MF_POPUP, (UINT_PTR)sysActions, "Actions");
+        AppendMenu(hSys, MF_SEPARATOR, NULL, NULL);
+
+        AppendMenu(hSys, MF_STRING, ID_ACTION_HELP, "Context Help");
+        AppendMenu(hSys, MF_STRING, ID_HELP_ABOUT, "About");
+
+        // If the menu is disabled (set menu disabled), then disable the
+        // same items in the system menu
+        if (menuDisabled) {
+            disableMenu();
+        }
+
+        // Configure checked state for everything in the actions menu
+        initMenu();
+    }
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KTerminal::setToolbarVisible(Bool visible) {
+#ifndef NOTOOLBAR
+    if ( toolbar ) {
+        int tbwid = 0, tbhi = 0;
+        toolbar->getSize(tbwid, tbhi);
+
+        int twid = 0, thi = 0;
+        getSize(twid, thi);
+
+        int newWindowHeight = visible ? thi + tbhi : thi - tbhi;
+
+        toolbar->setVisible(visible);
+
+        // move the client
+        int clientY = visible ? tbhi - kglob->sysMets->edgeHeight() : 0;
+        SetWindowPos( client->hwnd(), 0, 0,
+                      clientY
+                      , 0, 0, SWP_NOSIZE  );
+
+        size(twid, newWindowHeight);
+        client->setDimensions(TRUE);
+
+    }
+#endif /* NOTOOLBAR */
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+BOOL KTerminal::getToolbarVisible() {
+#ifndef NOTOOLBAR
+    if (toolbar) return toolbar->isVisible();
+#endif
+    return FALSE;
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KTerminal::setStatusbarVisible(Bool visible) {
+    if ( status ) {
+        int sbwid = 0, sbhi = 0;
+        status->getSize(sbwid, sbhi);
+
+        int twid = 0, thi = 0;
+        getSize(twid, thi);
+
+        int newWindowHeight = visible ? thi + sbhi : thi - sbhi;
+
+        status->setVisible(visible);
+
+        size(twid, newWindowHeight);
+        client->setDimensions(TRUE);
+    }
+}
+
+void KTerminal::setConnectMode(Bool on) {
+
+#ifndef NOTOOLBAR
+    if ( toolbar )
+        SendMessage(toolbar->hwnd(),
+                    TB_CHECKBUTTON, ID_TOOLBAR_EXIT,
+                    MAKELONG(on,0));
+#endif
+
+    HMENU hSys = GetSystemMenu(hwnd(), FALSE);
+    UINT stat = GetMenuState( hSys, ID_ACTION_EXIT, MF_BYCOMMAND );
+    UINT newstat;
+    if ( !(stat & (on ? MF_CHECKED : MF_UNCHECKED)) ) {
+        newstat = (on ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND;
+        CheckMenuItem( hSys, ID_ACTION_EXIT, newstat );
+    }
 }
 
 /*------------------------------------------------------------------------
@@ -523,6 +761,9 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
     case WM_CLOSE:
         debug(F111,"KTerminal::message","WM_CLOSE",msg);
         PostMessage( hWnd, WM_REQUEST_CLOSE_KERMIT, 0, 0 );
+#ifdef CK_SHELL_NOTIFY
+        destroyNotificationIcon();
+#endif /* CK_SHELL_NOTIFY */
         done = TRUE;
         break;
 
@@ -547,7 +788,7 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         break;
 
     case WM_INITMENU:
-        if (!menuInitialized) {
+        if (!menuInitialized && menu && menu->isVisible()) {
             initMenu();
             menuInitialized = TRUE;
         }
@@ -589,6 +830,25 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
         }
         break;
 
+#ifdef CK_SHELL_NOTIFY
+    case WMAPP_NOTIFYCALLBACK:
+        switch (LOWORD(lParam))
+        {
+            case WM_LBUTTONDOWN:
+            case NIN_BALLOONUSERCLICK:
+                /* User clicked the notification */
+                takeFocus();
+            case WM_RBUTTONDOWN:
+            case NIN_BALLOONTIMEOUT:
+                /* Get rid of the notification icon */
+                destroyNotificationIcon();
+                break;
+        }
+        done = TRUE;
+        break;
+#endif /* CK_SHELL_NOTIFY */
+
+    case WM_SYSCOMMAND:
     case WM_COMMAND:
         debug(F111,"KTerminal::message","WM_COMMAND",msg);
         debug(F111,"KTerminal::message WM_COMMAND","LOWORD(wParam)",LOWORD(wParam));
@@ -868,6 +1128,14 @@ Bool KTerminal::message( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             break;
         }
     }
+
+    if (msg == WM_SYSCOMMAND) {
+        // For WM_SYSCOMMAND, a return value of 0 indicates the message was
+        // processed.
+        if (done) return 0;
+        return 1;
+    }
+
     return done;
 }
 

@@ -37,8 +37,10 @@
 #include <sys/socket.h>
 
 #ifdef __WATCOMC__
+#ifndef TCPV40HDRS
 #include <tcpustd.h>
 #include <arpa/inet.h>
+#endif /* TCPV40HDRS */
 #endif
 
 void _System addsockettolist(int socket);

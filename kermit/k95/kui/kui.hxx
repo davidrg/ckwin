@@ -29,7 +29,7 @@ public:
 
     void savePositions();
     void setProperty( int propid, intptr_t param1, intptr_t param2 );
-    void getProperty( int propid, long param1, long param2 );
+    int getProperty( int propid, void* out );
 
     void setDialogHwnd( HWND h ) { dialogHwnd = h; }
     KTerminal * getTerminal(void) { return terminal; };

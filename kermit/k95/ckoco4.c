@@ -42,6 +42,7 @@
 extern int tnlm, tn_nlm;        /* Terminal newline mode, ditto for TELNET */
 #ifndef NOTERM
 extern int tt_status[VNUM] ;
+extern bool bracketed_paste[VNUM];
 #endif /* NOTERM */
 #ifndef NOLOCAL
 extern videobuffer vscrn[] ;
@@ -441,7 +442,7 @@ VscrnSelect( BYTE vmode, int mode )
     while (1) {
         line = &vscrn[vmode].lines[vscrn[vmode].marktop] ;
         if ( line->markbeg != -1 && line->markshowend != -1 )
-            for ( line->markbeg ;
+            for ( /*line->markbeg*/ ;
                 line->markbeg <= line->markshowend;
                 line->markbeg++ ) {
 #ifdef NT
@@ -549,15 +550,95 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
     return rc ;
 }
 
-APIRET
-CopyClipboardToKbdBuffer( BYTE vmode )
+#ifdef NT
+USHORT *
+GetUnicodeClipboardContent()
 {
-    int i = 0 ;
+    BYTE * hClipbrdData ;
+    USHORT * pUClipbrdData = 0;
+    HGLOBAL hClipboard = NULL ;
+
+    if ( OpenClipboard( NULL ) )
+    {
+        if ( hClipboard = (BYTE *) GetClipboardData( CF_UNICODETEXT ) )
+        {
+            hClipbrdData = GlobalLock(hClipboard) ;
+            pUClipbrdData = wcsdup( (const wchar_t *) hClipbrdData ) ;
+            GlobalUnlock( hClipboard ) ;
+        }
+        CloseClipboard();
+    }
+
+    return pUClipbrdData ;
+}
+#endif /* NT */
+
+BYTE *
+GetClipboardContent()
+{
     APIRET rc = -1 ;
     BYTE * hClipbrdData ;
     USHORT * pUClipbrdData = 0;
     BYTE * pClipbrdData = 0 ;
+#ifndef NT
     BYTE * pClipboard ;
+#endif /* NT */
+
+#ifdef NT
+    HGLOBAL hClipboard = NULL ;
+
+    if ( OpenClipboard( NULL ) )
+    {
+        if ( hClipboard = (BYTE *) GetClipboardData( CF_TEXT ) )
+        {
+            hClipbrdData = GlobalLock(hClipboard) ;
+            pClipbrdData = strdup( hClipbrdData ) ;
+            GlobalUnlock( hClipboard ) ;
+        }
+
+        CloseClipboard() ;
+    }
+    if ( pClipbrdData )
+        CharToOem( pClipbrdData, pClipbrdData );
+#else /* NT */
+    pClipbrdData = GetTextFromClipboardServer() ;
+
+    if ( !pClipbrdData ) {
+        if ( rc = WinOpenClipbrd(hab) ) {
+            hClipbrdData = (BYTE *) WinQueryClipbrdData( hab, CF_TEXT ) ;
+            if ( !DosGetSharedMem( hClipbrdData, PAG_READ ) )
+            {
+                pClipbrdData = strdup( hClipbrdData ) ;
+
+                /* We must copy the text back to the Clipboard because the   */
+                /* GetSharedMemory call screwed up the clipboard.  We're not */
+                /* supposed to do things like that.                          */
+                if ( !DosAllocSharedMem( (PPVOID) &pClipboard, 0, strlen(pClipbrdData)+1,
+                                         PAG_COMMIT | PAG_READ | PAG_WRITE |
+                                         OBJ_GIVEABLE | OBJ_GETTABLE ) )
+                {
+                    strcpy( pClipboard, pClipbrdData ) ;
+                    WinSetClipbrdData( hab, (ULONG) pClipboard, CF_TEXT, CFI_POINTER ) ;
+                    DosFreeMem( pClipboard ) ;
+                }
+            }
+            WinCloseClipbrd( hab ) ;
+        }
+    }
+#endif /* NT */
+    return pClipbrdData ;
+}
+
+APIRET
+CopyClipboardToKbdBuffer( BYTE vmode )
+{
+    APIRET rc = -1 ;
+    BYTE * hClipbrdData ;
+    USHORT * pUClipbrdData = 0;
+    BYTE * pClipbrdData = 0 ;
+#ifndef NT
+    BYTE * pClipboard ;
+#endif /* NT */
     int use_unicode = (ck_isunicode() && !isWin95());
 
 #ifdef NT
@@ -645,7 +726,17 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                             buf[j++] = *bytes++;
                     }
                 }
+
+                if (bracketed_paste[vmode]) { /* bracket paste */
+                  sendescseq("[200~");
+                }
+
                 sendcharsduplex(buf,bytecount,TRUE);
+
+                if (bracketed_paste[vmode]) { /* Un-bracket paste */
+                  sendescseq("[201~");
+                }
+
                 free(buf);
                 rc = 0;
             } else {
@@ -686,10 +777,19 @@ CopyClipboardToKbdBuffer( BYTE vmode )
                 pData[j] = '\0';
                 debug(F111,"Clipboard","pData length",j);
 
+                if (bracketed_paste[vmode]) { /* bracket paste */
+                    sendescseq("[200~");
+                }
+
                 if ( vmode == VTERM )
                     sendcharsduplex(pData,j,FALSE);
                 else
                     putkeystr( vmode, pData );
+
+                if (bracketed_paste[vmode]) { /* Un-bracket paste */
+                    sendescseq("[201~");
+                }
+
                 free(pData);
                 rc = 0 ;
             }
@@ -706,9 +806,8 @@ CopyClipboardToKbdBuffer( BYTE vmode )
 }
 
 APIRET
-CopyVscrnToClipboard( BYTE vmode, int select_mode )
+CopyToClipboard( BYTE* data, ULONG length )
 {
-    ULONG  ClipBoardSz = 0 ;
     BYTE * pClipboard = 0 ;
 #ifdef NT
     HGLOBAL hClipboard = NULL ;
@@ -716,17 +815,11 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
     APIRET rc = 0 ;
     int use_unicode = (ck_isunicode() && !isWin95());
 
-    if ( VscrnSelect(vmode, select_mode) )
-        return -1 ;
-
-    /* Determine size of Clipboard */
-    ClipBoardSz = use_unicode ? 2 * nselect : nselect ;
-
     /* Allocate Clipboard Buffer */
 #ifdef NT
-    if ( (hClipboard = GlobalAlloc( GMEM_MOVEABLE | GMEM_DDESHARE, ClipBoardSz )) == NULL )
+    if ( (hClipboard = GlobalAlloc( GMEM_MOVEABLE | GMEM_DDESHARE, length )) == NULL )
 #else /* NT */
-    if ( rc = DosAllocSharedMem( (PPVOID) &pClipboard, 0, ClipBoardSz,
+    if ( rc = DosAllocSharedMem( (PPVOID) &pClipboard, 0, length,
                    PAG_COMMIT | PAG_READ | PAG_WRITE |
                    OBJ_GIVEABLE | OBJ_GETTABLE ) )
 #endif /* NT */
@@ -748,10 +841,7 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
 #endif /* NT */
 
     /* Copy the data to the clibboard buffer */
-    if ( use_unicode )
-        memcpy( pClipboard, Uselection, ClipBoardSz );
-    else
-        strcpy( pClipboard, selection ) ;
+    memcpy( pClipboard, data, length );
 
 #ifdef NT
     if ( !use_unicode )
@@ -783,6 +873,19 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
       }
 #endif /* NT */
     return rc ;
+}
+
+APIRET
+CopyVscrnToClipboard( BYTE vmode, int select_mode )
+{
+    int use_unicode = (ck_isunicode() && !isWin95());
+
+    if ( VscrnSelect(vmode, select_mode) )
+        return -1 ;
+
+    return CopyToClipboard(
+        use_unicode ? (unsigned char*)Uselection : selection,
+        use_unicode ? 2 * nselect : nselect);
 }
 
 
@@ -1075,6 +1178,21 @@ markdownscreen( BYTE vmode )
         }
 }
 
+
+void markdownhalfscreen(BYTE vmode) {
+    int i;
+    /* I know this is gross - we should just be able to tell markdownscreen()
+     * to mark half of what it otherwise would have, but I've spent a day or two
+     * staring at and playing around with that function and I have no idea how
+     * it works.
+     */
+
+    int lines = VscrnGetHeight(vmode) / 2;
+    for (i = 0; i < lines; i++) {
+        markdownone(vmode);
+    }
+}
+
 void
 markupscreen( BYTE vmode )
 {
@@ -1147,6 +1265,23 @@ markupscreen( BYTE vmode )
         else vscrn[vmode].cursor.y = 0 ;
         }
 }
+
+void
+markuphalfscreen( BYTE vmode ) {
+    int i;
+
+    /* I know this is gross - we should just be able to tell markupscreen()
+     * to mark half of what it otherwise would have, but I've spent a day or two
+     * staring at and playing around with that function and I have no idea how
+     * it works.
+     */
+
+    int lines = VscrnGetHeight(vmode) / 2;
+    for (i = 0; i < lines; i++) {
+        markupone(vmode);
+    }
+}
+
 
 void
 markhomescreen(BYTE vmode )

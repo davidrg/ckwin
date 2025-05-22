@@ -14,10 +14,20 @@
 
 ========================================================================*/
 
+extern "C" {
+#include "ckcdeb.h"
+#include "ckocon.h"
+}
+
 #include "kwin.hxx"
 #include "kscroll.hxx"
 
+/* MAXNUMCOL is also defined in ckocon.h */
+#if (defined(_MSC_VER) && _MSC_VER > 1400) || defined(__GNUC__)
+const int MAXNUMCOL = 512;
+#else
 const int MAXNUMCOL = 256;
+#endif
 struct _K_CLIENT_PAINT;
 struct _K_WORK_STORE;
 
@@ -76,12 +86,12 @@ private:    // this section is for performance
     size_t workTempSize;
 
     ushort* textBuffer;
-    uchar* attrBuffer;
+    cell_video_attr_t* attrBuffer;
     ushort* effectBuffer;
     ushort* lineAttr;
     _K_WORK_STORE* kws;
 
-    uchar prevAttr;
+    cell_video_attr_t prevAttr;
     ushort prevEffect;
 
     int wc;

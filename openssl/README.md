@@ -1,7 +1,7 @@
-Building OpenSSL for C-Kermit for Windows
+Building OpenSSL for Kermit 95
 ==================================================
 
-For full details on how to build OpenSSL for use with C-Kermit for Windows, see the
+For full details on how to build OpenSSL for use with Kermit 95, see the
 [Optional Dependencies](../doc/optional-dependencies.md) document. You should really read
 that page first.
 

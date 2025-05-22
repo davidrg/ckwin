@@ -651,6 +651,27 @@ K_DIALOG_GUI_SETTINGS( KD_LIST_ITEM * entry, enum ENTRYMODE mode )
     list = (UIW_VT_LIST *) Get(LIST_GUI_RUN);
     SetRunMode(combo,entry->_gui_run);
 
+    button = (UIW_BUTTON *)Get(CHECK_GUI_MENUBAR);
+    if ( entry->_gui_menu_bar )
+        button->woStatus |= WOS_SELECTED ;
+    else
+        button->woStatus &= ~WOS_SELECTED ;
+    button->Information( I_CHANGED_STATUS, NULL ) ;
+
+    button = (UIW_BUTTON *)Get(CHECK_GUI_TASKBAR);
+    if ( entry->_gui_tool_bar )
+        button->woStatus |= WOS_SELECTED ;
+    else
+        button->woStatus &= ~WOS_SELECTED ;
+    button->Information( I_CHANGED_STATUS, NULL ) ;
+
+    button = (UIW_BUTTON *)Get(CHECK_GUI_STATUSBAR);
+    if ( entry->_gui_status_bar )
+        button->woStatus |= WOS_SELECTED ;
+    else
+        button->woStatus &= ~WOS_SELECTED ;
+    button->Information( I_CHANGED_STATUS, NULL ) ;
+
     UI_EVENT event(OPT_INITIALIZED);
     event.windowObject = this ;
     eventManager->Put(event);
@@ -871,6 +892,10 @@ ApplyChangesToEntry( void )
         _entry->_rgb[i][1] = _rgbData[i].green;
         _entry->_rgb[i][2] = _rgbData[i].blue;
     }
+
+    _entry->_gui_menu_bar = FlagSet(Get(CHECK_GUI_MENUBAR)->woStatus,WOS_SELECTED);
+    _entry->_gui_tool_bar = FlagSet(Get(CHECK_GUI_TASKBAR)->woStatus,WOS_SELECTED);
+    _entry->_gui_status_bar = FlagSet(Get(CHECK_GUI_STATUSBAR)->woStatus,WOS_SELECTED);
 }
 
 #ifdef WIN32

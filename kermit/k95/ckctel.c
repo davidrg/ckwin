@@ -80,6 +80,10 @@ int sstelnet = 0;                       /* Do server-side Telnet negotiation */
 #include "ckocon.h"
 extern int tt_type, max_tt;
 extern struct tt_info_rec tt_info[];
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
+extern int colorpalette;
 #endif /* OS2 */
 #endif /* NOTERM */
 
@@ -94,6 +98,10 @@ extern struct tt_info_rec tt_info[];
 #include "ckcsig.h"
 #include "ckosyn.h"
 #endif /* OS2 */
+
+#ifdef NT
+#include <process.h>  /* for getpid() */
+#endif /* NT */
 
 #ifdef CK_NAWS                          /* Negotiate About Window Size */
 #ifdef RLOGCODE
@@ -129,6 +137,9 @@ int tn_auth_how = TN_AUTH_HOW_ANY;
 int tn_auth_enc = TN_AUTH_ENC_ANY;
 int tn_deb = 0;                         /* Telnet Debug mode */
 int tn_sfu = 0;                         /* Microsoft SFU compatibility */
+#ifdef OS2
+int tn_colorterm = 1;                   /* Send COLORTERM environment variable */
+#endif /* OS2 */
 #ifdef CK_FORWARD_X
 char * tn_fwdx_xauthority = NULL;       /* Xauthority File */
 int    fwdx_no_encrypt = 0;             /* Forward-X requires encryption */
@@ -239,9 +250,30 @@ extern int cmd_cols, cmd_rows;
 extern char namecopy[];
 extern char myipaddr[];             /* Global copy of my IP address */
 
+/* A copy of this function also appears in ck_crp.c for use by Kermit 95s
+ * telnet cryptography DLL (k95crypt.dll) */
+char *
+#ifdef CK_ANSIC
+tel_unk(int opt)                        /* "UNKNOWN-%u" string. */
+#else
+tel_unk(opt) int opt;
+#endif /* CK_ANSIC */
+{
+  /* 2024-03-27 SMS.  Added (decimal) value to "UNKNOWN" messages. */
+  static char val_str[ 20];
+  sprintf(val_str, "UNKNOWN-%u", opt);
+  return(val_str);
+}
+
 #ifndef TELOPT_MACRO
+
 int
-telopt_index(opt) int opt; {
+#ifdef CK_ANSIC
+telopt_index(int opt)
+#else
+telopt_index(opt) int opt;
+#endif /* CK_ANSIC */
+{
     if (opt >= 0 && opt <= TELOPT_STDERR)
       return(opt);
     else if (opt >= TELOPT_PRAGMA_LOGON && opt <= TELOPT_PRAGMA_HEARTBEAT)
@@ -253,32 +285,53 @@ telopt_index(opt) int opt; {
 }
 
 int
-telopt_ok(opt) int opt; {
+#ifdef CK_ANSIC
+telopt_ok(int opt)
+#else
+telopt_ok(opt) int opt;
+#endif /* CK_ANSIC */
+{
     return((opt >= TELOPT_BINARY && opt <= TELOPT_STDERR) ||
            (opt >= TELOPT_PRAGMA_LOGON && opt <= TELOPT_PRAGMA_HEARTBEAT) ||
            (opt == TELOPT_IBM_SAK));
 }
 
-CHAR *
-telopt(opt) int opt; {
+char *
+#ifdef CK_ANSIC
+telopt(int opt)
+#else
+telopt(opt) int opt;
+#endif /* CK_ANSIC */
+{
     if (telopt_ok(opt))
-      return((CHAR *)telopts[telopt_index(opt)]);
+      return(telopts[telopt_index(opt)]);
     else
-      return((CHAR *)"UNKNOWN");
+      return(tel_unk(opt));
 }
 
 int
-telopt_mode_ok(opt) int opt; {
-    return((unsigned int)(opt) <= TN_NG_MU);
+#ifdef CK_ANSIC
+telopt_mode_ok(int mode)
+#else
+telopt_mode_ok(mode) int mode;
+#endif /* CK_ANSIC */
+{
+    return (((unsigned int)mode) <= TN_NG_MU);
 }
 
-CHAR *
-telopt_mode(opt) int opt; {
-    if (telopt_mode_ok(opt))
-      return((CHAR *)telopt_modes[opt-TN_NG_RF]);
+char *                          /* Type matches ckctel.h:telopt_modes[]. */
+#ifdef CK_ANSIC
+telopt_mode(int mode)
+#else
+telopt_mode(mode) int mode;
+#endif /* CK_ANSIC */
+{
+    if (telopt_mode_ok(mode))
+      return(telopt_modes[mode-TN_NG_RF]);
     else
-      return((CHAR *)"UNKNOWN");
+      return(tel_unk(mode));
 }
+
 #endif /* TELOPT_MACRO */
 
 static int
@@ -840,7 +893,7 @@ tn_ssbopt(opt,sub,data,len) int opt, sub; CHAR * data; int len;
 #endif /* CK_ANSIC */
 {
     CHAR buf[256];
-    int n,m,rc;
+    int rc;
 
     if (ttnet != NET_TCPB) return(0);   /* Must be TCP/IP */
     if (ttnproto != NP_TELNET) return(0); /* Must be telnet protocol */
@@ -887,7 +940,7 @@ tn_ssbopt(opt,sub,data,len) int opt, sub; CHAR * data; int len;
                      TELOPT(TELOPT_NEWENVIRON)," ",
                      sub == TELQUAL_SEND ? "SEND" :
                      sub == TELQUAL_IS ? "IS" :
-                     sub == TELQUAL_INFO ?"INFO" : "UNKNOWN" );
+                     sub == TELQUAL_INFO ?"INFO" : tel_unk(sub) );
             for (i = 0, quote = 0; i < len; i++) {
                 if (quote) {
                     sprintf(hexbuf,"%02x",data[i]); /* safe but ugly */
@@ -1005,6 +1058,9 @@ tn_get_display()
     /* explicitedly requested we try to send one via X-Display Location */
     /* But do not send a string at all if FORWARD_X is in use.          */
 
+    /* Note that in Kermit 95 this is also used for X11 forwarding      */
+    /* over SSH                                                         */
+
     /* if (!IS_TELNET()) return(0); */
 
     debug(F110,"tn_get_display() myipaddr",myipaddr,0);
@@ -1027,8 +1083,14 @@ tn_get_display()
     }
     else
 #endif /* CK_ENVIRONMENT */
-        if (TELOPT_ME(TELOPT_XDISPLOC) ||
-              TELOPT_U(TELOPT_FORWARD_X)) {
+        if ((TELOPT_ME(TELOPT_XDISPLOC) ||
+              TELOPT_U(TELOPT_FORWARD_X))
+#if OS2
+#ifdef SSHBUILTIN
+            || (IS_SSH() && ssh_get_iparam(SSH_IPARAM_XFW))
+#endif   /* SSHBUILTIN */
+#endif   /* OS2 */
+              ) {
         ckmakmsg(tmploc,256,myipaddr,":0.0",NULL,NULL);
         disp = tmploc;
     }
@@ -1050,6 +1112,10 @@ static Xauth *real_xauth=NULL;
 #define UNIX_CONNECTION "unix"
 #define UNIX_CONNECTION_LENGTH 4
 #endif
+
+#endif /* CK_FORWARD_X */
+
+#ifdef CK_FWDX_PARSE_DISPN
 
 /*
  * private utility routines
@@ -1131,6 +1197,10 @@ copyhostname ()
 }
 #endif
 
+/*
+ * Parse X11 display name. This is used by both Telnet X11 forwarding,
+ * and on Kermit 95, X11 forwarding over SSH.
+ */
 
 int
 #ifdef CK_ANSIC
@@ -1279,6 +1349,9 @@ fwdx_parse_displayname (displayname, familyp, hostp, dpynump, scrnump, restp)
     return 1;
 }
 
+#endif /* CK_FWDX_PARSE_DISPN */
+
+#ifdef CK_FORWARD_X
 
 int
 #ifdef CK_ANSIC
@@ -1462,9 +1535,8 @@ fwdx_send_xauth_to_xserver(channel, data, len)
     /* send our own Xauth message using the real Xauth data.  And */
     /* then send any other data in the buffer.                    */
     {
-        int c, err, dpynum, scrnum, family, sb_len;
+        int dpynum, scrnum, family;
         char *display, *host = NULL, *rest = NULL;
-        unsigned char *sb, *p;
 
         /* parse the local DISPLAY env var */
         display = getenv("DISPLAY");
@@ -1487,7 +1559,7 @@ fwdx_send_xauth_to_xserver(channel, data, len)
             else if (family == FamilyInternet) {
                 /* call with address = 4 bytes numeric ip addr (MSB) */
                 struct hostent *hi;
-                if (hi = gethostbyname(host))
+                if ((hi = gethostbyname(host)))
                     real_xauth = XauGetAuthByAddr(family, 4,
                                                   hi->h_addr, strlen(disp_no),
                                                   disp_no, 0, NULL);
@@ -1968,6 +2040,7 @@ fwdx_send_data_from_channel(channel, data, len)
     return(0);
 }
 
+#ifdef COMMENT
 static unsigned char *
 #ifdef CK_ANSIC
 fwdx_add_quoted_twobyte(unsigned char *p, unsigned short twobyte)
@@ -1987,6 +2060,7 @@ fwdx_add_quoted_twobyte(p, twobyte)
         *p++ = 0xFF;
     return p;
 }
+#endif /* COMMENT */
 
 int
 #ifdef CK_ANSIC
@@ -2048,7 +2122,7 @@ fwdx_send_xauth(void)
         else if (family == FamilyInternet) {
             /* call with address = 4 bytes numeric ip addr (MSB) */
             struct hostent *hi;
-            if (hi = gethostbyname(host))
+            if ((hi = gethostbyname(host)))
                 real_xauth = XauGetAuthByAddr(family, 4,
                                               hi->h_addr,
                                               strlen(disp_no),
@@ -2548,7 +2622,7 @@ tn_set_modes() {
 #endif /* CK_FORWARD_X */
 #ifdef CK_ENVIRONMENT
     {
-        int i,j;
+        int i;
         for (i = 0; i < 8; i++) {
             tn_env_uservar[i][0] = NULL;
             tn_env_uservar[i][1] = NULL;
@@ -3462,10 +3536,10 @@ tn_debug(s) char *s;
     debug(F111,"tn_debug",s,what);
 #ifdef OS2
     if (1) {
-        extern unsigned char colorcmd;
-        colorcmd ^= 0x8 ;
+        extern cell_video_attr_t colorcmd;
+        colorcmd = cell_video_attr_with_fg_intensity_toggled(colorcmd);
         printf("%s\r\n",s);
-        colorcmd ^= 0x8 ;
+        colorcmd = cell_video_attr_with_fg_intensity_toggled(colorcmd);
     }
     if (!scrninitialized[VTERM]) {
         USHORT x,y;
@@ -3532,7 +3606,7 @@ tn_siks(cmd) int cmd;
 #else
     CHAR mystch = '\1';
 #endif /* NOXFER */
-    int n,m,rc;
+    int rc;
 
     if (ttnet != NET_TCPB) return(0);   /* Must be TCP/IP */
     if (ttnproto != NP_TELNET) return(0); /* Must be telnet protocol */
@@ -3634,7 +3708,7 @@ tn_sb( int opt, int * len, int (*fn)(int) )
 tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 #endif /* CK_ANSIC */
 /* tn_sb */ {
-    int c, x, y, n, m, flag;
+    int y, n, flag;
     /* if (!IS_TELNET()) return(1); */
 
     debug(F100,"Entering tn_sb()","",0);
@@ -3684,7 +3758,6 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 
 #ifdef DEBUG
             if ( deblog || tn_deb || debses ) {
-                int i;
                 ckmakmsg( tn_msg,TN_MSG_LEN,
                           "TELNET RCVD SB ",TELOPT(opt),
 			  " DATA(buffer-full) ",NULL);
@@ -4367,7 +4440,9 @@ tn_sb( opt, len, fn ) int opt; int * len; int (*fn)();
 
 static char rows_buf[16] = { 0, 0 }; /* LINES Environment variable */
 static char cols_buf[16] = { 0, 0 }; /* COLUMNS Enviornment variable */
+#ifndef OS2
 static char term_buf[64] = { 0, 0 }; /* TERM Environment variable */
+#endif /* OS2 */
 
 #ifdef CK_CURSES
 #ifndef VMS
@@ -4441,7 +4516,7 @@ tn_xdoop(CHAR z, int echo, int (*fn)(int))
 tn_xdoop(z, echo, fn) CHAR z; int echo; int (*fn)();
 #endif /* CK_ANSIC */
 /* tn_xdoop */ {
-    int c, x, y, n, m;
+    int c, x, y, n;
 #ifdef IKS_OPTION
     extern int server;
 #ifdef NOICP
@@ -5721,8 +5796,7 @@ tn_rnenv(sb, len) CHAR * sb; int len;
 /* tn_rnenv */ {                        /* Receive new environment */
     char varname[17];
     char value[65];
-    char * reply = 0, * s = 0;
-    int i,j,k,n;                                /* Worker. */
+    int i,j,k;                                /* Worker. */
     int type = 0; /* 0 for NONE, 1 for VAR, 2 for USERVAR, */
                   /* 3 for VALUE in progress */
 
@@ -5880,6 +5954,12 @@ tn_rnenv(sb, len) CHAR * sb; int len;
 #define SFUTLNTVER_VALUE  "2"
 #define SFUTLNTMODE_VALUE "console"	/* The other value is "stream" */
 
+#ifdef OS2
+/* These are for indicating terminal capabilities */
+#define K95COLORTERM "COLORTERM"
+#define K95COLORTERM_VALUE "truecolor"
+#endif /* OS2 */
+
 /* Telnet send new environment */
 /* Returns -1 on error, 0 if nothing happens, 1 on success */
 /* In order for this code to work, sb[len] == IAC          */
@@ -5892,7 +5972,7 @@ tn_snenv(sb, len) CHAR * sb; int len;
 #endif /* CK_ANSIC */
 /* tn_snenv */ {                        /* Send new environment */
     char varname[16];
-    char * reply = 0, * s = 0;
+    char * reply = 0;
     int i,j,n;                          /* Worker. */
     int type = 0;       /* 0 for NONE, 1 for VAR, 2 for USERVAR in progress */
     extern int ck_lcname;
@@ -5990,6 +6070,12 @@ tn_snenv(sb, len) CHAR * sb; int len;
                         n += strlen(SFUTLNTMODE) +
                           strlen(SFUTLNTMODE_VALUE) + 2;
                     }
+#ifdef OS2
+                    if (tn_colorterm && (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88)) {
+                        /* For indicating 24-bit RGB color support */
+                        n += strlen(K95COLORTERM) + strlen(K95COLORTERM_VALUE) + 2;
+                    }
+#endif /* OS2 */
 #ifdef CK_SNDLOC
                     if ( tn_loc && tn_loc[0] )
                         n += strlen("LOCATION") + strlen(tn_loc) + 2;
@@ -6184,6 +6270,16 @@ tn_snenv(sb, len) CHAR * sb; int len;
                           strcpy(&reply[n+13],SFUTLNTMODE_VALUE);
                           n += strlen(SFUTLNTMODE)+strlen(SFUTLNTMODE_VALUE)+2;
                       }
+#ifdef OS2
+                      if (tn_colorterm && (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88)) {
+                          /* Signal 24-bit color support */
+                          reply[n] = TEL_ENV_USERVAR;     /* VAR */
+                          strcpy(&reply[n+1],K95COLORTERM);
+                          reply[n+10] = TEL_ENV_VALUE; /* VALUE */
+                          strcpy(&reply[n+11],K95COLORTERM_VALUE);
+                          n += strlen(K95COLORTERM)+strlen(K95COLORTERM_VALUE)+2;
+                      }
+#endif /* OS2 */
                       if (tn_loc && tn_loc[0]) {
                           reply[n] = TEL_ENV_USERVAR;     /* VAR */
                           strcpy(&reply[n+1],"LOCATION");
@@ -9049,8 +9145,6 @@ tngmdm(void)
 tngmdm()
 #endif /* CK_ANSIC */
 /* tngmdm */ {
-
-    int rc = -1;
 
     debug(F110,"tngmdm","begin",0);
     if (ttnet != NET_TCPB || ttnproto != NP_TELNET)

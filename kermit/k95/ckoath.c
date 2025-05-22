@@ -18,6 +18,7 @@
 #include "ckucmd.h"                             /* For struct keytab */
 #include "ckcnet.h"
 #include "ckctel.h"
+#include "ckoetc.h"
 
 #ifdef CK_DES
 #ifdef CK_SSL
@@ -45,6 +46,7 @@
 #else /* NT */
 #define INCL_DOSMODULEMGR
 #include <os2.h>
+#undef COMMENT
 #endif /* NT */
 #endif /* OS2 */
 #endif /* CRYPT_DLL */
@@ -53,6 +55,7 @@
 #ifndef NT
 #define INCL_DOSMODULEMGR
 #include <os2.h>
+#undef COMMENT
 #endif
 #endif
 
@@ -3573,7 +3576,7 @@ ck_des_pcbc_encrypt(Block input, Block output, long length,
 #endif /* CK_DES */
 
 #ifdef CRYPT_DLL
-typedef int  (*p_crypt_dll_init_t)(struct _crypt_dll_init *);
+typedef int  (*p_crypt_dll_init_t)(crypt_dll_init_data *);
 typedef int  (*p_encrypt_parse_t)(unsigned char *, int);
 typedef void (*p_encrypt_init_t)(kstream,int);
 typedef int  (*p_encrypt_session_key_t)(Session_Key *, int);
@@ -3729,9 +3732,8 @@ ck_des_is_weak_key(Block B)
 }
 
 void
-crypt_install_funcs(char * name, void * func)
+callback_install_dllfunc(char * name, void * func)
 {
-#ifdef NT
     if ( !strcmp(name,"encrypt_parse") )
         p_encrypt_parse = (p_encrypt_parse_t) func;
     else if ( !strcmp(name,"encrypt_init") )
@@ -3774,50 +3776,6 @@ crypt_install_funcs(char * name, void * func)
         libdes_pcbc_encrypt = (libdes_pcbc_encrypt_t) func;
     else if ( !strcmp(name,"crypt_dll_version") )
         p_crypt_dll_version = (p_crypt_dll_version_t) func;
-#else /* NT */
-    if ( !strcmp(name,"encrypt_parse") )
-        p_encrypt_parse = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_init") )
-        p_encrypt_init = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_session_key") )
-        p_encrypt_session_key = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_dont_support") )
-        p_encrypt_dont_support = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_send_request_start") )
-        p_encrypt_send_request_start = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_request_start") )
-        p_encrypt_request_start = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_send_request_end") )
-        p_encrypt_send_request_end = (PFN*) func;
-    else if ( !strcmp(name, "encrypt_send_end") )
-        p_encrypt_send_end = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_send_support") )
-        p_encrypt_send_support = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_is_encrypting") )
-        p_encrypt_is_encrypting = (PFN*) func;
-    else if ( !strcmp(name,"encrypt_is_decrypting") )
-        p_encrypt_is_decrypting = (PFN*) func;
-    else if ( !strcmp(name,"get_crypt_table") )
-        p_get_crypt_table = (PFN*) func;
-    else if ( !strcmp(name,"des_is_weak_key") )
-        p_des_is_weak_key = (PFN*) func;
-    else if ( !strcmp(name,"libdes_random_key") )
-        libdes_random_key = (PFN*) func;
-    else if ( !strcmp(name,"libdes_random_seed") )
-        libdes_random_seed = (PFN*) func;
-    else if ( !strcmp(name,"libdes_key_sched") )
-        libdes_key_sched = (PFN*) func;
-    else if ( !strcmp(name,"libdes_ecb_encrypt") )
-        libdes_ecb_encrypt = (PFN*) func;
-    else if ( !strcmp(name,"libdes_string_to_key") )
-        libdes_string_to_key = (PFN*) func;
-    else if ( !strcmp(name,"libdes_fixup_key_parity") )
-        libdes_fixup_key_parity = (PFN*) func;
-    else if ( !strcmp(name,"libdes_pcbc_encrypt") )
-        libdes_pcbc_encrypt = (PFN*) func;
-    else if ( !strcmp(name,"crypt_dll_version") )
-        p_crypt_dll_version = (PFN*) func;
-#endif /* NT */
 }
 
 char *
@@ -3889,11 +3847,15 @@ ck_crypt_dll_loaddll_eh(void)
 
 static int crypt_dll_loaded=0;
 
+static int scrnprint(const char *str) {
+    return Vscrnprintf(str);
+}
+
 int
 ck_crypt_loaddll( void )
 {
     ULONG rc = 0 ;
-    struct _crypt_dll_init init;
+    crypt_dll_init_data init;
     extern unsigned long startflags;
     int load_error = 0, len;
 #ifdef OS2ONLY
@@ -3964,7 +3926,7 @@ ck_crypt_loaddll( void )
     init.p_dohexdump = NULL;
 #endif /* NODEBUG */
     init.p_tn_debug = tn_debug;
-    init.p_vscrnprintf = Vscrnprintf;
+    init.p_scrnprint = scrnprint;
     /* Version 2 */
 #ifdef KRB5
     init.p_k5_context = &k5_context;
@@ -3972,7 +3934,7 @@ ck_crypt_loaddll( void )
     init.p_k5_context = NULL;
 #endif /* KRB5 */
     /* Version 3 */
-    init.p_install_funcs = crypt_install_funcs;
+    init.callbackp_install_dllfunc = callback_install_dllfunc;
     /* Version 5 */
     init.p_reqtelmutex = RequestTelnetMutex;
     init.p_reltelmutex = ReleaseTelnetMutex;
@@ -4072,10 +4034,8 @@ int    haveNTLMContext = 0;
 static SecBufferDesc NTLMSecBufDesc;
 SecBuffer     NTLMSecBuf[1];
 static UCHAR      NTLMBuffer[1024];
-static UCHAR      NTLMBuffer2[1024];
 static SecBufferDesc NTLMInSecBufDesc;
 static SecBuffer     NTLMInSecBuf;
-static UCHAR      NTLMInBuffer[512];
 static ULONG      NTLMContextAttrib;
 static TimeStamp  NTLMTimeStampContext;
 static SECURITY_STATUS ss = SEC_E_OK;
@@ -4267,7 +4227,9 @@ ck_ntlm_is_valid(int query_user) {
     extern int  pwflg, pwcrypt;
 
     SEC_WINNT_AUTH_IDENTITY AuthIdentity;
+#ifndef KUI
     char prompt[128];
+#endif
     char domain[128]="",name[128]="",pwd[128]="", *p;
     char localuser[128]="";
     DWORD dw;
@@ -4875,7 +4837,7 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
             AcceptSecurityContext(
 #ifdef COMMENT
                                    round == 0 ? &hNTLMCred : 0,
-#else COMMENT
+#else /* COMMENT */
                                    &hNTLMCred,
 #endif /* COMMENT */
                                    round == 2 ? &hNTLMContext : 0,
@@ -4955,7 +4917,6 @@ ntlm_is(data,cnt) unsigned char *data; int cnt;
         sprintf(&buf[7+length], "%c%c", IAC, SE);       /* safe */
 
         if (deblog || tn_deb || debses) {
-            int i;
             int mode = AUTH_CLIENT_TO_SERVER | (auth_how & AUTH_HOW_MASK);
             char * s = NULL;
 
@@ -5501,8 +5462,6 @@ SSPLogonUser( LPTSTR DomainName,
 
     BOOL done = FALSE;
     DWORD cbOut, cbIn;
-    char szUser[80];
-    DWORD cbUser = 80;
     SEC_WINNT_AUTH_IDENTITY AuthIdentity;
 
     if ( !p_SSPI_Func ) {
@@ -5658,14 +5617,14 @@ HINSTANCE hKRB52UID = NULL;
 HINSTANCE hGSSAPI = NULL;
 HINSTANCE hKRB524 = NULL;
 #else /* NT */
-HMODULE hKRB5_32 = NULL;
-HMODULE hKRB4_32 = NULL;
-HMODULE hCOMERR32 = NULL;
-HMODULE hPROFILE = NULL;
-HMODULE hKRB42UID = NULL;
-HMODULE hKRB52UID = NULL;
-HMODULE hGSSAPI = NULL;
-HMODULE hEMX = NULL;
+HMODULE hKRB5_32 = 0;
+HMODULE hKRB4_32 = 0;
+HMODULE hCOMERR32 = 0;
+HMODULE hPROFILE = 0;
+HMODULE hKRB42UID = 0;
+HMODULE hKRB52UID = 0;
+HMODULE hGSSAPI = 0;
+HMODULE hEMX = 0;
 #endif /* NT */
 static int cygnus = 0;
 
@@ -9575,7 +9534,6 @@ int gssapi_avail() { return 0; }
 int
 ck_security_loaddll( void )
 {
-    ULONG rc = 0 ;
     extern unsigned long startflags;
 
     if ( security_dll_loaded )

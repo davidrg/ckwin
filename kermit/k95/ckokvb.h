@@ -146,7 +146,9 @@ We would have to think about under what conditions each one is valid, etc.
 #define K_HOMSCN     115                /* Screen rollback: oldest screen */
 #define K_GO_BOOK    116        /* Scroll to bookmark */
 #define K_GOTO       117        /* Scroll to line number */
-#define K_ROLLMAX    117
+#define K_UPHSCN     118                /* Screen rollback: up half a screen */
+#define K_DNHSCN     119                /* Screen rollback: down half a screen */
+#define K_ROLLMAX    119
 
 #define K_LFONE      130                /* Horizontal Scroll: Left one cell */
 #define K_LFPAGE     131                /* Horizontal Scroll: Left one page */
@@ -231,7 +233,9 @@ We would have to think about under what conditions each one is valid, etc.
 #define K_CLRSCROLL  245                /* Clear Scrollback */
 #define K_URLHILT    246                /* Toggle URL Highlight */
 #define K_PCTERM     247                /* Toggle PCTERM (invisible) */
-#define K_ACT_MAX    247                /* Highest Action verb number */
+#define K_FOCUS_IN   248                /* Transmit focus in */
+#define K_FOCUS_OUT  249                /* Transmit focus out */
+#define K_ACT_MAX    249                /* Highest Action verb number */
 
 #ifdef OS2MOUSE
 /* Mouse only Kverbs */

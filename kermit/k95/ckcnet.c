@@ -1,4 +1,4 @@
-char *cknetv = "Network support, 10.0.303, 15 Apr 2023";
+char *cknetv = "Network support, 10.0.304, 18 Sep 2023";
 
 /*  C K C N E T  --  Network support  */
 
@@ -66,6 +66,7 @@ char *cknetv = "Network support, 10.0.303, 15 Apr 2023";
 #include <errno.h>                      /* this version, but after in others */
 #endif /* I386IX */
 #include "ckcnet.h"                     /* which includes ckctel.h */
+#include "ckuusr.h"
 #ifdef CK_SSL
 #include "ck_ssl.h"
 #endif /* CK_SSL */
@@ -287,8 +288,8 @@ struct timezone {
 #ifdef __WATCOMC__
 /*
   WatcomC doesn't need errno.h
-  (definitions conflict with some previous definition
-  #include <errno.h>
+  (definitions conflict with some previous definition)
+#include <errno.h>
 */
 #else
 #include <errno.h>			/* Error number symbols */
@@ -397,6 +398,7 @@ _PROTOTYP( int rlog_naws, (void) );
 #undef COMMENT
 #endif /* NT */
 #include "ckocon.h"
+int os2socketerror(int);
 extern int tt_type, max_tt;
 extern struct tt_info_rec tt_info[];
 extern char ttname[];
@@ -407,8 +409,12 @@ extern char ttname[];
 #endif /* OS2 */
 
 #ifdef NT
+#include <limits.h>
 extern int winsock_version;
 char * GetLocalUser(); /* defined in ckotio.c */
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
 /* The NT 3.50 SDK defines try as __try */
 #ifdef try
 #undef try
@@ -3617,8 +3623,10 @@ ckgetservice(hostname, servicename, ip, iplen)
     nett - network type (value defined in ckcnet.h)
 */
 
+#ifdef COMMENT
 #define XXNAMELEN 256
 static char xxname[XXNAMELEN];
+#endif /* COMMENT */
 
 int
 #ifdef CK_ANSIC
@@ -3628,7 +3636,10 @@ netopen(name, lcl, nett) char *name; int *lcl, nett;
 #endif /* CK_ANSIC */
 {
     char *p;
-    int i, x, rc_inet_addr = 0, dns = 0;
+    int i, x, dns = 0;
+#ifdef SOLARIS
+    int rc_inet_addr = 0;
+#endif /* SOLARIS */
 #ifdef TCPSOCKET
     int isconnect = 0;
 #ifdef SO_OOBINLINE
@@ -4252,6 +4263,7 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     /* It makes a difference in 64-bit builds. */
     rc_inet_addr = inet_addr(namecopy);	/* Assign return code to an int */
     iax = (unsigned) rc_inet_addr;	/* and from there to whatever.. */
+    debug(F111,"netopen rc_inet_addr",namecopy,rc_inet_addr);
 #else
 #ifndef datageneral
     iax = (unsigned int) inet_addr(namecopy);
@@ -4259,7 +4271,6 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
     iax = -1L;
 #endif /* datageneral */
 #endif /* SOLARIS */
-    debug(F111,"netopen rc_inet_addr",namecopy,rc_inet_addr);
     debug(F111,"netopen inet_addr",namecopy,iax);
 #endif /* INADDR_NONE */
 #endif /* INADDRX */
@@ -5169,7 +5180,6 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 /*  N E T C L O S  --  Close current network connection.  */
 
 #ifndef NOLOCAL
-_PROTOTYP(VOID slrestor,(VOID));
 #ifdef CK_SSL
 int tls_norestore = 0;
 #endif /* CK_SSL */
@@ -5178,7 +5188,10 @@ int tls_norestore = 0;
 int
 netclos() {
     static int close_in_progress = 0;
-    int x = 0, y, z;
+    int x = 0;
+#ifdef VMS
+    int y, z;
+#endif /* VMS */
     debug(F101,"netclos","",ttyfd);
 
 #ifdef NETLEBUF
@@ -5436,11 +5449,16 @@ nettchk() {                             /* for reading from network */
 #ifdef TCPIPLIB
     long count = 0;
     int x = 0, z;
-    long y;
+    unsigned long uy;
+#ifndef OS2
     char c;
+#endif /* OS2 */
     int rc;
 #ifdef NT
+    unsigned long ucount;
     extern int ionoblock;               /* For Overlapped I/O */
+#else
+    long y;
 #endif /* NT */
 
     debug(F101,"nettchk entry ttibn","",ttibn);
@@ -5534,17 +5552,34 @@ nettchk() {                             /* for reading from network */
                      (char *)
 #endif /* __DECC */
 #endif /* COMMENT */
+#ifdef NT
+                     &ucount
+#else
                      &count
+#endif /* NT */
                      ) < 0) {
         debug(F101,"nettchk socket_ioctl error","",socket_errno);
         /* If the connection is gone, the connection is gone. */
         netclos();
+
+#ifdef NT
+        /* Handle FIONREAD giving us a number larger than we can handle */
+        if (ucount > INT_MAX) ucount -= INT_MAX;
+        count = ucount;
+#endif /* NT */
+
 #ifdef NT_TCP_OVERLAPPED
         /* Is there anything in the overlapped I/O buffers? */
         count += OverlappedDataWaiting();
 #endif /* NT_TCP_OVERLAPPED */
         count += ttibn;
         return(count>0?count:-1);
+    } else {
+#ifdef NT
+        /* Handle FIONREAD giving us a number larger than we can handle */
+        if (ucount > INT_MAX) ucount -= INT_MAX;
+        count = ucount;
+#endif /* NT */
     }
     debug(F101,"nettchk count","",count);
 #ifdef NT_TCP_OVERLAPPED
@@ -5645,8 +5680,13 @@ nettchk() {                             /* for reading from network */
         RequestSSLMutex(SEM_INDEFINITE_WAIT);
 #endif /* CK_SSL */
 #endif /* OS2 */
+#ifdef NT
+        uy = 1;                         /* Turn on nonblocking reads */
+        z = socket_ioctl(ttyfd,FIONBIO,&uy);
+#else
         y = 1;                          /* Turn on nonblocking reads */
         z = socket_ioctl(ttyfd,FIONBIO,&y);
+#endif /* NT */
         debug(F111,"nettchk FIONBIO","on",z);
 #ifdef OS2
 #ifdef CK_SSL
@@ -5691,8 +5731,13 @@ nettchk() {                             /* for reading from network */
 		  RequestSSLMutex(SEM_INDEFINITE_WAIT);
 #endif /* CK_SSL */
 #endif /* OS2 */
+#ifdef NT
+         uy = 0;                         /* Turn off nonblocking reads */
+         z = socket_ioctl(ttyfd,FIONBIO,&uy);
+#else
 		  y = 0;                          /* Turn off nonblocking reads */
 		  z = socket_ioctl(ttyfd,FIONBIO,&y);
+#endif
 		  debug(F111,"nettchk FIONBIO","off",z);
 #ifdef OS2
 #ifdef CK_SSL
@@ -5777,8 +5822,13 @@ nettchk() {                             /* for reading from network */
         RequestSSLMutex(SEM_INDEFINITE_WAIT);
 #endif /* CK_SSL */
 #endif /* OS2 */
+#ifdef NT
+        uy = 0;                         /* Turn off nonblocking reads */
+        z = socket_ioctl(ttyfd,FIONBIO,&uy);
+#else
         y = 0;                          /* Turn off nonblocking reads */
         z = socket_ioctl(ttyfd,FIONBIO,&y);
+#endif /* NT */
         debug(F111,"nettchk FIONBIO","off",z);
 #ifdef OS2
 #ifdef CK_SSL
@@ -5954,9 +6004,11 @@ netxin( int n, CHAR * buf )
 netxin(n,buf) int n; CHAR * buf;
 #endif /* CK_ANSIC */
 {
-    int len, i, j;
+    int len;
 #ifdef TCPIPLIB
     int rc;
+#else
+    int i, j;
 #endif /* TCPIPLIB */
 
     if (ttyfd == -1) {
@@ -6277,7 +6329,7 @@ netinc(timo) int timo;
                  * ttchk() > 0 telnet suddenly works!
                  *
                  * So maybe there is some bug in the NT 3.1 Winsock
-                 * implementation? Or is CKW doing something that NT 3.1 doesn't
+                 * implementation? Or is K95 doing something that NT 3.1 doesn't
                  * like?
                  *
                  * problem is, the API ttchk() relies on (FIONREAD) is slow and
@@ -6892,9 +6944,9 @@ nettoc(c) CHAR c;
 #ifdef TNCODE
 static int
 #ifdef CK_ANSIC
-netgetc(int timo)                       /* Input function to point to... */
+netgetct(int timo)                      /* Input function to point to... */
 #else  /* CK_ANSIC */
-netgetc(timo) int timo;
+netgetct(timo) int timo;
 #endif /* CK_ANSIC */
 {                                       /* ...in the tn_doop() call */
 #ifdef TCPIPLIB
@@ -6932,7 +6984,7 @@ netflui() {
             ch = netinc(1);
             if (ch == IAC) {
                 extern int duplex;  /* this really shouldn't be here but ... */
-                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetc);
+                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetct);
                 if (tx == 1) duplex = 1;
                 else if (tx == 2) duplex = 0;
                 n = nettchk();
@@ -6977,7 +7029,7 @@ netflui() {
             ch = ttinc(1);
             if (ch == IAC) {
                 extern int duplex;  /* this really shouldn't be here but ... */
-                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetc);
+                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetct);
                 if (tx == 1) duplex = 1;
                 else if (tx == 2) duplex = 0;
                 n = ttchk();
@@ -7118,7 +7170,6 @@ getlocalipaddr()
     GSOCKNAME_T slen = sizeof(struct sockaddr_in);
     int sock;
     int rc;
-    struct in_addr laddr;
 
     /* if still not resolved, then try second strategy */
     /* This second strategy does not work on Windows */
@@ -7394,7 +7445,6 @@ rlog_ini(hostname, port, l_addr, r_addr)
     localuser[0] = '\0';
 #ifdef NT
     {
-        char localuid[UIDBUFLEN+1];
         ckstrncpy((char *)localuser,GetLocalUser(),UIDBUFLEN);
     }
 
@@ -10411,7 +10461,10 @@ http_open(hostname, svcname, use_ssl, rdns_name, rdns_len, agent)
 {
     char namecopy[NAMECPYL];
     char *p;
-    int i, x, dns = 0;
+    int i, dns = 0;
+#ifdef NON_BLOCK_IO
+    int x;
+#endif /* NON_BLOCK_IO */
 #ifdef TCPSOCKET
     int isconnect = 0;
 #ifdef SO_OOBINLINE
@@ -12036,8 +12089,6 @@ http_head(agent, hdrlist, user, pwd, array, local, remote, stdio)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -12226,8 +12277,6 @@ http_index(agent, hdrlist, user, pwd, array, local, remote, stdio)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -12474,8 +12523,6 @@ http_put(agent, hdrlist, mime, user, pwd, array, local, remote, dest, stdio)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -12779,8 +12826,6 @@ http_delete(agent, hdrlist, user, pwd, array, remote)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -13019,8 +13064,6 @@ http_post(agent, hdrlist, mime, user, pwd, array, local, remote, dest,
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -13307,8 +13350,6 @@ http_connect(socket, agent, hdrlist, user, pwd, array, host_port)
     int    http_fnd = 0;
     char   buf[HTTPBUFLEN], *p, ch;
     int    nullline;
-    time_t mod_t;
-    time_t srv_t;
     time_t local_t;
     char passwd[64];
     char b64in[128];
@@ -13925,7 +13966,12 @@ static int rlog_oob( CHAR *, int );
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 int
-fwdx_create_listen_socket(screen) int screen; {
+#ifdef CK_ANSIC
+fwdx_create_listen_socket(int screen)
+#else
+fwdx_create_listen_socket(screen) int screen;
+#endif  /* CK_ANSIC */
+{
 #ifdef NOPUTENV
     return(-1);
 #else /* NOPUTENV */
@@ -14005,13 +14051,18 @@ fwdx_create_listen_socket(screen) int screen; {
 
 
 int
-fwdx_open_client_channel(channel) int channel; {
+#ifdef CK_ANSIC
+fwdx_open_client_channel(int channel)
+#else
+fwdx_open_client_channel(channel) int channel;
+#endif  /* CK_ANSIC */
+{
     char * env;
     struct sockaddr_in saddr;
 #ifdef FWDX_UNIX_SOCK
     struct sockaddr_un saddr_un = { AF_LOCAL };
 #endif /* FWDX_UNIX_SOCK */
-    int colon, dot, display, port, sock, i, screen;
+    int display, port, sock, i, screen;
     int family;
     char buf[256], * host=NULL, * rest=NULL;
 #ifdef TCP_NODELAY
@@ -14177,11 +14228,8 @@ fwdx_server_avail() {
 #ifdef FWDX_UNIX_SOCK
     struct sockaddr_un saddr_un = { AF_LOCAL };
 #endif  /* FWDX_UNIX_SOCK */
-    int colon, dot, display, port, sock, i, screen;
+    int display, port, sock, screen;
     char buf[256], *host=NULL, *rest=NULL;
-#ifdef TCP_NODELAY
-    int on=1;
-#endif /* TCP_NODELAY */
     int family;
 
     env = getenv("DISPLAY");
@@ -14303,7 +14351,7 @@ fwdx_server_avail() {
 
 int
 fwdx_open_server_channel() {
-    int sock, ready_to_accept, sock2,channel,i;
+    int sock, ready_to_accept, sock2,channel;
 #ifdef TCP_NODELAY
     int on=1;
 #endif /* TCP_NODELAY */
@@ -14313,7 +14361,6 @@ fwdx_open_server_channel() {
     static SOCKOPT_T saddrlen;
 #endif /* UCX50 */
     struct sockaddr_in saddr;
-    char sb[8];
     extern char tn_msg[];
 #ifdef BSDSELECT
     fd_set rfds;
@@ -14329,8 +14376,6 @@ fwdx_open_server_channel() {
     } tv;
 #endif /* BELLSELECT */
 #endif /* BSDSELECT */
-    unsigned short nchannel;
-    unsigned char * p;
 
     sock = TELOPT_SB(TELOPT_FORWARD_X).forward_x.listen_socket;
 
@@ -14430,7 +14475,12 @@ fwdx_open_server_channel() {
 }
 
 int
-fwdx_close_channel(channel) int channel; {
+#ifdef CK_ANSIC
+fwdx_close_channel(int channel)
+#else
+fwdx_close_channel(channel) int channel;
+#endif  /* CK_ANSIC */
+{
     int i,fd;
 
     for ( i=0; i<MAXFWDX ; i++ ) {
@@ -14496,10 +14546,14 @@ fwdx_close_all() {
 #endif /* socket_read */
 
 int
+#ifdef CK_ANSIC
+fwdx_write_data_to_channel(int channel, char *data, int len)
+#else
 fwdx_write_data_to_channel(channel, data, len)
     int channel; char * data; int len;
+#endif  /* CK_ANSIC */
 {
-    int sock, count, try=0, length = len, i;
+    int sock, count, length = len, i;
 
     if ( len <= 0 )
         return(0);

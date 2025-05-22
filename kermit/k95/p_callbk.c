@@ -47,6 +47,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #ifdef OS2
 #ifdef NT
@@ -62,10 +63,12 @@
 #ifdef NT
 #define msleep Sleep
 #define DosBeep Beep
+#ifndef __WATCOMC__
 #define filelength _filelength
 #define fstat _fstat
 #define unlink _unlink
 #define stat _stat
+#endif /* __WATCOMC__ */
 #endif /* NT */
 
 extern int keep, moving;                /* fdc */
@@ -144,14 +147,32 @@ U8 *z_frame_end[] = {
 
 static char errbuf[512];
 
-U32 _System
-#ifdef CK_ANSIC
-status_func(U32 type, intptr_t arg0, U32 arg1, U32 arg2, U32 arg3, intptr_t arg4)
-#else
-status_func(type,arg0,arg1,arg2,arg3,arg4)
-     U32 type; intptr_t arg0; U32 arg1; U32 arg2; U32 arg3; intptr_t arg4;
-#endif
+/*
+ * TODO: Definition in p.h is: U32 (* CKDEVAPI status_func)(U32, ...);
+ *       This results in a type mismatch error over in ckop.c:
+ *          ckop.c(534): Warning! W102: Type mismatch (warning)
+ *          ckop.c(534): Note! I2003: source conversion type is 'unsigned long (*)(unsigned long __p1,int __p2,unsigned long __p3,unsigned long __p4,unsigned long __p5,int __p6)'
+ *          ckop.c(534): Note! I2004: target conversion type is 'unsigned long (*)(unsigned long __p1,... )'
+ *       This function ought to become variadic to solve that issue.
+ *       That might also make dealing with arg4 and arg0 which might not always
+ *       need to be an intptr_t (they were just U32s before the 64bit port)
+ */
+U32
+CKDEVAPI
+status_func(U32 type, ...)
 {
+    va_list args;
+    intptr_t arg0, arg4;
+    U32 arg1, arg2, arg3;
+
+    va_start(args, type);
+    arg0 = va_arg(args, intptr_t);
+    arg1 = va_arg(args, U32);
+    arg2 = va_arg(args, U32);
+    arg3 = va_arg(args, U32);
+    arg4 = va_arg(args, intptr_t);
+    va_end(args);
+
     switch (type) {
     case PS_ERROR:
         {
@@ -506,7 +527,6 @@ s_open_func(path,length,date,mode,f_left,b_left,zconv,zmanag,ztrans)
      U8 *zconv; U8 *zmanag; U8 *ztrans;
 #endif
 {
-    APIRET rc = 0;
     struct stat statbuf;
     U8 convert = 0 ;
     extern long rs_len ;
@@ -683,14 +703,21 @@ r_open_func(path,length,date,mode,f_left,b_left,zconv,zmanag,ztrans,offset)
 #else /* DYNAMIC */
     extern CHAR srvcmd[];
 #endif /* DYNAMIC */
-    char *zs, *longname, *newlongname, *pn; /* OS/2 long name items */
+    char *newlongname; /* OS/2 long name items */
+#ifdef OS2
+#ifdef CK_LABELED
+#ifdef __32BIT__
+    char *zs, *longname; /* OS/2 long name items */
+#endif /* __32BIT__ */
+#endif /* CK_LABELED */
+#endif /* OS2 */
     int dirflg=0;
     BOOLEAN path_was_null=0;
     BOOLEAN path_is_as_name=0;
+#ifdef COMMENT
     U32 management = 0;
     U32 open_mode = 0;
-    APIRET rc = 0;
-    struct stat statbuf;
+#endif /* COMMENT */
     struct zattr zz ;
     int len = 0;
 
@@ -1307,7 +1334,6 @@ close_func(path,length,date,retransmits,successful,offset)
 #endif
 {
     U8 id=0;
-    S32 rw_ret;
     time_t t_now;
     U32 cps;
     U32 ret_val = 0;
@@ -1316,7 +1342,6 @@ close_func(path,length,date,retransmits,successful,offset)
 #else
     struct utimbuf times;
 #endif
-    APIRET rc = 0;
 
     time(&t_now);
     if ( p_cfg.transfer_direction == DIR_SEND ) {

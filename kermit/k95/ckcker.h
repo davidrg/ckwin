@@ -4,7 +4,7 @@
   Author: Frank da Cruz <fdc@columbia.edu>,
   Columbia University Academic Information Systems, New York City.
 
-  Copyright (C) 1985, 2023
+  Copyright (C) 1985, 2024
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
@@ -1330,6 +1330,7 @@ _PROTOTYP( int doxarg, (char **, int) );
 _PROTOTYP( VOID usage, (void) );
 _PROTOTYP( VOID doclean, (int) );
 _PROTOTYP( int sndhlp, (void) );
+_PROTOTYP( int sndstatus, (void) );
 _PROTOTYP( int sndstring, (char *) );
 _PROTOTYP( VOID ckhost, (char *, int) );
 _PROTOTYP( int gettcs, (int, int) );

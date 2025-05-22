@@ -2,7 +2,7 @@
 
 /*  C K C F T P  --  FTP Client for C-Kermit  */
 
-char *ckftpv = "FTP Client, 10.0.280, 21 Jun 2023";
+char *ckftpv = "FTP Client, 10.0.281, 18 Sep 2023";
 
 /*
   Authors:
@@ -161,6 +161,7 @@ char *ckftpv = "FTP Client, 10.0.280, 21 Jun 2023";
 #ifdef OS2ONLY
 #define INCL_WINERRORS
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckowin.h"
 #include "ckocon.h"
@@ -325,10 +326,17 @@ struct timezone {
 #include <types.h>
 #endif /* __WATCOMC__ */
 #endif /* NT */
+_PROTOTYP(int ck_crypt_is_installed,(void));
+ULONG gmstimer();           /* ckotio.c */
+VOID ck_encrypt(char*);     /* ckoetc.c */
 #endif /* OS2 */
 
 #ifdef NT
 #include "ckoreg.h"
+
+#ifdef CK_LOGIN
+VOID setntcreds();
+#endif /* CK_LOGIN */
 #endif  /* NT */
 
 #ifndef INADDR_NONE			/* 2010-03-29 */
@@ -710,7 +718,7 @@ static gss_OID ck_gss_nt_service_name_v2 = ck_oids+5;
 #include "ckcfnp.h"                     /* Prototypes */
 
 extern int k95stdout, wherex[], wherey[];
-extern unsigned char colorcmd;
+extern cell_video_attr_t colorcmd;
 #endif /* OS2 */
 
 #ifdef FTP_KRB4
@@ -980,9 +988,9 @@ char * ftp_apw = NULL;			/* Anonymous password */
   Jeff Altman says to use sighandler_t, which is ok on Ubuntu but 
   not on (say) NetBSD.  So I can't do this:
 
-    #ifndef sig_t
-    #define sig_t sighandler_t
-    #endif
+#ifndef sig_t
+#define sig_t sighandler_t
+#endif
 
   I think the only alternative is to leave my_sig_t undefined and then
   see who squawks.  Since the previous 'my_sig_t' definition apparently
@@ -1015,14 +1023,18 @@ static sig_t oldintr;
 /* Prototypes for static functions defined in ckcftp.c */
 #ifdef CK_ANSIC
 
+#ifdef COMMENT
 static VOID bytswap( int *, int * );
+#endif /* COMMENT */
 static VOID cancel_remote( int );
 static VOID changetype( int, int );
 static VOID dbtime( char *, struct tm * );
 static VOID ftscreen( int, char, CK_OFF_T, char * );
 static char * ftp_hookup( char *, int, int );
 static char * radix_error( int );
+#ifdef FTP_SECURITY
 static char * shopl( int );
+#endif /* FTP_SECURITY */
 static char * strval( char *, char * );
 static int check_data_connection( int, int );
 static int chkmodtime( char *, char *, int );
@@ -1035,8 +1047,10 @@ static int ftp_rename( char *, char * );
 static int ftp_umask( char * );
 static int ftp_user( char *, char *, char * );
 static int ftpcmd( char *, char *, int, int, int );
+#ifdef FTP_SECURITY
 static int fts_cpl( int );
 static int fts_dpl( int );
+#endif /* FTP_SECURITY */
 static int getfile( char *, char *, int, int, char *, int, int, int );
 static int getreply( int, int, int, int, int );
 static int ispathsep( int );
@@ -1149,9 +1163,16 @@ static unsigned int nout = 0;           /* Number of chars in ucbuf */
 
 static jmp_buf recvcancel;
 static jmp_buf sendcancel;
-static jmp_buf ptcancel;
+
+#ifdef NOT_USED
 static jmp_buf jcancel;
+#endif /* NOT_USED */
+
+#ifdef FTP_PROXY
+static jmp_buf ptcancel;
+
 static int ptabflg = 0;
+#endif /* FTP_PROXY */
 
 /* Protection level symbols */
 
@@ -1967,9 +1988,9 @@ _PROTOTYP(static int setpbsz,(unsigned int));
 _PROTOTYP(static int recvrequest,(char *,char *,char *,char *,
   int,int,char *,int,int,int));
 _PROTOTYP(static int ftpcmd,(char *,char *,int,int,int));
+#ifdef FTP_SECURITY
 _PROTOTYP(static int fts_cpl,(int));
 _PROTOTYP(static int fts_dpl,(int));
-#ifdef FTP_SECURITY
 _PROTOTYP(static int ftp_auth, (void));
 #endif /* FTP_SECURITY */
 _PROTOTYP(static int ftp_user, (char *, char *, char *));
@@ -2131,8 +2152,13 @@ static int rfnlen = 0;
 static char rfnbuf[RFNBUFSIZ];          /* Remote filename translate buffer */
 static char * xgnbp = NULL;
 
-static int
-strgetc() {                             /* Helper function for xgnbyte() */
+static int                              /* Helper function for xgnbyte() */
+#ifdef CK_ANSIC
+strgetc(void)
+#else
+strgetc()
+#endif /* CK_ANSIC */
+{
     int c;
     if (!xgnbp)
       return(-1);
@@ -2157,6 +2183,7 @@ strputc(c) char c;
     return(0);
 }
 
+#ifdef COMMENT
 static int
 #ifdef CK_ANSIC
 xprintc(char c)
@@ -2167,7 +2194,10 @@ xprintc(c) char c;
     printf("%c",c);
     return(0);
 }
+#endif /* COMMENT */
 
+#ifdef COMMENT
+/* K95: Check whether we need this */
 static VOID
 #ifdef CK_ANSIC
 bytswap( int * c0, int * c1 )
@@ -2180,6 +2210,7 @@ bytswap(c0,c1) int * c0, * c1;
     *c0 = *c1;
     *c1 = t;
 }
+#endif /* COMMENT */
 #endif /* NOCSETS */
 
 #ifdef CKLOGDIAL
@@ -2266,7 +2297,6 @@ doftparg(char c)
 doftparg(c) char c;
 #endif /* CK_ANSIC */
 /* doftparg */ {
-    int x, z;
     char *xp;
     extern char **xargv, *xarg0;
     extern int xargc, stayflg, haveftpuid;
@@ -2552,6 +2582,7 @@ doftparg(c) char c;
               /* *xargv contains a value of the form tag=value */
               /* we need to lookup the tag and save the value  */
               char * p = NULL, * q = NULL;
+              int x, z;
               makestr(&p,*xargv);
               y = ckindex("=",p,0,0,1);
               if (y > 0)
@@ -4953,6 +4984,7 @@ check_data_connection(fd,fc) int fd, fc;
 #endif /* CK_ANSIC */
 {
     int x;
+#ifdef BSDSELECT
     struct timeval tv;
     fd_set in, out, err;
 
@@ -4971,19 +5003,30 @@ check_data_connection(fd,fc) int fd, fc;
 #else
     x = select(FD_SETSIZE,&in,&out,&err,&tv);
 #endif /* INTSELECT */
+#else /* BSDSELECT */
+#ifdef IBMSELECT
+    if (ftp_timeout < 1L)
+        return(0);
 
+    if (fc) { /* write */
+        x = select(&fd, 0, 1, 0, ftp_timeout * 1000L);
+    } else { /* read */
+        x = select(&fd, 1, 0, 0, ftp_timeout * 1000L);
+    }
+#endif /* IBMSELECT */
+#endif /* BSDSELECT */
     if (x == 0) {
 #ifdef EWOULDBLOCK
-	errno = EWOULDBLOCK;
+        errno = EWOULDBLOCK;
 #else
 #ifdef EAGAIN
-	errno = EAGAIN;
+        errno = EAGAIN;
 #else
-	errno = 11;
+        errno = 11;
 #endif	/* EAGAIN */
 #endif	/* EWOULDBLOCK */
-	debug(F100,"ftp check_data_connection TIMOUT","",0);
-	return(-3);
+        debug(F100,"ftp check_data_connection TIMOUT","",0);
+        return(-3);
     }
     return(0);
 }
@@ -6406,7 +6449,7 @@ cmdlinget( int stay )
 cmdlinget(stay) int stay;
 #endif /* CK_ANSIC */
 {
-    int i, x, rc = 0, done = 0, good = 0, status = 0, append = 0;
+    int x, rc = 0, done = 0, good = 0, status = 0, append = 0;
     int lcs = -1, rcs = -1, xlate = 0;
     int first = 1;
     int mget = 1;
@@ -6796,12 +6839,10 @@ doftpget(cx,who) int cx, who;
     int renaming = 0, mdel = 0, listfile = 0, updating = 0, getone = 0;
     int moving = 0, deleting = 0, toscreen = 0, haspath = 0;
     int gotsize = 0;
-    int matchdot = 0;
     CK_OFF_T getlarger = (CK_OFF_T)-1;
     CK_OFF_T getsmaller = (CK_OFF_T)-1;
     char * msg, * s, * s2, * nam, * pipename = NULL, * pn = NULL;
     char * src = "", * local = "";
-    char * pat = "";
 
     int x_csl = -1, x_csr = -1;         /* Local and remote charsets */
     int x_xla = 0;
@@ -7562,7 +7603,6 @@ doftpget(cx,who) int cx, who;
         haspath = 0;                    /* Recalculate this each time thru */
 
         if (getone) {                   /* GET */
-            char * p;
             s = line;
             src = line;                 /* Server name */
             done = 1;
@@ -8425,7 +8465,7 @@ doftprmt(cx,who) int cx, who;
 
 int
 doxftp() {                              /* Command parser for built-in FTP */
-    int cx, n;
+    int cx;
     struct FDB kw, fl;
     char * s;
     int usetls = 0;
@@ -8655,6 +8695,9 @@ doxftp() {                              /* Command parser for built-in FTP */
             char name[TTNAMLEN+1], *p;
             extern int network;
             extern char ttname[];
+#ifdef USETLSTAB
+            int n;
+#endif /* USETLSTAB */
             if (network)                /* If we have a current connection */
               ckstrncpy(name,ttname,LINBUFSIZ); /* get the host name */
             else
@@ -8871,6 +8914,7 @@ doxftp() {                              /* Command parser for built-in FTP */
 }
 
 #ifndef NOSHOW
+#ifdef FTP_SECURITY
 static char *
 #ifdef CK_ANSIC
 shopl( int x )
@@ -8886,6 +8930,7 @@ shopl(x) int x;
       default: return("(unknown)");
     }
 }
+#endif /* FTP_SECURITY */
 
 int
 #ifdef CK_ANSIC
@@ -9980,7 +10025,9 @@ static struct   sockaddr_in hisctladdr;
 static struct   sockaddr_in hisdataaddr;
 static struct   sockaddr_in data_addr;
 static int      data = -1;
+#ifdef FTP_PROXY
 static int      ptflag = 0;
+#endif /* FTP_PROXY */
 static struct   sockaddr_in myctladdr;
 
 #ifdef COMMENT
@@ -10716,7 +10763,7 @@ ssl_auth() {
         SSL_set_cipher_list(ssl_ftp_con,ssl_cipher_list);
     } else {
         char * p;
-        if (p = getenv("SSL_CIPHER")) {
+        if ((p = getenv("SSL_CIPHER"))) {
             SSL_set_cipher_list(ssl_ftp_con,p);
         } else {
             SSL_set_cipher_list(ssl_ftp_con,DEFAULT_CIPHER_LIST);
@@ -11009,7 +11056,7 @@ xlatec(fc,c,incs,outcs) int fc, c, incs, outcs;
 #else
     static char buf[128];
     static int cx;
-    int c0, c1;
+    int c0;
 
     if (fc == 1) {                      /* Initialize */
         cx = 0;                         /* Catch-up buffer write index */
@@ -12074,7 +12121,7 @@ doftpsend2(threadinfo) VOID * threadinfo;
 #endif
 {
     register int c, d = 0;
-    int n, t, x, notafile, unique = 0;
+    int n, x, notafile, unique = 0;
     char *buf, *bufp;
     
 #ifdef NTSIG
@@ -12521,7 +12568,12 @@ cancelrecv(sig) int sig;
 /* Argumentless front-end for secure_getc() */
 
 static int
-netgetc() {
+#ifdef CK_ANSIC
+netgetc(void)				/* Input function to point to... */
+#else  /* CK_ANSIC */
+netgetc()
+#endif /* CK_ANSIC */
+{
     return(secure_getc(globaldin,0));
 }
 
@@ -12812,7 +12864,6 @@ doftprecv2(threadinfo) VOID * threadinfo;
     int bare_lfs = 0;
     int blksize = 0;
     ULONG start = 0L, stop;
-    char * p;
     static char * rcvbuf = NULL;
     static int rcvbufsiz = 0;
 #ifdef CK_URL
@@ -13034,7 +13085,6 @@ Please confirm output file specification or supply an alternative:";
 	debug(F101,"ftp recvrequest TYPE A xlate","",ftprecv.xlate);
 #ifndef NOCSETS
         if (ftprecv.xlate) {
-            int t;
 #ifdef CK_ANSIC
             int (*fn)(char);
 #else
@@ -13140,15 +13190,17 @@ Please confirm output file specification or supply an alternative:";
                             return;
                         }
                         if (c < 0 || c == EOF)
-                          goto break2;
+                            break;
                         if (c == '\0') {
                             bytes++;
-                            goto contin2;
+                            break;
                         }
                     }
                 }
-                if (c < 0)
-                  break;
+                if (c < 0 || c == EOF)
+                    break;
+                if (c == '\0')
+                    continue;
 #endif /* UNX */
 
                 if (out2screen && !ftprecv.pipename)
@@ -13162,10 +13214,7 @@ Please confirm output file specification or supply an alternative:";
                     break;
                 bytes++;
                 ffc++;
-              contin2:
-                ;
             }
-          break2:
             if (bare_lfs && (!dpyactive || ftp_deb)) {
                 printf("WARNING! %d bare linefeeds received in ASCII mode\n",
                        bare_lfs);
@@ -13444,7 +13493,6 @@ initconn() {
             int tos;
 #endif /* IPTOS_THROUGHPUT */
 #endif /* IP_TOS */
-            int s;
 #ifdef DEBUG
             extern int debtim;
             int xdebtim;
@@ -13823,7 +13871,9 @@ dataconn(lmode) char *lmode;
 {
     int s;
 #ifdef IP_TOS
+#ifdef IPTOS_THROUGHPUT
     int tos;
+#endif /* IPTOS_THROUGHPUT */
 #endif /* IP_TOS */
 #ifdef UCX50
     static u_int fromlen;
@@ -14642,7 +14692,6 @@ ftp_auth() {
     } /* for (j;;) */
     return(0);
 }
-#endif /* FTP_SECURITY */
 
 static int
 #ifdef CK_ANSIC
@@ -14712,6 +14761,7 @@ setpbsz(size) unsigned int size;
     reply_parse = NULL;
     return(0);
 }
+#endif /* FTP_SECURITY */
 
 static VOID
 #ifdef CK_ANSIC
@@ -14879,6 +14929,7 @@ cancel_remote(din) int din;
 #endif /* DEBUG */
 }
 
+#ifdef FTP_SECURITY
 static int
 #ifdef CK_ANSIC
 fts_dpl( int x )
@@ -14958,6 +15009,7 @@ fts_cpl(x) int x;
     ftp_cpl = x;
     return(1);
 }
+#endif /* FTP_SECURITY */
 
 #ifdef FTP_GSSAPI
 static VOID
@@ -15849,7 +15901,7 @@ remote_files(new_query, arg, pattern, proxy_switch)
     CHAR *cp, *whicharg;
     char * cdto = NULL;
     char * p;
-    int i, x, forced = 0;
+    int x, forced = 0;
     int lcs = 0, rcs = 0, xlate = 0;
 
     debug(F101,"ftp remote_files new_query","",new_query);
@@ -16057,7 +16109,7 @@ remote_files(new_query, arg, pattern, proxy_switch)
 	      unlink(tmpfilnam[mlsdepth]);
 	}
 #endif /* OS2 */
-      notemp:
+      /*notemp:*/
         if (!tmpfilptr[mlsdepth]) {
             debug(F110,"ftp remote_files open fail",tmpfilnam[mlsdepth],0);
             if ((!dpyactive || ftp_deb))

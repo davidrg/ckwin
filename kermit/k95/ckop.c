@@ -37,7 +37,10 @@
 
 #include "p_type.h"
 #include "p.h"
+#ifdef XYZ_DLL
+#define XYZ_DLL_CLIENT
 #include "ckop.h"
+#endif /* XYZ_DLL */
 #include "p_global.h"
 #include "p_callbk.h"
 #include "p_common.h"
@@ -47,8 +50,7 @@ extern int rpackets, spackets, spktl, rpktl, what ;
 #ifdef XYZ_DLL
 #ifdef OS2
 static HMODULE dll_handle;
-typedef U32 (* _System p_transfer_t)(P_CFG *);
-p_transfer_t p_transfer = NULL;
+p_transfer_func *p_transfer = NULL;
 #endif /* OS2 */
 
 #define PINBUFSIZE 8192
@@ -57,8 +59,11 @@ p_transfer_t p_transfer = NULL;
 int
 load_p_dll(void) {
     int rc=0;
+
+#ifndef NT
     CHAR *exe_path;
     CHAR path[256];
+#endif /* NT */
 
 #ifdef NT
     dll_handle = LoadLibrary( "P95.DLL" ) ;
@@ -68,7 +73,7 @@ load_p_dll(void) {
         debug(F101,"load_p_dll - Unable to load module: rc","",rc);
         return rc;
     }
-    p_transfer = (p_transfer_t)GetProcAddress( dll_handle, "p_transfer" ) ;
+    p_transfer = (p_transfer_func *)GetProcAddress( dll_handle, "p_transfer" ) ;
     if ( !p_transfer )
     {
         rc = GetLastError() ;
@@ -115,17 +120,19 @@ unload_p_dll(void) {
 #endif /* XYZ_DLL */
 
 
-U32 _System
+U32
+CKDEVAPI
 pushback_func( U8 * buf, U32 len )
 {
     return le_puts( buf, len );
 }
 
-U32 _System
+U32
+CKDEVAPI
 in_func( U8 * buf, U32 len, U32 * bytes_received )
 {
     extern int network, carrier;
-    int rc, avail, read, i ;
+    int rc, avail, read;
 
     if (!network) {                     /* if not a network */
         if (carrier != CAR_OFF &&       /* && carrier-watch enabled */
@@ -169,7 +176,8 @@ in_func( U8 * buf, U32 len, U32 * bytes_received )
     return(ERROR_NO_DATA); /* Either no data was received or timeout */
 }
 
-U32 _System
+U32
+CKDEVAPI
 out_func( U8 * buf, U32 len, U32 * bytes_written )
 {
     int rc = 0 ;
@@ -202,7 +210,8 @@ USHORT DosDevIOCtl32(PVOID pData, USHORT cbData, PVOID pParms, USHORT cbParms,
                      USHORT usFunction, USHORT usCategory, HFILE hDevice);
 #endif /* OS2ONLY */
 
-U32 _System
+U32
+CKDEVAPI
 break_func( U8 on )
 {
    extern int ttmdm ;
@@ -242,7 +251,8 @@ break_func( U8 on )
     return 0;
 }
 
-U32 _System
+U32
+CKDEVAPI
 available_func( U32 * available )
 {
     int rc = ttchk() ;
@@ -266,7 +276,7 @@ pxyz(int sstate) {
     extern CK_TTYFD_T ttyfd;
     extern int network;
 #ifndef NOLOCAL
-    extern term_io;
+    extern int term_io;
     int term_io_sav = term_io;
 #endif /* NOLOCAL */
 #ifdef TCPSOCKET
@@ -296,7 +306,6 @@ pxyz(int sstate) {
     int savbin = binary ;
     char *tp;
     APIRET rc = 0;
-    int i;
 #ifdef GFTIMER
     extern float fptsecs;
 #endif /* GFTIMER */

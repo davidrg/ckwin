@@ -53,6 +53,7 @@ KToolBar::KToolBar( K_GLOBAL* kg, int resid )
     , numButtons( 0 )
     , numBitmaps( 0 )
     , toolbarid( resid )
+    , visible( TRUE )
 {
 }
 
@@ -166,6 +167,24 @@ void KToolBar::size( int width, int height )
 {
     // toolbar will resize itself at top of window
     SendMessage( hWnd, TB_AUTOSIZE, 0L, 0L );
+}
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+void KToolBar::setVisible( Bool visible ) {
+    if (visible == this->visible) return;
+
+    if (!visible) {
+        // Hide the toolbar
+        ShowWindow(hwnd(), SW_HIDE);
+        SetParent(hwnd(), NULL);
+    } else {
+        // Show the toolbar
+        ShowWindow(hwnd(), SW_SHOW);
+        SetParent(hwnd(), parent->hwnd());
+    }
+
+    this->visible = visible;
 }
 
 /*------------------------------------------------------------------------

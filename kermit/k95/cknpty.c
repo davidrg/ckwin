@@ -232,8 +232,8 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
 
     if (FAILED(hResult)) {
         debug(F101, "ConPTY open failed with result", "", result);
-        CloseHandle(hInputWriter); hInputWriter = NULL;
-        CloseHandle(hOutputReader); hOutputReader = NULL;
+        CloseHandle(*hInputWriter); *hInputWriter = NULL;
+        CloseHandle(*hOutputReader); *hOutputReader = NULL;
         return FALSE;
     }
 
@@ -243,8 +243,8 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
     if (FAILED(hResult)) {
         debug(F101, "Closing PTY; Prepare startup info failed with result", "", result);
         close_pseudo_console();
-        CloseHandle(hInputWriter); hInputWriter = NULL;
-        CloseHandle(hOutputReader); hOutputReader = NULL;
+        CloseHandle(*hInputWriter); *hInputWriter = NULL;
+        CloseHandle(*hOutputReader); *hOutputReader = NULL;
         return FALSE;
     }
 
@@ -263,8 +263,8 @@ BOOL start_subprocess_in_pty(COORD size, LPSTR lpCommandLine,
    if (!result) {
         debug(F100, "Create process failed", "", 0);
         close_pseudo_console();
-        CloseHandle(hInputWriter); hInputWriter = NULL;
-        CloseHandle(hOutputReader); hOutputReader = NULL;
+        CloseHandle(*hInputWriter); *hInputWriter = NULL;
+        CloseHandle(*hOutputReader); *hOutputReader = NULL;
         return FALSE;
    }
 

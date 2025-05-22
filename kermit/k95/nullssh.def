@@ -1,0 +1,3 @@
+LIBRARY NULLSSH
+EXPORTS
+  ssh_dll_init

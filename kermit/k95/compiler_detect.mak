@@ -1,3 +1,4 @@
+!if "$(PLATFORM)" == "NT"
 
 # This makefile tries to figure out what compiler we're using,
 # its version, the target CPU Architecture and platform.
@@ -25,23 +26,21 @@ ISJOM=yes
 CMP = VCXX
 COMPILER = Visual C++
 
-!IFDEF __VERSION__
-# This is Watcom wmake pretending to be nmake. We'll assume the compiler is
-# really Watcom C pretending to be Visual C++ 2002.
-#
-# This check has to come first because OpenWatcom 1.9 just stops waiting for
-# input and never exits
+!IF ([wcc386 . <nul >nul 2>&1] == 0)
+# Open Watcom
 CMP = OWCL
-COMPILER = OpenWatcom C/C++ CL clone
+COMPILER = Open Watcom C/C++ CL clone
 MSC_VER = 130
 COMPILER_VERSION = Visual C++ 7.0 compatible
 
-!message *Assuming* OpenWatcom due to use of wmake
-
 !ELSEIF ([cl 2>&1 | findstr /C:"Digital Mars" > nul] == 0)
-
 MSC_VER = 120
 COMPILER_VERSION = Digital Mars C/C++
+
+!ELSEIF ([cl 2>&1 | findstr /C:"Version 19.4" > nul] == 0)
+# Visual C++ 14.3 (Visual Studio 2022)
+MSC_VER = 194
+COMPILER_VERSION = 14.4 (Visual Studio 2022)
 
 !ELSEIF ([cl 2>&1 | findstr /C:"Version 19.3" > nul] == 0)
 # Visual C++ 14.3 (Visual Studio 2022)
@@ -167,6 +166,16 @@ COMPILER_VERSION = 2.0
 MSC_VER = 80
 COMPILER_VERSION = 1.00 (NT 3.50 SDK, AXP)
 
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Centaur.*Version 8\.00" > nul] == 0)
+# The Win32 SDK Final Release (NT 3.1) MIPS compiler calls itself:
+# Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+
+MSC_VER = 80
+COMPILER_VERSION = 1.00 (NT 3.1 SDK, MIPS)
+
+# This compiler behaves weirdly. Flag it so we can deal with it later.
+MIPS_CENTAUR = yes
+
 !ELSEIF ([cl 2>&1 | findstr /R /C:"32-bit.*Version 8\.0" > nul] == 0)
 # This could also pick up the Win32 SDK, the final release of which calls itself:
 #   Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 8.00.3190a
@@ -206,18 +215,19 @@ COMPILER_VERSION = Unknown
 # Assume we're building for Windows
 TARGET_PLATFORM = Windows
 
-!IFDEF __VERSION__
-# OpenWatcom again. Assume x86.
-
-!message Assuming x86 target for OpenWatcom
+!if "$(CMP)" == "OWCL"
+# Open Watcom
 
 TARGET_CPU = x86
 
-TARGET_PLATFORM = Windows
-# TODO: What if we're targeting OS/2? Watcom supports OS/2...
-
 !ELSEIF ([cl 2>&1 | findstr /C:"for MIPS R-Series" > nul] == 0)
 # We're targeting (and running on) Windows NT MIPS
+TARGET_CPU = MIPS
+
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Centaur.*Version 8\.00" > nul] == 0)
+# The Win32 SDK Final Release (NT 3.1) MIPS compiler calls itself:
+# Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
+
 TARGET_CPU = MIPS
 
 !ELSEIF ([cl 2>&1 | findstr /C:"for PowerPC" > nul] == 0)
@@ -287,4 +297,80 @@ TARGET_CPU = x86
 
 !ENDIF
 
+# Figure out the host CPU Architecture
+HOST_CPU = $(PROCESSOR_ARCHITECTURE)
+!if "$(HOST_CPU)" == "AMD64"
+HOST_CPU = x86-64
 !endif
+
+# And if we're cross-compiling from a CPU architecture
+# other than the target.
+CROSS_BUILD = no
+!if "$(HOST_CPU)" != "$(TARGET_CPU)"
+CROSS_BUILD = yes
+!endif
+
+# And if we're cross-compiling, can we
+CROSS_BUILD_COMPATIBLE = yes
+!if "$(CROSS_BUILD)" == "yes"
+# We're cross-compiling.
+
+!if "$(HOST_CPU)" == "x86-64" && "$(TARGET_CPU)" == "x86"
+CROSS_BUILD_COMPATIBLE = yes
+
+!elseif "$(HOST_CPU)" == "ARM64" && "$(TARGET_CPU)" == "ARM"
+# TODO: Is this actually true? Do the compilers even run on these architectures?
+CROSS_BUILD_COMPATIBLE = yes
+
+!else
+# x86 can't run x86-64 code for example.
+CROSS_BUILD_COMPATIBLE = no
+
+!endif
+
+!endif
+
+!endif
+
+!ELSE IF "$(PLATFORM)" == "OS2"
+
+# On OS/2 we'll just assume Open Watcom for now. I don't have access to the
+# IBM compiler to find a way to tell it apart from watcom like we do for
+# Visual C++.
+CMP = OWWCL
+COMPILER = Open Watcom WCL
+COMPILER_VERSION = Open Watcom
+
+# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
+# command line arguments.
+MSC_VER = 0
+
+# Buit different versions still support different features. So we may still
+# need to know *what* version of Open Watcom we're dealing with.
+OWCC_VER = 0
+
+# Nothing supports PowerPC OS/2.
+TARGET_CPU = x86
+TARGET_PLATFORM = OS/2
+
+# Override CL so we don't end up running the Visual C++ clone cl.
+CL = wcl386
+
+# We still need to know if this is Open Watcom 1.9 or the 2.0 fork. We don't
+# bother to check for Watcom versions older than 1.9 as even 1.9 really
+# struggles to build Kermit 95 due to compiler bugs
+!IF ([wcc386 . <nul | findstr /C:"Version 1.9" > nul] == 0)
+# Open Watcom 1.9
+!message Open Watcom version: 1.9
+OWCC_VER = 19
+!ELSEIF ([wcc386 . <nul | findstr /C:"Version 2.0 beta" > nul] == 0)
+# Open Watcom 2.0 beta.
+!message Open Watcom version: 2.0 beta
+
+OWCC_VER = 20
+
+# Open Watcom 2.0 has intptr_t
+CKB_HAVE_INTPTR_T=yes
+!ENDIF
+
+!ENDIF

@@ -45,11 +45,14 @@ char *ckzv = "OS/2 File support, 8.0.187, 18 July 2004";
 #endif /* CK_LOGIN */
 #include <stdio.h>
 #include <errno.h>
+#include <direct.h>
 _PROTOTYP( int os2settitle, (char *, int) );
 extern int priority;
 #include <signal.h>
 
 #include "ckoreg.h"
+#include "ckosyn.h"
+#include "ckuath.h"
 
 /*
 
@@ -87,7 +90,9 @@ extern int priority;
 #define DIRENT
 #endif /* SDIRENT */
 
+#define MAXPATHLEN_ONLY
 #include "ckodir.h"
+#include <direct.h>
 
 extern int binary;                      /* We need to know this for open() */
 #ifdef CK_CTRLZ
@@ -131,11 +136,12 @@ extern int pclose(FILE *);
 #endif /* COMMENT */
 #endif
 
+#ifdef __WATCOMC__
+#define stat    _stati64
+#else /* __WATCOMC__ */
 #ifdef NT
-#ifndef __WATCOMC__
 #define timezone _timezone
 #define fileno _fileno
-#endif /* __WATCOMC__ */
 #define write _write
 #define stricmp _stricmp
 #define setmode _setmode
@@ -152,7 +158,7 @@ extern int pclose(FILE *);
 #define rmdir  _rmdir
 #define utimbuf _utimbuf
 
-#if defined(__WATCOMC__) || defined(__GNUC__) || _MSC_VER > 900
+#if defined(__GNUC__) || _MSC_VER > 900
 #define stat    _stati64
 #else
 /* Visual C++ 1.0 32-bit, 2.0 and 2.2 don't have _stati64 */
@@ -166,6 +172,7 @@ extern int pclose(FILE *);
 #define SEM_INDEFINITE_WAIT INFINITE
 #endif /* SEM_INDEFINITE_WAIT */
 #endif /* NT */
+#endif /* __WATCOMC__ */
 
 /* Because standard stat has trouble with trailing /'s we have to wrap it */
 int os2stat(char *, struct stat *);
@@ -191,6 +198,25 @@ extern char exedir[CKMAXPATH];
 #ifndef XFERFILE
 #define XFERFILE "iksd.log"
 #endif /* XFERFILE */
+
+APIRET os2getpid();              /* ckotio.c */
+void prtfile(char *);            /* ckoco3.c */
+
+#ifdef NT
+int GetUserInfo(LPSTR, LPSTR);   /* this file */
+void ntlm_logout();     /* ckoath.c */
+int ntlm_impersonate(); /* ckoath.c */
+#endif /* NT */
+
+#ifndef KUI
+#include "ckocon.h"
+#include "ckokey.h"
+void VscrnForceFullUpdate();    /* ckoco2.c */
+_PROTOTYP( int os2gettitle, (char *, int) );
+#ifndef NOLOCAL
+int OS2WaitForKey();
+#endif /* NOLOCAL */
+#endif /* KUI */
 
 /*
   Functions (n is one of the predefined file numbers from ckcker.h):
@@ -356,6 +382,12 @@ int ckxpriv = 1;                        /* Allow Root logins? */
 #endif /* UNIX */
 #endif /* CK_LOGIN */
 
+#ifdef CK_LABELED
+/* forward declaration */
+static int os2getattr( char * name );
+static int os2setattr( char * name );
+#endif /* CK_LABELED */
+
 #ifndef CKWTMP
 int ckxwtmp = 0;
 #else
@@ -430,7 +462,6 @@ extern int zincnt, zoutcnt;
 
 static long iflen = -1L;                /* Input file length */
 
-static PID_T pid = 0;                   /* pid of child fork */
 static int fcount[2] = {0,0};           /* Number of files left in search */
 static int fcntsav[2] = {0,0};
 static int fcountstream[2] = {0,0};
@@ -685,7 +716,7 @@ getfullname(name) char * name; {
 
 int
 zopeni(n,name) int n; char *name; {
-    int x, y;
+    int x;
 
     debug(F111,"zopeni name",name,n);
     debug(F101,"zopeni fp","", (CK_OFF_T) fp[n]);
@@ -979,7 +1010,7 @@ zclose(n) int n; {
         debug(F101,"zclose zclosf","",x);
         debug(F101,"zclose zclosf fp[n]","",fp[n]);
     } else {
-        if ((fp[n] != stdout) && (fp[n] != stdin))
+        if ((fp[n] != stdout) && (fp[n] != stdin) && (fp[n] != NULL))
           x = fclose(fp[n]);
         fp[n] = NULL;
 #ifdef CK_LABELED
@@ -1227,7 +1258,6 @@ ttwait(int fd, int secs) {
 */
 int
 zinfill() {
-    int x;
     extern int kactive;
 
     errno = 0;
@@ -1474,6 +1504,19 @@ zoutdump() {
     }
 #endif /* IKSD */
 
+    /* If an autodownload is underway and the user kills it with Ctrl+C, the
+     * SIGINT handler will run on the keyboard input thread and close ZOUTFILE
+     * without warning. We don't want that happening between checking if its
+     * open and trying to write to the file otherwise it results in a crash.
+     */
+    RequestZoutDumpMutex( SEM_INDEFINITE_WAIT );
+
+    if (fp[ZOFILE] == 0) {       /* File already closed. Fail. */
+        zoutcnt = 0;
+        ReleaseZoutDumpMutex();
+        return(-1);
+    }
+
 #ifndef COMMENT
     /*
       Frank Prindle suggested that replacing this fwrite() by an fflush()
@@ -1482,11 +1525,15 @@ zoutdump() {
 
       This appears to slow down NT.  So I changed it back.
     */
+
     x = fwrite(zoutbuffer, 1, zoutcnt, fp[ZOFILE]);
 #else /* COMMENT */
     fflush(fp[ZOFILE]);
     x = write(fileno(fp[ZOFILE]),zoutbuffer,zoutcnt)
 #endif /* COMMENT */
+
+    ReleaseZoutDumpMutex();
+
     if (x == zoutcnt) {
 #ifdef DEBUG
         if (deblog)                     /* Save a function call... */
@@ -2179,8 +2226,12 @@ nzrtol(name,name2,fncnv,fnrpath,max)
         case '>':
         case ' ':                       /* And Space */
                 break;
+#ifdef COMMENT
+                /* Commented out to suppres unreachable code warning.
+                 * Not sure why this code isn't used - not needed? -- DG */
             *p = '_';                   /* To underscore */
             break;
+#endif /* COMMENT */
         default:
             *p = *name;
         }
@@ -2373,7 +2424,6 @@ zchdir(dirnam) char *dirnam; {
     extern int nmac;                        /* Number of macros */
 #endif /* NOSPL */
     char hd[CKMAXPATH+1];
-    char *p;
     int len;
 
     debug(F110,"zchdir",dirnam,0);
@@ -2437,7 +2487,7 @@ zchdir(dirnam) char *dirnam; {
 #ifndef NOSPL
         if (nmac) {             /* Any macros defined? */
             int k;                /* Yes */
-            static on_cd = 0;
+            static int on_cd = 0;
             if ( !on_cd ) {
                 on_cd = 1;
                 k = mlook(mactab,"on_cd",nmac); /* Look this up */
@@ -2546,7 +2596,6 @@ zgtdir() {
 int
 zxcmd(filnum,comand) int filnum; char *comand; {
     int out, rc;
-    int pipes[2];
 
     debug(F111,"zxcmd",comand,filnum);
     if (chkfn(filnum) < 0) return(-1);  /* Need a valid Kermit file number. */
@@ -2596,7 +2645,7 @@ zxcmd(filnum,comand) int filnum; char *comand; {
 
 int
 zclosf(filnum) int filnum; {
-    int wstat, out;
+    int out;
     debug(F101,"zclosf filnum","",filnum);
     out = (filnum == ZIFILE || filnum == ZRFILE) ? 0 : 1 ;
     debug(F101,"zclosf out","",out);
@@ -2641,7 +2690,7 @@ ckGetLongPathName(LPCSTR lpFileName, LPSTR lpBuffer, DWORD cchBuffer)
     }
 
     if ( !p_GetLongPathNameA ) {
-        DWORD len, i;
+        DWORD len;
         if ( !lpFileName || !lpBuffer )
             return(0);
 
@@ -2668,14 +2717,14 @@ DWORD ckGetShortPathName(LPCSTR lpszLongPath, LPSTR  lpszShortPath, DWORD cchBuf
     }
 
     if ( !p_GetShortPathNameA ) {
-        DWORD result;
 #ifdef CKT_NT31
+        DWORD result;
         debug(F111, "GetShortPathNameC lpszLongPath", lpszLongPath, 0);
         result = (GetShortPathNameC(lpszLongPath, lpszShortPath, cchBuffer));
         debug(F111, "GetShortPathNameC lpszShortPath", lpszShortPath, 0);
         return result;
 #else
-        DWORD len, i;
+        DWORD len;
         if ( !lpszLongPath || !lpszShortPath )
             return(0);
 
@@ -3129,7 +3178,6 @@ os2findisdir(void) {
 
 int
 zxrewind() {
-    int i,j,len;
     CHAR * FileName=NULL;
 
     /* Cancel previous zxpand if necessary */
@@ -4406,9 +4454,6 @@ zlink(source,destination) char *source, *destination; {
     char *p = NULL, *s;
     int x;
     int len;
-#ifdef NT
-    BOOL bCancel = 0;
-#endif /* NT */
     static p_CreateHardLinkA_t p_CreateHardLinkA=NULL;
     static HANDLE hKernel = INVALID_HANDLE_VALUE;
 
@@ -4537,8 +4582,6 @@ static char gperms[2];
 
 #endif /* CK_GPERMS */
 
-static char lperms[24];
-
 #ifdef CK_PERMS
 static char xlperms[24];
 
@@ -4574,8 +4617,7 @@ zgperm(f) char *f; {
 
 int
 zsattr(xx) struct zattr *xx; {
-    long k; int x;
-    struct stat buf;
+    long k;
 
     k = iflen % 1024L;                  /* File length in K */
     if (k != 0L) k = 1L;
@@ -4714,12 +4756,16 @@ zstrdt(date,len) char * date; int len; {
   To do: adapt code from OS-9 Kermit's ck9fio.c zstime function, which
   is more flexible, allowing [yy]yymmdd[ hh:mm[:ss]].
 */
+#ifdef __WATCOMC__
+    time_t tmx=0;
+#else
 #ifdef NT
     /* time_t is a 64bit value on Visual C++ 2005 and newer on 64bit windows. */
     time_t tmx=0;
 #else /* NT */
     long tmx=0;
 #endif /* NT */
+#endif
     long days;
     int i, n, isleapyear;
                    /*       J  F  M  A   M   J   J   A   S   O   N   D   */
@@ -4728,17 +4774,6 @@ zstrdt(date,len) char * date; int len; {
     int monthdays [13] = {  0,0,31,59,90,120,151,181,212,243,273,304,334 };
     char s[5];
     struct tm *time_stamp;
-
-#ifdef __WATCOMC__
-/* Watcom provides utimbuf instead of _utimbuf */
-struct utimbuf tp;
-#else
-#ifdef NT
-struct _utimbuf tp;
-#else /* NT */
-struct utimbuf tp;
-#endif /* NT */
-#endif /* __WATCOMC__ */
 
 #ifdef ANYBSD
     long timezone = 0L;
@@ -5431,9 +5466,9 @@ zsyscmd(s) char *s; {
 int
 _zshcmd(s,wait) char *s; int wait; {
 #ifndef NOPUSH
-    PID_T pid;
-    int rc;
+#ifndef KUI
     char title[80];
+#endif /* KUI */
 #ifdef NT
     SIGTYP (* savint)(int);
 #endif /* NT */
@@ -5512,7 +5547,7 @@ zshcmd(s) char *s; {
 */
 int
 iswild(filespec) char *filespec; {
-    char c; int x; char *p;
+    char c;
     int quo = 0;
 
     while ((c = *filespec++) != '\0') {
@@ -5596,7 +5631,7 @@ isdir(s) char *s; {
 int
 zmkdir(path) char *path; {
     char *xp, *tp, c;
-    int x, count = 0, i;
+    int x, count = 0;
 
     if (!path) path = "";
     if (!*path) return(-1);
@@ -5768,8 +5803,10 @@ zfseek(CK_OFF_T pos)
 
 struct zfnfp *
 zfnqfp(fname, buflen, buf)  char * fname; int buflen; char * buf; {
-    int x = 0, y = 0;
-    char * xp;
+    int y = 0;
+#ifdef OS2ONLY
+    int x = 0;
+#endif /* OS2ONLY */
     static struct zfnfp fnfp;
 
     if (!fname)
@@ -5831,9 +5868,7 @@ int
 zcmpfn(s1,s2) char * s1, * s2; {
     char buf1[CKMAXPATH+1];
     char buf2[CKMAXPATH+1];
-    char linkname[CKMAXPATH+1];
-    int x, rc = 0;
-    struct stat buf;
+    int rc = 0;
 
     if (!s1) s1 = "";
     if (!s2) s2 = "";
@@ -6061,12 +6096,12 @@ BOOL GetTextualSid(
 #define MAXSIZE 4096
 #define gle (GetLastError())
 static BOOL getSids( TOKEN_PRIVILEGES **tokenPrivs, PSID *ownerSid, PSID *priGroupSid, TOKEN_GROUPS **tokenGroups, LUID *logonSessionId );
-static BOOL showToken( HANDLE ht );
+/*static BOOL showToken( HANDLE ht );
 static void showSid( int indent, PSID ps );
 static BOOL Sid2Text( PSID ps, char *buf, int bufSize );
-static BOOL IsLogonSid( PSID ps );
-static BOOL IsLocalSid( PSID ps );
-static BOOL IsInteractiveSid( PSID ps );
+static BOOL IsLogonSid( PSID ps );*/
+/*static BOOL IsLocalSid( PSID ps );        commented out as unused
+static BOOL IsInteractiveSid( PSID ps );*/
 static BOOL getPriv( const char *privName );
 
 HANDLE
@@ -6079,11 +6114,6 @@ CreateTokenForUser(char * szUsername, char * szDomain, PSID luserSid, PSID preGr
     LUID logonSessionId;
     TOKEN_PRIVILEGES *tokenPrivs;
     SID_IDENTIFIER_AUTHORITY NTsia = SECURITY_NT_AUTHORITY;
-    SID_IDENTIFIER_AUTHORITY worldsia = SECURITY_WORLD_SID_AUTHORITY;
-    char *domainName;
-    DWORD luserSidSize;
-    DWORD domainNameSize;
-    SID_NAME_USE luserSidType;
     // returned handle
     HANDLE tokenHandle = INVALID_HANDLE_VALUE;
     // permissions with which the handle is opened
@@ -6093,7 +6123,7 @@ CreateTokenForUser(char * szUsername, char * szDomain, PSID luserSid, PSID preGr
     SECURITY_QUALITY_OF_SERVICE sqos;
     LSA_OBJECT_ATTRIBUTES ObjAttr;
     TOKEN_TYPE tokenType;
-    LUID sessionLuid, serviceSessionLuid = { 0x3e7, 0 };
+    LUID sessionLuid; /*, serviceSessionLuid = { 0x3e7, 0 };*/
     FILETIME expirationTime;
     SID_AND_ATTRIBUTES tokenUser;
     PSID newOwnerSid, newPriGroupSid;
@@ -6384,7 +6414,7 @@ const char *formatTime( FILETIME *t )
 }
 
 
-
+/*
 BOOL
 showToken( HANDLE ht )
 {
@@ -6494,8 +6524,9 @@ showToken( HANDLE ht )
     free( ptg );
 
     return TRUE;
-}
+}*/
 
+#ifdef COMMENT
 void showSid( int indent, PSID ps )
 {
     char textSid[MAX_PATH], user[MAX_PATH], domain[MAX_PATH], buf[MAX_PATH];
@@ -6575,9 +6606,10 @@ void showSid( int indent, PSID ps )
         putchar( ' ' );
     fputs( buf, stdout );
 }
+#endif /* COMMENT */
 
 
-
+/* Commented out as unused
 BOOL IsLocalSid( PSID ps )
 {
     static PSID pComparisonSid = NULL;
@@ -6622,10 +6654,10 @@ BOOL IsLogonSid( PSID ps )
         return TRUE;
     else
         return FALSE;
-}
+}*/
 
 
-
+#ifdef COMMENT
 // nearly straight from the SDK
 BOOL Sid2Text( PSID ps, char *buf, int bufSize )
 {
@@ -6699,6 +6731,7 @@ BOOL Sid2Text( PSID ps, char *buf, int bufSize )
 
     return TRUE;
 }
+#endif /* COMMENT */
 
 BOOL
 getPriv( const char *privName )
@@ -7001,7 +7034,6 @@ zvpass(passwd) char *passwd; {
     int ntlm=0;
     char * uid, * pwd;
     char buf[4096];
-    char username[256];
 #ifdef IKSDB
     extern int ikdbopen;
     extern unsigned long mydbslot;
@@ -7442,7 +7474,7 @@ zvpass(passwd) char *passwd; {
 
 #ifdef IKSDB
     if (ikdbopen) {
-        char * p, * q;
+        char * p;
         int k;
         extern char dbrec[];
         extern unsigned long myflags, mydbslot;
@@ -7897,7 +7929,7 @@ cksyslog(n, m, s1, s2, s3) int n, m; char * s1, * s2, * s3; {
     extern int what, ikdbopen;
 #endif /* IKSDB */
     int level;
-    char * messages[5];
+    const char * messages[5];
 
 #ifdef IKSDB
     if (inserver && ikdbopen) {
@@ -7959,7 +7991,6 @@ CK_OFF_T
 StreamSize(char * filename, char * streamname)
 {
     HANDLE hf ;
-    DWORD lasterror = 0 ;
     WIN32_STREAM_ID sid;
     DWORD dwStreamHeaderSize, dwRead, dw1, dw2;
     BOOL  bContinue;
@@ -7967,7 +7998,6 @@ StreamSize(char * filename, char * streamname)
     WCHAR wszStreamName[CKMAXPATH+1];
     WCHAR wszStat[CKMAXPATH+1];
     char  stream[CKMAXPATH+1];
-    int   i, diff;
     DWORD dwStreamId = 0xFFFFFFFF;
     CK_OFF_T  size = -1;
 

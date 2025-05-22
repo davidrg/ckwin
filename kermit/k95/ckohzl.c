@@ -23,12 +23,21 @@
 #include "ckcuni.h"
 #include "ckocon.h"
 #include "ckohzl.h"
+/* For wyseascii() */
+#include "ckowys.h"
 #ifdef NETCONN
 #ifdef TCPSOCKET
 #include "ckcnet.h"
 extern int network, nettype, ttnproto, u_binary;
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
+
+void setkeyclick(int);          /* ckoco3.c */
+void selclrscreen(BYTE, CHAR);  /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
+USHORT tx_usub(USHORT);         /* ckcuni.c */
+USHORT tx_hslsub(USHORT);       /* ckcuni.c */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -42,7 +51,6 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern int ttpush;
 extern int autoscroll, protect ;
 
@@ -121,8 +129,6 @@ hzlinc(void)
 void
 hzlctrl( int ch )
 {
-    int i,j;
-
     if ( !xprint ) {
     switch ( ch ) {
     case SOH:
@@ -248,9 +254,7 @@ hzlctrl( int ch )
 void
 hzlascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int x,y;
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);

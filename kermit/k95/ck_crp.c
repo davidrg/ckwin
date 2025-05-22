@@ -73,6 +73,7 @@ char *ckcrpv = "Encryption Engine, 10.0.121, 23 Mar 2023";
 #include <stdarg.h>
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckosyn.h"
 #else /* OS2 */
@@ -94,6 +95,22 @@ static char * tmpstring = NULL;
 
 #ifdef CRYPT_DLL
 int cmd_quoting = 0;
+
+#ifdef OS2
+/* Copied from ckctel.c */
+char *
+#ifdef CK_ANSIC
+tel_unk(int opt)                        /* "UNKNOWN-%u" string. */
+#else
+tel_unk(opt) int opt;
+#endif /* CK_ANSIC */
+{
+  /* 2024-03-27 SMS.  Added (decimal) value to "UNKNOWN" messages. */
+  static char val_str[ 20];
+  sprintf(val_str, "UNKNOWN-%u", opt);
+  return(val_str);
+}
+#endif /* OS2 */
 
 #ifndef TELOPT_MACRO
 int
@@ -125,7 +142,7 @@ static int (*p_ttol)(char *,int)=NULL;
 static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
 static int (*p_dohexdump)(char *,char *,int)=NULL;
 static void (*p_tn_debug)(char *)=NULL;
-static int (*p_vscrnprintf)(char *, ...)=NULL;
+static int (*p_scrnprint)(const char *)=NULL;
 static void * p_k5_context=NULL;
 static unsigned long (*p_reqtelmutex)(unsigned long)=NULL;
 static unsigned long (*p_reltelmutex)(void)=NULL;
@@ -194,8 +211,8 @@ Vscrnprintf(const char * format, ...) {
 #endif /* NT */
     va_end(ap);
 
-    if ( p_vscrnprintf )
-        return(p_vscrnprintf(myprtfstr));
+    if ( p_scrnprint )
+        return(p_scrnprint(myprtfstr));
     else
         return(-1);
 }
@@ -5478,11 +5495,11 @@ ck_crypt_dll_version()
 }
 
 int
-crypt_dll_init( struct _crypt_dll_init * init )
+crypt_dll_init( crypt_dll_init_data * init )
 {
 #ifdef LIBDES
     extern int des_check_key;
-    extern void libdes_dll_init(struct _crypt_dll_init *);
+    extern void libdes_dll_init(crypt_dll_init_data *);
     des_check_key = 1;
 #endif /* LIBDES */
 
@@ -5491,7 +5508,7 @@ crypt_dll_init( struct _crypt_dll_init * init )
         p_dodebug = init->p_dodebug;
         p_dohexdump = init->p_dohexdump;
         p_tn_debug = init->p_tn_debug;
-        p_vscrnprintf = init->p_vscrnprintf;
+        p_scrnprint = init->p_scrnprint;
         if ( init->version == 1 )
             return(1);
     }
@@ -5502,29 +5519,29 @@ crypt_dll_init( struct _crypt_dll_init * init )
             return(1);
     }
     if ( init->version >= 3 ) {
-        init->p_install_funcs("encrypt_parse",encrypt_parse);
-        init->p_install_funcs("encrypt_init",encrypt_init);
-        init->p_install_funcs("encrypt_session_key",encrypt_session_key);
-        init->p_install_funcs("encrypt_send_request_start",
+        init->callbackp_install_dllfunc("encrypt_parse",encrypt_parse);
+        init->callbackp_install_dllfunc("encrypt_init",encrypt_init);
+        init->callbackp_install_dllfunc("encrypt_session_key",encrypt_session_key);
+        init->callbackp_install_dllfunc("encrypt_send_request_start",
                               encrypt_send_request_start
                               );
-        init->p_install_funcs("encrypt_request_start",encrypt_request_start);
-        init->p_install_funcs("encrypt_send_request_end",
+        init->callbackp_install_dllfunc("encrypt_request_start",encrypt_request_start);
+        init->callbackp_install_dllfunc("encrypt_send_request_end",
                               encrypt_send_request_end
                               );
-        init->p_install_funcs("encrypt_request_end",encrypt_request_end);
-        init->p_install_funcs("encrypt_send_end",encrypt_send_end);
-        init->p_install_funcs("encrypt_send_support",encrypt_send_support);
-        init->p_install_funcs("encrypt_is_encrypting",encrypt_is_encrypting);
-        init->p_install_funcs("encrypt_is_decrypting",encrypt_is_decrypting);
-        init->p_install_funcs("get_crypt_table",get_crypt_table);
-        init->p_install_funcs("des_is_weak_key",ck_des_is_weak_key);
+        init->callbackp_install_dllfunc("encrypt_request_end",encrypt_request_end);
+        init->callbackp_install_dllfunc("encrypt_send_end",encrypt_send_end);
+        init->callbackp_install_dllfunc("encrypt_send_support",encrypt_send_support);
+        init->callbackp_install_dllfunc("encrypt_is_encrypting",encrypt_is_encrypting);
+        init->callbackp_install_dllfunc("encrypt_is_decrypting",encrypt_is_decrypting);
+        init->callbackp_install_dllfunc("get_crypt_table",get_crypt_table);
+        init->callbackp_install_dllfunc("des_is_weak_key",ck_des_is_weak_key);
         libdes_dll_init(init);
         if (init->version == 3)
           return(1);
     }
     if ( init->version >= 4 ) {
-        init->p_install_funcs("crypt_dll_version",ck_crypt_dll_version);
+        init->callbackp_install_dllfunc("crypt_dll_version",ck_crypt_dll_version);
         if (init->version == 4)
           return(1);
     }
@@ -5537,7 +5554,7 @@ crypt_dll_init( struct _crypt_dll_init * init )
     }
 
     if ( init->version >= 6 ) {
-        init->p_install_funcs("encrypt_dont_support",encrypt_dont_support);
+        init->callbackp_install_dllfunc("encrypt_dont_support",encrypt_dont_support);
         if ( init->version == 6 )
             return(1);
         /* when adding new versions; migrate the next two lines */

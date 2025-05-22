@@ -22,6 +22,9 @@
 #include "ckuusr.h"
 #include "ckocon.h"
 #include "ckoqnx.h"
+#include "ckcuni.h"
+
+void clrscreen( BYTE vmode, CHAR fillchar );     /* ckoco3.c */
 
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
@@ -35,8 +38,8 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib, savedattrib[] ;
-extern unsigned char attribute, defaultattribute;
-extern unsigned char savedattribute[], saveddefaultattribute[];
+extern cell_video_attr_t attribute, defaultattribute;
+extern cell_video_attr_t savedattribute[], saveddefaultattribute[];
 extern char * udkfkeys[];
 extern int tt_senddata;
 extern struct _vtG G[4];
@@ -111,7 +114,7 @@ qnxattroff( void )
 void
 qnxctrl( int ch )
 {
-    int i,j,x,y;
+    int i; /*,j,x,y; */
 
     switch ( ch ) {
     case ETX:
@@ -245,8 +248,8 @@ qnxctrl( int ch )
 void
 qnxascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ;
+    /* int i,j,k,n,x,y,z;
+    vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ; */
     viocell blankvcell;
 
     if (printon && (is_xprint() || is_uprint()))
@@ -275,7 +278,7 @@ qnxascii( int ch )
                     break;
                 if ( bg < '0' || bg >= '8' || fg < '0' || fg >= '8' )
                     break;
-                defaultattribute = ((bg-'0')<<4) | (fg-'0');
+                defaultattribute = cell_video_attr_set_colors((fg-'0'), (bg-'0'));
                 break;
             }
             case '"':
@@ -375,7 +378,7 @@ qnxascii( int ch )
                     break;
                 if ( fg < '0' || fg >= '8' || bg < '0' || bg >= '8' )
                     break;
-                attribute = ((bg-'0')<<4) | (fg-'0');
+                attribute = cell_video_attr_set_colors((fg-'0'), (bg-'0'));
                 break;
             }
             case 'A':
@@ -596,7 +599,7 @@ qnxascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = attribute;
+                blankvcell.video_attr = attribute;
                 VscrnScrollRt(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1, wherey[VTERM] - 1,
                                VscrnGetWidth(VTERM) - 1, 1, blankvcell);
@@ -607,7 +610,7 @@ qnxascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = attribute;
+                blankvcell.video_attr = attribute;
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,

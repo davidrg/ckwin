@@ -1,5 +1,5 @@
 #
-# CKW make-distribution script for cross-builds with GCC
+# K95 make-distribution script for cross-builds with GCC
 #
 # OpenSSL is assumed to live in ../../openssl/openssl-${OPENSSL_VERSION}/
 # so make sure you set the OPENSSL_VERSION environment variable!
@@ -51,14 +51,13 @@ cp ../../../COPYING ./
 # cp ../doc/ssh-readme.md ssh-readme.txt
 
 # Documentation
-cp ../../../doc/manual/ckwin.htm docs/manual/ckwin.htm
 cp ../hostmode.txt docs/
 
 # Keymaps
 cp ../vt220.ksc keymaps/
 cp ../keycodes.txt keymaps/
 cp ../keymaps-readme.txt keymaps/readme.txt
-# Normally we'd actually run CKW at this point and get it to dump out its default keymap, but that would require WINE.
+# Normally we'd actually run K95 at this point and get it to dump out its default keymap, but that would require WINE.
 
 # Public
 cp ../hostuser.txt public/

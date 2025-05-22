@@ -63,6 +63,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <io.h>
 #define strdup _strdup
 #define ltoa   _ltoa
 #define unlink _unlink
@@ -75,9 +76,11 @@
 
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
 typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
 #define CK_HAVE_INTPTR_T
-#endif
+#endif /* CK_HAVE_INTPTR_T */
 
 #define MAXPORTS 32
 struct PORT
@@ -102,7 +105,6 @@ SERVICE_STATUS          IKSDStatus;
 SERVICE_STATUS_HANDLE   IKSDStatusHandle;
 int iksd_started = 0;
 int ready_to_accept = 0 ;
-static struct servent *service, servrec;
 static struct hostent *host;
 static struct sockaddr_in saddr;
 static int saddrlen ;
@@ -125,6 +127,7 @@ void  WINAPI IKSDCtrlHandler (DWORD opcode);
 #endif
 DWORD IKSDInitialization (DWORD argc, LPTSTR *argv, DWORD *specificError);
 HANDLE StartKermit( SOCKET socket, char * cmdline, int ShowCmd, SOCKET * );
+BOOL ParseStandardArgs(int argc, char* argv[]);
 
 void
 SvcDebugOut(LPSTR String,
@@ -474,7 +477,7 @@ IKSDStart (DWORD argc, LPTSTR *argv)
     }
 
     iksd_started = 1;
-    _beginthread(listen_thread,65536, 0);
+    _beginthread(listen_thread,65536, NULL);
 
     // Initialization complete - report running status.
     IKSDStatus.dwCurrentState       = SERVICE_RUNNING;
@@ -778,9 +781,8 @@ DWORD
 IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     DWORD *specificError)
 {
-    char *p=NULL, * dbdir=NULL, dbfile[256];
-    int i, x;
-    int on = 1, rc = 0;
+    char * dbdir=NULL, dbfile[256];
+    int rc = 0;
 #ifdef NT
     WSADATA data ;
 
@@ -827,9 +829,9 @@ IKSDInitialization(DWORD   argc, LPTSTR  *argv,
     dbdir = "C:/";
 #endif /* NT */
     sprintf(dbfile,"%s\\iksd.lck",dbdir);
-    _unlink(dbfile);
+    unlink(dbfile);
     sprintf(dbfile,"%s\\iksd.db",dbdir);
-    _unlink(dbfile);
+    unlink(dbfile);
 
     if ( open_sockets(specificError) )
         return(1);

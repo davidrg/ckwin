@@ -46,10 +46,15 @@ static int xx_ftp( char *, char * );
 
 #ifdef OS2
 #include <io.h>
+#include "ckocon.h"
 #ifdef KUI
 #include "ikui.h"
 extern struct _kui_init kui_init;
 #endif /* KUI */
+_PROTOTYP( int os2settitle, (char *, int) );
+#ifdef SSHBUILTIN
+#include "ckossh.h"
+#endif /* SSHBUILTIN */
 #endif /* OS2 */
 
 /*
@@ -58,6 +63,9 @@ extern struct _kui_init kui_init;
   all others that define symbols or typedefs needed for the prototypes.
 */
 #include "ckcfnp.h"
+
+#ifdef OS2
+#endif /* OS2 */
 
 /* Prototypes for static functions used only in this module */
 #ifdef CK_ANSIC
@@ -173,6 +181,8 @@ extern int tt_scroll, tt_escape;
 #ifdef OS2PM
 extern int os2pm;
 #endif /* OS2PM */
+extern int usageparm;
+extern unsigned long startflags;
 #endif /* OS2 */
 
 #ifdef CK_NETBIOS
@@ -184,7 +194,6 @@ extern unsigned char NetBiosAdapter;
 #endif /* XFATAL */
 
 int haveftpuid = 0;			/* Have FTP user ID */
-static int have_cx = 0;			/* Have connection */
 
 static char * failmsg = NULL;		/* Failure message */
 
@@ -257,10 +266,6 @@ struct keytab urltab[] = {
 };
 int nurltab = sizeof(urltab)/sizeof(struct keytab) - 1;
 
-#ifndef URLBUFLEN
-#define URLBUFLEN 1024
-#endif /* URLBUFLEN */
-static char urlbuf[URLBUFLEN];
 struct urldata g_url = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 
 /* u r l p a r s e  --  Parse a possible URL */
@@ -299,7 +304,9 @@ urlparse(s,url) char *s; struct urldata * url;
 #endif /* CK_ANSIC */
 {
     char * p = NULL, * urlbuf = NULL;
+#ifdef COMMENT
     int x;
+#endif /* COMMENT */
 
     if (!s || !url)
         return(0);
@@ -695,6 +702,8 @@ char * http_hlp[] = {
     ""
 };
 
+#ifdef CK_SSL
+#ifndef NOICP
 #define HT_CERTFI 0
 #define HT_OKCERT 1
 #define HT_KEY    2
@@ -710,6 +719,8 @@ static struct keytab httpztab[] = {
     { "", 0, 0 }
 };
 static int nhttpztab = sizeof(httpztab) / sizeof(struct keytab) - 1;
+#endif /* NOICP */
+#endif /* CK_SSL */
 #endif /* NOHTTP */
 
 /*  U S A G E */
@@ -877,7 +888,6 @@ cmdlin() {
 		  debug(F111,"cmdlin http xargv",*xargv,xargc);
 		  xp = *xargv+1;
 		  if (**xargv == '-') { /* Got an option */
-		      int xx;
 		      x = *(*xargv+1);	/* Get the option letter */
 		      switch (x) {
 			case 'd':	/* Debug */
@@ -1403,15 +1413,14 @@ cmdlin() {
 
 #ifdef SSHBUILTIN
       if (howcalled == I_AM_SSH) {	/* If I was called as SSH... */
-          extern char * ssh_hst, * ssh_cmd, * ssh_prt;
 	  debug(F100,"ssh personality","",0);
 #ifdef CK_URL
 	  if (haveurl) {
-              makestr(&ssh_hst,g_url.hos);
-              makestr(&ssh_prt,g_url.svc);
-	      ckstrncpy(ttname,ssh_hst,TTNAMLEN+1);
+              ssh_set_sparam(SSH_SPARAM_HST, g_url.hos);
+              ssh_set_sparam(SSH_SPARAM_PRT,g_url.svc);
+	          ckstrncpy(ttname,ssh_get_sparam(SSH_SPARAM_HST),TTNAMLEN+1);
               ckstrncat(ttname,":",TTNAMLEN+1);
-              ckstrncat(ttname,ssh_prt,TTNAMLEN+1);
+              ckstrncat(ttname,ssh_get_sparam(SSH_SPARAM_PRT),TTNAMLEN+1);
           }
 	  else 
 #endif /* CK_URL */
@@ -1450,7 +1459,7 @@ cmdlin() {
                       }
                   } else {			/* No dash must be hostname */
                       ckstrncpy(ttname,*xargv,TTNAMLEN+1);
-                      makestr(&ssh_hst,ttname);
+                      ssh_set_sparam(SSH_SPARAM_HST, ttname);
                       debug(F110,"cmdlin ssh host",ttname,0);
 #ifndef NOICP
 #ifndef NODIAL
@@ -1478,7 +1487,7 @@ cmdlin() {
 			  nhcount = 0;
                       if (nhcount == 1) { /* Still OK, so make substitution */
                           ckstrncpy(ttname,nh_p[0],TTNAMLEN+1);
-                          makestr(&ssh_hst,ttname);
+                          ssh_set_sparam(SSH_SPARAM_HST, ttname);
                           debug(F110,"cmdlin lunet substitution",ttname,0);
                       }
 #endif /* NODIAL */
@@ -1488,7 +1497,7 @@ cmdlin() {
                           xargv++;
                           ckstrncat(ttname,":",TTNAMLEN+1);
                           ckstrncat(ttname,*xargv,TTNAMLEN+1);
-                          makestr(&ssh_prt,*xargv);
+                          ssh_set_sparam(SSH_SPARAM_PRT,*xargv);
                           debug(F110,"cmdlin telnet host2",ttname,0);
                       }
 #ifdef COMMENT
@@ -1500,7 +1509,7 @@ cmdlin() {
                           if (nh_px[0][0]) {
                               ckstrncat(ttname,":",TTNAMLEN+1);
                               ckstrncat(ttname,nh_px[0][0],TTNAMLEN+1);
-                              makestr(&ssh_prt,nh_px[0][0]);
+                              ssh_set_sparam(SSH_SPARAM_PRT,nh_px[0][0]);
                           }
                       }
 
@@ -2495,6 +2504,19 @@ doxarg(s,pre) char ** s; int pre;
       return(-1);                       /* fail. */
 
     /* Handle prescan versus post-initialization file */
+
+#ifdef OS2
+    if (x == XA_HELP) {
+        noinit = 1;
+        startflags |= 2;    /* No network DLLs */
+        startflags |= 4;    /* No TAPI DLLs */
+        startflags |= 8;    /* No Security DLLs */
+        startflags |= 16;   /* No Zmodem DLLs */
+        startflags |= 32;   /* Stdin */
+        startflags |= 64;   /* Stdout */
+        usageparm = 1;      /* Showing usage and exiting */
+    }
+#endif
 
     if (((xargtab[z].flgs & CM_PRE) || (c == '+')) && !pre)
       return(0);

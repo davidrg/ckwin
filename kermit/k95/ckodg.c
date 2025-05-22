@@ -32,6 +32,9 @@ extern int network, nettype, ttnproto, u_binary;
 #endif /* TCPSOCKET */
 #endif /* NETCONN */
 
+void doreset(int);              /* ckoco3.c */
+void clrscreen(BYTE, CHAR);     /* ckoco3.c */
+
 extern bool keyclick ;
 extern int  cursorena[], keylock, duplex, duplex_sav, screenon ;
 extern int  printon, aprint, uprint, cprint, xprint, seslog ;
@@ -45,7 +48,6 @@ extern int  wy_monitor;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern int autoscroll, protect ;
 extern CHAR (*xls[MAXTCSETS+1][MAXFCSETS+1])(CHAR);  /* Character set xlate */
 extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(CHAR);  /* functions. */
@@ -240,7 +242,7 @@ dgint2loc( int n, char * arg1, char * arg2, char * arg3 )
 void
 dgctrl( int ch )
 {
-    int i,j;
+    int i;
 
 
     if ( !xprint ) {
@@ -539,9 +541,7 @@ dgctrl( int ch )
 void
 dgascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
+    int i;
     char arg1, arg2, arg3, arg4, arg5;
 
     if ( escstate == ES_GOTESC )/* Process character as part of an escstate sequence */
@@ -853,7 +853,7 @@ dgascii( int ch )
                         break;
 
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( arg1 == 0 )
                         arg1 = 1 ;
                     else if ( arg1 > VscrnGetWidth(VTERM)-1 )
@@ -878,7 +878,7 @@ dgascii( int ch )
                         break;
 
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( arg1 == 0 )
                         arg1 = 1 ;
                     else if ( arg1 > VscrnGetWidth(VTERM)-1 )

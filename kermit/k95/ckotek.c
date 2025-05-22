@@ -69,7 +69,6 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 
 extern int autoscroll, protect ;
 
@@ -118,8 +117,6 @@ tekinc(void)
 void
 tekctrl( int ch )
 {
-    int i,j;
-
     switch ( ch ) {
     case SOH:
         break;
@@ -239,10 +236,6 @@ tekctrl( int ch )
 void
 tekascii( int ch )
 {
-    int i,j,k,n,x,y,z;
-    vtattrib attr ;
-    viocell blankvcell;
-
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
 

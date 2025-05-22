@@ -1,21 +1,16 @@
-# SSH Support in C-Kermit for Windows
+# SSH Support in Kermit 95 3.0 for Windows
 
-C-Kermit for Windows now includes built-in SSH support based on libssh[^1]. This
-is still a work-in progress so not all SSH commands supported by Kermit 95 are
-available in CKW at this time and bugs are likely. If you find a bug, please
-report it!
+Kermit 95 3.0 now includes a new built-in SSH support based on libssh[^1]. This
+is only available on Windows and is still a work-in progress so not all SSH 
+commands supported by Kermit 95 1.1.21 and 2.x are available in K95 3.0 at this
+time. Bugs are likely so if you find one, please report it!
 
 To get started, type `help ssh` at the kermit prompt but note that not all
-commands are implemented yet! Full documentation for the built-in SSH client
-as delivered in Kermit 95 v2.1.3 is available here: 
+commands are implemented yet! You can see which commands are available using
+the '?' key, for example by typing `set ssh ?` or `ssh ?`. Full documentation
+for the built-in SSH client as delivered in Kermit 95 v2.1.3 is available here: 
 https://kermitproject.org/k95manual/sshclien.html - SSH differences between
-Kermit 95 and C-Kermit for Windows are discussed later in this document.
-
-For convenience C-Kermit currently looks for the known_hosts file as well as 
-your public and private keys in `%USERPROFILE%\.ssh`. This directory is also
-used by the version of OpenSSH bundled with Windows 10+ so if you were
-previously using that your keys and known hosts should be picked up
-automatically by C-Kermit.
+Kermit 95 and Kermit 95 are discussed later in this document.
 
 ## Known Issues
 
@@ -26,22 +21,82 @@ automatically by C-Kermit.
   set term remote utf8
   ```
   For convenience, you can just uncomment these lines in the default
-  `k95custom.ini` file included in the CKW distribution so that they're run 
-  every time you start C-Kermit.
+  `k95custom.ini` file included in the K95 distribution so that they're run 
+  every time you start Kermit 95.
 * If you find your session disconnecting when left idle, try enabling the
   heartbeat feature with the `set ssh heartbeat-interval` command.
 * Connecting through proxy servers is not currently supported
 
-## Differences From Kermit 95
-
-The `set ssh v2 authentication` command only works to turn methods on or off at 
-this time, it does not affect the order in which authentication methods are 
-attempted. This may be corrected in a future release.
+## Differences From Kermit 95 2.x and 1.1.21
 
 The GUI dialogs for the `ssh key` commands have also been adjusted a little. 
 When GUI dialogs are enabled, these commands will use a standard Windows file
 dialog rather than having you type in a full pathname if a filename was not
 specified as part of the command.
+
+### SSH is now modular!
+
+The SSH backend has been moved out into a DLL that is loaded automatically on
+startup if present. On x86 platforms, four DLLs are provided:
+
+<table>
+<tr>
+<th>DLL</th>
+<th>Description</th>
+</tr>
+<tr><td>k95sshg.dll</td><td>GSSAPI-enabled SSH backend for Windows Vista and newer.</td></tr>
+<tr><td>k95ssh.dll</td><td>Standard SSH backend for Windows Vista and newer</td></tr>
+<tr><td>k95sshgx.dll</td><td>GSSAPI enabled SSH backend for Windows XP and Server 2003</td></tr>
+<tr><td>k95sshx.dll</td><td>Standard SSH backend for Windows XP and Server 2003</td></tr>
+</table>
+
+On startup, K95 will attempt each one in order and if any one of them loads
+then SSH features will be made available. If none of these DLLs are present or
+none of them load successfully for one reason or another, then only a single
+`SSH LOAD` command is provided allowing you to specify an alternative DLL to
+use to provide SSH features.
+
+As a result of this change, starting Kermit 95 without optional network DLLs
+(the `-# 2` command line argument) will result in SSH being unavailable until
+the `SSH LOAD` command is used to load a backend DLL.
+
+It is also now possible for alternative SSH implementations not based on libssh
+to be provided by implementing a relatively simple DLL interface similar to 
+Kermit 95s "Network DLL" interface. This may someday allow SSH to return on 
+vintage windows, or SSH to be supported on OS/2.
+
+### SSH Agent Support
+
+Kermit 95s SSH Agent Support is at this time severely limited by what libssh
+supports. Most SSH agents on Windows use Named Pipes for communication, while
+libssh only supports UNIX Domain Sockets (AF_UNIX). 
+
+At the time of writing, the only compatible SSH Agent is PuTTYs Pageant which 
+must be started with the `--unix` command line parameter to create a unix 
+socket. The socket _should_ be placed somewhere on your filesystem where only 
+you have access to it so that other users can't communicate with your SSH agent.
+For example: 
+```
+pagant.exe --unix C:\users\david\.ssh\pageant.sock
+```
+
+Then you've got to tell Kermit 95 where the socket is. You do this with the new
+`SET SSH AGENT-LOCATION` command:
+```
+SET SSH AGENT-LOCATION C:/users/david/.ssh/pageant.sock
+```
+
+Note that PuTTY uses its own key format which is incompatible with that used
+by OpenSSH and Kermit 95. Any keys created by OpenSSH or with K95s 
+`SSH KEY CREATE` command may need to be converted to PuTTYs format with
+`puttygen.exe` before you can import them into Pageant.
+
+The `SSH AGENT { ADD, DELETE, LIST }` commands for managing the SSH Agent
+remain unimplemented at this time as libssh does not support this part of the
+SSH agent protocol.
+
+AF_UNIX has only been supported since Windows 10 v1803, so SSH Agent support
+with libssh is not possible on Windows 8.1 and earlier.
 
 ### New Command Options
 These commands are unchanged aside from having some new options. Some options
@@ -53,10 +108,49 @@ set ssh v2 macs {hmac-sha1-etm@openssh.com, hmac-sha2-256, hmac-sha2-256-etm@ope
 ```
 
 ### New Commands
-The following commands are new to C-Kermit for Windows and so not documented in
+The following commands are new to Kermit 95 and so not documented in
 the Kermit 95 manual.
 
 ```
+SSH LOAD filename
+  This command is only available when no SSH backend DLL was loaded on 
+  startup, either due to there being no compatible DLL available or due to
+  the loading of optional network libraries being disabled via command line
+  parameter. 
+ 
+  This command takes one or more DLL filenames separated by a semicolon (;)
+  which will attempted in order. The first DLL that loads successfully will
+  enable all SSH commands and be used for all SSH operations until Kermit is
+  restarted.
+
+SSH REMOVE LOCAL-PORT-FORWARD local-port
+  Removes the local port forward with the specified local-port from
+  the local port forwarding list. This has no effect on any active 
+  connection.
+
+SSH REMOVE REMOTE-PORT-FORWARD remote-port
+  Removes the remote port forward with the specified remote-port from
+  the remote port forwarding list. This has no effect on any active
+  connection.
+  
+SET SSH AGENT-LOCATION location  
+  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent
+  for public key authentication.
+  
+SET SSH DIRECTORY directory
+  Specifies where Kermit 95 should look for the default SSH user files
+  such as the user-known-hosts file and identity files (id_rsa, etc).
+  By default Kermit 95 looks for these in \v(appdata)ssh.
+  
+  This setting also affects the default name of the user known hosts file. 
+  When this setting is unchanged from its default, the default user known 
+  hosts filename is known_hosts2 (\v(appdata)ssh/known_hosts2) for 
+  compatibility with previous versions of Kermit 95. If you set a different 
+  SSH directory (or even the same SSH directory) with the SET SSH DIRECTORY 
+  command, then the default user known hosts file will be known_hosts 
+  (eg, \v(home).ssh/known_hosts) for compatibility with OpenSSH and other 
+  clients.
+
 set ssh v2 key-exchange-methods {CURVE25519-SHA256,
      CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1,
      DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256,
@@ -75,8 +169,9 @@ set ssh v2 key-exchange-methods {CURVE25519-SHA256,
 ```
 
 ### Removed Commands and Options
-The following SSH commands and options have been removed because they are
-obsolete and not supported by libssh:
+The following SSH commands and options are obsolete and not supported by 
+libssh, so they have now been hidden and will just return an error when 
+entered.
 
 ```
 set ssh version 1
@@ -90,35 +185,26 @@ ssh key display /format:ietf
 ssh v2 rekey
 ```
 
-### Not Yet Implemented (or removed)
+### Not Yet Implemented
 The following commands have not been implemented _yet_. The intention is to
 eventually implement as many of these as possible but this comes down to what
-libssh will or will not support. Some will likely be removed entirely in future
-releases. At this time all of these commands just return an error or do nothing.
+libssh will or will not support. At this time all of these commands are hidden
+and just return an error when entered.
 
 ```
-SSH [OPEN] /X11-FORWARDING: {on,off}
-SSH ADD
-    LOCAL-PORT-FORWARD local-port host port
-    REMOTE-PORT-FORWARD remote-port host port
 SSH AGENT    
     ADD identity-file
     DELETE identity-file
     LIST
         /FINGERPRINT
-SSH CLEAR
-    LOCAL-PORT-FORWARD
-    REMOTE-PORT-FORWARD
 SET SSH
     AGENT-FORWARDING {ON,OFF}
     CHECK-HOST-IP {ON,OFF}
     DYNAMIC-FORWARDING {ON,OFF}
     GATEWAY-PORTS {ON,OFF}
-    IDENTITY-FILE filename
     PRIVILEGED-PORT {ON,OFF}
     QUIET {ON,OFF}
     V2 AUTO-REKEY {ON,OFF}
-    X11-FORWARDING {ON, OFF}
     XAUTH-LOCATION filename
 ```
 
@@ -128,27 +214,34 @@ At this time password, public key, gssapi-mic and keyboard interactive
 authentication are implemented and work.
 
 There is not yet support for using ssh agents but as this is supported by the 
-ssh backend used by C-Kermit support for these may appear in a future release.
+ssh backend used by Kermit 95 support for these may appear in a future release.
 
 ### Using gssapi-mic (Kerberos) authentication
 
-Standard x86 and x86-64 builds of C-Kermit for Windows supporting SSH include
-two versions of the SSH backend, ssh.dll and ssh-gssapi.dll. The default SSH 
-backend, ssh.dll, *does not* support GSSAPI authentcation.
+To use GSSAPI authentication, you must [Download and Install Kerberos for Windows from MIT](http://web.mit.edu/kerberos/dist/index.html).
+When this is installed, Kermit 95 will automatically load the
+GSSAPI-enabled backend (k95sshg.dll or k95sshgx.dll) on startup.
 
-To use GSSAPI authentication you must rename ssh.dll to something else, then
-rename ssh-gssapi.dll to ssh.dll:
-```
-ren ssh.dll ssh.dll.bak
-ren ssh-gssapi.dll ssh.dll
-```
+GSSAPI authentication is not currently supported on non-x86 builds of K95 as
+current versions of Kerberos for Windows are only available for x86 and x86-64.
 
-You must also [Download and Install Kerberos for Windows from MIT](http://web.mit.edu/kerberos/dist/index.html).
-C-Kermit for Windows will not start with the GSSAPI-supporting ssh.dll without
-this installed. If you later uninstall Kerberos for Windows you'll need to swap
-the SSH DLLs back around again.
+### Using SSH on Windows XP
+Libssh 0.10.6 includes a fix for the security vulnerability 
+[CVE-2023-6004](https://nvd.nist.gov/vuln/detail/CVE-2023-6004), but the fix breaks compatibility with Windows XP resulting
+in the error "The procedure entry point if_nametoindex could not be located in 
+the dynamic link library IPHLPAPI.DLL."
 
-GSSAPI authenticatino is not currently supported on non-x86 builds of CKW as
-current versions of Kerberos for Windows are only availbale for x86.
+As a result, Kermit 95 now includes separate SSH backends for
+Windows XP: `k95sshx.dll` and `k95sshgx.dll`. These SSH backends revert the 
+CVE-2023-6004 fix allowing them to operate correctly on Windows XP. One of these
+will be used automatically on Windows XP and Server 2003 if they are present. 
+
+CVE-2023-6004 has a low severity rating and impacts the ProxyCommand and 
+ProxyJump features which are not currently used by Kermit 95 or supported on 
+Windows yet. So undoing the security fix is unlikely to cause any problems in
+practice, but still not a great idea. Where security is a concern you should
+consider upgrading to a supported version of Windows which is able to run the
+normal version of libssh. Alternatively, you can delete `k95sshx.dll` and 
+`k95sshgx.dll` to disable SSH support on Windows XP.
 
 [^1]: https://libssh.org

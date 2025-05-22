@@ -8,28 +8,8 @@
 #    set LIB=.;C:\ZINC\LIB\MVCPP400;C:\MSVC\LIB
 
 # TODO: We should only do this on Windows.
-!if "$(PLATFORM)" == "NT"
 !message Attempting to detect compiler...
 !include ..\k95\compiler_detect.mak
-!else
-# On OS/2 we'll just assume OpenWatcom for now. I don't have access to the
-# IBM compiler to find a way to tell it apart from watcom like we do for
-# Visual C++.
-CMP = OWCL386
-COMPILER = OpenWatcom WCL386
-COMPILER_VERSION = OpenWatcom
-
-# wcl386 doesn't pretend to be Visual C++ and doesn't take the same
-# command line arguments.
-MSC_VER = 0
-
-# Nothing supports PowerPC OS/2.
-TARGET_CPU = x86
-TARGET_PLATFORM = OS/2
-
-# Override CL so we don't end up running the Visual C++ clone cl.
-CL = wcl386
-!endif
 
 !message
 !message
@@ -51,34 +31,39 @@ WNT_CPP=cl
 WNT_LINK=link
 WNT_LIBRARIAN=lib
 
+!if "$(CMP)" == "VCXX"
+
+#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I..\k95 /Zi -noBool
+#WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
 WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95 -noBool
 !if $(MSC_VER) < 100
 # Visual C++ 2.0 or older
 WNT_CPP_OPTS=$(WNT_CPP_OPTS) -DNODIAL -DCKT_NT31
 !endif
-
-!if "$(CMP)" == "OWCL"
-# The OpenWatcom 1.9 linker fails with an internal error using the normal linker options.
-WNT_LINK_OPTS=-subsystem:windows /MAP
-!else
 WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
-!endif
-#WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I..\k95 /Zi -noBool
-#WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
 WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup
-WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
-
-WNT_OBJS=
-WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib wnt_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib shell32.lib ole32.lib uuid.lib advapi32.lib # compmgr.lib
-
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
 !if $(MSC_VER) < 130
 !message Using ctl3d32
-# CTL3D32 is only available on Visual C++ 6.0 and earlier. Visual C++ 2002 and
-# OpenWatcom (which we pretend is VC++ 2002) do not have it.
+# CTL3D32 is only available on Visual C++ 6.0 and earlier.
 WNT_LIBS=$(WNT_LIBS) ctl3d32.lib
 !endif
 
-WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib libc.lib kernel32.lib oldnames.lib
+
+!else
+
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -DCKODIALER -I..\k95
+WNT_LINK_OPTS=-subsystem:windows -entry:WinMainCRTStartup /MAP
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib
+WNT_CON_LINK_OPTS=-subsystem:console -entry:mainCRTStartup /MAP
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib
+
+!endif
+
+WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
+WNT_OBJS=
+
 .cpp.obn:
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 
@@ -86,7 +71,7 @@ WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 
 # ----- OS/2 compiler options -----------------------------------------------
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 OS2_CPP=wpp386
 OS2_LINK=wlink
 OS2_LIBRARIAN=wlib
@@ -105,7 +90,7 @@ OS2_RC=rc
 #OS2_CPP_OPTS=/c /D__OS2__ /DOS2 /Gx+ /Sp1 /FiZIL.SYM /SiZIL.SYM
 #OS2_LINK_OPTS=/BASE:0x10000 /PM:PM /NOI /NOE 
 # ----- Next line for pre-compiled headers and optimization -----------------
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 # ICC   WCC386
 # /Gx+  -xs         Enable generation of C++ Exception Handling Code (watcom: -xs = balanced exception handling)
 # /Sp1  -zp=1       Pack aggregate members on specified alignment
@@ -122,7 +107,7 @@ OS2_RC=rc
 # -O    ?           Optimize generated code
 # -Oi25 -Oe=<num>   Set the threshold for auto-inlining to <value> intermediate code instructions
 # -Gm   ? -bm       Link with multithread runtime libraries. Default: /Gm-
-#       -bt=os2v2     Compile for target OS
+#       -bt=os2     Compile for target OS
 #
 # Link Flags - ICC  wlink
 # /BASE:0x10000
@@ -130,11 +115,10 @@ OS2_RC=rc
 # /NOI
 # /NOE
 #                   -l=os2v2_pm Link for OS/2 v2 Presentation Manager
-#                   -x          Make name case-sensitive
 
 #
 # -c -xs
-OS2_CPP_OPTS=-D__OS2__ -DOS2 -DCKODIALER -zp=1 -bm -Fh -bt=os2
+OS2_CPP_OPTS=-DOS2 -DCKODIALER -zp=1 -bm -Fh -bt=os2
 OS2_LINK_OPTS=SYSTEM os2v2_pm OP ST=96000
 OS2_LIB_OPTS=
 OS2_RC_OPTS=
@@ -194,7 +178,7 @@ nckdial.exe: main.obn dialer.obn lstitm.obn kconnect.obn \
     $(WNT_LIBS)
 
 nk95dial.res: k95dial.rc k95f.ico
-    rc -v -fo nk95dial.res k95dial.rc
+    rc -v -dWINVER=0x0400 -fo nk95dial.res k95dial.rc
 
 main.obn: main.cpp dialer.hpp kconnect.hpp kwinmgr.hpp kdemo.hpp
 
@@ -294,7 +278,7 @@ os2: k2dial.exe
 
 #$(CC) $(CC2) $(LINKFLAGS) $(DEBUG) $(OBJS) $(DEF) $(OUT)$@ $(LIBS) $(LDFLAGS)
 #        wrc -q -bt=os2 ckoker.res $@
-# LINKFLAGS="-l=os2v2 -x" \
+# LINKFLAGS="-l=os2v2" \
 
 # os2.def was previously included below but does not exist in the K95 2.1.3
 # build tree. I can only assume either this file was supplied by the IBM
@@ -308,7 +292,7 @@ k2dial.exe: main.obo dialer.obo lstitm.obo kconnect.obo \
             ksetkerberos.obo ksettls.obo ksetkeyboard.obo ksetlogin.obo \
             ksetprinter.obo ksetlogs.obo ksetssh.obo ksetftp.obo ksetgui.obo \
             ksetdlg.obo kabout.obo ksettcp.obo k2dial.rc
-!if "$(CMP)" == "OWCL386"
+!if "$(CMP)" == "OWWCL"
 	$(OS2_LINK) $(OS2_LINK_OPTS) N k2dial.exe \
     F main.obo,dialer.obo,lstitm.obo,kconnect.obo,kdialopt.obo,kquick.obo,kdconfig.obo,\
     kcolor.obo,dialetc.obo,kdirnet.obo,kdirdial.obo,kdemo.obo,kstatus.obo,kwinmgr.obo,\

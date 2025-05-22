@@ -20,10 +20,10 @@
 
 #ifdef NT
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif
+#endif /* CK_TAPI */
 #include "cknalm.h"
 
 #include "ckocon.h"
@@ -86,6 +86,10 @@ HANDLE hmuxAlarmSig[4][2] = { { (HANDLE) NULL, (HANDLE) NULL },
                           { (HANDLE) NULL, (HANDLE) NULL },
                           { (HANDLE) NULL, (HANDLE) NULL } } ;
 HANDLE hmuxCtrlCAlarmSig[3] = { (HANDLE) NULL, (HANDLE) NULL, (HANDLE) NULL } ;
+
+/* Used to protect zoutdump() from the SIGINT handler closing the output file
+ * mid-write */
+HANDLE hmtxZoutDump = (HANDLE) 0;
 
 #ifdef CK_TAPI
 HANDLE hevTAPIConnect = (HANDLE) 0 ;
@@ -162,6 +166,10 @@ HMUX hmuxVscrnUpdate[VNUM] = {(HMUX) 0,(HMUX) 0,(HMUX) 0} ;
 HMUX hmuxCtrlC[4]    = { (HMUX) 0,(HMUX) 0,(HMUX) 0,(HMUX) 0 } ;
 HMUX hmuxAlarmSig[4] = { (HMUX) 0,(HMUX) 0,(HMUX) 0,(HMUX) 0 } ;
 HMUX hmuxCtrlCAlarmSig = (HMUX) 0 ;
+
+/* Used to protect zoutdump() from the SIGINT handler closing the output file
+ * mid-write */
+HMUX hmtxZoutDump = (HMUX) 0;
 
 HEV hevRichEditInit = (HEV) 0;
 HEV hevRichEditClose = (HEV) 0;
@@ -419,7 +427,12 @@ CloseScreenMutex( void )
 APIRET
 CreateVscrnMutex( BOOL owned )
 {
-   int i, rc = 0 ;
+   int i;
+
+#ifndef NT
+    int rc;
+#endif /* Not NT */
+
    for ( i = 0 ; i < VNUM ; i++ )
    {
     if ( hmtxVscrn[i] )
@@ -488,7 +501,12 @@ CloseVscrnMutex( void )
 APIRET
 CreateVscrnDirtyMutex( BOOL owned )
 {
-   int i, rc ;
+   int i;
+
+#ifndef NT
+    int rc;
+#endif /* Not NT */
+
    for ( i=0; i<VNUM; i++)
    {
     if ( hmtxVscrnDirty[i] )
@@ -1841,7 +1859,12 @@ StopAlarmTimer( void )
 APIRET
 CreateVscrnTimerSem( BOOL posted )
 {
-   int i, rc = 0 ;
+   int i;
+
+#ifndef NT
+    int rc = 0;
+#endif /* Not NT */
+
    for ( i=0; i<VNUM ; i++ )
    {
     if ( hevVscrnTimer[i] )
@@ -1953,7 +1976,12 @@ CloseVscrnTimerSem( void )
 APIRET
 CreateVscrnDirtySem( BOOL posted )
 {
-   int i, rc = 0 ;
+   int i;
+
+#ifndef NT
+   int rc = 0;
+#endif /* Not NT */
+
    for ( i=0 ; i<VNUM ; i++ )
    {
     if ( hevVscrnDirty[i] )
@@ -4044,3 +4072,60 @@ CloseTerminalModeSem( void )
 #endif /* NT */
 }
 
+APIRET
+CreateZoutDumpMutex( BOOL owned )
+{
+    if ( hmtxZoutDump )
+#ifdef NT
+        CloseHandle( hmtxZoutDump ) ;
+    hmtxZoutDump = CreateMutex( NULL, owned, NULL ) ;
+    if (hmtxZoutDump == NULL)
+        return GetLastError();
+#else /* not NT */
+            DosCloseMutexSem( hmtxZoutDump ) ;
+    DosCreateMutexSem( NULL, &hmtxZoutDump, 0, owned ) ;
+#endif /* NT */
+    return 0;
+}
+
+APIRET
+RequestZoutDumpMutex( ULONG timo )
+{
+#ifdef NT
+    DWORD rc = 0 ;
+
+    rc = WaitForSingleObjectEx( hmtxZoutDump, timo, TRUE ) ;
+    return rc == WAIT_OBJECT_0 ? 0 : rc ;
+#else /* not NT */
+    return DosRequestMutexSem( hmtxZoutDump, timo ) ;
+#endif /* NT */
+}
+
+APIRET
+ReleaseZoutDumpMutex( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+
+    rc = ReleaseMutex( hmtxZoutDump ) ;
+    return rc == TRUE ? 0 : GetLastError() ;
+#else /* not NT */
+    return DosReleaseMutexSem( hmtxZoutDump ) ;
+#endif /* NT */
+}
+
+APIRET
+CloseZoutDumpMutex( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+    rc = CloseHandle( hmtxZoutDump ) ;
+    hmtxZoutDump = (HANDLE) NULL ;
+    return rc == TRUE ? 0 : GetLastError() ;
+#else /* not NT */
+    APIRET rc ;
+    rc = DosCloseMutexSem( hmtxZoutDump ) ;
+    hmtxZoutDump = 0 ;
+    return rc ;
+#endif /* NT */
+}

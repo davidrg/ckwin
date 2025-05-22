@@ -1,0 +1,369 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>TAPI - Microsoft Telephony</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2><a name="tapi">TAPI - Microsoft Telephony</h2>
+
+<b>Contents:</b>
+<ul>
+<li><a href="#tapik95">Kermit 95 and TAPI</a>
+<li><a href="#tapivs">TAPI versus Kermit Modem Dialing</a>
+<li><a href="#tapipnc">TAPI versus Kermit Phone Number Conversion</a>
+<li><a href="#tapiact">TAPI Actions</a>
+<li><a href="#tapians">TAPI and Incoming Calls</a>
+<li><a href="#tapiexm">TAPI Examples</a>
+</ul>
+<p>
+<b>Reference:</b>  <cite>Using C-Kermit</cite>, Chapters
+  <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=81">4</a> and
+  <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">5</a>,
+  <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=479">Appendix II</a>.
+<p>
+
+TAPI is Microsoft's Telephony Application Programming Interface for Windows 95
+(all versions) and for Windows NT 4.0 or later.  It is not available on
+Windows NT 3.51 or earlier, nor on any version of OS/2.  TAPI is supposed to
+free the application (such as Kermit 95) from the necessity of knowing the
+specific details required to control different makes and models of modems and
+other communication devices, and it is supposed to let multiple applications
+share the same communication device.
+<p>
+The benefits of TAPI include:
+<p><ul>
+<li>The ability to use Plug-n-Play modems without any special procedures.
+<li>The ability to dial out on a modem that is "owned" by (e.g.) a fax program.
+<li>The ability to use modem models that Kermit 95 doesn't know about.
+<li>The ability to use TAPI dialing rules instead of Kermit's.
+<li>Built-in knowledge of hundreds of modem makes and models and easy
+installation of new types.
+</ul><p>
+
+Sometimes you might want to use Kermit's built-in modem and dialing
+facilities, sometimes you might prefer to use TAPI's, and sometimes you might
+want to mix and match.  Each system has its advantages and drawbacks:
+
+<p>
+<ul>
+<li>TAPI might understand your modem when Kermit doesn't.
+<li>TAPI has better support for calling cards
+<li>TAPI does not support non-Hayes-compatible modems
+<li>Kermit supports non-Hayes-compatible modems (Rolm, CCITT, etc)
+<li>Kermit has better support for <a href="gloss.html#g_pbx">PBX</a>s
+<li>Kermit supports "10-digit" and other novel forms of dialing
+<li>Kermit is more informative about dialing results
+<li>Kermit's modem controls are easier to configure and customize
+</ul>
+<p>
+
+Kermit 95 lets you choose any combination of:
+<p><ul>
+<li>TAPI device versus traditional COM port / modem combination
+<li>TAPI versus Kermit modem control and dialing
+<li>TAPI versus Kermit phone number conversion
+</ul><p>
+Regardless of which combination you choose, all of Kermit 95's dialing
+directory features are still available: phone number lookup, multiple phone
+numbers per entry name, and cheapest-first dialing.
+
+<p>
+Kermit's TAPI support is in Kermit 95 itself, in the K95 Dialer, and in the
+SETUP program.
+
+<p>
+<hr>
+<h3><a name="tapik95">Kermit 95 and TAPI</h3>
+
+<b>Links:</b> [<a href="#tapivs">Next</a>] [<a href="#tapi">Index</a>]
+<p>
+
+The procedure for using TAPI modems in Kermit 95 is only slightly different
+from what you are accustomed to.
+<p>
+Previously, Kermit 95 treated the communications port (e.g. COM1) and the
+modem type (e.g. US Robotics Sportster) separately.  To make a dialout call,
+you had to tell Kermit which port to use and which kind of modem was on it,
+and the interface speed between them:
+<p><pre>
+  set modem type usr
+  set port com1
+  set speed 57600
+  dial 7654321
+</pre><p>
+TAPI, however, is not concerned with COM ports.  Instead it uses descriptive
+names, like "Sportster 28800 External", to denote a particular COM-port/modem
+combination.  These names can contain spaces and mixed-case words.  In Kermit
+95, TAPI names have their spaces converted to underscores:
+<p><pre>
+  <i>TAPI Name:</i>  Sportster 28800 External
+  <i>K-95 Name:</i>  Sportster_28800_External
+</pre><p>
+The new command for choosing a TAPI device rather than a COM-port / modem
+combination is:
+<p><pre>
+  SET TAPI LINE <i>[ k95-tapi-name ]</i>
+</pre><p>
+for example:
+<p><pre>
+  set tapi line Sportster_28800_External
+</pre><p>
+You can use ?, completion, and abbreviation on the name, since it is a Kermit
+keyword.  You can also use the synonym SET TAPI PORT.  If you have more than
+one TAPI device defined, you can type "set tapi line ?" to see a list.  You
+can select the desired device by typing enough characters to distinguish from
+from any other one in the list.  If you only have one TAPI device, "set tapi
+line" (by itself) selects that device.  If you have more than one TAPI device,
+"set tapi line" (by itself) selects the lowest-numbered TAPI device.
+<p>
+As noted below, you can choose whether you want Kermit or TAPI to dial the
+modem.  Should you want Kermit to dial the modem, you can choose whether
+Kermit uses its own built-in knowledge of the modem's commands, or uses the
+commands that TAPI has defined for this modem.  Use:
+<p><pre>
+  SET MODEM TYPE TAPI            ...to import TAPI's commands for this modem
+  SET MODEM TYPE <i>built-in-type</i>   ...to select Kermit's modem commands
+</pre><p>
+Kermit 95 loads the TAPI commands automatically whenever you give a SET TAPI
+LINE command.  To demonstrate, give a "show modem" command before and after
+"set tapi line" and to see the values that were loaded.  You can use
+<tt>SET</tt> <tt>MODEM</tt> <tt>TYPE</tt> <tt><i>specific-type</i></tt> to
+replace TAPI's modem commands with Kermit's built-in ones, or you can use
+<tt>SET</tt> <tt>MODEM</tt> <tt>COMMAND</tt> to replace or modify specific
+commands.
+<p>
+Also when you give a <tt>SET</tt> <tt>TAPI</tt> <tt>LINE</tt> command, the
+interface speed is copied from the Control Panel.  <tt>SHOW</tt>
+<tt>COMMUNICATIONS</tt> will tell you the speed that was chosen.  So you don't
+have to give a <tt>SET</tt> <tt>SPEED</tt> command either, unless you want to
+change the speed that was picked up from TAPI.
+<p>
+The most common configuration includes only one TAPI device, and so the
+sequence of commands would be, very simply:
+<p><pre>
+  set tapi line
+  dial +1 (212) 7654321
+</pre><p>
+For compatibility with previous releases and existing scripts, you can also
+use the regular <tt>SET</tt> <tt>PORT</tt> (or <tt>SET</tt> <tt>LINE</tt>)
+command as follows:
+<p><dl>
+<dt><tt>SET PORT TAPI <i>[ k95-tapi-name  ]</i></tt>
+<dd>This command is equivalent to <tt>SET</tt> <tt>TAPI</tt> <tt>LINE</tt>.
+</dl>
+<p>
+So, for example, if you use K95 Host Mode to allow other people to dial in to
+your PC, and you want to specify a TAPI device, simply specify the port name
+as "TAPI Sportster_28800_External" (substitute the name of your TAPI device),
+rather than COM1 or whatever you were using before, and the modem type as
+TAPI.  NOTE: you can't define "TAPI xxx" as the value of a variable and then
+"set port \m(variablename)", because you can't put a variable in a command
+field that expands to multiple words, as noted on 347-348 of <cite>Using
+C-Kermit</cite>.
+<p><dl>
+<dt><tt>SET TAPI USE-WINDOWS-CONFIGURATION <i>{</i> ON, OFF <i>}</i></tt>
+<dd>This command determines whether the TAPI device uses the settings in the 
+Control Panel for dialing (<tt>ON</tt>) or Kermit's built-in values
+(<tt>OFF</tt>, the default).  When <tt>ON</tt>, K95 does not touch the Windows
+port configuration, so use this setting to accomplish combinations that K95
+might not support intrinsically, such as 8 data bits with parity (in this
+case, also tell K95 to "set tapi modem-dialing on" and "set parity none").
+<p>
+<dt><tt>SET TAPI MODEM-LIGHTS <i>{</i> ON, OFF <i>}</i></tt>
+<dd>If you set this one to <tt>ON</tt>, TAPI puts little modem Receive and
+Transmit Data lights in your Windows 95 status bar.  You can view the lights
+whenever you have chosen a TAPI device.  (<tt>SET</tt> <tt>TAPI</tt>
+<tt>MODEM-DIALING</tt> <tt>ON</tt> required) 
+</dl>
+
+<p>
+<hr>
+<h3><a name="tapivs">TAPI versus Kermit Modem Dialing</h3>
+
+<b>Links:</b> [<a href="#tapipnc">Next</a>] [<a href="#tapik95">Previous</a>] [<a href="#tapi">Index</a>]
+<p>
+
+You can choose whether Kermit interacts with the modem directly, sending it
+all its setup and dialing commands and responding to its result codes, or all
+this is to be handled by TAPI.
+<p><dl>
+<dt><tt>SET TAPI MODEM-DIALING <i>{</i> ON, OFF <i>}</i></tt>
+<dd>When <tt>TAPI</tt> <tt>MODEM-DIALING</tt> is <tt>OFF</tt>, which is the
+default setting, Kermit obtains the TAPI device from TAPI, but dials the modem
+itself rather than having TAPI do it.  To let TAPI control the modem,
+<tt>SET</tt> <tt>TAPI</tt> <tt>MODEM-DIALING</tt> <tt>ON</tt>.  You must use
+<tt>TAPI</tt> <tt>MODEM-DIALING</tt> is <tt>OFF</tt> (the default) to make
+direct connections.  Use <tt>TAPI</tt> <tt>MODEM-DIALING</tt> <tt>ON</tt> if
+you want the modem to be shared by other TAPI applications, e.g. when waiting
+for an incoming call.
+</dl>
+<p>
+In general it is better to let TAPI do the dialing if you need to share the
+port with another application such as a FAX program.  Otherwise it is usually
+better to let Kermit handle the dialing because it is easier to find and fix
+any problems.  You should also use Kermit dialing your modem does not use the
+AT command set.
+<p>
+The following commands apply only when <tt>TAPI</tt> <tt>MODEM-DIALING</tt> is
+<tt>ON</tt>; that is, when TAPI is to handle the dialing:
+<p><dl>
+<dt><tt>SET TAPI MANUAL-DIALING <i>{</i> ON, OFF <i>}</i></tt>
+<dd>If you set this one to <tt>ON</tt>, TAPI pops up a little window to let
+you dial the modem yourself by typing the appropriate modem command.
+<p>
+<dt><tt>SET TAPI PRE-DIAL-TERMINAL <i>{</i> ON, OFF <i>}</i></tt>
+<dd>If you set this <tt>ON</tt>, TAPI pops up a little "dumb terminal" window
+to let you interact directly with the modem prior to dialing.
+<p>
+<dt><tt>SET TAPI POST-DIAL-TERMINAL <i>{</i> ON, OFF <i>}</i></tt>
+<dd>If you set this <tt>ON</tt>, TAPI pops up a little "dumb terminal" window
+to let you interact directly with the modem just after dialing.
+<p>
+<dt><tt>SET TAPI WAIT-FOR-CREDIT-CARD-TONE <i>{</i> ON, OFF <i>}</i></tt>
+<dd>This tells TAPI whether to use its normal method of dealing with credit
+card tones ("bong") when using a TAPI device.
+</dl>
+
+<p>
+<hr>
+<h3><a name="tapipnc">TAPI versus Kermit Phone Number Conversion</h3>
+
+<b>Links:</b> [<a href="#tapiact">Next</a>] [<a href="#tapivs">Previous</a>] [<a href="#tapi">Index</a>]
+<p>
+
+As described in <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">
+Chapter 5 of <cite>Using C-Kermit</cite></a>, Kermit can
+figure out how to dial almost any portable-format phone number from any
+location as long as you have specified the necessary location information,
+usually just the local country code and area code, plus the long distance and
+international dialing prefixes used in that location.  TAPI can do the same,
+more or less -- sometimes more, sometimes less.
+<p>
+If a phone number does not begin with "+", it is dialed as given with no
+conversions, in which case it doesn't matter whether TAPI or Kermit is
+responsible for conversions.
+<p><dl>
+<dt><tt>SET TAPI PHONE-NUMBER-CONVERSIONS { ON, OFF, AUTO }</tt>
+<dd><tt>ON</tt> means to let TAPI convert the phone number.  <tt>OFF</tt>
+means Kermit should convert the phone number as described in
+<a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">Chapter 5 of
+<cite>Using C-Kermit</cite></a>.  <tt>AUTO</tt> (the default) means TAPI should
+convert the phone number if a TAPI line is in use, and Kermit should do it if
+a regular COM-port/modem ("set port") device is selected.  <tt>AUTO</tt> is
+available only at K95 command level, not in the Dialer
+<p>
+<dt><tt>SET TAPI LOCATION <i>name</i></tt>
+<dd>This lets you pick any of the defined TAPI locations (from the Dialing
+Preferences section of Modems [sic] Properties in the Control Panel).  Type
+"set tapi location ?" for a list.  The Kermit name for a location is the
+same as the TAPI name, except spaces are replaced by underscores.  When you
+pick a TAPI location, its country code, area code, and long-distance and
+international dialing prefixes are imported by Kermit, just as if you had
+given the corresponding group of <tt>SET</tt> <tt>DIAL</tt> commands.
+</dl>
+
+<p>
+<hr>
+<h3><a name="tapiact">TAPI Actions</h3>
+
+<b>Links:</b> [<a href="#tapians">Next</a>] [<a href="#tapipnc">Previous</a>] [<a href="#tapi">Index</a>]
+<p>
+
+Kermit 95 includes the following commands that call up TAPI dialog boxes:
+<p><dl>
+<dt><tt>TAPI CONFIGURE-LINE <i>k95-tapi-name</i></tt>
+<dd>This lets you change the configuration of the given TAPI device without
+having to leave Kermit, go through the control panel, etc.  Any changes that
+you make here become global and permanent after you click on OK, and of
+course they are ignored and forgotten if you click on Cancel.
+<p>
+<dt><tt>TAPI DIALING-PROPERTIES<dt></tt>
+<dd>This lets you change information related to your current TAPI location,
+to add a new one, or remove an existing one.  Changes here, too, are global
+and permanent.
+</dl>
+
+<p>
+<hr>
+<h3><a name="tapians">TAPI and Incoming Calls</h3>
+
+<b>Links:</b> [<a href="#tapiexm">Next</a>] [<a href="#tapiact">Previous</a>] [<a href="#tapi">Index</a>]
+<p>
+
+Some people think TAPI is supposed to provide a way for multiple applications
+to wait for incoming calls, with TAPI handing the call off to the right
+application, such as a fax program, a voice mail or call-processing system for
+voice calls, and a data communications program for data calls.
+<p>
+In fact, this is only possible if the phone system provides this information
+to TAPI when the phone rings, as does <a href="gloss.html#g_isdn">ISDN</a> and
+some <a href="gloss.html#g_pbx">PBX</a>s and cable modems.  It
+is also possible on analog systems when features such as Distinctive Ring are
+available.  Otherwise, it is each application's responsibility to determine if
+an incoming call is for it in a non-destructive manner, and if not, hand it
+off to the next waiting application.  On an analog phone system this is nearly
+impossible.  If you want Kermit to answer a call (e.g. in host mode), it is
+generally best to shut down all other applications that might also be waiting
+for calls.
+
+<p>
+<hr>
+<h3><a name="tapiexm">TAPI Examples</h3>
+
+<b>Links:</b> [<a href="#tapians">Previous</a>] [<a href="#tapi">Index</a>]
+<p>
+
+<dl>
+<dt><tt>set modem type usrobotics<br>
+set port com1<br>
+set speed 57600<br>
+dial +1 (212) 555 1234</tt>
+<dd>This is the traditional Kermit procedure, that does not use or depend on
+TAPI in any way.  This will not work if (a) it's Plug-n-Play modem that
+has not been previously initialized, or (b) the device is currently owned
+by TAPI.  On the other hand, this method is portable to non-Windows
+platforms.
+<p>
+<dt><tt>set tapi line Sportster_28800_External<br>
+dial +1 (212) 555 1234</tt>
+<dd>This is the easiest way to use TAPI.  Kermit gets the modem from TAPI,
+imports the modem's dialing commands and the interface speed from the
+control panel, and, using TAPI's phone-number conversions, dials the number.
+<p>
+<dt><tt>set tapi line<br>
+dial +1 (212) 555 1234</tt>
+<dd>Same as the previous example.  You can leave out the TAPI device name if it
+is the default or only TAPI modem device.
+<p>
+<dt><tt>set tapi line Sportster_28800_External<br>
+set modem type usrobotics<br>
+set tapi phone-number-conversions off<br>
+set speed 57600<br>
+dial +1 (212) 555 1234</tt>
+<dd>Kermit gets the modem from TAPI but controls the modem and the telephone
+number itself.
+<p>
+<dt><tt>set tapi line Sportster_28800_External<br>
+set tapi modem-dialing on<br>
+dial +1 (212) 555 1234</tt>
+<dd>Kermit gets the modem from TAPI, but lets TAPI do everything.
+<p>
+<dt><tt>set tapi line Sportster_28800_External<br>
+set tapi phone-number-conversion off<br>
+set tapi modem-dialing on<br>
+dial +1 (212) 555 1234</tt>
+<dd>Kermit gets the modem from TAPI, but lets TAPI do everything except convert
+the phone number.
+<p>
+<dt><tt>set tapi modem-dialing off<br>
+set tapi line<br>
+set carrier-watch off<br>
+connect</tt>
+<dd>This allows you to <tt>CONNECT</tt> to a TAPI modem and type AT commands
+at its command processor.
+</dl>
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

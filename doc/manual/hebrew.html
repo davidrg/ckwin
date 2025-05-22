@@ -1,0 +1,322 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 - Hebrew Character Sets</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Hebrew Character Sets in Kermit 95</h2>
+
+<b>Contents</b>
+<ul>
+<li><a href="#hbxfer">Hebrew File Transfer</a>
+<li><a href="#hbterm">Hebrew Terminal Emulation</a>
+<li><a href="#hbcfg">Configuring K95 for Hebrew Terminal Emulation</a>
+<li><a href="#hbkey">Entering Hebrew Characters on the Keyboard</a>
+<li><a href="#hbkbmode">Using Kermit 95's Hebrew Keyboard Mode</a>
+</ul>
+<p>
+The Hebrew character sets known to Kermit 95 are:
+<p><pre>
+  <i>Kermit Name    Type   Description</i>
+   HEBREW-ISO    8-bit    <a href="gloss.html#g_iso">ISO</a> 8859-8 Latin/Hebrew
+   HEBREW-7      7-bit    7-Bit Hebrew from Hebrew-model DEC VT100
+   CP862         8-bit    Hebrew PC Code Page
+</pre><p>
+
+<p>
+<hr>
+<h3><a name="hbxfer">Hebrew File Transfer</h3>
+
+Hebrew file transfer is fully described in <cite>Using C-Kermit</cite>.
+<p>
+Commands:
+<p><dl>
+<dt><tt>SET TRANSFER CHARACTER-SET HEBREW-ISO</tt>
+<dd>ISO 8859-8 Latin/Hebrew Alphabet
+<p>
+<dt><tt>SET FILE CHARACTER-SET HEBREW-ISO</tt>
+<dd>ISO 8859-8 Latin/Hebrew Alphabet
+<p>
+<dt><tt>SET FILE CHARACTER-SET CP862</tt>
+<dd>Hebrew PC Code Page
+<p>
+<dt><tt>SET FILE CHARACTER-SET HEBREW-7</tt>
+<dd>DEC 7-Bit (VT100) Hebrew
+</dl>
+<p>
+An invertible translation table between Latin/Hebrew and CP862 is used during
+both terminal emulation and file transfer.  The translation table between
+Hebrew-7 and Latin/Hebrew, however, is not invertible because these character
+sets are different sizes.
+<p>
+Here is an example of uploading a Hebrew file from a PC to UNIX.  The PC
+version is coded in the Hebrew PC code page, and the UNIX version is to be
+stored in the 7-bit Hebrew character-set so it can be sent as network e-mail:
+<p><pre>
+C-Kermit> <u>set file character-set hebrew-7</u> ; I want 7-bit text for email
+C-Kermit> <u>receive</u>                         ; Wait for the file.
+<u>&#60;Alt-X&#62</u>                                   ; Escape back to the PC
+K-95> <u>set file type text</u>                  ; Make sure we are in text mode
+K-95> <u>set file character-set cp862</u>        ; File is in Hebrew PC code page
+K-95> <u>set xfer character-set hebrew</u>       ; Send using ISO Latin/Hebrew
+K-95> <u>send rab.oof</u>                        ; Send the file
+</pre><p>
+The file sender automatically tells the file receiver that the transfer
+character-set is Hebrew.
+<p>
+The three Hebrew character sets are also available for use in Kermit's
+TRANSLATE command, which translates a local file from one character-set to
+another.  Thus you can use Kermit to convert a local file from, say,
+Latin/Hebrew to Hebrew-7.
+<p>
+Kermit's Hebrew file transfer features can be used in conjunction with MS-DOS
+Kermit 3.13 and later and C-Kermit 5A(189) and later (with which Kermit 95
+shares the same translation tables to ensure consistent translations) and IBM
+Mainframe Kermit 4.2 or later, which translates between Latin/Hebrew and IBM
+CECP 424 (the Hebrew EBCDIC Country Extended Code Page).
+
+<p>
+<hr>
+<h3><a name="hbterm">Hebrew Terminal Emulation</h3>
+
+In Kermit 95,
+"Hebrew terminal emulation" means the use of Hebrew characters while emulating
+VT100, VT320, ANSI, or other type of terminal, and translation between the
+Windows encoding for Hebrew and the host encoding.
+<p>
+It does not mean right-to-left writing direction; thus it would be the
+responsibility of the host application to place Hebrew characters in the
+desired position on the screen by using escape sequences.  This should not
+be surprising, however, since very few of the terminals that Kermit
+emulates support right-to-left writing direction either.
+<p>
+Kermit 95's Hebrew support was widely used with Hebrew University's ALEPH
+bibliographic software.
+
+<h4>The PC Hebrew Character Set</h4>
+
+Kermit 95 can be used to display Hebrew characters on the host if you
+have the Hebrew code page, CP862, loaded on your PC.  In Windows 95, it is not
+likely that you have this, or can have it, unless you have installed the
+Israeli version of Windows; see the 
+<a href="k95bugs.html">Kermit 95 Bug List</a> for more
+information about this.
+<p>
+
+In Windows NT/2000/XP, we don't use code pages at all, but instead we use
+Unicode, which NT supports.  It is recommended that you use a True Type
+Unicode encoded font with Kermit 95.  The one that comes with Windows NT is
+Lucida Console (fixed-pitch Unicode), but unfortunately this font does not
+include a full set of Hebrew letters.  If you install an additional font that
+does contain Hebrew characters you can leave everything as it is.  Otherwise,
+you can use the bitmap (code page) fonts and instruct Kermit 95 to use your
+Hebrew PC code page with:
+
+<p><pre>
+  SET TERMINAL UNICODE OFF
+  SET TERMINAL CODE-PAGE 862
+  SET TERMINAL LOCAL-CHARACTER-SET CP862
+</pre><p>
+
+The OS/2 version of Kermit 95 comes with a Hebrew "PC font" equivalent to
+Code Page 862.  You can use this in fullscreen sessions only -- NOT in an OS/2
+Window, and even then it works only if your video driver allows it.  In
+Kermit/2, the commands:
+<p><pre>
+  SET TERMINAL FONT 862
+  SET TERMINAL LOCAL-CHARACTER-SET CP862
+</pre><p>
+actually attempts to load the Hebrew CP862 font into your video adapter
+(this can't be done in Windows).
+
+<p>
+<hr>
+<h3><a name="hbcfg">Configuring K95 for Hebrew Terminal Emulation</h3>
+
+Hebrew character-set translation is enabled during terminal emulation
+via the commands:
+<p><pre>
+  SET TERMINAL REMOTE-CHARACTER-SET { HEBREW-ISO, HEBREW-7, CP862 }
+  SET TERMINAL LOCAL-CHARACTER-SET CP862
+  SET TERMINAL BYTESIZE 8    ; Not needed for Hebrew-7
+</pre><p>
+(choose the character set that is appropriate for the host or service
+you are connecting to.)
+
+<p>
+<hr>
+<h3><a name="hbkey">Entering Hebrew Characters on the Keyboard</h3>
+
+In Windows it is possible to install more than one
+keyboard layout in the Keyboard Control Panel on the Input Locales
+page.  When more than one Input Locale/Layout combination is defined,
+you are required to choose one of them as the default, and to choose a
+key combination (such as Left Alt + Shift) to switch among them.  This
+is called the Switch-Locale key sequence.  The default Input-Locale is
+the Input-Locale that each Window uses when it is opened.
+<p>
+For instance, it is possible to install:
+<p><pre>
+  Input Locale                                  Layout
+  ------------------------------------------    ---------------
+  English (United States)                       US
+  Hebrew                                        Hebrew
+</pre><p>
+with "English (United States)" as the default input locale and a
+Switch-Locale key sequence of "Left_Alt+Shift".  Since the keyboard
+only has one alphabet on it, this "alphabet shift" key is needed to
+switch between the two defined alphabets.  In Hebrew Windows, for
+example, it is necessary to type Roman letters when you type Windows
+file names or Kermit 95 commands and Hebrew letters when writing in
+the Hebrew language.
+<p>
+
+In Windows NT/2000/XP, the Hot-key combination switches the Input-Locale for
+the entire system.  In Windows 95/98/ME, the Input-Locale is switched only for
+the current application window, allowing different applications to use
+different languages at the same time.
+
+<h4>Keyboard Shifting in Windows NT/2000/XP</h4>
+
+In Windows NT/2000/XP, you can give the following commands to Kermit 95:
+<p><pre>
+  SET TERMINAL UNICODE OFF ; if Hebrew characters are missing from font
+  SET TERMINAL CODE-PAGE 1255
+  SET TERMINAL LOCAL-CHARACTER-SET CP1255
+  SET TERMINAL REMOTE-CHARACTER-SET HEBREW-ISO <i>(or</i> HEBREW-7<i>)</i>
+</pre><p>
+
+When the current locale is "English (United States)" K95 receives Roman
+characters from the keyboard.  When the current locale is "Hebrew" K95
+receives Hebrew characters from the keyboard.  To toggle between the two,
+press the Switch-Locale key sequence.
+
+<p>
+
+When issuing commands to K95 switch to the "English" locale and when
+sending Hebrew characters to the host switch to the "Hebrew"
+locale.  There is no limitation to mixing Roman and Hebrew
+characters via this method at the K95 command prompt or in terminal
+mode.
+
+<p>
+
+Note that only characters that are in the active code page may be delivered to
+K95 from the keyboard.  In the above example code page 1255 is used because it
+is available on all versions of NT and it contains all of the Roman characters
+needed for English and the Hebrew characters used by CP862.  (CP862 is not
+available on the U.S. version of NT but may be available on some international
+versions.)
+
+<p>
+
+When issuing commands to Kermit 95 use the English Input-Locale and switch to
+the Hebrew Input-Locale when Hebrew characters are necessary in command mode
+for file names, or when sending characters to the host.  Note that an Alt- or
+Ctrl- key combination can generate different values for each locale.
+
+<h4>Windows 95/98/ME</h4>
+
+When using Windows 9x/ME, locale switching does not work properly in 32-bit
+console applications so Kermit 95 has to simulate the switching of keyboard
+layouts.  Hebrew Windows 95 uses CP862 as its default code page for the DOS
+and Windows-32 Console environments.  Therefore, both Roman and Hebrew
+characters are available for display.
+
+<p>
+For 16-bit DOS applications the current locale is ignored.  All keystrokes
+generate Roman letters regardless of what locales are installed.
+<p>
+In Kermit 95, both Left Alt-Shift and Ctrl-Shift are "hotkeys" that
+toggle the Keyboard Input-Locale among those installed.  Each time K95
+is started it uses the Default Input-Locale as set in the
+Keyboard Control Panel until you switch it with Alt-Shift or Ctrl-Shift.
+<p>
+If CP862 is your PC's Console code page, K95 detects this automatically when
+it starts and configure the Local Character-set to the same value.
+
+<p>
+<hr>
+<h3><a name="hbkbmode">Using Kermit 95's Hebrew Keyboard Mode</h3>
+
+If you have a font with Hebrew characters, but lack a Hebrew keyboard and
+driver, you can use Kermit 95's built-in Hebrew keyboard mode, to make Kermit
+do the necessary key translations:
+<ul>
+<li>The \KkbHebrew verb, which may be assigned to any key.  It is assigned by
+default to Ctrl-Alt-Shift-H.  It switches the main keypad (mostly the
+lowercase letters) into Hebrew mode (see keymap below).  When the keyboard
+is in Hebrew mode, the terminal type in the status line has "-H" appended
+to it, for example "VT220-H".
+<p>
+<li>The \KkbEnglish verb to switch the main keypad back to English mode.
+<p>
+<li>The \KkbHebrew function is performed automatically in VT emulation if
+the host application sends <tt>CSI ? 35 h</tt>, and the \KkbEnglish function
+with <tt>CSI ? 35 l</tt>.
+<p>
+<li>Hebrew keyboard mode is cleared when you execute the \Kreset (reset
+terminal) function, assigned to Alt-r by default.
+</ul>
+<p>
+The Hebrew key layout associated with these verbs follows follows the layout
+used by Hebrew WordPerfect, Windows, and Word.  The names of the Hebrew
+letters are from the ISO 8859-8 Standard.  These are the key assignments when
+the keyboard is in Hebrew mode, listed in three different orders for easy
+lookup:
+<p><pre>
+<hr><i>Hebrew Order             Roman Order              QWERTY Keyboard Order</i><hr>  q = Slash                , = Taw                  q = Slash
+  w = Apostrophe           . = Terminal Zade        w = Apostrophe
+  ' = Comma                ' = Comma                e = Qoph
+  / = Period               / = Period               r = Resh
+  t = Aleph                ; = Terminal Pe          t = Aleph
+  c = Bet                  a = Shin                 y = Tet
+  d = Gimel                b = Nun                  u = Waw
+  s = Dalet                c = Bet                  i = Terminal Nun
+  v = He                   d = Gimel                o = Terminal Mem
+  u = Waw                  e = Qoph                 p = Pe
+  z = Zain                 f = Kaph                 a = Shin
+  j = Chet                 g = Ayin                 s = Dalet
+  y = Tet                  h = Yod                  d = Gimel
+  h = Yod                  i = Terminal Nun         f = Kaph
+  l = Terminal Kaph        j = Chet                 g = Ayin
+  f = Kaph                 k = Lamed                h = Yod
+  k = Lamed                l = Terminal Kaph        j = Chet
+  o = Terminal Mem         m = Zade                 k = Lamed
+  n = Mem                  n = Mem                  l = Terminal Kaph
+  i = Terminal Nun         o = Terminal Mem         ; = Terminal Pe
+  b = Nun                  p = Pe                   ' = Comma
+  x = Samech               q = Slash                z = Zain
+  g = Ayin                 r = Resh                 x = Samech
+  ; = Terminal Pe          s = Dalet                c = Bet
+  p = Pe                   t = Aleph                v = He
+  . = Terminal Zade        u = Waw                  b = Nun
+  m = Zade                 v = He                   n = Mem
+  e = Qoph                 w = Apostrophe           m = Zade
+  r = Resh                 x = Samech               , = Taw
+  a = Shin                 y = Tet                  . = Terminal Zade
+  , = Taw                  z = Zain                 / = Period
+<hr>
+</pre><p>
+To use Kermit 95 with host-based Hebrew software such as ALEPH
+(the Hebrew University library software), give these commands to Kermit:
+<p>
+<pre>
+  SET TERMINAL BYTESIZE 8
+  SET TERM CODE-PAGE 862
+  SET TERM CHARACTER-SET HEBREW-ISO cp862
+  SET TERM KEY HEBREW \372 \KKBHEBREW     ; F5 = Enter Hebrew keyboard mode
+  SET TERM KEY HEBREW \373 \KKBENGLISH    ; F6 = Enter English keyboard mode
+  SET TERM KEY HEBREW \374 \KDECF7        ; F7 = DEC F7 (for ALEPH software)
+</pre><p>
+Of course, you can assign the <tt>\KkbHebrew</tt>, <tt>\KkbEnglish</tt>, and
+<tt>\KdecF7</tt> verbs to any other keys of your choice.
+<p>
+To define your own Hebrew key map, create a file containing the desired
+<tt>SET TERM KEY HEBREW</tt> commands, in which the assigned values are CP862
+values.  TAKE this file, and then whenever you execute the <tt>\KkbHebrew</tt>
+verb, your keyboard will have the mappings defined in this file.
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

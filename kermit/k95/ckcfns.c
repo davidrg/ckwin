@@ -1,4 +1,4 @@
-char *fnsv = "C-Kermit functions, 10.0.244, 14 Apr 2023";
+char *fnsv = "C-Kermit functions, 10.0.247, 6 Feb 2024";
 
 char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 
@@ -11,13 +11,14 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
   Columbia University Academic Information Systems, New York City (1974-2011)
   The Kermit Project, Bronx NY (2011-????)
 
-  Copyright (C) 1985, 2023,
+  Copyright (C) 1985, 2024,
     Trustees of Columbia University in the City of New York.
     All rights reserved.  See the C-Kermit COPYING.TXT file or the
     copyright text in the ckcmai.c module for disclaimer and permissions.
-    Last update: Fri Sep 23 15:27:55 2022
+    Updated: Fri Sep 23 15:27:55 2022
     (CR -> CK_CR and space unsigned long -> CK_OFF_T)
-
+    Last update: Fri Feb  2 15:55:27 2024
+    Implementation of REMOTE STATUS.
 */
 /*
  System-dependent primitives defined in:
@@ -34,6 +35,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 #ifdef OS2
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckocon.h"
 #endif /* OS2 */
@@ -46,6 +48,9 @@ extern CHAR feol;
 extern int byteorder, xflg, what, fmask, cxseen, czseen, nscanfile, sysindex;
 extern int xcmdsrc, dispos, matchfifo;
 extern int inserver;
+#ifdef OS2
+extern int ccseen;
+#endif /* OS2 */
 
 extern int nolinks;
 #ifdef VMSORUNIX
@@ -90,6 +95,7 @@ _PROTOTYP( int zzstring, (char *, char **, int *) );
 #include <io.h>
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #endif /* OS2 */
 
@@ -168,6 +174,7 @@ extern int bigsbsiz, bigrbsiz;
 extern char *versio;
 extern char *filefile;
 extern char whoareu[], * cksysid;
+extern char *fdate;
 
 #ifndef NOSERVER
 extern int ngetpath;
@@ -944,7 +951,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 #ifndef IKSDONLY
 #ifdef OS2
             extern int k95stdout,wherex[],wherey[];
-			extern unsigned char colorcmd;
+			extern cell_video_attr_t colorcmd;
             union {
                 USHORT ucs2;
                 UCHAR  bytes[2];
@@ -3146,6 +3153,9 @@ tinit(flag) int flag;
     fncnv = f_save;			/* Back to what user last said */
     pktnum = 0;				/* Initial packet number to send */
     cxseen = czseen = discard = 0;	/* Reset interrupt flags */
+#ifdef OS2
+	ccseen = 0; 		  /* Reset K95 autodownload Ctrl+C interruption flag */
+#endif /* OS2 */
     *filnam = '\0';			/* Clear file name */
     spktl = 0;				/* And its length */
     nakstate = 0;			/* Assume we're not in a NAK state */
@@ -3452,14 +3462,13 @@ rcvfil(n) char *n;
     extern int en_cwd;
     int i, skipthis;
     char * n2;
-    char * dispo;
 #ifdef OS2ONLY
     char *zs, *longname, *newlongname, *pn; /* OS/2 long name items */
 #endif /* OS2ONLY */
 #ifdef DTILDE
     char *dirp;
 #endif /* DTILDE */
-    int dirflg, x, y;
+    int dirflg;
 #ifdef PIPESEND
     extern char * rcvfilter;
 #endif /* PIPESEND */
@@ -3485,8 +3494,8 @@ rcvfil(n) char *n;
 #ifdef CALIBRATE
     calibrate = csave;
     if (dest == DEST_N) {
-	calibrate = 1;
-	cmarg2 = "CALIBRATE";
+        calibrate = 1;
+        cmarg2 = "CALIBRATE";
     }
 #endif /* CALIBRATE */
     if (*srvcmd == '\0')		/* Watch out for null F packet. */
@@ -3494,9 +3503,9 @@ rcvfil(n) char *n;
     makestr(&prrfspec,(char *)srvcmd);	/* New preliminary filename */
 #ifdef DTILDE
     if (*srvcmd == '~') {
-	dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
-	if (*dirp != '\0')
-	  ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
+        dirp = tilde_expand((char *)srvcmd); /* Expand tilde, if any. */
+        if (*dirp != '\0')
+          ckstrncpy((char *)srvcmd,dirp,srvcmdlen);
     }
 #else
 #ifdef OS2
@@ -4263,6 +4272,9 @@ reof(f,yy) char *f; struct zattr *yy;
 VOID
 reot() {
     cxseen = czseen = discard = 0;	/* Reset interruption flags */
+#ifdef OS2
+	ccseen = 0; /* Reset K95 autodownload Ctrl+C interruption flag */
+#endif /* OS2 */
     tstats();				/* Finalize transfer statistics */
 }
 
@@ -4993,6 +5005,9 @@ seot() {
     if (x < 0)
       return(x);
     cxseen = czseen = discard = 0;	/* Reset interruption flags */
+#ifdef OS2
+	ccseen = 0;  /* Reset K95 autodownload Ctrl+C interruption flag */
+#endif /* OS2 */
     tstats();				/* Log timing info */
     return(0);
 }
@@ -5743,6 +5758,29 @@ gnfile() {
 #endif /* NOMSEND */
 		    ckstrncpy(filnam,*cmlist++,CKMAXPATH+1);
 		    debug(F111,"gnfile cmlist filnam",filnam,nfils);
+#ifdef COMMENT
+/* BEGIN: NEW 6 August 2023 */
+/*
+ This doesn't work.  Suppose the client said "get /recursive foo",
+ where foo is a directory.  It cd's to foo ok, but then there is no
+ file list left.
+*/
+                    if (recursive && fileno == 1) {
+                        int itisadir = 0;
+                        itisadir = isdir(filnam); 
+                        if (itisadir) {
+                            int x;
+                            debug(F111,"gnfile zchdir",filnam,itisadir);
+                            x = zchdir(fullname);
+                            debug(F111,"gnfile zchdir result",filnam,x);
+                            fileno = 0;
+                            ckstrncpy("*",*cmlist++,CKMAXPATH+1); 
+                            continue;
+                        }
+                    }
+/* END: NEW 6 August 2023 */
+#endif  /* COMMENT */
+
 #ifndef NOMSEND
 		}
 #endif /* NOMSEND */
@@ -5888,6 +5926,14 @@ gotnam:
 		  doxlog(what,fullname,fsize,binary,1,"Skipped");
 #endif /* TLOG */
 		continue;
+/* BEGIN: NEW 6 August 2023 */
+	    } else if (filesize == (CK_OFF_T)-2) { /* It's a directory name */
+                if (recursive) {
+                    debug(F110,"gnfile zchdir",fullname,0);
+                    zchdir(fullname);
+                    return(-2);
+                }
+/* END: NEW 6 August 2023 */
 	    } else if (filesize < 0) {
 		if (filesize == (CK_OFF_T)-3) { /* Exists but not readable */
 		    debug(F100,"gnfile -3","",0);
@@ -6261,7 +6307,7 @@ sndhlp() {
 #ifdef IKSD
     if (inserver) {
 	sprintf((char *)(funcbuf+funclen),
-		"Internet Kermit Service (EXPERIMENTAL)\n\n");
+		"Internet Kermit Service\n\n");
 	funclen = strlen((char *)funcbuf);
     }
 #endif /* IKSD */
@@ -6270,6 +6316,155 @@ sndhlp() {
     funcstr = 1;
     srvhlpnum = 0;
     binary = XYFT_T;			/* Text mode for this. */
+    return(sinit());
+#else
+    return(0);
+#endif /* NOSERVER */
+}
+
+static int srvstatusnum = 0;
+
+static int
+nxtstatus(
+#ifdef CK_ANSIC
+       void
+#endif /* CK_ANSIC */
+       ) {
+    extern char * ck_s_xver;
+    char * filesize;
+    int x = 0;
+
+    if (funcnxt < funclen)
+      return (funcbuf[funcnxt++]);
+
+    switch (srvstatusnum++) {
+      case 0:
+        debug(F101,"nxtstatus case","",0);
+        sprintf((char *)funcbuf,
+                "    OPEN SOURCE\n    C-Kermit full version number: %s\n",
+                ck_s_xver);
+        break;
+      case 1: {
+#ifdef TCPSOCKET
+          extern char myipaddr[];
+          debug(F101,"nxtstatus case","",1);
+          if (!myipaddr[0])
+            getlocalipaddr();
+          if (myipaddr[0]) {
+              sprintf((char *)funcbuf,"    Hostname: %s (%s)\n",
+                      nvlook("host"),
+                      myipaddr);
+          } else {
+#endif /* TCPSOCKET */
+              sprintf((char *)funcbuf,"    Hostname: %s\n", nvlook("host")); 
+#ifdef TCPSOCKET
+          }
+#endif /* TCPSOCKET */
+          break;
+      }
+      case 2:
+        debug(F101,"nxtstatus case","",2);
+	sprintf((char *)funcbuf,"    Server hardware: %s (%s bits)\n",
+                nvlook("cpu"),
+                nvlook("bits"));
+        break;
+      case 3:
+        debug(F101,"nxtstatus case","",3);
+        sprintf((char *)funcbuf,"    Server operating system family: %s\n",
+                nvlook("system")); 
+        break;
+      case 4:
+        debug(F101,"nxtstatus case","",4);
+        sprintf((char *)funcbuf,"    Current directory on server: %s\n",
+                nvlook("directory"));
+        break;
+      case 5:                           /* Last file sent by server */ 
+        debug(F101,"nxtstatus case","",5);
+        if (sfspec == NULL) {           /* If there isn't one */
+            debug(F100,"nxtstatus no file sent yet","",0);
+            sprintf((char *)funcbuf,
+                    "    Last file sent by server: (none)\n");
+        } else {                        /* At least one */
+            CK_OFF_T z;                 /* Variable for file size */
+            z = zchki(sfspec);          /* Get file size */
+            filesize = ckfstoa(z);      /* convert to string for sprintf() */
+
+            /* Note: zfcdat gets the file date */
+            sprintf((char *)funcbuf,    /* Send name, size, and date-time */
+                    "    Last file sent by server:\n     %s %s %s\n",
+                    sfspec, filesize, zfcdat(sfspec));
+            debug(F100,"nxtstatus case 5 sprintf ok","",0);
+        }
+        break;
+      case 6:                           /* Last file received by server */
+        debug(F101,"nxtstatus case","",6);
+        if (rfspec == NULL) {           /* If there isn't one */
+            debug(F100,"nxtstatus no file received yet","",0);
+            sprintf((char *)funcbuf,
+                    "    Last file received by server: (none)\n");
+        } else {                        /* At least one */
+            CK_OFF_T z;                 /* Variable for file size */
+            z = zchki(rfspec);          /* Get file size */
+            filesize = ckfstoa(z);      /* convert to string for sprintf() */
+            sprintf((char *)funcbuf,    /* Send name, size, and date-time */
+                    "    Last file received by server:\n     %s %s %s\n",
+                    rfspec, filesize, zfcdat(rfspec));
+            debug(F100,"nxtstatus case 6 sprintf ok","",0);
+        }
+        break;
+      case 7: {
+          debug(F101,"nxtstatus case","",7);
+#ifdef CKMAXNAM
+          sprintf((char *)funcbuf,
+                  "    Filename length limit: %d\n", CKMAXNAM);
+#else
+          *funcbuf = '\0';
+#endif /* def CKMAXNAM [else] */
+          break;
+      }
+      case 8: {
+          debug(F101,"nxtstatus case","",8);
+#ifdef CKMAXPATH
+          sprintf((char *)funcbuf,
+                  "    Pathname length limit: %d\n\n", CKMAXPATH);
+#else
+          *funcbuf = '\0';
+#endif /* def CKMAXPATH [else] */
+
+          break;
+      }
+      default:
+        return(-1);
+    }
+    funcnxt = 0;
+    funclen = strlen((char *)funcbuf);
+    return(funcbuf[funcnxt++]);
+}
+
+int
+sndstatus() {                           /* REMOTE STATUS handler */
+#ifndef NOSERVER
+    extern char * ckxsys;
+
+    first = 1;                          /* Init getchx lookahead */
+    nfils = 0;				/* No files, no lists. */
+    xflg = 1;				/* Flag we must send X packet. */
+
+    ckstrncpy(cmdstr,"REMOTE STATUS",CMDSTRL); /* Data for X packet. */
+    sprintf((char *)funcbuf, "\n    SERVER: %s,%s\n", versio, ckxsys);
+    funclen = strlen((char *)funcbuf);
+#ifdef IKSD
+    if (inserver) {
+	sprintf((char *)(funcbuf+funclen),
+		"Internet Kermit Service\n\n");
+	funclen = strlen((char *)funcbuf);
+    }
+#endif /* IKSD */
+    funcstr = 1;                        /* Data input is from a function */
+    funcptr = nxtstatus;                /* Name of the function is nxtstatus */
+    funcnxt = 0;                        /* and we start at the beginning */
+    srvstatusnum = 0;
+    binary = XYFT_T;			/* Use text mode for this. */
     return(sinit());
 #else
     return(0);
@@ -6585,7 +6780,7 @@ snddir(spec) char * spec;
 {
 #ifndef NOSERVER
     char * p = NULL, name[CKMAXPATH+1];
-    int t = 0, rc = 0;
+    int rc = 0;
     char fnbuf[CKMAXPATH+1];
 
     debug(F111,"snddir matchdot",spec,matchdot);
@@ -7046,7 +7241,7 @@ remset(s) char *s;
 #endif /* CK_ANSIC */
 {
     extern int c_save, en_del;
-    int len, i, x, y;
+    int len, x, y;
     char *p;
 
     len = xunchar(*s++);		/* Length of first field */

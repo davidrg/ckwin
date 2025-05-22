@@ -216,7 +216,7 @@ Please use a combination of upper and lower case letters and numbers.\n"
 #define NOTADDED "Unable to add user '%s'\n"
 
 /* Some C-Kermit modules redefine printf to Vscrnprintf which normally only
- * exists within the main CKW (k95g.exe/k95.exe) so we've got to provide a
+ * exists within the main K95 (k95g.exe/k95.exe) so we've got to provide a
  * compatible definition here.
  */
 int Vscrnprintf(const char * format, ...) {

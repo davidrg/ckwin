@@ -5,7 +5,7 @@
 
 typedef struct _K_CLIENT_PAINT {
     unsigned short*  textBuffer;
-    unsigned char*  attrBuffer;
+    cell_video_attr_t* attrBuffer;
     unsigned short* effectBuffer;
     unsigned short* lineAttr;
     int             len;
@@ -47,7 +47,7 @@ private:
     videoline_struct* line;
     int cursor_offset;
     unsigned short *textBuffer;
-    unsigned char  *attrBuffer;
+    cell_video_attr_t *attrBuffer;
     unsigned short *effectBuffer, *lineAttr;
     int incnt;
     unsigned short vt_char_attrs;

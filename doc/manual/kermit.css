@@ -1,0 +1,426 @@
+
+  .white { color:white }
+  .white a:link { color:white }
+  .white a:visited { color:white }
+  .white a:hover { color:fuchsia }
+  .white a:active { color:fuchsia }
+
+  .blue { color:blue }
+  .blue a:link { color:blue }
+  .blue a:visited { color:blue }
+  .blue a:hover { color:fuchsia }
+  .blue a:active { color:fuchsia }
+
+  .green { background:#006060; color:lightgrey }
+  .green a:link { color:gold }
+  .green a:visited { color:gold }
+  .green a:hover { color:yellow }
+  .green a:active { color:white }
+
+  .gray { background:gray; color:darkmagenta }
+  .gray a:link { color:purple }
+  .gray a:visited { color:purple }
+  .gray a:hover { color:fuchsia }
+  .gray a:active { color:fuchsia }
+
+  div.references {
+     margin-top:22px; margin-bottom:0; padding-bottom:0;
+     font-size:110%; font-style:italic; border-top:1px dotted grey; 
+  }
+  div.references ol,ul { margin-top:4px }
+  div.references ol,ul li {
+     margin: 0 4% 6px 0; font-style:normal; font-size:13px;
+  }
+  ol,ul.references { font-size:86% }
+  ol,ul.references li { margin-bottom:6px; margin-right:4% }
+  ol,ul.references { margin-top:4px }
+
+  ol,ul.small li { font-size:84%; margin-top:4px }
+
+  .tt { font-family:monospace; font-size:88% }
+  my-tt { font-family:monospace; font-size:88% }
+  my-tt-nb { font-family:monospace; font-size:88%; white-space:pre; }
+  my-big { font-size:110% }
+  my-small { font-size:90% }
+
+  .stayontop { position:sticky; top:0; width:100%; z-index:1000; }
+
+  .dm { color:darkmagenta }
+  .dm a:link { color:darkmagenta }
+  .dm a:visited { color:darkmagenta }
+  .dm a:hover { color:fuchsia }
+  .dm a:active { color:fuchsia }
+
+  .dmx a:link { color:darkmagenta }
+  .dmx a:visited { color:darkmagenta }
+  .dmx a:hover { color:fuchsia }
+  .dmx a:active { color:fuchsia }
+
+  td { vertical-align: top; }
+  td.a { vertical-align: top; font-style: normal }
+  td.b { vertical-align: top; font-weight: bold }
+  td.c { vertical-align: middle }
+  td.z { vertical-align: bottom }
+
+  a.home { color:black; text-decoration:none }
+  a.home:visited { color:black; text-decoration:none }
+  a.home:hover { color:darkmagenta; text-decoration:underline }
+
+  .clear { clear:both; display:block; position:relative; text-align:left }
+  .nowrap { white-space:nowrap }
+  .nobreak { white-space:nowrap }
+
+  .shadedarea { border:1px solid darkgrey; background:#eeeeee; padding:12px }
+  .noline { border:0 }
+  .defunct { text-decoration:line-through; text-decoration-thickness:1px;
+     text-decoration-color:grey }
+
+  table { font-size:inherit; color:inherit; background:inherit }
+  table { border-collapse: collapse; border-spacing: 0; } 
+
+  table.footnote {
+    width:80%;
+    font-size:86%;
+    border-top:1px solid grey;
+    margin-top:10px;
+  }
+  table.footnote td {
+    text-align:left; font-size:90%; padding:4px 0 0 10px; vertical-align:top;
+  }
+  table.footnote td:first-child {
+    text-align:right; font-size:18px; font-weight:normal; padding:0;
+  }
+  link-button  { display:inline-block; background:#eeeeee;
+    border:1px solid grey; border-radius:4px; white-space:nowrap;
+    font-family:sans-serif; font-size:12.5px; font-weight:bold;
+    padding:0 6px 0 6px; margin:8px 6px 0 0 }
+  link-button a:link { color:purple; text-decoration:none }
+  link-button a:visited { color:purple; text-decoration:none }
+  link-button a:hover { color:fuchsia; text-decoration:underline; }
+  link-button a:active { color:fuchsia; text-decoration:underline }
+  div.languagebuttons { line-height:1.4; text-align:center; margin-top:8px }
+  .hscroll { overflow-x:auto }
+  
+  figure {
+     display:inline-block; float:left; margin:0 16px 4px 0;
+  }
+  figure.right {
+     float:right; margin:0 0 4px 10px;
+  }
+  figure img {
+     height:140px; width:auto; border:1px solid grey;
+  }
+  figure.fullpage { 
+    display: table;
+    height: 100%;
+  }
+  figure.fullpage img { 
+    max-height: 80vh;
+    max-width: 100%;
+  }
+  figcaption {
+      display: table-caption;
+      caption-side: bottom;
+      text-align: left;
+      font-size: 13px;
+      width:100%;
+      border: 0;
+      border-bottom: 1px solid grey;
+  }
+  div.row  {
+    display:flex; align-items: flex-start;
+    flex-direction:row; flex-wrap:nowrap; object-fit:contain;
+  }
+  div.row figure img { width:100%; height:auto; }
+
+  .menuflex a { text-decoration:none }
+  .menuflex a:link { color:darkmagenta  }
+  .menuflex a:visited { color:darkmagenta }
+  .menuflex a:hover { color:indigo; font-variant:small-caps }
+  .menuflex a:active { color:black }
+
+  div.menuflex {
+     background:#eeeeee;
+     border-top: 1px solid mediumorchid;
+     border-bottom: 1px solid mediumorchid;
+     width: 100%;
+     font-family:calibri, arial narrow, arial, sans-serif, times;
+     font-size:13px;
+     display: table;
+     table-layout: fixed;
+  }
+  div.menuflex ul {
+     margin: 0;
+     padding: 0;
+  }
+  div.menuflex ul li {
+     background-color: lightblue;
+     list-style: none;
+     text-align: center;
+     text-decoration: none;
+     font-size:13px;
+     font-weight:bold;
+     color: darkmagenta;
+     padding: 2px 0 2px 0;
+     border-right: 1px solid plum;
+  }
+  div.menuflex ul li.this {
+     color:black;
+     background-color: #e0e0e0;
+  }
+  div.menuflex ul li:hover { background-color:thistle }
+
+  div.menuflex ul {
+     line-height:1.1;
+     display: table-row;
+  }
+  div.menuflex ul li {
+     display: table-cell;
+  }
+  div.menuflex.bottom {
+     border-bottom:0;
+  }
+  .menu table { width:inherit; background:lightblue }
+  .menu td {
+     width:7.69%;
+     border-right: 1px solid darkmagenta;
+     text-align:center;
+     font-family:arial,sans-serif;
+     font-size:12px;
+     font-weight:bold;
+     padding:3px;
+     background: lightblue
+  }
+  .menu td:hover {
+     color:black;
+     background-color:plum;
+     font-variant:small-caps;
+  }
+  .menu td.left { border-left:0 }
+  .menu td.right { border-right:0 }
+  .menu a { text-decoration:none }
+  .menu a:link { color:darkmagenta  }
+  .menu a:visited { color:darkmagenta }
+  .menu a:hover { color:black }
+  .menu a:active { color:black  }
+  .menu .this { background-color:lightgrey }
+
+  .qq { background: thistle; height:16px; border: 2px solid;
+        border-style: outset; font-family:sans-serif;
+        border-color: pink;
+        padding:0; margin:0; padding-left:4px; padding-right:4px }
+  .qq a:link { color:black; text-decoration:none }
+  .qq a:visited { color:black; text-decoration:none }
+  .qq a:hover { color:fuchsia; text-decoration:none }
+  .qq a:active { color:fuchsia; text-decoration:none }
+  .qq { font-weight:bold }
+  span.qq:hover { background:mistyrose }
+
+  table.compact { border-collapse:collapse }
+  table.compact th { text-align:left; background:#eeeeee }
+  table.compact td,th { padding:0 4px 0 8px; border:1px solid grey }
+  table.translations a { text-decoration:none }
+
+  div.whatsnew { }
+  div.whatsnew ul { margin:0; padding:0 }
+  div.whatsnew ul li { 
+    list-style:none;
+    margin-left:2em;
+    text-indent:-1em;
+    padding: 4px 0 0 0;
+  }
+  .boton { background: #eeeeee; border: 1px solid grey; border-style:outset;
+        font-family:sans-serif; font-size:12px; white-space:nowrap;
+        padding:0; margin:0; padding-left:4px; padding-right:4px }
+  .boton a:link { color:purple; text-decoration:none }
+  .boton a:visited { color:purple; text-decoration:none }
+  .boton a:hover { color:fuchsia; text-decoration:underline; }
+  .boton a:active { color:fuchsia; text-decoration:underline }
+  span.boton:hover { background:mistyrose }
+  td.boton:hover { background:mistyrose }
+  div.buttonrow { line-height:1.8 }
+
+  .buttonbox { width:96%;
+    background: #dddddd;
+    background-image:url('bggray-8.jpg');
+    margin: 8px 0 8px 0;
+    border:1px solid black;
+    font-size: 15px
+  }
+  .buttonbox td { padding: 8px 8px 8px 12px; } 
+
+  .normalmargins { margin: 0 20px 0 14px }
+
+  .contents form { margin:0; padding: 0 }
+  .contents fieldset { padding:0 8px 8px 8px;
+    background:#eeeeee;border:1px solid plum }
+  .contents legend { color:slateblue; font-size:23px; font-weight:bold;
+    font-style:italic; font-family:times }
+
+  ul { margin-bottom:16px }
+  ul li { padding-right:24px; line-height:17px; }
+
+  ol.contents { font-size:20px; margin-top:8px; margin-bottom:4px }  
+  ul.contents { font-size:20px; margin-top:8px; margin-bottom:4px }  
+  ol.contents li { margin:0; padding:0 0 6px 0 }  
+  ul.contents li { line-height:11pt; font-size:19px; }
+  ul.compact { margin-top:20px; margin-bottom:23px }
+  ul.compact li { margin-top:6px; margin-bottom:0; padding:0 }
+
+  table.numbered {
+      counter-reset: rowNumber;
+  }
+  table.numbered tr > td:first-child {
+      counter-increment: rowNumber;
+  }
+  table.numbered tr td:first-child::before {
+      content: counter(rowNumber) ". ";
+      display:inline-block; text-align:right; width:24px; margin-right: 0.5em;
+  }
+
+  .contents a:link { color:darkmagenta; text-decoration:none }
+  .contents a:visited { color:darkmagenta; text-decoration:none }
+  .contents a:hover { color:fuchsia;  text-decoration:underline }
+  .contents a:active { color:fuchsia; text-decoration:none }
+
+  .buttons a:link { text-decoration:none }
+  .buttons a:visited { text-decoration:none }
+  .buttons a:hover { text-decoration:underline }
+  .buttons a:active { text-decoration:underline }
+  .buttons button { font-weight:bold }
+
+  h3 { border-top:1px solid #999999; margin:12px 0 12px 0 }
+  h4 { border-top:1px solid #444444; margin-bottom:12px }
+
+  .narrow { padding:0 12px 0 12px }
+
+  a:link { color:purple }
+  a:visited { color:purple }
+  a:hover { color:fuchsia }
+  a:active { color:fuchsia }
+
+  address { margin:0 10px 6px 12px }
+
+  table.address { width:100% }
+  table.address td {
+    font-size:86%; vertical-align:top; text-align:center;
+    padding: 10px 0 10px 0;
+  }
+  table.address td:first-child { text-align:left; padding-left:12px }
+  table.address td:last-child { text-align:right; padding-right:12px }
+
+  .xx a:link { color:purple; text-decoration:none }
+  .xx a:visited { color:purple; text-decoration:none }
+  .xx a:hover { color:fuchsia; text-decoration:none }
+  .xx a:active { color:fuchsia; text-decoration:none }
+
+  .nu { text-decoration:none }
+  a.nu:link { color:purple; text-decoration:none }
+  a.nu:visited { color:purple; text-decoration:none }
+  a.nu:hover { color:fuchsia; text-decoration:none }
+  a.nu:active { color:fuchsia; text-decoration:none }
+
+  dl.loose dd { padding:0 0 8px 0 }
+
+  blockquote.example { margin-top:6px; margin-bottom:8px }
+  blockquote.inset { border:1px solid grey; padding:16px; background:#eeeeee }
+
+  table.inset {
+    display:inline-table;
+    float:left;
+    margin:6px 14px 4px 0;
+    border-bottom:1px solid grey
+  }
+  table.inset td { font-size:13px; padding:0; }
+  table.inset td img { height:140px; border:1px solid grey;  }
+  table.inset.right { display:inline; float:right; margin:0 0 4px 10px }
+
+  div.imagecaption {
+      padding: 3px;
+      margin:6px 14px 4px 0;
+      float: left;
+      border: 0;
+  }
+  div.imagecaption.right {
+      float:right; margin:0 0 4px 10px
+  }
+  figure {
+     float:left; margin:0 10px 4px 0;
+  }
+  figure.right {
+     float:right; margin:0 0 4px 8px;
+  }
+  figure img {
+     height:140px; width:auto; border:1px solid grey;
+  }
+  figcaption {
+      display: table-caption;
+      caption-side: bottom;
+      text-align: left;
+      font-size: 13px;
+      width:100%;
+      border: 0;
+      border-bottom: 1px solid grey;
+  }
+
+/*
+  figure {
+      border:1px solid grey;
+      display: table;
+      margin: 0px;
+  }
+  figure img {
+      height: 140px;
+      display: block;
+  }
+  figcaption {
+      display: table-caption;
+      caption-side: bottom;
+      text-align: left;
+      font-size: 84%;
+      border-bottom: 1px solid grey;
+      border: 0
+  }
+*/
+  hr.thin { height:1px; border:none; background-color:darkgrey }
+
+  body {
+     font-family:calibri,arial narrow,sans-serif,times; font-size:15px;
+     color:black; background:white; margin:0; padding:0; border:0
+  }
+  pre { font-size:86% }
+  pre { margin: 12px 0 0 0 }
+  pre.code { font-family:monospace }
+
+  .narrow { display:none }
+  @media screen and (max-width: 920px) {
+     .vwide { display:none }
+  }
+  @media screen and (max-width: 740px) {
+     .nwide { display:none }
+  }
+  @media screen and (max-width: 662px) {
+     .mwide { display:none }
+  }
+  @media screen and (max-width: 520px) {
+     .xwide { display:none }
+     dd { margin-left:12px; font-size:90% }
+     table.menu td { font-size:10px; padding-left:0; padding-right:0 }
+  }
+  @media screen and (max-width: 480px) {
+     table { font-size:84% }
+     .wide { display:none }
+     .normalmargins { margin:0 4px 0 6px }
+  }
+  @media screen and (max-width: 360px) {
+     ul { padding-left: 24px; }
+     ol { padding-left: 24px; }
+     ul li { padding-left:0 }
+     ol li { margin-left:0 }
+     table { font-size:72% }
+     blockquote { margin-left:0; margin-right:0 }
+     table td { padding:2px }
+  }
+  @media screen and (max-width: 480px) {
+     .narrow { display:inline }
+ }

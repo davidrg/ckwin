@@ -89,6 +89,7 @@ char * tgoto (const char *, int, int);
 
 #ifdef OS2
 #include <string.h>
+#include <process.h>  /* for getpid() */
 _PROTOTYP(char * os2_gethostname, (void));
 #ifndef __WATCOMC__
 #define getpid _getpid
@@ -176,13 +177,14 @@ _PROTOTYP( char * ckgetfqhostname,(char *));
 #ifdef OS2
 #ifdef NT
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #include <tapi.h>
 #include "ckntap.h"
-#endif /* NODIAL */
+#endif /* CK_TAPI */
 #else /* NT */
 #define INCL_VIO
 #define INCL_WINERRORS
+#define INCL_DOSSEMAPHORES
 #include <os2.h>
 #endif /* NT */
 #ifdef COMMENT                          /* Would you believe */
@@ -243,6 +245,12 @@ _PROTOTYP( FILE * fdopen, (int, char *) );
 /* popen() needs declaring because it's not declared in <stdio.h> */
 _PROTOTYP( FILE * popen, (char *, char *) );
 #endif /* DCLPOPEN */
+
+#ifdef OS2
+#ifndef KUI
+APIRET IsVscrnDirty( int vmode );
+#endif /* KUI */
+#endif /* OS2 */
 
 int tt_crd = 0;                         /* Carriage return display */
 int tt_lfd = 0;                         /* Linefeed display */
@@ -352,7 +360,7 @@ extern struct csinfo fcsinfo[], tcsinfo[];
 #endif /* NOCSETS */
 
 #ifdef OS2
-extern unsigned char colorcmd;
+extern cell_video_attr_t colorcmd;
 #endif /* OS2 */
 
 #ifdef NOXFER
@@ -467,6 +475,9 @@ extern int server, bctu, rptflg, ebqflg, spsiz, urpsiz, wmax, czseen, cxseen,
   pktlog, lscapu, dest, srvdis, wslots, spackets, spktl, rpktl,
   retrans, wcur, numerrs, fsecs, whatru, crunched, timeouts,
   rpackets, fncnv, bye_active, discard, inserver, diractive, cdactive;
+#ifdef OS2
+extern int ccseen;
+#endif /* OS2 */
 
 extern long filcnt, filrej, rptn, filcps, tfcps, cps, peakcps;
 extern CK_OFF_T ffc, tfc, fsize; 
@@ -2059,7 +2070,6 @@ scanstring(s) char * s;
 {
     int x, val = -1, count = 0;		/* Workers */
     int rc = -1;			/* Return code */
-    int pv = -1;			/* Pattern-match value */
     int bytes = 0;			/* Total byte count */
 #ifdef UNICODE
     unsigned int c0, c1;		/* First 2 file bytes (for BOM) */
@@ -2067,14 +2077,12 @@ scanstring(s) char * s;
     extern int pipesend, filepeek;
 
     register int i;			/* Loop control */
-    int readsize = 0;			/* How much to read */
     int eightbit = 0;			/* Number of bytes with 8th bit on */
     int c0controls = 0;			/* C0 non-text control-char counter */
     int c0noniso = 0;			/* C0 non-ISO control-char counter */
     int c1controls = 0;			/* C1 control-character counter */
     unsigned int c;			/* Current character */
     int runmax = 0;			/* Longest run of 0 bytes */
-    int runzero = 0;			/* Run of 0 bytes */
     int pctzero = 0;			/* Percentage of 0 bytes */
     int txtcz = 0;
 
@@ -2949,7 +2957,6 @@ ckhost(vvbuf,vvlen) char * vvbuf; int vvlen;
 #else  /* Everything else - rest of this routine */
 
     char *g;
-    int havefull = 0;
 #ifdef VMS
     int x;
 #endif /* VMS */
@@ -3282,6 +3289,12 @@ trap(sig) int sig;
     zchkod = 0;                         /* Or file expansion interrupted... */
     zchkid = 0;
     interrupted = 1;
+#ifdef OS2
+	/* This signals to file transfer in progress on the connect mode thread that
+     * it should stop immediately */
+	ccseen = 1;
+#endif
+
 
     if (what & W_CONNECT) {		/* Are we in CONNECT mode? */
 /*
@@ -3307,8 +3320,17 @@ trap(sig) int sig;
     diractive = 0;
     cdactive = 0;
 #endif /* NOXFER */
+#ifdef OS2
+	/* Because this is running on the keyboard input thread, we need to make
+     * sure no other threads are about to write to ZOFILE before we go closing
+     * it without warning as that would be a crash */
+	RequestZoutDumpMutex( SEM_INDEFINITE_WAIT );
+#endif /* OS2 */
     zclose(ZIFILE);                     /* If we were transferring a file, */
     zclose(ZOFILE);                     /* close it. */
+#ifdef OS2
+	ReleaseZoutDumpMutex();
+#endif /* OS2 */
 #ifndef NOICP
     cmdsquo(cmd_quoting);               /* If command quoting was turned off */
 #ifdef CKLEARN
@@ -3324,8 +3346,30 @@ trap(sig) int sig;
 #endif /* CKLEARN */
 #endif /* NOICP */
 #ifdef CK_APC
+#ifdef OS2
+    /* In Kermit 95, we can't just force APC to inactive as APCs run on the
+     * connect mode (terminal emulator) thread rather than on the command mode
+     * thread and whatever we do here (on the keyboard event thread) isn't going
+     * to impact that immediately.
+     *
+     * To make matters worse, the parser normally sits waiting for an event that
+     * signals that the user has switched from connect mode to command mode, and
+     * it won't do anything until it receives that event.
+     *
+	 * If APC is active, the parser knows not to wait for that event as its on
+     * the connect mode thread and so is already on screen. Forcing APC off
+     * tricks the parser into blocking on an event signalling an exit from
+     * command mode, an event that will never come because that exit has already
+     * happened. This results in both the command and connect threads blocking
+     * and no way for the user to get them unstuck.
+     */
+    if (apcactive == APC_INACTIVE ) {
+        delmac("_apc_commands", 1);
+    }
+#else /* OS2 */
     delmac("_apc_commands",1);
     apcactive = APC_INACTIVE;
+#endif /* OS2 */
 #endif /* CK_APC */
 
 #ifdef VMS
@@ -6037,11 +6081,13 @@ ck_termset();
 #endif /* MYCURSES */
 #endif /* CK_CURSES */
 
+#ifndef OS2
 #ifdef NOTERMCAP
 static int notermcap = 1;
 #else
 static int notermcap = 0;
 #endif /* NOTERMCAP */
+#endif /* OS2 */
 
 #ifndef NODISPLAY
 CKVOID
@@ -6446,10 +6492,12 @@ ck_cleol() {
   First, some stuff we can just ignore:
 */
 
+#ifdef VMS
 static int
 touchwin(x) int x; {
     return(0);
 }
+#endif /* VMS */
 static int
 initscr() {
     return(0);
@@ -6535,7 +6583,9 @@ move(row, col) int row, col; {
 
 int
 clear() {
+#ifndef ONETERMUPD
     viocell cell;
+#endif /* ONETERMUPD*/
     move(0,0);
 #ifdef ONETERMUPD
     if (VscrnGetBufferSize(VCMD) > 0) {
@@ -6546,7 +6596,7 @@ clear() {
     }
 #else
     cell.c = ' ';
-    cell.a = colorcmd;
+    cell.video_attr = colorcmd;
     WrtNCell(cell, cmd_rows * cmd_cols, 0, 0);
 #endif /* ONETERMUPD */
     return(0);
@@ -6554,11 +6604,13 @@ clear() {
 
 int
 clrtoeol() {
+#ifndef ONETERMUPD
     USHORT row, col;
+#endif /* ONETERMUPD */
     viocell cell;
 
     cell.c = ' ';
-    cell.a = colorcmd;
+    cell.video_attr = colorcmd;
 #ifndef ONETERMUPD
     GetCurPos(&row, &col );
     WrtNCell(cell, cmd_cols - col -1, row, col);
@@ -7543,7 +7595,9 @@ char *s;        /* a string */
 #endif /* CK_KERBEROS */
 #endif /* RLOGCODE */
                  ) {
-		secure = 1;
+            /* You may get an "unreachable code" warning in builds with no SSL,
+             * Kerberos or SSH support. This is OK. */
+		    secure = 1;
 	    }
 	    if (secure) {
 #ifdef KUI
@@ -8767,7 +8821,9 @@ char *s;        /* a string */
 #endif /* CK_KERBEROS */
 #endif /* RLOGCODE */
                  ) {
-		secure = 1;
+            /* You may get an "unreachable code" warning in builds with no SSL,
+             * Kerberos or SSH support. This is OK. */
+		    secure = 1;
 	    }
 	    if (secure) {
                 char buf[30];
@@ -9706,7 +9762,7 @@ int
 getslot() {                             /* Find a free slot for us */
     FILE * rfp = NULL;                  /* Returns slot number (0, 1, ...) */
     char idstring[64];                  /* PID string buffer (decimal) */
-    char pidbuf[64], * s;
+    char pidbuf[64];
     int j, k, n, x, rc = -1;
     int lockfd, tries, haveslot = 0;
     int dummy;

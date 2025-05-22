@@ -9,7 +9,7 @@ char *ckathv = "Authentication, 10.0.244, 04 May 2023";
 
     Author:  Jeffrey E Altman (jaltman@secure-endpoints.com)
                Secure Endpoints Inc., New York City
-    Latest update: Tue Dec 13 07:10:21 2022 (David Goodwin for CKW)
+    Latest update: Tue Dec 13 07:10:21 2022 (David Goodwin for K95)
 
 */
 /*
@@ -88,6 +88,7 @@ int accept_complete = 0;
 #define INCL_DOSMODULEMGR
 #define INCL_DOSSEMAPHORES
 #include <os2.h>
+#undef COMMENT
 #endif /* NT */
 #endif /* OS2 */
 
@@ -276,6 +277,23 @@ extern int ssl_finished_messages;
 #include "ckosyn.h"
 #endif /* OS2 */
 
+#ifdef OS2
+#ifndef NOLOCAL
+_PROTOTYP(void ipadl25, (void));                /* Default status-line maker */
+#endif /* NOLOCAL */
+
+#ifdef CK_AUTHENTICATION
+int ck_security_loaddll( void );
+#endif /* CK_AUTHENTICATION */
+
+#ifdef NT
+#ifdef NTLM
+int ntlm_auth_send();                   /* ckoath.c */
+int ck_ntlm_is_valid(int query_user);   /* ckoath.c */
+#endif /* NTLM */
+#endif /* NT */
+#endif /* OS2 */
+
 /*
  * Globals
  */
@@ -377,7 +395,6 @@ static unsigned char str_data[4096] = { IAC, SB, TELOPT_AUTHENTICATION, 0,
                                         AUTHTYPE_KERBEROS_V5, };
 #define AUTHTMPBL 2048
 static char strTmp[AUTHTMPBL+1];
-static char szLocalHostName[UIDBUFLEN+1];
 static kstream g_kstream=NULL;
 
 #ifdef KRB5
@@ -1661,6 +1678,7 @@ ck_tn_decrypt( s,n ) char * s; int n;
 #endif /* ENCRYPTION */
 }
 
+#ifdef KRB5
 /*  S E N D K 5 A U T H S B
  *  Send a Kerberos 5 Authentication Subnegotiation to host and
  *  output appropriate Telnet Debug messages
@@ -1727,7 +1745,6 @@ SendK5AuthSB(type,data,len) int type; void *data; int len;
 
     /* Handle Telnet Debugging Messages */
     if (deblog || tn_deb || debses) {
-        int i;
         int deblen=p-str_data-2;
         char *s=NULL;
         int mode = AUTH_CLIENT_TO_SERVER | (auth_how & AUTH_HOW_MASK) |
@@ -1789,7 +1806,9 @@ SendK5AuthSB(type,data,len) int type; void *data; int len;
     debug(F111,"SendK5AuthSB","ttol()",rc);
     return(rc);
 }
+#endif /* KRB5 */
 
+#ifdef KRB4
 /*  S E N D K 4 A U T H S B
  *  Send a Kerberos 4 Authentication Subnegotiation to host and
  *  output appropriate Telnet Debug messages
@@ -1852,7 +1871,6 @@ SendK4AuthSB(type,data,len) int type; void *data; int len;
 
     /* Handle Telnet Debugging Messages */
     if (deblog || tn_deb || debses) {
-        int i;
         int deblen=p-str_data-2;
         char *s=NULL;
 
@@ -1898,7 +1916,9 @@ SendK4AuthSB(type,data,len) int type; void *data; int len;
     debug(F111,"SendK4AuthSB","ttol()",rc);
     return(rc);
 }
+#endif /* KRB4 */
 
+#ifdef CK_SRP
 /*  S E N D S R P A U T H S B
  *  Send a SRP Authentication Subnegotiation to host and
  *  output appropriate Telnet Debug messages
@@ -1951,7 +1971,6 @@ SendSRPAuthSB(type,data,len) int type; void *data; int len;
 
     /* Handle Telnet Debugging Messages */
     if (deblog || tn_deb || debses) {
-        int i;
         int deblen=p-str_data-2;
         char *s=NULL;
         int mode = AUTH_CLIENT_TO_SERVER | (auth_how & AUTH_HOW_MASK) |
@@ -2014,6 +2033,7 @@ SendSRPAuthSB(type,data,len) int type; void *data; int len;
 #endif
     return(rc);
 }
+#endif /* CK_SRP */
 
 #ifdef CK_ENCRYPTION
 /*
@@ -2330,6 +2350,7 @@ atok(int at) {
 static unsigned char send_list[512];
 static int  send_len = 0;
 
+#ifdef CK_SRP
 _PROTOTYP(static int auth_send, (unsigned char *parsedat, int end_sub));
 
 static int
@@ -2352,6 +2373,7 @@ auth_resend(type) int type;
     }
     return(auth_send(send_list,send_len));
 }
+#endif /* CK_SRP */
 
 static int
 #ifdef CK_ANSIC
@@ -2363,7 +2385,6 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
     static unsigned char buf[4096];
     unsigned char *pname;
     int plen;
-    int r;
     int i;
     int mode;
 #ifdef MIT_CURRENT
@@ -3083,7 +3104,6 @@ auth_send(parsedat,end_sub) unsigned char *parsedat; int end_sub;
         sprintf(&buf[7+length], "%c%c", IAC, SE);
 
         if (deblog || tn_deb || debses) {
-            int i;
             ckmakxmsg(tn_msg,TN_MSG_LEN,
                       "TELNET SENT SB ",TELOPT(TELOPT_AUTHENTICATION),
                       " IS ",AUTHTYPE_NAME(authentication_version)," ",
@@ -9798,7 +9818,9 @@ struct tkt_list_item {
     struct tkt_list_item * next;
 };
 
+#ifdef KRB4
 static struct tkt_list_item * k4_tkt_list = NULL;
+#endif
 
 int
 #ifdef CK_ANSIC
@@ -10306,7 +10328,9 @@ ck_krb4_getprincipal()
 #endif /* KRB4 */
 }
 
+#ifdef KRB5
 static struct tkt_list_item * k5_tkt_list = NULL;
+#endif
 
 int
 #ifdef CK_ANSIC
@@ -12804,8 +12828,12 @@ in this Software without prior written authorization from the X Consortium.
 #include "ckcfnp.h"                     /* Prototypes (must be last) */
 
 void
+#ifdef CK_ANSIC
+XauDisposeAuth (Xauth *auth)
+#else
 XauDisposeAuth (auth)
 Xauth   *auth;
+#endif  /* CK_ANSIC */
 {
     if (auth) {
         if (auth->address) (void) free (auth->address);
@@ -12833,7 +12861,7 @@ XauFileName ()
     if ( tn_fwdx_xauthority )
         return(tn_fwdx_xauthority);
 
-    if (name = getenv ("XAUTHORITY"))
+    if ((name = getenv ("XAUTHORITY")))
         return(name);
     name = zhome();
     if ( !name )
@@ -12861,9 +12889,13 @@ XauFileName ()
 }
 
 static int
+#ifdef CK_ANSIC
+binaryEqual (const char *a, const char *b, int len)
+#else
 binaryEqual (a, b, len)
 const char   *a, *b;
 int    len;
+#endif  /* CK_ANSIC */
 {
     while (len--)
         if (*a++ != *b++)
@@ -12876,6 +12908,15 @@ int    len;
 #endif /* R_OK */
 
 Xauth *
+#ifdef CK_ANSIC
+XauGetAuthByAddr (unsigned int family,
+                  unsigned int address_length,
+                  const char *address,
+                  unsigned int number_length,
+                  const char *number,
+                  unsigned int name_length,
+                  const char *name)
+#else
 XauGetAuthByAddr (family, address_length, address,
                           number_length, number,
                           name_length, name)
@@ -12886,6 +12927,7 @@ unsigned int    number_length;
 const char      *number;
 unsigned int    name_length;
 const char      *name;
+#endif  /* CK_ANSIC */
 {
     FILE    *auth_file;
     char    *auth_name;
@@ -12951,9 +12993,13 @@ const char      *name;
 }
 
 static int
+#ifdef CK_ANSIC
+read_short (unsigned short *shortp, FILE *file)
+#else
 read_short (shortp, file)
 unsigned short  *shortp;
 FILE            *file;
+#endif  /* CK_ANSIC */
 {
     unsigned char   file_short[2];
 
@@ -12964,10 +13010,14 @@ FILE            *file;
 }
 
 static int
+#ifdef CK_ANSIC
+read_counted_string (unsigned short *countp, char **stringp, FILE *file)
+#else
 read_counted_string (countp, stringp, file)
 unsigned short  *countp;
 char    **stringp;
 FILE    *file;
+#endif  /* CK_ANSIC */
 {
     unsigned short  len;
     char            *data;
@@ -12992,8 +13042,12 @@ FILE    *file;
 }
 
 Xauth *
+#ifdef CK_ANSIC
+XauReadAuth (FILE *auth_file)
+#else
 XauReadAuth (auth_file)
 FILE    *auth_file;
+#endif  /* CK_ANSIC */
 {
     Xauth   local;
     Xauth   *ret;
@@ -13037,9 +13091,13 @@ FILE    *auth_file;
 }
 
 static int
+#ifdef CK_ANSIC
+write_short (unsigned short s, FILE *file)
+#else
 write_short (s, file)
 unsigned short  s;
 FILE            *file;
+#endif  /* CK_ANSIC */
 {
     unsigned char   file_short[2];
 
@@ -13051,10 +13109,14 @@ FILE            *file;
 }
 
 static int
+#ifdef CK_ANSIC
+write_counted_string (unsigned short count, char *string, FILE *file)
+#else
 write_counted_string (count, string, file)
 unsigned short  count;
 char    *string;
 FILE    *file;
+#endif  /* CK_ANSIC */
 {
     if (write_short (count, file) == 0)
         return 0;
@@ -13064,9 +13126,13 @@ FILE    *file;
 }
 
 int
+#ifdef CK_ANSIC
+XauWriteAuth (FILE *auth_file, Xauth *auth)
+#else
 XauWriteAuth (auth_file, auth)
 FILE    *auth_file;
 Xauth   *auth;
+#endif  /* CK_ANSIC */
 {
     if (write_short (auth->family, auth_file) == 0)
         return 0;
@@ -13383,7 +13449,12 @@ ck_auth_init( hostname, ipaddr, username, socket )
 }
 
 void
-auth_finished(result) int result; {
+#ifdef CK_ANSIC
+auth_finished(int result)
+#else
+auth_finished(result) int result;
+#endif  /* CK_ANSIC */
+{
     extern char uidbuf[];
     extern int sstelnet;
 

@@ -287,7 +287,7 @@ kcopy(char *source, char *destination) {
 
         x = strlen(destination);
         len = strlen(destination) + strlen(source) + 2;
-        if (!(p = (char *)malloc(len)))
+        if ((p = (char *)malloc(len)) == NULL)
           return(-1);
         strcpy(p,destination);          /* Directory part */
         if (!ISDIRSEP(*(destination+x-1))) /* Separator, if needed */
@@ -296,7 +296,7 @@ kcopy(char *source, char *destination) {
         strcat(p,q);                    /* Concatenate to new directory */
     } else {
         len = strlen(destination) + 64;
-        if (!(p = (char *)malloc(len)))
+        if ((p = (char *)malloc(len)) == NULL)
           return(-1);
         strcpy(p,destination);
     }
@@ -332,7 +332,7 @@ kmkdir(const char *path) {
     x = strlen(path);
     if (x < 1 || x > CKMAXPATH)           /* Check length */
       return(-1);
-    if (!(tp = (char *)malloc(x+1)))            /* Make a temporary copy */
+    if ((tp = (char *)malloc(x+1)) == NULL)            /* Make a temporary copy */
       return(-1);
     strcpy(tp,path);
 
@@ -673,7 +673,7 @@ K_CONNECTOR::K_CONNECTOR(void)
     VtList =       (UIW_VT_LIST *) Get( LIST_ENTRIES ) ; 
 
 #ifdef WIN32
-    Information( I_SET_TEXT, "C-Kermit for Windows Dialer" ) ;
+    Information( I_SET_TEXT, "Kermit 95 Dialer" ) ;
 #else
     Information( I_SET_TEXT, "Kermit-95 for OS/2 Dialer" ) ;
 #endif /* WIN32 */
@@ -735,7 +735,7 @@ K_CONNECTOR::K_CONNECTOR(void)
         if ( !isdir(dir) ) {
             kmkdir(dir);
 
-            if ( common = GetAppData(1) ) {
+            if ( (common = GetAppData(1)) != NULL ) {
                 sprintf(file,"%s%s",(char *)common, "Kermit 95\\K95CUSTOM.INI");
                 kcopy(file,dir);
                 appdata = GetAppData(0);
@@ -3053,11 +3053,7 @@ IsManualInstalled(void)
     /* before starting the manual.  Otherwise, Netscape may   */
     /* be unable to find the referential links.               */
 
-#ifdef WIN32
-    strcat(exepath, "DOCS\\MANUAL\\CKWIN.HTM");
-#else
-    strcat(exepath, "DOCS\\MANUAL\\CKOS2.HTM");
-#endif
+    strcat(exepath, "DOCS\\MANUAL\\INDEX.HTM");
 
     if ( stat(exepath,&buf) >= 0 ) {
 #ifdef COMMENT
@@ -3145,54 +3141,27 @@ Browse( ZIL_ICHAR * url )
             sprintf(cmdbuf,"%s %s",_config->_app_www,url);
 #ifdef WIN32
         return(system(cmdbuf));
-#else
-#ifdef __WATCOMC__
-        ZIL_UINT32 tid = _beginthread((void (*)(void *)) ExecuteBrowser,
-                                      0,
-                                      65535,
-                                      (void *)cmdbuf
-                                      ) ;
-#else
-        ZIL_UINT32 tid = _beginthread((void (* _Optlink)(void *)) ExecuteBrowser,
-                                      0,
-                                      65535, 
-                                      (void *)cmdbuf
-                                      ) ;
-#endif /* __WATCOMC__ */
-        return ((DWORD)tid != 0xffffffff);
 #endif
     }
-
-    if (browsopts[0]) {
-        s = strstr("%1",(char *)browsopts);
+    else {
+        if (browsopts[0]) {
+            s = strstr("%1",(char *)browsopts);
+            if (s)
+                *s = 's';
+            else
+                s = strstr("%s",(char *)browsopts);	
+        }
         if (s)
-            *s = 's';
+            sprintf(tmpbuf,browsopts,url);
         else
-            s = strstr("%s",(char *)browsopts);	
+            sprintf(tmpbuf,"%s %s",browsopts,url);
+        sprintf(cmdbuf,"%s %s",browser,tmpbuf);
     }
-    if (s)
-        sprintf(tmpbuf,browsopts,url);
-    else
-        sprintf(tmpbuf,"%s %s",browsopts,url);
-    sprintf(cmdbuf,"%s %s",browser,tmpbuf);
-
-    ZIL_UINT32 tid = _beginthread( 
-#ifndef WIN32
-#ifdef __WATCOMC__
-                                   (void (*)(void *))
+#ifdef WIN32
+    return (_beginthread(ExecuteBrowser, 65535, (void *)cmdbuf) != -1);
 #else
-                                   (void (* _Optlink)(void *))
-#endif /* __WATCOMC__ */
-#endif /* WIN32 */
-
-                                   ExecuteBrowser,
-#ifndef WIN32
-                            0,
-#endif /* WIN32 */
-                            65535, 
-                            (void *)url
-                            ) ;
-    return ((DWORD)tid != 0xffffffff);
+    return (_beginthread(ExecuteBrowser, 0, 65535, (void *)cmdbuf) != -1);
+#endif
 }
 
 
@@ -4303,7 +4272,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
     ZIL_ICHAR *p;
     K_LOCATION * location = (K_LOCATION *) _location_list.Current();
 
-    sprintf(buf,"; C-Kermit for Windows Dialer Generated Script - Version %d.%d\n",
+    sprintf(buf,"; Kermit 95 Dialer Generated Script - Version %d.%d\n",
              kd_major,kd_minor);
     OUTFILE(buf);
 
@@ -6193,10 +6162,12 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
     int anonymous = !stricmp(entry->_userid,"anonymous") ||
         !stricmp(entry->_userid,"ftp");
 
-    if ( entry->_password && !anonymous ) {
-        if ( !entry->_prompt_for_password )
-            sprintf(tmp, "set login password {%s}", entry->_password );
-        else {
+    if ( entry->_password
+            && (strlen(entry->_password) > 0 || entry->_prompt_for_password)
+            && !anonymous ) {
+        if ( !entry->_prompt_for_password ) {
+                sprintf(tmp, "set login password {%s}", entry->_password);
+        } else {
             /* Prompt for Password */
             ZIL_ICHAR    password[PASSWD_SZ];
             ZIL_UINT8    ok=0;
@@ -6215,7 +6186,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
         OUTFILE(BuildOutStr(buf, "", tmp));
         OUTFILE("set command quoting on\n");
     }
-    if ( entry->_prompt ) {
+    if ( entry->_prompt && strlen(entry->_prompt) > 0) {
         sprintf(tmp, "set login prompt {%s}", entry->_prompt);
         OUTFILE(BuildOutStr(buf, "", tmp));
     }
@@ -6575,7 +6546,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
             OUTFILE(BuildOutFileStr(buf, "", tmp));
         }
 
-        /* The following is no longer supported as of C-Kermit for Windows:
+        /* The following is no longer supported as of Kermit 95 v3.0:
          *   external-keyx, srp-gex-sha1, hostbased
          * sprintf(buf,"set ssh v2 authentication %s%s%s%s%s%s%s\n",
                  entry->_ssh2_auth_external_keyx ? "external-keyx " : "",
@@ -6592,7 +6563,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
                 entry->_ssh2_auth_keyboard_interactive ? "keyboard-interactive " : "");
         OUTFILE(buf);
 
-        /* Changes for C-Kermit for Windows (from Kermit 95 v2.1):
+        /* Changes for Kermit 95 v3.0 (v2.1):
          * Removed: blowfish-cbc, cast128-cbc, arcfour
          * Retained (for now): aes128-cbc, 3des-cbc, aes192-cbc, aes256-cbc
          * New: aes128-ctr              aes256-gcm@openssh.com
@@ -6643,7 +6614,7 @@ GenerateScript( KD_LIST_ITEM * entry, KD_CONFIG * config,
                  entry->_ssh2_hka_dss ? "ssh-dss " : ""); /* Deprecated */
         OUTFILE(buf);
 
-        /* New in C-Kermit for Windows */
+        /* New in v3.0 */
         /* TODO: Build a UI to configure this
          *  Until then we'll comment out the command so as to not override the
          *  defaults */
@@ -7254,7 +7225,7 @@ StartKermit( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_entry 
    }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
 
         if ( !StartKermitFileName )
             OutofMemory("Unable to create MESSAGE_WINDOW StartKermit 3");
@@ -7475,6 +7446,21 @@ StartKermit( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_entry 
                      StartKermitFileName,frameID,K_STATUS::Instance,
                      entry->_startpos_x, entry->_startpos_y, 
                      tmp, entry->_fontsize) ;
+        }
+
+        /* The K95 2.1.3 dialer turned off the GUI bars with command line
+         * arguments rather than SET GUI commands. I'm not sure if this is
+         * exactly how it did it, but it works. */
+        if (!entry->_gui_menu_bar) {
+            sprintf(buf + strlen(buf), " --nomenubar");
+        }
+
+        if (!entry->_gui_tool_bar) {
+            sprintf(buf + strlen(buf), " --notoolbar");
+        }
+
+        if (!entry->_gui_status_bar) {
+            sprintf(buf + strlen(buf), " --nostatusbar");
         }
     } else 
 #endif /* WIN32 */
@@ -8025,7 +8011,7 @@ void K_CONNECTOR::UpdateStatusLine( ZIL_UINT32 UpdateName )
 #define SHORTCUTDEBUG
 
 #define K95_APPID "Kermit.Script"
-#define K95_APPID_DEFAULT "C-Kermit for Windows Script"
+#define K95_APPID_DEFAULT "Kermit 95 Script"
 #define K95_MIME  "application/kermit"
 #define K95_MIME_PATH  "MIME\\Database\\Content Type\\application/kermit"
 
@@ -8430,7 +8416,7 @@ ExportLocations(void)
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR ExportLocations 1");
 
@@ -8538,7 +8524,7 @@ ExportModems(void)
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR ExportModems");
 #ifdef WIN32
@@ -8696,7 +8682,7 @@ CreateShortcut( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_ent
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR CreateShortcut");
 #ifdef WIN32
@@ -8972,7 +8958,7 @@ CreateScriptFile( KD_LIST_ITEM * entry, KD_CONFIG * config, KD_LIST_ITEM * def_e
     }
 
     if (!StartKermitFileName && 
-	 !(StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE])) {
+	  (StartKermitFileName = (ZIL_ICHAR *) new ZIL_ICHAR[BUFFERSIZE]) == NULL) {
         if ( !StartKermitFileName )
             OutofMemory("Unable to create ICHAR CreateScriptFile");
 #ifdef WIN32
@@ -9340,14 +9326,7 @@ Win32ShellExecute( ZIL_ICHAR * object )
     ZIL_SCREENID frameID ;
     Information(I_GET_FRAMEID, &frameID);
     MyFrameID = frameID;
-    ZIL_UINT32 tid = _beginthread( Real_Win32ShellExecute, 
-#ifndef WIN32
-                            0,
-#endif /* WIN32 */
-                            65535, 
-                            (void *)object 
-                            ) ;
-    return ((DWORD)tid != 0xffffffff);
+    return (_beginthread( Real_Win32ShellExecute, 65535, (void *)object) != -1);
 }
 #endif /* WIN32 */
 

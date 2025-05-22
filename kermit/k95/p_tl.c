@@ -74,7 +74,6 @@ tl_add(tl,path,size,as_name,convert)
 
     U32 buf_idx;
     TE *te;
-    char tmpbuf[257] ;
 
     debug(F110,"tl_add path",path,0);
     debug(F101,"tl_add size","",size);

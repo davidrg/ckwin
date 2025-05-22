@@ -17,23 +17,30 @@
 #include "ckucmd.h"
 #include "ckuusr.h"
 #include "ckowin.h"
+#include "ckosyn.h"
+#include "ckocon.h"
 #include <string.h>
+#include <process.h>
 
 #include <windows.h>
-#ifndef NODIAL
+#ifdef CK_TAPI
 #define TAPI_CURRENT_VERSION 0x00010004
 #include <tapi.h>
 #include <mcx.h>
-#endif
 /* all functions in this module return TRUE to indicate success */
 /* or FALSE to indicate failure */
 
-#ifdef CK_TAPI
+
 #include "ckntap.h"             /* Kermit Telephony */
 #include "cknwin.h"
 #include "ckntapi.h"            /* TAPI function typedefs */
 
 _PROTOTYP( char * cktapiErrorString, (DWORD));
+int cktapiIsModem(void);
+BOOL HandleLineErr(long lLineErr);
+int cktapidisconnect(void);
+int cktapicloseasync(void);
+int cktapidevenum(void);
 
 extern int tttapi ;                     /* is Line TAPI ? */
 extern struct keytab * tapilinetab, * tapilocationtab ;
@@ -103,39 +110,38 @@ char   tapiSameAreaRule[65] = "";
 char   tapiLongDistanceRule[65] = "";
 char   tapiInternationalRule[65] = "";
 
-cklineInitialize_t cklineInitialize = NULL ;
-cklineNegotiateAPIVersion_t cklineNegotiateAPIVersion = NULL ;
-cklineGetDevCaps_t cklineGetDevCaps = NULL ;
-cklineShutdown_t cklineShutdown = NULL ;
-cklineOpen_t cklineOpen = NULL ;
-cklineMakeCall_t cklineMakeCall = NULL ;
-cklineDial_t cklineDial = NULL ;
-cklineDrop_t cklineDrop = NULL ;
-cklineAnswer_t cklineAnswer = NULL ;
-cklineAccept_t cklineAccept = NULL ;
-cklineDeallocateCall_t cklineDeallocateCall = NULL ;
-cklineSetCallPrivilege_t cklineSetCallPrivilege = NULL ;
-cklineClose_t cklineClose = NULL ;
-cklineHandoff_t cklineHandoff = NULL ;
-cklineGetID_t cklineGetID = NULL ;
-cklineGetTranslateCaps_t cklineGetTranslateCaps = NULL ;
-cklineSetCurrentLocation_t cklineSetCurrentLocation = NULL ;
-cklineSetStatusMessages_t cklineSetStatusMessages = NULL ;
-cklineConfigDialog_t cklineConfigDialog = NULL ;
-cklineTranslateDialog_t cklineTranslateDialog = NULL ;
-cklineTranslateAddress_t cklineTranslateAddress = NULL ;
-cklineGetCountry_t cklineGetCountry = NULL;
-cklineGetDevConfig_t cklineGetDevConfig = NULL;
-cklineGetLineDevStatus_t cklineGetLineDevStatus=NULL;
-cklineSetDevConfig_t cklineSetDevConfig=NULL;
-cklineGetCallInfo_t cklineGetCallInfo=NULL;
-cklineMonitorMedia_t cklineMonitorMedia=NULL;
-cklineGetAppPriority_t cklineGetAppPriority=NULL;
-cklineSetAppPriority_t cklineSetAppPriority=NULL;
-cklineGetNumRings_t cklineGetNumRings=NULL;
-cklineSetNumRings_t cklineSetNumRings=NULL;
-cklineSetCallParams_t cklineSetCallParams=NULL;
-
+static cklineInitialize_t cklineInitialize = NULL ;
+static cklineNegotiateAPIVersion_t cklineNegotiateAPIVersion = NULL ;
+static cklineGetDevCaps_t cklineGetDevCaps = NULL ;
+static cklineShutdown_t cklineShutdown = NULL ;
+static cklineOpen_t cklineOpen = NULL ;
+static cklineMakeCall_t cklineMakeCall = NULL ;
+static cklineDial_t cklineDial = NULL ;
+static cklineDrop_t cklineDrop = NULL ;
+static cklineAnswer_t cklineAnswer = NULL ;
+static cklineAccept_t cklineAccept = NULL ;
+static cklineDeallocateCall_t cklineDeallocateCall = NULL ;
+static cklineSetCallPrivilege_t cklineSetCallPrivilege = NULL ;
+static cklineClose_t cklineClose = NULL ;
+static cklineHandoff_t cklineHandoff = NULL ;
+static cklineGetID_t cklineGetID = NULL ;
+static cklineGetTranslateCaps_t cklineGetTranslateCaps = NULL ;
+static cklineSetCurrentLocation_t cklineSetCurrentLocation = NULL ;
+static cklineSetStatusMessages_t cklineSetStatusMessages = NULL ;
+static cklineConfigDialog_t cklineConfigDialog = NULL ;
+static cklineTranslateDialog_t cklineTranslateDialog = NULL ;
+static cklineTranslateAddress_t cklineTranslateAddress = NULL ;
+static cklineGetCountry_t cklineGetCountry = NULL;
+static cklineGetDevConfig_t cklineGetDevConfig = NULL;
+static cklineGetLineDevStatus_t cklineGetLineDevStatus=NULL;
+static cklineSetDevConfig_t cklineSetDevConfig=NULL;
+static cklineGetCallInfo_t cklineGetCallInfo=NULL;
+static cklineMonitorMedia_t cklineMonitorMedia=NULL;
+static cklineGetAppPriority_t cklineGetAppPriority=NULL;
+static cklineSetAppPriority_t cklineSetAppPriority=NULL;
+static cklineGetNumRings_t cklineGetNumRings=NULL;
+static cklineSetNumRings_t cklineSetNumRings=NULL;
+static cklineSetCallParams_t cklineSetCallParams=NULL;
 
 int
 cktapiunload(void)
@@ -406,7 +412,6 @@ HCALL g_hCall = (HCALL) 0;
 HLINE g_hLine = (HLINE) 0;
 extern CK_TTYFD_T ttyfd; /* this holds the HLINE hLine */
 extern int mdmtyp ;
-static int mdmtyp_sav=0;
 CHAR szModemName[256] ;
 DWORD LineDeviceId = -1;
 DWORD LineDeviceAPIVersion = 0 ;
@@ -1320,7 +1325,10 @@ DoLineCallState(
         UpdateStatusBar("Line is idle",1,0);
         if ( ttyfd != -1 && ttyfd != -2 ) {
             cktapidisconnect();
-            SetConnectMode(FALSE);
+            /* Not sure if CSX_INTERNAL is correct - previously nothing
+             * was passed at all though so it can't be more wrong than
+             * that -- DG */
+            SetConnectMode(FALSE, CSX_INTERNAL);
         }
         PostTAPIConnectSem();
         break;
@@ -1396,7 +1404,10 @@ DoLineCallState(
             }
             if ( ttyfd != -1 && ttyfd != -2 ) {
                 cktapidisconnect();
-                SetConnectMode(FALSE);
+                /* I'm not sure if CSX_HOSTDISC is correct - previously
+                 * nothing was passed at all though so it can't be less
+                 * wrong than that -- DG */
+                SetConnectMode(FALSE, CSX_HOSTDISC);
             }
             PostTAPIConnectSem() ;
             UpdateStatusBar(pszReasonDisconnected,1,0);
@@ -1529,7 +1540,9 @@ DoLineCallState(
         DWORD          dwSize     = sizeof(LINECALLINFO);
         LONG           lrc = 0;
         DWORD          dwMediaMode= LINEMEDIAMODE_UNKNOWN;
+        #ifdef BETADEBUG
         DWORD          dwNumRings = 0;
+        #endif /* BETADEBUG */
 
         UpdateStatusBar("Incoming call being offered",1,0);
         g_hCall = (HCALL) dwDevice;
@@ -2860,7 +2873,6 @@ cktapiBuildLocationTable( struct keytab ** pTable, int * pN )
    long lReturn = 0;
    DWORD dwCounter;
    LPLINELOCATIONENTRY lpLocationEntry;
-   LPLINECARDENTRY lpLineCardEntry = NULL;
    int i = 0 ;
 
    if ( *pTable )
@@ -3220,7 +3232,6 @@ cktapiFetchLocationInfoByName( char * CurrentLocation )
     long lReturn;
     DWORD dwCounter;
     LPLINELOCATIONENTRY lpLocationEntry;
-    LPLINECARDENTRY lpLineCardEntry = NULL;
 
     /* If no name specified, use Current Location */
     if ( !CurrentLocation || !CurrentLocation[0] ) {
@@ -3315,7 +3326,6 @@ cktapiFetchLocationInfoByID( int LocationID )
     long lReturn;
     DWORD dwCounter;
     LPLINELOCATIONENTRY lpLocationEntry;
-    LPLINECARDENTRY lpLineCardEntry = NULL;
 
    // First, get the TRANSLATECAPS
    do
@@ -4634,13 +4644,15 @@ cktapiSetModemSettings( LPDEVCFG lpDevCfg, LPCOMMCONFIG lpCommConfig )
     return(TRUE);
 }
 
+void cktapihangup_thr(void* unused) { cktapihangup(); }
+void cktapiclose_thr(void* unused) { cktapiclose(); }
 
 int
 cktapidisconnect( void )
 {
     int i=5;
     if ( !g_bHangingUp && !g_bClosing ) {
-        _beginthread( cktapihangup, 65535, 0 );
+        _beginthread( cktapihangup_thr, 65535, NULL );
     }
     do {
         msleep(50);
@@ -4653,7 +4665,7 @@ cktapicloseasync( void )
 {
     int i=5;
     if ( !g_bClosing ) {
-        _beginthread( cktapiclose, 65535, 0 );
+        _beginthread( cktapiclose_thr, 65535, NULL );
     }
     do {
         msleep(50);
