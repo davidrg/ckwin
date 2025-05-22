@@ -81,7 +81,7 @@ int PASCAL WinMain(HINSTANCE hInstance,
 
 	InitCommonControls();
 
-	HWND hwndSelf = FindWindow(NULL, TEXT("C-Kermit Connection Manager"));
+	HWND hwndSelf = FindWindow(NULL, TEXT("Kermit 95 Connection Manager"));
 
 	if (hwndSelf != NULL) {
 
@@ -196,7 +196,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 	g_hwndMain = CreateWindowEx(
 		0,
 		g_szClassName,
-		TEXT("C-Kermit Connection Manager"),
+		TEXT("Kermit 95 Connection Manager"),
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,	/* Horizontal Position */
 		CW_USEDEFAULT,	/* Vertical Position */

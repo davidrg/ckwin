@@ -108,63 +108,52 @@ CAPTION "File Transfer"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Protocol:",IDC_STATIC,5,5,29,8
-    COMBOBOX        IDC_COMBO1,60,5,50,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO1,64,4,50,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Performance:",IDC_STATIC,5,20,43,8
-    COMBOBOX        IDC_COMBO2,60,20,50,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO2,64,20,50,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Packet-length:",IDC_STATIC,5,40,47,8
-    EDITTEXT        IDC_EDIT1,60,35,40,14,ES_AUTOHSCROLL
-    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,100,35,
+    EDITTEXT        IDC_EDIT1,64,36,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,104,36,
                     11,14
     LTEXT           "Window size:",IDC_STATIC,5,55,43,8
-    EDITTEXT        IDC_EDIT2,60,50,40,14,ES_AUTOHSCROLL
-    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,100,50,
+    EDITTEXT        IDC_EDIT2,64,52,40,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,104,52,
                     11,14
-    COMBOBOX        IDC_COMBO3,60,65,50,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO3,64,68,52,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "CC Unprefixing:",IDC_STATIC,5,70,50,8
-    GROUPBOX        "Filename collision",IDC_STATIC,5,95,105,45
-    CONTROL         "Backup",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,10,105,
-                    41,10
-    CONTROL         "Update",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,10,115,
-                    39,10
-    CONTROL         "Overwrite",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,10,
-                    125,46,10
-    CONTROL         "Append",IDC_RADIO4,"Button",BS_AUTORADIOBUTTON,60,105,
-                    41,10
-    CONTROL         "Discard",IDC_RADIO5,"Button",BS_AUTORADIOBUTTON,60,115,
-                    40,10
-    CONTROL         "Rename",IDC_RADIO6,"Button",BS_AUTORADIOBUTTON,60,125,
-                    43,10
-    GROUPBOX        "Default Transfer Mode",IDC_STATIC,115,55,115,25
-    CONTROL         "Binary",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,120,66,
+    LTEXT           "CC Unprefixing:",IDC_STATIC,4,72,50,8
+    GROUPBOX        "Default Transfer Mode",IDC_STATIC,120,52,108,29
+    CONTROL         "Binary",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,184,64,
                     35,10
-    CONTROL         "Text",IDC_RADIO8,"Button",BS_AUTORADIOBUTTON,175,65,30,
+    CONTROL         "Text",IDC_RADIO8,"Button",BS_AUTORADIOBUTTON,128,64,30,
                     10
-    LTEXT           "File:",IDC_STATIC,120,20,14,8
-    COMBOBOX        IDC_COMBO4,160,15,65,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "File Character-set::",IDC_STATIC,120,4,60,8
+    LTEXT           "Transfer Character-set:",IDC_STATIC,120,28,73,8
+    COMBOBOX        IDC_COMBO5,120,36,108,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Transfer:",IDC_STATIC,120,35,29,8
-    COMBOBOX        IDC_COMBO5,160,30,65,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Autodownload:",IDC_STATIC,4,88,48,8
+    COMBOBOX        IDC_COMBO6,64,84,52,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Autodownload:",IDC_STATIC,5,85,48,8
-    COMBOBOX        IDC_COMBO6,60,80,50,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Character-sets",IDC_STATIC,115,5,115,45
     CONTROL         "Transmit literal filenames",IDC_CHECK4,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,115,115,92,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,108,92,10
     CONTROL         "Use / include pathnames",IDC_CHECK5,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,115,125,95,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,84,95,10
     CONTROL         "Keep partially received files",IDC_CHECK6,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,115,135,101,10
-    GROUPBOX        "Negotiate Transfer Modes",IDC_STATIC,115,85,115,25
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,96,101,10
+    GROUPBOX        "Negotiate Transfer Modes",IDC_STATIC,4,116,120,33
     CONTROL         "Streaming",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,95,47,10
+                    WS_TABSTOP,12,132,47,10
     CONTROL         "Clear-Channel",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,170,95,60,10
-    CONTROL         "Force 16bit CRC on all packets",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,115,145,114,10
+                    WS_TABSTOP,60,132,60,10
+    CONTROL         "Force 16bit CRC",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,128,120,72,8
+    COMBOBOX        IDC_COMBO7,64,100,52,124,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Filename Collision:",IDC_STATIC,4,100,58,8
+    COMBOBOX        IDC_TERM_CSET,120,12,108,112,CBS_DROPDOWNLIST | 
+                    CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_TELNET DIALOG DISCARDABLE  0, 0, 235, 156
@@ -464,7 +453,7 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_COL_UL_BG,148,95,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "To change the color codes assigned to these colors, see the Colors tab. Custom color codes are only available when using GUI C-Kermit.",
+    LTEXT           "To change the color codes assigned to these colors, see the Colors tab. Custom color codes are only available when using GUI Kermit 95.",
                     IDC_STATIC,8,112,220,18
     PUSHBUTTON      "Defaults",IDC_TERM_COLOR_DEFAULTS,178,135,50,14
 END
@@ -474,7 +463,7 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "GUI"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Open  in the GUI C-Kermit instead of the Console version",
+    CONTROL         "Open  in the GUI Kermit 95 instead of the Console version",
                     IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,5,194,
                     10
     GROUPBOX        "Font",IDC_STATIC,5,20,225,40
@@ -591,8 +580,8 @@ BEGIN
     LTEXT           "Light Magenta",IDC_STATIC,120,95,46,8
     LTEXT           "Yellow",IDC_STATIC,120,110,22,8
     LTEXT           "White",IDC_STATIC,120,125,20,8
-    LTEXT           "Color codes can only be customised in the GUI version of C-Kermit",
-                    IDC_STATIC,10,140,210,8
+    LTEXT           "Color codes can only be customised in the GUI version of Kermit 95",
+                    IDC_STATIC,10,140,220,8
 END
 
 IDD_LOGGING DIALOG DISCARDABLE  0, 0, 235, 156
@@ -647,7 +636,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,85,50,14
     ICON            IDI_LOGO,IDC_STATIC,5,5,18,20
-    LTEXT           "C-Kermit Connection Manager",IDC_STATIC,40,5,95,8
+    LTEXT           "Kermit 95 Connection Manager",IDC_STATIC,40,5,95,8
     LTEXT           "Version 1.0 for Windows NT",IDC_ABOUT_VERSION,40,15,125,
                     8
     LTEXT           "(C) Copyright David Goodwin, 2023",IDC_STATIC,40,25,140,
@@ -998,6 +987,21 @@ IDD_TRANSFER DLGINIT
 BEGIN
     IDC_COMBO1, 0x403, 7, 0
 0x654b, 0x6d72, 0x7469, "\000" 
+    IDC_COMBO7, 0x403, 7, 0
+0x6142, 0x6b63, 0x7075, "\000" 
+    IDC_COMBO7, 0x403, 7, 0
+0x7055, 0x6164, 0x6574, "\000" 
+    IDC_COMBO7, 0x403, 10, 0
+0x764f, 0x7265, 0x7277, 0x7469, 0x0065, 
+    IDC_COMBO7, 0x403, 7, 0
+0x7041, 0x6570, 0x646e, "\000" 
+    IDC_COMBO7, 0x403, 8, 0
+0x6944, 0x6373, 0x7261, 0x0064, 
+    IDC_COMBO7, 0x403, 7, 0
+0x6552, 0x616e, 0x656d, "\000" 
+    IDC_TERM_CSET, 0x403, 28, 0
+0x6163, 0x616e, 0x6964, 0x6e61, 0x662d, 0x6572, 0x636e, 0x2068, 0x4928, 
+0x4f53, 0x3436, 0x2d36, 0x4143, 0x0029, 
     0
 END
 
@@ -1262,7 +1266,8 @@ BEGIN
     ID_CONNECTION_PROPERTIES 
                             "Change the selected connections properties such as hostname and terminal emulation settings"
     ID_CONNECTION_CONNECT   "Connect to the selected connection"
-    ID_OPTIONS_MINIMIZEONCONNECT "Minimise the Connection Manager on connect"
+    ID_OPTIONS_MINIMIZEONCONNECT 
+                            "Minimise the Connection Manager on connect"
     ID_HELP_ABOUT           "Show Connection Manager version information"
     ID_FILE_IMPORTCONNECTIONS "Import connections from a file"
 END
