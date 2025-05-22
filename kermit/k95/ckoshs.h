@@ -74,6 +74,8 @@
 #define SSH_ERR_BUFFER_WRITE_FAILED -25 /* Writing to a buffer failed, data has been lost */
 #define SSH_ERR_THREAD_STATE_UNKNOWN -26 /* SSH thread failed to start or fail in a reasonable time. State is now unknown */
 
+#define MAX_AUTH_METHODS 10
+
 /** Parameters passed to the SSH thread on startup telling it what to connect
  * to, settings, etc.
  */
@@ -103,11 +105,14 @@ typedef struct {
     int nodelay;                                /* Set to disable nagles agorithm */
     char* proxy_command;                        /* Command to execute to connect to the server */
 
-    /* Allowed authentication types */
+    /* Which authentication methods should be attempted and their order. */
+    int authentication_methods[MAX_AUTH_METHODS];
+
+    /* Host verification may need to force password authentication off
+     * if it detects something suspicious. Easier to set a flag than
+     * go through authentication_methods removing all occurrences of
+     * the password auth option. */
     BOOL allow_password_auth;
-    BOOL allow_pubkey_auth;
-    BOOL allow_kbdint_auth;
-    BOOL allow_gssapi_auth;
 
     /* TODO: When agent, X11, and other port forwarding is added
      *      all forwarding should be forced off/cleared when host key

@@ -22,11 +22,31 @@ Nothing yet
   C-Kermit looks for it by its window title.
 * The default k95custom.ini no longer produces an error when it's run in the
   console version of C-Kermit or in a build of C-Kermit that lacks SSH support.
+* Fixed the SSH, SSL and Kerberos options in the dialer not being available or
+  not working correctly when they should be. These options are now permanently
+  enabled whether the bundled version of C-Kermit supports these features.
+  Previously the dialer tried to load the Kerberos, OpenSSL and SSH DLLs to
+  see if they were there. This no longer works due to changing DLL names (due
+  in part to changing library versions) and the fact these DLLs are now often
+  built for 64bit while the dialer remains 32bit. 
+* The SSH client will now check which authentication methods are allowed by
+  the server after each authentication method is attempted. This allows the
+  client to handle servers which change their list of allowed authentication
+  methods during login.
 
 ### Minor Enhancements and other changes
 
 * Upgraded to OpenSSL 3.0.10, the current long term support release 
   (supported until 7 September 2026)
+* Help text for "set gui window position" updated: this command *is* supported
+  and it does work.
+* The default k95custom.ini now displays a message the console-mode version
+  (k95.exe) is run pointing new users to the GUI version (k95g.exe)
+* The SSH client will now attempt authentication methods in the order specified
+  by `set ssh v2 authentication` (the list is now ordered rather than being
+  simply a list of what is allowed). The default order is: none, gssapi, 
+  public key, keyboard-interactive, password.
+
 
 ### Source Changes
 
