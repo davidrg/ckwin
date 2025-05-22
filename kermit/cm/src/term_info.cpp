@@ -21,6 +21,7 @@ static const TermInfo terminals[] = {
 	{	TT_HPTERM,	TEXT("hpterm"),		TEXT("HP TERM"),					0	},
 	{	TT_HZL1500,	TEXT("hz1500"),		TEXT("Hazeltine 1500"),				0	},
 	{	TT_IBM31,	TEXT("ibm3151"),	TEXT("IBM 3101-xx,3161"),			0	},
+	{   TT_K95,     TEXT("k95"),        TEXT("Kermit 95"),                  0   },
 	{	TT_LINUX,	TEXT("linux"),		TEXT("Linux"),						0	},
 	{	TT_QANSI,	TEXT("qansi"),		TEXT("QNX ANSI"),					0	},
 	{	TT_QNX,		TEXT("qnx"),		TEXT("QNX Console"),				0	},
@@ -64,8 +65,10 @@ static const TermSettings terminalSettings[] = {
 	{	TT_ADM5,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_AIXTERM,	Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_AAA,		Charset::CS_8859_1,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
-	{	TT_ANSI,	Charset::CS_TRANSP,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
-	{	TT_AT386,	Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	// Change from the dialer: ANSI and AT386 previously used CS_TRANSP which was different from how K95 configured
+	// these terminal types.
+	{	TT_ANSI,	Charset::CS_CP437,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{	TT_AT386,	Charset::CS_CP437,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_AVATAR,	Charset::CS_TRANSP,		TRUE,	TRUE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_BA80,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_BEOS,	Charset::CS_TRANSP,		FALSE,	TRUE,	25,	COLOR_LIGHT_GRAY,	COLOR_BLACK,	COLOR_LIGHT_GRAY,	COLOR_RED	},
@@ -78,6 +81,7 @@ static const TermSettings terminalSettings[] = {
 	{	TT_HPTERM,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_HZL1500,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
 	{	TT_IBM31,	Charset::CS_ASCII,		TRUE,	FALSE,	24,	COLOR_LIGHT_GRAY,	COLOR_BLUE,		COLOR_LIGHT_GRAY,	COLOR_RED	},
+	{   TT_K95,     Charset::CS_UTF8,       TRUE,   TRUE,   24, COLOR_LIGHT_GRAY,   COLOR_BLACK,    COLOR_LIGHT_GRAY,   COLOR_RED   },
 	// Change from the dialer: turn off the status line for linux to make it consistent with K95G (the dialer set it to on)
 	// And use UTF-8 as the charset rather than CP437 as most linux in the last 20 years will be sending unicode.
 	// And set the default background colour to black rather than blue as blue is a weird background colour for a linux console

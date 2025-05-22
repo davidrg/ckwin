@@ -57,6 +57,7 @@ namespace Term {
 		TT_WY50 = 47,
 		TT_WY60 = 48,
 		TT_XTERM = 49,		// not yet supported
+		TT_K95 = 50
 	};
 
 	// Note: number assignments are important! They match
