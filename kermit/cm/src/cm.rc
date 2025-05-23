@@ -26,32 +26,32 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_GENERAL DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_GENERAL DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "General"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Name:",IDC_STATIC,5,10,22,8
-    EDITTEXT        IDC_GENERAL_NAME,55,7,173,14,ES_AUTOHSCROLL
-    LTEXT           "Description:",IDC_STATIC,5,30,38,8
-    EDITTEXT        IDC_GENERAL_DESCRIPTION,55,25,173,14,ES_AUTOHSCROLL
-    LTEXT           "Notes",IDC_STATIC,5,45,20,8
-    EDITTEXT        IDC_GENERAL_NOTES,55,45,173,50,ES_MULTILINE | 
+    LTEXT           "Name:",IDC_STATIC,7,10,22,8
+    EDITTEXT        IDC_GENERAL_NAME,55,7,200,14,ES_AUTOHSCROLL
+    LTEXT           "Description:",IDC_STATIC,7,27,38,8
+    EDITTEXT        IDC_GENERAL_DESCRIPTION,55,24,200,14,ES_AUTOHSCROLL
+    LTEXT           "Notes",IDC_STATIC,7,48,20,8
+    EDITTEXT        IDC_GENERAL_NOTES,55,45,200,70,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    GROUPBOX        "Directories",IDC_STATIC,5,100,225,50
-    LTEXT           "Download:",IDC_STATIC,10,115,35,8
-    EDITTEXT        IDC_GENERAL_DOWNLOAD,50,110,175,14,ES_AUTOHSCROLL
-    LTEXT           "Start in:",IDC_STATIC,10,134,25,8
-    EDITTEXT        IDC_GENERAL_START,50,130,175,14,ES_AUTOHSCROLL
+    GROUPBOX        "Directories",IDC_STATIC,7,117,249,50
+    LTEXT           "Download:",IDC_STATIC,16,128,35,8
+    EDITTEXT        IDC_GENERAL_DOWNLOAD,55,125,194,14,ES_AUTOHSCROLL
+    LTEXT           "Start in:",IDC_STATIC,16,148,25,8
+    EDITTEXT        IDC_GENERAL_START,55,145,195,14,ES_AUTOHSCROLL
 END
 
-IDD_CONNECTION_IP DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_CONNECTION_IP DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Connection"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Hostname or IP Address:",IDC_STATIC,7,7,81,8
-    EDITTEXT        IDC_CONN_HOSTNAME,8,16,220,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_CONN_HOSTNAME,7,16,247,14,ES_AUTOHSCROLL
     LTEXT           "Protocol:",IDC_STATIC,8,36,29,8
     COMBOBOX        IDC_CONN_PROTO,8,44,104,105,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
@@ -61,418 +61,418 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,64,74,10
 END
 
-IDD_TERMINAL DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_TERMINAL DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Terminal"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Terminal Type:",IDC_STATIC,8,8,48,8
-    LISTBOX         IDC_TERM_TYPE,8,19,81,93,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+    LISTBOX         IDC_TERM_TYPE,8,19,112,146,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Screen",IDC_STATIC,125,7,129,73
+    LTEXT           "Width:",IDC_STATIC,130,17,22,8
+    COMBOBOX        IDC_TERM_WIDTH,170,15,46,68,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Screen",IDC_STATIC,96,7,132,77
-    LTEXT           "Width:",IDC_STATIC,104,18,22,8
-    COMBOBOX        IDC_TERM_WIDTH,144,16,46,68,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Columns",IDC_STATIC,222,17,28,8
+    LTEXT           "Height:",IDC_STATIC,130,33,24,8
+    COMBOBOX        IDC_TERM_HEIGHT,170,31,46,96,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Columns",IDC_STATIC,196,18,28,8
-    LTEXT           "Height:",IDC_STATIC,104,34,24,8
-    COMBOBOX        IDC_TERM_HEIGHT,144,32,46,96,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Lines",IDC_STATIC,222,33,18,8
+    LTEXT           "Scrollback:",IDC_STATIC,130,50,36,8
+    EDITTEXT        IDC_TERM_SCROLLBACK,170,47,46,14,ES_AUTOHSCROLL
+    LTEXT           "Lines",IDC_STATIC,222,50,18,8
+    LTEXT           "Cursor:",IDC_STATIC,130,65,23,8
+    COMBOBOX        IDC_TERM_CURSOR,170,63,46,56,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Lines",IDC_STATIC,196,34,18,8
-    LTEXT           "Scrollback:",IDC_STATIC,104,51,36,8
-    EDITTEXT        IDC_TERM_SCROLLBACK,144,48,46,14,ES_AUTOHSCROLL
-    LTEXT           "Lines",IDC_STATIC,196,51,18,8
-    LTEXT           "Cursor:",IDC_STATIC,104,66,23,8
-    COMBOBOX        IDC_TERM_CURSOR,144,64,46,56,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Character set:",IDC_STATIC,96,89,45,8
-    COMBOBOX        IDC_TERM_CSET,96,100,132,112,CBS_DROPDOWNLIST | 
+    LTEXT           "Character set:",IDC_STATIC,125,85,45,8
+    COMBOBOX        IDC_TERM_CSET,125,95,129,112,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Character size",IDC_STATIC,8,120,80,28
-    CONTROL         "7 bits",IDC_TERM_BITS_7,"Button",BS_AUTORADIOBUTTON,16,
-                    132,33,10
-    CONTROL         "8 bits",IDC_TERM_BITS_8,"Button",BS_AUTORADIOBUTTON,48,
-                    132,33,10
+    GROUPBOX        "Character size",IDC_STATIC,125,140,130,28
+    CONTROL         "7 bits",IDC_TERM_BITS_7,"Button",BS_AUTORADIOBUTTON,133,
+                    153,33,10
+    CONTROL         "8 bits",IDC_TERM_BITS_8,"Button",BS_AUTORADIOBUTTON,196,
+                    153,33,10
     CONTROL         "Local echo",IDC_TERM_LOCAL_ECHO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,96,124,47,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,125,110,47,10
     CONTROL         "Auto wrap",IDC_TERM_AUTO_WRAP,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,96,136,48,10
+                    WS_TABSTOP,125,125,48,10
     CONTROL         "APC enabled",IDC_TERM_APC,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,168,124,57,10
+                    WS_TABSTOP,195,110,57,10
     CONTROL         "Status line",IDC_TERM_STATUS_LINE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,168,136,49,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,195,125,49,10
 END
 
-IDD_TRANSFER DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_TRANSFER DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "File Transfer"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Protocol:",IDC_STATIC,5,5,29,8
-    COMBOBOX        IDC_COMBO1,64,4,50,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Protocol:",IDC_STATIC,7,7,29,8
+    COMBOBOX        IDC_COMBO1,70,7,66,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Performance:",IDC_STATIC,5,20,43,8
-    COMBOBOX        IDC_COMBO2,64,20,50,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Performance:",IDC_STATIC,7,25,43,8
+    COMBOBOX        IDC_COMBO2,70,23,66,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Packet-length:",IDC_STATIC,5,40,47,8
-    EDITTEXT        IDC_EDIT1,64,36,40,14,ES_AUTOHSCROLL
-    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,104,36,
+    LTEXT           "Packet-length:",IDC_STATIC,7,41,47,8
+    EDITTEXT        IDC_EDIT1,70,38,55,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,125,38,
                     11,14
-    LTEXT           "Window size:",IDC_STATIC,5,55,43,8
-    EDITTEXT        IDC_EDIT2,64,52,40,14,ES_AUTOHSCROLL
-    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,104,52,
+    LTEXT           "Window size:",IDC_STATIC,7,57,43,8
+    EDITTEXT        IDC_EDIT2,70,54,55,14,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,125,54,
                     11,14
-    COMBOBOX        IDC_COMBO3,64,68,52,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO3,70,70,66,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "CC Unprefixing:",IDC_STATIC,4,72,50,8
-    GROUPBOX        "Default Transfer Mode",IDC_STATIC,120,52,108,29
-    CONTROL         "Binary",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,184,64,
+    LTEXT           "CC Unprefixing:",IDC_STATIC,7,72,50,8
+    GROUPBOX        "Default Transfer Mode",IDC_STATIC,145,65,108,30
+    CONTROL         "Binary",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,210,80,
                     35,10
-    CONTROL         "Text",IDC_RADIO8,"Button",BS_AUTORADIOBUTTON,128,64,30,
+    CONTROL         "Text",IDC_RADIO8,"Button",BS_AUTORADIOBUTTON,155,80,30,
                     10
-    LTEXT           "File Character-set::",IDC_STATIC,120,4,60,8
-    LTEXT           "Transfer Character-set:",IDC_STATIC,120,28,73,8
-    COMBOBOX        IDC_COMBO5,120,36,108,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "File Character-set::",IDC_STATIC,145,7,60,8
+    LTEXT           "Transfer Character-set:",IDC_STATIC,145,35,73,8
+    COMBOBOX        IDC_COMBO5,145,45,108,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Autodownload:",IDC_STATIC,4,88,48,8
-    COMBOBOX        IDC_COMBO6,64,84,52,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Autodownload:",IDC_STATIC,7,88,48,8
+    COMBOBOX        IDC_COMBO6,70,86,66,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Transmit literal filenames",IDC_CHECK4,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,108,92,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,120,92,10
     CONTROL         "Use / include pathnames",IDC_CHECK5,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,84,95,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,100,95,10
     CONTROL         "Keep partially received files",IDC_CHECK6,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,96,101,10
-    GROUPBOX        "Negotiate Transfer Modes",IDC_STATIC,4,116,120,33
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,110,101,10
+    GROUPBOX        "Negotiate Transfer Modes",IDC_STATIC,5,120,129,34
     CONTROL         "Streaming",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,12,132,47,10
+                    WS_TABSTOP,13,134,47,10
     CONTROL         "Clear-Channel",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,60,132,60,10
+                    WS_TABSTOP,68,135,60,10
     CONTROL         "Force 16bit CRC",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,128,120,72,8
-    COMBOBOX        IDC_COMBO7,64,100,52,124,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_TABSTOP,145,130,72,8
+    COMBOBOX        IDC_COMBO7,70,101,66,124,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Filename Collision:",IDC_STATIC,4,100,58,8
-    COMBOBOX        IDC_TERM_CSET,120,12,108,112,CBS_DROPDOWNLIST | 
+    LTEXT           "Filename Collision:",IDC_STATIC,7,103,61,8
+    COMBOBOX        IDC_TERM_CSET,146,17,108,112,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_TELNET DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_TELNET DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Telnet"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Negotiate Options",IDC_STATIC,5,5,120,120
-    LTEXT           "Authentication:",IDC_STATIC,10,15,48,8
-    COMBOBOX        IDC_COMBO1,70,15,48,30,CBS_DROPDOWN | CBS_SORT | 
+    GROUPBOX        "Negotiate Options",IDC_STATIC,7,7,128,123
+    LTEXT           "Authentication:",IDC_STATIC,15,19,48,8
+    COMBOBOX        IDC_COMBO1,74,17,56,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO2,70,30,48,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO2,74,33,56,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO3,70,45,48,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO3,74,49,56,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO4,70,60,48,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO4,74,65,56,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO5,70,75,48,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO5,74,81,56,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO6,70,90,48,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO6,74,97,56,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO7,70,105,48,75,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_COMBO7,74,112,56,75,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Binary Mode:",IDC_STATIC,10,30,42,8
-    LTEXT           "Encryption:",IDC_STATIC,10,45,36,8
-    LTEXT           "Kermit:",IDC_STATIC,10,60,22,8
-    LTEXT           "Start TLS:",IDC_STATIC,10,75,33,8
-    LTEXT           "Forward-X",IDC_STATIC,10,90,33,8
-    LTEXT           "Com-Port-Control:",IDC_STATIC,10,105,56,8
-    GROUPBOX        "Environment Variables",IDC_STATIC,130,5,100,105
-    LTEXT           "Account:",IDC_STATIC,135,20,30,8
-    EDITTEXT        IDC_EDIT1,170,15,55,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT2,170,30,55,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT3,170,45,55,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT4,170,60,55,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT5,170,75,55,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT6,170,90,55,14,ES_AUTOHSCROLL
-    LTEXT           "Display:",IDC_STATIC,135,35,26,8
-    LTEXT           "Job:",IDC_STATIC,135,50,14,8
-    LTEXT           "Location:",IDC_STATIC,135,65,30,8
-    LTEXT           "Printer:",IDC_STATIC,135,80,23,8
-    LTEXT           "Terminal:",IDC_STATIC,135,95,30,8
-    CONTROL         "Forard credentials to host",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,5,130,95,10
+    LTEXT           "Binary Mode:",IDC_STATIC,15,35,42,8
+    LTEXT           "Encryption:",IDC_STATIC,15,51,36,8
+    LTEXT           "Kermit:",IDC_STATIC,15,67,22,8
+    LTEXT           "Start TLS:",IDC_STATIC,15,83,33,8
+    LTEXT           "Forward-X",IDC_STATIC,15,99,33,8
+    LTEXT           "Com-Port-Control:",IDC_STATIC,15,114,56,8
+    GROUPBOX        "Environment Variables",IDC_STATIC,140,7,114,108
+    LTEXT           "Account:",IDC_STATIC,147,19,30,8
+    EDITTEXT        IDC_EDIT1,193,16,55,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,193,32,55,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,194,48,55,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT4,194,64,55,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,194,80,55,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT6,194,96,55,14,ES_AUTOHSCROLL
+    LTEXT           "Display:",IDC_STATIC,147,35,26,8
+    LTEXT           "Job:",IDC_STATIC,147,51,14,8
+    LTEXT           "Location:",IDC_STATIC,147,67,30,8
+    LTEXT           "Printer:",IDC_STATIC,147,83,23,8
+    LTEXT           "Terminal:",IDC_STATIC,147,99,30,8
+    CONTROL         "Forward credentials to host",IDC_CHECK1,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,143,95,10
     CONTROL         "Telnet negotiations must complete",IDC_CHECK2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,5,140,123,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,157,123,10
     CONTROL         "Telnet debug mode",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,130,130,77,10
+                    WS_TABSTOP,147,143,77,10
     CONTROL         "Telnet subnegotiation delay",IDC_CHECK4,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,130,140,103,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,147,157,103,10
 END
 
-IDD_FTP DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_FTP DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "FTP"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Authentication Types:",IDC_STATIC,5,5,70,8
-    LISTBOX         IDC_LIST1,5,15,110,45,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
+    LTEXT           "Authentication Types:",IDC_STATIC,7,7,70,8
+    LISTBOX         IDC_LIST1,7,18,113,45,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Protection Level",IDC_STATIC,5,65,110,45
-    LTEXT           "Command:",IDC_STATIC,10,80,34,8
-    COMBOBOX        IDC_COMBO1,45,75,65,65,CBS_DROPDOWN | CBS_SORT | 
+    GROUPBOX        "Protection Level",IDC_STATIC,7,66,113,54
+    LTEXT           "Command:",IDC_STATIC,14,82,34,8
+    COMBOBOX        IDC_COMBO1,50,80,65,65,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Data:",IDC_STATIC,10,95,18,8
-    COMBOBOX        IDC_COMBO2,45,90,65,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Data:",IDC_STATIC,14,102,18,8
+    COMBOBOX        IDC_COMBO2,50,100,65,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Server Charset:",IDC_STATIC,120,110,50,10
-    COMBOBOX        IDC_COMBO3,120,120,110,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Server Charset:",IDC_STATIC,130,112,50,10
+    COMBOBOX        IDC_COMBO3,130,122,110,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Auto-login",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,5,47,10
+                    WS_TABSTOP,130,7,47,10
     CONTROL         "Auto-authentication",IDC_CHECK2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,120,15,77,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,17,77,10
     CONTROL         "Auto-encryption",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,25,65,10
+                    WS_TABSTOP,130,27,65,10
     CONTROL         "Passive Mode",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,35,61,10
+                    WS_TABSTOP,130,37,61,10
     CONTROL         "Credential Forwarding",IDC_CHECK5,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,120,45,84,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,47,84,10
     CONTROL         "FTP Dates",IDC_CHECK6,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,55,50,10
+                    WS_TABSTOP,130,57,50,10
     CONTROL         "Send literal filenames to server",IDC_CHECK7,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,120,65,111,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,67,111,10
     CONTROL         "Verbose Messages",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,75,76,10
+                    WS_TABSTOP,130,77,76,10
     CONTROL         "Debug Messages",IDC_CHECK9,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,85,71,10
+                    WS_TABSTOP,130,87,71,10
     CONTROL         "Character-set Translation",IDC_CHECK10,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,120,95,95,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,97,95,10
 END
 
-IDD_TCPIP DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_TCPIP DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "TCP/IP"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Buffers",IDC_STATIC,5,5,95,45
-    LTEXT           "Send:",IDC_STATIC,10,20,20,8
-    EDITTEXT        IDC_EDIT1,45,15,40,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT2,45,30,40,14,ES_AUTOHSCROLL
-    LTEXT           "Receive:",IDC_STATIC,10,35,30,8
-    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,85,15,
-                    10,14
-    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,85,30,
-                    10,14
-    GROUPBOX        "DNS",IDC_STATIC,105,5,125,45
-    LTEXT           "Reverse Lookup:",IDC_STATIC,110,15,56,8
-    COMBOBOX        IDC_COMBO1,170,15,55,30,CBS_DROPDOWN | CBS_SORT | 
+    GROUPBOX        "Buffers",IDC_STATIC,7,7,95,48
+    LTEXT           "Send:",IDC_STATIC,13,22,20,8
+    EDITTEXT        IDC_EDIT1,45,19,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,45,36,40,14,ES_AUTOHSCROLL
+    LTEXT           "Receive:",IDC_STATIC,13,39,30,8
+    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,85,19,
+                    11,14
+    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,85,36,
+                    11,14
+    GROUPBOX        "DNS",IDC_STATIC,105,7,149,48
+    LTEXT           "Reverse Lookup:",IDC_STATIC,109,22,56,8
+    COMBOBOX        IDC_COMBO1,170,20,74,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "DNS Service Lookup",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,110,35,83,10
-    GROUPBOX        "SOCKS Proxy Server",IDC_STATIC,5,55,225,45
-    LTEXT           "IP/Hostname:",IDC_STATIC,10,70,45,8
-    EDITTEXT        IDC_EDIT3,60,65,115,14,ES_AUTOHSCROLL
-    LTEXT           "Port:",IDC_STATIC,180,70,16,8
-    EDITTEXT        IDC_EDIT4,200,65,25,14,ES_AUTOHSCROLL
-    LTEXT           "Username:",IDC_STATIC,10,85,35,8
-    EDITTEXT        IDC_EDIT5,60,80,60,14,ES_AUTOHSCROLL
-    LTEXT           "Password:",IDC_STATIC,130,85,34,8
-    EDITTEXT        IDC_EDIT6,165,80,60,14,ES_AUTOHSCROLL
-    GROUPBOX        "HTTP Proxy Server",IDC_STATIC,5,105,225,45
-    LTEXT           "IP/Hostname:",IDC_STATIC,10,121,45,8
-    EDITTEXT        IDC_EDIT7,60,116,115,14,ES_AUTOHSCROLL
-    LTEXT           "Port:",IDC_STATIC,180,121,16,8
-    EDITTEXT        IDC_EDIT8,200,116,25,14,ES_AUTOHSCROLL
-    LTEXT           "Username:",IDC_STATIC,10,135,35,8
-    EDITTEXT        IDC_EDIT9,60,130,60,14,ES_AUTOHSCROLL
-    LTEXT           "Password:",IDC_STATIC,130,135,34,8
-    EDITTEXT        IDC_EDIT10,165,130,60,14,ES_AUTOHSCROLL
+                    WS_TABSTOP,112,38,83,10
+    GROUPBOX        "SOCKS Proxy Server",IDC_STATIC,5,60,247,50
+    LTEXT           "IP/Hostname:",IDC_STATIC,13,74,45,8
+    EDITTEXT        IDC_EDIT3,59,71,132,14,ES_AUTOHSCROLL
+    LTEXT           "Port:",IDC_STATIC,201,74,16,8
+    EDITTEXT        IDC_EDIT4,219,71,25,14,ES_AUTOHSCROLL
+    LTEXT           "Username:",IDC_STATIC,13,91,35,8
+    EDITTEXT        IDC_EDIT5,59,88,80,14,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,146,91,34,8
+    EDITTEXT        IDC_EDIT6,184,88,60,14,ES_AUTOHSCROLL
+    GROUPBOX        "HTTP Proxy Server",IDC_STATIC,7,115,249,52
+    LTEXT           "IP/Hostname:",IDC_STATIC,13,130,45,8
+    EDITTEXT        IDC_EDIT7,62,127,129,14,ES_AUTOHSCROLL
+    LTEXT           "Port:",IDC_STATIC,201,130,16,8
+    EDITTEXT        IDC_EDIT8,219,127,25,14,ES_AUTOHSCROLL
+    LTEXT           "Username:",IDC_STATIC,13,147,35,8
+    EDITTEXT        IDC_EDIT9,62,144,60,14,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,146,147,34,8
+    EDITTEXT        IDC_EDIT10,184,144,60,14,ES_AUTOHSCROLL
 END
 
-IDD_TLS DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_TLS DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "TLS"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Cipher List:",IDC_STATIC,5,10,36,8
-    EDITTEXT        IDC_EDIT1,90,5,120,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT2,90,20,120,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BUTTON1,215,20,15,14
-    LTEXT           "Client Certificate File:",IDC_STATIC,5,25,66,8
-    LTEXT           "Client Private Key File:",IDC_STATIC,5,40,71,8
-    EDITTEXT        IDC_EDIT3,90,35,120,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT4,90,50,120,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT5,90,65,120,14,ES_AUTOHSCROLL
-    LTEXT           "CA Verification File:",IDC_STATIC,5,55,62,8
-    LTEXT           "CA Verficiation Directory:",IDC_STATIC,5,70,79,8
-    EDITTEXT        IDC_EDIT6,90,80,120,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT8,90,95,120,14,ES_AUTOHSCROLL
-    LTEXT           "CRL File:",IDC_STATIC,5,85,30,8
-    LTEXT           "CRL Directory:",IDC_STATIC,5,100,47,8
-    LTEXT           "Cerficiate Verify Mode:",IDC_STATIC,5,115,72,8
-    COMBOBOX        IDC_COMBO1,90,110,120,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Cipher List:",IDC_STATIC,7,8,36,8
+    EDITTEXT        IDC_EDIT1,90,5,144,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,90,21,144,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BUTTON1,239,21,15,14
+    LTEXT           "Client Certificate File:",IDC_STATIC,7,24,66,8
+    LTEXT           "Client Private Key File:",IDC_STATIC,7,40,71,8
+    EDITTEXT        IDC_EDIT3,90,37,144,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT4,90,53,144,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT5,90,69,144,14,ES_AUTOHSCROLL
+    LTEXT           "CA Verification File:",IDC_STATIC,7,56,62,8
+    LTEXT           "CA Verficiation Directory:",IDC_STATIC,7,72,79,8
+    EDITTEXT        IDC_EDIT6,90,84,144,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT8,90,100,144,14,ES_AUTOHSCROLL
+    LTEXT           "CRL File:",IDC_STATIC,7,87,30,8
+    LTEXT           "CRL Directory:",IDC_STATIC,7,103,47,8
+    LTEXT           "Cerficiate Verify Mode:",IDC_STATIC,7,118,72,8
+    COMBOBOX        IDC_COMBO1,90,116,144,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Verbose Mode",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,90,125,62,10
+                    WS_TABSTOP,90,131,62,10
     CONTROL         "Debug Mode",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,90,135,57,10
-    PUSHBUTTON      "...",IDC_BUTTON2,215,35,15,14
-    PUSHBUTTON      "...",IDC_BUTTON3,215,50,15,14
-    PUSHBUTTON      "...",IDC_BUTTON4,215,80,15,14
+                    WS_TABSTOP,90,141,57,10
+    PUSHBUTTON      "...",IDC_BUTTON2,239,37,15,14
+    PUSHBUTTON      "...",IDC_BUTTON3,239,53,15,14
+    PUSHBUTTON      "...",IDC_BUTTON4,239,84,15,14
 END
 
-IDD_KEYBOARD DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_KEYBOARD DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Keyboard"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Backspace Key Sends",IDC_STATIC,5,5,90,45
+    GROUPBOX        "Backspace Key Sends",IDC_STATIC,7,7,98,48
     CONTROL         "Delete (Rubout)",IDC_KBD_BS_DELETE,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,10,15,66,10
+                    BS_AUTORADIOBUTTON | WS_GROUP,16,20,65,10
     CONTROL         "Ctrl-H (Backspace)",IDC_KBD_BS_BS,"Button",
-                    BS_AUTORADIOBUTTON,10,25,75,10
+                    BS_AUTORADIOBUTTON,16,30,75,10
     CONTROL         "EM (Ctrl-Y)",IDC_KBD_BS_CTRL_Y,"Button",
-                    BS_AUTORADIOBUTTON,10,35,49,10
-    GROUPBOX        "Enter Key Sends",IDC_STATIC,100,5,75,45
+                    BS_AUTORADIOBUTTON,16,40,49,10
+    GROUPBOX        "Enter Key Sends",IDC_STATIC,110,5,80,50
     CONTROL         "Carriage return",IDC_KBD_RET_CR,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,105,15,62,10
-    CONTROL         "CR-LF",IDC_KBD_RET_CRLF,"Button",BS_AUTORADIOBUTTON,105,
-                    25,36,10
+                    BS_AUTORADIOBUTTON | WS_GROUP,119,20,62,10
+    CONTROL         "CR-LF",IDC_KBD_RET_CRLF,"Button",BS_AUTORADIOBUTTON,119,
+                    30,36,10
     CONTROL         "Line Feed",IDC_KBD_RET_LF,"Button",BS_AUTORADIOBUTTON,
-                    105,35,47,10
-    GROUPBOX        "Mouse",IDC_STATIC,180,5,48,45
+                    119,40,47,10
+    GROUPBOX        "Mouse",IDC_STATIC,195,5,59,50
     CONTROL         "On",IDC_MOU_ON,"Button",BS_AUTORADIOBUTTON | WS_GROUP,
-                    185,15,25,10
-    CONTROL         "Off",IDC_MOU_OFF,"Button",BS_AUTORADIOBUTTON,185,30,25,
+                    205,20,25,10
+    CONTROL         "Off",IDC_MOU_OFF,"Button",BS_AUTORADIOBUTTON,205,35,25,
                     10
-    GROUPBOX        "Additional Key Mapping",IDC_STATIC,5,55,220,95
-    LTEXT           "Read from file:",IDC_STATIC,26,72,46,8
-    EDITTEXT        IDC_KBD_KM_FILENAME,75,67,125,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_KBD_KM_FILE_BROWSE,205,67,15,14
-    LTEXT           "Additional mapping:",IDC_STATIC,10,87,62,8
-    EDITTEXT        IDC_KBD_KM_KEYMAP,75,84,145,61,ES_AUTOHSCROLL
+    GROUPBOX        "Additional Key Mapping",IDC_STATIC,5,60,249,107
+    LTEXT           "Read from file:",IDC_STATIC,10,73,46,8
+    EDITTEXT        IDC_KBD_KM_FILENAME,75,70,155,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_KBD_KM_FILE_BROWSE,233,70,15,14
+    LTEXT           "Additional mapping:",IDC_STATIC,10,93,62,8
+    EDITTEXT        IDC_KBD_KM_KEYMAP,75,90,175,75,ES_AUTOHSCROLL
 END
 
-IDD_LOGIN DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_LOGIN DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Login"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Username:",IDC_STATIC,8,6,35,8
-    EDITTEXT        IDC_LOGIN_USER,68,4,160,14,ES_AUTOHSCROLL
-    LTEXT           "Password:",IDC_STATIC,8,22,34,8
-    EDITTEXT        IDC_LOGIN_PASS,68,20,160,14,ES_AUTOHSCROLL
-    LTEXT           "Password Prompt:",IDC_STATIC,8,58,58,8
-    EDITTEXT        IDC_LOGIN_PROMPT,68,56,160,14,ES_AUTOHSCROLL
-    GROUPBOX        "Login Script",IDC_STATIC,7,72,221,77
+    LTEXT           "Username:",IDC_STATIC,7,7,35,8
+    EDITTEXT        IDC_LOGIN_USER,65,4,189,14,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,7,23,34,8
+    EDITTEXT        IDC_LOGIN_PASS,65,20,189,14,ES_AUTOHSCROLL
+    LTEXT           "Password Prompt:",IDC_STATIC,7,59,58,8
+    EDITTEXT        IDC_LOGIN_PROMPT,65,56,189,14,ES_AUTOHSCROLL
+    GROUPBOX        "Login Script",IDC_STATIC,7,75,247,92
     CONTROL         "Run file:",IDC_LOGIN_RUN_FILE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,16,88,42,10
-    EDITTEXT        IDC_LOGIN_FILENAME,60,84,140,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_LOGIN_BROWSE,204,84,15,14
-    LTEXT           "Script:",IDC_STATIC,16,102,21,8
-    EDITTEXT        IDC_LOGIN_SCRIPT,60,100,160,44,ES_MULTILINE | 
+                    WS_TABSTOP,14,87,42,10
+    EDITTEXT        IDC_LOGIN_FILENAME,60,85,165,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_LOGIN_BROWSE,230,85,15,14
+    LTEXT           "Script:",IDC_STATIC,14,103,21,8
+    EDITTEXT        IDC_LOGIN_SCRIPT,60,100,185,60,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | 
                     WS_VSCROLL
-    LTEXT           "Warning: password is saved to disk and passed to C-Kermit unencrypted. For best security, leave blank.",
-                    IDC_STATIC,64,36,168,16
+    LTEXT           "Warning: password is saved to disk and passed to Kermit 95 without encryption. For best security, leave blank.",
+                    IDC_STATIC,65,37,189,16
 END
 
-IDD_PRINTER DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_PRINTER DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Printer"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Printer Type:",IDC_STATIC,5,10,41,8
+    LTEXT           "Printer Type:",IDC_STATIC,7,9,41,8
     CONTROL         "Output as PostScript",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,125,70,81,10
-    LTEXT           "Width/Height:",IDC_STATIC,125,85,46,8
-    EDITTEXT        IDC_EDIT1,175,80,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT2,210,80,20,14,ES_AUTOHSCROLL
-    LTEXT           "Character Set:",IDC_STATIC,5,70,46,8
-    COMBOBOX        IDC_COMBO1,5,80,115,30,CBS_DROPDOWN | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,173,8,81,10
+    LTEXT           "Width/Height:",IDC_STATIC,145,105,46,8
+    EDITTEXT        IDC_EDIT1,195,102,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,234,102,20,14,ES_AUTOHSCROLL
+    LTEXT           "Character Set:",IDC_STATIC,7,94,46,8
+    COMBOBOX        IDC_COMBO1,7,103,128,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Connection",IDC_STATIC,5,100,225,45
-    LTEXT           "Speed:",IDC_STATIC,15,115,24,8
-    COMBOBOX        IDC_COMBO2,60,110,48,30,CBS_DROPDOWN | CBS_SORT | 
+    GROUPBOX        "Connection",IDC_STATIC,7,122,247,45
+    LTEXT           "Speed:",IDC_STATIC,14,134,24,8
+    COMBOBOX        IDC_COMBO2,51,132,84,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Flow Control:",IDC_STATIC,115,115,42,8
-    COMBOBOX        IDC_COMBO3,160,110,48,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Flow Control:",IDC_STATIC,151,134,42,8
+    COMBOBOX        IDC_COMBO3,199,132,48,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Parity:",IDC_STATIC,15,130,20,8
-    COMBOBOX        IDC_COMBO4,60,125,48,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Parity:",IDC_STATIC,14,149,20,8
+    COMBOBOX        IDC_COMBO4,51,147,84,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Bidirectional (2-way) printing",IDC_CHECK2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,115,130,103,10
-    COMBOBOX        IDC_COMBO5,50,5,70,75,CBS_DROPDOWN | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,143,148,103,10
+    COMBOBOX        IDC_COMBO5,51,7,84,75,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Queue:",IDC_STATIC,125,10,24,8
-    COMBOBOX        IDC_COMBO6,150,5,80,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Queue:",IDC_STATIC,7,25,24,8
+    COMBOBOX        IDC_COMBO6,51,23,203,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Header file:",IDC_STATIC,5,40,37,8
-    EDITTEXT        IDC_EDIT3,50,35,160,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BUTTON1,215,35,15,14
-    LTEXT           " x",IDC_STATIC,199,83,8,8
+    LTEXT           "Header file:",IDC_STATIC,7,59,37,8
+    EDITTEXT        IDC_EDIT3,51,56,183,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BUTTON1,239,56,15,14
+    LTEXT           " x",IDC_STATIC,219,105,8,8
     CONTROL         "End-of-job string:",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,55,69,10
-    EDITTEXT        IDC_EDIT4,75,50,155,14,ES_AUTOHSCROLL
-    LTEXT           "Command:",IDC_STATIC,5,25,34,8
-    EDITTEXT        IDC_EDIT5,50,20,180,14,ES_AUTOHSCROLL
+                    WS_TABSTOP,7,75,69,10
+    EDITTEXT        IDC_EDIT4,77,73,177,14,ES_AUTOHSCROLL
+    LTEXT           "Command:",IDC_STATIC,7,42,34,8
+    EDITTEXT        IDC_EDIT5,51,39,203,14,ES_AUTOHSCROLL
 END
 
-IDD_TERM_COLORS DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_TERM_COLORS DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Terminal Colors"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Foreground:",IDC_STATIC,75,5,39,8
-    LTEXT           "Background:",IDC_STATIC,148,4,42,8
-    LTEXT           "Terminal screen:",IDC_STATIC,5,18,53,8
-    COMBOBOX        IDC_COL_TERM_FG,76,16,68,134,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Foreground:",IDC_STATIC,76,7,39,8
+    LTEXT           "Background:",IDC_STATIC,172,7,42,8
+    LTEXT           "Terminal screen:",IDC_STATIC,7,18,53,8
+    COMBOBOX        IDC_COL_TERM_FG,76,16,90,134,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_TERM_BG,148,15,68,134,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_COL_TERM_BG,172,16,82,134,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Command screen:",IDC_STATIC,5,34,58,8
-    COMBOBOX        IDC_COL_COMM_FG,76,32,68,119,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Command screen:",IDC_STATIC,7,34,58,8
+    COMBOBOX        IDC_COL_COMM_FG,76,32,90,119,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_COMM_BG,148,31,68,119,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_COL_COMM_BG,172,32,82,119,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Status line:",IDC_STATIC,5,50,36,8
-    COMBOBOX        IDC_COL_STAT_FG,76,48,68,104,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Status line:",IDC_STATIC,7,50,36,8
+    COMBOBOX        IDC_COL_STAT_FG,76,48,90,104,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_STAT_BG,148,47,68,104,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_COL_STAT_BG,172,48,82,104,CBS_DROPDOWNLIST | 
                     CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Mouse selection:",IDC_STATIC,5,66,54,8
-    COMBOBOX        IDC_COL_MOU_FG,76,64,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Selection:",IDC_STATIC,7,66,54,8
+    COMBOBOX        IDC_COL_MOU_FG,76,64,90,88,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_MOU_BG,148,63,68,88,CBS_DROPDOWNLIST | CBS_SORT | 
+    COMBOBOX        IDC_COL_MOU_BG,172,64,82,88,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Popup help screen:",IDC_STATIC,5,82,62,8
-    COMBOBOX        IDC_COL_POP_FG,76,80,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Popup help screen:",IDC_STATIC,7,81,62,8
+    COMBOBOX        IDC_COL_POP_FG,76,80,90,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_POP_BG,148,79,68,75,CBS_DROPDOWNLIST | CBS_SORT | 
+    COMBOBOX        IDC_COL_POP_BG,172,79,82,75,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Underline simulation:",IDC_STATIC,5,98,66,8
-    COMBOBOX        IDC_COL_UL_FG,76,96,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "Underline simulation:",IDC_STATIC,7,98,66,8
+    COMBOBOX        IDC_COL_UL_FG,76,96,90,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COL_UL_BG,148,95,68,59,CBS_DROPDOWNLIST | CBS_SORT | 
+    COMBOBOX        IDC_COL_UL_BG,172,96,82,59,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "To change the color codes assigned to these colors, see the Colors tab. Custom color codes are only available when using GUI Kermit 95.",
-                    IDC_STATIC,8,112,220,18
-    PUSHBUTTON      "Defaults",IDC_TERM_COLOR_DEFAULTS,178,135,50,14
+                    IDC_STATIC,7,113,247,18
+    PUSHBUTTON      "Defaults",IDC_TERM_COLOR_DEFAULTS,204,154,50,14
 END
 
-IDD_GUI DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_GUI DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "GUI"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Open  in the GUI Kermit 95 instead of the Console version",
-                    IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,5,194,
+    CONTROL         "Open in the GUI Kermit 95 instead of the Console version",
+                    IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,194,
                     10
-    GROUPBOX        "Font",IDC_STATIC,5,20,225,40
-    LTEXT           "Facename:",IDC_STATIC,10,30,36,8
-    COMBOBOX        IDC_COMBO1,10,40,180,30,CBS_DROPDOWN | CBS_SORT | 
+    GROUPBOX        "Font",IDC_STATIC,7,20,247,40
+    LTEXT           "Facename:",IDC_STATIC,15,30,36,8
+    COMBOBOX        IDC_COMBO1,15,40,195,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Size:",IDC_STATIC,195,30,16,8
-    EDITTEXT        IDC_EDIT1,195,40,20,14,ES_AUTOHSCROLL
-    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,215,40,
+    LTEXT           "Size:",IDC_STATIC,215,30,16,8
+    EDITTEXT        IDC_EDIT1,215,40,20,14,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,235,40,
                     11,14
     GROUPBOX        "GUI Features",IDC_STATIC,175,65,55,55
     CONTROL         "Menubar",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | 
@@ -488,7 +488,7 @@ BEGIN
     COMBOBOX        IDC_COMBO3,86,115,80,30,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Initial State:",IDC_STATIC,85,105,38,8
-    GROUPBOX        "Startup Position",IDC_STATIC,5,65,70,80
+    GROUPBOX        "Startup Position",IDC_STATIC,7,65,70,80
     CONTROL         "Default",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,11,75,
                     39,10
     CONTROL         "Custom:",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,11,90,
@@ -505,120 +505,120 @@ BEGIN
                     WS_TABSTOP,180,105,39,10
 END
 
-IDD_GUI_COLORS DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_GUI_COLORS DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Colors"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "Black",IDC_STATIC,5,20,19,8
-    EDITTEXT        IDC_EDIT1,40,15,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT10,60,15,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT11,80,15,20,14,ES_AUTOHSCROLL
-    LTEXT           "Red",IDC_STATIC,40,5,14,8
-    LTEXT           "Green",IDC_STATIC,60,5,20,8
-    LTEXT           "Blue",IDC_STATIC,85,5,15,8
-    LTEXT           "Blue",IDC_STATIC,5,35,15,8
-    LTEXT           "Green",IDC_STATIC,5,50,20,8
-    LTEXT           "Cyan",IDC_STATIC,5,65,17,8
-    LTEXT           "Red",IDC_STATIC,5,80,14,8
-    LTEXT           "Magenta",IDC_STATIC,5,95,29,8
-    LTEXT           "Brown",IDC_STATIC,5,110,21,8
-    EDITTEXT        IDC_EDIT2,40,30,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT12,60,30,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT13,80,30,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT14,40,45,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT15,60,45,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT16,80,45,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT17,40,60,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT18,60,60,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT19,80,60,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT20,40,75,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT21,60,75,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT22,80,75,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT23,40,90,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT24,60,90,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT25,80,90,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT26,40,105,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT27,60,105,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT28,80,105,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT29,40,120,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT30,60,120,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT31,80,120,20,14,ES_AUTOHSCROLL
-    LTEXT           "Light Gray",IDC_STATIC,5,125,33,8
-    EDITTEXT        IDC_EDIT32,170,15,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT33,190,15,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT34,210,15,20,14,ES_AUTOHSCROLL
-    LTEXT           "Red",IDC_STATIC,170,5,14,8
-    LTEXT           "Green",IDC_STATIC,190,5,20,8
-    LTEXT           "Blue",IDC_STATIC,215,5,15,8
-    EDITTEXT        IDC_EDIT35,170,30,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT36,190,30,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT37,210,30,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT38,170,45,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT39,190,45,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT40,210,45,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT41,170,60,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT42,190,60,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT43,210,60,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT44,170,75,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT45,190,75,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT46,210,75,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT47,170,90,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT48,190,90,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT49,210,90,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT50,170,105,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT51,190,105,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT52,210,105,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT53,170,120,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT54,190,120,20,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT55,210,120,20,14,ES_AUTOHSCROLL
-    LTEXT           "Dark Gray",IDC_STATIC,120,20,33,8
-    LTEXT           "Light Blue",IDC_STATIC,120,35,32,8
-    LTEXT           "Light Green",IDC_STATIC,120,50,38,8
-    LTEXT           "Light Cyan",IDC_STATIC,120,65,34,8
-    LTEXT           "Light Red",IDC_STATIC,120,80,32,8
-    LTEXT           "Light Magenta",IDC_STATIC,120,95,46,8
-    LTEXT           "Yellow",IDC_STATIC,120,110,22,8
-    LTEXT           "White",IDC_STATIC,120,125,20,8
+    LTEXT           "Black",IDC_STATIC,7,19,19,8
+    EDITTEXT        IDC_EDIT1,44,16,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT10,66,16,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT11,88,16,20,14,ES_AUTOHSCROLL
+    LTEXT           "Red",IDC_STATIC,44,7,14,8
+    LTEXT           "Green",IDC_STATIC,66,7,20,8
+    LTEXT           "Blue",IDC_STATIC,88,7,15,8
+    LTEXT           "Blue",IDC_STATIC,7,35,15,8
+    LTEXT           "Green",IDC_STATIC,7,51,20,8
+    LTEXT           "Cyan",IDC_STATIC,7,67,17,8
+    LTEXT           "Red",IDC_STATIC,7,83,14,8
+    LTEXT           "Magenta",IDC_STATIC,7,99,29,8
+    LTEXT           "Brown",IDC_STATIC,7,115,21,8
+    EDITTEXT        IDC_EDIT2,44,32,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT12,66,32,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT13,88,32,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT14,44,48,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT15,66,48,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT16,88,48,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT17,44,64,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT18,66,64,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT19,88,64,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT20,44,80,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT21,66,80,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT22,88,80,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT23,44,96,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT24,66,96,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT25,88,96,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT26,44,112,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT27,66,112,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT28,88,112,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT29,44,128,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT30,66,128,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT31,88,128,20,14,ES_AUTOHSCROLL
+    LTEXT           "Light Gray",IDC_STATIC,7,131,35,8
+    EDITTEXT        IDC_EDIT32,188,16,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT33,211,16,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT34,234,16,20,14,ES_AUTOHSCROLL
+    LTEXT           "Red",IDC_STATIC,188,7,14,8
+    LTEXT           "Green",IDC_STATIC,211,7,20,8
+    LTEXT           "Blue",IDC_STATIC,233,7,15,8
+    EDITTEXT        IDC_EDIT35,188,32,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT36,211,32,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT37,234,32,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT38,188,48,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT39,211,48,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT40,234,48,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT41,188,64,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT42,211,64,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT43,234,64,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT44,188,80,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT45,211,80,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT46,234,80,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT47,188,96,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT48,211,96,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT49,234,96,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT50,188,112,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT51,211,112,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT52,234,112,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT53,188,128,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT54,211,128,20,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT55,234,128,20,14,ES_AUTOHSCROLL
+    LTEXT           "Dark Gray",IDC_STATIC,138,19,33,8
+    LTEXT           "Light Blue",IDC_STATIC,138,35,32,8
+    LTEXT           "Light Green",IDC_STATIC,138,51,38,8
+    LTEXT           "Light Cyan",IDC_STATIC,138,67,34,8
+    LTEXT           "Light Red",IDC_STATIC,138,83,32,8
+    LTEXT           "Light Magenta",IDC_STATIC,138,99,46,8
+    LTEXT           "Yellow",IDC_STATIC,138,115,22,8
+    LTEXT           "White",IDC_STATIC,138,131,20,8
     LTEXT           "Color codes can only be customised in the GUI version of Kermit 95",
-                    IDC_STATIC,10,140,220,8
+                    IDC_STATIC,7,147,220,8
 END
 
-IDD_LOGGING DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_LOGGING DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Logging"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "Connections",IDC_CHECK11,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,5,55,10
+                    WS_TABSTOP,7,7,55,10
     CONTROL         "Debugging Info",IDC_CHECK12,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,35,65,10
+                    WS_TABSTOP,7,37,65,10
     CONTROL         "Kermit File Xfer Packets",IDC_CHECK13,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,5,70,91,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,91,10
     CONTROL         "Session Input",IDC_CHECK14,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,5,100,59,10
+                    WS_TABSTOP,7,97,59,10
     CONTROL         "File Xfer Transactions",IDC_CHECK15,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,5,130,84,10
-    EDITTEXT        IDC_EDIT6,105,5,105,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT7,105,35,105,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT8,105,65,105,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT9,105,95,105,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT10,105,125,105,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BUTTON4,215,5,15,14
-    PUSHBUTTON      "...",IDC_BUTTON5,215,35,15,14
-    PUSHBUTTON      "...",IDC_BUTTON6,215,65,15,14
-    PUSHBUTTON      "...",IDC_BUTTON7,215,95,15,14
-    PUSHBUTTON      "...",IDC_BUTTON8,215,125,15,14
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,127,84,10
+    EDITTEXT        IDC_EDIT6,105,5,127,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT7,105,35,127,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT8,105,65,127,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT9,105,95,127,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT10,105,125,127,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BUTTON4,238,5,15,14
+    PUSHBUTTON      "...",IDC_BUTTON5,238,35,15,14
+    PUSHBUTTON      "...",IDC_BUTTON6,238,65,15,14
+    PUSHBUTTON      "...",IDC_BUTTON7,238,95,15,14
+    PUSHBUTTON      "...",IDC_BUTTON8,238,125,15,14
     CONTROL         "Append",IDC_CHECK16,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190,20,41,10
+                    WS_TABSTOP,212,20,41,10
     CONTROL         "Append",IDC_CHECK17,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190,50,41,10
+                    WS_TABSTOP,212,50,41,10
     CONTROL         "Append",IDC_CHECK18,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190,80,41,10
+                    WS_TABSTOP,212,80,41,10
     CONTROL         "Append",IDC_CHECK19,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190,110,41,10
+                    WS_TABSTOP,212,110,41,10
     CONTROL         "Append",IDC_CHECK20,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190,140,41,10
+                    WS_TABSTOP,212,140,41,10
     CONTROL         "Brief Format",IDC_CHECK21,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,105,140,53,10
     CONTROL         "Text",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,75,110,30,
@@ -701,35 +701,35 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,5,75,89,10
 END
 
-IDD_CONNECTION_BASIC DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_CONNECTION_BASIC DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Connection"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Hostname or IP Address:",IDC_STATIC,7,7,81,8
-    EDITTEXT        IDC_CONN_HOSTNAME,8,16,220,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_CONN_HOSTNAME,7,16,247,14,ES_AUTOHSCROLL
     LTEXT           "TCP/IP port:",IDC_STATIC,8,36,41,8
     EDITTEXT        IDC_CONN_PORT,8,44,40,14,ES_AUTOHSCROLL
     CONTROL         "Exit on disconnect",IDC_CONN_EXIT_ON_DISCON,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,64,74,10
 END
 
-IDD_CONNECTION_CMD DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_CONNECTION_CMD DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Connection"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Hostname or DLL name or Command or Node or service name:",
                     IDC_CONN_PARAM_A_LBL,7,7,198,8
-    EDITTEXT        IDC_CONN_PARAM_A,8,16,220,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_CONN_PARAM_A,7,16,247,14,ES_AUTOHSCROLL
     LTEXT           "Pipe name or DLL parameters",IDC_CONN_PARAM_B_LBL,8,36,
                     94,8
-    EDITTEXT        IDC_CONN_PARAM_B,8,44,220,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_CONN_PARAM_B,7,44,247,14,ES_AUTOHSCROLL
     CONTROL         "Exit on disconnect",IDC_CONN_EXIT_ON_DISCON,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,64,74,10
 END
 
-IDD_CONNECTION_SERIAL DIALOG DISCARDABLE  0, 0, 235, 156
+IDD_CONNECTION_SERIAL DIALOG DISCARDABLE  0, 0, 262, 175
 STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Connection"
 FONT 8, "MS Sans Serif"
@@ -797,123 +797,251 @@ BEGIN
     IDD_GENERAL, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 255
+        VERTGUIDE, 16
         VERTGUIDE, 55
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 14
+        HORZGUIDE, 31
+        HORZGUIDE, 44
+        HORZGUIDE, 52
+        HORZGUIDE, 132
+        HORZGUIDE, 152
     END
 
     IDD_CONNECTION_IP, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
     END
 
     IDD_TERMINAL, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        LEFTMARGIN, 8
+        RIGHTMARGIN, 254
+        VERTGUIDE, 196
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 153
     END
 
     IDD_TRANSFER, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 70
+        VERTGUIDE, 136
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 13
+        HORZGUIDE, 29
+        HORZGUIDE, 45
+        HORZGUIDE, 61
+        HORZGUIDE, 76
+        HORZGUIDE, 92
+        HORZGUIDE, 107
     END
 
     IDD_TELNET, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 15
+        VERTGUIDE, 74
+        VERTGUIDE, 135
+        VERTGUIDE, 147
+        VERTGUIDE, 194
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 23
+        HORZGUIDE, 39
+        HORZGUIDE, 55
+        HORZGUIDE, 71
+        HORZGUIDE, 87
+        HORZGUIDE, 103
+        HORZGUIDE, 118
+        HORZGUIDE, 148
+        HORZGUIDE, 162
     END
 
     IDD_FTP, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 14
+        VERTGUIDE, 130
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 18
+        HORZGUIDE, 86
+        HORZGUIDE, 106
     END
 
     IDD_TCPIP, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 13
+        VERTGUIDE, 47
+        VERTGUIDE, 59
+        VERTGUIDE, 112
+        VERTGUIDE, 146
+        VERTGUIDE, 191
+        VERTGUIDE, 201
+        VERTGUIDE, 244
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 26
+        HORZGUIDE, 43
+        HORZGUIDE, 78
+        HORZGUIDE, 95
+        HORZGUIDE, 134
+        HORZGUIDE, 151
     END
 
     IDD_TLS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 90
+        VERTGUIDE, 234
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 12
+        HORZGUIDE, 28
+        HORZGUIDE, 44
+        HORZGUIDE, 60
+        HORZGUIDE, 76
+        HORZGUIDE, 91
+        HORZGUIDE, 107
+        HORZGUIDE, 122
+        HORZGUIDE, 136
+        HORZGUIDE, 146
     END
 
     IDD_KEYBOARD, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 10
+        VERTGUIDE, 16
         VERTGUIDE, 72
+        VERTGUIDE, 81
+        VERTGUIDE, 119
+        VERTGUIDE, 205
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 25
+        HORZGUIDE, 35
+        HORZGUIDE, 45
+        HORZGUIDE, 77
+        HORZGUIDE, 97
     END
 
     IDD_LOGIN, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 14
+        VERTGUIDE, 65
+        VERTGUIDE, 245
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 11
+        HORZGUIDE, 27
+        HORZGUIDE, 63
+        HORZGUIDE, 92
+        HORZGUIDE, 107
     END
 
     IDD_PRINTER, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 14
+        VERTGUIDE, 51
+        VERTGUIDE, 135
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 13
+        HORZGUIDE, 29
+        HORZGUIDE, 46
+        HORZGUIDE, 63
+        HORZGUIDE, 80
+        HORZGUIDE, 109
+        HORZGUIDE, 138
+        HORZGUIDE, 153
     END
 
     IDD_TERM_COLORS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 76
+        VERTGUIDE, 166
+        VERTGUIDE, 172
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 168
+        HORZGUIDE, 13
+        HORZGUIDE, 22
+        HORZGUIDE, 38
+        HORZGUIDE, 54
+        HORZGUIDE, 70
+        HORZGUIDE, 85
+        HORZGUIDE, 102
     END
 
     IDD_GUI, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
     END
 
     IDD_GUI_COLORS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 44
+        VERTGUIDE, 66
+        VERTGUIDE, 88
+        VERTGUIDE, 138
+        VERTGUIDE, 188
+        VERTGUIDE, 211
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 9
+        HORZGUIDE, 23
+        HORZGUIDE, 39
+        HORZGUIDE, 55
+        HORZGUIDE, 71
+        HORZGUIDE, 87
+        HORZGUIDE, 103
+        HORZGUIDE, 119
+        HORZGUIDE, 135
+        HORZGUIDE, 147
     END
 
     IDD_LOGGING, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
+        VERTGUIDE, 105
+        VERTGUIDE, 232
+        VERTGUIDE, 245
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
+        HORZGUIDE, 12
+        HORZGUIDE, 42
+        HORZGUIDE, 72
+        HORZGUIDE, 102
+        HORZGUIDE, 115
+        HORZGUIDE, 132
+        HORZGUIDE, 145
     END
 
     IDD_ABOUT, DIALOG
@@ -943,25 +1071,25 @@ BEGIN
     IDD_CONNECTION_BASIC, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
     END
 
     IDD_CONNECTION_CMD, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
     END
 
     IDD_CONNECTION_SERIAL, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 228
+        RIGHTMARGIN, 254
         TOPMARGIN, 7
-        BOTTOMMARGIN, 149
+        BOTTOMMARGIN, 167
     END
 END
 #endif    // APSTUDIO_INVOKED

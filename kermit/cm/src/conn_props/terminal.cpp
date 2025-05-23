@@ -416,14 +416,14 @@ BOOL CALLBACK TerminalPageDlgProc(
 			const Term::TermInfo *terminals = Term::getTerminalInfos();
 
 			for (i = 0; terminals[i].type != Term::TT_INVALID; i++) {
-				SendMessage(hwndTermType, 
+				int idx = SendMessage(hwndTermType, 
 					LB_ADDSTRING, 
 					(WPARAM) 0, 
-                    (LPARAM) terminals[i].keyword); 
+                    (LPARAM) terminals[i].name); 
 
                 SendMessage(hwndTermType, 
 					LB_SETITEMDATA, 
-					(WPARAM) i, 
+					(WPARAM) idx, 
 					(LPARAM) terminals[i].type); 
 			}
 
@@ -438,7 +438,7 @@ BOOL CALLBACK TerminalPageDlgProc(
 			SendMessage(hwndTermType, 
 				LB_SELECTSTRING, 
 				(WPARAM)0,
-				(LPARAM)Term::getTermKeyword(profile->terminalType()));
+				(LPARAM)Term::getTermName(profile->terminalType()));
 
 			setFieldText(hwndDlg, IDC_TERM_WIDTH, CMString::number(profile->screenWidth()));
 

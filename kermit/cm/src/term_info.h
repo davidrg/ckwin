@@ -112,6 +112,8 @@ namespace Term {
 
 	LPCTSTR getTermKeyword(TermType type);
 
+	LPCTSTR getTermName(TermType type);
+
 	TermSettings getTermSettings(TermType type);
 
 	ColorInfo getColorInfo(Color color);

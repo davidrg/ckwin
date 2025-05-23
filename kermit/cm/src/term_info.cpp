@@ -3,30 +3,30 @@
 namespace Term {
 
 static const TermInfo terminals[] = {
-	{	TT_ADM3A,	TEXT("adm3a"),		TEXT("LSI ADM-3A"),					0	},
-	{	TT_ADM5,	TEXT("adm5"),		TEXT("LSI ADM-5"),					0	},
+	{	TT_ADM3A,	TEXT("adm3a"),		TEXT("Lear Siegler ADM-3A"),		0	},
+	{	TT_ADM5,	TEXT("adm5"),		TEXT("Lear Siegler ADM-5"),			0	},
 	{	TT_AIXTERM,	TEXT("aixterm"),	TEXT("IBM AIXterm"),				0	},
-	{	TT_AAA,		TEXT("annarbor"),	TEXT("AnnArbor"),					0	},
+	{	TT_AAA,		TEXT("annarbor"),	TEXT("Ann Arbor Ambassador"),		0	},
 	{	TT_ANSI,	TEXT("ansi-bbs"),	TEXT("ANSI.SYS (BBS)"),				0	},
 	{	TT_AT386,	TEXT("at386"),		TEXT("Unixware ANSI"),				0	},
 	{	TT_AVATAR,	TEXT("avatar/0+"),	TEXT("AVATAR/0+"),					0	},
 	{	TT_BA80,	TEXT("ba80"),		TEXT("Nixdorf BA80"),				0	},
 	{	TT_BEOS,	TEXT("beterm"),		TEXT("BeOS Terminal"),				0	},
-	{	TT_DG200,	TEXT("dg200"),		TEXT("Data General DASHER 200"),	0	},
-	{	TT_DG210,	TEXT("dg210"),		TEXT("Data General DASHER 210"),	0	},
-	{	TT_DG217,	TEXT("dg217"),		TEXT("Data General DASHER 217"),	0	},
+	{	TT_DG200,	TEXT("dg200"),		TEXT("Data General DASHER D200"),	0	},
+	{	TT_DG210,	TEXT("dg210"),		TEXT("Data General DASHER D210"),	0	},
+	{	TT_DG217,	TEXT("dg217"),		TEXT("Data General DASHER D217"),	0	},
 	{	TT_H19,		TEXT("heath19"),	TEXT("Heath-19"),					0	},
 	{	TT_HFT,		TEXT("hft"),		TEXT("IBM High Function Terminal"),	0	},
 	{	TT_HP2621,	TEXT("hp2621a"),	TEXT("HP 2621A"),					0	},
 	{	TT_HPTERM,	TEXT("hpterm"),		TEXT("HP TERM"),					0	},
 	{	TT_HZL1500,	TEXT("hz1500"),		TEXT("Hazeltine 1500"),				0	},
-	{	TT_IBM31,	TEXT("ibm3151"),	TEXT("IBM 3101-xx,3161"),			0	},
+	{	TT_IBM31,	TEXT("ibm3151"),	TEXT("IBM 3101-xx/3161"),			0	},
 	{   TT_K95,     TEXT("k95"),        TEXT("Kermit 95"),                  0   },
-	{	TT_LINUX,	TEXT("linux"),		TEXT("Linux"),						0	},
+	{	TT_LINUX,	TEXT("linux"),		TEXT("Linux Console"),				0	},
 	{	TT_QANSI,	TEXT("qansi"),		TEXT("QNX ANSI"),					0	},
 	{	TT_QNX,		TEXT("qnx"),		TEXT("QNX Console"),				0	},
 	{	TT_SCOANSI,	TEXT("scoansi"),	TEXT("SCO ANSI"),					0	},
-	{	TT_97801,	TEXT("sni-97801"),	TEXT("SNI 97801"),					0	},
+	{	TT_97801,	TEXT("sni-97801"),	TEXT("Siemens-Nixdorf 97801"),		0	},
 	{	TT_SUN,		TEXT("sun"),		TEXT("SUN Console"),				0	},
 	//{	TT_TEK40,	TEXT("tek4014"),	TEXT(""),							0	},
 	{	TT_NONE,	TEXT("tty"),		TEXT("Teletypewriter"),				0	},
@@ -152,6 +152,17 @@ LPCTSTR getTermKeyword(TermType type) {
 	for (int i = 0; terminals[i].type != TT_INVALID; i++) {
 		if (terminals[i].type == type) {
 			return terminals[i].keyword;
+		}
+	}
+
+	return NULL;
+}
+
+
+LPCTSTR getTermName(TermType type) {
+	for (int i = 0; terminals[i].type != TT_INVALID; i++) {
+		if (terminals[i].type == type) {
+			return terminals[i].name;
 		}
 	}
 
