@@ -3381,7 +3381,7 @@ ck_des_new_random_key(Block B)
     rc = libdes_random_key(B);
     return(rc);
 #endif /* CRYPT_DLL */
-#endif /* LIBDES */
+#else /* LIBDES */
     if ( authentication_version == AUTHTYPE_KERBEROS_V5 ) {
         if ( p_des_new_random_key == NULL )
             return(-1);
@@ -3399,6 +3399,7 @@ ck_des_new_random_key(Block B)
         }
     }
     return(-1);
+#endif /* LIBDES */
 }
 void
 ck_des_set_random_generator_seed(Block B)
