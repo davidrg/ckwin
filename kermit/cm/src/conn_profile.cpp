@@ -442,7 +442,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 	}
 #endif
 
-	_sntprintf(buf, BUFFERSIZE, TEXT("; C-Kermit for Windows Connection Manager Generated Script - Version %d.%d.%d %s"),
+	_sntprintf(buf, BUFFERSIZE, TEXT("; Kermit 95 Connection Manager Generated Script - Version %d.%d.%d %s"),
              ver.major, ver.minor, ver.revision,
 #ifdef UNICODE
 			 TEXT("UNICODE")

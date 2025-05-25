@@ -13,8 +13,16 @@ public:
 	~JsonConfigFile();
 	virtual int version() const;
 	
+	//////// TEMPLATES //////// 
 	virtual ConnectionProfile* defaultTemplate();
 
+	/*virtual int templateCount() const;
+	virtual ConnectionProfile* getTemplateByID(int id);
+	virtual ConnectionProfile* createTemplate(
+		int templateId, CMString name);*/
+
+
+	//////// CONNECTION PROFILES ////////
 	virtual int profileCount() const;
 	
 	virtual ConnectionProfile* firstProfile();
@@ -25,11 +33,13 @@ public:
 		int templateId, CMString name,
 		ConnectionProfile::ConnectionType conType);
 
-	/*virtual int templateCount() const;
-	virtual ConnectionProfile* getTemplateByID(int id);
-	virtual ConnectionProfile* createTemplate(
-		int templateId, CMString name);*/
+	//////// COLOR THEMES ////////
+	virtual int colorThemeCount() const;
+	virtual ColorTheme* firstColorTheme();
+	virtual ColorTheme* getColorThemeById(int id);
+	virtual ColorTheme* createColorTheme();
 
+	//////// STORAGE ////////
 	virtual BOOL loaded() const;
 
 	virtual BOOL commitChanges();
@@ -37,8 +47,8 @@ public:
 private:
 	cJSON *jsonFile;
 
-	int _version, _profileCount, _templateCount;
-	int _nextProfileId;
+	int _version, _profileCount, _templateCount, _colorThemeCount;
+	int _nextProfileId, _nextColorThemeId;
 	BOOL _loaded;
 
 	CMString _filename;

@@ -167,6 +167,10 @@ SOURCE=..\conn_props\general.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\gui_colors.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\keyboard.cpp
 # End Source File
 # Begin Source File
@@ -207,6 +211,14 @@ SOURCE=..\cJSON\cJSON_Utils.h
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=..\color_theme.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\config_file.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\config_file.h
 # End Source File
 # Begin Source File
@@ -216,6 +228,14 @@ SOURCE=..\conn_profile.cpp
 # Begin Source File
 
 SOURCE=..\conn_profile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\json_color_theme.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\json_color_theme.h
 # End Source File
 # Begin Source File
 
@@ -233,6 +253,18 @@ SOURCE=..\json_profile.cpp
 
 SOURCE=..\json_profile.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\json_template.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\json_util.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\json_util.h
+# End Source File
 # End Group
 # Begin Source File
 
@@ -245,6 +277,17 @@ SOURCE=..\charset.h
 # Begin Source File
 
 SOURCE=..\cm.rc
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -265,10 +308,6 @@ SOURCE=..\conn_list.h
 # Begin Source File
 
 SOURCE=..\ipc_messages.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\json_template.h
 # End Source File
 # Begin Source File
 

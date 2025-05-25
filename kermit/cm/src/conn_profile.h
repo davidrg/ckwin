@@ -760,6 +760,9 @@ struct Date
 	virtual void setDialogsEnabled(BOOL enabled) = 0;
 
 	// ----- GUI Colors -----
+	virtual int colorThemeId() const = 0;
+	virtual void setColorThemeId(int themeId) = 0;
+
 	virtual RGB8BitColor rgbBlack() = 0;
 	virtual void setRgbBlack(RGB8BitColor c) = 0;
 

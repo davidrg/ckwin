@@ -1830,13 +1830,30 @@ void JsonProfile::setDialogsEnabled(BOOL enabled) {
 }
 
 // ----- GUI Colors -----
+int JsonProfile::colorThemeId() const { 
+	return getInteger("gui", "color_theme_id", _config->defaultThemeId());
+}
+
+void JsonProfile::setColorThemeId(int themeId) { 
+	setInteger("gui", "color_theme_id", themeId);
+}
+
 RGB8BitColor JsonProfile::rgbBlack() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_black", "r", 0), 
-			getInteger("gui", "color_black", "g", 0), 
-			getInteger("gui", "color_black", "b", 0) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbBlack();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_black", "r", 0), 
+				getInteger("gui", "color_black", "g", 0), 
+				getInteger("gui", "color_black", "b", 0) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbBlack(RGB8BitColor c) {
@@ -1846,12 +1863,21 @@ void JsonProfile::setRgbBlack(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbBlue() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_blue", "r", 0), 
-			getInteger("gui", "color_blue", "g", 0), 
-			getInteger("gui", "color_blue", "b", 128) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbBlue();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_blue", "r", 0), 
+				getInteger("gui", "color_blue", "g", 0), 
+				getInteger("gui", "color_blue", "b", 128) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbBlue(RGB8BitColor c) {
@@ -1861,12 +1887,21 @@ void JsonProfile::setRgbBlue(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbGreen() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_green", "r", 0), 
-			getInteger("gui", "color_green", "g", 128), 
-			getInteger("gui", "color_green", "b", 0) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbGreen();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_green", "r", 0), 
+				getInteger("gui", "color_green", "g", 128), 
+				getInteger("gui", "color_green", "b", 0) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbGreen(RGB8BitColor c) {
@@ -1876,12 +1911,21 @@ void JsonProfile::setRgbGreen(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbCyan() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_cyan", "r", 0), 
-			getInteger("gui", "color_cyan", "g", 128), 
-			getInteger("gui", "color_cyan", "b", 128) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbCyan();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_cyan", "r", 0), 
+				getInteger("gui", "color_cyan", "g", 128), 
+				getInteger("gui", "color_cyan", "b", 128) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbCyan(RGB8BitColor c) {
@@ -1891,12 +1935,21 @@ void JsonProfile::setRgbCyan(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbRed() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_red", "r", 127), 
-			getInteger("gui", "color_red", "g", 0), 
-			getInteger("gui", "color_red", "b", 0) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbRed();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_red", "r", 127), 
+				getInteger("gui", "color_red", "g", 0), 
+				getInteger("gui", "color_red", "b", 0) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbRed(RGB8BitColor c) {
@@ -1906,12 +1959,21 @@ void JsonProfile::setRgbRed(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbMagenta() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_magenta", "r", 128), 
-			getInteger("gui", "color_magenta", "g", 0), 
-			getInteger("gui", "color_magenta", "b", 128) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbMagenta();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_magenta", "r", 128), 
+				getInteger("gui", "color_magenta", "g", 0), 
+				getInteger("gui", "color_magenta", "b", 128) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbMagenta(RGB8BitColor c) {
@@ -1921,12 +1983,21 @@ void JsonProfile::setRgbMagenta(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbBrown() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_brown", "r", 128), 
-			getInteger("gui", "color_brown", "g", 0), 
-			getInteger("gui", "color_brown", "b", 128) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbBrown();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_brown", "r", 128), 
+				getInteger("gui", "color_brown", "g", 0), 
+				getInteger("gui", "color_brown", "b", 128) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbBrown(RGB8BitColor c) {
@@ -1936,12 +2007,21 @@ void JsonProfile::setRgbBrown(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbLightGray() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_lgray", "r", 192), 
-			getInteger("gui", "color_lgray", "g", 192), 
-			getInteger("gui", "color_lgray", "b", 192) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbLightGray();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_lgray", "r", 192), 
+				getInteger("gui", "color_lgray", "g", 192), 
+				getInteger("gui", "color_lgray", "b", 192) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbLightGray(RGB8BitColor c) {
@@ -1951,12 +2031,21 @@ void JsonProfile::setRgbLightGray(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbDarkGray() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_dgray", "r", 128), 
-			getInteger("gui", "color_dgray", "g", 128), 
-			getInteger("gui", "color_dgray", "b", 128) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbDarkGray();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_dgray", "r", 128), 
+				getInteger("gui", "color_dgray", "g", 128), 
+				getInteger("gui", "color_dgray", "b", 128) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbDarkGray(RGB8BitColor c) {
@@ -1966,12 +2055,21 @@ void JsonProfile::setRgbDarkGray(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbLightBlue() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_lblue", "r", 0), 
-			getInteger("gui", "color_lblue", "g", 0), 
-			getInteger("gui", "color_lblue", "b", 255) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbLightBlue();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_lblue", "r", 0), 
+				getInteger("gui", "color_lblue", "g", 0), 
+				getInteger("gui", "color_lblue", "b", 255) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbLightBlue(RGB8BitColor c) {
@@ -1981,12 +2079,21 @@ void JsonProfile::setRgbLightBlue(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbLightGreen() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_lgreen", "r", 0), 
-			getInteger("gui", "color_lgreen", "g", 255), 
-			getInteger("gui", "color_lgreen", "b", 0) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbLightGreen();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_lgreen", "r", 0), 
+				getInteger("gui", "color_lgreen", "g", 255), 
+				getInteger("gui", "color_lgreen", "b", 0) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbLightGreen(RGB8BitColor c) {
@@ -1996,12 +2103,21 @@ void JsonProfile::setRgbLightGreen(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbLightCyan() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_lcyan", "r", 0), 
-			getInteger("gui", "color_lcyan", "g", 255), 
-			getInteger("gui", "color_lcyan", "b", 255) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbLightCyan();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_lcyan", "r", 0), 
+				getInteger("gui", "color_lcyan", "g", 255), 
+				getInteger("gui", "color_lcyan", "b", 255) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbLightCyan(RGB8BitColor c) {
@@ -2011,12 +2127,21 @@ void JsonProfile::setRgbLightCyan(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbLightRed() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_lred", "r", 255), 
-			getInteger("gui", "color_lred", "g", 0), 
-			getInteger("gui", "color_lred", "b", 0) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbLightRed();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_lred", "r", 255), 
+				getInteger("gui", "color_lred", "g", 0), 
+				getInteger("gui", "color_lred", "b", 0) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbLightRed(RGB8BitColor c) {
@@ -2026,12 +2151,21 @@ void JsonProfile::setRgbLightRed(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbLightMagenta() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_lmagenta", "r", 255), 
-			getInteger("gui", "color_lmagenta", "g", 0), 
-			getInteger("gui", "color_lmagenta", "b", 255) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbLightMagenta();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_lmagenta", "r", 255), 
+				getInteger("gui", "color_lmagenta", "g", 0), 
+				getInteger("gui", "color_lmagenta", "b", 255) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbLightMagenta(RGB8BitColor c) {
@@ -2041,12 +2175,21 @@ void JsonProfile::setRgbLightMagenta(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbYellow() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_yellow", "r", 255), 
-			getInteger("gui", "color_yellow", "g", 255), 
-			getInteger("gui", "color_yellow", "b", 0) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbYellow();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_yellow", "r", 255), 
+				getInteger("gui", "color_yellow", "g", 255), 
+				getInteger("gui", "color_yellow", "b", 0) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbYellow(RGB8BitColor c) {
@@ -2056,12 +2199,21 @@ void JsonProfile::setRgbYellow(RGB8BitColor c) {
 }
 
 RGB8BitColor JsonProfile::rgbWhite() { 
-	RGB8BitColor x = { 
-			getInteger("gui", "color_white", "r", 255), 
-			getInteger("gui", "color_white", "g", 255), 
-			getInteger("gui", "color_white", "b", 255) 
-	}; 
-	return x;
+	RGB8BitColor result;
+	int themeId = colorThemeId();
+	if (themeId != 0) {
+		ColorTheme *theme = _config->getColorThemeById(themeId);
+		result = theme->rgbWhite();
+		delete theme;
+	} else {
+		RGB8BitColor x = { 
+				getInteger("gui", "color_white", "r", 255), 
+				getInteger("gui", "color_white", "g", 255), 
+				getInteger("gui", "color_white", "b", 255) 
+		}; 
+		result = x;
+	}
+	return result;
 }
 
 void JsonProfile::setRgbWhite(RGB8BitColor c) {

@@ -102,6 +102,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 
 	if (conType == ConnectionProfile::CT_SSH) {
 		// TODO: SSH page
+		// TODO: Maybe some subset of the telnet page? Some telnet envars are used for SSH.
 	}
 
 	if (conType == ConnectionProfile::CT_IP) {
@@ -126,7 +127,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 
 	// ----- GUI -----
 	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		NULL, NULL, NULL); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS,NULL, NULL, NULL); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS, (DLGPROC)GuiColorPageDlgProc, GuiColorPageProc, (LPARAM)profile); page++; // *
 
 	// ----- Advanced stuff -----
 	SetupPropertyPage(hInstance, &psp[page], IDD_LOGIN,	(DLGPROC)LoginPageDlgProc, LoginPageProc, (LPARAM)profile); page++; // *
@@ -134,6 +135,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 
 	if (conType == ConnectionProfile::CT_IP
 		|| conType == ConnectionProfile::CT_FTP) {
+		// TODO: Enable IDD_TCPIP for SSH when those settings can affect SSH
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TCPIP,	NULL, NULL, NULL); page++;
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TLS,		NULL, NULL, NULL); page++;
 		// TODO: Kerberos
@@ -248,4 +250,10 @@ int getFieldInt(HWND hwndDlg, int id) {
 
 	GetWindowText(hwnd, (LPTSTR)buf, 20);
 	return _ttoi((LPCTSTR)buf);
+}
+
+void setFieldInt(HWND hwndDlg, int id, int value) {
+	HWND hwnd = GetDlgItem(hwndDlg, id);
+	CMString valueStr = CMString::number(value);
+	SetWindowText(hwnd, valueStr.data());
 }

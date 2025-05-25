@@ -7,16 +7,15 @@
 #include <stdio.h>
 
 #include "json_profile.h"
+#include "json_color_theme.h"
 
 
-JsonConfigFile::JsonConfigFile(HWND parent, LPTSTR filename) {
-
+JsonConfigFile::JsonConfigFile(HWND parent, LPTSTR filename) : ConfigFile() {
 
 	_version = 0;
 	_profileCount = 0;
 	_loaded = FALSE;
 	_filename = CMString(filename);
-
 
 	// Check the file actually exists before we go trying to
 	// open it.
@@ -70,18 +69,33 @@ JsonConfigFile::JsonConfigFile(HWND parent, LPTSTR filename) {
 
 		jsonFile = cJSON_CreateObject();
 
-		setInteger(jsonFile, "version", 1);
-		setInteger(jsonFile, "next_profile_id", 1);
+		_version = 1;
+		_nextProfileId = 1;
+		_nextColorThemeId = 1;
+		_profileCount = 0;
+		_templateCount = 0;
+
+		setInteger(jsonFile, "version", _version);
+		setInteger(jsonFile, "next_profile_id", _nextProfileId);
+		setInteger(jsonFile, "next_color_theme_id", _nextColorThemeId);
 	}
 	
 
 	if (jsonFile != NULL) {	
 		const cJSON *profiles = NULL;
 		const cJSON *profile = NULL;
+		const cJSON *colorThemes = NULL;
+		const cJSON *theme = NULL;
 
 		// Get file version and next object IDs
 		_version = getInteger(jsonFile, "version", 1);
 		_nextProfileId = getInteger(jsonFile, "next_profile_id", 1);
+		_nextColorThemeId = getInteger(jsonFile, "next_color_theme_id", 1);
+
+		// Counts of things
+		_profileCount = 0;
+		_templateCount = 0;
+		_colorThemeCount = 0;
 
 		// Count the profiles
 		profiles = cJSON_GetObjectItemCaseSensitive(jsonFile, "profiles");
@@ -89,9 +103,23 @@ JsonConfigFile::JsonConfigFile(HWND parent, LPTSTR filename) {
 			_profileCount++;
 		}
 
+		// .. the templates
 		profiles = cJSON_GetObjectItemCaseSensitive(jsonFile, "templates");
 		cJSON_ArrayForEach(profile, profiles) {
 			_templateCount++;
+		}
+
+		// .. the themes
+		colorThemes = cJSON_GetObjectItemCaseSensitive(jsonFile, "color_themes");
+		cJSON_ArrayForEach(theme, colorThemes) {
+			_colorThemeCount++;
+		}
+
+		// TODO: Create default templates
+
+		// Create default themes if required
+		if (_colorThemeCount == 0) {
+			createDefaultThemes();
 		}
 
 		_loaded = TRUE;
@@ -179,6 +207,10 @@ BOOL JsonConfigFile::commitChanges() {
 
 	CloseHandle(hFile);
 	free(data);
+
+	// TODO: for maximum safety, perhaps we should rename the old file
+	//       and delete it once the move has completed, rather than 
+	//		 move-overwriting it 
 
 	// Now move the temp file into place
 	if (!MoveFileEx(tempFileName, 
@@ -277,6 +309,76 @@ ConnectionProfile *JsonConfigFile::createProfile(
 	return profile;
 }
 
+
+// -----------------------------------------------------------
+
+int JsonConfigFile::colorThemeCount() const {
+	return _colorThemeCount;
+}
+
+ColorTheme *JsonConfigFile::firstColorTheme() {
+	cJSON *themes = NULL;
+	cJSON *theme = NULL;
+
+	themes = cJSON_GetObjectItemCaseSensitive(jsonFile, "color_themes");
+
+	if (themes == NULL) return NULL;
+
+	theme = cJSON_GetArrayItem(themes, 0);
+
+	if (theme == NULL) return NULL;
+
+	return new JsonColorTheme(this, theme);
+}
+
+ColorTheme *JsonConfigFile::getColorThemeById(int id) {
+	cJSON *themes = NULL;
+	cJSON *theme = NULL;
+
+	themes = cJSON_GetObjectItemCaseSensitive(jsonFile, "color_themes");
+
+	if (themes == NULL) return NULL;
+
+	theme = cJSON_GetObjectItemCaseSensitive(themes, CMString::number(id).toUtf8(NULL));
+
+	if (theme == NULL) return NULL;
+
+	return new JsonColorTheme(this, theme);
+
+}
+
+ColorTheme *JsonConfigFile::createColorTheme() {
+	cJSON *themes = cJSON_GetObjectItemCaseSensitive(jsonFile, "color_themes");
+
+	if (themes == NULL) {
+		themes = cJSON_CreateObject();
+		
+		if (themes == NULL) return NULL;
+
+		cJSON_AddItemToObject(jsonFile, "color_themes", themes);
+	}
+
+	cJSON *themeJson = cJSON_CreateObject();
+	JsonColorTheme *theme = NULL;
+
+	if (themeJson != NULL) {
+		theme = new JsonColorTheme(this, themeJson);
+		theme->setId(_nextColorThemeId);
+
+		_nextColorThemeId++;
+		setInteger(jsonFile, "next_color_theme_id", _nextColorThemeId);
+
+		char* idString = CMString::number(theme->id()).toUtf8(NULL);
+
+		cJSON_AddItemToObject(themes, 
+			idString, 
+			themeJson);
+
+		free(idString);
+	}
+
+	return theme;
+}
 
 // -----------------------------------------------------------
 

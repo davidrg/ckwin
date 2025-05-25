@@ -56,12 +56,12 @@ public:
 
 	//CMString &operator+=(const CMString &other);
 
-private:
-	CMStringData *_data;
-
 	//friend CMString operator+(CMString lhs, const CMString &rhs);
 	friend BOOL operator==(const CMString &lhs, const CMString &rhs);
 	friend BOOL operator!=(const CMString &lhs, const CMString &rhs);
+
+private:
+	CMStringData *_data;
 };
 
 #endif /* CMSTRING_H */
