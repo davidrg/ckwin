@@ -163,6 +163,7 @@
 #define IDC_EDIT42                      1054
 #define IDC_BUTTON6                     1054
 #define IDC_L_CYAN_G                    1054
+#define IDC_STARTUP_X_SPIN              1054
 #define IDC_EDIT11                      1055
 #define IDC_BUTTON7                     1055
 #define IDC_BLACK_B                     1055
@@ -296,6 +297,21 @@
 #define IDC_BLACK_R                     1156
 #define IDC_BLACK_G                     1157
 #define IDC_BLUE_R                      1158
+#define IDC_USE_GUI                     1159
+#define IDC_FONT                        1160
+#define IDC_STARTUP_DEFAULT             1163
+#define IDC_STARTUP_CUSTOM              1164
+#define IDC_STARTUP_X                   1165
+#define IDC_STARTUP_Y                   1166
+#define IDC_STARTUP_Y_SPIN              1167
+#define IDC_RESIZE_MODE                 1168
+#define IDC_INITIAL_STATE               1169
+#define IDC_ENABLE_MENUBAR              1170
+#define IDC_ENABLE_TOOLBAR              1171
+#define IDC_ENABLE_STATUSBAR            1172
+#define IDC_ENABLE_DIALOGS              1173
+#define IDC_REMOVE_BARS                 1174
+#define IDC_FONT_SIZE                   1175
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -334,7 +350,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40037
-#define _APS_NEXT_CONTROL_VALUE         1159
+#define _APS_NEXT_CONTROL_VALUE         1176
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

@@ -235,18 +235,18 @@ DWORD ConnectionProfile::connect(HWND parent) {
 				tempFileName, parent, KermitInstance::nextInstanceId(), 
 				startupAtX(), startupAtY(),
 				font, fontSize(),
-				menubarEnabled() ? TEXT("") : TEXT(" --nomenubar"),
-				toolbarEnabled() ? TEXT("") : TEXT(" --notoolbar"),
-				statusbarEnabled() ? TEXT("") : TEXT(" --nostatusbar")
+				(removeBars() && !menubarEnabled())   ? TEXT(" --nomenubar")   : TEXT(""),
+				(removeBars() && !toolbarEnabled())   ? TEXT(" --notoolbar")   : TEXT(""),
+				(removeBars() && !statusbarEnabled()) ? TEXT(" --nostatusbar") : TEXT("")
 				);
 		} else {
 			_sntprintf(command, BUFFERSIZE, 
 				TEXT("k95g.exe \"%s\" -W %d %d --facename:%s --fontsize:%d%s%s%s"), 
 				tempFileName, parent, KermitInstance::nextInstanceId(), 
 				font, fontSize(),
-				menubarEnabled() ? TEXT("") : TEXT(" --nomenubar"),
-				toolbarEnabled() ? TEXT("") : TEXT(" --notoolbar"),
-				statusbarEnabled() ? TEXT("") : TEXT(" --nostatusbar")
+				(removeBars() && !menubarEnabled())   ? TEXT(" --nomenubar")   : TEXT(""),
+				(removeBars() && !toolbarEnabled())   ? TEXT(" --notoolbar")   : TEXT(""),
+				(removeBars() && !statusbarEnabled()) ? TEXT(" --nostatusbar") : TEXT("")
 				);
 		}
 
@@ -527,6 +527,18 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 			windowStartupMode() == WSM_MINIMIZED ? TEXT("minimize") :
 			TEXT("restore"));
 		OutLine(buf);
+
+		if (!removeBars()) {
+			if (!menubarEnabled()) {
+				OutLine(TEXT("  set gui menubar visible off"));
+			}
+			if (!toolbarEnabled()) {
+				OutLine(TEXT("  set gui toolbar visible off"));
+			}
+			if (!statusbarEnabled()) {
+				OutLine(TEXT("  set gui statusbar off"));
+			}
+		}
 
 		_sntprintf(buf, BUFFERSIZE, TEXT("  set gui dialogs %s"), 
 			dialogsEnabled() ? TEXT("on") : TEXT("off"));

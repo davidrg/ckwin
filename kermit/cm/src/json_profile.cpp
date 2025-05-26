@@ -347,7 +347,7 @@ void JsonProfile::setString(LPCSTR grandParentName, LPCSTR parentName, LPCSTR na
 	if (parent == NULL) {
 		// parent doesn't exist - create it
 		parent = cJSON_CreateObject();
-		cJSON_AddItemToObject(_json, parentName, parent);
+		cJSON_AddItemToObject(grandparent, parentName, parent);
 	}
 
 	setString(parent, name, value);
@@ -454,7 +454,7 @@ void JsonProfile::setBool(LPCSTR grandParentName, LPCSTR parentName, LPCSTR name
 	_cached_##grandparent##_##parent##_##name )
 
 #define setStringCached3(grandparent, parent, name, value)	_cached_##grandparent##_##parent##_##name = value ; \
-	setString( #parent, #name , value );
+	setString( #grandparent, #parent, #name , value );
 
 // -----------------------------------------------------------
 // -----------------------------------------------------------
@@ -1749,12 +1749,12 @@ void JsonProfile::setFontName(CMString font) {
 	setStringCached3(gui, font, name, font);
 }
 
-int JsonProfile::fontSize() { 
-	return getInteger("gui", "font", "size", 12);
+CMString JsonProfile::fontSize() { 
+	return getStringCached3(gui, font, size, CMString(TEXT("10")));
 }
 
-void JsonProfile::setFontSize(int size) {
-	setInteger("gui", "font", "size", size);
+void JsonProfile::setFontSize(CMString size) {
+	setStringCached3(gui, font, size, size);
 }
 
 BOOL JsonProfile::customStartupPosition() { 
@@ -1786,7 +1786,7 @@ BOOL JsonProfile::resizeChangesDimensions() {
 }
 
 void JsonProfile::setResizeChangesDimensions(BOOL enabled) {
-	setBool("gui", "reisze_dimensions", enabled);
+	setBool("gui", "resize_dimensions", enabled);
 }
 
 ConnectionProfile::WindowStartupMode JsonProfile::windowStartupMode() { 
@@ -1819,6 +1819,14 @@ BOOL JsonProfile::statusbarEnabled() {
 
 void JsonProfile::setStatusbarEnabled(BOOL enabled) {
 	setBool("gui", "statusbar", enabled);
+}
+
+BOOL JsonProfile::removeBars() { 
+	return getBool("gui", "remove_bars", FALSE); 
+}
+
+void JsonProfile::setRemoveBars(BOOL enabled) {
+	setBool("gui", "remove_bars", enabled);
 }
 
 BOOL JsonProfile::dialogsEnabled() { 

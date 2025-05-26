@@ -323,7 +323,7 @@ void JsonUtilMixin::setString(LPCSTR grandParentName, LPCSTR parentName, LPCSTR 
 	if (parent == NULL) {
 		// parent doesn't exist - create it
 		parent = cJSON_CreateObject();
-		cJSON_AddItemToObject(_json, parentName, parent);
+		cJSON_AddItemToObject(grandparent, parentName, parent);
 	}
 
 	setString(parent, name, value);

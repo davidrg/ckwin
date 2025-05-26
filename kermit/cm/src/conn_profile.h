@@ -729,8 +729,8 @@ struct Date
 	virtual CMString fontName() = 0;
 	virtual void setFontName(CMString font) = 0;
 
-	virtual int fontSize() = 0;
-	virtual void setFontSize(int size) = 0;
+	virtual CMString fontSize() = 0;
+	virtual void setFontSize(CMString size) = 0;
 
 	virtual BOOL customStartupPosition() = 0;
 	virtual void setCustomStartupPosition(BOOL enabled) = 0;
@@ -755,6 +755,9 @@ struct Date
 
 	virtual BOOL statusbarEnabled() = 0;
 	virtual void setStatusbarEnabled(BOOL enabled) = 0;
+
+	virtual BOOL removeBars() = 0;
+	virtual void setRemoveBars(BOOL enabled) = 0;
 
 	virtual BOOL dialogsEnabled() = 0;
 	virtual void setDialogsEnabled(BOOL enabled) = 0;

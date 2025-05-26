@@ -55,13 +55,14 @@ public:
 	// todo: void strip();
 
 	//CMString &operator+=(const CMString &other);
-
-	//friend CMString operator+(CMString lhs, const CMString &rhs);
+	friend CMString operator+(CMString lhs, const CMString &rhs);
 	friend BOOL operator==(const CMString &lhs, const CMString &rhs);
 	friend BOOL operator!=(const CMString &lhs, const CMString &rhs);
 
 private:
+	CMString(LPCTSTR str, int allocateLength);
 	CMStringData *_data;
-};
 
+	void InitFromTSTR(LPCTSTR str, int allocateLength);
+};
 #endif /* CMSTRING_H */

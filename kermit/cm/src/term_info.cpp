@@ -50,7 +50,7 @@ static const TermInfo terminals[] = {
 	{	TT_WY160,	TEXT("wy160"),		TEXT("Wyse WY-160/120/350"),		0	},
 	{	TT_WY30,	TEXT("wy30"),		TEXT("Wyse WY-30/30+/35"),			0	},
 	{	TT_WY370,	TEXT("wy370"),		TEXT("Wyse WY-370"),				0	},
-	{	TT_WY50,	TEXT("wy50"),		TEXT("Wyse WY-35"),					0	},
+	{	TT_WY50,	TEXT("wy50"),		TEXT("Wyse WY-50"),					0	},
 	{	TT_WY60,	TEXT("wy60"),		TEXT("Wyse WY-60"),					0	},
 	//{	TT_XTERM,	TEXT("xterm"),		TEXT("Xterm"),						0	},
 	{	TT_INVALID,	0,					0,									0	},

@@ -126,7 +126,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	NULL, NULL, NULL); page++;
 
 	// ----- GUI -----
-	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		NULL, NULL, NULL); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		 (DLGPROC)GuiPageDlgProc, GuiPageProc, (LPARAM)profile); page++; // *
 	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS, (DLGPROC)GuiColorPageDlgProc, GuiColorPageProc, (LPARAM)profile); page++; // *
 
 	// ----- Advanced stuff -----

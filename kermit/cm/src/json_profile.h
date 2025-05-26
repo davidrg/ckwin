@@ -522,8 +522,8 @@ struct Date
 	virtual CMString fontName();
 	virtual void setFontName(CMString font);
 
-	virtual int fontSize();
-	virtual void setFontSize(int size);
+	virtual CMString fontSize();
+	virtual void setFontSize(CMString size);
 
 	virtual BOOL customStartupPosition();
 	virtual void setCustomStartupPosition(BOOL enabled);
@@ -548,6 +548,9 @@ struct Date
 
 	virtual BOOL statusbarEnabled();
 	virtual void setStatusbarEnabled(BOOL enabled);
+
+	virtual BOOL removeBars();
+	virtual void setRemoveBars(BOOL enabled);
 
 	virtual BOOL dialogsEnabled();
 	virtual void setDialogsEnabled(BOOL enabled);
@@ -747,6 +750,7 @@ protected:
 	CMString _cached_printer_end_string;
 	CMString _cached_printer_cset;
 	CMString _cached_gui_font_name;
+	CMString _cached_gui_font_size;
 	CMString _cached_log_connections_file;
 	CMString _cached_log_debug_file;
 	CMString _cached_log_transfers_file;

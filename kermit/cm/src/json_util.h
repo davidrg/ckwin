@@ -111,7 +111,7 @@ protected:
 	_cached_##grandparent##_##parent##_##name )
 
 #define setStringCached3(grandparent, parent, name, value)	_cached_##grandparent##_##parent##_##name = value ; \
-	setString( #parent, #name , value );
+	setString( #grandparent, #parent, #name , value );
 
 
 #endif

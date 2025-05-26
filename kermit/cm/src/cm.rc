@@ -464,45 +464,48 @@ CAPTION "GUI"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "Open in the GUI Kermit 95 instead of the Console version",
-                    IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,194,
-                    10
+                    IDC_USE_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,
+                    194,10
     GROUPBOX        "Font",IDC_STATIC,7,20,247,40
     LTEXT           "Facename:",IDC_STATIC,15,30,36,8
-    COMBOBOX        IDC_COMBO1,15,40,195,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_FONT,15,40,195,127,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Size:",IDC_STATIC,215,30,16,8
-    EDITTEXT        IDC_EDIT1,215,40,20,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,235,40,
+    LTEXT           "Size:",IDC_STATIC,213,30,16,8
+    GROUPBOX        "Startup Position",IDC_STATIC,7,65,78,65
+    CONTROL         "Default",IDC_STARTUP_DEFAULT,"Button",
+                    BS_AUTORADIOBUTTON,15,75,39,10
+    CONTROL         "Custom:",IDC_STARTUP_CUSTOM,"Button",BS_AUTORADIOBUTTON,
+                    15,85,41,10
+    LTEXT           "X-pos:",IDC_STATIC,15,99,21,8
+    EDITTEXT        IDC_STARTUP_X,40,96,39,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin3",IDC_STARTUP_X_SPIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,75,96,
                     11,14
-    GROUPBOX        "GUI Features",IDC_STATIC,175,65,55,55
-    CONTROL         "Menubar",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,180,75,44,10
-    CONTROL         "Toolbar",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,180,85,40,10
-    CONTROL         "Statusbar",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,180,95,46,10
-    GROUPBOX        "Window",IDC_STATIC,80,65,90,70
-    LTEXT           "Resize Mode:",IDC_STATIC,85,80,44,8
-    COMBOBOX        IDC_COMBO2,86,90,80,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Y-Pos:",IDC_STATIC,15,116,22,8
+    EDITTEXT        IDC_STARTUP_Y,40,113,39,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin2",IDC_STARTUP_Y_SPIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,75,113,
+                    11,14
+    GROUPBOX        "Window",IDC_STATIC,88,65,90,65
+    LTEXT           "Resize Mode:",IDC_STATIC,94,76,44,8
+    COMBOBOX        IDC_RESIZE_MODE,94,88,80,71,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO3,86,115,80,30,CBS_DROPDOWN | CBS_SORT | 
+    LTEXT           "Initial State:",IDC_STATIC,94,103,38,8
+    COMBOBOX        IDC_INITIAL_STATE,94,113,80,54,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "GUI Features",IDC_STATIC,181,65,73,65
+    CONTROL         "Show Menubar",IDC_ENABLE_MENUBAR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,186,75,63,10
+    CONTROL         "Show Toolbar",IDC_ENABLE_TOOLBAR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,186,85,60,10
+    CONTROL         "Show Statusbar",IDC_ENABLE_STATUSBAR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,186,95,66,10
+    CONTROL         "Remove bars",IDC_REMOVE_BARS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,186,105,58,10
+    CONTROL         "Use GUI Dialogs",IDC_ENABLE_DIALOGS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,186,115,65,10
+    COMBOBOX        IDC_FONT_SIZE,213,40,33,127,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Initial State:",IDC_STATIC,85,105,38,8
-    GROUPBOX        "Startup Position",IDC_STATIC,7,65,70,80
-    CONTROL         "Default",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,11,75,
-                    39,10
-    CONTROL         "Custom:",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,11,90,
-                    41,10
-    EDITTEXT        IDC_EDIT2,40,125,20,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_EDIT3,40,105,20,14,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,60,125,
-                    11,14
-    CONTROL         "Spin3",IDC_SPIN3,"msctls_updown32",UDS_ARROWKEYS,60,105,
-                    11,14
-    LTEXT           "X-pos:",IDC_STATIC,15,110,21,8
-    LTEXT           "Y-Pos:",IDC_STATIC,15,130,22,8
-    CONTROL         "Dialogs",IDC_CHECK6,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,180,105,39,10
 END
 
 IDD_GUI_COLORS DIALOG DISCARDABLE  0, 0, 262, 175
@@ -999,8 +1002,22 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 254
+        VERTGUIDE, 15
+        VERTGUIDE, 40
+        VERTGUIDE, 60
+        VERTGUIDE, 79
+        VERTGUIDE, 94
+        VERTGUIDE, 186
+        VERTGUIDE, 213
+        VERTGUIDE, 246
         TOPMARGIN, 7
         BOTTOMMARGIN, 167
+        HORZGUIDE, 38
+        HORZGUIDE, 47
+        HORZGUIDE, 80
+        HORZGUIDE, 90
+        HORZGUIDE, 103
+        HORZGUIDE, 120
     END
 
     IDD_GUI_COLORS, DIALOG
@@ -1187,10 +1204,10 @@ END
 
 IDD_GUI DLGINIT
 BEGIN
-    IDC_COMBO2, 0x403, 18, 0
+    IDC_RESIZE_MODE, 0x403, 18, 0
 0x6843, 0x6e61, 0x6567, 0x4420, 0x6d69, 0x6e65, 0x6973, 0x6e6f, 0x0073, 
 
-    IDC_COMBO3, 0x403, 14, 0
+    IDC_INITIAL_STATE, 0x403, 14, 0
 0x6f4e, 0x6d72, 0x6c61, 0x5720, 0x6e69, 0x6f64, 0x0077, 
     0
 END

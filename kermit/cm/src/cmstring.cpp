@@ -37,7 +37,67 @@ CMString::CMString() {
 	ZeroMemory(_data->string, sizeof(TCHAR));
 }
 
+
 CMString::CMString(LPCTSTR str) {
+	if (str == NULL) {
+		InitFromTSTR(NULL, 0);
+	} else {
+		InitFromTSTR(str, _tcsclen(str));
+	}
+}
+
+CMString::CMString(LPCTSTR str, int allocateLength) {
+	InitFromTSTR(str, allocateLength);
+
+	/*_data = (CMStringData*)malloc(sizeof(CMStringData));
+	ZeroMemory(_data, sizeof(CMStringData));
+
+	_data->refCount = 1;
+	
+	if (str == NULL) {
+		_data->length = 0;
+		_data->isNull = TRUE;
+
+		// We'll still allocate a null terminated string just so that
+		// callers of data() don't always have to check if NULL.
+		_data->string = (LPTSTR)malloc(sizeof(TCHAR));
+		ZeroMemory(_data->string, sizeof(TCHAR));
+	} else {
+		LPTSTR buf;
+		int len = _tcsclen(str);
+		//if (allocateLength < len) allocateLength = len;
+		int buflen = sizeof(TCHAR) * (len + 1);
+		//int buflen = sizeof(TCHAR) * (allocateLength+1);
+
+		buf = (LPTSTR)malloc(buflen);
+		ZeroMemory(buf, buflen);
+
+		_tcsnccpy(buf, str, len);
+
+		_data->isNull = FALSE;
+		_data->length = len;
+		_data->string = buf;
+	}*/
+}
+
+CMString::CMString(const CMString &other) {
+	_data = other._data;
+	_data->refCount++;
+}
+
+CMString::~CMString() {
+	_data->refCount -=1;
+
+	if (_data->refCount == 0) {
+		// We're the last CMString instance left holding a reference to
+		// this data. Delete it.
+		free(_data->string);
+		free(_data);
+	}
+}
+
+
+void CMString::InitFromTSTR(LPCTSTR str, int allocateLength) {
 	_data = (CMStringData*)malloc(sizeof(CMStringData));
 	ZeroMemory(_data, sizeof(CMStringData));
 
@@ -54,7 +114,8 @@ CMString::CMString(LPCTSTR str) {
 	} else {
 		LPTSTR buf;
 		int len = _tcsclen(str);
-		int buflen = sizeof(TCHAR) * (len + 1);
+		if (allocateLength < len) allocateLength = len;
+		int buflen = sizeof(TCHAR) * (allocateLength+1);
 
 		buf = (LPTSTR)malloc(buflen);
 		ZeroMemory(buf, buflen);
@@ -64,22 +125,6 @@ CMString::CMString(LPCTSTR str) {
 		_data->isNull = FALSE;
 		_data->length = len;
 		_data->string = buf;
-	}
-}
-
-CMString::CMString(const CMString &other) {
-	_data = other._data;
-	_data->refCount++;
-}
-
-CMString::~CMString() {
-	_data->refCount -=1;
-
-	if (_data->refCount == 0) {
-		// We're the last CMString instance left holding a reference to
-		// this data. Delete it.
-		free(_data->string);
-		free(_data);
 	}
 }
 
@@ -149,13 +194,22 @@ CMString &CMString::operator=(const CMString &rhs) {
 }
 
 /*CMString &operator+=(const CMString &other) {
+	int len_required = length() + other.length() + 1;
 
-}
+}*/
 
 CMString operator+(CMString lhs, const CMString &rhs) {
-	lhs += rhs;
-	return lhs;
-}*/
+	CMString rhsCopy = CMString(rhs);
+
+	int len = lhs.length() + rhsCopy.length();
+	
+	
+	CMString result = CMString(lhs.data(), len);
+	lstrcat(result._data->string, rhsCopy.data());
+	result._data->length = _tcsclen(result._data->string);
+
+	return result;
+}
 
 BOOL operator==(const CMString &lhs, const CMString &rhs) {
 	if (lhs.isNull() && rhs.isNull()) return TRUE;
