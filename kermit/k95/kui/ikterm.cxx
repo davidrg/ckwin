@@ -64,7 +64,7 @@ void getMaxSizes( int* column, int* row )
 ------------------------------------------------------------------------*/
 IKTerm::IKTerm( BYTE whichbuffer, K_CLIENT_PAINT* clipaint )
     : vnum( whichbuffer )
-    , kcp( clipaint ), mouseCaptured(0)
+    , kcp( clipaint ), mouseCaptured(0), vt_char_attrs(0)
 {
 }
 
