@@ -596,44 +596,44 @@ STYLE WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Logging"
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Connections",IDC_CHECK11,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,7,55,10
-    CONTROL         "Debugging Info",IDC_CHECK12,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Connections",IDC_LOG_CONNECTIONS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,7,55,10
+    EDITTEXT        IDC_LOG_CONNECTIONS_FILE,105,5,127,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_LOG_CONNECTIONS_BROWSE,238,5,15,14
+    CONTROL         "Append",IDC_LOG_CONNECTIONS_APPEND,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,212,20,41,10
+    CONTROL         "Debugging Info",IDC_LOG_DEBUG,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,37,65,10
-    CONTROL         "Kermit File Xfer Packets",IDC_CHECK13,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,91,10
-    CONTROL         "Session Input",IDC_CHECK14,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,97,59,10
-    CONTROL         "File Xfer Transactions",IDC_CHECK15,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,127,84,10
-    EDITTEXT        IDC_EDIT6,105,5,127,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT7,105,35,127,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT8,105,65,127,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT9,105,95,127,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT10,105,125,127,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BUTTON4,238,5,15,14
-    PUSHBUTTON      "...",IDC_BUTTON5,238,35,15,14
-    PUSHBUTTON      "...",IDC_BUTTON6,238,65,15,14
-    PUSHBUTTON      "...",IDC_BUTTON7,238,95,15,14
-    PUSHBUTTON      "...",IDC_BUTTON8,238,125,15,14
-    CONTROL         "Append",IDC_CHECK16,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,212,20,41,10
-    CONTROL         "Append",IDC_CHECK17,"Button",BS_AUTOCHECKBOX | 
+    EDITTEXT        IDC_LOG_DEBUG_FILE,105,35,127,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_LOG_DEBUG_BROWSE,238,35,15,14
+    CONTROL         "Append",IDC_LOG_DEBUG_APPEND,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,212,50,41,10
-    CONTROL         "Append",IDC_CHECK18,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Kermit File Xfer Packets",IDC_LOG_PACKETS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,91,10
+    EDITTEXT        IDC_LOG_PACKETS_FILE,105,65,127,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_LOG_PACKETS_BROWSE,238,65,15,14
+    CONTROL         "Append",IDC_LOG_PACKETS_APPEND,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,212,80,41,10
-    CONTROL         "Append",IDC_CHECK19,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Session Input",IDC_LOG_SESSION,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,97,59,10
+    EDITTEXT        IDC_LOG_SESSION_FILE,105,95,127,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_LOG_SESSION_BROWSE,238,95,15,14
+    CONTROL         "Text",IDC_LOG_SESSION_TXT,"Button",BS_AUTORADIOBUTTON,
+                    75,110,30,10
+    CONTROL         "Binary",IDC_LOG_SESSION_BIN,"Button",BS_AUTORADIOBUTTON,
+                    110,110,35,10
+    CONTROL         "Debug",IDC_LOG_SESSION_DBG,"Button",BS_AUTORADIOBUTTON,
+                    150,110,37,10
+    CONTROL         "Append",IDC_LOG_SESSION_APPEND,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,212,110,41,10
-    CONTROL         "Append",IDC_CHECK20,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "File Xfer Transactions",IDC_LOG_XFER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,127,84,10
+    EDITTEXT        IDC_LOG_XFER_FILE,105,125,127,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_LOG_XFER_BROWSE,238,125,15,14
+    CONTROL         "Brief Format",IDC_LOG_XFER_BRIEF,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,105,140,53,10
+    CONTROL         "Append",IDC_LOG_XFER_APPEND,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,212,140,41,10
-    CONTROL         "Brief Format",IDC_CHECK21,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,105,140,53,10
-    CONTROL         "Text",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,75,110,30,
-                    10
-    CONTROL         "Binary",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,110,110,
-                    35,10
-    CONTROL         "Debug",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,150,110,
-                    37,10
 END
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 106

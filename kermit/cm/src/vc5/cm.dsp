@@ -179,6 +179,10 @@ SOURCE=..\conn_props\keyboard.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\logging.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\login.cpp
 # End Source File
 # Begin Source File
@@ -188,6 +192,10 @@ SOURCE=..\conn_props\term_colors.cpp
 # Begin Source File
 
 SOURCE=..\conn_props\terminal.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_props\transfer.cpp
 # End Source File
 # End Group
 # Begin Group "cJSON"
@@ -364,10 +372,6 @@ SOURCE=..\toolbar.cpp
 # Begin Source File
 
 SOURCE=..\toolbar.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\conn_props\transfer.cpp
 # End Source File
 # Begin Source File
 

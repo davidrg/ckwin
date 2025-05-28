@@ -87,6 +87,7 @@ CLEAN :
 	-@erase ".\Release\config_file.obj"
 	-@erase ".\Release\gui.obj"
 	-@erase ".\Release\transfer.obj"
+	-@erase ".\Release\logging.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -115,35 +116,36 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/term_info.obj" \
-	"$(INTDIR)/terminal.obj" \
-	"$(INTDIR)/connection.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/connection_serial.obj" \
-	"$(INTDIR)/keyboard.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/login.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/charset.obj" \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/term_colors.obj" \
-	"$(INTDIR)/gui_colors.obj" \
-	"$(INTDIR)/json_color_theme.obj" \
-	"$(INTDIR)/json_util.obj" \
-	"$(INTDIR)/config_file.obj" \
-	"$(INTDIR)/gui.obj" \
-	"$(INTDIR)/transfer.obj" \
-	"$(INTDIR)/cm.res"
+	".\Release\term_info.obj" \
+	".\Release\terminal.obj" \
+	".\Release\connection.obj" \
+	".\Release\statusbar.obj" \
+	".\Release\connection_serial.obj" \
+	".\Release\keyboard.obj" \
+	".\Release\conn_profile.obj" \
+	".\Release\main.obj" \
+	".\Release\cmstring.obj" \
+	".\Release\login.obj" \
+	".\Release\cJSON.obj" \
+	".\Release\new_conn.obj" \
+	".\Release\conn_props.obj" \
+	".\Release\json_profile.obj" \
+	".\Release\general.obj" \
+	".\Release\charset.obj" \
+	".\Release\util.obj" \
+	".\Release\toolbar.obj" \
+	".\Release\json_config.obj" \
+	".\Release\conn_list.obj" \
+	".\Release\kerm_track.obj" \
+	".\Release\term_colors.obj" \
+	".\Release\gui_colors.obj" \
+	".\Release\json_color_theme.obj" \
+	".\Release\json_util.obj" \
+	".\Release\config_file.obj" \
+	".\Release\gui.obj" \
+	".\Release\transfer.obj" \
+	".\Release\logging.obj" \
+	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -200,6 +202,7 @@ CLEAN :
 	-@erase ".\Debug\config_file.obj"
 	-@erase ".\Debug\gui.obj"
 	-@erase ".\Debug\transfer.obj"
+	-@erase ".\Debug\logging.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -231,35 +234,36 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /incremental:yes /pdb:"$(OUTDIR)/cm.pdb" /debug /machine:I386\
  /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/charset.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/connection.obj" \
-	"$(INTDIR)/terminal.obj" \
-	"$(INTDIR)/login.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/keyboard.obj" \
-	"$(INTDIR)/term_info.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/term_colors.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/connection_serial.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/gui_colors.obj" \
-	"$(INTDIR)/json_color_theme.obj" \
-	"$(INTDIR)/json_util.obj" \
-	"$(INTDIR)/config_file.obj" \
-	"$(INTDIR)/gui.obj" \
-	"$(INTDIR)/transfer.obj" \
-	"$(INTDIR)/cm.res"
+	".\Debug\main.obj" \
+	".\Debug\charset.obj" \
+	".\Debug\kerm_track.obj" \
+	".\Debug\connection.obj" \
+	".\Debug\terminal.obj" \
+	".\Debug\login.obj" \
+	".\Debug\cJSON.obj" \
+	".\Debug\conn_list.obj" \
+	".\Debug\keyboard.obj" \
+	".\Debug\term_info.obj" \
+	".\Debug\json_config.obj" \
+	".\Debug\statusbar.obj" \
+	".\Debug\util.obj" \
+	".\Debug\term_colors.obj" \
+	".\Debug\general.obj" \
+	".\Debug\json_profile.obj" \
+	".\Debug\conn_profile.obj" \
+	".\Debug\cmstring.obj" \
+	".\Debug\toolbar.obj" \
+	".\Debug\connection_serial.obj" \
+	".\Debug\conn_props.obj" \
+	".\Debug\new_conn.obj" \
+	".\Debug\gui_colors.obj" \
+	".\Debug\json_color_theme.obj" \
+	".\Debug\json_util.obj" \
+	".\Debug\config_file.obj" \
+	".\Debug\gui.obj" \
+	".\Debug\transfer.obj" \
+	".\Debug\logging.obj" \
+	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -316,6 +320,7 @@ CLEAN :
 	-@erase ".\cm___Win\config_file.obj"
 	-@erase ".\cm___Win\gui.obj"
 	-@erase ".\cm___Win\transfer.obj"
+	-@erase ".\cm___Win\logging.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -348,35 +353,36 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /incremental:yes /pdb:"$(OUTDIR)/cm.pdb" /debug /machine:I386\
  /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/charset.obj" \
-	"$(INTDIR)/terminal.obj" \
-	"$(INTDIR)/connection_serial.obj" \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/keyboard.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/term_info.obj" \
-	"$(INTDIR)/login.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/connection.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/term_colors.obj" \
-	"$(INTDIR)/gui_colors.obj" \
-	"$(INTDIR)/json_color_theme.obj" \
-	"$(INTDIR)/json_util.obj" \
-	"$(INTDIR)/config_file.obj" \
-	"$(INTDIR)/gui.obj" \
-	"$(INTDIR)/transfer.obj" \
-	"$(INTDIR)/cm.res"
+	".\cm___Win\charset.obj" \
+	".\cm___Win\terminal.obj" \
+	".\cm___Win\connection_serial.obj" \
+	".\cm___Win\main.obj" \
+	".\cm___Win\keyboard.obj" \
+	".\cm___Win\json_profile.obj" \
+	".\cm___Win\conn_profile.obj" \
+	".\cm___Win\term_info.obj" \
+	".\cm___Win\login.obj" \
+	".\cm___Win\cJSON.obj" \
+	".\cm___Win\kerm_track.obj" \
+	".\cm___Win\cmstring.obj" \
+	".\cm___Win\connection.obj" \
+	".\cm___Win\general.obj" \
+	".\cm___Win\conn_list.obj" \
+	".\cm___Win\conn_props.obj" \
+	".\cm___Win\toolbar.obj" \
+	".\cm___Win\util.obj" \
+	".\cm___Win\new_conn.obj" \
+	".\cm___Win\json_config.obj" \
+	".\cm___Win\statusbar.obj" \
+	".\cm___Win\term_colors.obj" \
+	".\cm___Win\gui_colors.obj" \
+	".\cm___Win\json_color_theme.obj" \
+	".\cm___Win\json_util.obj" \
+	".\cm___Win\config_file.obj" \
+	".\cm___Win\gui.obj" \
+	".\cm___Win\transfer.obj" \
+	".\cm___Win\logging.obj" \
+	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -431,6 +437,7 @@ CLEAN :
 	-@erase ".\cm___Wi0\config_file.obj"
 	-@erase ".\cm___Wi0\gui.obj"
 	-@erase ".\cm___Wi0\transfer.obj"
+	-@erase ".\cm___Wi0\logging.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -459,35 +466,36 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)/util.obj" \
-	"$(INTDIR)/terminal.obj" \
-	"$(INTDIR)/keyboard.obj" \
-	"$(INTDIR)/json_config.obj" \
-	"$(INTDIR)/term_colors.obj" \
-	"$(INTDIR)/conn_list.obj" \
-	"$(INTDIR)/json_profile.obj" \
-	"$(INTDIR)/conn_profile.obj" \
-	"$(INTDIR)/connection_serial.obj" \
-	"$(INTDIR)/cmstring.obj" \
-	"$(INTDIR)/term_info.obj" \
-	"$(INTDIR)/login.obj" \
-	"$(INTDIR)/main.obj" \
-	"$(INTDIR)/cJSON.obj" \
-	"$(INTDIR)/statusbar.obj" \
-	"$(INTDIR)/connection.obj" \
-	"$(INTDIR)/conn_props.obj" \
-	"$(INTDIR)/new_conn.obj" \
-	"$(INTDIR)/general.obj" \
-	"$(INTDIR)/charset.obj" \
-	"$(INTDIR)/toolbar.obj" \
-	"$(INTDIR)/kerm_track.obj" \
-	"$(INTDIR)/gui_colors.obj" \
-	"$(INTDIR)/json_color_theme.obj" \
-	"$(INTDIR)/json_util.obj" \
-	"$(INTDIR)/config_file.obj" \
-	"$(INTDIR)/gui.obj" \
-	"$(INTDIR)/transfer.obj" \
-	"$(INTDIR)/cm.res"
+	".\cm___Wi0\util.obj" \
+	".\cm___Wi0\terminal.obj" \
+	".\cm___Wi0\keyboard.obj" \
+	".\cm___Wi0\json_config.obj" \
+	".\cm___Wi0\term_colors.obj" \
+	".\cm___Wi0\conn_list.obj" \
+	".\cm___Wi0\json_profile.obj" \
+	".\cm___Wi0\conn_profile.obj" \
+	".\cm___Wi0\connection_serial.obj" \
+	".\cm___Wi0\cmstring.obj" \
+	".\cm___Wi0\term_info.obj" \
+	".\cm___Wi0\login.obj" \
+	".\cm___Wi0\main.obj" \
+	".\cm___Wi0\cJSON.obj" \
+	".\cm___Wi0\statusbar.obj" \
+	".\cm___Wi0\connection.obj" \
+	".\cm___Wi0\conn_props.obj" \
+	".\cm___Wi0\new_conn.obj" \
+	".\cm___Wi0\general.obj" \
+	".\cm___Wi0\charset.obj" \
+	".\cm___Wi0\toolbar.obj" \
+	".\cm___Wi0\kerm_track.obj" \
+	".\cm___Wi0\gui_colors.obj" \
+	".\cm___Wi0\json_color_theme.obj" \
+	".\cm___Wi0\json_util.obj" \
+	".\cm___Wi0\config_file.obj" \
+	".\cm___Wi0\gui.obj" \
+	".\cm___Wi0\transfer.obj" \
+	".\cm___Wi0\logging.obj" \
+	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -2226,6 +2234,49 @@ DEP_CPP_TRANS=\
 
 
 "$(INTDIR)\transfer.obj" : $(SOURCE) $(DEP_CPP_TRANS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\logging.cpp"
+DEP_CPP_LOGGI=\
+	".\..\conn_props.h"\
+	".\..\conn_profile.h"\
+	".\..\cmstring.h"\
+	".\..\charset.h"\
+	".\..\term_info.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\logging.obj" : $(SOURCE) $(DEP_CPP_LOGGI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\logging.obj" : $(SOURCE) $(DEP_CPP_LOGGI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\logging.obj" : $(SOURCE) $(DEP_CPP_LOGGI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\logging.obj" : $(SOURCE) $(DEP_CPP_LOGGI) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 

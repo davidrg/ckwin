@@ -409,7 +409,7 @@ void JsonProfile::setBool(LPCSTR grandParentName, LPCSTR parentName, LPCSTR name
 	if (parent == NULL) {
 		// parent doesn't exist - create it
 		parent = cJSON_CreateObject();
-		cJSON_AddItemToObject(_json, parentName, parent);
+		cJSON_AddItemToObject(grandparent, parentName, parent);
 	}
 
 	setBool(parent, name, value);
@@ -2233,7 +2233,6 @@ void JsonProfile::setRgbWhite(RGB8BitColor c) {
 // ----- Logging -----
 BOOL JsonProfile::logConnections() { 
 	return getBool("log", "connections", "enabled", FALSE);
-	return FALSE; // TODO
 }
 
 void JsonProfile::setLogConnections(BOOL enabled) {
