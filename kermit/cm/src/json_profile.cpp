@@ -868,20 +868,20 @@ void JsonProfile::setDefaultToBinaryMode(BOOL enabled) {
 	setBool("xfer", "default_binary", enabled);
 }
 
-CMString JsonProfile::fileCharacterSet() { 
-	return getStringCached2(xfer, file_cset, CMString(TEXT("cp437")));
+Charset::Charset JsonProfile::fileCharacterSet() { 
+	return (Charset::Charset)getInteger("xfer", "file_cset", (int)Charset::CS_CP437);
 }
 
-void JsonProfile::setFileCharacterSet(CMString cset) {
-	setStringCached2(xfer, file_cset, cset);
+void JsonProfile::setFileCharacterSet(Charset::Charset cset) {
+	setInteger("xfer", "file_cset", (int)cset);
 }
 
-CMString JsonProfile::transferCharacterSet() {
-	return getStringCached2(xfer, cset, CMString(TEXT("latin1-iso")));
+Charset::Charset JsonProfile::transferCharacterSet() {
+	return (Charset::Charset)getInteger("xfer", "cset", (int)Charset::CS_8859_1);
 }
 
-void JsonProfile::setTransferCharacterSet(CMString cset) {
-	setStringCached2(xfer, cset, cset);
+void JsonProfile::setTransferCharacterSet(Charset::Charset cset) {
+	setInteger("xfer", "cset", (int)cset);
 }
 
 ConnectionProfile::FileNameCollision JsonProfile::fileNameCollisionAction() {

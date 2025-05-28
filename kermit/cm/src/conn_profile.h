@@ -377,11 +377,11 @@ public:
 	virtual BOOL defaultToBinaryMode() = 0;
 	virtual void setDefaultToBinaryMode(BOOL enabled) = 0;
 
-	virtual CMString fileCharacterSet() = 0;
-	virtual void setFileCharacterSet(CMString cset) = 0;
+	virtual Charset::Charset fileCharacterSet() = 0;
+	virtual void setFileCharacterSet(Charset::Charset cset) = 0;
 
-	virtual CMString transferCharacterSet() = 0;
-	virtual void setTransferCharacterSet(CMString cset) = 0;
+	virtual Charset::Charset transferCharacterSet() = 0;
+	virtual void setTransferCharacterSet(Charset::Charset cset) = 0;
 
 	virtual FileNameCollision fileNameCollisionAction() = 0;
 	virtual void setFileNameCollisionAction(FileNameCollision fnc) = 0;

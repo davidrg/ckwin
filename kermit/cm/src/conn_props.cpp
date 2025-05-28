@@ -9,6 +9,8 @@
 void CALLBACK		PropSheetCallback(HWND, UINT, LPARAM);
 LRESULT CALLBACK	SimplePropSheetProc(HWND, UINT, WPARAM, LPARAM);
 
+int guiPropSheetId = 0;
+
 void SetupPropertyPage(HINSTANCE hInstance, PROPSHEETPAGE *page, WORD dialogId,
 						DLGPROC pfnDlgProc, LPFNPSPCALLBACK pfnCallback, LPARAM lParam) {
 
@@ -123,7 +125,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	// TODO: Mouse
 
 	// ----- Transfer -----
-	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	NULL, NULL, NULL); page++;
+	SetupPropertyPage(hInstance, &psp[page],  IDD_TRANSFER,	(DLGPROC)FileTransferPageDlgProc, FileTransferPageProc, (LPARAM)profile); page++; // *
 
 	// ----- GUI -----
 	SetupPropertyPage(hInstance, &psp[page], IDD_GUI,		 (DLGPROC)GuiPageDlgProc, GuiPageProc, (LPARAM)profile); page++; // *

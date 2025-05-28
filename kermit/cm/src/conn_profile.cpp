@@ -954,7 +954,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		BOOL suffix = FALSE;
 
 		// If the terminal type is at386, scoansi or ansi and the
-		// selected harset is not "transparent" then the K95 dialer
+		// selected charset is not "transparent" then the K95 dialer
 		// appends " g1" to this command.
 		if (terminalType() == Term::TT_AT386
 			|| terminalType() == Term::TT_SCOANSI
@@ -1166,9 +1166,9 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		OutLine(TEXT("set send pathnames off"));
 	}
 
-	if (!fileCharacterSet().isNullOrWhiteSpace()) {
-		_sntprintf(buf, BUFFERSIZE, TEXT("set file char %s"), 
-					fileCharacterSet().data());
+	if (fileCharacterSet() != Charset::CS_INVALID) {
+		_sntprintf(buf, BUFFERSIZE, TEXT("set file char %s"),
+					Charset::getCharsetKeyword(fileCharacterSet()));
 		OutLine(buf);
 	}
 
@@ -1275,9 +1275,8 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		}
 	}
 
-	
 	_sntprintf(buf, BUFFERSIZE, TEXT("set xfer char %s"), 
-				transferCharacterSet().data());
+				Charset::getCharsetKeyword(transferCharacterSet()));
 	OutLine(buf);
 
 	// Mouse settings

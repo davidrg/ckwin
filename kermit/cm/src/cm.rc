@@ -108,52 +108,55 @@ CAPTION "File Transfer"
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Protocol:",IDC_STATIC,7,7,29,8
-    COMBOBOX        IDC_COMBO1,70,7,66,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_TRANS_PROTOCOL,70,7,66,160,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Performance:",IDC_STATIC,7,25,43,8
-    COMBOBOX        IDC_COMBO2,70,23,66,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_TRANS_PERFORMANCE,70,23,66,144,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Packet-length:",IDC_STATIC,7,41,47,8
-    EDITTEXT        IDC_EDIT1,70,38,55,14,ES_AUTOHSCROLL
-    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_ARROWKEYS,125,38,
+    EDITTEXT        IDC_TRANS_PKT_LEN,70,38,66,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_TRANS_PKT_LEN_SPIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,132,38,
                     11,14
     LTEXT           "Window size:",IDC_STATIC,7,57,43,8
-    EDITTEXT        IDC_EDIT2,70,54,55,14,ES_AUTOHSCROLL
-    CONTROL         "Spin2",IDC_SPIN2,"msctls_updown32",UDS_ARROWKEYS,125,54,
+    EDITTEXT        IDC_TRANS_WIND_SIZE,70,54,66,14,ES_AUTOHSCROLL | 
+                    ES_NUMBER
+    CONTROL         "Spin2",IDC_TRANS_WIND_SIZE_SPIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,133,54,
                     11,14
-    COMBOBOX        IDC_COMBO3,70,70,66,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
     LTEXT           "CC Unprefixing:",IDC_STATIC,7,72,50,8
-    GROUPBOX        "Default Transfer Mode",IDC_STATIC,145,65,108,30
-    CONTROL         "Binary",IDC_RADIO7,"Button",BS_AUTORADIOBUTTON,210,80,
-                    35,10
-    CONTROL         "Text",IDC_RADIO8,"Button",BS_AUTORADIOBUTTON,155,80,30,
-                    10
-    LTEXT           "File Character-set::",IDC_STATIC,145,7,60,8
-    LTEXT           "Transfer Character-set:",IDC_STATIC,145,35,73,8
-    COMBOBOX        IDC_COMBO5,145,45,108,30,CBS_DROPDOWN | CBS_SORT | 
+    COMBOBOX        IDC_TRANS_CC_UNPREFIXING,70,70,66,97,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Autodownload:",IDC_STATIC,7,88,48,8
-    COMBOBOX        IDC_COMBO6,70,86,66,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Transmit literal filenames",IDC_CHECK4,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,120,92,10
-    CONTROL         "Use / include pathnames",IDC_CHECK5,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,100,95,10
-    CONTROL         "Keep partially received files",IDC_CHECK6,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,145,110,101,10
-    GROUPBOX        "Negotiate Transfer Modes",IDC_STATIC,5,120,129,34
-    CONTROL         "Streaming",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,13,134,47,10
-    CONTROL         "Clear-Channel",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,68,135,60,10
-    CONTROL         "Force 16bit CRC",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,145,130,72,8
-    COMBOBOX        IDC_COMBO7,70,101,66,124,CBS_DROPDOWNLIST | CBS_SORT | 
+    COMBOBOX        IDC_TRANS_AUTODL,70,86,66,81,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "Filename Collision:",IDC_STATIC,7,103,61,8
-    COMBOBOX        IDC_TERM_CSET,146,17,108,112,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_TRANS_FN_COLLISION,70,101,66,66,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Negotiate Transfer Modes",IDC_STATIC,7,120,129,34
+    CONTROL         "Streaming",IDC_TRANS_NEG_STREAMING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,13,134,47,10
+    CONTROL         "Clear-Channel",IDC_TRANS_NEG_CC,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,68,135,60,10
+    LTEXT           "File Character-set::",IDC_STATIC,145,7,60,8
+    COMBOBOX        IDC_TRANS_FILE_CSET,146,17,108,150,CBS_DROPDOWNLIST | 
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Transfer Character-set:",IDC_STATIC,145,35,73,8
+    COMBOBOX        IDC_TRANS_CSET,145,45,108,122,CBS_DROPDOWNLIST | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Default Transfer Mode",IDC_STATIC,145,65,108,30
+    CONTROL         "Text",IDC_TRANS_TEXT,"Button",BS_AUTORADIOBUTTON,155,80,
+                    30,10
+    CONTROL         "Binary",IDC_TRANS_BINARY,"Button",BS_AUTORADIOBUTTON,
+                    210,80,35,10
+    CONTROL         "Use / include pathnames",IDC_TRANS_PATHNAMES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,100,95,10
+    CONTROL         "Keep partially received files",IDC_TRANS_KEEP_PARTIAL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,110,101,10
+    CONTROL         "Transmit literal filenames",IDC_TRANS_LITERAL_FN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,120,92,10
+    CONTROL         "Force 16bit CRC",IDC_TRANS_16BIT_CRC,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,145,130,72,8
 END
 
 IDD_TELNET DIALOG DISCARDABLE  0, 0, 262, 175
@@ -1132,21 +1135,21 @@ END
 
 IDD_TRANSFER DLGINIT
 BEGIN
-    IDC_COMBO1, 0x403, 7, 0
+    IDC_TRANS_PROTOCOL, 0x403, 7, 0
 0x654b, 0x6d72, 0x7469, "\000" 
-    IDC_COMBO7, 0x403, 7, 0
+    IDC_TRANS_FN_COLLISION, 0x403, 7, 0
 0x6142, 0x6b63, 0x7075, "\000" 
-    IDC_COMBO7, 0x403, 7, 0
+    IDC_TRANS_FN_COLLISION, 0x403, 7, 0
 0x7055, 0x6164, 0x6574, "\000" 
-    IDC_COMBO7, 0x403, 10, 0
+    IDC_TRANS_FN_COLLISION, 0x403, 10, 0
 0x764f, 0x7265, 0x7277, 0x7469, 0x0065, 
-    IDC_COMBO7, 0x403, 7, 0
+    IDC_TRANS_FN_COLLISION, 0x403, 7, 0
 0x7041, 0x6570, 0x646e, "\000" 
-    IDC_COMBO7, 0x403, 8, 0
+    IDC_TRANS_FN_COLLISION, 0x403, 8, 0
 0x6944, 0x6373, 0x7261, 0x0064, 
-    IDC_COMBO7, 0x403, 7, 0
+    IDC_TRANS_FN_COLLISION, 0x403, 7, 0
 0x6552, 0x616e, 0x656d, "\000" 
-    IDC_TERM_CSET, 0x403, 28, 0
+    IDC_TRANS_FILE_CSET, 0x403, 28, 0
 0x6163, 0x616e, 0x6964, 0x6e61, 0x662d, 0x6572, 0x636e, 0x2068, 0x4928, 
 0x4f53, 0x3436, 0x2d36, 0x4143, 0x0029, 
     0

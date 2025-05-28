@@ -167,6 +167,10 @@ SOURCE=..\conn_props\general.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\gui.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\gui_colors.cpp
 # End Source File
 # Begin Source File
@@ -360,6 +364,10 @@ SOURCE=..\toolbar.cpp
 # Begin Source File
 
 SOURCE=..\toolbar.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\conn_props\transfer.cpp
 # End Source File
 # Begin Source File
 

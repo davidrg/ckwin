@@ -104,7 +104,9 @@
 #define IDC_RADIO5                      1025
 #define IDC_RADIO6                      1026
 #define IDC_RADIO7                      1027
+#define IDC_TRANS_BINARY                1027
 #define IDC_RADIO8                      1028
+#define IDC_TRANS_TEXT                  1028
 #define IDC_EDIT3                       1029
 #define IDC_BUTTON1                     1030
 #define IDC_EDIT7                       1030
@@ -312,6 +314,23 @@
 #define IDC_ENABLE_DIALOGS              1173
 #define IDC_REMOVE_BARS                 1174
 #define IDC_FONT_SIZE                   1175
+#define IDC_TRANS_PROTOCOL              1177
+#define IDC_TRANS_PERFORMANCE           1178
+#define IDC_TRANS_PKT_LEN               1179
+#define IDC_TRANS_WIND_SIZE             1180
+#define IDC_TRANS_CC_UNPREFIXING        1181
+#define IDC_TRANS_AUTODL                1182
+#define IDC_TRANS_FN_COLLISION          1183
+#define IDC_TRANS_FILE_CSET             1184
+#define IDC_TRANS_CSET                  1185
+#define IDC_TRANS_NEG_STREAMING         1186
+#define IDC_TRANS_NEG_CC                1187
+#define IDC_TRANS_PATHNAMES             1188
+#define IDC_TRANS_KEEP_PARTIAL          1189
+#define IDC_TRANS_LITERAL_FN            1190
+#define IDC_TRANS_16BIT_CRC             1191
+#define IDC_TRANS_PKT_LEN_SPIN          1192
+#define IDC_TRANS_WIND_SIZE_SPIN        1193
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -350,7 +369,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40037
-#define _APS_NEXT_CONTROL_VALUE         1176
+#define _APS_NEXT_CONTROL_VALUE         1194
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

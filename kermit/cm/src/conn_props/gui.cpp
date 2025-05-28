@@ -226,8 +226,6 @@ static void SetGUIEnabled(HWND hwndDlg, BOOL enabled) {
 			(WPARAM)!enabled,
 			(LPARAM)0);
 	}
-
-	// TODO: Enable/disable GUI Colors tab somehow
 }
 
 
@@ -368,7 +366,11 @@ static void SetCustomStartupPositionChecked(HWND hwndDlg, BOOL enabled) {
 }
 
 static void CheckXPosition(HWND hwndDlg, BOOL save) {
-	int newValue = getFieldInt(hwndDlg, IDC_STARTUP_X);
+	// We have to get the numeric value off of the spin box
+	// rather than backing field itself because it uses commas
+	// for numbers >999 which getFieldInt() can't handle
+	int newValue = SendMessage(
+		GetDlgItem(hwndDlg, IDC_STARTUP_X_SPIN), UDM_GETPOS, 0, 0);
 	int oldValue = profile->startupAtX();
 
 	BOOL changed = newValue != oldValue;
@@ -390,7 +392,11 @@ static void SetXPosition(HWND hwndDlg, int position) {
 }
 
 static void CheckYPosition(HWND hwndDlg, BOOL save) {
-	int newValue = getFieldInt(hwndDlg, IDC_STARTUP_Y);
+	// We have to get the numeric value off of the spin box
+	// rather than backing field itself because it uses commas
+	// for numbers >999 which getFieldInt() can't handle
+	int newValue = SendMessage(
+		GetDlgItem(hwndDlg, IDC_STARTUP_Y_SPIN), UDM_GETPOS, 0, 0);
 	int oldValue = profile->startupAtY();
 
 	BOOL changed = newValue != oldValue;
@@ -663,12 +669,6 @@ static void CheckFontSize(HWND hwndDlg, BOOL save) {
 }
 
 
-/*
- * TODO:
- *   - Disable GUI colors tab when "Open in GUI K95" is unchecked
- */
-
-
 BOOL CALLBACK GuiPageDlgProc(
 	HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
@@ -720,7 +720,7 @@ BOOL CALLBACK GuiPageDlgProc(
 				(LPARAM)profile->startupAtY());
 
 
-			// TODO: load initial values from profile
+			// load initial values from profile
 			SetUseGUIChecked(hwndDlg, profile->useGUIKermit());
 			SetEnableMenubarChecked(hwndDlg, profile->menubarEnabled());
 			SetEnableToolbarChecked(hwndDlg, profile->toolbarEnabled());
@@ -765,7 +765,7 @@ BOOL CALLBACK GuiPageDlgProc(
 					0, profile->fontSize().data());
 			}
 
-			// TODO set fields enabled or disabled
+			// Set fields enabled or disabled
 			SetGUIEnabled(hwndDlg, profile->useGUIKermit());
 			SetRemoveBarsEnabled(hwndDlg) ;
 

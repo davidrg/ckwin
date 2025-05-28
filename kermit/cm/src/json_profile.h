@@ -168,11 +168,11 @@ public:
 	virtual BOOL defaultToBinaryMode();
 	virtual void setDefaultToBinaryMode(BOOL enabled);
 
-	virtual CMString fileCharacterSet();
-	virtual void setFileCharacterSet(CMString cset);
+	virtual Charset::Charset fileCharacterSet();
+	virtual void setFileCharacterSet(Charset::Charset cset);
 
-	virtual CMString transferCharacterSet();
-	virtual void setTransferCharacterSet(CMString cset);
+	virtual Charset::Charset transferCharacterSet();
+	virtual void setTransferCharacterSet(Charset::Charset cset);
 
 	virtual FileNameCollision fileNameCollisionAction();
 	virtual void setFileNameCollisionAction(FileNameCollision fnc);
@@ -712,8 +712,6 @@ protected:
 	CMString _cached_pty_command;
 	CMString _cached_dll_name;
 	CMString _cached_dll_params;
-	CMString _cached_xfer_file_cset;
-	CMString _cached_xfer_cset;
 	CMString _cached_serial_line;
 	CMString _cached_telnet_envar_account;
 	CMString _cached_telnet_envar_display;
