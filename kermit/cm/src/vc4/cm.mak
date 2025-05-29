@@ -88,6 +88,7 @@ CLEAN :
 	-@erase ".\Release\gui.obj"
 	-@erase ".\Release\transfer.obj"
 	-@erase ".\Release\logging.obj"
+	-@erase ".\Release\printer.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -145,6 +146,7 @@ LINK32_OBJS= \
 	".\Release\gui.obj" \
 	".\Release\transfer.obj" \
 	".\Release\logging.obj" \
+	".\Release\printer.obj" \
 	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -203,6 +205,7 @@ CLEAN :
 	-@erase ".\Debug\gui.obj"
 	-@erase ".\Debug\transfer.obj"
 	-@erase ".\Debug\logging.obj"
+	-@erase ".\Debug\printer.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -263,6 +266,7 @@ LINK32_OBJS= \
 	".\Debug\gui.obj" \
 	".\Debug\transfer.obj" \
 	".\Debug\logging.obj" \
+	".\Debug\printer.obj" \
 	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -321,6 +325,7 @@ CLEAN :
 	-@erase ".\cm___Win\gui.obj"
 	-@erase ".\cm___Win\transfer.obj"
 	-@erase ".\cm___Win\logging.obj"
+	-@erase ".\cm___Win\printer.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -382,6 +387,7 @@ LINK32_OBJS= \
 	".\cm___Win\gui.obj" \
 	".\cm___Win\transfer.obj" \
 	".\cm___Win\logging.obj" \
+	".\cm___Win\printer.obj" \
 	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -438,6 +444,7 @@ CLEAN :
 	-@erase ".\cm___Wi0\gui.obj"
 	-@erase ".\cm___Wi0\transfer.obj"
 	-@erase ".\cm___Wi0\logging.obj"
+	-@erase ".\cm___Wi0\printer.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -495,6 +502,7 @@ LINK32_OBJS= \
 	".\cm___Wi0\gui.obj" \
 	".\cm___Wi0\transfer.obj" \
 	".\cm___Wi0\logging.obj" \
+	".\cm___Wi0\printer.obj" \
 	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -1393,6 +1401,7 @@ SOURCE="\ckwin-dial32\kermit\cm\src\cm.rc"
 DEP_RSC_CM_RC=\
 	".\..\toolbar1.bmp"\
 	".\..\logo.ico"\
+	"..\resource.hm"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -2277,6 +2286,49 @@ DEP_CPP_LOGGI=\
 
 
 "$(INTDIR)\logging.obj" : $(SOURCE) $(DEP_CPP_LOGGI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\conn_props\printer.cpp"
+DEP_CPP_PRINT=\
+	".\..\conn_props.h"\
+	".\..\conn_profile.h"\
+	".\..\charset.h"\
+	".\..\cmstring.h"\
+	".\..\term_info.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\printer.obj" : $(SOURCE) $(DEP_CPP_PRINT) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\printer.obj" : $(SOURCE) $(DEP_CPP_PRINT) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\printer.obj" : $(SOURCE) $(DEP_CPP_PRINT) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\printer.obj" : $(SOURCE) $(DEP_CPP_PRINT) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 

@@ -187,6 +187,10 @@ SOURCE=..\conn_props\login.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\conn_props\printer.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\conn_props\term_colors.cpp
 # End Source File
 # Begin Source File

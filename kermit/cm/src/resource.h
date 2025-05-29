@@ -75,6 +75,7 @@
 #define IDC_EDIT26                      1013
 #define IDC_BROWN_R                     1013
 #define IDC_LOG_SESSION_BIN             1013
+#define IDC_SEND_FF                     1013
 #define IDC_EDIT29                      1014
 #define IDC_L_GRAY_R                    1014
 #define IDC_COMBO1                      1015
@@ -103,6 +104,7 @@
 #define IDC_WHITE_R                     1022
 #define IDC_RADIO3                      1023
 #define IDC_LOG_SESSION_DBG             1023
+#define IDC_SEND_STRING                 1023
 #define IDC_RADIO4                      1024
 #define IDC_RADIO5                      1025
 #define IDC_RADIO6                      1026
@@ -115,6 +117,7 @@
 #define IDC_EDIT7                       1030
 #define IDC_COMBO5                      1031
 #define IDC_COMBO6                      1032
+#define IDC_BROWSE_OUT_FILE             1032
 #define IDC_CHECK5                      1033
 #define IDC_CHECK6                      1034
 #define IDC_CHECK7                      1035
@@ -171,6 +174,7 @@
 #define IDC_L_CYAN_G                    1054
 #define IDC_STARTUP_X_SPIN              1054
 #define IDC_LOG_PACKETS_BROWSE          1054
+#define IDC_HEIGHT_SPIN                 1054
 #define IDC_EDIT11                      1055
 #define IDC_BUTTON7                     1055
 #define IDC_BLACK_B                     1055
@@ -355,6 +359,25 @@
 #define IDC_LOG_PACKETS_FILE            1197
 #define IDC_LOG_SESSION_FILE            1198
 #define IDC_LOG_XFER_FILE               1199
+#define IDC_FILE                        1200
+#define IDC_DEVICE                      1201
+#define IDC_BROWSE_HEADER               1202
+#define IDC_PRINTER_TYPE                1203
+#define IDC_CHARSET                     1204
+#define IDC_HEADER_FILE                 1205
+#define IDC_EOJ_STRING                  1207
+#define IDC_PS_OUTPUT                   1208
+#define IDC_PS_WIDTH                    1209
+#define IDC_PS_HEIGHT                   1210
+#define IDC_TIMEOUT                     1211
+#define IDC_TIMEOUT_SPIN                1212
+#define IDC_SPEED                       1213
+#define IDC_PARITY                      1214
+#define IDC_FLOW                        1215
+#define IDC_BIDIRECTIONAL               1216
+#define IDC_QUEUE                       1217
+#define IDC_TARGET                      1218
+#define IDC_WIDTH_SPIN                  1219
 #define ID_FILE_EXIT                    40001
 #define ID_TEST_GO                      40002
 #define ID_TEST_GOMODELESS              40003
@@ -393,7 +416,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         40037
-#define _APS_NEXT_CONTROL_VALUE         1200
+#define _APS_NEXT_CONTROL_VALUE         1220
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

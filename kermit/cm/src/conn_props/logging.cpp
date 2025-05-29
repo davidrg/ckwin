@@ -134,6 +134,7 @@ static void BrowseFile(HWND hwndDlg, int targetFieldId, LPCTSTR title) {
 	ofn.lpstrFile = (LPTSTR)szFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.lpstrFilter = TEXT("Log Files (*.log)\0*.LOG\0All Files (*.*)\0*.*\0");
+	ofn.lpstrDefExt = TEXT("log");
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;

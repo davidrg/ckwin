@@ -1642,7 +1642,7 @@ void JsonProfile::setHeaderFile(CMString file) {
 }
 
 BOOL JsonProfile::sendEndOfJobString() { 
-	return getBool("printer", "send_end_string", FALSE); 
+	return getBool("printer", "send_end_string", TRUE); 
 }
 
 void JsonProfile::setSendEndOfJobString(BOOL enabled) {
@@ -1657,12 +1657,12 @@ void JsonProfile::setEndOfJobString(CMString string) {
 	setStringCached2(printer, end_string, string);
 }
 
-CMString JsonProfile::printCharacterSet() { 
-	return getStringCached2(printer, cset, CMString(TEXT("cp437")));
+Charset::Charset JsonProfile::printCharacterSet() { 
+	return (Charset::Charset)getInteger("printer", "charset", (int)Charset::CS_CP437);
 }
 
-void JsonProfile::setPrintCharacterSet(CMString cset) {
-	setStringCached2(printer, cset, cset);
+void JsonProfile::setPrintCharacterSet(Charset::Charset cset) {
+	setInteger("printer", "charset", (int)cset);
 }
 
 BOOL JsonProfile::printAsPostScript() { 
@@ -1718,7 +1718,7 @@ BOOL JsonProfile::bidirectionalPrinting() {
 }
 
 void JsonProfile::setBidirectionalPrinting(BOOL enabled) {
-	setBool("printer", "bidirectoinal", enabled);
+	setBool("printer", "bidirectional", enabled);
 }
 
 

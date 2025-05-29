@@ -132,8 +132,8 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page], IDD_GUI_COLORS, (DLGPROC)GuiColorPageDlgProc, GuiColorPageProc, (LPARAM)profile); page++; // *
 
 	// ----- Advanced stuff -----
-	SetupPropertyPage(hInstance, &psp[page], IDD_LOGIN,	(DLGPROC)LoginPageDlgProc, LoginPageProc, (LPARAM)profile); page++; // *
-	SetupPropertyPage(hInstance, &psp[page], IDD_PRINTER,	NULL, NULL, NULL); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_LOGIN,		(DLGPROC)LoginPageDlgProc, LoginPageProc, (LPARAM)profile); page++; // *
+	SetupPropertyPage(hInstance, &psp[page], IDD_PRINTER,	(DLGPROC)PrinterPageDlgProc, PrinterPageProc, (LPARAM)profile); page++; // *
 
 	if (conType == ConnectionProfile::CT_IP
 		|| conType == ConnectionProfile::CT_FTP) {
@@ -258,4 +258,30 @@ void setFieldInt(HWND hwndDlg, int id, int value) {
 	HWND hwnd = GetDlgItem(hwndDlg, id);
 	CMString valueStr = CMString::number(value);
 	SetWindowText(hwnd, valueStr.data());
+}
+
+void ConfigureSpinBox(HWND hwndDlg, int spinId, int fieldId, 
+						int rangeMin, int rangeMax, int value) {
+	HWND hwndSpin = GetDlgItem(hwndDlg, spinId);
+	SendMessage(hwndSpin,
+		UDM_SETBUDDY,
+		(WPARAM)GetDlgItem(hwndDlg, fieldId),
+		(LPARAM)0);
+
+#ifdef UDM_SETRANGE32 
+	SendMessage(hwndSpin,
+		UDM_SETRANGE32,
+		(WPARAM)rangeMin,
+		(LPARAM)rangeMax);
+#else
+	SendMessage(hwndSpin,
+		UDM_SETRANGE,
+		(WPARAM)0,
+		(LPARAM)MAKELONG((short)rangeMax, (short)rangeMin));
+#endif
+
+	SendMessage(hwndSpin,
+		UDM_SETPOS,
+		(WPARAM)0,
+		(LPARAM)value);
 }

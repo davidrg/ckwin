@@ -692,11 +692,11 @@ struct Date
 	virtual BOOL sendEndOfJobString() = 0;
 	virtual void setSendEndOfJobString(BOOL enabled) = 0;
 
-	virtual CMString endOfJobString() = 0;	// SHOULD BE CHECKED BY DEFAULT
+	virtual CMString endOfJobString() = 0;
 	virtual void setEndOfJobString(CMString string) = 0;
 
-	virtual CMString printCharacterSet() = 0;
-	virtual void setPrintCharacterSet(CMString cset) = 0;
+	virtual Charset::Charset printCharacterSet() = 0;
+	virtual void setPrintCharacterSet(Charset::Charset cset) = 0;
 
 	virtual BOOL printAsPostScript() = 0;
 	virtual void setPrintAsPostScript(BOOL enabled) = 0;
@@ -719,7 +719,7 @@ struct Date
 	virtual BOOL bidirectionalPrinting() = 0;
 	virtual void setBidirectionalPrinting(BOOL enabled) = 0;
 
-	virtual int printTimeoutSeconds() = 0;	// TODO: missing from the UI!
+	virtual int printTimeoutSeconds() = 0;
 	virtual void setPrintTimeoutSeconds(int seconds) = 0;
 
 	// ----- GUI -----

@@ -982,8 +982,42 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 			if (windowsPrintQueue() == CMString(DEFAULT_WIN_PRINT_QUEUE)) {
 				OutLine(TEXT("set printer /WINDOWS-QUEUE:"));
 			} else {
-				_sntprintf(buf, BUFFERSIZE, TEXT("set printer /WINDOWS-QUEUE:%s"), 
-						windowsPrintQueue().data());
+				LPTSTR q = _tcsdup(windowsPrintQueue().data());
+
+				// Transform to keyword format! There are *probably* more unicode
+				// characters we should be replacing here, but K95 doesn't handle
+				// unicode scripts yet anyway so we just do what K95 does...
+				TCHAR *c = q;
+				while (*c) {
+					switch ( *c ) {
+					case ' ':
+						*c = '_';
+						break;
+					case ',':
+						*c = '.';
+						break;
+					case ';':
+						*c = ':';
+						break;
+					case '\\':
+						*c = '/';
+						break;
+					case '?':
+						*c = '!';
+						break;
+					case '{':
+						*c = '[';
+						break;
+					case '}':
+						*c = ']';
+						break;
+					}
+					c++;
+				}
+
+
+				_sntprintf(buf, BUFFERSIZE, TEXT("set printer /WINDOWS-QUEUE:%s"), q);
+				free(q);
 				OutLine(buf);
 			}
 		}
@@ -1096,9 +1130,9 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		OutLine(buf);
 	}
 
-	if (!printCharacterSet().isNullOrWhiteSpace()) {
+	if (printCharacterSet() != Charset::CS_INVALID) {
 		_sntprintf(buf, BUFFERSIZE, TEXT("set printer /CHARACTER-SET:%s"), 
-					printCharacterSet().data());
+					Charset::getCharsetKeyword(printCharacterSet()));
 		OutLine(buf);
 	}
 	

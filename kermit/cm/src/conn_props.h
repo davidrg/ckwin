@@ -10,6 +10,8 @@ BOOL			textFieldChanged(HWND hwndField, LPTSTR originalValue);
 LPTSTR			getFieldText(HWND hwndDlg, int controlId);
 int				getFieldInt(HWND hwndDlg, int id);
 void			setFieldInt(HWND hwndDlg, int id, int value);
+void			ConfigureSpinBox(HWND hwndDlg, int spinId, int fieldId, 
+								int rangeMin, int rangeMax, int value);
 
 // Property Sheet: GENERAL
 BOOL CALLBACK	GeneralPageDlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -54,5 +56,9 @@ UINT CALLBACK	KeyboardPageProc(HWND, UINT, LPPROPSHEETPAGE);
 // Property Sheet: Logging
 BOOL CALLBACK	LoggingPageDlgProc(HWND, UINT, WPARAM, LPARAM);
 UINT CALLBACK	LoggingPageProc(HWND, UINT, LPPROPSHEETPAGE);
+
+// Property Sheet: Printer
+BOOL CALLBACK	PrinterPageDlgProc(HWND, UINT, WPARAM, LPARAM);
+UINT CALLBACK	PrinterPageProc(HWND, UINT, LPPROPSHEETPAGE);
 
 #endif /* CONN_PROPS_H */

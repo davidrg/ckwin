@@ -488,8 +488,8 @@ struct Date
 	virtual CMString endOfJobString();	// SHOULD BE CHECKED BY DEFAULT
 	virtual void setEndOfJobString(CMString string);
 
-	virtual CMString printCharacterSet();
-	virtual void setPrintCharacterSet(CMString cset);
+	virtual Charset::Charset printCharacterSet();
+	virtual void setPrintCharacterSet(Charset::Charset cset);
 
 	virtual BOOL printAsPostScript();
 	virtual void setPrintAsPostScript(BOOL enabled);
@@ -746,7 +746,6 @@ protected:
 	CMString _cached_printer_queue;
 	CMString _cached_printer_header_file;
 	CMString _cached_printer_end_string;
-	CMString _cached_printer_cset;
 	CMString _cached_gui_font_name;
 	CMString _cached_gui_font_size;
 	CMString _cached_log_connections_file;

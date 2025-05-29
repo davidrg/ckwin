@@ -48,36 +48,6 @@ CMString::CMString(LPCTSTR str) {
 
 CMString::CMString(LPCTSTR str, int allocateLength) {
 	InitFromTSTR(str, allocateLength);
-
-	/*_data = (CMStringData*)malloc(sizeof(CMStringData));
-	ZeroMemory(_data, sizeof(CMStringData));
-
-	_data->refCount = 1;
-	
-	if (str == NULL) {
-		_data->length = 0;
-		_data->isNull = TRUE;
-
-		// We'll still allocate a null terminated string just so that
-		// callers of data() don't always have to check if NULL.
-		_data->string = (LPTSTR)malloc(sizeof(TCHAR));
-		ZeroMemory(_data->string, sizeof(TCHAR));
-	} else {
-		LPTSTR buf;
-		int len = _tcsclen(str);
-		//if (allocateLength < len) allocateLength = len;
-		int buflen = sizeof(TCHAR) * (len + 1);
-		//int buflen = sizeof(TCHAR) * (allocateLength+1);
-
-		buf = (LPTSTR)malloc(buflen);
-		ZeroMemory(buf, buflen);
-
-		_tcsnccpy(buf, str, len);
-
-		_data->isNull = FALSE;
-		_data->length = len;
-		_data->string = buf;
-	}*/
 }
 
 CMString::CMString(const CMString &other) {
@@ -298,7 +268,7 @@ BOOL CMString::isNull() const {
 BOOL CMString::isNullOrWhiteSpace() const {
 	if (isNull()) return TRUE;
 
-	for (int i = 0; i < _data->length; i++) {
+	for (unsigned int i = 0; i < _data->length; i++) {
 		switch(_data->string[i]) {
 		case _T(' '):
 		case _T('\n'):

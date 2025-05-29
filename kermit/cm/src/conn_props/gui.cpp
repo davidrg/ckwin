@@ -690,34 +690,10 @@ BOOL CALLBACK GuiPageDlgProc(
 			PopulateFontSizeDDL(hwndDlg);
 			
 			// Configure spinboxes
-			HWND udm_xpos = GetDlgItem(hwndDlg, IDC_STARTUP_X_SPIN);
-			SendMessage(udm_xpos,
-				UDM_SETBUDDY,
-				(WPARAM)GetDlgItem(hwndDlg,IDC_STARTUP_X),
-				(LPARAM)0);
-			SendMessage(udm_xpos,
-				UDM_SETRANGE,
-				(WPARAM)0,
-				(LPARAM)32767);
-			SendMessage(udm_xpos,
-				UDM_SETPOS,
-				(WPARAM)0,
-				(LPARAM)profile->startupAtX());
-
-
-			HWND udm_ypos = GetDlgItem(hwndDlg, IDC_STARTUP_Y_SPIN);
-			SendMessage(udm_ypos,
-				UDM_SETBUDDY,
-				(WPARAM)GetDlgItem(hwndDlg,IDC_STARTUP_Y),
-				(LPARAM)0);
-			SendMessage(udm_ypos,
-				UDM_SETRANGE,
-				(WPARAM)0,
-				(LPARAM)32767);
-			SendMessage(udm_ypos,
-				UDM_SETPOS,
-				(WPARAM)0,
-				(LPARAM)profile->startupAtY());
+			ConfigureSpinBox(hwndDlg, IDC_STARTUP_X_SPIN, IDC_STARTUP_X, 
+							0, 32767, profile->startupAtX());
+			ConfigureSpinBox(hwndDlg, IDC_STARTUP_Y_SPIN, IDC_STARTUP_Y, 
+							0, 32767, profile->startupAtY());
 
 
 			// load initial values from profile

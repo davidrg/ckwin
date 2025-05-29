@@ -699,34 +699,10 @@ BOOL CALLBACK FileTransferPageDlgProc(
 				TRUE);
 			
 			// Configure spinboxes
-			HWND udm_pktlen = GetDlgItem(hwndDlg, IDC_TRANS_PKT_LEN_SPIN);
-			SendMessage(udm_pktlen,
-				UDM_SETBUDDY,
-				(WPARAM)GetDlgItem(hwndDlg,IDC_TRANS_PKT_LEN),
-				(LPARAM)0);
-			SendMessage(udm_pktlen,
-				UDM_SETRANGE,
-				(WPARAM)10,
-				(LPARAM)9024);
-			SendMessage(udm_pktlen,
-				UDM_SETPOS,
-				(WPARAM)0,
-				(LPARAM)profile->packetLength());
-
-
-			HWND udm_wsize = GetDlgItem(hwndDlg, IDC_TRANS_WIND_SIZE_SPIN);
-			SendMessage(udm_wsize,
-				UDM_SETBUDDY,
-				(WPARAM)GetDlgItem(hwndDlg,IDC_TRANS_WIND_SIZE),
-				(LPARAM)0);
-			SendMessage(udm_wsize,
-				UDM_SETRANGE,
-				(WPARAM)0,
-				(LPARAM)32);
-			SendMessage(udm_wsize,
-				UDM_SETPOS,
-				(WPARAM)0,
-				(LPARAM)profile->windowSize());
+			ConfigureSpinBox(hwndDlg, IDC_TRANS_PKT_LEN_SPIN, IDC_TRANS_PKT_LEN, 
+							10, 9024, profile->packetLength());
+			ConfigureSpinBox(hwndDlg, IDC_TRANS_WIND_SIZE_SPIN, IDC_TRANS_WIND_SIZE, 
+							0, 32, profile->windowSize());
 
 
 			// load initial values from profile
