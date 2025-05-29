@@ -1418,8 +1418,8 @@ _PROTOTYP( USHORT ReadCellStr, ( viocell *, PUSHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT WrtCellStr, ( viocell *, USHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT ReadCharStr, ( viocell *, PUSHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT WrtCharStrAtt, ( PCH, USHORT, USHORT, USHORT, cell_video_attr_t* ) );
-_PROTOTYP( USHORT WrtNCell, ( viocell, USHORT, USHORT, USHORT ) );
 #ifndef KUI
+_PROTOTYP( USHORT WrtNCell, ( viocell, USHORT, USHORT, USHORT ) );
 _PROTOTYP( USHORT GetMode, ( PCK_VIDEOMODEINFO ) );
 _PROTOTYP( USHORT SetMode, ( PCK_VIDEOMODEINFO ) );
 #endif /* KUI */
@@ -1441,8 +1441,9 @@ _PROTOTYP( USHORT VscrnWrtCharStrAtt, ( BYTE vmode, PCH CharStr, USHORT Length,
                          USHORT Row, USHORT Column, cell_video_attr_t* Attr ) ) ;
 _PROTOTYP( USHORT VscrnWrtUCS2StrAtt, ( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                                         USHORT Row, USHORT Column, cell_video_attr_t* Attr ) ) ;
+#ifndef KUI
 _PROTOTYP( void   TermScrnUpd, ( void * ) ) ;
-
+#endif /* KUI */
 _PROTOTYP( videoline * VscrnGetLineFromTop, ( BYTE, SHORT ) ) ;
 _PROTOTYP( videoline * VscrnGetLine, ( BYTE, SHORT ) ) ;
 _PROTOTYP( USHORT VscrnGetLineVtAttr, ( BYTE, SHORT ) ) ;
@@ -1547,7 +1548,9 @@ _PROTOTYP(void sendcharduplex, (unsigned char, int));
 _PROTOTYP(void sendcharsduplex, (unsigned char *, int, int));
 _PROTOTYP(void sendkeydef, (unsigned char *, int));
 _PROTOTYP(void checkscreenmode, (void));
+#ifndef KUI
 _PROTOTYP(void clearcmdscreen, (void));
+#endif /* KUI */
 _PROTOTYP(void cleartermscreen, (BYTE));
 _PROTOTYP(void clearscrollback, (BYTE) ) ;
 _PROTOTYP(cell_video_attr_t geterasecolor, (int));

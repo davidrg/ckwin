@@ -514,7 +514,12 @@ os2push() {                             /* not just for CONNECT mode anymore */
     }
 
     RequestScreenMutex(SEM_INDEFINITE_WAIT);
+
+    /* No reason to clear the command screen in KUI builds - the subprocess
+       doesn't affect it */
+#ifndef KUI
     clearcmdscreen();
+#endif /* KUI */
 
     if ( connectmode ) {
         restorecursormode();
@@ -698,6 +703,7 @@ getcmdcolor(void)
 #endif /* KUI */
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* clearcmdscreen                                                            */
 /*---------------------------------------------------------------------------*/
@@ -711,6 +717,7 @@ clearcmdscreen(void) {
     WrtNCell(cell, cmd_cols * (cmd_rows+1), 0, 0);
     SetCurPos( 0, 0 ) ;
 }
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* clearscrollback                                                           */

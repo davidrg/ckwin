@@ -612,6 +612,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
 
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* WrtNCell                                                                  */
 /*---------------------------------------------------------------------------*/
@@ -619,7 +620,6 @@ USHORT
 WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
 {
 #ifdef NT
-#ifndef KUI
     static LPWSTR wchars = NULL;
     static LPTSTR tchars = NULL ;
     static LPWORD attrs = NULL ;
@@ -747,11 +747,11 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
     }
     return rc ;
 
-#endif /* KUI */
 #else /* NT */
    return VioWrtNCell( (PCH) &Cell, Times, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* WrtCharStrAtt                                                             */
@@ -3861,6 +3861,7 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
     return(retval);
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* TermScrnUpd                                                               */
 /*---------------------------------------------------------------------------*/
@@ -4595,6 +4596,7 @@ TermScrnUpd( void * threadinfo)
     ckThreadEnd(threadinfo) ;
 #endif /* ONETERMUPD */
 }
+#endif /* KUI */
 
 #ifdef PCFONTS
 APIRET
