@@ -378,11 +378,20 @@ LPCTSTR telOptToString(ConnectionProfile::NegotiateOption opt) {
 	}
 }
 
+static BOOL indenting = FALSE;
 
 inline BOOL ScriptWriteLine(HANDLE hFile, LPTSTR string, HWND parent) {
 	int len = _tcslen(string) * sizeof(TCHAR);
 	BOOL rc, rc2;
 	DWORD bytesWritten;
+
+	if (indenting) {
+		rc = WriteFile(hFile, TEXT("  "), 2*sizeof(TCHAR), &bytesWritten, NULL);
+		if (!rc) {
+			MessageBox(parent, TEXT("Write failed."), TEXT("Error"), MB_OK | MB_ICONWARNING);
+			return FALSE;
+		};
+	}
 
 	rc = WriteFile(hFile, string, len, &bytesWritten, NULL);
 	rc2 = WriteFile(hFile, TEXT("\r\n"), 2*sizeof(TCHAR), &bytesWritten, NULL);
@@ -410,6 +419,8 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 	LPTSTR buf = (LPTSTR)malloc(sizeof(TCHAR) * BUFFERSIZE);
 	AppVersion ver = GetAppVersion(NULL);
 	HANDLE hFile;
+
+	indenting = FALSE;
 
 	ZeroMemory(buf, sizeof(TCHAR) * BUFFERSIZE);
 
@@ -1434,94 +1445,16 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 
 	// Setup the connection!
 	switch(connectionType()) {
-	case CT_SERIAL:
-		{
-			if (carrierDetection()) {
-				OutLine(TEXT("set carrier auto"));
-			} else {
-				OutLine(TEXT("set carrier off"));
-			}
-
-			/* TODO: If TAPI Line:
-			 * set tapi modem-dialing off
-			 * set tapi line %s
-			 *
-			 * Else...
-			 */
-
-			// Not tapi:
-			_sntprintf(buf, BUFFERSIZE, TEXT("set port %s"), 
-				line().data());
-			OutLine(buf);
-
-			_sntprintf(buf, BUFFERSIZE, TEXT("set speed %ld"), 
-				lineSpeed());
-			OutLine(buf);
-
-			switch(parity()) {
-			case PAR_NONE:
-				OutLine(TEXT("set parity none"));
-				break;
-			case PAR_SPACE:
-				OutLine(TEXT("set parity space"));
-				break;
-			case PAR_MARK:
-				OutLine(TEXT("set parity mark"));
-				break;
-			case PAR_EVEN:
-				OutLine(TEXT("set parity even"));
-				break;
-			case PAR_ODD:
-				OutLine(TEXT("set parity odd"));
-				break;
-			case PAR_SPACE_8BIT:
-				OutLine(TEXT("set parity hardware space"));
-				break;
-			case PAR_MARK_8BIT:
-				OutLine(TEXT("set parity hardware mark"));
-				break;
-			case PAR_EVEN_8BIT:
-				OutLine(TEXT("set parity hardware even"));
-				break;
-			case PAR_ODD_8BIT:
-				OutLine(TEXT("set parity hardware odd"));
-				break;
-			}
-
-			switch(stopBits()) {
-			case SB_1_0:
-				OutLine(TEXT("set stop-bits 1"));
-				break;
-			case SB_2_0:
-				OutLine(TEXT("set stop-bits 2"));
-				break;
-			}
-
-			switch (flowControl()) {
-			case FC_NONE:
-				OutLine(TEXT("set flow none"));
-				break;
-			case FC_XON_XOFF:
-				OutLine(TEXT("set flow xon/xoff"));
-				break;
-			case FC_RTS_CTS:
-				OutLine(TEXT("set flow rts/cts"));
-				break;
-			case FC_AUTO:
-				OutLine(TEXT("set flow auto"));
-				break;
-			}
-
-
-
-
+	case CT_RFC2217:
+		/* For RFC2217, carrier watch must be turned on or off *before* the connection
+		 * is made. Otherwise, if carrier-watch is on and there is no carrier the connection
+		 * will fail immediately */
+		if (carrierDetection()) {
+			OutLine(TEXT("set carrier-watch auto"));
+		} else {
+			OutLine(TEXT("set carrier-watch off"));
 		}
-	case CT_MODEM:
-		/*
-		Not supported at this time. Probably never will be supported.
-		New Zealand won't even *have* land-lines in a few years!
-		*/
-		break;
+		// fall through
 	case CT_IP:
 		{
 			/* We don't currently support network directories.
@@ -1907,9 +1840,149 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 			OutLine(buf);
 		}
 		break;
+	case CT_SERIAL:
+		// Handled below
+	default:
+		break;
 	}
 
+	// This can't go in the big switch block above because for RFC2217 connections,
+	// we need to do both IP *and* Serial connection stuff.
+	if (connectionType() == CT_SERIAL || connectionType() == CT_RFC2217) {
+	
+
+		/*if (modemConnection()) {
+			// If TAPI:
+			//		set tapi phone-number-conversions ...
+			//		set tapi modem-dialing ...
+
+			_sntprintf(buf, BUFFERSIZE, TEXT("if not equal \"\\v(modem)\" \"%s\" set modem type %s"), 
+					modemType().data(), modemType().data());
+			OutLine(buf);
+
+			// Plus... Modem settings may or may not override speed, parity, sstop bits
+			//			and flow control
+		}*/
+
+		if (connectionType() == CT_SERIAL) {
+			if (carrierDetection()) {
+				OutLine(TEXT("set carrier-watch auto"));
+			} else {
+				OutLine(TEXT("set carrier-watch off"));
+			}
+
+			/* TODO: If TAPI Line...
+			 *   TODO: If not using a modem: set tapi modem-dialing off
+			 *   set tapi line %s
+			 *
+			 * Else...
+			 */
+
+			// Not tapi:
+			_sntprintf(buf, BUFFERSIZE, TEXT("set port %s"), 
+				line().data());
+			OutLine(buf);
+		} else {
+			OutLine(TEXT("xif success {"));
+			indenting = TRUE;
+		}
+
+		/*
+		if (modemConnection()) {
+			if (errorCorrection()) {
+				OutLine(TEXT("set modem error-correction on"));
+			} else {
+				OutLine(TEXT("set modem error-correction off"));
+			}
+
+			if (dataCompression()) {
+				OutLine(TEXT("set modem compression on"));
+			} else {
+				OutLine(TEXT("set modem compression off"));
+			}
+		}*/
+
+		_sntprintf(buf, BUFFERSIZE, TEXT("set speed %ld"), 
+			lineSpeed());
+		OutLine(buf);
+
+		switch(parity()) {
+		case PAR_NONE:
+			OutLine(TEXT("set parity none"));
+			break;
+		case PAR_SPACE:
+			OutLine(TEXT("set parity space"));
+			break;
+		case PAR_MARK:
+			OutLine(TEXT("set parity mark"));
+			break;
+		case PAR_EVEN:
+			OutLine(TEXT("set parity even"));
+			break;
+		case PAR_ODD:
+			OutLine(TEXT("set parity odd"));
+			break;
+		case PAR_SPACE_8BIT:
+			OutLine(TEXT("set parity hardware space"));
+			break;
+		case PAR_MARK_8BIT:
+			OutLine(TEXT("set parity hardware mark"));
+			break;
+		case PAR_EVEN_8BIT:
+			OutLine(TEXT("set parity hardware even"));
+			break;
+		case PAR_ODD_8BIT:
+			OutLine(TEXT("set parity hardware odd"));
+			break;
+		}
+
+		switch(stopBits()) {
+		case SB_1_0:
+			OutLine(TEXT("set stop-bits 1"));
+			break;
+		case SB_2_0:
+			OutLine(TEXT("set stop-bits 2"));
+			break;
+		}
+
+		switch (flowControl()) {
+		case FC_NONE:
+			OutLine(TEXT("set flow none"));
+			break;
+		case FC_XON_XOFF:
+			OutLine(TEXT("set flow xon/xoff"));
+			break;
+		case FC_RTS_CTS:
+			OutLine(TEXT("set flow rts/cts"));
+			break;
+		case FC_AUTO:
+			OutLine(TEXT("set flow auto"));
+			break;
+		}
+
+		/* TODO - If Modem
+				set modem volume
+				set modem speaker
+				set modem speed-escape-char
+				set modem speed-match
+			TODO - If modem isn't TAPI, write out all the modem commands
+
+			TODO - If Modem, Write out location info
+
+			TODO - Write out dialing directory and configuration 
+				(set dial {confirm, convert, display, hangup, sort})
+		*/
+	}
+
+
 	// Make the connection!
+
+	/* TODO: For dialed connections, we'd do something like the
+	 * following here:
+	 *
+	 *	dial %s
+	 *	if fail end 1 DIAL Failed
+	 */
 
 	// If we have a login script file...
 	if (runLoginScriptFile() && !loginScriptFile().isNullOrWhiteSpace()) {
@@ -1924,29 +1997,19 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		case CT_NAMED_PIPE:		// Do login scripts work with any of these?
 		case CT_DLL:			// should probably test someday.
 		case CT_SERIAL:
+			OutLine(TEXT("xif success {"));
+			indenting = TRUE;
+			// Fall through
+		case CT_RFC2217:
 			{
-				OutLine(TEXT("xif success {"));
-				
-				_sntprintf(buf, BUFFERSIZE, TEXT("  take {%s}"), 
+				_sntprintf(buf, BUFFERSIZE, TEXT("take {%s}"), 
 					loginScriptFile().data());
 				OutLine(buf);
 
-				OutLine(TEXT("  if success connect"));
-
+				OutLine(TEXT("if success connect"));
+					
+				indenting = FALSE;
 				OutLine(TEXT("}"));
-			}
-			break;
-		case CT_MODEM:
-			{
-				/* We don't support dialed connections at the moment and
-				 * likely never will. But if we did, we'd do something like:
-				 *
-				 *	dial %s
-				 *	if fail end 1 DIAL Failed
-				 *  take {%s}
-				 *  if success connect
-				 */
-
 			}
 			break;
 		}
@@ -1962,27 +2025,17 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		case CT_NAMED_PIPE:		// Do login scripts work with any of these?
 		case CT_DLL:			// should probably test someday.
 		case CT_SERIAL:
+			OutLine(TEXT("xif success {"));
+			indenting = TRUE;
+			// Fall through
+		case CT_RFC2217:
 			{
-				OutLine(TEXT("xif success {"));
-				
 				OutLine(loginScript().toCRLF().data());
 
-				OutLine(TEXT("  if success connect"));
+				OutLine(TEXT("if success connect"));
 
+				indenting = FALSE;
 				OutLine(TEXT("}"));
-			}
-			break;
-		case CT_MODEM:
-			{
-				/* We don't support dialed connections at the moment and
-				 * likely never will. But if we did, we'd do something like:
-				 *
-				 *	dial %s
-				 *	if fail end 1 DIAL Failed
-				 *  (dump contents of login script, CR-LF'd)
-				 *  if success connect
-				 */
-
 			}
 			break;
 		}
@@ -1998,24 +2051,21 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 		case CT_NAMED_PIPE:		// Do login scripts work with any of these?
 		case CT_DLL:			// should probably test someday.
 		case CT_SERIAL:
+			indenting = FALSE;
+			OutLine(TEXT("if success connect"));
+			break;
+		case CT_RFC2217:
 			{
 				OutLine(TEXT("if success connect"));
-			}
-			break;
-		case CT_MODEM:
-			{
-				/* We don't support dialed connections at the moment and
-				 * likely never will. But if we did, we'd do something like:
-				 *
-				 *	dial %s
-				 *  if success connect
-				 */
+				indenting = FALSE;
+				OutLine(TEXT("}"));
 			}
 			break;
 		case CT_FTP:
 			break; // Nothing to do for FTP
 		}
 	}
+	indenting = FALSE;
 
 	CloseHandle(hFile);
 

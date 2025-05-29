@@ -30,7 +30,7 @@ public:
 		CT_PTY = 7,			// Windows 10 v1809 or newer
 		CT_PIPE = 8,		// Regular pipe
 		CT_DLL = 9,			// set network type 
-		CT_MODEM = 10,		// Dialed serial. We'll probably never support this.
+		CT_RFC2217 = 10,	// Serial over Telnet
 		CT_CTERM = 11
 	};
 
@@ -224,7 +224,7 @@ public:
 	// ----- Connection -----
 	virtual ConnectionType connectionType() = 0;
 
-	// If CT_SSH, CT_FTP, CT_IP
+	// If CT_SSH, CT_FTP, CT_IP, CT_RFC2217
 	virtual CMString hostname() = 0;  // Or IP
 	virtual void setHostname(CMString hostname) = 0;	
 
@@ -432,6 +432,11 @@ public:
 	virtual BOOL carrierDetection() = 0;
 	virtual void setCarrierDetection(BOOL enabled) = 0;
 
+	//virtual BOOL modemConnection() = 0;
+	//virtual void setModemConnection(BOOL enabled) = 0;
+
+	//virtual CMString modemType() = 0;
+	//virtual void setModemType(CMString modemType) = 0;
 	
 	// ----- Telnet -----
 	virtual NegotiateOption telnetAuthenticationOption() = 0;

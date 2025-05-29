@@ -48,6 +48,8 @@
 #define IDD_CONNECTION_BASIC            136
 #define IDD_CONNECTION_CMD              137
 #define IDD_CONNECTION_SERIAL           138
+#define IDD_CONNECTION_SERIAL1          139
+#define IDD_CONNECTION_RFC2217          139
 #define IDC_NAME                        1000
 #define IDC_GENERAL_NAME                1000
 #define IDC_DESCRIPTION                 1001

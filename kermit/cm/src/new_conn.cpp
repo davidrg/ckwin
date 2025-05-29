@@ -21,7 +21,8 @@ HINSTANCE _hInstance;
 #define CONOTHER_DEFAULT		TEXT("default")
 #define CONOTHER_TELNET			TEXT("telnet with negotiations")
 #define CONOTHER_TELNET_NNEGO	TEXT("telnet")
-#define CONOTHER_IKS			TEXT("iks")
+#define CONOTHER_IKS			TEXT("Internet Kermit Service")
+#define CONOTHER_RFC2217		TEXT("RFC2217 Serial")
 #define CONOTHER_RLOGIN			TEXT("rlogin")
 #define CONOTHER_RAW			TEXT("raw socket")
 #define CONOTHER_EK4LOGIN		TEXT("ek4login")
@@ -72,6 +73,7 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 			SendMessage(hwndIPP,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) CONOTHER_TELNET);
 			SendMessage(hwndIPP,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) CONOTHER_TELNET_NNEGO);
 			SendMessage(hwndIPP,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) CONOTHER_IKS);
+			SendMessage(hwndIPP,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) CONOTHER_RFC2217);
 			SendMessage(hwndIPP,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) CONOTHER_RLOGIN);
 			SendMessage(hwndIPP,(UINT) CB_ADDSTRING,(WPARAM) 0,(LPARAM) CONOTHER_RAW);
 			
@@ -218,7 +220,10 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 						} else if (lstrcmp(buf, CONOTHER_CTERM) == 0) {
 							ipType = ConnectionProfile::IPP_DEFAULT;
 							conType = ConnectionProfile::CT_CTERM;
-						}
+						} else if (lstrcmp(buf, CONOTHER_RFC2217) == 0) {
+							ipType = ConnectionProfile::IPP_TELNET_NEGO;
+							conType = ConnectionProfile::CT_RFC2217;
+						} 
 
 						free(buf);
 					} 
@@ -247,7 +252,8 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 						if (conType == ConnectionProfile::CT_SSH ||
 							conType == ConnectionProfile::CT_FTP ||
-							conType == ConnectionProfile::CT_IP) {
+							conType == ConnectionProfile::CT_IP ||
+							conType == ConnectionProfile::CT_RFC2217) {
 
 							portLen = GetWindowTextLength(lePort) + 1;
 							port = (LPTSTR)malloc(portLen * sizeof(TCHAR));
@@ -271,6 +277,7 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 						case ConnectionProfile::CT_SSH:
 						case ConnectionProfile::CT_FTP:
 						case ConnectionProfile::CT_IP:
+						case ConnectionProfile::CT_RFC2217:
 							prof->setIpConnectionDetails(host, _ttoi(port), ipType);
 							break;
 						case ConnectionProfile::CT_SERIAL:
@@ -370,7 +377,8 @@ BOOL CALLBACK NewConnectionDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 							SetWindowText(lePort, TEXT("2105"));
 						} else if (lstrcmp(buf, CONOTHER_TELNET) == 0 || 
 								   lstrcmp(buf, CONOTHER_DEFAULT) == 0 || 
-								   lstrcmp(buf, CONOTHER_TELNET_NNEGO) == 0) {
+								   lstrcmp(buf, CONOTHER_TELNET_NNEGO) == 0 ||
+								   lstrcmp(buf, CONOTHER_RFC2217) == 0) {
 							// Telnet is officially on port 23.
 							SetWindowText(lePort, TEXT("23"));
 						} if (lstrcmp(buf, CONOTHER_SSL) == 0 || 

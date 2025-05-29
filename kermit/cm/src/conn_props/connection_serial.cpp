@@ -10,6 +10,10 @@
 /*
   Serial		--> IDD_CONNECTION_SERIAL
 	Port				Combo box		IDC_CONN_LINE
+  RFC2217		--> IDD_CONNECTION_RFC2217
+	Hostname			Text box		IDC_CONN_HOSTNAME
+	Port				Text box		IDC_CONN_PORT
+  Common
 	Speed				Drop-down list	IDC_CONN_SPEED
 	Flow Control		Drop-down list	IDC_CONN_FLOW	(four opts)
 	Parity				Drop-down list	IDC_CONN_PARITY
@@ -81,10 +85,12 @@ typedef struct tagDialogFieldStatus {
 // Connection profile we're editing
 static ConnectionProfile *profile;
 
-static const int fieldCount = 9;
+static const int fieldCount = 11;
 
 static DialogFieldStatus fieldStatus[] = {
-	{ IDC_CONN_LINE,				FALSE	},
+	{ IDC_CONN_LINE,				FALSE	},	// Serial only
+	{ IDC_CONN_HOSTNAME,			FALSE	},	// RFC2217 only
+	{ IDC_CONN_PORT,				FALSE	},  // RFC2217 only
 	{ IDC_CONN_SPEED,				FALSE	},
 	{ IDC_CONN_FLOW,				FALSE	},
 	{ IDC_CONN_PARITY,				FALSE	},
@@ -93,7 +99,6 @@ static DialogFieldStatus fieldStatus[] = {
 	{ IDC_CONN_DATA_COMPRESSION,	FALSE	},
 	{ IDC_CONN_CARRIER_DETECT,		FALSE	},
 	{ IDC_CONN_EXIT_ON_DISCON,		FALSE	}
-
 };
 
 static BOOL isDirty(int id) {
@@ -150,8 +155,14 @@ BOOL CALLBACK SerialConnectionPageDlgProc(
 		{	
 			int i;
 
-			loadSerialPortDropdown(hwndDlg, IDC_CONN_LINE);
-			SetWindowText(GetDlgItem(hwndDlg, IDC_CONN_LINE), profile->line().data());
+			if (profile->connectionType() == ConnectionProfile::CT_SERIAL) {
+				loadSerialPortDropdown(hwndDlg, IDC_CONN_LINE);
+				SetWindowText(GetDlgItem(hwndDlg, IDC_CONN_HOSTNAME), profile->line().data());
+			} else if (profile->connectionType() == ConnectionProfile::CT_RFC2217) {
+				SetWindowText(GetDlgItem(hwndDlg, IDC_CONN_HOSTNAME), 
+					profile->hostname().data());
+				setFieldInt(hwndDlg, IDC_CONN_PORT, profile->port());
+			}
 			
 			// Populate line speeds
 			HWND hwndLineSpeed = GetDlgItem(hwndDlg, IDC_CONN_SPEED);
@@ -332,9 +343,33 @@ BOOL CALLBACK SerialConnectionPageDlgProc(
 				break;
 			case IDC_CONN_LINE:
 				{
-					BOOL changed  = textFieldChanged(
-						GetDlgItem(hwndDlg, IDC_CONN_LINE),
-						profile->line().data());
+					if (profile->connectionType() == ConnectionProfile::CT_SERIAL) {
+						BOOL changed  = textFieldChanged(
+							GetDlgItem(hwndDlg, wID),
+							profile->line().data());
+
+						setDirty(wID, changed);
+						FieldChanged(hwndDlg);
+					}
+				}
+				break;
+			case IDC_CONN_HOSTNAME:
+				{
+					if (profile->connectionType() == ConnectionProfile::CT_RFC2217) {
+						BOOL changed  = textFieldChanged(
+							GetDlgItem(hwndDlg, wID),
+							profile->hostname().data());
+
+						setDirty(wID, changed);
+						FieldChanged(hwndDlg);
+					}
+				}
+				break;
+			case IDC_CONN_PORT:
+				if (profile->connectionType() == ConnectionProfile::CT_RFC2217) {
+					int newValue = getFieldInt(hwndDlg, wID);
+					int savedValue = profile->port();
+					BOOL changed = newValue != savedValue;
 
 					setDirty(wID, changed);
 					FieldChanged(hwndDlg);
@@ -416,13 +451,30 @@ BOOL CALLBACK SerialConnectionPageDlgProc(
 							IsDlgButtonChecked(hwndDlg, IDC_CONN_CARRIER_DETECT) == BST_CHECKED);
 					}
 
-					if (isDirty(IDC_CONN_LINE)) {
-						LPTSTR buf = getFieldText(hwndDlg, IDC_CONN_LINE);
-						
-						profile->setLine(buf);
+					if (profile->connectionType() == ConnectionProfile::CT_SERIAL) {
+						if (isDirty(IDC_CONN_LINE)) {
 
-						free(buf);
+							LPTSTR buf = getFieldText(hwndDlg, IDC_CONN_LINE);
+							
+							profile->setLine(buf);
+
+							free(buf);
+						}
+					} else {
+						if (isDirty(IDC_CONN_HOSTNAME)) {
+
+							LPTSTR buf = getFieldText(hwndDlg, IDC_CONN_HOSTNAME);
+							
+							profile->setHostname(buf);
+
+							free(buf);
+						}
+
+						if (isDirty(IDC_CONN_PORT)) {
+							profile->setPort(getFieldInt(hwndDlg, IDC_CONN_PORT));
+						}
 					}
+
 
 					if (isDirty(IDC_CONN_SPEED)) {
 						HWND hwnd = GetDlgItem(hwndDlg, IDC_CONN_SPEED);

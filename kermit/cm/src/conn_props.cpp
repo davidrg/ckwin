@@ -49,6 +49,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	case ConnectionProfile::CT_FTP:
 		pageCount = 12; break; // Excluded: IDD_TERMINAL, IDD_TERM_COLORS, IDD_TELNET
 	case ConnectionProfile::CT_IP:
+	case ConnectionProfile::CT_RFC2217:
 		pageCount = 14; break; // Excluded: IDD_FTP
 	default:
 		OutputDebugString(TEXT("ConnProps: Unrecognised Connection Type"));
@@ -81,11 +82,16 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 		// This requires hostname, port plus a drop-down for protocol.
 		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_IP, (DLGPROC)ConnectionPageDlgProc, ConnectionPageProc, (LPARAM)profile); page++;
 		break;
-	case ConnectionProfile::CT_MODEM:
 	case ConnectionProfile::CT_SERIAL:
 		// These require a bunch of drop-downs and checkboxes to configure
 		// the serial line
 		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_SERIAL, 
+			(DLGPROC)SerialConnectionPageDlgProc, SerialConnectionPageProc, (LPARAM)profile); page++;
+		break;
+	case ConnectionProfile::CT_RFC2217:
+		// Like the serial one, but it trades the serial port drop-down for 
+		// hostname and IP fields
+		SetupPropertyPage(hInstance, &psp[page], IDD_CONNECTION_RFC2217, 
 			(DLGPROC)SerialConnectionPageDlgProc, SerialConnectionPageProc, (LPARAM)profile); page++;
 		break;
 	case ConnectionProfile::CT_LAT:
@@ -107,7 +113,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 		// TODO: Maybe some subset of the telnet page? Some telnet envars are used for SSH.
 	}
 
-	if (conType == ConnectionProfile::CT_IP) {
+	if (conType == ConnectionProfile::CT_IP || conType == ConnectionProfile::CT_RFC2217) {
 		
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TELNET,	NULL, NULL, NULL); page++;
 	}
@@ -136,6 +142,7 @@ int DoPropSheet(HWND hWnd, HINSTANCE hInstance, ConnectionProfile *profile) {
 	SetupPropertyPage(hInstance, &psp[page], IDD_PRINTER,	(DLGPROC)PrinterPageDlgProc, PrinterPageProc, (LPARAM)profile); page++; // *
 
 	if (conType == ConnectionProfile::CT_IP
+		|| conType == ConnectionProfile::CT_RFC2217
 		|| conType == ConnectionProfile::CT_FTP) {
 		// TODO: Enable IDD_TCPIP for SSH when those settings can affect SSH
 		SetupPropertyPage(hInstance, &psp[page],  IDD_TCPIP,	NULL, NULL, NULL); page++;
