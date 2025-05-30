@@ -525,6 +525,8 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
                     pData[j++] = utolxlat(selection[i]);
             pData[j] = '\0';
             putkeystr( vmode, pData );
+
+            free(pData);
         }
     } else {
         /* The Vscrn is in the local character set                */

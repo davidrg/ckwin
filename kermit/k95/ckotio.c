@@ -2568,7 +2568,7 @@ ttimoff() {                             /* Turn off any timer interrupts */
 
 
 /* O S 2 S E T T I M O -- set read and write timeouts */
-
+/* spd is connetion speed, modem is if connection is via modem or not */
 int
 os2settimo(int spd, int modem)
 {
@@ -2594,6 +2594,12 @@ os2settimo(int spd, int modem)
 
     if ( maxow > maxow_usr )
         maxow = maxow_usr;
+
+    /* A number of values are divided by spd, making a zero-value a bit risky.
+     * While we only get zero passed in here by sysinit() which happens to work
+     * during program start, we're better off forcing a valid value just in case. */
+    if (spd <= 0)
+        spd = 1;
 
 #ifdef CK_TAPI
     if ( tttapi && !tapipass ) {

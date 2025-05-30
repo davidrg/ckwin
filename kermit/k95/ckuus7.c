@@ -11461,7 +11461,7 @@ setlin(xx, zz, fc) int xx, zz, fc;
 #ifdef SSHBUILTIN
         if (mynet == NET_SSH) {		/* SSH connection */
             int k, havehost = 0, trips = 0;
-            int    tmpver = -1, tmpxfw = -1, tmpssh_cas;
+            int    tmpver = -1, tmpxfw = -1, tmpssh_cas = FALSE;
 #ifndef SSHTEST
             extern int sl_ssh_xfw, sl_ssh_xfw_saved;
             extern int sl_ssh_ver, sl_ssh_ver_saved;

@@ -582,6 +582,7 @@ wysecharattr( int ch )
     a.unerasable = attrib.unerasable ;  /* Erasable */
     a.graphic = FALSE ;                 /* Not graphic character */
     a.wyseattr = FALSE ;                /* WYSE attribute */
+    a.italic = FALSE;                   /* No Italic */
 
     debug(F111,"Wyse","Character Attribute",ch);
 

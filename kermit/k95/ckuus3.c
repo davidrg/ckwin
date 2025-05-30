@@ -8650,6 +8650,7 @@ dosetssh() {
             }
             return(1);
         }
+        break;
 
       case SSH_V2:                      /* SSH V2 */
         if ((y = cmkey(sshv2tab,nsshv2tab,"","", xxstring)) < 0)
