@@ -3281,6 +3281,7 @@ ktab_ret ssh_get_keytab(int keytab_id) {
         }
 #endif /* SSH_V1 */
         default: {
+            ret.ktab = NULL;
             ret.rc = -1;
         }
     }
