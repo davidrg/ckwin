@@ -74,6 +74,14 @@ WIN32_VERSION=0x0400
 WIN32_VERSION=0x0500
 !endif
 
+!if ($(MSC_VER) > 150)
+# Visual C++ 2010 and newer have all the modern shell stuff. Visual C++ 2008
+# should support it too provided the Windows 7 SDK is installed. Turn on support
+# for JumpLists
+CKF_JUMPLISTS=yes
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKMODERNSHELL
+!endif
+
 !if ($(MSC_VER) > 120)
 # Shell Notify requires Windows 2000 and Visual C++ 2002 (7.0) or newer
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY

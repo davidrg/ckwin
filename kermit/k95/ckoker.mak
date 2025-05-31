@@ -124,7 +124,7 @@ MSC_VER = 80
 TARGET_CPU = x86
 !endif
 
-WIN32_VERSION=0x0400]
+WIN32_VERSION=0x0400
 
 # So that we can set the minimum subsystem version when needed
 SUBSYSTEM_CONSOLE=console
@@ -967,6 +967,11 @@ KUILIBS = $(KUILIBS) wshload.lib
 !if "$(MIPS_CENTAUR)" == "yes"
 KUILIBS = $(KUILIBS) libcmt.lib
 !endif
+
+!if "$(CKF_JUMPLISTS)" == "yes"
+KUILIBS = $(KUILIBS) Shell32.lib
+!endif
+
 
 # Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
