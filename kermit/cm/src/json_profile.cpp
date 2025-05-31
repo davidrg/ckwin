@@ -1855,9 +1855,9 @@ RGB8BitColor JsonProfile::rgbBlack() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_black", "r", 0), 
-				getInteger("gui", "color_black", "g", 0), 
-				getInteger("gui", "color_black", "b", 0) 
+				(signed short)getInteger("gui", "color_black", "r", 0),
+				(signed short)getInteger("gui", "color_black", "g", 0),
+				(signed short)getInteger("gui", "color_black", "b", 0)
 		}; 
 		result = x;
 	}
@@ -1879,9 +1879,9 @@ RGB8BitColor JsonProfile::rgbBlue() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_blue", "r", 0), 
-				getInteger("gui", "color_blue", "g", 0), 
-				getInteger("gui", "color_blue", "b", 128) 
+				(signed short)getInteger("gui", "color_blue", "r", 0),
+				(signed short)getInteger("gui", "color_blue", "g", 0),
+				(signed short)getInteger("gui", "color_blue", "b", 128)
 		}; 
 		result = x;
 	}
@@ -1903,9 +1903,9 @@ RGB8BitColor JsonProfile::rgbGreen() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_green", "r", 0), 
-				getInteger("gui", "color_green", "g", 128), 
-				getInteger("gui", "color_green", "b", 0) 
+				(signed short)getInteger("gui", "color_green", "r", 0),
+				(signed short)getInteger("gui", "color_green", "g", 128),
+				(signed short)getInteger("gui", "color_green", "b", 0)
 		}; 
 		result = x;
 	}
@@ -1927,9 +1927,9 @@ RGB8BitColor JsonProfile::rgbCyan() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_cyan", "r", 0), 
-				getInteger("gui", "color_cyan", "g", 128), 
-				getInteger("gui", "color_cyan", "b", 128) 
+				(signed short)getInteger("gui", "color_cyan", "r", 0),
+				(signed short)getInteger("gui", "color_cyan", "g", 128),
+				(signed short)getInteger("gui", "color_cyan", "b", 128)
 		}; 
 		result = x;
 	}
@@ -1951,9 +1951,9 @@ RGB8BitColor JsonProfile::rgbRed() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_red", "r", 127), 
-				getInteger("gui", "color_red", "g", 0), 
-				getInteger("gui", "color_red", "b", 0) 
+				(signed short)getInteger("gui", "color_red", "r", 127),
+				(signed short)getInteger("gui", "color_red", "g", 0),
+				(signed short)getInteger("gui", "color_red", "b", 0)
 		}; 
 		result = x;
 	}
@@ -1975,9 +1975,9 @@ RGB8BitColor JsonProfile::rgbMagenta() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_magenta", "r", 128), 
-				getInteger("gui", "color_magenta", "g", 0), 
-				getInteger("gui", "color_magenta", "b", 128) 
+				(signed short)getInteger("gui", "color_magenta", "r", 128),
+				(signed short)getInteger("gui", "color_magenta", "g", 0),
+				(signed short)getInteger("gui", "color_magenta", "b", 128)
 		}; 
 		result = x;
 	}
@@ -1999,9 +1999,9 @@ RGB8BitColor JsonProfile::rgbBrown() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_brown", "r", 128), 
-				getInteger("gui", "color_brown", "g", 0), 
-				getInteger("gui", "color_brown", "b", 128) 
+				(signed short)getInteger("gui", "color_brown", "r", 128),
+				(signed short)getInteger("gui", "color_brown", "g", 0),
+				(signed short)getInteger("gui", "color_brown", "b", 128)
 		}; 
 		result = x;
 	}
@@ -2023,9 +2023,9 @@ RGB8BitColor JsonProfile::rgbLightGray() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_lgray", "r", 192), 
-				getInteger("gui", "color_lgray", "g", 192), 
-				getInteger("gui", "color_lgray", "b", 192) 
+				(signed short)getInteger("gui", "color_lgray", "r", 192),
+				(signed short)getInteger("gui", "color_lgray", "g", 192),
+				(signed short)getInteger("gui", "color_lgray", "b", 192)
 		}; 
 		result = x;
 	}
@@ -2047,9 +2047,9 @@ RGB8BitColor JsonProfile::rgbDarkGray() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_dgray", "r", 128), 
-				getInteger("gui", "color_dgray", "g", 128), 
-				getInteger("gui", "color_dgray", "b", 128) 
+				(signed short)getInteger("gui", "color_dgray", "r", 128),
+				(signed short)getInteger("gui", "color_dgray", "g", 128),
+				(signed short)getInteger("gui", "color_dgray", "b", 128)
 		}; 
 		result = x;
 	}
@@ -2071,9 +2071,9 @@ RGB8BitColor JsonProfile::rgbLightBlue() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_lblue", "r", 0), 
-				getInteger("gui", "color_lblue", "g", 0), 
-				getInteger("gui", "color_lblue", "b", 255) 
+				(signed short)getInteger("gui", "color_lblue", "r", 0),
+				(signed short)getInteger("gui", "color_lblue", "g", 0),
+				(signed short)getInteger("gui", "color_lblue", "b", 255)
 		}; 
 		result = x;
 	}
@@ -2095,9 +2095,9 @@ RGB8BitColor JsonProfile::rgbLightGreen() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_lgreen", "r", 0), 
-				getInteger("gui", "color_lgreen", "g", 255), 
-				getInteger("gui", "color_lgreen", "b", 0) 
+				(signed short)getInteger("gui", "color_lgreen", "r", 0),
+				(signed short)getInteger("gui", "color_lgreen", "g", 255),
+				(signed short)getInteger("gui", "color_lgreen", "b", 0)
 		}; 
 		result = x;
 	}
@@ -2119,9 +2119,9 @@ RGB8BitColor JsonProfile::rgbLightCyan() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_lcyan", "r", 0), 
-				getInteger("gui", "color_lcyan", "g", 255), 
-				getInteger("gui", "color_lcyan", "b", 255) 
+				(signed short)getInteger("gui", "color_lcyan", "r", 0),
+				(signed short)getInteger("gui", "color_lcyan", "g", 255),
+				(signed short)getInteger("gui", "color_lcyan", "b", 255)
 		}; 
 		result = x;
 	}
@@ -2143,9 +2143,9 @@ RGB8BitColor JsonProfile::rgbLightRed() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_lred", "r", 255), 
-				getInteger("gui", "color_lred", "g", 0), 
-				getInteger("gui", "color_lred", "b", 0) 
+				(signed short)getInteger("gui", "color_lred", "r", 255),
+				(signed short)getInteger("gui", "color_lred", "g", 0),
+				(signed short)getInteger("gui", "color_lred", "b", 0)
 		}; 
 		result = x;
 	}
@@ -2167,9 +2167,9 @@ RGB8BitColor JsonProfile::rgbLightMagenta() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_lmagenta", "r", 255), 
-				getInteger("gui", "color_lmagenta", "g", 0), 
-				getInteger("gui", "color_lmagenta", "b", 255) 
+				(signed short)getInteger("gui", "color_lmagenta", "r", 255),
+				(signed short)getInteger("gui", "color_lmagenta", "g", 0),
+				(signed short)getInteger("gui", "color_lmagenta", "b", 255)
 		}; 
 		result = x;
 	}
@@ -2191,9 +2191,9 @@ RGB8BitColor JsonProfile::rgbYellow() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_yellow", "r", 255), 
-				getInteger("gui", "color_yellow", "g", 255), 
-				getInteger("gui", "color_yellow", "b", 0) 
+				(signed short)getInteger("gui", "color_yellow", "r", 255),
+				(signed short)getInteger("gui", "color_yellow", "g", 255),
+				(signed short)getInteger("gui", "color_yellow", "b", 0)
 		}; 
 		result = x;
 	}
@@ -2215,9 +2215,9 @@ RGB8BitColor JsonProfile::rgbWhite() {
 		delete theme;
 	} else {
 		RGB8BitColor x = { 
-				getInteger("gui", "color_white", "r", 255), 
-				getInteger("gui", "color_white", "g", 255), 
-				getInteger("gui", "color_white", "b", 255) 
+				(signed short)getInteger("gui", "color_white", "r", 255),
+				(signed short)getInteger("gui", "color_white", "g", 255),
+				(signed short)getInteger("gui", "color_white", "b", 255)
 		}; 
 		result = x;
 	}

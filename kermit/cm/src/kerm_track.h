@@ -88,7 +88,7 @@ public:
 
 	static void removeInstance(int id);
 	
-
+	static BOOL anyInstances();
 
 private:
 	static int _nextInstanceId;

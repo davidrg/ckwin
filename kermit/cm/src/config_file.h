@@ -27,6 +27,10 @@ public:
 	virtual ConnectionProfile* createProfile(int templateId,
 		CMString name, ConnectionProfile::ConnectionType conType) = 0;
 
+	virtual void setMostRecentlyUsedProfile(ConnectionProfile* profile) = 0;
+	virtual void removeMostRecentlyUsedProfile(ConnectionProfile* profile) = 0;
+	virtual unsigned int getMostRecentlyUsedProfiles(int outProfileIds[], int outProfileLength) = 0;
+
 	//////// COLOR THEMES ////////
 	virtual int defaultThemeId();
 	virtual int colorThemeCount() const = 0;

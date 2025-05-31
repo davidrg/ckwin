@@ -139,6 +139,32 @@ CMString CMString::fromUtf8(char* str) {
 #endif 
 }
 
+#ifndef UNICODE
+wchar_t* CMString::toUtf16() {
+	wchar_t* buf = NULL;
+
+	int lengthRequired = MultiByteToWideChar(
+		CP_UTF8,
+		0,			// Must be 0 for CP_UTF8
+		data(),
+		-1,			// -1 for null terminated string
+		buf,
+		0);
+
+	buf = (wchar_t*)malloc(lengthRequired * sizeof(wchar_t));
+
+	MultiByteToWideChar(
+		CP_UTF8,
+		0,			// Must be 0 for CP_UTF8
+		data(),
+		-1,			// -1 for null terminated string
+		buf,
+		lengthRequired);
+
+	return buf;
+}
+#endif
+
 CMString CMString::number(int i, int base) {
 	LPTSTR buffer[33];
 	ZeroMemory(buffer, 33 * sizeof(TCHAR));
