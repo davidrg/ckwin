@@ -1492,6 +1492,7 @@ END
 IDI_LOGO                ICON    DISCARDABLE     "logo.ico"
 IDI_TERMINAL_CONN       ICON    DISCARDABLE     "terminal_conn.ico"
 IDI_TERMINAL            ICON    DISCARDABLE     "terminal.ico"
+IDI_CM                  ICON    DISCARDABLE     "cm.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

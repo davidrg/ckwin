@@ -1377,6 +1377,7 @@ DEP_RSC_CM_RC=\
 	".\..\logo.ico"\
 	"..\terminal_conn.ico"\
 	"..\terminal.ico"\
+	"..\cm.ico"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
