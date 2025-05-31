@@ -48,8 +48,10 @@
 #define IDD_CONNECTION_BASIC            136
 #define IDD_CONNECTION_CMD              137
 #define IDD_CONNECTION_SERIAL           138
-#define IDD_CONNECTION_SERIAL1          139
 #define IDD_CONNECTION_RFC2217          139
+#define IDI_TERMINAL_CONN               139
+#define IDI_ICON1                       140
+#define IDI_TERMINAL                    140
 #define IDC_NAME                        1000
 #define IDC_GENERAL_NAME                1000
 #define IDC_DESCRIPTION                 1001
@@ -416,7 +418,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        136
+#define _APS_NEXT_RESOURCE_VALUE        141
 #define _APS_NEXT_COMMAND_VALUE         40037
 #define _APS_NEXT_CONTROL_VALUE         1220
 #define _APS_NEXT_SYMED_VALUE           103

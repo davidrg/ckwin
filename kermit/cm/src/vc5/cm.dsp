@@ -293,17 +293,6 @@ SOURCE=..\charset.h
 # Begin Source File
 
 SOURCE=..\cm.rc
-
-!IF  "$(CFG)" == "cm - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
-
-!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -368,6 +357,14 @@ SOURCE=..\term_info.cpp
 # Begin Source File
 
 SOURCE=..\term_info.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\terminal.ico
+# End Source File
+# Begin Source File
+
+SOURCE=..\terminal_conn.ico
 # End Source File
 # Begin Source File
 
