@@ -130,6 +130,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
    `SET TERMINAL COLOR DIM` is used.
 
+### Bug fixes
+ - Fixed an inssue introduced in beta 7 which could cause SSH connections made
+   via the dialer to cause K95 to crash
+
 ### New terminal control sequences
 > [!NOTE]
 > Until Kermit 95 gets a VT525 terminal type option, control sequences marked
