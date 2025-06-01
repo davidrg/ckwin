@@ -198,6 +198,7 @@ DWORD ConnectionProfile::connect(HWND parent) {
 	if (useGUIKermit()) {
 		int len = fontName().length();
 		LPTSTR font = (LPTSTR)malloc(sizeof(TCHAR) * (len + 1));
+		memset(font, 0, sizeof(font));
 
 		_tcsncpy(font, fontName().data(), len);
 
