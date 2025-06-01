@@ -9,6 +9,7 @@
 #include "json_profile.h"
 #include "json_color_theme.h"
 
+static const int MRU_MAX = 30;
 
 JsonConfigFile::JsonConfigFile(HWND parent, LPTSTR filename) : ConfigFile() {
 
@@ -309,6 +310,112 @@ ConnectionProfile *JsonConfigFile::createProfile(
 	return profile;
 }
 
+void JsonConfigFile::setMostRecentlyUsedProfile(ConnectionProfile *profile) {
+	int mruProfiles[MRU_MAX];
+	int profiles = getMostRecentlyUsedProfiles(mruProfiles, MRU_MAX);
+
+	int id = profile->id();
+
+	cJSON *mruArray = cJSON_CreateArray();
+	if (mruArray == NULL) return;
+
+	cJSON *item = cJSON_CreateNumber(id);
+	if (item == NULL) {
+		cJSON_Delete(mruArray);
+		return;
+	}
+
+	// Add the supplied profile to the start of the MRU list
+	//cJSON_SetIntValue(item, id);
+	cJSON_AddItemToArray(mruArray, item);
+
+	// Then iterate through everything else thats already in the list
+	for (int i = 0; i < profiles; i++) {
+		// Don't want to add this ID twice
+		if (mruProfiles[i] != id) {
+			item = cJSON_CreateNumber(mruProfiles[i]);
+			if (item == NULL) {
+				cJSON_Delete(mruArray);
+				return;
+			}
+
+			cJSON_AddItemToArray(mruArray, item);
+		}
+	}
+
+	cJSON *mruExisting = cJSON_GetObjectItemCaseSensitive(jsonFile, "profile_mru");
+	if (mruExisting == NULL) {
+		cJSON_AddItemToObject(jsonFile, "profile_mru", mruArray);
+	} else {
+		cJSON_ReplaceItemInObjectCaseSensitive(jsonFile, "profile_mru", mruArray);
+	}
+}
+
+void JsonConfigFile::removeMostRecentlyUsedProfile(ConnectionProfile *profile) {
+	int mruProfiles[MRU_MAX];
+	int profiles = getMostRecentlyUsedProfiles(mruProfiles, MRU_MAX);
+	int id = profile->id();
+
+	BOOL found = FALSE;
+	for (int i = 0; i < profiles; i++) {
+		if (mruProfiles[i] == id) {
+			found = TRUE;
+			break;
+		}
+	}
+
+	if (!found) {
+		// Specified profile isn't in the MRU list. Nothing to do.
+		return;
+	}
+
+	// Profile is in the MRU list. So we need to recreate it, minus the
+	// specified profile.
+
+	cJSON *mruArray = cJSON_CreateArray();
+	if (mruArray == NULL) return;
+
+	// Then iterate through everything else thats already in the list
+	for (int i = 0; i < profiles; i++) {
+		// Skip over the supplied profile if we see it.
+		if (mruProfiles[i] != id) {
+			cJSON *item = cJSON_CreateNumber(mruProfiles[i]);
+			if (item == NULL) {
+				cJSON_Delete(mruArray);
+				return;
+			}
+
+			//cJSON_SetIntValue(item, mruProfiles[i]);
+			cJSON_AddItemToArray(mruArray, item);
+		}
+	}
+
+	cJSON *mruExisting = cJSON_GetObjectItemCaseSensitive(jsonFile, "profile_mru");
+	if (mruExisting == NULL) {
+		cJSON_AddItemToObject(jsonFile, "profile_mru", mruArray);
+	} else {
+		cJSON_ReplaceItemInObjectCaseSensitive(jsonFile, "profile_mru", mruArray);
+	}
+}
+
+unsigned int JsonConfigFile::getMostRecentlyUsedProfiles(
+		int outProfileIds[], int outProfileLength) {
+
+	if (outProfileLength == 0) return MRU_MAX;
+	if (outProfileIds == NULL) return 0;
+	cJSON *mruList = cJSON_GetObjectItemCaseSensitive(jsonFile, "profile_mru");
+
+	int mruCount = 0;
+	cJSON *arrayItem = 0;
+	cJSON_ArrayForEach(arrayItem, mruList) {
+		if (arrayItem != NULL && cJSON_IsNumber(arrayItem)) {
+			outProfileIds[mruCount] = arrayItem->valueint;
+			mruCount++;
+		}
+		if (mruCount == outProfileLength) return mruCount;
+	}
+	return mruCount;
+}
 
 // -----------------------------------------------------------
 

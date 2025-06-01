@@ -33,6 +33,13 @@ public:
 		int templateId, CMString name,
 		ConnectionProfile::ConnectionType conType);
 
+	// TODO: On profile delete, removeMostRecentlyUsedProfile
+	// And also note that KermitInstance holds on to ConnectionProfile instances.
+
+	virtual void setMostRecentlyUsedProfile(ConnectionProfile* profile);
+	virtual void removeMostRecentlyUsedProfile(ConnectionProfile* profile);
+	virtual unsigned int getMostRecentlyUsedProfiles(int outProfileIds[], int outProfileLength);
+
 	//////// COLOR THEMES ////////
 	virtual int colorThemeCount() const;
 	virtual ColorTheme* firstColorTheme();

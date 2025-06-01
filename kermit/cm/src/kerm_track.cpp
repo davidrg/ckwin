@@ -157,6 +157,9 @@ void KermitInstance::removeInstance(int id) {
 	}
 }
 
+BOOL KermitInstance::anyInstances() {
+	return firstInstance() != NULL;
+}
 
 KermitInstance* KermitInstance::nextInstanceWithSameProfile(BOOL connectedOnly) {
 	KermitInstance *inst = this->_nextInstance;

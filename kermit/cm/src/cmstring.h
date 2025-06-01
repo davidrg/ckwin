@@ -41,6 +41,13 @@ public:
 	// for deleting the returned buffer when finished with it. If this string
 	// is NULL (isNull() returns TRUE), NULL is returned.
 	char* toUtf8(size_t *lengthBytes) const;
+
+#ifndef UNICODE
+	// Converts this string to Utf16. The strings content is treated as UTF-8,
+	// though in ANSI buidls its likely just ASCII. Caller must free the
+	// returned string.
+	wchar_t* toUtf16();
+#endif
 	
 	BOOL isNull() const;
 

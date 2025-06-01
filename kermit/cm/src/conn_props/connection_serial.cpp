@@ -45,6 +45,8 @@ static const FlowControlOption flowControlOptions[] = {
 	{	ConnectionProfile::FC_RTS_CTS,		TEXT("Rts/Cts")		},
 	{	ConnectionProfile::FC_XON_XOFF,		TEXT("Xon/Xoff")	}
 };
+// TODO: Auto doesn't seem to be an option in K95 anymore???
+// TODO: RFC2217 should also have: DTR/CD, DTR/CTS
 
 typedef struct tagParityOption {
 	ConnectionProfile::Parity parity;

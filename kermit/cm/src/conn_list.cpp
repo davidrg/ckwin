@@ -8,6 +8,7 @@
 #include "toolbar.h"
 #include "kerm_track.h"
 #include "util.h"
+#include "jumplist.h"
 
 #define COLUMNS 3
 
@@ -20,6 +21,8 @@ typedef struct myitem_tag {
 } MYITEM; 
  
 HWND hwndLV, hwndParentWindow;
+
+void ConnectProfile(HWND hwndParent, ConnectionProfile *profile);
 
 HWND WINAPI CreateConnectionListView(HWND hwndParent, HINSTANCE hInstance) 
 { 
@@ -73,8 +76,7 @@ HWND WINAPI CreateConnectionListView(HWND hwndParent, HINSTANCE hInstance)
 
 
 void AddConnections(HWND hwnd, ConfigFile *cfg) {
-	LV_ITEM lvi; 
-//	int i;
+	LV_ITEM lvi;
 
 	ListView_DeleteAllItems(hwnd);
 	ListView_SetItemCount(hwnd, cfg->profileCount());
@@ -248,6 +250,34 @@ void ProfileSelected(BOOL selected, BOOL isConnected) {
 }
 
 
+void ConnectProfile(HWND hwndParent, ConnectionProfile *profile) {
+	DWORD processId = profile->connect(hwndParent);
+
+	if (processId != NULL) {
+		KermitInstance *inst = KermitInstance::getInstanceByProcessId(processId);
+
+		if (inst != NULL) {
+			// We already know about this instance - must have
+			// taken it over with a new connection
+			inst->setStatus(KermitInstance::S_CONNECTING);
+			inst->setProfile(profile);
+		} else {
+			// We launched a new kermit instance. Start tracking.
+			// It's window handle won't be known until it begins
+			// starting.
+			inst = new KermitInstance(NULL, processId, profile);
+		}
+
+		// Update the MRU list
+		extern ConfigFile *g_ConfigFile;
+		g_ConfigFile->setMostRecentlyUsedProfile(profile);
+		g_ConfigFile->commitChanges();
+
+		// And update the Jump list if we're on Windows 7 or newer
+		UpdateJumpList();
+	}
+}
+
 void ConnectSelectedProfile(HWND hwndConnectionList, HWND hwndParent) {
 	ConnectionProfile *profile = GetSelectedProfile(hwndConnectionList);
 
@@ -256,25 +286,30 @@ void ConnectSelectedProfile(HWND hwndConnectionList, HWND hwndParent) {
 	if (profile != NULL) {
 		ProfileSelected(TRUE, TRUE);
 	
-		DWORD processId = profile->connect(hwndParent);
-
-		if (processId != NULL) {
-			KermitInstance *inst = KermitInstance::getInstanceByProcessId(processId);
-
-			if (inst != NULL) {
-				// We already know about this instance - must have
-				// taken it over with a new connection
-				inst->setStatus(KermitInstance::S_CONNECTING);
-				inst->setProfile(profile);
-			} else {
-				// We launched a new kermit instance. Start tracking.
-				// It's window handle won't be known until it begins
-				// starting.
-				inst = new KermitInstance(NULL, processId, profile);
-			}
-		}
+		ConnectProfile(hwndParent, profile);
 	} else {
 		// Nothing selected
 		ProfileSelected(FALSE, FALSE);
 	}
+}
+
+void ConnectProfileId(HWND hwndParent, int profileId) {
+	LVITEM lvi;
+	memset(&lvi, 0, sizeof(lvi));
+	lvi.mask = LVIF_PARAM;
+
+	// Search the list for the profile...
+	int itemCount = ListView_GetItemCount(hwndLV);
+	for (int i = 0; i < itemCount; i++) {
+		lvi.iItem = i;
+
+		if (ListView_GetItem(hwndLV, &lvi)) {
+			ConnectionProfile *profile = (ConnectionProfile *)lvi.lParam;
+			if (profile->id() == profileId) {
+				ConnectProfile(hwndParent, profile);
+				return;
+			}
+		}
+	}
+
 }

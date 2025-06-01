@@ -25,13 +25,15 @@ Stuff missing from K95DIAL:
 	File Transfer	- 
 */
 
-
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include <tchar.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef CKMODERNSHELL
+#include <shobjidl_core.h>
+#endif /* CKMODERNSHELL */
 
 #include "resource.h"
 #include "toolbar.h"
@@ -42,13 +44,20 @@ Stuff missing from K95DIAL:
 #include "util.h"
 #include "ipc_messages.h"
 #include "kerm_track.h"
-
-#ifdef DUMMY_CONFIG
-#include "dummy_config.h"
-#else
 #include "json_config.h"
+#ifdef CKMODERNSHELL
+#include "jumplist.h"
+#endif /* CKMODERNSHELL */
+
+// TODO: can Visual C++ 2003 do this too?
+// Currently limited to Visual C++ 2005 or newer.
+#if _MSC_VER > 1310
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
+#ifdef CKMODERNSHELL
+PCWSTR cszProgramID = L"KermitProject.Kermit95";
+#endif /* CKMODERNSHELL */
 
 #define STATUS_UPDATE_TIMER_ID 1
 #define STATUS_UPDATE_TIMER_MSEC 1000
@@ -60,6 +69,7 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	MainWndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK		AboutDlgProc(HWND, UINT, WPARAM, LPARAM);
 BOOL CALLBACK		DisconnectDlgProc(HWND, UINT, WPARAM, LPARAM);
+void				LaunchKermit(HWND hwndParent, BOOL k95g);
 
 /* Global Variables */
 TCHAR		g_szClassName[] = TEXT("K95ConMan");
@@ -69,8 +79,7 @@ HWND		g_hwndMain,
 			g_hwndConnectionList,
 			g_hwndPropSheet;
 HINSTANCE	g_hInstance;
-ConfigFile  *g_ConfigFile;
-
+ConfigFile  *g_ConfigFile = NULL;
 
 int PASCAL WinMain(HINSTANCE hInstance, 
 				   HINSTANCE hPrevInstance, 
@@ -78,22 +87,29 @@ int PASCAL WinMain(HINSTANCE hInstance,
 				   int nCmdShow) {
 	MSG msg;
 	HACCEL hAccel;
+	BOOL launchK95 = FALSE;
+	BOOL launchK95g = FALSE;
+	int launchProfileIdWhenReady = -1;
+
+#ifdef CKMODERNSHELL
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+    if (!SUCCEEDED(hr)) {
+        return 0;
+    }
+
+    hr = SetCurrentProcessExplicitAppUserModelID(cszProgramID);
+#endif /* CKMODERNSHELL */
 
 	InitCommonControls();
 
 	HWND hwndSelf = FindWindow(NULL, TEXT("Kermit 95 Connection Manager"));
 
-	if (hwndSelf != NULL) {
-
-		SetForegroundWindow(hwndSelf);
-
-		return 0;
-	}
-
 	// Command line arguments
+	// -k hwnd pid	  Kermit 95 letting us know its window handle and process ID
 	if (__argc == 4 && strcmp(__argv[1], " -k")) {
 		// We've been passed a HWND and a Process ID indicating that
-		// C-Kermit instance is ready to be taken over. This is almost
+		// Kermit 95 instance is ready to be taken over. This is almost
 		// certainly caused by the user clicking the dialer button.
 
 #ifdef _WIN64
@@ -104,27 +120,81 @@ int PASCAL WinMain(HINSTANCE hInstance,
 
 		int pidInstance = atoi(__argv[3]);
 
-		KermitInstance *inst = new KermitInstance(hWndInstance, pidInstance, NULL);
-		inst->setStatus(KermitInstance::S_READY);
-		KermitInstance::setPriorityInstanceIdAvailable(inst->instanceId());
+		if (hwndSelf != NULL) {
+			// Let the existing instance of the connection manager handle this
+			SendMessage(hwndSelf, OPT_KERMIT_HWND2, 0, (LPARAM)hWndInstance);
+			SendMessage(hwndSelf, OPT_KERMIT_PID, 0, (LPARAM)pidInstance);
+		} else {
+			KermitInstance *inst = new KermitInstance(hWndInstance, pidInstance, NULL);
+			inst->setStatus(KermitInstance::S_READY);
+			KermitInstance::setPriorityInstanceIdAvailable(inst->instanceId());
+		}
+	} else if (__argc == 2 && strcmp(__argv[1], " -n")) {
+		// -n		Start new Kermit instance
+		launchK95g = TRUE;
+		nCmdShow = SW_HIDE;
+		if (hwndSelf != NULL) {
+			SendMessage(hwndSelf, OPT_CM_LAUNCH_K95, TRUE, 0);
+		}
+	} else if (__argc == 2 && strcmp(__argv[1], " -s")) {
+		if (hwndSelf != NULL) {
+			ShowWindow(hwndSelf, SW_SHOW);
+		}
+	} else if (__argc == 3 && strcmp(__argv[1], " -c")) {
+		launchProfileIdWhenReady = atoi(__argv[2]);
+		nCmdShow = SW_HIDE;
+
+		if (hwndSelf != NULL) {
+			SendMessage(hwndSelf, OPT_CM_LAUNCH_PROFILE,
+						(WPARAM)launchProfileIdWhenReady, (LPARAM)0);
+		}
+	}
+
+	if (hwndSelf != NULL) {
+		if (nCmdShow != SW_HIDE) {
+			ShowWindow(hwndSelf, SW_SHOW);
+			SetForegroundWindow(hwndSelf);
+		}
+
+#ifdef CKMODERNSHELL
+		CoUninitialize();
+#endif /* CKMODERNSHELL */
+
+		return 0;
 	}
 
 	g_hInstance = hInstance;
 
 	if (!hPrevInstance) {
 		if (!InitApplication(hInstance)) {
+#ifdef CKMODERNSHELL
+			CoUninitialize();
+#endif /* CKMODERNSHELL */
 			return FALSE;
 		}
 	}
 
 	if (!InitInstance(hInstance, nCmdShow)) {
+#ifdef CKMODERNSHELL
+		CoUninitialize();
+#endif /* CKMODERNSHELL */
 		return FALSE;
 	}
 
 	hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
 
+	if (launchK95g) {
+		SendMessage(g_hwndMain, OPT_CM_LAUNCH_K95, TRUE, 0);
+		launchK95g = FALSE;
+	}
+
+	if (launchProfileIdWhenReady >= 0) {
+		SendMessage(g_hwndMain, OPT_CM_LAUNCH_PROFILE,
+					(WPARAM)launchProfileIdWhenReady, (LPARAM)0);
+		launchProfileIdWhenReady = -1;
+	}
+
 	while(GetMessage(&msg, NULL, 0x00, 0x00)) {
-		
 
 		if (g_hwndPropSheet 
 			&& (PropSheet_GetCurrentPageHwnd(g_hwndPropSheet) == NULL)) {
@@ -140,6 +210,10 @@ int PASCAL WinMain(HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 	}
+
+#ifdef CKMODERNSHELL
+    CoUninitialize();
+#endif /* CKMODERNSHELL */
 
 	return (int)msg.wParam;
 }
@@ -214,9 +288,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 	g_hwndStatusbar = CreateStatusBar(g_hwndMain, g_hInstance);
 	g_hwndConnectionList = CreateConnectionListView(g_hwndMain, g_hInstance);
 
-#ifdef DUMMY_CONFIG
-	g_ConfigFile = new DummyConfigFile();
-#else
 	// Get the config filename
 	LPTSTR fileName = (LPTSTR)malloc(sizeof(TCHAR) * MAX_PATH);
 	LPTSTR filePath = (LPTSTR)malloc(sizeof(TCHAR) * MAX_PATH);
@@ -255,11 +326,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 	free(filePath);
 
 	if (!g_ConfigFile->loaded()) return FALSE;
-#endif
-
 
 	AddConnections(g_hwndConnectionList, g_ConfigFile);
 	ProfileSelected(FALSE, FALSE);
+
+#ifdef CKMODERNSHELL
+	UpdateJumpList();
+#endif /* CKMODERNSHELL */
 
 	ShowWindow(g_hwndMain, nCmdShow);
 	UpdateWindow(g_hwndMain);
@@ -269,14 +342,28 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 
 
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam) {
-	
+
+	BOOL exit = FALSE;
+
 	switch(uMessage) {
 
 	case WM_CREATE:
 		SetTimer(hWnd, STATUS_UPDATE_TIMER_ID, STATUS_UPDATE_TIMER_MSEC, NULL);
 		break;
-		
+
+	case OPT_CM_QUIT:
+		// File->Exit sends us this. We should exit even if we were keeping an
+		// eye on any K95 instances.
+		exit = TRUE;
+		// fall through
 	case WM_CLOSE:
+		// If any K95 instances we launched are still running, then we should
+		// stay running too. Just hide the window instad of exiting.
+		if (KermitInstance::anyInstances() && !exit) {
+			ShowWindow(hWnd, SW_HIDE);
+			return 0;
+		}
+
 		if (IsWindow(g_hwndPropSheet)) {
 			DestroyWindow(g_hwndPropSheet);
 		}
@@ -285,9 +372,8 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_DESTROY:
-
 		{
-			// Notify all the C-Kermit instances we've been working with that
+			// Notify all the Kermit 95 instances we've been working with that
 			// we're exiting.
 			KermitInstance *inst = KermitInstance::firstInstance();
 			while (inst != NULL) {
@@ -465,9 +551,9 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 			 *   -> We started it and its busy starting up
 			 *   -> We gave work to an existing instance that claimed 
 			 *      it was ready for ready for re-use
-			 *   -> The user tried to start the dialer from C-Kermit 
+			 *   -> The user tried to start the dialer from Kermit 95
 			 *      (either via the "dialer" command, toolbar button
-			 *      or file menu) but C-Kermit wasn't started by us.
+			 *      or file menu) but Kermit 95 wasn't started by us.
 			 *      It found us by our window title and is letting us
 			 *      know it exists. In this case it won't be able to
 			 *      supply us with an instanceId, just its window handle.
@@ -479,14 +565,14 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 			KermitInstance *inst;
 
 			if (instanceId == 0) {
-				// C-Kermit wasn't started by us - it found us by our window
+				// Kermit 95 wasn't started by us - it found us by our window
 				// title. Go create it an InstanceId.
 				inst = new KermitInstance(hWndInstance, NULL, NULL);
 				instanceId = inst->instanceId();
 				// No need to delete *inst - its part of a linked list now.
 
 				// let the instance know its instance ID. This is new behaviour
-				// from Kermit 95 which didn't start tracking C-Kermit instances
+				// from Kermit 95 which didn't start tracking Kermit 95 instances
 				// until they were handed work.
 				PostMessage(hWndInstance, OPT_DIALER_HWND, 
 					(WPARAM)instanceId, (LONG) hWnd);
@@ -506,23 +592,23 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 			int instanceId = (int)wParam;
 			HWND hWndInstance = (HWND)lParam;
 			/*
-			 * This is sent to us by C-Kermit when the user clicks the
+			 * This is sent to us by Kermit 95 when the user clicks the
 			 * dialer toolbar button, the "Connections" file menu item
 			 * or issues the "dialer" command. It indicates that the
-			 * C-Kermit instance is currently idle and we're free to take
+			 * Kermit 95 instance is currently idle and we're free to take
 			 * it over if the user tries to start a new connection.
 			 */
 
 			KermitInstance *inst;
 			if (instanceId == 0) {
-				// C-Kermit wasn't started by us - it found us by our window
+				// Kermit 95 wasn't started by us - it found us by our window
 				// title. Go create it an InstanceId.
 				inst = new KermitInstance(hWndInstance, NULL, NULL);
 				instanceId = inst->instanceId();
 				// No need to delete *inst - its part of a linked list now.
 
 				// let the instance know its instance ID. This is new behaviour
-				// from Kermit 95 which didn't start tracking C-Kermit instances
+				// from Kermit 95 which didn't start tracking Kermit 95 instances
 				// until they were handed work.
 				PostMessage(hWndInstance, OPT_DIALER_HWND, 
 					(WPARAM)instanceId, (LONG) hWnd);
@@ -546,10 +632,10 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 			int instanceId = (int)wParam;
 			DWORD processId = (DWORD)lParam;
 			/*
-			 * This is sent to us by C-Kermit when the user clicks the
+			 * This is sent to us by Kermit 95 when the user clicks the
 			 * dialer toolbar button, the "Connections" file menu item
 			 * or issues the "dialer" command. It indicates that the
-			 * C-Kermit instance is currently idle and we're free to take
+			 * Kermit 95 instance is currently idle and we're free to take
 			 * it over if the user tries to start a new connection.
 			 */
 
@@ -562,7 +648,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 				// without an instance ID we respond by assigning an instance
 				// ID. 
 
-				// C-Kermit wasn't started by us - it found us by our window
+				// Kermit 95 wasn't started by us - it found us by our window
 				// title. Go create it an InstanceId.
 				inst = new KermitInstance(NULL, processId, NULL);
 				instanceId = inst->instanceId();
@@ -589,7 +675,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 			// We have no particular use for its exit status at the moment.
 			// int exitStatus = (int)lParam;
 
-			// Send to us by C-Kermit to let us know its exiting. We don't
+			// Send to us by Kermit 95 to let us know its exiting. We don't
 			// need to keep an eye on it anymore.
 			if (instanceId != 0) {
 				// Let the status bar know we're about to delete this instance
@@ -599,9 +685,28 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 				// Then delete the instance Id.
 				KermitInstance::removeInstance(instanceId);
 			}
+
+			if (!KermitInstance::anyInstances() && !IsWindowVisible(hWnd)) {
+				// The last Kermit 95 instance we were keeping an eye on just
+				// exited. If our UI is currently hidden, for all the user knows
+				// we aren't running so we can safely exit now too.
+				PostMessage(hWnd, WM_CLOSE, 0, 0);
+			}
 		}
 		break;
 
+	case OPT_CM_LAUNCH_K95:
+		{
+			BOOL useK95G = (BOOL)wParam;
+			LaunchKermit(g_hwndMain, useK95G);
+		}
+		break;
+
+	case OPT_CM_LAUNCH_PROFILE:
+		{
+			ConnectProfileId(g_hwndMain, wParam);
+		}
+		break;
 
 	case WM_COMMAND:
 		switch (GET_WM_COMMAND_ID(wParam, lParam)) {
@@ -613,7 +718,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 			break;
 
 		case ID_FILE_EXIT:
-			PostMessage(hWnd, WM_CLOSE, 0, 0);
+			PostMessage(hWnd, OPT_CM_QUIT, 0, 0);
 			break;
 
 		case ID_CONNECTION_ADD:
@@ -1124,4 +1229,113 @@ BOOL CALLBACK DisconnectDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 
 	return FALSE;
+}
+
+void LaunchKermit(HWND hwndParent, BOOL k95g) {
+	const int BUFFERSIZE = 3000;
+	LPTSTR command = (LPTSTR)malloc(sizeof(TCHAR) * BUFFERSIZE);
+
+	BOOL consoleCreated = FALSE;
+
+	STARTUPINFO si ;
+    memset( &si, 0, sizeof(STARTUPINFO) ) ;
+    si.cb = sizeof(STARTUPINFO);
+
+	if (hwndParent != NULL) {
+		_sntprintf(command, BUFFERSIZE, TEXT("%s -W %d %d"),
+			k95g ? TEXT("k95g.exe") : TEXT("k95.exe"),
+			hwndParent,
+			KermitInstance::nextInstanceId());
+	} else {
+		_sntprintf(command, BUFFERSIZE,
+			k95g ? TEXT("k95g.exe") : TEXT("k95.exe"));
+	}
+
+	if (!k95g) {
+		// Apparently Windows 95 doesn't create console windows properly when
+		// starting applications via CreateProcess so we've got to do it ourselves
+		// there.
+		OSVERSIONINFO vi ;
+		vi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO) ;
+		GetVersionEx( &vi ) ;
+
+		if ( vi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ) {
+			AllocConsole();
+			consoleCreated = TRUE;
+
+			HANDLE hOut, hIn;
+
+			hOut = CreateFile(
+				TEXT("CONOUT$"),
+				GENERIC_READ | GENERIC_WRITE,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				NULL,
+				OPEN_EXISTING,
+				0,
+				0) ;
+			hIn = CreateFile(
+				TEXT("CONIN$"),
+				GENERIC_READ | GENERIC_WRITE,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				NULL,
+				OPEN_EXISTING,
+				0,
+				0) ;
+
+			si.dwFlags = (DWORD) STARTF_USESTDHANDLES;
+
+			DuplicateHandle(
+				GetCurrentProcess(),
+				hOut,
+				GetCurrentProcess(),
+				&si.hStdOutput,
+				DUPLICATE_SAME_ACCESS,
+				TRUE,
+				DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS
+				);
+
+			si.hStdError = si.hStdOutput;
+			DuplicateHandle(
+				GetCurrentProcess(),
+				hIn,
+				GetCurrentProcess(),
+				&si.hStdInput,
+				DUPLICATE_SAME_ACCESS, TRUE,
+				DUPLICATE_CLOSE_SOURCE | DUPLICATE_SAME_ACCESS
+				) ;
+		}
+
+		si.dwFlags |= (DWORD) STARTF_USECOUNTCHARS
+				   | STARTF_USEFILLATTRIBUTE
+				   | STARTF_USESHOWWINDOW;
+		si.wShowWindow = SW_SHOWMAXIMIZED;
+    }
+
+	// Ready to launch Kermit!
+
+	PROCESS_INFORMATION pi;
+
+	BOOL rc = CreateProcess(
+			(LPTSTR)NULL,		// executable (if not in command line)
+			command,						// command line
+			(LPSECURITY_ATTRIBUTES)NULL,	// process attributes
+			(LPSECURITY_ATTRIBUTES)NULL,	// thread attributes
+			FALSE,							// inherit handles
+			(DWORD) CREATE_NEW_PROCESS_GROUP, // creation flags - probably only important for console
+			(LPVOID)NULL,					// environment
+			(LPTSTR)NULL,					// current directory
+			&si,							// startup info
+			&pi								// process info
+			);
+
+
+	if (consoleCreated) {
+		FreeConsole();
+	}
+
+	free(command);
+
+	if (rc && pi.dwProcessId != NULL) {
+		KermitInstance *inst = new KermitInstance(NULL, pi.dwProcessId, NULL);
+	}
 }

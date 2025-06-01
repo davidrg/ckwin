@@ -18,7 +18,8 @@ void ConnectionProfile::setTargetName() {
 	switch(connectionType()) {
 	case CT_SSH:
 	case CT_FTP:
-	case CT_IP: 
+	case CT_IP:
+	case CT_RFC2217:
 		if (!hostname().isNullOrWhiteSpace()) {
 			LPTSTR temp[50];
 			unsigned int p = port();
@@ -150,7 +151,7 @@ DWORD ConnectionProfile::connect(HWND parent) {
 
 		GetTempPath(MAX_PATH, tempFileName);
 
-		_sntprintf(tempFilePath, MAX_PATH, TEXT("%sckermit\\"), tempFileName);
+		_sntprintf(tempFilePath, MAX_PATH, TEXT("%skermit95\\"), tempFileName);
 
 		if (!CreateDirectory(tempFilePath, NULL)) {
 			if (GetLastError() != ERROR_ALREADY_EXISTS) {
@@ -232,19 +233,19 @@ DWORD ConnectionProfile::connect(HWND parent) {
 
 		if (customStartupPosition()) {
 			_sntprintf(command, BUFFERSIZE, 
-				TEXT("k95g.exe \"%s\" -W %d %d --xpos:%d --ypos:%d --facename:%s --fontsize:%d%s%s%s"), 
+				TEXT("k95g.exe \"%s\" -W %d %d --xpos:%d --ypos:%d --facename:%s --fontsize:%s%s%s%s"),
 				tempFileName, parent, KermitInstance::nextInstanceId(), 
 				startupAtX(), startupAtY(),
-				font, fontSize(),
+				font, fontSize().data(),
 				(removeBars() && !menubarEnabled())   ? TEXT(" --nomenubar")   : TEXT(""),
 				(removeBars() && !toolbarEnabled())   ? TEXT(" --notoolbar")   : TEXT(""),
 				(removeBars() && !statusbarEnabled()) ? TEXT(" --nostatusbar") : TEXT("")
 				);
 		} else {
 			_sntprintf(command, BUFFERSIZE, 
-				TEXT("k95g.exe \"%s\" -W %d %d --facename:%s --fontsize:%d%s%s%s"), 
+				TEXT("k95g.exe \"%s\" -W %d %d --facename:%s --fontsize:%s%s%s%s"),
 				tempFileName, parent, KermitInstance::nextInstanceId(), 
-				font, fontSize(),
+				font, fontSize().data(),
 				(removeBars() && !menubarEnabled())   ? TEXT(" --nomenubar")   : TEXT(""),
 				(removeBars() && !toolbarEnabled())   ? TEXT(" --notoolbar")   : TEXT(""),
 				(removeBars() && !statusbarEnabled()) ? TEXT(" --nostatusbar") : TEXT("")
@@ -2069,6 +2070,8 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 	indenting = FALSE;
 
 	CloseHandle(hFile);
+
+
 
 	return TRUE;
 }

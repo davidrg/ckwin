@@ -14,5 +14,8 @@
 #define OPT_DIALER_CONNECT          13001
 #define OPT_DIALER_HWND             13002
 #define OPT_DIALER_EXIT             13003
+#define OPT_CM_LAUNCH_K95           13004
+#define OPT_CM_LAUNCH_PROFILE       13005
+#define OPT_CM_QUIT                 13006
 
 #endif /* IPC_MESSAGES_H */
