@@ -18,7 +18,8 @@ void ConnectionProfile::setTargetName() {
 	switch(connectionType()) {
 	case CT_SSH:
 	case CT_FTP:
-	case CT_IP: 
+	case CT_IP:
+	case CT_RFC2217:
 		if (!hostname().isNullOrWhiteSpace()) {
 			LPTSTR temp[50];
 			unsigned int p = port();
