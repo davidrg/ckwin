@@ -98,6 +98,7 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
         debug(F100, "Failed to create read/write ready events", "", 0);
         CloseHandle(buf->readReady);
         CloseHandle(buf->writeReady);
+        CloseHandle(buf->mutex);
         free(buf->buffer);
         free(buf);
         return NULL;
