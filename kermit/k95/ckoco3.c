@@ -192,6 +192,9 @@ extern int tt_senddata;         /* May data be sent to the host */
 extern int tt_clipboard_read,
            tt_clipboard_write;  /* OSC-52 */
 extern int tt_hidattr;          /* Attributes do not occupy a space */
+#ifdef NT
+extern int tt_autorepeat;       /* Keyboard autorepeat */
+#endif /* NT */
 #ifdef PCTERM
 extern int tt_pcterm;
 #endif /* PCTERM */
@@ -7757,6 +7760,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     tt_arrow = TTK_NORM;                /* Arrow keypad to cursor mode */
     tt_keypad = TTK_NORM;               /* Auxilliary keypad to numeric mode */
     tt_shift_keypad = FALSE ;           /* Do not shift keypad values */
+#ifdef NT
+    tt_autorepeat = TRUE;               /* Keyboard autorepeat ON */
+#endif /* NT */
     tt_wrap = TRUE;                     /* (FALSE for real VT terminal!) */
     send_c1 = send_c1_usr;              /* Don't send C1 controls */
     keylock = FALSE;                    /* Keyboard is not locked */
@@ -16694,7 +16700,11 @@ vtcsi(void)
                             pn[2] = tt_wrap ? 1 : 2 ;
                             break;
                         case 8: /* DECARM */
+#ifdef NT
+                            pn[2] = tt_autorepeat ? 1 : 2 ;
+#else /* NT */
                             pn[2] = 3 ; /* permanently set */
+#endif /* NT */
                             break;
                         case 9: /* DECINLM - Interlace */
 #ifdef OS2MOUSE
@@ -18084,6 +18094,9 @@ vtcsi(void)
                             tt_wrap = TRUE;
                             break;
                         case 8: /* DECARM - Autorepeat */
+#ifdef NT
+                            tt_autorepeat = TRUE;
+#endif /* NT */
                             break;
                         case 9: /* DECINLM - Interlace */
                             /* XTERM - Send Mouse X & Y on button press */
@@ -18729,6 +18742,9 @@ vtcsi(void)
                                tt_wrap = FALSE;
                                break;
                            case 8: /* DECARM - Auto repeat */
+#ifdef NT
+                               tt_autorepeat = FALSE;
+#endif /* NT */
                                break;
                            case 9: /* DECINLM - Interlace */
                                /* XTERM - Don't Send Mouse X&Y on button press */

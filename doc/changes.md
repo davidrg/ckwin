@@ -106,6 +106,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    when the remote host attempts to access your clipboard. For security, the
    default is disabled with a notification.
  - Support for xterm focus tracking (mode 1004)
+ - Support for DEC Private mode 8 (DECARM): keyboard autorepeat
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))

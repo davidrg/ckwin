@@ -6102,11 +6102,11 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turns auto-wrap mode on</p>
             </section>
-            <section role="parameter" id="decarm" not-implemented="true" mnemonic="DECARM" title="Autorepeat">
+            <section role="parameter" id="decarm" mnemonic="DECARM" title="Autorepeat">
                 <ctlseq><param-single/> = 8</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-8.1E68"/>
                 <ref src="wy370:26"/>
-                <ref src="070:389"/>
+                <ref src="070:528"/>
                 <ref src="vt100:DECARM"/>
                 <ref src="vt132:83"/>
                 <ref src="vt220:S4.6.15"/>
@@ -6114,7 +6114,9 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:173"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
-                <p>Enable auto-repeat mode</p>
+                <p>Enable auto-repeat mode. Setting/resetting DECARM is only
+                    supported on Windows. On OS/2, DECARM is permanently set.
+                </p>
             </section>
             <section role="parameter" id="x10mr" title="X10 mouse reporting" groups="isansi" badges="linux">
                 <ctlseq><param-single/> = 9</ctlseq>
@@ -7695,11 +7697,11 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
                 <p>Turn off autowrap</p>
             </section>
-            <section role="parameter" not-implemented="true" mnemonic="DECARM"
+            <section role="parameter" mnemonic="DECARM"
                      id="r-decarm" title="Auto repeat">
                 <ctlseq><param-single/> = 8</ctlseq>
                 <ref src="wy370:26"/>
-                <ref src="070:389"/>
+                <ref src="070:528"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-8.1E6C"/>
                 <ref src="vt100:DECARM"/>
                 <ref src="vt132:83"/>
@@ -7708,7 +7710,9 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:173"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
-                <p>Turn off auto-repeat</p>
+                <p>Windows only: Turn off auto-repeat. Not supported on OS/2 as
+                    the console does not supply key-up events.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" mnemonic="DECINLM" id="r-decinlm" title="Interlace">
                 <ctlseq><param-single/> = 9</ctlseq>
@@ -10622,7 +10626,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt52x:264"/>
                     <termsupp first="vt420" series="vt" additional="tt"/>
                 </section>
-                <section role="parameter" id="decrqm-8" mnemonic="DECARM" title="Autorepeat (permanently set to 3)">
+                <section role="parameter" id="decrqm-8" mnemonic="DECARM" title="Autorepeat">
                     <ctlseq><param-single/> = 8</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-8.1E68"/>
                     <ref src="wy370:26"/>
@@ -10631,6 +10635,10 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt510:DECRQM.html#T5-8"/>
                     <ref src="vt52x:264"/>
                     <termsupp first="vt420" series="vt" additional="tt"/>
+                    <p>
+                        On OS/2, this mode is permanently set (3). Setting/resetting
+                        DECARM is only supported on Windows.
+                    </p>
                 </section>
                 <section role="parameter" title="X10 mouse reporting"
                          id="decrqm-9-x10" groups="isansi"

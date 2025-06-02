@@ -94,6 +94,9 @@ extern bool keyclick ;
 #ifndef NOTERM
 extern int tt_type, tt_type_mode ;
 extern int tt_kb_mode ;
+#ifdef NT
+int tt_autorepeat = TRUE;
+#endif /* NT */
 #ifdef PCTERM
 int tt_pcterm = 0;                      /* PCTERM keyboard mode */
 VOID
@@ -1979,6 +1982,8 @@ void
 win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
 {
     int c = -1, i;
+    static int previousKey = -1;
+    int repeat_count = 0;
 #ifndef KUI
     int keycount = 1 ;
 #endif /* KUI */
@@ -2075,6 +2080,16 @@ win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
 
     c = getKeycodeFromKeyRec(&keyrec, (WORD *)buf, CHCOUNT);
 
+    if (!keyrec.bKeyDown)
+        previousKey = -1;
+
+    if (!tt_autorepeat && keyrec.bKeyDown && (c == previousKey) && mode == VTERM) {
+        return;
+    }
+
+    previousKey = c;
+    repeat_count = tt_autorepeat ? keyrec.wRepeatCount : 1;
+
     if ( c >= 0 ) {
 #ifdef NOSETKEY
         con_event evt;
@@ -2096,7 +2111,7 @@ win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
              )  /* Ctrl-C */
             raise(SIGINT);
         else
-            for ( i=0; i<keyrec.wRepeatCount ;i++ )
+            for ( i=0; i<repeat_count ;i++ )
             {
 #ifndef NOLOCAL
                 clickkeys() ;
