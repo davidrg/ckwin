@@ -130,6 +130,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    given. Like with bold, it still affects color unless turned off with
    `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
    `SET TERMINAL COLOR DIM` is used.
+ - Added a new `IF REXX` test for checking if REXX support is available
 
 ### Bug fixes
  - Fixed an inssue introduced in beta 7 which could cause SSH connections made

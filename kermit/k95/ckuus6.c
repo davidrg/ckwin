@@ -590,6 +590,7 @@ int nopn = (sizeof(opntab) / sizeof(struct keytab));
 #define  XXIFLGE 62	/* IF LLE (lexically less than or equal) */
 #define  XXIFTXT 63	/* IF TEXT (file) */
 #define  XXIFBIN 64	/* IF BINARY (file) */
+#define  XXIFREX 65 /* IF REXX */
 
 struct keytab iftab[] = {               /* IF commands */
     { "!",          XXIFNO, 0 },
@@ -675,6 +676,11 @@ struct keytab iftab[] = {               /* IF commands */
     { "quiet",      XXIFQU, 0 },
     { "readable",   XXIFRD, 0 },
     { "remote-only",XXIFRO, 0 },
+#ifdef OS2
+    { "rexx",       XXIFREX, 0},
+#else /* OS2 */
+    { "rexx",       XXIFREX, CM_INV},
+#endif /* OS2 */
     { "started-from-dialer",XXIFSD, CM_INV },
     { "success",    XXIFSU, 0 },
     { "tapi",       XXIFTA, 0 },
@@ -12812,6 +12818,14 @@ boolexp(cx) int cx;
 #endif /* NOLOCAL */
         break;
 #endif /* CK_IFRO */
+
+     case XXIFREX:
+#ifdef NOREXX
+        z = 0;
+#else /* NOREXX */
+        z = 1;
+#endif /* NOREXX */
+        break;
 
       case XXIFAL:                      /* ALARM */
         ifargs++;
