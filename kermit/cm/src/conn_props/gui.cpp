@@ -691,9 +691,9 @@ BOOL CALLBACK GuiPageDlgProc(
 			
 			// Configure spinboxes
 			ConfigureSpinBox(hwndDlg, IDC_STARTUP_X_SPIN, IDC_STARTUP_X, 
-							0, 32767, profile->startupAtX());
+							-32767, 32767, profile->startupAtX());
 			ConfigureSpinBox(hwndDlg, IDC_STARTUP_Y_SPIN, IDC_STARTUP_Y, 
-							0, 32767, profile->startupAtY());
+							-32767, 32767, profile->startupAtY());
 
 
 			// load initial values from profile
