@@ -25,9 +25,10 @@ HWND CreateStatusBar(HWND hwndParent, HINSTANCE hInstance)
 
 	// These aren't widths as such, they're the coordinates for the right
 	// side of each panel with -1 signalling to extend all the way to the end.
-	// So panel 1 is from 0-200, panel 2 is from 200-250, and panel 3 occupies
-	// whatever space is left
-	int widths[] = {200, 250, -1};
+	// So panel 1 is from 0-200, panel 2 is from 200-271, and panel 3 occupies
+	// whatever space is left. Panel 2 should currently wide enough 
+	// for ddd:hh:mm:ss
+	int widths[] = {200, 271, -1};
  
     // Create the status window. 
     hwndStatus = CreateWindowEx( 
@@ -119,7 +120,7 @@ void StatusRefresh() {
 		// No connection profile selected.
 
 		SendMessage(hwndStatus, SB_SETTEXT, 0, (LPARAM)TEXT(""));
-		SendMessage(hwndStatus, SB_SETTEXT, 1, (LPARAM)TEXT(""));
+		SendMessage(hwndStatus, SB_SETTEXT, 1, (LPARAM)TEXT("365:24:59:59"));
 		SendMessage(hwndStatus, SB_SETTEXT, 2, (LPARAM)TEXT("No profile selected"));
 
 	} else {
