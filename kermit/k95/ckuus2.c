@@ -601,6 +601,9 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 "about the manual, visit:",
 "  http://www.kermitproject.org/usingckermit.html",
 " ",
+"For an online Kermit 95 tutorial, vist:",
+"  http://www.kermitproject.org/k95tutor.html",
+" ",
 "For an online C-Kermit tutorial, visit:",
 "  http://www.kermitproject.org/ckututor.html",
 " ",
@@ -1212,7 +1215,7 @@ static char *hmxxscrn[] = {
 " ",
 "Also see:",
 #ifdef OS2
-"  HELP FUNCTION SCRNCURX, HELP FUNCTION SCRNCURY, HELP FUNCTION SCRSTR,",
+"  HELP FUNCTION SCRNCURX, HELP FUNCTION SCRNCURY, HELP FUNCTION SCRNSTR,",
 #endif /* OS2 */
 "  SHOW VARIABLE TERMINAL, SHOW VARIABLE COLS, SHOW VAR ROWS, SHOW COMMAND.",
 ""

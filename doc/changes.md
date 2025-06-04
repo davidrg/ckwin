@@ -135,6 +135,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
 ### Bug fixes
  - Fixed an inssue introduced in beta 7 which could cause SSH connections made
    via the dialer to cause K95 to crash
+ - Fixed a typo on the `help screen` output (was SCRSTR, should be SCRNSTR)
 
 ### New terminal control sequences
 > [!NOTE]
