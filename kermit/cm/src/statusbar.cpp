@@ -120,7 +120,7 @@ void StatusRefresh() {
 		// No connection profile selected.
 
 		SendMessage(hwndStatus, SB_SETTEXT, 0, (LPARAM)TEXT(""));
-		SendMessage(hwndStatus, SB_SETTEXT, 1, (LPARAM)TEXT("365:24:59:59"));
+		SendMessage(hwndStatus, SB_SETTEXT, 1, (LPARAM)TEXT(""));
 		SendMessage(hwndStatus, SB_SETTEXT, 2, (LPARAM)TEXT("No profile selected"));
 
 	} else {
