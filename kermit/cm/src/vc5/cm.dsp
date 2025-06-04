@@ -292,6 +292,10 @@ SOURCE=..\charset.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\cm.ico
+# End Source File
+# Begin Source File
+
 SOURCE=..\cm.rc
 # End Source File
 # Begin Source File
@@ -313,6 +317,14 @@ SOURCE=..\conn_list.h
 # Begin Source File
 
 SOURCE=..\ipc_messages.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\jumplist.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\jumplist.h
 # End Source File
 # Begin Source File
 

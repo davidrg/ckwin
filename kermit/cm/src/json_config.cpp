@@ -355,9 +355,10 @@ void JsonConfigFile::removeMostRecentlyUsedProfile(ConnectionProfile *profile) {
 	int mruProfiles[MRU_MAX];
 	int profiles = getMostRecentlyUsedProfiles(mruProfiles, MRU_MAX);
 	int id = profile->id();
+	int i;
 
 	BOOL found = FALSE;
-	for (int i = 0; i < profiles; i++) {
+	for (i = 0; i < profiles; i++) {
 		if (mruProfiles[i] == id) {
 			found = TRUE;
 			break;
@@ -376,7 +377,7 @@ void JsonConfigFile::removeMostRecentlyUsedProfile(ConnectionProfile *profile) {
 	if (mruArray == NULL) return;
 
 	// Then iterate through everything else thats already in the list
-	for (int i = 0; i < profiles; i++) {
+	for (i = 0; i < profiles; i++) {
 		// Skip over the supplied profile if we see it.
 		if (mruProfiles[i] != id) {
 			cJSON *item = cJSON_CreateNumber(mruProfiles[i]);

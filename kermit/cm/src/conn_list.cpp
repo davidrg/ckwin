@@ -294,7 +294,7 @@ void ConnectSelectedProfile(HWND hwndConnectionList, HWND hwndParent) {
 }
 
 void ConnectProfileId(HWND hwndParent, int profileId) {
-	LVITEM lvi;
+	LV_ITEM lvi;
 	memset(&lvi, 0, sizeof(lvi));
 	lvi.mask = LVIF_PARAM;
 

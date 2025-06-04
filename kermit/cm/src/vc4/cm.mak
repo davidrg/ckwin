@@ -61,34 +61,35 @@ CLEAN :
 	-@erase ".\Release\term_info.obj"
 	-@erase ".\Release\terminal.obj"
 	-@erase ".\Release\connection.obj"
+	-@erase ".\Release\transfer.obj"
 	-@erase ".\Release\statusbar.obj"
+	-@erase ".\Release\logging.obj"
 	-@erase ".\Release\connection_serial.obj"
 	-@erase ".\Release\keyboard.obj"
+	-@erase ".\Release\gui_colors.obj"
 	-@erase ".\Release\conn_profile.obj"
+	-@erase ".\Release\gui.obj"
 	-@erase ".\Release\main.obj"
+	-@erase ".\Release\json_color_theme.obj"
+	-@erase ".\Release\json_util.obj"
 	-@erase ".\Release\cmstring.obj"
 	-@erase ".\Release\login.obj"
 	-@erase ".\Release\cJSON.obj"
 	-@erase ".\Release\new_conn.obj"
 	-@erase ".\Release\conn_props.obj"
+	-@erase ".\Release\printer.obj"
 	-@erase ".\Release\json_profile.obj"
 	-@erase ".\Release\general.obj"
 	-@erase ".\Release\charset.obj"
 	-@erase ".\Release\util.obj"
+	-@erase ".\Release\config_file.obj"
 	-@erase ".\Release\toolbar.obj"
 	-@erase ".\Release\json_config.obj"
 	-@erase ".\Release\conn_list.obj"
 	-@erase ".\Release\kerm_track.obj"
 	-@erase ".\Release\term_colors.obj"
 	-@erase ".\Release\cm.res"
-	-@erase ".\Release\gui_colors.obj"
-	-@erase ".\Release\json_color_theme.obj"
-	-@erase ".\Release\json_util.obj"
-	-@erase ".\Release\config_file.obj"
-	-@erase ".\Release\gui.obj"
-	-@erase ".\Release\transfer.obj"
-	-@erase ".\Release\logging.obj"
-	-@erase ".\Release\printer.obj"
+	-@erase ".\Release\jumplist.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -120,33 +121,34 @@ LINK32_OBJS= \
 	".\Release\term_info.obj" \
 	".\Release\terminal.obj" \
 	".\Release\connection.obj" \
+	".\Release\transfer.obj" \
 	".\Release\statusbar.obj" \
+	".\Release\logging.obj" \
 	".\Release\connection_serial.obj" \
 	".\Release\keyboard.obj" \
+	".\Release\gui_colors.obj" \
 	".\Release\conn_profile.obj" \
+	".\Release\gui.obj" \
 	".\Release\main.obj" \
+	".\Release\json_color_theme.obj" \
+	".\Release\json_util.obj" \
 	".\Release\cmstring.obj" \
 	".\Release\login.obj" \
 	".\Release\cJSON.obj" \
 	".\Release\new_conn.obj" \
 	".\Release\conn_props.obj" \
+	".\Release\printer.obj" \
 	".\Release\json_profile.obj" \
 	".\Release\general.obj" \
 	".\Release\charset.obj" \
 	".\Release\util.obj" \
+	".\Release\config_file.obj" \
 	".\Release\toolbar.obj" \
 	".\Release\json_config.obj" \
 	".\Release\conn_list.obj" \
 	".\Release\kerm_track.obj" \
 	".\Release\term_colors.obj" \
-	".\Release\gui_colors.obj" \
-	".\Release\json_color_theme.obj" \
-	".\Release\json_util.obj" \
-	".\Release\config_file.obj" \
-	".\Release\gui.obj" \
-	".\Release\transfer.obj" \
-	".\Release\logging.obj" \
-	".\Release\printer.obj" \
+	".\Release\jumplist.obj" \
 	".\Release\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -183,29 +185,30 @@ CLEAN :
 	-@erase ".\Debug\login.obj"
 	-@erase ".\Debug\cJSON.obj"
 	-@erase ".\Debug\conn_list.obj"
+	-@erase ".\Debug\gui_colors.obj"
 	-@erase ".\Debug\keyboard.obj"
 	-@erase ".\Debug\term_info.obj"
 	-@erase ".\Debug\json_config.obj"
 	-@erase ".\Debug\statusbar.obj"
 	-@erase ".\Debug\util.obj"
+	-@erase ".\Debug\gui.obj"
 	-@erase ".\Debug\term_colors.obj"
+	-@erase ".\Debug\printer.obj"
+	-@erase ".\Debug\json_color_theme.obj"
 	-@erase ".\Debug\general.obj"
 	-@erase ".\Debug\json_profile.obj"
 	-@erase ".\Debug\conn_profile.obj"
 	-@erase ".\Debug\cmstring.obj"
 	-@erase ".\Debug\toolbar.obj"
 	-@erase ".\Debug\connection_serial.obj"
+	-@erase ".\Debug\transfer.obj"
+	-@erase ".\Debug\config_file.obj"
 	-@erase ".\Debug\conn_props.obj"
 	-@erase ".\Debug\new_conn.obj"
-	-@erase ".\Debug\cm.res"
-	-@erase ".\Debug\gui_colors.obj"
-	-@erase ".\Debug\json_color_theme.obj"
 	-@erase ".\Debug\json_util.obj"
-	-@erase ".\Debug\config_file.obj"
-	-@erase ".\Debug\gui.obj"
-	-@erase ".\Debug\transfer.obj"
 	-@erase ".\Debug\logging.obj"
-	-@erase ".\Debug\printer.obj"
+	-@erase ".\Debug\cm.res"
+	-@erase ".\Debug\jumplist.obj"
 	-@erase ".\Debug\cm.ilk"
 	-@erase ".\Debug\cm.pdb"
 
@@ -245,28 +248,29 @@ LINK32_OBJS= \
 	".\Debug\login.obj" \
 	".\Debug\cJSON.obj" \
 	".\Debug\conn_list.obj" \
+	".\Debug\gui_colors.obj" \
 	".\Debug\keyboard.obj" \
 	".\Debug\term_info.obj" \
 	".\Debug\json_config.obj" \
 	".\Debug\statusbar.obj" \
 	".\Debug\util.obj" \
+	".\Debug\gui.obj" \
 	".\Debug\term_colors.obj" \
+	".\Debug\printer.obj" \
+	".\Debug\json_color_theme.obj" \
 	".\Debug\general.obj" \
 	".\Debug\json_profile.obj" \
 	".\Debug\conn_profile.obj" \
 	".\Debug\cmstring.obj" \
 	".\Debug\toolbar.obj" \
 	".\Debug\connection_serial.obj" \
+	".\Debug\transfer.obj" \
+	".\Debug\config_file.obj" \
 	".\Debug\conn_props.obj" \
 	".\Debug\new_conn.obj" \
-	".\Debug\gui_colors.obj" \
-	".\Debug\json_color_theme.obj" \
 	".\Debug\json_util.obj" \
-	".\Debug\config_file.obj" \
-	".\Debug\gui.obj" \
-	".\Debug\transfer.obj" \
 	".\Debug\logging.obj" \
-	".\Debug\printer.obj" \
+	".\Debug\jumplist.obj" \
 	".\Debug\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -297,12 +301,15 @@ CLEAN :
 	-@erase ".\cm___Win\cm.exe"
 	-@erase ".\cm___Win\charset.obj"
 	-@erase ".\cm___Win\terminal.obj"
+	-@erase ".\cm___Win\config_file.obj"
+	-@erase ".\cm___Win\json_util.obj"
 	-@erase ".\cm___Win\connection_serial.obj"
 	-@erase ".\cm___Win\main.obj"
 	-@erase ".\cm___Win\keyboard.obj"
 	-@erase ".\cm___Win\json_profile.obj"
 	-@erase ".\cm___Win\conn_profile.obj"
 	-@erase ".\cm___Win\term_info.obj"
+	-@erase ".\cm___Win\gui.obj"
 	-@erase ".\cm___Win\login.obj"
 	-@erase ".\cm___Win\cJSON.obj"
 	-@erase ".\cm___Win\kerm_track.obj"
@@ -310,22 +317,20 @@ CLEAN :
 	-@erase ".\cm___Win\connection.obj"
 	-@erase ".\cm___Win\general.obj"
 	-@erase ".\cm___Win\conn_list.obj"
+	-@erase ".\cm___Win\transfer.obj"
 	-@erase ".\cm___Win\conn_props.obj"
 	-@erase ".\cm___Win\toolbar.obj"
 	-@erase ".\cm___Win\util.obj"
 	-@erase ".\cm___Win\new_conn.obj"
 	-@erase ".\cm___Win\json_config.obj"
+	-@erase ".\cm___Win\gui_colors.obj"
 	-@erase ".\cm___Win\statusbar.obj"
 	-@erase ".\cm___Win\term_colors.obj"
-	-@erase ".\cm___Win\cm.res"
-	-@erase ".\cm___Win\gui_colors.obj"
-	-@erase ".\cm___Win\json_color_theme.obj"
-	-@erase ".\cm___Win\json_util.obj"
-	-@erase ".\cm___Win\config_file.obj"
-	-@erase ".\cm___Win\gui.obj"
-	-@erase ".\cm___Win\transfer.obj"
 	-@erase ".\cm___Win\logging.obj"
+	-@erase ".\cm___Win\json_color_theme.obj"
 	-@erase ".\cm___Win\printer.obj"
+	-@erase ".\cm___Win\cm.res"
+	-@erase ".\cm___Win\jumplist.obj"
 	-@erase ".\cm___Win\cm.ilk"
 	-@erase ".\cm___Win\cm.pdb"
 
@@ -360,12 +365,15 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
 LINK32_OBJS= \
 	".\cm___Win\charset.obj" \
 	".\cm___Win\terminal.obj" \
+	".\cm___Win\config_file.obj" \
+	".\cm___Win\json_util.obj" \
 	".\cm___Win\connection_serial.obj" \
 	".\cm___Win\main.obj" \
 	".\cm___Win\keyboard.obj" \
 	".\cm___Win\json_profile.obj" \
 	".\cm___Win\conn_profile.obj" \
 	".\cm___Win\term_info.obj" \
+	".\cm___Win\gui.obj" \
 	".\cm___Win\login.obj" \
 	".\cm___Win\cJSON.obj" \
 	".\cm___Win\kerm_track.obj" \
@@ -373,21 +381,19 @@ LINK32_OBJS= \
 	".\cm___Win\connection.obj" \
 	".\cm___Win\general.obj" \
 	".\cm___Win\conn_list.obj" \
+	".\cm___Win\transfer.obj" \
 	".\cm___Win\conn_props.obj" \
 	".\cm___Win\toolbar.obj" \
 	".\cm___Win\util.obj" \
 	".\cm___Win\new_conn.obj" \
 	".\cm___Win\json_config.obj" \
+	".\cm___Win\gui_colors.obj" \
 	".\cm___Win\statusbar.obj" \
 	".\cm___Win\term_colors.obj" \
-	".\cm___Win\gui_colors.obj" \
-	".\cm___Win\json_color_theme.obj" \
-	".\cm___Win\json_util.obj" \
-	".\cm___Win\config_file.obj" \
-	".\cm___Win\gui.obj" \
-	".\cm___Win\transfer.obj" \
 	".\cm___Win\logging.obj" \
+	".\cm___Win\json_color_theme.obj" \
 	".\cm___Win\printer.obj" \
+	".\cm___Win\jumplist.obj" \
 	".\cm___Win\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -414,8 +420,11 @@ ALL : "$(OUTDIR)\cm.exe"
 
 CLEAN : 
 	-@erase ".\cm___Wi0\cm.exe"
+	-@erase ".\cm___Wi0\logging.obj"
 	-@erase ".\cm___Wi0\util.obj"
 	-@erase ".\cm___Wi0\terminal.obj"
+	-@erase ".\cm___Wi0\gui_colors.obj"
+	-@erase ".\cm___Wi0\json_color_theme.obj"
 	-@erase ".\cm___Wi0\keyboard.obj"
 	-@erase ".\cm___Wi0\json_config.obj"
 	-@erase ".\cm___Wi0\term_colors.obj"
@@ -430,21 +439,19 @@ CLEAN :
 	-@erase ".\cm___Wi0\cJSON.obj"
 	-@erase ".\cm___Wi0\statusbar.obj"
 	-@erase ".\cm___Wi0\connection.obj"
+	-@erase ".\cm___Wi0\config_file.obj"
+	-@erase ".\cm___Wi0\transfer.obj"
+	-@erase ".\cm___Wi0\printer.obj"
 	-@erase ".\cm___Wi0\conn_props.obj"
 	-@erase ".\cm___Wi0\new_conn.obj"
 	-@erase ".\cm___Wi0\general.obj"
 	-@erase ".\cm___Wi0\charset.obj"
+	-@erase ".\cm___Wi0\gui.obj"
 	-@erase ".\cm___Wi0\toolbar.obj"
 	-@erase ".\cm___Wi0\kerm_track.obj"
-	-@erase ".\cm___Wi0\cm.res"
-	-@erase ".\cm___Wi0\gui_colors.obj"
-	-@erase ".\cm___Wi0\json_color_theme.obj"
 	-@erase ".\cm___Wi0\json_util.obj"
-	-@erase ".\cm___Wi0\config_file.obj"
-	-@erase ".\cm___Wi0\gui.obj"
-	-@erase ".\cm___Wi0\transfer.obj"
-	-@erase ".\cm___Wi0\logging.obj"
-	-@erase ".\cm___Wi0\printer.obj"
+	-@erase ".\cm___Wi0\cm.res"
+	-@erase ".\cm___Wi0\jumplist.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -473,8 +480,11 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib comctl32.lib Version.lib /nologo /subsystem:windows\
  /incremental:no /pdb:"$(OUTDIR)/cm.pdb" /machine:I386 /out:"$(OUTDIR)/cm.exe" 
 LINK32_OBJS= \
+	".\cm___Wi0\logging.obj" \
 	".\cm___Wi0\util.obj" \
 	".\cm___Wi0\terminal.obj" \
+	".\cm___Wi0\gui_colors.obj" \
+	".\cm___Wi0\json_color_theme.obj" \
 	".\cm___Wi0\keyboard.obj" \
 	".\cm___Wi0\json_config.obj" \
 	".\cm___Wi0\term_colors.obj" \
@@ -489,20 +499,18 @@ LINK32_OBJS= \
 	".\cm___Wi0\cJSON.obj" \
 	".\cm___Wi0\statusbar.obj" \
 	".\cm___Wi0\connection.obj" \
+	".\cm___Wi0\config_file.obj" \
+	".\cm___Wi0\transfer.obj" \
+	".\cm___Wi0\printer.obj" \
 	".\cm___Wi0\conn_props.obj" \
 	".\cm___Wi0\new_conn.obj" \
 	".\cm___Wi0\general.obj" \
 	".\cm___Wi0\charset.obj" \
+	".\cm___Wi0\gui.obj" \
 	".\cm___Wi0\toolbar.obj" \
 	".\cm___Wi0\kerm_track.obj" \
-	".\cm___Wi0\gui_colors.obj" \
-	".\cm___Wi0\json_color_theme.obj" \
 	".\cm___Wi0\json_util.obj" \
-	".\cm___Wi0\config_file.obj" \
-	".\cm___Wi0\gui.obj" \
-	".\cm___Wi0\transfer.obj" \
-	".\cm___Wi0\logging.obj" \
-	".\cm___Wi0\printer.obj" \
+	".\cm___Wi0\jumplist.obj" \
 	".\cm___Wi0\cm.res"
 
 "$(OUTDIR)\cm.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
@@ -678,9 +686,6 @@ SOURCE="\ckwin-dial32\kermit\cm\src\statusbar.h"
 # Begin Source File
 
 SOURCE="\ckwin-dial32\kermit\cm\src\statusbar.cpp"
-
-!IF  "$(CFG)" == "cm - Win32 Release"
-
 DEP_CPP_STATU=\
 	".\..\statusbar.h"\
 	".\..\kerm_track.h"\
@@ -689,6 +694,9 @@ DEP_CPP_STATU=\
 	".\..\charset.h"\
 	".\..\term_info.h"\
 	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -696,14 +704,6 @@ DEP_CPP_STATU=\
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
-DEP_CPP_STATU=\
-	".\..\statusbar.h"\
-	".\..\kerm_track.h"\
-	".\..\conn_profile.h"\
-	".\..\cmstring.h"\
-	".\..\charset.h"\
-	".\..\term_info.h"\
-	
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -711,11 +711,6 @@ DEP_CPP_STATU=\
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
-DEP_CPP_STATU=\
-	".\..\statusbar.h"\
-	".\..\kerm_track.h"\
-	".\..\conn_profile.h"\
-	
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -723,14 +718,6 @@ DEP_CPP_STATU=\
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
-DEP_CPP_STATU=\
-	".\..\statusbar.h"\
-	".\..\kerm_track.h"\
-	".\..\conn_profile.h"\
-	".\..\cmstring.h"\
-	".\..\charset.h"\
-	".\..\term_info.h"\
-	
 
 "$(INTDIR)\statusbar.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -781,7 +768,7 @@ DEP_CPP_NEW_C=\
 	".\..\conn_props.h"\
 	".\..\util.h"\
 	".\..\conn_profile.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
@@ -832,12 +819,13 @@ DEP_CPP_MAIN_=\
 	".\..\ipc_messages.h"\
 	".\..\kerm_track.h"\
 	".\..\json_config.h"\
+	"..\jumplist.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
 	".\..\config_file.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -891,9 +879,6 @@ SOURCE="\ckwin-dial32\kermit\cm\src\kerm_track.h"
 # Begin Source File
 
 SOURCE="\ckwin-dial32\kermit\cm\src\kerm_track.cpp"
-
-!IF  "$(CFG)" == "cm - Win32 Release"
-
 DEP_CPP_KERM_=\
 	".\..\kerm_track.h"\
 	".\..\ipc_messages.h"\
@@ -902,6 +887,9 @@ DEP_CPP_KERM_=\
 	".\..\charset.h"\
 	".\..\term_info.h"\
 	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -909,14 +897,6 @@ DEP_CPP_KERM_=\
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Debug"
 
-DEP_CPP_KERM_=\
-	".\..\kerm_track.h"\
-	".\..\ipc_messages.h"\
-	".\..\conn_profile.h"\
-	".\..\cmstring.h"\
-	".\..\charset.h"\
-	".\..\term_info.h"\
-	
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -924,11 +904,6 @@ DEP_CPP_KERM_=\
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
 
-DEP_CPP_KERM_=\
-	".\..\kerm_track.h"\
-	".\..\ipc_messages.h"\
-	".\..\conn_profile.h"\
-	
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -936,14 +911,6 @@ DEP_CPP_KERM_=\
 
 !ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
-DEP_CPP_KERM_=\
-	".\..\kerm_track.h"\
-	".\..\ipc_messages.h"\
-	".\..\conn_profile.h"\
-	".\..\cmstring.h"\
-	".\..\charset.h"\
-	".\..\term_info.h"\
-	
 
 "$(INTDIR)\kerm_track.obj" : $(SOURCE) $(DEP_CPP_KERM_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
@@ -994,7 +961,7 @@ DEP_CPP_JSON_=\
 	".\..\json_config.h"\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
@@ -1055,14 +1022,14 @@ DEP_CPP_JSON_C=\
 	".\..\json_config.h"\
 	".\..\cJSON\cJSON.h"\
 	".\..\json_profile.h"\
-	"..\json_color_theme.h"\
+	".\..\json_color_theme.h"\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
-	"..\json_util.h"\
+	".\..\json_util.h"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -1258,8 +1225,10 @@ DEP_CPP_CONN_L=\
 	".\..\toolbar.h"\
 	".\..\kerm_track.h"\
 	".\..\util.h"\
+	"..\jumplist.h"\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
@@ -1375,9 +1344,9 @@ SOURCE="\ckwin-dial32\kermit\cm\src\cm.rc"
 DEP_RSC_CM_RC=\
 	".\..\toolbar1.bmp"\
 	".\..\logo.ico"\
-	"..\terminal_conn.ico"\
-	"..\terminal.ico"\
-	"..\cm.ico"\
+	".\..\terminal_conn.ico"\
+	".\..\terminal.ico"\
+	".\..\cm.ico"\
 	
 
 !IF  "$(CFG)" == "cm - Win32 Release"
@@ -1635,7 +1604,7 @@ DEP_CPP_TERMI=\
 	".\..\cmstring.h"\
 	
 NODEP_CPP_TERMI=\
-	"..\conn_props\,"\
+	".\..\conn_props\,"\
 	
 
 "$(INTDIR)\terminal.obj" : $(SOURCE) $(DEP_CPP_TERMI) "$(INTDIR)"
@@ -1915,7 +1884,7 @@ DEP_CPP_GUI_C=\
 	".\..\config_file.h"\
 	".\..\conn_props.h"\
 	".\..\conn_profile.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
@@ -1973,10 +1942,10 @@ SOURCE="\ckwin-dial32\kermit\cm\src\color_theme.h"
 
 SOURCE="\ckwin-dial32\kermit\cm\src\json_color_theme.cpp"
 DEP_CPP_JSON_CO=\
-	"..\json_color_theme.h"\
+	".\..\json_color_theme.h"\
 	".\..\cJSON\cJSON.h"\
-	"..\color_theme.h"\
-	"..\json_util.h"\
+	".\..\color_theme.h"\
+	".\..\json_util.h"\
 	".\..\conn_profile.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
@@ -2037,12 +2006,12 @@ SOURCE="\ckwin-dial32\kermit\cm\src\json_color_theme.h"
 
 SOURCE="\ckwin-dial32\kermit\cm\src\json_util.cpp"
 DEP_CPP_JSON_U=\
-	"..\json_util.h"\
+	".\..\json_util.h"\
 	".\..\cJSON\cJSON.h"\
 	".\..\json_config.h"\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
@@ -2102,7 +2071,7 @@ SOURCE="\ckwin-dial32\kermit\cm\src\config_file.cpp"
 DEP_CPP_CONFI=\
 	".\..\config_file.h"\
 	".\..\conn_profile.h"\
-	"..\color_theme.h"\
+	".\..\color_theme.h"\
 	".\..\cmstring.h"\
 	".\..\charset.h"\
 	".\..\term_info.h"\
@@ -2307,6 +2276,67 @@ DEP_CPP_PRINT=\
 "$(INTDIR)\printer.obj" : $(SOURCE) $(DEP_CPP_PRINT) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\jumplist.cpp"
+DEP_CPP_JUMPL=\
+	"..\jumplist.h"\
+	".\..\config_file.h"\
+	".\..\conn_profile.h"\
+	".\..\color_theme.h"\
+	".\..\cmstring.h"\
+	".\..\charset.h"\
+	".\..\term_info.h"\
+	
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+
+"$(INTDIR)\jumplist.obj" : $(SOURCE) $(DEP_CPP_JUMPL) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+
+"$(INTDIR)\jumplist.obj" : $(SOURCE) $(DEP_CPP_JUMPL) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+
+"$(INTDIR)\jumplist.obj" : $(SOURCE) $(DEP_CPP_JUMPL) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
+
+
+"$(INTDIR)\jumplist.obj" : $(SOURCE) $(DEP_CPP_JUMPL) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE="\ckwin-dial32\kermit\cm\src\jumplist.h"
+
+!IF  "$(CFG)" == "cm - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Debug"
+
+!ELSEIF  "$(CFG)" == "cm - Win32 Unicode Release"
 
 !ENDIF 
 
