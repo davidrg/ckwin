@@ -394,8 +394,7 @@ static void CheckPacketLength(HWND hwndDlg, BOOL save) {
 	// We have to get the numeric value off of the spin box
 	// rather than backing field itself because it uses commas
 	// for numbers >999 which getFieldInt() can't handle
-	int newValue = SendMessage(
-		GetDlgItem(hwndDlg, IDC_TRANS_PKT_LEN_SPIN), UDM_GETPOS, 0, 0);
+	int newValue = GetSpinBoxValue(hwndDlg, IDC_TRANS_PKT_LEN_SPIN);
 
 	int oldValue = profile->packetLength();
 

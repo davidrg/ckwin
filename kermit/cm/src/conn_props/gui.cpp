@@ -369,8 +369,7 @@ static void CheckXPosition(HWND hwndDlg, BOOL save) {
 	// We have to get the numeric value off of the spin box
 	// rather than backing field itself because it uses commas
 	// for numbers >999 which getFieldInt() can't handle
-	int newValue = SendMessage(
-		GetDlgItem(hwndDlg, IDC_STARTUP_X_SPIN), UDM_GETPOS, 0, 0);
+	int newValue = GetSpinBoxValue(hwndDlg, IDC_STARTUP_X_SPIN);
 	int oldValue = profile->startupAtX();
 
 	BOOL changed = newValue != oldValue;
@@ -395,8 +394,7 @@ static void CheckYPosition(HWND hwndDlg, BOOL save) {
 	// We have to get the numeric value off of the spin box
 	// rather than backing field itself because it uses commas
 	// for numbers >999 which getFieldInt() can't handle
-	int newValue = SendMessage(
-		GetDlgItem(hwndDlg, IDC_STARTUP_Y_SPIN), UDM_GETPOS, 0, 0);
+	int newValue = GetSpinBoxValue(hwndDlg, IDC_STARTUP_Y_SPIN);
 	int oldValue = profile->startupAtY();
 
 	BOOL changed = newValue != oldValue;

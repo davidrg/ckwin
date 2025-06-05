@@ -292,3 +292,12 @@ void ConfigureSpinBox(HWND hwndDlg, int spinId, int fieldId,
 		(WPARAM)0,
 		(LPARAM)value);
 }
+
+int GetSpinBoxValue(HWND hwndDlg, int spinId) {
+	LRESULT val;
+	val = SendMessage(
+		GetDlgItem(hwndDlg, spinId), 
+		UDM_GETPOS, 0, 0);
+
+	return (short)LOWORD(val);
+}

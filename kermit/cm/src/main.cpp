@@ -112,11 +112,7 @@ int PASCAL WinMain(HINSTANCE hInstance,
 		// Kermit 95 instance is ready to be taken over. This is almost
 		// certainly caused by the user clicking the dialer button.
 
-#ifdef _WIN64
-		HWND hWndInstance = _atoi64(__argv[2]);
-#else
 		HWND hWndInstance = (HWND)atoi(__argv[2]);
-#endif
 
 		int pidInstance = atoi(__argv[3]);
 

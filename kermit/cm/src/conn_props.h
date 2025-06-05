@@ -12,6 +12,7 @@ int				getFieldInt(HWND hwndDlg, int id);
 void			setFieldInt(HWND hwndDlg, int id, int value);
 void			ConfigureSpinBox(HWND hwndDlg, int spinId, int fieldId, 
 								int rangeMin, int rangeMax, int value);
+int				GetSpinBoxValue(HWND hwndDlg, int spinId);
 
 // Property Sheet: GENERAL
 BOOL CALLBACK	GeneralPageDlgProc(HWND, UINT, WPARAM, LPARAM);

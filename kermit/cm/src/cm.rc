@@ -350,7 +350,8 @@ BEGIN
     EDITTEXT        IDC_KBD_KM_FILENAME,75,70,155,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_KBD_KM_FILE_BROWSE,233,70,15,14
     LTEXT           "Additional mapping:",IDC_STATIC,10,93,62,8
-    EDITTEXT        IDC_KBD_KM_KEYMAP,75,90,175,75,ES_AUTOHSCROLL
+    EDITTEXT        IDC_KBD_KM_KEYMAP,75,90,175,75,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL
 END
 
 IDD_LOGIN DIALOG DISCARDABLE  0, 0, 262, 175
@@ -496,12 +497,12 @@ BEGIN
     CONTROL         "Custom:",IDC_STARTUP_CUSTOM,"Button",BS_AUTORADIOBUTTON,
                     15,85,41,10
     LTEXT           "X-pos:",IDC_STATIC,15,99,21,8
-    EDITTEXT        IDC_STARTUP_X,40,96,39,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_STARTUP_X,40,96,39,14,ES_AUTOHSCROLL
     CONTROL         "Spin3",IDC_STARTUP_X_SPIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,75,96,
                     11,14
     LTEXT           "Y-Pos:",IDC_STATIC,15,116,22,8
-    EDITTEXT        IDC_STARTUP_Y,40,113,39,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_STARTUP_Y,40,113,39,14,ES_AUTOHSCROLL
     CONTROL         "Spin2",IDC_STARTUP_Y_SPIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,75,113,
                     11,14
@@ -659,11 +660,11 @@ FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,130,85,50,14
     ICON            IDI_LOGO,IDC_STATIC,5,5,18,20
-    LTEXT           "Kermit 95 Connection Manager",IDC_STATIC,40,5,95,8
+    LTEXT           "Kermit 95 Connection Manager",IDC_STATIC,40,5,140,8
     LTEXT           "Version 1.0 for Windows NT",IDC_ABOUT_VERSION,40,15,125,
                     8
-    LTEXT           "(C) Copyright David Goodwin, 2023",IDC_STATIC,40,25,140,
-                    8
+    LTEXT           "(C) Copyright David Goodwin, 2023-2025",IDC_STATIC,40,
+                    25,140,8
     LTEXT           "Build: x86 UNICODE",IDC_ABOUT_BUILD,40,70,140,8
     LTEXT           "Portions (C) Copyright Dave Gamble and cJSON contributors",
                     IDC_STATIC,40,40,135,20
