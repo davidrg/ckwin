@@ -10,6 +10,9 @@
 #    Debug, Unicode: nmake -f cm.mak DEBUG=yes UNICODE=yes
 #
 
+# Required by compiler detect
+PLATFORM=NT
+
 # --------------------------------------------------------------
 # Try to detect the compiler version being used so we can adjust
 # compiler flags accordingly.
@@ -325,4 +328,4 @@ CLEAN :
 "$(OUTDIR)\util.obj" : util.cpp "$(OUTDIR)" util.h
 
 "$(OUTDIR)\cm.res" : cm.rc "$(OUTDIR)" logo.ico toolbar1.bmp
-	$(RSC) /l 0x409 /fo"$(OUTDIR)\cm.res" /i "." $(RCFLAGS) cm.rc
+	$(RSC) /l 0x409 /fo"$(OUTDIR)\cm.res" /i "." /i "supp" $(RCFLAGS) cm.rc
