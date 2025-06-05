@@ -13,4 +13,5 @@ void				ProfileSelected(BOOL, BOOL);
 ConnectionProfile*	GetSelectedProfile(HWND);
 void                ConnectSelectedProfile(HWND, HWND);
 void                ConnectProfileId(HWND hwndParent, int profileId);
+BOOL                GetSelectedProfileScreenCoord(POINT *point);
 #endif /* CONN_LIST_H */

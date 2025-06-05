@@ -313,3 +313,15 @@ void ConnectProfileId(HWND hwndParent, int profileId) {
 	}
 
 }
+
+BOOL GetSelectedProfileScreenCoord(POINT* point) {
+	// Get selected list item
+	int idx = SendMessage(hwndLV, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+	if (idx < 0) return FALSE;
+
+	// Get coordinates
+	if (ListView_GetItemPosition(hwndLV, idx, point)) {
+		return ClientToScreen(hwndLV, point);
+	}
+	return FALSE;
+}

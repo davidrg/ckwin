@@ -423,8 +423,25 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 
 			if (profile != NULL) {
 				GetWindowRect(g_hwndConnectionList, &rc);
+#ifdef GET_X_LPARAM
+				// These are new to Visual C++ 5.0 and required for multi-monitor setups
+				// where the coordinates could have negative values where the window is
+				// on a display to the left of or above the primary display.
+				pt.x = GET_X_LPARAM(lParam);
+				pt.y = GET_Y_LPARAM(lParam);
+
+				if (pt.x == -1 && pt.y == -1) {
+					// This indicates the context menu was requested via the keyboard (either
+					// Shift+F10 or the context menu key), so get the coordinates of the selected
+					// item.
+					if (!GetSelectedProfileScreenCoord(&pt)) {
+						break;
+					}
+				}
+#else
 				pt.x = LOWORD(lParam);
 				pt.y = HIWORD(lParam);
+#endif
 
 				// TODO: Prevent the context menu appearing for the header
 				//		 (if we show one ideally it would be to pick visible columns)
