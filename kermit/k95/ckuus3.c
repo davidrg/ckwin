@@ -9737,10 +9737,12 @@ setguiwin() {
           return(z);
         if ((z = cmcfm()) < 0)
           return(z);
+        /* TODO: Ideally we should call EnumDisplayMonitors or similar to figure
+         *       out what valid replacements actually are.
         if (x < 0 || y < 0) {
             printf("?Coordinates must be 0 or greater\n");
             return(-9);
-        }
+        }*/
         gui_position(x,y);
         return(success = 1);
       case GUIW_RES:

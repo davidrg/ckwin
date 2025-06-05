@@ -2794,18 +2794,32 @@ doxarg(s,pre) char ** s; int pre;
         kui_init.nCmdShow = SW_MINIMIZE;
         break;
 
-      case XA_XPOS:
-        if (!rdigits(p))
-          return(-1);
-	kui_init.pos_init++;
-	kui_init.pos_x = atoi(p);
+      case XA_XPOS: {
+			char* temp = p;
+			/* rdigits doesn't consider '-' to be a digit, so we've got to skip
+			 * over it if we want to handle negative screen coordinates. atoi
+			 * handles it fine, so we only need to skip over it for rdigits.
+			 * Negative screen coordinates are required for screens to the left
+			 * of or above of the primary display. */
+			if (temp[0] == '-')
+				temp = p+1;
+        	if (!rdigits(temp))
+          		return(-1);
+			kui_init.pos_init++;
+			kui_init.pos_x = atoi(p);
+		}
         break;
 
-      case XA_YPOS:
-        if (!rdigits(p))
-          return(-1);
-	kui_init.pos_init++;
-	kui_init.pos_y = atoi(p);
+      case XA_YPOS: {
+      		char* temp = p;
+			/* See comment above for why we're doing this */
+      		if (temp[0] == '-')
+      			temp = p+1;
+      		if (!rdigits(temp))
+      			return(-1);
+			kui_init.pos_init++;
+			kui_init.pos_y = atoi(p);
+		}
         break;
 
       case XA_FNAM: {

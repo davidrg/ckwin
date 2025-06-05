@@ -131,7 +131,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
    `SET TERMINAL COLOR DIM` is used.
  - Added a new `IF REXX` test for checking if REXX support is available
-
+ - Negative screen coordinates are now supported on the command line 
+   (`--xpos`, `--ypos`) and in the `SET GUI WINDOW POSITION` command. Negative
+   coordinates may be required in multi-monitor setups to place the window on
+   a display to the left of or above of the primary display.
+ 
 ### Bug fixes
  - Fixed an inssue introduced in beta 7 which could cause SSH connections made
    via the dialer to cause K95 to crash
