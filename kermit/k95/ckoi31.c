@@ -37,7 +37,6 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern char termessage[] ;
 extern int autoscroll, protect ;
 extern struct _vtG G[4];
@@ -169,7 +168,7 @@ i31rdctrl( int m, int * pa1, int * pa2, int * pa3, int * pa4, int * op )
             p = pa4;
             break;
         }
-        if ( (*p & 0x60) == 0x20 ) {
+        if ( (p != NULL) && (*p & 0x60) == 0x20 ) {
             *op  = i31inc();
             if ( (*op) < 0 )
                 return(n);
@@ -2086,7 +2085,7 @@ i31ascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,

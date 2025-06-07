@@ -525,6 +525,8 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
                     pData[j++] = utolxlat(selection[i]);
             pData[j] = '\0';
             putkeystr( vmode, pData );
+
+            free(pData);
         }
     } else {
         /* The Vscrn is in the local character set                */
@@ -548,6 +550,85 @@ CopyVscrnToKbdBuffer( BYTE vmode, int select_mode ) {
         free(pData);
     }
     return rc ;
+}
+
+#ifdef NT
+USHORT *
+GetUnicodeClipboardContent()
+{
+    BYTE * hClipbrdData ;
+    USHORT * pUClipbrdData = 0;
+    HGLOBAL hClipboard = NULL ;
+
+    if ( OpenClipboard( NULL ) )
+    {
+        if ( hClipboard = (BYTE *) GetClipboardData( CF_UNICODETEXT ) )
+        {
+            hClipbrdData = GlobalLock(hClipboard) ;
+            pUClipbrdData = wcsdup( (const wchar_t *) hClipbrdData ) ;
+            GlobalUnlock( hClipboard ) ;
+        }
+        CloseClipboard();
+    }
+
+    return pUClipbrdData ;
+}
+#endif /* NT */
+
+BYTE *
+GetClipboardContent()
+{
+    APIRET rc = -1 ;
+    BYTE * hClipbrdData ;
+    USHORT * pUClipbrdData = 0;
+    BYTE * pClipbrdData = 0 ;
+#ifndef NT
+    BYTE * pClipboard ;
+#endif /* NT */
+
+#ifdef NT
+    HGLOBAL hClipboard = NULL ;
+
+    if ( OpenClipboard( NULL ) )
+    {
+        if ( hClipboard = (BYTE *) GetClipboardData( CF_TEXT ) )
+        {
+            hClipbrdData = GlobalLock(hClipboard) ;
+            pClipbrdData = strdup( hClipbrdData ) ;
+            GlobalUnlock( hClipboard ) ;
+        }
+
+        CloseClipboard() ;
+    }
+    if ( pClipbrdData )
+        CharToOem( pClipbrdData, pClipbrdData );
+#else /* NT */
+    pClipbrdData = GetTextFromClipboardServer() ;
+
+    if ( !pClipbrdData ) {
+        if ( rc = WinOpenClipbrd(hab) ) {
+            hClipbrdData = (BYTE *) WinQueryClipbrdData( hab, CF_TEXT ) ;
+            if ( !DosGetSharedMem( hClipbrdData, PAG_READ ) )
+            {
+                pClipbrdData = strdup( hClipbrdData ) ;
+
+                /* We must copy the text back to the Clipboard because the   */
+                /* GetSharedMemory call screwed up the clipboard.  We're not */
+                /* supposed to do things like that.                          */
+                if ( !DosAllocSharedMem( (PPVOID) &pClipboard, 0, strlen(pClipbrdData)+1,
+                                         PAG_COMMIT | PAG_READ | PAG_WRITE |
+                                         OBJ_GIVEABLE | OBJ_GETTABLE ) )
+                {
+                    strcpy( pClipboard, pClipbrdData ) ;
+                    WinSetClipbrdData( hab, (ULONG) pClipboard, CF_TEXT, CFI_POINTER ) ;
+                    DosFreeMem( pClipboard ) ;
+                }
+            }
+            WinCloseClipbrd( hab ) ;
+        }
+    }
+#endif /* NT */
+    return pClipbrdData ;
 }
 
 APIRET
@@ -727,9 +808,8 @@ CopyClipboardToKbdBuffer( BYTE vmode )
 }
 
 APIRET
-CopyVscrnToClipboard( BYTE vmode, int select_mode )
+CopyToClipboard( BYTE* data, ULONG length )
 {
-    ULONG  ClipBoardSz = 0 ;
     BYTE * pClipboard = 0 ;
 #ifdef NT
     HGLOBAL hClipboard = NULL ;
@@ -737,17 +817,11 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
     APIRET rc = 0 ;
     int use_unicode = (ck_isunicode() && !isWin95());
 
-    if ( VscrnSelect(vmode, select_mode) )
-        return -1 ;
-
-    /* Determine size of Clipboard */
-    ClipBoardSz = use_unicode ? 2 * nselect : nselect ;
-
     /* Allocate Clipboard Buffer */
 #ifdef NT
-    if ( (hClipboard = GlobalAlloc( GMEM_MOVEABLE | GMEM_DDESHARE, ClipBoardSz )) == NULL )
+    if ( (hClipboard = GlobalAlloc( GMEM_MOVEABLE | GMEM_DDESHARE, length )) == NULL )
 #else /* NT */
-    if ( rc = DosAllocSharedMem( (PPVOID) &pClipboard, 0, ClipBoardSz,
+    if ( rc = DosAllocSharedMem( (PPVOID) &pClipboard, 0, length,
                    PAG_COMMIT | PAG_READ | PAG_WRITE |
                    OBJ_GIVEABLE | OBJ_GETTABLE ) )
 #endif /* NT */
@@ -769,10 +843,7 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
 #endif /* NT */
 
     /* Copy the data to the clibboard buffer */
-    if ( use_unicode )
-        memcpy( pClipboard, Uselection, ClipBoardSz );
-    else
-        strcpy( pClipboard, selection ) ;
+    memcpy( pClipboard, data, length );
 
 #ifdef NT
     if ( !use_unicode )
@@ -804,6 +875,19 @@ CopyVscrnToClipboard( BYTE vmode, int select_mode )
       }
 #endif /* NT */
     return rc ;
+}
+
+APIRET
+CopyVscrnToClipboard( BYTE vmode, int select_mode )
+{
+    int use_unicode = (ck_isunicode() && !isWin95());
+
+    if ( VscrnSelect(vmode, select_mode) )
+        return -1 ;
+
+    return CopyToClipboard(
+        use_unicode ? (unsigned char*)Uselection : selection,
+        use_unicode ? 2 * nselect : nselect);
 }
 
 

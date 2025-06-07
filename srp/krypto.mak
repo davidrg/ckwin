@@ -19,17 +19,24 @@ CFG=Debug
 !ERROR An invalid configuration is specified.
 !ENDIF
 
-!message Attempting to detect compiler...
-!include ..\kermit\k95\compiler_detect.mak
+# For some reason this isn't running at all
+# !message Attempting to detect compiler...
+# !include ..\kermit\k95\compiler_detect.mak
+
+# So instead we just rely on the values from setenv.bat, which is faster anyway
+TARGET_CPU=$(CKB_TARGET_ARCH)
+COMPILER=$(CK_COMPILER_NAME)
+MSC_VER=$(CKB_MSC_VER)
+TARGET_PLATFORM=Windows
 
 !message
 !message
 !message ===============================================================================
-!message libkrypto Build Configuration
+!message libsrp Build Configuration
 !message ===============================================================================
 !message  Architecture:             $(TARGET_CPU)
 !message  Compiler:                 $(COMPILER)
-!message  Compiler Version:         $(COMPILER_VERSION)
+#!message  Compiler Version:         $(COMPILER_VERSION)
 !message  Compiler Target Platform: $(TARGET_PLATFORM)
 !message  Configuration:            $(CFG)
 !message ===============================================================================

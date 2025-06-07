@@ -56,6 +56,9 @@
 #define KBM_UR 4 /* Ukrainian (not used) */
 #define KBM_EM 5 /* Emacs */
 #define KBM_WP 6 /* Word Perfect 5.1 */
+#define KBM_ME 7 /* Meta-sends-escape (like emacs) */
+#define KBM_MM 8 /* xterm meta mode */
+
 
 #ifndef NOKVERBS
 #include "ckokvb.h"
@@ -282,6 +285,8 @@ extern con_event mousemap[MMBUTTONMAX][MMSIZE] ;
 #define HEBREWKM   (TT_MAX+2)
 #define RUSSIANKM  (TT_MAX+3)
 #define WPKM       (TT_MAX+4)
+#define METAESCKM  (TT_MAX+5)
+#define METAKM     (TT_MAX+6)
 
 _PROTOTYP( void keymapinit, (void) );
 _PROTOTYP( void keynaminit, (void) );

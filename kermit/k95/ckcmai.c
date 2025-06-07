@@ -1,12 +1,12 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
 #ifdef COMMENT
-#define EDITDATE  "8 Aug 2024"       /* Last edit date dd mmm yyyy */
+#define EDITDATE  "22 Mar 2025"       /* Last edit date dd mmm yyyy */
 #else
-#define EDITDATE  "2024/08/08"       /* Last edit date ISO format */
+#define EDITDATE  "2025/03/22"       /* Last edit date ISO format */
 #endif  /* COMMENT */
 
-#define EDITNDATE "20240808"          /* Keep them in sync */
+#define EDITNDATE "20250322"          /* Keep them in sync */
 /* Thu Aug  8 12:25:04 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
@@ -45,7 +45,7 @@ If the version number has changed, also:
 */
 #include "ckcdeb.h"                     /* Debug & other symbols */
 
-char * ck_cryear = "2024"; 		/* C-Kermit copyright year */
+char * ck_cryear = "2025"; 		/* C-Kermit copyright year */
 /*
   Note: initialize ck_s_test to "" if this is not a test version.
   Use (*ck_s_test != '\0') to decide whether to print test-related messages.
@@ -71,7 +71,7 @@ char *ck_s_tver = K95_TEST_VER_S;
 #else
 /* Can also use "Pre-Beta" here for in between "daily" uploads */
 char *ck_s_test = "Beta"; /* "Dev","Alpha","pre-Beta","Beta","RC", or "" */
-char *ck_s_tver = "11";                 /* Test version number */
+char *ck_s_tver = "12";                 /* Test version number */
 #endif /* OS2 */
 #else /* BETATEST */
 char *ck_s_test = "";			/* Not development */
@@ -107,15 +107,14 @@ int offtsize = 0;                       /* Size of OFF_T */
   and it should always be incremented, for the benefit of packagers like
   Debian who depend on it.
   
-  Also the custom-format version numbers for OS/2, Windows, and the
-  original 1980s Macintosh are gone.  There are no more Kermit-2,
-  Kermit 95 for Windows 95 and later, and Mac Kermit (for the original
-  Macintosh), just C-Kermit for each platform (except the original Mac).
+  Also the custom-format version numbers for the original 1980s Macintosh is
+  gone as there is no more Mac Kermit (for the original Macintosh), just
+  C-Kermit for each platform (except the original Mac) and Kermit 95.
 */
 char *ck_s_ver = "10.0";                /* C-Kermit version string */
-char *ck_s_edit = "414";                /* Edit number (for Debian package) */
-char *ck_s_xver = "10.0.414";           /* eXtended version string */
-long  ck_l_ver = 1000414L;              /* C-Kermit version number */
+char *ck_s_edit = "416";                /* Edit number (for Debian package) */
+char *ck_s_xver = "10.0.416";           /* eXtended version string */
+long  ck_l_ver = 1000415L;              /* C-Kermit version number */
 char *ck_s_name = "C-Kermit";           /* Name of this program */
 char *ck_s_who = "";                    /* Where customized, "" = not. */
 char *ck_patch = "";                    /* Patch info, if any. */
@@ -1433,6 +1432,9 @@ int deblog = 0,                         /* Debug log is open */
     cnflg  = 0,                         /* Connect after transaction */
     cxseen = 0,                         /* Flag for cancelling a file */
     czseen = 0,                         /* Flag for cancelling file group */
+#ifdef OS2
+    ccseen = 0,                         /* Flag for canceling autodownload */
+#endif /* OS2 */
     fatalio = 0,                        /* Flag for fatal i/o error */
     discard = 0,                        /* Flag for file to be discarded */
     keep = SET_AUTO,                    /* Keep incomplete files = AUTO */

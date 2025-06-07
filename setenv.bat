@@ -374,6 +374,7 @@ REM OpenSSL 0.9.8, 1.0.x:
 if exist %openssl_root%\out32dll\ssleay32.lib set lib=%lib%;%openssl_root%\out32dll
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_OPENSSL_VERSION=0.9.8 or 1.0.x
+if exist %openssl_root%\out32dll\ssleay32.lib set CKF_K4W_SSL=yes
 if exist %openssl_root%\out32dll\ssleay32.lib echo Found OpenSSL 0.9.8 or 1.0.x: %openssl_root%\out32dll\ssleay32.lib
 if exist %openssl_root%\out32dll\ssleay32.lib set CKF_SSL_LIBS=ssleay32.lib libeay32.lib
 if exist %openssl_root%\out32dll\ssleay32.dll set CK_SSL_DIST_DLLS=%CK_SSL_DIST_DLLS% %openssl_root%\out32dll\ssleay32.dll %openssl_root%\out32dll\libeay32.dll
@@ -506,6 +507,7 @@ for %%I in (%CK_K4W_DIST_FILES%) do set CK_K4W_DIST=%CK_K4W_DIST% %%I
 :nok4w
 
 echo Searching for REXX...
+if "%CKF_REXX%" == "no" goto :norex
 set CKF_REXX=no
 if not exist %rexx_root%\include\rexxsaa.h echo Can't find rexxsaa.h
 if not exist %rexx_root%\include\rexxsaa.h goto :norex
@@ -622,7 +624,15 @@ cl 2>&1 | findstr /R /C:"C Centaur.*Version 8\.00" > nul
 if %errorlevel% == 0 goto :vc1mips
 cl 2>&1 | findstr /C:"Version 8.00" > nul
 if %errorlevel% == 0 goto :vc116
+cl 2>&1 | findstr /C:"Digital Mars" > nul
+if %errorlevel% == 0 goto :dmcc
 
+goto :unsupported
+
+:dmcc
+REM Digital Mars C/C++ - not currently supported
+set CK_COMPILER_NAME=Digital Mars C/C++
+set CKB_MSC_VER=120
 goto :unsupported
 
 :watcomc
@@ -633,6 +643,7 @@ wcc386 . <nul 2>&1 | findstr /C:"Version 2.0" > nul
 if %errorlevel% == 0 set ZINCBUILD=ow20
 if "%ZINCBUILD%" == "" goto :unsupported
 set CK_COMPILER_NAME=OpenWatcom
+set CKB_MSC_VER=130
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
@@ -656,6 +667,7 @@ goto :cvcdone
 
 :vc116
 set CK_COMPILER_NAME=Visual C++ 1.0 (16-bit)
+set CKB_MSC_VER=80
 set ZINCBUILD=mvcpp150
 set CKF_SUPERLAT=unsupported
 set CKF_SSH=unsupported
@@ -668,6 +680,7 @@ goto :semisupported
 
 :vc1
 set CK_COMPILER_NAME=Visual C++ 1.0 32-bit Edition
+set CKB_MSC_VER=80
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
@@ -681,6 +694,7 @@ goto :cvcdone
 :vc1axp
 REM This is in the NT 3.50 Win32 SDK. Doesn't include Visual C++ libs/runtime (msvcrt)
 set CK_COMPILER_NAME=Visual C++ 1.0 for Alpha AXP
+set CKB_MSC_VER=80
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
@@ -697,6 +711,7 @@ goto :cvcdone
 REM This is in the Win32 SDK Final Release (NT 3.1) compiler.
 REM Doesn't include Visual C++ libs/runtime (msvcrt)
 set CK_COMPILER_NAME=Win32 SDK Final Release (MIPS) Centaur C 8.0
+set CKB_MSC_VER=80
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
@@ -710,6 +725,7 @@ goto :cvcdone
 :vc2
 :vc21
 set CK_COMPILER_NAME=Visual C++ 2.x
+set CKB_MSC_VER=90
 REM TODO - try to find msvcrt20.dll and add it to distdlls
 set ZINCBUILD=mvcpp200mt
 set CKF_SSH=unsupported
@@ -727,8 +743,15 @@ if "%CKB_TARGET_ARCH%" == "MIPS" set ZINCBUILD=mvcpp400mt-mips
 goto :cvcdone
 
 :vc4
+set CKB_MSC_VER=100
+goto :vc4x
 :vc41
+set CKB_MSC_VER=101
+goto :vc4x
 :vc42
+set CKB_MSC_VER=102
+goto :vc4x
+:vc4x
 set CK_COMPILER_NAME=Visual C++ 4.x
 set ZINCBUILD=mvcpp400mt
 set CKF_SSH=unsupported
@@ -748,6 +771,7 @@ goto :cvcdone
 
 :vc5
 set CK_COMPILER_NAME=Visual C++ 5.0 (Visual Studio 97)
+set CKB_MSC_VER=110
 set ZINCBUILD=mvcpp500mt
 set CKF_SSH=unsupported
 set CKF_SSL=unsupported
@@ -761,6 +785,7 @@ goto :cvcdone
 
 :vc6
 set CK_COMPILER_NAME=Visual C++ 6.0 (Visual Studio 6)
+set CKB_MSC_VER=120
 set ZINCBUILD=mvcpp600mt
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
@@ -772,6 +797,7 @@ goto :cvcdone
 
 :vc7
 set CK_COMPILER_NAME=Visual C++ 2002 (7.0)
+set CKB_MSC_VER=130
 set ZINCBUILD=mvcpp700mt
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
@@ -785,6 +811,7 @@ goto :cvcdone
 
 :vc71
 set CK_COMPILER_NAME=Visual C++ 2003 (7.1)
+set CKB_MSC_VER=131
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
@@ -792,6 +819,7 @@ goto :cvcdone
 
 :vc8
 set CK_COMPILER_NAME=Visual C++ 2005 (8.0)
+set CKB_MSC_VER=140
 set CKB_9X_COMPATIBLE=yes
 set CKB_NT_COMPATIBLE=yes
 set CKB_XP_COMPATIBLE=yes
@@ -799,12 +827,14 @@ goto :cvcdone
 
 :vc9
 set CK_COMPILER_NAME=Visual C++ 2008 (9.0)
+set CKB_MSC_VER=150
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc10
 set CK_COMPILER_NAME=Visual C++ 2010 (10.0)
+set CKB_MSC_VER=160
 set ZINCBUILD=mvcpp10
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
@@ -812,30 +842,35 @@ goto :cvcdone
 
 :vc11
 set CK_COMPILER_NAME=Visual C++ 2012 (11.0)
+set CKB_MSC_VER=170
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc12
 set CK_COMPILER_NAME=Visual C++ 2013 (12.0)
+set CKB_MSC_VER=180
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc140
 set CK_COMPILER_NAME=Visual C++ 2015 (14.0)
+set CKB_MSC_VER=190
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc141
 set CK_COMPILER_NAME=Visual C++ 2017 (14.1)
+set CKB_MSC_VER=191
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
 
 :vc142
 set CK_COMPILER_NAME=Visual C++ 2019 (14.2)
+set CKB_MSC_VER=192
 set CKF_SUPERLAT=unsupported
 set CKB_XP_COMPATIBLE=yes
 goto :cvcdone
@@ -844,11 +879,13 @@ REM Visual C++ 2022 and newer are not suitable for targeting XP.
 
 :vc143
 set CK_COMPILER_NAME=Visual C++ 2022 (14.3)
+set CKB_MSC_VER=193
 set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
 :vc144
 set CK_COMPILER_NAME=Visual C++ 2022 17.10+ (14.4)
+set CKB_MSC_VER=194
 set CKF_SUPERLAT=unsupported
 goto :cvcdone
 
@@ -937,6 +974,10 @@ REM TODO - if we're using an old compiler, force things like SSH off
 REM        and remove their dist files.
 
 set CK_DIST_DLLS=%CK_ZLIB_DIST_DLLS% %CK_SSL_DIST_DLLS% %CK_SSH_DIST_DLLS% %CK_SRP_DIST_DLLS% %CK_K4W_DIST_FILES% %CKB_REXX_DIST_DLLS%
+
+REM If this build can run on Windows 9x, include ctrl2cap for swapping the
+REM CTRL and Caps Lock keys, and the accent grave and esc keys:
+if "%CKB_9X_COMPATIBLE%" == "yes" set CK_DIST_DLLS=%CK_DIST_DLLS% %root%\kermit\ctrl2cap\ctrl2cap.vxd %root%\kermit\ctrl2cap\ctrl2cap.txt %root%\kermit\ctrl2cap\ctrl2cap.license
 
 echo -----------------------------
 echo.

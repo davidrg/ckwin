@@ -212,6 +212,17 @@ static char *ckxrev = "32-bit";
 #include "ckokey.h"
 #include "ckoslp.h"
 
+#ifdef KUI
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+#endif /* KUI */
+extern ULONG RGBTable[], RGBTable256[], RGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+
 #ifdef CK_XYZ
 #include "p.h"
 #include "ckop.h"
@@ -449,6 +460,7 @@ int dfloc = 0;
 
 int OSVer = 0;
 int nt351 = 0;
+int nt5 = 0;
 
 #ifdef NTSIG
 int TlsIndex = 0;
@@ -1699,6 +1711,7 @@ sysinit() {
                 OSVer = osverinfo.dwPlatformId ;
 
             if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
+            if (osverinfo.dwMajorVersion > 4) nt5 = 1; /* We're on Win2k or newer */
 
 #ifndef CK_UTSNAME
             sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
@@ -1895,6 +1908,7 @@ sysinit() {
     CreateKeyMapInitSem( FALSE ) ;
     CreateVscrnDirtySem( TRUE );
 #endif /* NOLOCAL */
+    CreateZoutDumpMutex( FALSE );
 
 #ifndef NOSETKEY
     keymapinit();                       /* Initialize key maps */
@@ -2134,6 +2148,19 @@ sysinit() {
         if ( !row_init && !col_init )
             ttgwsiz() ;
     }
+
+#ifdef KUI
+    {
+        int i;
+        // Initialise the backup copies of the RGB colour tables
+        for (i = 0; i < 256; i++) SavedRGBTable256[i] = RGBTable256[i];
+        for (i = 0; i < 88; i++) SavedRGBTable88[i] = RGBTable88[i];
+        for (i = 0; i < 16; i++) SavedRGBTable[i] = RGBTable[i];
+#ifdef CK_PALETTE_WY370
+        for (i = 0; i < 65; i++) SavedWY370RGBTable[i] = WY370RGBTable[i];
+#endif /* CK_PALETTE_WY370 */
+    }
+#endif /* KUI*/
 
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
@@ -2485,6 +2512,7 @@ syscleanup() {
     VioHandle = 0 ;
 #endif /* NT */
     CloseThreadMgmtMutex() ;
+    CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);
 
 #ifndef NOLOCAL
@@ -2540,7 +2568,7 @@ ttimoff() {                             /* Turn off any timer interrupts */
 
 
 /* O S 2 S E T T I M O -- set read and write timeouts */
-
+/* spd is connetion speed, modem is if connection is via modem or not */
 int
 os2settimo(int spd, int modem)
 {
@@ -2566,6 +2594,12 @@ os2settimo(int spd, int modem)
 
     if ( maxow > maxow_usr )
         maxow = maxow_usr;
+
+    /* A number of values are divided by spd, making a zero-value a bit risky.
+     * While we only get zero passed in here by sysinit() which happens to work
+     * during program start, we're better off forcing a valid value just in case. */
+    if (spd <= 0)
+        spd = 1;
 
 #ifdef CK_TAPI
     if ( tttapi && !tapipass ) {
@@ -7445,7 +7479,7 @@ loadtod( int hh, int mm )
 
 int
 conoc(char c) {
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
     extern int wherex[];    /* Screen column, 1-based */
     extern int wherey[];        /* Screen row, 1-based */
 
@@ -7494,7 +7528,7 @@ conxo(int x, char *s) {
 
 int
 conol(char *s) {
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
 
     if ( s == NULL )
         return(-1);
@@ -7756,6 +7790,8 @@ congev( int vmode, int timo ) {
     ULONG timeout = 0;
     con_event evt ;
     int tt,tr,interval,i ;
+
+    memset(&evt,0,sizeof(con_event));
 
 #ifdef IKSD
     if ( inserver ) {

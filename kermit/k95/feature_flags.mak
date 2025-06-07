@@ -67,6 +67,26 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOTYPEINTERPRET
 !if "$(PLATFORM)" == "NT"
 WIN32_VERSION=0x0400
 
+!if ($(MSC_VER) >= 150)
+# Visual C++ 2008 can't target anything older than Windows 2000, so bump the
+# WINVER up to that to get some extra shell notification icon features.
+!message Targeting Windows 2000 or newer
+WIN32_VERSION=0x0500
+!endif
+
+!if ($(MSC_VER) > 150)
+# Visual C++ 2010 and newer have all the modern shell stuff. Visual C++ 2008
+# should support it too provided the Windows 7 SDK is installed. Turn on support
+# for JumpLists
+CKF_JUMPLISTS=yes
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKMODERNSHELL
+!endif
+
+!if ($(MSC_VER) > 120)
+# Shell Notify requires Windows 2000 and Visual C++ 2002 (7.0) or newer
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY
+!endif
+
 !if "$(CMP)" == "OWCL"
 # No built-in SSH support for Open Watcom (yet), so if SSH support has been
 # requested, turn Dynamic SSH on.
@@ -269,7 +289,6 @@ CKF_SSH_BACKEND=no
 # ############################# Platform: Any  #################################
 # ==============================================================================
 
-
 # Build and use wart to generate ckcpro.c from ckcpro.w unless we're told
 # not to
 !if "$(CKB_BUILD_WART)" != "no"
@@ -291,7 +310,46 @@ CKB_USE_WART=yes
 WART=ckwart
 !endif
 
+# Color support (CF_COLORS). Options are:
+#   "rgb"       24-bit RGB support, plus color palettes up to 256-colors, and
+#               support for setting attribute colors to any 24-bit color value
+#               via SET TERMINAL COLOR or OSC-5. Requires an additional 3MB or
+#               so for the vscrn buffers.
+#   "256"       Color palettes up to 256-colors. RGB values set via
+#               SGR-38/SGR-48 are quantized to the selected color palette.
+#   "16"        16-color aixterm palette only. RGB values set via SGR-38/SGR-48
+#               are quantized to the nearest color in the aixterm palette.
+# The above only applies only to KUI builds (K95G). For console builds (OS/2, or
+# k95.exe on Windows), SGR 38/48 maps colors from the selected palette or RGB
+# values to the aixterm palette which is the only one the console version is
+# capable of using for display.
+!if "$(CKF_COLORS)" == ""
+# If nothing else is specified, default to RGB for Visual C++ 2013 or newer,
+# and 256-color build for everything else. RGB support requires around 3MB of
+# additional memory for the vscrn buffers.
+!if ($(MSC_VER) >= 180)
+CKF_COLORS=rgb
+!else
+CKF_COLORS=256
+!endif
+!endif
 
+!if "$(CKF_COLORS)" == "rgb"
+ENABLED_FEATURES = $(ENABLED_FEATURES) 24bit-color
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_COLORS_24BIT
+
+!elseif "$(CKF_COLORS)" == "256"
+ENABLED_FEATURES = $(ENABLED_FEATURES) 256-colors
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_COLORS_256
+
+!elseif "$(CKF_COLORS)" == "16"
+ENABLED_FEATURES = $(ENABLED_FEATURES) 16-colors
+
+!elseif "$(CKF_COLORS)" == "16dbg"
+ENABLED_FEATURES = $(ENABLED_FEATURES) 16-color-debug
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_COLORS_DEBUG
+
+!endif
 
 # Other features that should one day be turned on via feature flags once we
 # figure out how to build them and get any dependencies sorted out.

@@ -61,10 +61,11 @@ extern UCHAR NetBiosAdapter;
 #include "ckocon.h"
 #include "ckokey.h"
 #ifndef NOTERM
-extern unsigned char colorcmd;  /* Command-screen colors */
+extern cell_video_attr_t colorcmd;  /* Command-screen colors */
 extern struct keytab ttyclrtab[];
 extern int nclrs;
 extern int tt_cols[], tt_rows[], tt_szchng[], tt_status[];
+extern int colorpalette;
 #endif /* NOTERM */
 _PROTOTYP(int setprty, (void));
 extern char startupdir[], exedir[];
@@ -1419,6 +1420,9 @@ int nls = (sizeof(lstab) / sizeof(struct keytab));
 extern int tn_nlm, tn_b_nlm, tn_b_meu, tn_b_ume, tn_b_xfer, tn_sb_bug;
 extern int tn_no_encrypt_xfer, tn_auth_krb5_des_bug;
 extern int tn_wait_flg, tn_duplex, tn_delay_sb, tn_sfu;
+#ifdef OS2
+extern int tn_colorterm;
+#endif /* OS2 */
 extern int sl_tn_saved;
 extern int tn_infinite;
 extern int tn_rem_echo;
@@ -1823,6 +1827,9 @@ struct keytab tntab[] = {
     "no-encrypt-during-xfer", CK_TN_NE, CM_INV,
     "prompt-for-userid",CK_TN_PUID,0,
     "remote-echo",     CK_TN_RE,   0,
+#ifdef OS2
+    "send-colorterm",  CK_TN_COLORTERM, 0,
+#endif /* OS2 */
 #ifdef CK_SSL
     "start-tls",       CK_TN_TLS,  CM_INV,
 #endif /* CK_SSL */
@@ -2649,6 +2656,7 @@ _PROTOTYP(int gui_mtxt_dialog,(char *,int,struct txtbox []));
 _PROTOTYP(int gui_position,(int, int));
 _PROTOTYP(int gui_resize_mode,(int));
 _PROTOTYP(int gui_win_run_mode,(int));
+_PROTOTYP(int gui_get_win_run_mode,());
 _PROTOTYP(int gui_file_dialog,(char *,char *, int, char *, char *, int));
 extern int gui_dialog;
 #endif /* KUI */
@@ -8642,6 +8650,7 @@ dosetssh() {
             }
             return(1);
         }
+        break;
 
       case SSH_V2:                      /* SSH V2 */
         if ((y = cmkey(sshv2tab,nsshv2tab,"","", xxstring)) < 0)
@@ -9116,7 +9125,12 @@ dosetsftp() {
 
 #ifdef KUI
 #include "ikui.h"
-extern ULONG RGBTable[16];
+extern ULONG RGBTable256[], RGBTable88[], SavedRGBTable256[], SavedRGBTable88[];
+extern ULONG RGBTable[], SavedRGBTable[];
+extern int colorpalette;
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[], SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
 
 #ifdef CK_ANSIC
 /* Prototypes for static functions - fdc 30 November 2022 */
@@ -9209,6 +9223,7 @@ static struct keytab rgbtab[] = {
     { "darkgray",      8, 0 },
     { "dgray",         8, CM_INV },
     { "green",         2, 0 },
+    { "index",        16, 0 },
     { "lblue",         9, CM_INV },
     { "lcyan",        11, CM_INV },
     { "lgreen",       10, CM_INV },
@@ -9225,32 +9240,314 @@ static struct keytab rgbtab[] = {
     { "red",           4, 0 },
     { "white",        15, 0 },
     { "yellow",       14, 0 },
-
 };
 int nrgb = (sizeof(rgbtab) / sizeof(struct keytab));
 
-VOID
+#define SHGUIPALETTE 1
+
+struct keytab shoguiswtab[] = {
+    { "/palette",        SHGUIPALETTE, 0 },
+    { "", 0, 0 }
+};
+int nshoguisw = (sizeof(shoguiswtab) / sizeof(struct keytab)) - 1;
+
+/* This determines if the RGB value for specified colour index
+ * is "light" or "dark" for the purpose of selecting an appropriate
+ * foreground colour that will stand out from the background */
+int color_is_light(int index) {
+    int blue, green, red;
+	int bgr;
+    double intensity;
+    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(0x00);
+
+    attr = cell_video_attr_set_fg_color(attr, color_index_to_vio(index));
+    bgr = cell_video_attr_foreground_rgb(attr);
+
+    blue = (bgr & 0x00FF0000)>>16;
+	green = (bgr & 0x0000FF00)>>8;
+    red = (bgr & 0x000000FF);
+
+    intensity = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+
+    return intensity > 127;
+}
+
+/* Choose a suitable foreground colour for a given background colour */
+int fg_color_for_bg_index(int bg_index) {
+  	/* TODO: we really should confirm indexes 0 and 15 really are
+     * suitable as the user could have changed their RGB values to,
+     * eg, invert the display. */
+	if (color_is_light(bg_index)) {
+		return 0;  /* dark FG for light BG */
+    }
+    return 15; /* light FG for dark BG */
+}
+
+/* Outputs a line of colour indexes from start to max with the specified
+ * increment. The background colour will be the colour for that index. */
+void output_index_colors(int start, int increment, int max) {
+    cell_video_attr_t cmdsav = colorcmd;
+    int j = 0;
+
+    for (j = start; j <= max; j += increment) {
+        int bg_index = 0, fg_index = 0;
+        bg_index = color_index_to_vio(j);
+
+#ifdef CK_COLORS_16
+        bg_index = nearest_palette_color_palette(colorpalette, bg_index);
+#endif /* CK_COLORS_16 */
+
+        fg_index = fg_color_for_bg_index(bg_index);
+
+        colorcmd = cell_video_attr_set_colors(fg_index, bg_index);
+	    printf("%3d ", j);
+        colorcmd = cmdsav;
+    }
+}
+
+void output_palette_segment_256_wide(int index);
+
+/* Output one line of the 256 colour palette cubes */
+void output_palette_segment_256(int index) {
+    // if width is 108 or greater, output in a wider format
+    if (tt_cols[VCMD] >= 108) {
+        output_palette_segment_256_wide(index);
+        return;
+    }
+
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("6x6x6 color cubes:"); break;
+        /* Color cube 1 */
+        case 5: output_index_colors(16, 6, 46); break;
+        case 6: output_index_colors(17, 6, 47); break;
+        case 7: output_index_colors(18, 6, 48); break;
+        case 8: output_index_colors(19, 6, 49); break;
+        case 9: output_index_colors(20, 6, 50); break;
+        case 10: output_index_colors(21, 6, 51); break;
+        case 11: break;
+        /* Color cube 2 */
+        case 12: output_index_colors(52, 6, 82); break;
+        case 13: output_index_colors(53, 6, 83); break;
+        case 14: output_index_colors(54, 6, 84); break;
+        case 15: output_index_colors(55, 6, 85); break;
+        case 16: output_index_colors(56, 6, 86); break;
+        case 17: output_index_colors(57, 6, 87); break;
+        case 18: break;
+        /* Color cube 3 */
+        case 19: output_index_colors(88, 6, 118); break;
+        case 20: output_index_colors(89, 6, 119); break;
+        case 21: output_index_colors(90, 6, 120); break;
+        case 22: output_index_colors(91, 6, 121); break;
+        case 23: output_index_colors(92, 6, 122); break;
+        case 24: output_index_colors(93, 6, 123); break;
+        case 25: break;
+        /* Color cube 4 */
+        case 26: output_index_colors(124, 6, 154); break;
+        case 27: output_index_colors(125, 6, 155); break;
+        case 28: output_index_colors(126, 6, 156); break;
+        case 29: output_index_colors(127, 6, 157); break;
+        case 30: output_index_colors(128, 6, 158); break;
+        case 31: output_index_colors(129, 6, 159); break;
+        case 32: break;
+        /* Color cube 5 */
+        case 33: output_index_colors(160, 6, 190); break;
+        case 34: output_index_colors(161, 6, 191); break;
+        case 35: output_index_colors(162, 6, 192); break;
+        case 36: output_index_colors(163, 6, 193); break;
+        case 37: output_index_colors(164, 6, 194); break;
+        case 38: output_index_colors(165, 6, 195); break;
+        case 39: break;
+        /* Color cube 6 */
+        case 40: output_index_colors(196, 6, 226); break;
+        case 41: output_index_colors(197, 6, 227); break;
+        case 42: output_index_colors(198, 6, 228); break;
+        case 43: output_index_colors(199, 6, 229); break;
+        case 44: output_index_colors(200, 6, 230); break;
+        case 45: output_index_colors(201, 6, 231); break;
+        case 46: break;
+        case 47: printf("Grey ramp:"); break;
+        case 48: output_index_colors(232, 1, 237); break;
+		case 49: output_index_colors(238, 1, 243); break;
+        case 50: output_index_colors(244, 1, 249); break;
+		case 51: output_index_colors(250, 1, 255); break;
+    }
+}
+
+/* Output one line of the 256 colour palette cubes */
+void output_palette_segment_256_wide(int index) {
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("6x6x6 color cubes:"); break;
+        /* Color cube 1, 2, 3 */
+        case 5:
+            output_index_colors(16, 6, 46); printf(" ");
+            output_index_colors(52, 6, 82); printf(" ");
+            output_index_colors(88, 6, 118);
+            break;
+        case 6:
+            output_index_colors(17, 6, 47); printf(" ");
+            output_index_colors(53, 6, 83); printf(" ");
+            output_index_colors(89, 6, 119);
+            break;
+        case 7:
+            output_index_colors(18, 6, 48); printf(" ");
+            output_index_colors(54, 6, 84); printf(" ");
+            output_index_colors(90, 6, 120);
+            break;
+        case 8:
+            output_index_colors(19, 6, 49); printf(" ");
+            output_index_colors(55, 6, 85); printf(" ");
+            output_index_colors(91, 6, 121);
+            break;
+        case 9:
+            output_index_colors(20, 6, 50); printf(" ");
+            output_index_colors(56, 6, 86); printf(" ");
+            output_index_colors(92, 6, 122);
+            break;
+        case 10:
+            output_index_colors(21, 6, 51); printf(" ");
+            output_index_colors(57, 6, 87); printf(" ");
+            output_index_colors(93, 6, 123);
+            break;
+        case 11: break;
+        /* Color cube 4, 5, 6 */
+        case 12:
+            output_index_colors(124, 6, 154); printf(" ");
+            output_index_colors(160, 6, 190); printf(" ");
+            output_index_colors(196, 6, 226);
+            break;
+        case 13:
+            output_index_colors(125, 6, 155); printf(" ");
+            output_index_colors(161, 6, 191); printf(" ");
+            output_index_colors(197, 6, 227);
+            break;
+        case 14:
+            output_index_colors(126, 6, 156); printf(" ");
+            output_index_colors(162, 6, 192); printf(" ");
+            output_index_colors(198, 6, 228);
+            break;
+        case 15:
+            output_index_colors(127, 6, 157); printf(" ");
+            output_index_colors(163, 6, 193); printf(" ");
+            output_index_colors(199, 6, 229);
+            break;
+        case 16:
+            output_index_colors(128, 6, 158); printf(" ");
+            output_index_colors(164, 6, 194); printf(" ");
+            output_index_colors(200, 6, 230);
+            break;
+        case 17:
+            output_index_colors(129, 6, 159); printf(" ");
+            output_index_colors(165, 6, 195); printf(" ");
+            output_index_colors(201, 6, 231);
+            break;
+        case 18:
+            break;
+        case 19: printf("Grey ramp:"); break;
+        case 20: output_index_colors(232, 1, 243); break;
+        case 21: output_index_colors(244, 1, 255); break;
+    }
+}
+
+/* Output one line of the 88 colour palette cubes */
+void output_palette_segment_88(int index) {
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("4x4x4 color cubes:"); break;
+        /* Color cube 1 & 2 */
+        case 5:
+          	output_index_colors(16, 4, 28);
+            printf(" ");
+            output_index_colors(32, 4, 44);
+            break;
+        case 6:
+          	output_index_colors(17, 4, 29);
+            printf(" ");
+            output_index_colors(33, 4, 45);
+            break;
+        case 7:
+          	output_index_colors(18, 4, 30);
+            printf(" ");
+            output_index_colors(34, 4, 46);
+            break;
+        case 8:
+          	output_index_colors(19, 4, 31);
+            printf(" ");
+            output_index_colors(35, 4, 47);
+            break;
+        case 9: break;
+        /* Color cubes 3 & 4 */
+        case 10:
+          	output_index_colors(48, 4, 60);
+            printf(" ");
+            output_index_colors(64, 4, 76);
+            break;
+        case 11:
+          	output_index_colors(49, 4, 61);
+            printf(" ");
+            output_index_colors(65, 4, 77);
+            break;
+        case 12:
+          	output_index_colors(50, 4, 62);
+            printf(" ");
+            output_index_colors(66, 4, 78);
+            break;
+        case 13:
+          	output_index_colors(51, 4, 63);
+            printf(" ");
+            output_index_colors(67, 4, 79);
+            break;
+        case 14: break;
+        case 15: printf("Grey ramp:"); break;
+        case 16: output_index_colors(80, 1, 87);
+    }
+}
+
+int
 shogui() {
     extern int gui_dialog;
     extern HWND getHwndKUI();
-    unsigned char cmdsav = colorcmd;
-    int i, red, green, blue, lines=0;
+    cell_video_attr_t cmdsav = colorcmd;
+    int i, red, green, blue, lines=0, y, x, palette_size;
     char * s;
+    bool show_palette = FALSE;
+    ULONG *palette;
 
+	if ((y = cmswi(shoguiswtab,nshoguisw,"Switch","",xxstring)) < 0) {
+		if (y != -3)
+	  		return(y);
+	} else if (cmgbrk() > SP) {
+		printf("?This switch does not take an argument\n");
+		return(-9);
+	} else if (y == SHGUIPALETTE) {
+		show_palette = TRUE;
+	}
+	if ((x = cmcfm()) < 0)
+	  return(x);
 
     printf("GUI paramters:\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Dialogs:     %s\n",showoff(gui_dialog));
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Position:    %d,%d\n",get_gui_window_pos_x(),
             get_gui_window_pos_y());
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Resolution:  %d x %d\n",GetSystemMetrics(SM_CXSCREEN),
             GetSystemMetrics(SM_CYSCREEN));
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Run-mode:    %s\n",IsIconic(getHwndKUI()) ? "minimized" :
             IsZoomed(getHwndKUI()) ? "maximized" : "restored");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     switch ( get_gui_resize_mode() ) {
       case GUIWR_NON:
         s = "none";
@@ -9263,43 +9560,127 @@ shogui() {
         break;
     }
     printf("  Resize-mode: %s\n",s);
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
 
-    printf("RGB Color Table:\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf("  Color              Red Green Blue\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf("  ------------------------------------------\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    for (i = 0; i < nrgb; i++) {
-        if (!rgbtab[i].flgs) {
-            blue = (RGBTable[rgbtab[i].kwval] & 0x00FF0000)>>16;
-            green = (RGBTable[rgbtab[i].kwval] & 0x0000FF00)>>8;
-            red = (RGBTable[rgbtab[i].kwval] & 0x000000FF);
-            printf("  %-18s %3d  %3d  %3d  ",rgbtab[i].kwd,red,green,blue);
-            colorcmd = rgbtab[i].kwval << 4;
+    if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
+    	palette = RGBTable256;
+        palette_size = 256;
+    } else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+    	palette = RGBTable88;
+        palette_size = 88;
+#ifdef CK_PALETTE_WY370
+    } else if (colorpalette == CK_PALETTE_WY370) {
+        palette = WY370RGBTable;
+        palette_max = 64;
+#endif
+    } else { /* CK_PALETTE_ANSI */
+        palette = RGBTable;
+        palette_size =16;
+    }
+
+    if (!show_palette) {
+   		printf("RGB Color Table:\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  Color              Red Green Blue\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  ------------------------------------------\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	for (i = 0; i < nrgb; i++) {
+      		/* kwval == 16 is the special "INDEX" option, not a colour. */
+        	if (!rgbtab[i].flgs && rgbtab[i].kwval != 16) {
+	            blue = (palette[rgbtab[i].kwval] & 0x00FF0000)>>16;
+	            green = (palette[rgbtab[i].kwval] & 0x0000FF00)>>8;
+    	        red = (palette[rgbtab[i].kwval] & 0x000000FF);
+        	    printf("  %-18s %3d  %3d  %3d  ",rgbtab[i].kwd,red,green,blue);
+            	colorcmd = cell_video_attr_from_vio_attribute(rgbtab[i].kwval << 4);
+            	printf("********");
+            	colorcmd = cmdsav;
+            	printf("\n");
+            	if (++lines > cmd_rows - 3) {
+					if (!askmore())
+		  				return(success=1);
+					else
+		  				lines = 0;
+	    		}
+        	}
+    	}
+    	printf("\n");
+    } else {  /* Output the *full* colour palette */
+        int cube_ind = 0;
+
+        if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
+     		printf("RGB Color Table for xterm 256-Color Palette:\n");
+    	} else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+            printf("RGB Color Table for xterm 88-Color Palette:\n");
+#ifdef CK_PALETTE_WY370
+        } else if (colorpalette == CK_PALETTE_WY370) {
+            printf("RGB Color Table for Wyse WY-370 Palette:\n");
+#endif /* CK_PALETTE_WY370 */
+        } else {
+            printf("RGB Color Table for aixterm 16-Color Palette:\n");
+        }
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  Color Red Green Blue             Color Cubes\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  -----------------------------    --------------------------------------------\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	for (i = 0; i < palette_size; i++) {
+      		int index = color_index_to_vio(i);
+
+	        blue = (palette[index] & 0x00FF0000)>>16;
+	        green = (palette[index] & 0x0000FF00)>>8;
+    	    red = (palette[index] & 0x000000FF);
+        	printf("  %-5d %3d  %3d  %3d  ",i,red,green,blue);
+            colorcmd = cell_video_attr_set_bg_color(colorcmd, index);
             printf("********");
             colorcmd = cmdsav;
+
+            printf("    ");
+            if (palette_size == 256) output_palette_segment_256(i);
+			if (palette_size == 88) output_palette_segment_88(i);
+			if (palette_size == 16 && i < 3) output_palette_segment_88(i);
+
             printf("\n");
             if (++lines > cmd_rows - 3) {
-		if (!askmore())
-		  return;
-		else
-		  lines = 0;
-	    }
-        }
-    }
-    printf("\n");
+				if (!askmore())
+		  			return(success=1);
+				else
+		  			lines = 0;
+	    	}
+
+    	}
+    	printf("\n");
+	}
+
+    return (success=1);
 }
 
 int
 setrgb() {
-    int cx, red = 0, blue = 0, green = 0, z, x;
+    int cx, red = 0, blue = 0, green = 0, z, x, new_value;
+    extern int colorpalette;  /* ckoco3.c */
+    int cxmax = 15;
 
-    if ((cx = cmkey(rgbtab,nrgb,"","",xxstring)) < 0)
-      return(cx);
+    cxmax = current_palette_max_index();
+
+    if ((cx = cmkey(rgbtab,nrgb,"","",xxstring)) < 0) {
+      	return(cx);
+    }
+    if (cx == 16) {
+        if ((z = cmnum(cxmax == 15
+                            ? "Color Index, 0-15"
+                            : cxmax == 87 ? "Color Index, 0-87"
+                                          : "Color Index, 0-255"
+                       ,"",10,&cx,xxstring)) < 0)
+        return(z);
+
+        /* The first 16 colour indexes of the color tables aren't in SGR order */
+        if (cx < 16) {
+            cx = color_index_to_vio(cx);
+        }
+    }
     if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
       return(z);
     if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
@@ -9307,11 +9688,32 @@ setrgb() {
     if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
       return(z);
     if ((x = cmcfm()) < 0) return(x);
-    if (cx > 15 || red > 255 || blue > 255 || green > 255)
+    if (cx > cxmax || red > 255 || blue > 255 || green > 255)
       return(-2);
-    RGBTable[cx] = (unsigned)(((unsigned)blue << 16) |
+
+    new_value = (unsigned)(((unsigned)blue << 16) |
         (unsigned)((unsigned)green << 8) |
         (unsigned)red);
+
+    /* Update both the current active color palette, and the saved color palette.
+  	 * The saved palette will take effect if the terminal is reset undoing any
+     * palette changes made by the host */
+    if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
+    	RGBTable256[cx] = new_value;
+        SavedRGBTable256[cx] = new_value;
+    } else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+    	RGBTable88[cx] = new_value;
+        SavedRGBTable88[cx] = new_value;
+#ifdef CK_PALETTE_WY370
+    } else if (colorpalette == CK_PALETTE_WY370) {
+        WY370RGBTable[cx] = new_value;
+        SavedWY370RGBTable[cx] = new_value;
+#endif
+    } else { /* CK_PALETTE_ANSI */
+        RGBTable[cx] = new_value;
+        SavedRGBTable[cx] = new_value;
+    }
+
     return(success = 1);
 }
 
@@ -9335,10 +9737,12 @@ setguiwin() {
           return(z);
         if ((z = cmcfm()) < 0)
           return(z);
+        /* TODO: Ideally we should call EnumDisplayMonitors or similar to figure
+         *       out what valid replacements actually are.
         if (x < 0 || y < 0) {
             printf("?Coordinates must be 0 or greater\n");
             return(-9);
-        }
+        }*/
         gui_position(x,y);
         return(success = 1);
       case GUIW_RES:
@@ -11198,6 +11602,15 @@ case XYCARR:                            /* CARRIER-WATCH */
             return(success = 1);
             break;
 
+#ifdef OS2
+          case CK_TN_COLORTERM:    /* Send COLORTERM environment variable */
+            if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);
+            if ((y = cmcfm()) < 0) return(y);
+            tn_colorterm = z;
+            return(success = 1);
+            break;
+#endif /* OS2 */
+
           case CK_TN_WAIT:              /* WAIT-FOR-NEGOTIATIONS */
             if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);
             if ((y = cmcfm()) < 0) return(y);
@@ -11338,18 +11751,123 @@ case XYCARR:                            /* CARRIER-WATCH */
 #ifndef NOLOCAL
           case SCMD_COL: {              /* Command-screen colors */
               int fg, bg;
+              cell_video_attr_t attr = cell_video_attr_from_vio_attribute(0);
+
               fg = cmkey(ttyclrtab, nclrs,
                          "foreground color and then background color",
                          "white",
                          xxstring);
               if (fg < 0)
                 return(fg);
+
+              if (fg == 16) {
+                  /* Indexed color from current palette */
+                  int cmax = current_palette_max_index();
+                  int z;
+
+                  if ((z = cmnum(cmax == 15
+                              ? "Foreground color index, 0-15"
+                              : cmax == 87 ? "Foreground color index, 0-87"
+                                            : "Foreground color index, 0-255"
+                         ,"",10,&fg,xxstring)) < 0) return(z);
+
+                  if (fg < 16) fg = color_index_to_vio(fg);
+
+                  if (fg < 0 || fg > cmax) {
+                      printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                      return(-9);
+                  }
+              }
+              else if (fg == 17) {
+                  /* Direct RGB value. Three colors needed. */
+                  int red, green, blue;
+
+                  if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                  return(z);
+                  if (red < 0 || red > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                  return(z);
+                  if (green < 0 || green > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                  return(z);
+                  if (blue < 0 || blue > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
+                  fg = -1;
+              }
+              else {
+                  attr = cell_video_attr_set_fg_color(attr, fg);
+              }
+
               if ((bg = cmkey(ttyclrtab,nclrs,
                               "background color","black",xxstring)) < 0)
                 return(bg);
+
+              if (bg == 16) {
+                  /* Indexed color from current palette */
+                  int cmax = current_palette_max_index();
+                  int z;
+
+                  if ((z = cmnum(cmax == 15
+                              ? "Background color index, 0-15"
+                              : cmax == 87 ? "Background color index, 0-87"
+                                            : "Background color index, 0-255"
+                         ,"",10,&bg,xxstring)) < 0) return(z);
+
+                  if (fg < 16) bg = color_index_to_vio(fg);
+
+                  if (bg < 0 || bg > cmax) {
+                      printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                      return(-9);
+                  }
+              }
+              else if (bg == 17) {
+                  /* Direct RGB value. Three colors needed. */
+                  int red, green, blue;
+
+                  if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                  return(z);
+                  if (red < 0 || red > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                  return(z);
+                  if (green < 0 || green > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                  return(z);
+                  if (blue < 0 || blue > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
+                  bg = -1;
+              }
+              else {
+                  attr = cell_video_attr_set_bg_color(attr, bg);
+              }
+
               if ((y = cmcfm()) < 0)
                 return(y);
-              colorcmd = fg | bg << 4;
+
+              colorcmd = attr;
               return(success = 1);
           }
           case SCMD_SCR:                /* Command Scrollback size */

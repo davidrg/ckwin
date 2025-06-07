@@ -12861,7 +12861,7 @@ XauFileName ()
     if ( tn_fwdx_xauthority )
         return(tn_fwdx_xauthority);
 
-    if (name = getenv ("XAUTHORITY"))
+    if ((name = getenv ("XAUTHORITY")))
         return(name);
     name = zhome();
     if ( !name )

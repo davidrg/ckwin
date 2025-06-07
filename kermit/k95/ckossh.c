@@ -242,6 +242,8 @@ static ssh_agent_delete_file_dllfunc *dllfuncp_ssh_agent_delete_file = NULL;    
 static ssh_agent_delete_all_dllfunc *dllfuncp_ssh_agent_delete_all = NULL;  /* TODO */
 static ssh_agent_add_file_dllfunc *dllfuncp_ssh_agent_add_file = NULL;  /* TODO */
 static ssh_agent_list_identities_dllfunc *dllfuncp_ssh_agent_list_identities = NULL;    /* TODO */
+static ssh_set_environment_variable_dllfunc *dllfuncp_ssh_set_environment_variable = NULL;
+static ssh_clear_environment_variables_dllfunc *dllfuncp_ssh_clear_environment_variables= NULL;
 static ssh_unload_dllfunc *dllfuncp_ssh_unload = NULL;
 static ssh_dll_ver_dllfunc *dllfuncp_ssh_dll_ver = NULL;
 static ssh_get_keytab_dllfunc *dllfuncp_ssh_get_keytab = NULL;
@@ -504,6 +506,10 @@ static void CKSSHAPI callback_install_dllfunc(const char* function, const void* 
         dllfuncp_ssh_agent_add_file = F_CAST(ssh_agent_add_file_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_agent_list_identities") )
         dllfuncp_ssh_agent_list_identities = F_CAST(ssh_agent_list_identities_dllfunc *)p_function;
+    else if ( !strcmp(function,"ssh_set_environment_variable") )
+        dllfuncp_ssh_set_environment_variable = F_CAST(ssh_set_environment_variable_dllfunc *)p_function;
+    else if ( !strcmp(function,"ssh_clear_environment_variables") )
+        dllfuncp_ssh_clear_environment_variables = F_CAST(ssh_clear_environment_variables_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_unload") )
         dllfuncp_ssh_unload = F_CAST(ssh_unload_dllfunc *)p_function;
     else if (!strcmp(function,"ssh_dll_ver"))
@@ -524,6 +530,9 @@ static void CKSSHAPI callback_install_dllfunc(const char* function, const void* 
 int ssh_load(char* dllname) {
     ULONG rc = 0;
     ssh_dll_init_data init;
+#ifdef CK_COLORS_24BIT
+    extern int colorpalette;
+#endif
 
 #ifdef OS2ONLY
     CHAR *exe_path;
@@ -614,6 +623,12 @@ int ssh_load(char* dllname) {
         return -1;
     }
 
+#ifdef CK_COLORS_24BIT
+    if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+        ssh_set_environment_variable("COLORTERM", "truecolor");
+    }
+#endif
+
     ssh_subsystem_loaded = TRUE;
     debug(F111, "SSH DLL loaded", dllname, rc);
     return rc;
@@ -681,6 +696,8 @@ int ssh_dll_unload(int quiet) {
     dllfuncp_ssh_agent_delete_all = NULL;  /* TODO */
     dllfuncp_ssh_agent_add_file = NULL;  /* TODO */
     dllfuncp_ssh_agent_list_identities = NULL;    /* TODO */
+    dllfuncp_ssh_set_environment_variable = NULL;
+    dllfuncp_ssh_clear_environment_variables = NULL;
     dllfuncp_ssh_unload = NULL;
     dllfuncp_ssh_get_set_help = NULL;
     dllfuncp_ssh_get_help = NULL;
@@ -1288,6 +1305,23 @@ int ssh_agent_list_identities(int do_fp) {
     /* optional feature not available */
 
     return -1;
+}
+
+/** Attempts to send an environment variable to the remote host on connect
+ */
+int ssh_set_environment_variable(const char *name, const char *value) {
+    if (dllfuncp_ssh_set_environment_variable)
+        return dllfuncp_ssh_set_environment_variable(name, value);
+
+    return -1;
+}
+
+/** Clears any environment variables previously set with
+ * ssh_set_environment_variable so they are not set on the next connection
+ */
+int ssh_clear_environment_variables() {
+    if (dllfuncp_ssh_clear_environment_variables)
+        return dllfuncp_ssh_clear_environment_variables();
 }
 
 /** Gets the specified keyword table.

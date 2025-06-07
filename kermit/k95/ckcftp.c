@@ -718,7 +718,7 @@ static gss_OID ck_gss_nt_service_name_v2 = ck_oids+5;
 #include "ckcfnp.h"                     /* Prototypes */
 
 extern int k95stdout, wherex[], wherey[];
-extern unsigned char colorcmd;
+extern cell_video_attr_t colorcmd;
 #endif /* OS2 */
 
 #ifdef FTP_KRB4
@@ -10763,7 +10763,7 @@ ssl_auth() {
         SSL_set_cipher_list(ssl_ftp_con,ssl_cipher_list);
     } else {
         char * p;
-        if (p = getenv("SSL_CIPHER")) {
+        if ((p = getenv("SSL_CIPHER"))) {
             SSL_set_cipher_list(ssl_ftp_con,p);
         } else {
             SSL_set_cipher_list(ssl_ftp_con,DEFAULT_CIPHER_LIST);

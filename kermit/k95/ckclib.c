@@ -3365,8 +3365,9 @@ cksplit(fc,n1,s1,s2,s3,n2,n3,n4,n5)
 			  break;
 		    }
 		    s2 = s+1;		/* Then forwards... */
-		    while (*s2 && (*s2 == SP || *s2 == HT))
-		      *s2++;
+		    while (*s2 && (*s2 == SP || *s2 == HT)) {
+		      s2++;
+		    }
 		    s = s2-1;
 		}
 		if (!csv || prevstate != ST_IG) {

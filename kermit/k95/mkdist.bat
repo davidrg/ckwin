@@ -3,24 +3,26 @@ set local
 @echo === Make Distribution ===
 
 @echo Create directories...
+REM These should normally go in: %PROGRAMFILES%\Kermit 95
 if not exist dist\NUL mkdir dist
 if not exist dist\docs\NUL mkdir dist\docs
 if not exist dist\docs\manual\NUL mkdir dist\docs\manual
 REM if not exist dist\icons mkdir dist\icons
 REM if not exist dist\fonts mkdir dist\fonts
 
-REM These directories would normally go in: C:\ProgramData\Kermit 95
+REM These directories would normally go in: %ALLUSERSPROFILE%\Kermit 95
 REM if not exist dist\certs\NUL mkdir dist\certs
 REM if not exist dist\crls\NUL mkdir dist\crls
 if not exist dist\keymaps\NUL mkdir dist\keymaps
 REM if not exist dist\phones\NUL mkdir dist\phones
-REM if not exist dist\printer\NUL mkdir dist\printer
+if not exist dist\printer\NUL mkdir dist\printer
 if not exist dist\public\NUL mkdir dist\public
 if not exist dist\scripts\NUL mkdir dist\scripts
 REM if not exist dist\ssh\NUL mkdir dist\ssh
 if not exist dist\users\NUL mkdir dist\users
 
 @echo Move build outputs...
+REM All of this should go in: %PROGRAMFILES%\Kermit 95
 move *.exe dist
 if exist *.pdb move *.pdb dist
 if exist dist\nullssh.pdb del dist\nullssh.pdb
@@ -45,12 +47,22 @@ if exist ..\p95\p95.dll copy ..\p95\p95.dll dist\
 @echo Copy resources...
 copy k95d.cfg dist
 
-REM The following would go in "C:\ProgramData\Kermit 95" if installed:
+REM Terminfo description
+copy k95.src dist
+
+REM ----------------------------------------------------------
+REM The following should go in: %ALLUSERSPROFILE%\Kermit 95
 copy k95.ini dist
 copy k95custom.ini dist\k95custom.sample
 copy welcome.txt dist
 copy hostmode.bat dist
 REM (k95custom.sample should be renamed to k95custom.ini upon installation)
+REM k95site.ini should also be included once an installer exists
+REM    And perhaps we should update it to copy %ALLUSERSPROFILE%\k95custom.ini
+REM    to %APPDATA%\k95custom.ini if it doesn't already exist.
+REM ca_certs.pem and ca_certs.license
+REM dialinf.dat when we have that (this is the dialer templates, etc)
+REM ----------------------------------------------------------
 
 @echo Copy Open Watcom DLL run-time libraries
 if "%WATCOM%"=="" goto :noowrtdll
@@ -78,7 +90,6 @@ if exist dist\regina.dll copy %rexx_root%\doc\*.pdf dist\docs\
 if exist dist\rexxre.dll copy %rexxre_root%\rexxre.pdf dist\docs\
 
 @echo Copy manual...
-copy ..\..\doc\manual\ckwin.htm dist\docs\manual\
 copy hostmode.txt dist\docs\
 copy ..\..\doc\ctlseqs.html dist\docs\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist\ssh-readme.txt
@@ -115,6 +126,7 @@ REM Generate the default keymap. This will fail if we're cross-compiling for an
 REM architecture incompatible with this machine so skip it in that case.
 if "%CKB_CROSS_COMPATIBLE%" == "no" goto :skipkm
 cd dist
+echo Generate default.ksc...
 k95.exe -Y -# 127 -C "save keymap keymaps/default.ksc,exit" > NUL:
 cd ..
 :skipkm
@@ -132,15 +144,21 @@ REM     textps.txt
 REM         Documentation for the textps utility
 REM     readme.txt
 REM         Document describing the contents of this directory
+@echo Copy printer files...
+set CK_DIST_PRINTER=pcprint.sh pcprint.man pcprint.com pcaprint.sh textps.txt
+REM TODO: readme.txt
+for %%I in (%CK_DIST_PRINTER%) do copy %%I dist\printer\
+copy printer-readme.txt dist\printer\readme.txt
 
 REM PUBLIC directory
 @echo Copy public files...
 set CK_DIST_PUBLIC=hostuser.txt
+REM TODO: iksd.txt
 for %%I in (%CK_DIST_PUBLIC%) do copy %%I dist\public\
 
 REM SCRIPTS directory
 @echo Copy scripts...
-set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc
+set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc terminfo.ksc
 set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% npage.ksc recover.ksc review.ksc rgrep.ksc host.cfg
 for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
 copy scripts-readme.txt dist\scripts\readme.txt
@@ -152,3 +170,28 @@ REM USERS directory
 @echo Copy User files...
 copy hostmode-greeting.txt dist\users\greeting.txt
 copy hostmode-help.txt dist\users\hostmode.txt
+
+REM Install layout on Windows NT
+REM $(user)\AppData\Kermit 95\:
+REM     Certs\ - empty
+REM     Crls\ - empty
+REM     Keymaps\ - empty
+REM     Phones\ - empty
+REM     Scripts\ - empty
+REM     Ssh\ - empty
+REM     Dialusr.dat
+REM All Users\AppData\Kermit 95\:
+REM     Certs\ - empty
+REM     Crls\ - empty
+REM     Keymaps\  -- dist\keymaps
+REM     phones\  -- now empty, previously had phone and network directories for services that no longer exist
+REM     printer\  -- dist\printer
+REM     public\  -- dist\public     (hostuser.txt, iksd.txt)
+REM     scripts\  -- dist\scripts
+REM     users\  -- dist\users
+REM     cacerts.pem
+REM     dialinf.dat
+REM     hostmode.bat
+REM     k95.ini
+REM     k95custom.ini
+REM     k95site.ini

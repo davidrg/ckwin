@@ -968,6 +968,11 @@ KUILIBS = $(KUILIBS) wshload.lib
 KUILIBS = $(KUILIBS) libcmt.lib
 !endif
 
+!if "$(CKF_JUMPLISTS)" == "yes"
+KUILIBS = $(KUILIBS) Shell32.lib
+!endif
+
+
 # Commented out KUILIBS in K95 2.1.3: msvcrt.lib libsrp.lib bigmath.lib
 
 LIBS = kernel32.lib user32.lib gdi32.lib wsock32.lib shell32.lib\

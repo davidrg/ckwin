@@ -601,6 +601,9 @@ Press the key or key-combination shown after \"Command:\" in the status line",
 "about the manual, visit:",
 "  http://www.kermitproject.org/usingckermit.html",
 " ",
+"For an online Kermit 95 tutorial, vist:",
+"  http://www.kermitproject.org/k95tutor.html",
+" ",
 "For an online C-Kermit tutorial, visit:",
 "  http://www.kermitproject.org/ckututor.html",
 " ",
@@ -736,7 +739,15 @@ static char * hmxygui[] = {
 "SET GUI RGBCOLOR colorname redvalue greenvalue bluevalue",
 "  Specifies the red-green-blue mixture to be used to render the given",
 "  color name.  Type \"set gui rgbcolor\" to see a list of colornames.",
-"  the RGB values are whole numbers from 0 to 255.",
+"  The RGB values are whole numbers from 0 to 255.",
+" ",
+"SET GUI RGBCOLOR INDEX colornumber redvalue greenvalue bluevalue",
+"  Specifies the red-green-blue mixture to be used to render the given",
+"  color number. This is primarily for setting how colors from the xterm",
+"  extended color palettes are rendered. The range for colornumber depends",
+"  on the current palette set by SET TERM COLOR PALETTE. To view current",
+"  settings, you can use the SHOW GUI command. The RGB values are whole",
+"  numbers from 0 to 255.",
 " ",
 "SET GUI TOOLBAR DISABLED",
 "  Disables toolbar functions which could be used to modify the Kermit",
@@ -1204,7 +1215,7 @@ static char *hmxxscrn[] = {
 " ",
 "Also see:",
 #ifdef OS2
-"  HELP FUNCTION SCRNCURX, HELP FUNCTION SCRNCURY, HELP FUNCTION SCRSTR,",
+"  HELP FUNCTION SCRNCURX, HELP FUNCTION SCRNCURY, HELP FUNCTION SCRNSTR,",
 #endif /* OS2 */
 "  SHOW VARIABLE TERMINAL, SHOW VARIABLE COLS, SHOW VAR ROWS, SHOW COMMAND.",
 ""
@@ -7616,8 +7627,17 @@ static char *hsetcmd[] = {
 #ifdef OS2
 "SET COMMAND COLOR <foreground-color> <background-color>",
 "  Lets you choose colors for Command screen.  Use ? in the color fields to",
-"  to get lists of available colors.",
+"  to get lists of available colors. If INDEX is specified, it must be",
+"  followed by the number of a color from the current color palette. For",
+"  example: ",
+"    SET COMMAND COLOR INDEX 85 INDEX 20",
+"  If RGB is specified for a color, it must be followed by three numbers -",
+"  a red value, a green value and a blue value. This allows setting the",
+"  command screen to any color by its RGB value. For example, the following",
+"  would set it to an amber color:",
+"    SET COMMAND COLOR RGB 255 110 0 black",
 " ",
+
 "SET COMMAND CURSOR-POSITION <row> <column>",
 "  Moves the command-screen cursor to the given position (1-based).  This",
 "  command should be used in scripts instead of relying on ANSI.SYS escape",
@@ -7908,14 +7928,39 @@ static char *hxyterm[] = {
 "SET TERMINAL ATTRIBUTE { BLINK, DIM, PROTECTED, REVERSE, UNDERLINE }",
 "  Determines how attributes are displayed in the Terminal window.",
 " ",
-"SET TERMINAL ATTRIBUTE { BLINK, DIM, REVERSE, UNDERLINE } { ON, OFF }",
-"  Determines whether real Blinking, Dim, Reverse, and Underline are used in",
-"  the terminal display.  When BLINK is turned OFF, reverse background",
+"SET TERMINAL ATTRIBUTE { BLINK, BOLD, DIM, REVERSE, UNDERLINE } { ON, OFF }",
+"  Determines whether real Blinking, Bold, Dim, Reverse, and Underline are",
+"  used in the terminal display.  When BLINK is turned OFF, reverse background",
 "  intensity is used.  When DIM is turned OFF, dim characters appear BOLD.",
 "  When REVERSE and UNDERLINE are OFF, the colors selected with SET",
-"  TERMINAL COLOR { REVERSE,UNDERLINE } are used instead.  This command",
-"  affects the entire current screen and terminal scrollback buffer.",
+"  TERMINAL COLOR { REVERSE,UNDERLINE } are used instead.  In K95G, when BOLD",
+"  is off, a bold font is not used (the foreground intensity is still set).",
+"  This command affects the entire current screen and terminal scrollback ",
+"  buffer.",
 " ",
+"SET TERMINAL ATTRIBUTE {BLINK, BOLD, DIM} OFF COLOR",
+"  Turns off real Blinking, Bold or Dim. Instead of simulating blinking with ",
+"  reverse background intensity or bold/dim with foreground foreground ",
+"  intensity, the colors selected with SET TERMINAL COLOR { BLINK, BOLD } are ",
+"  used. This command affects the entire current screen and terminal ",
+"  scrollback buffer.",
+" ",
+"SET TERMINAL ATTRIBUTE {BLINK, BOLD, DIM} OFF BRIGHT",
+"  Turns off real Blinking or Bold. Instead of simulating blinking, bold or ",
+"  dim with fixed colors, blink is simluated with reverse background intensity",
+"  while bold and dim are simulated with foreground intensity/brightness. This",
+"  command affects the entire current screen and terminal scrollback buffer.",
+" ",
+#ifdef KUI
+"SET TERMINAL ATTRIBUTE BOLD ON BRIGHT",
+"  Shows the bold attribute in both a bold font and with a brighter color (if ",
+"  the current color is one of the 8 standard ANSI colors).",
+" ",
+"SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY",
+"  Shows the bold attribute in a bold font only without changing the texts",
+"  color. This may cause compatibility issues with some applications.",
+" ",
+#endif /* KUI */
 "SET TERMINAL ATTRIBUTE PROTECTED [ -",
 "   { BOLD, DIM, INVISIBLE, NORMAL, REVERSE, UNDERLINED } ]",
 "  Sets the attributes used to represent Protected text in Wyse and Televideo",
@@ -8049,7 +8094,28 @@ static char *hxyterm[] = {
 #endif /* NOCSETS */
 
 #ifdef OS2
-
+"SET TERMINAL CLIPBOARD-ACCESS { ALLOW-BOTH, ALLOW-READ, ALLOW-WRITE } ",
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+"  { ON, OFF } NOTIFY",
+#else /* CK_SHELL_NOTIFY */
+"  { ON, OFF }",
+#endif /* CK_SHELL_NOTIFY */
+#else /* KUI */
+"  { ON, OFF }",
+#endif /* KUI */
+" Enable or disable clipboard access by the remote host using OSC-52. You can",
+" turn read and write on or off individually, or you can set both at once with",
+" the ALLOW-BOTH option. ",
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+" ",
+" You can optionally choose to be notified when the remote host attempts to ",
+" access the clipboard with the NOTIFY option. This requires Windows 2000 or ",
+" newer",
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+" ",
 "SET TERMINAL CODE-PAGE <number>",
 "  Lets you change the PC code page.  Only works for code pages that are",
 "  successfully prepared in CONFIG.SYS.  Use SHOW TERMINAL to list the",
@@ -8067,18 +8133,38 @@ static char *hxyterm[] = {
 "SET TERMINAL COLOR <screenpart> <foreground> <background>",
 " Sets the colors of the terminal emulation screen.",
 " <screenpart> may be any of the following:",
-"  DEBUG, HELP-TEXT, REVERSE, SELECTION, STATUS-LINE, TERMINAL-SCREEN, or",
-"  UNDERLINED-TEXT.",
+"  BLINK, BOLD, DEBUG, DIM, HELP-TEXT, ITALIC, REVERSE, SELECTION, ",
+"  STATUS-LINE, TERMINAL-SCREEN, or UNDERLINED-TEXT.",
 " <foreground> and <background> may be any of:",
 "  BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, BROWN, LGRAY, DGRAY, LBLUE,",
-"  LGREEN, LCYAN, LRED, LMAGENTA, YELLOW or WHITE.",
-" The L prefix for the color names means Light.",
+"  LGREEN, LCYAN, LRED, LMAGENTA, YELLOW, WHITE, INDEX, or RGB",
+" The L prefix for the color names means Light. If INDEX is specified then ",
+" it must be followed by the number of a color from the current color palette",
+" as set by SET TERMINAL COLOR PALETTE. For example:",
+"   SET TERMINAL COLOR SELECTION INDEX 82 INDEX 208",
+" would set the SELECTION foreground color to a shade of green and background",
+" color to amber in the xterm-256 palette. If RGB is specified then it must be",
+" followed by three numbers - a red value, a green value and a blue value.",
+" This allows setting the foreground and background colors to any color by its",
+" RGB value. For example:",
+"   SET TERMINAL COLOR TERMINAL RGB 255 110 0 black",
+" would give the terminal an amber foreground and black background",
 " ",
 
 "SET TERMINAL COLOR ERASE { CURRENT-COLOR, DEFAULT-COLOR }",
 "  Determines whether the current color as set by the host or the default",
 "  color as set by the user (SET TERMINAL COLOR TERMINAL) is used to clear",
 "  the screen when erase commands are received from the host.",
+" ",
+
+#ifdef CK_COLORS_24BIT
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88, XTERM-RGB }",
+#else
+"SET TERMINAL COLOR PALETTE { AIXTERM-16, XTERM-256, XTERM-88 }",
+#endif
+"  Sets the active color palette. In the Windows Console and OS/2 versions of",
+"  Kermit 95 (or K95G built with only 16-color support), colors are mapped",
+"  from the chosen palette into AIXTERM-16 for display.",
 " ",
 
 "SET TERMINAL COLOR RESET-ON-ESC[0m { CURRENT-COLOR, DEFAULT-COLOR }",
@@ -8236,8 +8322,12 @@ static char *hxyterm[] = {
 "  To find out the keycode and mapping for a particular key, use the SHOW",
 "  KEY command.  Use the SAVE KEYS command to save all settings to a file.",
 " ",
-"SET TERMINAL KEYBOARD-MODE { NORMAL, EMACS, RUSSIAN, HEBREW }",
-"  Select a special keyboard mode for use in the terminal screen.",
+"SET TERMINAL KEYBOARD-MODE { NORMAL, EMACS, RUSSIAN, HEBREW, WP, META, ",
+"   XTERM-META }",
+"  Select a special keyboard mode for use in the terminal screen. META is a",
+"  subset of EMACS which does not modify any function key definitions, while ",
+"  XTERM-META shifts characters into the 128-255 range (equivalent to xterms ",
+"  default behavior.",
 " ",
 
 "SET TERMINAL KEYPAD-MODE { APPLICATION, NUMERIC }",
@@ -8480,7 +8570,7 @@ static char *hxyterm[] = {
 "  NRC mode is activated.  The default is \"North American\".",
 " ",
 "SET TERMINAL VT-NRC-MODE { ON, OFF }",
-"  OFF (default) chooses VT multinational Character Set mode.  OFF chooses",
+"  OFF (default) chooses VT multinational Character Set mode.  ON chooses",
 "  VT National Replacement Character-set mode.  The NRC is selected with",
 "  SET TERMINAL VT-LANGUAGE",
 " ",
@@ -9365,6 +9455,15 @@ static char *hxytel[] = {
 "  is ON.  Remote echoing may be turned off when it is necessary to read",
 "  a password with the INPUT command.",
 " ",
+#ifdef OS2
+"SET TELNET SEND-COLORTERM { ON, OFF }",
+"  When ON, Kermit 95 will attempt set the COLORTERM environment variable on",
+"  the remote host to \"truecolor\" if 24-bit RGB color is currently enabled",
+"  via the SET TERMINAL COLOR PALETTE command. Some applications use the",
+"  COLORTERM environment variable to determine if the terminal in use",
+"  supports 24-bit color, rather than relying on $TERM and terminfo/termcap",
+" ",
+#endif
 "SET TELNET TERMINAL-TYPE name",
 "  The terminal type to send to the remote TELNET host.  If none is given,",
 #ifdef OS2
@@ -12348,7 +12447,7 @@ dohkverb(xx) int xx; {
         printf("\\Kdecremove     Transmit DEC REMOVE sequence\n");
         break;
     case  K_DECSELECT :                 /* DEC Select key */
-        printf("\\Kdecfselect    Transmit DEC SELECT sequence\n");
+        printf("\\Kdecselect     Transmit DEC SELECT sequence\n");
         break;
     case  K_DECPREV   :                 /* DEC Previous Screen key */
         printf("\\Kdecprev       Transmit DEC PREV SCREEN sequence\n");
@@ -12622,7 +12721,7 @@ dohkverb(xx) int xx; {
       printf("\\Ktn_ao         TELNET: Transmit Cancel-Output request\n");
       break;
     case  K_TN_AYT      :               /* TELNET Are You There */
-      printf("\\Ktnayt         TELNET: Transmit Are You There? request\n");
+      printf("\\Ktn_ayt        TELNET: Transmit Are You There? request\n");
       break;
     case  K_TN_EC       :               /* TELNET Erase Character */
       printf("\\Ktn_ec         TELNET: Transmit Erase Character request\n");
@@ -12668,7 +12767,7 @@ dohkverb(xx) int xx; {
       printf("\\Kkeyclick      Toggle Keyclick mode\n");
       break;
     case  K_LOGDEBUG    :               /* Toggle Debug Log File */
-      printf("\\Klogdebug      Toggle Debug Logging to File\n");
+      printf("\\Kdebuglog      Toggle Debug Logging to File\n");
       break;
     case  K_FNKEYS      :               /* Show Function Key Labels */
       printf("\\Kfnkeys        Display Function Key Labels\n");
@@ -13412,7 +13511,7 @@ dohkverb(xx) int xx; {
       printf("\\Kdgbs          Transmit Data General: Backspace         \n");
       break;
     case  K_DGSHOME      :
-      printf("\\Kdshome        Transmit Data General: Shift-Home        \n");
+      printf("\\Kdgshome       Transmit Data General: Shift-Home        \n");
       break;
 
 

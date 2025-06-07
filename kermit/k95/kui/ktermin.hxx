@@ -40,6 +40,7 @@ public:
     void disableClose( void );
     void setMenubarVisible(Bool visible);
     void setToolbarVisible(Bool visible);
+    BOOL getToolbarVisible( void );
     void setStatusbarVisible(Bool visible);
 
     void setMenuItemChecked(UINT menuItemId, Bool checked);

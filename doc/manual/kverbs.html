@@ -1,0 +1,828 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 - Keyboard Verbs</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Kermit 95 Keyboard Verbs</h2>
+
+Keyboard Verbs (Kverbs) may be assigned to keystrokes with the <tt>SET
+KEY</tt> and <tt>SET TERMINAL KEY</tt> commands, and to mouse events with
+the <tt>SET MOUSE BUTTON</tt> command.
+<p>
+<ul>
+<li>The <tt>SHOW KEY</tt> command shows what is assigned to a particular key.
+<li>The <tt>SHOW MOUSE</tt> command shows the mouse-event assignments
+<li>The <tt>HELP KVERB</tt> command describes the given Kverb and tells
+which key(s) and mouse event(s) it is assigned to.
+</ul>
+The HELP KVERB name should be given without the backslash or the
+"K", for example:
+<p><pre>
+  K-95> <u>help kverb gold</u>
+  \kpf1, \kgold   Transmit DEC PF1 sequence
+
+  Active bindings:
+    \368   - F1
+    \400   - Num Lock
+</pre><p>
+
+<p>
+More than 650 keyboard verbs are available in Kermit 95.
+<p>
+The first group are for general use and are independent of which terminal
+is being emulated.
+<p>
+<pre>
+   \Kanswerback    Transmit answerback string to host
+   \Kautodownload  Toggle on/off terminal autodownload.
+   \Kbacknext      Continue backward search
+   \Kbacksearch    Begin backward search 
+   \Kbreak         Transmit a BREAK signal
+   \Kbytesize      Toggle terminal bytesize between 7 and 8 bits.
+   \Kclearscreen   Clear the Terminal screen
+   \Kcompose 	   Compose an accented character
+   \Kdebug         Enter/exit Terminal Debug mode
+   \Kdnarr         Transmit Terminal Down Arrow sequence
+   \Kdnone         Roll screen down one line
+   \Kdnhscn        Roll screen down half of one page
+   \Kdnscn         Roll screen down one page
+   \Kdos           "Push" to command shell
+   \Kdump          Dump the current screen text to SET PRINTER device
+   \Kendscn        Roll screen to the bottom of buffer
+   \Kexit          Exit terminal mode
+   \Kflipscn       Reverse foreground and background colors
+   \Kfnkeys        Display function key labels in HP and Wyse emulations
+   \Kfwdnext       Continue forward search
+   \Kfwdsearch     Begin forward search
+   \Kgobook        Goto bookmark in rollback buffer
+   \Kgoto          Goto line number in rollback buffer
+   \Khangup        Hangup line and return to command prompt
+   \Khelp          Display popup help
+   \Kholdscrn      Pause data input
+   \Khomscn        Roll screen to beginning of buffer
+   \Kignore        Ignore keystroke
+   \Kkbemacs       Switch to EMACS keyboard mode
+   \Kkbenglish     Switch to normal keyboard mode
+   \Kkbhebrew      Switch to HEBREW keyboard mode
+   \Kkbrussian     Switch to Russian keyboard mode
+   \Kkbwp          Switch to Word Perfect 5.1 keyboard mode
+   \Kkeyclick      Toggle Keyclick On/Off
+   \Klbreak        Transmit Long Break signal
+   \Klfall         Scroll to left margin
+   \Klfarr         Transmit Terminal Left Arrow sequence
+   \Klfone         Scroll left one column
+   \Klfpage        Scroll left eight columns
+   \Klogoff        Turn Session Log Off
+   \Klogon         Turn Session Log On
+   \Kmarkcancel    Cancel Mark Mode
+   \Kmarkcopyclip  Copy marked text to clipboard
+   \Kmarkcopyhost  Copy marked text to host
+   \Kmarkstart     Start Mark Mode  <!--       \Kmarkselect is marked as invisible
+   \Kmarkselect    Mark Mode: Place marked text into \v(select)           -->
+   \Kmousecurpos   Transmit sequence to move cursor to mouse position
+   \Kmousemark     Mouse drag sequence marks text
+   \Kmouseurl      Start Browser with selected URL
+   \Knull          Transmit Null to host
+   \Kos2           "Push" to command shell
+   \Kpaste         Paste text from clipboard to host
+   \Kprintff       Send Formfeed to SET PRINTER device
+   \Kprtauto       Toggle Auto-print mode
+   \Kprtcopy       Toggle Copy-Print mode
+   \Kprtctrl       Toggle Ctrl-print mode
+   \Kquit          Disconnect from host and terminate Kermit
+   \Kreset         Reset terminal
+   \Krtall         Scroll to right margin
+   \Krtarr         Transmit Terminal Right Arrow sequence
+   \Krtone         Scroll right one column
+   \Krtpage        Scroll right eight columns
+   \Ksession       Toggle on/off session logging to 'session.log' <!--
+   \Kdebuglog      Toggle Debug Logging to File                      This Kverb is marked invisible-->
+   \Ksetbook       Set bookmark 
+   \Kstatus        Toggle statusline (None, Indicator, Host Writeable)
+   \Ktermtype      Toggle Terminal Type
+   \Ktn_ao         Transmit Telnet Cancel-Output request
+   \Ktn_ayt        Transmit Telnet "are you there?" request
+   \Ktn_ec         Transmit Telnet Erase Character request
+   \Ktn_el         Transmit Telnet Erase Line request
+   \Ktn_ga         Transmit Telnet Go Ahead request
+   \Ktn_ip         Transmit Telnet "interrupt process" request
+   \Ktn_logout     Transmit Telnet Do Logout Option
+   \Ktn_naws       Transmit Window Size (if Telnet NAWS is active)
+   \Ktn_sak        Transmit AIX Trusted Shell request
+   \Kucs2          Unicode UCS-2 U+xxxx Compose Key
+   \Kuparr         Transmit Terminal Up Arrow sequence
+   \Kupone         Roll screen up one line
+   \Kuphscn        Roll screen up half of one page
+   \Kupscn	       Roll screen up one page
+   \Kurl           Treat text under cursor position as a URL <!--  \Kemacs_overwrite is marked as invisible
+   \Kemacs_overwrite  Transmit EMACS Overwrite toggle command sequence -->
+</pre>
+<p>
+For use with SCOANSI and AT386 emulations:
+<pre>
+   \Kansif01       F1
+   \Kansif02       F2
+   \Kansif03       F3
+   \Kansif04       F4
+   \Kansif05       F5
+   \Kansif06       F6
+   \Kansif07       F7
+   \Kansif08       F8
+   \Kansif09       F9
+   \Kansif10       F10
+   \Kansif11       F11
+   \Kansif12       F12
+   \Kansif13       Shift-F1 
+   \Kansif14       Shift-F2 
+   \Kansif15       Shift-F3 
+   \Kansif16       Shift-F4 
+   \Kansif17       Shift-F5 
+   \Kansif18       Shift-F6 
+   \Kansif19       Shift-F7 
+   \Kansif20       Shift-F8 
+   \Kansif21       Shift-F9 
+   \Kansif22       Shift-F10
+   \Kansif23       Shift-F11
+   \Kansif24       Shift-F12
+   \Kansif25       Ctrl-F1 
+   \Kansif26       Ctrl-F2 
+   \Kansif27       Ctrl-F3 
+   \Kansif28       Ctrl-F4 
+   \Kansif29       Ctrl-F5 
+   \Kansif30       Ctrl-F6 
+   \Kansif31       Ctrl-F7 
+   \Kansif32       Ctrl-F8 
+   \Kansif33       Ctrl-F9 
+   \Kansif34       Ctrl-F10
+   \Kansif35       Ctrl-F11
+   \Kansif36       Ctrl-F12
+   \Kansif37       Ctrl-Shift-F1 
+   \Kansif38       Ctrl-Shift-F2 
+   \Kansif39       Ctrl-Shift-F3 
+   \Kansif40       Ctrl-Shift-F4 
+   \Kansif41       Ctrl-Shift-F5 
+   \Kansif42       Ctrl-Shift-F6 
+   \Kansif43       Ctrl-Shift-F7 
+   \Kansif44       Ctrl-Shift-F8 
+   \Kansif45       Ctrl-Shift-F9 
+   \Kansif46       Ctrl-Shift-F10
+   \Kansif47       Ctrl-Shift-F11
+   \Kansif48       Ctrl-Shift-F12
+   \Kansif49       Home
+   \Kansif50       UpArrow
+   \Kansif51       PgUp
+   \Kansif52       Ctrl-Shift-Subtract
+   \Kansif53       LeftArrow
+   \Kansif54       Clear
+   \Kansif55       RightArrow
+   \Kansif56       Shift-Add
+   \Kansif57       End
+   \Kansif58       DownArrow
+   \Kansif59       PageDown
+   \Kansif60       Insert
+   \Kansif61       
+</pre>
+<p>
+For use with Data General emulations:
+<pre>
+   \Kdgbs          Backspace
+   \Kdgc1          C1
+   \Kdgc2          C2
+   \Kdgc3          C3
+   \Kdgc4          C4
+   \Kdgcf01        Ctrl-F1
+   \Kdgcf02        Ctrl-F2
+   \Kdgcf03        Ctrl-F3
+   \Kdgcf04        Ctrl-F4
+   \Kdgcf05        Ctrl-F5
+   \Kdgcf06        Ctrl-F6
+   \Kdgcf07        Ctrl-F7
+   \Kdgcf08        Ctrl-F8
+   \Kdgcf09        Ctrl-F9
+   \Kdgcf10        Ctrl-F10
+   \Kdgcf11        Ctrl-F11
+   \Kdgcf12        Ctrl-F12
+   \Kdgcf13        Ctrl-F13
+   \Kdgcf14        Ctrl-F14
+   \Kdgcf15        Ctrl-F15
+   \Kdgcmdprint    Command-Print
+   \Kdgcsf01       Ctrl-Shift-F1 
+   \Kdgcsf02       Ctrl-Shift-F2 
+   \Kdgcsf03       Ctrl-Shift-F3 
+   \Kdgcsf04       Ctrl-Shift-F4 
+   \Kdgcsf05       Ctrl-Shift-F5 
+   \Kdgcsf06       Ctrl-Shift-F6 
+   \Kdgcsf07       Ctrl-Shift-F7 
+   \Kdgcsf08       Ctrl-Shift-F8 
+   \Kdgcsf09       Ctrl-Shift-F9 
+   \Kdgcsf10       Ctrl-Shift-F10
+   \Kdgcsf11       Ctrl-Shift-F11
+   \Kdgcsf12       Ctrl-Shift-F12
+   \Kdgcsf13       Ctrl-Shift-F13
+   \Kdgcsf14       Ctrl-Shift-F14
+   \Kdgcsf15       Ctrl-Shift-F15
+   \Kdgdnarr       Down Arrow
+   \Kdgeraseeol    Erase-EOL
+   \Kdgerasepage   Erase-Page
+   \Kdgf01         F1 
+   \Kdgf02         F2 
+   \Kdgf03         F3 
+   \Kdgf04         F4 
+   \Kdgf05         F5 
+   \Kdgf06         F6 
+   \Kdgf07         F7 
+   \Kdgf08         F8 
+   \Kdgf09         F9 
+   \Kdgf10         F10
+   \Kdgf11         F11
+   \Kdgf12         F12
+   \Kdgf13         F13
+   \Kdgf14         F14
+   \Kdgf15         F15
+   \Kdghome        Home
+   \Kdglfarr       Left Arrow
+   \Kdgrtarr       Right Arrow
+   \Kdgsc1         Shift-C1
+   \Kdgsc2         Shift-C2
+   \Kdgsc3         Shift-C3
+   \Kdgsc4         Shift-C4
+   \Kdgscmdprint   Shift-Command-Print
+   \Kdgsdnarr      Shift-Down Arrow
+   \Kdgseraseeol   Shift-Erase-EOL
+   \Kdgserasepage  Shift-Erase-Page
+   \Kdgsf01        Shift-F1 
+   \Kdgsf02        Shift-F2 
+   \Kdgsf03        Shift-F3 
+   \Kdgsf04        Shift-F4 
+   \Kdgsf05        Shift-F5 
+   \Kdgsf06        Shift-F6 
+   \Kdgsf07        Shift-F7 
+   \Kdgsf08        Shift-F8 
+   \Kdgsf09        Shift-F9 
+   \Kdgsf10        Shift-F10
+   \Kdgsf11        Shift-F11
+   \Kdgsf12        Shift-F12
+   \Kdgsf13        Shift-F13
+   \Kdgsf14        Shift-F14
+   \Kdgsf15        Shift-F15
+   \Kdgshome       Shift-Home
+   \Kdgslfarr      Shift-Left Arrow
+   \Kdgsrtarr      Shift-Right Arrow
+   \Kdgsuparr      Shift-Up Arrow
+   \Kdguparr       Up Arrow
+</pre>
+<p>
+For use with DEC VT and Wyse 370 emulations:
+<pre>
+   \Kdecdo         DEC Do
+   \Kdecf1         DEC F1 (PC keyboard on VT520)
+   \Kdecf2         DEC F2 (PC keyboard on VT520)
+   \Kdecf3         DEC F3 (PC keyboard on VT520)
+   \Kdecf4         DEC F4 (PC keyboard on VT520)
+   \Kdecf5         DEC F5 (PC keyboard on VT520)
+   \Kdecf6         DEC F6
+   \Kdecf7         DEC F7
+   \Kdecf8         DEC F8
+   \Kdecf9         DEC F9
+   \Kdecf10        DEC F10
+   \Kdecf11        DEC F11
+   \Kdecf12        DEC F12
+   \Kdecf13        DEC F13
+   \Kdecf14        DEC F14
+   \Kdecf15        DEC F15
+   \Kdecf16        DEC F16
+   \Kdecf17        DEC F17
+   \Kdecf18        DEC F18
+   \Kdecf19        DEC F19
+   \Kdecf20        DEC F20
+   \Kdecfind       DEC Find
+   \Kdechelp       DEC Help
+   \Kdechome       Home key on PC keyboard on VT520
+   \Kdecinsert     DEC Insert
+   \Kdecnext       DEC Next
+   \Kdecprev       DEC Prev
+   \Kdecremove     DEC Remove
+   \Kdecselect     DEC Select
+   \Kgold          DEC Gold
+   \Kkp0           DEC Keypad 0
+   \Kkp1           DEC Keypad 1
+   \Kkp2           DEC Keypad 2
+   \Kkp3           DEC Keypad 3
+   \Kkp4           DEC Keypad 4
+   \Kkp5           DEC Keypad 5
+   \Kkp6           DEC Keypad 6
+   \Kkp7           DEC Keypad 7
+   \Kkp8           DEC Keypad 8
+   \Kkp9           DEC Keypad 9
+   \Kkpcoma        DEC Keypad Comma
+   \Kkpdot         DEC Keypad Decimal
+   \Kkpenter       DEC Keypad Enter
+   \Kkpminus       DEC Keypad Subtract
+   \Kpf1           DEC PF1
+   \Kpf2           DEC PF2
+   \Kpf3           DEC PF3
+   \Kpf4           DEC PF4
+   \Kudkdo         DEC UDK Do (\Kudkf16)
+   \Kudkf1         DEC UDK F1
+   \Kudkf2         DEC UDK F2
+   \Kudkf3         DEC UDK F3
+   \Kudkf4         DEC UDK F4
+   \Kudkf5         DEC UDK F5
+   \Kudkf6         DEC UDK F6
+   \Kudkf7         DEC UDK F7
+   \Kudkf8         DEC UDK F8
+   \Kudkf9         DEC UDK F9
+   \Kudkf10        DEC UDK F10
+   \Kudkf11        DEC UDK F11
+   \Kudkf12        DEC UDK F12
+   \Kudkf13        DEC UDK F13
+   \Kudkf14        DEC UDK F14
+   \Kudkf15        DEC UDK F15 (\Kudkhelp)
+   \Kudkf16        DEC UDK F16 (\Kudkdo)
+   \Kudkf17        DEC UDK F17
+   \Kudkf18        DEC UDK F18
+   \Kudkf19        DEC UDK F19
+   \Kudkf20	       DEC UDK F20
+   \Kudkhelp	   DEC UDK Help (\Kudkf15)
+</pre>
+<p>
+For use with HP emulations:
+<pre>
+   \Khpenter       HP Enter
+   \Khpf01         HP F1
+   \Khpf02         HP F2
+   \Khpf03         HP F3
+   \Khpf04         HP F4
+   \Khpf05         HP F5
+   \Khpf06         HP F6
+   \Khpf07         HP F7
+   \Khpf08         HP F8
+   \Khpf09         HP F9
+   \Khpf10         HP F10
+   \Khpf11         HP F11
+   \Khpf12         HP F12
+   \Khpf13         HP F13
+   \Khpf14         HP F14
+   \Khpf15         HP F15
+   \Khpf16         HP F16
+   \Khpreturn      HP Return
+   \Khpbacktab     HP Back Tab
+</pre>
+<p>
+For use with Televideo emulations:
+<pre>
+   \Ktvibs         TVI Backspace
+   \Ktviclrln      TVI Clear Line
+   \Ktviclrpg      TVI Clear Page
+   \Ktvidelchar    TVI Delete Char
+   \Ktvidelln      TVI Delete Line
+   \Ktvidnarr      TVI Down Arrow
+   \Ktvienter      TVI Enter
+   \Ktviesc        TVI Esc
+   \Ktvif01        TVI F1
+   \Ktvif02        TVI F2
+   \Ktvif03        TVI F3
+   \Ktvif04        TVI F4
+   \Ktvif05        TVI F5
+   \Ktvif06        TVI F6
+   \Ktvif07        TVI F7
+   \Ktvif08        TVI F8
+   \Ktvif09        TVI F9
+   \Ktvif10        TVI F10
+   \Ktvif11        TVI F11
+   \Ktvif12        TVI F12
+   \Ktvif13        TVI F13
+   \Ktvif14        TVI F14
+   \Ktvif15        TVI F15
+   \Ktvif16        TVI F16
+   \Ktvihome       TVI Home
+   \Ktviinschar    TVI Insert Char
+   \Ktviinsert     TVI Insert
+   \Ktviinsln      TVI Insert Line
+   \Ktvilfarr      TVI Left Arrow
+   \Ktvipgnext     TVI Page Next
+   \Ktvipgprev     TVI Page Previous
+   \Ktviprtscn     TVI Print Screen
+   \Ktvireplace    TVI Replace
+   \Ktvireturn     TVI Return
+   \Ktvirtarr      TVI Right Arrow
+   \Ktvisbs        TVI Shift Backspace
+   \Ktvisclrln     TVI Shift Clear Line
+   \Ktvisclrpg     TVI Shift Clear Page
+   \Ktvisdnarr     TVI Shift Down Arrow
+   \Ktvisend       TVI Send Data
+   \Ktvisenter     TVI Shift Enter
+   \Ktvisesc       TVI Shift Esc
+   \Ktvisf01       TVI Shift F1
+   \Ktvisf02       TVI Shift F2
+   \Ktvisf03       TVI Shift F3
+   \Ktvisf04       TVI Shift F4
+   \Ktvisf05       TVI Shift F5 
+   \Ktvisf06       TVI Shift F6 
+   \Ktvisf07       TVI Shift F7 
+   \Ktvisf08       TVI Shift F8 
+   \Ktvisf09       TVI Shift F9 
+   \Ktvisf10       TVI Shift F10
+   \Ktvisf11       TVI Shift F11
+   \Ktvisf12       TVI Shift F12
+   \Ktvisf13       TVI Shift F13
+   \Ktvisf14       TVI Shift F14
+   \Ktvisf15       TVI Shift F15
+   \Ktvisf16       TVI Shift F16
+   \Ktvishome      TVI Shift Home
+   \Ktvislfarr     TVI Shift Left Arrow
+   \Ktvisreturn    TVI Shift Return
+   \Ktvisrtarr     TVI Shift Right Arrow
+   \Ktvissend      TVI Shift Send Data
+   \Ktvistab       TVI Shift Tab
+   \Ktvisuparr     TVI Shift Up Arrow
+   \Ktvitab        TVI Tab
+   \Ktviuparr      TVI Up Arrow
+</pre>
+<p>
+For use with Wyse ASCII emulations:
+<pre>
+   \Kwybs	   Wyse Backspace  
+   \Kwyclrln	   Wyse Clear Line 
+   \Kwyclrpg	   Wyse Clear Page 
+   \Kwydelchar	   Wyse Delete Char
+   \Kwydelln	   Wyse Delete Line
+   \Kwyenter	   Wyse Ente
+   \Kwyesc	   Wyse Esc 
+   \Kwyf01	   Wyse F1  
+   \Kwyf02	   Wyse F2  
+   \Kwyf03	   Wyse F3  
+   \Kwyf04	   Wyse F4  
+   \Kwyf05	   Wyse F5  
+   \Kwyf06	   Wyse F6  
+   \Kwyf07	   Wyse F7  
+   \Kwyf08	   Wyse F8  
+   \Kwyf09	   Wyse F9  
+   \Kwyf10	   Wyse F10 
+   \Kwyf11	   Wyse F11 
+   \Kwyf12	   Wyse F12 
+   \Kwyf13	   Wyse F13 
+   \Kwyf14	   Wyse F14 
+   \Kwyf15	   Wyse F15 
+   \Kwyf16	   Wyse F16 
+   \Kwyf17	   Wyse F17 
+   \Kwyf18	   Wyse F18 
+   \Kwyf19	   Wyse F19 
+   \Kwyf20	   Wyse F20
+   \Kwyhome	   Wyse Home
+   \Kwyinschar	   Wyse Insert Char  
+   \Kwyinsert	   Wyse Insert       
+   \Kwyinsln	   Wyse Insert Line  
+   \Kwypgnext	   Wyse Page Next           
+   \Kwypgprev	   Wyse Page Previous    
+   \Kwyprtscn	   Wyse Print Screen     
+   \Kwyreplace	   Wyse Replace          
+   \Kwyreturn	   Wyse Return      <!--
+   \Kwyuparr       Wyse Up Arrow       The WYSE Arrow KVerbs are currently
+   \Kwydnarr       Wyse Down Arrow     hidden/invisible, and the default key
+   \Kwylfarr       Wyse Left Arrow     maps just use \Klfarr, \Kuparr, \Krtarr
+   \Kwyrtarr       Wyse Right Arrow    and \Kdnarr for some reason. -->
+   \Kwysbs	   Wyse Shift Backspace
+   \Kwysclrln	   Wyse Shift Clear Line 
+   \Kwysclrpg	   Wyse Shift Clear Page 
+   \Kwysdnarr	   Wyse Shift Down Arrow 
+   \Kwysend        Wyse Send Data
+   \Kwysenter	   Wyse Shift Enter      
+   \Kwysesc	   Wyse Shift Esc        
+   \Kwysf01	   Wyse Shift F1 
+   \Kwysf02	   Wyse Shift F2 
+   \Kwysf03	   Wyse Shift F3 
+   \Kwysf04	   Wyse Shift F4 
+   \Kwysf05	   Wyse Shift F5 
+   \Kwysf06	   Wyse Shift F6 
+   \Kwysf07	   Wyse Shift F7 
+   \Kwysf08	   Wyse Shift F8 
+   \Kwysf09	   Wyse Shift F9 
+   \Kwysf10	   Wyse Shift F10
+   \Kwysf11	   Wyse Shift F11
+   \Kwysf12	   Wyse Shift F12
+   \Kwysf13	   Wyse Shift F13
+   \Kwysf14	   Wyse Shift F14
+   \Kwysf15	   Wyse Shift F15
+   \Kwysf16	   Wyse Shift F16
+   \Kwysf17	   Wyse Shift F17
+   \Kwysf18	   Wyse Shift F18
+   \Kwysf19	   Wyse Shift F19
+   \Kwysf20	   Wyse Shift F20
+   \Kwyshome	   Wyse Shift Home       
+   \Kwyslfarr	   Wyse Shift Left Arrow 
+   \Kwysreturn	   Wyse Shift Return     
+   \Kwysrtarr	   Wyse Shift Right Arrow
+   \Kwyssend       Wyse Shift Send Data
+   \Kwystab	   Wyse Shift Tab        
+   \Kwysuparr	   Wyse Shift Up Arrow   
+   \Kwytab	   Wyse Tab              
+</pre>
+<p>
+For use with SNI 97801 emulations:
+<pre>
+   \Ksni_00          Transmit SNI-97801-5xx: Double-Zero
+   \Ksni_c_00        Transmit SNI-97801-5xx: Ctrl-Double-Zero
+   \Ksni_c_ce        Transmit SNI-97801-5xx: Ctrl-CE
+   \Ksni_c_compose   Transmit SNI-97801-5xx: Ctrl-Compose
+   \Ksni_c_del_char  Transmit SNI-97801-5xx: Ctrl-Delete Char
+   \Ksni_c_del_line  Transmit SNI-97801-5xx: Ctrl-Delete Line
+   \Ksni_c_del_word  Transmit SNI-97801-5xx: Ctrl-Delete Word
+   \Ksni_c_dnarr     Transmit SNI-97801-5xx: Ctrl-Cursor Down
+   \Ksni_c_endmarke  Transmit SNI-97801-5xx: Ctrl-End Marke
+   \Ksni_c_f01       Transmit SNI-97801-5xx: Ctrl-F1
+   \Ksni_c_f02       Transmit SNI-97801-5xx: Ctrl-F2
+   \Ksni_c_f03       Transmit SNI-97801-5xx: Ctrl-F3
+   \Ksni_c_f04       Transmit SNI-97801-5xx: Ctrl-F4
+   \Ksni_c_f05       Transmit SNI-97801-5xx: Ctrl-F5
+   \Ksni_c_f06       Transmit SNI-97801-5xx: Ctrl-F6
+   \Ksni_c_f07       Transmit SNI-97801-5xx: Ctrl-F7
+   \Ksni_c_f08       Transmit SNI-97801-5xx: Ctrl-F8
+   \Ksni_c_f09       Transmit SNI-97801-5xx: Ctrl-F9
+   \Ksni_c_f10       Transmit SNI-97801-5xx: Ctrl-F10
+   \Ksni_c_f11       Transmit SNI-97801-5xx: Ctrl-F11
+   \Ksni_c_f12       Transmit SNI-97801-5xx: Ctrl-F12
+   \Ksni_c_f13       Transmit SNI-97801-5xx: Ctrl-F13
+   \Ksni_c_f14       Transmit SNI-97801-5xx: Ctrl-F14
+   \Ksni_c_f15       Transmit SNI-97801-5xx: Ctrl-F15
+   \Ksni_c_f16       Transmit SNI-97801-5xx: Ctrl-F16
+   \Ksni_c_f17       Transmit SNI-97801-5xx: Ctrl-F17
+   \Ksni_c_f18       Transmit SNI-97801-5xx: Ctrl-F18
+   \Ksni_c_user1     Transmit SNI-97801-5xx: Ctrl-Key below F18
+   \Ksni_c_f19       Transmit SNI-97801-5xx: Ctrl-F19
+   \Ksni_c_user2     Transmit SNI-97801-5xx: Ctrl-Key below F19
+   \Ksni_c_f20       Transmit SNI-97801-5xx: Ctrl-F20
+   \Ksni_c_user3     Transmit SNI-97801-5xx: Ctrl-Key below F20
+   \Ksni_c_f21       Transmit SNI-97801-5xx: Ctrl-F21
+   \Ksni_c_user4     Transmit SNI-97801-5xx: Ctrl-Key below F21
+   \Ksni_c_f22       Transmit SNI-97801-5xx: Ctrl-F22
+   \Ksni_c_user5     Transmit SNI-97801-5xx: Ctrl-Key below F22
+   \Ksni_c_help      Transmit SNI-97801-5xx: Ctrl-Help
+   \Ksni_c_home      Transmit SNI-97801-5xx: Ctrl-Home
+   \Ksni_c_ins_char  Transmit SNI-97801-5xx: Ctrl-Insert Char
+   \Ksni_c_ins_line  Transmit SNI-97801-5xx: Ctrl-Insert Line
+   \Ksni_c_ins_word  Transmit SNI-97801-5xx: Ctrl-Insert Word
+   \Ksni_c_left_tab  Transmit SNI-97801-5xx: Ctrl-Left Tab
+   \Ksni_c_lfarr     Transmit SNI-97801-5xx: Ctrl-Cursor Left
+   \Ksni_c_mode      Transmit SNI-97801-5xx: Ctrl-Mode
+   \Ksni_c_page      Transmit SNI-97801-5xx: Ctrl-Page
+   \Ksni_c_print     Transmit SNI-97801-5xx: Ctrl-Print
+   \Ksni_c_rtarr     Transmit SNI-97801-5xx: Ctrl-Cursor Right
+   \Ksni_c_scroll_dn Transmit SNI-97801-5xx: Ctrl-Scroll Down
+   \Ksni_c_scroll_up Transmit SNI-97801-5xx: Ctrl-Scroll Up
+   \Ksni_c_start     Transmit SNI-97801-5xx: Ctrl-Start
+   \Ksni_c_uparr     Transmit SNI-97801-5xx: Ctrl-Cursor Up
+   \Ksni_c_tab       Transmit SNI-97801-5xx: Ctrl-Tab
+   \Ksni_ce          Transmit SNI-97801-5xx: CE
+   \Ksni_ch_code     Transmit SNI-97801-5xx: Ch.Code
+   \Ksni_compose     Transmit SNI-97801-5xx: Compose
+   \Ksni_del_char    Transmit SNI-97801-5xx: Delete Char
+   \Ksni_del_line    Transmit SNI-97801-5xx: Delete Line
+   \Ksni_del_word    Transmit SNI-97801-5xx: Delete Word
+   \Ksni_dnarr       Transmit SNI-97801-5xx: Cursor Down
+   \Ksni_endmarke    Transmit SNI-97801-5xx: End Marke
+   \Ksni_f01         Transmit SNI-97801-5xx: F1
+   \Ksni_f02         Transmit SNI-97801-5xx: F2
+   \Ksni_f03         Transmit SNI-97801-5xx: F3
+   \Ksni_f04         Transmit SNI-97801-5xx: F4
+   \Ksni_f05         Transmit SNI-97801-5xx: F5
+   \Ksni_f06         Transmit SNI-97801-5xx: F6
+   \Ksni_f07         Transmit SNI-97801-5xx: F7
+   \Ksni_f08         Transmit SNI-97801-5xx: F8
+   \Ksni_f09         Transmit SNI-97801-5xx: F9
+   \Ksni_f10         Transmit SNI-97801-5xx: F10
+   \Ksni_f11         Transmit SNI-97801-5xx: F11
+   \Ksni_f12         Transmit SNI-97801-5xx: F12
+   \Ksni_f13         Transmit SNI-97801-5xx: F13
+   \Ksni_f14         Transmit SNI-97801-5xx: F14
+   \Ksni_f15         Transmit SNI-97801-5xx: F15
+   \Ksni_f16         Transmit SNI-97801-5xx: F16
+   \Ksni_f17         Transmit SNI-97801-5xx: F17
+   \Ksni_f18         Transmit SNI-97801-5xx: F18
+   \Ksni_user1       Transmit SNI-97801-5xx: Key below F18
+   \Ksni_f19         Transmit SNI-97801-5xx: F19
+   \Ksni_user2       Transmit SNI-97801-5xx: Key below F19
+   \Ksni_f20         Transmit SNI-97801-5xx: F20
+   \Ksni_user3       Transmit SNI-97801-5xx: Key below F20
+   \Ksni_f21         Transmit SNI-97801-5xx: F21
+   \Ksni_user4       Transmit SNI-97801-5xx: Key below F21
+   \Ksni_f22         Transmit SNI-97801-5xx: F22
+   \Ksni_user5       Transmit SNI-97801-5xx: Key below F22
+   \Ksni_help        Transmit SNI-97801-5xx: Help
+   \Ksni_home        Transmit SNI-97801-5xx: Home
+   \Ksni_ins_char    Transmit SNI-97801-5xx: Insert Char
+   \Ksni_ins_line    Transmit SNI-97801-5xx: Insert Line
+   \Ksni_ins_word    Transmit SNI-97801-5xx: Insert Word
+   \Ksni_left_tab    Transmit SNI-97801-5xx: Left Tab
+   \Ksni_lfarr       Transmit SNI-97801-5xx: Cursor Left
+   \Ksni_mode        Transmit SNI-97801-5xx: Mode
+   \Ksni_page        Transmit SNI-97801-5xx: Page
+   \Ksni_print       Transmit SNI-97801-5xx: Print
+   \Ksni_rtarr       Transmit SNI-97801-5xx: Cursor Right
+   \Ksni_s_00        Transmit SNI-97801-5xx: Shift-Double-Zero
+   \Ksni_s_ce        Transmit SNI-97801-5xx: Shift-CE
+   \Ksni_s_compose   Transmit SNI-97801-5xx: Shift-Compose
+   \Ksni_s_del_char  Transmit SNI-97801-5xx: Shift-Delete Char
+   \Ksni_s_del_line  Transmit SNI-97801-5xx: Shift-Delete Line
+   \Ksni_s_del_word  Transmit SNI-97801-5xx: Shift-Delete Word
+   \Ksni_s_dnarr     Transmit SNI-97801-5xx: Shift-Cursor Down
+   \Ksni_s_endmarke  Transmit SNI-97801-5xx: Shift-End Marke
+   \Ksni_s_f01       Transmit SNI-97801-5xx: Shift-F1
+   \Ksni_s_f02       Transmit SNI-97801-5xx: Shift-F2
+   \Ksni_s_f03       Transmit SNI-97801-5xx: Shift-F3
+   \Ksni_s_f04       Transmit SNI-97801-5xx: Shift-F4
+   \Ksni_s_f05       Transmit SNI-97801-5xx: Shift-F5
+   \Ksni_s_f06       Transmit SNI-97801-5xx: Shift-F6
+   \Ksni_s_f07       Transmit SNI-97801-5xx: Shift-F7
+   \Ksni_s_f08       Transmit SNI-97801-5xx: Shift-F8
+   \Ksni_s_f09       Transmit SNI-97801-5xx: Shift-F9
+   \Ksni_s_f10       Transmit SNI-97801-5xx: Shift-F10
+   \Ksni_s_f11       Transmit SNI-97801-5xx: Shift-F11
+   \Ksni_s_f12       Transmit SNI-97801-5xx: Shift-F12
+   \Ksni_s_f13       Transmit SNI-97801-5xx: Shift-F13
+   \Ksni_s_f14       Transmit SNI-97801-5xx: Shift-F14
+   \Ksni_s_f15       Transmit SNI-97801-5xx: Shift-F15
+   \Ksni_s_f16       Transmit SNI-97801-5xx: Shift-F16
+   \Ksni_s_f17       Transmit SNI-97801-5xx: Shift-F17
+   \Ksni_s_f18       Transmit SNI-97801-5xx: Shift-F18
+   \Ksni_s_user1     Transmit SNI-97801-5xx: Shift-Key below F18
+   \Ksni_s_f19       Transmit SNI-97801-5xx: Shift-F19
+   \Ksni_s_user2     Transmit SNI-97801-5xx: Shift-Key below F19
+   \Ksni_s_f20       Transmit SNI-97801-5xx: Shift-F20
+   \Ksni_s_user3     Transmit SNI-97801-5xx: Shift-Key below F20
+   \Ksni_s_f21       Transmit SNI-97801-5xx: Shift-F21
+   \Ksni_s_user4     Transmit SNI-97801-5xx: Shift-Key below F21
+   \Ksni_s_f22       Transmit SNI-97801-5xx: Shift-F22
+   \Ksni_s_user5     Transmit SNI-97801-5xx: Shift-Key below F22
+   \Ksni_s_help      Transmit SNI-97801-5xx: Shift-Help
+   \Ksni_s_home      Transmit SNI-97801-5xx: Shift-Home
+   \Ksni_s_ins_char  Transmit SNI-97801-5xx: Shift-Insert Char
+   \Ksni_s_ins_line  Transmit SNI-97801-5xx: Shift-Insert Line
+   \Ksni_s_ins_word  Transmit SNI-97801-5xx: Shift-Insert Word
+   \Ksni_s_left_tab  Transmit SNI-97801-5xx: Shift-Left Tab
+   \Ksni_s_lfarr     Transmit SNI-97801-5xx: Shift-Cursor Left
+   \Ksni_s_mode      Transmit SNI-97801-5xx: Shift-Mode
+   \Ksni_s_page      Transmit SNI-97801-5xx: Shift-Page
+   \Ksni_s_print     Transmit SNI-97801-5xx: Shift-Print
+   \Ksni_s_rtarr     Transmit SNI-97801-5xx: Shift-Cursor Right
+   \Ksni_s_scroll_dn Transmit SNI-97801-5xx: Shift-Scroll Down
+   \Ksni_s_scroll_up Transmit SNI-97801-5xx: Shift-Scroll Up
+   \Ksni_s_start     Transmit SNI-97801-5xx: Shift-Start
+   \Ksni_s_uparr     Transmit SNI-97801-5xx: Shift-Cursor Up
+   \Ksni_s_tab       Transmit SNI-97801-5xx: Shift-Tab
+   \Ksni_scroll_dn   Transmit SNI-97801-5xx: Scroll Down
+   \Ksni_scroll_up   Transmit SNI-97801-5xx: Scroll Up
+   \Ksni_start       Transmit SNI-97801-5xx: Start
+   \Ksni_tab         Transmit SNI-97801-5xx: Tab
+   \Ksni_uparr       Transmit SNI-97801-5xx: Cursor Up
+</pre>
+<p>
+For use with Nixdorf BA80 emulations:
+<pre>
+   \Kba80_attr       Transmit BA80: Attr 
+   \Kba80_c_key      Transmit BA80: C 
+   \Kba80_clear      Transmit BA80: Clear
+   \Kba80_cmd        Transmit BA80: Cmd
+   \Kba80_copy       Transmit BA80: Copy
+   \Kba80_del        Transmit BA80: Delete
+   \Kba80_del_b      Transmit BA80: Delete B 
+   \Kba80_do         Transmit BA80: Do
+   \Kba80_end        Transmit BA80: End
+   \Kba80_env        Transmit BA80: Env
+   \Kba80_eop        Transmit BA80: EOP
+   \Kba80_erase      Transmit BA80: Erase
+   \Kba80_fmt        Transmit BA80: Format
+   \Kba80_help       Transmit BA80: Help
+   \Kba80_home       Transmit BA80: Home
+   \Kba80_ins        Transmit BA80: Insert
+   \Kba80_ins_b      Transmit BA80: Insert B
+   \Kba80_mark       Transmit BA80: Mark
+   \Kba80_move       Transmit BA80: Move
+   \Kba80_pa01       Transmit BA80: PA1
+   \Kba80_pa02       Transmit BA80: PA2
+   \Kba80_pa03       Transmit BA80: PA3
+   \Kba80_pa04       Transmit BA80: PA4
+   \Kba80_pa05       Transmit BA80: PA5
+   \Kba80_pa06       Transmit BA80: PA6
+   \Kba80_pa07       Transmit BA80: PA7
+   \Kba80_pa08       Transmit BA80: PA8
+   \Kba80_pa09       Transmit BA80: PA9
+   \Kba80_pa10       Transmit BA80: PA10
+   \Kba80_pa11       Transmit BA80: PA11
+   \Kba80_pa12       Transmit BA80: PA12
+   \Kba80_pa13       Transmit BA80: PA13
+   \Kba80_pa14       Transmit BA80: PA14
+   \Kba80_pa15       Transmit BA80: PA15
+   \Kba80_pa16       Transmit BA80: PA16
+   \Kba80_pa17       Transmit BA80: PA17
+   \Kba80_pa18       Transmit BA80: PA18
+   \Kba80_pa19       Transmit BA80: PA19
+   \Kba80_pa20       Transmit BA80: PA20
+   \Kba80_pa21       Transmit BA80: PA21
+   \Kba80_pa22       Transmit BA80: PA22
+   \Kba80_pa23       Transmit BA80: PA23
+   \Kba80_pa24       Transmit BA80: PA24
+   \Kba80_pgdn       Transmit BA80: Page Down
+   \Kba80_pgup       Transmit BA80: Page Up
+   \Kba80_pick       Transmit BA80: Pick
+   \Kba80_print      Transmit BA80: Print
+   \Kba80_put        Transmit BA80: Put
+   \Kba80_refresh    Transmit BA80: Refresh 
+   \Kba80_reset      Transmit BA80: Reset
+   \Kba80_rubout     Transmit BA80: Rubout
+   \Kba80_save       Transmit BA80: Save
+   \Kba80_softkey1   Transmit BA80: Softkey 1
+   \Kba80_softkey2   Transmit BA80: Softkey 2
+   \Kba80_softkey3   Transmit BA80: Softkey 3
+   \Kba80_softkey4   Transmit BA80: Softkey 4
+   \Kba80_softkey5   Transmit BA80: Softkey 5
+   \Kba80_softkey6   Transmit BA80: Softkey 6
+   \Kba80_softkey7   Transmit BA80: Softkey 7
+   \Kba80_softkey8   Transmit BA80: Softkey 8
+   \Kba80_softkey9   Transmit BA80: Softkey 9
+   \Kba80_undo       Transmit BA80: Undo
+</pre>
+<p>
+   For use with IBM 31xx emulations:
+<pre>
+   \Ki31_f01         Transmit IBM 31xx: F1
+   \Ki31_f02         Transmit IBM 31xx: F2
+   \Ki31_f03         Transmit IBM 31xx: F3
+   \Ki31_f04         Transmit IBM 31xx: F4
+   \Ki31_f05         Transmit IBM 31xx: F5
+   \Ki31_f06         Transmit IBM 31xx: F6
+   \Ki31_f07         Transmit IBM 31xx: F7
+   \Ki31_f08         Transmit IBM 31xx: F8
+   \Ki31_f09         Transmit IBM 31xx: F9
+   \Ki31_f10         Transmit IBM 31xx: F10
+   \Ki31_f11         Transmit IBM 31xx: F11
+   \Ki31_f12         Transmit IBM 31xx: F12
+   \Ki31_f13         Transmit IBM 31xx: F13
+   \Ki31_f14         Transmit IBM 31xx: F14
+   \Ki31_f15         Transmit IBM 31xx: F15
+   \Ki31_f16         Transmit IBM 31xx: F16
+   \Ki31_f17         Transmit IBM 31xx: F17
+   \Ki31_f18         Transmit IBM 31xx: F18
+   \Ki31_f19         Transmit IBM 31xx: F19
+   \Ki31_f20         Transmit IBM 31xx: F20
+   \Ki31_f21         Transmit IBM 31xx: F21
+   \Ki31_f22         Transmit IBM 31xx: F22
+   \Ki31_f23         Transmit IBM 31xx: F23
+   \Ki31_f24         Transmit IBM 31xx: F24
+   \Ki31_f25         Transmit IBM 31xx: F25
+   \Ki31_f26         Transmit IBM 31xx: F26
+   \Ki31_f27         Transmit IBM 31xx: F27
+   \Ki31_f28         Transmit IBM 31xx: F28
+   \Ki31_f29         Transmit IBM 31xx: F29
+   \Ki31_f30         Transmit IBM 31xx: F30
+   \Ki31_f31         Transmit IBM 31xx: F31
+   \Ki31_f32         Transmit IBM 31xx: F32
+   \Ki31_f33         Transmit IBM 31xx: F33
+   \Ki31_f34         Transmit IBM 31xx: F34
+   \Ki31_f35         Transmit IBM 31xx: F35
+   \Ki31_f36         Transmit IBM 31xx: F36
+   \Ki31_pa1         Transmit IBM 31xx: PA1
+   \Ki31_pa2         Transmit IBM 31xx: PA2
+   \Ki31_pa3         Transmit IBM 31xx: PA3
+   \Ki31_reset       Transmit IBM 31xx: Reset
+   \Ki31_jump        Transmit IBM 31xx: Jump
+   \Ki31_clear       Transmit IBM 31xx: Clear
+   \Ki31_erase_eof   Transmit IBM 31xx: Erase to End of Field
+   \Ki31_eop         Transmit IBM 31xx: Erase to End of Page
+   \Ki31_inp         Transmit IBM 31xx: Erase Input Operation
+   \Ki31_ins_char    Transmit IBM 31xx: Insert Character
+   \Ki31_ins_space   Transmit IBM 31xx: Insert Space
+   \Ki31_delete      Transmit IBM 31xx: Delete Character
+   \Ki31_ins_line    Transmit IBM 31xx: Insert Line
+   \Ki31_del_ln      Transmit IBM 31xx: Delete Line
+   \Ki31_prt_line    Transmit IBM 31xx: Print Line
+   \Ki31_prt_msg     Transmit IBM 31xx: Print Message
+   \Ki31_prt_shift   Transmit IBM 31xx: Print Shift
+   \Ki31_cancel      Transmit IBM 31xx: Cancel
+   \Ki31_send_line   Transmit IBM 31xx: Send Line
+   \Ki31_send_msg    Transmit IBM 31xx: Send Message
+   \Ki31_send_page   Transmit IBM 31xx: Send Page
+   \Ki31_home        Transmit IBM 31xx: Home
+   \Ki31_back_tab    Transmit IBM 31xx: Back Tab
+</pre>
+<p>
+   For use with Sun Console emulations:
+<pre>
+   \Ksunstop         Transmit SUN Console: Stop
+   \Ksunagain        Transmit SUN Console: Again
+   \Ksunprops        Transmit SUN Console: Props
+   \Ksunundo         Transmit SUN Console: Undo
+   \Ksunfront        Transmit SUN Console: Front
+   \Ksuncopy         Transmit SUN Console: Copy
+   \Ksunopen         Transmit SUN Console: Open
+   \Ksunpaste        Transmit SUN Console: Paste
+   \Ksunfind         Transmit SUN Console: Find
+   \Ksuncut          Transmit SUN Console: Cut
+   \Ksunhelp         Transmit SUN Console: Help
+
+</pre>
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

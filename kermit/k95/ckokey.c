@@ -94,6 +94,9 @@ extern bool keyclick ;
 #ifndef NOTERM
 extern int tt_type, tt_type_mode ;
 extern int tt_kb_mode ;
+#ifdef NT
+int tt_autorepeat = TRUE;
+#endif /* NT */
 #ifdef PCTERM
 int tt_pcterm = 0;                      /* PCTERM keyboard mode */
 VOID
@@ -391,6 +394,8 @@ struct keytab kverbs[] = {
     "exit",       K_EXIT,        0,
     "flipscn",    K_FLIPSCN,     0,
     "fnkeys",     K_FNKEYS,      0,
+    "focus_in",   K_FOCUS_IN,    CM_INV,
+    "focus_out",  K_FOCUS_OUT,   CM_INV,
     "fwdnext",    K_FWDNEXT,     0,
     "fwdsearch",  K_FWDSRCH,     0,
     "gold",       K_GOLD,        0,
@@ -922,24 +927,17 @@ clickkeys(void)
 }
 #endif /* NOLOCAL */
 
+#ifdef OS2ONLY
 USHORT
 getshiftstate( void ) {
-#ifdef NT
-    /* ??? returns VK_SHIFT, VK_CONTROL, VK_MENU (ALT) */
-    /* ??? these probably do not match OS/2 */
-    BYTE keystate = 0;
-    GetKeyboardState(&keystate);
-    return keystate;
-#else /* NT */
     KBDINFO k ;
 
     memset( &k, 0, sizeof(k) ) ;
     k.cb = sizeof(k) ;
     KbdGetStatus( &k, KbdHandle ) ;
     return k.fsState ;
-#endif  /* NT */
 }
-
+#endif  /* NT */
 
 /* Begin Keyboard Buffer Code
    This is a simple implementation of a circular queue with access
@@ -1984,6 +1982,8 @@ void
 win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
 {
     int c = -1, i;
+    static int previousKey = -1;
+    int repeat_count = 0;
 #ifndef KUI
     int keycount = 1 ;
 #endif /* KUI */
@@ -2080,6 +2080,16 @@ win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
 
     c = getKeycodeFromKeyRec(&keyrec, (WORD *)buf, CHCOUNT);
 
+    if (!keyrec.bKeyDown)
+        previousKey = -1;
+
+    if (!tt_autorepeat && keyrec.bKeyDown && (c == previousKey) && mode == VTERM) {
+        return;
+    }
+
+    previousKey = c;
+    repeat_count = tt_autorepeat ? keyrec.wRepeatCount : 1;
+
     if ( c >= 0 ) {
 #ifdef NOSETKEY
         con_event evt;
@@ -2101,7 +2111,7 @@ win32KeyEvent( int mode, KEY_EVENT_RECORD keyrec )
              )  /* Ctrl-C */
             raise(SIGINT);
         else
-            for ( i=0; i<keyrec.wRepeatCount ;i++ )
+            for ( i=0; i<repeat_count ;i++ )
             {
 #ifndef NOLOCAL
                 clickkeys() ;
@@ -3636,7 +3646,7 @@ keymapinit() {
 #ifdef BETADEBUG
     printf("Initializing Default Keymaps\n");
 #endif /* BETADEBUG */
-    for ( i=0;i<=TT_MAX+4;i++ )
+    for ( i=0;i<=TT_MAX+6;i++ )
         defaultkeymap(i) ;
 #ifdef BETADEBUG
     printf("Initialization complete!\n");
@@ -4659,7 +4669,7 @@ cktomsk( int key )
     return key < 256 ? key : 0;
 }
 
-struct keynode * ttkeymap[TT_MAX+5] ;
+struct keynode * ttkeymap[TT_MAX+7] ;
 
 static con_event
 mkkeyevt( KEY scancode ) {
@@ -5065,12 +5075,171 @@ defwpkm( int tt )
 }
 
 int
-defemacskm( int tt )
-{
-    if (
-        /* Alt key = Meta key */
-        insertkeymap( tt, 2416, mkkeyevt(F_KVERB | K_HELP )) || /* Alt-F1 Help                     */
-        insertkeymap( tt, 2419, mkkeyevt(F_KVERB | K_EXIT )) || /* Alt-F4 return to prompt              */
+defmetamodekm( int tt ) {
+if (
+		/* xterm-compatible meta mode (sets 8th bit high) */
+
+        /* Alt key = Meta key, and it does not send escape */
+        insertkeymap( tt, 2145, mkkeyevt(225      )) || /* Alt-a sends Meta-a                 */
+        insertkeymap( tt, 2146, mkkeyevt(226      )) || /* Alt-b sends Meta-b             */
+        insertkeymap( tt, 2147, mkkeyevt(227      )) || /* Alt-c etc etc...                   */
+        insertkeymap( tt, 2148, mkkeyevt(228      )) || /* Alt-d                                */
+        insertkeymap( tt, 2149, mkkeyevt(229      )) || /* Alt-e                               */
+        insertkeymap( tt, 2150, mkkeyevt(230      )) || /* Alt-f                                */
+        insertkeymap( tt, 2151, mkkeyevt(231      )) || /* Alt-g                                */
+        insertkeymap( tt, 2152, mkkeyevt(232      )) || /* Alt-h                                */
+        insertkeymap( tt, 2153, mkkeyevt(233      )) || /* Alt-i                                */
+        insertkeymap( tt, 2154, mkkeyevt(234      )) || /* Alt-j                                */
+        insertkeymap( tt, 2155, mkkeyevt(235      )) || /* Alt-k                                */
+        insertkeymap( tt, 2156, mkkeyevt(236      )) || /* Alt-l                                */
+        insertkeymap( tt, 2157, mkkeyevt(237      )) || /* Alt-m                                */
+        insertkeymap( tt, 2158, mkkeyevt(238      )) || /* Alt-n                                */
+        insertkeymap( tt, 2159, mkkeyevt(239      )) || /* Alt-o                                */
+        insertkeymap( tt, 2160, mkkeyevt(240      )) || /* Alt-p                                */
+        insertkeymap( tt, 2161, mkkeyevt(241      )) || /* Alt-q                                */
+        insertkeymap( tt, 2162, mkkeyevt(242      )) || /* Alt-r                                */
+        insertkeymap( tt, 2163, mkkeyevt(243      )) || /* Alt-s                                */
+        insertkeymap( tt, 2164, mkkeyevt(244      )) || /* Alt-t                                */
+        insertkeymap( tt, 2165, mkkeyevt(245      )) || /* Alt-u                                */
+        insertkeymap( tt, 2166, mkkeyevt(246      )) || /* Alt-v                                */
+        insertkeymap( tt, 2167, mkkeyevt(247      )) || /* Alt-w                                */
+        insertkeymap( tt, 2168, mkkeyevt(248      )) || /* Alt-x                                */
+        insertkeymap( tt, 2169, mkkeyevt(249      )) || /* Alt-y                                */
+        insertkeymap( tt, 2170, mkkeyevt(250      )) || /* Alt-z                                */
+
+        insertkeymap( tt, 2096, mkkeyevt(176      )) || /* Alt-0 */
+        insertkeymap( tt, 2097, mkkeyevt(177      )) || /* Alt-1 */
+        insertkeymap( tt, 2098, mkkeyevt(178      )) || /* Alt-2 */
+        insertkeymap( tt, 2099, mkkeyevt(179      )) || /* Alt-3 */
+        insertkeymap( tt, 2100, mkkeyevt(180      )) || /* Alt-4 */
+        insertkeymap( tt, 2101, mkkeyevt(181      )) || /* Alt-5 */
+        insertkeymap( tt, 2102, mkkeyevt(182      )) || /* Alt-6 */
+        insertkeymap( tt, 2103, mkkeyevt(183      )) || /* Alt-7 */
+        insertkeymap( tt, 2104, mkkeyevt(184      )) || /* Alt-8 */
+        insertkeymap( tt, 2105, mkkeyevt(185      )) || /* Alt-9 */
+
+        insertkeymap( tt, 2107, mkkeyevt(169      )) || /* Alt-)                                */
+        insertkeymap( tt, 2087, mkkeyevt(167      )) || /* Alt-'                                */
+        insertkeymap( tt, 2139, mkkeyevt(219      )) || /* Alt-[                                */
+        insertkeymap( tt, 2141, mkkeyevt(221      )) || /* Alt-]                                */
+        insertkeymap( tt, 2140, mkkeyevt(220      )) || /* Alt-\                                */
+        insertkeymap( tt, 2092, mkkeyevt(172      )) || /* Alt-< (unshifted)                    */
+        insertkeymap( tt, 2094, mkkeyevt(174      )) || /* Alt-> (unshifted)                    */
+        insertkeymap( tt, 2144, mkkeyevt(224      )) || /* Alt-`                                */
+        insertkeymap( tt, 2093, mkkeyevt(173      )) || /* Alt--                                */
+
+        insertkeymap( tt, 2113, mkkeyevt(193      )) || /* Alt-A sends Meta-a (i.e. ESC a)      */
+        insertkeymap( tt, 2114, mkkeyevt(194      )) || /* Alt-B sends Meta-b (ESC b)           */
+        insertkeymap( tt, 2115, mkkeyevt(195      )) || /* Alt-C etc etc...                     */
+        insertkeymap( tt, 2116, mkkeyevt(196      )) || /* Alt-D                                */
+        insertkeymap( tt, 2117, mkkeyevt(197      )) || /* Alt-E                                */
+        insertkeymap( tt, 2118, mkkeyevt(198      )) || /* Alt-F                                */
+        insertkeymap( tt, 2119, mkkeyevt(199      )) || /* Alt-G                                */
+        insertkeymap( tt, 2120, mkkeyevt(200      )) || /* Alt-H                                */
+        insertkeymap( tt, 2121, mkkeyevt(201      )) || /* Alt-I                                */
+        insertkeymap( tt, 2122, mkkeyevt(202      )) || /* Alt-J                                */
+        insertkeymap( tt, 2123, mkkeyevt(203      )) || /* Alt-K                                */
+        insertkeymap( tt, 2124, mkkeyevt(204      )) || /* Alt-L                                */
+        insertkeymap( tt, 2125, mkkeyevt(205      )) || /* Alt-M                                */
+        insertkeymap( tt, 2126, mkkeyevt(206      )) || /* Alt-N                                */
+        insertkeymap( tt, 2127, mkkeyevt(207      )) || /* Alt-O                                */
+        insertkeymap( tt, 2128, mkkeyevt(208      )) || /* Alt-P                                */
+        insertkeymap( tt, 2129, mkkeyevt(209      )) || /* Alt-Q                                */
+        insertkeymap( tt, 2130, mkkeyevt(210      )) || /* Alt-R                                */
+        insertkeymap( tt, 2131, mkkeyevt(211      )) || /* Alt-S                                */
+        insertkeymap( tt, 2132, mkkeyevt(212      )) || /* Alt-T                                */
+        insertkeymap( tt, 2133, mkkeyevt(213      )) || /* Alt-U                                */
+        insertkeymap( tt, 2134, mkkeyevt(214      )) || /* Alt-V                                */
+        insertkeymap( tt, 2135, mkkeyevt(215      )) || /* Alt-W                                */
+        insertkeymap( tt, 2136, mkkeyevt(216      )) || /* Alt-X                                */
+        insertkeymap( tt, 2137, mkkeyevt(217      )) || /* Alt-Y                                */
+        insertkeymap( tt, 2138, mkkeyevt(218      )) || /* Alt-Z                                */
+
+        insertkeymap( tt, 2082, mkkeyevt(162      )) || /* Alt-"                                */
+        insertkeymap( tt, 2171, mkkeyevt(251      )) || /* Alt-{                                */
+        insertkeymap( tt, 2173, mkkeyevt(253      )) || /* Alt-}                                */
+        insertkeymap( tt, 2172, mkkeyevt(252      )) || /* Alt-\                                */
+        insertkeymap( tt, 2108, mkkeyevt(188      )) || /* Alt-< (shifted)                      */
+        insertkeymap( tt, 2110, mkkeyevt(190      )) || /* Alt-> (shifted)                      */
+        insertkeymap( tt, 2174, mkkeyevt(254      )) || /* Alt-~ */
+        insertkeymap( tt, 2143, mkkeyevt(223      )) || /* Alt-_ */
+        insertkeymap( tt, 2106, mkkeyevt(186      )) || /* Alt-: */
+        insertkeymap( tt, 2107, mkkeyevt(187      )) || /* Alt-; */
+
+        insertkeymap( tt, 2081, mkkeyevt(161      )) || /* Alt-!                                */
+        insertkeymap( tt, 2112, mkkeyevt(192      )) || /* Alt-@                                */
+        insertkeymap( tt, 2083, mkkeyevt(163      )) || /* Alt-#                                */
+        insertkeymap( tt, 2084, mkkeyevt(164      )) || /* Alt-$                                */
+        insertkeymap( tt, 2085, mkkeyevt(165      )) || /* Alt-%                                */
+        insertkeymap( tt, 2142, mkkeyevt(222      )) || /* Alt-^                                */
+        insertkeymap( tt, 2086, mkkeyevt(166      )) || /* Alt-&                                */
+        insertkeymap( tt, 2090, mkkeyevt(170      )) || /* Alt-*                                */
+        insertkeymap( tt, 2088, mkkeyevt(168      )) || /* Alt-(                                */
+        insertkeymap( tt, 2089, mkkeyevt(169      )) || /* Alt-)                                */
+        insertkeymap( tt, 2091, mkkeyevt(171      )) || /* Alt-+                               */
+        insertkeymap( tt, 2095, mkkeyevt(175      )) || /* Alt-/                               */
+        insertkeymap( tt, 2109, mkkeyevt(189      )) || /* Alt-=                               */
+        insertkeymap( tt, 2111, mkkeyevt(191      )) || /* Alt-?                               */
+
+        /* Ctrl-Alt = Ctrl-Meta */
+        insertkeymap( tt, 4030, mkkeyevt(160   )) || /* Ctrl-Alt-SP sends Meta-SP */
+        insertkeymap( tt, 3393, mkkeyevt(129   )) || /* Ctrl-Alt-a sends Meta-Ctrl-a (i.e. Esc ^A) */
+        insertkeymap( tt, 3394, mkkeyevt(130   )) || /* Ctrl-Alt-b sends Meta-Ctrl-b (Esc ^B)   */
+        insertkeymap( tt, 3395, mkkeyevt(131   )) || /* Ctrl-Alt-c etc etc...                   */
+        insertkeymap( tt, 3396, mkkeyevt(132   )) || /* Ctrl-Alt-d                                      */
+        insertkeymap( tt, 3397, mkkeyevt(133   )) || /* Ctrl-Alt-e                                      */
+        insertkeymap( tt, 3398, mkkeyevt(134   )) || /* Ctrl-Alt-f                                      */
+        insertkeymap( tt, 3399, mkkeyevt(135   )) || /* Ctrl-Alt-g                                      */
+        insertkeymap( tt, 3400, mkkeyevt(136   )) || /* Ctrl-Alt-h                                      */
+        insertkeymap( tt, 3401, mkkeyevt(137   )) || /* Ctrl-Alt-i                                      */
+        insertkeymap( tt, 3402, mkkeyevt(138   )) || /* Ctrl-Alt-j                                      */
+        insertkeymap( tt, 3403, mkkeyevt(139   )) || /* Ctrl-Alt-k                                      */
+        insertkeymap( tt, 3404, mkkeyevt(140   )) || /* Ctrl-Alt-l                                      */
+        insertkeymap( tt, 3405, mkkeyevt(141   )) || /* Ctrl-Alt-m                                      */
+        insertkeymap( tt, 3406, mkkeyevt(142   )) || /* Ctrl-Alt-n                                      */
+        insertkeymap( tt, 3407, mkkeyevt(143   )) || /* Ctrl-Alt-o                                      */
+        insertkeymap( tt, 3408, mkkeyevt(144   )) || /* Ctrl-Alt-p                                      */
+        insertkeymap( tt, 3409, mkkeyevt(145   )) || /* Ctrl-Alt-q                                      */
+        insertkeymap( tt, 3410, mkkeyevt(146   )) || /* Ctrl-Alt-r                                      */
+        insertkeymap( tt, 3411, mkkeyevt(147   )) || /* Ctrl-Alt-s                                      */
+        insertkeymap( tt, 3412, mkkeyevt(148   )) || /* Ctrl-Alt-t                                      */
+        insertkeymap( tt, 3413, mkkeyevt(149   )) || /* Ctrl-Alt-u                                      */
+        insertkeymap( tt, 3414, mkkeyevt(150   )) || /* Ctrl-Alt-v                                      */
+        insertkeymap( tt, 3415, mkkeyevt(151   )) || /* Ctrl-Alt-w                                      */
+        insertkeymap( tt, 3416, mkkeyevt(152   )) || /* Ctrl-Alt-x                                      */
+        insertkeymap( tt, 3417, mkkeyevt(153   )) || /* Ctrl-Alt-y                                      */
+        insertkeymap( tt, 3418, mkkeyevt(154   )) || /* Ctrl-Alt-z                                      */
+        insertkeymap( tt, 3547, mkkeyevt(155   )) || /* Ctrl-Alt-[                                      */
+        insertkeymap( tt, 3548, mkkeyevt(156   )) || /* Ctrl-Alt-\                                      */
+        insertkeymap( tt, 3549, mkkeyevt(157   )) || /* Ctrl-Alt-]                                      */
+        insertkeymap( tt, 3894, mkkeyevt(158   )) || /* Ctrl-Alt-^                                      */
+        insertkeymap( tt, 4029, mkkeyevt(159   )) || /* Ctrl-Alt-_                                      */
+
+        insertkeymap( tt, 2609, mkkeyevt(161   )) || /* Alt-! */
+        insertkeymap( tt, 2610, mkkeyevt(192   )) || /* Alt-@ */
+        insertkeymap( tt, 2611, mkkeyevt(163   )) || /* Alt-# */
+        insertkeymap( tt, 2612, mkkeyevt(164   )) || /* Alt-$ */
+        insertkeymap( tt, 2613, mkkeyevt(165   )) || /* Alt-% */
+        insertkeymap( tt, 2614, mkkeyevt(222   )) || /* Alt-^ */
+        insertkeymap( tt, 2615, mkkeyevt(166   )) || /* Alt-& */
+        insertkeymap( tt, 2616, mkkeyevt(170   )) || /* Alt-* */
+        insertkeymap( tt, 2617, mkkeyevt(168   )) || /* Alt-( */
+        insertkeymap( tt, 2608, mkkeyevt(169   ))    /* Alt-) */
+          )
+        return -1;
+    return 0;
+}
+
+int
+defmetaesckm( int tt ) {
+if (
+        /* Alt key = Meta key, and Meta sends escape */
+
+		/* Not ideal as some terminals use BS for backspace... */
+		insertkeymap( tt, 2312, mkkeyevt(F_ESC | DEL      )) || /* Alt-Backspace sends Meta-DEL         */
+
+		insertkeymap( tt, 2317, mkkeyevt(F_ESC | CK_CR    )) || /* Alt-Enter sends Meta-CR              */
+
         insertkeymap( tt, 2145, mkkeyevt(F_ESC | 'a'      )) || /* Alt-a sends Meta-a (i.e. ESC a)      */
         insertkeymap( tt, 2146, mkkeyevt(F_ESC | 'b'      )) || /* Alt-b sends Meta-b (ESC b)   */
         insertkeymap( tt, 2147, mkkeyevt(F_ESC | 'c'      )) || /* Alt-c etc etc...             */
@@ -5098,30 +5267,30 @@ defemacskm( int tt )
         insertkeymap( tt, 2169, mkkeyevt(F_ESC | 'y'      )) || /* Alt-y                                */
         insertkeymap( tt, 2170, mkkeyevt(F_ESC | 'z'      )) || /* Alt-z                                */
 
-         insertkeymap( tt, 2096, mkkeyevt( F_ESC | '0' )) || /* Alt-0 */
-         insertkeymap( tt, 2097, mkkeyevt( F_ESC | '1' )) || /* Alt-1 */
-         insertkeymap( tt, 2098, mkkeyevt( F_ESC | '2' )) || /* Alt-2 */
-         insertkeymap( tt, 2099, mkkeyevt( F_ESC | '3' )) || /* Alt-3 */
-         insertkeymap( tt, 2100, mkkeyevt( F_ESC | '4' )) || /* Alt-4 */
-         insertkeymap( tt, 2101, mkkeyevt( F_ESC | '5' )) || /* Alt-5 */
-         insertkeymap( tt, 2102, mkkeyevt( F_ESC | '6' )) || /* Alt-6 */
-         insertkeymap( tt, 2103, mkkeyevt( F_ESC | '7' )) || /* Alt-7 */
-         insertkeymap( tt, 2104, mkkeyevt( F_ESC | '8' )) || /* Alt-8 */
-         insertkeymap( tt, 2105, mkkeyevt( F_ESC | '9' )) || /* Alt-9 */
+        insertkeymap( tt, 2096, mkkeyevt( F_ESC | '0'     )) || /* Alt-0 */
+        insertkeymap( tt, 2097, mkkeyevt( F_ESC | '1'     )) || /* Alt-1 */
+        insertkeymap( tt, 2098, mkkeyevt( F_ESC | '2'     )) || /* Alt-2 */
+        insertkeymap( tt, 2099, mkkeyevt( F_ESC | '3'     )) || /* Alt-3 */
+        insertkeymap( tt, 2100, mkkeyevt( F_ESC | '4'     )) || /* Alt-4 */
+        insertkeymap( tt, 2101, mkkeyevt( F_ESC | '5'     )) || /* Alt-5 */
+        insertkeymap( tt, 2102, mkkeyevt( F_ESC | '6'     )) || /* Alt-6 */
+        insertkeymap( tt, 2103, mkkeyevt( F_ESC | '7'     )) || /* Alt-7 */
+        insertkeymap( tt, 2104, mkkeyevt( F_ESC | '8'     )) || /* Alt-8 */
+        insertkeymap( tt, 2105, mkkeyevt( F_ESC | '9'     )) || /* Alt-9 */
 
-        insertkeymap( tt, 2107, mkkeyevt(F_ESC | 59       )) || /* Alt-) ||                             */
+        insertkeymap( tt, 2107, mkkeyevt(F_ESC | 59       )) || /* Alt-)                                */
         insertkeymap( tt, 2087, mkkeyevt(F_ESC | 39       )) || /* Alt-'                                */
         insertkeymap( tt, 2139, mkkeyevt(F_ESC | '['      )) || /* Alt-[                                */
         insertkeymap( tt, 2141, mkkeyevt(F_ESC | ']'      )) || /* Alt-]                                */
         insertkeymap( tt, 2140, mkkeyevt(F_ESC | 92       )) || /* Alt-\                                */
-        insertkeymap( tt, 2092, mkkeyevt(F_ESC | ','      )) || /* Alt-< (unshifted)            */
-        insertkeymap( tt, 2094, mkkeyevt(F_ESC | '.'      )) || /* Alt-> (unshifted)            */
-        insertkeymap( tt, 2144, mkkeyevt(F_ESC | '`'      )) || /* Alt-`                        */
-        insertkeymap( tt, 2093, mkkeyevt(F_ESC | '-'      )) || /* Alt-- */
+        insertkeymap( tt, 2092, mkkeyevt(F_ESC | ','      )) || /* Alt-< (unshifted)                    */
+        insertkeymap( tt, 2094, mkkeyevt(F_ESC | '.'      )) || /* Alt-> (unshifted)                    */
+        insertkeymap( tt, 2144, mkkeyevt(F_ESC | '`'      )) || /* Alt-`                                */
+        insertkeymap( tt, 2093, mkkeyevt(F_ESC | '-'      )) || /* Alt--                                */
 
         insertkeymap( tt, 2113, mkkeyevt(F_ESC | 'A'      )) || /* Alt-A sends Meta-a (i.e. ESC a)      */
-        insertkeymap( tt, 2114, mkkeyevt(F_ESC | 'B'      )) || /* Alt-B sends Meta-b (ESC b)   */
-        insertkeymap( tt, 2115, mkkeyevt(F_ESC | 'C'      )) || /* Alt-C etc etc...             */
+        insertkeymap( tt, 2114, mkkeyevt(F_ESC | 'B'      )) || /* Alt-B sends Meta-b (ESC b)           */
+        insertkeymap( tt, 2115, mkkeyevt(F_ESC | 'C'      )) || /* Alt-C etc etc...                     */
         insertkeymap( tt, 2116, mkkeyevt(F_ESC | 'D'      )) || /* Alt-D                                */
         insertkeymap( tt, 2117, mkkeyevt(F_ESC | 'E'      )) || /* Alt-E                                */
         insertkeymap( tt, 2118, mkkeyevt(F_ESC | 'F'      )) || /* Alt-F                                */
@@ -5147,15 +5316,15 @@ defemacskm( int tt )
         insertkeymap( tt, 2138, mkkeyevt(F_ESC | 'Z'      )) || /* Alt-Z                                */
 
         insertkeymap( tt, 2082, mkkeyevt(F_ESC | '"'      )) || /* Alt-"                                */
-        insertkeymap( tt, 2171, mkkeyevt(F_ESC | '{'     )) || /* Alt-{                         */
-        insertkeymap( tt, 2173, mkkeyevt(F_ESC | '}'     )) || /* Alt-}                         */
+        insertkeymap( tt, 2171, mkkeyevt(F_ESC | '{'      )) || /* Alt-{                                */
+        insertkeymap( tt, 2173, mkkeyevt(F_ESC | '}'      )) || /* Alt-}                                */
         insertkeymap( tt, 2172, mkkeyevt(F_ESC | '|'      )) || /* Alt-\                                */
         insertkeymap( tt, 2108, mkkeyevt(F_ESC | '<'      )) || /* Alt-< (shifted)                      */
         insertkeymap( tt, 2110, mkkeyevt(F_ESC | '>'      )) || /* Alt-> (shifted)                      */
         insertkeymap( tt, 2174, mkkeyevt(F_ESC | '~'      )) || /* Alt-~ */
         insertkeymap( tt, 2143, mkkeyevt(F_ESC | '_'      )) || /* Alt-_ */
-         insertkeymap( tt, 2106, mkkeyevt(F_ESC | ':'      )) || /* Alt-: */
-         insertkeymap( tt, 2107, mkkeyevt(F_ESC | ';'      )) || /* Alt-; */
+        insertkeymap( tt, 2106, mkkeyevt(F_ESC | ':'      )) || /* Alt-: */
+        insertkeymap( tt, 2107, mkkeyevt(F_ESC | ';'      )) || /* Alt-; */
 
         insertkeymap( tt, 2081, mkkeyevt(F_ESC | '!'      )) || /* Alt-!                                */
         insertkeymap( tt, 2112, mkkeyevt(F_ESC | '@'      )) || /* Alt-@                                */
@@ -5167,15 +5336,12 @@ defemacskm( int tt )
         insertkeymap( tt, 2090, mkkeyevt(F_ESC | '*'      )) || /* Alt-*                                */
         insertkeymap( tt, 2088, mkkeyevt(F_ESC | '('      )) || /* Alt-(                                */
         insertkeymap( tt, 2089, mkkeyevt(F_ESC | ')'      )) || /* Alt-)                                */
-         insertkeymap( tt, 2091, mkkeyevt(F_ESC | '+'      )) || /* Alt-+                               */
-         insertkeymap( tt, 2095, mkkeyevt(F_ESC | '/'      )) || /* Alt-/                               */
-         insertkeymap( tt, 2109, mkkeyevt(F_ESC | '='      )) || /* Alt-=                               */
-         insertkeymap( tt, 2111, mkkeyevt(F_ESC | '?'      )) || /* Alt-?                               */
-         insertkeymap( tt, 2350, mkkeyevt(F_ESC | DEL      )) || /* Alt-DEL sends Meta-DEL */
+        insertkeymap( tt, 2091, mkkeyevt(F_ESC | '+'      )) || /* Alt-+                               */
+        insertkeymap( tt, 2095, mkkeyevt(F_ESC | '/'      )) || /* Alt-/                               */
+        insertkeymap( tt, 2109, mkkeyevt(F_ESC | '='      )) || /* Alt-=                               */
+        insertkeymap( tt, 2111, mkkeyevt(F_ESC | '?'      )) || /* Alt-?                               */
 
-            /* Ctrl-Alt = Ctrl-Meta */
-
-
+        /* Ctrl-Alt = Ctrl-Meta */
         insertkeymap( tt, 4030, mkkeyevt(F_ESC | SP    )) || /* Ctrl-Alt-SP sends Meta-SP */
         insertkeymap( tt, 3393, mkkeyevt(F_ESC | 1     )) || /* Ctrl-Alt-a sends Meta-Ctrl-a (i.e. Esc ^A) */
         insertkeymap( tt, 3394, mkkeyevt(F_ESC | 2     )) || /* Ctrl-Alt-b sends Meta-Ctrl-b (Esc ^B)   */
@@ -5209,7 +5375,6 @@ defemacskm( int tt )
         insertkeymap( tt, 3894, mkkeyevt(F_ESC | 30    )) || /* Ctrl-Alt-^                                      */
         insertkeymap( tt, 4029, mkkeyevt(F_ESC | 31    )) || /* Ctrl-Alt-_                                      */
 
-        insertkeymap( tt, 2312, mkkeyevt(F_ESC | BS    )) || /* Alt-Backspace */
          insertkeymap( tt, 2609, mkkeyevt(F_ESC | '!'   )) || /* Alt-! */
          insertkeymap( tt, 2610, mkkeyevt(F_ESC | '@'   )) || /* Alt-@ */
          insertkeymap( tt, 2611, mkkeyevt(F_ESC | '#'   )) || /* Alt-# */
@@ -5219,11 +5384,24 @@ defemacskm( int tt )
          insertkeymap( tt, 2615, mkkeyevt(F_ESC | '&'   )) || /* Alt-& */
          insertkeymap( tt, 2616, mkkeyevt(F_ESC | '*'   )) || /* Alt-* */
          insertkeymap( tt, 2617, mkkeyevt(F_ESC | '('   )) || /* Alt-( */
-         insertkeymap( tt, 2608, mkkeyevt(F_ESC | ')'   )) || /* Alt-) */
+         insertkeymap( tt, 2608, mkkeyevt(F_ESC | ')'   ))    /* Alt-) */
+          )
+        return -1;
+    return 0;
+}
+
+int
+defemacskm( int tt )
+{
+    if ( defmetaesckm(tt)  ||
+
+        /* Alt key = Meta key */
+        insertkeymap( tt, 2416, mkkeyevt(F_KVERB | K_HELP )) || /* Alt-F1 Help                     */
+        insertkeymap( tt, 2419, mkkeyevt(F_KVERB | K_EXIT )) || /* Alt-F4 return to prompt              */
+        insertkeymap( tt, 2350, mkkeyevt(F_ESC | DEL      )) || /* Alt-DEL sends Meta-DEL */
+        insertkeymap( tt, 2312, mkkeyevt(F_ESC | BS    )) || /* Alt-Backspace */
         insertkeymap( tt, 6446, mkkeyevt(F_ESC | DEL   )) || /* Alt-Gray-Del */
-
         insertkeymap( tt, 4397, mkkeyevt(F_KVERB | K_EMACS_OVER )) || /* Insert key toggles insert / overwrite mode */
-
         insertkeymap( tt, 4388, mkkeyevt(F_ESC | '<'  )) || /* Home         Home key goes to top screen line      */
         insertkeymap( tt, 4385, mkkeyevt(F_ESC | 'v'  )) || /* Page up      Page up goes to previous screen       */
         insertkeymap( tt, 4398, mkkeyevt(127          )) || /* Delete       Delete key sends Delete            */
@@ -5656,6 +5834,265 @@ defvtpckm( int tt )
          insertkeymap( tt, 4386, mkkeyevt(F_KVERB | K_DECNEXT )) ||
          insertkeymap( tt, 4385, mkkeyevt(F_KVERB | K_DECPREV )) ||
          insertkeymap( tt, 4387, mkkeyevt(F_KVERB | K_DECFIND ))
+         )
+       return(-1);
+
+    return(0);
+}
+
+int
+defk95km( int tt) {
+	/* This is a largely (but not entirely) xterm-compatible keymap, as the K95
+	 * terminal type aims to match what modern linux software expects (which is
+	 * largely "xterm-like") */
+
+    if ( defvt200km( tt ) ||
+		 /* Numeric Keypad - DEC Function keys via Shift */
+		insertkeymap( tt, 5008, mkkeyevt(F_KVERB | K_DECF1  )) || /* Shift+Gray-NumLock */
+		insertkeymap( tt, 4975, mkkeyevt(F_KVERB | K_DECF2  )) || /* Shift+Gray-Divide */
+		insertkeymap( tt, 874,  mkkeyevt(F_KVERB | K_DECF3  )) || /* Shift+Multiply */
+		insertkeymap( tt, 877,  mkkeyevt(F_KVERB | K_DECF4  )) || /* Shift+Subtract */
+		insertkeymap( tt, 875,  mkkeyevt(F_KVERB | K_KPCOMA )) || /* Shift+Add sends DEC , */
+		/* 2411 (Alt+Add) -> \Kkpminus */
+		/* 4365 (Gray-Enter) -> \Kkpenter */
+
+		/* Numeric keypad - Numlock on */
+		/* \366 (Decimal)  -> \Kkpdot
+		   \352 (Keypad-0) -> \Kkp0
+		   \353 (Keypad-1) -> \Kkp1
+		   \354 (Keypad-2) -> \Kkp2
+		   \355 (Keypad-3) -> \Kkp3
+		   \356 (Keypad-4) -> \Kkp4
+		   \357 (Keypad-5) -> \Kkp5
+		   \358 (Keypad-6) -> \Kkp6
+		   \359 (Keypad-7) -> \Kkp7
+		   \360 (Keypad-8) -> \Kkp8
+		   \361 (Keypad-9) -> \Kkp9
+		 */
+
+		/* Numeric Keypad - Numlock off */
+		/* \302 (Delete (.))   -> \Kkpdot
+		   \1326 (Ctrl-Delete) -> \{8}
+		   \301 (Insert     (0)) -> \Kkp0
+		   \291 (End        (1)) -> \Kkp1
+		   \296 (DownArrow  (2)) -> \Kkp2
+		   \290 (PageDown   (3)) -> \Kkp3
+		   \293 (LeftArrow  (4)) -> \Kkp4
+		   \268 (Clear      (5)) -> \Kkp5
+		   \295 (RightArrow (6)) -> \Kkp6
+		   \292 (Home       (7)) -> \Kkp7
+		   \294 (UpArrow    (8)) -> \Kkp8
+		   \289 (PageUp     (9)) -> \Kkp9
+		*/
+
+		/* Arrow keys */
+		/* \4390 (Gray-UpArrow) -> \kuparr */
+		insertkeymap( tt, 4902, mkliteralevt("\033[1;2A")) || /* Shift+Gray-UpArrow */
+		insertkeymap( tt, 6438, mkliteralevt("\033[1;3A")) || /* Alt+Gray-UpArrow */
+		insertkeymap( tt, 6950, mkliteralevt("\033[1;4A")) || /* Alt+Shift+Gray-UpArrow */
+		insertkeymap( tt, 5414, mkliteralevt("\033[1;5A")) || /* Ctrl+Gray-UpArrow */
+		insertkeymap( tt, 5926, mkliteralevt("\033[1;6A")) || /* Ctrl+Shift+Gray-UpArrow */
+		insertkeymap( tt, 7462, mkliteralevt("\033[1;7A")) || /* Ctrl+Alt+Gray-UpArrow */
+		insertkeymap( tt, 7974, mkliteralevt("\033[1;8A")) || /* Ctrl+Alt+Shift+Gray-UpArrow */
+		/* \4392 (Gray-DownArrow) -> \kdnarr*/
+		insertkeymap( tt, 4904, mkliteralevt("\033[1;2B")) || /* Shift+Gray-DownArrow */
+		insertkeymap( tt, 6440, mkliteralevt("\033[1;3B")) || /* Alt+Gray-DownArrow */
+		insertkeymap( tt, 6952, mkliteralevt("\033[1;4B")) || /* Alt+Shift+Gray-DownArrow */
+		insertkeymap( tt, 5416, mkliteralevt("\033[1;5B")) || /* Ctrl+Gray-DownArrow */
+		insertkeymap( tt, 5928, mkliteralevt("\033[1;6B")) || /* Ctrl+Shift+Gray-DownArrow */
+		insertkeymap( tt, 7464, mkliteralevt("\033[1;7B")) || /* Ctrl+Alt+Gray-DownArrow */
+		insertkeymap( tt, 7976, mkliteralevt("\033[1;8B")) || /* Ctrl+Alt+Shift+Gray-DownArrow */
+		/* \4389 (Gray-LeftArrow) -> \klfarr */
+		insertkeymap( tt, 4901, mkliteralevt("\033[1;2D")) || /* Shift+Gray-LeftArrow */
+		insertkeymap( tt, 6437, mkliteralevt("\033[1;3D")) || /* Alt+Gray-LeftArrow */
+		insertkeymap( tt, 6949, mkliteralevt("\033[1;4D")) || /* Alt+Shift+Gray-LeftArrow */
+		insertkeymap( tt, 5413, mkliteralevt("\033[1;5D")) || /* Ctrl+Gray-LeftArrow */
+		insertkeymap( tt, 5925, mkliteralevt("\033[1;6D")) || /* Ctrl+Shift+Gray-LeftArrow */
+		insertkeymap( tt, 7461, mkliteralevt("\033[1;7D")) || /* Ctrl+Alt+Gray-LeftArrow */
+		insertkeymap( tt, 7973, mkliteralevt("\033[1;8D")) || /* Ctrl+Alt+Shift+Gray-LeftArrow */
+		/* \4391 (Gray-RightArrow) -> \krtarr */
+		insertkeymap( tt, 4903, mkliteralevt("\033[1;2C")) || /* Shift+Gray-RightArrow */
+		insertkeymap( tt, 6439, mkliteralevt("\033[1;3C")) || /* Alt+Gray-RightArrow */
+		insertkeymap( tt, 6951, mkliteralevt("\033[1;4C")) || /* Alt+Shift+Gray-RightArrow */
+		insertkeymap( tt, 5415, mkliteralevt("\033[1;5C")) || /* Ctrl+Gray-RightArrow */
+		insertkeymap( tt, 5927, mkliteralevt("\033[1;6C")) || /* Ctrl+Shift+Gray-RightArrow */
+		insertkeymap( tt, 7463, mkliteralevt("\033[1;7C")) || /* Ctrl+Alt+Gray-RightArrow */
+		insertkeymap( tt, 7975, mkliteralevt("\033[1;8C")) || /* Ctrl+Alt+Shift+Gray-RightArrow */
+
+		/* Editing Cluster */
+		insertkeymap( tt, 4397, mkkeyevt(F_KVERB | K_DECINSERT )) || /* Gray-Insert */
+		insertkeymap( tt, 4909, mkliteralevt("\033[2;2~")) || /* Shift-Gray-Insert */
+		insertkeymap( tt, 6445, mkliteralevt("\033[2;3~")) || /* Alt+Gray-Insert */
+		insertkeymap( tt, 6957, mkliteralevt("\033[2;4~")) || /* Alt-Shift-Gray-Insert */
+		insertkeymap( tt, 5421, mkliteralevt("\033[2;5~")) || /* Ctrl+Gray-Insert */
+		insertkeymap( tt, 5933, mkliteralevt("\033[2;6~")) || /* Ctrl-Shift-Gray-Insert */
+		insertkeymap( tt, 7469, mkliteralevt("\033[2;7~")) || /* Ctrl+Alt+Gray-Insert */
+		insertkeymap( tt, 4398, mkkeyevt(F_KVERB | K_DECREMOVE )) || /* Gray-Delete */
+		insertkeymap( tt, 4910, mkliteralevt("\033[3;2~")) || /* Shift-Gray-Delete */
+		insertkeymap( tt, 6446, mkliteralevt("\033[3;3~")) || /* Alt+Gray-Delete */
+		insertkeymap( tt, 6958, mkliteralevt("\033[3;4~")) || /* Alt-Shift-Gray-Delete */
+		insertkeymap( tt, 5422, mkliteralevt("\033[3;5~")) || /* Ctrl+Gray-Delete */
+		insertkeymap( tt, 5934, mkliteralevt("\033[3;6~")) || /* Ctrl+Shift+Gray-Delete */
+		insertkeymap( tt, 7982, mkliteralevt("\033[3;8~")) || /* Ctrl+Alt+Shift+Gray-Delete */
+		insertkeymap( tt, 4388, mkliteralevt("\033OH"   )) || /* Gray-Home */
+		insertkeymap( tt, 4900, mkliteralevt("\033[1;2H")) || /* Shift-Gray-Home */
+		insertkeymap( tt, 6436, mkliteralevt("\033[1;3H")) || /* Alt+Gray-Home */
+		insertkeymap( tt, 6948, mkliteralevt("\033[1;4H")) || /* Alt+Shift+Gray-Home */
+		insertkeymap( tt, 5412, mkliteralevt("\033[1;5H")) || /* Ctrl+Gray-Home */
+		insertkeymap( tt, 5924, mkliteralevt("\033[1;6H")) || /* Ctrl+Shift+Gray-Home */
+		insertkeymap( tt, 7460, mkliteralevt("\033[1;7H")) || /* Ctrl-Alt-Gray-Home */
+		insertkeymap( tt, 4387, mkliteralevt("\033OF"   )) || /* Gray-End */
+		insertkeymap( tt, 4899, mkliteralevt("\033[1;2F")) || /* Shift-Gray-End */
+		insertkeymap( tt, 6435, mkliteralevt("\033[1;3F")) || /* Alt+Gray-End */
+		insertkeymap( tt, 6947, mkliteralevt("\033[1;4F")) || /* Alt+Shift+Gray-End */
+		insertkeymap( tt, 5411, mkliteralevt("\033[1;5F")) || /* Ctrl+Gray-End */
+		insertkeymap( tt, 5923, mkliteralevt("\033[1;6F")) || /* Ctrl+Shift+Gray-End */
+		insertkeymap( tt, 7459, mkliteralevt("\033[1;7F")) || /* Ctrl+Alt+Gray-End */
+		insertkeymap( tt, 7971, mkliteralevt("\033[1;8F")) || /* Ctrl+Alt+Shift+Gray-End */
+		insertkeymap( tt, 4385, mkkeyevt(F_KVERB | K_DECPREV)) || /* Gray-PageUp */
+		insertkeymap( tt, 4897, mkliteralevt("\033[5;2~")) || /* Shift-Gray-PageUp */
+		insertkeymap( tt, 6433, mkliteralevt("\033[5;3~")) || /* Alt+Gray-PageUp */
+		insertkeymap( tt, 6945, mkliteralevt("\033[5;4~")) || /* Alt-Shift-Gray-PageUp */
+		insertkeymap( tt, 5409, mkliteralevt("\033[5;5~")) || /* Ctrl+Gray-PageUp */
+		insertkeymap( tt, 5921, mkliteralevt("\033[5;6~")) || /* Ctrl-Shift-Gray-PageUp */
+		insertkeymap( tt, 7457, mkliteralevt("\033[5;7~")) || /* Ctrl+Alt+Gray-PageUp */
+		insertkeymap( tt, 4386, mkkeyevt(F_KVERB | K_DECNEXT )) || /* Gray-PageDown */
+		insertkeymap( tt, 4898, mkliteralevt("\033[6;2~")) || /* Shift-Gray-PageDown */
+		insertkeymap( tt, 6434, mkliteralevt("\033[6;3~")) || /* Alt+Gray-PageDown */
+		insertkeymap( tt, 6946, mkliteralevt("\033[6;4~")) || /* Alt-Shift-Gray-PageDown */
+		insertkeymap( tt, 5410, mkliteralevt("\033[6;5~")) || /* Ctrl+Gray-PageDown */
+		insertkeymap( tt, 5922, mkliteralevt("\033[6;6~")) || /* Ctrl-Shift-Gray-PageDown */
+		insertkeymap( tt, 7458, mkliteralevt("\033[6;7~")) || /* Ctrl+Alt+Gray-PageDown */
+
+		/* Other Misc Keys */
+		/* \539 (Shift-ESC) -> \033
+		   \264 (Backspace) -> \{127}
+		   \776 (Shift+Backspace) -> \{127}
+		   \269 (Enter) -> \{13}
+		*/
+		insertkeymap( tt, 269,  mkkeyevt(CK_CR )) || /* Enter */
+		insertkeymap( tt, 1805, mkkeyevt(CK_CR )) || /* Ctrl-Shift-Enter */
+		insertkeymap( tt, 265,  mkkeyevt(HT    )) || /* Tab */
+		insertkeymap( tt, 777,  mkliteralevt("\033[Z")) || /* Shift+Tab */
+		/* \276 (CapsLock) -> \Kignore */
+		insertkeymap( tt, 1056, mkkeyevt(F_KVERB | K_NULL )) || /* Ctrl+Space */
+		/* \4443 (Gray-LeftMSWindows) -> \Kignore
+		   \4444 (Gray-RightMSWindows) -> \Kignore
+		   \4445 (Gray-TaskList) -> \Kignore
+		 */
+
+		/* Control Characters */
+		/* \1330 (Ctrl-2) -> \Knull
+		   \1842 (Ctrl-Shift-2) -> \Knull
+		   \1334 (Ctrl-6       (^^ is RS)) -> \{30}
+		   \1846 (Ctrl-Shift-6 (^^ is RS)) -> \{30}
+		   \2011 (Ctrl-Shift-OEM.US.LeftBracket   (^[ is ESC)) -> \{27}
+		   \2013 (Ctrl-Shift-OEM.US.RightBracket  (^] is GS)) -> \{29}
+		   \1469 (Ctrl-OEM.US.Subtract            (^_ is US)) -> \{31}
+		   \1981 (Ctrl-Shift-OEM.US.Subtract      (^_ is US)) -> \{31}
+		   \2012 (Ctrl-Shift-OEM.US.BackSlash     (^\ is FS)) -> \{28}
+		   \1471 (Ctrl-OEM.US.Slash        (^])) -> \{29}
+		   \1983 (Ctrl-Shift-OEM.US.Slash  (^_)) -> \{31}
+		 */
+
+		/* Function Keys 1-12*/
+		insertkeymap( tt, 368, mkkeyevt(F_KVERB | K_GOLD   )) || /* F1 */
+		insertkeymap( tt, 369, mkkeyevt(F_KVERB | K_PF2    )) || /* F2 */
+		insertkeymap( tt, 370, mkkeyevt(F_KVERB | K_PF3    )) || /* F3 */
+		insertkeymap( tt, 371, mkkeyevt(F_KVERB | K_PF4    )) || /* F4 */
+		insertkeymap( tt, 372, mkkeyevt(F_KVERB | K_DECF5  )) || /* F5 */
+		insertkeymap( tt, 373, mkkeyevt(F_KVERB | K_DECF6  )) || /* F6 */
+		insertkeymap( tt, 374, mkkeyevt(F_KVERB | K_DECF7  )) || /* F7 */
+		insertkeymap( tt, 375, mkkeyevt(F_KVERB | K_DECF8  )) || /* F8 */
+		insertkeymap( tt, 376, mkkeyevt(F_KVERB | K_DECF9  )) || /* F9 */
+		insertkeymap( tt, 377, mkkeyevt(F_KVERB | K_DECF10 )) || /* F10 */
+		insertkeymap( tt, 378, mkkeyevt(F_KVERB | K_DECF11 )) || /* F11 */
+		insertkeymap( tt, 379, mkkeyevt(F_KVERB | K_DECF12 )) || /* F12 */
+
+		/* Function Keys 13-24 */
+		insertkeymap( tt, 880, mkliteralevt("\033[1;2P")) || /* Shift+F1 */
+		insertkeymap( tt, 881, mkliteralevt("\033[1;2Q")) || /* Shift+F2 */
+		insertkeymap( tt, 882, mkliteralevt("\033[1;2R")) || /* Shift+F3 */
+		insertkeymap( tt, 883, mkliteralevt("\033[1;2S")) || /* Shift+F4 */
+		insertkeymap( tt, 884, mkliteralevt("\033[15;2~")) || /* Shift+F5 */
+		insertkeymap( tt, 885, mkliteralevt("\033[17;2~")) || /* Shift+F6 */
+		insertkeymap( tt, 886, mkliteralevt("\033[18;2~")) || /* Shift+F7 */
+		insertkeymap( tt, 887, mkliteralevt("\033[19;2~")) || /* Shift+F8 */
+		insertkeymap( tt, 888, mkliteralevt("\033[20;2~")) || /* Shift+F9 */
+		insertkeymap( tt, 889, mkliteralevt("\033[21;2~")) || /* Shift+F10 */
+		insertkeymap( tt, 890, mkliteralevt("\033[23;2~")) || /* Shift+F11 */
+		insertkeymap( tt, 891, mkliteralevt("\033[24;2~")) || /* Shift+F12 */
+
+		/* Function Keys 25-36 */
+		insertkeymap( tt, 1392, mkliteralevt("\033[1;5P" )) || /* Ctrl+F1 */
+		insertkeymap( tt, 1393, mkliteralevt("\033[1;5Q" )) || /* Ctrl+F2 */
+		insertkeymap( tt, 1394, mkliteralevt("\033[1;5R" )) || /* Ctrl+F3 */
+		insertkeymap( tt, 1395, mkliteralevt("\033[1;5S" )) || /* Ctrl+F4 */
+		insertkeymap( tt, 1396, mkliteralevt("\033[15;5~")) || /* Ctrl+F5 */
+		insertkeymap( tt, 1397, mkliteralevt("\033[17;5~")) || /* Ctrl+F6 */
+		insertkeymap( tt, 1398, mkliteralevt("\033[18;5~")) || /* Ctrl+F7 */
+		insertkeymap( tt, 1399, mkliteralevt("\033[19;5~")) || /* Ctrl+F8 */
+		insertkeymap( tt, 1400, mkliteralevt("\033[20;5~")) || /* Ctrl+F9 */
+		insertkeymap( tt, 1401, mkliteralevt("\033[21;5~")) || /* Ctrl+F10 */
+		insertkeymap( tt, 1402, mkliteralevt("\033[23;5~")) || /* Ctrl+F11 */
+		insertkeymap( tt, 1403, mkliteralevt("\033[24;5~")) || /* Ctrl+F12 */
+
+		/* Function Keys 37-48 */
+		insertkeymap( tt, 1904, mkliteralevt("\033[1;6P" )) || /* Ctrl+Shift+F1 */
+		insertkeymap( tt, 1905, mkliteralevt("\033[1;6Q" )) || /* Ctrl+Shift+F2 */
+		insertkeymap( tt, 1906, mkliteralevt("\033[1;6R" )) || /* Ctrl+Shift+F3 */
+		insertkeymap( tt, 1907, mkliteralevt("\033[1;6S" )) || /* Ctrl+Shift+F4 */
+		insertkeymap( tt, 1908, mkliteralevt("\033[15;6~")) || /* Ctrl+Shift+F5 */
+		insertkeymap( tt, 1909, mkliteralevt("\033[17;6~")) || /* Ctrl+Shift+F6 */
+		insertkeymap( tt, 1910, mkliteralevt("\033[18;6~")) || /* Ctrl+Shift+F7 */
+		insertkeymap( tt, 1911, mkliteralevt("\033[19;6~")) || /* Ctrl+Shift+F8 */
+		insertkeymap( tt, 1912, mkliteralevt("\033[20;6~")) || /* Ctrl+Shift+F9 */
+		insertkeymap( tt, 1913, mkliteralevt("\033[21;6~")) || /* Ctrl+Shift+F10 */
+		insertkeymap( tt, 1914, mkliteralevt("\033[23;6~")) || /* Ctrl+Shift+F11 */
+		insertkeymap( tt, 1915, mkliteralevt("\033[24;6~")) || /* Ctrl+Shift+F12 */
+
+		/* Function Keys 49-60 */
+		insertkeymap( tt, 2416, mkliteralevt("\033[1;3P" )) || /* Alt+F1 */
+		insertkeymap( tt, 2417, mkliteralevt("\033[1;3Q" )) || /* Alt+F2 */
+		insertkeymap( tt, 2418, mkliteralevt("\033[1;3R" )) || /* Alt+F3 */
+		insertkeymap( tt, 2419, mkliteralevt("\033[1;3S" )) || /* Alt+F4 */
+		insertkeymap( tt, 2420, mkliteralevt("\033[15;3~")) || /* Alt+F5 */
+		insertkeymap( tt, 2421, mkliteralevt("\033[17;3~")) || /* Alt+F6 */
+		insertkeymap( tt, 2422, mkliteralevt("\033[18;3~")) || /* Alt+F7 */
+		insertkeymap( tt, 2423, mkliteralevt("\033[19;3~")) || /* Alt+F8 */
+		insertkeymap( tt, 2424, mkliteralevt("\033[20;3~")) || /* Alt+F9 */
+		insertkeymap( tt, 2425, mkliteralevt("\033[21;3~")) || /* Alt+F10 */
+		insertkeymap( tt, 2426, mkliteralevt("\033[23;3~")) || /* Alt+F11 */
+		insertkeymap( tt, 2427, mkliteralevt("\033[24;3~")) || /* Alt+F12 */
+
+		/* Function Keys 61-63, Alt+Shift+F4-12 */
+		insertkeymap( tt, 2928, mkliteralevt("\033[1;4P" )) || /* Alt+Shift+F1 */
+		insertkeymap( tt, 2929, mkliteralevt("\033[1;4Q" )) || /* Alt+Shift+F2 */
+		insertkeymap( tt, 2930, mkliteralevt("\033[1;4R" )) || /* Alt+Shift+F3 */
+		insertkeymap( tt, 2931, mkliteralevt("\033[1;4S" )) || /* Alt+Shift+F4 */
+		insertkeymap( tt, 2932, mkliteralevt("\033[15;4~")) || /* Alt+Shift+F5 */
+		insertkeymap( tt, 2933, mkliteralevt("\033[17;4~")) || /* Alt+Shift+F6 */
+		insertkeymap( tt, 2934, mkliteralevt("\033[18;4~")) || /* Alt+Shift+F7 */
+		insertkeymap( tt, 2935, mkliteralevt("\033[19;4~")) || /* Alt+Shift+F8 */
+		insertkeymap( tt, 2936, mkliteralevt("\033[20;4~")) || /* Alt+Shift+F9 */
+		insertkeymap( tt, 2937, mkliteralevt("\033[21;4~")) || /* Alt+Shift+F10 */
+		insertkeymap( tt, 2938, mkliteralevt("\033[23;4~")) || /* Alt+Shift+F11 */
+		insertkeymap( tt, 2939, mkliteralevt("\033[24;4~")) || /* Alt+Shift+F12 */
+
+		/* Ctrl+Alt+Shift+F1-12*/
+		insertkeymap( tt, 3952, mkliteralevt("\033[1;8P" )) || /* Ctrl+Alt+Shift+F1 */
+		insertkeymap( tt, 3953, mkliteralevt("\033[1;8Q" )) || /* Ctrl+Alt+Shift+F2 */
+		insertkeymap( tt, 3954, mkliteralevt("\033[1;8R" )) || /* Ctrl+Alt+Shift+F3 */
+		insertkeymap( tt, 3955, mkliteralevt("\033[1;8S" )) || /* Ctrl+Alt+Shift+F4 */
+		insertkeymap( tt, 3956, mkliteralevt("\033[15;8~")) || /* Ctrl+Alt+Shift+F5 */
+		insertkeymap( tt, 3957, mkliteralevt("\033[17;8~")) || /* Ctrl+Alt+Shift+F6 */
+		insertkeymap( tt, 3958, mkliteralevt("\033[18;8~")) || /* Ctrl+Alt+Shift+F7 */
+		insertkeymap( tt, 3959, mkliteralevt("\033[19;8~")) || /* Ctrl+Alt+Shift+F8 */
+		insertkeymap( tt, 3960, mkliteralevt("\033[20;8~")) || /* Ctrl+Alt+Shift+F9 */
+		insertkeymap( tt, 3961, mkliteralevt("\033[21;8~")) || /* Ctrl+Alt+Shift+F10 */
+		insertkeymap( tt, 3962, mkliteralevt("\033[23;8~")) || /* Ctrl+Alt+Shift+F11 */
+		insertkeymap( tt, 3963, mkliteralevt("\033[24;8~"))    /* Ctrl+Alt+Shift+F12 */
+
          )
        return(-1);
 
@@ -7762,6 +8199,10 @@ defaultkeymap( int terminal ) {
         return defhebrewkm(terminal);
     case RUSSIANKM:
         return defrussiankm(terminal);
+	case METAESCKM:
+		return defmetaesckm(terminal);
+	case METAKM:
+		return defmetamodekm(terminal);
     case TT_VC4404:
         return defvckm(terminal);
     case TT_HPTERM:
@@ -7811,6 +8252,8 @@ defaultkeymap( int terminal ) {
     case TT_VT220PC:
     case TT_VT320PC:
         return defvtpckm( terminal );
+    case TT_K95:
+		return defk95km( terminal );
     case TT_97801:
         return defsnikm( terminal );
     case TT_TVI910:
@@ -7858,6 +8301,12 @@ mapkey( unsigned int c )
         case KBM_WP:
             rc = findkeymap(WPKM,c,&event);
             break;
+		case KBM_ME:
+			rc = findkeymap(METAESCKM,c,&event);
+			break;
+		case KBM_MM:
+			rc = findkeymap(METAKM,c,&event);
+			break;
         }
     }
     if ( rc == 0 )

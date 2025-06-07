@@ -1,0 +1,42 @@
+; Simple wrapper Kermit script for xml2doc.rexx to allow it to be called from
+; Kermit 95s command line parameters, for example:
+;     k95.exe -Y -# 94 -C "take xml2doc.ksc 1 {preliminary.html} 1, exit"
+; This is only necessary because the method for passing arguments to rexx
+; conflicts with the method for passing multiple commands to K95 on the
+; command line. From within K95, you're fine to just run something like the
+; following interactively: rexx call xml2doc 1, 'preliminary.html', 1
+;
+; Parameters for this script are the same as for xml2doc.rexx itself:
+;   xml2doc.ksc dev-mode banner-file show-warnings input-file
+; Where:
+;   dev-mode:      0 for release build, 1 for development build (default)
+;   banner-file:   Specify filename containing one line of HTML to insert at the
+;                  top of each output file. Default is no banner file.
+;   show-warnings: If warnings should be output or not. Default is not to show
+;                  warnings
+;   input-file:    File to generate outputs from. Default is "ctlseqs.xml"
+; All parameters are optional.
+
+.dev_mode := 0
+.warnings := 1
+.banner := ""
+.infile := ""
+
+if defined \%1 .dev_mode := \fcontents(\%1)
+if defined \%2 .banner := \fcontents(\%2)
+if defined \%3 .warnings := \fcontents(\%3)
+if defined \%4 .infile := \fcontents(\%4)
+
+if equal \m(dev_mode) "true" {
+    .dev_mode := 1
+} else if equal \m(dev_mode) "false" {
+    .dev_mode := 0
+}
+
+if equal \m(warnings) "true" {
+    .warnings := 1
+} else if equal \m(warnings) "false" {
+    .warnings := 0
+}
+
+rexx call xml2doc \m(dev_mode), '\m(banner)', \m(warnings), '\m(infile)'

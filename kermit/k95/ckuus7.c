@@ -85,6 +85,8 @@ int setguifont();                                   /* ckuus3.c */
 
 extern int mskkeys;
 extern int mskrename;
+
+extern int colorpalette;
 #endif /* OS2 */
 
 #ifdef CK_AUTHENTICATION
@@ -496,6 +498,7 @@ extern int marginbell, marginbellcol;
 extern int autoscroll, wy_autopage;
 extern int tt_sac;
 extern int dec_nrc, dec_lang, dec_kbd;
+int tt_clipboard_read, tt_clipboard_write;
 #else /* OS2 */
 extern int tt_rows, tt_cols;
 #endif /*  OS2 */
@@ -970,6 +973,7 @@ static struct keytab trmtab[] = {
     { "character-set", XYTCS,     0 },
 #endif /* NOCSETS */
 #ifdef OS2
+    { "clipboard-access",  XYTCLP,    0 },
     { "code-page",     XYTCPG,    0 },
     { "color",         XYTCOL,    0 },
     { "controls",      XYTCTRL,   0 },
@@ -1110,6 +1114,30 @@ static struct keytab trmtab[] = {
 int ntrm = (sizeof(trmtab) / sizeof(struct keytab)) - 1;
 
 #ifdef OS2
+struct keytab termclipacc[] = {    /* SET TERM CLIPBOARD-ACCESS */
+    { "allow-both",  0, 0 },
+    { "allow-read",  1, 0 },
+    { "allow-write", 2, 0 },
+    { "both",        0, CM_INV },
+    { "read",        1, CM_INV },
+    { "write",       2, CM_INV },
+};
+int ntermclipacc = (sizeof(termclipacc) / sizeof(struct keytab));
+
+struct keytab termclipnotify[] = {
+#ifdef KUI
+#ifdef CK_SHELL_NOTIFY
+    { "notify", 0, 0 },
+#else /* CK_SHELL_NOTIFY */
+    { "notify", 0, CM_INV },
+#endif /* CK_SHELL_NOTIFY */
+#else /* KUI */
+    { "notify", 0, CM_INV },
+#endif /* KUI */
+    { "silent", 1, 0 },
+};
+int ntermclipnotify = (sizeof(termclipnotify) / sizeof(struct keytab));
+
 struct keytab termctrl[] = {    /* SET TERM CONTROLS */
     { "7",      7, 0 },
     { "8",      8, 0 }
@@ -1378,6 +1406,7 @@ int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
 int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
+int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */
 int tt_pacing = 0;                      /* Terminal output-pacing (none) */
 int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
@@ -1396,17 +1425,25 @@ int tt_status_usr[VNUM] = {1,1,0,0};
 #else /* K95G */
 int tt_status[VNUM] = {0,0,0,0};        /* Terminal status line displayed */
 int tt_status_usr[VNUM] = {0,0,0,0};
+int tt_clipboard_read = CLIPBOARD_DENY_NOTIFY,
+    tt_clipboard_write = CLIPBOARD_DENY_NOTIFY; /* Host clipboard access */
 #endif /* K95G */
 #endif /* KUI */
 int tt_senddata = 0;                    /* Let host read terminal data */
 extern int wy_blockend;                 /* Terminal Send Data EOB type */
 int tt_hidattr = 1;                     /* Attributes are hidden */
 
-extern unsigned char colornormal, colorselect,
+extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
-colorgraphic, colordebug, colorreverse, coloritalic;
+colorgraphic, colordebug, colorreverse, coloritalic,
+colorblink, colorbold, savedcolorselect, colordim,
+colorcursor;
 
-extern int trueblink, trueunderline, truereverse, trueitalic, truedim;
+extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
+extern int savedtrueblink, savedtrueunderline, savedtruereverse,
+		   savedtrueitalic, savedtruedim, savedtruebold;
+extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
+		   dim_is_color, bold_font_only;
 
 extern int bgi, fgi;
 extern int scrninitialized[];
@@ -1444,15 +1481,25 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLITA  9
 #define TTCOLRES  10
 #define TTCOLERA  11
+#define TTCOLPAL  12
+#define TTCOLBLI  13
+#define TTCOLBOL  14
+#define TTCOLDIM  15
+#define TTCOLCUR  16
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
+    { "blink",              TTCOLBLI, 0 },      /* Blink color */
+    { "bold",               TTCOLBOL, 0 },      /* Bold color */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
+	{ "cursor", 			TTCOLCUR, 0 },		/* Cursor color */
     { "debug-terminal",     TTCOLDEB, 0 },      /* Debug color */
+    { "dim",                TTCOLDIM, 0 },      /* Dim color */
     { "erase",              TTCOLERA, 0 },      /* Erase mode */
     { "graphic",            TTCOLGRP, 0 },      /* Graphic Color */
     { "help-text",          TTCOLHLP, 0 },      /* Help screens */
     { "italic",             TTCOLITA, 0 },      /* Italic Color */
     { "normal",             TTCOLNOR, CM_INV }, /* Normal screen text */
+    { "palette",            TTCOLPAL, 0 },      /* Color palette */
     { "reset-on-esc[0m",    TTCOLRES, 0 },      /* Reset on ESC [ 0 m */
     { "reverse-video",      TTCOLREV, 0 },      /* Reverse video */
     { "status-line",        TTCOLSTA, 0 },      /* Status line */
@@ -1461,6 +1508,24 @@ struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "underlined-text",    TTCOLUND, 0 }       /* Underlined text */
 };
 int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
+
+struct keytab ttypaltab[] = {
+    { "aixterm-16",   CK_PALETTE_16,     0 },
+    { "rgb",          CK_PALETTE_XTRGB,  CM_INV|CM_ABR },
+    { "xt256",        CK_PALETTE_XT256,  CM_INV|CM_ABR },
+    { "xt88",         CK_PALETTE_XT88,   CM_INV|CM_ABR },
+    { "xterm-256",    CK_PALETTE_XT256,  0 },
+    { "xterm-88",     CK_PALETTE_XT88,   0 },
+#ifdef CK_COLORS_24BIT
+    { "xterm-rgb",    CK_PALETTE_XTRGB,   0 },
+    { "xterm-rgb256", CK_PALETTE_XTRGB,   CM_INV|CM_ABR },
+    { "xterm-rgb88",  CK_PALETTE_XTRGB88, CM_INV },
+#endif /* CK_COLORS_24BIT */
+#ifdef CK_PALETTE_WY370
+    { "wy-370",       CK_PALETTE_WY370,   0 },
+#endif /* CK_PALETTE_WY370 */
+};
+int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 
 #define TTATTNOR  0
 #define TTATTBLI  1
@@ -1475,6 +1540,11 @@ int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
 
 struct keytab ttyattrtab[] = {
     { "blink",     TTATTBLI, 0 },
+#ifdef KUI
+    { "bold",      TTATTBLD, 0 },
+#else  /* KUI */
+    { "bold",      TTATTBLD, CM_INV },
+#endif /* KUI */
     { "dim",       TTATTDIM, 0 },
     { "italic",    TTATTITA, 0 },
     { "protected", TTATTPRO, 0 },
@@ -1482,6 +1552,18 @@ struct keytab ttyattrtab[] = {
     { "underline", TTATTUND, 0 }
 };
 int nattrib = (sizeof(ttyattrtab) / sizeof(struct keytab));
+
+struct keytab ttyattrblinktab[] = {
+    { "bright",    FALSE, 0 },
+    { "color",     TRUE,  0 },
+};
+int nattrblink = (sizeof(ttyattrblinktab) / sizeof(struct keytab));
+
+struct keytab ttyattrboldtab[] = {
+    { "bright",    FALSE, 0 },
+    { "font-only", TRUE,  0 },
+};
+int nattrbold = (sizeof(ttyattrboldtab) / sizeof(struct keytab));
 
 struct keytab ttyprotab[] = {
     { "blink",       TTATTBLI,  0 },
@@ -1510,6 +1592,7 @@ struct keytab ttyclrtab[] = {           /* Colors */
     { "darkgray",      8, CM_INV },
     { "dgray",         8, 0      },
     { "green",         2, 0      },
+    { "index",        16, 0      },     /* Indexed color from current palette */
     { "lblue",         9, CM_INV },
     { "lcyan",        11, CM_INV },
     { "lgray",         7, CM_INV },
@@ -1524,17 +1607,19 @@ struct keytab ttyclrtab[] = {           /* Colors */
     { "lred",         12, CM_INV },
     { "magenta",       5, 0      },
     { "red",           4, 0      },
+    { "rgb",          17, 0      },     /* Direct RGB value */
     { "white",        15, 0      },
     { "yellow",       14, 0      }
 };
 int nclrs = (sizeof (ttyclrtab) / sizeof (struct keytab));
 
 struct keytab ttycurtab[] = {
+	{ "block",       TTC_BLOCK, CM_INV|CM_ABR },
     { "full",        TTC_BLOCK, 0 },
     { "half",        TTC_HALF,  0 },
     { "underline",   TTC_ULINE, 0 }
 };
-int ncursors = 3;
+int ncursors = 4;
 
 struct keytab ttyptab[] = {
     { "aaa",      TT_AAA,     CM_INV },     /* AnnArbor */
@@ -1564,6 +1649,7 @@ struct keytab ttyptab[] = {
     { "hpterm",   TT_HPTERM,  0 },          /* HP TERM */
     { "hz1500",   TT_HZL1500, 0 },          /* Hazeltine 1500 */
     { "ibm3151",  TT_IBM31,   0 },          /* IBM 3101-xx,3161 */
+    { "k95",      TT_K95,     0 },          /* Kermit 95 */
     { "linux",    TT_LINUX,   0 },          /* Linux */
     { "qansi",    TT_QANSI,   0 },          /* QNX ANSI */
     { "qnx",      TT_QNX,     0 },          /* QNX Console */
@@ -1656,7 +1742,9 @@ struct keytab ttkeytab[] = {
     { "hpterm",    TT_HPTERM,     0 },             /* HP TERM */
     { "hz1500",    TT_HZL1500,    0 },             /* Hazeltine 1500 */
     { "ibm3151",   TT_IBM31,      0 },             /* IBM 3101-xx,3161 */
+    { "k95",       TT_K95,        0 },             /* Kermit 95 */
     { "linux",     TT_LINUX,      0 },             /* Linux */
+    { "meta",      TT_KBM_METAESC, 0, },           /* Meta sends ESC mode (subset of emacs mode) */
     { "qansi",     TT_QANSI,      0 },             /* QNX ANSI */
     { "qnx",       TT_QNX,        0 },             /* QNX */
     { "regent25",  TT_REGENT25,   CM_INV },        /* ADDS Regent 25 */
@@ -1693,7 +1781,8 @@ struct keytab ttkeytab[] = {
     { "wyse30",    TT_WY30,       CM_INV },
     { "wyse370",   TT_WY370,      CM_INV },
     { "wyse50",    TT_WY50,       CM_INV },
-    { "wyse60",    TT_WY60,       CM_INV }
+    { "wyse60",    TT_WY60,       CM_INV },
+    { "xterm-meta",TT_KBM_META,   0, }            /* Meta key mode */
 };
 int nttkey = (sizeof(ttkeytab) / sizeof(struct keytab));
 
@@ -1702,10 +1791,12 @@ struct keytab kbmodtab[] = {
     { "emacs",   KBM_EM, 0      },
     { "english", KBM_EN, CM_INV },
     { "hebrew",  KBM_HE, 0      },
+    { "meta",    KBM_ME, 0      },
     { "normal",  KBM_EN, 0      },
     { "none",    KBM_EN, CM_INV },
     { "russian", KBM_RU, 0      },
-    { "wp",      KBM_WP, 0      }
+    { "wp",      KBM_WP, 0      },
+    { "xterm-meta",KBM_MM, 0    }
 };
 int nkbmodtab = (sizeof(kbmodtab) / sizeof(struct keytab));
 #endif /* NOSETKEY */
@@ -4373,8 +4464,31 @@ settrm() {
               return(z);
             user_erasemode = y;
             return(success=1);
+        } else if (x == TTCOLPAL) {
+          extern int colorpalette;
+          y = cmkey(ttypaltab, npalette, "Color palette to use",
+#ifdef CK_COLORS_24BIT
+                    "xterm-rgb",
+#else /* CK_COLORS_24BIT*/
+                    "xterm-256",
+#endif	/* CK_COLORS_24BIT*/
+                    xxstring);
+          if (y < 0) return y;
+          /* TODO: We should backup attribute colors set below on changing */
+          colorpalette = y;
+#ifdef SSHBUILTIN
+          if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+              ssh_set_environment_variable("COLORTERM", "truecolor");
+          } else {
+              ssh_set_environment_variable("COLORTERM", 0);
+          }
+#endif /* SSHBUILTIN */
+          return(success=1);
+          break;
         } else {                        /* No parse error */
             int fg = 0, bg = 0;
+            cell_video_attr_t attr = cell_video_attr_from_vio_attribute(0);
+
             fg = cmkey(ttyclrtab, nclrs,
                        (x == TTCOLBOR ?
                         "color for screen border" :
@@ -4382,46 +4496,164 @@ settrm() {
                        "lgray", xxstring);
             if (fg < 0)
               return(fg);
+
+            if (fg == 16) {
+                /* Indexed color from current palette */
+                int cmax = current_palette_max_index();
+                int z;
+
+                if ((z = cmnum(cmax == 15
+                            ? "Foreground color index, 0-15"
+                            : cmax == 87 ? "Foreground color index, 0-87"
+                                          : "Foreground color index, 0-255"
+                       ,"",10,&fg,xxstring)) < 0) return(z);
+
+                if (fg < 16) fg = color_index_to_vio(fg);
+
+                if (fg < 0 || fg > cmax) {
+                    printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                    return(-9);
+                }
+
+                attr = cell_video_attr_set_fg_color(attr, fg);
+            }
+            else if (fg == 17) {
+                /* Direct RGB value. Three colors needed. */
+                int red, green, blue;
+
+                if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                return(z);
+                if (red < 0 || red > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                    return(-9);
+                }
+
+                if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                return(z);
+                if (green < 0 || green > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                    return(-9);
+                }
+
+                if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                return(z);
+                if (blue < 0 || blue > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                    return(-9);
+                }
+
+                attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
+                fg = -1;
+            }
+            else {
+                attr = cell_video_attr_set_fg_color(attr, fg);
+            }
+
             if (x != TTCOLBOR) {
                 if ((bg = cmkey(ttyclrtab,nclrs,
                                 "background color","blue",xxstring)) < 0)
                   return(bg);
+
+                if (bg == 16) {
+                    /* Indexed color from current palette */
+                    int cmax = current_palette_max_index();
+                    int z;
+
+                    if ((z = cmnum(cmax == 15
+                                ? "Background color index, 0-15"
+                                : cmax == 87 ? "Background color index, 0-87"
+                                              : "Background color index, 0-255"
+                           ,"",10,&bg,xxstring)) < 0) return(z);
+
+                    if (fg < 16) bg = color_index_to_vio(fg);
+
+                    if (bg < 0 || bg > cmax) {
+                        printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                        return(-9);
+                    }
+                    attr = cell_video_attr_set_bg_color(attr, bg);
+                }
+                else if (bg == 17) {
+                    /* Direct RGB value. Three colors needed. */
+                    int red, green, blue;
+
+                    if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                    return(z);
+                    if (red < 0 || red > 255) {
+                        printf("\n?Red value outside valid range (0-255)\n");
+                        return(-9);
+                    }
+
+                    if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                    return(z);
+                    if (green < 0 || green > 255) {
+                        printf("\n?Red value outside valid range (0-255)\n");
+                        return(-9);
+                    }
+
+                    if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                    return(z);
+                    if (blue < 0 || blue > 255) {
+                        printf("\n?Red value outside valid range (0-255)\n");
+                        return(-9);
+                    }
+
+                    attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
+                    bg = -1;
+                }
+                else {
+                    attr = cell_video_attr_set_bg_color(attr, bg);
+                }
             }
             if ((y = cmcfm()) < 0)
               return(y);
+
             switch (x) {
               case TTCOLNOR:
-                colornormal = fg | bg << 4;
-                fgi = fg & 0x08;
-                bgi = bg & 0x08;
+                colornormal = attr;
+                fgi = 0; bgi = 0;
+                if (fg < 16 && fg >= 0) fgi = fg & 0x08;
+                if (bg < 16 && bg >= 0) bgi = bg & 0x08;
                 break;
               case TTCOLREV:
-                colorreverse = fg | bg << 4;
+                colorreverse = attr;
                 break;
               case TTCOLITA:
-                coloritalic = fg | bg << 4;
+                coloritalic = attr;
                 break;
               case TTCOLUND:
-                colorunderline = fg | bg << 4;
+                colorunderline = attr;
                 break;
               case TTCOLGRP:
-                colorgraphic = fg | bg << 4;
+                colorgraphic = attr;
                 break;
               case TTCOLDEB:
-                colordebug = fg | bg << 4;
+                colordebug = attr;
                 break;
               case TTCOLSTA:
-                colorstatus = fg | bg << 4;
+                colorstatus = attr;
                 break;
               case TTCOLHLP:
-                colorhelp = fg | bg << 4;
+                colorhelp = attr;
                 break;
               case TTCOLBOR:
-                colorborder = fg;
+                colorborder = attr;
                 break;
               case TTCOLSEL:
-                colorselect = fg | bg << 4;
+                savedcolorselect = colorselect = attr;
                 break;
+              case TTCOLBLI:
+                colorblink = attr;
+                break;
+              case TTCOLBOL:
+                colorbold = attr;
+                break;
+              case TTCOLDIM:
+                colordim = attr;
+                break;
+			  case TTCOLCUR:
+				colorcursor = attr;
+			    break;
               default:
                 printf("%s - invalid\n",cmdbuf);
                 return(-9);
@@ -4969,7 +5201,7 @@ settrm() {
 	    if ((x = cmkey(rollkeytab,nrollkey,"","send",xxstring))<0)
 	      return(x);
 	    if ((z = cmcfm()) < 0) return(z);
-	    tt_rkeys[VTERM] = x;
+	    tt_rkeys[VTERM] = tt_rkeys_saved[VTERM] = x;
 	} else {
 	    if ((x = cmcfm()) < 0) return(x);
 	    tt_roll[VTERM] = y;
@@ -4980,6 +5212,35 @@ settrm() {
         y = cmnum("Maximum seconds to allow CTS off during CONNECT",
                   "5",10,&x,xxstring);
         return(setnum(&tt_ctstmo,x,y,10000));
+
+      case XYTCLP: {    /* SET TERMINAL CLIPBOARD-ACCESS */
+            int zz;
+
+            if ((x = cmkey(termclipacc, ntermclipacc,"clipboard access","allow-both",xxstring))<0)
+              return(x);
+
+            if ((y = cmkey(onoff,2,"","on",xxstring)) < 0)
+                return(y);
+
+            if ((z = cmkey(termclipnotify, ntermclipnotify,"notify on access","silent",xxstring))<0)
+              return(z);
+
+            if ((zz = cmcfm()) < 0) return(zz);
+
+            if (y == 1 && z == 1) zz = CLIPBOARD_ALLOW;
+            else if (y == 1 && z == 0) zz = CLIPBOARD_ALLOW_NOTIFY;
+            else if (y == 0 && z == 1) zz = CLIPBOARD_DENY;
+            else if (y == 0 && z == 0) zz = CLIPBOARD_DENY_NOTIFY;
+
+            if (x == 0 || x == 1) {
+                /* Allow both or allow read */
+                tt_clipboard_read = zz;
+            }
+            if (x == 0 || x == 2) {
+                /* Allow both or allow write */
+                tt_clipboard_write = zz;
+            }
+      }
 
       case XYTCPG: {                    /* SET TERMINAL CODE-PAGE */
         int i;
@@ -5406,37 +5667,88 @@ settrm() {
         switch (x) {
           case TTATTBLI:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+            savedtrueblink = trueblink = y;
+            /* Ask how blink should be simulated - a bright color, or a fixed
+             * color. This option is new in K95 3.0 beta.8 which added support
+             * for more than 16 colors as toggling the intensity/brightness bit
+             * doesn't work when the color isn't in the 0-7 range. We'll default
+             * to "bright" to avoid any surprises as this is what K95 did in the
+             * past.  */
+            if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+              return(y);
             if ((x = cmcfm()) < 0) return(x);
-            trueblink = y;
+            use_blink_attr = blink_is_color = y;
 #ifndef KUI
             if ( !trueblink && trueunderline ) {
-                trueunderline = 0;
-                printf("Warning: Underline being simulated by color.\n");
+                /* In the console version, true underline is really implemented
+                 * as a bright foreground (or background) color. We can't do
+                 * both that *and* simulate blink with a bright foreground (or
+                 * background) color. */
+                if (!blink_is_color) {
+                    savedtrueunderline = trueunderline = 0;
+                    printf("Warning: Underline being simulated by color.\n");
+                }
+            }
+#endif /* KUI */
+            break;
+
+          case TTATTBLD:
+            if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+            savedtruebold = truebold = y;
+
+            if (y) {
+                /* Ask if we should still do bright colors for true bold */
+                if ((y = cmkey(ttyattrboldtab,nattrbold,"","bright",xxstring)) < 0) return(y);
+                if ((x = cmcfm()) < 0) return(x);
+
+                bold_font_only = y;
+            }
+            else {
+                /* Ask how bold should be simulated - a bright color, or a fixed
+                 * color. This option is new in K95 3.0 beta.8 which added support
+                 * for more than 16 colors as toggling the intensity/brightness bit
+                 * doesn't work when the color isn't in the 0-7 range. We'll default
+                 * to "bright" to avoid any surprises as this is what K95 did in the
+                 * past.  */
+                if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+                  return(y);
+                if ((x = cmcfm()) < 0) return(x);
+                use_bold_attr = bold_is_color = y;
             }
 
-#endif /* KUI */
             break;
 
           case TTATTDIM:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+            savedtruedim = truedim = y;
+            /* Ask how dim should be simulated - a bright color, or a fixed
+             * color. This option is new in K95 3.0 beta.8 which added support
+             * for more than 16 colors as toggling the intensity/brightness bit
+             * doesn't work when the color isn't in the 0-7 range. We'll default
+             * to "bright" to avoid any surprises as this is what K95 did in the
+             * past.  */
+            if ((y = cmkey(ttyattrblinktab,nattrblink,"","bright",xxstring)) < 0)
+              return(y);
             if ((x = cmcfm()) < 0) return(x);
-            truedim = y;
+            dim_is_color = y;
             break;
 
           case TTATTREV:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             if ((x = cmcfm()) < 0) return(x);
-            truereverse = y;
+            savedtruereverse = truereverse = y;
             break;
 
           case TTATTUND:
             if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
             if ((x = cmcfm()) < 0) return(x);
-            trueunderline = y;
+            savedtrueunderline = trueunderline = y;
 #ifndef KUI
             if (!trueblink && trueunderline) {
-                trueblink = 1;
-                printf("Warning: True blink mode is active.\n");
+                if (!blink_is_color) {
+                    savedtrueblink = trueblink = 1;
+                    printf("Warning: True blink mode is active.\n");
+                }
             }
 #endif /* KUI */
             break;
@@ -5444,7 +5756,7 @@ settrm() {
           case TTATTITA:
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
-              trueitalic = y;
+              savedtrueitalic = trueitalic = y;
             break;
 
           case TTATTPRO: {      /* Set default Protected Character attribute */
@@ -9050,7 +9362,7 @@ cx_net(net, protocol, xhost, svc,
 #endif /* CK_ANSIC */
 /* cx_net */ {
 
-    int i, n, x, msg;
+    int i, n = 1, x, msg;
     int _local = -1;
     int did_ttopen = 0;
 
@@ -9888,6 +10200,14 @@ cx_net(net, protocol, xhost, svc,
 	    slrestor();
 	    makestr(&slmsg,"Network connection failure");
 #ifdef VMS
+        /* 2024-06-08 SMS.  Lame work-around for NONET build problem:
+         * %CC-E-UNDECLARED, In this statement, "socket_errno" is not declared.
+         * socket_errno is defined conditionally in ckcnet.h, but the
+         * condition here is different.
+         */
+#ifndef socket_errno
+#define socket_errno errno      /* Must match definition in ckcnet.h. */
+#endif
 	    if (msg && hints && !xcmdsrc && IS_RLOGIN()) {
 		makestr(&slmsg,"RLOGIN failure");
 		if  (socket_errno == EACCES) {
@@ -11145,7 +11465,7 @@ setlin(xx, zz, fc) int xx, zz, fc;
 #ifdef SSHBUILTIN
         if (mynet == NET_SSH) {		/* SSH connection */
             int k, havehost = 0, trips = 0;
-            int    tmpver = -1, tmpxfw = -1, tmpssh_cas;
+            int    tmpver = -1, tmpxfw = -1, tmpssh_cas = FALSE;
 #ifndef SSHTEST
             extern int sl_ssh_xfw, sl_ssh_xfw_saved;
             extern int sl_ssh_ver, sl_ssh_ver_saved;
@@ -14090,10 +14410,12 @@ savkeys(name,disp) char * name; int disp;
 
 #define SV_SCRL 0
 #define SV_HIST 1
+#define SV_SCRN 2
 
 #ifdef OS2
 #ifndef NOLOCAL
 static struct keytab trmtrmopt[] = {
+    { "screen",     SV_SCRN, CM_INV },  /* For future save-as-image feature */
     { "scrollback", SV_SCRL, 0 }
 };
 #endif /* NOLOCAL */
@@ -14114,7 +14436,7 @@ static int ncmdtrmopt = (sizeof (cmdtrmopt) / sizeof (struct keytab)) - 1;
 
 #ifdef OS2
 #ifndef NOLOCAL
-_PROTOTYP(int savscrbk, (int, char *, int));
+_PROTOTYP(int savscrbk, (int, char *, int, int));
 #endif /* NOLOCAL */
 #endif /* OS2 */
 
@@ -14151,7 +14473,7 @@ dosave(xx) int xx;
 #ifdef OS2
 #ifndef NOLOCAL
           case XSTERM:                  /* SAVE TERMINAL.. */
-            if ((y = cmkey(trmtrmopt,1,
+            if ((y = cmkey(trmtrmopt,2,
                            "What to save","scrollback",xxstring)) < 0)
               return(y);
             break;
@@ -14159,7 +14481,8 @@ dosave(xx) int xx;
 #endif /* OS2 */
         }
         z = cmofi("Filename",
-                  ((y == SV_SCRL) ? "scrollbk.txt" : "history.txt"),
+                  ((y == SV_SCRL) ? "scrollbk.txt" :
+                    (y == SV_SCRN) ? "screen.txt" : "history.txt"),
                   &s,
                   xxstring
                   );
@@ -14203,7 +14526,7 @@ dosave(xx) int xx;
 #ifdef OS2
 #ifndef NOLOCAL
         if (y == SV_SCRL)               /* .. SCROLLBACK */
-          return(success = savscrbk(VCMD,s,disp));
+          return(success = savscrbk(VCMD,s,disp,FALSE));
 #endif /* NOLOCAL */
 #endif /* OS2 */
 #ifndef NORECALL
@@ -14214,8 +14537,14 @@ dosave(xx) int xx;
 
 #ifdef OS2
 #ifndef NOLOCAL
-      case XSTERM:                      /* SAVE TERMINAL SCROLLBACK */
-        return(success = savscrbk(VTERM,s,disp));
+      case XSTERM: {                    /* SAVE TERMINAL SCROLLBACK */
+        switch(y) {
+          case SV_SCRL:
+            return(success = savscrbk(VTERM,s,disp,FALSE));
+          case SV_SCRN:
+            return(success = savscrbk(VTERM,s,disp,TRUE));
+        }
+      }
 #endif /* NOLOCAL */
 #endif /* OS2 */
     }
@@ -14677,16 +15006,16 @@ sho_auth(cx) int cx;
             kv = all ? AUTHTYPE_KERBEROS_V5 : 0;
             if (ck_krb4_is_installed()) {
                 printf(" Authentication:      Kerberos 4\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             } else {
                 printf(" Authentication:      Kerberos 4 (not installed)\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 continue;
             }
 #ifdef CK_KERBEROS
             printf(" Keytab file:         %s\n",
                       k4_keytab ? k4_keytab : "(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             if (krb_action < 0) {
                 p = "(none)";
             } else {
@@ -14698,49 +15027,49 @@ sho_auth(cx) int cx;
                 }
             }
             printf(" Action:              %s\n", p);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default lifetime     %d\n",krb4_d_lifetime);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Lifetime:            %d (minutes)\n",krb4_init.lifetime);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default preauth:     %d\n",krb4_d_preauth);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Preauth:             %d\n",krb4_init.preauth);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default principal:   \"%s\"\n",
                     krb4_d_principal ? krb4_d_principal : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Principal:           \"%s\"\n",
                     krb4_init.principal ? krb4_init.principal : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default realm:       \"%s\"\n",
                     krb4_d_realm ? krb4_d_realm : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Realm:               \"%s\"\n",
                     krb4_init.realm ? krb4_init.realm : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default instance:    \"%s\"\n",
                     krb4_d_instance ? krb4_d_instance : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Instance:            \"%s\"\n",
                     krb4_init.instance ? krb4_init.instance : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Auto-Get TGTs:       %d\n",krb4_autoget);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Auto-Destroy TGTs:   %s\n",
                     krb4_autodel==KRB_DEL_NO?"never":
                     krb4_autodel==KRB_DEL_CL?"on-close":"on-exit");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Check IP Addresses:  %d\n",krb4_checkaddrs);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #ifdef COMMENT
             printf(" Password:    \"%s\"\n",
                     krb4_init.password  ? krb4_init.password  : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* COMMENT */
 #endif /* CK_KERBEROS */
             printf("\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             break;
         case AUTHTYPE_KERBEROS_V5:
             kv = all ? AUTHTYPE_SSL : 0;
@@ -14749,23 +15078,23 @@ sho_auth(cx) int cx;
                     printf(" Authentication:      Kerberos 5 plus GSSAPI\n");
                 else
                     printf(" Authentication:      Kerberos 5\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             } else {
                 printf(" Authentication:      Kerberos 5 (not installed)\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 continue;
             }
 
 #ifdef CK_KERBEROS
             printf(" Cache file:          %s\n",
                     krb_op.cache ? krb_op.cache : "(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default cache:       %s\n",
                     krb5_d_cc ? krb5_d_cc : "(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Keytab file:         %s\n",
                       k5_keytab ? k5_keytab : "(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             if (krb_action < 0) {
                 p = "(none)";
             } else  {
@@ -14777,63 +15106,63 @@ sho_auth(cx) int cx;
                 }
             }
             printf(" Action:              %s\n", p);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 
             printf(" Default forwardable  %d\n",krb5_d_forwardable);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Forwardable:         %d\n",krb5_init.forwardable);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default lifetime     %d\n",krb5_d_lifetime);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Lifetime:            %d (minutes)\n",krb5_init.lifetime);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Postdate:            \"%s\"\n",
                     krb5_init.postdate ? krb5_init.postdate: "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default proxiable:   %d\n",krb5_d_proxiable);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Proxiable:           %d\n",krb5_init.proxiable);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Renew:               %d\n",krb5_init.renew);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default renewable:   %d (minutes)\n",krb5_d_renewable);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Renewable:           %d (minutes)\n",krb5_init.renewable);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Service:             \"%s\"\n",
                     krb5_init.service ? krb5_init.service : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Validate:            %d\n",krb5_init.validate);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default principal:   \"%s\"\n",
                     krb5_d_principal ? krb5_d_principal : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Principal:           \"%s\"\n",
                     krb5_init.principal ? krb5_init.principal : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default instance:    \"%s\"\n",
                     krb5_d_instance ? krb5_d_instance : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default realm:       \"%s\"\n",
                     krb5_d_realm ? krb5_d_realm : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Realm:               \"%s\"\n",
                     krb5_init.realm ? krb5_init.realm : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Auto-Get TGTs:       %d\n",krb5_autoget);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Auto-Destroy TGTs:   %s\n",
                     krb5_autodel==KRB_DEL_NO?"never":
                     krb5_autodel==KRB_DEL_CL?"on-close":"on-exit");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Default get K4 TGTs: %d\n",krb5_d_getk4);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Get K4 TGTs: %d\n",krb5_init.getk4);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Check IP Addresses:  %d\n",krb5_checkaddrs);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" No IP Addresses:  %d\n",krb5_d_no_addresses);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" IP-Addresses:        ");
             if (krb5_init.addrs && krb5_init.addrs[0]) {
                 for (i = 0; krb5_init.addrs[i]; i++) {
@@ -14851,15 +15180,15 @@ sho_auth(cx) int cx;
                 printf("(use default)");
             }
             printf("\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #ifdef COMMENT
             printf(" Password:            \"%s\"\n",
                     krb5_init.password  ? krb5_init.password  : "");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* COMMENT */
 #endif /* CK_KERBEROS */
             printf("\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             break;
 #ifdef CK_SSL
           case AUTHTYPE_SSL:
@@ -14867,51 +15196,51 @@ sho_auth(cx) int cx;
             if (ck_ssleay_is_installed()) {
                 printf(" Authentication:      SSL/TLS (%s)\n",
                         SSLeay_version(SSLEAY_VERSION));
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             } else {
                 printf(" Authentication:      SSL/TLS (not installed)\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 continue;
             }
             printf(" RSA Certs file: %s\n",ssl_rsa_cert_file?
                   ssl_rsa_cert_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" RSA Certs Chain file: %s\n",ssl_rsa_cert_chain_file?
                   ssl_rsa_cert_chain_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" RSA Key file: %s\n",ssl_rsa_key_file?
                   ssl_rsa_key_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" DSA Certs file: %s\n",ssl_dsa_cert_file?
                   ssl_dsa_cert_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" DSA Certs Chain file: %s\n",ssl_dsa_cert_chain_file?
                   ssl_dsa_cert_chain_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" DH Key file: %s\n",ssl_dh_key_file?
                   ssl_dh_key_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" DH Param file: %s\n",ssl_dh_param_file?
                   ssl_dh_param_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" CRL file: %s\n",ssl_crl_file?
                   ssl_crl_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" CRL dir: %s\n",ssl_crl_dir?
                     ssl_crl_dir:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Random file: %s\n",ssl_rnd_file?
                   ssl_rnd_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Verify file: %s\n",ssl_verify_file?
                   ssl_verify_file:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Verify dir: %s\n",ssl_verify_dir?
                   ssl_verify_dir:"(none)");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Cipher list: %s\n",ssl_cipher_list ? ssl_cipher_list : 
 		    DEFAULT_CIPHER_LIST);
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             if (ssl_con == NULL) {
                 SSL_library_init();
                 ssl_ctx = (SSL_CTX *)
@@ -14929,41 +15258,42 @@ sho_auth(cx) int cx;
                     if (p == NULL)
                       break;
                     printf("    %s\n",p);
-                    if (++n > cmd_rows - 3)
+                    if (++n > cmd_rows - 3) {
                         if (!askmore()) return(0); else n = 0;
+                    }
                 }
             }
             printf(" Certs OK? %s\n",ssl_certsok_flag? "yes" : "no");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Debug mode: %s\n", ssl_debug_flag ? "on" : "off");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Verbose mode: %s\n", ssl_verbose_flag ? "on" : "off");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" Verify mode: %s\n",
                     ssl_verify_flag == SSL_VERIFY_NONE ? "none" :
                     ssl_verify_flag == SSL_VERIFY_PEER ? "peer-cert" :
                     "fail-if-no-peer-cert");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" SSL only? %s\n", ssl_only_flag ? "yes" : "no");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             printf(" TLS only? %s\n", tls_only_flag ? "yes" : "no");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
 #endif /* CK_SSL */
             break;
           case AUTHTYPE_NTLM:
             kv = 0;
             if (ck_ntlm_is_installed()) {
                 printf(" Authentication:      NTLM\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 printf(" No options\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             } else {
                 printf(" Authentication:      NTLM (not installed)\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 continue;
             }
             printf("\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             break;
           case AUTHTYPE_SRP:
             kv = all ? AUTHTYPE_NTLM : 0;
@@ -14972,16 +15302,16 @@ sho_auth(cx) int cx;
                     printf(" Authentication:      SRP plus Krypto API\n");
                 else
                     printf(" Authentication:      SRP\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 printf(" No options\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             } else {
                 printf(" Authentication:      SRP (not installed)\n");
-                if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+                if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
                 continue;
             }
             printf("\n");
-            if (++n > cmd_rows - 3) if (!askmore()) return(0); else n = 0;
+            if (++n > cmd_rows - 3) { if (!askmore()) return(0); else n = 0; }
             break;
         }
     }

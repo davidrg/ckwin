@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>K95 Dialer - Modem Definitions</title>
+<body bgcolor="#ffffff" text="#000000">
+<h2>K95 Dialer - Modem Definitions</h2>
+
+Please refer to <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=81">
+<cite>Using C-Kermit</cite></a>, Chapter 4, for a thorough
+explanation of Kermit 95's handling of modems, and to Appendix I for a
+technical overview of modems and serial communications.
+
+<p>
+<img alt="(Screen Shot of Modem Definitions Dialog)" src="mdmdef.gif">
+<p>
+
+<h3>Adding a New Modem</h3>
+
+To add a new modem, click on Add.  A little text box pops up into which you
+can type the name for your new modem.  The name can contain spaces.  Click on
+OK if you want to keep it, otherwise Cancel.
+<p>
+Now you're back on the Modem Definitions page.  If your new modem type is one
+of Kermit's built-in types, and you want to use Kermit's built-in commands for
+it, choose it from the Type list, otherwise choose "tapi" to use TAPI's
+commands.  Or, if you want to define your own commands, choose User-Defined.
+<p>
+Then fill in the COM port.  COM1-COM8 are listed in the dropdown list; if your
+modem is on a higher-numbered COM port, just highlight an entry, delete it
+with the mouse or the Backspace key, and type in the name of the device, such
+as COM17.  Then fill in the interface speed and flow control.
+<p>
+The check boxes on the right correspond to SET MODEM commands from
+<a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=81">Chapter 4
+of <cite>Using C-Kermit</cite></a>:
+<p><dl>
+<dt><b>Error Correction</b>
+<dd>Check this box to enable, uncheck to disable.
+<p>
+<dt><b>Data Compression</b>
+<dd>Check this box to enable, uncheck to disable.
+<p>
+<dt><b>Carrier Detection</b>
+<dd>Check this box to make Kermit 95 pop back to its prompt automatically if
+the modem turns off its Carrier Detect (CD) signal.  Uncheck this box if you
+want to be able to enter the Terminal screen even when CD is off.
+<p>
+<dt><b>Speed Matching</b>
+<a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=85">
+<dd>See p.85, <cite>Using C-Kermit</cite></a>.  Check this box if you want Kermit
+95 to change its interface speed automatically to match the speed reported by
+the modem in its CONNECT message.  Normally this should be done only for old
+2400bps or slower modems.  Leave this box unchecked for V.32, V.32bis, V.34,
+56K, or other high-speed modems.
+<p>
+<dt><b>Speaker</b>
+<dd>Check this box if you want the modem speaker on during dialing, uncheck if
+you want it off.
+<p>
+<dt><b>Volume</b>
+<dd>Use the slider to select the speaker volume when the speaker is on.
+</dl>
+<p>
+<hr>
+<p>
+Now you can click the <b>Modify Commands</b> button.  Here you see the
+commands that Kermit sends to the modem.
+
+<p>
+<img alt="(Screen Shot of Modem Configuration Dialog)" src="mdmcfg.gif">
+<p>
+
+
+  Each command is in a text box.  In
+case a command doesn't fit, you can click on the text box with your mouse and
+them use the mouse or arrow keys to scroll horizontally.  Consult
+<a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=87">pages 87-92
+of <cite>Using C-Kermit</cite></a> and your modem manual while working on this
+page.
+<p>
+You can use normal editing techniques to change or remove each command.
+Remember:
+<ul>
+<li>Backslashes in modem commands must be doubled.  For example <tt>\N0</tt>
+must be written as <tt>\\N0</tt>.
+<p>
+<li>Control characters must be entered in backslash notation,
+e.g. <tt>\{13}</tt> for carriage return.
+<p>
+<li>For Hayes-compatible modems, all commands must begin with AT and end with
+carriage return, e.g. <tt>AT\\N0\13</tt>.
+</ul>
+<p>
+Your modem's capabilities are indicated by the checkboxes in the lower right.
+See <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=83">
+Table 4-1, page 83, <cite>Using C-Kermit</cite></a>, for a description.  Each
+capability should be checked if your modem has it, unchecked if it does not.
+<p>
+Click on OK to save the modem commands or Cancel to discard them.  You can
+also save the current modem type in the form of a Kermit script (SET MODEM
+commands) by choosing Generate Modem Script in the File menu on the main menu
+bar.
+
+<h3>Removing a Modem</h3>
+
+On the Modem options page, select the type you want to remove in the Name box,
+then click on Remove.  Then click on OK to save this change, or Cancel to
+forget about it. A modem can not be removed if it is being used by a
+Connection Entry.
+
+<h3>Exporting Modem Definitions</h3>
+
+In the Dialer's main File menu, choose "Generate mode script".  This creates a
+file called <tt>MODEM.KSC</tt> in Kermit 95's <tt>SCRIPTS</tt> subdirectory.
+The <tt>MODEM.KSC</tt> file contains macro definitions for all your modem
+types.  The name of each macro is "modem-xxx", where xxx is the name of the
+modem.  To load these definitions into Kermit 95, type <tt>TAKE
+MODEM.KSC</tt>.  Then to execute any of these macros from the K-95> prompt,
+just type its name, e.g. "modem-default".  The <tt>MODEM.KSC</tt> file is
+portable and may be used with other C-Kermit implementations.
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

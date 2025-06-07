@@ -26,6 +26,9 @@ HOSTMDM.KSC
 HOSTCOM.KSC
   Host-mode listener for incoming direct serial connections
 
+IKSDPY.KSC
+A script that reads the IKSD database to show information on active sessions.
+
 NPAGE.KSC
   A script for sending numeric pages (to a pager)
 
@@ -40,3 +43,6 @@ REVIEW.KSC
 
 RGREP.KSC
   Recursive "grep" (like UNIX grep, but recursive)
+
+TERMINFO.KSC
+  Send the K95 terminfo entry to the remote host and install it with tic

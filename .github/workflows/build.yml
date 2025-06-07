@@ -3,6 +3,8 @@ name: Full Build
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - '*'
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
@@ -18,7 +20,7 @@ env:
   OPENSSL_VERSION: 3.4.0
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
-  OPENSSL_ARM_VERSION: 3.4.0
+  OPENSSL_ARM_VERSION: 3.4.1
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
   # If jom works ideally we use that as it results in shorter build times.
   OPENSSL_MAKE: nmake
@@ -27,6 +29,8 @@ env:
   OPENSSL_EXTRA_BUILD_FLAGS: -D"_WIN32_WINNT=0x502" -FS
   # Expected filename: https://www.libssh.org/files/0.10/libssh-0.10.6.tar.xz
   LIBSSH_VERSION: 0.10.6
+  # TODO: When upgrading to 0.11, drop -DCMAKE_POLICY_VERSION_MINIMUM=3.5 from
+  #       the ARM build jobs, and the /F flag from all the others.
   # OpenZinc is available from http://openzinc.com/Downloads/OZ1.zip
   # But we don't want to waste the resources of the generous OpenZinc developer,
   # so we grab it from a mirror
@@ -43,7 +47,7 @@ env:
   JOM: https://download.qt.io/official_releases/jom/jom.zip
   # Download it from sourceforge distribution page
   # expected filename: https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.6/regina-rexx-3.9.6.tar.gz/download
-  REGINA_VERSION: 3.9.6
+  REGINA_VERSION: 3.9.7
   # OS/2 Developer's Toolkit v4.5 is available on David Azarewicz's 88watts.net
   # *supposedly* with permission from IBM - or so Arca Noae (which David is
   # involved with) claims on this page:
@@ -414,7 +418,7 @@ jobs:
           REM /R - release build
           REM /W - build for Windows Vista or newer (not XP)
         
-          call build.bat /M out /C /R /W current
+          call build.bat /M out /C /R /F /W current
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
@@ -436,7 +440,7 @@ jobs:
           REM /R - release build
           REM /W - build for Windows Vista or newer (not XP)
         
-          call build.bat /M out /N g /G /C /R /W current
+          call build.bat /M out /N g /G /C /R /F /W current
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP)
@@ -457,7 +461,7 @@ jobs:
           REM /R - release build
           REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)        
           
-          call build.bat /M out /N x /C /R /X current
+          call build.bat /M out /N x /C /R /F /X current
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP, GSSAPI)
@@ -479,7 +483,7 @@ jobs:
           REM /R - release build
           REM /X - build for Windows XP (removes a low impact security fix in 0.10.6, and disables thread local storage)     
           
-          call build.bat /M out /N gx /G /C /R /X current
+          call build.bat /M out /N gx /G /C /R /F /X current
         shell: cmd
 
         # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
@@ -488,7 +492,7 @@ jobs:
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
         working-directory: libssh/current/build
         run: |
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
           nmake
         shell: powershell
 
@@ -497,7 +501,7 @@ jobs:
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
         working-directory: libssh/current/build
         run: |
-          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON
+          cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
           nmake        
         shell: powershell
 
@@ -1763,3 +1767,679 @@ jobs:
           cat linux+ssl.txt
           popd
         shell: bash
+
+
+  ##############################################################################
+  # Build the Kermit 95 Manual                                                 #
+  ##############################################################################
+  # A built version of Kermit 95 with REXX support is required to do this, so
+  # we can't do it until after the Build-VisualCxx job has completed as all
+  # the x86 builds have REXX support included
+
+  # This checks to see if the commit we're building is tagged. We assume tagged
+  # commits indicate a release build of some kind, meaning we should adjust
+  # the version number shown in the generated documentation, and deploy the
+  # manual to the stable directory in the github pages artifact.
+  # *Probably* we could do this check as part of the other earlier jobs to shave
+  # 20 seconds off the overall build time.
+  Check-Build-Type:
+    runs-on: windows-latest
+    outputs:
+      commit-tag: ${{ steps.check-for-tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check if commit is tagged
+        id: check-for-tag
+        shell: bash
+        run: |
+          SHA=`git rev-parse HEAD`
+          echo "SHA: $SHA"
+          TAG=`git describe --tags --exact-match $SHA` || true
+          echo "Tag: $TAG"
+          if [[ $TAG == v* ]] ; then 
+              echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else 
+              echo "Not a release tag"
+              echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+  # This version is for publishing on the internet elsewhere. HTML files end
+  # in .html, and index.html is the front page of the manual.
+  Build-Ctlseqs-Doc:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+                   
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc, exit" || goto :failed
+          
+          goto :done
+          
+          :dev_doc          
+          %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc 1 {preliminary-ctlseqs.html}, exit" || goto :failed
+          
+          goto :done
+          
+          :done
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: |
+            ${{ github.workspace }}\doc\ctlseqs.html
+            ${{ github.workspace }}\doc\outline.html
+            ${{ github.workspace }}\doc\term-ctlseqs.html
+            ${{ github.workspace }}\doc\tt-ctlseqs.html
+            ${{ github.workspace }}\doc\todo.html
+          retention-days: 1
+
+  # This version is for publishing on the internet elsewhere. HTML files end
+  # in .html, and index.html is the front page of the manual.
+  Build-Manual-Web-Dist:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          
+          call mkdocs.bat /W
+          
+          goto :done
+          
+          :dev_doc
+          call mkdocs.bat /W /D
+          
+          :done
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-web
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # This version is for publishing on github pages. HTML files end in .html,
+  # and index.html is the front page of the manual. If the current commit is
+  # not tagged, then every page has a note at the top saying it is preliminary
+  # documentation for an unreleased version.
+  Build-Manual-Web-Pages:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs:
+      - Check-Build-Type
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+          
+          call mkdocs.bat /W
+          
+          goto :done
+          
+          :dev_doc
+          call mkdocs.bat /W /D /B=${{ github.workspace }}\doc\preliminary.html
+          
+          :done
+          
+          REM Add the control sequences documentation to the manual so it goes
+          REM into the website.
+          copy %root%\ctlseqs\*.html %root%\doc\manual\
+
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-for-github-pages
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # Deploy the Github Pages website if:
+  #   The branch is master
+  #   Or the tag starts with 'v'
+  Deploy-Website:
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Web-Pages
+      - Check-Build-Type
+    env:
+      have_stable_artifact: yes
+    # Only master or tags starting with v can currently deploy to github-pages
+    # TODO: Eventually this will also need to be enabled for a 'stable' branch
+    #  when we have one.
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/manual-publish'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare base site
+        shell: cmd
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          xcopy /E doc\web pages\
+
+          echo "Trigger: ${{ github.ref_type }}"
+          echo "Tag: %TAG%
+
+      # Because github pages doesn't support partial deployment, we've got to
+      # fetch the bits of the site we don't want to change ourselves and add
+      # them into the new pages artifact. In this case, if the current commit
+      # isn't tagged, then we don't want to update the stable documentation. To
+      # make retaining the existing stable documentation, we just stash the
+      # stable documentation artifact *in* the pages artifact.
+      - name: Get stable docs
+        if: needs.Check-Build-Type.outputs.commit-tag == ''
+        shell: bash
+        run: |
+          echo Current commit is not tagged. Fetching stable artifact from deployed site...
+          cd pages
+          
+          curl -o artifact\\stable.zip https://davidrg.github.io/ckwin/artifact/stable.zip || true
+          
+          if [ -f artifact/stable.zip ]; then
+            echo Have stable artifact from currently deployed site. Using that to retain
+            echo stable documentation in this github-pages artifact.
+            7z x artifact\\stable.zip
+          echo "have_stable_artifact=yes" >> $GITHUB_ENV
+          else
+            echo Could not obtain stable artifact from currently deployed site. This build
+            echo will be used to provide the stable documentation.
+            echo "have_stable_artifact=no" >> $GITHUB_ENV
+          fi
+
+      # If we couldn't fetch the current stable manual from the live github
+      # pages site, then try and fetch the manual artifact from the latest
+      # release instead.
+      # (this is probably something we could just do always
+      - name: Fetch Latest Release Manual
+        uses: robinraju/release-downloader@v1
+        if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
+        with:
+          latest: true
+          fileName: 'k95-manual-web.zip'
+
+      - name: Process Latest Release Manual
+        shell: bash
+        if: needs.Check-Build-Type.outputs.commit-tag == '' && env.have_stable_artifact == 'no'
+        run: |
+          if [ -f k95-manual-web.zip ]; then
+            echo Have manual from latest release. This will be used to provide
+            echo stable documentation in this github-pages artifact.
+            mkdir pages/current
+            cd pages/current
+            7z x ..\\..\\k95-manual-web.zip
+            cd .. 
+            7z a -tzip artifact\\stable.zip current
+          echo "have_stable_artifact=yes" >> $GITHUB_ENV
+          else
+            echo Could not obtain manual artifact from latest release. This build
+            echo will be used to provide the stable documentation.
+            echo "have_stable_artifact=no" >> $GITHUB_ENV
+          fi          
+
+      - name: Fetch Manual as Stable Manual
+        uses: actions/download-artifact@v4
+        if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
+        with:
+          name: k95-manual-web
+          path: ${{ github.workspace }}\pages\current\
+
+      - name: Use current build as stable docs
+        if: needs.Check-Build-Type.outputs.commit-tag != '' || env.have_stable_artifact == 'no'
+        shell: cmd
+        run: |
+          echo Current commit is tagged (or currently deployed site has no stable artifact).
+          echo Stable artifact will come from this build. 
+          cd pages
+          7z a -tzip artifact\stable.zip current
+
+      - name: Fetch Manual as Dev Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-for-github-pages
+          path: ${{ github.workspace }}\pages\dev\
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './pages'
+
+# TODO: This doesn't currently work properly.
+# If the commit is built before the tag, the deploy won't happen.
+# See:  https://github.com/actions/deploy-pages/issues/383
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # This is the normal version for distribution with the application. HTML
+  # files end in .htm, index.htm is the front page of the K95 documentation,
+  # and k95manual.htm is the front page of the manual
+  Build-Manual-Dist:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+          
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+
+          call mkdocs.bat
+
+          goto :done
+
+          :dev_doc
+          call mkdocs.bat /D
+
+          :done
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+  # This is a version for distribution with Kermit 95 for vintage PCs. It's the
+  # same as the normal version above, but doesn't use https:// links. Files
+  # end in .htm, index.htm is the front page of the K95 documentation, and
+  # k95manual.htm is the front page of the manual
+  Build-Manual-Dist-Vintage:
+    runs-on: windows-latest
+    # We need at least one artifact from the Build-VisualCxx step but Github
+    needs:
+      - Check-Build-Type
+      - Build-VisualCxx
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch K95
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x86
+          path: ${{ github.workspace }}\dist
+      - name: Prepare Documentation
+        env:
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+        run: |
+          set root=${{ github.workspace }}
+                    
+          REM No tag? not release build
+          if "%TAG%" == "" goto :dev_doc
+
+          call mkdocs.bat /I
+
+          goto :done
+
+          :dev_doc
+          call mkdocs.bat /D /I
+
+          :done
+        shell: cmd
+        working-directory: ${{ github.workspace }}\doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\dist\docs\manual
+          retention-days: 1
+
+
+
+  ##############################################################################
+  # Generate final "releasable" artifacts                                      #
+  ##############################################################################
+  # This produces releasable artifacts containing the manual and anything
+  # else that isn't generated as part of the normal build.
+  #
+  # At this time this is limited to the manual. *IF* OpenWatcom supported
+  # ctl3d32 then we'd also insert the OpenWatcom-built dialer here too.
+  #
+  # For x86, x86-64 and arm32 we use the Visual C++ 14.2-built artifacts
+  # as this is newest we can get away with for Windows XP and Windows RT.
+  #
+  # For ARM64 we use the latest compiler (Visual C++ 14.4)
+  #
+  # For IA64 we use the Visual C++ 2010 version (Visual C++ 10.0)
+  #
+  # The results are all k95-${arch}.zip
+  #
+
+  Update-x86-Artifact:
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - name: Fetch K95 x86
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x86
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86
+          path: ${{ github.workspace }}\k95
+          retention-days: 1
+
+  Update-x86-64-Artifact:
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - name: Fetch K95 x86-64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86-64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-arm32-Artifact:
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - name: Fetch K95 arm32
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x64_arm
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-arm32
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-arm64-Artifact:
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - name: Fetch K95 arm32
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2022-x64_arm64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-arm64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-ia64-Artifact:
+    runs-on: windows-latest
+    needs: [Build-Manual-Dist, Build-VS2010-PSDK71, Build-Ctlseqs-Doc]
+    steps:
+      - name: Fetch K95 ia64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2010-ia64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-ia64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
+
+  Update-os2-Artifact:
+    runs-on: windows-latest
+    needs: [Build-Manual-Dist-Vintage, Build-Open-Watcom]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load Build Tools
+        uses: "./.github/actions/load-tools"
+        with:
+          nocache: ${{vars.NOCACHE}}
+      - name: Fetch K95 os2 full
+        uses: actions/download-artifact@v4
+        with:
+          name: k2-full-install
+          path: ${{ github.workspace }}\k2-full
+      - name: Fetch K95 os2 mini
+        uses: actions/download-artifact@v4
+        with:
+          name: k2-mini-install
+          path: ${{ github.workspace }}\k2-mini
+      - name: Decompress artifacts
+        run: |         
+          cd ${{ github.workspace }}\k2-full
+          ${{ github.workspace }}\info-zip\unzip k2pack.exe
+          del k2pack.exe
+          cd ${{ github.workspace }}\k2-mini
+          ${{ github.workspace }}\info-zip\unzip k2pack.exe
+          del k2pack.exe
+        shell: cmd
+      - name: Fetch Manual - Mini
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\k2-mini\docs\manual
+      - name: Fetch Manual - Full
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist-vintage
+          path: ${{ github.workspace }}\k2-full\docs\manual
+      - name: Compress artifacts
+        run: |
+          echo :: Create Directories
+          mkdir ${{ github.workspace }}\dist-mini
+          mkdir ${{ github.workspace }}\dist-full
+          
+          echo :: Repack K2-FULL
+          cd ${{ github.workspace }}\k2-full
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          
+          echo :: Repack K2-MINI
+          cd ${{ github.workspace }}\k2-mini
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
+          
+          echo :: Prepare DIST-MINI
+          cd ${{ github.workspace }}\dist-mini
+          copy ${{ github.workspace }}\k2-mini\setup.exe
+          copy ${{ github.workspace }}\k2-mini\K2PACK.exe
+          
+          echo :: Prepare DIST-FULL
+          cd ${{ github.workspace }}\dist-full
+          copy ${{ github.workspace }}\k2-full\setup.exe
+          copy ${{ github.workspace }}\k2-full\K2PACK.exe
+        shell: cmd
+
+      - name: Delete old full artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: k2-full-install
+
+      - name: Delete old mini artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: k2-mini-install
+
+      - name: Upload Full Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k2-full-install
+          path: ${{github.workspace}}/dist-full
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Minimal Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k2-mini-install
+          path: ${{github.workspace}}/dist-mini
+          if-no-files-found: error
+          retention-days: 7
+
+
+# TODO: If the commit is tagged v... it would be nice to automatically
+#   create a draft release and attach those artifacts that don't
+#   need updating with things not built by GHA. At the moment, that
+#   is probably just: IA64, ARM32 and ARM64. These three architectures
+#   don't receive the dialer or anything else that needs to be built
+#   offline with Visual C++ 6.0 or older.

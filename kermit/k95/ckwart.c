@@ -1,8 +1,8 @@
 #define CKWART_C
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ckcdeb.h"
 #include "ckcsym.h"
 #include "ckcasc.h"
@@ -54,6 +54,8 @@ char *wartv = "Wart Version 2.17, 04 February 2024 ";
  *  %%
  *  more lines to be copied
  */
+
+#include "ckcdeb.h"			/* Includes */
 
 #ifdef STRATUS
 /* Actually call printf, not our printf-catcher for Kermit */

@@ -3,7 +3,262 @@ This document covers what has changed in each release of Kermit 95 since its
 first open-source release in 2022.  For a more in-depth look at what has 
 changed, check the git commit log.
 
-## Kermit 95 v3.0 beta 7 - TBD
+Because it's been over 20 years since the last stable release of K95, changes
+for the Kermit 95 v3.0 beta releases (which are already more usable than the
+last stable release) are temporarily included here, with the full v3.0 change 
+log living in the [Whats New in 3.0](whats-new.md) document. When the final 
+release of v3.0 eventually happens, the details about the various v3.0 
+eventually be moved elsewhere, with the full v3.0 change log taking their place.
+
+## Kermit 95 v3.0 beta 8 - Date TBD, likely late 2025
+
+This release comes with *significant* changes to the way Kermit 95 handles
+color. While every effort has been made to ensure there are no unexpected
+behaviour changes to applications and terminal emulations not using more than
+16 colours, these are big changes so its not impossible something may have been
+missed. If you notice any unexpected color changes from beta 7 in applications 
+and terminal emulations that *do not* use the new 256-color/24-bit color modes,
+*please log a bug* so it can be fixed!
+
+### A New Terminal Type: K95
+This release of Kermit 95 includes a new "K95" terminal type which aims for
+compatibility with modern terminal software expecting something
+"xterm-compatible". It provides many more features and a more compatible default
+keymap than the previously recommended "linux" terminal type.
+
+It is, at the time of writing, *generally* compatible with xterms
+"xterm-256color" terminfo description, but there is always the possibility that 
+xterm (and its terminfo description) will change in some incompatible way in the
+future, and Kermit 95 does a few things differently from xterm. So for the best
+results and fewest compatibility issues rather than just claiming to be xterm 
+like some other terminals, Kermit 95 includes its own terminfo description.
+
+For the time being, this terminfo entry must be manually installed on any hosts
+you connect to. This can be easily done by just running `take terminfo.ksc` from
+the K95 command screen if you've got both `kermit` and `tic` on the remote host.
+Otherwise, you can transfer `k95.src` (included with the K95 distribution) to 
+the remote host and run `tic -x k95.src` to install it.
+
+This will likely become the default terminal type in some future release of
+Kermit 95. But as the required terminfo description isn't distributed except 
+as part of K95 at this time, the default terminal remains VT220 for now.
+
+### New Features
+ - Support for multiple color palettes of up to 256 colors, switchable at runtime
+   with the new `SET TERM COLOR PALETTE` command. _Display_ of more than 16 colors
+   is limited to the Windows GUI version of K95, with the Windows and OS/2 Console
+   versions picking the nearest color from the 16-color palette for display
+   - Included palettes are: 
+     - xterm 256-colors (the new default palette)
+     - xterm 88-colors
+     - aixterm 16-colors (the palette used by prior Kermit 95 releases)
+   - Screen colors can be set to values from the larger palette with the
+     `SET TERMINAL COLOR` command by using the new INDEX keyword followed by
+     color number. For example: `SET TERM COLOR TERM INDEX 15 black` would set the
+     foreground to color 15 in the current palette, and the background to black.
+   - You can change colors in the larger palette with 
+     `SET GUI RGBCOLOR INDEX <colornumber>`
+   - You can show the full color palette with `SHOW GUI /PALETTE`
+   - You can find out the currently set color palette with either the `SHOW TERMINAL`
+     command, or the new `\v(color_palette)` variable.
+   - You can still select the 88-color or 256-color palette in console versions
+     of K95, but this is only for compatibility purposes. On display, the nearest
+     color in the 16-color palette will be used instead.
+ - Support for full 24-bit color is now available in GUI versions of Kermit 95 
+   for Windows XP SP3 or newer. This is enabled by picking the `xterm-rgb`
+   (256-colors + RGB) color palette, and disabled by picking any other color palette.
+   - 24-bit color *can* be supported on older Windows releases, but is disabled
+     for now to reduce memory requirements. If there is demand, 24-bit color 
+     versions for vintage windows can be provided in the future.
+   - Screen colors can be set to any 24-bit RGB color with the `SET TERMINAL COLOR`
+     command by using the new RGB keyword, for example: `SET TERM COLOR TERM RGB 255 110 00 black`
+     would set the foreground to an amber color, and the background to black.
+   - If 24-bit color is enabled, the telnet client will try to set the 
+     `COLORTERM=truecolor` environment variable if it can and if this behavior 
+     is not turned off with `SET TELNET SEND-COLORTERM OFF`. The COLORTERM
+     environment variable is used by some applications rather than relying on
+     potentially out-of-date terminfo/termcap entries to detect 24-bit color
+     support.
+   - The SSH client will also try to set the `COLORTERM=truecolor` environment
+     variable if it can, but this will only work if the SSH server has been 
+     configured to accept the COLORTERM environment variable; to make it work, 
+     it will likely have to be added to the `AcceptEnv` list in 
+     `/etc/ssh/sshd_config` on the server.
+ - New screen elements can be given color via `SET TERMINAL COLOR`
+   - Blinking text (if the blink attribute is disabled with the new 
+     `SET TERMINAL ATTRIBUTE BLINK OFF COLOR` command)
+   - Bold text (if the bold attribute is disabled with the new
+     `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` command)
+   - The text cursor
+   - Dim text (if the dim attribute is disabled with the new
+     `SET TERMINAL ATTRIBUTE DIM OFF COLOR` command)
+ - New "k95" terminal type with its own terminfo description. This aims to be 
+   generally compatible with modern xterm-like terminal emulators, rather than 
+   emulating a specific hardware or unix console terminal.
+ - Two new special keyboard modes
+   - `META` - This is a subset of the `EMACS` keyboard mode which does not
+     modify any function keys.
+   - `XTERM-META` - This sets the 8th bit for keyboard input, equivalent to 
+     xterms "interpret 'meta' key" option.
+ - Clipboard access for the remote host is now supported via OSC-52. This can be
+   enabled or disabled for read, write or both with 
+   `SET TERMINAL CLIPBOARD-ACCESS`. You can optionally choose to be notified
+   when the remote host attempts to access your clipboard. For security, the
+   default is disabled with a notification.
+ - Support for xterm focus tracking (mode 1004)
+ - Support for DEC Private mode 8 (DECARM): keyboard autorepeat. This was the
+   last VT10x escape sequence K95 could reasonably support. The only ones
+   left unimplemented are the interlaced video mode, and the confidence tests
+   neither of which can be reasonably supported by an emulator.
+
+### Enhancements
+ - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
+   has been _heavily_ revised. The whole document was converted from HTML to
+   a more bespoke format from which various HTML documents are now generated
+   allowing for more consistent styling and easier maintenance. The
+   new documentation now includes, where possible, references to terminal 
+   documentation for the various control sequences K95 implements (or doesn't).
+ - The way terminal operating system commands are parsed has been rewritten to 
+   be more flexible and to make adding support for new operating system commands
+   easier.
+ - True bold can now be turned off in K95G with the new command 
+   `SET TERMINAL ATTRIBUTE BOLD OFF`. When off, it still affects text
+   color unless its turned off with `SET TERMINAL ATTRIBUTE BOLD OFF COLOR` in
+   which case the color set with `SET TERMINAL COLOR BOLD` is used.
+ - True bold can now be turned on such that it only affects the font and not
+   the texts color with `SET TERMINAL ATTRIBUTE BOLD ON FONT-ONLY` (this is of
+   course incompatible with applications that use the bold attribute to access
+   the upper eight colors)
+ - True dim is now turned off in K95G when `SET TERMINAL ATTRIBUTE DIM OFF` is
+   given. Like with bold, it still affects color unless turned off with
+   `SET TERMINAL ATTRIBUTE DIM OFF COLOR` in which case the color set with 
+   `SET TERMINAL COLOR DIM` is used.
+ - Added a new `IF REXX` test for checking if REXX support is available
+ - Negative screen coordinates are now supported on the command line 
+   (`--xpos`, `--ypos`) and in the `SET GUI WINDOW POSITION` command. Negative
+   coordinates may be required in multi-monitor setups to place the window on
+   a display to the left of or above of the primary display.
+ 
+### Bug fixes
+ - Fixed an inssue introduced in beta 7 which could cause SSH connections made
+   via the dialer to cause K95 to crash
+ - Fixed a typo on the `help screen` output (was SCRSTR, should be SCRNSTR)
+
+### New terminal control sequences
+> [!NOTE]
+> Until Kermit 95 gets a VT525 terminal type option, control sequences marked
+> as requiring a VT525 are temporarily available under the existing VT320 
+> terminal type instead.
+
+ - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-ic) and 
+   [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-ic) are 
+   now supported for setting colors by number using both the standard 
+   parameter-element (colon) syntax, and the old but still widely used 
+   non-standard xterm (semicolon) syntax.
+ - [SGR-38](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-38-rgb) and 
+   [SGR-48](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-48-rgb) are 
+   now supported for setting direct 24-bit RGB colors using both the standard 
+   parameter-element (colon) syntax, and the old but still widely used 
+   non-standard xterm (semicolon) syntax. If 24-bit RGB color is not enabled or 
+   not available (eg, in the console version of K95), the nearest color in the 
+   current palette is used instead (in console versions, this is always the 
+   16-color palette).
+ - [DECSCUSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decscusr) can now
+   control cursor blinking
+ - [DECRQSS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss) is now
+   implemented for the following (VT320+ terminal type):
+   - [SGR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-sgr)
+   - [DECSCA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsca)
+   - [DECSCL](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscl)
+   - [DECSCUSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscusr)
+   - [DECSTBM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decstbm)
+   - [DECSLPP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decslpp)
+   - [DECSCPP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decscpp)
+   - [DECSASD](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsasd)
+   - [DECSSDT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decssdt)
+   - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decstglt) (VT525 terminal type)
+   - [DECSACE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decsace)
+   - [DECAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decac) (VT525 terminal type)
+   - [DECATC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqss-decatc) (VT525 terminal type)
+ - The linux console terminal emulation has been brought up to date with:
+    - Support for [SCOSC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#scosc)
+    - Support for [SCORC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#scorc)
+    - [SGR-21](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-21-ul) is now underline
+    - Three parameters for the [linux display settings](https://davidrg.github.io/ckwin/dev/ctlseqs.html#linux-disp)
+      control sequence are now supported (linux terminal type only):
+        - Ps = 1 - set underline color
+        - Ps = 2 - set dim color
+        - Ps = 3 - set current color pair as the default attribute
+    - [OSC-R: Reset palette (linux)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-R) (linux terminal type only)
+    - [OSC-P: Set palette (linux)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-P) (linux terminal type only)
+    - SGR-38/48
+ - Various xterm Operating System Commands are now supported:
+   - [OSC-2: Set Window Title](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-wt)
+   - [OSC-l: Set Window Title](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-l)
+   - [OSC-4: Change Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-4)
+     (both RGB values and X11 color names accepted)
+   - [OSC-104: Reset Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-104)
+   - [OSC-5: Change Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-5)
+   - [OSC-105: Reset Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-105)
+   - [OSC-6: Enable/Disable Special (attribute) Color Number](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-6) (including colorAttrMode)
+   - [OSC-10: Change text foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-10)
+   - [OSC-110: Reset text foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-110)
+   - [OSC-11: Change text background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-11)
+   - [OSC-111: Reset text background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-111)
+   - [OSC-12: Change text cursor color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-12)
+   - [OSC-112: Reset text cursor color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-112)
+   - [OSC-17: Change text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-17)
+   - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
+   - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
+   - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
+   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52)
+ - A few VT525 control sequences _based on documented behaviour_; there may be
+   differences from the real thing (donations of a VT525 accepted!):
+   - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
+     all three modes are supported (mono, alternate color, SGR color) (VT525 terminal type only)
+   - [DECATC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatc) 
+     for setting DECSTGLT alternate color mode colors (VT525 terminal type only)
+   - [DECAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decac) 
+     for setting the text foreground and background color only (VT525 terminal type only)
+   - [DECATCBM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcbm) 
+     enables or disables true blink in DECSTGLT alternate color mode
+   - [DECATCUM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decatcum) 
+     enables or disables true underline in DECSTGLT alternate color mode
+ - [CHA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#cha) is now marked as
+   available for VT520 (and so, temporarily, VT320)
+ - [DECSET-1034](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-interpret-meta)
+   now switches to the XTERM-META special keyboard mode, and returns to the normal
+   keyboard mode when reset. It can be queried with DECRQM
+ - [DECSET-1036](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-send-esc-meta)
+   now switches to the META special keyboard mode, and returns to the normal
+   keyboard mode when reset. It can be queried with DECRQM
+ - [DECSET-12](https://davidrg.github.io/ckwin/dev/ctlseqs.html#att610-sbc) for
+   turning cursor blink on/off for xterm compatibility
+ - Enable [LMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#lma)
+   and [UMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#usr) for K95 and
+   xterm terminal types
+ - DECSM/DECRM/DECRQM modes
+   - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
+   - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
+   - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
+   - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
+ - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
+
+### Fixed Bugs
+ - Fixed a potential memory leak in the status line display. Cov-462304.
+ - Fix control flow issue which could cause a DECRQM to do both the DECRQM
+   and a Delete lines. Cov-462454.
+ - Fix potential memory leak if SSH key generation fails. Cov-462508, Cov-462436
+ - Fix potential memory leak on ssh connect if existing connection fails to close. Cov-462163.
+ - Fix Ctrl+C during an autodownload causing a crash
+ - Fixed VT emulations not rendering SUB. When the VT100 and up receive a SUB
+   character they render it as a shaded block for the VT1xx, and a backwards
+   question-mark for the VT220 and up, as well as canceling any escape sequence.
+   K95 will now do the same, using unicode character 0x2426 for VT220 and up.
+   Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
+   (K95 bug 815).
+
+## Kermit 95 v3.0 beta 7 - 27 January 2025
 
 As of Beta 7, C-Kermit for Windows has been renamed back to Kermit 95, the name
 it carried from 1995 through to 2013.
@@ -100,6 +355,9 @@ by OpenSSH on modern versions of windows, add the command
   so via command line arguments rather than the new `set gui` commands so they
   can't be turned back on with the new `set gui` commands.
 * Added support xterms Bracketed Paste feature
+* Most of the users guide has been revised for this release and is now included
+  as part of the release. The _Kermit Security Reference_ and sections dealing
+  with installing and uninstalling kermit 95 are still waiting to be overhauled.
 
 ### Minor Enhancements and other changes
 * All executables (*.exe, *.dll) now have proper versioninfo resources
@@ -683,11 +941,14 @@ Kermit 95 v2.2 was never publicly released, but
 [this file](https://www.kermitproject.org/k95-fixes-since-213.txt) documents 
 what's new since Kermit 95 v2.1.3.
 
-Not every change for K95 v2.2 has made it in to C-Kermit for Windows due to the 
+Not every change for K95 v2.2 has made it in to Kermit 95 v3.0 due to the 
 removal of some components that could not be open-sourced. In particular,
-changes for the Dialer in K95 v2.2 do not apply as the CKW dialer is based on
-K95 v2.1.3, and changes for the SSH subsystem don't apply to CKW as CKW uses an
-entirely new SSH implementation.
+changes for the Dialer in K95 v2.2 do not apply as the K95 3.0 dialer is based on
+K95 v2.1.2, and changes for the SSH subsystem don't apply to K95 3.0 as v3.0 uses an
+entirely new SSH implementation. In particular, the following entries from the K95 2.2
+change log should be disregarded:
+ * *Not implemented*: the dialer's QUICK command now supports connections based on
+   templates and includes a SaveAs operation (a poor man's clone)
 
 ## Previous Kermit 95 releases
 Change logs going back to the release of the first version in October 1995 (1.1)

@@ -12,6 +12,9 @@ extern "C" {
 #include "ikui.h"
 }
 
+
+
+
 // there is only one K_GLOBAL shared by all objects.
 // this is used so that C functions (mostly wndprocs) have access to
 // the KWin class pointers
@@ -53,6 +56,8 @@ int KuiInit( void* hInstance, struct _kui_init * kui_init )
     //int numadded = AddFontResource( outfile );
 
     //DeleteFile( filename );
+
+
 
     // intialize K_GLOBAL
     //
@@ -229,6 +234,35 @@ KuiSetTerminalRunMode(int x)
     }
 }
 
+int KuiGetTerminalRunMode() {
+    long ret = GetWindowLong(kui->getTerminal()->hwnd(), GWL_STYLE);
+
+    if (ret & WS_MINIMIZE) return 2;
+    return 1;
+}
+
+int widthToChars(int width) {
+    return width / kui->getTerminal()->getKFont()->getFontW();
+}
+
+int heightToChars(int height) {
+    return height / kui->getTerminal()->getKFont()->getFontSpacedH();
+}
+
+void KuiGetTerminalMaximisedSize(BOOL inChars, int* width, int* height) {
+    RECT rec;
+    BOOL r = SystemParametersInfo(
+            SPI_GETWORKAREA,0, &rec, 0);
+
+    *width = rec.right - rec.left;
+    *height = rec.bottom - rec.top;
+
+    if (inChars) {
+        *width = widthToChars(*width);
+        *height = heightToChars(*height);
+    }
+}
+
 int
 KuiFileDialog(char * title, char * def, char * result, int rlen,
                   BOOL downloadButton, BOOL openFile)
@@ -272,8 +306,17 @@ void KuiSetProperty( int propid, intptr_t param1, intptr_t param2 )
 
 /*------------------------------------------------------------------------
 ------------------------------------------------------------------------*/
-void KuiGetProperty( int propid, intptr_t param1, intptr_t param2 )
+int KuiGetProperty( int propid, void* out )
 {
     if( kui )
-        kui->getProperty( propid, param1, param2 );
+        return kui->getProperty( propid, out );
+    return 0;
 }
+
+/*------------------------------------------------------------------------
+------------------------------------------------------------------------*/
+#ifdef CK_SHELL_NOTIFY
+void KuiShowNotification(int icon, char* title, char * message) {
+    kui->getTerminal()->showNotification(icon, title, message);
+}
+#endif /* CK_SHELL_NOTIFY */

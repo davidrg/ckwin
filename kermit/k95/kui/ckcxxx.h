@@ -302,12 +302,14 @@ extern int u_binary;            /* My partner is in telnet binary mode */
 
 extern struct tt_info_rec tt_info[];    /* Terminal-type-specific info */
 
-extern unsigned char colornormal;       /* SET TERM COLOR TERM */
-extern unsigned char colorselect;       /* SET TERM COLOR SELECTION */
-extern unsigned char colorunderline;    /* SET TERM COLOR UNDERLINE */
-extern unsigned char colorstatus;       /* SET TERM COLOR STATUS-LINE (N/A?) */
-extern unsigned char colorhelp;         /* SET TERM COLOR HELP */
-extern unsigned char colorborder;       /* SET TERM COLOR BORDER (N/A) */
+extern cell_video_attr_t colornormal;       /* SET TERM COLOR TERM */
+extern cell_video_attr_t colorselect;       /* SET TERM COLOR SELECTION */
+extern cell_video_attr_t colorunderline;    /* SET TERM COLOR UNDERLINE */
+extern cell_video_attr_t colorstatus;       /* SET TERM COLOR STATUS-LINE (N/A?) */
+extern cell_video_attr_t colorhelp;         /* SET TERM COLOR HELP */
+extern cell_video_attr_t colorborder;       /* SET TERM COLOR BORDER (N/A) */
+extern cell_video_attr_t colorblink;        /* SET TERM COLOR BLINK */
+extern cell_video_attr_t colorbold;         /* SET TERM COLOR BOLD */
 
 #ifdef OS2
 extern int tt_rows[];           /* Terminal rows = SET TERM HEIGHT */

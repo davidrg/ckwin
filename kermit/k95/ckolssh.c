@@ -64,6 +64,8 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 #include "ckoreg.h"
 #endif
 
+unsigned char* get_display(void);
+
 #ifdef SSH_AGENT_SUPPORT
 /*
  * SSH Agent support currently relies on AF_UNIX support (introduced in
@@ -547,6 +549,12 @@ static const char **ssh_idf = NULL;                    /* Identity files */
  */
 static ssh_port_forward_t *port_forwards = NULL;
 
+/*
+ * Environment variables settable with ssh_set_environment_variable
+ */
+char * ssh_environment_variables[MAX_ENVIRONMENT_VARIABLES][2] =
+    {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+
 /* Local variables */
 ssh_client_t *ssh_client = NULL;  /* Interface to the ssh subsystem */
 HANDLE hSSHClientThread = NULL;   /* SSH subsystem thread */
@@ -732,6 +740,8 @@ static ssh_agent_delete_file_dllfunc        dllfunc_ssh_agent_delete_file;
 static ssh_agent_delete_all_dllfunc         dllfunc_ssh_agent_delete_all;
 static ssh_agent_add_file_dllfunc           dllfunc_ssh_agent_add_file;
 static ssh_agent_list_identities_dllfunc    dllfunc_ssh_agent_list_identities;
+static ssh_set_environment_variable_dllfunc dllfunc_ssh_set_environment_variable;
+static ssh_clear_environment_variables_dllfunc dllfunc_ssh_clear_environment_variables;
 static ssh_unload_dllfunc                   dllfunc_ssh_unload;
 static ssh_dll_ver_dllfunc                  dllfunc_ssh_dll_ver;
 static ssh_get_keytab_dllfunc               dllfunc_ssh_get_keytab;
@@ -893,6 +903,14 @@ static int CKSSHAPI dllfunc_ssh_agent_list_identities(int do_fp) {
     return ssh_agent_list_identities(do_fp);
 }
 
+static int CKSSHAPI dllfunc_ssh_set_environment_variable(const char * name, const char * value) {
+    return ssh_set_environment_variable(name, value);
+}
+
+static int CKSSHAPI dllfunc_ssh_clear_environment_variables(void) {
+    return ssh_clear_environment_variables();
+}
+
 static void CKSSHAPI dllfunc_ssh_unload(void) {
     ssh_unload();
 }
@@ -961,6 +979,8 @@ static const char ** CKSSHAPI dllfunc_ssh_get_help(void) {
 #define dllfunc_ssh_agent_delete_all        ssh_agent_delete_all
 #define dllfunc_ssh_agent_add_file          ssh_agent_add_file
 #define dllfunc_ssh_agent_list_identities   ssh_agent_list_identities
+#define dllfunc_ssh_set_environment_variable ssh_set_environment_variable
+#define dllfunc_ssh_clear_environment_variables ssh_clear_environment_variables
 #define dllfunc_ssh_unload                  ssh_unload
 #define dllfunc_ssh_dll_ver                 ssh_dll_ver
 #define dllfunc_ssh_get_keytab              ssh_get_keytab
@@ -1151,6 +1171,8 @@ int CKSSHDLLENTRY ssh_dll_init(ssh_dll_init_data *init) {
     init->callbackp_install_dllfunc("ssh_agent_delete_all", dllfunc_ssh_agent_delete_all); /* TODO */
     init->callbackp_install_dllfunc("ssh_agent_add_file", dllfunc_ssh_agent_add_file); /* TODO */
     init->callbackp_install_dllfunc("ssh_agent_list_identities", dllfunc_ssh_agent_list_identities); /* TODO */
+    init->callbackp_install_dllfunc("ssh_set_environment_variable", dllfunc_ssh_set_environment_variable);
+    init->callbackp_install_dllfunc("ssh_clear_environment_variables", dllfunc_ssh_clear_environment_variables);
 #ifdef COMMENT
     /* Not supported */
     init->callbackp_install_dllfunc("ssh_unload", dllfunc_ssh_unload);
@@ -1651,6 +1673,7 @@ int ssh_open(void) {
             if (rc != SSH_ERR_NO_ERROR) {
                 /* Failed to close the existing connection. Can't start a new one.*/
                 if (socket != INVALID_SOCKET) closesocket(socket);
+                if (user) free(user);
                 return rc;
             }
         } else {
@@ -1773,7 +1796,8 @@ int ssh_open(void) {
             ssh_idf,        /* Identity files */
             socket,         /* Existing socket to use */
             ssh_sal,        /* SSH Agent Location */
-            ssh_afw         /* Enable Agent forwarding? */
+            ssh_afw,        /* Enable Agent forwarding? */
+            ssh_environment_variables
             );
 
     if (user) free(user);
@@ -2710,6 +2734,8 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     rc = ssh_pki_generate(ktype, bits, &key);
     if (rc != SSH_OK) {
         printf("Failed to generate private key\n");
+        free(passphrase);
+        free(output_filename);
         return SSH_ERR_UNSPECIFIED;
     }
 
@@ -3152,6 +3178,71 @@ int ssh_agent_list_identities(int do_fp) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }
 
+int ssh_set_environment_variable(const char * name, const char * value) {
+    int first_free_slot = -1;
+
+    if (value == NULL) {
+        debug(F110, "SSH set environment variable", name, 0);
+    } else {
+        debug(F110, "SSH set environment variable", name, 0);
+        debug(F110, "SSH set environment variable", value, 0);
+    }
+
+
+    /* Attempt to remove the named variable if it exists */
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        /* Make a note that this slot is available in case we need to
+         * add this as a new entry rather than updating an existing one */
+        if (ssh_environment_variables[i][0] == NULL && first_free_slot == -1) {
+            first_free_slot = i;
+        }
+
+        if (ssh_environment_variables[i][0] != NULL) {
+            if (strcmp(name, ssh_environment_variables[i][0]) == 0) {
+                /* Found it! */
+
+                /* Free the old value */
+                free(ssh_environment_variables[i][1]);
+                ssh_environment_variables[i][1] = NULL;
+
+                if (value == NULL) {
+                    /* And free the entry altogether - we were given no value,
+                     * so we're removing, rather than setting, the variable */
+                    free(ssh_environment_variables[i][0]);
+                    ssh_environment_variables[i][0] = NULL;
+                    debug(F111, "SSH environment variable removed", "i", i);
+                } else {
+                    debug(F111, "SSH environemnt variable set", "i", i);
+                    ssh_environment_variables[i][1] = strdup(value);
+                }
+                return SSH_ERR_OK;
+            }
+        }
+    }
+
+    if (first_free_slot >= 0 && value != NULL) {
+        ssh_environment_variables[first_free_slot][0] = strdup(name);
+        ssh_environment_variables[first_free_slot][1] = strdup(value);
+        return SSH_ERR_OK;
+    }
+
+    return SSH_ERR_TOO_MANY_VARIABLES;
+}
+
+int ssh_clear_environment_variables(void) {
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        if (ssh_environment_variables[i][0] != NULL) {
+            free(ssh_environment_variables[i][0]);
+            ssh_environment_variables[i][0] = NULL;
+        }
+        if (ssh_environment_variables[i][1] != NULL) {
+            free(ssh_environment_variables[i][1]);
+            ssh_environment_variables[i][1] = NULL;
+        }
+    }
+    return SSH_ERR_OK;
+}
+
 ktab_ret ssh_get_keytab(int keytab_id) {
     ktab_ret ret;
     ret.rc = 0;
@@ -3190,6 +3281,7 @@ ktab_ret ssh_get_keytab(int keytab_id) {
         }
 #endif /* SSH_V1 */
         default: {
+            ret.ktab = NULL;
             ret.rc = -1;
         }
     }

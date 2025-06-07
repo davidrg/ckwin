@@ -77,7 +77,7 @@ extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute, colorstatus;
+extern cell_video_attr_t colorstatus;
 extern char * udkfkeys[];
 extern int tt_senddata ;
 extern int tt_hidattr;
@@ -582,6 +582,7 @@ wysecharattr( int ch )
     a.unerasable = attrib.unerasable ;  /* Erasable */
     a.graphic = FALSE ;                 /* Not graphic character */
     a.wyseattr = FALSE ;                /* WYSE attribute */
+    a.italic = FALSE;                   /* No Italic */
 
     debug(F111,"Wyse","Character Attribute",ch);
 
@@ -1911,7 +1912,7 @@ wyseascii( int ch )
                 if ( debses )
                     break;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollRt(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1, wherey[VTERM] - 1,
                                VscrnGetWidth(VTERM) - 1, 1, blankvcell);
@@ -2030,9 +2031,12 @@ wyseascii( int ch )
             case 'V':
                 if ( ISWY60(tt_type_mode) ) {
                     /* Clear cursor column - wy60 */
-                    viocell cell = {SP,geterasecolor(VTERM)};
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                     vtattrib vta = attrib;
+                    viocell cell;
+
+                    cell.c = SP;
+                    cell.video_attr = geterasecolor(VTERM);
 
                     debug(F110,"Wyse Escape","Clear cursor column",0);
                     if ( debses )
@@ -2047,8 +2051,11 @@ wyseascii( int ch )
                 else {
                     /* Sets a protected column */
                     int ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                    viocell cell = {SP,geterasecolor(VTERM)};
                     vtattrib vta ;
+                    viocell cell;
+
+                    cell.c = SP;
+                    cell.video_attr = geterasecolor(VTERM);
 
                     debug(F110,"Wyse Escape","Sets a protected column",0);
                     if ( debses )
@@ -2075,7 +2082,7 @@ wyseascii( int ch )
                                           wherex[VTERM]-1,
                                           wherey[VTERM]-1 ) ;
                 blankvcell.c = SP;
-                blankvcell.a = geterasecolor(VTERM);
+                blankvcell.video_attr = geterasecolor(VTERM);
                 VscrnScrollLf(VTERM, wherey[VTERM] - 1,
                                wherex[VTERM] - 1,
                                wherey[VTERM] - 1,
@@ -3414,7 +3421,7 @@ wyseascii( int ch )
                         if ( debses )
                             break;
                         blankvcell.c = SP ;
-                        blankvcell.a = geterasecolor(VTERM) ;
+                        blankvcell.video_attr = geterasecolor(VTERM) ;
                         VscrnScrollRt( VTERM,
                                        0, wherex[VTERM]-1,
                                        VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
@@ -3447,7 +3454,7 @@ wyseascii( int ch )
                         if ( debses )
                             break;
                         blankvcell.c = SP ;
-                        blankvcell.a = geterasecolor(VTERM) ;
+                        blankvcell.video_attr = geterasecolor(VTERM) ;
                         VscrnScrollRt( VTERM,
                                        0, wherex[VTERM]-1,
                                        VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
