@@ -1075,15 +1075,11 @@ DECTSR		462
             by which of the following popular terminals:
         </p>
         <dl>
-            <dt>DEC VT100</dt>
+            <dt>DEC VT100, VT102</dt>
             <dd>
                 Emulation is complete except for: VT100 confidence tests, and the
-                interlaced video and keyboard autorepeat settings.
-            </dd>
-            <dt>DEC VT102</dt>
-            <dd>
-                Emulation is complete except for: VT100 confidence tests, and the
-                interlaced video and keyboard autorepeat settings.
+                interlaced video setting neither of which are applicable to a
+                terminal emulator.
             </dd>
             <dt>DEC VT132</dt>
             <dd>
@@ -1094,8 +1090,8 @@ DECTSR		462
             </dd>
             <dt>VT220</dt>
             <dd>
-                Emulation is complete except for: VT100 confidence tests,
-                the keyboard auto-repeat setting, and support for downloadable
+                Emulation is complete except for the VT100 confidence tests (not
+                applicable to a terminal emulator) and support for downloadable
                 soft-character sets.
             </dd>
             <dt>DEC VT420</dt>
