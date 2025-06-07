@@ -1069,6 +1069,13 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_VT520   97	/*    DEC VT-520/525 */
 #define     TT_XTERM   98   /*    XTerm */
 #define     TT_TEK40   99	/*    Tektronix 401x */
+/* Other ADDS Regent terminals - not currently emulated */
+#define     TT_REGENT20 100     /* ADDS Regent 20  */
+#define     TT_REGENT40 101     /* ADDS Regent 40  */
+#define     TT_REGENT40P 102    /* ADDS Regent 40+ */
+#define     TT_REGENT60 103     /* ADDS Regent 60  */
+#define     TT_REGENT100 104    /* ADDS Regent 100 */
+#define     TT_REGENT200 105    /* ADDS Regent 200 */
 #define     TT_KBM_EMACS   TT_MAX+1
 #define     TT_KBM_HEBREW  TT_MAX+2
 #define     TT_KBM_RUSSIAN TT_MAX+3

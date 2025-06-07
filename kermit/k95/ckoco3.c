@@ -5845,7 +5845,7 @@ void
 clreol_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
     int x ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -5857,7 +5857,7 @@ clreol_escape( BYTE vmode, CHAR fillchar ) {
     for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
-        line->cells[x].a = cellcolor;
+        line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
     }
 }
