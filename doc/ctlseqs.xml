@@ -1097,8 +1097,9 @@ DECTSR		462
             <dt>DEC VT420</dt>
             <dd>
                 Not currently emulated by Kermit 95. Most of the rectangular
-                area operations are implemented, but support for macros, the
-                left/right margin, multiple sessions and multiple pages.
+                area operations are implemented, but macros, the left/right
+                margin, multiple sessions and multiple pages are not currently
+                supported.
             </dd>
             <dt>DEC VT510, VT520, VT525</dt>
             <dd>Not currently emulated by Kermit 95</dd>
