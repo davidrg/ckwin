@@ -1488,7 +1488,7 @@ popuphelp(int mode, enum helpscreen x) {
         "   A       E     AE digraph",
         "   O       /     O with stroke",
         "   s       s     German sharp s",
-        "   n       b     No-break space"
+        "   n       b     No-break space",
         "",
         " And others; see the documentation.",
     };
