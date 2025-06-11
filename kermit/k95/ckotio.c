@@ -10219,6 +10219,7 @@ DisplayCommProperties(HANDLE h)
         break;
     case PST_SCANNER         :
         printf("Scanner");
+        break;
     case PST_NETWORK_BRIDGE  :
         printf("Network Bridge");
         break;
