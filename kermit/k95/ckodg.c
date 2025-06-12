@@ -682,6 +682,7 @@ dgascii( int ch )
                         if ( !uprint && !xprint && !aprint && printon )
                             printeroff();
                         sendchar(ACK);
+                        break;
                     case '8':   /* VT220 AutoPrint on */
                         debug(F110,"Data General","Aprint On",0);
                         setaprint(TRUE);
