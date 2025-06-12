@@ -2273,7 +2273,7 @@ zstrip(name,name2) char *name, **name2; {
     char *cp, *pp;
     int n = 0;
     debug(F110,"zstrip before",name,0);
-    if (!name) { *name2 = ""; return; }
+    if (!name || *name == '\0') { *name2 = ""; return; }
     pp = work;
     /* Strip disk letter and colon */
     if (isalpha(*name) && (*(name+1) == ':')) name += 2;
