@@ -477,7 +477,9 @@ RestoreCmdMode() {
 #endif /* COMMENT */
     debug(F101,"x_rest wherex","",commandscreen.ox);
     debug(F101,"x_rest wherey","",commandscreen.oy);
+#ifndef KUI
     SetCurPos( commandscreen.oy-1, commandscreen.ox-1 ) ;
+#endif /* ! KUI */
    /* lgotoxy no longer moves */
    /* the physical cursor     */
     vmode = VCMD ;
@@ -712,10 +714,15 @@ clearcmdscreen(void) {
     viocell         cell ;
 
     ttgcwsz();
+    /* TODO: What should we do for KUI? */
+#ifndef KUI
+    /* WrtNCell does nothing useful for KUI as we don't have a console window
+     * to write to */
     cell.c = ' ' ;
     cell.video_attr = colorcmd ;
     WrtNCell(cell, cmd_cols * (cmd_rows+1), 0, 0);
     SetCurPos( 0, 0 ) ;
+#endif /* ! KUI */
 }
 #endif /* KUI */
 
@@ -2355,6 +2362,7 @@ checkscreenmode() {
 
 void
 setcursormode() {
+#ifndef KUI
 #ifdef NT
     CK_CURSORINFO vci={88,0,8,1};
 #else
@@ -2404,12 +2412,15 @@ setcursormode() {
     vi.fs = 1;                          /* 0 = blinking, 1 = hi intensity */
     VioSetState((PVOID) &vi, VioHandle);
 #endif /* NT */
+#endif /* ! KUI */
 }
 
 void
 restorecursormode() {
+#ifndef KUI
     debug(F100,"restorecursormode","",0);
     SetCurType(&crsr_command);
+#endif /* ! KUI */
 }
 
 static void
@@ -3358,7 +3369,15 @@ conect(int async) {
 
     checkscreenmode();                  /* Initialize terminal emulator */
     setcursormode();
+#ifndef ONETERMUPD
     GetCurPos(&y, &x);                  /* Command screen cursor position */
+#else
+    {
+        position * ppos = VscrnGetCurPos(VCMD);
+        x = ppos->x;
+        y = ppos->y;
+    };
+#endif
     SaveCmdMode(x+1,y+1);               /* Remember Command screen */
     RestoreTermMode();                  /* Put up previous terminal screen */
 #ifndef KUI
