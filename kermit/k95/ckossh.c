@@ -47,17 +47,33 @@ char *cksshv = "SSH-DLL support, 10.0,  28 July 2024";
 #include "ckoreg.h"
 #include "ckctel.h"
 
+#ifndef NT
+#define INCL_NOPM
+#define INCL_DOSPROCESS
+#define INCL_DOSMODULEMGR
+#define INCL_ERRORS
+#define  INCL_DOSNMPIPES
+#include <os2.h>
+#undef COMMENT
+
+/* This lives in p_common.c */
+_PROTOTYP( unsigned long get_dir_len, (unsigned char *));
+#endif /* Not NT */
+
 /* Various global variables owned by the rest of C-Kermit */
 extern char uidbuf[];                   /* User ID set via /user: */
 extern char pwbuf[];                    /* Password set via /password: */
 extern int  pwflg;                      /* Password has been set */
+
+#ifdef TCP_NODELAY
 extern int tcp_nodelay;                 /* Enable/disable Nagle's algorithm */
+#endif /* TCP_NODELAY */
 
 /** Gets the currently set username if there is one
  *
  * @return Currently set username
  */
-const char* ssh_get_uid() {
+const char* ssh_get_uid(void) {
     return uidbuf;
 }
 
@@ -65,7 +81,7 @@ const char* ssh_get_uid() {
  *
  * @return Currently set password or NULL
  */
-const char* ssh_get_pw() {
+const char* ssh_get_pw(void) {
     return pwflg ? pwbuf : NULL;
 }
 
@@ -73,8 +89,12 @@ const char* ssh_get_pw() {
  *
  * @return True if nodelay is enabled, False otherwise
  */
-int ssh_get_nodelay_enabled() {
+int ssh_get_nodelay_enabled(void) {
+#ifdef TCP_NODELAY
     return tcp_nodelay;
+#else
+    return 0;
+#endif
 }
 
 /** Gets the current terminal (VTERM) dimensions
@@ -100,7 +120,7 @@ void get_current_terminal_dimensions(int* rows, int* cols) {
  *
  * @return terminal type
  */
-const char* get_current_terminal_type() {
+const char* get_current_terminal_type(void) {
     static char term_type[64];
     extern int tt_type, max_tt;
     extern struct tt_info_rec tt_info[];
@@ -137,11 +157,11 @@ const char* get_current_terminal_type() {
  * @return True if debug logging is enabled, false otherwise.
  */
 inline
-int debug_logging() {
+int debug_logging(void) {
     return deblog;
 }
 
-unsigned char* get_display() {
+unsigned char* get_display(void) {
     return tn_get_display();
 }
 
@@ -149,6 +169,22 @@ int parse_displayname(char *displayname, int *familyp, char **hostp,
                       int *dpynump, int *scrnump, char **restp) {
     return fwdx_parse_displayname(displayname, familyp, hostp,
                                   dpynump, scrnump, restp);
+}
+
+
+/* Opens a socket for a new SSH connection if a proxy server is configured.
+ * Returns INVALID_SOCKET if no proxy server is configured or opening the
+ * socket failed in some way. In this situation, the caller should assume
+ * no proxy server is configured and try opening the socket itself.
+ *
+ * @returns a socket or INVALID_SOCKET if no proxy server is configured.
+ */
+SOCKET ssh_open_socket(char* host, char* port) {
+    /* TODO: If HTTP Proxy is configured, open a connection through
+     *       that and return it.
+     */
+
+    return INVALID_SOCKET;
 }
 
 #ifdef SSH_DLL
@@ -161,99 +197,59 @@ int parse_displayname(char *displayname, int *familyp, char **hostp,
 
 #include <stdlib.h>
 
-/* Typedefs for all the function pointers we *could* receive from an SSH
- * subsystem DLL */
-typedef int (*p_ssh_dll_init_t)(ssh_init_parameters_t *);
-typedef int (*p_ssh_set_iparam_t)(int, int);
-typedef int (*p_ssh_get_iparam_t)(int);
-typedef int (*p_ssh_set_sparam_t)(int, const char*);
-typedef const char* (*p_ssh_get_sparam_t)(int);
-typedef int (*p_ssh_open_t)();
-typedef int (*p_ssh_clos_t)();
-typedef int (*p_ssh_tchk_t)();
-typedef int (*p_ssh_flui_t)();
-typedef int (*p_ssh_break_t)();
-typedef int (*p_ssh_inc_t)(int);
-typedef int (*p_ssh_xin_t)(int, char*);
-typedef int (*p_ssh_toc_t)(int);
-typedef int (*p_ssh_tol_t)(char*,int);
-typedef int (*p_ssh_snaws_t)();
-typedef const char* (*p_ssh_proto_ver_t)();
-typedef const char* (*p_ssh_impl_ver_t)();
-typedef int (*p_sshkey_create_t)(char *, int, char *, int, char *);
-typedef int (*p_sshkey_display_fingerprint_t)(char *, int);
-typedef int (*p_sshkey_display_public_t)(char *, char *);
-typedef int (*p_sshkey_display_public_as_ssh2_t)(char *,char *);
-typedef int (*p_sshkey_change_passphrase_t)(char *, char *, char *);
-typedef int (*p_ssh_fwd_remote_port_t)(char*, int, char *, int, BOOL);
-typedef int (*p_ssh_fwd_local_port_t)(char*, int,char *,int, BOOL);
-typedef int (*p_ssh_fwd_clear_local_ports_t)(BOOL);
-typedef int (*p_ssh_fwd_clear_remote_ports_t)(BOOL);
-typedef int (*p_ssh_fwd_remove_remote_port_t)(int, BOOL);
-typedef int (*p_ssh_fwd_remove_local_port_t)(int, BOOL);
-typedef ssh_port_forward_t* (*p_ssh_fwd_get_ports_t)();
-#ifdef SSHTEST
-typedef int (*p_sshkey_v1_change_comment_t)(char *, char *, char *);
-#endif /* SSHTEST */
-/*typedef char * (*p_sshkey_default_file_t)(int);*/
-typedef void (*p_ssh_v2_rekey_t)();
-typedef int (*p_ssh_agent_delete_file_t)(const char *);
-typedef int (*p_ssh_agent_delete_all_t)();
-typedef int (*p_ssh_agent_add_file_t)(const char*);
-typedef int (*p_ssh_agent_list_identities_t)(int);
-typedef void (*p_ssh_unload_t)();
-typedef const char* (*p_ssh_dll_ver_t)();
-typedef ktab_ret (*p_ssh_get_keytab_t)(int keytab_id);
-typedef int (*p_ssh_feature_supported_t)(int feature_id);
+typedef int CKSSHDLLENTRY ssh_dll_init_dllentry(ssh_dll_init_data *);
+static ssh_dll_init_dllentry *dllentryp_ssh_init = NULL;
 
 /* Function pointers received from the currently loaded SSH subsystem DLL */
-static p_ssh_set_iparam_t p_ssh_set_iparam = NULL;
-static p_ssh_get_iparam_t p_ssh_get_iparam = NULL;
-static p_ssh_set_sparam_t p_ssh_set_sparam = NULL;
-static p_ssh_get_sparam_t p_ssh_get_sparam = NULL;
-static p_ssh_open_t p_ssh_open = NULL;
-static p_ssh_clos_t p_ssh_clos = NULL;
-static p_ssh_tchk_t p_ssh_tchk = NULL;
-static p_ssh_flui_t p_ssh_flui = NULL;
-static p_ssh_break_t p_ssh_break = NULL;
-static p_ssh_inc_t p_ssh_inc = NULL;
-static p_ssh_xin_t p_ssh_xin = NULL;
-static p_ssh_toc_t p_ssh_toc = NULL;
-static p_ssh_tol_t p_ssh_tol = NULL;
-static p_ssh_snaws_t p_ssh_snaws = NULL;
-static p_ssh_proto_ver_t p_ssh_proto_ver = NULL;
-static p_ssh_impl_ver_t p_ssh_impl_ver = NULL;
-static p_sshkey_create_t p_sshkey_create = NULL;
-static p_sshkey_display_fingerprint_t p_sshkey_display_fingerprint = NULL;
-static p_sshkey_display_public_t p_sshkey_display_public = NULL;
-static p_sshkey_display_public_as_ssh2_t p_sshkey_display_public_as_ssh2 = NULL;
-static p_sshkey_change_passphrase_t p_sshkey_change_passphrase = NULL;
-static p_ssh_fwd_remote_port_t p_ssh_fwd_remote_port = NULL;
-static p_ssh_fwd_local_port_t p_ssh_fwd_local_port = NULL;
-static p_ssh_fwd_clear_remote_ports_t p_ssh_fwd_clear_remote_ports = NULL;
-static p_ssh_fwd_clear_local_ports_t p_ssh_fwd_clear_local_ports = NULL;
-static p_ssh_fwd_remove_remote_port_t p_ssh_fwd_remove_remote_port = NULL;
-static p_ssh_fwd_remove_local_port_t p_ssh_fwd_remove_local_port = NULL;
-static p_ssh_fwd_get_ports_t p_ssh_fwd_get_ports = NULL;
+static ssh_set_iparam_dllfunc *dllfuncp_ssh_set_iparam = NULL;
+static ssh_get_iparam_dllfunc *dllfuncp_ssh_get_iparam = NULL;
+static ssh_set_sparam_dllfunc *dllfuncp_ssh_set_sparam = NULL;
+static ssh_get_sparam_dllfunc *dllfuncp_ssh_get_sparam = NULL;
+static ssh_set_identity_files_dllfunc *dllfuncp_ssh_set_identity_files = NULL;
+static ssh_get_socket_dllfunc *dllfuncp_ssh_get_socket = NULL;
+static ssh_open_dllfunc *dllfuncp_ssh_open = NULL;
+static ssh_clos_dllfunc *dllfuncp_ssh_clos = NULL;
+static ssh_tchk_dllfunc *dllfuncp_ssh_tchk = NULL;
+static ssh_flui_dllfunc *dllfuncp_ssh_flui = NULL;
+static ssh_break_dllfunc *dllfuncp_ssh_break = NULL;
+static ssh_inc_dllfunc *dllfuncp_ssh_inc = NULL;
+static ssh_xin_dllfunc *dllfuncp_ssh_xin = NULL;
+static ssh_toc_dllfunc *dllfuncp_ssh_toc = NULL;
+static ssh_tol_dllfunc *dllfuncp_ssh_tol = NULL;
+static ssh_snaws_dllfunc *dllfuncp_ssh_snaws = NULL;
+static ssh_proto_ver_dllfunc *dllfuncp_ssh_proto_ver = NULL;
+static ssh_impl_ver_dllfunc *dllfuncp_ssh_impl_ver = NULL;
+static sshkey_create_dllfunc *dllfuncp_sshkey_create = NULL;
+static sshkey_display_fingerprint_dllfunc *dllfuncp_sshkey_display_fingerprint = NULL;
+static sshkey_display_public_dllfunc *dllfuncp_sshkey_display_public = NULL;
+static sshkey_display_public_as_ssh2_dllfunc *dllfuncp_sshkey_display_public_as_ssh2 = NULL;
+static sshkey_change_passphrase_dllfunc *dllfuncp_sshkey_change_passphrase = NULL;
+static ssh_fwd_remote_port_dllfunc *dllfuncp_ssh_fwd_remote_port = NULL;
+static ssh_fwd_local_port_dllfunc *dllfuncp_ssh_fwd_local_port = NULL;
+static ssh_fwd_clear_remote_ports_dllfunc *dllfuncp_ssh_fwd_clear_remote_ports = NULL;
+static ssh_fwd_clear_local_ports_dllfunc *dllfuncp_ssh_fwd_clear_local_ports = NULL;
+static ssh_fwd_remove_remote_port_dllfunc *dllfuncp_ssh_fwd_remove_remote_port = NULL;
+static ssh_fwd_remove_local_port_dllfunc *dllfuncp_ssh_fwd_remove_local_port = NULL;
+static ssh_fwd_get_ports_dllfunc *dllfuncp_ssh_fwd_get_ports = NULL;
 #ifdef SSHTEST
-static p_sshkey_v1_change_comment_t p_sshkey_v1_change_comment = NULL;  /* TODO */
+static sshkey_v1_change_comment_dllfunc *dllfuncp_sshkey_v1_change_comment = NULL;  /* TODO */
 #endif /* SSHTEST */
-/*static p_sshkey_default_file_t p_sshkey_default_file = NULL;*/ /* TODO */
-static p_ssh_v2_rekey_t p_ssh_v2_rekey = NULL;  /* TODO */
-static p_ssh_agent_delete_file_t p_ssh_agent_delete_file = NULL;    /* TODO */
-static p_ssh_agent_delete_all_t p_ssh_agent_delete_all = NULL;  /* TODO */
-static p_ssh_agent_add_file_t p_ssh_agent_add_file = NULL;  /* TODO */
-static p_ssh_agent_list_identities_t p_ssh_agent_list_identities = NULL;    /* TODO */
-static p_ssh_unload_t p_ssh_unload = NULL;
-static p_ssh_dll_ver_t p_ssh_dll_ver = NULL;
-static p_ssh_get_keytab_t p_ssh_get_keytab = NULL;
-static p_ssh_feature_supported_t p_ssh_feature_supported = NULL;
-
-/* The various "set tcp" functions will try to set socket options (keepalive,
- * linger, dontroute, nodelay. recvbuf, sendbuf and perhaps others) on this
- * if it has a value. Might also be relevant for opening connections through
- * proxy servers. */
-int ssh_sock; /* TODO: GET RID OF THIS */
+#if 0
+static sshkey_default_file_dllfunc *dllfuncp_sshkey_default_file = NULL; /* TODO */
+#endif
+static ssh_v2_rekey_dllfunc *dllfuncp_ssh_v2_rekey = NULL;  /* TODO */
+static ssh_agent_delete_file_dllfunc *dllfuncp_ssh_agent_delete_file = NULL;    /* TODO */
+static ssh_agent_delete_all_dllfunc *dllfuncp_ssh_agent_delete_all = NULL;  /* TODO */
+static ssh_agent_add_file_dllfunc *dllfuncp_ssh_agent_add_file = NULL;  /* TODO */
+static ssh_agent_list_identities_dllfunc *dllfuncp_ssh_agent_list_identities = NULL;    /* TODO */
+static ssh_set_environment_variable_dllfunc *dllfuncp_ssh_set_environment_variable = NULL;
+static ssh_clear_environment_variables_dllfunc *dllfuncp_ssh_clear_environment_variables= NULL;
+static ssh_unload_dllfunc *dllfuncp_ssh_unload = NULL;
+static ssh_dll_ver_dllfunc *dllfuncp_ssh_dll_ver = NULL;
+static ssh_get_keytab_dllfunc *dllfuncp_ssh_get_keytab = NULL;
+static ssh_feature_supported_dllfunc *dllfuncp_ssh_feature_supported = NULL;
+static ssh_get_set_help_dllfunc *dllfuncp_ssh_get_set_help = NULL;
+static ssh_get_help_dllfunc *dllfuncp_ssh_get_help = NULL;
 
 /* If a subsystem has been successfully loaded and initialised or not */
 int ssh_subsystem_loaded = FALSE;
@@ -266,9 +262,164 @@ char* dll_name = NULL;
 #define F_CAST(t) (t)
 static HINSTANCE hSSH;
 #else
-#define F_CAST(t) (PFN*)
+#define F_CAST(t) (t)
 static HMODULE hSSH;
 #endif
+
+static int scrnprint(const char *str)
+{
+    return( Vscrnprintf(str) );
+}
+
+#ifdef SSH_DLL_CALLCONV
+
+/* define prototypes for callback functions */
+static ssh_get_uid_callback callback_ssh_get_uid;
+static ssh_get_pw_callback callback_ssh_get_pw;
+static ssh_get_nodelay_enabled_callback callback_ssh_get_nodelay_enabled;
+static get_current_terminal_dimensions_callback callback_get_current_terminal_dimensions;
+static get_current_terminal_type_callback callback_get_current_terminal_type;
+static get_display_callback callback_get_display;
+static parse_displayname_callback callback_parse_displayname;
+static scrnprint_callback callback_scrnprint;
+static ckstrncpy_callback callback_ckstrncpy;
+static ssh_open_socket_callback callback_ssh_open_socket;
+static dodebug_callback callback_dodebug;
+static uq_txt_callback callback_uq_txt;
+static uq_mtxt_callback callback_uq_mtxt;
+static uq_ok_callback callback_uq_ok;
+static uq_file_callback callback_uq_file;
+static GetAppData_callback callback_GetAppData;
+static GetHomePath_callback callback_GetHomePath;
+static GetHomeDrive_callback callback_GetHomeDrive;
+static whoami_callback callback_whoami;
+static zmkdir_callback callback_zmkdir;
+static ckmakxmsg_callback callback_ckmakxmsg;
+static debug_logging_callback callback_debug_logging;
+
+static const char* CKSSHAPI callback_ssh_get_uid(void) {
+    return ssh_get_uid();
+}
+
+static const char* CKSSHAPI callback_ssh_get_pw(void) {
+    return ssh_get_pw();
+}
+
+static int CKSSHAPI callback_ssh_get_nodelay_enabled(void) {
+    return ssh_get_nodelay_enabled();
+}
+
+static void CKSSHAPI callback_get_current_terminal_dimensions(int* rows, int* cols) {
+    get_current_terminal_dimensions(rows, cols);
+}
+
+static const char* CKSSHAPI callback_get_current_terminal_type(void) {
+    return( get_current_terminal_type() );
+}
+
+static unsigned char* CKSSHAPI callback_get_display(void) {
+    return get_display();
+}
+
+static int CKSSHAPI callback_parse_displayname(char *displayname, int *familyp, char **hostp,
+                      int *dpynump, int *scrnump, char **restp) {
+    return parse_displayname(displayname, familyp, hostp,
+                                  dpynump, scrnump, restp);
+}
+
+static int CKSSHAPI callback_scrnprint(const char *str)
+{
+    return( scrnprint(str) );
+}
+
+static int CKSSHAPI callback_ckstrncpy(char * dest, const char * src, int len)
+{
+    return( ckstrncpy(dest, src, len) );
+}
+
+static SOCKET CKSSHAPI callback_ssh_open_socket(char* host, char* port) {
+    return ssh_open_socket(host, port);
+}
+
+static int CKSSHAPI callback_dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
+{
+    return( dodebug(flag, s1, s2, n) );
+}
+
+static int CKSSHAPI callback_uq_txt(char * preface, char * prompt, int echo, char ** help, char * buf,
+       int buflen, char *dflt, int timer) {
+    return uq_txt(preface, prompt, echo, help, buf, buflen, dflt, timer);
+}
+
+static int CKSSHAPI callback_uq_mtxt(char * preface,char **help, int n, struct txtbox field[]) {
+    return uq_mtxt(preface, help, n, field);
+}
+
+static int CKSSHAPI callback_uq_ok(char * preface, char * prompt, int mask,char ** help, int dflt) {
+    return uq_ok(preface, prompt, mask, help, dflt);
+}
+
+static int CKSSHAPI callback_uq_file(char * preface, char * fprompt, int fc, char ** help,
+        char * dflt, char * result, int rlength) {
+    return uq_file(preface, fprompt, fc, help, dflt, result, rlength);
+}
+
+static char* CKSSHAPI callback_GetAppData(int common) {
+    return GetAppData(common);
+}
+
+static char* CKSSHAPI callback_GetHomePath(void) {
+    return GetHomePath();
+}
+
+static char* CKSSHAPI callback_GetHomeDrive(void) {
+    return GetHomeDrive();
+}
+
+static char* CKSSHAPI callback_whoami(void) {
+    return whoami();
+}
+
+static int CKSSHAPI callback_zmkdir(char *path) {
+    return zmkdir(path);
+}
+
+static int CKSSHAPI callback_ckmakxmsg(char * buf, int len, char *s1, char *s2, char *s3,
+        char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
+        char *s10, char *s11, char *s12) {
+    return ckmakxmsg(buf, len, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12);
+}
+
+static int CKSSHAPI callback_debug_logging(void) {
+    return debug_logging();
+}
+
+#else /* SSH_DLL_CALLCONV */
+
+#define callback_ssh_get_uid                ssh_get_uid
+#define callback_ssh_get_pw                 ssh_get_pw
+#define callback_ssh_get_nodelay_enabled    ssh_get_nodelay_enabled
+#define callback_get_current_terminal_dimensions    get_current_terminal_dimensions
+#define callback_get_current_terminal_type  get_current_terminal_type
+#define callback_get_display                get_display
+#define callback_parse_displayname          parse_displayname
+#define callback_scrnprint                  scrnprint
+#define callback_ckstrncpy                  ckstrncpy
+#define callback_ssh_open_socket            ssh_open_socket
+#define callback_dodebug                    dodebug
+#define callback_uq_txt                     uq_txt
+#define callback_uq_mtxt                    uq_mtxt
+#define callback_uq_ok                      uq_ok
+#define callback_uq_file                    uq_file
+#define callback_GetAppData                 GetAppData
+#define callback_GetHomePath                GetHomePath
+#define callback_GetHomeDrive               GetHomeDrive
+#define callback_whoami                     whoami
+#define callback_zmkdir                     zmkdir
+#define callback_ckmakxmsg                  ckmakxmsg
+#define callback_debug_logging              debug_logging
+
+#endif /* SSH_DLL_CALLCONV */
 
 /** Called by the loaded SSH subsystem DLL to supply pointers to all of the
  * various fucntions it supports. Some functions are optional, others are not.
@@ -276,87 +427,101 @@ static HMODULE hSSH;
  * @param function - Name of the function
  * @param p_function - Pointer to the function
  */
-void ssh_install_func(const char* function, const void* p_function) {
+static void CKSSHAPI callback_install_dllfunc(const char* function, const void* p_function) {
+    debug(F110, "ssh_install_func", function, 0);
+
     if ( !strcmp(function,"ssh_set_iparam") )
-        p_ssh_set_iparam = F_CAST(p_ssh_set_iparam_t) p_function;
+        dllfuncp_ssh_set_iparam = F_CAST(ssh_set_iparam_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_get_iparam") )
-        p_ssh_get_iparam = F_CAST(p_ssh_get_iparam_t) p_function;
+        dllfuncp_ssh_get_iparam = F_CAST(ssh_get_iparam_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_set_sparam") )
-        p_ssh_set_sparam = F_CAST(p_ssh_set_sparam_t) p_function;
+        dllfuncp_ssh_set_sparam = F_CAST(ssh_set_sparam_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_get_sparam") )
-        p_ssh_get_sparam = F_CAST(p_ssh_get_sparam_t) p_function;
+        dllfuncp_ssh_get_sparam = F_CAST(ssh_get_sparam_dllfunc *)p_function;
+    else if ( !strcmp(function,"ssh_set_identity_files") )
+        dllfuncp_ssh_set_identity_files = F_CAST(ssh_set_identity_files_dllfunc *)p_function;
+    else if ( !strcmp(function,"ssh_get_socket") )
+        dllfuncp_ssh_get_socket = F_CAST(ssh_get_socket_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_open") )
-        p_ssh_open = F_CAST(p_ssh_open_t) p_function;
+        dllfuncp_ssh_open = F_CAST(ssh_open_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_clos") )
-        p_ssh_clos = F_CAST(p_ssh_clos_t) p_function;
+        dllfuncp_ssh_clos = F_CAST(ssh_clos_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_tchk") )
-        p_ssh_tchk = F_CAST(p_ssh_tchk_t) p_function;
+        dllfuncp_ssh_tchk = F_CAST(ssh_tchk_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_flui") )
-        p_ssh_flui = F_CAST(p_ssh_flui_t) p_function;
+        dllfuncp_ssh_flui = F_CAST(ssh_flui_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_break") )
-        p_ssh_break = F_CAST(p_ssh_break_t) p_function;
+        dllfuncp_ssh_break = F_CAST(ssh_break_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_inc") )
-        p_ssh_inc = F_CAST(p_ssh_inc_t) p_function;
+        dllfuncp_ssh_inc = F_CAST(ssh_inc_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_xin") )
-        p_ssh_xin = F_CAST(p_ssh_xin_t) p_function;
+        dllfuncp_ssh_xin = F_CAST(ssh_xin_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_toc") )
-        p_ssh_toc = F_CAST(p_ssh_toc_t) p_function;
+        dllfuncp_ssh_toc = F_CAST(ssh_toc_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_tol") )
-        p_ssh_tol = F_CAST(p_ssh_tol_t) p_function;
+        dllfuncp_ssh_tol = F_CAST(ssh_tol_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_snaws") )
-        p_ssh_snaws = F_CAST(p_ssh_snaws_t) p_function;
+        dllfuncp_ssh_snaws = F_CAST(ssh_snaws_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_proto_ver") )
-        p_ssh_proto_ver = F_CAST(p_ssh_proto_ver_t) p_function;
+        dllfuncp_ssh_proto_ver = F_CAST(ssh_proto_ver_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_impl_ver") )
-        p_ssh_impl_ver = F_CAST(p_ssh_impl_ver_t) p_function;
+        dllfuncp_ssh_impl_ver = F_CAST(ssh_impl_ver_dllfunc *)p_function;
     else if ( !strcmp(function,"sshkey_create") )
-        p_sshkey_create = F_CAST(p_sshkey_create_t) p_function;
+        dllfuncp_sshkey_create = F_CAST(sshkey_create_dllfunc *)p_function;
     else if ( !strcmp(function,"sshkey_display_fingerprint") )
-        p_sshkey_display_fingerprint = F_CAST(p_sshkey_display_fingerprint_t) p_function;
+        dllfuncp_sshkey_display_fingerprint = F_CAST(sshkey_display_fingerprint_dllfunc *)p_function;
     else if ( !strcmp(function,"sshkey_display_public") )
-        p_sshkey_display_public = F_CAST(p_sshkey_display_public_t) p_function;
+        dllfuncp_sshkey_display_public = F_CAST(sshkey_display_public_dllfunc *)p_function;
     else if ( !strcmp(function,"sshkey_display_public_as_ssh2") )
-        p_sshkey_display_public_as_ssh2 = F_CAST(p_sshkey_display_public_as_ssh2_t) p_function;
+        dllfuncp_sshkey_display_public_as_ssh2 = F_CAST(sshkey_display_public_as_ssh2_dllfunc *)p_function;
     else if ( !strcmp(function,"sshkey_change_passphrase") )
-        p_sshkey_change_passphrase = F_CAST(p_sshkey_change_passphrase_t) p_function;
+        dllfuncp_sshkey_change_passphrase = F_CAST(sshkey_change_passphrase_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_remote_port") )
-        p_ssh_fwd_remote_port = F_CAST(p_ssh_fwd_remote_port_t) p_function;
+        dllfuncp_ssh_fwd_remote_port = F_CAST(ssh_fwd_remote_port_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_local_port") )
-        p_ssh_fwd_local_port = F_CAST(p_ssh_fwd_local_port_t) p_function;
+        dllfuncp_ssh_fwd_local_port = F_CAST(ssh_fwd_local_port_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_clear_remote_ports") )
-        p_ssh_fwd_clear_remote_ports = F_CAST(p_ssh_fwd_clear_remote_ports_t) p_function;
+        dllfuncp_ssh_fwd_clear_remote_ports = F_CAST(ssh_fwd_clear_remote_ports_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_clear_local_ports") )
-        p_ssh_fwd_clear_local_ports = F_CAST(p_ssh_fwd_clear_local_ports_t) p_function;
+        dllfuncp_ssh_fwd_clear_local_ports = F_CAST(ssh_fwd_clear_local_ports_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_remove_remote_port") )
-        p_ssh_fwd_remove_remote_port = F_CAST(p_ssh_fwd_remove_remote_port_t) p_function;
+        dllfuncp_ssh_fwd_remove_remote_port = F_CAST(ssh_fwd_remove_remote_port_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_remove_local_port") )
-        p_ssh_fwd_remove_local_port = F_CAST(p_ssh_fwd_remove_local_port_t) p_function;
+        dllfuncp_ssh_fwd_remove_local_port = F_CAST(ssh_fwd_remove_local_port_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_fwd_get_ports") )
-        p_ssh_fwd_get_ports = F_CAST(p_ssh_fwd_get_ports_t) p_function;
+        dllfuncp_ssh_fwd_get_ports = F_CAST(ssh_fwd_get_ports_dllfunc *)p_function;
 #ifdef SSHTEST
     else if ( !strcmp(function,"sshkey_v1_change_comment") )
-        p_sshkey_v1_change_comment = F_CAST(p_sshkey_v1_change_comment_t) p_function;
+        dllfuncp_sshkey_v1_change_comment = F_CAST(sshkey_v1_change_comment_dllfunc *)p_function;
 #endif /* SSHTEST */
     /*else if ( !strcmp(function,"sshkey_default_file") )
-        p_sshkey_default_file = (p_sshkey_default_file_t) p_function;*/
+        dllfuncp_sshkey_default_file = (sshkey_default_file_dllfunc *)p_function;*/
     else if ( !strcmp(function,"ssh_v2_rekey") )
-        p_ssh_v2_rekey = F_CAST(p_ssh_v2_rekey_t) p_function;
+        dllfuncp_ssh_v2_rekey = F_CAST(ssh_v2_rekey_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_agent_delete_file") )
-        p_ssh_agent_delete_file = F_CAST(p_ssh_agent_delete_file_t) p_function;
+        dllfuncp_ssh_agent_delete_file = F_CAST(ssh_agent_delete_file_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_agent_delete_all") )
-        p_ssh_agent_delete_all = F_CAST(p_ssh_agent_delete_all_t) p_function;
+        dllfuncp_ssh_agent_delete_all = F_CAST(ssh_agent_delete_all_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_agent_add_file") )
-        p_ssh_agent_add_file = F_CAST(p_ssh_agent_add_file_t) p_function;
+        dllfuncp_ssh_agent_add_file = F_CAST(ssh_agent_add_file_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_agent_list_identities") )
-        p_ssh_agent_list_identities = F_CAST(p_ssh_agent_list_identities_t) p_function;
+        dllfuncp_ssh_agent_list_identities = F_CAST(ssh_agent_list_identities_dllfunc *)p_function;
+    else if ( !strcmp(function,"ssh_set_environment_variable") )
+        dllfuncp_ssh_set_environment_variable = F_CAST(ssh_set_environment_variable_dllfunc *)p_function;
+    else if ( !strcmp(function,"ssh_clear_environment_variables") )
+        dllfuncp_ssh_clear_environment_variables = F_CAST(ssh_clear_environment_variables_dllfunc *)p_function;
     else if ( !strcmp(function,"ssh_unload") )
-        p_ssh_unload = F_CAST(p_ssh_unload_t) p_function;
+        dllfuncp_ssh_unload = F_CAST(ssh_unload_dllfunc *)p_function;
     else if (!strcmp(function,"ssh_dll_ver"))
-        p_ssh_dll_ver = F_CAST(p_ssh_dll_ver_t) p_function;
+        dllfuncp_ssh_dll_ver = F_CAST(ssh_dll_ver_dllfunc *)p_function;
     else if (!strcmp(function,"ssh_get_keytab"))
-        p_ssh_get_keytab = F_CAST(p_ssh_get_keytab_t) p_function;
+        dllfuncp_ssh_get_keytab = F_CAST(ssh_get_keytab_dllfunc *)p_function;
     else if (!strcmp(function,"ssh_feature_supported"))
-        p_ssh_feature_supported = F_CAST(p_ssh_feature_supported_t) p_function;
+        dllfuncp_ssh_feature_supported = F_CAST(ssh_feature_supported_dllfunc *)p_function;
+    else if (!strcmp(function,"ssh_get_set_help"))
+        dllfuncp_ssh_get_set_help = F_CAST(ssh_get_set_help_dllfunc *)p_function;
+    else if (!strcmp(function,"ssh_get_help"))
+        dllfuncp_ssh_get_help = F_CAST(ssh_get_help_dllfunc *)p_function;
 }
 
 /** Attempts to load and initialise a particular SSH subsystem DLL
@@ -364,12 +529,16 @@ void ssh_install_func(const char* function, const void* p_function) {
  */
 int ssh_load(char* dllname) {
     ULONG rc = 0;
-    ssh_init_parameters_t init_params;
-    p_ssh_dll_init_t init;
+    ssh_dll_init_data init;
+#ifdef CK_COLORS_24BIT
+    extern int colorpalette;
+#endif
 
 #ifdef OS2ONLY
     CHAR *exe_path;
     CHAR path[256];
+    int len;
+    char fail[_MAX_PATH];
 #endif
 
     debug(F110, "Attempting to load SSH DLL...", dllname, 0);
@@ -381,8 +550,8 @@ int ssh_load(char* dllname) {
         debug(F111, "K95 SSH LoadLibrary failed", dllname, rc);
         return -1;
     } else {
-        init = (p_ssh_dll_init_t)GetProcAddress(hSSH, "ssh_dll_init");
-        if (init == NULL) {
+        dllentryp_ssh_init = F_CAST(ssh_dll_init_dllentry *)GetProcAddress(hSSH, "ssh_dll_init");
+        if (dllentryp_ssh_init == NULL) {
             rc = GetLastError();
             debug(F111, "K95 SSH GetProcAddress for ssh_dll_init failed", dllname, rc);
             FreeLibrary(hSSH);
@@ -406,7 +575,7 @@ int ssh_load(char* dllname) {
         return -1;
     } else {
         debug(F111, "K95 SSH LoadLibrary success",fail,rc) ;
-        if (rc = DosQueryProcAddr(hSSH,0,"ssh_dll_init",(PFN*)&init))
+        if (rc = DosQueryProcAddr(hSSH,0,"ssh_dll_init",(PFN*)&dllentryp_ssh_init))
         {
             debug(F111,"K95 SSH GetProcAddress for ssh_dll_init failed", dllname, rc);
             DosFreeModule(hSSH);
@@ -416,31 +585,34 @@ int ssh_load(char* dllname) {
 #endif
 
     /* SSH DLL loaded successfully! Prepare init params! */
-    init_params.version = 1;
-    init_params.p_install_funcs = ssh_install_func;
-    init_params.p_get_current_terminal_dimensions = get_current_terminal_dimensions;
-    init_params.p_get_current_terminal_type = get_current_terminal_type;
-    init_params.p_ssh_get_uid = ssh_get_uid;
-    init_params.p_ssh_get_pw = ssh_get_pw;
-    init_params.p_ssh_get_nodelay_enabled = ssh_get_nodelay_enabled;
-    init_params.p_dodebug = dodebug;
-    init_params.p_vscrnprintf = Vscrnprintf;
-    init_params.p_uq_txt = uq_txt;
-    init_params.p_uq_mtxt = uq_mtxt;
-    init_params.p_uq_ok = uq_ok;
-    init_params.p_uq_file = uq_file;
-    init_params.p_zmkdir = zmkdir;
-    init_params.p_ckmakxmsg = ckmakxmsg;
-    init_params.p_whoami = whoami;
-    init_params.p_GetHomePath = GetHomePath;
-    init_params.p_GetHomeDrive = GetHomeDrive;
-    init_params.p_ckstrncpy = ckstrncpy;
-    init_params.p_debug_logging = debug_logging;
-    init_params.p_get_display = tn_get_display;                  /* ckctel.c */
-    init_params.p_parse_displayname = fwdx_parse_displayname;    /* ckctel.c */
+    init.version = 1;
+    init.callbackp_install_dllfunc = callback_install_dllfunc;
+    init.callbackp_get_current_terminal_dimensions = callback_get_current_terminal_dimensions;
+    init.callbackp_get_current_terminal_type = callback_get_current_terminal_type;
+    init.callbackp_ssh_get_uid = callback_ssh_get_uid;
+    init.callbackp_ssh_get_pw = callback_ssh_get_pw;
+    init.callbackp_ssh_get_nodelay_enabled = callback_ssh_get_nodelay_enabled;
+    init.callbackp_ssh_open_socket = callback_ssh_open_socket;
+    init.callbackp_dodebug = callback_dodebug;
+    init.callbackp_scrnprint = callback_scrnprint;
+    init.callbackp_uq_txt = callback_uq_txt;
+    init.callbackp_uq_mtxt = callback_uq_mtxt;
+    init.callbackp_uq_ok = callback_uq_ok;
+    init.callbackp_uq_file = callback_uq_file;
+    init.callbackp_zmkdir = callback_zmkdir;
+    init.callbackp_ckmakxmsg = callback_ckmakxmsg;
+    init.callbackp_whoami = callback_whoami;
+    init.callbackp_GetAppData = callback_GetAppData;
+    init.callbackp_GetHomePath = callback_GetHomePath;
+    init.callbackp_GetHomeDrive = callback_GetHomeDrive;
+    init.callbackp_ckstrncpy = callback_ckstrncpy;
+    init.callbackp_debug_logging = callback_debug_logging;
+    init.callbackp_get_display = callback_get_display;
+    init.callbackp_parse_displayname = callback_parse_displayname;
 
     /* Initialise! */
-    rc = init(&init_params);
+    debug(F100, "Call ssh_dll_init()", NULL, 0);
+    rc = dllentryp_ssh_init(&init);
 
     /* TODO: Check all mandatory functions are available */
 
@@ -450,6 +622,12 @@ int ssh_load(char* dllname) {
 
         return -1;
     }
+
+#ifdef CK_COLORS_24BIT
+    if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
+        ssh_set_environment_variable("COLORTERM", "truecolor");
+    }
+#endif
 
     ssh_subsystem_loaded = TRUE;
     debug(F111, "SSH DLL loaded", dllname, rc);
@@ -471,50 +649,58 @@ int ssh_dll_unload(int quiet) {
     /* TODO: Kill any active SSH connection. Then perhaps make this an
      *       invisible command: "ssh unload" */
 
-    if (p_ssh_unload) {
-        p_ssh_unload();
+    if (dllfuncp_ssh_unload) {
+        dllfuncp_ssh_unload();
     }
 
     ssh_subsystem_loaded = FALSE;
 
-    p_ssh_set_iparam = NULL;
-    p_ssh_get_iparam = NULL;
-    p_ssh_set_sparam = NULL;
-    p_ssh_get_sparam = NULL;
-    p_ssh_open = NULL;
-    p_ssh_clos = NULL;
-    p_ssh_tchk = NULL;
-    p_ssh_flui = NULL;
-    p_ssh_break = NULL;
-    p_ssh_inc = NULL;
-    p_ssh_xin = NULL;
-    p_ssh_toc = NULL;
-    p_ssh_tol = NULL;
-    p_ssh_snaws = NULL;
-    p_ssh_proto_ver = NULL;
-    p_ssh_impl_ver = NULL;
-    p_sshkey_create = NULL;
-    p_sshkey_display_fingerprint = NULL;
-    p_sshkey_display_public = NULL;
-    p_sshkey_display_public_as_ssh2 = NULL;
-    p_sshkey_change_passphrase = NULL;
-    p_ssh_fwd_remote_port = NULL;
-    p_ssh_fwd_local_port = NULL;
-    p_ssh_fwd_clear_remote_ports = NULL;
-    p_ssh_fwd_clear_local_ports = NULL;
-    p_ssh_fwd_remove_remote_port = NULL;
-    p_ssh_fwd_remove_local_port = NULL;
-    p_ssh_fwd_get_ports = NULL;
+    dllentryp_ssh_init = NULL;
+
+    dllfuncp_ssh_set_iparam = NULL;
+    dllfuncp_ssh_get_iparam = NULL;
+    dllfuncp_ssh_set_sparam = NULL;
+    dllfuncp_ssh_get_sparam = NULL;
+    dllfuncp_ssh_set_identity_files = NULL;
+    dllfuncp_ssh_get_socket = NULL;
+    dllfuncp_ssh_open = NULL;
+    dllfuncp_ssh_clos = NULL;
+    dllfuncp_ssh_tchk = NULL;
+    dllfuncp_ssh_flui = NULL;
+    dllfuncp_ssh_break = NULL;
+    dllfuncp_ssh_inc = NULL;
+    dllfuncp_ssh_xin = NULL;
+    dllfuncp_ssh_toc = NULL;
+    dllfuncp_ssh_tol = NULL;
+    dllfuncp_ssh_snaws = NULL;
+    dllfuncp_ssh_proto_ver = NULL;
+    dllfuncp_ssh_impl_ver = NULL;
+    dllfuncp_sshkey_create = NULL;
+    dllfuncp_sshkey_display_fingerprint = NULL;
+    dllfuncp_sshkey_display_public = NULL;
+    dllfuncp_sshkey_display_public_as_ssh2 = NULL;
+    dllfuncp_sshkey_change_passphrase = NULL;
+    dllfuncp_ssh_fwd_remote_port = NULL;
+    dllfuncp_ssh_fwd_local_port = NULL;
+    dllfuncp_ssh_fwd_clear_remote_ports = NULL;
+    dllfuncp_ssh_fwd_clear_local_ports = NULL;
+    dllfuncp_ssh_fwd_remove_remote_port = NULL;
+    dllfuncp_ssh_fwd_remove_local_port = NULL;
+    dllfuncp_ssh_fwd_get_ports = NULL;
 #ifdef SSHTEST
-    p_sshkey_v1_change_comment = NULL;  /* TODO */
+    dllfuncp_sshkey_v1_change_comment = NULL;  /* TODO */
 #endif /* SSHTEST */
-    /*  p_sshkey_default_file = NULL;*/ /* TODO */
-    p_ssh_v2_rekey = NULL;  /* TODO */
-    p_ssh_agent_delete_file = NULL;    /* TODO */
-    p_ssh_agent_delete_all = NULL;  /* TODO */
-    p_ssh_agent_add_file = NULL;  /* TODO */
-    p_ssh_agent_list_identities = NULL;    /* TODO */
-    p_ssh_unload = NULL;
+    /*  dllfuncp_sshkey_default_file = NULL;*/ /* TODO */
+    dllfuncp_ssh_v2_rekey = NULL;  /* TODO */
+    dllfuncp_ssh_agent_delete_file = NULL;    /* TODO */
+    dllfuncp_ssh_agent_delete_all = NULL;  /* TODO */
+    dllfuncp_ssh_agent_add_file = NULL;  /* TODO */
+    dllfuncp_ssh_agent_list_identities = NULL;    /* TODO */
+    dllfuncp_ssh_set_environment_variable = NULL;
+    dllfuncp_ssh_clear_environment_variables = NULL;
+    dllfuncp_ssh_unload = NULL;
+    dllfuncp_ssh_get_set_help = NULL;
+    dllfuncp_ssh_get_help = NULL;
 
     #ifdef NT
     FreeLibrary(hSSH);
@@ -533,7 +719,6 @@ int ssh_dll_unload(int quiet) {
  */
 int ssh_dll_load(const char* dll_names, int quiet) {
     int rc = 0;
-    int len, index=0;
     char* dlls;
     char* dll;
     char* delim = ";";
@@ -579,7 +764,7 @@ int ssh_dll_load(const char* dll_names, int quiet) {
  * has been loaded and initialised)
  * @return True if SSH commands are available
  */
-int ssh_avail() {
+int ssh_avail(void) {
     return ssh_subsystem_loaded;
 }
 
@@ -587,7 +772,7 @@ int ssh_avail() {
  *
  * @return SSH DLL filename
  */
-const char* ssh_dll_name() {
+const char* ssh_dll_name(void) {
     if (ssh_avail())
         return dll_name;
     return NULL;
@@ -597,15 +782,15 @@ const char* ssh_dll_name() {
  *
  * @return SSH DLL version
  */
-const char* ssh_dll_ver() {
-    if (p_ssh_dll_ver)
-        return p_ssh_dll_ver();
+const char* ssh_dll_ver(void) {
+    if (dllfuncp_ssh_dll_ver)
+        return dllfuncp_ssh_dll_ver();
     return NULL;
 }
 
 int ssh_set_iparam(int param, int value) {
-    if (p_ssh_set_iparam)
-        return p_ssh_set_iparam(param, value);
+    if (dllfuncp_ssh_set_iparam)
+        return dllfuncp_ssh_set_iparam(param, value);
 
     /* ERROR - this function is mandatory */
 
@@ -614,8 +799,8 @@ int ssh_set_iparam(int param, int value) {
 
 
 int ssh_get_iparam(int param) {
-    if (p_ssh_get_iparam)
-        return p_ssh_get_iparam(param);
+    if (dllfuncp_ssh_get_iparam)
+        return dllfuncp_ssh_get_iparam(param);
 
     /* These are the default values for the various settings in K95 2.1.3 */
     switch(param) {
@@ -649,8 +834,8 @@ int ssh_get_iparam(int param) {
 }
 
 int ssh_set_sparam(int param, const char* value) {
-    if (p_ssh_set_sparam)
-        return p_ssh_set_sparam(param, value);
+    if (dllfuncp_ssh_set_sparam)
+        return dllfuncp_ssh_set_sparam(param, value);
 
     /* ERROR - this function is mandatory */
 
@@ -658,10 +843,30 @@ int ssh_set_sparam(int param, const char* value) {
 }
 
 const char* ssh_get_sparam(int param) {
-    if (p_ssh_get_sparam)
-        return p_ssh_get_sparam(param);
+    if (dllfuncp_ssh_get_sparam)
+        return dllfuncp_ssh_get_sparam(param);
 
     return NULL;
+}
+
+/** Set the list of identity files to use for authentication.
+ * @param identity_files The list of identity file names, null terminated.
+ */
+int ssh_set_identity_files(const char** identity_files) {
+    if (dllfuncp_ssh_set_identity_files)
+        return dllfuncp_ssh_set_identity_files(identity_files);
+    return -1;
+}
+
+/** Get the socket currently in use by the SSH client.
+ *
+ * @returns Socket for the current SSH connection, or -1 if not implemented or
+ *      no active connection
+ */
+int ssh_get_socket(void) {
+    if (dllfuncp_ssh_get_socket)
+        return dllfuncp_ssh_get_socket();
+    return -1;
 }
 
 /** Opens an SSH connection. Connection parameters are passed through global
@@ -669,9 +874,9 @@ const char* ssh_get_sparam(int param) {
  *
  * @return An error code (0 = success)
  */
-int ssh_open(){
-    if (p_ssh_open)
-        return p_ssh_open();
+int ssh_open(void){
+    if (dllfuncp_ssh_open)
+        return dllfuncp_ssh_open();
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -684,9 +889,9 @@ int ssh_open(){
  *
  * @return  0 on success, < 0 on failure.
  */
-int ssh_clos() {
-    if (p_ssh_clos)
-        return p_ssh_clos();
+int ssh_clos(void) {
+    if (dllfuncp_ssh_clos)
+        return dllfuncp_ssh_clos();
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -702,9 +907,9 @@ int ssh_clos() {
  * @return >= 0 indicates number of bytes waiting to be read
  *          < 0 indicates a fatal error and the connection should be closed.
  */
-int ssh_tchk() {
-    if (p_ssh_tchk)
-        return p_ssh_tchk();
+int ssh_tchk(void) {
+    if (dllfuncp_ssh_tchk)
+        return dllfuncp_ssh_tchk();
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -717,9 +922,9 @@ int ssh_tchk() {
  *
  * @return 0 on success, < 0 on error
  */
-int ssh_flui() {
-    if (p_ssh_flui)
-        return p_ssh_flui();
+int ssh_flui(void) {
+    if (dllfuncp_ssh_flui)
+        return dllfuncp_ssh_flui();
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -733,9 +938,9 @@ int ssh_flui() {
  *
  * @return
  */
-int ssh_break() {
-   if (p_ssh_break)
-        return p_ssh_break();
+int ssh_break(void) {
+   if (dllfuncp_ssh_break)
+        return dllfuncp_ssh_break();
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -751,8 +956,8 @@ int ssh_break() {
  * @return -1 for timeout, >= 0 is a valid character, < -1 is a fatal error
  */
 int ssh_inc(int timeout) {
-    if (p_ssh_inc)
-        return p_ssh_inc(timeout);
+    if (dllfuncp_ssh_inc)
+        return dllfuncp_ssh_inc(timeout);
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -772,8 +977,8 @@ int ssh_inc(int timeout) {
  * @return >= 0 indicates the number of characters read, < 0 indicates error
  */
 int ssh_xin(int count, char * buffer) {
-    if (p_ssh_xin)
-        return p_ssh_xin(count, buffer);
+    if (dllfuncp_ssh_xin)
+        return dllfuncp_ssh_xin(count, buffer);
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -789,8 +994,8 @@ int ssh_xin(int count, char * buffer) {
  * @return 0 for success, <0 for error
  */
 int ssh_toc(int c) {
-    if (p_ssh_toc)
-        return p_ssh_toc(c);
+    if (dllfuncp_ssh_toc)
+        return dllfuncp_ssh_toc(c);
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -806,8 +1011,8 @@ int ssh_toc(int c) {
  * @return  >= 0 for number of characters sent, <0 for a fatal error.
  */
 int ssh_tol(char * buffer, int count) {
-    if (p_ssh_tol)
-        return p_ssh_tol(buffer, count);
+    if (dllfuncp_ssh_tol)
+        return dllfuncp_ssh_tol(buffer, count);
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -820,9 +1025,9 @@ int ssh_tol(char * buffer, int count) {
  * and terminal type if these have changed.
  *
  */
-int ssh_snaws() {
-    if (p_ssh_snaws)
-        return p_ssh_snaws();
+int ssh_snaws(void) {
+    if (dllfuncp_ssh_snaws)
+        return dllfuncp_ssh_snaws();
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -845,8 +1050,8 @@ int ssh_snaws() {
  * @returns 0 on success
  */
 int ssh_fwd_remote_port(char* address, int port, char * host, int host_port, BOOL apply) {
-    if (p_ssh_fwd_remote_port)
-        return p_ssh_fwd_remote_port(address, port, host, host_port, apply);
+    if (dllfuncp_ssh_fwd_remote_port)
+        return dllfuncp_ssh_fwd_remote_port(address, port, host, host_port, apply);
 
     /* optional feature not available */
 
@@ -867,8 +1072,8 @@ int ssh_fwd_remote_port(char* address, int port, char * host, int host_port, BOO
  * @returns 0 on success
  */
 int ssh_fwd_local_port(char* address, int port, char *host, int host_port, BOOL apply) {
-    if (p_ssh_fwd_local_port)
-        return p_ssh_fwd_local_port(address, port, host, host_port, apply);
+    if (dllfuncp_ssh_fwd_local_port)
+        return dllfuncp_ssh_fwd_local_port(address, port, host, host_port, apply);
 
     /* optional feature not available */
 
@@ -881,8 +1086,8 @@ int ssh_fwd_local_port(char* address, int port, char *host, int host_port, BOOL 
  * @returns 0 on success
  */
 int ssh_fwd_clear_remote_ports(BOOL apply) {
-    if (p_ssh_fwd_clear_remote_ports)
-        return p_ssh_fwd_clear_remote_ports(apply);
+    if (dllfuncp_ssh_fwd_clear_remote_ports)
+        return dllfuncp_ssh_fwd_clear_remote_ports(apply);
 
     /* optional feature not available */
 
@@ -895,8 +1100,8 @@ int ssh_fwd_clear_remote_ports(BOOL apply) {
  * @returns 0 on success
  */
 int ssh_fwd_clear_local_ports(BOOL apply) {
-    if (p_ssh_fwd_clear_local_ports)
-        return p_ssh_fwd_clear_local_ports(apply);
+    if (dllfuncp_ssh_fwd_clear_local_ports)
+        return dllfuncp_ssh_fwd_clear_local_ports(apply);
 
     /* optional feature not available */
 
@@ -911,8 +1116,8 @@ int ssh_fwd_clear_local_ports(BOOL apply) {
  * @return 0 on success
  */
 int ssh_fwd_remove_remote_port(int port, BOOL apply) {
-        if (p_ssh_fwd_remove_remote_port)
-        return p_ssh_fwd_remove_remote_port(port, apply);
+        if (dllfuncp_ssh_fwd_remove_remote_port)
+        return dllfuncp_ssh_fwd_remove_remote_port(port, apply);
 
     /* optional feature not available */
 
@@ -927,8 +1132,8 @@ int ssh_fwd_remove_remote_port(int port, BOOL apply) {
  * @return 0 on success
  */
 int ssh_fwd_remove_local_port(int port, BOOL apply) {
-    if (p_ssh_fwd_remove_local_port)
-        return p_ssh_fwd_remove_local_port(port, apply);
+    if (dllfuncp_ssh_fwd_remove_local_port)
+        return dllfuncp_ssh_fwd_remove_local_port(port, apply);
 
     /* optional feature not available */
 
@@ -940,9 +1145,9 @@ int ssh_fwd_remove_local_port(int port, BOOL apply) {
  *
  * @returns List of forwarded ports, or NULL on error or empty list
  */
-const ssh_port_forward_t* ssh_fwd_get_ports() {
-    if (p_ssh_fwd_get_ports)
-        return p_ssh_fwd_get_ports();
+const ssh_port_forward_t* ssh_fwd_get_ports(void) {
+    if (dllfuncp_ssh_fwd_get_ports)
+        return dllfuncp_ssh_fwd_get_ports();
 
     /* optional feature not available */
 
@@ -960,8 +1165,8 @@ const ssh_port_forward_t* ssh_fwd_get_ports() {
  */
 int sshkey_create(char * filename, int bits, char *pp, int type,
                   char *cmd_comment) {
-    if (p_sshkey_create)
-        return p_sshkey_create(filename, bits, pp, type, cmd_comment);
+    if (dllfuncp_sshkey_create)
+        return dllfuncp_sshkey_create(filename, bits, pp, type, cmd_comment);
 
     /* optional feature not available */
 
@@ -976,8 +1181,8 @@ int sshkey_create(char * filename, int bits, char *pp, int type,
  * @return 0
  */
 int sshkey_display_fingerprint(char * filename, int babble) {
-    if (p_sshkey_display_fingerprint)
-        return p_sshkey_display_fingerprint(filename, babble);
+    if (dllfuncp_sshkey_display_fingerprint)
+        return dllfuncp_sshkey_display_fingerprint(filename, babble);
 
     /* optional feature not available */
 
@@ -990,8 +1195,8 @@ int sshkey_display_fingerprint(char * filename, int babble) {
  * @param passphrase key passphrase - will be prompted if not specified
  */
 int sshkey_display_public(char * filename, char *identity_passphrase) {
-    if (p_sshkey_display_public)
-        return p_sshkey_display_public(filename, identity_passphrase);
+    if (dllfuncp_sshkey_display_public)
+        return dllfuncp_sshkey_display_public(filename, identity_passphrase);
 
     /* optional feature not available */
 
@@ -1004,8 +1209,8 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
  * @param identity_passphrase key passphrase - will be prompted if not specified
  */
 int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
-    if (p_sshkey_display_public_as_ssh2)
-        return p_sshkey_display_public_as_ssh2(filename, identity_passphrase);
+    if (dllfuncp_sshkey_display_public_as_ssh2)
+        return dllfuncp_sshkey_display_public_as_ssh2(filename, identity_passphrase);
 
     /* optional feature not available */
 
@@ -1013,8 +1218,8 @@ int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
 }
 
 int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
-    if (p_sshkey_change_passphrase)
-        return p_sshkey_change_passphrase(filename, oldpp, newpp);
+    if (dllfuncp_sshkey_change_passphrase)
+        return dllfuncp_sshkey_change_passphrase(filename, oldpp, newpp);
 
     /* optional feature not available */
 
@@ -1023,8 +1228,8 @@ int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
 
 #ifdef SSHTEST
 int sshkey_v1_change_comment(char * filename, char * comment, char * pp) {
-    if (p_sshkey_v1_change_comment)
-        return p_sshkey_v1_change_comment(filename, comment, pp);
+    if (dllfuncp_sshkey_v1_change_comment)
+        return dllfuncp_sshkey_v1_change_comment(filename, comment, pp);
 
     /* optional feature not available */
 
@@ -1038,9 +1243,9 @@ char * sshkey_default_file(int a) {
 }
 #endif
 
-void ssh_v2_rekey() {
-    if (p_ssh_v2_rekey)
-        p_ssh_v2_rekey();
+void ssh_v2_rekey(void) {
+    if (dllfuncp_ssh_v2_rekey)
+        dllfuncp_ssh_v2_rekey();
 
     /* optional feature not available */
 }
@@ -1049,9 +1254,9 @@ void ssh_v2_rekey() {
  *
  * @return Current protocol version (eg, "SSH-2.0")
  */
-const char * ssh_proto_ver() {
-    if (p_ssh_proto_ver)
-        return p_ssh_proto_ver();
+const char * ssh_proto_ver(void) {
+    if (dllfuncp_ssh_proto_ver)
+        return dllfuncp_ssh_proto_ver();
 
     return NULL;
 }
@@ -1059,25 +1264,25 @@ const char * ssh_proto_ver() {
 /** Return the current SSH backend/implementation version.
  * @return SSH backend/implementation version
  */
-const char * ssh_impl_ver() {
-    if (p_ssh_impl_ver)
-        return p_ssh_impl_ver();
+const char * ssh_impl_ver(void) {
+    if (dllfuncp_ssh_impl_ver)
+        return dllfuncp_ssh_impl_ver();
 
     return NULL;
 }
 
 int ssh_agent_delete_file(const char *filename) {
-    if (p_ssh_agent_delete_file)
-        return p_ssh_agent_delete_file(filename);
+    if (dllfuncp_ssh_agent_delete_file)
+        return dllfuncp_ssh_agent_delete_file(filename);
 
     /* optional feature not available */
 
     return -1;
 }
 
-int ssh_agent_delete_all() {
-    if (p_ssh_agent_delete_all)
-        return p_ssh_agent_delete_all();
+int ssh_agent_delete_all(void) {
+    if (dllfuncp_ssh_agent_delete_all)
+        return dllfuncp_ssh_agent_delete_all();
 
     /* optional feature not available */
 
@@ -1085,8 +1290,8 @@ int ssh_agent_delete_all() {
 }
 
 int ssh_agent_add_file (const char *filename) {
-    if (p_ssh_agent_add_file)
-        return p_ssh_agent_add_file(filename);
+    if (dllfuncp_ssh_agent_add_file)
+        return dllfuncp_ssh_agent_add_file(filename);
 
     /* optional feature not available */
 
@@ -1094,12 +1299,29 @@ int ssh_agent_add_file (const char *filename) {
 }
 
 int ssh_agent_list_identities(int do_fp) {
-    if (p_ssh_agent_list_identities)
-        return p_ssh_agent_list_identities(do_fp);
+    if (dllfuncp_ssh_agent_list_identities)
+        return dllfuncp_ssh_agent_list_identities(do_fp);
 
     /* optional feature not available */
 
     return -1;
+}
+
+/** Attempts to send an environment variable to the remote host on connect
+ */
+int ssh_set_environment_variable(const char *name, const char *value) {
+    if (dllfuncp_ssh_set_environment_variable)
+        return dllfuncp_ssh_set_environment_variable(name, value);
+
+    return -1;
+}
+
+/** Clears any environment variables previously set with
+ * ssh_set_environment_variable so they are not set on the next connection
+ */
+int ssh_clear_environment_variables() {
+    if (dllfuncp_ssh_clear_environment_variables)
+        return dllfuncp_ssh_clear_environment_variables();
 }
 
 /** Gets the specified keyword table.
@@ -1108,8 +1330,8 @@ int ssh_agent_list_identities(int do_fp) {
  * @return the requested keyword table
  */
 ktab_ret ssh_get_keytab(int keytab_id) {
-    if (p_ssh_get_keytab)
-        return p_ssh_get_keytab(keytab_id);
+    if (dllfuncp_ssh_get_keytab)
+        return dllfuncp_ssh_get_keytab(keytab_id);
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -1130,9 +1352,39 @@ ktab_ret ssh_get_keytab(int keytab_id) {
  * @return TRUE if the feature is supported, or FALSE if it is not
  */
 int ssh_feature_supported(int feature_id) {
-    if (p_ssh_feature_supported)
-        return p_ssh_feature_supported(feature_id);
+    if (dllfuncp_ssh_feature_supported)
+        return dllfuncp_ssh_feature_supported(feature_id);
     return FALSE; /* No features supported! */
+}
+
+const char** ssh_get_set_help(void) {
+    const char** result;
+    static const char *hmxyssh[] = {
+"No help content for SET SSH was provided by the currently loaded SSH backend.",
+""
+};
+    if (dllfuncp_ssh_get_set_help)
+        result = dllfuncp_ssh_get_set_help();
+
+    if (result != NULL)
+        return result;
+
+    return hmxyssh;
+}
+
+const char** ssh_get_help(void) {
+    const char** result;
+    static const char *hmxyssh[] = {
+"No help content for SSH was provided by the currently loaded SSH backend.",
+""
+};
+    if (dllfuncp_ssh_get_help)
+        result = dllfuncp_ssh_get_help();
+
+    if (result != NULL)
+        return result;
+
+    return hmxyssh;
 }
 
 

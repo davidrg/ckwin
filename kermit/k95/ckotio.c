@@ -141,7 +141,7 @@ _PROTOTYP( void DisplayCommProperties, (HANDLE));
 #define CKWIsWinVerOrGreater(ver) (FALSE)
 #endif /* _MSC_VER */
 #else /* __WATCOMC__ */
-/* OpenWatcom doesn't have versionhelpers.h */
+/* Open Watcom doesn't have versionhelpers.h */
 #define CKWIsWinVerOrGreater(ver) (FALSE)
 #endif /* __WATCOMC__ */
 #endif /* NT */
@@ -190,12 +190,20 @@ static char *ckxrev = "32-bit";
 #define INCL_DOSDATETIME
 #define INCL_DOSNMPIPES
 #include <os2.h>        /* This pulls in a whole load of stuff */
+#undef COMMENT
+#endif /* NT */
+
 #ifdef CK_REXX
+
+#ifdef NT
+/* Regina REXX wants to typedef char to CHAR, but we already do that */
+#define CHAR_TYPEDEFED
+#define USHORT_TYPEDEFED
+#endif
+
 #define  INCL_REXXSAA
 #include <rexxsaa.h>
 #endif /* CK_REXX */
-#undef COMMENT
-#endif /* NT */
 
 #include "ckowin.h"
 #include "ckcuni.h"
@@ -203,6 +211,17 @@ static char *ckxrev = "32-bit";
 #include "ckcsig.h"
 #include "ckokey.h"
 #include "ckoslp.h"
+
+#ifdef KUI
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
+#endif /* KUI */
+extern ULONG RGBTable[], RGBTable256[], RGBTable88[];
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
 
 #ifdef CK_XYZ
 #include "p.h"
@@ -263,7 +282,7 @@ int ck_security_loaddll();
 #endif /* CK_SECURITY */
 
 #ifdef __WATCOMC__
-/* The Watcom headers (in OpenWatcom 1.9 at least) don't seem to
+/* The Watcom headers (in Open Watcom 1.9 at least) don't seem to
  * have _tzset(), but they do have tzset()... */
 #define _tzset tzset
 #endif /* __WATCOMC__ */
@@ -285,6 +304,11 @@ int Shutdown = FALSE;
 extern int tt_status[VNUM] ;
 int k95stdin=0,k95stdout=0;
 extern int inserver, local;
+
+/* This is set by prescan() if the -h flag was given. In this case we want to
+ * skip some parts of startup in order to preserve the console and exit
+ * faster */
+int usageparm = 0;
 
 #ifdef CHAR
 #undef CHAR
@@ -412,12 +436,31 @@ extern int os2pm;
 char *dftty = "0"; /* stdin */
 int dfloc = 0;
 #else
+
+/* For K95G we used to just assume the user was going to
+ * use a modem attached to COM1 and so go and open that
+ * device automatically on startup if nothing else had
+ * it open. In 2024 this behaviour is less likely to be
+ * useful, so now K95G behaves as K95 does - it opens
+ * stdin instead so as to not unexpectedly lock resources
+ * that might be needed by other applications. The
+ * original COM1 opening code is left below primarily as
+ * an example of how dftty and dfloc work.
+ */
+
+#ifdef COMMENT
 char *dftty = "com1"; /* COM1 */
 int dfloc = 1;
+#else /* COMMENT */
+char *dftty = "0"; /* stdin */
+int dfloc = 0;
+#endif /* COMMENT */
+
 #endif /* K95G */
 
 int OSVer = 0;
 int nt351 = 0;
+int nt5 = 0;
 
 #ifdef NTSIG
 int TlsIndex = 0;
@@ -1670,6 +1713,7 @@ sysinit() {
                 OSVer = osverinfo.dwPlatformId ;
 
             if (osverinfo.dwMajorVersion < 4) nt351 = 1; /* We're on NT 3.51 */
+            if (osverinfo.dwMajorVersion > 4) nt5 = 1; /* We're on Win2k or newer */
 
 #ifndef CK_UTSNAME
             sprintf(ckxsystem, " %s %1d.%02d(%1d)%s%s",
@@ -1866,6 +1910,7 @@ sysinit() {
     CreateKeyMapInitSem( FALSE ) ;
     CreateVscrnDirtySem( TRUE );
 #endif /* NOLOCAL */
+    CreateZoutDumpMutex( FALSE );
 
 #ifndef NOSETKEY
     keymapinit();                       /* Initialize key maps */
@@ -1925,7 +1970,11 @@ sysinit() {
 #ifdef IKSD
     if ( !inserver )
 #endif /* IKSD */
-    KbdHandlerInit() ;
+    if ( !usageparm ) {
+        /* If we're just going to show usage info and exit, we don't need a
+         * keyboard handler. Starting it just slows down our escape. */
+        KbdHandlerInit();
+    }
 #endif /* KUI */
 #endif /* NOLOCAL */
 
@@ -1974,8 +2023,7 @@ sysinit() {
 #endif /* NT */
 
     getcmdcolor();
-    os2gettitle(szOldTitle, sizeof(szOldTitle));
-    debug(F110,"sysinit szOldTitle",szOldTitle,0);
+    os2gettitle(szOldTitle, sizeof(szOldTitle));debug(F110,"sysinit szOldTitle",szOldTitle,0);
     os2settitle("", TRUE);
 #endif /* NOLOCAL */
 
@@ -2032,10 +2080,10 @@ sysinit() {
     }
 
 
-#ifdef __IBMC__
+#ifdef OS2ONLY
     setvbuf(stdout, NULL, _IONBF, 0);
     setmode(1, _O_TEXT);
-#endif /* __IBMC__ */
+#endif /* OS2ONLY */
 
 #ifdef NT
     {
@@ -2103,6 +2151,19 @@ sysinit() {
             ttgwsiz() ;
     }
 
+#ifdef KUI
+    {
+        int i;
+        // Initialise the backup copies of the RGB colour tables
+        for (i = 0; i < 256; i++) SavedRGBTable256[i] = RGBTable256[i];
+        for (i = 0; i < 88; i++) SavedRGBTable88[i] = RGBTable88[i];
+        for (i = 0; i < 16; i++) SavedRGBTable[i] = RGBTable[i];
+#ifdef CK_PALETTE_WY370
+        for (i = 0; i < 65; i++) SavedWY370RGBTable[i] = WY370RGBTable[i];
+#endif /* CK_PALETTE_WY370 */
+    }
+#endif /* KUI*/
+
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
     VscrnInit( VCMD ) ;
@@ -2161,7 +2222,7 @@ sysinit() {
 #ifndef NOLOCAL
 #ifndef KUI
 #ifdef ONETERMUPD
-    if ( !(inserver && k95stdout) )
+    if ( !k95stdout )
         tidTermScrnUpd = (TID) ckThreadBegin( &TermScrnUpd,
                                           THRDSTKSIZ, 0, TRUE, 0 ) ;
 #endif /* ONETERMUPD */
@@ -2455,6 +2516,7 @@ syscleanup() {
 #endif /* ! KUI */
 #endif /* NT */
     CloseThreadMgmtMutex() ;
+    CloseZoutDumpMutex();
     debug(F100,"Close Mutexes and Semaphores done","",0);
 
 #ifndef NOLOCAL
@@ -2510,7 +2572,7 @@ ttimoff() {                             /* Turn off any timer interrupts */
 
 
 /* O S 2 S E T T I M O -- set read and write timeouts */
-
+/* spd is connetion speed, modem is if connection is via modem or not */
 int
 os2settimo(int spd, int modem)
 {
@@ -2536,6 +2598,12 @@ os2settimo(int spd, int modem)
 
     if ( maxow > maxow_usr )
         maxow = maxow_usr;
+
+    /* A number of values are divided by spd, making a zero-value a bit risky.
+     * While we only get zero passed in here by sysinit() which happens to work
+     * during program start, we're better off forcing a valid value just in case. */
+    if (spd <= 0)
+        spd = 1;
 
 #ifdef CK_TAPI
     if ( tttapi && !tapipass ) {
@@ -7415,7 +7483,7 @@ loadtod( int hh, int mm )
 
 int
 conoc(char c) {
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
     extern int wherex[];    /* Screen column, 1-based */
     extern int wherey[];        /* Screen row, 1-based */
 
@@ -7464,7 +7532,7 @@ conxo(int x, char *s) {
 
 int
 conol(char *s) {
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
 
     if ( s == NULL )
         return(-1);
@@ -7726,6 +7794,8 @@ congev( int vmode, int timo ) {
     ULONG timeout = 0;
     con_event evt ;
     int tt,tr,interval,i ;
+
+    memset(&evt,0,sizeof(con_event));
 
 #ifdef IKSD
     if ( inserver ) {
@@ -8931,14 +9001,14 @@ pclose(FILE *pipe) {
 static DWORD exitcode;
 
 void
-ttruncmd2( HANDLE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     DWORD io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = ReadFile( pipe, &outc, 1, &io, NULL ) )
+        if ( success = ReadFile( (HANDLE)pipe, &outc, 1, &io, NULL ) )
         {
             ttoc(outc) ;
         }
@@ -9159,7 +9229,7 @@ ttruncmd(char * cmd)
         CloseHandle(procinfo.hThread);
 
         exitcode = STILL_ACTIVE;
-        _beginthread( ttruncmd2, 65536, hChildStdoutRd );
+        _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );
         do {
             DWORD io ;
             int  inc ;
@@ -9204,14 +9274,14 @@ ttruncmd(char * cmd)
 #define STILL_ACTIVE -1L
 static ULONG exitcode = 0;
 void
-ttruncmd2( HFILE pipe )
+ttruncmd2( void *pipe )
 {
     int success = 1;
     CHAR outc;
     ULONG io;
 
     while ( success && exitcode == STILL_ACTIVE ) {
-        if ( success = !DosRead( pipe, &outc, 1, &io ) )
+        if ( success = !DosRead( (HFILE)pipe, &outc, 1, &io ) )
         {
             ttoc(outc) ;
         }
@@ -9308,7 +9378,7 @@ ttruncmd(cmd) char *cmd; { /* Return: 0 = failure, 1 = success */
     debug(F111,"ttruncmd","PID",pid);
 
     exitcode = STILL_ACTIVE;
-    _beginthread( ttruncmd2, 0, 65536, hChildStdoutRd );
+    _beginthread( ttruncmd2, 0, 65536, (void *)hChildStdoutRd );
     do {
         ULONG io ;
         int inc ;
@@ -9402,7 +9472,10 @@ conkbg(void) {
 
     *p = '\0';
 
-/* TODO: This doesn't build on openwatcom currently*/
+/* TODO: This doesn't build on Open Watcom currently :
+ *      OpenWatcom names some of the KBDHWID struct members differently,
+ *      and KbdGetHWID produces an "undefined symbol KBD16GETHWID_"
+ *      link error */
 #ifndef __WATCOMC__
     memset( &kbID, 0, sizeof(kbID) ) ;
 
@@ -9525,6 +9598,92 @@ get_os2_vers() {
 extern char * mrval[] ;
 extern int maclvl ;
 
+#ifdef NT
+LONG APIENTRY os2rexx_exit_handler(
+        LONG ExitNumber,
+        LONG Subfunction,
+        PEXIT ParamBlock
+        ) {
+
+    debug(F111, "os2rexx_exit_handler", "ExitNumber", ExitNumber);
+    debug(F111, "os2rexx_exit_handler", "Subfunction", Subfunction);
+
+    switch(ExitNumber) {
+        case RXSIO: {
+            switch(Subfunction) {
+                case RXSIOSAY:
+                    {
+                        RXSIOSAY_PARM *param;
+                        RXSTRING sayString;
+
+                        param = (RXSIOSAY_PARM*)ParamBlock;
+                        sayString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(sayString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(sayString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(sayString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - say", buf, 0);
+
+                                printf("%s\n", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
+                case RXSIOTRC:
+                    {
+                        RXSIOTRC_PARM *param;
+                        RXSTRING trcString;
+
+                        param = (RXSIOTRC_PARM*)ParamBlock;
+                        trcString = param->rxsio_string;
+
+                        if (RXVALIDSTRING(trcString)) {
+                            char* buf = NULL;
+                            int len = RXSTRLEN(trcString) ;
+
+                            if (len > 0) {
+                                buf = malloc((len + 1) * sizeof(char));
+                                memcpy(buf, RXSTRPTR(trcString), len);
+                                buf[len] = '\0';
+
+                                debug(F110, "os2rexx_exit_handler - trc", buf, 0);
+
+                                printf("%s\n", buf);
+                                free(buf);
+                            }
+                        }
+
+                        return RXEXIT_HANDLED;
+                    }
+                    break;
+                case RXSIOTRD:
+                case RXSIODTR:
+                case RXSIOTLL:
+                default:
+                    return RXEXIT_NOT_HANDLED;
+                    break;
+            }
+        }
+        break;
+    case RXFNC:
+        /* TODO: Handle RexxUtil Console I/O functions */
+    default:
+        return RXEXIT_NOT_HANDLED;
+        break;
+    }
+}
+
+#endif /* NT */
+
 /* This is the CkCommand/CKermit function handler.  It is an undocumented  */
 /* Kermit feature.  Do not remove this code.                             */
 
@@ -9586,33 +9745,88 @@ os2rexx( char * rexxcmd, char * rexxbuf, int rexxbuflen ) {
     RXSTRING  Instore[2] ; /* Instorage rexx procedure */
     RXSTRING  retstr  ;  /* program return value    */
     int       retval  ;  /* os2rexx return value    */
+    RXSYSEXIT exits[2];  /* Exit handlers */
+    static int initted=0; /* os2rexxinit() called? */
 
     MAKERXSTRING( Instore[0], rexxcmd, strlen(rexxcmd) ) ;
     MAKERXSTRING( Instore[1], 0, 0 ) ;
     MAKERXSTRING( retstr, return_buffer, sizeof(return_buffer) ) ;
 
+#ifdef NT
+    /* For some reason we've got to re-reginster the subcommand handler
+     * here despite having done it on app start, but we've only got to do
+     * it once here. I guess the call to os2rexxinit() on app start isn't
+     * taking effect properly? Maybe some kind of threading issue? I'm not
+     * sure why, but if we don't do this somewhere in os2rexx()
+     * subcommands don't work.
+     *
+     * They work fine on OS/2 without doing this, so it appears to be
+     * a Windows and/or Regina specific thing.
+     */
+    if (!initted) {
+        os2rexxinit();
+        initted=1;
+    }
+
+    /*
+     * Register an exit handler so that "say" works. This is NT only
+     * for now as I'm not sure if it is required on OS/2 at all.
+     */
+
+    RexxRegisterExitExe( "CKExitHandler",
+#ifdef RX_WEAKTYPING
+                        (PFN) os2rexx_exit_handler,
+#else
+                        os2rexx_exit_handler,
+#endif
+                        NULL );     /* User Area */
+
+    exits[0].sysexit_name = "CKExitHandler";
+    exits[0].sysexit_code = RXSIO;
+    exits[1].sysexit_code = RXENDLST;
+#endif /* NT */
+
     debug(F110,"os2rexx: procedure",rexxcmd,0);
     return_code = RexxStart( 0,   /* no program arguments */
                              0,   /* null argument list   */
+#ifdef NT
+                            "Kermit 95 REXX Command",
+#else
                             "Kermit for OS/2 REXX Command",
+#endif
                                                /* default program name */
                             Instore, /* rexx procedure to interpret */
                             "CKermit",         /* default address name */
                             RXFUNCTION,         /* calling as a function */
+#ifdef NT
+                            exits,              /* Exit handlers */
+#else
                             0,                  /* no exits used */
+#endif /* NT */
                             &rc,                /* converted return code */
                             &retstr);           /* returned result */
 
     debug(F111,"os2rexx: returns",RXSTRPTR(retstr),return_code);
+    debug(F111,"os2rexx: retstr",RXSTRPTR(retstr),RXSTRLEN( retstr ));
     if ( !return_code && RXSTRLEN( retstr ) < rexxbuflen ) {
-        ckstrncpy( rexxbuf, RXSTRPTR(retstr), RXSTRLEN( retstr ) );
+        ckstrncpy( rexxbuf, RXSTRPTR(retstr), rexxbuflen );
+        debug(F110,"os2rexx: rexxbuf",rexxbuf,0);
         retval = 0 ;                    /* Success */
     } else {
         rexxbuf[0] = '\0' ;
         retval = 1 ;                    /* Failure */
     }
-    if (RXSTRPTR(retstr) != return_buffer)
-      DosFreeMem(RXSTRPTR(retstr));
+    if (RXSTRPTR(retstr) != return_buffer) {
+        if (RXSTRPTR(retstr) != NULL) {
+#ifdef NT
+            free(RXSTRPTR(retstr));
+#else
+            DosFreeMem(RXSTRPTR(retstr));
+#endif
+        }
+    }
+
+    printf("\n");
 
     return retval ;
 }
@@ -9624,6 +9838,11 @@ os2rexxinit()
    /* handler instead.  Both mechanisms can co-exist, so we leave in   */
    /* the CkCommand/CKermit as an undocumented function.               */
 
+#ifdef NT
+   RexxDeregisterFunction("CKermit");
+   RexxDeregisterFunction("CKCommand");
+   RexxDeregisterSubcom("CKermit", NULL);
+#endif
    RexxRegisterFunctionExe("CKermit",(PFN)os2rexxckcmd) ;
    RexxRegisterFunctionExe("CKCommand",(PFN)os2rexxckcmd) ;
    RexxRegisterSubcomExe("CKermit",(PFN)os2rexxsubcom, NULL);
@@ -9633,11 +9852,6 @@ os2rexxinit()
 #endif /* CK_REXX */
 
 #define TITLEBUF_LEN 128
-#ifdef NT
-#define TITLE_PLATFORM "Windows"
-#else
-#define TITLE_PLATFORM "OS/2"
-#endif
 int
 os2settitle(char *newtitle, int newpriv ) {
 #ifndef NOLOCAL
@@ -9677,24 +9891,24 @@ os2settitle(char *newtitle, int newpriv ) {
     if ( usertitle[0] ) {
         if ( StartedFromDialer ) {
             _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s",KermitDialerID,usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "",
+                 private ? (inserver ? " - IKS" : " - Kermit 95") : "",
                      videomode
                  );
         }
         else {
             _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s",usertitle,
-                 private ? (inserver ? " - IKS" : " - C-Kermit for " TITLE_PLATFORM) : "", videomode
+                 private ? (inserver ? " - IKS" : " - Kermit 95") : "", videomode
                  );
         }
     }
     else if ( StartedFromDialer ) {
         _snprintf( titlebuf, TITLEBUF_LEN, "%d::%s%s%s%s",KermitDialerID,title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) :  "", videomode
+                 private ? (inserver ? "IKS" : "Kermit 95") :  "", videomode
                  );
     }
     else {
         _snprintf( titlebuf, TITLEBUF_LEN, "%s%s%s%s",title,(*title&&private)?" - ":"",
-                 private ? (inserver ? "IKS" : "C-Kermit for " TITLE_PLATFORM) : "" , videomode
+                 private ? (inserver ? "IKS" : "Kermit 95") : "" , videomode
                  );
     }
 
@@ -10009,6 +10223,7 @@ DisplayCommProperties(HANDLE h)
         break;
     case PST_SCANNER         :
         printf("Scanner");
+        break;
     case PST_NETWORK_BRIDGE  :
         printf("Network Bridge");
         break;

@@ -37,9 +37,15 @@
 #endif /* __GNUC__ */
 #endif 
 
+#ifdef NT
+#define socket_handle   (*(SOCKET *)&dev_handle)
+#else /* NT */
+#define socket_handle   (*(int *)&dev_handle)
+#endif /* NT */
+
 _Inline void tcp_open(void) {
 
-  U32 true = 1;
+  U32 true_u32 = 1;
   struct hostent *hostnm;    /* server host name information */
   struct sockaddr_in server; /* server address information */
 #ifdef NT
@@ -47,7 +53,7 @@ _Inline void tcp_open(void) {
 #endif 
 
 #ifdef NT
-  if (!dev_handle) 
+  if (!socket_handle) 
       if( WSAStartup( MAKEWORD( 2, 0 ), &wsadata ) )
 #else
    if (sock_init())
@@ -55,14 +61,14 @@ _Inline void tcp_open(void) {
     p_error(P_ERROR_SOCK_INIT, 0,
 	    MODULE_SOCKET, __LINE__, 0);
 
-  if (!dev_handle) {
+  if (!socket_handle) {
     if (dev_server) {
       if ((passive_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	p_error(P_ERROR_SOCKET, sock_errno(),
 		MODULE_SOCKET, __LINE__, 0);
 
       if (setsockopt(passive_socket, SOL_SOCKET, SO_REUSEADDR,
-		     (char *)&true, sizeof(true)))
+		     (char *)&true_u32, sizeof(true_u32)))
 	p_error(P_ERROR_SETSOCKOPT, sock_errno(),
 		MODULE_SOCKET, __LINE__, passive_socket);
 
@@ -81,9 +87,9 @@ _Inline void tcp_open(void) {
       /***********************************************/
       if (
 #ifdef NT
-ioctlsocket( passive_socket, FIONBIO, &true )
+ioctlsocket( passive_socket, FIONBIO, &true_u32 )
 #else
-ioctl(passive_socket, FIONBIO, (char *)&true, sizeof(U32))
+ioctl(passive_socket, FIONBIO, (char *)&true_u32, sizeof(true_u32))
 #endif
    )
 	p_error(P_ERROR_IOCTL, sock_errno(),
@@ -104,23 +110,23 @@ ioctl(passive_socket, FIONBIO, (char *)&true, sizeof(U32))
 		  MODULE_SOCKET, __LINE__, (intptr_t)socket_remote);
 	server.sin_addr.s_addr = *((unsigned long *)hostnm->h_addr);
       }
-      if ((dev_handle = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+      if ((socket_handle = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	p_error(P_ERROR_SOCKET, sock_errno(),
 		MODULE_SOCKET, __LINE__, 0);
-      if (connect(dev_handle,
+      if (connect(socket_handle,
 		  (struct sockaddr *)&server, sizeof(server)) == -1)
 	p_error(P_ERROR_CONNECT, sock_errno(),
-		MODULE_SOCKET, __LINE__, dev_handle);
+		MODULE_SOCKET, __LINE__, socket_handle);
       if (
 #ifdef NT
-ioctlsocket( dev_handle, FIONBIO, &true )
+ioctlsocket( socket_handle, FIONBIO, &true_u32 )
 #else
-ioctl(dev_handle, FIONBIO, (char *)&true, sizeof(U32))
+ioctl(socket_handle, FIONBIO, (char *)&true_u32, sizeof(true_u32))
 #endif
    )
 	p_error(P_ERROR_IOCTL, sock_errno(),
 		MODULE_SOCKET, __LINE__,
-		dev_handle);
+		socket_handle);
     }
   }
 }
@@ -128,15 +134,15 @@ ioctl(dev_handle, FIONBIO, (char *)&true, sizeof(U32))
 _Inline U32 tcp_connect(void) {
 
   U32 namelen;
-  U32 true = 1;
+  U32 true_u32 = 1;
   struct hostent *hostnm;    /* client host name information */
   struct sockaddr_in client; /* client address information */
 
   namelen = sizeof(client);
-  dev_handle = accept(passive_socket,
+  socket_handle = accept(passive_socket,
 		      (struct sockaddr *)&client,
 		      (int *)&namelen);
-  if (dev_handle == -1) {
+  if (socket_handle == -1) {
     if (sock_errno() == 
 #ifdef NT
          WSAEWOULDBLOCK
@@ -163,14 +169,14 @@ _Inline U32 tcp_connect(void) {
 
       if (
 #ifdef NT
-ioctlsocket( dev_handle, FIONBIO, &true )
+ioctlsocket( socket_handle, FIONBIO, &true_u32 )
 #else
-ioctl(dev_handle, FIONBIO, (char *)&true, sizeof(U32))
+ioctl(socket_handle, FIONBIO, (char *)&true_u32, sizeof(true_u32))
 #endif
    )
     p_error(P_ERROR_IOCTL, sock_errno(),
 	    MODULE_SOCKET, __LINE__,
-	    dev_handle);
+	    socket_handle);
   return(1);
 }
 
@@ -178,7 +184,7 @@ _Inline void tcp_close(void) {
 
   if (dev_server)
     soclose(passive_socket);
-  soclose(dev_handle);
+  soclose(socket_handle);
 }
 
 _Inline U32 tcp_incoming(void) {
@@ -188,20 +194,20 @@ _Inline U32 tcp_incoming(void) {
    fd_set rfds;
    struct timeval tv;
    FD_ZERO(&rfds);
-   FD_SET(dev_handle, &rfds);
+   FD_SET(socket_handle, &rfds);
    tv.tv_sec  = tv.tv_usec = 0L;
    if ( select(FD_SETSIZE, &rfds, NULL, NULL, &tv ) > 0 &&
-         FD_ISSET(dev_handle, &rfds) )
+         FD_ISSET(socket_handle, &rfds) )
       return 1 ;
    else return 0 ;
 #else 
-  rc = select((int *)&dev_handle,
+  rc = select(&socket_handle,
 		  1, 0, 0,		/* Num of read, write and */
 					/* special sockets */
 		  0);		/* No timeout */
   if (rc == -1)
     p_error(P_ERROR_SELECT, sock_errno(),
-	    MODULE_SOCKET, __LINE__, dev_handle);
+	    MODULE_SOCKET, __LINE__, socket_handle);
 #endif 
   if (rc)
     return(1);
@@ -216,7 +222,7 @@ _Inline void tcp_getch_buf(void) {
   inbuf_idx = 0;
   inbuf_len = 0;
   for (tmout_cnt = 0; tmout_cnt < timeouts_per_call; tmout_cnt++) {
-    inbuf_len = recv(dev_handle, inbuf, inbuf_size, 0);
+    inbuf_len = recv(socket_handle, inbuf, inbuf_size, 0);
     if ((S32)inbuf_len > 0) {		/* Data received ok? */
       return;
     } else if (inbuf_len == -1 && sock_errno() == 
@@ -230,7 +236,7 @@ _Inline void tcp_getch_buf(void) {
       DosSleep(30);
     } else
       p_error(P_ERROR_RECV, sock_errno(),
-		MODULE_SOCKET, __LINE__, dev_handle);
+		MODULE_SOCKET, __LINE__, socket_handle);
   }
 }
 
@@ -242,7 +248,7 @@ _Inline void tcp_flush_outbuf(void) {
 
   buf = outbuf;
   for (cnt = 0; cnt < 300; cnt++) {
-    ret_val = send(dev_handle, buf, outbuf_idx, 0);
+    ret_val = send(socket_handle, buf, outbuf_idx, 0);
     if (ret_val == outbuf_idx) {	/* Data sent ok? */
       outbuf_idx = 0;
       return;
@@ -258,7 +264,7 @@ _Inline void tcp_flush_outbuf(void) {
     else if (ret_val == -1)
       p_error(P_ERROR_SEND, sock_errno(),
 	      MODULE_SOCKET, __LINE__,
-	      dev_handle);
+	      socket_handle);
     else {			/* We got something transferred... */
       DosSleep(10);
       buf += ret_val;
@@ -267,7 +273,7 @@ _Inline void tcp_flush_outbuf(void) {
   }
   p_error(P_ERROR_SEND, sock_errno(),
 	  MODULE_SOCKET, __LINE__,
-	  dev_handle);
+	  socket_handle);
 }
 
 _Inline U32 tcp_connected(void) {

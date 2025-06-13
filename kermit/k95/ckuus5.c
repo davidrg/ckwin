@@ -17,7 +17,7 @@ int cmdsrc() { return(0); }
     Update: Jun 24 2023 (David Goodwin)
     Update: Oct 10-11 2022 (fdc and sms)
     Update: Dec 02 2022 (David Goodwin - SHOW MOUSE)
-    Update: Dec 13 2022 (David Goodwin - missing break + CKW arrow keys)
+    Update: Dec 13 2022 (David Goodwin - missing break + K95 arrow keys)
     Update: Apr 14 2023 (ANSI function declarations and prototypes)
     Update: May 16 2023 (Jeff Johnson fix for iksd.conf diagnostic)
     Update: May 16 2023 (Jeff Johnson fix for \v(startup) vs \v(exedir))
@@ -99,7 +99,7 @@ extern bool cursorena[] ;
 int cktomsk(int);   /* ckokey.c */
 
 #ifdef KUI
-void shogui();      /* ckuus3.c */
+int shogui();      /* ckuus3.c */
 #endif /* KUI */
 
 #endif /* OS2 */
@@ -275,19 +275,12 @@ char * ikprompt = "IKSD>";
 #ifdef OS2
 /* Default prompt for OS/2 and Win32 */
 /* fdc 2013-12-06 - C-Kermit 9.0 and later is just "C-Kermit" */
+/* dg  2024-07-15 - Back to Kermit 95 on Windows and OS/2 */
 #ifdef NT
-#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] K-95> ";
-#else
-char * ckprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] CKW> ";
-#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\flongpath(\\v(dir)),/,\\\\)] IKSD> ";
 #else  /* NT */
-#ifdef COMMENT
 char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] K-95> ";
-#else
-char * ckprompt = "[\\freplace(\\v(dir),/,\\\\)] C-Kermit> ";
-#endif /* COMMENT */
 char * ikprompt = "[\\freplace(\\v(dir),/,\\\\)] IKSD> ";
 #endif /* NT */
 #else  /* OS2 */
@@ -361,9 +354,11 @@ extern struct keytab * term_font;
 #endif /* KUI */
 #endif /* PCFONTS */
 extern int ntermfont, tt_font, tt_font_size;
-extern unsigned char colornormal, colorunderline, colorstatus,
+extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
-    colorreverse, colorcmd, coloritalic;
+    colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim,
+	colorcursor;
+extern cell_video_attr_t savedcolorselect, savedcolorcursor;
 extern int priority;
 extern struct keytab prtytab[];
 extern int nprty;
@@ -659,11 +654,7 @@ char *m_purge = "run purge \\%*";
 #endif /* VMS */
 
 #ifdef OS2
-#ifdef NT
-char *m_manual = "browse \\v(exedir)docs/manual/ckwin.htm";
-#else
-char *m_manual = "browse \\v(exedir)docs/manual/ckos2.htm";
-#endif
+char *m_manual = "browse \\v(exedir)docs/manual/index.htm";
 #endif /* OS2 */
 
 /* Now the multiline macros, defined with addmmac()... */
@@ -5321,9 +5312,10 @@ static struct keytab shokeytab[] = {    /* SHOW KEY modes */
 };
 static int nshokey = (sizeof(shokeytab) / sizeof(struct keytab));
 
-#define SHKEYDEF TT_MAX+5
+#define SHKEYDEF TT_MAX+7
 struct keytab shokeymtab[] = {
     "aaa",       TT_AAA,     CM_INV,    /* AnnArbor */
+    "adds25",    TT_REGENT25,0,         /* ADDS Regent 25 */
     "adm3a",     TT_ADM3A,   0,         /* LSI ADM-3A */
     "adm5",      TT_ADM5,    0,         /* LSI ADM-5 */
     "aixterm",   TT_AIXTERM, 0,         /* IBM AIXterm */
@@ -5351,9 +5343,12 @@ struct keytab shokeymtab[] = {
     "hpterm",    TT_HPTERM,  0,         /* HP TERM */
     "hz1500",    TT_HZL1500, 0,         /* Hazeltine 1500 */
     "ibm3151",   TT_IBM31,   0,         /* IBM 3101-xx,3161 */
+    "k95",       TT_K95,     0,         /* Kermit 95 */
     "linux",     TT_LINUX,   0,         /* Linux */
+    "meta",      TT_KBM_METAESC,   0,   /* Meta sends ESC mode (subset of emacs mode) */
     "qansi",     TT_QANSI,   0,         /* QNX ANSI */
     "qnx",       TT_QNX,     0,         /* QNX */
+    "regent25",  TT_REGENT25,CM_INV,    /* ADDS Regent 25 */
     "russian",   TT_KBM_RUSSIAN, 0,     /* Russian mode */
     "scoansi",   TT_SCOANSI, 0,         /* SCO ANSI */
     "sni-97801", TT_97801,   0,         /* Sinix 97801 */
@@ -5386,7 +5381,8 @@ struct keytab shokeymtab[] = {
     "wyse30",  TT_WY30,  CM_INV,
     "wyse370", TT_WY370, CM_INV,
     "wyse50",  TT_WY50,  CM_INV,
-    "wyse60",  TT_WY60,  CM_INV
+    "wyse60",  TT_WY60,  CM_INV,
+	"xterm-meta",TT_KBM_META,   0,     /* Meta key mode (sends 8 bit characters) */
 };
 int nshokeym = (sizeof(shokeymtab) / sizeof(struct keytab));
 #endif /* OS2 */
@@ -5793,7 +5789,7 @@ shotcs(csl,csr) int csl, csr;
     extern struct _vtG G[4], *GL, *GR;
     extern int decnrcm, sni_chcode;
     extern int tt_utf8, dec_nrc, dec_kbd, dec_lang;
-    extern prncs;
+    extern int prncs;
 
     printf(" Terminal character-sets:\n");
     if (IS97801(tt_type_mode)) {
@@ -6032,6 +6028,77 @@ shomou() {
 #endif /* OS2MOUSE */
 
 #ifndef NOLOCAL
+#ifdef OS2
+
+void print_color(char* format, int foreground, cell_video_attr_t attr) {
+    int color;
+    char buf[10];
+    static char * colors[16] = {
+        "black","blue","green","cyan","red","magenta","brown","lgray",
+        "dgray","lblue","lgreen","lcyan","lred","lmagent","yellow","white"
+    };
+
+    if (foreground) {
+#ifdef CK_COLORS_24BIT
+        if (!cell_video_attr_fg_is_indexed(attr)) { color = -1; } else {
+#endif /* CK_COLORS_24BIT */
+        color = cell_video_attr_foreground(attr);
+        if (color < 16) {
+            printf(format, cell_video_attr_foreground_color_name(attr));
+            return;
+        }
+#ifdef CK_COLORS_24BIT
+        }
+#endif /* CK_COLORS_24BIT */
+    } else {
+#ifdef CK_COLORS_24BIT
+        if (!cell_video_attr_bg_is_indexed(attr)) { color = -1; } else {
+#endif /* CK_COLORS_24BIT */
+        color = cell_video_attr_background(attr);
+        if (color < 16) {
+            printf(format, cell_video_attr_background_color_name(attr));
+            return;
+        }
+#ifdef CK_COLORS_24BIT
+        }
+#endif /* CK_COLORS_24BIT */
+    }
+
+    if (color >= 0 && color < 256) {
+        /* The color is outside the 0-15 range, so we don't have a name for it.
+         * Just output the number. */
+        _snprintf(buf, sizeof(buf), "%d", color);
+        printf(format, buf);
+        return;
+    }
+#ifdef CK_COLORS_24BIT
+    if (color == -1) {
+        int r, g, b;
+        if (foreground) {
+            r = cell_video_attr_fg_rgb_r(attr);
+            g = cell_video_attr_fg_rgb_g(attr);
+            b = cell_video_attr_fg_rgb_b(attr);
+        } else {
+            r = cell_video_attr_bg_rgb_r(attr);
+            g = cell_video_attr_bg_rgb_g(attr);
+            b = cell_video_attr_bg_rgb_b(attr);
+        }
+
+        color = (unsigned)(((unsigned)r << 16) |
+                (unsigned)((unsigned)g << 8) |
+                (unsigned)b);
+        _snprintf(buf, sizeof(buf), "#%06x", color);
+        printf(format, buf);
+        return;
+    }
+#endif /* CK_COLORS_24BIT */
+
+    /* Error - output blank */
+    printf(format, "");
+}
+
+#endif /* OS2 */
+
 VOID
 shotrm() {
     char *s;
@@ -6049,10 +6116,12 @@ shotrm() {
     extern int wy_autopage, autoscroll, sgrcolors, colorreset, user_erasemode,
       decscnm, decscnm_usr, tt_diff_upd, tt_senddata,
       wy_blockend, marginbell, marginbellcol, tt_modechg, dgunix;
+    extern int tt_clipboard_read, tt_clipboard_write;
     int lines = 0;
+    extern int colorpalette;
 #ifdef KUI
     extern CKFLOAT tt_linespacing[];
-    extern tt_cursor_blink;
+    extern int tt_cursor_blink;
 #endif /* KUI */
 #ifdef PCFONTS
     int i;
@@ -6176,13 +6245,21 @@ shotrm() {
     printf(" %19s: %-13s  %13s: %-15s\n","SGR Colors",showoff(sgrcolors),
            "ESC[0m color",colorreset?"default-color":"current-color");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (colorpalette == CK_PALETTE_16) s = "aixterm-16";
+    if (colorpalette == CK_PALETTE_XT88) s = "xterm-88";
+    if (colorpalette == CK_PALETTE_XTRGB88) s = "xterm-88 + 24-bit color";
+    if (colorpalette == CK_PALETTE_XT256) s = "xterm-256";
+    if (colorpalette == CK_PALETTE_XTRGB) s = "xterm-256 + 24-bit color";
+#ifdef CK_PALETTE_WY370
+    if (colorpalette == CK_PALETTE_WY370) s = "wy-370";
+#endif /* CK_PALETTE_WY370 */
     printf(" %19s: %-13s  %13s: %-15s\n",
             "Erase color",user_erasemode?"default-color":"current-color",
-           "Screen mode",decscnm?"reverse":"normal");
+            "Color palette", s);
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-    printf(" %19s: %-13d  %13s: %-15d\n","Transmit-timeout",tt_ctstmo,
-           "Output-pacing",tt_pacing);
+    printf(" %19s: %-13d  %13s: %-15s\n","Transmit-timeout",tt_ctstmo,
+           "Screen mode",decscnm?"reverse":"normal");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
     printf(" %19s: %-13d  %13s: %s\n","Idle-timeout",tt_idlelimit,
@@ -6191,6 +6268,40 @@ shotrm() {
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Send data",
           showoff(tt_senddata),"End of Block", wy_blockend?"crlf/etx":"us/cr");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+    /* Shell notifications only in K95G on Windows 2000 or newer */
+#ifndef KUI
+#ifdef CK_SHELL_NOTIFY
+#undef CK_SHELL_NOTIFY
+#endif /* CK_SHELL_NOTIFY */
+#endif /* KUI */
+
+#ifdef CK_SHELL_NOTIFY
+    printf(" %19s: %-13s  %13s: %-15s\n",
+            "Clipboard: Read",
+                tt_clipboard_read == CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_read == CLIPBOARD_ALLOW_NOTIFY ? "allow, notify"
+              : tt_clipboard_read == CLIPBOARD_DENY ? "deny"
+              : tt_clipboard_read == CLIPBOARD_DENY_NOTIFY ? "deny, notify"
+              : "",
+            "Write",
+                tt_clipboard_write == CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_write == CLIPBOARD_ALLOW_NOTIFY ? "allow, notify"
+              : tt_clipboard_write == CLIPBOARD_DENY ? "deny"
+              : tt_clipboard_write == CLIPBOARD_DENY_NOTIFY ? "deny, notify"
+              : "");
+#else /* CK_SHELL_NOTIFY */
+    printf(" %19s: %-13s  %13s: %-15s\n",
+            "Clipboard: Read",
+                tt_clipboard_read >= CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_read <= CLIPBOARD_DENY ? "deny"
+              : "",
+            "Write",
+                tt_clipboard_write >= CLIPBOARD_ALLOW ? "allow"
+              : tt_clipboard_write <= CLIPBOARD_DENY ? "deny"
+              : "");
+#endif /* CK_SHELL_NOTIFY */
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 #ifndef NOTRIGGER
     printf(" %19s: %-13s  %13s: %d seconds\n","Auto-exit trigger",
@@ -6266,8 +6377,8 @@ shotrm() {
            "Screen-optimization",showoff(tt_diff_upd),
            "Status line",showoff(tt_status[VTERM]));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf(" %19s: %-13s  %13s: %-15s\n","Debug",
-           showoff(debses),"Session log", seslog? sesfil : "(none)" );
+    printf(" %19s: %-13s  %13s: %-15s\n","Debug", showoff(debses),
+           "Session log", seslog? sesfil : "(none)" );
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
     /* Display colors (should become SHOW COLORS) */
@@ -6276,99 +6387,145 @@ shotrm() {
 #ifndef ONETERMUPD
         USHORT col;
 #endif /* ONETERMUPD */
-        char * colors[16] = {
-            "black","blue","green","cyan","red","magenta","brown","lgray",
-            "dgray","lblue","lgreen","lcyan","lred","lmagent","yellow","white"
-        };
+
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        /* Fields are 7 characters wide, plus 1 space */
+        printf(" Color:");
+#ifndef ONETERMUPD
+        GetCurPos(&row, &col);
+        WrtCharStrAtt("blink",     5, row,  9, &colorblink );
+        WrtCharStrAtt("bold",      4, row, 17, &colorbold );
+        WrtCharStrAtt("border",    6, row, 25, &colorborder );
+		WrtCharStrAtt("cursor",    6, row, 33, &savedcolorcursor );
+        WrtCharStrAtt("debug",     5, row, 41, &colordebug );
+		WrtCharStrAtt("dim",       3, row, 50, &colordebug );
+        WrtCharStrAtt("helptext",  8, row, 58, &colorhelp );
+        WrtCharStrAtt("reverse",   7, row, 66, &colorreverse );
+#endif /* ONETERMUPD */
+        row = VscrnGetCurPos(VCMD)->y+1;
+        VscrnWrtCharStrAtt(VCMD, "blink",     5, row,  9, &colorblink );
+        VscrnWrtCharStrAtt(VCMD, "bold",      4, row, 17, &colorbold );
+        VscrnWrtCharStrAtt(VCMD, "border",    6, row, 25, &colorborder );
+		VscrnWrtCharStrAtt(VCMD, "cursor",    6, row, 33, &savedcolorcursor );
+        VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 41, &colordebug );
+		VscrnWrtCharStrAtt(VCMD, "dim",       3, row, 49, &colordim );
+        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 57, &colorhelp );
+        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 66, &colorreverse );
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+		/* We use savedcolorselect and savedcolorcusor below (and above) because
+		 * the current value in these may be temporarily overriden by
+		 * OSC-17/OSC-19 and we'd rather show the *default* value here like with
+		 * everything else
+		 */
+
+        /* Foreground color names */
+        printf("%6s: ", "fore");
+        print_color("%-8s", TRUE, colorblink);
+        print_color("%-8s", TRUE, colorbold);
+        printf("%-8s", "");
+		print_color("%-8s", TRUE, savedcolorcursor);
+		print_color("%-8s", TRUE, colordebug);
+		print_color("%-8s", TRUE, colordim);
+        print_color("%-9s", TRUE, colorhelp);
+        print_color("%-8s", TRUE, colorreverse);
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        /* Background color names */
+        printf("%6s: ", "back");
+        print_color("%-8s", FALSE, colorblink);
+        print_color("%-8s", FALSE, colorbold);
+        print_color("%-8s", TRUE,  colorborder);
+		print_color("%-8s", FALSE, savedcolorcursor);
+        print_color("%-8s", FALSE, colordebug);
+		print_color("%-8s", FALSE, colordim);
+        print_color("%-9s", FALSE, colorhelp);
+        print_color("%-8s", FALSE, colorreverse);
+        printf("\n");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         printf(" Color:");
 #ifndef ONETERMUPD
         GetCurPos(&row, &col);
-        WrtCharStrAtt("border",    6, row, 9, &colorborder );
-        WrtCharStrAtt("debug",     5, row, 17, &colordebug );
-        WrtCharStrAtt("helptext",  8, row, 25, &colorhelp );
-        WrtCharStrAtt("reverse",   7, row, 34, &colorreverse );
-        WrtCharStrAtt("select",    6, row, 42, &colorselect );
-        WrtCharStrAtt("status",    6, row, 50, &colorstatus );
-        WrtCharStrAtt("terminal",  8, row, 58, &colornormal );
-        WrtCharStrAtt("underline", 9, row, 67, &colorunderline );
+        WrtCharStrAtt("command",   7, row, 9, &colorcmd );
+        WrtCharStrAtt("graphic",   7, row, 17, &colorgraphic );
+        WrtCharStrAtt("italic",    6, row, 25, &coloritalic );
+		WrtCharStrAtt("select",    6, row, 33, &savedcolorselect );
+		WrtCharStrAtt("status",    6, row, 42, &colorstatus );
+		WrtCharStrAtt("terminal",  8, row, 49, &colornormal );
+		WrtCharStrAtt("underline", 9, row, 58, &colorunderline );
+
 #endif /* ONETERMUPD */
         row = VscrnGetCurPos(VCMD)->y+1;
-        VscrnWrtCharStrAtt(VCMD, "border",    6, row, 9, &colorborder );
-        VscrnWrtCharStrAtt(VCMD, "debug",     5, row, 17, &colordebug );
-        VscrnWrtCharStrAtt(VCMD, "helptext",  8, row, 25, &colorhelp );
-        VscrnWrtCharStrAtt(VCMD, "reverse",   7, row, 34, &colorreverse );
-        VscrnWrtCharStrAtt(VCMD, "select",    6, row, 42, &colorselect );
-        VscrnWrtCharStrAtt(VCMD, "status",    6, row, 50, &colorstatus );
-        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 58, &colornormal );
-        VscrnWrtCharStrAtt(VCMD, "underline",  9, row, 67, &colorunderline );
+        VscrnWrtCharStrAtt(VCMD, "command",   7, row,  9, &colorcmd );
+        VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 17, &colorgraphic );
+        VscrnWrtCharStrAtt(VCMD, "italic",    6, row, 25, &coloritalic );
+		VscrnWrtCharStrAtt(VCMD, "select",    6, row, 33, &savedcolorselect );
+		VscrnWrtCharStrAtt(VCMD, "status",    6, row, 41, &colorstatus );
+        VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 49, &colornormal );
+        VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 58, &colorunderline );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
         /* Foreground color names */
-        printf("%6s: %-8s%-8s%-9s%-8s%-8s%-8s%-9s%-9s\n","fore",
-                "",
-                colors[colordebug&0x0F],
-                colors[colorhelp&0x0F],
-                colors[colorreverse&0x0F],
-                colors[colorselect&0x0F],
-                colors[colorstatus&0x0F],
-                colors[colornormal&0x0F],
-                colors[colorunderline&0x0F]);
-        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+        printf("%6s: ", "fore");
+        print_color("%-8s", TRUE, colorcmd);
+        print_color("%-8s", TRUE, colorgraphic);
+        print_color("%-8s", TRUE, coloritalic);
+		print_color("%-8s", TRUE, savedcolorselect);
+		print_color("%-8s", TRUE, colorstatus);
+        print_color("%-9s", TRUE, colornormal);
+        print_color("%-8s", TRUE, colorunderline);
 
-        /* Background color names */
-        printf("%6s: %-8s%-8s%-9s%-8s%-8s%-8s%-9s%-9s\n","back",
-                colors[colorborder],
-                colors[colordebug>>4],
-                colors[colorhelp>>4],
-                colors[colorreverse>>4],
-                colors[colorselect>>4],
-                colors[colorstatus>>4],
-                colors[colornormal>>4],
-                colors[colorunderline>>4] );
-        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-        printf("\n");
-        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-        printf(" Color:");
-#ifndef ONETERMUPD
-        GetCurPos(&row, &col);
-        WrtCharStrAtt("graphic",   7, row, 9, &colorgraphic );
-        WrtCharStrAtt("command",   7, row, 17, &colorcmd );
-        WrtCharStrAtt("italic",    6, row, 26, &coloritalic );
-#endif /* ONETERMUPD */
-        row = VscrnGetCurPos(VCMD)->y+1;
-        VscrnWrtCharStrAtt(VCMD, "graphic",   7, row, 9,  &colorgraphic );
-        VscrnWrtCharStrAtt(VCMD, "command",   7, row, 17, &colorcmd );
-        VscrnWrtCharStrAtt(VCMD, "italic",    6, row, 26, &coloritalic );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-        /* Foreground color names */
-        printf("%6s: %-8s%-8s%-8s\n","fore",
-                colors[colorgraphic&0x0F],
-                colors[colorcmd&0x0F],
-                colors[coloritalic&0x0F]);
-        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-
         /* Background color names */
-        printf("%6s: %-8s%-8s%-8s\n","back",
-                colors[colorgraphic>>4],
-                colors[colorcmd>>4],
-                colors[coloritalic>>4]);
+        printf("%6s: ", "back");
+        print_color("%-8s", FALSE, colorcmd);
+        print_color("%-8s", FALSE, colorgraphic);
+        print_color("%-8s", FALSE, coloritalic);
+		print_color("%-8s", FALSE, savedcolorselect);
+		print_color("%-8s", FALSE, colorstatus);
+        print_color("%-9s", FALSE, colornormal);
+        print_color("%-8s", FALSE, colorunderline);
+        printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
-        extern int trueblink, truedim, truereverse, trueunderline, trueitalic;
+        extern int trueblink, truedim, truebold, truereverse, trueunderline, trueitalic;
+        extern int blink_is_color, bold_is_color, dim_is_color, use_blink_attr,
+				   use_bold_attr;
+		extern int savedtruereverse, savedtrueunderline, savedtruedim,
+					savedtruebold, savedtrueitalic, savedtrueblink;
+
+		/* The saved values are initialised to the same values as the non-saved
+		 * variants, and *only* updated by the "SET TERM ATTR" command, where
+	     * as the non-saved versions may also be updated by OSC-6/OSC-106.
+		 * On terminal reset, the non-saved versions are overwritten with the
+		 * saved versions. So saved is the default/set value, and non-saved is
+		 * the current active value */
+
         printf(
-	    " Attribute:  \
-blink: %-3s  dim: %-3s  italic: %-3s  reverse: %-3s  underline: %-3s\n",
-	    trueblink?"on":"off", truedim?"on":"off", trueitalic?"on":"off", 
-	    truereverse?"on":"off", trueunderline?"on":"off");
+	    " Attribute:  blink: %-3s  bold: %-3s  dim: %-3s  italic: %-3s\n",
+	        savedtrueblink?"on": (use_blink_attr?"off (color)":"off"),
+	        savedtruebold?"on": (use_bold_attr?"off (color)":"off"),
+	        savedtruedim?"on": (dim_is_color?"off (color)":"off"),
+			trueitalic?"on":"off");
+        if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+
+        printf("             reverse: %-3s  underline: %-3s\n",
+                savedtruereverse?"on":"off",
+                savedtrueunderline?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {
@@ -6874,6 +7031,12 @@ doshow(x) int x;
           case KBM_RU:
             s = "russian";
             break;
+		  case KBM_ME:
+			s = "meta";
+			break;
+		  case KBM_MM:
+			s = "xterm-meta";
+			break;
           case KBM_EN:
           default:
             s = "default";
@@ -6976,6 +7139,12 @@ doshow(x) int x;
 #endif /* OS2 */
 #endif /* NOKVERBS */
 #endif /* NOSETKEY */
+
+#ifdef KUI
+    if (x == SHOGUI) {
+        return(shogui());
+    }
+#endif /* KUI */
 
 #ifndef NOSPL
     if (x == SHMAC) {                   /* SHOW MACRO */
@@ -8452,12 +8621,6 @@ doshow(x) int x;
         (VOID) shossh();
         break;
 #endif /* ANYSSH */
-
-#ifdef KUI
-      case SHOGUI:
-        (VOID) shogui();
-        break;
-#endif /* KUI */
 
 #ifndef NOFRILLS
 #ifndef NORENAME
@@ -12723,6 +12886,18 @@ printf("NOWTMP not defined\n");
 #endif /* SUPERLAT */
 #endif /* NT */
 
+#ifdef OS2
+#ifdef CK_COLORS_24BIT
+    printf(" 24-bit RGB color support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#else
+#ifdef CK_COLORS_256
+    printf(" 256-color support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* CK_COLORS_256 */
+#endif /* CK_COLORS_24BIT */
+#endif /* OS2 */
+
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     printf("Major optional features not included:\n");
@@ -13081,13 +13256,11 @@ printf("NOWTMP not defined\n");
 #endif /* OS2MOUSE */
 
 #ifdef OS2
-#ifndef NT
 #ifndef CK_REXX
     printf(" No REXX script language interface\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
     flag = 1;
 #endif /* CK_REXX */
-#endif /* NT */
 #endif /* OS2 */
 
 #ifndef IKSD
@@ -13111,6 +13284,13 @@ printf("NOWTMP not defined\n");
     flag = 1;
 #endif /* SUPERLAT */
 #endif /* NT */
+
+#ifdef OS2
+#ifndef CK_COLORS_24BIT
+    printf(" No 24-bit RGB color support\n");
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(1); else lines = 0; }
+#endif /* CK_COLORS_24BIT */
+#endif /* OS2 */
 
     if (flag == 0) {
         printf(" None\n");

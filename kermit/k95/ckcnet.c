@@ -66,6 +66,7 @@ char *cknetv = "Network support, 10.0.304, 18 Sep 2023";
 #include <errno.h>                      /* this version, but after in others */
 #endif /* I386IX */
 #include "ckcnet.h"                     /* which includes ckctel.h */
+#include "ckuusr.h"
 #ifdef CK_SSL
 #include "ck_ssl.h"
 #endif /* CK_SSL */
@@ -5179,7 +5180,6 @@ _PROTOTYP(SIGTYP x25oobh, (int) );
 /*  N E T C L O S  --  Close current network connection.  */
 
 #ifndef NOLOCAL
-_PROTOTYP(VOID slrestor,(VOID));
 #ifdef CK_SSL
 int tls_norestore = 0;
 #endif /* CK_SSL */
@@ -6329,7 +6329,7 @@ netinc(timo) int timo;
                  * ttchk() > 0 telnet suddenly works!
                  *
                  * So maybe there is some bug in the NT 3.1 Winsock
-                 * implementation? Or is CKW doing something that NT 3.1 doesn't
+                 * implementation? Or is K95 doing something that NT 3.1 doesn't
                  * like?
                  *
                  * problem is, the API ttchk() relies on (FIONREAD) is slow and
@@ -6944,9 +6944,9 @@ nettoc(c) CHAR c;
 #ifdef TNCODE
 static int
 #ifdef CK_ANSIC
-netgetc(int timo)                       /* Input function to point to... */
+netgetct(int timo)                      /* Input function to point to... */
 #else  /* CK_ANSIC */
-netgetc(timo) int timo;
+netgetct(timo) int timo;
 #endif /* CK_ANSIC */
 {                                       /* ...in the tn_doop() call */
 #ifdef TCPIPLIB
@@ -6984,7 +6984,7 @@ netflui() {
             ch = netinc(1);
             if (ch == IAC) {
                 extern int duplex;  /* this really shouldn't be here but ... */
-                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetc);
+                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetct);
                 if (tx == 1) duplex = 1;
                 else if (tx == 2) duplex = 0;
                 n = nettchk();
@@ -7029,7 +7029,7 @@ netflui() {
             ch = ttinc(1);
             if (ch == IAC) {
                 extern int duplex;  /* this really shouldn't be here but ... */
-                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetc);
+                int tx = tn_doop((CHAR)(ch & 0xff),duplex,netgetct);
                 if (tx == 1) duplex = 1;
                 else if (tx == 2) duplex = 0;
                 n = ttchk();

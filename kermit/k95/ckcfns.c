@@ -35,6 +35,7 @@ char *nm[] =  { "Disabled", "Local only", "Remote only", "Enabled" };
 #ifdef OS2
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #include "ckocon.h"
 #endif /* OS2 */
@@ -47,6 +48,9 @@ extern CHAR feol;
 extern int byteorder, xflg, what, fmask, cxseen, czseen, nscanfile, sysindex;
 extern int xcmdsrc, dispos, matchfifo;
 extern int inserver;
+#ifdef OS2
+extern int ccseen;
+#endif /* OS2 */
 
 extern int nolinks;
 #ifdef VMSORUNIX
@@ -91,6 +95,7 @@ _PROTOTYP( int zzstring, (char *, char **, int *) );
 #include <io.h>
 #ifdef OS2ONLY
 #include <os2.h>
+#undef COMMENT
 #endif /* OS2ONLY */
 #endif /* OS2 */
 
@@ -946,7 +951,7 @@ xpnbyte(a,tcs,fcs,fn) int a, tcs, fcs; int (*fn)();
 #ifndef IKSDONLY
 #ifdef OS2
             extern int k95stdout,wherex[],wherey[];
-			extern unsigned char colorcmd;
+			extern cell_video_attr_t colorcmd;
             union {
                 USHORT ucs2;
                 UCHAR  bytes[2];
@@ -3148,6 +3153,9 @@ tinit(flag) int flag;
     fncnv = f_save;			/* Back to what user last said */
     pktnum = 0;				/* Initial packet number to send */
     cxseen = czseen = discard = 0;	/* Reset interrupt flags */
+#ifdef OS2
+	ccseen = 0; 		  /* Reset K95 autodownload Ctrl+C interruption flag */
+#endif /* OS2 */
     *filnam = '\0';			/* Clear file name */
     spktl = 0;				/* And its length */
     nakstate = 0;			/* Assume we're not in a NAK state */
@@ -4264,6 +4272,9 @@ reof(f,yy) char *f; struct zattr *yy;
 VOID
 reot() {
     cxseen = czseen = discard = 0;	/* Reset interruption flags */
+#ifdef OS2
+	ccseen = 0; /* Reset K95 autodownload Ctrl+C interruption flag */
+#endif /* OS2 */
     tstats();				/* Finalize transfer statistics */
 }
 
@@ -4994,6 +5005,9 @@ seot() {
     if (x < 0)
       return(x);
     cxseen = czseen = discard = 0;	/* Reset interruption flags */
+#ifdef OS2
+	ccseen = 0;  /* Reset K95 autodownload Ctrl+C interruption flag */
+#endif /* OS2 */
     tstats();				/* Log timing info */
     return(0);
 }

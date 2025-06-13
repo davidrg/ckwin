@@ -1,0 +1,434 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0"> 
+<html><head>
+<title>Kermit 95 - Web Browser Interface</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2><a name="url">Kermit 95's Web Browser Interface</h2>
+
+<b>Contents:</b>
+<ul>
+<li><a href="#urlcmd">The BROWSE Command</a>
+<li><a href="#urlmouse">Clicking on URLs</a>
+<li><a href="#urlhotkey">URL Hot Keys</a>
+<li><a href="#urldoit">Do-It-Yourself URL Hot Spots</a>
+<li><a href="#urlsexe">The SE.EXE Program</a>
+<li><a href="#urlbuiltin">Using K-95's Built-In ShellExecute()</a>
+<li><a href="#urlnetsc">Kermit 95 and Netscape Communicator</a>
+<li><a href="#urlmsie">Kermit 95 and Microsoft Internet Explorer</a>
+</ul>
+
+<p>
+
+Kermit 95 can activate your Web browser when you Ctrl-click on a Universal
+Resource Locator (URL) in the Terminal or Command window, or when you give a
+BROWSE command.  By default, URLs that K95 has recognized are highlighted;
+you can Ctrl-click on any part of a highlighted URL.  You can also Ctrl-click
+on text that K95 has not recognized as a URL, but which you believe your
+browser can handle anyway, such as "short-form" URLs like www.ibm.com.
+
+<p>
+
+The default method for locating and activating the browser is as follows:
+
+<p>
+<ul>
+
+<li>Windows:
+The <tt>HKEY_CLASSES_ROOT\http\shell\open\command</tt> value from the Registry.
+<p>
+<li>OS/2:
+Via path search for <tt>NETSCAPE.EXE</tt> or <tt>EXPLORE.EXE</tt>.
+</ul>
+<p>
+
+You may override the default in the Dialer's <b>Options..Configure</b>
+Applications dialog, or by specifing a browser as follows (normally in your
+<tt>K95CUSTOM.INI</tt> or <tt>K2CUSTOM.INI</tt> file):
+
+<p>
+<dl>
+
+<dt><tt>SET BROWSER <i>[ filename [ command-line-options ] ]</i></tt>
+
+<dd>Use this command to specify the name of your Web browser program, for
+example:
+<p><pre>
+  set browser C:\Netscape\Navigator2\Program\Netscape.exe -h
+</pre>
+<p>
+
+or (note the braces when the filename contains spaces):
+
+<p>
+<pre>
+  set browser "C:\Program Files\iexplore.exe"
+</pre>
+<p>
+</dl>
+
+By default, <b>a new instance</b> of the browser is started each time you
+perform a browse action (because K95 does not know the specific interface to
+each version of each browser on each platform).
+
+<p>
+
+<tt>SHOW BROWSER</tt> displays the current browser.
+
+<p>
+
+K95's default method for choosing and invoking the browser was chosen because
+it is the method that works "out of the box" for the most people.  Other
+methods are described below that you might like better -- if they work!
+
+<h3><a name="urlcmd"><hr>The BROWSE Command</h3>
+
+<b>Links:</b> [<a href="#urlmouse">Next</a>] [<a href="#url">Index</a>]
+<p>
+
+<p><dl>
+<dt><tt>BROWSE <i>text</i></tt>
+<dd>Invokes your browser on the given text, for example:
+<p><pre>
+"browse http://www.kermitproject.org/".
+</pre><p>
+</dl>
+
+Kermit 95 is suspended until the Browser exits (but see below).
+
+<h3><a name="urlmouse"><hr>Clicking on URLs</h3>
+
+<b>Links:</b>
+[<a href="#urlhotkey">Next</a>]
+[<a href="#urlcmd">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+The <tt>\KmouseURL</tt> verb, which is assigned to Ctrl-Button-1 on your mouse
+by default, is used to start your browser on the URL that you click on.  For
+example, if the text:
+
+<p><pre>
+  http://www.kermitproject.org/
+</pre><p>
+
+appears in Kermit 95's Terminal or Command screen, and you move the mouse
+pointer to anywhere within this text, then hold down the Ctrl key and click
+button 1, Kermit starts your browser on this URL.
+
+<p>
+
+Practically any text is a valid URL for a browser.  For example, if you tell
+your browser to visit "ibm", it might very well be clever enough to
+try "<tt>http://www.ibm.com/</tt>" (the browser treats any text as a potential
+URL, whereas K95 has to pick true, well-formed URLs out of arbitrary text
+streams).
+
+<p>
+
+When you Ctrl-click on some text, K95 scans backwards and forwards from the
+mouse point to determine the boundaries.  If the URL has wrapped, K95 does not
+get the second half because it would have no way of telling the difference
+between a URL that ended on the right screen margin from one that wrapped.
+The result of this scan is passed as-is to the browser, except that if it
+appears to be an email address, then "mailto:" is added to the front of it (if
+not already there).
+
+<p>
+
+The result of the scan is also placed in the variable, <tt>\v(url)</tt>, in
+case you want to check it or use it later.  If the URL ends with a period
+followed by whitespace, K95 does not include the period, since URLs that
+appear in email or news postings are likely to be at the end of a sentence,
+and most URLs do not actually have a period at the end.
+
+<p>
+
+Note: You might find that some dexterity is required to click the mouse
+without moving it.  If Ctrl-click on a URL doesn't seem to work, it's probably
+because the mouse was in motion, and so Windows reported a drag event rather
+than a click event (in which case, K95 executes whatever is associated
+with Button 1 Ctrl-Drag, which is "Select text and transmit it" unless you
+changed it).
+
+<h3><a name="urlhotkey"><hr>URL Hot Keys</h3>
+
+<b>Links:</b>
+[<a href="#urldoit">Next</a>]
+[<a href="#urlmouse">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+The <tt>\Kurl</tt> verb lets you put the the terminal cursor on any URL and
+then press the associated key to have your browser visit the URL.  Example:
+
+<p><pre>
+  K-95&#62; <u>set key \375 \Kurl</u>
+</pre>
+
+This makes F8 your URL hot key.  Then whenever the terminal window is active,
+and you can place the terminal cursor on a URL (as you can, for example, in
+a fullscreen text editor like EMACS, VI, or EDT), you can use this key to
+go to the site.  Handy for mouse-ogynists.
+
+<h3><a name="urldoit"><hr>Do-It-Yourself URL Hot Spots</h3>
+
+<b>Links:</b>
+[<a href="#urlsexe">Next</a>]
+[<a href="#urlmouse">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+You can use the following method to let you select any arbitrary text and pass
+it to your browser.  Define a macro like the following in your K95CUSTOM.INI
+file:
+
+<p><pre>
+  define URL {
+      browse \v(select)
+      if terminal-macro connect
+  }
+  set mouse button 1 alt drag \Kurl
+</pre><p>
+
+Now you can hold down the Alt key and select text with mouse button 1.  When
+you release button 1, the selected text is passed to your defined browser.
+
+<p>
+
+Alternatively you can use "<tt>run start \v(select)</tt>" rather than
+"<tt>browse ...</tt>"; the effect should be the same.
+
+<h3><a name="urlsexe"><hr>The SE.EXE Program</h3>
+
+<b>Links:</b>
+[<a href="#urlbuiltin">Next</a>]
+[<a href="#urldoit">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+Windows 95 and NT include an API called <tt>ShellExecute()</tt>.  Given a
+character string, this API <i>(a)</i> decides what application is appropriate
+for it based on a Registry search, <i>(b)</i> checks to see if the application
+is already running; and <i>(c)</i> if it is, sends a <a
+href="gloss.html#g_dde">DDE</a> message to the application telling it to
+process the given string; otherwise it starts the application, giving it the
+string as an operand.
+
+<p>
+
+So, for example, if the string is "<tt>oofa.xls</tt>", ShellExecute() might
+determine that the appropriate application is Excel, checks to see if Excel is
+running, and if so, sends a DDE message to it telling it load the
+<tt>oofa.xls</tt> file; otherwise it starts Excel and loads it with
+<tt>oofa.xls</tt>.  If the string is:
+
+<p><pre>
+  http://www.kermitproject.org/
+</pre><p>
+
+then the appropriate application is your primary Web browser.  For
+"<tt>oofa.gif</tt>" it is your GIF file viewer (which might also be your Web
+browser).  For "<tt>oofa.ps</tt>" it is your PostScript previewer, assuming
+you have one registered.
+
+<p>
+
+Note that many applications do not respond to DDE messages; when such an
+application is invoked via ShellExecute(), a new copy is always started.
+
+<p>
+
+A small program called <tt>SE.EXE</tt> is included for use with Windows 95 and
+Windows NT.  It simply calls ShellExecute() on its argument.  For example:
+
+<p><pre>
+  se http://www.kermitproject.org/
+</pre><p>
+
+passes "<tt>http://www.kermitproject.org/</tt>" to ShellExecute(), which
+should send your browser (starting it if necessary) to the Kermit website.
+Similarly,
+
+<p><pre>
+  se oofa.txt
+</pre><p>
+
+should start your text editor (such as Notepad) on the <tt>oofa.txt</tt> file,
+and so on.  But exactly what <i>really</i> happens depends on the filetype
+associations in your Registrey (Windows only) and meny other factors.
+If you give an argument to SE that it does not understand (i.e. for which
+there is not an association in the Registry), it does nothing.
+
+<p>
+
+If you specify <tt>SE.EXE</tt> as your browser, it is the same as telling K-95
+to "set browser" to your preferred browser, except:
+
+<p>
+<ol>
+
+<li>This does not always start a new copy; if the browser is already running,
+it simply visits the given URL as if you had brought your browser to the
+front and did this yourself.
+
+<p>
+
+<li>If you click on something that is not a URL, this will start the
+associated application, whatever it is; e.g. clicking on "readme.txt" 
+will probably start a text editor.
+
+</ol>
+<p>
+
+To choose <tt>SE.EXE</tt> as your browser:
+
+<p><pre>
+  SET BROWSER D:\K95\SE.EXE ; <i>(or whatever your Kermit 95 directory is.)</i>
+</pre><p>
+
+Equivalently, you can enter the pathname of <tt>SE.EXE</tt> in the Dialer's 
+<b>Options..Configure Applications</b> dialog.
+
+<p>
+
+You can also use <tt>SE.EXE</tt> as your editor:
+
+<p><pre>
+  SET EDITOR D:\K95\SE.EXE  ; <i>(or whatever your Kermit 95 directory is.)</i>
+</pre><p>
+
+This lets Windows pick the appropriate editor for each type of file you
+want to edit: plain text (<tt>.TXT</tt>), Windows Word (<tt>.DOC</tt>), C
+language source code (<tt>.C</tt>), and so on, based on Registry entries.
+
+<p>
+
+And you can use <tt>SE.EXE</tt> in other ways too.  Suppose, for example, you
+want to download a GIF (graphics) file from a Kermit server and view it as
+soon as it arrives:
+
+<p><pre>
+  define gifget set file type binary, get \%1, se \%1
+</pre><p>
+
+In fact, this will work not only with GIF files, but any other kind of file
+for which the Windows Registry contains associations.
+
+<h3><a name="urlbuiltin"><hr>Using K-95's Built-In ShellExecute()</h3>
+
+<b>Links:</b>
+[<a href="#urlnetsc">Next</a>]
+[<a href="#urlsexe">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+In Windows, if you give the following command to Kermit 95:
+
+<p><pre>
+  SET BROWSER
+</pre><p>
+
+(by itself, no operands) this tells K-95 to call <tt>ShellExecute()</tt> on
+any browse actions: the <tt>BROWSE</tt> command, or a <tt>\KmouseURL</tt>
+event.  This is equivalent to:
+
+<p><pre>
+  SET BROWSER SE.EXE
+</pre><p>
+
+except that <tt>ShellExecute()</tt> is called from within K-95 itself, rather
+than through an external program.  When this option works, it is to be
+preferred because it does not cause the creation of any new windows, and it
+does not force K-95 to suspend itself until SE completes, which could be
+practically any amount of time.
+
+<p>
+
+Internal <tt>ShellExecute()</tt> would be K-95's default browser interface
+except for the following hitches:
+
+<p>
+<ol>
+
+<li><tt>ShellExecute()</tt> is not available in OS/2.
+
+<li>It is dependent on the consistency of the Registry entries associated with
+each URL.  Competing products from different vendors frequently cause errors
+which prevent applications from being executed correctly.
+
+</ol>
+<p>
+
+If "<tt>set browser</tt>" (with no argument, i.e. internal ShellExecute())
+works for you, by all means use it, but run some tests on your system first to
+be sure.  If it doesn't work, use "<tt>set browser se.exe</tt>" (which might
+have the same problems, but at least they happen outside K-95), or "<tt>set
+browser</tt>" to a specific browser program and its arguments.
+
+<h3><a name="urlnetsc"><hr>Kermit 95 and Netscape Communicator</h3>
+
+<b>Links:</b>
+[<a href="#urlmsie">Next</a>]
+[<a href="#urlbuiltin">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+Netscape Communicator, also known as Netscape 4.x, completely changed its
+method for invoking its Telnet helper application, and so Kermit 95 1.1.13 and
+earlier do not work with it (nor do any other Telnet programs that we know
+about).  Earlier versions of Netscape would invoke the Telnet program using
+the command-line you gave in its <b>Options..General preferences..Apps</b>
+dialog.  with the IP name/address and possibly port appended to it, such as:
+
+<p><pre>
+  C:\K95\K95 -J xyzcorp.com 2000
+</pre><p>
+
+(where "<tt>C:\K95\K95 -J</tt>" is what you configured in Netscape, and
+"<tt>xyzcorp.com 2000</tt>" are the hostname and port added to the command
+line by Netscape to make the connection.
+
+<p>
+
+The Netscape 4.x substitutes some kind of bizarre pseudo-URL that
+most Telnet applications do not understand for the simple hostname and port.
+As of version 1.1.14, K95 is capable of parsing these misformatted hostnames.
+The syntax accepted is:
+
+<p><pre>
+  <i>[protocol</i>:<i>[</i>:<i>][</i>//<i>][user[</i>:<i>password]</i>@<i>]]host[</i>:<i>port][</i>/<i>]</i>
+</pre><p>
+
+(where optional parts are enclosed in brackets).  This form, as well as the
+three forms that were accepted originally:
+
+<p><pre>
+  <i>host</i>
+  <i>host port</i>
+  <i>host:port</i>
+</pre><p>
+
+can also be used in SET HOST or TELNET commands and passed on the command line
+as arguments to "<tt>-j</tt>" or "<tt>-J</tt>".  The <i>password</i>, if
+given, is ignored.
+
+<h3><a name="urlmsie"><hr>Kermit 95 and Microsoft Internet Explorer</h3>
+
+<b>Links:</b>
+[<a href="#urlnetsc">Previous</a>]
+[<a href="#url">Index</a>]
+<p>
+
+Internet Explorer activates the telnet program that is configured in the
+Windows 95 or NT registry.  There is no means within Internet Explorer to
+set the Telnet client that you wish to use.  The Kermit 95 Registry Tool
+(<tt>K95REGTL.EXE</tt>) may be used to configure K95 as your default Telnet
+client.
+
+<p>
+
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+
+<p>
+<hr>
+</body>

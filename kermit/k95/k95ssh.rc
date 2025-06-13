@@ -59,14 +59,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "libssh SSH Backend for " VERSION_PRODUCT_SHORT COMMENTS "\0"
+            VALUE "Comments", "libssh SSH Backend for " K95_VERSION_PRODUCT_SHORT COMMENTS "\0"
             VALUE "CompanyName", "The Kermit Project\0"
             VALUE "FileDescription", "libssh SSH Backend" VARIANT "\0"
             VALUE "FileVersion", RC_FILE_VERSION_STR
             VALUE "InternalName", "k95ssh\0"
-            VALUE "LegalCopyright", "(C) Copyright 2022-" VERSION_YEAR " David Goodwin\0"
+            VALUE "LegalCopyright", "(C) Copyright 2022-" K95_VERSION_YEAR " David Goodwin\0"
             VALUE "OriginalFilename", "k95ssh.dll\0"
-            VALUE "ProductName", VERSION_PRODUCT "\0"
+            VALUE "ProductName", K95_VERSION_PRODUCT "\0"
             VALUE "ProductVersion", RC_PROD_VERSION_STR
         END
     END

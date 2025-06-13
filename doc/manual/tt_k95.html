@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+    <META name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kermit 95 - The "k95" Terminal Type</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>The "k95" Terminal Type</h2>
+
+<p>
+
+This is Kermit 95s <em>own</em> terminal personality which, while not emulating
+xterm, aims to be broadly compatible with software written for other
+"xterm compatible" terminals. And while not aiming specifically to emulate
+xterm, the K95 terminal type is in general more xterm-compatible than many other
+"xterm compatible" terminals.
+
+<p>
+The K95 terminal type is largely a VT320 with various extensions from the VT420,
+VT520, xterm and other terminals. It includes its own terminfo entry enabling
+curses applications to take full advantage of its capabilities, which include:
+
+<ul>
+    <li>Support for full 24-bit direct RGB color</li>
+    <li>Settable color palette</li>
+    <li>Optional host-writable status line. When turned on or off, it alters
+        the window size, rather than adding/removing terminal lines like other
+        emulations.
+    </li>
+    <li>Both of xterms Meta key modes</li>
+    <li>A more xterm-compatible default keymap</li>
+    <li>VT420 rectangular area operations</li>
+    <li>Some VT525 color control sequences</li>
+    <li>A selection of additional control sequences for improved
+        compatibility with xterm</li>
+</ul>
+
+<p>Many (but not all) of these features are available in K95s other ANSI
+    terminal emulations, but as (for example) the VT320 terminfo file doesn't
+    contain capabilities for changing the color palette, applications tend not
+    to make use of those features.
+
+<h3><a name="terminfo"><hr>Terminfo Description</h3>
+<p>
+While at the time of writing the K95 terminal type is quite compatible with the
+common <tt>xterm-256color</tt> terminfo entry, there <em>are</em> differences
+which could potentially impact some applications. And there is always the
+possibility that future xterm releases will change its terminfo entry in ways
+that are incompatible with Kermit 95.
+
+<p>So for the best compatibility when using the K95 terminal type, you should
+    make sure to install Kermit 95s terminfo description. If the remote host
+    is unix, and you've got both C-Kermit (not gkermit) and the terminfo
+    entry-description compiler (<tt>kermit</tt> and <tt>tic</tt>) in your PATH,
+    and you're sitting at the shell you can run from the following command from
+    the K95 command screen to install it: <tt>take terminfo.ksc</tt>.
+
+<p>This script will transmit the terminfo description (<tt>k95.src</tt>)
+    to the remote host and install it using <tt>tic -x</tt>. If you don't have
+    write access to install it globally (in <tt>/usr/share/terminfo</tt>), it
+    should end up in your personal terminfo directory (<tt>$HOME/.terminfo</tt>).
+
+<p>The <tt>terminfo.ksc</tt> script itself only contains two commands:
+<pre>   output kermit -C "receive /command /as-name:{tic -x -},exit"\{13}
+   send \v(exedir)/k95.src</pre>
+
+<p>The first runs kermit on the remote host, tells it to receive a file and
+    pipe it through the command <tt>tic -x -</tt>, then exit. And the
+    second command sends the terminfo file.
+
+<p>If you don't have C-Kermit on the remote host, you can transmit the file by
+    some other means, and then install it with <tt>tic -x k95.src</tt>.
+
+<h3><a name="emacs"><hr>Emacs compatibility</h3>
+<p> Unfortunately, installing the terminfo entry alone isn't enough for Emacs
+to work nicely with the K95 terminal type, as Emacs relies on its own
+knowledge of different terminals rather than relying only on terminfo. So if
+you're an Emacs user, you'll need to add a few things to your <tt>.emacs</tt>
+file to get the best results:
+
+<pre>
+    ;; Treat k95 like any other xterm-compatible terminal and use keybindings
+    ;; suitable for xterm-compatible terminals.
+    (add-to-list 'term-file-aliases '("k95" . "xterm"))
+
+    ;; When Emacs is on screen, tell K95 to change its keymap so that it does
+    ;; what Emacs expects the meta key to do (Alt+x sends ESC x). When Emacs
+    ;; exits or is suspended, it will switch K95 back to its normal keyboard
+    ;; mode.
+    (add-hook 'tty-setup-hook '(lambda()
+        (when (equal "k95" (getenv "TERM" (selected-frame)))
+            (send-string-to-terminal "\e[?1036h")
+            (push "\e[?1036l" (terminal-parameter nil 'tty-mode-reset-strings))
+            (push "\e[?1036h" (terminal-parameter nil 'tty-mode-set-strings)))))
+</pre>
+
+<p>The second part is optional. It causes Emacs to ask K95 for different
+    handling of the Alt key when its on screen. This is similar to Kermit 95s
+    special Emacs keyboard mode. This does override many of K95s default
+    shortcut keys though.
+
+<!-- TODO: Update this with any changes to how the meta-sends-esc mode works,
+        along with details on how to turn that mode on and off manually -->
+
+<p>
+<hr>
+<p>
+
+    <i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>
+

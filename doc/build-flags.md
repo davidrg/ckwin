@@ -1,6 +1,6 @@
-# CKW Build Flags
+# K95 Build Flags
 
-The CKW build system will automatically try to turn on all features the current
+The K95 build system will automatically try to turn on all features the current
 compiler and available 3rd party libraries will support. If you'd like to turn
 off some features that would otherwise be on automatically, or otherwise
 customise the build you can set a few environment variables before running
@@ -56,7 +56,7 @@ set CKF_INTERNAL_CRYPT=yes
 ## Target Platform
 
 These are set automatically based on detected compiler. These all require either
-Visual C++ 1.0 32bit, Visual C++ 2.0 or OpenWatcom.
+Visual C++ 1.0 32bit, Visual C++ 2.0 or Open Watcom.
 
 | Flag     | Default                          | Description                                                              |
 |----------|----------------------------------|--------------------------------------------------------------------------|
@@ -74,6 +74,6 @@ Setting either CKT_NT35 or CKT_NT31 disables the following features:
 * CKF_LOGIN
 * CKF_NTLM
 
-OpenWatcom by default will target NT 3.51 and newer but you can
-`set CKT_NT35=yes` to target NT 3.50 instead. Builds with OpenWatcom don't
+Open Watcom by default will target NT 3.51 and newer but you can
+`set CKT_NT35=yes` to target NT 3.50 instead. Builds with Open Watcom don't
 currently work on NT 3.1 regardless of whether CKT_NT31 is set or not.

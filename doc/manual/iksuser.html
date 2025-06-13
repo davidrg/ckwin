@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head></tt>
+<title>Kermit Security Features</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<a name="top"></a>
+<center>
+<h3>The Internet Kermit Service Daemon</h3>
+<h2>USER'S GUIDE</h2>
+<p>
+The Kermit Project<br>
+Columbia University<br>
+<a href="https://kermitproject.org/">https://kermitproject.org/</a>
+<p>
+
+<i>8 February 2000</i>
+</center>
+<p>
+The Internet Kermit Service (IKS) is similar to traditional FTP service, but
+with several key differences:
+<p>
+<ol type="a">
+<li>It uses Kermit protocol rather than FTP protocol for file transfer
+and management.
+<p>
+<li>You may interact with it through a client (such as Kermit program
+at its command prompt) or you may interact with it directly through a
+terminal emulator.
+<p>
+<li>You can access it not only from an Internet client, but also from a serial
+communications program, and it can operate through firewalls.
+<p>
+<li>It offers numerous services not available in FTP.
+</ol>
+<p>
+<hr>
+<h3><a name="contents">CONTENTS</a></h3>
+
+<ol>
+<li><a href="#x1">Requirements</a>
+<li><a href="#x2">Making the Connection</a>
+<li><a href="#x3">Logging In</a>
+<li><a href="#x4">Using the IKS Interactively</a>
+<li><a href="#x5">Client/Server Access</a>
+<li><a href="#x6">Tightly Coupled Access</a>
+</ol>
+<p>
+<hr>
+<h3><a name="x1">1. Requirements</a></h3>
+
+To access the IKS, you need:
+<p>
+<ol type="a">
+<li>A Telnet client that includes a Kermit protocol implementation, or:
+<li>A serial communications package that includes Kermit protocol.
+</ol>
+<p>
+No particular type of terminal emulation is required (or used).
+<p>
+Various commercial shareware, and freeware, communication software packages
+fall into one category or the other, some into both, and others into neither.
+<p>
+For best results, use
+<a href="https://kermitproject.org/ckermit.html">C-Kermit</a>,
+<a href="https://kermitproject.org/k95.html">Kermit 95</a>, or
+<a href="https://kermitproject.org/mskermit.html">MS-DOS Kermit</a>
+from the
+<a href="https://kermitproject.org/">Kermit Project</a>
+, since these can take full advantage of the IKS
+in terms of both performance and functionality.
+<p>
+<hr>
+
+<h3><a name="x2">2. Making the Connection</a></h3>
+
+Depending on the capabilities of your communications software, you can access
+the IKS in interactive mode, client/server mode, or both.
+To access the IKS directly from your Telnet client in interactive mode,
+instruct it to make a connection to the desired host on port 1649.  For
+example, from the C-Kermit or Kermit 95 prompt:
+<p><pre>
+  telnet kermit.columbia.edu 1649
+</pre><p>
+or invoking C-Kermit from the UNIX shell:
+<p><pre>
+  kermit -J kermit.columbia.edu 1649
+</pre><p>
+If you want to make a client/server connection, first make sure your
+communications software has a SET HOST command and a REMOTE LOGIN command.
+Then use the SET HOST command rather than TELNET; this makes the connection
+without also entering the terminal screen:
+<p><pre>
+  set host kermit.columbia.edu 1649
+</pre><p>
+You can also access the IKS indirectly through a terminal server or other
+Telnet-capable device or host to which you have dialup access.  First use your
+communications software to dial the appropriate number; e.g. using C-Kermit:
+<p><pre>
+  set modem type usrobotics
+  set line /dev/cua0
+  set speed 57600
+  dial 7654321
+</pre><p>
+Once the call is complete, enter the terminal emulator if necessary (e.g.
+with Kermit's CONNECT command), and then engage in any dialog required to make
+a Telnet connection to the IKS, e.g.:
+<p><pre>
+  Welcome to XYZ Corp's Terminal Server
+  xyz_ts> telnet kermit.columbia.edu 1649
+</pre><p>
+<hr>
+
+<h3><a name="x3">3. Logging In</a></h3>
+
+If your client software and the server both support, and are configured for,
+Telnet authentication negotiation, e.g. via Kerberos, this will be used
+automatically, and you will be authenticated automatically if your identity
+is registered in the appropriate host database.
+<p>
+If you made a client/server connection, use your communication package's
+REMOTE LOGIN command to log in, for example:
+<p><pre>
+  remote login myuserid mypassword
+</pre><p>
+If you made an interactive connection, then your communications software is 
+in its terminal screen, and you should see a banner and a Username prompt:
+<p><pre>
+  Internet Kermit Service ready at Fri Feb  4 16:32:21 2000
+  C-Kermit 7.0.196, 1 Jan 2000
+  kermit.columbia.edu
+
+  Username:
+</pre><p>
+If you have a user ID on the system to which you have connected, enter it at
+the Username: prompt.  If you do not have an ID, enter "anonymous".  Then
+press the Enter or Return key.  Now you will see a Password prompt:
+<p><pre>
+  Password:
+</pre><p>
+If you have entered a real user ID, enter the corresponding password here.
+If you entered "anonymous", enter your email ID here.  The text that you type
+at the Password prompt will not echo.  Press the Enter or Return key at the
+end of the password.
+<p>
+If you made any mistakes, the IKS says "Access denied" and gives you a new
+Username prompt so you can try again.
+<p>
+If you logged in anonymously, your access is restricted in the same way it
+would be with anonymous FTP access.
+<p>
+What happens next depends on how the IKS was configured by the system
+administrator.
+<p>
+<hr>
+
+<h3><a name="x4">4. Using the IKS Interactively</a></h3>
+
+After logging in interactively, your client program should still be in its
+terminal screen, and you should see a <tt>IKSD&#62;</tt> prompt.  At this
+point, you can issue any C-Kermit commands at all to the IKS.  It will execute
+them or not depending on your access rights, according to the ID you have
+logged in with.
+<p>
+If, instead of a C-Kermit> prompt, you see the message:
+<p><pre>
+  KERMIT READY TO SERVE...
+</pre><p>
+then the IKS has been started in a manner that allows only client/server
+operation.  In that case, return to your communication software's command
+prompt or menu and issue further commands from there (see next section).
+<p>
+C-Kermit commands are documented in the
+<a href="ckb2.html"><cite>Using
+C-Kermit</cite></a> manual.  You can
+get a list of commands by typing ? (question mark) at the prompt, and you
+can use the HELP command to get brief descriptions of each command.  If you
+don't know anything about Kermit software at all, type INTRO at the IKS
+prompt for a brief introduction.
+<p>
+
+Interactive IKS access works best if your communications program supports
+"autoupload" and "autodownload" in its terminal emulator (as do C-Kermit,
+Kermit 95, and MS-DOS Kermit).  This way if you give a SEND command to the
+IKS, your terminal program automatically enters RECEIVE mode.  If you give a
+GET or REMOTE command to the IKS, your terminal program automatically enters
+SERVER mode.  Thus you never need to "escape back" to your terminal program,
+give it the complementary file-transfer command, and then re-CONNECT when the
+transfer is done.
+<p>
+C-Kermit, Kermit 95, and MS-DOS Kermit have this feature enabled by default.
+If your terminal program does not support this feature, you'll need to follow
+the instructions in its documentation for Kermit file transfer.
+<p>
+When you are finished using the IKS, you can give any of the following
+commands at the IKS prompt to terminate your session and close the connection:
+<p><pre>
+  LOGOUT
+  EXIT
+  QUIT
+</pre><p>
+<hr>
+
+<h3><a name="x5">5. Client/Server Access</a></h3>
+
+When you have a client/server connection, the server is hidden from you and
+you can only see the client, i.e. the communications software with which you
+made the connection.  To make effective use of the IKS, your client must
+include the following commands (or equivalent choices):
+<p><pre>
+  GET <i>filename</i>      To ask the IKS to send files to you
+  SEND              To send files to the IKS
+  REMOTE <i>xxx</i>        To request the IKS to "xxx" (see below)
+  FINISH            To request the IKS enter interactive mode
+  BYE               To terminate the IKS and close the connection
+  HANGUP            To close the connection (and therefore terminate the IKS)
+</pre><p>
+REMOTE xxx choices include:
+<p><pre>
+  REMOTE CD         To change directory (RCD)
+  REMOTE PWD        To tell current directory (RPWD)
+  REMOTE DIRECTORY  To get a directory listing (RDIR)
+  REMOTE DELETE     To delete files (RDEL)
+  REMOTE RENAME     To rename a file (RREN)
+  REMOTE HELP       To get a listing of available IKS services (RHELP)
+  REMOTE MKDIR      To create a directory (RMKDIR)
+  REMOTE RMDIR      To remove a directory (RRMDIR)
+  REMOTE SET        To change various settings (RSET)
+  REMOTE TYPE       To display a file on your screen (RTYPE)
+  REMOTE WHO        To list users on your screen (RWHO)
+</pre>
+<p>
+
+Any or all of these might be disabled in the server, depending on your access
+rights and the configuration set up by the system administrator.  Other, more
+advanced, options might also be available.  Consult your client software
+documentation.
+<p>
+<hr>
+
+<h3><a name="x6">6. Tightly Coupled Access</a></h3>
+
+C-Kermit 7.0, Kermit 95 1.1.19, and any other
+software that implements the RFC2840 Telnet Kermit
+Option, will be able to switch back and forth between client/server and
+interactive mode automatically.  Thus, for example, when you use one of these
+programs as your Telnet client, and you CONNECT to the IKS, then the IKS
+automatically gives you its interactive prompt; if you send it a file while it
+is at its prompt, it automatically switches into file-transfer mode.  And so
+forth.  Tightly coupled access is possible only on end-to-end Telnet
+connections.
+
+<p>[<a href="#top">Top</a>][<a href="https://kermitproject.org/ckermit.html">C-Kermit</a>][<a href="https://kermitproject.org/ckermit70.html">Update Notes</a>][<a href="https://kermitproject.org/">Kermit Home</a>]<hr>
+<address>
+IKS User Guide / Kermit Project / 8 Feb 2000
+</address>
+</body>
+</html>

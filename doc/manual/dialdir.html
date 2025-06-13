@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Kermit 95 - Dialing Directory Format</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>Dialing Directory Format</h2>
+
+The dialing and networks directories are described thoroughly in
+<a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">Chapter 5
+of <cite>Using C-Kermit</cite></a>.
+<p>
+Very briefly . . .  A <b>dialing directory</b> is a
+<a href="gloss.html#g_plain">plain-text</a> file containing one or more entries.
+You can create or edit directory files with any text editor that handles
+plain-text files: Notepad, Wordpad, or EDIT in Windows; ED or EDIT in OS/2.
+Or with EMACS if you have it.
+<p>
+Each entry is on a line by itself and has the following simple format:
+<p>
+<pre>
+  <i>name   phone-number   ; optional comment</i>
+</pre>
+<p>
+Example:
+<p>
+<pre><hr>ATTmail     +1 (800) 624 5123      ; AT&T Mail (Easylink), USA
+ATTmail     +1 (416) 502 3000      ; AT&T Mail (Easylink), Canada
+ATTmail    +81 3 5568 9134         ; AT&T Mail (Easylink), Japan
+ATTmail   +852 3003 4900           ; AT&T Mail (Easylink), Hong Kong
+ATTmail    +44  (71) 537 4121      ; AT&T Mail (Easylink), UK<hr></pre>
+<p>
+This shows how the same name can be associated with multiple phone numbers.
+<i>Comments</i> are optional and begin with a semicolon preceded by at least one
+space, or else at the beginning of the line.  Spacing is free-form.  The only
+requirements are that the name must contain no spaces or tabs (or if it does,
+it must be enclosed in braces) and at least one space or tab must separate the
+name from the telephone number.
+<p>
+The <i>phone-number</i> may be in literal or portable format.  Numbers
+starting with + are portable and must include a country code.  Parentheses,
+hyphens, periods, and slashes within a phone number are ignored.  You may
+include special dialing instructions for your modem in the phone number, such
+as comma to insert a pause.
+<p>
+In a <b>network directory</b>, a network type and host name or address appears
+instead of the phone number, possibly followed by additional network-specific 
+information, for example
+<p>
+<pre><hr>CompuServe        tcp/ip compuserve.com
+Delphi		  tcp/ip delphi.com
+Dow-Jones	  tcp/ip djnr.dowjones.com
+Weather           tcp/ip madlab.sprl.umich.edu 3000
+Weather           tcp/ip wind.atmos.uah.edu 3000<hr></pre>
+<p>
+You can find sample directory files in Kermit 95's <tt>PHONES</tt> subdirectory.
+<p>
+Please consult <a href="https://www.kermitproject.org/onlinebooks/uck2ep2.pdf#page=95">
+<cite>Using C-Kermit</cite>, Chapter 5</a>, for a complete
+explanation of telephone numbers, dialing procedures, and the dialing
+and network directories.
+<p>
+<i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>

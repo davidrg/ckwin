@@ -4974,7 +4974,7 @@ cmcvtdate(s,t) char * s; int t;
 	debug(F111,"cmcvtdate",cmdatemsg,-1);
 	return(NULL);
     }
-    sprintf(yyyymmdd,"%s%s%02d",year,month,nday); /* for tz calculations... */
+    sprintf(yyyymmdd,"%s%s%02d",year,month,(char)nday); /* for tz calculations... */
 
     state = 1;				/* Initialize time-parsing FSA */
     hh = 0;				/* hours */

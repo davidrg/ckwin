@@ -314,4 +314,11 @@ kermit/k95/dialer.dat
 kermit/k95/k95dial.exe.manifest
 kermit/k95/p_direct.znc
 kermit/k95/p_servic.znc
+
+# Dependencies
 /kerberos/kfw41
+/rexx/*
+
+# Dist directories
+dist-os2
+dist

@@ -354,4 +354,10 @@ _PROTOTYP( APIRET CreateRichEditMutex, (BOOL) ) ;
 _PROTOTYP( APIRET RequestRichEditMutex, (unsigned long) ) ;
 _PROTOTYP( APIRET ReleaseRichEditMutex, (void) ) ;
 _PROTOTYP( APIRET CloseRichEditMutex, (void) ) ;
+
+_PROTOTYP( APIRET CreateZoutDumpMutex, (BOOL) ) ;
+_PROTOTYP( APIRET RequestZoutDumpMutex, (unsigned long) ) ;
+_PROTOTYP( APIRET ReleaseZoutDumpMutex, (void) ) ;
+_PROTOTYP( APIRET CloseZoutDumpMutex, (void) ) ;
+
 #endif /* CKOSYN_H */

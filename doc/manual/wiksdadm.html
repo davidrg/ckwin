@@ -1,0 +1,2672 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<title>Windows Internet Kermit Service - Administrator Guide</title>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head><body bgcolor="#ffffff" text="#000000">
+<h2><a name="top">
+<tt>Windows Internet Kermit Service - Administrator Guide</tt></a></a></h2>
+
+<blockquote>
+<big>
+
+Max Evarts, The Kermit Project<br>
+Columbia University, New York City
+
+</big>
+</blockquote>
+<p>
+
+[ <a href="#contents">Contents</a> ]
+[ <a href="wiksduse.html">WIKSD User Guide</a> ]
+[ <a href="http://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="http://kermitproject.org/index.html">Kermit Home</a> ]
+
+<p>
+
+<b>ABSTRACT:</b> How to install, configure, and manage
+the <b>Windows Internet Kermit Service:</b>
+a standards-compliant File Transfer and
+Management Shell for Windows NT, 2000, and XP from the
+<a href="https://kermitproject.org">Kermit Project at Columbia
+University</a>, available in free and secure versions.
+
+<p>
+
+<tt>&nbsp;&nbsp;</tt>
+<i>As of Kermit 95 version:</i>  <b><!--$ver-full$-->3.0.0 DEV<!--/$ver-full$--></b><br>
+<tt>&nbsp;&nbsp;</tt>
+<i>This file last updated:</i><b>
+4 June 2002
+</b> &nbsp; (New York City time), with minor updates on
+  <!--$last-update-short$-->11 November 2024<!--/$last-update-short$-->
+
+<p>
+
+IF YOU ARE READING A PLAIN-TEXT version of this document,
+it is a plain-text dump of a Web page.  You can visit the original (and
+possibly more up-to-date) Web page here:
+
+<p>
+<pre>
+  <a href="http://kermitproject.org/wiksdadmin.html">http://kermitproject.org/wiksdadmin.html</a>
+</pre>
+
+<p>
+
+<big><big>T</big>his document</big> applies to <b>Windows NT</b> and its
+descendents, which at this writing include <b>Windows 2000</b> and <b>Windows
+XP</b>.  When the term "Windows", "Windows NT", or "Windows NT/2000" is used
+in this document it refers to Windows NT, 2000, and XP, but <i>not</i> to
+Windows 95, 98, or Millenium Edition (which are sometimes referred to
+collectively as Windows 9x or Win9x).  <b>The Internet Kermit Service should
+NOT be installed on Windows 9x</b> because <i>(a)</i> Windows 9x is insecure,
+and <i>(b)</i> it does not support background processes or "services".  Any
+references to Windows 9x in this document are for completeness only and should
+not be construed as encouragement for running an unattended Internet Kermit
+Service on those operating systems.
+
+<p>
+
+Comments, suggestions, questions welcome.  Open a discussion on github:
+<a href="https://github.com/davidrg/ckwin/discussions"><tt>https://github.com/davidrg/ckwin/discussions</tt></a>.
+
+<h3><a name="contents"><hr noshade>CONTENTS</a></h3>
+
+<p>
+<pre>
+  1. <a href="#x1"><b>WHAT IS IKSD?</b></a>
+  2. <a href="#x2"><b>INSTALLATION</b></a>
+  3. <a href="#x3"><b>IKSD USERS</b></a>
+  4. <a href="#x4"><b>RUNTIME CONFIGURATION OPTIONS</b></a>
+  5. <a href="#x5"><b>ACCESS TO SERVICES</b></a>
+  6. <a href="#x6"><b>MONITORING AND CONTROL</b></a>  
+  7. <a href="#x7"><b>OPEN ISSUES</b></a>
+  8. <a href="#x8"><b>TESTING</b></a>
+</pre>
+
+<h3><a name="x1"><hr noshade>1. WHAT IS IKSD?</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Next</a> ]
+<p>
+
+The Microsoft Windows operating system was not originally designed or intended
+to allow remote access by ordinary terminal programs (such as Telnet clients).
+Yet users understandably wanted this type of open access ever since Windows
+was first announced.  As soon as Kermit 95 announced in October 1995 (just
+after Windows 95 itself), users began demanding support for incoming
+connections.  The result was
+"<a href="https://kermitproject.org/k95host.html">Host Mode</a>", which
+in effect built a user-ID based authentication and file system onto a Windows
+95 foundation that didn't have such a thing.
+
+<p>
+
+Windows NT (which actually predates Windows 95 by a couple of years, but did not
+become popular until much later) solves many of the same problems
+addressed by K95 Host Mode: a file system supporting authenticated users
+with a full range of access controls.  Of course Windows NT is only the first
+in a series of NT-based operating systems, now including Windows 2000 and
+Windows XP.  Kermit 95 Host Mode can be used on Windows NT and its
+descendents, but:
+
+<p>
+
+<ul>
+<li>It bypasses NT's authentication and access mechanisms rather 
+than using them.  
+<li>The authentication process usually transmits passwords over the network in
+clear text.
+<li>Host Mode sessions themselves are usually conducted in clear text.
+<li>Host Mode runs as the user who started it (if not run as an NT Service).
+<li>It pops up all sorts of text screens (ditto).
+<li>Its range of functions is limited by its small menu.
+<li>You have to buy Kermit 95 before you can install it on your PC.
+</ul>
+
+<p>
+
+Enter Windows IKSD.
+
+<p>
+
+<b>IKSD</b> is the Internet Kermit Service Daemon, a software program that
+offers a secure and flexible file-transfer and management service on the
+Internet, based on Telnet and Kermit protocols, that can be accessed from
+anywhere on the Internet, using the procedures specified in Internet RFCs <a
+href="https://www.rfc-editor.org/rfc/rfc2839">2839</a> and <a
+href="https://www.rfc-editor.org/rfc/rfc2840">2840</a>, and supporting
+various IETF-standard security methods that can be negotiated with the client.
+
+<p>
+
+<b>WIKSD</b> is a version of IKSD for Windows NT, 2000, or XP, based on Kermit
+95.  It is not a "PcAnywhere" substitute (graphical desktop replicator), nor
+does it give you remote access to the "DOS" shell (more about this in the
+<a href="wiksduse.html">WIKSD User Guide</a>)
+-- it is more like a high-function FTP server that gives you the options of
+interacting with it directly and of scripting its operation.
+WIKSD comes in two forms:
+
+<p>
+
+<dl>
+<dt><tt>Kermit 95</tt></dt>
+<dd>This is the regular full-featured Kermit 95 program, which can be
+started in a special manner that instructs it to be an Internet Kermit Service.
+
+<p>
+
+<dt><tt>Internet Kermit Service for Windows NT/2000/XP</tt></dt>
+<dd>This is a special version of Kermit 95 that runs as a Windows Service in
+  the background and can only act as an Internet Kermit Service (it doesn't
+  include terminal emulation or the ability to make connections).
+
+</dl>
+
+<p>
+
+Windows Internet Kermit Service allows both anonymous and authenticated
+text-mode access.  As the PC owner, you can allow or disable anonymous access,
+and you can also restrict which users may and may not log in to your PC with
+IKSD.  Anonymous users have restricted access rights; for example, they are
+not allowed to delete, overwrite, or modify existing files.  Authenticated
+users have whatever rights are associated with their Windows NT identities,
+but both classes of users can, optionally, be restricted to a particular
+directory or directory tree.
+
+<p>
+
+IKSD can be useful in a variety of scenarios, such as:
+
+<p>
+
+<ul>
+<li>You have a PC at work that you want to access from home or other
+remote locations (or vice versa).
+
+<li>You have a PC that you want to let other people, who are known to you,
+access remote remotely.
+
+<li>You have a PC to which you want to allow general, unauthenticated (but
+safe) public access.
+
+<li>You have a Windows domain with a file server but 
+don't want to allow Windows file sharing outside the firewall, but
+still want to let authorized users access the file server.
+
+<li>You have a Windows-based Web server and want to give content providers
+and designers the ability to maintain the website from remote locations.
+
+</ul>
+<p>
+
+Once authenticated, IKSD users can manage and transfer files, as they might
+do with an FTP server:
+
+<p>
+<ul>
+
+<li>Like FTP, Kermit provides a service that can be accessed from many
+different platforms with a consistent set of commands, but unlike FTP,
+these commands include programming constructions such as variables,
+arrays, looping and selection mechanisms, and local and remote procedure
+calls, thus allowing file transfer and management operations of arbitrary
+complexity to be easily automated.
+
+<p>
+
+<li>Like FTP, Kermit provides both text- and binary-mode data transfer, as
+well as file management capabilities.  But Kermit also offers numerous
+features lacking from FTP, such as character-set translation, flexible file
+selection mechanisms, preservation of timestamps, automatic per-file
+text/binary mode switching (important in cross-platform transfers),
+cross-platform directory-tree transfer, and a selection of file collision
+options including "make backup copy of existing file and accept incoming
+file", "reject incoming file", "accept incoming file only if newer than
+existing file", etc.
+
+<p>
+
+<li>Unlike FTP, Kermit supports atomic file movement, in which the source
+file can be deleted (or renamed, or moved) when and only when it has been
+transferred successfully, as part of the transfer operation itself.
+
+<p>
+
+<li>Unlike most FTP implementations, Kermit supports recovery of interrupted
+(binary-mode) transfers from the point of failure.  You can even use it to
+recover interrupted FTP transfers when FTP itself does not offer this option.
+
+<p>
+
+<li>Unlike standard FTP, Kermit can transfer data through firewalls or
+proxies or NATs on a single well-known port (unless the TCP port for the
+connection has been explicitly filtered).
+
+<p>
+
+<li>Unlike FTP, Kermit can transfer data across a combination of transports
+(e.g. dial-up to a terminal server and thence to an Internet host).
+
+<p>
+
+<li>Unlike FTP, IKSD can restrict even authenticated users to a specific
+directory or directory-tree.
+
+<p>
+
+<li>Authentication and data transfer can take place over secure connections
+(mutually authenticated and encrypted) using IETF-standard Telnet
+security (authentication and/or encryption) options.
+
+</ul>
+<p>
+
+<b>IKSD can be accessed by any Telnet client that allows specification of TCP
+socket 1649.</b> If you also want to transfer files, the Telnet client must
+also support the Kermit file-transfer protocol (when IKSD is Kermit 95 rather
+than the free IKSDNT version, other protocols such as Zmodem are also
+supported).  The clients that work best are:
+
+<p>
+<ul>
+
+<li><a href="https://kermitproject.org/ckermit.html">C-Kermit</a>
+7.0 or later for UNIX, VMS, etc.
+<li><a href="https://kermitproject.org/k95.html">Kermit 95</a>
+1.1.20 or later for Windows 96/98/ME/NT/2000/XP
+<li><a href="https://kermitproject.org/mskermit.html">MS-DOS Kermit</a>
+3.15 or later for DOS or Windows 3.x
+
+</ul>
+<p>
+
+Other clients might or might not support:
+
+<p>
+<ul>
+
+<li>Autodownload and autoupload
+<li>Automatic text/binary-mode switching
+<li>Client/server features
+<li>Automatic client/server mode matching
+<li>Fast file transfer
+<li>Character-set translation
+<li>etc etc.
+
+</ul>
+<p>
+
+A <a href="https://kermitproject.org/cuiksd.html">Unix-based IKSD</a>
+<em>was</em> available for public access at:
+
+<p>
+<pre>
+  kermit.columbia.edu, port 1649
+</pre>
+<p>
+
+IKSD is a Kermit program configured to run only as an Internet service.  It
+includes the full command and scripting language.  If you are unfamiliar with
+the Kermit command language, it is documented in:
+
+<p>
+<blockquote>
+
+Frank da Cruz and Christine M. Gianone, 
+<a href="https://kermitproject.org/ck60manual.html"><cite>Using
+C-Kermit</cite></a>, Second Edition,
+Digital Press / Butterworth-Heinemann, Woburn, MA, 1997, 622 pages,
+ISBN 1-55558-164-1.
+
+</blockquote>
+<p>
+
+Potential WIKSD administrators might also find it helpful to consult the
+following pages at the Kermit website:
+
+<p>
+<dl>
+<dt><a href="https://kermitproject.org/k95tutor.html">
+<tt>https://kermitproject.org/k95tutor.html</tt></a></dt>
+<dd>Kermit 95 Tutorial
+
+<dt><a href="wiksduse.html">
+<tt>wiksduse.html</tt></a></dt>
+<dd>Windows IKSD User Guide
+
+<dt><a href="https://kermitproject.org/ckututor.html">
+<tt>https://kermitproject.org/ckututor.html</tt></a></dt>
+<dd>Unix C-Kermit Tutorial
+
+<dt><a href="https://kermitproject.org/iksd.html">
+<tt>https://kermitproject.org/iksd.html</tt></a></dt>
+<dd>Unix IKSD Administrator Guide
+
+<dt><a href="security.html">
+<tt>security.html</tt></a></dt>
+<dd>Kermit Security Reference
+
+<dt><a href="telnet.html">
+<tt>telnet.html</tt></a></dt>
+<dd>Kermit Telnet Client Reference
+
+</dl>
+
+
+<h3><a name="x2"><hr noshade>2. INSTALLATION</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x3">Next</a> ]
+[ <a href="#x1">Previous</a> ]
+<p>
+
+<pre>
+  2.1. <a href="#x2.1"><b>InstallShield Installation</b></a>
+  2.2. <a href="#x2.2"><b>Manual Installation</b></a>
+</pre>
+<p>
+
+<blockquote>
+<i>
+
+Any material in this section or following sections relating to configuration
+of Windows NT users and file system settings to accomodate IKSD should be
+viewed as suggestions only.  You might already have a scheme of users, groups
+and file system permissions that can be used or adapted to accomodate IKSD.
+In any case, installation of IKSD as described here should have little impact
+on your overall NT configuration.  In concept, it is about the same as
+installing an FTP server.
+
+</i>
+</blockquote>
+
+<p>
+
+The Internet Kermit Service for Microsoft Windows operating systems is
+provided as a standalone program (<tt>IKSDNT.EXE</tt>) and as a part of the
+Kermit 95 product (in which case <tt>K95.EXE</tt> acts as IKSD).  The IKSDNT
+package contains the following files:
+
+<p>
+
+<dl>
+<dt><tt>IKSD.EXE</tt>
+<dd>A program used to start Internet Kermit Service as a user process (Win9x only).
+<dt><tt>IKSDSVC.EXE &nbsp; </tt>
+<dd>A program used to start the Internet Kermit Service as a Windows NT
+service.
+<dt><tt>IKSDNT.EXE</tt>
+<dd>The Internet-Kermit-Service-only version of Kermit 95.
+
+</dl>
+<p>
+
+Kermit 95 1.1.21 and later include Internet Kermit Server capability and do
+not require the use of <tt>IKSDNT.EXE</tt>.  <tt>IKSDSVC.EXE</tt> executes
+<tt>K95.EXE</tt> when <tt>IKSDNT.EXE</tt> is unavailable.  Thus
+<tt>IKSDNT.EXE</tt> need be installed or used only on PCs where Kermit 95 is
+not installed.
+
+<p>
+
+WIKSD is normally installed as a Windows NT <i>Service</i> (background
+process), meaning it is started automatically every time Windows itself
+starts, and therefore is available to clients whenever Windows is running on
+your PC and your PC is on the Internet.  Thus, conceptually, it is like an FTP
+server.  Users can access it from outside, but you can't see it on your
+screen, unless you make a localhost connection to it (e.g. "iksd localhost" at
+the <tt>K-95&gt;</tt> prompt).
+
+<p>
+
+<b>It is strongly recommended</b> that IKSD be installed only on Windows NT,
+2000, or XP systems with <b>all-NTFS</b> file systems.  FAT file systems do
+not support any of the file access controls you need when your PC disk is
+accessed by multiple remote users.  To convert a FAT file system to NFTS, use
+the CONVERT command in the Command Window (type "help convert" in the
+Command Window for instructions).
+
+<p>
+
+You can install WIKSD in the normal, easy Windows way (from the Kermit 95
+installer package) or for greater control over the configuration, you can
+install it <a href="#x2.2">manually</a>.
+
+<h3><a name="x2.1"><hr>2.1. Installation</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.2">Next</a> ]
+<p>
+
+  Installation Packages have not been prepared for this version of Kermit 95
+  yet. See the <a href="#x2.2">next section</a> for manual installation
+  instructions
+
+<!--
+Normally you would install Internet Kermit Service on your Windows system the
+same way you install any other program, using the normal Windows installation
+procedure.  WIKSD comes in an InstallShield (IS) package, a single
+<tt>.EXE</tt> file that you run to install the application.  The IS procedure
+asks a few simple questions and then installs WIKSD as a Windows NT service
+and starts it.  So as soon as you complete the installation, you can make
+connections to WIKSD.
+
+<p>
+
+You must be a member of the Administrator group to install WIKSD.  If you
+are not, installation of the WIKSD service fails.
+
+<p>
+
+The IS procedure for WIKSD (or the WIKSD component of the IS procedure for
+Kermit 95) follows these steps:
+
+<p>
+<ol>
+<li>If you downloaded the IS package from the Kermit site,
+you must run it, e.g. with <i>Start</i>--&gt;</i>Run</i>.  (If you are
+installing from CDROM, this should happen automatically.)
+
+<p>
+
+<li>It begins by unpacking itself into its constituent files (into the
+directory indicated by your TEMP environment variable), then you get
+a screen explaining what happens next, with Next and Cancel buttons.
+At each step, if you push Cancel, the installation is canceled.
+
+<p>
+
+<li>Push Next to get the license, read it, and then push Next if you agree to
+the terms, No if you don't.
+
+<p>
+
+<li>If you agree to the license, you get the Choose Destination Location
+screen.  The default location is shown in the Destination Folder box.
+Click Next to accept it, or Browse to choose a different location.
+
+<p>
+
+<li>The Selected Components screen appears, in which you choose which
+components to install.  If you click once on a component name to highlight it,
+an explanation of the component's role and function appears in the Description
+box on the right.  You can check or uncheck any component box unless it is
+grayed out (as is the case for mandatory components).
+
+<p>
+
+<li>If you are installing Kermit 95, some screens might appear that are
+not related to WIKSD.
+
+<p>
+
+<li>The Start Copying Files screen appears, listing what is to be installed.
+Push Next to proceed, Back to change selections, or Cancel to quit.
+
+<p>
+
+<li>Assuming you have selected the IKSD (WIKSD or IKSDNT) component, and
+have copied the files, a series of questions appears in which you choose
+the basic operating parameters for WIKSD:
+
+<p>
+<dl>
+<dt><i>Please choose the directory that remote users will start in:</i></dt>
+<dd>This will be the user's initial current directory after they log in.
+By default is the user's home folder, so if users on your PC each have their
+own folder, you would accept the default.
+
+<p>
+
+<dt><i>Choose logging level</i></dt>
+
+<dd>This determines which kinds of records WIKSD writes into the NT System
+Event Log.  LOGIN would log only logins and logouts.  FILE CREATE logs
+changes to the file system (including file deletion).  FILE ACCESS logs
+all file access (including reads).  COMMANDS would log every command that
+every user gave.
+
+<p>
+
+<dt><i>Do you want to log all file transfers?</i></dt>
+<dd>If you answer Yes, a separate file transfer log is kept, similar to the
+logs kept by FTP servers.  By default, it is <tt>IKSD.LOG</tt> in the
+same directory from which the IKSD (or K95) executable is started.
+
+<p>
+
+<dt><i>Do you want to enable anonymous access?</i></dt>
+<dd>The default is No.  You should not choose Yes without reading
+<a href="#x3.1">Section 3.1</a> of this document first.  But if you do choose
+Yes, you'll have a chance to identify anonymous with a particular NT account
+(default is GUEST).
+<p>
+
+</dl>
+
+<p>
+
+The WIKSD-related questions are used to create the <tt>IKSD.KSC</tt> file in
+the top-level Kermit 95 directory, which every instance of WIKSD reads and
+executes upon startup and before accepting a login.  You can change your IKSD
+preferences or configuration at any time by editing this file.  See <a
+href="#x4.1">Section 4.1</a> for details.
+
+</ol>
+
+You can <b>shut down</b>, pause, or restart the WIKSD service at any time from
+the Control Panel: <i>Administrative Tools</i> --&gt; <i>Services</i>.
+Highlight IKSD, then choose the desired action from the Action menu.
+
+<p>
+
+You can <b>monitor</b> WIKSD activity in the Event Viewer Application Log
+(<i>Control Panel</i> --&gt; <i>Administrative Tools</i> --&gt; <i>Event
+Viewer</i> --&gt; <i>Application Log</i>).
+
+<p>
+
+To <b>uninstall</b> WIKSD, use <i>Add/Remove Programs</i> in the Control
+Panel.  But note that when uninstalling WIKSD (or Kermit 95 itself) certain
+files might not be removed:
+
+<p>
+<dl>
+
+<dt><tt>KRBCC32S.EXE</tt></dt>
+
+<dd>(Full Kermit 95 installations only, not IKSD-only ones)
+This program remains in memory to keep the Kerberos credentials cache
+available.  Uninstall schedules it for removal upon the next reboot.
+
+<p>
+
+<dt><tt>IKSD.KSC</tt></dt>
+
+<dd>(In your top-level Kermit 95 directory) This is your IKSD configuration
+file, in case you want to use it again.  If you install WIKSD or K95 again,
+the IKSD configuration questions are skipped and this file is used.  If you
+don't want that to happen, simply delete this file.
+
+<p>
+
+<dt><tt>DIALUSR.DAT</tt></dt>
+
+<dd>(In your top-level Kermit 95 directory, but not related to IKSD).  This is
+your Kermit 95 Dialer database, containing all the entries you made or
+modified.  If you install K95 again, this file is used instead of the
+distributed one.  If you don't want that to happen, simply delete this file.
+
+<p>
+
+<dt><tt>K95.INI</tt></dt>
+<dt><tt>K95CUSTOM.INI</tt></dt>
+<dd>(In your top-level Kermit 95 directory, not necessarily related to IKSD).
+Your Kermit 95 initialization and customization files.
+
+</dl>
+
+<p>
+
+Plus any Kerberos configuration files that might have been created.
+
+-->
+
+<h3><a name="x2.2"><hr>2.2. Manual Installation</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.1">Previous</a> ]
+<p>
+
+<pre>
+  2.2.1. <a href="#x2.2.1"><b>Installing IKSD as a Service</b></a>
+  2.2.2. <a href="#x2.2.2"><b>Installing IKSD as a User Process</b></a>
+  2.2.3. <a href="#x2.2.3"><b>Windows NT/2000/XP Folder Permissions</b></a>
+  2.2.4. <a href="#x2.2.4"><b>SRP and Windows NT/2000/XP</b></a>
+  2.2.5. <a href="#x2.2.5"><b>SRP and Windows 95/98/ME</b></a>
+</pre>
+<p>
+
+Manual installation of WIKSD is possible only if you installed Kermit 95
+without choosing to install WIKSD, or if you uninstalled WIKSD after
+first installing it.
+
+<p>
+
+To install the Internet Kermit Service on any Microsoft Windows Operating
+System:
+
+<p>
+<ol>
+
+<li>Copy the IKSD files to your K95 directory (or a directory of your
+choice if Kermit 95 is not installed.)
+
+<p>
+
+<li>(optional) Edit the <tt>SERVICES</tt> file to include a "kermit" service
+entry:
+
+<p>
+<pre>
+  kermit   1649/tcp
+</pre>
+<p>
+
+On Windows NT/2000/XP, edit the file:
+
+<p>
+<pre>
+  %SystemRoot%\SYSTEM32\DRIVERS\ETC\SERVICES
+</pre>
+<p>
+
+<i>(On Windows 95/98/ME, the file is <tt>C:\WINDOWS\SERVICES</tt>.)</i>
+
+<p>
+
+<li>If desired, create an IKSD configuration file: <tt>IKSD.KSC</tt>.  This
+file can be located either in the K95 directory, or in the SCRIPTS
+subdirectory of the K95 directory (see <a href="#x4.4">Section 4.4</a>).
+
+<p>
+
+<li>Go to <a href="#x2.2.1">Section 2.2.1</a> if you are installing on Windows
+NT/2000 and wish to install IKSD as a Service; Otherwise, go to
+<a href="#x2.2.2">Section 2.2.2</a>.
+
+</ol>
+
+<h3><a name="x2.2.1"><hr>2.2.1. Installing IKSD as a Service</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.2">Subsection Contents</a> ]
+[ <a href="#x2.2.2">Next</a> ]
+<p>
+
+<i>Also see the following Microsoft Knowledge Base articles:</i>
+<ul>
+<li><a
+href="http://web.archive.org/web/20140714073532/http://support.microsoft.com/kb/266118">
+How to Restore the Default NTFS Permissions for Windows 2000 (Q266118)</a>
+<li><a href="https://web.archive.org/web/20140317173909/http://support.microsoft.com/kb/148437">
+  Default NTFS Permissions in Windows NT (Q148437)</a>
+<li><a href="http://web.archive.org/web/20131126021829/http://support.microsoft.com/kb/244600">
+Default NTFS Permissions in Windows 2000 (Q244600)</a>
+</ul>
+
+<p>
+
+Installation as an NT Service enables users to access the Internet Kermit
+Service at any time and independent of the user logged into the system.  To
+install WIKSD as a service you must be logged in with an account that is a
+member of the "Administrators" group.
+
+<p>
+<ol>
+
+<li>Install the WIKSD service by executing the command:
+
+<p>
+<pre>
+  iksdsvc.exe -i
+</pre>
+<p>
+
+This installs WIKSD as a Service which starts automatically every time
+Windows starts.  WIKSD is started using the "LocalSystem" account.  The
+service name is "IKSD".
+
+<p>
+
+Use <i>Control Panel</i> --&gt; <i>Administrative Tools</i> --&gt;
+<i>Services</i> to change these settings.  If an account other than the
+"LocalSystem" account is to be used for starting WIKSD, the account must
+have the "Act as part of the Operating System" privilege.  Use of the
+LocalSystem account restricts the access of WIKSD to the local machine.  All
+attempts at network access are denied.
+
+<p>
+
+<li>You can stop, start, pause, and restart the WIKSD service from <i>Control
+Panel</i> --&gt; <i>Administrative Tools</i> --&gt; <i>Services</i>, or with
+the NET command: NET START IKSD, NET STOP IKSD.
+
+</ol>
+
+
+<h3><a name="x2.2.2"><hr>2.2.2. Installing IKSD as a User Process</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.2">Subsection Contents</a> ]
+[ <a href="#x2.2.3">Next</a> ]
+[ <a href="#x2.2.1">Previous</a> ]
+<p>
+
+<i>(This section applies only to Windows 9x/ME.)</i>
+
+<p>
+
+Start IKSD "by hand" in the Command Window simply
+by typing "iksd" at the prompt in the K95 directory.
+
+<p>
+
+If you wish to have WIKSD autostart each time you login to Windows:
+
+<p>
+
+<ol>
+<li>Choose <i>Start Menu</i>--&gt;<i>Settings</i>-&gt;<i>Task Bar and Start Menu</i> ...
+<li>Select the Advanced Page
+<li>Choose Add...
+<li>Specify the file <tt><i>k95path</i>\iksd.exe</tt>
+<li>Place the Shortcut in <i>Start Menu</i>--&gt;<i>Programs</i>--&gt;<i>Startup</i>
+<li>Specify the name as "Internet Kermit Service"
+<li>Press Finish
+
+</ol>
+<p>
+
+Now the Internet Kermit Service will start automatically each time you
+login to Windows.
+
+<h3><a name="x2.2.3"><hr>2.2.3. Configuring Windows NT/2000/XP Folder Permissions</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.2">Subsection Contents</a> ]
+[ <a href="#x2.2.4">Next</a> ]
+[ <a href="#x2.2.2">Previous</a> ]
+<p>
+
+<!-- Super out of date now - last updated October 23, 2001
+https://web.archive.org/web/20031004102450/http://www.columbia.edu/acis/security/safecomputing.html
+
+<i>Also see:</i>
+<ul>
+<li>The <a
+href="http://www.columbia.edu/acis/security/safecomputing.html#x8.3.2">System
+Tuning Section for Windows NT/2000/XP</a> of Columbia University's
+<a href="http://www.columbia.edu/acis/security/safecomputing.html">Safe
+Computing on Windows</a> document.
+</ul>
+
+<p>
+-->
+
+By default, Windows NT leaves the file system wide open.  These operating
+systems rely on applications like drive and folder sharing or IIS (Internet
+Information Server) to handle keeping users restricted to certain directories
+and directory trees.  To some extent you can also use IKSD to limit access in
+the same way using the IKSD configuration file (see the SET ROOT command in <a
+href="#x4.1">Section 4.1</a> below).  But to fully secure your system
+and to implement special permissions schemes, like the incoming folder for the
+anonymous account, you will need to make some adjustments to the default folder
+permissions.  (This assumes that you are using NTFS drives; if you are not, or
+you are running 95/98/ME, then you can use only IKSD mechanisms for
+restricting users -- see SET ROOT and the discussion of the ON_LOGIN macro in
+<a href="#x4">Section 4</a>.)
+
+<p>
+
+<dl>
+<dt><i>The Everyone Group</i></dt>
+
+<dd>
+This is a special group to which everyone must belong.  You cannot remove this
+group and membership is not optional; therefore the Anonymous ID account
+(e.g. Guest) is a member of this group.  By default, the Everyone group has
+full control over all drives, and therefore by inheritance, over all folders.
+An IKSD-enabled system should remove the Everyone group from the permissions
+for each drive:
+
+<p>
+<ol>
+<li>In <i>My Computer</i>, right-click on the drive and select
+<i>Properties</i>.
+<li>Clicking on the Security tab.
+<li>Remove the Everyone group.
+<li>You should now add in at least the Administrators group with Full Control
+and possibly the Users group with either Full or some custom set of
+permissions; otherwise you won't have permissions to make changes to the drive
+at all!
+</ol>
+
+<p>
+
+<dt><i>Inherited Permissions</i></dt>
+
+<dd>To isolate certain folders with special permissions it is necessary to
+tell Windows not to inherit permissions from the parent folder.  We want
+anonymous users to be able to deposit files here, but not be able to download
+anything or even view a directory listing of files in this folder (to keep
+your PC from becoming a "warez" repository for software pirates).
+
+<p>
+<blockquote>
+<i>
+
+The following procedure applies to Window 2000 (and most likely XP); in
+Windows NT 3 and 4 the concepts and permissions are the same, but the tools
+are not as well-developed.
+
+</i>
+</blockquote>
+<p>
+
+After creating a folder for incoming files in the anonymous user's directory
+tree, bring up the Security page under the Properties for the new folder.
+Then:
+
+<p>
+<ol>
+
+<li>Uncheck the box next to "Allow inheritable permissions..."
+<li>Click "Remove" to reset the permissions for this folder.
+<li>You should now see that the "Name" box is empty.
+<li>Now click "Add" and add in the "Administrator" account with Full Control.
+<li>Next "Add" the "Guest" account (or whatever user you have designated as
+the anonymous access account).
+
+</ol>
+<p>
+
+Now set the exact permissions required for the incoming directory:
+
+<p>
+
+<ol>
+<li>With Guest highlighted in the Name box, click "Advanced".
+<li>This brings up the "Access Control Settings" dialog.
+<li>Make sure Guest is highlighted and then click "View/Edit".
+</ol>
+
+<p>
+
+Check the boxes as follows:
+
+<p>
+<table>
+
+<tr>
+<th align="left">Permission
+<th align="center">Allow
+<th aligh="center">Deny
+
+<tr>
+<td>Traverse Folder / Execute File
+<td><tt>[x]</tt>
+<td><tt>[ ]</tt>
+
+<tr>
+<td>List Folder / Read Data
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Read Attributes
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Read Extended Attributes
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Create Files / Write Data
+<td><tt>[x]</tt>
+<td><tt>[ ]</tt>
+
+<tr>
+<td>Create Folders / Append Data
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Write Attributes
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Write Extended Attributes
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Delete Subfolders and Files
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Delete
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Read Permissions
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Change Permissions
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+<tr>
+<td>Take Ownership
+<td><tt>[ ]</tt>
+<td><tt>[x]</tt>
+
+</table>
+</dl>
+
+<p>
+
+This gives anonymous users the ability to upload files, but not to see them,
+read them, copy them, send them, delete them, rename them, or overwrite them,
+but leaves you full rights over the uploaded files.
+
+<p>
+
+NOTE: Since anonymous users can't delete or overwrite files in the Incoming
+directory, it won't be possible for them to upload a file when a file of the
+same name is already there.  In this case they can use an as-name, or else
+tell IKSD to "set file collision rename", meaning to give a new name to the
+incoming file.
+
+<h3><a name="x2.2.4"><hr>2.2.4. Secure Remote Password and Windows NT/2000/XP</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.2">Subsection Contents</a> ]
+[ <a href="#x2.2.5">Next</a> ]
+[ <a href="#x2.2.3">Previous</a> ]
+<p>
+<b>Note: SRP is no longer a standard feature as of Kermit 95 v3.0 - you must
+  build it from source using old and insecure libraries if you need it.</b>
+
+<p>
+On Windows NT/2000/SP, Secure Remote Password
+(<a href="security.html">SRP</a>) can be used in
+with the local user accounts by installing a DLL (<tt>SRPFILTR.DLL</tt>) into
+the Windows System directory and inserting a record into the Registry:
+
+<p>
+<pre>
+  HKEY_LOCAL_MACHINE\
+   SYSTEM\
+   CurrentControlSet\
+   Control\
+   Lsa\
+   Notification Packages (value of type REG_MULTI_SZ)
+</pre>
+<p>
+
+A value of type REG_MULTI_SZ allows multiple strings to be inserted at
+the same time.  Do not delete any existing strings; just add the string
+"srpfiltr" to the list.  Once this is done:
+
+<p>
+<ul>
+
+<li>Run <tt>SRP-TCONF.EXE</tt> to create the machine specific configuration
+info.
+
+<li>Reboot the computer.
+
+</ul>
+<p>
+
+Now whenever a password is changed on the local machine an SRP password
+hash is also created, allowing SRP to be used as an authentication
+method with IKSD.
+
+<h3><a name="x2.2.5"><hr>2.2.5. Secure Remote Password and Windows 95/98/ME</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x2">Section Contents</a> ]
+[ <a href="#x2.2">Subsection Contents</a> ]
+[ <a href="#x2.2.4">Previous</a> ]
+<p>
+  <b>Note: SRP is no longer a standard feature as of Kermit 95 v3.0 - you must
+    build it from source using old and insecure libraries if you need it.</b>
+
+<p>
+<blockquote>
+<i>
+(This section is informational only.  WIKSD is not supported on Windows
+95, 98, or ME.)
+</i>
+</blockquote>
+
+<p>
+
+On Windows ME or 98 (and 95 with Internet Explorer 4.0 or higher installed)
+SRP can be used in conjunction with the local user accounts by installing a
+DLL (<tt>SRPW95PP.DLL</tt>) into the Windows System directory and inserting a
+new key block into the Registry:
+
+<p>
+<pre>
+  HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\PwdProvider\SRP
+</pre>
+<p>
+
+In this key, the following values must be set:
+
+<p>
+<pre>
+  ProviderPath=srpw95pp.dll
+  Description=Secure Remote Password
+  ChangePassword=PPChangePassword
+  GetPasswordStatus=PPGetPasswordStatus
+</pre>
+<p>
+
+Once this is done:
+
+<p>
+<ul>
+
+<li>Run <tt>SRP-TCONF.EXE</tt> to create the machine specific configuration
+info.
+
+<p>
+
+<li>Reboot the computer.
+
+</ul>
+<p>
+
+To change the SRP password to be the same as the Windows logon password:
+
+<p>
+<ul>
+
+<li>In Control Panel, double-click Passwords, and then click Change Windows
+Password.
+
+<p>
+
+<li>In the Change Windows Password dialog box, select the Secure Remote
+Password to use the same password as the Windows password, and then
+click OK.
+
+<p>
+
+<li>In the second Change Windows Password dialog box, type the current (old)
+Windows password, type a new password, and then in the Confirm new
+password box, type the new password again.  Click OK.
+
+</ul>
+<p>
+
+To change the SRP password without changing the Windows logon password:
+
+<p>
+<ul>
+
+<li>In Control Panel, double-click Passwords, and then click Change Other
+Passwords.
+
+<p>
+
+<li>In the Select Password dialog box, select Secure Remote Password, and
+then click Change.
+
+<p>
+
+<li>In the Change Password dialog box, type the current (old) SRP password,
+type a new password, and then, in the Confirm new password box, type the
+new password again.  Click OK.
+
+</ul>
+
+<h3><a name="x3"><hr noshade>3. IKSD USERS</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Next</a> ]
+[ <a href="#x2">Previous</a> ]
+<p>
+
+<pre>
+  3.1. <a href="#x3.1"><b>The Anonymous User</b></a>
+  3.2. <a href="#x3.2"><b>The "Regular" User</b></a>
+</pre>
+<p>
+
+Users of IKSD map to Windows users.  As we know, Windows 95/98/ME does not
+offer much control over users and how they can interact with the system.
+Fortunately, many of these shortcomings can be overcome with the configuration
+features of IKSD (see <a href="#x4">Section 4</a>).  Windows NT/2000/XP,
+however, allows detailed control over users' permissions, home directories,
+and so on.
+
+<p>
+
+Typically, one might have at least three classes of users:
+
+<p>
+<ol>
+
+<li>Anonymous users, whose access is restricted to a specific
+part of the file system. 
+
+<p>
+
+<li>Regular users, who operate out of a home directory where they can read and
+write files.  These users could also have access to other shared file areas
+where they can only read.
+
+<p>
+<li>Administrator-level users who have full control over the entire file
+system.
+
+</ol>
+
+<h3><a name="x3.1"><hr>3.1. The Anonymous User</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x3">Section Contents</a> ]
+[ <a href="#x3.2">Next</a> ]
+<p>
+
+Although the default GUEST user on NT/2000/XP systems is a possible candidate
+for mapping to the IKSD ANONYMOUS user, it might be better to create a new
+user for this purpose.  Since the IKSD ANONYMOUS user must be so carefully
+restricted to a specific part of the file system, making the necessary
+modifications to the GUEST user's permissions might have side effects you
+don't want.  If this a concern to you, create a new user, make sure that it is
+not a member of the EVERYONE group, and use the SET IKS ANONYMOUS ACCOUNT
+command to tell IKSD to use this account.  Give this user file permissions
+only on a folder that you designate for anonymous users.  You can then "jail"
+the user to this folder with SET IKS ANONYMOUS ROOT command, which takes the
+place of operating-system-level file security for Windows 9x.
+
+<h3><a name="x3.2"><hr>3.2. The "Regular" User</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x3">Section Contents</a> ]
+[ <a href="#x3.1">Previous</a> ]
+<p>
+
+In NT/2000/XP, IKSD users map to existing Windows users in a Domain that the
+IKSD server is a part of.  IKSD prompts for the user's ID (or Domain\ID) and
+the user's password for that domain.  (See the <a href="#defdom"><tt>SET</tt>
+<tt>IKS</tt> <tt>DEFAULT-DOMAIN</tt></a> command.)  Once the user is logged
+in, they have the same privileges and permissions they have if they had logged
+in to the machine locally.  If the NT user had a home directory defined, this
+is where they start.  (See <a href="#howhome"><i>How the user's home directory
+is determined</i></a> below.)  One would use NT's control over file permissions
+to determine where the user would have rights to read, list, write, etc...
+
+<p>
+
+<i>If user-level access is activated in Windows 95/98/ME, then the defined
+user names can be used to log in, every user has full read/write access to all
+the files on the PC.</i>
+
+<h3><a name="x4"><hr noshade>4. RUNTIME CONFIGURATION OPTIONS</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Next</a> ]
+[ <a href="#x3">Previous</a> ]
+<p>
+
+<pre>
+  4.1. <a href="#x4.1"><b>The IKSD Configuration File</b></a>
+  4.2. <a href="#x4.2"><b>The K95 Initialization File</b></a>
+  4.3. <a href="#x4.3"><b>System Logging</b></a>
+  4.4. <a href="#x4.4"><b>The Transfer Log File</b></a>
+</pre>
+<p>
+
+The IKSD can be configured at runtime by a configuration file and an
+initialization file.
+
+<p>
+
+And in Windows 9x/ME only, when using <tt>IKSD.EXE</tt> to start IKSD as a
+user process, you can include the following command-line parameter:
+
+<p>
+<dl>
+
+<dt><tt>--port:<i>number</i></tt> (or service name)</dt>
+
+<dd>By default, <tt>IKSD.EXE</tt> offers the Internet Kermit Service on the
+port specified in the <tt>SERVICES</tt> file as "kermit".  If no "kermit" TCP
+service is specified in the <tt>SERVICES</tt> file, then the official port,
+1649, is used.  This option allows you to specify an alternative port IKSD
+number without modifying the <tt>SERVICES</tt> file.
+
+</dl>
+
+<p>
+
+When Kermit 95 is started as IKSD (or IKSDNT is started), it obtains its
+configuration in the following sequence:
+
+<p>
+<ol>
+
+<li>It executes the <a href="#x4.1">IKSD Configuration File</a>,
+<tt>IKSD.KSC</tt>, from the same directory where K95 (or IKSDNT) executable is
+kept (or the SCRIPTS subdirectory of that directory).  The IKSD configuration
+file is executed before the TCP/IP connection is opened, before the Kermit 95
+initialization file is read, and before the user logs in.  The commands in
+this file specify how incoming TCP/IP connections are handled (Telnet
+negotiations, authentication and encryption requirements, login processing,
+anonymous and user initialization files, ...).  Note: IKSD's current directory
+at this point is <tt>WINNT\System32</tt>.  If you include a CD command in
+<tt>IKSD.KSC</tt>, e.g. to <tt>C:\PUBLIC</tt>, this changes the default
+directory (used in case the user does not have a "Home Folder") to something
+less scary.
+
+<p>
+
+<li>IKSD waits for the user to login or authenticate.
+
+<p>
+
+<li>As soon as the user is authenticated, IKSD executes the ON_LOGIN macro, if
+one is defined.  Thus the place to define an ON_LOGIN macro would be the
+<tt>IKSD.KSC</tt> file.  The current directory is changed to the user's
+Home Folder, if one is defined.
+
+<p>
+
+<li><a href="#x4.2">The Kermit 95 Initialization File</a>, <tt>K95.INI</tt>,
+if any, is executed from the user's home directory.  Note that
+<tt>K95.INI</tt> is the only initialization file that is executed
+automatically.  <i>By convention</i> this file itself executes a second,
+"customization" file called <tt>K95CUSTOM.INI</tt>, but that is only a
+convention -- it is not built into Kermit 95.  Thus if <tt>K95.INI</tt> does
+not exist no initialization file is executed automatically.
+
+<p>
+
+<li>At this point IKSD is ready to execute commands from the user, either
+directly or from the client.
+
+<p>
+
+<li>When the user logs out, the ON_LOGOUT macro is executed, if one is
+defined.
+
+<p>
+
+<li>When Kermit (IKSD) exits, the ON_EXIT macro is executed, if one is
+defined.
+
+</ol>
+
+<p>
+
+The ON_LOGIN macro lets you enforce your per-user policies, limited only
+by your imagination.  Here's a suggestion:
+
+<p>
+<pre>
+  define ON_LOGIN {
+    switch \v(user) {
+      :olga
+	echo Hi Olga
+	set root c:/olga
+	break
+      :olaf
+	echo Hello Olaf
+	break
+      :default
+	echo Welcome \fcapitalize(\v(user))
+  }
+</pre>
+<p>
+
+This gives a custom greeting to Olga and Olaf and a standard greeting to
+everyone else.  It also uses the SET ROOT command to restrict Olga to her own
+directory tree:
+
+<p>
+<dl>
+
+<dt><tt>SET ROOT <i>directoryname</i></tt></dt>
+<dd>Similar to the Unix "chroot" command.  It changes Kermit's root directory
+to the one given, confining IKSD users to a particular directory tree.  Once
+a SET ROOT command has been executed, it can't be undone; thus users can't
+give another SET ROOT command unless it gives them even narrower access than
+the previous one.
+
+</dl>
+<p>
+
+Another command of particular interest in this regard is DISABLE, with which
+you can prevent certain users from doing certain kinds of things, like
+uploading files, deleting files, creating directories, etc.
+
+
+<h3><a name="x4.1"><hr>4.1. The IKSD Configuration File</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Section Contents</a> ]
+[ <a href="#x4.2">Next</a> ]
+<p>
+
+The IKSD configuration file can contain any Kermit commands, functions or
+built-in variables but:
+
+<p>
+
+<ul>
+<li>Since the connection has not been established variables such as
+<tt>\v(user)</tt>, <tt>\v(ipaddr)</tt>, <tt>\v(line)</tt> are not yet defined.
+However, they can be referenced in the ON_LOGIN macro, which is executed
+when the user logs in.  Thus <tt>IKSD.KSC</tt> can define an ON_LOGIN macro
+that does whatever you (the PC owner) want it to do, for example deny or
+restrict various kinds of access for certain users, print a greeting
+message customized for the particular user, etc.
+
+<p>
+
+<li>Macros defined in the initialization files have not been loaded yet.
+
+<p>
+
+<li>All SET commands may be overriden by subsequent initialization
+file processing.
+
+<p>
+
+<li>Since there is no connection all output from commands including
+error messages is lost.
+
+</ul>
+<p>
+
+The following commands can be executed only in the IKSD Configuration file
+or in the ON_LOGIN macro.  These commands are ignored if they are executed
+after the user is logged in.
+
+<p>
+<dl>
+
+<dt><tt>SET IKS ANONYMOUS ACCOUNT <i>username</i></tt></dt>
+
+<dd>On Windows NT/2000 this is the account that will be used to allow
+anonymous access to the system.  This account MUST have no password and its
+privileges should be restricted to only allow those operations which should be
+permitted to unknown users.  In practice this means List Directories and
+Read-Execute privileges only.  If a directory is configured for Write
+privileges then Read privileges should be denied for that directory.
+Otherwise, your system will become used by software piraters.  If this command
+is not specified in the <tt>IKSD.KSC</tt> file the username "GUEST" is used by
+default.  <i>This command has no effect on Windows 95/98/ME.</i>
+
+<p>
+
+<dt><tt>SET IKS ANONYMOUS INITFILE <i>filename</i></tt></dt>
+
+<dd>The initialization file to be executed for anonymous logins.  By default,
+it is K95.INI in the home directory associated with the ANNONYMOUS ACCOUNT.
+Any <i>filename</i> that you specify here must be readable by the ANONYMOUS
+ACCOUNT and if a SET IKS ANONYMOUS ROOT command is issue, exist within
+restricted directory tree.  This option is independent of the SET IKS
+INITFILE command which applies only to real users.
+
+<p>
+
+<dt><tt>SET IKS ANONYMOUS LOGIN <i>{</i> ON, OFF <i>}</i></tt></dt>
+
+<dd>Whether anonymous logins are allowed.  By default, they are NOT allowed, so
+this option need be included only to allow them (or for clarity, to
+emphasize that they are not allowed).  Anonymous login occurs when the
+username "anonymous" is specified with any password (as with ftpd).
+In order for anonymous logins to succeed on Windows NT/2000, the
+ANONYMOUS ACCOUNT must be enabled.
+
+<p>
+
+On Windows NT, 2000, and XP, anonymous users have the same access rights as
+the ANONYMOUS account.  <i>In Windows 95/98/ME, anonymous users, just like any
+other users, have full access rights to your entire PC, since Windows 9x has
+no file-system security.  For this reason, if you are allowing anonymous
+logins, be sure to also specify a SET IKS ANONYMOUS ROOT directory to restrict
+anonymous users to.</i>
+
+<p>
+
+ANONYMOUS user permissions may be restricted via the specification of
+DISABLE commands in the ANONYMOUS INITFILE.  ANONYMOUS users are not
+permitted to execute an ENABLE command.  ANONYMOUS users are also prevented
+from SHOWing sensitive data about the operating system or the IKS
+configuration.
+
+<p>
+
+<dt><tt>SET IKS ANONYMOUS ROOT <i>directory</i></tt></dt>
+
+<dd>Specifies a directory tree to which anonymous users are restricted after
+login.
+
+<p>
+
+<dt><tt>SET IKS BANNERFILE <i>filename</i></tt></dt>
+
+<dd>The name of a file containing a message to be printed after the user logs
+in, in place of the normal message (Copyright notice, "Type HELP or ? for
+help", "Default transfer mode is...", etc).
+
+<p>
+
+<dt><tt>SET IKS CDFILE <i>filelist</i></tt></dt>
+
+<dd>When cdmessage is on, this is the name of the "read me" file to be sent.
+Normally you would specify a relative (not absolute) name, since the file
+is opened using the literal name you specified, after changing to the new
+directory.  Example:
+
+<p>
+<pre>
+  SET IKS CDFILE READ.ME
+</pre>
+<p>
+
+You can also give a list of up to 8 filenames by (a) enclosing each
+filename in braces, and (b) enclosing the entire list in braces.  Example:
+<p>
+<pre>
+  set iks cdfile {{./.readme}{READ.ME}{aaareadme.txt}{README}{read-this-first}}
+</pre>
+<p>
+When a list is given, it is searched from left to right and the first
+file found is displayed.  The default list for UNIX is:
+
+<p>
+<pre>
+  SET IKS CDFILE {{./.readme}{README.TXT}{READ.ME}}
+</pre>
+<p>
+
+<dt><tt>SET IKS CDMESSAGE <i>{</i> ON,OFF,0,1,2 <i>}</i></tt></dt>
+
+<dd>For use in the Server-Side Server configuration; whenever the client
+tells the server to change directory, the server sends the contents of a
+"read me" file to the client's screen.  This feature is On by default,
+and operates only in client/server mode when ON or 1.  If set to 2 or
+higher, it also operates when the CD command is given at the IKSD&gt; prompt.
+Synonym: SET IKS CDMSG.
+
+<p>
+
+<dt><tt>SET IKS DATABASE <i>{</i> ON, OFF <i>}</i></tt></dt>
+
+<dd>This command determines whether entries are inserted into the SET IKS
+DBFILE which can be viewed with the <tt>IKSDPY.KSC</tt> script
+(<a href="#x6.4">Section 6.4</a>).
+
+<p>
+
+<dt><tt>SET IKS DBFILE <i>filename</i></tt></dt>
+
+<dd>Specifies the file which should be used for storing run time status
+information about active connections.  You should use something like:
+<p>
+<pre>
+  \v(exedir)iksd.db
+</pre>
+<p>
+
+<dt><a name="defdom"><tt>SET IKS DEFAULT-DOMAIN <i>domain-name</i></tt></a></dt>
+
+<dd>A userid on Windows is of the form Domain\Userid.  This command
+determines which domain is searched for the Userid if a Domain is not
+specified by the user.  <i>On Windows 95/98/ME when user-level access is
+activated in the Network Control Panel, the default domain is automatically
+set.  If the default domain is not specified, accounts on the local machine
+take precedence over accounts in Domains to which the local machine
+belongs.</i>
+
+<p>
+
+<dt><tt>SET IKS HELPFILE <i>filename</i></tt></dt>
+
+<dd>Specifies the name of a file to be displayed if the user types HELP
+(not followed by a specific command or topic), in place of the built-in
+top-level help text.  The file need not fit on one screen; more-prompting
+is used if the file is more than one screen long if COMMAND MORE-PROMPTING
+is ON, as it is by default.
+
+<p>
+
+<dt><tt>SET IKS INITFILE <i>filename</i></tt></dt>
+
+<dd>Execute "filename" rather than the normal initialization file for real
+users; this option does not apply to anonymous users.
+
+<p>
+
+<dt><tt>SET IKS NO-INITFILE <i>{</i> ON, OFF <i>}</i></tt></dt>
+
+<dd>Do not execute an initialization file, even if a real user is logging in.
+
+<p>
+
+<dt><tt>SET IKS SERVER-ONLY <i>{</i> ON, OFF <i>}</i></tt></dt>
+
+<dd>If this option is included on the IKSD command line, the Client Side Server
+configuration is disabled, and the user will not get a Username: or
+Password: prompt, and will not be able to access the IKSD command prompt.
+A FINISH command sent to the IKSD will log it out and close the
+connection, rather than returning it to its prompt.
+
+<p>
+
+<dt><a name="syslog"><tt>SET SYSLOG <i>{</i> LOGIN, FILE-CREATE,
+FILE-ACCESS, COMMANDS, NONE <i>}</i></tt></a></dt>
+
+<dd>Windows NT/2000/XP only: Level of event logging.  The term SYSLOG is
+used for compatibility with the Unix version of IKSD, and in NT refers to the
+Event Log.  LOGIN logs only session begin and end.  FILE-CREATE also logs
+file creation; FILE-ACCESS also logs all forms of file access; COMMANDS logs
+every command each user issues.  NONE disables IKSD event logging.
+
+<p>
+
+<dt><tt>SET IKS TIMEOUT <i>number</i></tt></dt>
+
+<dd>This sets a limit (in seconds) on the amount of time the client has to log
+in once the connection is made.  If successful login does not occur within
+the given number of seconds, the connection is closed.  The default timeout
+is 300 seconds (5 minutes).  A value of 0 or less indicates there is to be
+no limit.
+
+<p>
+
+<dt><tt>SET IKS XFERLOG <i>{</i> ON, OFF <i>}</i></tt></dt>
+
+<dd>Whether a wu-ftpd-like log should be kept.  Off by default.  This log is
+explained in <a href="#x5.3">Section 5.3</a>.
+
+<p>
+
+<dt><tt>SET IKS XFERFILE <i>filename</i></tt></dt>
+
+<dd>Use this option to specify an IKSD log file name.  If you include this
+option, it implies SET IKS XFERFILE ON.
+
+</dl>
+<p>
+
+The IKSD configuration file can define three special macros which cannot
+altered or SHOWed by logged-in users:  ON_LOGIN, ON_LOGOUT, ON_EXIT.  These
+macros are used to define operations the Administrator wants to have executed
+at special moments during the session lifetime:
+
+<p>
+<dl>
+
+<dt><tt>ON_LOGIN</tt></dt>
+
+<dd>The ON_LOGIN macro is an extension of the IKSD configuration file which is
+executed after the user has been authenticated and logged into their account
+but before the user's or anonymous initialization file is processed.  This
+is a final opportunity for the IKSD Configuration file to implement
+restrictions on the user's behavior based upon the authenticated identity
+of the user.  The ON_LOGIN macro can define ON_LOGOUT and ON_EXIT macros.
+
+<p>
+
+<dt><tt>ON_LOGOUT</tt></dt>
+
+<dd>The ON_LOGOUT macro is executed after the user has closed the connection
+or issued the EXIT, LOGOUT, or REMOTE LOGOUT commands but before the user
+is logged out of the system.  This is an opportunity for the administrator
+to implement cleanup procedures that must be executed with the privileges of
+the user.
+
+<p>
+
+<dt><tt>ON_EXIT</tt></dt>
+
+<dd>The ON_EXIT macro is executed after the user has been logged out of the
+system and the privileges of the WIKSD process have been restored to the
+those of the LocalSystem account when run as a Service on Windows NT/2000.
+This is an opportunity for the Administrator to implement cleanup procedures
+that must be executed with the maximum privileges allowed.
+
+<p>
+
+<dt><a name="howhome">
+<i>How the user's home directory is determined</i></a></dt>
+
+<dd>The Home directory is retrieved from the user's profile.
+If not, the current directory
+at the time login occurs is used.  This directory will be the startup
+directory unless it is altered via a CD command in the IKSD Configuration
+file.  The startup directory is the directory <tt>IKSD.EXE</tt> is executed in
+or the Windows System directory when IKS is run as a Windows NT service.
+
+<p>
+
+For anonymous users, the home directory is as specified in the
+ANONYMOUS ACCOUNT's profile; or the directory specified by the
+SET IKS ANONYMOUS ROOT command.
+
+<p>
+
+<dt><i>Specifying Telnet Option Policies and Configuration Information</i></dt>
+
+<dd>The IKSD Configuration File is the one place where SET TELOPT
+and SET AUTH commands can be specified to alter the behavior
+of the TCP/IP connection processes.  See
+
+<p>
+<pre>
+  <a href="security.html"><tt>security.html</tt></a>
+  <a href="telnet.html"><tt>telnet.html</tt></a>
+</pre>
+<p>
+
+for details on how Telnet and Authentication policies can be set.
+
+</dl>
+<p>
+
+Examples:
+
+<p>
+<dl>
+
+<dt>No <tt>IKSD.KSC</tt> file:
+<dd>Starts the Internet Kermit Server with all defaults in effect:
+
+<p>
+<ul>
+
+<li>No anonymous logins
+<li>CD Message Files are typed to the user
+<li>K95.INI file in the home directory of the logged-in user is executed
+<li>All other Kermit defaults are in effect.
+
+</ul>
+<p>
+
+<dt><tt>IKSD.KSC</tt> file contains:
+<dd><pre>
+  SET SYSLOG COMMANDS
+</pre>
+As above, but with all user commands going to the Event Log
+(<a href="#x4.3">Section 4.3</a>).
+
+<p>
+
+<dt><tt>IKSD.KSC</tt> file contains:
+<dd><pre>
+  SET IKS ANONYMOUS LOGINS ON
+  SET IKS CDFILE READ.ME
+</pre>
+Starts the IKSD with anonymous access enabled and changes the name of
+CD message file from the default list to READ.ME.
+
+<p>
+
+<dt><tt>IKSD.KSC</tt> file contains:
+<dd><pre>
+  SET IKS ANONYMOUS LOGINS ON
+  SET IKS ANONYMOUS ACCOUNT KERMIT\\GUEST
+  SET IKS CDFILE README.TXT
+  SET IKS SERVER-ONLY ON
+</pre>
+Starts the IKSD with anonymous access enabled; sets the account to
+use for anonymous logins; and changes the name of CD message file
+from the default list to <tt>README.TXT</tt>.  Note that the backslash
+separating the Domain (Kermit) from the Username (Guest) must be
+doubled, since this is a Kermit command.
+
+<p>
+
+<dt><tt>IKSD.KSC</tt> file contains:
+<dd><pre>
+  SET IKS ANONYMOUS LOGINS OFF
+  SET SYSLOG COMMANDS
+  SET AUTH TLS RSA-CERT-FIL D:/OPENSSL/CERTS/TELNETD-RSA.PEM
+  SET AUTH TLS RSA-KEY-FIL  D:/OPENSSL/CERTS/TELNETD-RSA.PEM
+  SET AUTH TLS DSA-CERT-FIL D:/OPENSSL/CERTS/TELNETD-DSA.PEM
+  SET AUTH TLS DSA-KEY-FIL  D:/OPENSSL/CERTS/TELNETD-DSA.PEM
+  SET AUTH TLS CIPHER ALL:+DSS:+RSA:ADH
+  SET AUTH TLS VERIFY PEER
+  SET TELOPT START-TLS REQUIRED
+  SET TELOPT AUTH REQUIRED
+  SET TELOPT KERMIT REQUIRED REQUIRED
+</pre>
+Starts the IKSD with anonymous access forbidden; logs all commands;
+configures the server's X.509 certificates for TLS; requires the
+use of TELNET START-TLS for privacy and integrity protections;
+requires the use of an authentication method such as NTLM, SRP, ...
+for end user identification; and requires the use of TELNET KERMIT
+negotiations.
+</dl>
+
+<h3><a name="x4.2"><hr>4.2. The K95 Initialization File</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Section Contents</a> ]
+[ <a href="#x4.3">Next</a> ]
+[ <a href="#x4.1">Previous</a> ]
+<p>
+
+When a real user logs in to the IKSD, the Kermit-95 initialization file,
+<tt>K95.INI</tt>, is executed from the user's Home Directory as specified in
+the user's profile.  The initialization file in turn executes the user's
+customization file, <tt>K95CUSTOM.INI</tt>.  If the global (or user's)
+environment contains a <tt>K95.INI</tt> entry the specified initialization
+file is executed instead; this may, in turn, execute a customization file out
+of the user's home directory.  You may override Kermit-95's automatic
+selection of initialization with the SET IKS NO-INIT and SET IKS INITFILE
+commands.
+
+<p>
+
+The initialization and customization files can contain any Kermit commands
+at all.  Of particular interest in this context:
+
+<p>
+<dl>
+<dt><tt>IF <i>[</i> NOT <i>]</i> IKSD <i>command(s)</i> ...</tt></dt>
+
+<dd>This is a regular IF command.  It can have an ELSE part (or not) and
+multiple commands can be bracketed in the normal way.  The IKSD condition is 
+true if Kermit is acting as an Internet Kermit Server.
+
+</dl>
+<p>
+
+
+<blockquote>
+<i>
+
+<tt>IKSDNT.EXE</tt> is missing numerous commands that are found in the regular
+<tt>K95.EXE</tt> program.  Any such commands found in the initialization or
+customization files will cause error messages.  To avoid the messages, either
+remove commands, specify a different initialization file with the appropriate
+SET IKS command, or prefix each such command with IF NOT IKSD.
+
+</i>
+</blockquote>
+<p>
+
+For anonymous users, the default initialization file, if any, is
+<tt>K95.INI</tt> in the home directory for the ANONYMOUS ACCOUNT or as
+specified with the SET IKS ANONYMOUS INITFILE command.  It is extremely
+important that the ANONYMOUS INITFILE file exist and not provide write
+permission to the ANONYMOUS ACCOUNT.  Otherwise, guests could alter the
+contents of the file.
+
+<p>
+
+The system administrator may include commands in this file to disable
+selected services for anonymous users, e.g.:
+
+<p>
+<pre>
+  disable delete  ; Don't let anonymous users delete files  (***)
+  disable send    ; Don't let anonymous users send files
+</pre>
+<p>
+
+Of course, any Kermit commands at all may be included: settings, macro
+definitions, etc (also see <a href="#x7.5">Section 7.5</a>).
+
+<p>
+
+When the sysadmin specifies the initialization file, this allows a high degree
+of fine-grained control over who is allowed access to what commands and
+resources, using standard Kermit-95 commands, functions, and variables.  The
+following are particularly useful:
+
+<p>
+<dl>
+
+<dt><tt>\v(date)</tt>, <tt>\v(ndate)</tt></dt>
+
+<dd>The current date, in case you want to restrict access by date.
+(Also read about the new date-related functions in the
+<a href="https://kermitproject.org/ckermit70.html#x1.6">C-Kermit
+7.0</a> and 
+<a href="https://kermitproject.org/ckermit80.html#x8.13">8.0</a>
+update notes.
+
+<p>
+
+<dt><tt>\v(day)</tt>, <tt>\v(nday)</tt></dt>
+
+<dd>The day of the week, in case you want to restrict access to certain days
+of the week.
+
+<p>
+
+<dt><tt>\v(home)</tt></dt>
+
+<dd>The user's home directory.
+
+<p>
+
+<dt><tt>\v(host)</tt></dt>
+
+<dd>The hostname of the IKS.
+
+<p>
+
+<dt><tt>\v(ipaddress)</tt></dt>
+
+<dd>The IP address of the IKS.  This and/or <tt>\v(host)</tt> may be used when
+you are running an IKS on multiple hosts and want to have different setups on
+each, but still have a common initialization file.
+
+<p>
+
+<dt><tt>\v(line)</tt></dt>
+
+<dd>The IP host name or address of the client's host.
+
+<p>
+
+<dt><tt>\v(time)</tt>, <tt>\v(ntime)</tt></dt>
+
+<dd>The current time of day, in case you wish to restrict access to certain
+times of day.
+
+<p>
+
+<dt><tt>\v(userid)</tt></dt>
+
+<dd>The ID with which the user logged in to the IKS.  For anonymous logins,
+this is "anonymous".
+
+<p>
+
+<dt><tt>\v(authname)</tt></dt>
+
+<dd>Only valid when Kermit is accepting a connection. This variable contains
+the name of the user that has been authenticated as opposed to
+<tt>\v(userid)</tt> which contains the name the user chose to login as. This
+distinction is important for <tt>\v(authstate)</tt> = "user" since this means
+that although we were able to authenticate the user as <tt>\v(authname)</tt>
+we could not verify that she has authorization to access the account of
+<tt>\v(userid)</tt>.
+
+<p>
+
+<dt><tt>\v(authstate)</tt></dt>
+
+<dd>String indicating current state of authentication:
+
+<p>
+<pre>
+  "rejected" - Rejected or otherwise not authenticated
+  "unknown"  - Anonymous connection
+  "other"    - We know him, but not his name
+  "user"     - We know his name
+  "valid"    - We know him, and he needs no password
+</pre>
+<p>
+
+<dt><tt>\v(authtype)</tt></dt>
+
+<dd>String indicating which telnet (or other) authentication method is in use.
+
+<p>
+<pre>
+  "NULL"              - No authentication
+  "KERBEROS_V4"       - Kerberos 4
+  "KERBEROS_V5"       - Kerberos 5
+  "SRP"               - Secure Remote Password
+  "NTLM"              - NT Lan Manager
+  "X_509_CERTIFICATE" - X.509 certificate
+</pre>
+<p>
+
+<dt><tt>\v(x509_issuer)</tt></dt>
+
+<dd>The issuer string from the peer's X.509 certificate
+
+<p>
+
+<dt><tt>\v(x509_subject)</tt></dt>
+
+<dd>The subject string from the peer's X.509 certificate
+
+</dl>
+<p>
+
+So, for example, if the sysadmin wishes to prevent user "olga" from using the
+IKS on Mondays, the initialization file could contain a command like:
+
+<p>
+<pre>
+  if equal <tt>\v(user)</tt> olga -
+    if equal <tt>\v(nday)</tt> 1 -
+       exit 1 Sorry Olga - please come back another day
+</pre>
+<p>
+
+Or suppose it is desirable to block access from all xyzcorp.com hosts between
+9:00am and noon:
+
+<p>
+<pre>
+  if match <tt>\v(line)</tt> *.xyzcorp.com -
+    if lgt <tt>\v(time)</tt> 09:00:00 -
+      if llt <tt>\v(time)</tt> 12:00:00 -
+         exit 1 Sorry - Please come back after noon
+</pre>
+<p>
+
+Or suppose a certain user is to be allowed to GET files from the server, but
+not SEND, PRINT, or MAIL them:
+
+<p>
+<pre>
+  xif equal <tt>\v(user)</tt> ivan {
+      disable send
+      disable print
+      disable mail
+      disable enable
+  }
+</pre>
+
+<h3><a name="x4.3"><hr>4.3. System Logging</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Section Contents</a> ]
+[ <a href="#x4.4">Next</a> ]
+[ <a href="#x4.2">Previous</a> ]
+<p>
+
+System logging in Windows NT is performed via the Administrative Tools
+Event Log.  Use the Event Viewer to examine IKSD events.
+
+<p>
+
+All IKSD entries (except debugging, see below) appear in the event log,
+with a tag of "IKSD" and the process ID (pid) of the IKSD process.
+The system logging levels are:
+
+<p>
+<pre>
+  0 = no logging
+  1 = Login/out, failed login attempts, failed Kerberos (etc) authentication
+  2 = Dialing out (does not apply to IKSD)
+  3 = Making any kinds of connections (does not apply to IKSD)
+  4 = Protocol Operations
+  5 = Creating / receiving / deleting / renaming / copying files
+  6 = Sending / typing / reading / transmitting files
+  7 = All top-level commands and all server commands sent to iksd
+  8 = Commands executed from macros and command files
+  9 = Debug
+</pre>
+<p>
+
+Each level includes all the levels beneath it (except 0 is not included if the
+logging level is greater than 0).  The default logging level is 6.  If you
+specify a number higher than the maximum, it is the same as specifying the
+maximum.
+
+<p>
+
+WARNING: Debug level produces VOLUMINOUS amounts of information -- it is
+equivalent to (in fact, it <i>is</i>) Kermit 95's debug log.  Furthermore,
+there is a good possibility it will contain sensitive information such as
+clear-text passwords.
+
+<h3><a name="x4.4"><hr>4.4. The Transfer Log File</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x4">Section Contents</a> ]
+[ <a href="#x4.3">Previous</a> ]
+<p>
+
+The transfer log is disabled by default; it must be enabled on the command
+line (<a href="#x5.1">Section 5.1</a>).
+
+<p>
+
+The transfer log has the same format as the Unix wu-ftpd log, and so all the
+same scripts can be used to process it, collect statistics, etc.
+
+<p>
+
+The Transfer log can also be used in regular user-mode Kermit 95 sessions.
+
+<p>
+
+The first field is fixed-length and contains spaces; subsequent fields are
+variable length, contain no spaces, and are separated by one or more spaces.
+The fields are:
+
+<p>
+<dl>
+
+<dt>Timestamp</dt>
+
+<dd>This is an asctime-style timestamp, example: "Sun Jan 20 11:42:52 2002".
+It is always exactly 24 characters long, and the subfields are always in
+fixed positions.
+
+<p>
+
+<dt>Elapsed time</dt>
+
+<dd>The whole number of seconds required to transfer the file, as a string
+of decimal digits, e.g. "24".
+
+<p>
+
+<dt>Connection</dt>
+
+<dd>In IKSD, the IP hostname or address of the client.  For user-mode C-Kermit
+transfers, The name of the network host to which C-Kermit is connected, or
+the name of the serial device through which it has dialed (or has a direct
+connection), or "/dev/tty" for transfers in remote mode.
+
+<p>
+
+<dt>Bytes transferred</dt>
+
+<dd>The number of bytes transferred, decimal digits, e.g. "1537904".
+
+<p>
+
+<dt>Filename</dt>
+
+<dd>The full pathname of the file that was transferred, e.g.
+"/pub/ftp/kermit/a/README.TXT".  If the filename contains any spaces or
+control characters, each such character is replaced by an underscore ('_')
+character.
+
+<p>
+
+<dt>Mode</dt>
+
+<dd>The letter 'b' if the file was transferred in binary mode, or 'a'
+if it was transferred in text (ASCII) mode.
+
+<p>
+
+<dt>Options</dt>
+
+<dd>For compatibility with the wuftpd log.  This field always contains an
+underscore ('_') character.
+
+<p>
+
+<dt>Direction</dt>
+
+<dd>The letter 'o' if the file was transferred Out, and 'i' if the file was
+transferred In.
+
+<p>
+
+<dt>User class</dt>
+
+<dd>The letter 'r' for real users, or 'a' for anonymous users.
+
+<p>
+
+<dt>User identification</dt>
+
+<dd>The user ID of a real user, or the password given by an anonymous user.
+
+<p>
+
+<dt>Server identification</dt>
+
+<dd>The string "iks" (Internet Kermit Server), or if C-Kermit is running
+in user mode, "kermit".  This distinguishes a Kermit transfer log
+record from a WU-FTPD record, which contains "ftp" in this field.
+
+<p>
+
+<dt>Authentication class</dt>
+
+<dd>The digit '1' if we know the user's ID on the client system,
+otherwise '0'.  Currently, always '0'.
+
+<p>
+
+<dt>Authenticated user</dt>
+
+<dd>If the authentication class is '1', this is the user's ID on the client
+system.  Otherwise, it is an asterisk ('*').  Currently, it is always an
+asterisk.
+
+</dl>
+
+<h3><a name="x5"><hr noshade>5. ACCESS TO SERVICES</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Next</a> ]
+[ <a href="#x4">Previous</a> ]
+<p>
+
+<pre>
+  5.1. <a href="#x5.1"><b>Automatic Settings</b></a>
+  5.2. <a href="#x5.2"><b>Authentication and Authorization</b></a>
+  5.3. <a href="#x5.3"><b>The DISABLE Command</b></a>
+  5.4. <a href="#x5.4"><b>Shell Access</b></a>
+  5.5. <a href="#x5.5"><b>Anonymous Users</b></a>
+  5.6. <a href="#x5.6"><b>Management Information</b></a>
+</pre>
+<p>
+
+The IKSD behaves at runtime just like the regular Kermit-95 program with the
+differences noted in this section and in <a href="#x7">Section 7</a>.
+
+<h3><a name="x5.1"><hr>5.1. Automatic Settings</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Section Contents</a> ]
+[ <a href="#x5.2">Next</a> ]
+<p>
+
+When Kermit-95 is started as an Internet Kermit Service, the following settings
+occur automatically:
+
+<p>
+<ol type="a">
+
+<li>Login (authorization) is required.
+<li>Shell access is disabled.
+<li>Server-side Telnet negotiation is enabled.
+<li>SET RELIABLE ON (see the
+<a href="https://www.kermitproject.org/ckermit70.html#4.20">C-Kermit 7.0
+Update Notes</a>).
+<li>FAST file-transfer settings, including "cautious" unprefixing.
+<li>No flow control, no parity.
+
+</ol>
+<p>
+
+Items d-f can be overridden in the IKSD configuration file.
+
+<h3><a name="x5.2"><hr>5.2. Authentication and Authorization</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Section Contents</a> ]
+[ <a href="#x5.3">Next</a> ]
+[ <a href="#x5.1">Previous</a> ]
+<p>
+
+<blockquote>
+<i>
+
+TO DO: Describe details of authentication via X.509 certificates, Kerberos,
+SRP, and NTLM and how that differs from authorization via the issuance of
+a userid and password.
+
+</i>
+</blockquote>
+
+<p>
+
+The IKSD command prompt will not appear, and no commands may be given, before
+the user is authorized (and perhaps, authenticated).
+
+<p>
+
+When the IKSD has been started without the SET IKS SERVER-ONLY ON command
+in the IKSD Configuration file, it issues a Username: prompt.  The user may
+type a username at the prompt, in which case a Password: is issued, and the
+user must enter a password.  Three login attempts are allowed, with a pause
+enforced between each one.  If all three fail, the connection is closed.
+
+<p>
+
+The user may also authorize from the client by sending a REMOTE LOGIN
+command (again, only 3 tries are allowed), or by Telnet Authentication
+negotiations.  Prior to authorization, the IKSD will respond to only the
+following client commands:
+
+<p>
+<pre>
+  REMOTE LOGIN
+  REMOTE LOGOUT
+  REMOTE HELP
+  REMOTE EXIT
+  BYE
+</pre>
+<p>
+
+Once authorized, the user may not re-authorize or change identities.
+
+<p>
+
+The connection persists until it is broken in any of the following ways:
+
+<p>
+
+<ol type="a">
+
+<li>Client sends BYE or REMOTE EXIT or REMOTE LOGOUT to IKSD.
+<li>Client sends FINISH to IKSD that has been started with <tt>-x</tt>.
+<li>User gives a HANGUP or CLOSE command to the client.
+<li>User gives an EXIT or LOGOUT command at IKSD prompt.
+
+</ol>
+<p>
+
+The connection is also closed if the user exits from the client, but only if
+it was an end-to-end Telnet connection.  There can be no guarantee that
+exiting from a serial communication program will close and hang up the serial
+connection.
+
+<h3><a name="x5.3"><hr>5.3. The DISABLE Command</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Section Contents</a> ]
+[ <a href="#x5.4">Next</a> ]
+[ <a href="#x5.2">Previous</a> ]
+<p>
+
+In the IKSD, the DISABLE command applies not only to client/server functions,
+but also to the corresponding commands when given at the prompt.  For example,
+DISABLE DELETE disables not only REMOTE DELETE commands given from the client,
+but also DELETE commands given at the IKSD's command prompt, as well as
+implicit forms of file deletion, such as when the target of a COPY command is
+an existing file.
+
+<p>
+
+The DISABLE ENABLE command is irreversible; once this command is given, the
+ENABLE command can not be re-enabled, and therefore no other disabled commands
+can be enabled either.  ENABLE is DISABLEd automatically for anonymous users,
+so any DISABLE commands in the anonymous-user initialization file
+(<a href="#x5.4">Section 5.4</a>) are also irreversible.
+
+<h3><a name="x5.4"><hr>5.4. Shell Access</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Section Contents</a> ]
+[ <a href="#x5.5">Next</a> ]
+[ <a href="#x5.3">Previous</a> ]
+<p>
+
+All forms of system and shell access are disabled in WIKSD.  Thus, the user
+can not execute REMOTE HOST commands from the client, nor access the shell
+from the IKSD command prompt via shell escapes (!), the RUN or PUSH command, or
+by specifying pipes or filters in file-transfer commands, or by pipe
+specifications in REMOTE commands, or in any other way.
+
+<h3><a name="x5.5"><hr>5.5. Anonymous Users</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Section Contents</a> ]
+[ <a href="#x5.6">Next</a> ]
+[ <a href="#x5.4">Previous</a> ]
+<p>
+
+Anonymous logins are disabled by default, but can be enabled with the
+SET IKS ANONYMOUS LOGIN ON command in the IKSD Configuration file.
+
+<p>
+
+The account specified by SET IKS ANONYMOUS ACCOUNT is used on Windows
+NT/2000/XP to provide anonymous access.  <i>There is no ANONYMOUS ACCOUNT in
+Windows 95/98/ME.  For safety in Windows 9x, an anonymous root directory
+should always be specified with SET IKS ANONYMOUS ROOT.  Otherwise, anonymous
+users will have (at least) read access to your entire file system.</i>
+
+<p>
+
+In addition to the FTP-like restrictions, certain Kermit services are always
+denied to anonymous users.  These include:
+
+<p>
+
+<ul>
+<li>PRINT (at IKSD prompt) and REMOTE PRINT (from client)
+<li>MAIL (or SEND /MAIL) at IKSD prompt and from client.
+<li>Creation of any logs (transaction, debug, packet, etc).
+<li>No file may be deleted, including implicitly, e.g. by the COPY command.
+<li>FILE COLLISION is set to RENAME and may not be changed.
+</ul>
+
+<p>
+
+The latter three provisions mean that anonymous users can not delete,
+overwrite, rename, or alter any existing files in any way, whether by file
+transfer or with the DELETE or RENAME command.
+
+<p>
+
+Note that IKSD, like FTPD, does not allow directory creation by anonymous
+users, even when file/directory permissions would otherwise allow it.  To
+change this, add:
+
+<p>
+<pre>
+  enable mkdir    ; Enable directory creation
+</pre>
+<p>
+
+to the IKSD Configuration file or the ON_LOGIN macro.  Similarly, for directory
+removal:
+
+<p>
+<pre>
+  enable rmdir    ; Enable directory removal
+</pre>
+<p>
+
+Of course directories can be removed only if (a) they are empty, and (b)
+their permissions allow it.
+
+<h3><a name="x5.6"><hr>5.6. Management Information</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x5">Section Contents</a> ]
+[ <a href="#x5.5">Previous</a> ]
+<p>
+
+The command-line argument vector, normally accessible in the
+<tt>\&amp;@[]</tt> array, the top-level <tt>\%0..9</tt> variables, or by other
+means, is inaccessible to IKSD users.  Thus, IKSD clients can not discover the
+IKSD startup path or options, the logfile pathnames or directories, logging
+level, etc.
+
+
+<h3><a name="x6"><hr noshade>6. MONITORING AND CONTROL</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Next</a> ]
+[ <a href="#x5">Previous</a> ]
+<p>
+
+<pre>
+  6.1. <a href="#x6.1"><b>The Control Panel</b></a>
+  6.2. <a href="#x6.2"><b>The Event Log</b></a>
+  6.3. <a href="#x6.3"><b>The Task Manager</b></a>
+  6.4. <a href="#x6.4"><b>IKSDPY</b></a>
+</pre>
+<p>
+
+As with any Internet service (e.g. FTP, Telnet), every IKSD session has its
+own IKSD server instance.  Thus at any time 0, 1, 2, or more copies of IKSD
+may be running on your PC.  You can monitor and control them in various
+ways, described in this section.
+
+<h3><a name="x6.1"><hr>6.1. The Control Panel</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Section Contents</a> ]
+[ <a href="#x6.2">Next</a> ]
+<p>
+
+<i>Control
+Panel</i> --&gt; <i>Administrative Tools</i> --&gt; <i>Services</i>.  This
+lets you stop, pause, resume, or start Internet Kermit Service (IKSD).  Note:
+stopping the service does not stop open sessions; it merely blocks creation of
+new sessions.
+
+<h3><a name="x6.2"><hr>6.2. The Event Log</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Section Contents</a> ]
+[ <a href="#x6.3">Next</a> ]
+[ <a href="#x6.1">Previous</a> ]
+<p>
+
+You can monitor IKSD sessions with the Event Log:
+
+<p>
+<tt>&nbsp;&nbsp;</tt><i>Control
+Panel</i> --&gt; <i>Administrative Tools</i> --&gt; <i>Event Viewer</i>
+--&gt; <i>Applications</i>
+<p>
+
+IKSD entries have IKSD in the Source column.  The types of entries that appear
+in the log depend on your <a href="#syslog">SET SYSLOG selection</a>.  To see
+the detail for an entry, double-click on it.  The text entered into the log by
+IKSD is at the end of the Description box (despite the fact the that
+description begins with "The description for Event ID (0) uin Source (IKSD)
+cannot be found").
+
+<p>
+
+The Event Viewer does not update the screen as new events occur; you have
+to hit the Refresh button.
+
+<h3><a name="x6.3"><hr>6.3. The Task Manager</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Section Contents</a> ]
+[ <a href="#x6.4">Next</a> ]
+[ <a href="#x6.2">Previous</a> ]
+<p>
+
+You can watch IKSD (as either IKSDNT or K95) in the task manager's Processes
+tab, and system performance in the Performance tab.  Unfortunately, however,
+there is no way to kill an IKSD instance because it is owned by System, and
+not even the Administrator has the authority to kill System-owned processes.
+
+<h3><a name="x6.4"><hr>6.4. IKSDPY</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x6">Section Contents</a> ]
+[ <a href="#x6.3">Previous</a> ]
+<p>
+
+A realtime text-mode display of IKSD activity is available as a Kermit script
+called <tt>IKSDPY.KSC</tt>, to be executed by Kermit 95.  You can find a copy
+of it in Kermit 95's SCRIPTS subdirectory.  To use it, start a copy of
+<tt>K95.EXE</tt> and tell it to "take scripts/iksdpy.ksc".  Or (if in your
+Kermit 95 installation, you chose to associate "<tt>.KSC</tt>" files with
+Kermit 95) you can simply click on the <tt>IKSDPY.KSC</tt> file or any
+shortcut to it.
+
+<p>
+
+The main IKSDPY display shows the active sessions.  If you press a digit, you
+can view the details for a particular session -- user, pid, current directory,
+state, last command, etc.
+
+<p>
+
+In any screen, you can press "h" to get help for that screen, which tells you
+which keys you can press to move to other screens.
+
+<h3><a name="x7"><hr noshade>7. OPEN ISSUES</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x8">Next</a> ]
+[ <a href="#x6">Previous</a> ]
+<p>
+
+<pre>
+  7.1. <a href="#x7.1"><b>Connection Establishment</b></a>
+  7.2. <a href="#x7.2"><b>Shell Access</b></a>
+  7.3. <a href="#x7.3"><b>Non-Kermit Protocols</b></a>
+  7.4. <a href="#x7.4"><b>Additional Administrative Controls</b></a>
+  7.5. <a href="#x7.5"><b>Known Bugs</b></a>
+</pre>
+<p>
+
+Several services that are normally provided by Kermit-95 are not available
+when it is an Internet Kermit Service Daemon.
+
+<h3><a name="x7.1"><hr>7.1. Connection Establishment</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Section Contents</a> ]
+[ <a href="#x7.2">Next</a> ]
+<p>
+
+If a real user has access to the IKSD command prompt, why not allow her to
+"set host" or "set line" from there to another place?  Obviously this would be
+a security risk if allowed for anonymous users.  For authenticated users, it
+should be OK, but is not currently possible for Telnet connections since the
+IKSD is already a Telnet server on the incoming connection, and is not
+designed to conduct two separate Telnet sessions simultaneously.  It might be
+possible to allow the user to make a dialout connection, but some coding and
+testing would be needed should this prove desirable, and even then it is not
+clear that the PC owner would be willing to pay the telephone charges.
+
+<h3><a name="x7.2"><hr>7.2. Shell Access</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Section Contents</a> ]
+[ <a href="#x7.3">Next</a> ]
+[ <a href="#x7.1">Previous</a> ]
+<p>
+
+Shell access is forbidden to anonymous users for obvious reasons.  From a
+security standpoint, it could be allowed for authenticated users.
+
+<h3><a name="x7.3"><hr>7.3. Non-Kermit Protocols</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Section Contents</a> ]
+[ <a href="#x7.4">Next</a> ]
+[ <a href="#x7.2">Previous</a> ]
+<p>
+
+Since Xmodem, Ymodem, and Zmodem are built into Kermit 95, when it is used
+as an IKSD these protocols are available for use, e.g. with "set protocol
+zmodem".  Non-Kermit protocols
+are not available with the standalone <tt>IKSDNT.EXE</tt> program.
+
+<h3><a name="x7.4"><hr>7.4. Additional Administrative Controls</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Section Contents</a> ]
+[ <a href="#x7.5">Next</a> ]
+[ <a href="#x7.3">Previous</a> ]
+<p>
+
+Certain options available in wu-ftpd are not implemented in iksd:
+
+<p>
+<ul>
+
+<li>Ability to select IKSD logging for real vs anonymous users.
+<li>Ability to select IKSD logging for inbound vs outbound files.
+<ul>
+<li>Currently, all transfers are logged.
+</ul>
+
+<p>
+
+<li>Ability to allow/restrict chmod/delete/overwrite for anonymous users.
+<ul>
+<li>Currently, there is no command for changing file permissions.
+<li>Guests may not delete files, period.
+<li>FILE COLLISION is set to RENAME for guests and may not be changed
+since all the other options allow existing files to be altered.
+<li>There is no way to grant these capabilities to guests.
+</ul>
+
+<p>
+
+<li>Ability to allow directory creation by anonymous users.
+<ul>
+<li>Anonymous users may not create or remove directories.
+</ul>
+
+<p>
+
+<li>Ability to allow/specify CD messages on a per-directory basis.
+<li>RFC931 authentication of remote (client) user (but wu-ftpd doesn't either).
+
+</ul>
+<p>
+
+These or other controls can be added if there is sufficient reason or demand.
+
+<h3><a name="x7.5"><hr>7.5. Known Bugs</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Section Contents</a> ]
+[ <a href="#x7.4">Previous</a> ]
+<p>
+
+<ul>
+
+<li>Ctrl-C at the <tt>IKSD&gt;</tt> prompt has no effect.
+<li>When commands are logged in Event Log, the EXIT command appears twice.
+<li>User profiles are not imported into the environment
+
+</ul>
+
+<h3><a name="x8"><hr noshade>8. TESTING</h3>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="#x7">Previous</a> ]
+<p>
+
+In case you want to test IKSD on a port other than 1649, be aware that
+IKS-aware Kermit clients (such as Kermit-95 and C-Kermit) will not
+automatically initiate Telnet negotiations with it, since it is not on a
+Telnet port (i.e. 23 or 1649).  To get correct operation you'll need to force
+the client to negotiate, e.g.:
+
+<p>
+<pre>
+  telnet hostname 3000
+  set host hostname 3000 /telnet
+</pre>
+<p>
+
+[ <a href="#top">Top</a> ]
+[ <a href="#contents">Contents</a> ]
+[ <a href="https://kermitproject.org/k95.html">Kermit 95 Home</a> ]
+[ <a href="https://kermitproject.org/kermit/index.html">Kermit Home</a> ]
+<hr noshade>
+<address>
+Windows Internet Kermit Service - User Guide /
+The Kermit Project /
+  <!--$last-update-short$-->4 June 2002<!--/$last-update-short$-->
+</address></body></html>

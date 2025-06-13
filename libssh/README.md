@@ -1,7 +1,7 @@
-Building LibSSH for C-Kermit for Windows
+Building LibSSH for Kermit 95
 ==================================================
 
-For full details on how to build LibSSH for use with C-Kermit for Windows, see the
+For full details on how to build LibSSH for use with Kermit 95, see the
 [Optional Dependencies](../doc/optional-dependencies.md) document. You should really read
 that page first.
 
@@ -71,7 +71,7 @@ dynamically loading iphlpapi.dll and if that fails skipping the functionality
 that depends on this library. This will of course re-introduce the vulnerability
 on Windows XP which is not great.
 
-The vulnerability appears to only affect features that C-Kermit doesn't use and
+The vulnerability appears to only affect features that Kermit 95 doesn't use and
 which libssh doesn't even support on Windows. So the effects of undoing the fix
 are likely not serious at the moment, but this may change in the future.
 
@@ -80,5 +80,5 @@ apply this patch by running `patch -p1 < ..\xp-fix.patch` from inside the
 libssh directory, or you can run `build.bat` with the `/X` parameter.
 
 The `/X` parameter also builds libssh without Thread Local Storage which is
-required when building C-Kermit for Windows with an external SSH subsystem 
+required when building Kermit 95 with an external SSH subsystem 
 (CKF_SSH_DLL=yes).

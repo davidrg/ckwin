@@ -10,21 +10,33 @@
 # ----- Windows NT compiler options -----------------------------------------
 # for debug:    add /Zi to CPP_OPTS
 #               add /DEBUG:MAPPED,FULL /DEBUGTYPE:CV to LINK_OPTS
-WNT_CPP=cl
-WNT_LINK=link
-WNT_LIBRARIAN=lib
+WNT_CPP=cl /nologo
+WNT_LINK=link /nologo
+WNT_LIBRARIAN=lib /nologo
+
+!if "$(CMP)" == "VCXX"
 
 #WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. -noBool
 #WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc
 WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. /Zi -noBool
-WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /NODEFAULTLIB:libc /Debug:full /Debugtype:cv 
+WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /Debug:full /NODEFAULTLIB:libc /Debugtype:cv
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib ctl3d32.lib shell32.lib ole32.lib uuid.lib advapi32.lib oldnames.lib # compmgr.lib
 WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib libc.lib kernel32.lib oldnames.lib
+
+!else
+
+WNT_CPP_OPTS= -c -W3 -MT -DWIN32 -DOS2 -DNT -I.\.. -Z7
+WNT_LINK_OPTS=-align:0x1000 -subsystem:windows -entry:WinMainCRTStartup /MAP /Debug:full
+WNT_LIBS=wnt_zil.lib ndirect.lib nservice.lib nstorage.lib # compmgr.lib
+WNT_CON_LINK_OPTS=-align:0x1000 -subsystem:console -entry:mainCRTStartup 
+WNT_CON_LIBS=w32_zil.lib ndirect.lib nservice.lib nstorage.lib
+
+!endif
+
 WNT_LIB_OPTS=/machine:i386 /subsystem:WINDOWS
-
 WNT_OBJS=
-WNT_LIBS=libcmt.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib wnt_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib ctl3d32.lib shell32.lib ole32.lib uuid.lib advapi32.lib # compmgr.lib
 
-WNT_CON_LIBS=libc.lib kernel32.lib w32_zil.lib ndirect.lib nservice.lib nstorage.lib oldnames.lib
 .cpp.obn:
 	$(WNT_CPP) $(WNT_CPP_OPTS) -Fo$*.obn $<
 

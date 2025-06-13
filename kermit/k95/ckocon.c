@@ -187,8 +187,8 @@ extern enum markmodes markmodeflag[VNUM] ;
   SET TERMINAL COLOR command (in ckuus7.c) or by CSI3x;4xm escape sequences
   from the host.
 */
-extern unsigned char     colorhelp;
-extern unsigned char     colorcmd;
+extern cell_video_attr_t colorhelp;
+extern cell_video_attr_t colorcmd;
 
 int     scrninitialized[VNUM] = {0,0,0} ;
 bool    scrollflag[VNUM]  = {0,0,0}, flipscrnflag[VNUM] = {0,0,0};
@@ -227,7 +227,7 @@ ascreen                                 /* For saving screens: */
   vt100screen,                          /* terminal screen */
   commandscreen ;                       /* OS/2 screen */
 
-extern unsigned char                    /* Video attribute bytes */
+extern cell_video_attr_t                /* Video attribute bytes */
   attribute,                            /* Current video attribute byte */
   savedattribute,                       /* Saved video attribute byte */
   defaultattribute;                     /* Default video attribute byte */
@@ -262,6 +262,7 @@ CK_CURSORINFO crsr_command={-88,0,8,1};
 
 extern bool     cursoron[VNUM]  = {TRUE,TRUE,TRUE};       /* For speed, turn off when busy */
 extern bool     cursorena[VNUM] = {TRUE,TRUE,TRUE};       /* Cursor enabled / disabled */
+bool bracketed_paste[VNUM] = {FALSE,FALSE,FALSE};         /* Enable/disable bracketed-pastes */
 
 extern bool     printon;                /* Printer is on */
 extern bool     xprint;                 /* Controller print in progress */
@@ -350,16 +351,21 @@ int
 
 int cmd_border = -1;
 
+/* This border stuff is OS/2 only */
 void
 setborder() {
 #ifdef CK_BORDER
     extern HVIO VioHandle ;
-    extern unsigned char borderattribute ;
+    extern cell_video_attr_t borderattribute ;
     VIOOVERSCAN vo;                     /* Set border (overscan) color */
 
     vo.cb = sizeof(vo);                 /* for terminal emulation window */
     vo.type = 1;
-    vo.color = borderattribute ;
+#ifdef CK_COLORS_16
+    vo.color = borderattribute;    /* This is always an unsigned char on OS/2 */
+#else
+#error "OS/2 builds only support 16 colours!"
+#endif
     VioSetState((PVOID) &vo, VioHandle );
 #endif /* CK_BORDER */
 }
@@ -402,7 +408,7 @@ SaveTermMode(int wherex, int wherey) {
 #endif /* KUI */
     vt100screen.ox = wherex;
     vt100screen.oy = wherey;
-    vt100screen.att = attribute;
+    vt100screen.cell_att = attribute;
     /*vt100screen.scrncpy ;      not used for terminal mode */
 }
 
@@ -446,7 +452,7 @@ SaveCmdMode(int wherex, int wherey) {
 #endif /* KUI */
     commandscreen.ox = wherex;
     commandscreen.oy = wherey;
-    commandscreen.att = colorcmd;
+    commandscreen.cell_att = colorcmd;
 }
 
 /* Restore a saved command screen */
@@ -465,7 +471,7 @@ RestoreCmdMode() {
     }
 #endif /* KUI */
 #ifdef COMMENT
-    colorcmd = commandscreen.att;
+    colorcmd = commandscreen.cell_att;
     wherey[VTERM] = commandscreen.oy;
     wherex[VTERM] = commandscreen.ox;
 #endif /* COMMENT */
@@ -510,7 +516,12 @@ os2push() {                             /* not just for CONNECT mode anymore */
     }
 
     RequestScreenMutex(SEM_INDEFINITE_WAIT);
+
+    /* No reason to clear the command screen in KUI builds - the subprocess
+       doesn't affect it */
+#ifndef KUI
     clearcmdscreen();
+#endif /* KUI */
 
     if ( connectmode ) {
         restorecursormode();
@@ -687,12 +698,14 @@ getcmdcolor(void)
     viocell cell ;
     USHORT  x,y ;
     USHORT  length = 1;
-    GetCurPos( &x, &y ) ;
-    ReadCellStr( &cell, &length, x, y ) ;
-    colorcmd = cell.a ;
+    if (GetCurPos( &x, &y ) == 0) {
+        ReadCellStr(&cell, &length, x, y);
+        colorcmd = cell.video_attr;
+    }
 #endif /* KUI */
 }
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* clearcmdscreen                                                            */
 /*---------------------------------------------------------------------------*/
@@ -706,11 +719,12 @@ clearcmdscreen(void) {
     /* WrtNCell does nothing useful for KUI as we don't have a console window
      * to write to */
     cell.c = ' ' ;
-    cell.a = colorcmd ;
+    cell.video_attr = colorcmd ;
     WrtNCell(cell, cmd_cols * (cmd_rows+1), 0, 0);
     SetCurPos( 0, 0 ) ;
 #endif /* ! KUI */
 }
+#endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
 /* clearscrollback                                                           */
@@ -741,7 +755,7 @@ cleartermscreen( BYTE vmode ) {
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             line->cells[x].c = ' ' ;
-            line->cells[x].a = vmode == VTERM ? attribute : colorcmd ;
+            line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd ;
             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
             }
         }
@@ -774,7 +788,7 @@ helpstart(int w, int h, int gui) {               /* Start help window */
 #endif /* KUI */
     {
         helpcol = helprow = 0 ;
-        pPopup->a = colorhelp ;
+        pPopup->video_attr = colorhelp ;
         pPopup->width = w + 4 ;   /* 2 for border, plus 2 for padding */
         pPopup->height = h + 2 ;  /* 2 for border */
         pPopup->c[helprow][helpcol++] = 201; /* IBM upper left box corner double */
@@ -1481,7 +1495,7 @@ popuphelp(int mode, enum helpscreen x) {
         "   A       E     AE digraph",
         "   O       /     O with stroke",
         "   s       s     German sharp s",
-        "   n       b     No-break space"
+        "   n       b     No-break space",
         "",
         " And others; see the documentation.",
     };
@@ -1589,15 +1603,18 @@ popuphelp(int mode, enum helpscreen x) {
         }
         break;
 
-    case hlp_rollback:
+    case hlp_rollback: {
+        int oversize = FALSE;
         strcpy(usertext, " Press (almost) any key to restore the screen");
         exittext[0] = helptext[0] = hostname[0] = NUL;
 
         s = " SCREEN SCROLL KEYS";      /* Box title */
-        n = 22;                         /* How many lines for help box */
+        n = 24;                         /* How many lines for help box */
         if (vik.upscn   < 256) n--;     /* Deduct for verbs not assigned */
+        if (vik.uphscn  < 256) n--;
         if (vik.upone   < 256) n--;
         if (vik.dnscn   < 256) n--;
+        if (vik.dnhscn  < 256) n--;
         if (vik.dnone   < 256) n--;
         if (vik.homscn  < 256) n--;
         if (vik.endscn  < 256) n--;
@@ -1611,84 +1628,102 @@ popuphelp(int mode, enum helpscreen x) {
         if (vik.exit    < 256) n--;
         if (vik.markstart < 256) n--;
         if (vik.help < 256) n--;
+
+        if (n > 22) {
+            /* We can only fit 22 lines. If we have more, drop the two blank
+             * lines */
+            n = 22;
+            oversize = TRUE;
+        }
+
         pPopup = helpstart(66, n, gui_dialog);      /* Make popup window 66 x n */
         helpline( pPopup, s);           /* 1 */
-        helpline( pPopup, "");          /* 2 */
+        if (!oversize) helpline( pPopup, "");          /* 2 */
 
         if (vik.upscn > 255 && keyname(vik.upscn)) {
             ckstrncpy(kn,keyname(vik.upscn),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll backward one screen");
             helpline( pPopup, line);    /* 3 */
         }
+        if (vik.uphscn > 255 && keyname(vik.uphscn)) {
+            ckstrncpy(kn,keyname(vik.uphscn),40);
+            sprintf(line,"  %-34.33s%s",kn,"Scroll backward half a screen");
+            helpline( pPopup, line);    /* 4 */
+        }
         if (vik.upone > 255 && keyname(vik.upone)) {
             ckstrncpy(kn,keyname(vik.upone),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll backward one line");
-            helpline( pPopup, line);    /* 4 */
+            helpline( pPopup, line);    /* 5 */
         }
         if (vik.dnscn > 255 && keyname(vik.dnscn)) {
             ckstrncpy(kn,keyname(vik.dnscn),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll forward one screen");
-            helpline( pPopup, line);    /* 5 */
+            helpline( pPopup, line);    /* 6 */
+        }
+        if (vik.dnhscn > 255 && keyname(vik.dnhscn)) {
+            ckstrncpy(kn,keyname(vik.dnhscn),40);
+            sprintf(line,"  %-34.33s%s",kn,"Scroll forward half a screen");
+            helpline( pPopup, line);    /* 7 */
         }
         if (vik.dnone > 255 && keyname(vik.dnone)) {
             ckstrncpy(kn,keyname(vik.dnone),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll forward one line");
-            helpline( pPopup, line);    /* 6 */
+            helpline( pPopup, line);    /* 8 */
         }
         if (vik.homscn > 255 && keyname(vik.homscn)) {
             ckstrncpy(kn,keyname(vik.homscn),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll back to beginning");
-            helpline( pPopup, line);            /* 7 */
+            helpline( pPopup, line);            /* 9 */
         }
         if (vik.endscn > 255 && keyname(vik.endscn)) {
             ckstrncpy(kn,keyname(vik.endscn),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll forward to end");
-            helpline( pPopup, line);    /* 8 */
+            helpline( pPopup, line);    /* 10 */
         }
         if (vik.lfone > 255 && keyname(vik.lfone)) {
             ckstrncpy(kn,keyname(vik.lfone),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll left one column");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 11 */
         }
         if (vik.lfpg > 255 && keyname(vik.lfpg)) {
             ckstrncpy(kn,keyname(vik.lfpg),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll left eight columns");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 12 */
         }
         if (vik.lfall > 255 && keyname(vik.lfall)) {
             ckstrncpy(kn,keyname(vik.lfall),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll left to first column");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 13 */
         }
         if (vik.rtone > 255 && keyname(vik.rtone)) {
             ckstrncpy(kn,keyname(vik.rtone),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll right one column");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 14 */
         }
         if (vik.rtpg > 255 && keyname(vik.rtpg)) {
             ckstrncpy(kn,keyname(vik.rtpg),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll right eight columns");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 15 */
         }
         if (vik.rtall > 255 && keyname(vik.rtall)) {
             ckstrncpy(kn,keyname(vik.rtall),40);
             sprintf(line,"  %-34.33s%s",kn,"Scroll right to last column");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 16 */
         }
         if (vik.markstart > 255 && keyname(vik.markstart)) {
             ckstrncpy(kn,keyname(vik.markstart),40);
             sprintf(line,"  %-34.33s%s",kn,"Begin selection (mark mode)");
-            helpline( pPopup, line);    /* 11 */
+            helpline( pPopup, line);    /* 17 */
         }
         if (vik.dump > 255 && keyname(vik.dump)) {
             ckstrncpy(kn,keyname(vik.dump),40);
             sprintf(line,"  %-34.33s%s",kn,"Print the visible screen");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 18 */
         }
         if (vik.exit > 255 && keyname(vik.exit)) {
             ckstrncpy(kn,keyname(vik.exit),40);
             sprintf(line,"  %-34.33s%s",kn,"Return to Command screen");
-            helpline( pPopup, line);    /* 10 */
+            helpline( pPopup, line);    /* 19 */
         }
         if (vik.help > 255 && keyname(vik.help)) {
             ckstrncpy(kn,keyname(vik.help),40);
@@ -1698,19 +1733,20 @@ popuphelp(int mode, enum helpscreen x) {
             else
 #endif /* KUI */
                 sprintf(line,"  %-34.33s%s",kn,"More help...");
-            helpline( pPopup, line);    /* 18 */
+            helpline( pPopup, line);    /* 20 */
         }
-        helpline( pPopup, "");          /* 12 */
+        if (!oversize) helpline( pPopup, "");          /* 21 */
         helpline( pPopup, tt_roll ?
                  " ROLL-MODE is INSERT: New data appears at end of buffer." :
                  " ROLL-MODE is OVERWRITE: New data appears on current screen."
-                 );                     /* 13 */
+                 );                     /* 22 */
         sprintf(line, " Scrollback buffer size: %d lines.",
                 VscrnGetBufferSize(mode)
-                );
-        helpline(pPopup, line); /* 14 */
-        helpline(pPopup," Use SET TERMINAL SCROLLBACK to change it."); /* 13 */
+                );              /* 23 */
+        helpline(pPopup, line); /* 24 */
+        helpline(pPopup," Use SET TERMINAL SCROLLBACK to change it."); /* 25 */
         break;
+        }
 
     case hlp_normal:
         if ( mode == VTERM ) {
@@ -1944,12 +1980,14 @@ popuphelp(int mode, enum helpscreen x) {
 
         s = " MARK MODE KEYS"; /* Box title */
         if ( markmodeflag[mode] == inmarkmode ) /* how many lines ? */
-          n = 13 ;
+          n = 15 ;
         else
-          n = 16 ;
+          n = 18 ;
         if (vik.upscn   < 256) n--;     /* Deduct for verbs not assigned */
+        if (vik.uphscn  < 256) n--;
         if (vik.upone   < 256) n--;
         if (vik.dnscn   < 256) n--;
+        if (vik.dnhscn  < 256) n--;
         if (vik.dnone   < 256) n--;
         if (vik.homscn  < 256) n--;
         if (vik.endscn  < 256) n--;
@@ -1970,40 +2008,52 @@ popuphelp(int mode, enum helpscreen x) {
                     "Extend selection backward one screen");
             helpline( pPopup, line);    /* 3 */
         }
+        if (vik.uphscn > 255 && keyname(vik.uphscn)) {
+            ckstrncpy(kn,keyname(vik.uphscn),40);
+            sprintf(line,"  %-26.25s%s",kn,
+                    "Extend selection backward half a screen");
+            helpline( pPopup, line);    /* 4 */
+        }
         if (vik.upone > 255 && keyname(vik.upone)) {
             ckstrncpy(kn,keyname(vik.upone),40);
             sprintf(line,"  %-26.25s%s",kn,
                     "Extend selection backward one line");
-            helpline( pPopup, line);    /* 4 */
+            helpline( pPopup, line);    /* 5 */
         }
         if (vik.dnscn > 255 && keyname(vik.dnscn)) {
             ckstrncpy(kn,keyname(vik.dnscn),40);
             sprintf(line,"  %-26.25s%s",kn,
                     "Extend selection forward one screen");
-            helpline( pPopup, line);    /* 5 */
+            helpline( pPopup, line);    /* 6 */
+        }
+        if (vik.dnhscn > 255 && keyname(vik.dnhscn)) {
+            ckstrncpy(kn,keyname(vik.dnhscn),40);
+            sprintf(line,"  %-26.25s%s",kn,
+                    "Extend selection forward half a screen");
+            helpline( pPopup, line);    /* 7 */
         }
         if (vik.dnone > 255 && keyname(vik.dnone)) {
             ckstrncpy(kn,keyname(vik.dnone),40);
             sprintf(line,"  %-26.25s%s",kn,
                     "Extend selection forward one line");
-            helpline( pPopup, line);    /* 6 */
+            helpline( pPopup, line);    /* 8 */
         }
         if (vik.homscn > 255 && keyname(vik.homscn)) {
             ckstrncpy(kn,keyname(vik.homscn),40);
             sprintf(line,"  %-26.25s%s",kn,
                     "Extend selection to top of buffer");
-            helpline( pPopup, line);    /* 7 */
+            helpline( pPopup, line);    /* 9 */
         }
         if (vik.endscn > 255 && keyname(vik.endscn)) {
             ckstrncpy(kn,keyname(vik.endscn),40);
             sprintf(line,"  %-26.25s%s",kn,
                     "Extend selection to bottom of buffer");
-            helpline( pPopup, line);    /* 8 */
+            helpline( pPopup, line);    /* 10 */
         }
         if (vik.exit > 255 && keyname(vik.exit)) {
             ckstrncpy(kn,keyname(vik.exit),40);
             sprintf(line,"  %-26.25s%s",kn,"Return to Command screen");
-            helpline( pPopup, line);    /* 9 */
+            helpline( pPopup, line);    /* 11 */
         }
         if (vik.markstart > 255 && keyname(vik.markstart)) {
             ckstrncpy(kn,keyname(vik.markstart),40);
@@ -2011,35 +2061,35 @@ popuphelp(int mode, enum helpscreen x) {
                     "Begin selection" :
                     "Anchor selection at current position"
                     );
-            helpline( pPopup, line);    /* 10 */
+            helpline( pPopup, line);    /* 12 */
         }
         if (vik.markcancel > 255 && keyname(vik.markcancel)) {
             ckstrncpy(kn,keyname(vik.markcancel),40);
             sprintf(line,"  %-26.25s%s",kn, "Cancel selection" );
-            helpline( pPopup, line);    /* 11 */
+            helpline( pPopup, line);    /* 13 */
         }
         if ( markmodeflag[mode] == marking ) {
             if (vik.copyclip > 255 && keyname(vik.copyclip)) {
                 ckstrncpy(kn,keyname(vik.copyclip),40);
                 sprintf(line,"  %-26.25s%s",kn,
                         "Copy selection to clipboard" );
-                helpline( pPopup, line); /* 12 */
+                helpline( pPopup, line); /* 14 */
             }
             if (vik.copyhost > 255 && keyname(vik.copyhost)) {
                 ckstrncpy(kn,keyname(vik.copyhost),40);
                 sprintf(line,"  %-26.25s%s",kn,
                         "Transmit selection" );
-                helpline( pPopup, line); /* 13 */
+                helpline( pPopup, line); /* 15 */
             }
             if (vik.dump > 255 && keyname(vik.dump)) {
                 ckstrncpy(kn,keyname(vik.dump),40);
                 sprintf(line,"  %-26.25s%s",kn,
                         "Copy selection to printer (or file)");
-                helpline( pPopup, line); /* 14 */
+                helpline( pPopup, line); /* 16 */
             }
         }
-        helpline( pPopup, "");          /* 12/15 */
-        helpline( pPopup,               /* 13/16 */
+        helpline( pPopup, "");          /* 14/17 */
+        helpline( pPopup,               /* 15/18 */
                   " You can also use the arrow keys to modify the selection.");
         break;
 
@@ -2307,7 +2357,7 @@ checkscreenmode() {
     vt100screen.mi.sbcol = vt100screen.mi.col;
 #endif /* NT */
 #endif /* KUI */
-    vt100screen.att = defaultattribute ;
+    vt100screen.cell_att = defaultattribute ;
 }
 
 void
@@ -3396,7 +3446,7 @@ conect(int async) {
 #ifdef OS2ONLY
                       0,
 #endif /* OS2ONLY */
-                      65536, 0);
+                      65536, NULL);
 
     if (tt_timelimit && (now_t - start_t >= tt_timelimit))
         return(0);

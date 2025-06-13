@@ -1,8 +1,8 @@
 #define CKWART_C
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ckcdeb.h"
 #include "ckcsym.h"
 #include "ckcasc.h"

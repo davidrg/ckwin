@@ -91,6 +91,10 @@ HANDLE hmuxAlarmSig[4][2] = { { (HANDLE) NULL, (HANDLE) NULL },
                           { (HANDLE) NULL, (HANDLE) NULL } } ;
 HANDLE hmuxCtrlCAlarmSig[3] = { (HANDLE) NULL, (HANDLE) NULL, (HANDLE) NULL } ;
 
+/* Used to protect zoutdump() from the SIGINT handler closing the output file
+ * mid-write */
+HANDLE hmtxZoutDump = (HANDLE) 0;
+
 #ifdef CK_TAPI
 HANDLE hevTAPIConnect = (HANDLE) 0 ;
 HANDLE hevTAPIAnswer = (HANDLE) 0 ;
@@ -166,6 +170,10 @@ HMUX hmuxVscrnUpdate[VNUM] = {(HMUX) 0,(HMUX) 0,(HMUX) 0} ;
 HMUX hmuxCtrlC[4]    = { (HMUX) 0,(HMUX) 0,(HMUX) 0,(HMUX) 0 } ;
 HMUX hmuxAlarmSig[4] = { (HMUX) 0,(HMUX) 0,(HMUX) 0,(HMUX) 0 } ;
 HMUX hmuxCtrlCAlarmSig = (HMUX) 0 ;
+
+/* Used to protect zoutdump() from the SIGINT handler closing the output file
+ * mid-write */
+HMUX hmtxZoutDump = (HMUX) 0;
 
 HEV hevRichEditInit = (HEV) 0;
 HEV hevRichEditClose = (HEV) 0;
@@ -4078,3 +4086,60 @@ CloseTerminalModeSem( void )
 #endif /* NT */
 }
 
+APIRET
+CreateZoutDumpMutex( BOOL owned )
+{
+    if ( hmtxZoutDump )
+#ifdef NT
+        CloseHandle( hmtxZoutDump ) ;
+    hmtxZoutDump = CreateMutex( NULL, owned, NULL ) ;
+    if (hmtxZoutDump == NULL)
+        return GetLastError();
+#else /* not NT */
+            DosCloseMutexSem( hmtxZoutDump ) ;
+    DosCreateMutexSem( NULL, &hmtxZoutDump, 0, owned ) ;
+#endif /* NT */
+    return 0;
+}
+
+APIRET
+RequestZoutDumpMutex( ULONG timo )
+{
+#ifdef NT
+    DWORD rc = 0 ;
+
+    rc = WaitForSingleObjectEx( hmtxZoutDump, timo, TRUE ) ;
+    return rc == WAIT_OBJECT_0 ? 0 : rc ;
+#else /* not NT */
+    return DosRequestMutexSem( hmtxZoutDump, timo ) ;
+#endif /* NT */
+}
+
+APIRET
+ReleaseZoutDumpMutex( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+
+    rc = ReleaseMutex( hmtxZoutDump ) ;
+    return rc == TRUE ? 0 : GetLastError() ;
+#else /* not NT */
+    return DosReleaseMutexSem( hmtxZoutDump ) ;
+#endif /* NT */
+}
+
+APIRET
+CloseZoutDumpMutex( void )
+{
+#ifdef NT
+    BOOL rc = 0 ;
+    rc = CloseHandle( hmtxZoutDump ) ;
+    hmtxZoutDump = (HANDLE) NULL ;
+    return rc == TRUE ? 0 : GetLastError() ;
+#else /* not NT */
+    APIRET rc ;
+    rc = DosCloseMutexSem( hmtxZoutDump ) ;
+    hmtxZoutDump = 0 ;
+    return rc ;
+#endif /* NT */
+}

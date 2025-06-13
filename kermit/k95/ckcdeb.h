@@ -837,7 +837,7 @@
 #endif /* OS2ORVMS */
 #endif /* OS2 */
 
-/* C-Kermit for Windows can now be 64-bit so OS2ORWIN32 is a misnomer */
+/* Kermit 95 can now be 64-bit so OS2ORWIN32 is a misnomer */
 #ifdef OS2ORWIN32
 #ifndef OS2ORWINDOWS
 #define OS2ORWINDOWS
@@ -3177,7 +3177,7 @@ extern long ztmsec, ztusec;		/* Fraction of sec of current time */
 /*
   SSH section.  NOSSH disables any form of SSH support.
   If NOSSH is not defined (or implied by NONET, NOLOCAL, etc)
-  then SSHBUILTIN is defined for K95/CKW and SSHCMD is defined for UNIX.
+  then SSHBUILTIN is defined for K95 and SSHCMD is defined for UNIX.
   Then, if either SSHBUILTIN or SSHCMD is defined, ANYSSH is also defined.
 */
 #ifdef COMMENT
@@ -3736,9 +3736,6 @@ _PROTOTYP( int ttruncmd, (char *) );
 #ifdef OS2PM				/* Presentation Manager */
 #undef OS2PM
 #endif /* OS2PM */
-#ifdef CK_REXX				/* Rexx */
-#undef CK_REXX
-#endif /* CK_REXX */
 #endif /* NT */
 #endif /* OS2 */
 
@@ -4874,11 +4871,11 @@ extern int errno;
 #endif /* STRATUS */
 #endif /* _CRAY */
 
-#ifdef UNIX				/* Catch-all so we can have */
+#ifdef VMSORUNIX			/* Catch-all so we can have */
 #ifndef ESRCH				/* access to error mnemonics */
 #include <errno.h>			/* in all modules - 2007/08/25 */
-#endif	/* ESRCH */
-#endif	/* UNIX */
+#endif	/* ESRCH */			/* 2024-06-07 SMS.  Added VMSOR. */
+#endif	/* VMSORUNIX */
 
 #ifdef pdp11				/* Try to make some space on PDP-11 */
 #ifndef NODIAL
@@ -5366,7 +5363,7 @@ typedef unsigned int u_int;
 #ifdef CKT_NT31
 #ifdef CKT_NT35
 /* Any compiler capable of targeting NT 3.50 should support __int64
- * (Visual C++ 2.0, OpenWatcom) */
+ * (Visual C++ 2.0, Open Watcom) */
 #define CK_OFF_T __int64
 #else /* CKT_NT35 */
 /* Compilers capable of targeting only Windows NT 3.1
@@ -7203,7 +7200,11 @@ typedef unsigned long DWORD_PTR;
  */
 #ifdef OS2
 #ifdef CK_HAVE_INTPTR_T
+#ifdef NT
 #define CK_TTYFD_T intptr_t
+#else /* NT */
+#define CK_TTYFD_T int
+#endif /* NT */
 #else /* CK_HAVE_INTPTR_T */
 #define CK_TTYFD_T int
 #endif /* CK_HAVE_INTPTR_T */

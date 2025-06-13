@@ -59,8 +59,8 @@ U32 send_rz_cr = 0;
 
 #ifdef NT
 OVERLAPPED overlapped_read = {0L,0L,0L,0L,(HANDLE)-1};
-int nActuallyRead = 0;
+U32 nActuallyRead = 0;
 OVERLAPPED overlapped_write = {0L,0L,0L,0L,(HANDLE)-1};
-int nActuallyWritten = 0;
+U32 nActuallyWritten = 0;
 #endif /* NT */
 

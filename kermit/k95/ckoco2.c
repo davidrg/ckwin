@@ -85,13 +85,13 @@ int tt_url_hilite_attr = VT_CHAR_ATTR_BOLD;
 extern int updmode ;
 extern int priority ;
 extern int tt_modechg;
-extern unsigned char defaultattribute ;
-extern unsigned char colornormal;
-extern unsigned char reverseattribute ;
-extern unsigned char italicattribute;
-extern unsigned char graphicattribute ;
-extern unsigned char underlineattribute ;
-extern unsigned char borderattribute ;
+extern cell_video_attr_t defaultattribute ;
+extern cell_video_attr_t colornormal;
+extern cell_video_attr_t reverseattribute ;
+extern cell_video_attr_t italicattribute;
+extern cell_video_attr_t graphicattribute ;
+extern cell_video_attr_t underlineattribute ;
+extern cell_video_attr_t borderattribute ;
 
 extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
@@ -115,11 +115,11 @@ extern int inserver;
 #endif /* IKSD */
 
 extern int tt_cursor;                   /* Cursor type */
-extern int tt_status[];                 /* Status line displayed ? */
+extern int tt_status[VNUM];             /* Status line displayed ? */
 
-extern unsigned char     colorstatus     ;
-extern unsigned char     colorselect ;
-extern unsigned char     colorcmd;
+extern cell_video_attr_t     colorstatus;
+extern cell_video_attr_t     colorselect;
+extern cell_video_attr_t     colorcmd;
 
 extern enum markmodes markmodeflag[] ;
 
@@ -222,7 +222,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
             for ( i=0; i<len ; i++ )
             {
                 ((viocell *)CellStr)[i].c = wchars[i] ;
-                ((viocell *)CellStr)[i].a = attrs[i] ;
+                ((viocell *)CellStr)[i].video_attr = cell_video_attr_from_vio_attribute(attrs[i]);
             }
         }
     }
@@ -261,7 +261,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
             for ( i=0; i<len ; i++ )
             {
                 CellStr[i].c = tchars[i] ;
-                CellStr[i].a = attrs[i] ;
+                CellStr[i].video_attr = cell_video_attr_from_vio_attribute(attrs[i]);
             }
         }
     }
@@ -280,6 +280,7 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
 /* WrtCellStr                                                                */
 /*---------------------------------------------------------------------------*/
 #ifdef NT
+#ifndef KUI
 USHORT
 OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
@@ -333,7 +334,11 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
         for ( i=0; i<len ; i++ )
         {
             wchars[i] = CellStr[i].c ;
-            attrs[i] = CellStr[i].a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(CellStr[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacterW( VioHandle, wchars, len, coord, &written ) ;
         if ( !rc ) {
@@ -365,7 +370,11 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
         for ( i=0; i<len ; i++ )
         {
             tchars[i] = ((viocell *)CellStr)[i].c ;
-            attrs[i] = ((viocell *)CellStr)[i].a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(((viocell *)CellStr)[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacter( VioHandle, tchars, len, coord, &written ) ;
         if ( !rc ) {
@@ -401,12 +410,14 @@ OldWin32WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column 
     }
     return(0);
 }
+#endif /* KUI */
 #endif /* NT */
 
 USHORT
 WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
 {
 #ifdef NT
+#ifndef KUI
     static CHAR_INFO *lpBuffer = NULL;  // pointer to buffer with data to write
     static COORD dwBufferSize  = {0,0}; // column-row size of source buffer
     COORD dwBufferCoord = {0,0};        // upper-left cell to write from
@@ -449,7 +460,11 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         for ( i=0; i<Length ; i++ )
         {
             lpBuffer[i].Char.UnicodeChar = CellStr[i].c ;
-            lpBuffer[i].Attributes       = CellStr[i].a ;
+#ifdef CK_COLORS_16
+            lpBuffer[i].Attributes       = cell_video_attr_to_win32_console(CellStr[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputW( VioHandle, lpBuffer, dwBufferSize, dwBufferCoord,
                              &WriteRegion ) ;
@@ -467,7 +482,11 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         for ( i=0; i<Length ; i++ )
         {
             lpBuffer[i].Char.AsciiChar = CellStr[i].c ;
-            lpBuffer[i].Attributes       = CellStr[i].a ;
+#ifdef CK_COLORS_16
+            lpBuffer[i].Attributes     = cell_video_attr_to_win32_console(CellStr[i].video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutput( VioHandle, lpBuffer, dwBufferSize, dwBufferCoord,
                             &WriteRegion ) ;
@@ -488,6 +507,7 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
         rc = 2 ;
     }
    return(0);
+#endif /* KUI */
 #else /* NT */
    return VioWrtCellStr( (PCH) CellStr, Length*sizeof(viocell), Row, Column, VioHandle ) ;
 #endif /* NT */
@@ -556,7 +576,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
 
         while ( count < Length ) {
             if ( vpo->c == vpn->c &&
-                 vpo->a == vpn->a )
+                 cell_video_attr_equal(vpo->video_attr, vpn->video_attr) )
             {
                 count++;
                 vpo++;
@@ -574,7 +594,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
             /* Find the length of the change */
             while ( count < Length &&
                 (vpn->c != vpo->c ||
-                    vpn->a != vpo->a) ) {
+                    !cell_video_attr_equal(vpn->video_attr, vpo->video_attr)) ) {
                 count++;
                 ccount++;
                 vpo++;
@@ -656,7 +676,11 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
         for ( i=0; i<Times ; i++ )
         {
             wchars[i] = Cell.c ;
-            attrs[i] = Cell.a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(Cell.video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacterW( VioHandle, wchars, Times, coord, &written ) ;
         if ( !rc ) {
@@ -689,7 +713,11 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
         for ( i=0; i<Times ; i++ )
         {
             tchars[i] = Cell.c ;
-            attrs[i] = Cell.a ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(Cell.video_attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacter( VioHandle, tchars, Times, coord, &written ) ;
         if ( !rc ) {
@@ -730,7 +758,7 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
    return VioWrtNCell( (PCH) &Cell, Times, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-#endif /* ! KUI */
+#endif /* KUI */
 
 #ifndef ONETERMUPD
 /*---------------------------------------------------------------------------*/
@@ -738,9 +766,10 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
 /*---------------------------------------------------------------------------*/
 USHORT
 WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
-                      PBYTE Attr )
+                      cell_video_attr_t* Attr )
 {
 #ifdef NT
+#ifndef KUI
     static LPWSTR wchars = NULL;
     static LPTSTR tchars = NULL ;
     static LPWORD attrs = NULL ;
@@ -790,7 +819,11 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         for ( i=0; i<Length ; i++ )
         {
             wchars[i] = CharStr[i] ;
-            attrs[i] = *Attr ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(*Attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacterW( VioHandle, wchars, Length, coord, &written ) ;
         if ( !rc ) {
@@ -823,7 +856,11 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         for ( i=0; i<Length ; i++ )
         {
             tchars[i] = CharStr[i] ;
-            attrs[i] = *Attr ;
+#ifdef CK_COLORS_16
+            attrs[i] = cell_video_attr_to_win32_console(*Attr);
+#else
+#error "Win32 Console builds only support 16-colours!"
+#endif /* CK_COLORS_16 */
         }
         rc = WriteConsoleOutputCharacter( VioHandle, tchars, Length, coord, &written ) ;
         if ( !rc ) {
@@ -859,7 +896,7 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
         rc = 2 ;
     }
     return rc ;
-
+#endif /* KUI */
 #else /* NT */
    return VioWrtCharStrAtt( CharStr, Length, Row, Column, Attr, VioHandle ) ;
 #endif /* NT */
@@ -1985,7 +2022,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
 {
     int i ;
     videoline * line ;
-    unsigned char cellcolor = geterasecolor(vmode);
+    cell_video_attr_t cellcolor = geterasecolor(vmode);
 
     if ( Row > VscrnGetHeight(vmode)-(tt_status[vmode]?2:1) )
         return ERROR_VIO_ROW ;
@@ -2002,7 +2039,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         line->width = VscrnGetWidth(vmode)  ;
         for ( i=0 ; i<MAXTERMCOL  ; i++ ) {
             line->cells[i].c = ' ' ;
-            line->cells[i].a = cellcolor ;
+            line->cells[i].video_attr = cellcolor ;
             line->vt_char_attrs[i] = VT_CHAR_ATTR_NORMAL ;
         }
     }
@@ -2029,7 +2066,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
 /*---------------------------------------------------------------------------*/
 USHORT
 VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
-                    USHORT Row, USHORT Column, PBYTE Attr )
+                    USHORT Row, USHORT Column, cell_video_attr_t* Attr )
 {
     USHORT rc = 0;
     int i ;
@@ -2056,7 +2093,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
             }
             else
                 cell.c = CharStr[i];
-            cell.a = *Attr;
+            cell.video_attr = *Attr;
 
             if (Column > VscrnGetWidth(vmode==VSTATUS?VTERM:vmode)) {
                 Column = 1;
@@ -2108,7 +2145,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
                 }
                 else
                     cell.c = CharStr[i];
-                cell.a = *Attr;
+                cell.video_attr = *Attr;
 
                 VscrnWrtCell(vmode, cell, (vmode == VTERM ? attrib : cmdattrib),
                               Row - 1, Column - 1);
@@ -2137,7 +2174,7 @@ VscrnWrtCharStrAtt( BYTE vmode, PCH CharStr, USHORT Length,
 /*---------------------------------------------------------------------------*/
 USHORT
 VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
-                    USHORT Row, USHORT Column, PBYTE Attr )
+                    USHORT Row, USHORT Column, cell_video_attr_t* Attr )
 {
     USHORT rc = 0;
     int i ;
@@ -2158,7 +2195,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
             }
             else
                 cell.c = UCS2Str[i];
-            cell.a = *Attr;
+            cell.video_attr = *Attr;
 
             if (Column > VscrnGetWidth(vmode==VSTATUS?VTERM:vmode)) {
                 Column = 1;
@@ -2218,7 +2255,7 @@ VscrnWrtUCS2StrAtt( BYTE vmode, PUSHORT UCS2Str, USHORT Length,
                 }
                 else
                     cell.c = UCS2Str[i];
-                cell.a = *Attr;
+                cell.video_attr = *Attr;
 
                 VscrnWrtCell(vmode, cell, (vmode == VTERM ? attrib : cmdattrib),
                               Row - 1, Column - 1);
@@ -2874,7 +2911,8 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    debug(F101,"SetBufferSize","",newsize);
+    debug(F111,"SetBufferSize","vmode",vmode);
+    debug(F111,"SetBufferSize","newsize",newsize);
     debug(F101,"SetBufferSize linecount","",vscrn[vmode].linecount);
 
     /* Wait for exclusive access to the screen */
@@ -2923,6 +2961,14 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
         vscrn[vmode].popup = NULL ;
         for ( i=0 ; i<10 ; i++)
            vscrn[vmode].bookmark[i] = -1 ;
+
+        debug( F101,"VscrnSetBufferSize sizeof(viocell)","",sizeof(viocell));
+        debug( F101,"VscrnSetBufferSize cellmem size","",
+               (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(viocell) ) ;
+        debug( F101,"VscrnSetBufferSize attrmem size","",
+                (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(short)) ;
+        debug( F101,"VscrnSetBufferSize hyperlinkmem size","",
+                (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(short)) ;
 
         cellmem[vmode] = malloc( (vscrn[vmode].linecount + 1) * MAXTERMCOL * sizeof(viocell) ) ;
         if ( !cellmem[vmode] )
@@ -3053,7 +3099,7 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
     videoline   linetodelete ;
     int i,x;
     long  obeg, oend, otop, nbeg, nend, ntop ;
-    unsigned char cellcolor = geterasecolor(vmode) ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
     if ( fillchar == NUL )
         fillchar = SP ;
@@ -3062,7 +3108,7 @@ VscrnScroll(BYTE vmode, int updown, int topmargin, int bottommargin,
         vmode = VSTATUS ;
 
     blankcell.c = fillchar ;
-    blankcell.a = cellcolor ;
+    blankcell.video_attr = cellcolor ;
 
     if ( updmode == TTU_SMOOTH )
         msleep(1) ;
@@ -3895,17 +3941,17 @@ TermScrnUpd( void * threadinfo)
         fatal("TermScrnUpd: Unable to allocate memory for Video Display Workspace");
     }
     defaultcell.c = ' ' ;
-    defaultcell.a = vmode == VCMD ? colorcmd :
+    defaultcell.video_attr = vmode == VCMD ? colorcmd :
       (colorreset ? colornormal : defaultattribute) ;
     defaultflipcell = defaultcell ;
     /* This commented out as it's a meaningless expression - byteswapcolors
      * doesn't alter its parameter; it returns a value that you've got to store
-     * somewhere. There is no source control history for CKW so I've no idea why
+     * somewhere. There is no source control history for K95 so I've no idea why
      * this line is here. Its it a bug? Is it really supposed to be
-     * defaultflipcell.a = byteswapcolors( defaultflipcell.a )? Or is it just
+     * defaultflipcell.video_attr = byteswapcolors( defaultflipcell.video_attr )? Or is it just
      * some old left-over code that should have been deleted as part of some
      * past refactoring? I have no idea.  -- DG
-    byteswapcolors( defaultflipcell.a ) ;
+    byteswapcolors( defaultflipcell.video_attr ) ;
      */
     debug(F101,"VscrnGetWidth() ","",VscrnGetWidth(vmode) ) ;
     debug(F101,"VscrnGetDisplayHeight()","",VscrnGetDisplayHeight(vmode)) ;
@@ -4068,23 +4114,23 @@ TermScrnUpd( void * threadinfo)
                                 if ( blinkon )
                                 {
                                     pDcell->c = pScell->c ;
-                                    pDcell->a = (pDcell+1)->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr = (pDcell+1)->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                                 else
                                 {
                                     pDcell->c = ' ' ;
-                                    pDcell->a = (pDcell+1)->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr = (pDcell+1)->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                             }
                             else
                             {
                                 pDcell->c = pScell->c ;
-                                pDcell->a = (pDcell+1)->a =
-                                    ComputeColorFromAttr( avm, pScell->a,
+                                pDcell->video_attr = (pDcell+1)->video_attr =
+                                    ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
                             }
                             (pDcell+1)->c = ' ' ;
@@ -4110,23 +4156,23 @@ TermScrnUpd( void * threadinfo)
                                 if ( blinkon )
                                 {
                                     pDcell->c = pScell->c ;
-                                    pDcell->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                                 else
                                 {
                                     pDcell->c = ' ' ;
-                                    pDcell->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                             }
                             else
                             {
                                 pDcell->c = pScell->c ;
-                                pDcell->a =
-                                    ComputeColorFromAttr( avm, pScell->a,
+                                pDcell->video_attr =
+                                    ComputeColorFromAttr( avm, pScell->video_attr,
                                                          vt_char_attrs );
                             }
                         }
@@ -4163,7 +4209,7 @@ TermScrnUpd( void * threadinfo)
                         }
                         else
                             thecells[c+xo+i].c = vscrn[avm].popup->c[y-yo][i];
-                        thecells[c+xo+i].a = vscrn[avm].popup->a;
+                        thecells[c+xo+i].video_attr = vscrn[avm].popup->video_attr;
                     }
                 }
                 c += xs;        /* advance the pointer in the buffer */
@@ -4202,8 +4248,8 @@ TermScrnUpd( void * threadinfo)
                                     else
                                         pDcell->c = pScell->c ;
                                     (pDcell+1)->c = ' ' ;
-                                    pDcell->a =
-                                        (pDcell+1)->a = colorselect ;
+                                    pDcell->video_attr =
+                                        (pDcell+1)->video_attr = colorselect ;
                                 }
                                 else if ( line->markshowend != -1 &&
                                          x+xho >= line->markbeg*2 &&
@@ -4219,8 +4265,8 @@ TermScrnUpd( void * threadinfo)
                                     else
                                         pDcell->c = pScell->c ;
                                     (pDcell+1)->c = ' ' ;
-                                    pDcell->a =
-                                        (pDcell+1)->a = colorselect ;
+                                    pDcell->video_attr =
+                                        (pDcell+1)->video_attr = colorselect ;
                                 }
                                 else
                                 {
@@ -4230,22 +4276,22 @@ TermScrnUpd( void * threadinfo)
                                         if ( blinkon )
                                         {
                                             pDcell->c = pScell->c ;
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                         else
                                         {
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                     }
                                     else
                                     {
                                         pDcell->c = pScell->c ;
-                                        pDcell->a = (pDcell+1)->a =
-                                            ComputeColorFromAttr( avm, pScell->a,
+                                        pDcell->video_attr = (pDcell+1)->video_attr =
+                                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                                  vt_char_attrs );
                                     }
                                     (pDcell+1)->c = ' ' ;
@@ -4277,7 +4323,7 @@ TermScrnUpd( void * threadinfo)
                                     }
                                     else
                                         pDcell->c = pScell->c ;
-                                    pDcell->a = colorselect ;
+                                    pDcell->video_attr = colorselect ;
                                 }
                                 else
                                 {
@@ -4287,23 +4333,23 @@ TermScrnUpd( void * threadinfo)
                                         if ( blinkon )
                                         {
                                             pDcell->c = pScell->c ;
-                                            pDcell->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs);
                                         }
                                         else
                                         {
                                             pDcell->c = ' ' ;
-                                            pDcell->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                     }
                                     else
                                     {
                                         pDcell->c = pScell->c ;
-                                        pDcell->a =
-                                            ComputeColorFromAttr( avm, pScell->a,
+                                        pDcell->video_attr =
+                                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                                  vt_char_attrs );
                                     }
                                 }
@@ -4332,15 +4378,15 @@ TermScrnUpd( void * threadinfo)
                                         if ( blinkon )
                                         {
                                             pDcell->c = pScell->c ;
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs);
                                         }
                                         else
                                         {
                                             pDcell->c = ' ' ;
-                                            pDcell->a = (pDcell+1)->a =
-                                                ComputeColorFromAttr( avm, pScell->a,
+                                            pDcell->video_attr = (pDcell+1)->video_attr =
+                                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                                      vt_char_attrs );
                                         }
                                     }
@@ -4348,8 +4394,8 @@ TermScrnUpd( void * threadinfo)
                                     {
                                         pDcell->c = pScell->c ;
                                         (pDcell+1)->c = ' ' ;
-                                        pDcell->a = (pDcell+1)->a =
-                                            ComputeColorFromAttr( avm, pScell->a,
+                                        pDcell->video_attr = (pDcell+1)->video_attr =
+                                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                                  vt_char_attrs );                                    }
                                 }
                             }
@@ -4377,8 +4423,8 @@ TermScrnUpd( void * threadinfo)
                                     }
                                     else
                                         pDcell->c = pScell->c ;
-                                    pDcell->a =
-                                        ComputeColorFromAttr( avm, pScell->a,
+                                    pDcell->video_attr =
+                                        ComputeColorFromAttr( avm, pScell->video_attr,
                                                              vt_char_attrs );
                                 }
                             }
@@ -4411,7 +4457,7 @@ TermScrnUpd( void * threadinfo)
                         }
                         else
                             thecells[c+xo+i].c = vscrn[avm].popup->c[y-yo][i];
-                        thecells[c+xo+i].a = vscrn[avm].popup->a;
+                        thecells[c+xo+i].video_attr = vscrn[avm].popup->video_attr;
                     }
                 }
                 c += xs;
@@ -4439,23 +4485,23 @@ TermScrnUpd( void * threadinfo)
                         if ( blinkon )
                         {
                             pDcell->c = pScell->c ;
-                            pDcell->a =
-                                ComputeColorFromAttr( avm, pScell->a,
+                            pDcell->video_attr =
+                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                      vt_char_attrs );
                         }
                         else
                         {
                             pDcell->c = ' ' ;
-                            pDcell->a =
-                                ComputeColorFromAttr( avm, pScell->a,
+                            pDcell->video_attr =
+                                ComputeColorFromAttr( avm, pScell->video_attr,
                                                      vt_char_attrs );
                         }
                     }
                     else
                     {
                         pDcell->c = pScell->c ;
-                        pDcell->a =
-                            ComputeColorFromAttr( avm, pScell->a,
+                        pDcell->video_attr =
+                            ComputeColorFromAttr( avm, pScell->video_attr,
                                                  vt_char_attrs );
                     }
                 }
@@ -4474,7 +4520,7 @@ TermScrnUpd( void * threadinfo)
                     }
                     else
                         thecells[c].c = status[x] ;
-                    thecells[c].a = colorstatus ;
+                    thecells[c].video_attr = colorstatus ;
                     c++ ;
                 }
             }
@@ -4566,7 +4612,7 @@ TermScrnUpd( void * threadinfo)
     ckThreadEnd(threadinfo) ;
 #endif /* ONETERMUPD */
 }
-#endif /* ! KUI */
+#endif /* KUI */
 
 #ifdef PCFONTS
 APIRET
@@ -4817,14 +4863,18 @@ VscrnInit( BYTE vmode )
    extern int cmd_rows, cmd_cols, marginbot ;
    extern int updmode, tt_updmode, SysInited ;
    extern ascreen commandscreen, vt100screen ;
-   extern unsigned char                 /* Video attribute bytes */
+   extern cell_video_attr_t           /* Video attribute bytes */
       attribute,                      /* Current video attribute byte */
       underlineattribute,
+      blinkattribute,
+      boldattribute,
+      dimattribute,
       savedattribute,                 /* Saved video attribute byte */
       defaultattribute;               /* Default video attribute byte */
    extern int scrninitialized[] ;
-   extern unsigned char colornormal, colorunderline, colorborder,
-    colorreverse, colorgraphic, colorcmd, coloritalic ;
+   extern cell_video_attr_t colornormal, colorunderline, colorborder,
+    colorreverse, colorgraphic, colorcmd, coloritalic, colorblink, colorbold,
+    colordim ;
    BYTE clrscr = 0 ;
 #ifndef KUI
    CK_VIDEOMODEINFO m;
@@ -4875,6 +4925,9 @@ VscrnInit( BYTE vmode )
           italicattribute = coloritalic;
           graphicattribute = colorgraphic ;
           borderattribute = colorborder ;
+          blinkattribute = colorblink ;
+          boldattribute = colorbold ;
+          dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
       }
       if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0) ||
@@ -4939,7 +4992,7 @@ VscrnInit( BYTE vmode )
                         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
                         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
                             line->cells[x].c = ' ' ;
-                            line->cells[x].a = vmode == VTERM ? attribute : colorcmd;
+                            line->cells[x].video_attr = vmode == VTERM ? attribute : colorcmd;
                             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
                         }
                     }
@@ -4963,7 +5016,7 @@ VscrnIsClear( BYTE vmode )
 {
     int             x,y ;
     videoline *     line ;
-    unsigned char cellcolor = geterasecolor(vmode);
+    cell_video_attr_t cellcolor = geterasecolor(vmode);
 
     for ( y = 0 ; y < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ ) {
         line = VscrnGetLineFromTop(vmode,y) ;
@@ -4975,9 +5028,9 @@ VscrnIsClear( BYTE vmode )
                 debug(F100,"VscrnIsClear c!=' '","",0);
                 return 0;
             }
-            if ( line->cells[x].a != cellcolor )
+            if ( !cell_video_attr_equal(line->cells[x].video_attr, cellcolor) )
             {
-                debug(F100,"VscrnIsClear a != cellcolor","",0);
+                debug(F100,"VscrnIsClear video_attr != cellcolor","",0);
                 return 0;
             }
         }
@@ -5003,7 +5056,7 @@ static char myprtfstr2[2*CMDBL];
 int
 Vscrnprintf (const char *format, ...) {
 #ifndef NOLOCAL
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
@@ -5082,7 +5135,7 @@ Vscrnprintf (const char *format, ...) {
 int
 Vscrnfprintf (FILE * file, const char *format, ...) {
 #ifndef NOLOCAL
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */
@@ -5172,7 +5225,7 @@ Vscrnperror( const char *str )
 int
 Vscrnprintw (const char *format, ...) {
 #ifndef NOLOCAL
-    extern unsigned char colorcmd ;
+    extern cell_video_attr_t colorcmd ;
     BYTE vmode = VCMD ;
     extern int wherex[], wherey[];
 #endif /* NOLOCAL */

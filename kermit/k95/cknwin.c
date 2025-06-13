@@ -321,9 +321,63 @@ ckMainThread( void * param )
 HANDLE
 MainThreadInit( HINSTANCE hInst )
 {
-    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, hInst ) ;
+    MainThread = (HANDLE) _beginthread( ckMainThread, 65535, (void *)hInst ) ;
     return(MainThread);
 }
+
+#ifdef CKMODERNSHELL
+#ifdef KUI
+typedef HRESULT (WINAPI *SetCurrentProcessExplicitAppUserModelID_t)(const wchar_t*);
+
+static void SetAppUserModelId() {
+    HINSTANCE hInstance;
+    HRESULT rc;
+    SetCurrentProcessExplicitAppUserModelID_t setId;
+    BOOL haveCM = FALSE;
+    char cmpath[512];
+    WIN32_FIND_DATA findFileData;
+    HANDLE handle;
+    char* p;
+
+    /* We only want to set an explicit App ID for the purpose of making
+     * Jump Lists work, and that requires the K95 Connection Manager to be
+     * present. So if we can't find the Connection Manager, don't bother.
+     */
+
+    GetModuleFileName(NULL, cmpath, 512);
+    p = cmpath + strlen(cmpath);
+    while ( *p != '\\' && p > cmpath ) p--;
+    if ( p != cmpath )
+        p++;
+    strcpy(p,"cm.exe");
+
+    handle = FindFirstFile(cmpath, &findFileData);
+
+    haveCM = handle != INVALID_HANDLE_VALUE;
+
+    if (haveCM) {
+        hInstance = LoadLibrary("shell32");
+        if ( !hInstance ) {
+            rc = GetLastError();
+            debug(F111, "SetAppUserModelId - LoadLibrary failed","shell32",rc);
+            return;
+        }
+
+        setId = (SetCurrentProcessExplicitAppUserModelID_t)GetProcAddress(
+            hInstance,"SetCurrentProcessExplicitAppUserModelID");
+
+        if (setId == NULL) {
+            rc = GetLastError();
+            debug(F111, "SetAppUserModelId - failed to get address",
+                "SetCurrentProcessExplicitAppUserModelID",rc);
+            return;
+        }
+
+        setId(L"KermitProject.Kermit95");
+    }
+}
+#endif /* KUI */
+#endif /* MODERN_SHELL */
 
 int WINAPI
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
@@ -331,8 +385,23 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 #ifdef KUI
     extern int deblog ;
 
+#ifdef CKMODERNSHELL
+    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+    if (!SUCCEEDED(hr)) {
+        return 0;
+    }
+
+    SetAppUserModelId();
+#endif /* CKMODERNSHELL */
+
     kui_init.nCmdShow = nCmdShow;
     ckMainThread( hInstance ) ;
+
+#ifdef CKMODERNSHELL
+    CoUninitialize();
+#endif /* CKMODERNSHELL */
+
     return 0;
 #else /* KUI */
     MSG msg;
@@ -685,7 +754,7 @@ StartDialer(void)
         }
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
         SetForegroundWindow(hwndDialer);
-    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit for Windows Dialer")) {
+    } else if (_hwndDialer = FindWindow(NULL, "Kermit 95 Dialer")) {
         dialerIsCKCM = FALSE;
         StartedFromDialer = 1;
         hwndDialer = _hwndDialer;
@@ -698,7 +767,22 @@ StartDialer(void)
         ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
         SetForegroundWindow(hwndDialer);
         StartedFromDialer = 0;
-    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit Connection Manager")) {
+    } else if (_hwndDialer = FindWindow(NULL, "C-Kermit for Windows Dialer")) {
+        /* Temporary: The dialer was called the "C-Kermit for Windows Dialer"
+         *            in betas 4, 5 and 6. So we'll check for that too. */
+        dialerIsCKCM = FALSE;
+        StartedFromDialer = 1;
+        hwndDialer = _hwndDialer;
+        KermitDialerID = 0;
+        DialerSend(OPT_KERMIT_HWND, (LPARAM)hwndGUI);
+        if ( reuse ) {
+            DialerSend(OPT_KERMIT_HWND2, (LPARAM)hwndGUI);
+            DialerSend(OPT_KERMIT_PID,  GetCurrentProcessId());
+        }
+        ShowWindowAsync(hwndDialer,SW_SHOWNORMAL);
+        SetForegroundWindow(hwndDialer);
+        StartedFromDialer = 0;
+    }else if (_hwndDialer = FindWindow(NULL, "C-Kermit Connection Manager")) {
         /* The new Win32 replacement for the dialer */
         dialerIsCKCM = TRUE;
         StartedFromDialer = 1;
@@ -1568,6 +1652,10 @@ gui_win_run_mode(int x)
 {
     KuiSetTerminalRunMode(x);
     return(1);
+}
+
+int gui_get_win_run_mode() {
+    return KuiGetTerminalRunMode();
 }
 
 int

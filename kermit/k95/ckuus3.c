@@ -61,10 +61,11 @@ extern UCHAR NetBiosAdapter;
 #include "ckocon.h"
 #include "ckokey.h"
 #ifndef NOTERM
-extern unsigned char colorcmd;  /* Command-screen colors */
+extern cell_video_attr_t colorcmd;  /* Command-screen colors */
 extern struct keytab ttyclrtab[];
 extern int nclrs;
 extern int tt_cols[], tt_rows[], tt_szchng[], tt_status[];
+extern int colorpalette;
 #endif /* NOTERM */
 _PROTOTYP(int setprty, (void));
 extern char startupdir[], exedir[];
@@ -1419,6 +1420,9 @@ int nls = (sizeof(lstab) / sizeof(struct keytab));
 extern int tn_nlm, tn_b_nlm, tn_b_meu, tn_b_ume, tn_b_xfer, tn_sb_bug;
 extern int tn_no_encrypt_xfer, tn_auth_krb5_des_bug;
 extern int tn_wait_flg, tn_duplex, tn_delay_sb, tn_sfu;
+#ifdef OS2
+extern int tn_colorterm;
+#endif /* OS2 */
 extern int sl_tn_saved;
 extern int tn_infinite;
 extern int tn_rem_echo;
@@ -1823,6 +1827,9 @@ struct keytab tntab[] = {
     "no-encrypt-during-xfer", CK_TN_NE, CM_INV,
     "prompt-for-userid",CK_TN_PUID,0,
     "remote-echo",     CK_TN_RE,   0,
+#ifdef OS2
+    "send-colorterm",  CK_TN_COLORTERM, 0,
+#endif /* OS2 */
 #ifdef CK_SSL
     "start-tls",       CK_TN_TLS,  CM_INV,
 #endif /* CK_SSL */
@@ -2649,6 +2656,7 @@ _PROTOTYP(int gui_mtxt_dialog,(char *,int,struct txtbox []));
 _PROTOTYP(int gui_position,(int, int));
 _PROTOTYP(int gui_resize_mode,(int));
 _PROTOTYP(int gui_win_run_mode,(int));
+_PROTOTYP(int gui_get_win_run_mode,());
 _PROTOTYP(int gui_file_dialog,(char *,char *, int, char *, char *, int));
 extern int gui_dialog;
 #endif /* KUI */
@@ -4140,7 +4148,7 @@ dosexp(s) char *s;
             }
             goto xdosexp;
         } else if (x == SX_IFC) {               /* Conditional expression */
-            int true = 0;
+            int bool_result = 0;
             if (n > 4) {
                 printf("?Too many operands: IF - \"%s\"\n",s);
                 sexprc++;
@@ -4157,12 +4165,12 @@ dosexp(s) char *s;
                 } else {
                     fpj = atof(s2);
                 }
-                true = ((fpj != 0.0) ? 1 : 0);
+                bool_result = ((fpj != 0.0) ? 1 : 0);
             }
-            if (!true && n < 4) {
+            if (!bool_result && n < 4) {
                 s2 = NULL;
             } else {
-                s2 = dosexp(true ? p[3] : p[4]);
+                s2 = dosexp(bool_result ? p[3] : p[4]);
                 if (sexprc) goto xdosexp;
                 j = s2 ? ckatofs(s2) : 0;
                 if (xxfloat(s2,0) == 2) {
@@ -7984,13 +7992,17 @@ setprinter(xx) int xx;
 #define SSH_CFG 22                      /* Use OpenSSH Config */
 #define SSH_HBT 23                      /* Heartbeat Interval */
 #define SSH_PXC 24                      /* Proxy Command */
+#define SSH_DIR 25                      /* SSH Directory */
+#define SSH_AGL 26                      /* SSH Agent Location */
 #endif /* SSHBUILTIN */
 
 static struct keytab sshtab[] = {       /* SET SSH command table */
 #ifdef SSHBUILTIN
     { "agent-forwarding",        SSH_AFW,  0 },     /* SSH_FEAT_AGENT_FWD */
+    { "agent-location",          SSH_AGL,  0 },     /* SSH_FEAT_AGENT_LOC */
     { "check-host-ip",           SSH_CHI,  0 },
     { "compression",             SSH_CMP,  0 },
+    { "directory",               SSH_DIR,  0 },
     { "dynamic-forwarding",      SSH_DYF,  0 },     /* SSH_FEAT_PORT_FWD */
     { "gateway-ports",           SSH_GWP,  0 },     /* SSH_FEAT_PORT_FWD */
     { "gssapi",                  SSH_GSS,  0 },     /* SSH_FEAT_ADV_GSSAPI */
@@ -8095,11 +8107,12 @@ static struct keytab gssapitab[] = {
 static int ngssapitab = (sizeof(gssapitab) / sizeof(struct keytab)) - 1;
 
 
-char * ssh_idf[32] = {                  /* Identity file list */
+char * ssh_idf[33] = {                  /* Identity file list - null terminated */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+  NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+  NULL
 };
 char * ssh_tmp[32] = {                  /* Temp identity file list */
   NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
@@ -8146,6 +8159,7 @@ shossh() {
     }
     printf(" ssh check-host-ip:               %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CHKIP)));
     printf(" ssh compression:                 %s\n",showoff(ssh_get_iparam(SSH_IPARAM_CMP)));
+    printf(" ssh directory:                   %s\n",showstring((char*)ssh_get_sparam(SSH_SPARAM_DIR)));
     if (ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
         printf(" ssh dynamic-forwarding:          %s\n",showoff(ssh_get_iparam(SSH_IPARAM_DYF)));
     }
@@ -8155,7 +8169,7 @@ shossh() {
          * want to output them separately. The array is terminated with an
          * entry that has its type set to SSH_PORT_FORWARD_NULL.
          */
-        ssh_port_forward_t* fwd = ssh_fwd_get_ports();
+        const ssh_port_forward_t* fwd = ssh_fwd_get_ports();
 
         if (fwd != NULL) {
             int i = 0;
@@ -8319,7 +8333,6 @@ dosetssh() {
         return (-9);
     }
 #endif /* SSH_DLL */
-
     /* Hide any "set ssh" commands not supported by the currently loaded SSH
      * backend */
     for (z = 0; z < nsshtab; z++) {
@@ -8331,12 +8344,12 @@ dosetssh() {
             sshtab[z].flgs = CM_INV;
         }
         else if ((sshtab[z].kwval == SSH_XFW && !ssh_feature_supported(SSH_FEAT_X11_FWD))
-            || (sshtab[z].flgs = CM_INV  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
+            || (sshtab[z].flgs == SSH_XAL  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
             /*
              * "set ssh x11-forwarding" and "set ssh xauth-location" commands.
              */
+            sshtab[z].flgs = CM_INV;
         }
-        // sshtab[z].kwval == SSH_XAL
         else if ((sshtab[z].kwval == SSH_DYF || sshtab[z].kwval == SSH_GWP)
             && !ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
             /* Dynamic Port Forwarding
@@ -8383,7 +8396,23 @@ dosetssh() {
         else if (sshtab[z].kwval == SSH_AFW
             && !ssh_feature_supported(SSH_FEAT_AGENT_FWD)) {
             /*
-             * "set ssh agent-forwarding" commands.
+             * "set ssh agent-forwarding" command.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_AGL
+            && !ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            /*
+             * "set ssh agent-location" command.
+             */
+            sshtab[z].flgs = CM_INV;
+        }
+        else if (sshtab[z].kwval == SSH_GSS
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)
+            && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
+            /*
+             * "set ssh gssapi" commands - if none of them are enabled,
+             * hide "set ssh gssapi" too.
              */
             sshtab[z].flgs = CM_INV;
         }
@@ -8403,19 +8432,19 @@ dosetssh() {
 
     /* Hide any "set ssh gssapi" commands not supported by the currently loaded SSH
      * backend */
-    for (z = 0; z < nsshv2tab; z++) {
-        if (sshv2tab[z].kwval == SSH_GSSAPI_DELEGATE
+    for (z = 0; z < ngssapitab; z++) {
+        if (gssapitab[z].kwval == SSH_GSSAPI_DELEGATE
             && !ssh_feature_supported(SSH_FEAT_GSSAPI_DELEGAT)) {
             /*
              * "set ssh gssapi delegate-credentials"
              */
-            sshv2tab[z].flgs = CM_INV;
-        } else if (sshv2tab[z].kwval == SSH_GSSAPI_KEYEX
+            gssapitab[z].flgs = CM_INV;
+        } else if (gssapitab[z].kwval == SSH_GSSAPI_KEYEX
             && !ssh_feature_supported(SSH_FEAT_GSSAPI_KEYEX)) {
             /* The always hidden command:
              * "set ssh gssapi key-exchange"
              */
-            sshv2tab[z].flgs = CM_INV;
+            gssapitab[z].flgs = CM_INV;
         }
     }
 #endif /* SSHBUILTIN */
@@ -8441,12 +8470,39 @@ dosetssh() {
         }
         return(success = set_ssh_iparam_on(SSH_IPARAM_AFW));
 
+      case SSH_AGL:
+        if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC)) {
+            printf("\r\nSetting of agent location is not supported by the "
+                   "current SSH backend\r\n");
+            return(-9);
+        }
+        if ((x = cmifi("Socket Name","",&s,&z,xxstring)) < 0) {
+            return(x);
+        }
+        ssh_set_sparam(SSH_SPARAM_AGENTLOC, s);
+        return(1);
+
       case SSH_CHI:                     /* Check Host IP */
         return(success = set_ssh_iparam_on(SSH_IPARAM_CHKIP));
         break;
 
       case SSH_CMP:                     /* Compression */
         return(success = set_ssh_iparam_on(SSH_IPARAM_CMP));
+
+      case SSH_DIR:
+        if ((x = cmdir("SSH Directory","",&s,xxstring)) < 0) {
+            if (x != -3)
+              return(x);
+        } else {
+            ckstrncpy(line,s,LINBUFSIZ);
+            if (zfnqfp(line,TMPBUFSIZ,tmpbuf))
+              ckstrncpy(line,tmpbuf,LINBUFSIZ);
+        }
+        s = (x == -3) ? NULL : line;
+        if ((x = cmcfm()) < 0)
+          return(x);
+        ssh_set_sparam(SSH_SPARAM_DIR, s);
+        return(1);
 
       case SSH_DYF:                     /* Dynamic Forwarding */
         if (!ssh_feature_supported(SSH_FEAT_DYN_PORT_FWD)) {
@@ -8594,6 +8650,7 @@ dosetssh() {
             }
             return(1);
         }
+        break;
 
       case SSH_V2:                      /* SSH V2 */
         if ((y = cmkey(sshv2tab,nsshv2tab,"","", xxstring)) < 0)
@@ -8987,6 +9044,12 @@ dosetssh() {
             }
         }
         ssh_idf_n = n;
+
+        if (ssh_set_identity_files((const char **)ssh_idf) < 0) {
+            printf("\r\nCommand not supported by the current SSH backend\r\n");
+            return(0);
+        }
+
         return(success = 1);
       }
       case SSH_XFW:                     /* X11-forwarding */
@@ -9024,7 +9087,7 @@ dosetssh() {
             printf("\r\nSSH proxy command feature not supported by the current SSH backend\r\n");
             return(-9);
         }
-        if ((y = cmtxt("title text","",&s,xxstring)) < 0)
+        if ((y = cmtxt("Command","",&s,xxstring)) < 0)
           return(y);
         ssh_set_sparam(SSH_SPARAM_PXC, s);
         return(success = 1);
@@ -9062,7 +9125,12 @@ dosetsftp() {
 
 #ifdef KUI
 #include "ikui.h"
-extern ULONG RGBTable[16];
+extern ULONG RGBTable256[], RGBTable88[], SavedRGBTable256[], SavedRGBTable88[];
+extern ULONG RGBTable[], SavedRGBTable[];
+extern int colorpalette;
+#ifdef CK_PALETTE_WY370
+extern ULONG WY370RGBTable[], SavedWY370RGBTable[];
+#endif /* CK_PALETTE_WY370 */
 
 #ifdef CK_ANSIC
 /* Prototypes for static functions - fdc 30 November 2022 */
@@ -9078,9 +9146,16 @@ static int setprinter( int );
 #define GUI_WIN  2
 #define GUI_FON  3
 #define GUI_DIA  4
-#define GUI_TLB  5
-#define GUI_MNB  6
-#define GUI_CLS  7
+#define GUI_STB  5
+#define GUI_TLB  6
+#define GUI_MNB  7
+#define GUI_CLS  8
+
+
+#define GUIB_OFF 0
+#define GUIB_ON  1
+#define GUIB_DIS 2
+#define GUIB_VIS 3
 
 #define GUIW_POS 1
 #define GUIW_RES 2
@@ -9098,6 +9173,7 @@ static struct keytab guitab[] = {
     { "font",        GUI_FON,  0 },
     { "menubar",     GUI_MNB,  0 },
     { "rgbcolor",    GUI_RGB,  0 },
+    { "statusbar",   GUI_STB,  0 },
 #ifndef NOTOOLBAR
     { "toolbar",     GUI_TLB,  0 },
 #endif
@@ -9105,6 +9181,15 @@ static struct keytab guitab[] = {
     { "", 0, 0}
 };
 static int nguitab = (sizeof(guitab) / sizeof(struct keytab));
+
+static struct keytab guibartab[] = {
+    { "disabled",    GUIB_DIS, 0 },
+    { "off",         GUIB_OFF, CM_INV},
+    { "on",          GUIB_ON,  CM_INV},
+    { "visible",     GUIB_VIS, 0 },
+    { "", 0, 0}
+};
+static int nguibartab = (sizeof(guibartab) / sizeof(struct keytab));
 
 static struct keytab guiwtab[] = {
     { "position",    GUIW_POS, 0 },
@@ -9138,6 +9223,7 @@ static struct keytab rgbtab[] = {
     { "darkgray",      8, 0 },
     { "dgray",         8, CM_INV },
     { "green",         2, 0 },
+    { "index",        16, 0 },
     { "lblue",         9, CM_INV },
     { "lcyan",        11, CM_INV },
     { "lgreen",       10, CM_INV },
@@ -9154,32 +9240,314 @@ static struct keytab rgbtab[] = {
     { "red",           4, 0 },
     { "white",        15, 0 },
     { "yellow",       14, 0 },
-
 };
 int nrgb = (sizeof(rgbtab) / sizeof(struct keytab));
 
-VOID
-shogui() {
-    extern gui_dialog;
-    extern HWND getHwndKUI();
-    unsigned char cmdsav = colorcmd;
-    int i, red, green, blue, lines=0;
-    char * s;
+#define SHGUIPALETTE 1
 
+struct keytab shoguiswtab[] = {
+    { "/palette",        SHGUIPALETTE, 0 },
+    { "", 0, 0 }
+};
+int nshoguisw = (sizeof(shoguiswtab) / sizeof(struct keytab)) - 1;
+
+/* This determines if the RGB value for specified colour index
+ * is "light" or "dark" for the purpose of selecting an appropriate
+ * foreground colour that will stand out from the background */
+int color_is_light(int index) {
+    int blue, green, red;
+	int bgr;
+    double intensity;
+    cell_video_attr_t attr = cell_video_attr_init_vio_attribute(0x00);
+
+    attr = cell_video_attr_set_fg_color(attr, color_index_to_vio(index));
+    bgr = cell_video_attr_foreground_rgb(attr);
+
+    blue = (bgr & 0x00FF0000)>>16;
+	green = (bgr & 0x0000FF00)>>8;
+    red = (bgr & 0x000000FF);
+
+    intensity = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+
+    return intensity > 127;
+}
+
+/* Choose a suitable foreground colour for a given background colour */
+int fg_color_for_bg_index(int bg_index) {
+  	/* TODO: we really should confirm indexes 0 and 15 really are
+     * suitable as the user could have changed their RGB values to,
+     * eg, invert the display. */
+	if (color_is_light(bg_index)) {
+		return 0;  /* dark FG for light BG */
+    }
+    return 15; /* light FG for dark BG */
+}
+
+/* Outputs a line of colour indexes from start to max with the specified
+ * increment. The background colour will be the colour for that index. */
+void output_index_colors(int start, int increment, int max) {
+    cell_video_attr_t cmdsav = colorcmd;
+    int j = 0;
+
+    for (j = start; j <= max; j += increment) {
+        int bg_index = 0, fg_index = 0;
+        bg_index = color_index_to_vio(j);
+
+#ifdef CK_COLORS_16
+        bg_index = nearest_palette_color_palette(colorpalette, bg_index);
+#endif /* CK_COLORS_16 */
+
+        fg_index = fg_color_for_bg_index(bg_index);
+
+        colorcmd = cell_video_attr_set_colors(fg_index, bg_index);
+	    printf("%3d ", j);
+        colorcmd = cmdsav;
+    }
+}
+
+void output_palette_segment_256_wide(int index);
+
+/* Output one line of the 256 colour palette cubes */
+void output_palette_segment_256(int index) {
+    // if width is 108 or greater, output in a wider format
+    if (tt_cols[VCMD] >= 108) {
+        output_palette_segment_256_wide(index);
+        return;
+    }
+
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("6x6x6 color cubes:"); break;
+        /* Color cube 1 */
+        case 5: output_index_colors(16, 6, 46); break;
+        case 6: output_index_colors(17, 6, 47); break;
+        case 7: output_index_colors(18, 6, 48); break;
+        case 8: output_index_colors(19, 6, 49); break;
+        case 9: output_index_colors(20, 6, 50); break;
+        case 10: output_index_colors(21, 6, 51); break;
+        case 11: break;
+        /* Color cube 2 */
+        case 12: output_index_colors(52, 6, 82); break;
+        case 13: output_index_colors(53, 6, 83); break;
+        case 14: output_index_colors(54, 6, 84); break;
+        case 15: output_index_colors(55, 6, 85); break;
+        case 16: output_index_colors(56, 6, 86); break;
+        case 17: output_index_colors(57, 6, 87); break;
+        case 18: break;
+        /* Color cube 3 */
+        case 19: output_index_colors(88, 6, 118); break;
+        case 20: output_index_colors(89, 6, 119); break;
+        case 21: output_index_colors(90, 6, 120); break;
+        case 22: output_index_colors(91, 6, 121); break;
+        case 23: output_index_colors(92, 6, 122); break;
+        case 24: output_index_colors(93, 6, 123); break;
+        case 25: break;
+        /* Color cube 4 */
+        case 26: output_index_colors(124, 6, 154); break;
+        case 27: output_index_colors(125, 6, 155); break;
+        case 28: output_index_colors(126, 6, 156); break;
+        case 29: output_index_colors(127, 6, 157); break;
+        case 30: output_index_colors(128, 6, 158); break;
+        case 31: output_index_colors(129, 6, 159); break;
+        case 32: break;
+        /* Color cube 5 */
+        case 33: output_index_colors(160, 6, 190); break;
+        case 34: output_index_colors(161, 6, 191); break;
+        case 35: output_index_colors(162, 6, 192); break;
+        case 36: output_index_colors(163, 6, 193); break;
+        case 37: output_index_colors(164, 6, 194); break;
+        case 38: output_index_colors(165, 6, 195); break;
+        case 39: break;
+        /* Color cube 6 */
+        case 40: output_index_colors(196, 6, 226); break;
+        case 41: output_index_colors(197, 6, 227); break;
+        case 42: output_index_colors(198, 6, 228); break;
+        case 43: output_index_colors(199, 6, 229); break;
+        case 44: output_index_colors(200, 6, 230); break;
+        case 45: output_index_colors(201, 6, 231); break;
+        case 46: break;
+        case 47: printf("Grey ramp:"); break;
+        case 48: output_index_colors(232, 1, 237); break;
+		case 49: output_index_colors(238, 1, 243); break;
+        case 50: output_index_colors(244, 1, 249); break;
+		case 51: output_index_colors(250, 1, 255); break;
+    }
+}
+
+/* Output one line of the 256 colour palette cubes */
+void output_palette_segment_256_wide(int index) {
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("6x6x6 color cubes:"); break;
+        /* Color cube 1, 2, 3 */
+        case 5:
+            output_index_colors(16, 6, 46); printf(" ");
+            output_index_colors(52, 6, 82); printf(" ");
+            output_index_colors(88, 6, 118);
+            break;
+        case 6:
+            output_index_colors(17, 6, 47); printf(" ");
+            output_index_colors(53, 6, 83); printf(" ");
+            output_index_colors(89, 6, 119);
+            break;
+        case 7:
+            output_index_colors(18, 6, 48); printf(" ");
+            output_index_colors(54, 6, 84); printf(" ");
+            output_index_colors(90, 6, 120);
+            break;
+        case 8:
+            output_index_colors(19, 6, 49); printf(" ");
+            output_index_colors(55, 6, 85); printf(" ");
+            output_index_colors(91, 6, 121);
+            break;
+        case 9:
+            output_index_colors(20, 6, 50); printf(" ");
+            output_index_colors(56, 6, 86); printf(" ");
+            output_index_colors(92, 6, 122);
+            break;
+        case 10:
+            output_index_colors(21, 6, 51); printf(" ");
+            output_index_colors(57, 6, 87); printf(" ");
+            output_index_colors(93, 6, 123);
+            break;
+        case 11: break;
+        /* Color cube 4, 5, 6 */
+        case 12:
+            output_index_colors(124, 6, 154); printf(" ");
+            output_index_colors(160, 6, 190); printf(" ");
+            output_index_colors(196, 6, 226);
+            break;
+        case 13:
+            output_index_colors(125, 6, 155); printf(" ");
+            output_index_colors(161, 6, 191); printf(" ");
+            output_index_colors(197, 6, 227);
+            break;
+        case 14:
+            output_index_colors(126, 6, 156); printf(" ");
+            output_index_colors(162, 6, 192); printf(" ");
+            output_index_colors(198, 6, 228);
+            break;
+        case 15:
+            output_index_colors(127, 6, 157); printf(" ");
+            output_index_colors(163, 6, 193); printf(" ");
+            output_index_colors(199, 6, 229);
+            break;
+        case 16:
+            output_index_colors(128, 6, 158); printf(" ");
+            output_index_colors(164, 6, 194); printf(" ");
+            output_index_colors(200, 6, 230);
+            break;
+        case 17:
+            output_index_colors(129, 6, 159); printf(" ");
+            output_index_colors(165, 6, 195); printf(" ");
+            output_index_colors(201, 6, 231);
+            break;
+        case 18:
+            break;
+        case 19: printf("Grey ramp:"); break;
+        case 20: output_index_colors(232, 1, 243); break;
+        case 21: output_index_colors(244, 1, 255); break;
+    }
+}
+
+/* Output one line of the 88 colour palette cubes */
+void output_palette_segment_88(int index) {
+	switch(index) {
+        case 0: printf("System colors:"); break;
+        case 1: output_index_colors(0, 1, 7); break;
+        case 2: output_index_colors(8, 1, 15); break;
+        case 3: break;
+        case 4: printf("4x4x4 color cubes:"); break;
+        /* Color cube 1 & 2 */
+        case 5:
+          	output_index_colors(16, 4, 28);
+            printf(" ");
+            output_index_colors(32, 4, 44);
+            break;
+        case 6:
+          	output_index_colors(17, 4, 29);
+            printf(" ");
+            output_index_colors(33, 4, 45);
+            break;
+        case 7:
+          	output_index_colors(18, 4, 30);
+            printf(" ");
+            output_index_colors(34, 4, 46);
+            break;
+        case 8:
+          	output_index_colors(19, 4, 31);
+            printf(" ");
+            output_index_colors(35, 4, 47);
+            break;
+        case 9: break;
+        /* Color cubes 3 & 4 */
+        case 10:
+          	output_index_colors(48, 4, 60);
+            printf(" ");
+            output_index_colors(64, 4, 76);
+            break;
+        case 11:
+          	output_index_colors(49, 4, 61);
+            printf(" ");
+            output_index_colors(65, 4, 77);
+            break;
+        case 12:
+          	output_index_colors(50, 4, 62);
+            printf(" ");
+            output_index_colors(66, 4, 78);
+            break;
+        case 13:
+          	output_index_colors(51, 4, 63);
+            printf(" ");
+            output_index_colors(67, 4, 79);
+            break;
+        case 14: break;
+        case 15: printf("Grey ramp:"); break;
+        case 16: output_index_colors(80, 1, 87);
+    }
+}
+
+int
+shogui() {
+    extern int gui_dialog;
+    extern HWND getHwndKUI();
+    cell_video_attr_t cmdsav = colorcmd;
+    int i, red, green, blue, lines=0, y, x, palette_size;
+    char * s;
+    bool show_palette = FALSE;
+    ULONG *palette;
+
+	if ((y = cmswi(shoguiswtab,nshoguisw,"Switch","",xxstring)) < 0) {
+		if (y != -3)
+	  		return(y);
+	} else if (cmgbrk() > SP) {
+		printf("?This switch does not take an argument\n");
+		return(-9);
+	} else if (y == SHGUIPALETTE) {
+		show_palette = TRUE;
+	}
+	if ((x = cmcfm()) < 0)
+	  return(x);
 
     printf("GUI paramters:\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Dialogs:     %s\n",showoff(gui_dialog));
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Position:    %d,%d\n",get_gui_window_pos_x(),
             get_gui_window_pos_y());
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Resolution:  %d x %d\n",GetSystemMetrics(SM_CXSCREEN),
             GetSystemMetrics(SM_CYSCREEN));
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("  Run-mode:    %s\n",IsIconic(getHwndKUI()) ? "minimized" :
             IsZoomed(getHwndKUI()) ? "maximized" : "restored");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     switch ( get_gui_resize_mode() ) {
       case GUIWR_NON:
         s = "none";
@@ -9192,43 +9560,127 @@ shogui() {
         break;
     }
     printf("  Resize-mode: %s\n",s);
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
     printf("\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
+    if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
 
-    printf("RGB Color Table:\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf("  Color              Red Green Blue\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    printf("  ------------------------------------------\n");
-    if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
-    for (i = 0; i < nrgb; i++) {
-        if (!rgbtab[i].flgs) {
-            blue = (RGBTable[rgbtab[i].kwval] & 0x00FF0000)>>16;
-            green = (RGBTable[rgbtab[i].kwval] & 0x0000FF00)>>8;
-            red = (RGBTable[rgbtab[i].kwval] & 0x000000FF);
-            printf("  %-18s %3d  %3d  %3d  ",rgbtab[i].kwd,red,green,blue);
-            colorcmd = rgbtab[i].kwval << 4;
+    if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
+    	palette = RGBTable256;
+        palette_size = 256;
+    } else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+    	palette = RGBTable88;
+        palette_size = 88;
+#ifdef CK_PALETTE_WY370
+    } else if (colorpalette == CK_PALETTE_WY370) {
+        palette = WY370RGBTable;
+        palette_max = 64;
+#endif
+    } else { /* CK_PALETTE_ANSI */
+        palette = RGBTable;
+        palette_size =16;
+    }
+
+    if (!show_palette) {
+   		printf("RGB Color Table:\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  Color              Red Green Blue\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  ------------------------------------------\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	for (i = 0; i < nrgb; i++) {
+      		/* kwval == 16 is the special "INDEX" option, not a colour. */
+        	if (!rgbtab[i].flgs && rgbtab[i].kwval != 16) {
+	            blue = (palette[rgbtab[i].kwval] & 0x00FF0000)>>16;
+	            green = (palette[rgbtab[i].kwval] & 0x0000FF00)>>8;
+    	        red = (palette[rgbtab[i].kwval] & 0x000000FF);
+        	    printf("  %-18s %3d  %3d  %3d  ",rgbtab[i].kwd,red,green,blue);
+            	colorcmd = cell_video_attr_from_vio_attribute(rgbtab[i].kwval << 4);
+            	printf("********");
+            	colorcmd = cmdsav;
+            	printf("\n");
+            	if (++lines > cmd_rows - 3) {
+					if (!askmore())
+		  				return(success=1);
+					else
+		  				lines = 0;
+	    		}
+        	}
+    	}
+    	printf("\n");
+    } else {  /* Output the *full* colour palette */
+        int cube_ind = 0;
+
+        if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
+     		printf("RGB Color Table for xterm 256-Color Palette:\n");
+    	} else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+            printf("RGB Color Table for xterm 88-Color Palette:\n");
+#ifdef CK_PALETTE_WY370
+        } else if (colorpalette == CK_PALETTE_WY370) {
+            printf("RGB Color Table for Wyse WY-370 Palette:\n");
+#endif /* CK_PALETTE_WY370 */
+        } else {
+            printf("RGB Color Table for aixterm 16-Color Palette:\n");
+        }
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  Color Red Green Blue             Color Cubes\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	printf("  -----------------------------    --------------------------------------------\n");
+    	if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
+    	for (i = 0; i < palette_size; i++) {
+      		int index = color_index_to_vio(i);
+
+	        blue = (palette[index] & 0x00FF0000)>>16;
+	        green = (palette[index] & 0x0000FF00)>>8;
+    	    red = (palette[index] & 0x000000FF);
+        	printf("  %-5d %3d  %3d  %3d  ",i,red,green,blue);
+            colorcmd = cell_video_attr_set_bg_color(colorcmd, index);
             printf("********");
             colorcmd = cmdsav;
+
+            printf("    ");
+            if (palette_size == 256) output_palette_segment_256(i);
+			if (palette_size == 88) output_palette_segment_88(i);
+			if (palette_size == 16 && i < 3) output_palette_segment_88(i);
+
             printf("\n");
             if (++lines > cmd_rows - 3) {
-		if (!askmore())
-		  return;
-		else
-		  lines = 0;
-	    }
-        }
-    }
-    printf("\n");
+				if (!askmore())
+		  			return(success=1);
+				else
+		  			lines = 0;
+	    	}
+
+    	}
+    	printf("\n");
+	}
+
+    return (success=1);
 }
 
 int
 setrgb() {
-    int cx, red = 0, blue = 0, green = 0, z, x;
+    int cx, red = 0, blue = 0, green = 0, z, x, new_value;
+    extern int colorpalette;  /* ckoco3.c */
+    int cxmax = 15;
 
-    if ((cx = cmkey(rgbtab,nrgb,"","",xxstring)) < 0)
-      return(cx);
+    cxmax = current_palette_max_index();
+
+    if ((cx = cmkey(rgbtab,nrgb,"","",xxstring)) < 0) {
+      	return(cx);
+    }
+    if (cx == 16) {
+        if ((z = cmnum(cxmax == 15
+                            ? "Color Index, 0-15"
+                            : cxmax == 87 ? "Color Index, 0-87"
+                                          : "Color Index, 0-255"
+                       ,"",10,&cx,xxstring)) < 0)
+        return(z);
+
+        /* The first 16 colour indexes of the color tables aren't in SGR order */
+        if (cx < 16) {
+            cx = color_index_to_vio(cx);
+        }
+    }
     if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
       return(z);
     if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
@@ -9236,11 +9688,32 @@ setrgb() {
     if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
       return(z);
     if ((x = cmcfm()) < 0) return(x);
-    if (cx > 15 || red > 255 || blue > 255 || green > 255)
+    if (cx > cxmax || red > 255 || blue > 255 || green > 255)
       return(-2);
-    RGBTable[cx] = (unsigned)(((unsigned)blue << 16) |
+
+    new_value = (unsigned)(((unsigned)blue << 16) |
         (unsigned)((unsigned)green << 8) |
         (unsigned)red);
+
+    /* Update both the current active color palette, and the saved color palette.
+  	 * The saved palette will take effect if the terminal is reset undoing any
+     * palette changes made by the host */
+    if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
+    	RGBTable256[cx] = new_value;
+        SavedRGBTable256[cx] = new_value;
+    } else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
+    	RGBTable88[cx] = new_value;
+        SavedRGBTable88[cx] = new_value;
+#ifdef CK_PALETTE_WY370
+    } else if (colorpalette == CK_PALETTE_WY370) {
+        WY370RGBTable[cx] = new_value;
+        SavedWY370RGBTable[cx] = new_value;
+#endif
+    } else { /* CK_PALETTE_ANSI */
+        RGBTable[cx] = new_value;
+        SavedRGBTable[cx] = new_value;
+    }
+
     return(success = 1);
 }
 
@@ -9264,10 +9737,12 @@ setguiwin() {
           return(z);
         if ((z = cmcfm()) < 0)
           return(z);
+        /* TODO: Ideally we should call EnumDisplayMonitors or similar to figure
+         *       out what valid replacements actually are.
         if (x < 0 || y < 0) {
             printf("?Coordinates must be 0 or greater\n");
             return(-9);
-        }
+        }*/
         gui_position(x,y);
         return(success = 1);
       case GUIW_RES:
@@ -9332,16 +9807,87 @@ setguidialog(x) int x;
     KuiSetProperty(KUI_GUI_DIALOGS, (intptr_t)x, 0L);
 }
 
-VOID
-setguimenubar(x) int x;
+int
+setguimenubar()
 {
-    KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the menubar */
+                KuiSetProperty(KUI_GUI_MENUBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the menubar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_MENUBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
 }
 
-VOID
-setguitoolbar(x) int x;
+
+int
+setguitoolbar()
 {
-    KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)x, 0L);
+    int cx, x, rc;
+    if ((cx = cmkey(guibartab,nguibartab,"","",xxstring)) < 0) {
+        return(cx);
+    }
+    switch (cx) {
+        case GUIB_ON:
+            if ((x = cmcfm()) < 0) return(x);
+            /* Does nothing: Once disabled it stays disabled (its a lock-down
+             * feature) */
+            return(1);
+            break;
+        case GUIB_OFF:
+        case GUIB_DIS: {
+                if ((x = cmcfm()) < 0) return(x);
+
+                /* Disable the toolbar */
+                KuiSetProperty(KUI_GUI_TOOLBAR, (intptr_t)0, 0L);
+                return(0);
+            }
+            break;
+        case GUIB_VIS: {
+                /* Show or hide the toolbar */
+                rc = seton(&x);
+                if (rc >= 0) {
+                    KuiSetProperty(KUI_GUI_TOOLBAR_VIS, (intptr_t)x, 0L);
+                }
+                return(rc);
+            }
+            break;
+    }
+    return(0);
+}
+
+int
+setguistatusbar() {
+    int x, rc;
+
+    rc = seton(&x);
+    if (rc >= 0)
+      KuiSetProperty(KUI_GUI_STATBAR_VIS, (intptr_t)x, 0L);
+    return(rc);
 }
 
 VOID
@@ -9368,15 +9914,11 @@ setgui() {
       case GUI_WIN:
         return(setguiwin());
       case GUI_TLB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguitoolbar(x);
-        return(rc);
+        return(setguitoolbar());
+      case GUI_STB:
+        return (setguistatusbar());
       case GUI_MNB:
-        rc = seton(&x);
-        if (rc >= 0)
-          setguimenubar(x);
-        return(rc);
+        return (setguimenubar());
       case GUI_CLS:
         rc = seton(&x);
         if (rc >= 0)
@@ -9558,20 +10100,15 @@ case XYPAD:                             /* SET PAD ... */
                 netcmd[z].flgs =  CM_INV;
 #endif /* SUPERLAT */
 #if SSH_DLL
-              else if (netcmd[z].kwval == NET_SSH && !ssh_avail())
+              else if (netcmd[z].kwval == NET_SSH && !ck_ssh_is_installed())
                   netcmd[z].flgs = CM_INV;
 #endif /* SSH_DLL */
           }
           if (tcp_avail)                /* Default network type */
             ckstrncpy(tmpbuf,"tcp/ip",TMPBUFSIZ);
 #ifdef SSHBUILTIN
-#ifdef SSH_DLL
-          else if ( ssh_avail() )
+          else if ( ck_ssh_is_installed() )
             ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
-#else
-          else if ( TRUE )
-            ckstrncpy(tmpbuf,"ssh",TMPBUFSIZ);
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 #ifdef DECNET
           else if (dnet_avail)
@@ -10042,8 +10579,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = keepalive(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = keepalive(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = keepalive(ttyfd,z);
@@ -10057,8 +10594,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = dontroute(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = dontroute(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = dontroute(ttyfd,z);
@@ -10072,8 +10609,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,z);
@@ -10085,8 +10622,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = no_delay(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = no_delay(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = no_delay(ttyfd,!z);
@@ -10108,8 +10645,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = ck_linger(ssh_sock,z,y);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = ck_linger(ssh_get_socket(),z,y);
             else
 #endif /* SSHBUILTIN */
 	      success = ck_linger(ttyfd,z,y);
@@ -10124,8 +10661,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             if (iksdcf) return(success = 0);
 #endif /* IKSDCONF */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = sendbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = sendbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = sendbuf(ttyfd,z);
@@ -10151,8 +10688,8 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             }
 #endif /* QNX16 */
 #ifdef SSHBUILTIN
-            if (network && nettype == NET_SSH && ssh_sock != -1)
-              success = recvbuf(ssh_sock,z);
+            if (network && nettype == NET_SSH && ssh_get_socket() != -1)
+              success = recvbuf(ssh_get_socket(),z);
             else
 #endif /* SSHBUILTIN */
 	      success = recvbuf(ttyfd,z);
@@ -11065,6 +11602,15 @@ case XYCARR:                            /* CARRIER-WATCH */
             return(success = 1);
             break;
 
+#ifdef OS2
+          case CK_TN_COLORTERM:    /* Send COLORTERM environment variable */
+            if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);
+            if ((y = cmcfm()) < 0) return(y);
+            tn_colorterm = z;
+            return(success = 1);
+            break;
+#endif /* OS2 */
+
           case CK_TN_WAIT:              /* WAIT-FOR-NEGOTIATIONS */
             if ((z = cmkey(onoff,2,"","on",xxstring)) < 0) return(z);
             if ((y = cmcfm()) < 0) return(y);
@@ -11205,18 +11751,123 @@ case XYCARR:                            /* CARRIER-WATCH */
 #ifndef NOLOCAL
           case SCMD_COL: {              /* Command-screen colors */
               int fg, bg;
+              cell_video_attr_t attr = cell_video_attr_from_vio_attribute(0);
+
               fg = cmkey(ttyclrtab, nclrs,
                          "foreground color and then background color",
                          "white",
                          xxstring);
               if (fg < 0)
                 return(fg);
+
+              if (fg == 16) {
+                  /* Indexed color from current palette */
+                  int cmax = current_palette_max_index();
+                  int z;
+
+                  if ((z = cmnum(cmax == 15
+                              ? "Foreground color index, 0-15"
+                              : cmax == 87 ? "Foreground color index, 0-87"
+                                            : "Foreground color index, 0-255"
+                         ,"",10,&fg,xxstring)) < 0) return(z);
+
+                  if (fg < 16) fg = color_index_to_vio(fg);
+
+                  if (fg < 0 || fg > cmax) {
+                      printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                      return(-9);
+                  }
+              }
+              else if (fg == 17) {
+                  /* Direct RGB value. Three colors needed. */
+                  int red, green, blue;
+
+                  if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                  return(z);
+                  if (red < 0 || red > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                  return(z);
+                  if (green < 0 || green > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                  return(z);
+                  if (blue < 0 || blue > 255) {
+                    printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  attr = cell_video_attr_set_fg_rgb(attr, red, green, blue);
+                  fg = -1;
+              }
+              else {
+                  attr = cell_video_attr_set_fg_color(attr, fg);
+              }
+
               if ((bg = cmkey(ttyclrtab,nclrs,
                               "background color","black",xxstring)) < 0)
                 return(bg);
+
+              if (bg == 16) {
+                  /* Indexed color from current palette */
+                  int cmax = current_palette_max_index();
+                  int z;
+
+                  if ((z = cmnum(cmax == 15
+                              ? "Background color index, 0-15"
+                              : cmax == 87 ? "Background color index, 0-87"
+                                            : "Background color index, 0-255"
+                         ,"",10,&bg,xxstring)) < 0) return(z);
+
+                  if (fg < 16) bg = color_index_to_vio(fg);
+
+                  if (bg < 0 || bg > cmax) {
+                      printf("\n?Color index outside range for current palette (0-%d)\n", cmax);
+                      return(-9);
+                  }
+              }
+              else if (bg == 17) {
+                  /* Direct RGB value. Three colors needed. */
+                  int red, green, blue;
+
+                  if ((z = cmnum("Red value, 0-255","",10,&red,xxstring)) < 0)
+                  return(z);
+                  if (red < 0 || red > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Green value, 0-255","",10,&green,xxstring)) < 0)
+                  return(z);
+                  if (green < 0 || green > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  if ((z = cmnum("Blue value, 0-255","",10,&blue,xxstring)) < 0)
+                  return(z);
+                  if (blue < 0 || blue > 255) {
+                      printf("\n?Red value outside valid range (0-255)\n");
+                      return(-9);
+                  }
+
+                  attr = cell_video_attr_set_bg_rgb(attr, red, green, blue);
+                  bg = -1;
+              }
+              else {
+                  attr = cell_video_attr_set_bg_color(attr, bg);
+              }
+
               if ((y = cmcfm()) < 0)
                 return(y);
-              colorcmd = fg | bg << 4;
+
+              colorcmd = attr;
               return(success = 1);
           }
           case SCMD_SCR:                /* Command Scrollback size */
@@ -14189,8 +14840,12 @@ dorexx() {
     int x, y;
     char *rexxcmd;
 
-        if ((x = cmtxt("Rexx command","",&rexxcmd,xxstring)) < 0)
-          return(x);
+    if ((x = cmtxt("Rexx command","",&rexxcmd,xxstring)) < 0)
+      return(x);
+
+    /* No REXX command? Don't try to run the REXX command (doing so causes
+     * Regina REXX to crash) */
+    if (strlen(rexxcmd) == 0) return(success = 0);
 
 #ifdef IKSD
     if (inserver) {

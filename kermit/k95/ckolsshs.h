@@ -1,4 +1,4 @@
-/* C-Kermit for Windows SSH Subsystem
+/* Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,50 @@
 #include <windows.h>
 
 #include "ckorbf.h"
+
+/*
+ * On x86 and x86-64 Windows, four libssh backend DLLs are built currently:
+ *      G       Vista+, GSSAPI      k95sshg.dll
+ *      X       XP                  k95sshx.dll
+ *      GX      XP, GSSAPI          k95sshgx.dll
+ *      STD     Vista+              k95ssh.dll
+ * Only the G and GX builds get GSSAPI support, and only the G and STD
+ * builds get Agent support.
+ */
+
+#ifdef CKF_SSHDLL_VARIANT_G
+/* Vista+, GSSAPI : the only varaint to get all features */
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_X
+/* Windows XP */
+#define NO_SSH_AGENT_SUPPORT
+#define NO_SSH_GSSAPI_SUPPORT
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_GX
+/* Windows XP, GSSAPI */
+#define NO_SSH_AGENT_SUPPORT
+#endif
+
+#ifdef CKF_SSHDLL_VARIANT_STD
+/* Vista+ */
+#define NO_SSH_GSSAPI_SUPPORT
+#endif
+
+/*
+ * Unless we're told not to, build with SSH Agent and GSSAPI Support. There
+ * is no real harm in doing this - worst case there are some options in the
+ * UI that don't work if the Windows version is too old or the libssh dll
+ * lacks GSSAPI support.
+ */
+#ifndef NO_SSH_AGENT_SUPPORT
+#define SSH_AGENT_SUPPORT
+#endif
+
+#ifndef NO_SSH_GSSAPI_SUPPORT
+#define SSH_GSSAPI_SUPPORT
+#endif
 
 #ifdef SSH_DLL
 #undef debug
@@ -129,6 +173,8 @@ typedef struct ssh_port_forward {
 
 #define MAX_AUTH_METHODS 10
 
+#define MAX_ENVIRONMENT_VARIABLES 10
+
 /** Parameters passed to the SSH thread on startup telling it what to connect
  * to, settings, etc.
  */
@@ -157,6 +203,11 @@ typedef struct {
                                                  * seconds, 0 disables. */
     int nodelay;                                /* Set to disable nagles agorithm */
     char* proxy_command;                        /* Command to execute to connect to the server */
+    char* ssh_dir;                              /* SSH Directory */
+    const char** identity_files;                /* SSH Identity Files */
+    SOCKET existing_socket;                     /* Connect with an existing socket */
+    char* agent_location;                       /* SSH Agent Location */
+    int agent_forwarding;                       /* Enable agent forwarding */
 
     /* Which authentication methods should be attempted and their order. */
     int authentication_methods[MAX_AUTH_METHODS];
@@ -168,6 +219,9 @@ typedef struct {
     BOOL allow_password_auth;
 
     const ssh_port_forward_t *port_forwards;
+
+    /* Environment variables */
+    char* environment_variables[MAX_ENVIRONMENT_VARIABLES][2];
 
     BOOL forward_x;             /* Forward X11 ? */
     char* x11_host;             /* Host where the X server is running */
@@ -185,13 +239,13 @@ typedef struct {
 
     /* Events raised by C-Kermit to signal conditions to the SSH thread */
     HANDLE disconnectEvent;   /* Disconnect requested by C-Kermit */
-    HANDLE ptySizeChangedEvent; /* CKW Terminal size changed. Store new values
+    HANDLE ptySizeChangedEvent;   /* K95 Terminal size changed. Store new values
                                    * in pty_height and pty_width */
     HANDLE flushEvent; /* Flush requested by C-Kermit */
     HANDLE breakEvent; /* Send break requested by C-Kermit */
-    HANDLE dataArrivedEvent; /* CKW has put data in the input buffer to be sent */
+    HANDLE dataArrivedEvent; /* K95 has put data in the input buffer to be sent */
 
-    /* CKW has consumed data from the output buffer. Only raised when the
+    /* K95 has consumed data from the output buffer. Only raised when the
      * output buffer transitions from full to less than full in case the
      * network has more data waiting but couldn't do anything with it because of
      * a full buffer */
@@ -254,6 +308,12 @@ void get_current_terminal_dimensions(int* rows, int* cols);
  * @param display_host Host running the X11 server
  * @param display_number X11 display number
  * @param xauth_location Xauth location
+ * @param ssh_dir SSH Directory
+ * @param identity_files List of identity files
+ * @param socket Existing socket to use for the connection
+ * @param agent_location SSH agent location
+ * @param agent_forwarding Enable agent forwarding
+ * @param environment_variables Environment variables to send
  * @return A new ssh_parameters_t instance.
  */
 ssh_parameters_t* ssh_parameters_new(
@@ -267,7 +327,10 @@ ssh_parameters_t* ssh_parameters_new(
         const char* macs, const char* key_exchange_methods, int nodelay,
         const char* proxy_command, const ssh_port_forward_t *port_forwards,
         BOOL forward_x, const char* display_host, int display_number,
-        const char* xauth_location);
+        const char* xauth_location, const char* ssh_dir,
+        const char** identity_files, SOCKET socket,
+        const char* agent_location, int agent_forwarding,
+        const char* environment_variables[MAX_ENVIRONMENT_VARIABLES][2]);
 
 /** Frees the ssh_parameters_t struct and all its members.
  *

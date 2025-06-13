@@ -76,9 +76,11 @@
 
 #ifndef CK_HAVE_INTPTR_T
 /* Any windows compiler too old to support this will be 32-bits (or less) */
+#ifndef _INTPTR_T_DEFINED
 typedef int intptr_t;
+#endif /* _INTPTR_T_DEFINED */
 #define CK_HAVE_INTPTR_T
-#endif
+#endif /* CK_HAVE_INTPTR_T */
 
 #define MAXPORTS 32
 struct PORT
@@ -475,7 +477,7 @@ IKSDStart (DWORD argc, LPTSTR *argv)
     }
 
     iksd_started = 1;
-    _beginthread(listen_thread,65536, 0);
+    _beginthread(listen_thread,65536, NULL);
 
     // Initialization complete - report running status.
     IKSDStatus.dwCurrentState       = SERVICE_RUNNING;

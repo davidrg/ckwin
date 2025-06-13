@@ -93,6 +93,9 @@ DWORD ckGetLongPathName(LPCSTR,LPSTR,DWORD);    /* ckofio.c */
 #include "ckossh.h"
 #endif /* SSHBUILTIN */
 
+#include "ckocon.h"
+extern int colorpalette;
+
 #endif /* OS2 */
 
 #ifdef KUI
@@ -161,6 +164,10 @@ extern int debtim;
 #endif /* DEBUG */
 
 extern int noinit;
+
+#ifdef OS2
+extern int usageparm;  /* Set if we're only going to show usage info and exit */
+#endif /* OS2 */
 
 static char ndatbuf[10];
 
@@ -488,7 +495,7 @@ extern int frecl;
 #endif /* VMS */
 
 extern CK_OFF_T ffc, tfc, tlci, tlco;
-extern long filcnt, rptn, speed,  ccu, ccp, vernum;
+extern long filcnt, rptn, speed,  ccu, ccp, vernum, xvernum;
 
 #ifndef NOSPL
 extern char fspec[], myhost[];
@@ -637,6 +644,9 @@ struct keytab vartab[] = {
     { "cmdfile",   VN_CMDF,  0},
     { "cmdlevel",  VN_CMDL,  0},
     { "cmdsource", VN_CMDS,  0},
+#ifdef OS2
+    { "color_palette", VN_PALETTE, 0},  /* K95 3.0 beta.8 */
+#endif /* OS2 */
     { "cols",      VN_COLS,  0},        /* 190 */
 #ifdef NT
     { "common",    VN_COMMON, 0},       /* 201 */
@@ -1680,6 +1690,7 @@ prescan(dummy) int dummy;
                                   startflags |= 16;   /* No Zmodem DLLs */
                                   startflags |= 32;   /* Stdin */
                                   startflags |= 64;   /* Stdout */
+                                  usageparm = 1; /* Showing usage and exiting */
 #endif /* OS2 */
                                   break;
                               case 'd': /* = SET DEBUG ON */
@@ -1788,6 +1799,7 @@ prescan(dummy) int dummy;
                         startflags |= 16;   /* No Zmodem DLLs */
                         startflags |= 32;   /* Stdin */
                         startflags |= 64;   /* Stdout */
+                        usageparm = 1;      /* Showing usage and exiting */
 #endif /* OS2 */
                         break;
                       case 'd':             /* = SET DEBUG ON */
@@ -2000,6 +2012,7 @@ prescan(dummy) int dummy;
                     startflags |= 16;   /* No Zmodem DLLs */
                     startflags |= 32;   /* Stdin */
                     startflags |= 64;   /* Stdout */
+                    usageparm = 1;      /* Showing usage and exiting */
 #endif /* OS2 */
                     break;
 #ifndef NOICP
@@ -3294,7 +3307,7 @@ xlate(fin, fout, csin, csout) char *fin, *fout; int csin, csout;
 #ifdef OS2
     extern int k95stdout;
     extern int wherex[], wherey[];
-    extern unsigned char colorcmd;
+    extern cell_video_attr_t colorcmd;
 #ifdef NT
     SIGTYP (* oldsig)(int);             /* For saving old interrupt trap. */
 #else /* NT */
@@ -5393,12 +5406,8 @@ shonet() {
 #endif /* HPX25 */
 
 #ifdef SSHBUILTIN
-#if SSH_DLL
-    if (ssh_avail())
+    if (ck_ssh_is_installed())
         printf(" SSH V2 protocol\n");
-#else
-    printf(" SSH V2 protocol\n");
-#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 
 #ifdef DECNET
@@ -13465,9 +13474,8 @@ char *                                  /* Evaluate builtin variable */
         sprintf(vvbuf,"%ld",vernum);    /* SAFE */
         return(vvbuf);
 
-      /* C-Kermit 10.0... no more product-specific version numbers */
       case VN_XVNUM:                    /* Product-specific version number */
-        sprintf(vvbuf,"%ld",vernum);    /* SAFE */
+        sprintf(vvbuf,"%ld",xvernum);    /* SAFE */
         return(vvbuf);
 
       case VN_FULLVER:                  /* Full version number (edit 400) */
@@ -14415,10 +14423,6 @@ char *                                  /* Evaluate builtin variable */
 
     switch(y) {
       case VN_XPROG:
-#ifndef COMMENT
-/* C-Kermit 9.0 and later for Windows and OS/2 is just C-Kermit */
-        return("C-Kermit");
-#else
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
@@ -14432,7 +14436,6 @@ char *                                  /* Evaluate builtin variable */
 #else
         return("C-Kermit");
 #endif /* OS2 */
-#endif /* COMMENT */
 
       case VN_EDITOR:
 #ifdef NOFRILLS
@@ -15447,6 +15450,41 @@ char *                                  /* Evaluate builtin variable */
           return(vvbuf);
     }
 #endif /* KUI */
+
+#ifdef OS2
+    switch(y) {
+        case VN_PALETTE:
+            switch(colorpalette) {
+                case CK_PALETTE_XTRGB:
+                    sprintf(vvbuf,"xterm-rgb");
+                    break;
+                case CK_PALETTE_XT256:
+                    sprintf(vvbuf,"xterm-256");
+                    break;
+                case CK_PALETTE_XT88:
+                    sprintf(vvbuf,"xterm-88");
+                    break;
+#ifdef CK_PALETTE_WY370
+                case CK_PALETTE_WY370:
+                    sprintf(vvbuf,"wy-370");
+                    break;
+#endif /* CK_PALETTE_WY370 */
+                case CK_PALETTE_16:
+                    sprintf(vvbuf,"aixterm-16");
+                    break;
+                case CK_PALETTE_8:
+                    sprintf(vvbuf,"ansi");
+                    break;
+                case CK_PALETTE_XTRGB88:
+                    sprintf(vvbuf,"xterm-88rgb");
+                    break;
+                default:
+                    sprintf(vvbuf,"unknown");
+                    break;
+            }
+            return(vvbuf);
+    }
+#endif /* OS2 */
 
     fnsuccess = 0;
     if (fnerror) {

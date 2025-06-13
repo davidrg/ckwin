@@ -63,7 +63,7 @@ set BUILD_ZINC=no
 
 echo.
 echo.
-echo OpenZinc built successfully - you can now build the C-Kermit for Windows Dialer!
+echo OpenZinc built successfully - you can now build the Kermit 95 Dialer!
 echo.
 
 goto :end

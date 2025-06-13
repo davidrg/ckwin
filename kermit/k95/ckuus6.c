@@ -590,6 +590,7 @@ int nopn = (sizeof(opntab) / sizeof(struct keytab));
 #define  XXIFLGE 62	/* IF LLE (lexically less than or equal) */
 #define  XXIFTXT 63	/* IF TEXT (file) */
 #define  XXIFBIN 64	/* IF BINARY (file) */
+#define  XXIFREX 65 /* IF REXX */
 
 struct keytab iftab[] = {               /* IF commands */
     { "!",          XXIFNO, 0 },
@@ -675,6 +676,11 @@ struct keytab iftab[] = {               /* IF commands */
     { "quiet",      XXIFQU, 0 },
     { "readable",   XXIFRD, 0 },
     { "remote-only",XXIFRO, 0 },
+#ifdef OS2
+    { "rexx",       XXIFREX, 0},
+#else /* OS2 */
+    { "rexx",       XXIFREX, CM_INV},
+#endif /* OS2 */
     { "started-from-dialer",XXIFSD, CM_INV },
     { "success",    XXIFSU, 0 },
     { "tapi",       XXIFTA, 0 },
@@ -3759,7 +3765,7 @@ typeline(buf,len,outcs,ofp) char * buf; int len, outcs; FILE * ofp;
     /* that was requested by the user. */
     if (!inserver && !k95stdout) {
         extern int wherex[], wherey[];
-        extern unsigned char colorcmd;
+        extern cell_video_attr_t colorcmd;
 
         VscrnWrtUCS2StrAtt( VCMD, (unsigned short *)buf, len/2,
                            wherey[VCMD], wherex[VCMD], &colorcmd);
@@ -9690,16 +9696,20 @@ static char * pcvtbufin = NULL;
 static char * pcvtbufout = NULL;
 
 static int				/* Input function xgnbyte() */
-cvtfnin() {
+#ifdef CK_ANSIC
+cvtfnin(void)
+#else
+cvtfnin()
+#endif	/* CK_ANSIC */
+{
     CHAR c;
     c = *pcvtbufin++;
     return(c ? c : -1);
 }
 
-_PROTOTYP(int cvtfnout,(char));		/* Output function for xpnbyte() */
-int
+static int
 #ifdef CK_ANSIC
-cvtfnout(char c)
+cvtfnout(char c)			/* Output function for xpnbyte() */
 #else
 cvtfnout(c) char c;
 #endif	/* CK_ANSIC */
@@ -12808,6 +12818,14 @@ boolexp(cx) int cx;
 #endif /* NOLOCAL */
         break;
 #endif /* CK_IFRO */
+
+     case XXIFREX:
+#ifdef NOREXX
+        z = 0;
+#else /* NOREXX */
+        z = 1;
+#endif /* NOREXX */
+        break;
 
       case XXIFAL:                      /* ALARM */
         ifargs++;

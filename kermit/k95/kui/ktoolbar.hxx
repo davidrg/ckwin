@@ -43,6 +43,8 @@ public:
     void setCharset( char* cs );
     void setFontName( char * fnt );
     void setFontHeight( int );
+    void setVisible(Bool visible);
+    BOOL isVisible() { return visible; }
 
 protected:
 #if defined(_MSC_VER) && _MSC_VER < 1300
@@ -57,6 +59,7 @@ private:
     int numBitmaps;
     int toolbarid;
     int disabled;
+    int visible;
 
     HWND hWndTermTypeCombo;
     HWND hWndFontNameCombo;

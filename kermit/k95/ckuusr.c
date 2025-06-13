@@ -142,12 +142,16 @@ extern bool viewonly;
 extern int k95stdout;
 extern int tt_scroll;
 #ifndef NOTERM
-extern tt_status[VNUM];
+extern int tt_status[VNUM];
 #endif /* NOTERM */
 #include "ckossh.h"
 #ifdef KUI
 #include "ikui.h"
 #endif /* KUI */
+#ifdef SSHBUILTIN
+extern char * ssh_idf[32];              /* identity files */
+extern int ssh_idf_n;
+#endif /* SSHBUILTIN */
 #endif /* OS2 */
 
 int optlines = 0;
@@ -2444,7 +2448,7 @@ static struct keytab sshkwtab[] = {
     { "load",                XSSH_LOAD, CM_INV },
     { "open",                XSSH_OPN, 0 },
     { "remove",              XSSH_REM, 0 },         /* SSH_FEAT_PORT_FWD */
-    { "v2",                  XSSH_V2,  0 },         /* SSH_FEAT_REKEY_MANUAL */
+    { "v2",                  XSSH_V2,  0 },         /*  */
     { "", 0, 0 }
 };
 static int nsshcmd = (sizeof(sshkwtab) / sizeof(struct keytab)) - 1;
@@ -2459,7 +2463,7 @@ static int nsshloadcmd = (sizeof(sshloadkwtab) / sizeof(struct keytab)) - 1;
 #endif /* SSH_DLL */
 
 static struct keytab ssh2tab[] = {
-    { "rekey", XSSH2_RKE, 0 }, /* Not supported by libssh */
+    { "rekey", XSSH2_RKE, 0 }, /* SSH_FEAT_REKEY_MANUAL */
     { "", 0, 0 }
 };
 static int nssh2tab = (sizeof(ssh2tab) / sizeof(struct keytab));
@@ -10882,7 +10886,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             else if (sshkwtab[z].kwval == XSSH_V2
                 && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
                 /*
-                 * "ssh agent"
+                 * "ssh v2 rekey"
                  */
                 sshkwtab[z].flgs = CM_INV;
             }
@@ -10916,16 +10920,16 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
             /* There is a different set of "ssh" commands available when the
              * SSH backend hasn't been loaded.
              */
-          	cmfdbi(&kw,			/* 1st FDB - commands */
+          	cmfdbi(&kw,			/* load command only */
                _CMKEY,			/* fcode */
                "action",	    /* hlpmsg */
                "",			    /* default */
                "",			    /* addtl string data */
-                nsshloadcmd,    /* addtl numeric data 1: tbl size */
+               nsshloadcmd,     /* addtl numeric data 1: tbl size */
                0,			    /* addtl numeric data 2: 0 = keyword */
                xxstring,		/* Processing function */
                sshloadkwtab,	/* Keyword table */
-               &fl			    /* Pointer to next FDB */
+               0			    /* Pointer to next FDB */
             );
             x = cmfdb(&kw);
             debug(F101,"SSH external cmfdb &kw","",x);
@@ -11315,7 +11319,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
 	          return(y);
 	      }
 
-          if ((x = cmnum((cx == SSHR_LPF) ?
+          if ((x = cmnum((y == SSHR_LPF) ?
 			     "Local port number" : "Remote port number",
 			     "",10,&port,xxstring)) < 0) {
 		    return(x);
@@ -12762,7 +12766,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifdef OS2
 #ifdef NT
 #ifdef KUI
-    int height;
+    int height = 0;
 	char guibuf[128], * gui_title = NULL;
 	int  gui = 0;
 #endif /* KUI */

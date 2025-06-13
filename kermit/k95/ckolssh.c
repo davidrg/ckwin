@@ -59,6 +59,42 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 /* for FamilyLocal, FamilyInternet, etc */
 #include "ckctel.h"
 
+#ifndef SSH_DLL
+#include "ckclib.h"
+#include "ckoreg.h"
+#endif
+
+unsigned char* get_display(void);
+
+#ifdef SSH_AGENT_SUPPORT
+/*
+ * SSH Agent support currently relies on AF_UNIX support (introduced in
+ * Windows 10 v1803), so if we *know* we're running on something older than
+ * Windows 10, we'll hide the Agent-related commands.
+ *
+ * If we can't detect the Windows version because the compiler was too old,
+ * we'll enable the agent-related commands just in case. Worst case they just
+ * don't work.
+ */
+#ifdef NT
+#ifndef __WATCOMC__
+#if !defined(_MSC_VER) || _MSC_VER >= 1920
+/* Visual C++ 2013 (1800) and the Windows 8.1 Platform SDK introduce this header
+ * and though the Win32 APIs it relies on have been around since Windows 2000,
+ * though building with Visual C++ 2017 (1910) fails with unresovled external
+ * symbol so we'll only do this on Visual C++ 2019 or newer */
+#include <versionhelpers.h>
+#define CKWIsWinVerOrGreater(ver) (IsWindowsVersionOrGreater(HIBYTE(ver),LOBYTE(ver),0))
+#else /* _MSC_VER */
+/* Can't detect if we're Windows 10 or greater so just assume we are */
+#define CKWIsWinVerOrGreater(ver) (TRUE)
+#endif /* _MSC_VER */
+#else /* __WATCOMC__ */
+/* Open Watcom doesn't have versionhelpers.h */
+#define CKWIsWinVerOrGreater(ver) (TRUE)
+#endif /* __WATCOMC__ */
+#endif /* NT */
+#endif /* SSH_AGENT_SUPPORT */
 
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
@@ -164,7 +200,7 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
  *      GSSAPI DELEGATE-CREDENTIALS {ON,OFF}
  *          Value is stored in ssh_gsd
  *      HEARTBEAT-INTERVAL interval
- *      TODO: IDENTITY-FILE filename
+ *      IDENTITY-FILE filename
  *      TODO: PRIVILEGED-PORT {ON,OFF}
  *      TODO: QUIET {ON,OFF}
  *          -> This should suppress all printfs
@@ -304,7 +340,13 @@ char *cksshv = "SSH support (LibSSH), 10.0,  18 Apr 2023";
 
 static struct keytab ssh2aut[] = {      /* SET SSH V2 AUTH command table */
         /*{ "external-keyx",      SSHA_EXT, 0 },*/
-        { "gssapi",             SSHA_GSS, 0 },  /* TODO: Hide if not supported */
+
+        { "gssapi",             SSHA_GSS,
+#ifdef SSH_GSSAPI_SUPPORT
+                                            0 },
+#else
+                                            CM_INV },  /* Hidden as not supported */
+#endif /* SSH_GSSAPI_SUPPORT */
         /*{ "hostbased",          SSHA_HOS, 0 },*/
         { "keyboard-interactive",  SSHA_KBD, 0 },
         { "password",           SSHA_PSW, 0 },
@@ -443,10 +485,7 @@ static int nsshkextab = (sizeof(sshkextab) / sizeof(struct keytab)) - 1;
 
 /* Global variables */
 
-int ssh_sock;   /* TODO: get rid of this (unless its needed for connecting
-                 *      through a proxy server?) */
-
-static int                                     /* SET SSH variables */
+static int                                /* SET SSH variables */
     ssh_afw = 0,                          /* agent forwarding */
     ssh_xfw = 0,                          /* x11 forwarding   */
     ssh_prp = SET_OFF,                    /* privileged ports */
@@ -485,7 +524,11 @@ static char                             /* The following are to be malloc'd */
     * ssh2_unh = NULL,                    /* v2 user known hosts file */
     * ssh2_kex = NULL,                    /* Key Exchange Methods */
     * ssh_pxc = NULL,                     /* Proxy command */
+    * ssh_dir = NULL,                     /* SSH Directory */
+    * ssh_sal = NULL,                     /* SSH Agent Location */
     * xxx_dummy = NULL;
+
+static const char **ssh_idf = NULL;                    /* Identity files */
 
 /* The SSH subsystem actually tracks port forwards with a linked list so it has
  * no particular limit on the number it will support, but we need to be able to
@@ -506,60 +549,70 @@ static char                             /* The following are to be malloc'd */
  */
 static ssh_port_forward_t *port_forwards = NULL;
 
+/*
+ * Environment variables settable with ssh_set_environment_variable
+ */
+char * ssh_environment_variables[MAX_ENVIRONMENT_VARIABLES][2] =
+    {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
+
 /* Local variables */
 ssh_client_t *ssh_client = NULL;  /* Interface to the ssh subsystem */
 HANDLE hSSHClientThread = NULL;   /* SSH subsystem thread */
 
 #ifdef SSH_DLL
 
-static void (*p_get_current_terminal_dimensions)(int* rows, int* cols) = NULL;
-const char* (*p_get_current_terminal_type)() = NULL;
-const char* (*p_ssh_get_uid)();
-const char* (*p_ssh_get_pw)();
-int (*p_ssh_get_nodelay_enabled)();
-static int (*p_dodebug)(int,char *,char *,CK_OFF_T)=NULL;
-static int (*p_vscrnprintf)(char *, ...)=NULL;
-static int (*p_uq_txt)(char *,char *,int,char **,char *,int,char *,int) = NULL;
-static int (*p_uq_mtxt) (char *,char **,int,struct txtbox[]) = NULL;
-int (*p_uq_ok)(char *,char *,int,char **,int) = NULL;
-int (*p_uq_file)(char *,char *,int,char **,char *,char *,int) = NULL;
-int (*p_zmkdir)(char *) = NULL;
-int (*p_ckmakxmsg)(char * buf, int len, char *s1, char *s2, char *s3,
-        char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
-        char *s10, char *s11, char *s12) = NULL;
-char* (*p_whoami)() = NULL;
-char* (*p_GetHomePath)() = NULL;
-char* (*p_GetHomeDrive)() = NULL;
-int (*p_ckstrncpy)(char * dest, const char * src, int len) = NULL;
-int (*p_debug_logging)() = NULL;
-unsigned char* (*p_get_display)() = NULL;
-int (*p_parse_displayname)(char *displayname, int *familyp, char **hostp,
-                        int *dpynump, int *scrnump, char **restp) = NULL;
+/* define callback function pointers */
+static get_current_terminal_dimensions_callback *callbackp_get_current_terminal_dimensions = NULL;
+static get_current_terminal_type_callback   *callbackp_get_current_terminal_type = NULL;
+static ssh_get_uid_callback                 *callbackp_ssh_get_uid = NULL;
+static ssh_get_pw_callback                  *callbackp_ssh_get_pw = NULL;
+static ssh_get_nodelay_enabled_callback     *callbackp_ssh_get_nodelay_enabled = NULL;
+static ssh_open_socket_callback             *callbackp_ssh_open_socket = NULL;
+static dodebug_callback                     *callbackp_dodebug = NULL;
+static scrnprint_callback                   *callbackp_scrnprint = NULL;
+static uq_txt_callback                      *callbackp_uq_txt = NULL;
+static uq_mtxt_callback                     *callbackp_uq_mtxt = NULL;
+static uq_ok_callback                       *callbackp_uq_ok = NULL;
+static uq_file_callback                     *callbackp_uq_file = NULL;
+static zmkdir_callback                      *callbackp_zmkdir = NULL;
+static ckmakxmsg_callback                   *callbackp_ckmakxmsg = NULL;
+static whoami_callback                      *callbackp_whoami = NULL;
+static GetAppData_callback                  *callbackp_GetAppData = NULL;
+static GetHomePath_callback                 *callbackp_GetHomePath = NULL;
+static GetHomeDrive_callback                *callbackp_GetHomeDrive = NULL;
+static ckstrncpy_callback                   *callbackp_ckstrncpy = NULL;
+static debug_logging_callback               *callbackp_debug_logging = NULL;
+static get_display_callback                 *callbackp_get_display = NULL;
+static parse_displayname_callback           *callbackp_parse_displayname = NULL;
 
 void get_current_terminal_dimensions(int* rows, int* cols) {
-    p_get_current_terminal_dimensions(rows, cols);
+    callbackp_get_current_terminal_dimensions(rows, cols);
 }
 
-const char* get_current_terminal_type() {
-    return p_get_current_terminal_type();
+const char* get_current_terminal_type(void) {
+    return callbackp_get_current_terminal_type();
 }
 
-const char* ssh_get_uid() {
-    return p_ssh_get_uid();
+const char* ssh_get_uid(void) {
+    return callbackp_ssh_get_uid();
 }
 
-const char* ssh_get_pw() {
-    return p_ssh_get_pw();
+const char* ssh_get_pw(void) {
+    return callbackp_ssh_get_pw();
 }
 
-int ssh_get_nodelay_enabled() {
-    return p_ssh_get_nodelay_enabled();
+int ssh_get_nodelay_enabled(void) {
+    return callbackp_ssh_get_nodelay_enabled();
+}
+
+SOCKET ssh_open_socket(char* host, char* port) {
+    return callbackp_ssh_open_socket(host, port);
 }
 
 int dodebug(int flag, char * s1, char * s2, CK_OFF_T n)
 {
-    if ( p_dodebug )
-        return(p_dodebug(flag,s1,s2,n));
+    if ( callbackp_dodebug )
+        return(callbackp_dodebug(flag,s1,s2,n));
     else
         return(-1);
 }
@@ -578,71 +631,364 @@ int Vscrnprintf(const char * format, ...) {
 #endif /* NT */
     va_end(ap);
 
-    if ( p_vscrnprintf )
-        return(p_vscrnprintf(myprtfstr));
+    if ( callbackp_scrnprint )
+        return(callbackp_scrnprint(myprtfstr));
     else
         return(-1);
 }
 
 int uq_txt(char * preface, char * prompt, int echo, char ** help, char * buf,
        int buflen, char *dflt, int timer) {
-    return p_uq_txt(preface, prompt, echo, help, buf, buflen, dflt, timer);
+    return callbackp_uq_txt(preface, prompt, echo, help, buf, buflen, dflt, timer);
 }
 
 int uq_mtxt(char * preface,char **help, int n, struct txtbox field[]) {
-    return p_uq_mtxt(preface, help, n, field);
+    return callbackp_uq_mtxt(preface, help, n, field);
 }
 
 int uq_ok(char * preface, char * prompt, int mask,char ** help, int dflt) {
-    return p_uq_ok(preface, prompt, mask, help, dflt);
+    return callbackp_uq_ok(preface, prompt, mask, help, dflt);
 }
 
 int uq_file(char * preface, char * fprompt, int fc, char ** help,
 	char * dflt, char * result, int rlength) {
-    return p_uq_file(preface, fprompt, fc, help, dflt, result, rlength);
+    return callbackp_uq_file(preface, fprompt, fc, help, dflt, result, rlength);
 }
 
-
 int zmkdir(char *path) {
-    return p_zmkdir(path);
+    return callbackp_zmkdir(path);
 }
 
 int ckmakxmsg(char * buf, int len, char *s1, char *s2, char *s3,
         char *s4, char *s5, char *s6, char *s7, char *s8, char *s9,
         char *s10, char *s11, char *s12) {
-    return p_ckmakxmsg(buf, len, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
+    return callbackp_ckmakxmsg(buf, len, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
                        s12);
 }
 
-char* whoami() {
-    return p_whoami();
+char* whoami(void) {
+    return callbackp_whoami();
 }
 
-char* GetHomePath() {
-    return p_GetHomePath();
+char* GetAppData(int common) {
+    return callbackp_GetAppData(common);
 }
 
-char* GetHomeDrive() {
-    return p_GetHomeDrive();
+char* GetHomePath(void) {
+    return callbackp_GetHomePath();
+}
+
+char* GetHomeDrive(void) {
+    return callbackp_GetHomeDrive();
 }
 
 int ckstrncpy(char * dest, const char * src, int len) {
-    return p_ckstrncpy(dest, src, len);
+    return callbackp_ckstrncpy(dest, src, len);
 }
 
-int debug_logging() {
-    return p_debug_logging();
+int debug_logging(void) {
+    return callbackp_debug_logging();
 }
 
-unsigned char* get_display() {
-    return p_get_display();
+unsigned char* get_display(void) {
+    return callbackp_get_display();
 }
 
 int parse_displayname(char *displayname, int *familyp, char **hostp,
                         int *dpynump, int *scrnump, char **restp) {
-    return p_parse_displayname(displayname, familyp, hostp,
+    return callbackp_parse_displayname(displayname, familyp, hostp,
                                dpynump, scrnump, restp);
 }
+
+#ifdef SSH_DLL_CALLCONV
+
+/* define prototypes for DLL functions */
+static ssh_set_iparam_dllfunc               dllfunc_ssh_set_iparam;
+static ssh_get_iparam_dllfunc               dllfunc_ssh_get_iparam;
+static ssh_set_sparam_dllfunc               dllfunc_ssh_set_sparam;
+static ssh_get_sparam_dllfunc               dllfunc_ssh_get_sparam;
+static ssh_set_identity_files_dllfunc       dllfunc_ssh_set_identity_files;
+static ssh_get_socket_dllfunc               dllfunc_ssh_get_socket;
+static ssh_open_dllfunc                     dllfunc_ssh_open;
+static ssh_clos_dllfunc                     dllfunc_ssh_clos;
+static ssh_tchk_dllfunc                     dllfunc_ssh_tchk;
+static ssh_flui_dllfunc                     dllfunc_ssh_flui;
+static ssh_break_dllfunc                    dllfunc_ssh_break;
+static ssh_inc_dllfunc                      dllfunc_ssh_inc;
+static ssh_xin_dllfunc                      dllfunc_ssh_xin;
+static ssh_toc_dllfunc                      dllfunc_ssh_toc;
+static ssh_tol_dllfunc                      dllfunc_ssh_tol;
+static ssh_snaws_dllfunc                    dllfunc_ssh_snaws;
+static ssh_proto_ver_dllfunc                dllfunc_ssh_proto_ver;
+static ssh_impl_ver_dllfunc                 dllfunc_ssh_impl_ver;
+static sshkey_create_dllfunc                dllfunc_sshkey_create;
+static sshkey_display_fingerprint_dllfunc   dllfunc_sshkey_display_fingerprint;
+static sshkey_display_public_dllfunc        dllfunc_sshkey_display_public;
+static sshkey_display_public_as_ssh2_dllfunc dllfunc_sshkey_display_public_as_ssh2;
+static sshkey_change_passphrase_dllfunc     dllfunc_sshkey_change_passphrase;
+static ssh_fwd_remote_port_dllfunc          dllfunc_ssh_fwd_remote_port;
+static ssh_fwd_local_port_dllfunc           dllfunc_ssh_fwd_local_port;
+static ssh_fwd_clear_remote_ports_dllfunc   dllfunc_ssh_fwd_clear_remote_ports;
+static ssh_fwd_clear_local_ports_dllfunc    dllfunc_ssh_fwd_clear_local_ports;
+static ssh_fwd_remove_remote_port_dllfunc   dllfunc_ssh_fwd_remove_remote_port;
+static ssh_fwd_remove_local_port_dllfunc    dllfunc_ssh_fwd_remove_local_port;
+static ssh_fwd_get_ports_dllfunc            dllfunc_ssh_fwd_get_ports;
+static sshkey_v1_change_comment_dllfunc     dllfunc_sshkey_v1_change_comment;
+static sshkey_default_file_dllfunc          dllfunc_sshkey_default_file;
+static ssh_v2_rekey_dllfunc                 dllfunc_ssh_v2_rekey;
+static ssh_agent_delete_file_dllfunc        dllfunc_ssh_agent_delete_file;
+static ssh_agent_delete_all_dllfunc         dllfunc_ssh_agent_delete_all;
+static ssh_agent_add_file_dllfunc           dllfunc_ssh_agent_add_file;
+static ssh_agent_list_identities_dllfunc    dllfunc_ssh_agent_list_identities;
+static ssh_set_environment_variable_dllfunc dllfunc_ssh_set_environment_variable;
+static ssh_clear_environment_variables_dllfunc dllfunc_ssh_clear_environment_variables;
+static ssh_unload_dllfunc                   dllfunc_ssh_unload;
+static ssh_dll_ver_dllfunc                  dllfunc_ssh_dll_ver;
+static ssh_get_keytab_dllfunc               dllfunc_ssh_get_keytab;
+static ssh_feature_supported_dllfunc        dllfunc_ssh_feature_supported;
+static ssh_get_set_help_dllfunc             dllfunc_ssh_get_set_help;
+static ssh_get_help_dllfunc                 dllfunc_ssh_get_help;
+
+/* calling convention layer for DLL functions on DLL side */
+static int CKSSHAPI dllfunc_ssh_set_iparam(int param, int value) {
+    return ssh_set_iparam(param, value);
+}
+
+static int CKSSHAPI dllfunc_ssh_get_iparam(int param) {
+    return ssh_get_iparam(param);
+}
+
+static int CKSSHAPI dllfunc_ssh_set_sparam(int param, const char* value) {
+    return ssh_set_sparam(param, value);
+}
+
+static const char* CKSSHAPI dllfunc_ssh_get_sparam(int param) {
+    return ssh_get_sparam(param);
+}
+
+static int CKSSHAPI dllfunc_ssh_set_identity_files(const char** identity_files) {
+    return ssh_set_identity_files(identity_files);
+}
+
+static int CKSSHAPI dllfunc_ssh_get_socket(void) {
+    return ssh_get_socket();
+}
+
+static int CKSSHAPI dllfunc_ssh_open(void) {
+    return ssh_open();
+}
+
+static int CKSSHAPI dllfunc_ssh_clos(void) {
+    return ssh_clos();
+}
+
+static int CKSSHAPI dllfunc_ssh_tchk(void) {
+    return ssh_tchk();
+}
+
+static int CKSSHAPI dllfunc_ssh_flui(void) {
+    return ssh_flui();
+}
+
+static int CKSSHAPI dllfunc_ssh_break(void) {
+    return ssh_break();
+}
+
+static int CKSSHAPI dllfunc_ssh_inc(int timeout) {
+    return ssh_inc(timeout);
+}
+
+static int CKSSHAPI dllfunc_ssh_xin(int count, char * buffer) {
+    return ssh_xin(count, buffer);
+}
+
+static int CKSSHAPI dllfunc_ssh_toc(int c) {
+    return ssh_toc(c);
+}
+
+static int CKSSHAPI dllfunc_ssh_tol(char * buffer, int count) {
+    return ssh_tol(buffer, count);
+}
+
+static int CKSSHAPI dllfunc_ssh_snaws(void) {
+    return ssh_snaws();
+}
+
+static const char * CKSSHAPI dllfunc_ssh_proto_ver(void) {
+    return ssh_proto_ver();
+}
+
+static const char * CKSSHAPI dllfunc_ssh_impl_ver(void) {
+    return ssh_impl_ver();
+}
+
+static int CKSSHAPI dllfunc_sshkey_create(char * filename, int bits, char * pp,
+                             int type, char * cmd_comment) {
+    return sshkey_create(filename, bits, pp, type, cmd_comment);
+}
+
+static int CKSSHAPI dllfunc_sshkey_display_fingerprint(char * filename, int babble) {
+    return sshkey_display_fingerprint(filename, babble);
+}
+
+static int CKSSHAPI dllfunc_sshkey_display_public(char * filename, char *identity_passphrase) {
+    return sshkey_display_public(filename, identity_passphrase);
+}
+
+static int CKSSHAPI dllfunc_sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
+    return sshkey_display_public_as_ssh2(filename, identity_passphrase);
+}
+
+static int CKSSHAPI dllfunc_sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
+    return sshkey_change_passphrase(filename, oldpp, newpp);
+}
+
+static int CKSSHAPI dllfunc_ssh_fwd_remote_port(char* address, int port, char * host, int host_port, BOOL apply) {
+    return ssh_fwd_remote_port(address, port, host, host_port, apply);
+}
+
+static int CKSSHAPI dllfunc_ssh_fwd_local_port(char* address, int port,char * host, int host_port, BOOL apply) {
+    return ssh_fwd_local_port(address, port, host, host_port, apply);
+}
+
+static int CKSSHAPI dllfunc_ssh_fwd_clear_remote_ports(BOOL apply) {
+    return ssh_fwd_clear_remote_ports(apply);
+}
+
+static int CKSSHAPI dllfunc_ssh_fwd_clear_local_ports(BOOL apply) {
+    return ssh_fwd_clear_local_ports(apply);
+}
+
+static int CKSSHAPI dllfunc_ssh_fwd_remove_remote_port(int port, BOOL apply) {
+    return ssh_fwd_remove_remote_port(port, apply);
+}
+
+static int CKSSHAPI dllfunc_ssh_fwd_remove_local_port(int port, BOOL apply) {
+    return ssh_fwd_remove_local_port(port, apply);
+}
+
+static const ssh_port_forward_t* CKSSHAPI dllfunc_ssh_fwd_get_ports(void) {
+    return ssh_fwd_get_ports();
+}
+
+#ifdef SSHTEST
+static int CKSSHAPI dllfunc_sshkey_v1_change_comment(char * filename, char * comment, char * pp) {
+    return sshkey_v1_change_comment(filename, comment, pp);
+}
+#endif /* SSHTEST */
+
+#ifdef COMMENT
+static char * CKSSHAPI dllfunc_sshkey_default_file(int a) {
+    return sshkey_default_file(a);
+}
+#endif /* COMMENT */
+
+static void CKSSHAPI dllfunc_ssh_v2_rekey(void) {
+    ssh_v2_rekey();
+}
+
+static int CKSSHAPI dllfunc_ssh_agent_delete_file(const char *filename) {
+    return ssh_agent_delete_file(filename);
+}
+
+static int CKSSHAPI dllfunc_ssh_agent_delete_all(void) {
+    return ssh_agent_delete_all();
+}
+
+static int CKSSHAPI dllfunc_ssh_agent_add_file(const char *filename) {
+    return ssh_agent_add_file(filename);
+}
+
+static int CKSSHAPI dllfunc_ssh_agent_list_identities(int do_fp) {
+    return ssh_agent_list_identities(do_fp);
+}
+
+static int CKSSHAPI dllfunc_ssh_set_environment_variable(const char * name, const char * value) {
+    return ssh_set_environment_variable(name, value);
+}
+
+static int CKSSHAPI dllfunc_ssh_clear_environment_variables(void) {
+    return ssh_clear_environment_variables();
+}
+
+static void CKSSHAPI dllfunc_ssh_unload(void) {
+    ssh_unload();
+}
+
+static const char * CKSSHAPI dllfunc_ssh_dll_ver(void) {
+    return ssh_dll_ver();
+}
+
+static ktab_ret CKSSHAPI dllfunc_ssh_get_keytab(int keytab_id) {
+    return ssh_get_keytab(keytab_id);
+}
+
+static int CKSSHAPI dllfunc_ssh_feature_supported(int feature_id) {
+    return ssh_feature_supported(feature_id);
+}
+
+static const char ** CKSSHAPI dllfunc_ssh_get_set_help(void) {
+    return ssh_get_set_help();
+}
+
+static const char ** CKSSHAPI dllfunc_ssh_get_help(void) {
+    return ssh_get_help();
+}
+
+#else /* SSH_DLL_CALLCONV */
+
+/* directly use DLL functions without calling convention layer */
+#define dllfunc_ssh_set_iparam              ssh_set_iparam
+#define dllfunc_ssh_get_iparam              ssh_get_iparam
+#define dllfunc_ssh_set_sparam              ssh_set_sparam
+#define dllfunc_ssh_get_sparam              ssh_get_sparam
+#define dllfunc_ssh_set_identity_files      ssh_set_identity_files
+#define dllfunc_ssh_get_socket              ssh_get_socket
+#define dllfunc_ssh_open                    ssh_open
+#define dllfunc_ssh_clos                    ssh_clos
+#define dllfunc_ssh_tchk                    ssh_tchk
+#define dllfunc_ssh_flui                    ssh_flui
+#define dllfunc_ssh_break                   ssh_break
+#define dllfunc_ssh_inc                     ssh_inc
+#define dllfunc_ssh_xin                     ssh_xin
+#define dllfunc_ssh_toc                     ssh_toc
+#define dllfunc_ssh_tol                     ssh_tol
+#define dllfunc_ssh_snaws                   ssh_snaws
+#define dllfunc_ssh_proto_ver               ssh_proto_ver
+#define dllfunc_ssh_impl_ver                ssh_impl_ver
+#define dllfunc_sshkey_create               sshkey_create
+#define dllfunc_sshkey_display_fingerprint  sshkey_display_fingerprint
+#define dllfunc_sshkey_display_public       sshkey_display_public
+#define dllfunc_sshkey_display_public_as_ssh2 sshkey_display_public_as_ssh2
+#define dllfunc_sshkey_change_passphrase    sshkey_change_passphrase
+#define dllfunc_ssh_fwd_remote_port         ssh_fwd_remote_port
+#define dllfunc_ssh_fwd_local_port          ssh_fwd_local_port
+#define dllfunc_ssh_fwd_clear_remote_ports  ssh_fwd_clear_remote_ports
+#define dllfunc_ssh_fwd_clear_local_ports   ssh_fwd_clear_local_ports
+#define dllfunc_ssh_fwd_remove_remote_port  ssh_fwd_remove_remote_port
+#define dllfunc_ssh_fwd_remove_local_port   ssh_fwd_remove_local_port
+#define dllfunc_ssh_fwd_get_ports           ssh_fwd_get_ports
+#ifdef SSHTEST
+#define dllfunc_sshkey_v1_change_comment    sshkey_v1_change_comment
+#endif /* SSHTEST */
+#ifdef COMMENT
+#define dllfunc_sshkey_default_file         sshkey_default_file
+#endif /* COMMENT */
+#define dllfunc_ssh_v2_rekey                ssh_v2_rekey
+#define dllfunc_ssh_agent_delete_file       ssh_agent_delete_file
+#define dllfunc_ssh_agent_delete_all        ssh_agent_delete_all
+#define dllfunc_ssh_agent_add_file          ssh_agent_add_file
+#define dllfunc_ssh_agent_list_identities   ssh_agent_list_identities
+#define dllfunc_ssh_set_environment_variable ssh_set_environment_variable
+#define dllfunc_ssh_clear_environment_variables ssh_clear_environment_variables
+#define dllfunc_ssh_unload                  ssh_unload
+#define dllfunc_ssh_dll_ver                 ssh_dll_ver
+#define dllfunc_ssh_get_keytab              ssh_get_keytab
+#define dllfunc_ssh_feature_supported       ssh_feature_supported
+#define dllfunc_ssh_get_set_help            ssh_get_set_help
+#define dllfunc_ssh_get_help                ssh_get_help
+
+#endif /* SSH_DLL_CALLCONV */
 
 #undef malloc
 #undef realloc
@@ -716,6 +1062,9 @@ kstrdup(const char *str)
     return cp;
 }
 
+#define ckmakmsg(buf,len,s1,s2,s3,s4) ckmakxmsg(buf, len, s1, s2, s3, s4, \
+            NULL, NULL,NULL, NULL, NULL, NULL, NULL, NULL)
+
 /*
  * Quick macro to check if a function pointer is null and, if it is, log
  * the event and return an error.
@@ -725,102 +1074,122 @@ kstrdup(const char *str)
     debug(F110, "ERROR: Required function pointer is null", STR(fp), 0); \
     return -1;}
 
-int ssh_dll_init(ssh_init_parameters_t *params) {
+/** Called by Kermit 95 when the DLL is loaded. This should make
+ * the DLL ready for use by storing copies of all the needed
+ * callback functions supplied by Kermit 95, and supplying to
+ * Kermit 95 via the install_dllfunc all of the SSH functions
+ * this DLL provides.
+ * @param params SSH initialisation parameters from Kermit 95
+ */
+int CKSSHDLLENTRY ssh_dll_init(ssh_dll_init_data *init) {
     /* Store pointers to helper functions provided by K95 */
-    p_get_current_terminal_dimensions = params->p_get_current_terminal_dimensions;
-    CHECK_FP(p_get_current_terminal_dimensions)
-    p_get_current_terminal_type = params->p_get_current_terminal_type;
-    CHECK_FP(p_get_current_terminal_type)
-    p_ssh_get_uid = params->p_ssh_get_uid;
-    CHECK_FP(p_ssh_get_uid)
-    p_ssh_get_pw = params->p_ssh_get_pw;
-    CHECK_FP(p_ssh_get_pw)
-    p_ssh_get_nodelay_enabled = params->p_ssh_get_nodelay_enabled;
-    CHECK_FP(p_ssh_get_nodelay_enabled)
-    p_dodebug = params->p_dodebug;
-    CHECK_FP(p_dodebug)
-    p_vscrnprintf = params->p_vscrnprintf;
-    CHECK_FP(p_vscrnprintf)
-    p_uq_txt = params->p_uq_txt;
-    CHECK_FP(p_uq_txt)
-    p_uq_mtxt = params->p_uq_mtxt;
-    CHECK_FP(p_uq_mtxt)
-    p_uq_ok = params->p_uq_ok;
-    CHECK_FP(p_uq_ok)
-    p_uq_file = params->p_uq_file;
-    CHECK_FP(p_uq_file)
-    p_zmkdir = params->p_zmkdir;
-    CHECK_FP(p_zmkdir)
-    p_ckmakxmsg = params->p_ckmakxmsg;
-    CHECK_FP(p_ckmakxmsg)
-    p_whoami = params->p_whoami;
-    CHECK_FP(p_whoami)
-    p_GetHomePath = params->p_GetHomePath;
-    CHECK_FP(p_GetHomePath)
-    p_GetHomeDrive = params->p_GetHomeDrive;
-    CHECK_FP(p_GetHomeDrive)
-    p_ckstrncpy = params->p_ckstrncpy;
-    CHECK_FP(p_ckstrncpy)
-    p_debug_logging = params->p_debug_logging;
-    CHECK_FP(p_debug_logging)
-    p_get_display = params->p_get_display;
-    CHECK_FP(p_get_display)
-    p_parse_displayname = params->p_parse_displayname;
-    CHECK_FP(p_get_display)
+    callbackp_get_current_terminal_dimensions = init->callbackp_get_current_terminal_dimensions;
+    CHECK_FP(callbackp_get_current_terminal_dimensions)
+    callbackp_get_current_terminal_type = init->callbackp_get_current_terminal_type;
+    CHECK_FP(callbackp_get_current_terminal_type)
+    callbackp_ssh_get_uid = init->callbackp_ssh_get_uid;
+    CHECK_FP(callbackp_ssh_get_uid)
+    callbackp_ssh_get_pw = init->callbackp_ssh_get_pw;
+    CHECK_FP(callbackp_ssh_get_pw)
+    callbackp_ssh_get_nodelay_enabled = init->callbackp_ssh_get_nodelay_enabled;
+    CHECK_FP(callbackp_ssh_get_nodelay_enabled)
+    callbackp_ssh_open_socket = init->callbackp_ssh_open_socket;
+    CHECK_FP(callbackp_ssh_open_socket)
+    callbackp_dodebug = init->callbackp_dodebug;
+    CHECK_FP(callbackp_dodebug)
+    callbackp_scrnprint = init->callbackp_scrnprint;
+    CHECK_FP(callbackp_scrnprint)
+    callbackp_uq_txt = init->callbackp_uq_txt;
+    CHECK_FP(callbackp_uq_txt)
+    callbackp_uq_mtxt = init->callbackp_uq_mtxt;
+    CHECK_FP(callbackp_uq_mtxt)
+    callbackp_uq_ok = init->callbackp_uq_ok;
+    CHECK_FP(callbackp_uq_ok)
+    callbackp_uq_file = init->callbackp_uq_file;
+    CHECK_FP(callbackp_uq_file)
+    callbackp_zmkdir = init->callbackp_zmkdir;
+    CHECK_FP(callbackp_zmkdir)
+    callbackp_ckmakxmsg = init->callbackp_ckmakxmsg;
+    CHECK_FP(callbackp_ckmakxmsg)
+    callbackp_whoami = init->callbackp_whoami;
+    CHECK_FP(callbackp_whoami)
+    callbackp_GetAppData = init->callbackp_GetAppData;
+    CHECK_FP(callbackp_GetAppData)
+    callbackp_GetHomePath = init->callbackp_GetHomePath;
+    CHECK_FP(callbackp_GetHomePath)
+    callbackp_GetHomeDrive = init->callbackp_GetHomeDrive;
+    CHECK_FP(callbackp_GetHomeDrive)
+    callbackp_ckstrncpy = init->callbackp_ckstrncpy;
+    CHECK_FP(callbackp_ckstrncpy)
+    callbackp_debug_logging = init->callbackp_debug_logging;
+    CHECK_FP(callbackp_debug_logging)
+    callbackp_get_display = init->callbackp_get_display;
+    CHECK_FP(callbackp_get_display)
+    callbackp_parse_displayname = init->callbackp_parse_displayname;
+    CHECK_FP(callbackp_parse_displayname)
 
-    /* And then supply pointers to all our functions to K95 */
-    params->p_install_funcs("ssh_set_iparam", ssh_set_iparam);
-    params->p_install_funcs("ssh_get_iparam", ssh_get_iparam);
-    params->p_install_funcs("ssh_set_sparam", ssh_set_sparam);
-    params->p_install_funcs("ssh_get_sparam", ssh_get_sparam);
-    params->p_install_funcs("ssh_open", ssh_open);
-    params->p_install_funcs("ssh_clos", ssh_clos);
-    params->p_install_funcs("ssh_tchk", ssh_tchk);
-    params->p_install_funcs("ssh_flui", ssh_flui);
-    params->p_install_funcs("ssh_break", ssh_break);
-    params->p_install_funcs("ssh_inc", ssh_inc);
-    params->p_install_funcs("ssh_xin", ssh_xin);
-    params->p_install_funcs("ssh_toc", ssh_toc);
-    params->p_install_funcs("ssh_tol", ssh_tol);
-    params->p_install_funcs("ssh_snaws", ssh_snaws);
-    params->p_install_funcs("ssh_proto_ver", ssh_proto_ver);
-    params->p_install_funcs("ssh_impl_ver", ssh_impl_ver);
-    params->p_install_funcs("sshkey_create", sshkey_create);
-    params->p_install_funcs("sshkey_display_fingerprint", sshkey_display_fingerprint);
-    params->p_install_funcs("sshkey_display_public", sshkey_display_public);
-    params->p_install_funcs("sshkey_display_public_as_ssh2", sshkey_display_public_as_ssh2);
-    params->p_install_funcs("sshkey_change_passphrase", sshkey_change_passphrase);
-    params->p_install_funcs("ssh_fwd_remote_port", ssh_fwd_remote_port);
-    params->p_install_funcs("ssh_fwd_local_port", ssh_fwd_local_port);
-    params->p_install_funcs("ssh_fwd_clear_remote_ports", ssh_fwd_clear_remote_ports);
-    params->p_install_funcs("ssh_fwd_clear_local_ports", ssh_fwd_clear_local_ports);
-    params->p_install_funcs("ssh_fwd_remove_remote_port", ssh_fwd_remove_remote_port);
-    params->p_install_funcs("ssh_fwd_remove_local_port", ssh_fwd_remove_local_port);
-    params->p_install_funcs("ssh_fwd_get_ports", ssh_fwd_get_ports);
+    init->callbackp_install_dllfunc("ssh_set_iparam", dllfunc_ssh_set_iparam);
+    init->callbackp_install_dllfunc("ssh_get_iparam", dllfunc_ssh_get_iparam);
+    init->callbackp_install_dllfunc("ssh_set_sparam", dllfunc_ssh_set_sparam);
+    init->callbackp_install_dllfunc("ssh_get_sparam", dllfunc_ssh_get_sparam);
+    init->callbackp_install_dllfunc("ssh_set_identity_files", dllfunc_ssh_set_identity_files);
+    init->callbackp_install_dllfunc("ssh_get_socket", dllfunc_ssh_get_socket);
+    init->callbackp_install_dllfunc("ssh_open", dllfunc_ssh_open);
+    init->callbackp_install_dllfunc("ssh_clos", dllfunc_ssh_clos);
+    init->callbackp_install_dllfunc("ssh_tchk", dllfunc_ssh_tchk);
+    init->callbackp_install_dllfunc("ssh_flui", dllfunc_ssh_flui);
+    init->callbackp_install_dllfunc("ssh_break", dllfunc_ssh_break);
+    init->callbackp_install_dllfunc("ssh_inc", dllfunc_ssh_inc);
+    init->callbackp_install_dllfunc("ssh_xin", dllfunc_ssh_xin);
+    init->callbackp_install_dllfunc("ssh_toc", dllfunc_ssh_toc);
+    init->callbackp_install_dllfunc("ssh_tol", dllfunc_ssh_tol);
+    init->callbackp_install_dllfunc("ssh_snaws", dllfunc_ssh_snaws);
+    init->callbackp_install_dllfunc("ssh_proto_ver", dllfunc_ssh_proto_ver);
+    init->callbackp_install_dllfunc("ssh_impl_ver", dllfunc_ssh_impl_ver);
+
+    /* These functions are all optional */
+    init->callbackp_install_dllfunc("sshkey_create", dllfunc_sshkey_create);
+    init->callbackp_install_dllfunc("sshkey_display_fingerprint", dllfunc_sshkey_display_fingerprint);
+    init->callbackp_install_dllfunc("sshkey_display_public", dllfunc_sshkey_display_public);
+    init->callbackp_install_dllfunc("sshkey_display_public_as_ssh2", dllfunc_sshkey_display_public_as_ssh2);
+    init->callbackp_install_dllfunc("sshkey_change_passphrase", dllfunc_sshkey_change_passphrase);
+    init->callbackp_install_dllfunc("ssh_fwd_remote_port", dllfunc_ssh_fwd_remote_port);
+    init->callbackp_install_dllfunc("ssh_fwd_local_port", dllfunc_ssh_fwd_local_port);
+    init->callbackp_install_dllfunc("ssh_fwd_clear_remote_ports", dllfunc_ssh_fwd_clear_remote_ports);
+    init->callbackp_install_dllfunc("ssh_fwd_clear_local_ports", dllfunc_ssh_fwd_clear_local_ports);
+    init->callbackp_install_dllfunc("ssh_fwd_remove_remote_port", dllfunc_ssh_fwd_remove_remote_port);
+    init->callbackp_install_dllfunc("ssh_fwd_remove_local_port", dllfunc_ssh_fwd_remove_local_port);
+    init->callbackp_install_dllfunc("ssh_fwd_get_ports", dllfunc_ssh_fwd_get_ports);
 #ifdef SSHTEST
-    params->p_install_funcs("sshkey_v1_change_comment", sshkey_v1_change_comment); /* TODO */
+    init->callbackp_install_dllfunc("sshkey_v1_change_comment", dllfunc_sshkey_v1_change_comment); /* TODO */
 #endif
-    /* params->p_install_funcs("sshkey_default_file", sshkey_default_file); */ /* TODO */
-    params->p_install_funcs("ssh_v2_rekey", ssh_v2_rekey); /* TODO */
-    params->p_install_funcs("ssh_agent_delete_file", ssh_agent_delete_file); /* TODO */
-    params->p_install_funcs("ssh_agent_delete_all", ssh_agent_delete_all); /* TODO */
-    params->p_install_funcs("ssh_agent_add_file", ssh_agent_add_file); /* TODO */
-    params->p_install_funcs("ssh_agent_list_identities", ssh_agent_list_identities); /* TODO */
 #ifdef COMMENT
-    /* Not supported: */
-    params->p_install_funcs("ssh_unload", ssh_unload);
+    init->callbackp_install_dllfunc("sshkey_default_file", dllfunc_sshkey_default_file); */ /* TODO */
 #endif /* COMMENT */
-    params->p_install_funcs("ssh_dll_ver", ssh_dll_ver);
-    params->p_install_funcs("ssh_get_keytab", ssh_get_keytab);
-    params->p_install_funcs("ssh_feature_supported", ssh_feature_supported);
+    init->callbackp_install_dllfunc("ssh_v2_rekey", dllfunc_ssh_v2_rekey); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_delete_file", dllfunc_ssh_agent_delete_file); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_delete_all", dllfunc_ssh_agent_delete_all); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_add_file", dllfunc_ssh_agent_add_file); /* TODO */
+    init->callbackp_install_dllfunc("ssh_agent_list_identities", dllfunc_ssh_agent_list_identities); /* TODO */
+    init->callbackp_install_dllfunc("ssh_set_environment_variable", dllfunc_ssh_set_environment_variable);
+    init->callbackp_install_dllfunc("ssh_clear_environment_variables", dllfunc_ssh_clear_environment_variables);
+#ifdef COMMENT
+    /* Not supported */
+    init->callbackp_install_dllfunc("ssh_unload", dllfunc_ssh_unload);
+#endif /* COMMENT */
+    init->callbackp_install_dllfunc("ssh_dll_ver", dllfunc_ssh_dll_ver);
+    init->callbackp_install_dllfunc("ssh_get_keytab", dllfunc_ssh_get_keytab);
+    init->callbackp_install_dllfunc("ssh_feature_supported", dllfunc_ssh_feature_supported);
+    init->callbackp_install_dllfunc("ssh_get_set_help", dllfunc_ssh_get_set_help);
+    init->callbackp_install_dllfunc("ssh_get_help", dllfunc_ssh_get_help);
+
+    /* And lastly do any other initialisation work that is independent of
+     * whether we're a DLL or not */
+    ssh_initialise();
 
     return 0;
 }
-#else
-/* These live in ckossh.c */
-unsigned char* get_display();
-int parse_displayname(char *displayname, int *familyp, char **hostp,
-                      int *dpynump, int *scrnump, char **restp);
+
 #endif /* SSH_DLL */
 
 int ssh_set_iparam(int param, int value) {
@@ -991,6 +1360,12 @@ int ssh_set_sparam(int param, const char* value) {
         case SSH_SPARAM_PXC:
             copy_set_sparam(&ssh_pxc, value);
             break;
+        case SSH_SPARAM_DIR:
+            copy_set_sparam(&ssh_dir, value);
+            break;
+        case SSH_SPARAM_AGENTLOC:
+            copy_set_sparam(&ssh_sal, value);
+            break;
         default:
             return 1;
     }
@@ -1029,10 +1404,38 @@ const char* ssh_get_sparam(int param) {
             return ssh2_kex;
         case SSH_SPARAM_PXC:
             return ssh_pxc;
+        case SSH_SPARAM_DIR:
+            return ssh_dir;
         default:
             return NULL;
     }
     return NULL;
+}
+
+/** Set the list of SSH identity files to use for authentication
+ *
+ * @param identity_files List of identity files, null terminated.
+ * @returns 0 on success, -1 if not supported
+ */
+int ssh_set_identity_files(const char** identity_files) {
+    /* TODO: We really *should* make a copy of this rather than
+     *      just holding on to the pointer given to us by K95.
+     *      Currently its "ok" as the array of identity files is
+     *      statically allocated by K95, and there is little
+     *      reason for this to change in the future.
+     */
+    ssh_idf = identity_files;
+    return 0;
+}
+
+/** This is called by ssh_dll_init when the DLL is loaded (SSH_DLL defined)
+ * or directly by K95 on application startup (SSH_DLL not defined) at the
+ * point where the DLL would normally have been loaded.
+ *
+ * Here we can set defaults.
+ */
+void ssh_initialise(void) {
+
 }
 
 
@@ -1106,12 +1509,23 @@ static void debug_params(const char* function) {
 }
 
 
+/** Get the socket currently in use by the SSH client.
+ *
+ * @returns Socket for the current SSH connection, or -1 if not implemented or
+ *      no active connection
+ */
+int ssh_get_socket(void) {
+
+    /* TODO: Get the libssh socket */
+
+    return -1;
+}
 
 /** Checks that the SSH thread is alive and has not reported an error.
  *
  * @return Error status or 0 if everything is ok.
  */
-static int get_ssh_error() {
+static int get_ssh_error(void) {
     int error = SSH_ERR_UNSPECIFIED;
 
     /* If there is no ssh_client instance then the client is absolutely not
@@ -1151,22 +1565,43 @@ static int get_ssh_error() {
     return error;
 }
 
+/* Returns the SSH directory in a new string. The string must be freed by
+ * the caller.
+ *
+ * @returns A new string containing the SSH directory.
+ */
+char* ssh_directory(void) {
+
+    char* dir;
+    if (ssh_dir != NULL) {      /* SSH Directory */
+        dir = _strdup(ssh_dir);
+    } else {
+        dir = malloc(sizeof(char)*MAX_PATH);
+
+        /* \v(appdata)ssh/ */
+        ckmakmsg(dir, MAX_PATH, GetAppData(0), "Kermit 95/", "ssh/", NULL);
+    }
+    return dir;
+}
 
 /** Opens an SSH connection. Connection parameters are passed through global
  * variables
  *
  * @return An error code (0 = success)
  */
-int ssh_open() {
+int ssh_open(void) {
     ssh_parameters_t* parameters;
     char* user = NULL;
     int pty_height, pty_width;
     int rc;
     const char* uidbuf;
+#define NHPATHMAX 1024
+    char *unh = NULL, *gnh = NULL, *dir = NULL;
 
     /* X11 forwarding details */
     int display_number = 0, screen_number = 0;
     char *x11_host = NULL;
+    SOCKET socket = INVALID_SOCKET;
 
     uidbuf = ssh_get_uid();
 
@@ -1185,6 +1620,12 @@ int ssh_open() {
         debug(F100, "Error - host not specified (ssh_hst is null)", "", 0);
         return SSH_ERR_HOST_NOT_SPECIFIED;
     }
+
+    /* Check if K95 wants to supply us with a socket - it may do this if
+     * the user has configured a http proxy. If we receive a socket, we're
+     * responsible for closing it when the connection is done - K95 and
+     * libssh (if we get that far) won't close it for us. */
+    socket = ssh_open_socket(ssh_hst, ssh_prt);
 
     if (strlen(uidbuf) == 0) {
         /* Username is not set - prompt for one */
@@ -1231,6 +1672,8 @@ int ssh_open() {
             rc = ssh_clos();
             if (rc != SSH_ERR_NO_ERROR) {
                 /* Failed to close the existing connection. Can't start a new one.*/
+                if (socket != INVALID_SOCKET) closesocket(socket);
+                if (user) free(user);
                 return rc;
             }
         } else {
@@ -1282,6 +1725,40 @@ int ssh_open() {
         if (rest) free(rest);
     }
 
+    /* Sort out default files and directories */
+    if (ssh2_unh != NULL) {     /* SSHv2 User Known Hosts file */
+        unh = _strdup(ssh2_unh);
+    } else if (ssh_dir == NULL) {
+        /* Set the default user known hosts file to
+         * \v(appdata)ssh/known_hosts2 only if:
+         *      -> The user has not specified the user known hosts file with the
+         *         set ssh v2 user-known-hosts-file
+         *      -> The user has not specified an SSH directory
+         * This is to retain compatibility with Kermit 95 2.1.3 and earlier
+         * which named the SSHv2 UNH file "known_hosts2" and the SSHv1 UNH file
+         * "known_hosts". If the user changes their SSH directory to something
+         * else, we don't need to worry about K95 2.1.3 and earlier named this
+         * file, and we'll just go with "known_hosts" which is what OpenSSH
+         * uses.
+         */
+
+        unh = malloc(sizeof(char)*NHPATHMAX);
+
+        /* \v(appdata) = GetAppData(0) + "Kermit 95/" */
+        ckmakmsg(unh, NHPATHMAX, GetAppData(0), "Kermit 95/", "ssh/", "known_hosts2");
+    }
+
+    if (ssh2_gnh != NULL) {     /* SSHv2 Global Known Hosts file */
+        gnh = _strdup(ssh2_gnh);
+    } else {
+        gnh = malloc(sizeof(char)*NHPATHMAX);
+
+        /* \v(common) = GetAppData(1) + "Kermit 95/" */
+        ckmakmsg(gnh, NHPATHMAX, GetAppData(1), "Kermit 95/", "ssh/", "known_hosts2");
+    }
+
+    dir = ssh_directory();
+
     /* The SSH Subsystem will take ownership of this and handle cleaning it up
      * on disconnect */
     debug(F100, "ssh_open() - construct parameters", "", 0);
@@ -1295,8 +1772,8 @@ int ssh_open() {
             ssh_cfg,  /* Read openssh configuration */
             ssh_gsd,  /* GSSAPI Delegate Credentials */
             ssh_shk,  /* Strict Host Key Checking */
-            ssh2_unh, /* User known hosts file */
-            ssh2_gnh, /* Global known hosts file*/
+            unh,      /* User known hosts file */
+            gnh,      /* Global known hosts file*/
             user,     /* Username */
             ssh_get_pw(), /* Password (if supplied) */
             get_current_terminal_type(),
@@ -1314,10 +1791,19 @@ int ssh_open() {
             ssh_xfw,        /* Forward X11 */
             x11_host,       /* Host to forward X11 too */
             display_number, /* X11 display number */
-            ssh_xal         /* Xauth location */
+            ssh_xal,        /* Xauth location */
+            dir,            /* SSH Dir*/
+            ssh_idf,        /* Identity files */
+            socket,         /* Existing socket to use */
+            ssh_sal,        /* SSH Agent Location */
+            ssh_afw,        /* Enable Agent forwarding? */
+            ssh_environment_variables
             );
 
     if (user) free(user);
+    if (unh) free(unh);
+    if (gnh) free(gnh);
+    if (dir) free(dir);
     if (x11_host) {
         free(x11_host);
         x11_host = NULL;
@@ -1325,6 +1811,7 @@ int ssh_open() {
 
     if (parameters == NULL) {
         debug(F100, "ssh_open() - failed to construct parameters struct", "", 0);
+        if (socket != INVALID_SOCKET) closesocket(socket);
         return SSH_ERR_MALLOC_FAILED;
     }
 
@@ -1336,6 +1823,7 @@ int ssh_open() {
     if (ssh_client == NULL) {
         debug(F100, "ssh_open() - failed to construct client struct", "", 0);
         ssh_parameters_free(parameters);
+        if (socket != INVALID_SOCKET) closesocket(socket);
         return SSH_ERR_MALLOC_FAILED;
     }
 
@@ -1348,7 +1836,7 @@ int ssh_open() {
  *
  * @return  0 on success, < 0 on failure.
  */
-int ssh_clos() {
+int ssh_clos(void) {
     BOOL success;
     DWORD result;
     debug(F100, "ssh_clos()", "", 0);
@@ -1416,7 +1904,7 @@ int ssh_clos() {
  * @return >= 0 indicates number of bytes waiting to be read
  *          < 0 indicates a fatal error and the connection should be closed.
  */
-int ssh_tchk() {
+int ssh_tchk(void) {
     int rc = 0;
 
     if (ssh_client == NULL) {
@@ -1472,7 +1960,7 @@ int ssh_tchk() {
  *
  * @return 0 on success, < 0 on error
  */
-int ssh_flui() {
+int ssh_flui(void) {
     if (ssh_client == NULL) {
         return SSH_ERR_NO_INSTANCE;
     }
@@ -1491,7 +1979,7 @@ int ssh_flui() {
  *
  * @return
  */
-int ssh_break() {
+int ssh_break(void) {
     if (ssh_client == NULL)
         return SSH_ERR_NO_INSTANCE;
 
@@ -1766,7 +2254,7 @@ const char * ssh_errorstr(int error) {
  *
  * @return 0 on success, < 0 on error.
  */
-int ssh_ttvt() {
+int ssh_ttvt(void) {
     /* Just report success here. Returning any kind of error just results
      * in a weird message to the user like
      * "Sorry, Can't condition communication line" which is pretty meaningless
@@ -1780,7 +2268,7 @@ int ssh_ttvt() {
  *
  * @return 0 on success, < 0 otherwise.
  */
-int ssh_ttpkt() {
+int ssh_ttpkt(void) {
     /* Nothing much to do here. Just return an error if we have one. */
     return get_ssh_error();
 }
@@ -1790,18 +2278,18 @@ int ssh_ttpkt() {
  *
  * @return 0 on success, < 0 on failure.
  */
-int ssh_ttres() {
+int ssh_ttres(void) {
     /* Nothing much to do here. Just return an error if we have one. */
     return get_ssh_error();
 }
-#endif
+#endif /* COMMENT */
 
 
 /** Negotiate About Window Size. Let the remote host know the window dimensions
  * and terminal type if these have changed.
  *
  */
-int ssh_snaws() {
+int ssh_snaws(void) {
     int rows, cols;
     debug(F100, "ssh_snaws()", "", 0);
 
@@ -2044,14 +2532,10 @@ int ssh_fwd_remove_local_port(int port, BOOL apply) {
  *
  * @returns List of forwarded ports, or NULL on error or empty list
  */
-const ssh_port_forward_t* ssh_fwd_get_ports() {
+const ssh_port_forward_t* ssh_fwd_get_ports(void) {
 
     return port_forwards;
 }
-
-/* These live in ckoreg.c */
-char* GetHomePath();
-char* GetHomeDrive();
 
 /** Creates an SSH key pair
  *
@@ -2087,7 +2571,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
             ktype = SSH_KEYTYPE_RSA;
             if (bits == 0) bits = 3072;
             if (bits != 1024 && bits != 2048 && bits != 3072 &&
-                    bits != 2048 && bits != 8192) {
+                    bits != 4096 && bits != 8192) {
                 printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
                 return SSH_ERR_UNSPECIFIED;
             }
@@ -2097,7 +2581,7 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
             ktype = SSH_KEYTYPE_RSA1;
             if (bits == 0) bits = 3072;
             if (bits != 1024 && bits != 2048 && bits != 3072 &&
-                bits != 2048 && bits != 8192) {
+                bits != 4096 && bits != 8192) {
                 printf("Invalid key length %d - valid options are: 1024, 2048, 3072, 4096, 8192\n");
                 return SSH_ERR_UNSPECIFIED;
             }
@@ -2161,15 +2645,20 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
         output_filename = _strdup(filename);
     } else {
         char* default_pathname;
+        char* dir;
         output_filename = malloc(MAX_PATH * sizeof(char));
         default_pathname = malloc(MAX_PATH * sizeof(char));
 
-        /* We'll suggest the user save in %USERPROFILE%\.ssh by default as thats
-         * where both C-Kermit and the windows builds of OpenSSH look */
-        snprintf(default_pathname, MAX_PATH, "%s%s.ssh/%s",
-                 GetHomeDrive(), GetHomePath(), default_filename);
+        dir = ssh_directory();
+
+        /* We'll suggest the user save in their ssh directory by default as
+         * that's where K95 looks by default */
+        snprintf(default_pathname, MAX_PATH, "%s%s",
+                 dir, default_filename);
+        free(dir);
+
 #ifdef CK_MKDIR
-        /* Make the .ssh directory if it doesn't already exist */
+        /* Make the ssh directory if it doesn't already exist */
         zmkdir(default_pathname);
 #endif
 
@@ -2245,6 +2734,8 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     rc = ssh_pki_generate(ktype, bits, &key);
     if (rc != SSH_OK) {
         printf("Failed to generate private key\n");
+        free(passphrase);
+        free(output_filename);
         return SSH_ERR_UNSPECIFIED;
     }
 
@@ -2293,6 +2784,26 @@ int sshkey_create(char * filename, int bits, char * pp, int type, char * cmd_com
     return SSH_ERR_NO_ERROR;
 }
 
+/** Gets the default key filename. This will be something like id_rsa
+ * in the SSH directory.
+ *
+ * The returned string must be freed by the caller.
+ *
+ * @return Default SSH key filename. Must be freed by caller.
+ */
+char* default_key_filename(void) {
+    char *default_filename, *dir;
+    dir = ssh_directory();
+    default_filename = malloc(MAX_PATH * sizeof(char));
+
+    /* We'll suggest the user save in their ssh directory by default as
+     * that's where K95 looks by default */
+    snprintf(default_filename, MAX_PATH, "%s%s",
+             dir, "id_rsa");
+    free(dir);
+    return default_filename;
+}
+
 /** Displays the fingerprint for the specified public key
  *
  * @param filename Key file to display the fingerprint for. If not supplied, one
@@ -2326,6 +2837,8 @@ int sshkey_display_fingerprint(char * filename, int babble) {
 /*    printf("sshkey_display_fingerprint\nFilename: %s\nBabble: %d\n", filename, babble);*/
 
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
+
         fn = malloc(MAX_PATH);
         int rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2333,10 +2846,11 @@ int sshkey_display_fingerprint(char * filename, int babble) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2389,6 +2903,8 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
      */
 
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
+
         fn = malloc(MAX_PATH);
         rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2396,10 +2912,11 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2442,16 +2959,13 @@ int sshkey_display_public(char * filename, char *identity_passphrase) {
 int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
     /* ssh key display /format:ssh.com id_rsa */
 
-
     ssh_key key = NULL;
     int rc;
     char* fn = NULL, * blob;
 
-    /* We get here with the following:
-     * ssh key display /format:openssh id_rsa
-     */
-
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
+
         fn = malloc(MAX_PATH);
         rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2459,10 +2973,11 @@ int sshkey_display_public_as_ssh2(char * filename,char *identity_passphrase) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2517,6 +3032,7 @@ int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
     char* pp = NULL;
 
     if (filename == NULL) {
+        char *default_filename = default_key_filename();
         fn = malloc(MAX_PATH);
         rc = uq_file(
                 /* Text mode only, text above the prompt */
@@ -2524,10 +3040,11 @@ int sshkey_change_passphrase(char * filename, char * oldpp, char * newpp) {
                 "Open Key File",  /* file dialog title or text-mode prompt*/
                 1,    /* existing file */
                 NULL, /* Help text - not used */
-                "id_rsa",
+                default_filename,
                 fn,
                 MAX_PATH
         );
+        free(default_filename);
         if (rc == 0) {
             free(fn);
             return SSH_ERR_USER_CANCELED;
@@ -2617,9 +3134,9 @@ int sshkey_v1_change_comment(char * filename, char * comment, char * pp) {
 char * sshkey_default_file(int a) {
     return NULL; /* TODO */
 }
-#endif
+#endif /* COMMENT */
 
-void ssh_v2_rekey() {
+void ssh_v2_rekey(void) {
     /* TODO */
 }
 
@@ -2627,7 +3144,7 @@ void ssh_v2_rekey() {
  *
  * @return "SSH-2.0"
  */
-const char * ssh_proto_ver() {
+const char * ssh_proto_ver(void) {
     static char buf[16];
     snprintf(buf, sizeof buf, "SSH-2.0");
     return buf;
@@ -2635,13 +3152,13 @@ const char * ssh_proto_ver() {
 
 /** Return the current SSH backend/implementation version.
  */
-const char * ssh_impl_ver() {
+const char * ssh_impl_ver(void) {
     static char buf[64];
     snprintf(buf, sizeof(buf), "libssh %s", ssh_version(0));
     return buf;
 }
 
-const char * ssh_dll_ver() {
+const char * ssh_dll_ver(void) {
     return cksshv;
 }
 
@@ -2649,7 +3166,7 @@ int ssh_agent_delete_file(const char *filename) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }
 
-int ssh_agent_delete_all() {
+int ssh_agent_delete_all(void) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
 }
 
@@ -2659,6 +3176,71 @@ int ssh_agent_add_file(const char *filename) {
 
 int ssh_agent_list_identities(int do_fp) {
     return SSH_ERR_NOT_IMPLEMENTED; /* TODO */
+}
+
+int ssh_set_environment_variable(const char * name, const char * value) {
+    int first_free_slot = -1;
+
+    if (value == NULL) {
+        debug(F110, "SSH set environment variable", name, 0);
+    } else {
+        debug(F110, "SSH set environment variable", name, 0);
+        debug(F110, "SSH set environment variable", value, 0);
+    }
+
+
+    /* Attempt to remove the named variable if it exists */
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        /* Make a note that this slot is available in case we need to
+         * add this as a new entry rather than updating an existing one */
+        if (ssh_environment_variables[i][0] == NULL && first_free_slot == -1) {
+            first_free_slot = i;
+        }
+
+        if (ssh_environment_variables[i][0] != NULL) {
+            if (strcmp(name, ssh_environment_variables[i][0]) == 0) {
+                /* Found it! */
+
+                /* Free the old value */
+                free(ssh_environment_variables[i][1]);
+                ssh_environment_variables[i][1] = NULL;
+
+                if (value == NULL) {
+                    /* And free the entry altogether - we were given no value,
+                     * so we're removing, rather than setting, the variable */
+                    free(ssh_environment_variables[i][0]);
+                    ssh_environment_variables[i][0] = NULL;
+                    debug(F111, "SSH environment variable removed", "i", i);
+                } else {
+                    debug(F111, "SSH environemnt variable set", "i", i);
+                    ssh_environment_variables[i][1] = strdup(value);
+                }
+                return SSH_ERR_OK;
+            }
+        }
+    }
+
+    if (first_free_slot >= 0 && value != NULL) {
+        ssh_environment_variables[first_free_slot][0] = strdup(name);
+        ssh_environment_variables[first_free_slot][1] = strdup(value);
+        return SSH_ERR_OK;
+    }
+
+    return SSH_ERR_TOO_MANY_VARIABLES;
+}
+
+int ssh_clear_environment_variables(void) {
+    for (int i = 0; i < MAX_ENVIRONMENT_VARIABLES; i++) {
+        if (ssh_environment_variables[i][0] != NULL) {
+            free(ssh_environment_variables[i][0]);
+            ssh_environment_variables[i][0] = NULL;
+        }
+        if (ssh_environment_variables[i][1] != NULL) {
+            free(ssh_environment_variables[i][1]);
+            ssh_environment_variables[i][1] = NULL;
+        }
+    }
+    return SSH_ERR_OK;
 }
 
 ktab_ret ssh_get_keytab(int keytab_id) {
@@ -2699,6 +3281,7 @@ ktab_ret ssh_get_keytab(int keytab_id) {
         }
 #endif /* SSH_V1 */
         default: {
+            ret.ktab = NULL;
             ret.rc = -1;
         }
     }
@@ -2708,11 +3291,26 @@ ktab_ret ssh_get_keytab(int keytab_id) {
 int ssh_feature_supported(int feature_id) {
     switch(feature_id) {
 
-        case SSH_FEAT_OPENSSH_CONF: /* Configuration via openssh config file */
-        case SSH_FEAT_KEY_MGMT:     /* SSH key creation, etc */
-        case SSH_FEAT_PORT_FWD:     /* Local and remote port forwarding */
-        case SSH_FEAT_X11_FWD:      /* X11 forwarding */
-        case SSH_FEAT_REKEY_AUTO:   /* TODO: do we implement this? */
+#ifdef SSH_AGENT_SUPPORT
+        case SSH_FEAT_AGENT_FWD:      /* Agent Forwarding - needs AF_UNIX support */
+        case SSH_FEAT_AGENT_LOC:      /* Agent Location - needs AF_UNIX support */
+            /* AF_UNIX is only available on Windows 10 v1803 or newer */
+            if (CKWIsWinVerOrGreater(_WIN32_WINNT_WIN10)) {
+                return TRUE;
+            }
+            return FALSE;
+#endif
+
+#ifdef SSH_GSSAPI_SUPPORT
+        case SSH_FEAT_GSSAPI_DELEGAT: /* GSSAPI Delegate Credentials */
+            return TRUE;
+#endif
+
+        case SSH_FEAT_OPENSSH_CONF:   /* Configuration via openssh config file */
+        case SSH_FEAT_KEY_MGMT:       /* SSH key creation, etc */
+        case SSH_FEAT_PORT_FWD:       /* Local and remote port forwarding */
+        case SSH_FEAT_X11_FWD:        /* X11 forwarding */
+        case SSH_FEAT_REKEY_AUTO:     /* TODO: do we implement this? */
             return TRUE;
 
         case SSH_FEAT_SSH_V1:         /* Not supported by libssh anymore */
@@ -2724,10 +3322,345 @@ int ssh_feature_supported(int feature_id) {
         case SSH_FEAT_GSSAPI_KEYEX:   /* Not supported by libssh */
         case SSH_FEAT_DYN_PORT_FWD:   /* Requires a SOCKS server implementation */
         case SSH_FEAT_X11_XAUTH:      /* TODO - not implemented here yet */
-        case SSH_FEAT_AGENT_FWD:      /* TODO - not implemented here yet */
-        case SSH_FEAT_GSSAPI_DELEGAT: /* TODO: can we support this ? I think so */
         case SSH_FEAT_AGENT_MGMT:     /* TODO: can we support this ? */
         default:
             return FALSE;
     }
+}
+
+/** This function should return the text for "HELP SET SSH". Any commands not
+ * supported should be excluded.
+ *
+ * @return Help text for HELP SET SSH.
+ */
+const char** ssh_get_set_help(void) {
+    static const char *hmxyssh[] = {
+#ifdef SSH_AGENT_SUPPORT
+"SET SSH AGENT-FORWARDING { ON, OFF }",
+"  If an authentication agent is in use, setting this value to ON",
+"  results in the connection to the agent being forwarded to the remote",
+"  computer.  The default is OFF.",
+" ",
+"SET SSH AGENT-LOCATION location",
+"  Specifies AF_UNIX socket Kermit 95 should use to connect to your SSH Agent",
+"  for public key authentication.",
+" ",
+#endif /* SSH_AGENT_SUPPORT */
+#ifdef COMMENT
+"SET SSH CHECK-HOST-IP { ON, OFF }",
+"  Specifies whether the remote host's ip-address should be checked",
+"  against the matching host key in the known_hosts file.  This can be",
+"  used to determine if the host key changed as a result of DNS spoofing.",
+"  The default is ON.",
+" ",
+#endif /* COMMENT */
+"SET SSH COMPRESSION { ON, OFF }",
+"  Specifies whether compression will be used.  The default is ON.",
+" ",
+"SET SSH DIRECTORY directory",
+"  Specifies where Kermit 95 should look for the default SSH user files",
+"  such as the user-known-hosts file and identity files (id_rsa, etc).",
+"  By default Kermit 95 looks for these in \\v(appdata)ssh.",
+" ",
+#ifdef COMMENT
+"SET SSH DYNAMIC-FORWARDING { ON, OFF }",
+"  Specifies whether Kermit is to act as a SOCKS4 service on port 1080",
+"  when connected to a remote host via SSH.  When Kermit acts as a SOCKS4",
+"  service, it accepts connection requests and forwards the connections",
+"  through the remote host.  The default is OFF.",
+" ",
+"SET SSH GATEWAY-PORTS { ON, OFF }",
+"  Specifies whether Kermit should act as a gateway for forwarded",
+"  connections received from the remote host.  The default is OFF.",
+" ",
+#endif
+#ifdef SSH_GSSAPI_SUPPORT
+"SET SSH GSSAPI DELEGATE-CREDENTIALS { ON, OFF }",
+"  Specifies whether Kermit should delegate GSSAPI credentials to ",
+"  the remote host after authentication.  Delegating credentials allows",
+"  the credentials to be used from the remote host.  The default is OFF.",
+" ",
+#endif /* SSH_GSSAPI_SUPPORT */
+"SET SSH HEARTBEAT-INTERVAL <seconds>",
+"  Specifies a number of seconds of idle time after which an IGNORE",
+"  message will be sent to the server.  This pulse is useful for",
+"  maintaining connections through HTTP Proxy servers and Network",
+"  Address Translators.  The default is OFF (0 seconds).",
+" ",
+"SET SSH IDENTITY-FILE filename [ filename [ ... ] ]",
+"  Specifies one or more files from which the user's authorization",
+"  identities (private keys) are to be read when using public key",
+"  authorization.  These are files used in addition to the default files:",
+" ",
+"    \\v(appdata)ssh/id_rsa        V2 RSA",
+"    \\v(appdata)ssh/id_dsa        V2 DSA",
+"    \\v(appdata)ssh/id_ecdsa      ECDSA",
+"    \\v(appdata)ssh/id_ed25519    ED25519",
+" ",
+#ifdef COMMENT
+"SET SSH PRIVILEGED-PORT { ON, OFF }",
+"  Specifies whether a privileged port (less than 1024) should be used",
+"  when connecting to the host.  Privileged ports are not required except",
+"  when using SSH V1 with Rhosts or RhostsRSA authorization.  The default",
+"  is OFF.",
+" ",
+"SET SSH PROXY-COMMAND [ command ]",
+"  Specifies the command to be executed in order to connect to the remote",
+"  host. ",
+" ",
+#endif /* COMMENT */
+"SET SSH QUIET { ON, OFF }",
+"  Specifies whether all messages generated in conjunction with SSH",
+"  protocols should be suppressed.  The default is OFF.",
+" ",
+"SET SSH STRICT-HOST-KEY-CHECK { ASK, ON, OFF }",
+"  Specifies how Kermit should behave if the the host key check fails.",
+"  When strict host key checking is OFF, the new host key is added to the",
+"  protocol-version-specific user-known-hosts-file.  When strict host key",
+"  checking is ON, the new host key is refused and the connection is",
+"  dropped.  When set to ASK, Kermit prompt you to say whether the new",
+"  host key should be accepted.  The default is ASK.",
+" ",
+"  Strict host key checking protects you against Trojan horse attacks.",
+"  It depends on you to maintain the contents of the known-hosts-file",
+"  with current and trusted host keys.",
+" ",
+"SET SSH USE-OPENSSH-CONFIG { ON, OFF }",
+"  Specifies whether Kermit should parse an OpenSSH configuration file",
+"  after applying Kermit's SET SSH commands.  The configuration file",
+"  would be located at \\v(home)ssh/ssh_config.  The default is OFF.",
+" ",
+#ifdef SSH_GSSAPI_SUPPORT
+"SET SSH V2 AUTHENTICATION { GSSAPI, KEYBOARD-INTERACTIVE, PASSWORD, ",
+"    PUBKEY, NONE } [ ... ]",
+#else
+    "SET SSH V2 AUTHENTICATION { KEYBOARD-INTERACTIVE, PASSWORD, PUBKEY, ",
+"    NONE } [ ... ]",
+#endif /* SSH_GSSAPI_SUPPORT */
+"  Specifies an ordered list of SSH version 2 authentication methods to",
+"  be used when connecting to the remote host. The SSH client requires ",
+"  none to be attempted first, so the default list is:",
+" ",
+#ifdef SSH_GSSAPI_SUPPORT
+"    none gssapi publickey keyboard-interactive password",
+#else
+"    none publickey keyboard-interactive password",
+#endif /* SSH_GSSAPI_SUPPORT */
+" ",
+"SET SSH V2 AUTO-REKEY { ON, OFF }",
+"  Specifies whether Kermit automatically issues rekeying requests",
+"  once an hour when SSH version 2 in in use.  The default is ON.",
+" ",
+"SET SSH V2 CIPHERS { 3DES-CBC, AES128-CBC, AES192-CBC, AES256-CBC, ",
+"     AES128-CTR, AES192-CTR, AES256-CTR, AES128-GCM@OPENSSH.COM, ",
+"     AES256-GCM@OPENSSH.COM, CHACHAE20-POLY1305 }",
+"  Specifies an ordered list of SSH version ciphers to be used to encrypt",
+"  the established connection.  The default list is:",
+" ",
+"    aes256-gcm@openssh.com aes128-gcm@openssh.com aes256-ctr aes192-ctr",
+"    aes128-ctr aes256-cbc aes192-cbc aes128-cbc 3des-cbc",
+" ",
+"SET SSH V2 GLOBAL-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the system-wide known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(common)ssh/known_hosts2",
+" ",
+"SET SSH V2 HOSTKEY-ALGORITHMS { ECDSA-SHA2-NISTP256, ECDSA-SHA2-NISTP384, ",
+"     ECDSA-SHA2-NISTP521, RSA-SHA2-256, RSA-SHA2-512, SSH-DSS, SSH-ED25519, ",
+"     SSH-RSA }",
+"  Specifies an ordered list of hostkey algorithms to be used to verify",
+"  the identity of the host.  The default list is",
+" ",
+"    ssh-ed25519 ecdsa-sha2-nistp521 ecdsa-sha2-nistp384 ecdsa-sha2-nistp256",
+"    rsa-sha2-512 rsa-sha2-256 ssh-rsa",
+" ",
+"SET SSH V2 KEY-EXCHANGE-METHODS { CURVE25519-SHA256, ",
+"     CURVE25519-SHA256@LIBSSH.ORG, DIFFIE-HELLMAN-GROUP1-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP14-SHA1, DIFFIE-HELLMAN-GROUP14-SHA256, ",
+"     DIFFIE-HELLMAN-GROUP16-SHA512, DIFFIE-HELLMAN-GROUP18-SHA512, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA1, ",
+"     DIFFIE-HELLMAN-GROUP-EXCHANGE-SHA256, ECDH-SHA2-NISTP256, ",
+"     ECDH-SHA2-NISTP384, ECDH-SHA2-NISTP521 }",
+"  Specifies an ordered list of Key Exchange Methods to be used to generate ",
+"  per-connection keys. The default list is:",
+" ",
+"    curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256 ",
+"    ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group18-sha512",
+"    diffie-hellman-group16-sha512 diffie-hellman-group-exchange-sha256",
+"    diffie-hellman-group14-sha256 diffie-hellman-group14-sha1 ",
+"    diffie-hellman-group1-sha1 ext-info-c",
+" ",
+"SET SSH V2 MACS { HMAC-SHA1, HMAC-SHA1-ETM@OPENSSH.COM, HMAC-SHA2-256, ",
+"     HMAC-SHA2-256-ETM@OPENSSH.COM, HMAC-SHA2-512, ",
+"     HMAC-SHA2-512-ETM@OPENSSH.COM, NONE }",
+"  Specifies an ordered list of Message Authentication Code algorithms to",
+"  be used for integrity  protection of the established connection.  The",
+"  default list is:",
+" ",
+"    hmac-sha2-256-etm@openssh.com hmac-sha2-512-etm@openssh.com ",
+"    hmac-sha1-etm@openssh.com hmac-sha2-256 hmac-sha2-512 hmac-sha1",
+" ",
+"SET SSH V2 USER-KNOWN-HOSTS-FILE filename",
+"  Specifies the location of the user-known-hosts file.  The default",
+"  location is:",
+" ",
+"    \\v(appdata)ssh/known_hosts2",
+" ",
+"SET SSH VERBOSE level",
+"  Specifies how many messages should be generated by the OpenSSH engine.",
+"  The level can range from 0 to 7.  The default value is 2.",
+" ",
+"SET SSH VERSION { 2, AUTOMATIC }",
+"  Obsolete: retained only for backwards compatibility. Only SSH Version 2",
+"  is supported now.",
+" ",
+"SET SSH X11-FORWARDING { ON, OFF }",
+"  Specifies whether X Windows System Data is to be forwarded across the",
+"  established SSH connection.  The default is OFF.  When ON, the DISPLAY",
+"  value is set using the SET TELNET ENV DISPLAY command.",
+" ",
+""
+    };
+
+#ifdef SSH_AGENT_SUPPORT
+    /* Hide the SSH agent command help when they're not supported. We can only
+     * get away with this because they're all grouped together at the start
+     * so we can just skip over them.
+     */
+    if (!ssh_feature_supported(SSH_FEAT_AGENT_LOC))
+        return &hmxyssh[9];
+#endif
+    return hmxyssh;
+}
+
+/** This function should return the text for "HELP SSH". Any commands not
+ * supported should be excluded.
+ *
+ * @return Help text for HELP SSH.
+ */
+const char** ssh_get_help(void) {
+    static const char * hmxxssh[] = {
+"Syntax: SSH { ADD, AGENT, CLEAR, KEY, [ OPEN ], V2 } operands...",
+"  Performs an SSH-related action, depending on the keyword that follows:",
+" ",
+"SSH ADD LOCAL-PORT-FORWARD local-port host port",
+"  Adds a port forwarding triplet to the local port forwarding list.",
+"  The triplet specifies a local port to be forwarded and the hostname /",
+"  ip-address and port number to which the port should be forwarded from",
+"  the remote host.  Port forwarding is activated at connection",
+"  establishment and continues until the connection is terminated.",
+" ",
+"SSH ADD REMOTE-PORT-FORWARD remote-port host port",
+"  Adds a port forwarding triplet to the remote port forwarding list.",
+"  The triplet specifies a remote port to be forwarded and the",
+"  hostname/ip-address and port number to which the port should be",
+"  forwarded from the local machine.  Port forwarding is activated at",
+"  connection establishment and continues until the connection is",
+"  terminated.",
+" ",
+#ifdef COMMENT
+/* Feature: SSH_FEAT_AGENT_MGMT */
+"SSH AGENT ADD [ identity-file ]",
+"  Adds the contents of the identity-file (if any) to the SSH AGENT",
+"  private key cache.  If no identity-file is specified, all files",
+"  specified with SET SSH IDENTITY-FILE are added to the cache.",
+" ",
+/* Feature: SSH_FEAT_AGENT_MGMT */
+"SSH AGENT DELETE [ identity-file ]",
+"  Deletes the contents of the identity-file (if any) from the SSH AGENT",
+"  private key cache.  If no identity-file is specified, all files",
+"  specified with SET SSH IDENTITY-FILE are deleted from the cache.",
+" ",
+/* Feature: SSH_FEAT_AGENT_MGMT */
+"SSH AGENT LIST [ /FINGERPRINT ]",
+"  Lists the contents of the SSH AGENT private key cache.  If /FINGERPRINT",
+"  is specified, the fingerprint of the private keys are displayed instead",
+"  of the keys.",
+" ",
+#endif /* COMMENT */
+"SSH CLEAR LOCAL-PORT-FORWARD",
+"  Clears the local port forwarding list.",
+" ",
+"SSH CLEAR REMOTE-PORT-FORWARD",
+"  Clears the remote port forwarding list.",
+" ",
+"SSH KEY commands:",
+"  The SSH KEY commands create and manage public and private key pairs",
+"  (identities).  There are four forms of SSH keys.  Each key pair is",
+"  stored in its own set of files:",
+" ",
+"   Key Type      Private Key File           Public Key File",
+"    RSA keys      \\v(home).ssh/id_rsa       \\v(home).ssh/id_rsa.pub",
+"    DSA keys      \\v(home).ssh/id_dsa       \\v(home).ssh/id_dsa.pub",
+"    ECDSA keys    \\v(home).ssh/id_ecdsa     \\v(home).ssh/id_ecdsa.pub",
+"    ED25519 keys  \\v(home).ssh/id_ed25519   \\v(home).ssh/id_ed25519.pub",
+" ",
+"  Keys are stored using the OpenSSH keyfile format.  The private key",
+"  files can be (optionally) protected by specifying a passphrase.  A",
+"  passphrase is a longer version of a password.  English text provides",
+"  no more than 2 bits of key data per character.  56-bit keys can be",
+"  broken by a brute force attack in approximately 24 hours.  When used,",
+"  private key files should therefore be protected by a passphrase of at",
+"  least 40 characters (about 80 bits).",
+" ",
+"  To install a public key file on the host, you must transfer the file",
+"  to the host and append it to your \"authorized_keys\" file.  The file",
+"  permissions must be 600 (or equivalent).",
+" ",
+"SSH KEY CHANGE-PASSPHRASE [ /NEW-PASSPHRASE:passphrase",
+"      /OLD-PASSPHRASE:passphrase ] filename",
+"  This re-encrypts the specified private key file with a new passphrase.",
+"  The old passphrase is required.  If the passphrases (and filename) are",
+"  not provided Kermit prompts your for them.",
+" ",
+"SSH KEY CREATE [ /BITS:bits /PASSPHRASE:passphrase",
+"    /TYPE:{ DSS, ECDSA, ED25519, RSA } ] filename",
+"  This command creates a new private/public key pair.  The defaults is",
+"  TYPE:ED25519.  The filename is the name of the private key file.  The",
+"  The public key is created with the same name with .pub appended to it.",
+"  If a filename is not specified Kermit prompts you for it. Key length ",
+"  options (/BITS:) depends on the key type:",
+" ",
+"    ECDSA: 256 (default), 384, 521",
+"    RSA: 1024, 2048, 3072 (default), 4096, 8192",
+"    DSS: 1024 (default), 2048",
+" ",
+"  ED25519 does not support being given a key length and any value supplied",
+"  via /BITS: will be ignored.",
+" ",
+"SSH KEY DISPLAY [ /FORMAT:{FINGERPRINT,IETF,OPENSSH,SSH.COM} ] filename",
+"  This command displays the contents of a public or private key file.",
+"  The default format is OPENSSH.",
+" ",
+"SSH [ OPEN ] host [ port ] [ /COMMAND:command /USER:username",
+"      /PASSWORD:pwd /X11-FORWARDING:{ ON, OFF } ]",
+"  This command establishes a new connection using SSH version 1 or",
+"  version 2 protocol.  The connection is made to the specified host on",
+"  the SSH port (you can override the port by including a port name or",
+"  number after the host name).  Once the connection is established the",
+"  authentication negotiations begin.  If the authentication is accepted,",
+"  the local and remote port forwarding lists are used to establish the",
+"  desired connections.  If X11 Forwarding is active, this results in a",
+"  remote port forwarding between the X11 clients on the remote host and",
+"  X11 Server on the local machine.  If a /COMMAND is provided, the",
+"  command is executed on the remote host in place of your default shell.",
+" ",
+"  An example of a /COMMAND to execute C-Kermit in SERVER mode is:",
+"     SSH OPEN hostname /COMMAND:{kermit -x -l 0}",
+" ",
+"SSH REMOVE LOCAL-PORT-FORWARD local-port",
+"  Removes the local port forward with the specified local-port from",
+"  the local port forwarding list. This has no effect on any active ",
+"  connection.",
+" ",
+"SSH REMOVE REMOTE-PORT-FORWARD remote-port",
+"  Removes the remote port forward with the specified remote-port from",
+"  the remote port forwarding list. This has no effect on any active ",
+"  connection.",
+" ",
+/* Last line must be empty to terminate */
+""
+    };
+    return hmxxssh;
 }

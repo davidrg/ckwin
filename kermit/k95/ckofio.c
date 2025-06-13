@@ -136,11 +136,12 @@ extern int pclose(FILE *);
 #endif /* COMMENT */
 #endif
 
+#ifdef __WATCOMC__
+#define stat    _stati64
+#else /* __WATCOMC__ */
 #ifdef NT
-#ifndef __WATCOMC__
 #define timezone _timezone
 #define fileno _fileno
-#endif /* __WATCOMC__ */
 #define write _write
 #define stricmp _stricmp
 #define setmode _setmode
@@ -157,7 +158,7 @@ extern int pclose(FILE *);
 #define rmdir  _rmdir
 #define utimbuf _utimbuf
 
-#if defined(__WATCOMC__) || defined(__GNUC__) || _MSC_VER > 900
+#if defined(__GNUC__) || _MSC_VER > 900
 #define stat    _stati64
 #else
 /* Visual C++ 1.0 32-bit, 2.0 and 2.2 don't have _stati64 */
@@ -171,6 +172,7 @@ extern int pclose(FILE *);
 #define SEM_INDEFINITE_WAIT INFINITE
 #endif /* SEM_INDEFINITE_WAIT */
 #endif /* NT */
+#endif /* __WATCOMC__ */
 
 /* Because standard stat has trouble with trailing /'s we have to wrap it */
 int os2stat(char *, struct stat *);
@@ -379,6 +381,12 @@ int ckxperms = 0040;
 int ckxpriv = 1;                        /* Allow Root logins? */
 #endif /* UNIX */
 #endif /* CK_LOGIN */
+
+#ifdef CK_LABELED
+/* forward declaration */
+static int os2getattr( char * name );
+static int os2setattr( char * name );
+#endif /* CK_LABELED */
 
 #ifndef CKWTMP
 int ckxwtmp = 0;
@@ -1002,7 +1010,7 @@ zclose(n) int n; {
         debug(F101,"zclose zclosf","",x);
         debug(F101,"zclose zclosf fp[n]","",fp[n]);
     } else {
-        if ((fp[n] != stdout) && (fp[n] != stdin))
+        if ((fp[n] != stdout) && (fp[n] != stdin) && (fp[n] != NULL))
           x = fclose(fp[n]);
         fp[n] = NULL;
 #ifdef CK_LABELED
@@ -1496,6 +1504,19 @@ zoutdump() {
     }
 #endif /* IKSD */
 
+    /* If an autodownload is underway and the user kills it with Ctrl+C, the
+     * SIGINT handler will run on the keyboard input thread and close ZOUTFILE
+     * without warning. We don't want that happening between checking if its
+     * open and trying to write to the file otherwise it results in a crash.
+     */
+    RequestZoutDumpMutex( SEM_INDEFINITE_WAIT );
+
+    if (fp[ZOFILE] == 0) {       /* File already closed. Fail. */
+        zoutcnt = 0;
+        ReleaseZoutDumpMutex();
+        return(-1);
+    }
+
 #ifndef COMMENT
     /*
       Frank Prindle suggested that replacing this fwrite() by an fflush()
@@ -1504,11 +1525,15 @@ zoutdump() {
 
       This appears to slow down NT.  So I changed it back.
     */
+
     x = fwrite(zoutbuffer, 1, zoutcnt, fp[ZOFILE]);
 #else /* COMMENT */
     fflush(fp[ZOFILE]);
     x = write(fileno(fp[ZOFILE]),zoutbuffer,zoutcnt)
 #endif /* COMMENT */
+
+    ReleaseZoutDumpMutex();
+
     if (x == zoutcnt) {
 #ifdef DEBUG
         if (deblog)                     /* Save a function call... */
@@ -2248,7 +2273,7 @@ zstrip(name,name2) char *name, **name2; {
     char *cp, *pp;
     int n = 0;
     debug(F110,"zstrip before",name,0);
-    if (!name) { *name2 = ""; return; }
+    if (!name || *name == '\0') { *name2 = ""; return; }
     pp = work;
     /* Strip disk letter and colon */
     if (isalpha(*name) && (*(name+1) == ':')) name += 2;
@@ -2462,7 +2487,7 @@ zchdir(dirnam) char *dirnam; {
 #ifndef NOSPL
         if (nmac) {             /* Any macros defined? */
             int k;                /* Yes */
-            static on_cd = 0;
+            static int on_cd = 0;
             if ( !on_cd ) {
                 on_cd = 1;
                 k = mlook(mactab,"on_cd",nmac); /* Look this up */
@@ -4731,12 +4756,16 @@ zstrdt(date,len) char * date; int len; {
   To do: adapt code from OS-9 Kermit's ck9fio.c zstime function, which
   is more flexible, allowing [yy]yymmdd[ hh:mm[:ss]].
 */
+#ifdef __WATCOMC__
+    time_t tmx=0;
+#else
 #ifdef NT
     /* time_t is a 64bit value on Visual C++ 2005 and newer on 64bit windows. */
     time_t tmx=0;
 #else /* NT */
     long tmx=0;
 #endif /* NT */
+#endif
     long days;
     int i, n, isleapyear;
                    /*       J  F  M  A   M   J   J   A   S   O   N   D   */

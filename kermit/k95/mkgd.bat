@@ -19,11 +19,12 @@ SET OUTDIR=.\kui\win95%SUFFIX%
 SET K95BUILD=K95
 move kui\win95%SUFFIX%\ck*.obj . > nul
 move kui\win95%SUFFIX%\p_*.obj . > nul
-del ckcmai.obj ckuus5.obj
+if exist ckcmai.obj del ckcmai.obj
+if exist ckuus5.obj del ckuus5.obj
 %MAKE% /nologo /e /f ckoker.mak k95gd
 move *.obj kui\win95%SUFFIX% > nul
 
-REM OpenWatcom 1.9s nmake clone doesn't seem to set errorlevel when the build
+REM Open Watcom 1.9s nmake clone doesn't seem to set errorlevel when the build
 REM fails. So we'll check the expected outputs were produced too:
 if not exist k95g.exe goto :missingoutputs
 

@@ -1,6 +1,6 @@
 /* A simple ring-buffer implementation for the SSH Subsystem.
  *
- * C-Kermit for Windows SSH Subsystem
+ * Kermit 95 SSH Subsystem
  * Copyright (C) 2022, David Goodwin <david@zx.net.nz>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,6 +98,7 @@ ring_buffer_handle_t ring_buffer_new(size_t max_length) {
         debug(F100, "Failed to create read/write ready events", "", 0);
         CloseHandle(buf->readReady);
         CloseHandle(buf->writeReady);
+        CloseHandle(buf->mutex);
         free(buf->buffer);
         free(buf);
         return NULL;

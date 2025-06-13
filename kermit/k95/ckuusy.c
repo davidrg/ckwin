@@ -181,6 +181,8 @@ extern int tt_scroll, tt_escape;
 #ifdef OS2PM
 extern int os2pm;
 #endif /* OS2PM */
+extern int usageparm;
+extern unsigned long startflags;
 #endif /* OS2 */
 
 #ifdef CK_NETBIOS
@@ -2503,6 +2505,19 @@ doxarg(s,pre) char ** s; int pre;
 
     /* Handle prescan versus post-initialization file */
 
+#ifdef OS2
+    if (x == XA_HELP) {
+        noinit = 1;
+        startflags |= 2;    /* No network DLLs */
+        startflags |= 4;    /* No TAPI DLLs */
+        startflags |= 8;    /* No Security DLLs */
+        startflags |= 16;   /* No Zmodem DLLs */
+        startflags |= 32;   /* Stdin */
+        startflags |= 64;   /* Stdout */
+        usageparm = 1;      /* Showing usage and exiting */
+    }
+#endif
+
     if (((xargtab[z].flgs & CM_PRE) || (c == '+')) && !pre)
       return(0);
     else if (pre && !(xargtab[z].flgs & CM_PRE) && (c != '+'))
@@ -2779,18 +2794,32 @@ doxarg(s,pre) char ** s; int pre;
         kui_init.nCmdShow = SW_MINIMIZE;
         break;
 
-      case XA_XPOS:
-        if (!rdigits(p))
-          return(-1);
-	kui_init.pos_init++;
-	kui_init.pos_x = atoi(p);
+      case XA_XPOS: {
+			char* temp = p;
+			/* rdigits doesn't consider '-' to be a digit, so we've got to skip
+			 * over it if we want to handle negative screen coordinates. atoi
+			 * handles it fine, so we only need to skip over it for rdigits.
+			 * Negative screen coordinates are required for screens to the left
+			 * of or above of the primary display. */
+			if (temp[0] == '-')
+				temp = p+1;
+        	if (!rdigits(temp))
+          		return(-1);
+			kui_init.pos_init++;
+			kui_init.pos_x = atoi(p);
+		}
         break;
 
-      case XA_YPOS:
-        if (!rdigits(p))
-          return(-1);
-	kui_init.pos_init++;
-	kui_init.pos_y = atoi(p);
+      case XA_YPOS: {
+      		char* temp = p;
+			/* See comment above for why we're doing this */
+      		if (temp[0] == '-')
+      			temp = p+1;
+      		if (!rdigits(temp))
+      			return(-1);
+			kui_init.pos_init++;
+			kui_init.pos_y = atoi(p);
+		}
         break;
 
       case XA_FNAM: {

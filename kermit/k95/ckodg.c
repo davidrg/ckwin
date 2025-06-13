@@ -48,7 +48,6 @@ extern int  wy_monitor;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
 extern vtattrib attrib ;
-extern unsigned char attribute;
 extern int autoscroll, protect ;
 extern CHAR (*xls[MAXTCSETS+1][MAXFCSETS+1])(CHAR);  /* Character set xlate */
 extern CHAR (*xlr[MAXTCSETS+1][MAXFCSETS+1])(CHAR);  /* functions. */
@@ -683,6 +682,7 @@ dgascii( int ch )
                         if ( !uprint && !xprint && !aprint && printon )
                             printeroff();
                         sendchar(ACK);
+                        break;
                     case '8':   /* VT220 AutoPrint on */
                         debug(F110,"Data General","Aprint On",0);
                         setaprint(TRUE);
@@ -854,7 +854,7 @@ dgascii( int ch )
                         break;
 
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( arg1 == 0 )
                         arg1 = 1 ;
                     else if ( arg1 > VscrnGetWidth(VTERM)-1 )
@@ -879,7 +879,7 @@ dgascii( int ch )
                         break;
 
                     cell.c = SP ;
-                    cell.a = geterasecolor(VTERM) ;
+                    cell.video_attr = geterasecolor(VTERM) ;
                     if ( arg1 == 0 )
                         arg1 = 1 ;
                     else if ( arg1 > VscrnGetWidth(VTERM)-1 )

@@ -37,6 +37,10 @@ char   *kstrdup(const char *str);
 #define free(x) kfree(x)
 #define strdup(x) kstrdup(x)
 
+#ifdef __WATCOMC__
+#define mktemp _mktemp
+#define wcsdup _wcsdup
+#else /* __WATCOMC__ */
 #ifdef NT
 #ifdef __STDC__
 #define stricmp _stricmp
@@ -44,7 +48,6 @@ char   *kstrdup(const char *str);
 #define sopen _sopen
 #define strupr _strupr
 #define close _close
-#ifndef __WATCOMC__
 #ifndef __GNUC__
 #define stat _stat
 #endif /* __GNUC__ */
@@ -54,7 +57,6 @@ char   *kstrdup(const char *str);
 #define ftime _ftime
 #endif /* __GNUC__ */
 #define getpid _getpid
-#endif /* __WATCOMC__ */
 #define sys_errlist _sys_errlist
 #define unlink _unlink
 #define write _write
@@ -90,10 +92,9 @@ typedef _off_t off_t;
 #define wcsdup _wcsdup
 #define chmod _chmod
 #endif /* __STDC__ */
-#ifndef __WATCOMC__
 #define isascii __isascii
-#endif
 #endif /* NT */
+#endif /* __WATCOMC__ */
 
 #define NOJC
 
