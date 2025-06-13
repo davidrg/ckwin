@@ -110,6 +110,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    last VT10x escape sequence K95 could reasonably support. The only ones
    left unimplemented are the interlaced video mode, and the confidence tests
    neither of which can be reasonably supported by an emulator.
+ - New experimental ADDS Regent 25 emulation
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))

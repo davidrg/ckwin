@@ -5315,6 +5315,7 @@ static int nshokey = (sizeof(shokeytab) / sizeof(struct keytab));
 #define SHKEYDEF TT_MAX+7
 struct keytab shokeymtab[] = {
     "aaa",       TT_AAA,     CM_INV,    /* AnnArbor */
+    "adds25",    TT_REGENT25,0,         /* ADDS Regent 25 */
     "adm3a",     TT_ADM3A,   0,         /* LSI ADM-3A */
     "adm5",      TT_ADM5,    0,         /* LSI ADM-5 */
     "aixterm",   TT_AIXTERM, 0,         /* IBM AIXterm */
@@ -5347,6 +5348,7 @@ struct keytab shokeymtab[] = {
     "meta",      TT_KBM_METAESC,   0,   /* Meta sends ESC mode (subset of emacs mode) */
     "qansi",     TT_QANSI,   0,         /* QNX ANSI */
     "qnx",       TT_QNX,     0,         /* QNX */
+    "regent25",  TT_REGENT25,CM_INV,    /* ADDS Regent 25 */
     "russian",   TT_KBM_RUSSIAN, 0,     /* Russian mode */
     "scoansi",   TT_SCOANSI, 0,         /* SCO ANSI */
     "sni-97801", TT_97801,   0,         /* Sinix 97801 */

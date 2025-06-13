@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN//2.0">
+<html><head>
+<META name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kermit 95 - ADDS Regent 25 Emulation</title>
+<body bgcolor="#ffffff" text="#000000">
+
+<h2>ADDS Regent 25 Emulation</h2>
+
+<p>
+    Kermit 95 v3.0 adds experimental ADDS Regent 25 emulation. This was written
+    based on available documentation only with no access to a real terminal or
+    Regent 25 software for testing. As a result, the emulation may be imperfect,
+    but it should be at least compatible with the REGENT25 termcap / terminfo
+    entry. To use it, select the ADDS25 terminal type: <tt>SET TERMINAL TYPE ADDS25</tt>
+
+<p>
+    If you have access to a real ADDS Regent 25 and find a bug in Kermit 95s
+    emulation, or if you need one of the features Kermit 95 doesn't currently
+    implement, please log a bug/feature request so it can be corrected.
+
+<p>
+    The following Regent 25 features are not emulated at this time:
+    <ul>
+        <li> AUX port on/off (DC2/DC4)
+        <li> International character sets
+        <li> Numeric pad as function keys (for now, use the <tt>SET KEY</tt>
+            command as a workaround)
+        <li> Monitor mode. Use K95s debug mode (<tt>set terminal debug on</tt>)
+            instead.
+    </ul>
+
+<h3>Relevant Settings</h3>
+<dl>
+    <dt>Audible Key Feedback</dt>
+    <dd>Use the <em>Keyclick</em> option in the Actions menu (k95g), or the
+    <tt>\Kkeyclick</tt> kverb (Ctrl+Shift+Enter by default)</dd>
+    <dt>Auto scroll on/off</dt>
+    <dd>Use <tt>SET TERMINAL AUTOSCROLL { ON, OFF }</tt></dd>
+    <dt>Auto line feed</dt>
+    <dd>Use <tt>SET TERMINAL NEWLINE-MODE ON</tt></dd>
+    <dt>Cursor Display</dt>
+    <dd>Use <tt>SET TERMINAL CURSOR { BLOCK, UNDERLINE } { BLINK, NOBLINK }</tt></dd>
+    <dt>Keyboard Lock (Normal / ADDS Consul 580 Compatibility)</dt>
+    <dd>No setting available; both options are supported at all times.</dd>
+</dl>
+
+<p>
+<hr>
+<p>
+
+    <i>Click <b>Back</b> on your Browser's Toolbar to return.</i>
+<p>
+<hr>
+</body>
+

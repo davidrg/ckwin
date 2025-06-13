@@ -29,6 +29,7 @@
 #include "ckoi31.h"
 #include "ckoqnx.h"
 #include "ckoadm.h"
+#include "ckoads.h"
 #endif /* NOLOCAL */
 
 #include <ctype.h>              /* Character types */
@@ -609,6 +610,7 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "ADM3A",  {NULL}, "", /* LSI ADM 3A */
     "ADM5",   {NULL}, "", /* LSI ADM 5 */
     "VTNT",   {NULL},                           "",                       /* Microsoft NT VT */
+    "REGENT25",{NULL},                           "",                    /* ADDS Regent 25 */
     "IBM3101",{"I3101",NULL},   ""                       /* IBM 31xx */
 };
 int max_tt = TT_MAX;                    /* Highest terminal type */
@@ -5312,16 +5314,18 @@ cursordown(int wrap) {
                     ((ISWYSE(tt_type_mode) ||
                      ISTVI(tt_type_mode) ||
                      ISHZL(tt_type_mode) ||
-                     ISDG200(tt_type_mode)) &&
-                    !autoscroll || protect || wy_autopage) )
+                     ISDG200(tt_type_mode) ||
+                     ISREGENT25(tt_type_mode)) &&
+                    !autoscroll || protect || wy_autopage))
         {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
             lgotoxy(VTERM, wherex[VTERM], (relcursor ? margintop : 1));
-        } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) &&
-                  autoscroll && !protect)
+        } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode) || ISREGENT25(tt_type_mode)) &&
+                  autoscroll && !protect) {
             wrtch(LF);
+        }
     }
     if ( wrapit )
         wrapit = FALSE;
@@ -5834,6 +5838,28 @@ clrbol_escape( BYTE vmode, CHAR fillchar ) {
         line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
+}
+
+/* Clear from current cursor position to end of line */
+void
+clreol_escape( BYTE vmode, CHAR fillchar ) {
+    videoline * line = NULL ;
+    int x ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
+
+    if ( fillchar == NUL )
+        fillchar = SP ;
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ;
+
+    /* take care of current line */
+    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
+    {
+        line->cells[x].c = fillchar ;
+        line->cells[x].video_attr = cellcolor;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+    }
 }
 
 void
@@ -10427,6 +10453,8 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
     if ( !kbdlocked() ) {
         if ( mode == VTERM ||
              mode == VCMD && activecmd == XXOUT ) {
+
+            /* Handle arrow keys */
             if (k >= K_ARR_MIN && k <= K_ARR_MAX) {
                 if ( ISDG200( tt_type_mode ) ) {
                     /* Data General */
@@ -10574,6 +10602,23 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                         break;
                     case K_LFARR:
                         sendcharduplex(BS,TRUE);
+                        break;
+                    case K_DNARR:
+                        sendcharduplex(LF,TRUE);
+                        break;
+                    }
+                }
+                else if ( ISREGENT25( tt_type_mode ) ) {
+                    /* ADDS Regent 25 */
+                    switch ( k ) {
+                    case K_UPARR:
+                        sendcharduplex(SUB,TRUE);
+                        break;
+                    case K_RTARR:
+                        sendcharduplex(ACK,TRUE);
+                        break;
+                    case K_LFARR:
+                        sendcharduplex(NAK,TRUE);
                         break;
                     case K_DNARR:
                         sendcharduplex(LF,TRUE);
@@ -13853,6 +13898,11 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
 
     if ( ISADM3A(tt_type_mode) || ISADM5(tt_type_mode) ) {
         admascii(ch);
+        return;
+    }
+
+    if (ISREGENT25(tt_type_mode)) {
+        addsascii(ch);
         return;
     }
 
