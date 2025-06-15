@@ -162,6 +162,10 @@ features are not available on older operating systems however.
   also means that alternative SSH backends not based on libssh can now be supported
   should anyone want to build one, opening the door to SSH on vintage windows or
   OS/2 systems.
+* <!-- 3.0 beta 3 --> Added support for "user@host" syntax to SSH command. "ssh root@myhost" should
+  do the same as "ssh myhost /user:root" now. The implementation is pretty basic
+  and may not handle weird input well but when it works it should be less
+  confusing to new users.  
 * <!-- 2.2 --> 
   new `SET SSH HEARTBEAT-INTERVAL <seconds>` command
 * <!-- 2.2 --> 
@@ -173,10 +177,6 @@ features are not available on older operating systems however.
 * <!-- 3.0 beta 3 --> Upgraded to the latest OpenSSL release fixing many security vulnerabilities
   and adding support for new algorithms.
 * <!-- 3.0 beta 3 --> Added support for TLS 1.1, 1.2 and 1.3
-* <!-- 3.0 beta 3 --> Added support for "user@host" syntax to SSH command. "ssh root@myhost" should
-  do the same as "ssh myhost /user:root" now. The implementation is pretty basic
-  and may not handle weird input well but when it works it should be less
-  confusing to new users.
 
 ### Terminal Emulation
 
