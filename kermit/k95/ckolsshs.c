@@ -2124,7 +2124,7 @@ static int start_reverse_forward_server(ssh_forward_t *fwd,
  */
 static int start_forward_server(ssh_forward_t *fwd,
                                 ssh_client_state_t *state) {
-    int rc;
+    int rc = SSH_ERR_OK;
 
     if (fwd->type == SSH_PORT_FORWARD_LOCAL) {
         rc = start_direct_forward_server(fwd);
