@@ -1291,6 +1291,11 @@ extern int autodl, adl_err, adl_ask;
 struct keytab beltab[] = {              /* Terminal bell mode */
 #ifdef OS2
     { "audible", XYB_AUD,  0 },
+#ifdef KUI
+    { "flash-window", XYB_FLASH, 0},
+#else
+    { "flash-window", XYB_FLASH, CM_INV },
+#endif /* KUI */
     { "none",    XYB_NONE, 0 },
 #else
     { "audible", XYB_AUD,  CM_INV },
@@ -6741,6 +6746,17 @@ setbell() {
         tt_bell = 1;
 #endif /* OS2 */
         break;
+#ifdef OS2
+      case XYB_FLASH: {
+#ifdef KUI
+        extern int user_bell_flash, tt_bell_flash;
+        if ((x = cmkey(onoff,2,"","on",xxstring)) < 0) return(x);
+        if ((z = cmcfm()) < 0) return(z);
+        user_bell_flash = tt_bell_flash = x;
+#endif /* KUI */
+      }
+      break;
+#endif /* OS2 */
     }
     return(1);
 }

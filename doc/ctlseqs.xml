@@ -6801,11 +6801,17 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-urgency" mnemonic=""
-                     title="Enable Urgency window hint when Ctrl+G is received"
-                     not-implemented="true" todo="true">
+                     title="Enable Urgency window hint when Ctrl+G is received">
                 <ctlseq><param-single/> = 1042</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-2.1F7E"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Windows, GUI only:
+                    When a bell is received causes the title bar and taskbar
+                    button to flash. Depending on Windows version
+                    the taskbar may remain highlighted until the window is
+                    given focus.
+                </p>
             </section>
             <section role="parameter" id="xt-raise-window" mnemonic=""
                      title="Enable raising of the window when Ctrl+G is received"
@@ -8402,11 +8408,14 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1042" mnemonic=""
-                     title="Disable Urgency window manager hint when Ctrl+G is received"
-                     not-implemented="true" todo="true">
+                     title="Disable Urgency window manager hint when Ctrl+G is received">
                 <ctlseq><param-single/> = 1042</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-2.1F82"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Windows only: Disables flashing the titlebar and and taskbar
+                    button when a bell is received.
+                </p>
             </section>
             <section role="parameter" id="decrst-1043" mnemonic=""
                      title="Disable raising of the window when Ctrl+G is received"
@@ -11221,11 +11230,19 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-1042" mnemonic=""
-                         title="Urgency window hint when Ctrl+G is received"
-                         not-implemented="true" todo="true">
+                         title="Urgency window hint when Ctrl+G is received">
                     <ctlseq><param-single/> = 1042</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-2.1F7E"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if the window title and task bar button will
+                        be flashed when a bell is received.
+                    </p>
+                    <p>
+                        This is permanently reset on OS/2, and builds targeting
+                        windows releases earlier than Windows XP where it was
+                        not enabled at compile time.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1043" mnemonic=""
                          title="Enable raising of the window when Ctrl+G is received"
@@ -11340,8 +11357,7 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-2004"
-                         title="Bracketed Paste Mode"
-                         not-implemented="true" todo="true">
+                         title="Bracketed Paste Mode">
                     <ctlseq><param-single/> = 2004</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-4.1F7D"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>

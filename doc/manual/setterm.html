@@ -12,12 +12,15 @@ or from a command or initialization file, to change most aspects of the
 terminal emulator.
 
 <dl>
-<dt><tt>SET BELL <i>{</i> AUDIBLE <i>{</i> BEEP, SYSTEM-SOUNDS <i>}</i>, VISIBLE, NONE <i>}</i></tt>
+<dt><tt>SET BELL <i>{</i> AUDIBLE <i>{</i> BEEP, SYSTEM-SOUNDS <i>}</i>, VISIBLE, FLASH-WINDOW [ { ON, OFF } ], NONE <i>}</i></tt>
 <dd>This command tells how bell (beep) characters / noises should be sounded
 or displayed.  <tt>VISIBLE</tt> means to flash the screen rather than making a
 noise.  <tt>AUDIBLE</tt> means to make a noise, which can be either the
 standard "beep", or else "System sounds" that give you three different noises
 for "information", "warning", and "error".
+<p>The FLASH-WINDOW option can be specified independently of and in addition
+    to other options. It causes the window title and taskbar button to flash
+    when a Bell is received.
 <p>
 <dt><tt>SET COMMAND COLOR <i>foreground-color</i> <i>background-color</i></tt>
 <dd>Like <tt>SET TERMINAL COLOR</tt>, except for the Command screen.  This

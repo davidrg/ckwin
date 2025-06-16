@@ -185,6 +185,10 @@ extern int tn_b_nlm ;           /* TELNET BINARY newline mode */
 extern int tt_crd;              /* Carriage-return display mode */
 extern int tt_lfd;              /* Line-feed display mode */
 extern int tt_bell;             /* How to handle incoming Ctrl-G characters */
+#ifdef KUI
+extern int tt_bell_flash;
+extern int user_bell_flash;
+#endif /* KUI */
 extern int tt_type, tt_type_mode ;
 extern int tt_status[VNUM];           /* Terminal status line displayed */
 extern int tt_status_usr[VNUM];
@@ -7724,6 +7728,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     attrib.linkid = 0;
     savedattrib[VTERM] = attrib;
 
+#ifdef KUI
+    tt_bell_flash = user_bell_flash;    /* Urgency on bell back to user setting */
+#endif /* KUI */
     bracketed_paste[VTERM] = FALSE;     /* Bracketed paste off */
 
     erasemode = user_erasemode;
@@ -16887,6 +16894,13 @@ vtcsi(void)
 						case 1036:  /* xterm - Send esc when Meta modifies a key */
 							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
 							break;
+                        case 1042:  /* xterm - urgency window hint on bell */
+#ifdef KUI
+                            pn[2] = tt_bell_flash ? 1 : 2;
+#else
+                            pn[2] = 4; /* Permanently reset */
+#endif /* KUI */
+                            break;
                         case 2004:
                             pn[2] = bracketed_paste[vmode] ? 1 : 2;
                             break;
@@ -18439,6 +18453,11 @@ vtcsi(void)
 							tt_kb_mode = KBM_ME;
 							ipadl25();;  /* Update the status line */
 							break;
+                        case 1042:    /* xterm - enable urgency window hint on bell */
+#ifdef KUI
+                            tt_bell_flash = TRUE;
+#endif /* KUI */
+                            break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
@@ -19057,6 +19076,11 @@ vtcsi(void)
 								tt_kb_mode = KBM_EN;
 								ipadl25();  /* Update the status line */
 								break;
+                            case 1042:    /* xterm - disable urgency window hint on bell */
+#ifdef KUI
+                                tt_bell_flash = FALSE;
+#endif /* KUI */
+                                break;
                             case 2004:
                             	/* xterm - Disable Bracketed Paste Mode */
                             	bracketed_paste[vmode] = FALSE;
