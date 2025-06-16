@@ -6120,9 +6120,13 @@ shotrm() {
     int lines = 0;
     extern int colorpalette;
 #ifdef KUI
+    extern int tt_bell_flash;
+#endif /* KUI */
+#ifdef KUI
     extern CKFLOAT tt_linespacing[];
     extern int tt_cursor_blink;
 #endif /* KUI */
+   char bell[64] = "";
 #ifdef PCFONTS
     int i;
     char *font;
@@ -6222,21 +6226,26 @@ shotrm() {
            showoff(tt_answer),"response",answerback);
     switch (tt_bell) {
       case XYB_NONE:
-        s = "none";
+        ckstrncat(bell,"none",64);
         break;
       case XYB_VIS:
-        s= "visible";
+        ckstrncat(bell,"visible",64);
         break;
       case XYB_AUD | XYB_BEEP:
-        s="beep";
+        ckstrncat(bell,"beep",64);
         break;
       case XYB_AUD | XYB_SYS:
-        s="system sounds";
+        ckstrncat(bell,"system sounds",64);
         break;
       default:
-        s="(unknown)";
+        ckstrncat(bell,"(unknown)",64);
     }
-    printf(" %19s: %-13s  %13s: %-15s\n","Bell",s,
+#ifdef KUI
+    if (tt_bell_flash) {
+      ckstrncat(bell,", flash",64);
+    }
+#endif /* KUI */
+    printf(" %19s: %-21s  %5s: %-15s\n","Bell",bell,
            "Wrap",showoff(tt_wrap));
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Autopage",showoff(wy_autopage),

@@ -111,6 +111,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    left unimplemented are the interlaced video mode, and the confidence tests
    neither of which can be reasonably supported by an emulator.
  - New experimental ADDS Regent 25 emulation
+ - New SET BELL option to flash the window title and task bar button in addition
+   to any visible/audible bell setting.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -243,6 +245,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
+   - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
 
 ### Fixed Bugs

@@ -74,6 +74,9 @@
 #define XYB_VIS   2			/* Visible bell */
 #define XYB_BEEP  0			/* Audible Beep */
 #define XYB_SYS   4			/* Audible System Sounds */
+#ifdef OS2
+#define XYB_FLASH 8         /* Flash window on bell */
+#endif
 
 /* File status bits */
 

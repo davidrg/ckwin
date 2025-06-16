@@ -8060,9 +8060,18 @@ static char *hxyterm[] = {
 #endif /* OS2 */
 
 #ifdef OS2
+#ifdef KUI
+"SET TERMINAL BELL { AUDIBLE, VISIBLE, FLASH-WINDOW, NONE }",
+#else
 "SET TERMINAL BELL { AUDIBLE, VISIBLE, NONE }",
+#endif /* KUI */
 "  Specifies how Control-G (bell) characters are handled.  AUDIBLE means",
 "  a beep is sounded; VISIBLE means the screen is flashed momentarily.",
+#ifdef KUI
+" ",
+" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+" enabled independently of other options.",
+#endif /* KUI */
 " ",
 "  (This command has been superseded by SET BELL.)",
 " ",
@@ -9939,11 +9948,21 @@ static char *hxywin95[] = {
 
 static char *hmxybel[] = {
 #ifdef OS2
+#ifdef KUI
+"Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, ",
+"    FLASH-WINDOW [ { ON, OFF } ], NONE }",
+#else
 "Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, NONE }",
+#endif /* KUI */
 "  Specifies how incoming Ctrl-G (bell) characters are handled in CONNECT",
 "  mode and how command warnings are presented in command mode.  AUDIBLE",
 "  means either a beep or a system-sound is generated; VISIBLE means the",
 "  screen is flashed momentarily.",
+#ifdef KUI
+" ",
+" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+" enabled independently of other options.",
+#endif /* KUI */
 #else
 "Syntax: SET BELL { OFF, ON }",
 "  ON (the default) enables ringing of the terminal bell (beep) except where",
