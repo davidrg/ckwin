@@ -127,6 +127,10 @@ int gui_videopopup_dialog(videopopup *, int);   /* cknwin.c */
 #include "ckossh.h"
 #endif
 
+#ifdef KUI
+_PROTOTYP(void gui_flash_window, (void));
+#endif /* KUI */
+
 VOID resconn();                 /* ckuusr.c */
 void scrollstatusline();        /* ckoco3.c */
 void vt100key(int);             /* ckoco3.c */
@@ -156,6 +160,7 @@ extern int tt_bell;             /* How to handle incoming Ctrl-G characters */
 #ifdef KUI
 int user_bell_flash = FALSE;    /* Flash the window on Bell? */
 int tt_bell_flash = FALSE;      /* Active setting for above */
+int tt_bell_raise = FALSE;      /* Active setting for above */
 #endif /* KUI */
 extern long     speed, vernum;
 extern int      local, escape, duplex, parity, flow, seslog, ttyfd,
@@ -574,7 +579,9 @@ bleep(short int type) {
 
 #ifndef IKSDONLY
 #ifdef KUI
-    if (type == BP_BEL && tt_bell_flash) {
+    if (type == BP_BEL && (tt_bell_flash || tt_bell_raise)) {
+        /* Windows doesn't allow applications to steal focus from other
+         * applications, so the best we can do is flash the window */
         gui_flash_window();
     }
 #endif /* KUI */

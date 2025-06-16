@@ -188,6 +188,7 @@ extern int tt_bell;             /* How to handle incoming Ctrl-G characters */
 #ifdef KUI
 extern int tt_bell_flash;
 extern int user_bell_flash;
+extern int tt_bell_raise;
 #endif /* KUI */
 extern int tt_type, tt_type_mode ;
 extern int tt_status[VNUM];           /* Terminal status line displayed */
@@ -7730,6 +7731,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
 #ifdef KUI
     tt_bell_flash = user_bell_flash;    /* Urgency on bell back to user setting */
+    tt_bell_raise = FALSE;              /* Raise window on bell back to user setting */
 #endif /* KUI */
     bracketed_paste[VTERM] = FALSE;     /* Bracketed paste off */
 
@@ -16901,6 +16903,13 @@ vtcsi(void)
                             pn[2] = 4; /* Permanently reset */
 #endif /* KUI */
                             break;
+                        case 1043:  /* xterm - raise window on bell */
+#ifdef KUI
+                            pn[2] = tt_bell_raise ? 1 : 2;
+#else
+                            pn[2] = 4; /* Permanently reset */
+#endif /* KUI */
+                            break;
                         case 2004:
                             pn[2] = bracketed_paste[vmode] ? 1 : 2;
                             break;
@@ -18458,6 +18467,11 @@ vtcsi(void)
                             tt_bell_flash = TRUE;
 #endif /* KUI */
                             break;
+                        case 1043:    /* xterm - raise window hint on bell */
+#ifdef KUI
+                            tt_bell_raise = TRUE;
+#endif /* KUI */
+                            break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
@@ -19079,6 +19093,11 @@ vtcsi(void)
                             case 1042:    /* xterm - disable urgency window hint on bell */
 #ifdef KUI
                                 tt_bell_flash = FALSE;
+#endif /* KUI */
+                                break;
+                            case 1043:    /* xterm - do not raise window on bell */
+#ifdef KUI
+                                tt_bell_raise = FALSE;
 #endif /* KUI */
                                 break;
                             case 2004:

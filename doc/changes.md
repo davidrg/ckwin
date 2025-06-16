@@ -246,6 +246,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
+   - [1043](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-raise-window): Due to windows limitations, same behavior as above
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
 
 ### Fixed Bugs
