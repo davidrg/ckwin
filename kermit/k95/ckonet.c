@@ -143,6 +143,9 @@ BOOL conpty_open = FALSE;
 #include "ckossh.h"
 #endif /* SSH_DLL */
 
+void update_setssh_options();   /* This lives in ckuus3.c */
+void update_ssh_options();      /* This lives in ckuusr.c */
+
 extern int ttnproto, tn_deb;
 #ifndef NOTERM
 extern int tt_type;
@@ -4475,6 +4478,8 @@ netinit() {
 #else
 #ifdef SSHBUILTIN
         ssh_initialise();
+        update_setssh_options();
+        update_ssh_options();
 #endif /* SSHBUILTIN */
 #endif /* SSH_DLL */
 #ifdef SSHBUILTIN

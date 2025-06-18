@@ -262,6 +262,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    K95 will now do the same, using unicode character 0x2426 for VT220 and up.
    Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
    (K95 bug 815).
+ - Fixed a bug in the previous release that caused the backspace key to not work
+   correctly for some "SET SSH" commands
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

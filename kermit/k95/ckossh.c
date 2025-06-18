@@ -58,6 +58,9 @@ char *cksshv = "SSH-DLL support, 10.0,  28 July 2024";
 
 /* This lives in p_common.c */
 _PROTOTYP( unsigned long get_dir_len, (unsigned char *));
+
+void update_setssh_options();   /* This lives in ckuus3.c */
+void update_ssh_options();      /* This lives in ckuusr.c */
 #endif /* Not NT */
 
 /* Various global variables owned by the rest of C-Kermit */
@@ -744,6 +747,9 @@ int ssh_dll_load(const char* dll_names, int quiet) {
                 free(dll_name);
             dll_name = _strdup(dll);
             free(dlls);
+
+            update_setssh_options();
+            update_ssh_options();
 
             debug(F101, "SSH Init complete!", NULL, rc);
 

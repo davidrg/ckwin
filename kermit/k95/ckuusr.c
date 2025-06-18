@@ -8049,6 +8049,77 @@ redossh() {
 }
 #endif	/* SSHCMD */
 
+#ifdef SSHBUILTIN
+/* Hides any SSH options that are not valid for the currently loaded (or
+ * compiled in) SSH backend */
+void update_ssh_options() {
+    int z;
+
+#ifdef SSH_DLL
+    if (!ssh_avail()) return;
+#endif /* SSH_DLL */
+
+    for (z = 0; z < nsshcmd; z++) {
+        if ((sshkwtab[z].kwval == XSSH_ADD || sshkwtab[z].kwval == XSSH_CLR
+            || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP
+            || sshkwtab[z].kwval == XSSH_REM)
+            && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
+            /* Port forwarding
+             *   "ssh add" - adds port fowards
+             *   "ssh clear" - clears port fowards
+             * And these, which are already hidden by default:
+             *   "ssh forward-local-port"
+             *   "ssh forward-remote-port"
+             * Possibly an unimplemented feature ("arbitrary forwarding")?
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+        else if (sshkwtab[z].kwval == XSSH_AGT
+            && !ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {
+            /*
+             * "ssh agent"
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+        else if (sshkwtab[z].kwval == XSSH_KEY
+            && !ssh_feature_supported(SSH_FEAT_KEY_MGMT)) {
+            /*
+             * "ssh agent"
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+        else if (sshkwtab[z].kwval == XSSH_V2
+            && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
+            /*
+             * "ssh v2 rekey"
+             */
+            sshkwtab[z].flgs = CM_INV;
+        }
+    }
+
+    /* Hide any "ssh open" arguments not supported by the currently loaded
+     * SSH backend */
+    for (z = 0; z < nsshopnsw; z++) {
+        if (sshopnsw[z].kwval == SSHSW_VER && !ssh_feature_supported(SSH_FEAT_SSH_V1)) {
+            /*
+             * "ssh open x /version:y" - if we don't support SSH V1 then we
+             * only support SSH V2 so this at best does nothing. We only
+             * hide this argument - it will still be parsed and the entered
+             * value passed through to the SSH backend to reject if
+             * necessary.
+             */
+            sshopnsw[z].flgs = CM_INV;
+        }
+        else if (sshopnsw[z].kwval == SSHSW_X11 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
+            /*
+             * "ssh open x /x11-forwarding"
+             */
+            sshopnsw[z].flgs = CM_INV;
+        }
+    }
+}
+#endif /* SSHBUILTIN */
+
 /*
   Like hmsga() in ckuus2.c but takes a single substitution parameter, s2,
   which replaces every occurrence of "%s" in the first argument.
@@ -10851,67 +10922,6 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n");
         makestr(&ssh_tmpuid,NULL);
         makestr(&ssh_tmpcmd,NULL);
         makestr(&ssh_tmpport,NULL);
-
-        /* Hide any "ssh" commands not supported by the currently loaded SSH
-         * backend */
-        for (z = 0; z < nsshcmd; z++) {
-            if ((sshkwtab[z].kwval == XSSH_ADD || sshkwtab[z].kwval == XSSH_CLR
-                || sshkwtab[z].kwval == XSSH_FLP || sshkwtab[z].kwval == XSSH_FRP
-                || sshkwtab[z].kwval == XSSH_REM)
-                && !ssh_feature_supported(SSH_FEAT_PORT_FWD)) {
-                /* Port forwarding
-                 *   "ssh add" - adds port fowards
-                 *   "ssh clear" - clears port fowards
-                 * And these, which are already hidden by default:
-                 *   "ssh forward-local-port"
-                 *   "ssh forward-remote-port"
-                 * Possibly an unimplemented feature ("arbitrary forwarding")?
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-            else if (sshkwtab[z].kwval == XSSH_AGT
-                && !ssh_feature_supported(SSH_FEAT_AGENT_MGMT)) {
-                /*
-                 * "ssh agent"
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-            else if (sshkwtab[z].kwval == XSSH_KEY
-                && !ssh_feature_supported(SSH_FEAT_KEY_MGMT)) {
-                /*
-                 * "ssh agent"
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-            else if (sshkwtab[z].kwval == XSSH_V2
-                && !ssh_feature_supported(SSH_FEAT_REKEY_MANUAL)) {
-                /*
-                 * "ssh v2 rekey"
-                 */
-                sshkwtab[z].flgs = CM_INV;
-            }
-        }
-
-        /* Hide any "ssh open" arguments not supported by the currently loaded
-         * SSH backend */
-        for (z = 0; z < nsshopnsw; z++) {
-            if (sshopnsw[z].kwval == SSHSW_VER && !ssh_feature_supported(SSH_FEAT_SSH_V1)) {
-                /*
-                 * "ssh open x /version:y" - if we don't support SSH V1 then we
-                 * only support SSH V2 so this at best does nothing. We only
-                 * hide this argument - it will still be parsed and the entered
-                 * value passed through to the SSH backend to reject if
-                 * necessary.
-                 */
-                sshopnsw[z].flgs = CM_INV;
-            }
-            else if (sshopnsw[z].kwval == SSHSW_X11 && !ssh_feature_supported(SSH_FEAT_X11_FWD)) {
-                /*
-                 * "ssh open x /x11-forwarding"
-                 */
-                sshopnsw[z].flgs = CM_INV;
-            }
-        }
 
         debug(F101,"SSH external parsing","",0);
 
