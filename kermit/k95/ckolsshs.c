@@ -860,6 +860,7 @@ static int verify_known_host(ssh_client_state_t * state) {
         case SSH_KNOWN_HOSTS_NOT_FOUND:
             printf("Could not find the known hosts file. If you accept the key here "
                    "it will be created automatically.\n");
+            /* fall through */
         case SSH_KNOWN_HOSTS_UNKNOWN:
             /*
              * The server is unknown. The user must confirm the public key hash is
