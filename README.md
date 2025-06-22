@@ -91,7 +91,7 @@ If you don't have a GitHub account, or would rather not ask a question in public
 space, you can also email [ckw@kermitproject.org](mailto:ckw@kermitproject.org).
 
 There is also a [Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html)
-which may be useful for new users.
+which may be useful for new users. The [Kermit 95 FAQ](https://www.kermitproject.org/k95faq.html), while not updated for v3.0, still contains some relevant information too.
 
 If you think you may have found a bug, you can check the 
 [K95 Bugs List](https://davidrg.github.io/ckwin/current/k95bugs.html) or the 
