@@ -518,9 +518,9 @@ static void ssh_client_close(ssh_client_state_t* state, ssh_client_t *client,
     debug(F100, "sshsubsys - Subsystem shutdown", "exit_status", exit_status);
 
     /* Grab a copy of the libssh error message if there is one */
-    if (exit_status == SSH_ERR_SSH_ERROR) {
+    if (exit_status == SSH_ERR_SSH_ERROR && state != NULL) {
         error_message = _strdup(ssh_get_error(state->session));
-        debug(F100, "sshsubsys - have libssh error message", error_message, 0);
+        debug(F110, "sshsubsys - have libssh error message", error_message, 0);
     }
 
     /* Close the existing socket if we were supplied one rather than
@@ -529,8 +529,10 @@ static void ssh_client_close(ssh_client_state_t* state, ssh_client_t *client,
         closesocket(state->parameters->existing_socket);
     }
 
-    if (state != NULL)
+    if (state != NULL) {
         ssh_client_state_free(state);
+        state = NULL;
+    }
 
     if (acquire_mutex(client->mutex, INFINITE)) {
         client->error = exit_status;
