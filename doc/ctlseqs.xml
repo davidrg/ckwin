@@ -5670,13 +5670,20 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### g ######################### -->
-        <section role="ctlseq" id="dgc" mnemonic="DGC" title="Display character in G2 (SCO)" badges="scoansi">
+        <section role="ctlseq" id="dgc" mnemonic="DGC" title="Display Graphic Character" badges="scoansi">
             <ctlseq>CSI <param-single/> g</ctlseq>
             <termsupp first="sco" series="sco" additional=""/>
             <p>
                 Displays the character <param-single/> in G2. This should
                 only occur when not in SCO ANSI BCS2 mode, but as there is no
                 way to turn SCO ANSI BCS2 mode on currently this is always true.
+            </p>
+            <p>
+                This allows displaying character codes outside the normal
+                printable range (eg, the C0 control codes) as graphic
+                characters. For example, if the current remote character set
+                is CP437 then <tt>CSI 26 g</tt> would display the right arrow
+                character (→).
             </p>
         </section>
         <section role="ctlseq" id="tbc" mnemonic="TBC" title="Tab clear">
@@ -8991,7 +8998,8 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="e48:75"/>
                 <p>
-                    Disables sco8bit and crm modes, restores graphic sets.
+                    Disables display of C0 control codes and shifting of all
+                    other characters, restores graphic sets.
                     <!-- Copies QsavedG[] into G[] -->
                 </p>
             </section>
@@ -9003,29 +9011,38 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt510" series="sco" additional="sco putty"/>
                 <p>
                     Hex 00–7F of the PC character set codes are mapped to the
-                    current 7-bit display character set.
-                    <!--Turns off sco8bit, turns on crm, switches to graphic set G2, and switches
+                    current 7-bit display character set. This results in C0
+                    control codes being displayed as graphic characters, rather
+                    than being interpreted as control codes. For example, if the
+                    current remote character set is CP437, then the LF character
+                    would be rendered as the '◙' character rather than causing
+                    a line feed.
+                </p>
+                <!--Turns off sco8bit, turns on crm, switches to graphic set G2, and switches
                     colors to the color set with <tt>set term color graphic</tt>. If in SCOANSI
                     backwards compatibility mode, colors are reset.-->
-                </p>
             </section>
             <section role="parameter" badges="linux" id="sgr-11-linux"
                      title="Display GL Control Characters as Graphic Characters">
                 <ctlseq><param-single/> = 11</ctlseq>
-                <p>Turns on sco8bit and crm. Sets G1, G2 and G3 to CP437</p>
+                <p>Switches to the CP437 character set. C0 control characters are
+                    displayed as graphic characters, while all others have their
+                    8th bit set.
+                </p>
             </section>
             <section role="parameter" badges="qansi" id="sgr-11-qansi"
                      title="Display GL Control Characters as Graphic Characters">
                 <ctlseq><param-single/> = 11</ctlseq>
-                <p>Turns on sco8bit and crm. Sets G1/G2/G3 to IBM C0 Graphics.</p>
+                <p>Sets G1/G2/G3 to IBM C0 Graphics. C0 control characters are
+                    displayed as graphic characters, while all others have their
+                    8th bit set.</p>
             </section>
             <section role="parameter" badges="linux" id="sgr-12" title="Select null mapping">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <p>
-                    Select null mapping (CP437), set display control flag, set toggle meta
-                    flag (causes the high bit of a byte to be toggled before the mapping table
-                    translation is done). Turns on sco8bit and crm, turns off the graphic
-                    attribute, sets G1/G2/G3 to CP437.
+                    Select null mapping (CP437). Enables display of C0 control
+                    codes as graphic characters, all other characters have their
+                    8th bit set. Sets G1/G2/G3 to CP437.
                 </p>
             </section>
             <section role="parameter" id="sgr-12-vt" title="Map 80-FF"
@@ -9038,7 +9055,9 @@ DCS $ q 3 , } ST</pre>
                     <!-- TODO: Is this the same as above currently flagged for
                             linux only? -->
                     Hex 80-FF of the current character set are mapped to the
-                    current 7-bit display character set.
+                    current 7-bit display character set. This causes the 8th
+                    bit to be set for any characters outside the C0 Control
+                    character range.
                 </p>
             </section>
 
@@ -9061,10 +9080,12 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-17" title="Shift High Bit on before displaying characters">
                     <ctlseq><param-single/> = 17</ctlseq>
                     <p groups="isansi" badges="beos">
-                        Turns on sco8bit, turns off crm and graphic attribute. Switches to G3.
+                        Switches to G3 and sets the 8th bit on all characters
+                        outside the C0 range.
                     </p>
                     <p badges="qansi">
-                        Turns sco8bit on, turns crm off. Switches G1/G2/G3 to CP437
+                        Switches G1/G2/G3 to CP437 and sets the 8th bit on all
+                        characters outside the C0 range.
                     </p>
                 </section>
             </section>
