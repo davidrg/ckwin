@@ -51,13 +51,15 @@ that are incompatible with Kermit 95.
     make sure to install Kermit 95s terminfo description. If the remote host
     is unix, and you've got both C-Kermit (not gkermit) and the terminfo
     entry-description compiler (<tt>kermit</tt> and <tt>tic</tt>) in your PATH,
-    and you're sitting at the shell you can run from the following command from
+    and you're sitting at the shell you can run the following command from
     the K95 command screen to install it: <tt>take terminfo.ksc</tt>.
 
 <p>This script will transmit the terminfo description (<tt>k95.src</tt>)
     to the remote host and install it using <tt>tic -x</tt>. If you don't have
     write access to install it globally (in <tt>/usr/share/terminfo</tt>), it
     should end up in your personal terminfo directory (<tt>$HOME/.terminfo</tt>).
+    To prevent problems when you elevate to the super-user (<tt>su</tt>,
+    <tt>sudo</tt>), it is best to install it globally if you can.
 
 <p>The <tt>terminfo.ksc</tt> script itself only contains two commands:
 <pre>   output kermit -C "receive /command /as-name:{tic -x -},exit"\{13}
@@ -100,6 +102,13 @@ file to get the best results:
 
 <!-- TODO: Update this with any changes to how the meta-sends-esc mode works,
         along with details on how to turn that mode on and off manually -->
+
+<!-- TODO: This may only be required due to lack of support for xterms
+        modifyOtherKeys option -->
+<p>If you use <a href="https://orgmode.org/">Org Mode</a>, you may notice that
+    the M-S-RET key sequence (insert new TODO entry/checkbox item) does not
+    work. As a workaround, you can add the following to your k95custom.ini:
+<pre>   set terminal key meta \2829 \{3}\{24}M</pre>
 
 <p>
 <hr>
