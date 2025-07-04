@@ -14776,7 +14776,6 @@ DCS $ q 3 , } ST</pre>
                 customizing the color palette via <a href="#osc-4">OSC-4</a> or
                 <tt>SET GUI RGBCOLOR</tt>.
             </p>
-
             <p>
                 To retain compatibility with software blindly expecting 256-color or
                 24-bit RGB color support, 16-color versions of Kermit 95 still
@@ -14802,15 +14801,6 @@ DCS $ q 3 , } ST</pre>
                 of K95 only have 4 bits each for the foreground and background
                 colors, making them incapable of actually storing color indexes
                 above 16 or per-cell RGB values.
-            </p>
-            <p>
-                16-color builds do not support <a href="#osc-4">OSC-4</a>
-                or the <tt>SET GUI RGBCOLOR</tt> command as the color palettes
-                are only used to get an RGB value to use for color quantization.
-                K95 has no control over how the console host/VIO window renders
-                colors, so the RGB values in the color palettes are never used
-                for display; only to map indexes from a larger palette on to
-                the smaller 4-bit aixterm-16 palette.
             </p>
         </section>
     </section>
