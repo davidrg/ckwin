@@ -5468,6 +5468,9 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">4</dt>  <!-- vt510, xt -->
                 <dd>Sixel</dd>
 
+                <dt not-implemented="true">5</dt>
+                <dd>Katakana</dd>
+
                 <dt>6</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
                 <dd>Selective erase</dd>
 
@@ -5480,8 +5483,20 @@ DCS $ q 3 , } ST</pre>
                 <dt>9</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
                 <dd>National Replacement Character Sets</dd>
 
+                <dt not-implemented="true">10</dt>  <!-- ? -->
+                <dd>Kanji</dd>
+
+                <dt not-implemented="true">11</dt>  <!-- ? -->
+                <dd>Status Display</dd>
+
                 <dt not-implemented="true">12</dt>  <!-- vt510 -->
                 <dd>Yugoslavian (SCS)</dd>
+
+                <dt not-implemented="true">13</dt>  <!-- ? -->
+                <dd>Block Mode</dd>
+
+                <dt not-implemented="true">14</dt>  <!-- ? -->
+                <dd>8-bit Interface Architecture</dd>
 
                 <dt>15</dt>  <!-- vt510, vt420, xt -->
                 <dd>Technical Characters</dd>
@@ -5498,6 +5513,9 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">19</dt>  <!-- vt420 -->
                 <dd>Dual Sessions</dd>
 
+                <dt not-implemented="true">20</dt>  <!-- ? -->
+                <dd>APL</dd>
+
                 <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
@@ -5510,14 +5528,63 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">24</dt>  <!-- vt510 -->
                 <dd>Turkish</dd>
 
+                <dt not-implemented="true">25</dt>    <!-- ? -->
+                <dd>Arabic Bilingual Mode 1</dd>
+
+                <dt not-implemented="true">26</dt>    <!-- ? -->
+                <dd>Arabic Bilingual Mode 2</dd>
+
+                <dt not-implemented="true">27</dt>    <!-- ? -->
+                <dd>Arabic Bilingual Mode 3</dd>
+
                 <dt not-implemented="true">28</dt>  <!-- xt -->
                 <dd>Rectangular editing</dd>        <!-- TODO: we have this? -->
 
                 <dt not-implemented="true">29</dt>  <!-- xt -->
                 <dd>ANSI text locator</dd>          <!-- TODO: we have this? -->
 
+                <dt not-implemented="true">30</dt>    <!-- ? -->
+                <dd>Hanzi</dd>
+
+                <dt not-implemented="true">31</dt>    <!-- ? -->
+                <dd>Not allocated/used/reserved?</dd>
+
+                <dt not-implemented="true">32</dt>    <!-- ? -->
+                <dd>Text Macros</dd>
+
+                <dt not-implemented="true">33</dt>    <!-- ? -->
+                <dd>Hangul and Hanja</dd>
+
+                <dt not-implemented="true">34</dt>    <!-- ? -->
+                <dd>Icelandic</dd>
+
+                <dt not-implemented="true">35</dt>    <!-- ? -->
+                <dd>Arabic Bilingual with Text Controls</dd>
+
+                <dt not-implemented="true">36</dt>    <!-- ? -->
+                <dd>Arabic Bilingual with no Text Controls</dd>
+
+                <dt not-implemented="true">37</dt>    <!-- ? -->
+                <dd>Thai</dd>
+
+                <dt not-implemented="true">38</dt>    <!-- ? -->
+                <dd>Character Outlining</dd>
+
+                <dt not-implemented="true">39</dt>    <!-- VT1000 -->
+                <dd>Page Memory Extension</dd>
+
+                <!-- Can't find anything that reports these. Perhaps one of the
+                     DEC X Terminals (like above)? -->
+                <dt not-implemented="true">40</dt>    <!-- ? -->
+                <dd>unknown</dd>
+                <dt not-implemented="true">41</dt>    <!-- ? -->
+                <dd>unknown</dd>
+
                 <dt not-implemented="true">42</dt>  <!-- vt510 -->
                 <dd>ISO Latin-2 character set</dd>      <!-- TODO: Do we really not have this? -->
+
+                <dt not-implemented="true">43</dt>    <!-- DECterm -->
+                <dd>Ruled Lines</dd>
 
                 <dt>44</dt>  <!-- vt510 -->
                 <dd>PCTerm</dd>
@@ -5527,6 +5594,9 @@ DCS $ q 3 , } ST</pre>
 
                 <dt not-implemented="true">46</dt>   <!-- vt510 -->
                 <dd>ASCII emulation</dd>     <!-- TODO: What is this? -->
+
+                <dt not-implemented="true">52</dt>    <!-- Windows Terminal -->
+                <dd>(some terminal emulators, recent) Support for write subset of <a href="#osc-52">OSC-52</a></dd>
             </dl>
 
         </section>
