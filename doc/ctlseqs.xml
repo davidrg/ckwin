@@ -5459,7 +5459,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>K95</td>
-                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 4 4 c</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 4 4 ; 5 2 c</td>
                 </tr>
             </table>
 
@@ -5640,8 +5640,12 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">46</dt>   <!-- vt510 -->
                 <dd>ASCII emulation</dd>     <!-- TODO: What is this? -->
 
-                <dt not-implemented="true">52</dt>    <!-- Windows Terminal -->
-                <dd>(some terminal emulators, recent) Support for write subset of <a href="#osc-52">OSC-52</a></dd>
+                <dt>52</dt>                          <!-- Windows Terminal -->
+                <dd>(some terminal emulators, recent)
+                    Support for write subset of <a href="#osc-52">OSC-52</a>.
+                    K95 only includes this in its DA response for the K95 terminal
+                    type, and only if writing to the clipboard is enabled.
+                </dd>
             </dl>
             <!--
                 For a certain device class, support for particular extensions

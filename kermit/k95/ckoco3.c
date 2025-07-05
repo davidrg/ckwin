@@ -572,6 +572,8 @@ extern int send_c1_usr ;                /* User default for send_c1 */
  * though it doesn't appear to have been updated in a *very* long time; the
  * VT420 (released 1990) and VT520 (released 1993) are missing for example.
  */
+/* Warning: Device Attribute Responses longer than 50 chars requires the
+    sendescseq buffer to be enlarged */
 struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "TTY", {NULL},                              "",                    /* Teletype */
     "D200", {"DG200","DATA-GENERAL-200",NULL},  "o#!J ",               /* Data General 200 */
@@ -5190,7 +5192,7 @@ sendcharsduplex(unsigned char * s, int len, int no_xlate ) {
 */
 int
 sendescseq(CHAR *s) {
-    unsigned char sendstr[24], * p  ;
+    unsigned char sendstr[50], * p  ;
 
     /* Handle 7-bit vs 8-bit escape sequences...*/
 
@@ -17844,7 +17846,20 @@ vtcsi(void)
                     if (pn[1] == 0)
                         if (tt_type >= 0 &&
                              tt_type <= max_tt) {
-                            sendescseq(tt_info[tt_type].x_id);
+                            if (ISK95(tt_type) && tt_clipboard_write >= CLIPBOARD_ALLOW) {
+                                /* If writing to the clipboard via OSC-52 is
+                                 * enabled, indicate this by appending extension
+                                 * 52 to the DA1 response (Windows Terminal) */
+                                char da1buf[100];
+                                da1buf[0] = '\0';
+                                memset(da1buf, 0, sizeof(da1buf));
+                                strcat(da1buf, tt_info[tt_type].x_id);
+                                da1buf[strlen(da1buf)-1] = '\0';
+                                strcat(da1buf, ";52c");
+                                sendescseq(da1buf);
+                            } else {
+                                sendescseq(tt_info[tt_type].x_id);
+                            }
                         }
                     }
                     break;

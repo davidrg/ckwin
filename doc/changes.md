@@ -216,7 +216,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [OSC-117: Reset text selection background color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-117)
    - [OSC-19: Change text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-19)
    - [OSC-119: Reset text selection foreground color](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-119)
-   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52)
+   - [OSC-52: Manipulate selection data](https://davidrg.github.io/ckwin/dev/ctlseqs.html#osc-52).
+     When clipboard writing is enabled, support is indicated via DA1 for the K95 terminal type. 
  - A few VT525 control sequences _based on documented behaviour_; there may be
    differences from the real thing (donations of a VT525 accepted!):
    - [DECSTGLT](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decstglt): 
