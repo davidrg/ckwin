@@ -113,6 +113,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - New experimental ADDS Regent 25 emulation
  - New SET BELL option to flash the window title and task bar button in addition
    to any visible/audible bell setting.
+ - Synchronized Output mode
+ - Crossed-out character attribute
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -250,6 +252,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [2026](https://davidrg.github.io/ckwin/dev/ctlseqs.html#bsu): Synchronized Output Mode (K95 terminal type only)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
  - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)
+ - [SGR-9](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-9-co): Crossed-out character attribute (all terminal types except QANSI)
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

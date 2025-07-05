@@ -292,6 +292,7 @@ cell_video_attr_t     colorborder     = cell_video_attr_init_vio_attribute(0x01)
 cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27);
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
+cell_video_attr_t     colorcrossedout = cell_video_attr_init_vio_attribute(0x10);
 cell_video_attr_t     colordim        = cell_video_attr_init_vio_attribute(0x08);
 cell_video_attr_t     colorcursor     = cell_video_attr_init_vio_attribute(0x80);
 
@@ -316,8 +317,10 @@ int truebold      = TRUE ;
 int bold_font_only = FALSE;    /* Only do a bold font, not bold + bright? */
 #ifdef KUI
 int trueitalic    = TRUE ;
+int truecrossedout = TRUE;
 #else /* KUI */
 int trueitalic    = FALSE ;
+int truecrossedout = FALSE;
 #endif /* KUI */
 int colorAttPriority = TRUE ; /* Attribute colors take priority over SGR colors */
 /* xterm defaults this to FALSE, while K95 defaults it to TRUE */
@@ -331,8 +334,10 @@ int savedtruedim       = TRUE ;
 int savedtruebold      = TRUE ;
 #ifdef KUI
 int savedtrueitalic    = TRUE ;
+int savedtruecrossedout = TRUE;
 #else /* KUI */
 int savedtrueitalic    = FALSE ;
+int savedtruecrossedout = FALSE ;
 #endif /* KUI */
 
 enum markmodes markmodeflag[VNUM] = {notmarking, notmarking,
@@ -408,7 +413,9 @@ cell_video_attr_t                       /* Video attribute bytes */
     boldattribute=cell_video_attr_init_vio_attribute(0),
     savedboldattribute[VNUM]={0,0,0,0},
 	dimattribute=cell_video_attr_init_vio_attribute(0),
-    saveddimattribute[VNUM]={0,0,0,0}
+    saveddimattribute[VNUM]={0,0,0,0},
+    crossedoutattribute=cell_video_attr_init_vio_attribute(0),
+    savedcrossedoutattribute[VNUM]={0,0,0,0}
     ;
 
 cell_video_attr_t decatc_colors[16];
@@ -5472,6 +5479,7 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
 		boldattribute=swapcolors(boldattribute);
 		dimattribute=swapcolors(dimattribute);
 		blinkattribute=swapcolors(blinkattribute);
+        crossedoutattribute=swapcolors(crossedoutattribute);
         attribute = swapcolors( attribute );
     } else if ( vmode == VCMD ) {
         colorcmd = swapcolors(colorcmd);
@@ -7538,6 +7546,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
         savedblinkattribute[vmode]= blinkattribute;
         savedboldattribute[vmode] = boldattribute;
 		saveddimattribute[vmode] = dimattribute;
+        savedcrossedoutattribute[vmode] = crossedoutattribute;
         savedattrib[vmode] = attrib;            /* Current DEC character attributes */
         saverelcursor[vmode] = relcursor;       /* Cursor addressing mode */
         savedwrap[vmode]     = tt_wrap;         /* Wrap mode */
@@ -7571,6 +7580,7 @@ restorecurpos(int vmode, int x) {
             blinkattribute=savedblinkattribute[vmode];
             boldattribute=savedboldattribute[vmode];
 			dimattribute=saveddimattribute[vmode];
+            crossedoutattribute=savedcrossedoutattribute[vmode];
             attrib = savedattrib[vmode];
             relcursor = saverelcursor[vmode];   /* Restore cursor addressing mode */
             tt_wrap = savedwrap[vmode] ;       /* Restore wrap mode */
@@ -7688,6 +7698,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     blinkattribute   = colorblink;
     boldattribute    = colorbold;
 	dimattribute     = colordim;
+    crossedoutattribute = colorcrossedout;
 
     saveddefaultattribute[VTERM] = colornormal; /* Default saved values */
     savedunderlineattribute[VTERM] = colorunderline ;
@@ -7698,6 +7709,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     savedblinkattribute[VTERM] = colorblink;
     savedboldattribute[VTERM]  = colorbold;
 	saveddimattribute[VTERM] = colordim;
+    savedcrossedoutattribute[VTERM] = colorcrossedout;
     savedattribute[VTERM] = attribute;
 	use_bold_attr = bold_is_color;
 	use_blink_attr = blink_is_color;
@@ -7710,6 +7722,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	truedim = savedtruedim;
 	truebold = savedtruebold ;
 	trueitalic = savedtrueitalic;
+    truecrossedout = savedtruecrossedout;
 	trueblink = savedtrueblink;
 
 	/* Reset select color in case it was changed by OSC-17/OSC-19 */
@@ -7732,6 +7745,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     attrib.dim = FALSE ;                /* No dim */
     attrib.wyseattr = FALSE ;
     attrib.italic = FALSE;              /* No italic */
+	attrib.crossedout = FALSE;			/* No crossedout */
     attrib.hyperlink = FALSE;
     attrib.linkid = 0;
     savedattrib[VTERM] = attrib;
@@ -9073,6 +9087,8 @@ resetcolors( int x )
                 byteswapcolors(colorbold);
 			dimattribute =
 				byteswapcolors(colordim);
+            crossedoutattribute =
+                byteswapcolors(colorcrossedout);
         }
         else {
             defaultattribute = colornormal ;
@@ -9083,6 +9099,7 @@ resetcolors( int x )
             blinkattribute = colorblink;
             boldattribute  = colorbold;
 			dimattribute   = colordim;
+            crossedoutattribute = colorcrossedout;
         }
         attribute = defaultattribute ;
         borderattribute = colorborder ;
@@ -13315,6 +13332,7 @@ dodcs( void )
                         if (attrib.blinking) strcat(sgrbuf, ";5");
                         if (attrib.reversed) strcat(sgrbuf, ";7");
                         if (attrib.invisible) strcat(sgrbuf, ";8");
+						if (attrib.crossedout) strcat(sgrbuf, ";9");
 
 #ifdef COMMENT
                         /* We don't really have a *good* way of knowing if these
@@ -16084,7 +16102,8 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
            (WPattrib.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
            (WPattrib.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
            (WPattrib.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
-           (WPattrib.wyseattr   ? WY_CHAR_ATTR           : 0) ;
+           (WPattrib.wyseattr   ? WY_CHAR_ATTR           : 0) |
+		   (WPattrib.crossedout  ? VT_CHAR_ATTR_CROSSEDOUT:0) ;
         }
 
         if (vtattr & VT_CHAR_ATTR_HYPERLINK)
@@ -16157,7 +16176,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 
         } else {  /* decstglt != DECSTGLT_ALTERNATE */
 
-            /* Only do attributes-as-colorsif either attribute colors always
+            /* Only do attributes-as-colors if either attribute colors always
              * override SGR colors, or if the current characters colors are
              * the default/normal colors */
             if (cell_video_attr_equal(colorattr, defaultattribute)
@@ -16172,6 +16191,9 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
                 else if ((vtattr & VT_CHAR_ATTR_ITALIC) &&
                          !trueitalic /* italic simulated by color */ )
                     colorval = italicattribute;
+                else if ((vtattr & VT_CHAR_ATTR_CROSSEDOUT) &&
+                         !truecrossedout /* crossed-out simulated by color */ )
+                    colorval = crossedoutattribute;
                 else if ((vtattr & VT_CHAR_ATTR_GRAPHIC))
                     /* a graphic character */
                     colorval = graphicattribute ;
@@ -16473,6 +16495,7 @@ vtcsi(void)
             attrib.dim = FALSE ;
             attrib.graphic = FALSE ;
             attrib.wyseattr = FALSE ;
+			attrib.crossedout = FALSE ;
             attrib.hyperlink = FALSE;
             attrib.linkid = 0;
 
@@ -19887,6 +19910,7 @@ vtcsi(void)
                         attrib.reversed = FALSE;
                         attrib.graphic = FALSE ;
                         attrib.dim = FALSE ;
+						attrib.crossedout = FALSE ;
                         attrib.wyseattr = FALSE ;
                         attrib.hyperlink = FALSE;
                         attrib.linkid = 0;
@@ -20137,6 +20161,7 @@ vtcsi(void)
                             attrib.dim = FALSE ;
                             attrib.wyseattr = FALSE ;
                             attrib.hyperlink = FALSE;
+							attrib.crossedout = FALSE;
                             attrib.linkid = 0;
 
                             sco8bit = FALSE ;
@@ -20250,8 +20275,14 @@ vtcsi(void)
                             break;
 
                             /* 8 - 12 are ANSI X3.64 */
-                        case 8: /* Turn on INVISIBLE */
                         case 9: /* Turn on INVISIBLE (QANSI) */
+                                /* Turn on Crossed-Out characters (ANSI) */
+							if (!ISQANSI(tt_type_mode)) {
+								attrib.crossedout = TRUE;
+								break;
+							}
+							/* Fall through - Turn on INVISIBLE (QANSI) */
+						case 8: /* Turn on INVISIBLE */
                             attrib.invisible = TRUE; /* see wrtch */
                             break;
 
@@ -20426,12 +20457,19 @@ vtcsi(void)
                                 break;
                             attrib.reversed = FALSE;
                             break;
-                        case 28:/* Turn INVISIBLE Off */
-                        case 29:/* QANSI */
+
+                        case 29:
+							if (!ISQANSI(tt_type_mode)) {
+								attrib.crossedout = FALSE;
+								break;
+							}
+							/* Fall through - QANSI INVISIBLE off */
+						case 28:/* Turn INVISIBLE Off */
                             if (!attrib.invisible)
                                 break;
                             attrib.invisible = FALSE;
                             break;
+
 
                         case 30: /* Colors */
                         case 31:

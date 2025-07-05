@@ -297,6 +297,8 @@ k95|Kermit 95 v3.0.0 beta 8,
 	rmso=\E[27m,
 # Exit undeline mode
 	rmul=\E[24m,
+# Exit strikeout/crossed-out
+    rmxx=\E[29m,
 # Reset string 2: Just do a hard reset - that should set everything back to
 # defaults or user-specified values. If it doesn't, its probably a K95 bug.
 	rs2=\Ec,
@@ -350,6 +352,8 @@ k95|Kermit 95 v3.0.0 beta 8,
 	smso=\E[7m,
 # Enter underline mode
 	smul=\E[4m,
+# Enter strikeout/crossed-out mode
+    smxx=\E[9m,
 # Set cursor style (DECSCUSR)
 	Ss=\E[%p1%d\sq,
 # Synchronized Output (K95G only)

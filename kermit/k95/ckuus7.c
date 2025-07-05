@@ -1442,11 +1442,12 @@ extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
 colorblink, colorbold, savedcolorselect, colordim,
-colorcursor;
+colorcursor, colorcrossedout;
 
-extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold;
+extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold,
+            truecrossedout;
 extern int savedtrueblink, savedtrueunderline, savedtruereverse,
-		   savedtrueitalic, savedtruedim, savedtruebold;
+		   savedtrueitalic, savedtruedim, savedtruebold, savedtruecrossedout;
 extern int blink_is_color, bold_is_color, use_blink_attr, use_bold_attr,
 		   dim_is_color, bold_font_only;
 
@@ -1491,11 +1492,13 @@ int ncolmode = sizeof(ttcolmodetab)/sizeof(struct keytab);
 #define TTCOLBOL  14
 #define TTCOLDIM  15
 #define TTCOLCUR  16
+#define TTCOLCO   17
 
 struct keytab ttycoltab[] = {                   /* Terminal Screen coloring */
     { "blink",              TTCOLBLI, 0 },      /* Blink color */
     { "bold",               TTCOLBOL, 0 },      /* Bold color */
     { "border",             TTCOLBOR, 0 },      /* Screen border color */
+    { "crossed-out-text",   TTCOLCO,  0 },      /* Crossed-out color */
 	{ "cursor", 			TTCOLCUR, 0 },		/* Cursor color */
     { "debug-terminal",     TTCOLDEB, 0 },      /* Debug color */
     { "dim",                TTCOLDIM, 0 },      /* Dim color */
@@ -1541,7 +1544,8 @@ int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 #define TTATTDIM  6
 #define TTATTINV  7
 #define TTATTITA  8
-#define TTATTDONE 9
+#define TTATTCO   9
+#define TTATTDONE 10
 
 struct keytab ttyattrtab[] = {
     { "blink",     TTATTBLI, 0 },
@@ -1550,6 +1554,7 @@ struct keytab ttyattrtab[] = {
 #else  /* KUI */
     { "bold",      TTATTBLD, CM_INV },
 #endif /* KUI */
+    { "crossed-out", TTATTCO, 0 },
     { "dim",       TTATTDIM, 0 },
     { "italic",    TTATTITA, 0 },
     { "protected", TTATTPRO, 0 },
@@ -4626,6 +4631,9 @@ settrm() {
               case TTCOLITA:
                 coloritalic = attr;
                 break;
+              case TTCOLCO:
+                colorcrossedout = attr;
+                break;
               case TTCOLUND:
                 colorunderline = attr;
                 break;
@@ -5762,6 +5770,12 @@ settrm() {
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
               savedtrueitalic = trueitalic = y;
+            break;
+
+          case TTATTCO:
+              if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
+              if ((x = cmcfm()) < 0) return(x);
+              savedtruecrossedout = truecrossedout = y;
             break;
 
           case TTATTPRO: {      /* Set default Protected Character attribute */

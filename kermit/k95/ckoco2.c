@@ -92,6 +92,7 @@ extern cell_video_attr_t italicattribute;
 extern cell_video_attr_t graphicattribute ;
 extern cell_video_attr_t underlineattribute ;
 extern cell_video_attr_t borderattribute ;
+extern cell_video_attr_t crossedoutattribute;
 
 extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
@@ -2041,6 +2042,7 @@ VscrnWrtCell( BYTE vmode, viocell Cell, vtattrib att, USHORT Row, USHORT Col )
         (att.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
         (att.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
         (att.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
+        (att.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
         (att.wyseattr   ? WY_CHAR_ATTR         : 0) ;
     line->hyperlinks[Col] = att.hyperlink ? att.linkid : 0;
     return NO_ERROR ;
@@ -2509,6 +2511,7 @@ VscrnGetVtCharAttr( BYTE vmode, SHORT x, SHORT y )
     vta.unerasable      = attr & VT_CHAR_ATTR_PROTECTED ? 1 : 0 ;
     vta.graphic         = attr & VT_CHAR_ATTR_GRAPHIC ? 1 : 0 ;
     vta.wyseattr        = attr & WY_CHAR_ATTR ? 1 : 0 ;
+    vta.crossedout      = attr & VT_CHAR_ATTR_CROSSEDOUT ? 1 : 0 ;
     vta.hyperlink       = attr & VT_CHAR_ATTR_HYPERLINK ? 1 : 0;
     vta.linkid          = attr & VT_CHAR_ATTR_HYPERLINK ? line->hyperlinks[x] : 0;
 
@@ -2537,6 +2540,7 @@ VscrnSetVtCharAttr( BYTE vmode, SHORT x, SHORT y, vtattrib vta )
                 (vta.invisible  ? VT_CHAR_ATTR_INVISIBLE : 0) |
                 (vta.unerasable ? VT_CHAR_ATTR_PROTECTED : 0) |
                 (vta.graphic    ? VT_CHAR_ATTR_GRAPHIC   : 0) |
+                (vta.crossedout ? VT_CHAR_ATTR_CROSSEDOUT: 0) |
                 (vta.hyperlink  ? VT_CHAR_ATTR_HYPERLINK : 0) |
                 (vta.wyseattr   ? WY_CHAR_ATTR         : 0) ;
     line = VscrnGetLineFromTop(vmode,y);
@@ -4854,7 +4858,7 @@ VscrnInit( BYTE vmode )
    extern int scrninitialized[] ;
    extern cell_video_attr_t colornormal, colorunderline, colorborder,
     colorreverse, colorgraphic, colorcmd, coloritalic, colorblink, colorbold,
-    colordim ;
+    colordim, colorcrossedout ;
    BYTE clrscr = 0 ;
 #ifndef KUI
    CK_VIDEOMODEINFO m;
@@ -4907,6 +4911,7 @@ VscrnInit( BYTE vmode )
           borderattribute = colorborder ;
           blinkattribute = colorblink ;
           boldattribute = colorbold ;
+          crossedoutattribute = colorcrossedout ;
           dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
       }

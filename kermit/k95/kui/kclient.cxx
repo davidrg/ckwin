@@ -37,7 +37,8 @@ extern int tt_update;
 extern int scrollflag[];
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
-extern int trueblink, trueunderline, trueitalic, truedim, truebold;
+extern int trueblink, trueunderline, trueitalic, truedim, truebold,
+        truecrossedout;
 extern int decstglt, decatcbm, decatcum;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
@@ -877,6 +878,7 @@ void KClient::writeMe()
             Bool dim = truedim && ((prevEffect & VT_CHAR_ATTR_DIM) ? TRUE : FALSE);
             Bool underline = trueunderline && ((prevEffect & VT_CHAR_ATTR_UNDERLINE) ? TRUE : FALSE);
             Bool italic = trueitalic && ((prevEffect & VT_CHAR_ATTR_ITALIC) ? TRUE : FALSE);
+			Bool crossedOut = truecrossedout && ((prevEffect & VT_CHAR_ATTR_CROSSEDOUT) ? TRUE : FALSE);
             blink = trueblink && ((prevEffect & VT_CHAR_ATTR_BLINK) ? TRUE : FALSE);
 
             if (decstglt == DECSTGLT_ALTERNATE) {
@@ -893,6 +895,32 @@ void KClient::writeMe()
 
             if( normal )
                 getFont()->resetFont( hdc() );
+            else if (crossedOut) {
+                if( bold && underline && italic )
+                    getFont()->setCrossedOutBoldUnderlineItalic( hdc() );
+                else if( bold && underline )
+                    getFont()->setCrossedOutBoldUnderline( hdc() );
+                else if( dim && underline && italic )
+                    getFont()->setCrossedOutDimUnderlineItalic( hdc() );
+                else if( dim && underline )
+                    getFont()->setCrossedOutDimUnderline( hdc() );
+                else if( underline && italic )
+                    getFont()->setCrossedOutUnderlineItalic( hdc() );
+                else if( bold && italic )
+                    getFont()->setCrossedOutBoldItalic( hdc() );
+                else if( bold )
+                    getFont()->setCrossedOutBold( hdc() );
+                else if( dim && italic )
+                    getFont()->setCrossedOutDimItalic( hdc() );
+                else if( dim )
+                    getFont()->setCrossedOutDim( hdc() );
+                else if( underline )
+                    getFont()->setCrossedOutUnderline( hdc() );
+                else if ( italic )
+                    getFont()->setCrossedOutItalic( hdc() );
+		    	else
+                    getFont()->setCrossedOut( hdc() );
+            }
             else if( bold && underline && italic )
                 getFont()->setBoldUnderlineItalic( hdc() );
             else if( bold && underline )

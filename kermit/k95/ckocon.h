@@ -1247,6 +1247,7 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
     unsigned dim:1;             /* Dim */
     unsigned wyseattr:1;        /* Wyse Attribute */
     unsigned italic:1;          /* Italic */
+	unsigned crossedout:1;		/* Crossed out */
     unsigned hyperlink:1;       /* Hyperlink */
     unsigned short linkid;      /* Hyperlink Index */
 } vtattrib ;
@@ -1270,8 +1271,8 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 #define KUI_CHAR_ATTR_LOWER_HALF      ((USHORT) 0x0400)
 #define VT_CHAR_ATTR_ITALIC           ((USHORT) 0x0800)
 #define VT_CHAR_ATTR_HYPERLINK        ((USHORT) 0x1000)
+#define VT_CHAR_ATTR_CROSSEDOUT      ((USHORT) 0x2000)
 /* These three are available for use */
-#define VT_CHAR_RESERVED_3            ((USHORT) 0x2000)  /* Crossed-out */
 #define VT_CHAR_RESERVED_2            ((USHORT) 0x4000)  /* Doubly-underlined */
 #define VT_CHAR_RESERVED_1            ((USHORT) 0x8000)
 

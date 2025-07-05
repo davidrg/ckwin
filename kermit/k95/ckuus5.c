@@ -357,7 +357,7 @@ extern int ntermfont, tt_font, tt_font_size;
 extern cell_video_attr_t colornormal, colorunderline, colorstatus,
     colorhelp, colorselect, colorborder, colorgraphic, colordebug,
     colorreverse, colorcmd, coloritalic, colorblink, colorbold, colordim,
-	colorcursor;
+	colorcursor, colorcrossedout;
 extern cell_video_attr_t savedcolorselect, savedcolorcursor;
 extern int priority;
 extern struct keytab prtytab[];
@@ -6480,6 +6480,7 @@ shotrm() {
 		VscrnWrtCharStrAtt(VCMD, "status",    6, row, 41, &colorstatus );
         VscrnWrtCharStrAtt(VCMD, "terminal",  8, row, 49, &colornormal );
         VscrnWrtCharStrAtt(VCMD, "underline", 9, row, 58, &colorunderline );
+        VscrnWrtCharStrAtt(VCMD, "crossed-out", 11, row, 68, &colorcrossedout );
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
@@ -6491,7 +6492,8 @@ shotrm() {
 		print_color("%-8s", TRUE, savedcolorselect);
 		print_color("%-8s", TRUE, colorstatus);
         print_color("%-9s", TRUE, colornormal);
-        print_color("%-8s", TRUE, colorunderline);
+        print_color("%-10s", TRUE, colorunderline);
+        print_color("%-8s", TRUE, colorcrossedout);
 
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
@@ -6504,18 +6506,21 @@ shotrm() {
 		print_color("%-8s", FALSE, savedcolorselect);
 		print_color("%-8s", FALSE, colorstatus);
         print_color("%-9s", FALSE, colornormal);
-        print_color("%-8s", FALSE, colorunderline);
+        print_color("%-10s", FALSE, colorunderline);
+        print_color("%-8s", FALSE, colorcrossedout);
         printf("\n");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     {
-        extern int trueblink, truedim, truebold, truereverse, trueunderline, trueitalic;
+        extern int trueblink, truedim, truebold, truereverse, trueunderline,
+                    trueitalic, truecrossedout;
         extern int blink_is_color, bold_is_color, dim_is_color, use_blink_attr,
 				   use_bold_attr;
 		extern int savedtruereverse, savedtrueunderline, savedtruedim,
-					savedtruebold, savedtrueitalic, savedtrueblink;
+					savedtruebold, savedtrueitalic, savedtrueblink,
+                    savedtruecrossedout;
 
 		/* The saved values are initialised to the same values as the non-saved
 		 * variants, and *only* updated by the "SET TERM ATTR" command, where
@@ -6532,9 +6537,10 @@ shotrm() {
 			trueitalic?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
 
-        printf("             reverse: %-3s  underline: %-3s\n",
+        printf("             reverse: %-3s  underline: %-3s  crossed-out: %-3s\n",
                 savedtruereverse?"on":"off",
-                savedtrueunderline?"on":"off");
+                savedtrueunderline?"on":"off",
+                savedtruecrossedout?"on":"off");
         if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     }
     {

@@ -9173,21 +9173,15 @@ DCS $ q 3 , } ST</pre>
                      title="Turn on Invisible attribute">
                 <ctlseq><param-single/> = 9</ctlseq>
                 <p>Turns on the Invisible attribute.</p>
-                <!-- TODO: For all other terminal types, this should be
-                       crossed-out characters. Currently a value of 9 is treated
-                       the same as 8 regardless of term type.
-                       -->
             </section>
-            <section role="parameter" not-implemented="true" id="sgr-9-co"
-                     title="Crossed-out characters" todo="true">
+            <section role="parameter" id="sgr-9-co"
+                     title="Crossed-out characters">
                 <ctlseq><param-single/> = 9</ctlseq>
                 <ref src="e48:75"/>
                 <ref src="wy370:78"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-9.1E02"/>
                 <termsupp first="xterm" series="xt" additional="putty"/>
-                <!-- TODO: Currently a value of 9 is treated the same as 8
-                        regardless of term type - this should be qansi-only.
-                       -->
+                <p>Turns on the Crossed-out attribute.</p>
             </section>
             <section role="parameter" groups="isansi" badges="beos" id="sgr-10-ansi"
                      title="Select Primary Font">
@@ -9402,23 +9396,15 @@ DCS $ q 3 , } ST</pre>
                      title="Turn off Invisible">
                 <ctlseq><param-single/> = 29</ctlseq>
                 <p>Turns off the Invisible attribute</p>
-                <!-- TODO: This is currently treated the same as 28. It should
-                        be gated to QANSI only, and on all other terminals
-                        turn off crossed-out characters
-                         -->
             </section>
-            <section role="parameter" not-implemented="true"
-                     id="sgr-29-co" todo="true"
+            <section role="parameter" id="sgr-29-co"
                      title="Turn off crossed-out">
                 <ctlseq><param-single/> = 29</ctlseq>
                 <ref src="e48:75"/>
                 <ref src="wy370:78"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-2-9.1E61"/>
                 <termsupp first="xterm" series="xt" additional="putty"/>
-                <!-- TODO: This is currently treated the same as 28. It should
-                        be gated to QANSI only, and on all other terminals
-                        turn off crossed-out characters
-                         -->
+                <p>Turns off the crossed-out attribute</p>
             </section>
             <section style="group" role="group">
                 <section role="parameter" id="sgr-30" title="Set Black Foreground">

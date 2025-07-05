@@ -78,14 +78,16 @@ the desired mode when they do not seem to work with your host application.
 <a href="arrow.html">CLICK HERE</a> for a technical explanation.
 
 <p>
-<dt><tt>SET TERMINAL ATTRIBUTE <i>{</i> BLINK, DIM, PROTECTED, REVERSE, UNDERLINE <i>}</i> <i>{</i> ON, OFF <i>}</i></tt>
+<dt><tt>SET TERMINAL ATTRIBUTE <i>{</i> BLINK, DIM, PROTECTED, REVERSE,
+    UNDERLINE, ITALIC, CROSSED-OUT <i>}</i> <i>{</i> ON, OFF <i>}</i></tt>
 
-<dd>Determines whether real Blinking, Reverse, and Underline are used in the
-terminal display.  When <tt>BLINK</tt> is turned <tt>OFF</tt>, reverse
-background intensity is used.  When <tt>REVERSE</tt> and <tt>UNDERLINE</tt>
+<dd>Determines whether real Blinking, Reverse, italic, crossed-out and Underline
+are used in the terminal display. When <tt>BLINK</tt> is turned <tt>OFF</tt>, reverse
+background intensity is used.  When <tt>REVERSE</tt>, <tt>ITALIC</tt>,
+<tt>CROSSED-OUT</tt> and <tt>UNDERLINE</tt>
 are <tt>OFF</tt>, the colors selected with <tt>SET TERMINAL COLOR <i>{</i>
-REVERSE, UNDERLINE <i>}</i></tt> are used instead.  This command affects the
-entire current screen and the entire terminal scrollback buffer.
+REVERSE, UNDERLINE, ITALIC, CROSSED-OUT <i>}</i></tt> are used instead.
+This command affects the entire current screen and the entire terminal scrollback buffer.
 <p>
 <blockquote>
 When <tt>BLINK</tt> is <tt>ON</tt>, true blinking is done.  But due to
@@ -195,12 +197,22 @@ Screen parts are:
 <dd>Screen border, OS/2 only (only one color can be given here, not two
 as for the other screen parts).
 <p>
+<dt><tt>CROSSED-OUT-TEXT</tt>
+<dd>Crossed-out text, which must be simulated with color in Console versions of
+    K95 on OS/2 and Windows due to restrictions of the Console driver.
+<dt><tt>CURSOR</tt>
+<dd>K95G only: the text cursor
+<p>
 <dt><tt>DEBUG-TERMINAL</tt>
 <dd>Debugging screens (in which control characters and escape sequences are
 displayed graphically).
 <p>
 <dt><tt>HELP-TEXT</tt>
 <dd>Popup help screens
+<p>
+<dt><tt>ITALIC</tt>
+<dd>Italic text, which must be simulated with color in Console versions of
+    K95 on OS/2 and Windows due to restrictions of the Console driver.
 <p>
 <dt><tt>REVERSE-VIDEO</tt>
 <dd>Colors to be substituted when the host puts the terminal into reverse
@@ -218,8 +230,9 @@ lost in reverse video.
 <dd>The main terminal screen.
 <p>
 <dt><tt>UNDERLINED TEXT</tt>
-<dd>Underlined text, which must be simulated with color due to restrictions
-of the Console driver.
+<dd>Underlined text, which must be simulated with color in Console versions of
+    K95 on OS/2 and Windows due to restrictions of the Console driver.
+
 </dl>
 <p>
 Colors are:
