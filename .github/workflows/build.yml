@@ -183,11 +183,9 @@ jobs:
             sdk: 10.0.22621.0
           - id: x64_arm64
         version:
-# windows-2019 is no longer available
+# windows-2019 is no longer available, and with it Visual Studio 2019.
 #          - vs: 2019
 #            image: windows-2019
-          - vs: 2019
-            image: windows-2022
           - vs: 2022
             image: windows-2022
     runs-on: ${{matrix.version.image}}
@@ -2186,71 +2184,71 @@ jobs:
   # The results are all k95-${arch}.zip
   #
 
-  Update-x86-Artifact:
-    runs-on: windows-latest
-    needs:
-      - Build-Manual-Dist
-      - Build-Ctlseqs-Doc
-      - Build-VisualCxx
-    steps:
-      - name: Fetch K95 x86
-        uses: actions/download-artifact@v4
-        with:
-          name: k95-vs2019-x86
-          path: ${{ github.workspace }}\k95
-      - name: Fetch Manual
-        uses: actions/download-artifact@v4
-        with:
-          name: k95-manual-dist
-          path: ${{ github.workspace }}\k95\docs\manual
-      - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
-        with:
-          name: k95-ctlseqs-doc
-          path: ${{ github.workspace }}\ctlseqs
-      - name: Move ctlseqs doc
-        run: |
-          del ${{ github.workspace }}\ctlseqs\todo.html
-          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: k95-x86
-          path: ${{ github.workspace }}\k95
-          retention-days: 1
+#  Update-x86-Artifact:
+#    runs-on: windows-latest
+#    needs:
+#      - Build-Manual-Dist
+#      - Build-Ctlseqs-Doc
+#      - Build-VisualCxx
+#    steps:
+#      - name: Fetch K95 x86
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: k95-vs2019-x86
+#          path: ${{ github.workspace }}\k95
+#      - name: Fetch Manual
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: k95-manual-dist
+#          path: ${{ github.workspace }}\k95\docs\manual
+#      - name: Fetch ctlseqs doc
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: k95-ctlseqs-doc
+#          path: ${{ github.workspace }}\ctlseqs
+#      - name: Move ctlseqs doc
+#        run: |
+#          del ${{ github.workspace }}\ctlseqs\todo.html
+#          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: k95-x86
+#          path: ${{ github.workspace }}\k95
+#          retention-days: 1
 
-  Update-x86-64-Artifact:
-    runs-on: windows-latest
-    needs:
-      - Build-Manual-Dist
-      - Build-Ctlseqs-Doc
-      - Build-VisualCxx
-    steps:
-      - name: Fetch K95 x86-64
-        uses: actions/download-artifact@v4
-        with:
-          name: k95-vs2019-x64
-          path: ${{ github.workspace }}\k95
-      - name: Fetch Manual
-        uses: actions/download-artifact@v4
-        with:
-          name: k95-manual-dist
-          path: ${{ github.workspace }}\k95\docs\manual
-      - name: Fetch ctlseqs doc
-        uses: actions/download-artifact@v4
-        with:
-          name: k95-ctlseqs-doc
-          path: ${{ github.workspace }}\ctlseqs
-      - name: Move ctlseqs doc
-        run: |
-          del ${{ github.workspace }}\ctlseqs\todo.html
-          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: k95-x86-64
-          path: ${{ github.workspace }}\k95
-          retention-days: 7
+#  Update-x86-64-Artifact:
+#    runs-on: windows-latest
+#    needs:
+#      - Build-Manual-Dist
+#      - Build-Ctlseqs-Doc
+#      - Build-VisualCxx
+#    steps:
+#      - name: Fetch K95 x86-64
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: k95-vs2019-x64
+#          path: ${{ github.workspace }}\k95
+#      - name: Fetch Manual
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: k95-manual-dist
+#          path: ${{ github.workspace }}\k95\docs\manual
+#      - name: Fetch ctlseqs doc
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: k95-ctlseqs-doc
+#          path: ${{ github.workspace }}\ctlseqs
+#      - name: Move ctlseqs doc
+#        run: |
+#          del ${{ github.workspace }}\ctlseqs\todo.html
+#          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: k95-x86-64
+#          path: ${{ github.workspace }}\k95
+#          retention-days: 7
 
   Update-arm32-Artifact:
     runs-on: windows-latest
