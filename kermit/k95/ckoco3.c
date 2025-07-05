@@ -29,6 +29,7 @@
 #include "ckoi31.h"
 #include "ckoqnx.h"
 #include "ckoadm.h"
+#include "ckoads.h"
 #endif /* NOLOCAL */
 
 #include <ctype.h>              /* Character types */
@@ -184,6 +185,11 @@ extern int tn_b_nlm ;           /* TELNET BINARY newline mode */
 extern int tt_crd;              /* Carriage-return display mode */
 extern int tt_lfd;              /* Line-feed display mode */
 extern int tt_bell;             /* How to handle incoming Ctrl-G characters */
+#ifdef KUI
+extern int tt_bell_flash;
+extern int user_bell_flash;
+extern int tt_bell_raise;
+#endif /* KUI */
 extern int tt_type, tt_type_mode ;
 extern int tt_status[VNUM];           /* Terminal status line displayed */
 extern int tt_status_usr[VNUM];
@@ -600,15 +606,18 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;44c",     /* Kermit 95 self-personality */
-            /* K95 Device Attributes: VT320;132-columns;printer;selective-erase;user-defined-keys;
-                                      national-replacement-character-sets;technical-characters;PCTerm */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;28;44c",     /* Kermit 95 self-personality */
+            /* K95 Device Attributes:
+				VT320;132-columns;printer;selective-erase;user-defined-keys;
+                national-replacement-character-sets;technical-characters;
+				rectangular-editing;PCTerm */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
     "ADM3A",  {NULL}, "", /* LSI ADM 3A */
     "ADM5",   {NULL}, "", /* LSI ADM 5 */
     "VTNT",   {NULL},                           "",                       /* Microsoft NT VT */
+    "REGENT25",{NULL},                           "",                    /* ADDS Regent 25 */
     "IBM3101",{"I3101",NULL},   ""                       /* IBM 31xx */
 };
 int max_tt = TT_MAX;                    /* Highest terminal type */
@@ -640,6 +649,11 @@ extern int tt_updmode;                  /* Terminal Screen Update Mode */
 extern int tt_url_hilite;
 extern int tt_url_hilite_attr;
 int tt_type_vt52 = TT_VT52 ;            /* Terminal Type Mode before entering VT52 mode */
+#ifdef KUI
+#define SYNC_OUTPUT_TIMEOUT 1000
+int 	 tt_sync_output = FALSE;
+int      tt_sync_output_timeout = 0;
+#endif /* KUI */
 int      holdscreen = FALSE ;
 
 int      escstate = ES_NORMAL;
@@ -5312,16 +5326,18 @@ cursordown(int wrap) {
                     ((ISWYSE(tt_type_mode) ||
                      ISTVI(tt_type_mode) ||
                      ISHZL(tt_type_mode) ||
-                     ISDG200(tt_type_mode)) &&
-                    !autoscroll || protect || wy_autopage) )
+                     ISDG200(tt_type_mode) ||
+                     ISREGENT25(tt_type_mode)) &&
+                    !autoscroll || protect || wy_autopage))
         {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
             lgotoxy(VTERM, wherex[VTERM], (relcursor ? margintop : 1));
-        } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode)) &&
-                  autoscroll && !protect)
+        } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode) || ISREGENT25(tt_type_mode)) &&
+                  autoscroll && !protect) {
             wrtch(LF);
+        }
     }
     if ( wrapit )
         wrapit = FALSE;
@@ -5834,6 +5850,28 @@ clrbol_escape( BYTE vmode, CHAR fillchar ) {
         line->cells[x].video_attr = cellcolor;
         line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
         }
+}
+
+/* Clear from current cursor position to end of line */
+void
+clreol_escape( BYTE vmode, CHAR fillchar ) {
+    videoline * line = NULL ;
+    int x ;
+    cell_video_attr_t cellcolor = geterasecolor(vmode) ;
+
+    if ( fillchar == NUL )
+        fillchar = SP ;
+    if ( vmode == VTERM && decsasd == SASD_STATUS )
+        vmode = VSTATUS ;
+
+    /* take care of current line */
+    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
+    {
+        line->cells[x].c = fillchar ;
+        line->cells[x].video_attr = cellcolor;
+        line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL ;
+    }
 }
 
 void
@@ -7698,6 +7736,11 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     attrib.linkid = 0;
     savedattrib[VTERM] = attrib;
 
+#ifdef KUI
+    tt_bell_flash = user_bell_flash;    /* Urgency on bell back to user setting */
+    tt_bell_raise = FALSE;              /* Raise window on bell back to user setting */
+    tt_sync_output = FALSE;             /* Synchronized output off */
+#endif /* KUI */
     bracketed_paste[VTERM] = FALSE;     /* Bracketed paste off */
 
     erasemode = user_erasemode;
@@ -10427,6 +10470,8 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
     if ( !kbdlocked() ) {
         if ( mode == VTERM ||
              mode == VCMD && activecmd == XXOUT ) {
+
+            /* Handle arrow keys */
             if (k >= K_ARR_MIN && k <= K_ARR_MAX) {
                 if ( ISDG200( tt_type_mode ) ) {
                     /* Data General */
@@ -10574,6 +10619,23 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                         break;
                     case K_LFARR:
                         sendcharduplex(BS,TRUE);
+                        break;
+                    case K_DNARR:
+                        sendcharduplex(LF,TRUE);
+                        break;
+                    }
+                }
+                else if ( ISREGENT25( tt_type_mode ) ) {
+                    /* ADDS Regent 25 */
+                    switch ( k ) {
+                    case K_UPARR:
+                        sendcharduplex(SUB,TRUE);
+                        break;
+                    case K_RTARR:
+                        sendcharduplex(ACK,TRUE);
+                        break;
+                    case K_LFARR:
+                        sendcharduplex(NAK,TRUE);
                         break;
                     case K_DNARR:
                         sendcharduplex(LF,TRUE);
@@ -13856,6 +13918,11 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
         return;
     }
 
+    if (ISREGENT25(tt_type_mode)) {
+        addsascii(ch);
+        return;
+    }
+
     if ( ISVC(tt_type_mode) )
     {
         vcascii(ch);
@@ -16837,8 +16904,31 @@ vtcsi(void)
 						case 1036:  /* xterm - Send esc when Meta modifies a key */
 							pn[2] = tt_kb_mode == KBM_ME ? 1 : 2;
 							break;
+                        case 1042:  /* xterm - urgency window hint on bell */
+#ifdef KUI
+                            pn[2] = tt_bell_flash ? 1 : 2;
+#else
+                            pn[2] = 4; /* Permanently reset */
+#endif /* KUI */
+                            break;
+                        case 1043:  /* xterm - raise window on bell */
+#ifdef KUI
+                            pn[2] = tt_bell_raise ? 1 : 2;
+#else
+                            pn[2] = 4; /* Permanently reset */
+#endif /* KUI */
+                            break;
                         case 2004:
                             pn[2] = bracketed_paste[vmode] ? 1 : 2;
+                            break;
+                        case 2026:
+                            if (ISK95(tt_type_mode)) {
+#ifdef KUI
+                                pn[2] = tt_sync_output ? 1 : 2;
+#else
+                                pn[2] = 4; /* Permanently reset */
+#endif /* KUI */
+                            }
                             break;
 
                         default:
@@ -18389,9 +18479,32 @@ vtcsi(void)
 							tt_kb_mode = KBM_ME;
 							ipadl25();;  /* Update the status line */
 							break;
+                        case 1042:    /* xterm - enable urgency window hint on bell */
+#ifdef KUI
+                            tt_bell_flash = TRUE;
+#endif /* KUI */
+                            break;
+                        case 1043:    /* xterm - raise window hint on bell */
+#ifdef KUI
+                            tt_bell_raise = TRUE;
+#endif /* KUI */
+                            break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
+                            break;
+                        case 2026:
+#ifdef KUI
+                            if (ISK95(tt_type_mode)) {
+                                /* various - Synchronized Output */
+                                if (!tt_sync_output) {
+                                    /* Don't alow the timeout to be suppressed by
+                                     * spamming this set mode. */
+                                    tt_sync_output_timeout = SYNC_OUTPUT_TIMEOUT;
+                                }
+                                tt_sync_output = TRUE;
+                            }
+#endif /* KUI */
                             break;
                         default:
                             break;
@@ -19007,10 +19120,31 @@ vtcsi(void)
 								tt_kb_mode = KBM_EN;
 								ipadl25();  /* Update the status line */
 								break;
+                            case 1042:    /* xterm - disable urgency window hint on bell */
+#ifdef KUI
+                                tt_bell_flash = FALSE;
+#endif /* KUI */
+                                break;
+                            case 1043:    /* xterm - do not raise window on bell */
+#ifdef KUI
+                                tt_bell_raise = FALSE;
+#endif /* KUI */
+                                break;
                             case 2004:
                             	/* xterm - Disable Bracketed Paste Mode */
                             	bracketed_paste[vmode] = FALSE;
                             	break;
+                            case 2026:
+#ifdef KUI
+                                if (ISK95(tt_type_mode)) {
+                                    /* various - Synchronized Output */
+                                    tt_sync_output = FALSE;
+                                    tt_sync_output_timeout = 0;
+                                    VscrnIsDirty(VTERM);
+                                }
+#endif
+                                break;
+
                            default:
                                break;
                            }
@@ -22053,10 +22187,15 @@ vtcsi(void)
 #endif /* KUI */
                         break;
                     case 5: /* Raise Window */
+                        /* Not possible to take focus on Windows */
                         break;
                     case 6: /* Lower Window */
                         break;
                     case 7: /* Refresh the xterm window */
+#ifdef KUI
+                        tt_sync_output_timeout = SYNC_OUTPUT_TIMEOUT;
+                        KuiRefreshTerminal();
+#endif /* KUI */
                         break;
                     case 8: /* Size window in characters (Y=Pn[2],X=Pn[3]) */
                         /* 0 means leave that dimension alone */

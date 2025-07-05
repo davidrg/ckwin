@@ -475,6 +475,11 @@ DECTSR		462
                 uri="https://www.kermitproject.org/onlinebooks/usingmsdoskermit2e.pdf"
                 uri-type="pdf-page"
                 sort-order="16"/>
+        <refsrc name="vt1000"
+                key="vt1000"
+                uri="https://manx-docs.org/collections/mds-199909/cd3/term/v1000ug2.pdf"
+                uri-type="pdf-page"
+                sort-order="17"/>
     </references>
 
     <badges>
@@ -5415,6 +5420,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:251"/>
             <ref src="vt510:DA1.html"/>
             <ref src="vt52x:163"/>
+            <ref src="vt1000:190"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <ctlseq>CSI <param-single/> c</ctlseq>
             <p>
@@ -5451,58 +5457,112 @@ DCS $ q 3 , } ST</pre>
                     <td>SNI-97801</td>
                     <td>CSI ? 6 2 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 4 4 c</td>
                 </tr>
+                <tr>
+                    <td>K95</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 4 4 c</td>
+                </tr>
             </table>
-            <p>The first value indicates the device class: 61 for VT100, 62 for
-                VT200, 63 for VT300, 64 for VT400/VT500. The remaining values
-                specify extensions and have the following meanings:</p>
+
+            <p>For the VT220 and newer, the first value indicates the device
+                class: 61 for VT100, 62 for VT200, 63 for VT300,
+                64 for VT400/VT510, and 65 for VT520/VT525. The remaining values
+                specify <em>extensions</em> and have the following meanings:</p>
             <dl>
-                <dt>1</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>1</dt>  <!-- vt510, vt420, vt340, vt320, vt220, xt -->
                 <dd>132-columns</dd>
 
                 <dt>2</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
                 <dd>Printer</dd>
 
-                <dt not-implemented="true">3</dt> <!-- xt -->
+                <dt not-implemented="true">3</dt> <!-- vt340, vt330, xt -->
                 <dd>ReGIS</dd>
 
-                <dt not-implemented="true">4</dt>  <!-- vt510, xt -->
+                <dt not-implemented="true">4</dt>  <!-- vt510, vt340, vt330, xt -->
                 <dd>Sixel</dd>
 
-                <dt>6</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt not-implemented="true">5</dt>
+                <dd>Katakana</dd>
+
+                <dt>6</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
                 <dd>Selective erase</dd>
 
-                <dt not-implemented="true">7</dt>  <!-- vt510, vt420, vt320, vt220 -->
+                <dt not-implemented="true">7</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220 -->
                 <dd>Soft character sets (DRCS)</dd>
 
-                <dt>8</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>8</dt>  <!-- vt510, vt420, vt382, vt340, vt330, vt320, vt220, xt -->
                 <dd>User-defined keys</dd>
+                <!--
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=968
+                -->
 
-                <dt>9</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>9</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
                 <dd>National Replacement Character Sets</dd>
+
+                <!--
+                    Note: the Greek and Turkish special versions of the VT200
+                    and VT300 use parameters 10 and 11 instead of 23 and 24
+                    respectively
+                -->
+
+                <dt not-implemented="true">10</dt>  <!-- vt382 -->
+                <dd>Kanji</dd>
+
+                <dt not-implemented="true">11</dt>  <!-- vt1000 -->
+                <dd>Status Display</dd>
+                <!-- The status line
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1036
+                -->
 
                 <dt not-implemented="true">12</dt>  <!-- vt510 -->
                 <dd>Yugoslavian (SCS)</dd>
 
-                <dt>15</dt>  <!-- vt510, vt420, xt -->
+                <dt not-implemented="true">13</dt>  <!-- vt340, vt330 -->
+                <dd>Block Mode</dd>
+
+                <dt not-implemented="true">14</dt>  <!-- vt1000 -->
+                <dd>8-bit Interface Architecture</dd>
+                <!--
+                See: https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=112
+                This is an extension for level 2, and required for level 3.
+                -->
+
+                <dt>15</dt>  <!-- vt510, vt420, vt382, vt340, vt330, xt -->
                 <dd>Technical Characters</dd>
 
-                <dt not-implemented="true">16</dt>  <!-- xt -->
+                <dt not-implemented="true">16</dt>  <!-- vt340, vt330, xt -->
                 <dd>Locator Port</dd>           <!-- TODO: we have mouse reporting... -->
+                <!-- Related to 29
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1012
+                -->
 
-                <dt not-implemented="true">17</dt>  <!-- xt -->
+                <dt not-implemented="true">17</dt>  <!-- vt1000, xt -->
                 <dd>Terminal state interrogation</dd>
+                <!--
+                DECRQM, DECRPM, DECNKM, DECRQSS, DECPRPSS, DECRQPSR, DECPSR,
+                DECRSPS, DECRQTSR, DECTSR, DECRSTS
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=446
+                -->
 
-                <dt not-implemented="true">18</dt>  <!-- vt510, vt420, xt -->
+                <dt not-implemented="true">18</dt>  <!-- vt510, vt420, vt340, vt330, xt -->
                 <dd>Windowing capability</dd>
+                <!-- DECHCCM, DECVCCM, DECPCCM, DECRQDE, DECSNLS, SU, SD
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=339
+                -->
 
-                <dt not-implemented="true">19</dt>  <!-- vt420 -->
+                <dt not-implemented="true">19</dt>  <!-- vt420, vt340, vt330 -->
                 <dd>Dual Sessions</dd>
+
+                <dt not-implemented="true">20</dt>  <!-- ? -->
+                <dd>APL</dd>
 
                 <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
-                <dt not-implemented="true">22</dt>  <!-- xt -->
+                <dt>22</dt>                         <!-- vt525, xt -->
                 <dd>ANSI color (eg, VT525)</dd>
+                <!-- DECCTR, DECSTGLT
+                 https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=361
+                 -->
 
                 <dt not-implemented="true">23</dt>  <!-- vt510 -->
                 <dd>Greek</dd>
@@ -5510,14 +5570,66 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">24</dt>  <!-- vt510 -->
                 <dd>Turkish</dd>
 
-                <dt not-implemented="true">28</dt>  <!-- xt -->
+                <dt not-implemented="true">25</dt>    <!-- ? -->
+                <dd>Arabic Bilingual Mode 1</dd>
+
+                <dt not-implemented="true">26</dt>    <!-- ? -->
+                <dd>Arabic Bilingual Mode 2</dd>
+
+                <dt not-implemented="true">27</dt>    <!-- ? -->
+                <dd>Arabic Bilingual Mode 3</dd>
+
+                <dt>28</dt>                         <!-- xt -->
                 <dd>Rectangular editing</dd>        <!-- TODO: we have this? -->
 
                 <dt not-implemented="true">29</dt>  <!-- xt -->
                 <dd>ANSI text locator</dd>          <!-- TODO: we have this? -->
+                <!-- Related to 15
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1012
+                -->
+
+                <dt not-implemented="true">30</dt>    <!-- ? -->
+                <dd>Hanzi</dd>
+
+                <dt not-implemented="true">31</dt>    <!-- ? -->
+                <dd>Not allocated/used/reserved?</dd>
+
+                <dt not-implemented="true">32</dt>    <!-- ? -->
+                <dd>Text Macros</dd>
+
+                <dt not-implemented="true">33</dt>    <!-- ? -->
+                <dd>Hangul and Hanja</dd>
+
+                <dt not-implemented="true">34</dt>    <!-- ? -->
+                <dd>Icelandic</dd>
+
+                <dt not-implemented="true">35</dt>    <!-- ? -->
+                <dd>Arabic Bilingual with Text Controls</dd>
+
+                <dt not-implemented="true">36</dt>    <!-- ? -->
+                <dd>Arabic Bilingual with no Text Controls</dd>
+
+                <dt not-implemented="true">37</dt>    <!-- ? -->
+                <dd>Thai</dd>
+
+                <dt not-implemented="true">38</dt>    <!-- ? -->
+                <dd>Character Outlining</dd>
+
+                <dt not-implemented="true">39</dt>    <!-- VT1000 -->
+                <dd>Page Memory Extension</dd>
+
+                <!-- Can't find anything that reports these. Perhaps one of the
+                     DEC X Terminals (like above)? -->
+                <dt not-implemented="true">40</dt>    <!-- ? -->
+                <dd>unknown</dd>
+                <dt not-implemented="true">41</dt>    <!-- ? -->
+                <dd>unknown</dd>
 
                 <dt not-implemented="true">42</dt>  <!-- vt510 -->
                 <dd>ISO Latin-2 character set</dd>      <!-- TODO: Do we really not have this? -->
+
+                <dt not-implemented="true">43</dt>    <!-- DECterm -->
+                <dd>Ruled Lines</dd>
 
                 <dt>44</dt>  <!-- vt510 -->
                 <dd>PCTerm</dd>
@@ -5527,8 +5639,65 @@ DCS $ q 3 , } ST</pre>
 
                 <dt not-implemented="true">46</dt>   <!-- vt510 -->
                 <dd>ASCII emulation</dd>     <!-- TODO: What is this? -->
-            </dl>
 
+                <dt not-implemented="true">52</dt>    <!-- Windows Terminal -->
+                <dd>(some terminal emulators, recent) Support for write subset of <a href="#osc-52">OSC-52</a></dd>
+            </dl>
+            <!--
+                For a certain device class, support for particular extensions
+                may be implicit. For example, all level 3 or higher terminals
+                (VT320 and up, device class 63 or higher) support
+                extensions 11, 14 and 17 so they don't need to be reported in
+                the DA response. A level 3 or higher terminal emulating a
+                level 2 (eg, VT220) terminal may choose to report these
+                extensions though.
+            -->
+
+            <p>A real VT100 terminal (or Kermit 95 when it is emulating a real
+                VT100) produces responses in a different format:</p>
+            <table>
+                <tr>
+                    <th>Response</th>
+                    <th>Option Present</th>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 0 c</tt></td>
+                    <td>No options</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 1 c</tt></td>
+                    <td>Processor option (STP)</td>
+                </tr>
+                <tr>
+                    <td><tt>CSI ? 1 ; 2 c</tt></td>
+                    <td>Advanced video option (AVO)</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 3 c</tt></td>
+                    <td>AVO and STP</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 4 c</tt></td>
+                    <td>Graphics option (GPO)</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 5 c</tt></td>
+                    <td>GPO and STP</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 6 c</tt></td>
+                    <td>GPO and AVO</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 7 c</tt></td>
+                    <td>AGPO, STP and AVO</td>
+                </tr>
+            </table>
+
+            <p>
+                The DEC VT102 uses a different format again, just responding
+                with <tt>CSI ? 6 c</tt>
+            </p>
         </section>
         <section role="ctlseq" id="da3" mnemonic="DA3" title="Tertiary Device Attributes" groups="isvt220">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-=-Ps-c.1D0D"/>
@@ -5567,7 +5736,19 @@ DCS $ q 3 , } ST</pre>
                     ISVT220(tt_type) *not* ISVT220(tt_type_mode)
             -->
             <!-- TODO: This will need changing when we get support for more
-                 VT420 or VT520 escapes -->
+                 VT420 or VT520 escapes
+                 The first parameter is the identification code:
+                         1 - VT220
+                        18 - VT330
+                        19 - VT340
+                        24 - VT320
+                        28 - DECterm
+                        41 - VT420
+                        42 - VT1000 terminal emulator
+                        61 - VT510
+                        64 - VT520
+                        65 - VT525
+            -->
             <p>
                 Secondary Device Attributes Report Request. If <param-single/>
                 is 0 then K95 claims to be a VT320 with firmware version 0 and ROM
@@ -5670,13 +5851,20 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### g ######################### -->
-        <section role="ctlseq" id="dgc" mnemonic="DGC" title="Display character in G2 (SCO)" badges="scoansi">
+        <section role="ctlseq" id="dgc" mnemonic="DGC" title="Display Graphic Character" badges="scoansi">
             <ctlseq>CSI <param-single/> g</ctlseq>
             <termsupp first="sco" series="sco" additional=""/>
             <p>
                 Displays the character <param-single/> in G2. This should
                 only occur when not in SCO ANSI BCS2 mode, but as there is no
                 way to turn SCO ANSI BCS2 mode on currently this is always true.
+            </p>
+            <p>
+                This allows displaying character codes outside the normal
+                printable range (eg, the C0 control codes) as graphic
+                characters. For example, if the current remote character set
+                is CP437 then <tt>CSI 26 g</tt> would display the right arrow
+                character (→).
             </p>
         </section>
         <section role="ctlseq" id="tbc" mnemonic="TBC" title="Tab clear">
@@ -6801,18 +6989,38 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="xt-urgency" mnemonic=""
-                     title="Enable Urgency window hint when Ctrl+G is received"
-                     not-implemented="true" todo="true">
+                     title="Enable Urgency window hint when Ctrl+G is received">
                 <ctlseq><param-single/> = 1042</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-2.1F7E"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Windows, GUI only:
+                    When a bell is received causes the title bar and taskbar
+                    button to flash. Depending on Windows version
+                    the taskbar may remain highlighted until the window is
+                    given focus.
+                </p>
             </section>
             <section role="parameter" id="xt-raise-window" mnemonic=""
-                     title="Enable raising of the window when Ctrl+G is received"
-                     not-implemented="true" todo="true">
+                     title="Enable raising of the window when Ctrl+G is received">
                 <ctlseq><param-single/> = 1043</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-3.1F7F"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Windows, GUI only:
+                    Windows does not allow an application to steal focus from
+                    other applications (at least not without their cooperation).
+                    Instead, this has the same behavior as mode 1042; it
+                    causes the window to be flashed on a bell. This is inline
+                    with the observed behavior of xterm under some window
+                    managers on Linux, which enforce similar restrictions on
+                    focus-stealing.
+                </p>
+                <p>
+                    While the behavior of modes 1042 and 1043 may currently be
+                    the same, Kermit 95 still treats them as separate
+                    independent modes.
+                </p>
             </section>
             <section role="parameter" id="xt-reuse-clip" mnemonic=""
                      title="Reuse the most recent data copied to CLIPBOARD"
@@ -6940,6 +7148,26 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 2006</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-6.1F7F"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+            </section>
+            <section role="parameter" id="bsu" mnemonic="BSU"
+                     title="Begin Synchronized Output" badges="k95">
+                <ctlseq><param-single/> = 2026</ctlseq>
+                <p>
+                    Disables scheduled updating of the terminal screen from the
+                    terminal buffer. While disabled, the terminal screen can
+                    still be manually updated via
+                    <a href="#xtwinops-refresh">XTWINOPS Refresh</a>.
+                    Only available on Windows in the GUI version of Kermit 95
+                    (K95G).
+                </p>
+                <p>
+                    A timeout applies to this mode to prevent a crashed or
+                    malicious application, or a lost network connection, from
+                    keeping screen updates disabled forever. Synchronized
+                    Output Mode will end automatically when the timeout
+                    expires. Setting the mode repeatedly does not extend the
+                    timeout, but the XTWINOPS Refresh control sequence does.
+                </p>
             </section>
             <section role="parameter" id="tt-7727" mnemonic=""
                      title="Enable Application Escape mode"
@@ -8402,18 +8630,27 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1042" mnemonic=""
-                     title="Disable Urgency window manager hint when Ctrl+G is received"
-                     not-implemented="true" todo="true">
+                     title="Disable Urgency window manager hint when Ctrl+G is received">
                 <ctlseq><param-single/> = 1042</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-2.1F82"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Windows only: Disables flashing the titlebar and taskbar
+                    button when a bell is received.
+                </p>
             </section>
             <section role="parameter" id="decrst-1043" mnemonic=""
-                     title="Disable raising of the window when Ctrl+G is received"
-                     not-implemented="true" todo="true">
+                     title="Disable raising of the window when Ctrl+G is received">
                 <ctlseq><param-single/> = 1043</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-3.1F83"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Windows only: Disables mode 1043 which has the same effect
+                    as mode 1042 due to Windows (and usability) limitations.
+                    While modes 1042 and 1043 may have the same effect,
+                    disabling mode 1043 does <em>not</em> affect mode 1042 if it
+                    is also enabled.
+                </p>
             </section>
             <section role="parameter" id="decrst-1045" mnemonic=""
                      title="No Extended reverse-wraparound mode"
@@ -8532,6 +8769,14 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 2006</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-2-0-0-6.1F83"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+            </section>
+            <section role="parameter" id="esu" mnemonic="ESU"
+                     title="End Synchronized Output" badges="k95">
+                <ctlseq><param-single/> = 2026</ctlseq>
+                <p>
+                    Resumes scheduled updating of the terminal screen from the
+                    terminal buffer.
+                </p>
             </section>
             <section role="parameter" id="r-tt-7727" mnemonic=""
                      title="Disable Application Escape mode"
@@ -8962,7 +9207,8 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="e48:75"/>
                 <p>
-                    Disables sco8bit and crm modes, restores graphic sets.
+                    Disables display of C0 control codes and shifting of all
+                    other characters, restores graphic sets.
                     <!-- Copies QsavedG[] into G[] -->
                 </p>
             </section>
@@ -8974,29 +9220,38 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt510" series="sco" additional="sco putty"/>
                 <p>
                     Hex 00–7F of the PC character set codes are mapped to the
-                    current 7-bit display character set.
-                    <!--Turns off sco8bit, turns on crm, switches to graphic set G2, and switches
+                    current 7-bit display character set. This results in C0
+                    control codes being displayed as graphic characters, rather
+                    than being interpreted as control codes. For example, if the
+                    current remote character set is CP437, then the LF character
+                    would be rendered as the '◙' character rather than causing
+                    a line feed.
+                </p>
+                <!--Turns off sco8bit, turns on crm, switches to graphic set G2, and switches
                     colors to the color set with <tt>set term color graphic</tt>. If in SCOANSI
                     backwards compatibility mode, colors are reset.-->
-                </p>
             </section>
             <section role="parameter" badges="linux" id="sgr-11-linux"
                      title="Display GL Control Characters as Graphic Characters">
                 <ctlseq><param-single/> = 11</ctlseq>
-                <p>Turns on sco8bit and crm. Sets G1, G2 and G3 to CP437</p>
+                <p>Switches to the CP437 character set. C0 control characters are
+                    displayed as graphic characters, while all others have their
+                    8th bit set.
+                </p>
             </section>
             <section role="parameter" badges="qansi" id="sgr-11-qansi"
                      title="Display GL Control Characters as Graphic Characters">
                 <ctlseq><param-single/> = 11</ctlseq>
-                <p>Turns on sco8bit and crm. Sets G1/G2/G3 to IBM C0 Graphics.</p>
+                <p>Sets G1/G2/G3 to IBM C0 Graphics. C0 control characters are
+                    displayed as graphic characters, while all others have their
+                    8th bit set.</p>
             </section>
             <section role="parameter" badges="linux" id="sgr-12" title="Select null mapping">
                 <ctlseq><param-single/> = 12</ctlseq>
                 <p>
-                    Select null mapping (CP437), set display control flag, set toggle meta
-                    flag (causes the high bit of a byte to be toggled before the mapping table
-                    translation is done). Turns on sco8bit and crm, turns off the graphic
-                    attribute, sets G1/G2/G3 to CP437.
+                    Select null mapping (CP437). Enables display of C0 control
+                    codes as graphic characters, all other characters have their
+                    8th bit set. Sets G1/G2/G3 to CP437.
                 </p>
             </section>
             <section role="parameter" id="sgr-12-vt" title="Map 80-FF"
@@ -9009,7 +9264,9 @@ DCS $ q 3 , } ST</pre>
                     <!-- TODO: Is this the same as above currently flagged for
                             linux only? -->
                     Hex 80-FF of the current character set are mapped to the
-                    current 7-bit display character set.
+                    current 7-bit display character set. This causes the 8th
+                    bit to be set for any characters outside the C0 Control
+                    character range.
                 </p>
             </section>
 
@@ -9032,10 +9289,12 @@ DCS $ q 3 , } ST</pre>
                 <section role="parameter" id="sgr-17" title="Shift High Bit on before displaying characters">
                     <ctlseq><param-single/> = 17</ctlseq>
                     <p groups="isansi" badges="beos">
-                        Turns on sco8bit, turns off crm and graphic attribute. Switches to G3.
+                        Switches to G3 and sets the 8th bit on all characters
+                        outside the C0 range.
                     </p>
                     <p badges="qansi">
-                        Turns sco8bit on, turns crm off. Switches G1/G2/G3 to CP437
+                        Switches G1/G2/G3 to CP437 and sets the 8th bit on all
+                        characters outside the C0 range.
                     </p>
                 </section>
             </section>
@@ -11221,18 +11480,30 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-1042" mnemonic=""
-                         title="Urgency window hint when Ctrl+G is received"
-                         not-implemented="true" todo="true">
+                         title="Urgency window hint when Ctrl+G is received">
                     <ctlseq><param-single/> = 1042</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-2.1F7E"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if the window title and task bar button will
+                        be flashed when a bell is received.
+                    </p>
+                    <p>
+                        This is permanently reset on OS/2.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1043" mnemonic=""
-                         title="Enable raising of the window when Ctrl+G is received"
-                         not-implemented="true" todo="true">
+                         title="Enable raising of the window when Ctrl+G is received">
                     <ctlseq><param-single/> = 1043</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-3.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Indicates if mode 1043 is set which currently has the
+                        same behavior as mode 1042.
+                    </p>
+                    <p>
+                        This is permanently reset on OS/2.
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1044" mnemonic=""
                          title="Reuse the most recent data copied to CLIPBOARD"
@@ -11340,25 +11611,32 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-2004"
-                         title="Bracketed Paste Mode"
-                         not-implemented="true" todo="true">
+                         title="Bracketed Paste Mode">
                     <ctlseq><param-single/> = 2004</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-4.1F7D"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
                 </section>
                 <section role="parameter" id="rqm-2005" mnemonic=""
-                         title="Enable readline character-quoting"
+                         title="Readline character-quoting"
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 2005</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-5.1F7E"/>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-2006" mnemonic=""
-                         title="Enable readline newline pasting"
+                         title="Readline newline pasting"
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 2006</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-6.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                </section>
+                <section role="parameter" id="rqm-2026" mnemonic=""
+                         title="Synchronized Output Mode" badges="k95">
+                    <ctlseq><param-single/> = 2026</ctlseq>
+                    <p>
+                        This is Permanently Reset in the OS/2 and Windows Console
+                        versions of Kermit 95.
+                    </p>
                 </section>
                 <section role="parameter" id="decrqm-7727" mnemonic=""
                          title="Disable Application Escape mode"
@@ -12089,10 +12367,16 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-6.2008"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
-            <section role="parameter" not-implemented="true" title="Refresh the xterm window">
+            <section role="parameter" title="Refresh the xterm window" id="xtwinops-refresh">
                 <ctlseq><param-single/> = 7</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-7.2009"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Refreshes the terminal window from the terminal buffer
+                    immediately. Not affected by
+                    <a href="#bsu">Scynrhonized Output Mode</a>. Only available
+                    on Windows in the GUI version of Kermit 95 (K95G).
+                </p>
             </section>
             <section role="parameter" id="xtwinopts-rwc"
                      title="Resize window in characters">
@@ -14645,7 +14929,6 @@ DCS $ q 3 , } ST</pre>
                 customizing the color palette via <a href="#osc-4">OSC-4</a> or
                 <tt>SET GUI RGBCOLOR</tt>.
             </p>
-
             <p>
                 To retain compatibility with software blindly expecting 256-color or
                 24-bit RGB color support, 16-color versions of Kermit 95 still
@@ -14671,15 +14954,6 @@ DCS $ q 3 , } ST</pre>
                 of K95 only have 4 bits each for the foreground and background
                 colors, making them incapable of actually storing color indexes
                 above 16 or per-cell RGB values.
-            </p>
-            <p>
-                16-color builds do not support <a href="#osc-4">OSC-4</a>
-                or the <tt>SET GUI RGBCOLOR</tt> command as the color palettes
-                are only used to get an RGB value to use for color quantization.
-                K95 has no control over how the console host/VIO window renders
-                colors, so the RGB values in the color palettes are never used
-                for display; only to map indexes from a larger palette on to
-                the smaller 4-bit aixterm-16 palette.
             </p>
         </section>
     </section>

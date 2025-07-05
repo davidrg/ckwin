@@ -41,6 +41,8 @@ extern int trueblink, trueunderline, trueitalic, truedim, truebold;
 extern int decstglt, decatcbm, decatcum;
 cell_video_attr_t geterasecolor(int);
 int tt_old_update;
+extern int tt_sync_output;  /* ckoco3.c */
+extern int tt_sync_output_timeout;
 
 extern DWORD VscrnClean( int vmode );
 extern void scrollback( BYTE, int );
@@ -89,12 +91,26 @@ VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT id, DWORD dwtime )
 VOID CALLBACK KTimerProc( HWND hwnd, UINT msg, UINT_PTR id, DWORD dwtime )
 #endif
 {
+    /* Guard against the terminal getting 'stuck' because something turns
+     * synchronised output on and leaving it on forever. */
+    if (tt_sync_output) {
+        if (tt_sync_output_timeout > 0) {
+            tt_sync_output_timeout -= tt_update;
+        }
+        if (tt_sync_output_timeout <= 0) {
+            tt_sync_output = FALSE;
+            tt_sync_output_timeout = 0;
+            VscrnIsDirty(VTERM);
+        }
+    }
+
     // debug(F111,"KTimerProc()","msg",msg);
     // debug(F111,"KTimerProc()","id",id);
     // debug(F111,"KTimerProc()","dwtime",dwtime);
     KClient* client = (KClient*) kglob->hwndset->find( hwnd );
     if( client ) {
-        if( ::VscrnClean( vmode /* client->getClientID() */ ) )
+        if( ::VscrnClean( vmode /* client->getClientID() */ )
+            && (!tt_sync_output || vmode != VTERM))
             client->getDrawInfo();
         else
             client->checkBlink();
@@ -608,7 +624,13 @@ void KClient::getEndSize( int& w, int& h )
 Bool KClient::paint()
 {
     clearPaintRgn();
-    getDrawInfo();
+    if (tt_sync_output && vmode == VTERM) {
+        /* in synchronized output mode - keep re-rendering the existing display
+         * until we exit synchronized output mode. */
+        writeMe();
+    } else {
+        getDrawInfo();
+    }
     return TRUE;
 }
 

@@ -91,3 +91,5 @@ int KuiFileDialog(char *, char *, char *, int, BOOL, BOOL);
 
 void KuiShowNotification(int icon, char* title, char * message);
 #endif /* CK_SHELL_NOTIFY */
+
+void KuiRefreshTerminal();

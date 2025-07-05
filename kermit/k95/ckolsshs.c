@@ -518,9 +518,9 @@ static void ssh_client_close(ssh_client_state_t* state, ssh_client_t *client,
     debug(F100, "sshsubsys - Subsystem shutdown", "exit_status", exit_status);
 
     /* Grab a copy of the libssh error message if there is one */
-    if (exit_status == SSH_ERR_SSH_ERROR) {
+    if (exit_status == SSH_ERR_SSH_ERROR && state != NULL) {
         error_message = _strdup(ssh_get_error(state->session));
-        debug(F100, "sshsubsys - have libssh error message", error_message, 0);
+        debug(F110, "sshsubsys - have libssh error message", error_message, 0);
     }
 
     /* Close the existing socket if we were supplied one rather than
@@ -529,8 +529,10 @@ static void ssh_client_close(ssh_client_state_t* state, ssh_client_t *client,
         closesocket(state->parameters->existing_socket);
     }
 
-    if (state != NULL)
+    if (state != NULL) {
         ssh_client_state_free(state);
+        state = NULL;
+    }
 
     if (acquire_mutex(client->mutex, INFINITE)) {
         client->error = exit_status;
@@ -860,6 +862,7 @@ static int verify_known_host(ssh_client_state_t * state) {
         case SSH_KNOWN_HOSTS_NOT_FOUND:
             printf("Could not find the known hosts file. If you accept the key here "
                    "it will be created automatically.\n");
+            /* fall through */
         case SSH_KNOWN_HOSTS_UNKNOWN:
             /*
              * The server is unknown. The user must confirm the public key hash is
@@ -2124,7 +2127,7 @@ static int start_reverse_forward_server(ssh_forward_t *fwd,
  */
 static int start_forward_server(ssh_forward_t *fwd,
                                 ssh_client_state_t *state) {
-    int rc;
+    int rc = SSH_ERR_OK;
 
     if (fwd->type == SSH_PORT_FORWARD_LOCAL) {
         rc = start_direct_forward_server(fwd);

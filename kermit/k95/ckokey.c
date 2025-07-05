@@ -8001,6 +8001,99 @@ defi31km( int tt )
     return 0;
 }
 
+/* ADDS Regent 20 */
+int
+defregent20km( int tt ) {
+    if ( defbasekm(tt) ||
+         /*                Scan  Kverb                    Regent Key           PC Key           PC Key Group */
+         insertkeymap( tt, 269,  mkkeyevt(CK_CR)) ||      /* NEW LINE           Enter */
+         insertkeymap( tt, 1293, mkkeyevt(LF)) ||         /* LINE FEED          Ctrl+Enter */
+         insertkeymap( tt, 4388, mkkeyevt(SOH)) ||        /* HOME               Gray-Home */
+         /*insertkeymap( tt, 4398, mkkeyevt(F_ESC | 'K')) ||*/ /* ERASE         Gray-Delete */
+         insertkeymap( tt, 5422, mkkeyevt(FF)) ||         /* Ctrl+ERASE         Ctrl-Gray-Delete */
+         insertkeymap( tt, 264, mkkeyevt(BS ))            /* BACK SPACE         Backspace */
+            )
+        return -1;
+    return 0;
+}
+
+/* ADDS Regent 25 - like a Regent 20, but with arrow keys and a numeric key pad */
+int
+defregent25km( int tt ) {
+    if ( defregent20km(tt) ||
+            /*                Scan  Kverb                           Regent Key           PC Key           PC Key Group */
+
+         /*
+         Cursor keys
+         */
+         insertkeymap( tt, 4390, mkkeyevt(F_KVERB | K_UPARR )) || /* Up Arrow           Up Arrow         Cursor keypad */
+         insertkeymap( tt, 4392, mkkeyevt(F_KVERB | K_DNARR )) || /* Down Arrow         Down Arrow       Cursor keypad */
+         insertkeymap( tt, 4391, mkkeyevt(F_KVERB | K_RTARR )) || /* Right Arrow        Right Arrow      Cursor keypad */
+         insertkeymap( tt, 4389, mkkeyevt(F_KVERB | K_LFARR )) || /* Left Arrow         Left Arrow       Cursor keypad */
+
+         insertkeymap( tt, 4365, mkkeyevt(CK_CR)) ||        /* KP Enter */
+
+         /*
+         Function Keys
+                TEMPORARY: The Regent 25 does not have function keys, but the
+                Regent 40, 60, 100 and 200 all do. These terminals all understand
+                the same subset of escape sequences with the main enhancements in
+                the higher end models being text attributes (underline, reverse video, etc)
+                and forms. So by giving the Regent 25 the function keys it may
+                make it a good enough subsititute for a Regent 40/60/100/200.
+         */
+         /* TODO: Support alternate EOL sequences (CR ETX, CR EOT) after STX n */
+         insertkeymap( tt, 368, mkliteralevt("\0021\x0D")) || /* F1           F1               Top F keys */
+         insertkeymap( tt, 369, mkliteralevt("\0022\x0D")) || /* F2           F2               Top F keys */
+         insertkeymap( tt, 370, mkliteralevt("\0023\x0D")) || /* F3           F3               Top F keys */
+         insertkeymap( tt, 371, mkliteralevt("\0024\x0D")) || /* F4           F4               Top F keys */
+         insertkeymap( tt, 372, mkliteralevt("\0025\x0D")) || /* F5           F5               Top F keys */
+         insertkeymap( tt, 373, mkliteralevt("\0026\x0D")) || /* F6           F6               Top F keys */
+         insertkeymap( tt, 374, mkliteralevt("\0027\x0D")) || /* F7           F7               Top F keys */
+         insertkeymap( tt, 375, mkliteralevt("\0028\x0D")) || /* F8           F8               Top F keys */
+         insertkeymap( tt, 880, mkliteralevt("\002!\x0D")) || /* SHIFT+F1     SHIFT+F1         Top F keys */
+         insertkeymap( tt, 881, mkliteralevt("\002\"\x0D"))|| /* SHIFT+F2    SHIFT+F2         Top F keys */
+         insertkeymap( tt, 882, mkliteralevt("\002#\x0D")) || /* SHIFT+F3     SHIFT+F3         Top F keys */
+         insertkeymap( tt, 883, mkliteralevt("\002$\x0D")) || /* SHIFT+F4     SHIFT+F4         Top F keys */
+         insertkeymap( tt, 884, mkliteralevt("\002%\x0D")) || /* SHIFT+F5     SHIFT+F5         Top F keys */
+         insertkeymap( tt, 885, mkliteralevt("\002&\x0D")) || /* SHIFT+F6     SHIFT+F6         Top F keys */
+         insertkeymap( tt, 886, mkliteralevt("\002'\x0D")) || /* SHIFT+F7     SHIFT+F7         Top F keys */
+         insertkeymap( tt, 887, mkliteralevt("\002(\x0D"))    /* SHIFT+F8     SHIFT+F8         Top F keys */
+            )
+        return -1;
+    return 0;
+}
+
+int
+defregent200km( int tt ) {
+    if ( defregent25km(tt) ||
+         /* Scan  Kverb                                          Regent Key     PC Key           PC Key Group */
+
+         /*
+         Function Keys
+         */
+         /* TODO: Support alternate EOL sequences (CR ETX, CR EOT) after STX n */
+         insertkeymap( tt, 368, mkliteralevt("\0021\x0D")) || /* F1           F1               Top F keys */
+         insertkeymap( tt, 369, mkliteralevt("\0022\x0D")) || /* F2           F2               Top F keys */
+         insertkeymap( tt, 370, mkliteralevt("\0023\x0D")) || /* F3           F3               Top F keys */
+         insertkeymap( tt, 371, mkliteralevt("\0024\x0D")) || /* F4           F4               Top F keys */
+         insertkeymap( tt, 372, mkliteralevt("\0025\x0D")) || /* F5           F5               Top F keys */
+         insertkeymap( tt, 373, mkliteralevt("\0026\x0D")) || /* F6           F6               Top F keys */
+         insertkeymap( tt, 374, mkliteralevt("\0027\x0D")) || /* F7           F7               Top F keys */
+         insertkeymap( tt, 375, mkliteralevt("\0028\x0D")) || /* F8           F8               Top F keys */
+         insertkeymap( tt, 880, mkliteralevt("\002!\x0D")) || /* SHIFT+F1     SHIFT+F1         Top F keys */
+         insertkeymap( tt, 881, mkliteralevt("\002\"\x0D"))|| /* SHIFT+F2    SHIFT+F2         Top F keys */
+         insertkeymap( tt, 882, mkliteralevt("\002#\x0D")) || /* SHIFT+F3     SHIFT+F3         Top F keys */
+         insertkeymap( tt, 883, mkliteralevt("\002$\x0D")) || /* SHIFT+F4     SHIFT+F4         Top F keys */
+         insertkeymap( tt, 884, mkliteralevt("\002%\x0D")) || /* SHIFT+F5     SHIFT+F5         Top F keys */
+         insertkeymap( tt, 885, mkliteralevt("\002&\x0D")) || /* SHIFT+F6     SHIFT+F6         Top F keys */
+         insertkeymap( tt, 886, mkliteralevt("\002'\x0D")) || /* SHIFT+F7     SHIFT+F7         Top F keys */
+         insertkeymap( tt, 887, mkliteralevt("\002(\x0D"))    /* SHIFT+F8     SHIFT+F8         Top F keys */
+        )
+        return -1;
+    return 0;
+}
+
 int
 insertkmtolist( struct keynode ** plist, int key, con_event def )
 {
@@ -8171,6 +8264,12 @@ defaultkeymap( int terminal ) {
         return defqnxkm(terminal);
     case TT_IBM31:
         return defi31km(terminal);
+    case TT_REGENT20:
+        return defregent20km(terminal);
+    case TT_REGENT25:
+        return defregent25km(terminal);
+    case TT_REGENT200:
+        return defregent200km(terminal);
     case TT_NONE:
     default:
         return defbasekm(terminal);

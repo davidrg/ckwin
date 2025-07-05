@@ -8028,11 +8028,14 @@ static char *hxyterm[] = {
 "  For Wyse and Televideo terminals, Autopage mode causes the cursor to move",
 "  to the top of the next page of terminal memory when it scrolls off the ",
 "  bottom of the current page. In K95, it moves the cursor to the top line ",
-"  from the bottom since K95 only supports a single page of terminal memory",
+"  from the bottom since K95 only supports a single page of terminal memory.",
 " ",
 "SET TERMINAL AUTOSCROLL { ON, OFF }",
 "  Autoscroll mode is used on Televideo terminals when the size of a page of",
-"  terminal memory is larger than the view screen.",
+"  terminal memory is larger than the view screen. On ADDS Regent terminals,",
+"  when autoscroll is off anything that causes the cursor to move down from ",
+"  the bottom line of the screen will cause the cursor to wrap around to the",
+"  top of the screen.",
 " ",
 #else /* OS2 */
 "SET TERMINAL AUTODOWNLOAD { ON, OFF, ERROR { STOP, CONTINUE } }",
@@ -8057,9 +8060,18 @@ static char *hxyterm[] = {
 #endif /* OS2 */
 
 #ifdef OS2
+#ifdef KUI
+"SET TERMINAL BELL { AUDIBLE, VISIBLE, FLASH-WINDOW, NONE }",
+#else
 "SET TERMINAL BELL { AUDIBLE, VISIBLE, NONE }",
+#endif /* KUI */
 "  Specifies how Control-G (bell) characters are handled.  AUDIBLE means",
 "  a beep is sounded; VISIBLE means the screen is flashed momentarily.",
+#ifdef KUI
+" ",
+" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+" enabled independently of other options.",
+#endif /* KUI */
 " ",
 "  (This command has been superseded by SET BELL.)",
 " ",
@@ -9936,11 +9948,21 @@ static char *hxywin95[] = {
 
 static char *hmxybel[] = {
 #ifdef OS2
+#ifdef KUI
+"Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, ",
+"    FLASH-WINDOW [ { ON, OFF } ], NONE }",
+#else
 "Syntax: SET BELL { AUDIBLE [ { BEEP, SYSTEM-SOUNDS } ], VISIBLE, NONE }",
+#endif /* KUI */
 "  Specifies how incoming Ctrl-G (bell) characters are handled in CONNECT",
 "  mode and how command warnings are presented in command mode.  AUDIBLE",
 "  means either a beep or a system-sound is generated; VISIBLE means the",
 "  screen is flashed momentarily.",
+#ifdef KUI
+" ",
+" FLASH-WINDOW causes the titlebar and taskbar buttons to flash. This can be",
+" enabled independently of other options.",
+#endif /* KUI */
 #else
 "Syntax: SET BELL { OFF, ON }",
 "  ON (the default) enables ringing of the terminal bell (beep) except where",

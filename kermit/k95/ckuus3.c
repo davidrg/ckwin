@@ -8307,32 +8307,19 @@ shossh() {
 static int set_ssh_iparam_on(int param) {
     int value;
     int success = seton(&value);
-    if (!success) return success;
+    if (success < 0) return success;
     return ssh_set_iparam(param, value);
 }
-#endif
 
-static int
-dosetssh() {
-#ifdef SSHCMD
-    extern char * sshcmd;
-#endif /* SSHCMD */
-#ifdef SSHBUILTIN
-#ifndef SSHTEST
-    extern int sl_ssh_xfw_saved, sl_ssh_ver_saved;
-#endif /* SSHTEST */
-#endif /* SSHBUILTIN */
-    int cx, x, y, z;
-    char * s;
+/* Hides any SET SSH options that are not valid for the currently loaded (or
+ * compiled in) SSH backend */
+void update_setssh_options() {
+    int z;
 
-#ifdef SSHBUILTIN
 #ifdef SSH_DLL
-    if (!ssh_avail()) {
-        printf("\nNo SSH backend DLL loaded. SSH commands unavailable. Use the SSH LOAD command\n");
-        printf("to load a compatible SSH backend if you have one.\n");
-        return (-9);
-    }
+    if (!ssh_avail()) return;
 #endif /* SSH_DLL */
+
     /* Hide any "set ssh" commands not supported by the currently loaded SSH
      * backend */
     for (z = 0; z < nsshtab; z++) {
@@ -8344,7 +8331,7 @@ dosetssh() {
             sshtab[z].flgs = CM_INV;
         }
         else if ((sshtab[z].kwval == SSH_XFW && !ssh_feature_supported(SSH_FEAT_X11_FWD))
-            || (sshtab[z].flgs == SSH_XAL  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
+            || (sshtab[z].kwval == SSH_XAL  && !ssh_feature_supported(SSH_FEAT_X11_XAUTH))) {
             /*
              * "set ssh x11-forwarding" and "set ssh xauth-location" commands.
              */
@@ -8447,6 +8434,31 @@ dosetssh() {
             gssapitab[z].flgs = CM_INV;
         }
     }
+}
+
+#endif
+
+static int
+dosetssh() {
+#ifdef SSHCMD
+    extern char * sshcmd;
+#endif /* SSHCMD */
+#ifdef SSHBUILTIN
+#ifndef SSHTEST
+    extern int sl_ssh_xfw_saved, sl_ssh_ver_saved;
+#endif /* SSHTEST */
+#endif /* SSHBUILTIN */
+    int cx, x, y, z;
+    char * s;
+
+#ifdef SSHBUILTIN
+#ifdef SSH_DLL
+    if (!ssh_avail()) {
+        printf("\nNo SSH backend DLL loaded. SSH commands unavailable. Use the SSH LOAD command\n");
+        printf("to load a compatible SSH backend if you have one.\n");
+        return (-9);
+    }
+#endif /* SSH_DLL */
 #endif /* SSHBUILTIN */
 
     if ((cx = cmkey(sshtab,nsshtab,"","command", xxstring)) < 0)

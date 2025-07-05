@@ -162,6 +162,10 @@ features are not available on older operating systems however.
   also means that alternative SSH backends not based on libssh can now be supported
   should anyone want to build one, opening the door to SSH on vintage windows or
   OS/2 systems.
+* <!-- 3.0 beta 3 --> Added support for "user@host" syntax to SSH command. "ssh root@myhost" should
+  do the same as "ssh myhost /user:root" now. The implementation is pretty basic
+  and may not handle weird input well but when it works it should be less
+  confusing to new users.  
 * <!-- 2.2 --> 
   new `SET SSH HEARTBEAT-INTERVAL <seconds>` command
 * <!-- 2.2 --> 
@@ -173,10 +177,6 @@ features are not available on older operating systems however.
 * <!-- 3.0 beta 3 --> Upgraded to the latest OpenSSL release fixing many security vulnerabilities
   and adding support for new algorithms.
 * <!-- 3.0 beta 3 --> Added support for TLS 1.1, 1.2 and 1.3
-* <!-- 3.0 beta 3 --> Added support for "user@host" syntax to SSH command. "ssh root@myhost" should
-  do the same as "ssh myhost /user:root" now. The implementation is pretty basic
-  and may not handle weird input well but when it works it should be less
-  confusing to new users.
 
 ### Terminal Emulation
 
@@ -220,33 +220,34 @@ While every effort has been made to avoid removing features that were previously
 supported, this has in some cases been unavoidable due to the very limited
 development resources now available for Kermit 95.
 
-Features that are <u>underlined</u> _may_ return before the final stable release
-of Kermit 95 v3.0 but there are no guarantees! If you *need* one of these
-features the best way to guarantee it returns is to make a pull request!
+Features that are *in italics* **may** return before final stable release
+of Kermit 95 v3.0, or perhaps in a later release but there are no guarantees! 
+If you *need* one of these features the best way to guarantee it returns is 
+to make a pull request!
 
 ### On Windows
 * SSH Client:
   * SSHv1 is no longer supported
   * A number of now obsolete ciphers, etc, are no longer supported
-  * SSH is no longer supported on Windows 9x/NT/2000
-  * <u>SSH Agent support is very limited</u>
-  * <u>SSH over HTTP Proxies</u>
-  * <u>SSH over SOCKS Proxies</u>
-  * <u>Dynamic Port Forwarding</u>
-  * <u>SET TCP settings no longer affect the SSH client</u>
-* <u>DNS SRV is no longer supported</u> 
+  * *SSH is no longer supported on Windows 9x/NT/2000*
+  * *SSH Agent support is very limited*
+  * *SSH over HTTP Proxies*
+  * *SSH over SOCKS Proxies*
+  * *Dynamic Port Forwarding*
+  * *SET TCP settings no longer affect the SSH client*
+* *DNS SRV is no longer supported*
 * SSL/TLS is no longer supported on Windows 9x/NT/2000 as OpenSSL no longer 
   supports these platforms
 * DECnet connection methods are only supported on Windows Server 2003 or older
   as Pathworks32 is not available for newer Windows releases
-* <u>Meridian SuperLAT and TES32 are no longer supported</u>
+* *Meridian SuperLAT and TES32 are no longer supported*
 * SRP Authentication is no longer supported as all available implementations in
   C are unmaintained and depend on out-of-date versions of OpenSSL. If you
   need this, it's still possible to build Kermit 95 from source with SRP
   support.
 * Kerberos IV authentication is no longer supported as it is no longer included
   in current releases of MIT Kerberos for Windows. If you need this, it's still 
-  possible to build Kermit 95 from source with SRP support.
+  possible to build Kermit 95 from source with Kerberos IV support.
 
 ### On IBM OS/2
 * Support for PC/TCP 1.2 and IBM TCP/IP 1.2.1 is no longer included as the

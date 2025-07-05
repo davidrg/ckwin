@@ -110,6 +110,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    last VT10x escape sequence K95 could reasonably support. The only ones
    left unimplemented are the interlaced video mode, and the confidence tests
    neither of which can be reasonably supported by an emulator.
+ - New experimental ADDS Regent 25 emulation
+ - New SET BELL option to flash the window title and task bar button in addition
+   to any visible/audible bell setting.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -242,7 +245,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
+   - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
+   - [1043](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-raise-window): Due to windows limitations, same behavior as above
+   - [2026](https://davidrg.github.io/ckwin/dev/ctlseqs.html#bsu): Synchronized Output Mode (K95 terminal type only)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
+ - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.
@@ -257,6 +264,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    K95 will now do the same, using unicode character 0x2426 for VT220 and up.
    Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
    (K95 bug 815).
+ - Fixed a bug in the previous release that caused the backspace key to not work
+   correctly for some "SET SSH" commands
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
