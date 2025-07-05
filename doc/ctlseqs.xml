@@ -7149,6 +7149,26 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-6.1F7F"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
+            <section role="parameter" id="bsu" mnemonic="BSU"
+                     title="Begin Synchronized Output" badges="k95">
+                <ctlseq><param-single/> = 2026</ctlseq>
+                <p>
+                    Disables scheduled updating of the terminal screen from the
+                    terminal buffer. While disabled, the terminal screen can
+                    still be manually updated via
+                    <a href="#xtwinops-refresh">XTWINOPS Refresh</a>.
+                    Only available on Windows in the GUI version of Kermit 95
+                    (K95G).
+                </p>
+                <p>
+                    A timeout applies to this mode to prevent a crashed or
+                    malicious application, or a lost network connection, from
+                    keeping screen updates disabled forever. Synchronized
+                    Output Mode will end automatically when the timeout
+                    expires. Setting the mode repeatedly does not extend the
+                    timeout, but the XTWINOPS Refresh control sequence does.
+                </p>
+            </section>
             <section role="parameter" id="tt-7727" mnemonic=""
                      title="Enable Application Escape mode"
                      not-implemented="true" todo="true">
@@ -8749,6 +8769,14 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 2006</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-2-0-0-6.1F83"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+            </section>
+            <section role="parameter" id="esu" mnemonic="ESU"
+                     title="End Synchronized Output" badges="k95">
+                <ctlseq><param-single/> = 2026</ctlseq>
+                <p>
+                    Resumes scheduled updating of the terminal screen from the
+                    terminal buffer.
+                </p>
             </section>
             <section role="parameter" id="r-tt-7727" mnemonic=""
                      title="Disable Application Escape mode"
@@ -11589,18 +11617,26 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="xterm" series="xt" additional="tt"/>
                 </section>
                 <section role="parameter" id="rqm-2005" mnemonic=""
-                         title="Enable readline character-quoting"
+                         title="Readline character-quoting"
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 2005</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-5.1F7E"/>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-2006" mnemonic=""
-                         title="Enable readline newline pasting"
+                         title="Readline newline pasting"
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 2006</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-6.1F7F"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                </section>
+                <section role="parameter" id="rqm-2026" mnemonic=""
+                         title="Synchronized Output Mode" badges="k95">
+                    <ctlseq><param-single/> = 2026</ctlseq>
+                    <p>
+                        This is Permanently Reset in the OS/2 and Windows Console
+                        versions of Kermit 95.
+                    </p>
                 </section>
                 <section role="parameter" id="decrqm-7727" mnemonic=""
                          title="Disable Application Escape mode"
@@ -12331,10 +12367,16 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-6.2008"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
             </section>
-            <section role="parameter" not-implemented="true" title="Refresh the xterm window">
+            <section role="parameter" title="Refresh the xterm window" id="xtwinops-refresh">
                 <ctlseq><param-single/> = 7</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-7.2009"/>
                 <termsupp first="xterm" series="xt" additional="tt"/>
+                <p>
+                    Refreshes the terminal window from the terminal buffer
+                    immediately. Not affected by
+                    <a href="#bsu">Scynrhonized Output Mode</a>. Only available
+                    on Windows in the GUI version of Kermit 95 (K95G).
+                </p>
             </section>
             <section role="parameter" id="xtwinopts-rwc"
                      title="Resize window in characters">

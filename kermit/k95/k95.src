@@ -70,13 +70,15 @@
 #   report a 16-color palette as while it *understands* 256-color and direct
 #   RGB, colors are always converted to something valid for its 16-color
 #   display palette
+# - Should probably have a different terminfo entry for the console variant,
+#   which lacks a number of features (>16 colours, synchronised output, etc)
 # - Is there a capability to switch into/out of meta-sends-esc mode like there
 #   is for meta-sets-8th-bit? This would set/reset DEC mode 1036.
 # - We're currently using the private-mode mc4/mc5 as the VT320 terminfo entry
 #   did which differs from xterm, and xterm also advertises the mc5i
 #   capability. Need to investigate which is more appropriate.
 #
-# - Extra capabilities to consier:
+# - Extra capabilities to consider:
 #   - Terminfo has capabilities for the PC scancode keyboard (PCTERM) mode.
 #     And K95 does implement PCTERM mode, its just lacking the VT420 control
 #     sequences to enter/exit it - it has to be initiated by the user at the
@@ -348,8 +350,10 @@ k95|Kermit 95 v3.0.0 beta 8,
 	smso=\E[7m,
 # Enter underline mode
 	smul=\E[4m,
-# Set cursor style (DECSCUSR
-	\E[%p1%d\sq,
+# Set cursor style (DECSCUSR)
+	Ss=\E[%p1%d\sq,
+# Synchronized Output (K95G only)
+    Sync=\E[?2026%?%p1%{1}%-%tl%eh,
 # Clear all tab stops
 	tbc=\E[3g,
 # Move to status line

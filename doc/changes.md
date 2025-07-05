@@ -247,7 +247,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
    - [1043](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-raise-window): Due to windows limitations, same behavior as above
+   - [2026](https://davidrg.github.io/ckwin/dev/ctlseqs.html#bsu): Synchronized Output Mode (K95 terminal type only)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
+ - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

@@ -649,6 +649,11 @@ extern int tt_updmode;                  /* Terminal Screen Update Mode */
 extern int tt_url_hilite;
 extern int tt_url_hilite_attr;
 int tt_type_vt52 = TT_VT52 ;            /* Terminal Type Mode before entering VT52 mode */
+#ifdef KUI
+#define SYNC_OUTPUT_TIMEOUT 1000
+int 	 tt_sync_output = FALSE;
+int      tt_sync_output_timeout = 0;
+#endif /* KUI */
 int      holdscreen = FALSE ;
 
 int      escstate = ES_NORMAL;
@@ -7734,6 +7739,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 #ifdef KUI
     tt_bell_flash = user_bell_flash;    /* Urgency on bell back to user setting */
     tt_bell_raise = FALSE;              /* Raise window on bell back to user setting */
+    tt_sync_output = FALSE;             /* Synchronized output off */
 #endif /* KUI */
     bracketed_paste[VTERM] = FALSE;     /* Bracketed paste off */
 
@@ -16915,6 +16921,15 @@ vtcsi(void)
                         case 2004:
                             pn[2] = bracketed_paste[vmode] ? 1 : 2;
                             break;
+                        case 2026:
+                            if (ISK95(tt_type_mode)) {
+#ifdef KUI
+                                pn[2] = tt_sync_output ? 1 : 2;
+#else
+                                pn[2] = 4; /* Permanently reset */
+#endif /* KUI */
+                            }
+                            break;
 
                         default:
                             pn[2] = 0 ; /* Unrecognized mode */
@@ -18478,6 +18493,19 @@ vtcsi(void)
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
                             break;
+                        case 2026:
+#ifdef KUI
+                            if (ISK95(tt_type_mode)) {
+                                /* various - Synchronized Output */
+                                if (!tt_sync_output) {
+                                    /* Don't alow the timeout to be suppressed by
+                                     * spamming this set mode. */
+                                    tt_sync_output_timeout = SYNC_OUTPUT_TIMEOUT;
+                                }
+                                tt_sync_output = TRUE;
+                            }
+#endif /* KUI */
+                            break;
                         default:
                             break;
                         }
@@ -19106,6 +19134,17 @@ vtcsi(void)
                             	/* xterm - Disable Bracketed Paste Mode */
                             	bracketed_paste[vmode] = FALSE;
                             	break;
+                            case 2026:
+#ifdef KUI
+                                if (ISK95(tt_type_mode)) {
+                                    /* various - Synchronized Output */
+                                    tt_sync_output = FALSE;
+                                    tt_sync_output_timeout = 0;
+                                    VscrnIsDirty(VTERM);
+                                }
+#endif
+                                break;
+
                            default:
                                break;
                            }
@@ -22148,10 +22187,15 @@ vtcsi(void)
 #endif /* KUI */
                         break;
                     case 5: /* Raise Window */
+                        /* Not possible to take focus on Windows */
                         break;
                     case 6: /* Lower Window */
                         break;
                     case 7: /* Refresh the xterm window */
+#ifdef KUI
+                        tt_sync_output_timeout = SYNC_OUTPUT_TIMEOUT;
+                        KuiRefreshTerminal();
+#endif /* KUI */
                         break;
                     case 8: /* Size window in characters (Y=Pn[2],X=Pn[3]) */
                         /* 0 means leave that dimension alone */

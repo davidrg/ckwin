@@ -320,3 +320,7 @@ void KuiShowNotification(int icon, char* title, char * message) {
     kui->getTerminal()->showNotification(icon, title, message);
 }
 #endif /* CK_SHELL_NOTIFY */
+
+void KuiRefreshTerminal() {
+    kui->getTerminal()->getClient()->getDrawInfo();
+}
