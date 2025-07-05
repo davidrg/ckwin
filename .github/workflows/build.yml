@@ -183,8 +183,11 @@ jobs:
             sdk: 10.0.22621.0
           - id: x64_arm64
         version:
+# windows-2019 is no longer available
+#          - vs: 2019
+#            image: windows-2019
           - vs: 2019
-            image: windows-2019
+            image: windows-2022
           - vs: 2022
             image: windows-2022
     runs-on: ${{matrix.version.image}}
