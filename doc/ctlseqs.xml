@@ -475,6 +475,11 @@ DECTSR		462
                 uri="https://www.kermitproject.org/onlinebooks/usingmsdoskermit2e.pdf"
                 uri-type="pdf-page"
                 sort-order="16"/>
+        <refsrc name="vt1000"
+                key="vt1000"
+                uri="https://manx-docs.org/collections/mds-199909/cd3/term/v1000ug2.pdf"
+                uri-type="pdf-page"
+                sort-order="17"/>
     </references>
 
     <badges>
@@ -5415,6 +5420,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:251"/>
             <ref src="vt510:DA1.html"/>
             <ref src="vt52x:163"/>
+            <ref src="vt1000:190"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty"/>
             <ctlseq>CSI <param-single/> c</ctlseq>
             <p>
@@ -5451,66 +5457,99 @@ DCS $ q 3 , } ST</pre>
                     <td>SNI-97801</td>
                     <td>CSI ? 6 2 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 4 4 c</td>
                 </tr>
+                <tr>
+                    <td>K95</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 4 4 c</td>
+                </tr>
             </table>
-            <p>The first value indicates the device class: 61 for VT100, 62 for
-                VT200, 63 for VT300, 64 for VT400/VT500. The remaining values
-                specify extensions and have the following meanings:</p>
+
+            <p>For the VT220 and newer, the first value indicates the device
+                class: 61 for VT100, 62 for VT200, 63 for VT300,
+                64 for VT400/VT510, and 65 for VT520/VT525. The remaining values
+                specify <em>extensions</em> and have the following meanings:</p>
             <dl>
-                <dt>1</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>1</dt>  <!-- vt510, vt420, vt340, vt320, vt220, xt -->
                 <dd>132-columns</dd>
 
                 <dt>2</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
                 <dd>Printer</dd>
 
-                <dt not-implemented="true">3</dt> <!-- xt -->
+                <dt not-implemented="true">3</dt> <!-- vt340, vt330, xt -->
                 <dd>ReGIS</dd>
 
-                <dt not-implemented="true">4</dt>  <!-- vt510, xt -->
+                <dt not-implemented="true">4</dt>  <!-- vt510, vt340, vt330, xt -->
                 <dd>Sixel</dd>
 
                 <dt not-implemented="true">5</dt>
                 <dd>Katakana</dd>
 
-                <dt>6</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>6</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
                 <dd>Selective erase</dd>
 
-                <dt not-implemented="true">7</dt>  <!-- vt510, vt420, vt320, vt220 -->
+                <dt not-implemented="true">7</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220 -->
                 <dd>Soft character sets (DRCS)</dd>
 
-                <dt>8</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>8</dt>  <!-- vt510, vt420, vt382, vt340, vt330, vt320, vt220, xt -->
                 <dd>User-defined keys</dd>
+                <!--
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=968
+                -->
 
-                <dt>9</dt>  <!-- vt510, vt420, vt320, vt220, xt -->
+                <dt>9</dt>  <!-- vt510, vt420, vt340, vt330, vt320, vt220, xt -->
                 <dd>National Replacement Character Sets</dd>
 
-                <dt not-implemented="true">10</dt>  <!-- ? -->
+                <!--
+                    Note: the Greek and Turkish special versions of the VT200
+                    and VT300 use parameters 10 and 11 instead of 23 and 24
+                    respectively
+                -->
+
+                <dt not-implemented="true">10</dt>  <!-- vt382 -->
                 <dd>Kanji</dd>
 
-                <dt not-implemented="true">11</dt>  <!-- ? -->
+                <dt not-implemented="true">11</dt>  <!-- vt1000 -->
                 <dd>Status Display</dd>
+                <!-- The status line
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1036
+                -->
 
                 <dt not-implemented="true">12</dt>  <!-- vt510 -->
                 <dd>Yugoslavian (SCS)</dd>
 
-                <dt not-implemented="true">13</dt>  <!-- ? -->
+                <dt not-implemented="true">13</dt>  <!-- vt340, vt330 -->
                 <dd>Block Mode</dd>
 
-                <dt not-implemented="true">14</dt>  <!-- ? -->
+                <dt not-implemented="true">14</dt>  <!-- vt1000 -->
                 <dd>8-bit Interface Architecture</dd>
+                <!--
+                See: https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=112
+                This is an extension for level 2, and required for level 3.
+                -->
 
-                <dt>15</dt>  <!-- vt510, vt420, xt -->
+                <dt>15</dt>  <!-- vt510, vt420, vt382, vt340, vt330, xt -->
                 <dd>Technical Characters</dd>
 
-                <dt not-implemented="true">16</dt>  <!-- xt -->
+                <dt not-implemented="true">16</dt>  <!-- vt340, vt330, xt -->
                 <dd>Locator Port</dd>           <!-- TODO: we have mouse reporting... -->
+                <!-- Related to 29
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1012
+                -->
 
-                <dt not-implemented="true">17</dt>  <!-- xt -->
+                <dt not-implemented="true">17</dt>  <!-- vt1000, xt -->
                 <dd>Terminal state interrogation</dd>
+                <!--
+                DECRQM, DECRPM, DECNKM, DECRQSS, DECPRPSS, DECRQPSR, DECPSR,
+                DECRSPS, DECRQTSR, DECTSR, DECRSTS
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=446
+                -->
 
-                <dt not-implemented="true">18</dt>  <!-- vt510, vt420, xt -->
+                <dt not-implemented="true">18</dt>  <!-- vt510, vt420, vt340, vt330, xt -->
                 <dd>Windowing capability</dd>
+                <!-- DECHCCM, DECVCCM, DECPCCM, DECRQDE, DECSNLS, SU, SD
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=339
+                -->
 
-                <dt not-implemented="true">19</dt>  <!-- vt420 -->
+                <dt not-implemented="true">19</dt>  <!-- vt420, vt340, vt330 -->
                 <dd>Dual Sessions</dd>
 
                 <dt not-implemented="true">20</dt>  <!-- ? -->
@@ -5519,8 +5558,11 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
-                <dt not-implemented="true">22</dt>  <!-- xt -->
+                <dt>22</dt>                         <!-- vt525, xt -->
                 <dd>ANSI color (eg, VT525)</dd>
+                <!-- DECCTR, DECSTGLT
+                 https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=361
+                 -->
 
                 <dt not-implemented="true">23</dt>  <!-- vt510 -->
                 <dd>Greek</dd>
@@ -5537,11 +5579,14 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">27</dt>    <!-- ? -->
                 <dd>Arabic Bilingual Mode 3</dd>
 
-                <dt not-implemented="true">28</dt>  <!-- xt -->
+                <dt>28</dt>                         <!-- xt -->
                 <dd>Rectangular editing</dd>        <!-- TODO: we have this? -->
 
                 <dt not-implemented="true">29</dt>  <!-- xt -->
                 <dd>ANSI text locator</dd>          <!-- TODO: we have this? -->
+                <!-- Related to 15
+                https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1012
+                -->
 
                 <dt not-implemented="true">30</dt>    <!-- ? -->
                 <dd>Hanzi</dd>
@@ -5598,7 +5643,61 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">52</dt>    <!-- Windows Terminal -->
                 <dd>(some terminal emulators, recent) Support for write subset of <a href="#osc-52">OSC-52</a></dd>
             </dl>
+            <!--
+                For a certain device class, support for particular extensions
+                may be implicit. For example, all level 3 or higher terminals
+                (VT320 and up, device class 63 or higher) support
+                extensions 11, 14 and 17 so they don't need to be reported in
+                the DA response. A level 3 or higher terminal emulating a
+                level 2 (eg, VT220) terminal may choose to report these
+                extensions though.
+            -->
 
+            <p>A real VT100 terminal (or Kermit 95 when it is emulating a real
+                VT100) produces responses in a different format:</p>
+            <table>
+                <tr>
+                    <th>Response</th>
+                    <th>Option Present</th>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 0 c</tt></td>
+                    <td>No options</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 1 c</tt></td>
+                    <td>Processor option (STP)</td>
+                </tr>
+                <tr>
+                    <td><tt>CSI ? 1 ; 2 c</tt></td>
+                    <td>Advanced video option (AVO)</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 3 c</tt></td>
+                    <td>AVO and STP</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 4 c</tt></td>
+                    <td>Graphics option (GPO)</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 5 c</tt></td>
+                    <td>GPO and STP</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 6 c</tt></td>
+                    <td>GPO and AVO</td>
+                </tr>
+                <tr not-implemented="true">
+                    <td><tt>CSI ? 1 ; 7 c</tt></td>
+                    <td>AGPO, STP and AVO</td>
+                </tr>
+            </table>
+
+            <p>
+                The DEC VT102 uses a different format again, just responding
+                with <tt>CSI ? 6 c</tt>
+            </p>
         </section>
         <section role="ctlseq" id="da3" mnemonic="DA3" title="Tertiary Device Attributes" groups="isvt220">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-=-Ps-c.1D0D"/>
@@ -5637,7 +5736,19 @@ DCS $ q 3 , } ST</pre>
                     ISVT220(tt_type) *not* ISVT220(tt_type_mode)
             -->
             <!-- TODO: This will need changing when we get support for more
-                 VT420 or VT520 escapes -->
+                 VT420 or VT520 escapes
+                 The first parameter is the identification code:
+                         1 - VT220
+                        18 - VT330
+                        19 - VT340
+                        24 - VT320
+                        28 - DECterm
+                        41 - VT420
+                        42 - VT1000 terminal emulator
+                        61 - VT510
+                        64 - VT520
+                        65 - VT525
+            -->
             <p>
                 Secondary Device Attributes Report Request. If <param-single/>
                 is 0 then K95 claims to be a VT320 with firmware version 0 and ROM
