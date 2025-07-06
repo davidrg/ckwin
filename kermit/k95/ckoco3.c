@@ -17851,7 +17851,6 @@ vtcsi(void)
                                  * enabled, indicate this by appending extension
                                  * 52 to the DA1 response (Windows Terminal) */
                                 char da1buf[100];
-                                da1buf[0] = '\0';
                                 memset(da1buf, 0, sizeof(da1buf));
                                 strcat(da1buf, tt_info[tt_type].x_id);
                                 da1buf[strlen(da1buf)-1] = '\0';

@@ -5507,7 +5507,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">10</dt>  <!-- vt382 -->
                 <dd>Kanji</dd>
 
-                <dt not-implemented="true">11</dt>  <!-- vt1000 -->
+                <dt>11</dt>  <!-- vt1000 -->
                 <dd>Status Display</dd>
                 <!-- The status line
                 https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1036
@@ -5519,7 +5519,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">13</dt>  <!-- vt340, vt330 -->
                 <dd>Block Mode</dd>
 
-                <dt not-implemented="true">14</dt>  <!-- vt1000 -->
+                <dt>14</dt>  <!-- vt1000 -->
                 <dd>8-bit Interface Architecture</dd>
                 <!--
                 See: https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=112
@@ -5558,7 +5558,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">21</dt>  <!-- vt510, vt420, xt -->
                 <dd>Horizontal scrolling</dd>
 
-                <dt>22</dt>                         <!-- vt525, xt -->
+                <dt not-implemented="true">22</dt>   <!-- vt525, xt -->
                 <dd>ANSI color (eg, VT525)</dd>
                 <!-- DECCTR, DECSTGLT
                  https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=361
