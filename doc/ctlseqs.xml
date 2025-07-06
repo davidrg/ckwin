@@ -14560,6 +14560,13 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-6-1.101B"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
+            <section role="parameter" id="osc-62" mnemonic="XTQALLOWABLE"
+                     title="Query allowable features"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 62</ctlseq>
+                <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-6-2.101C"/>
+                <termsupp first="xterm" series="xt" additional=""/>
+            </section>
             <section role="parameter" id="osc-104" mnemonic=""
                      title="Reset color number">
                 <ctlseq><param-single/> = 104 ; c</ctlseq>
