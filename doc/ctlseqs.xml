@@ -115,7 +115,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT termsupp EMPTY>
         <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -480,6 +480,15 @@ DECTSR		462
                 uri="https://manx-docs.org/collections/mds-199909/cd3/term/v1000ug2.pdf"
                 uri-type="pdf-page"
                 sort-order="17"/>
+        <!-- This isn't DECterm documentation (that doesn't really exist
+             anywhere online), but rather a section of the Digital UNIX manual
+             "Writing Software for the International Market", the only place where
+             some DECterm control sequences are discussed -->
+        <refsrc name="decterm"
+                key="dtl"
+                uri="https://ftp.zx.net.nz/rom/V4.0D_D1/DOCS/HTML/AQ0R4CTE/DOCU_006.HTM"
+                uri-type="anchor"
+                sort-order="18"/>
     </references>
 
     <badges>
@@ -966,7 +975,7 @@ DECTSR		462
              against the control sequence.
         -->
         <html type="todo" filename="todo.html" title="TO-DO"
-              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar sgr-9-co sgr-29-co cursor-steady-block steady-underline xt-urgency xt-raise-window osc-8"
+              todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
               todo-terminals="vt102 vt220 vt420 k95 xterm tt putty">
             <style>
@@ -9804,6 +9813,17 @@ DCS $ q 3 , } ST</pre>
                     mode.
                 </p>
             </section>
+
+            <!-- WezTerm
+                53 - Overline On
+                54 - Overline Off
+                58 - Underline color (same format as SGR-38/48)
+                59 - UnderlineColorDefault
+                73 - VerticalAlignSuperScript
+                74 - VerticalAlignSubScript
+                75 - VerticalAlignBaseLine
+            -->
+
             <section style="group" role="group">
                 <section role="parameter" id="sgr-90" title="Set Bright Black Foreground">
                     <ctlseq><param-single/> = 90</ctlseq>
@@ -12152,6 +12172,16 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt420" series="vt" additional="vt510"/>
         </section>
 
+        <section role="ctlseq" id="decdrlbr" mnemonic="DECDRLBR"
+                 title="Draw Ruled Line" not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single symbol="Pl"/> ;
+                <param-single symbol="Px"/> ; <param-single symbol="Plx"/> ;
+                <param-single symbol="Py"/> ; <param-single symbol="Ply"/> , r
+            </ctlseq>
+            <ref src="dtl:BLOCK84"/>
+            <termsupp series="vt" first="decterm"/>
+        </section>
+
         <section role="ctlseq" id="decsest" mnemonic="DECSEST"
                  title="Energy Saver Timing"
                  not-implemented="true" todo="true">
@@ -12231,6 +12261,16 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:DECSFC.html"/>
             <ref src="vt52x:287"/>
             <termsupp first="vt510" series="vt" additional=""/>
+        </section>
+
+        <section role="ctlseq" id="decerlbrp" mnemonic="DECERLBRP"
+                 title="Erase Ruled Lines" not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single symbol="Pl"/> ;
+                <param-single symbol="Px"/> ; <param-single symbol="Plx"/> ;
+                <param-single symbol="Py"/> ; <param-single symbol="Ply"/> , s
+            </ctlseq>
+            <ref src="dtl:BLOCK85"/>
+            <termsupp series="vt" first="decterm"/>
         </section>
 
         <section role="ctlseq" id="ttimesv" mnemonic="TTIMESV"
@@ -12611,6 +12651,16 @@ DCS $ q 3 , } ST</pre>
                     <td>Negative image</td>
                 </tr>
             </table>
+        </section>
+
+        <section role="ctlseq" id="decerlbra" mnemonic="DECERLBRA"
+                 title="Erase All Ruled Lines in Area" not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single symbol="Pl"/> ;
+                <param-single symbol="Px"/> ; <param-single symbol="Plx"/> ;
+                <param-single symbol="Py"/> ; <param-single symbol="Ply"/> , t
+            </ctlseq>
+            <ref src="dtl:BLOCK86"/>
+            <termsupp series="vt" first="decterm"/>
         </section>
 
         <section role="ctlseq" id="ttimest" mnemonic="TTIMEST"
@@ -14110,7 +14160,7 @@ DCS $ q 3 , } ST</pre>
     </section>
 
     <section toc="true" role="text" id="s_osc"
-             formats="html:document html:outline html:ctlseq-table html:term-ctlseqs html:todo"
+             formats="html:document html:ctlseq-table html:term-ctlseqs html:todo"
              title="Operating System Commands">
 
 
@@ -14797,7 +14847,7 @@ DCS $ q 3 , } ST</pre>
             </section>
         </section>
     </section>
-    <section toc="true" role="text" id="s_pm"  formats="html:document"
+    <section toc="true" role="text" id="s_pm" formats="html:document"
              title="Privacy Message">
         <p>Kermit 95 does not implement any privacy message functions</p>
     </section>
