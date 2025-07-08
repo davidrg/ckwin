@@ -67,7 +67,7 @@ parse arg param_devmode, param_bannerfile, param_verbose, param_inputfile
 settings.output_file = ""            /* Comes from the XML file */
 
 /* Which terminals should be included in the term-ctlseqs comparison tables */
-settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt420 vt510 vt520 vt525 k95 xterm tt putty'
+settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty'
 
 /* Filtering for the to-do output - these are stored in the XML document.
  * Additional filtering is included in the "todoOutputFilter" procedure
