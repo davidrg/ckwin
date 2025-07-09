@@ -1815,6 +1815,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 
 			OutLine(TEXT("set host"));
 		}
+		break;
 	case CT_PTY:
 		{
 			OutLine(TEXT("set network type pty"));
@@ -1823,6 +1824,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 				ptyCommand().data());
 			OutLine(buf);
 		}
+		break;
 	case CT_PIPE:
 		{
 			OutLine(TEXT("set network type pipe"));
@@ -1831,6 +1833,7 @@ BOOL ConnectionProfile::writeScript(HWND parent, LPTSTR filename) {
 				ptyCommand().data());
 			OutLine(buf);
 		}
+		break;
 	case CT_DLL:
 		{
 			_sntprintf(buf, BUFFERSIZE, TEXT("set network type dll %s"), 
