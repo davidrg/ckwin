@@ -1019,6 +1019,83 @@ DECTSR		462
             </style>
         </html>
 
+        <!-- For testing: a variant that includes everything but without the
+            comparison columns. Like the outline document, but in table form
+            and including not-implemented stuff.
+
+        <html type="term-ctlseqs" filename="all-ctlseqs.html"
+              title="All Known Control Sequences"
+              compare=""
+              include="vws vt320 vt330 decterm vt1000 vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty aaa aixterm ansi at386 avatar ba80 beos h19 hft linux qansi s97801 scoansi sun vip7809 vt52 wy370"
+              show-refs="true">
+            <style>
+                table {
+                border-collapse: collapse;
+                }
+
+                th {
+                white-space: nowrap;
+                text-align: left;
+                }
+
+                tr {
+                border-bottom: 1px solid black;
+                }
+
+                tr:hover {
+                background-color: #4C8BF5;
+                color: #fff;
+                }
+                th.ctlseq {
+                font-family: monospace;
+                }
+
+                th {
+                border-right: 1px solid black;
+                border-left: 1px solid black;
+                }
+                td {
+                border-right: 1px solid black;
+                }
+                td.sec_references {
+                white-space: nowrap;
+                background-color: gray;
+                }
+                th.sec_references {
+                background-color: gray;
+                }
+                thead tr {
+                border-top: 1px solid black;
+                }
+
+                .show-badge {
+                display: revert;
+                }
+
+                tr.not-implemented {
+                background-color: orange;
+                }
+
+                th.totals {
+                text-align: right;
+                padding-right: 1em;
+                }
+
+                th.parameter {
+                padding-left: 2em;
+                }
+                span.percentage {
+                white-space: nowrap;
+                }
+
+                tr.not-implemented td {
+                color: purple;
+                }
+
+            </style>
+        </html>
+        -->
+
         <!-- The todo-* attributes filter what is included in todo.html. A
              control sequence or parameter must be marked for one of the listed
              terminals, or have one of the listed mnemonics or IDs. For anything
@@ -1205,8 +1282,6 @@ DECTSR		462
         </p>
         <section role="text" title="Reading the Tables"
                  formats="html:term-ctlseqs">
-
-
 
             <p>
                 In the tables on this page, each row represents a control

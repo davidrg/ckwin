@@ -1816,7 +1816,7 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
     end
 
     /* totals at the bottom of each column for term-ctlseqs output */
-    if docType = 'term-ctlseqs' then do
+    if docType = 'term-ctlseqs' & compareBadges <> '' then do
         call outputHtml indentLevel,'<th colspan=3 class="totals">Totals:</th>'
         badgeNames = compareBadges
         do I = 1 by 1 until badgeNames = ""
