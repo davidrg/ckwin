@@ -12723,6 +12723,60 @@ DCS $ q 3 , } ST</pre>
             </ctlseq>
             <ref src="dtl:BLOCK84"/>
             <termsupp series="vt" first="decterm"/>
+
+            <!--
+            This draws a box on screen. Lines appear to be on the borders of the
+            character cells. The box scrolls up as with any line with attributes
+            set on it. A Ctrl+L in bash doesn't clear any lines on the screen.
+            DECterm by default (in Tru64 5.1B-6 at least) seem to advertise
+            this feature as being available via DA, but it does work.
+
+            Interestingly, doing a new line over the top of a box moves the box
+            segments on that line one character cell to the left.
+
+            For example, starting with something like this:
+                bash-4.3$ printf '\x1b[15;5;5;10;10,r
+
+                     +-----+
+                     |     |
+                     |     |
+                     |     |
+                     |     |
+                     |     |
+                     +-----+
+
+            Hit enter a few times:
+                bash-4.3$ printf '\x1b[15;5;5;10;10,r
+                bash-4.3$
+                    +-----+
+                bash|-4.3$|
+                bash|-4.3$|
+                     |     |
+                     |     |
+                     |     |
+                     +-----+
+
+            You can hit Ctrl+L to clear the screen, and the box won't move but
+            the text will disappear. If you hit enter a bunch more times, the
+            box will move again to the left when the cursor reaches those lines.
+
+            Manually placing the cursor on a line with ruled lines set using HVP
+            causes the same effect when the line is first modified. Subsquent
+            modifications while the cursor remains on the line do not cause it
+            to move again, but moving the cursor away and back and making another
+            modification causes another move. Moving the cursor to a line
+            containing ruled lines and then moving it elsewhere doesn't affect it.
+
+            eg:
+                This moves ruled lines on row 15 left: printf '\x1b[15;1fHello!'
+                This does not: printf '\x1b[15;1f\x1b[1;1fHello!'
+
+            It smells like a bug, but if we're to implement this feature it's
+            probably a bug we should replicate. Or at least have the option of
+            replicating.
+
+            Th
+            -->
         </section>
 
         <section role="ctlseq" id="decsest" mnemonic="DECSEST"
