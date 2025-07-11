@@ -908,9 +908,11 @@ getSectionSupportedTerminals: procedure expose g. refSet.
 
             termsupp = first' 'addit
 
-            /* scoansi goes by just "sco" in the termsupp tags */
-            /* TODO: Store synonyms in the document alongside the badge definitions */
+            /* scoansi goes by just "sco" in the termsupp tags. Xterm goes by
+             * both xt and xterm */
             termsupp = changestr("sco",termsupp,"scoansi")
+            termsupp = changestr("xt",termsupp,"xterm")
+            /* TODO: Store synonyms in the document alongside the badge definitions. */
 
             tt = tt' 'termsupp
             excl = excl' 'ex
