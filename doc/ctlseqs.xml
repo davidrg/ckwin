@@ -115,7 +115,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT termsupp EMPTY>
         <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -493,6 +493,7 @@ DECTSR		462
                 key="vt1000"
                 uri="https://manx-docs.org/collections/mds-199909/cd3/term/v1000ug2.pdf"
                 uri-type="pdf-page"
+                pdf-page-offset="10"
                 sort-order="17"/>
         <!-- This isn't DECterm documentation (that doesn't really exist
              anywhere online), but rather a section of the Digital UNIX manual
@@ -502,7 +503,24 @@ DECTSR		462
                 key="dtl"
                 uri="https://ftp.zx.net.nz/rom/V4.0D_D1/DOCS/HTML/AQ0R4CTE/DOCU_006.HTM"
                 uri-type="anchor"
-                sort-order="18"/>
+                sort-order="18"
+                badge="decterm"
+        />
+
+        <!-- All of the VWS stuff seems to be specific to VWS unless mentioned
+            in the documentation for some other terminal. Eg, the copy/paste
+            and window control stuff doesn't seem to be supported by DECterm on
+            Tru64 5.1B-6. This stuff also isn't mentioned in DEC-STD-070 at all,
+            so perhaps none of it was considered an "official" extension to
+            their character terminal standard.
+          -->
+        <refsrc name="vws"
+                key="vws"
+                uri="https://bitsavers.org/pdf/dec/vax/vms/vms_workstation/AA-EZ24D-TE_VMS_Workstation_Software_Users_Guide_Jun1989.pdf"
+                uri-type="pdf-page"
+                sort-order="19"
+                badge="vws"
+        />
     </references>
 
     <badges>
@@ -548,6 +566,8 @@ DECTSR		462
         <badge-def sort-order="37" name="vt320" colour="#1E88E5" comment="DEC VT-320"/>
         <badge-def sort-order="38" name="vt320pc" colour="" comment="DEC VT-320 with PC keyboard"/> <!-- Hide -->
         <!-- Not implemented yet -->
+        <badge-def sort-order="53" name="vt330" colour="" comment="DEC VT-330"/>
+        <badge-def sort-order="54" name="vt340" colour="" comment="DEC VT-340"/>
         <badge-def sort-order="39" name="vt420" colour="" comment="DEC VT-420"/> <!-- colour: #1976D2 -->
         <badge-def sort-order="39" name="vt420pc" colour="" comment="DEC VT-420 with PC keyboard"/>
         <badge-def sort-order="40" name="vt510" colour="" comment="DEC VT-510"/> <!-- Not implemented -->
@@ -563,7 +583,8 @@ DECTSR		462
         <badge-def sort-order="48" name="xterm" colour="#F44336" comment="Xterm"/>
         <badge-def sort-order="49" name="tt" colour="" comment="Tera Term"/> <!-- Not implemented -->
         <badge-def sort-order="50" name="putty" colour="" comment="PuTTY"/> <!-- Not implemented -->
-
+        <badge-def sort-order="51" name="vws" colour="" comment="VAX Workstation Software"/> <!-- Not implemented -->
+        <badge-def sort-order="52" name="decterm" colour="" comment="DECterm"/> <!-- Not implemented -->
     </badges>
     <!--
      Badge groups should be kept in sync with the matching macros in ckuusr.h
@@ -948,6 +969,13 @@ DECTSR		462
                 td {
                 border-right: 1px solid black;
                 }
+                td.sec_references {
+                    white-space: nowrap;
+                    background-color: gray;
+                }
+                th.sec_references {
+                    background-color: gray;
+                }
                 thead tr {
                 border-top: 1px solid black;
                 }
@@ -1151,26 +1179,30 @@ DECTSR		462
             Whether a terminal appears here or not depends on whether good
             enough documentation can be found to provide references for all the
             control sequences it implements. The DEC VT320 is notably excluded
-            here for that reason—no copy of EK-VT320-RM (the VT320 programmers
+            here for that reason-no copy of EK-VT320-RM (the VT320 programmers
             reference manual) is available online.
         </p>
         <p>
             All of the information on this page was obtained by reading the
-            available documentation for the listed terminals, so there may very
-            well be errors and inconsistencies. If you spot one, log a bug
-            or <a href="https://github.com/davidrg/ckwin/discussions">make a post
+            available documentation for the listed terminals (or source code
+            where documentation is not available), so there may very well be
+            errors and inconsistencies. If you spot one, log a bug or
+            <a href="https://github.com/davidrg/ckwin/discussions">make a post
             on GitHub discussions</a>.
         </p>
         <section role="text" title="Reading the Tables"
                  formats="html:term-ctlseqs">
+
+
+
             <p>
                 In the tables on this page, each row represents a control
-                sequence giving its name and mnemonic (if they're known) and
-                control sequence. This is followed by multiple columns, each
-                one representing a particular terminal (or terminal emulator).
-                If the background color of the row is <em>orange</em>, that
-                indicates Kermit 95 does not currently implement that control
-                sequence.
+                sequence (or parameter) giving its name and mnemonic (if they're
+                known) and control sequence. This is followed by multiple
+                columns, each one representing a particular terminal (or
+                terminal emulator). If the background color of the row is
+                <em>orange</em>, that indicates Kermit 95 does not currently
+                implement that control sequence.
             </p>
             <p>
                 If an 'X' or an 'O' appears in one of the terminal columns, that
@@ -1185,13 +1217,13 @@ DECTSR		462
                 For example, the VT100 supports <tt>ESC A</tt>, but only if the
                 terminal is switched to VT52 emulation mode first. As a result,
                 while both the VT100 and Kermit 95 support <tt>ESC A</tt>, K95s
-                VT100 emulation does not.
+                VT100 emulation does not so it gets an 'O' in the VT100 column.
             </p>
             <p>
                 An 'O' may also appear in the case where K95 doesn't support
                 emulating the terminal at all and as a result the code for that
                 control sequence isn't marked as being available to that
-                terminal emulation
+                terminal emulation.
             </p>
 
             <p>
@@ -3367,6 +3399,12 @@ DECTSR		462
             <ctlseq>DCS <param-single/> ! u <param-text/> ST</ctlseq>
         </section>
 
+        <section role="ctlseq" id="decctpb" mnemonic="DECCTPB" todo="true"
+                 title="Copy Text to Paste Buffer" not-implemented="true">
+            <ref src="vws:110"/>
+            <ctlseq>DCS ! x <param-text/> ST</ctlseq>
+        </section>
+
         <section role="ctlseq" id="decrsts" mnemonic="DECRSTS"
                  title="Restore Terminal State"
                  not-implemented="true" todo="true">
@@ -3505,6 +3543,7 @@ DECTSR		462
             <ref src="vt420:289"/>
             <ref src="vt510:DECRQSS.html"/>
             <ref src="vt52x:266"/>
+            <ref src="vws:112"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt"/>
             <ctlseq>
                 DCS $ q <param-text/> ST
@@ -3682,6 +3721,7 @@ DECTSR		462
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <ref src="vt340:240"/>
+                <ref src="vws:112"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
                 <p>
                     Reports the current <a href="#decslpp">DECSLPP</a> setting -
@@ -3712,6 +3752,7 @@ DECTSR		462
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <ref src="vt340:240"/>
+                <ref src="vws:112"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
                 <p>Kermit 95 responds with the width of the terminal Window. If,
                 for example, the terminal is 132 columns wide, the response would
@@ -5670,6 +5711,11 @@ DCS $ q 3 , } ST</pre>
                 </tr>
             </table>
 
+            <!--
+            DECterm on Tru64 5.1B-6 responds with:
+                63;1;2;3;4;6;8;9;15;16;18;22;29c
+            -->
+
             <p>For the VT220 and newer, the first value indicates the device
                 class: 61 for VT100, 62 for VT200, 63 for VT300,
                 64 for VT400/VT510, and 65 for VT520/VT525. The remaining values
@@ -5793,6 +5839,8 @@ DCS $ q 3 , } ST</pre>
                 <dd>ANSI text locator</dd>          <!-- TODO: we have this? -->
                 <!-- Related to 15
                 https://bitsavers.org/pdf/dec/standards/EL-SM070-00_DEC_STD_070_Video_Systems_Reference_Manual_Dec91.pdf#page=1012
+
+                Supported by VWS - page 118
                 -->
 
                 <dt not-implemented="true">30</dt>    <!-- ? -->
@@ -6908,6 +6956,24 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:325"/>
                 <termsupp first="vt510" series="vt" additional=""/>
+            </section>
+
+            <!-- VWS page 119 gives some more details on these. Transparent copy
+            appears to be equivalent to \Kcopyclip, while transparent paste
+            would be equivalent to \Kpaste, and these enable/disable those
+            features. I guess an application using "programmed" copy/paste
+            (using the escape sequences to get/set the clipboard) would turn the
+            "transparent" copy/paste features off so that they don't interfere.
+             -->
+            <section role="parameter" id="dectpm" mnemonic="DECTPM" todo="true"
+                     title="Transparent Paste Mode" not-implemented="true">
+                <ctlseq><param-single/> = 76</ctlseq>
+                <ref src="vws:109"/>
+            </section>
+            <section role="parameter" id="dectcm" mnemonic="DECTCM" todo="true"
+                     title="Transparent Copy Mode" not-implemented="true">
+                <ctlseq><param-single/> = 77</ctlseq>
+                <ref src="vws:109"/>
             </section>
             <section role="parameter" not-implemented="true" id="decsdm" mnemonic="DECSDM" title="Enable Sixel Display Mode">
                 <ctlseq><param-single/> = 80</ctlseq>
@@ -8617,6 +8683,16 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:325"/>
                 <termsupp first="vt510" series="vt" additional=""/>
             </section>
+            <section role="parameter" id="decrst-76" mnemonic="DECTPM" todo="true"
+                     title="Transparent Paste Mode" not-implemented="true">
+                <ctlseq><param-single/> = 76</ctlseq>
+                <ref src="vws:109"/>
+            </section>
+            <section role="parameter" id="decrst-77" mnemonic="DECTCM" todo="true"
+                     title="Transparent Copy Mode" not-implemented="true">
+                <ctlseq><param-single/> = 77</ctlseq>
+                <ref src="vws:109"/>
+            </section>
             <section role="parameter" id="decrst-80" mnemonic="DECSDM"
                      title="Disable sixel display mode"
                      not-implemented="true" todo="true">
@@ -9319,7 +9395,8 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:165"/>
             <ref src="vt510:SGR.html"/>
             <ref src="vt52x:355"/>
-            <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
+            <ref src="vws:111"/>
+            <termsupp first="vt100" series="vt" additional="vt132 vt220 vws vt330 vt340 vt420 vt510 tt linux sco putty"/>
 
             <p>Character Attributes (SGR)</p>
             <section role="parameter" id="sgr-0" title="Normal (default), VT100">
@@ -9335,6 +9412,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
                 <p>Sets all attributes to normal (off/false): blinking, italic, bold, invisible,
                     underlined, reversed, graphic, dim, wyse, hyperlink, sco8bit.</p>
@@ -9434,6 +9512,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
                 <p>Turns on the Underline attribute</p>
                 <p badges="at386">
@@ -9463,6 +9542,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty"/>
                 <p>
                     K95 does not currently differentiate between Blink and
@@ -9498,6 +9578,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
                 <p>Turns on the Reverse Video attribute.</p>
             </section>
@@ -9510,6 +9591,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 sco"/>
                 <p>Turns on the Invisible attribute. </p>
             </section>
@@ -9665,6 +9747,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux putty"/>
                 <p>Turns off the bold and dim attributes</p>
                 <!-- Linux: Set normal intensity -->
@@ -9687,6 +9770,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux sco putty"/>
                 <p>Turns off the underline attribute</p>
             </section>
@@ -9701,6 +9785,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux sco putty"/>
                 <p>Turns off the blink attribute</p>
             </section>
@@ -9725,6 +9810,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux sco putty"/>
                 <p>Turns off the Reverse Video attribute</p>
             </section>
@@ -9737,6 +9823,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:165"/>
                 <ref src="vt510:SGR.html"/>
                 <ref src="vt52x:355"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 sco"/>
                 <p>Turns off the Invisible attribute</p>
             </section>
@@ -9761,6 +9848,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-0.1E59"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-31" title="Set Red Foreground">
@@ -9768,6 +9856,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-1.1E5A"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-32" title="Set Green Foreground">
@@ -9775,6 +9864,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-2.1E5B"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-33" title="Set Brown Foreground">
@@ -9782,13 +9872,16 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-3.1E5C"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
+                    <!-- VWS calls this Yellow -->
                 </section>
                 <section role="parameter" id="sgr-34" title="Set Blue Foreground">
                     <ctlseq><param-single/> = 34</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-4.1E5D"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-35" title="Set Magenta Foreground">
@@ -9796,6 +9889,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-5.1E5E"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-36" title="Set Cyan Foreground">
@@ -9803,6 +9897,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-6.1E5F"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-37" title="Set White Foreground">
@@ -9810,6 +9905,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-7.1E60"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:111"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
@@ -9926,6 +10022,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-9.1E62"/>
                 <ref src="e48:75"/>
                 <ref src="vt52x:356"/>
+                <ref src="vws:111"/>
                 <termsupp first="vt525" series="vt" additional="tt sco putty"/>
                 <p>This is processed for all terminal types, where it resets the foreground
                     color to the default value. The comments say:
@@ -9949,6 +10046,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-0.1E5A"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-41" title="Set Red Background">
@@ -9956,6 +10054,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-1.1E5B"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-42" title="Set Green Background">
@@ -9963,6 +10062,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-2.1E5C"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-43" title="Set Brown Background">
@@ -9970,13 +10070,16 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-3.1E5D"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
+                    <!-- VWS calls this Yellow -->
                 </section>
                 <section role="parameter" id="sgr-44" title="Set Blue Background">
                     <ctlseq><param-single/> = 44</ctlseq>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-4.1E5E"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-45" title="Set Magenta Background">
@@ -9984,6 +10087,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-5.1E5F"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-46" title="Set Cyan Background">
@@ -9991,6 +10095,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-6.1E60"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 </section>
                 <section role="parameter" id="sgr-47" title="Set White Background">
@@ -9998,6 +10103,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="e48:75"/>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-7.1E61"/>
                     <ref src="vt52x:356"/>
+                    <ref src="vws:112"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
@@ -10107,6 +10213,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:75"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-9.1E63"/>
                 <ref src="vt52x:356"/>
+                <ref src="vws:112"/>
                 <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                 <p>This is processed for all terminal types, where it resets the background
                     color to the default value. The comments say: &quot;Supported by SCO ANSI.
@@ -10351,6 +10458,8 @@ DCS $ q 3 , } ST</pre>
                 <!-- TODO: We should fix this! Or perhaps, rather, we should
                             check what a real VT does as DECs implies it does
                             the same.
+
+                            VWS page 118 for locator details
                     -->
             </p>
 
@@ -11581,6 +11690,21 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt340:235"/>
                     <termsupp first="vt330" series="vt" additional="vt340 vt420"/>
                 </section>
+                <!-- Not sure if VWS supported DECRQM, or if DECterm or anything
+                    else implemented any of these modes
+
+                <section role="parameter" id="decrqm-76" mnemonic="DECTPM" todo="true"
+                         title="Transparent Paste Mode" not-implemented="true">
+                    <ctlseq><param-single/> = 76</ctlseq>
+                    <ref src="vws:109"/>
+                </section>
+                <section role="parameter" id="decrqm-77" mnemonic="DECTCM" todo="true"
+                     title="Transparent Copy Mode" not-implemented="true">
+                    <ctlseq><param-single/> = 77</ctlseq>
+                    <ref src="vws:109"/>
+                </section>
+
+                -->
                 <section role="parameter" not-implemented="true" id="decrqm-80"
                          mnemonic="DECSDM" title="Sixel Display Mode" todo="true">
                     <ctlseq><param-single/> = 80</ctlseq>
@@ -12683,6 +12807,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt340:160"/>
             <termsupp first="vt340" series="vt" additional="vt340"/>
         </section>
+        <section role="ctlseq" mnemonic="DECSTPF" id="decstpf" todo="true"
+                 title="Select Transparent Paste Format" not-implemented="true">
+            <ctlseq>CSI <param-single/> ) s</ctlseq>
+            <ref src="vws:110"/>
+        </section>
         <section role="ctlseq" mnemonic="DECSFC" id="decsfc"
                  title="Select Flow Control"
                  not-implemented="true" todo="true">
@@ -12757,6 +12886,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:154"/>
             <ref src="vt510:DECSLPP.html"/>
             <ref src="vt52x:290"/>
+            <ref src="vws:108"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 tt putty"/>
             <p>
                 Sets the screen height to <param-single/> rows. Valid options
@@ -13082,7 +13212,11 @@ DCS $ q 3 , } ST</pre>
                 </tr>
             </table>
         </section>
-
+        <section role="ctlseq" id="decttpb" mnemonic="DECTTPB" todo="true"
+                 title="Transmit Transparent Paste Buffer" not-implemented="true">
+            <ctlseq>CSI <param-single/> ) t</ctlseq>
+            <ref src="vws:110"/>
+        </section>
         <section role="ctlseq" id="decerlbra" mnemonic="DECERLBRA"
                  title="Erase All Ruled Lines in Area" not-implemented="true" todo="true">
             <ctlseq>CSI <param-single symbol="Pl"/> ;
@@ -13412,7 +13546,9 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI Pt ; Pl ; Pb ; Pr ' w</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pt;Pl;Pb;Pr-'-w.1FED"/>
             <ref src="070:1025"/>
-            <termsupp first="xterm" series="xt" additional="tt"/>
+            <ref src="vt1000:180"/>
+            <ref src="vws:116"/>
+            <termsupp first="vt1000" series="vt" additional="xt tt"/>
             <!-- TODO: XTerm claims this is a VT420 escape, but the VT420/510/520
                  manuals don't mention it at all. Where does it *really* come from?
                  One spreadsheet suggests it was first implemented in UWS
@@ -13894,7 +14030,10 @@ DCS $ q 3 , } ST</pre>
                  not-implemented="true" todo="true">
             <ctlseq>CSI Ps ; Pu ' z</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Pu-'-z.1E0E"/>
-            <termsupp first="xterm" series="xt" additional="tt"/>
+            <ref src="vt1000:181"/>
+            <ref src="070:1020"/>
+            <ref src="vws:115"/>
+            <termsupp first="vt1000" series="vt" additional="xt tt"/>
         </section>
         <section role="ctlseq" id="decinvm" mnemonic="DECINVM" title="Invoke Macro"
                  not-implemented="true" todo="true">
@@ -13933,7 +14072,10 @@ DCS $ q 3 , } ST</pre>
                  not-implemented="true" todo="true">
             <ctlseq>CSI Ps ; Pu ' {</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-'-%7B.1D2C"/>
-            <termsupp first="xterm" series="xt" additional="tt"/>
+            <ref src="vt1000:185"/>
+            <ref src="070:1024"/>
+            <ref src="vws:117"/>
+            <termsupp first="vt1000" series="vt" additional="xt tt"/>
         </section>
         <section role="ctlseq" id="xtpushsgr-c" mnemonic="XTPUSHSGR"
                  title="Push video attributes onto stack"
@@ -14073,6 +14215,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:152"/>
             <ref src="vt510:DECSCPP.html"/>
             <ref src="vt52x:279"/>
+            <ref src="vws:108"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 v510 putty"/>
             <p>
                 The parameter <param-single/>
@@ -14112,7 +14255,10 @@ DCS $ q 3 , } ST</pre>
                  not-implemented="true" todo="true">
             <ctlseq>CSI <param-single/> ' |</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-'-%7C.1D33"/>
-            <termsupp first="xterm" series="xt" additional="tt"/>
+            <ref src="vt1000:184"/>
+            <ref src="070:1023"/>
+            <ref src="vws:117"/>
+            <termsupp first="vt1000" series="vt" additional="xt tt"/>
         </section>
         <section role="ctlseq" id="decsnls" mnemonic="DECSNLS"
                  title="Select Number of Lines/Screen"
@@ -14608,7 +14754,6 @@ DCS $ q 3 , } ST</pre>
              formats="html:document html:ctlseq-table html:term-ctlseqs html:todo"
              title="Operating System Commands">
 
-
         <section role="ctlseq" id="stp" title="Set Text Parameters">
             <ctlseq>OSC <param-single/> ; <param-text/> BEL</ctlseq>
             <ctlseq>OSC <param-single/> ; <param-text/> ST</ctlseq>
@@ -14649,17 +14794,6 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-2.FB9"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
                 <p>Sets the window title to the value supplied, up to 63 characters.</p>
-            </section>
-            <section role="parameter" not-implemented="true" id="decsin"
-                     mnemonic="DECSIN" title="Set Icon Title">
-                <ctlseq><param-single/> = 2L</ctlseq>
-
-                <ref src="vt52x:288"/>
-                <termsupp first="vt520" series="vt" additional="tt"/>
-                <p>Set Icon Title (VT520)</p>
-                <p>Not supported: Windows doesn't provide a way of setting a
-                    value for the task bar label that is different from the
-                    window title.</p>
             </section>
             <section role="parameter" id="osc-3" mnemonic=""
                      title="Set X property on top-level window"
@@ -14962,8 +15096,19 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="decswt" mnemonic="DECSWT" title="Set Window Title">
                 <ctlseq><param-single/> = 21</ctlseq>
                 <ref src="vt52x:310"/>
-                <termsupp first="vt520" series="vt" additional="putty"/>
-                <p>Sets the window title to the value supplied, up to 63 characters.</p>
+                <ref src="vws:101"/>
+                <termsupp first="vws" series="vt" additional="vt520 putty"/>
+                <p>Sets the window title to the value supplied, up to 63
+                    characters.</p>
+                <p>The VWS documentation gives the mnemonic for this OSC as
+                    VTESTB.</p>
+            </section>
+            <section role="parameter" mnemonic="VTESTI"
+                     title="Shrink to Icon" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 22 ;
+                    <param-single symbol="Pos"/> ;
+                    <param-single symbol="Text"/> </ctlseq>
+                <ref src="vws:101"/>
             </section>
             <section role="parameter" id="osc-22" mnemonic=""
                      title="Change pointer cursor shape"
@@ -14971,6 +15116,111 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 22</ctlseq>
                 <ref src="xt:h4-Operating-System-Commands:OSC-Ps;Pt-ST:Ps-=-2-2.1018"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+            </section>
+            <section role="parameter" mnemonic="VTEEFI"
+                     title="Expand from Icon" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 23 ; <param-single symbol="Pos"/> </ctlseq>
+                <ref src="vws:102"/>
+            </section>
+            <section role="parameter" mnemonic="VTEMTW" todo="true"
+                     title="Move Terminal Window" not-implemented="true">
+                <ctlseq><param-single/> = 24 ; <param-single symbol="Pos"/></ctlseq>
+                <ref src="vws:102"/>
+            </section>
+            <section role="parameter" mnemonic="VTEMTI" todo="true"
+                     title="Move Terminal Icon" not-implemented="true">
+                <ctlseq><param-single/> = 25 ; <param-single symbol="Pos"/></ctlseq>
+                <ref src="vws:102"/>
+            </section>
+            <section role="parameter" mnemonic="VTEDCONK" todo="true"
+                     title="Disconnect Keyboard" not-implemented="true">
+                <ctlseq><param-single/> = 26</ctlseq>
+                <ref src="vws:103"/>
+            </section>
+            <section role="parameter" mnemonic="VTEDK" todo="true"
+                     title="Disable Keyboard" not-implemented="true">
+                <ctlseq><param-single/> = 27</ctlseq>
+                <ref src="vws:103"/>
+            </section>
+            <section role="parameter" mnemonic="VTEEK" todo="true"
+                     title="Enable Keyboard" not-implemented="true">
+                <ctlseq><param-single/> = 28</ctlseq>
+                <ref src="vws:103"/>
+            </section>
+            <section role="parameter" mnemonic="VTEPUSH" todo="true"
+                     title="Push Terminal" not-implemented="true">
+                <ctlseq><param-single/> = 29</ctlseq>
+                <ref src="vws:103"/>
+            </section>
+            <section role="parameter" mnemonic="VTEPOP" todo="true"
+                     title="Pop Terminal" not-implemented="true">
+                <ctlseq><param-single/> = 2A</ctlseq>
+                <ref src="vws:104"/>
+            </section>
+            <section role="parameter" mnemonic="VTEDMI" todo="true"
+                     title="Disable Menu Item" not-implemented="true">
+                <ctlseq><param-single/> = 2B ; <param-single symbol="Item"/> </ctlseq>
+                <ref src="vws:104"/>
+            </section>
+            <section role="parameter" mnemonic="VTEEMI" todo="true"
+                     title="Enable a Window Options Menu Item"
+                     not-implemented="true">
+                <ctlseq><param-single/> = 2C ; <param-single symbol="Item"/> </ctlseq>
+                <ref src="vws:104"/>
+            </section>
+            <section role="parameter" mnemonic="VTECMS" todo="true"
+                     title="Change the Size of the Multi-Scroll Feature"
+                     not-implemented="true">
+                <ctlseq><param-single/> = 2D ; <param-single symbol="Size"/> </ctlseq>
+                <ref src="vws:105"/>
+            </section>
+            <section role="parameter" mnemonic="VTEEWR" todo="true"
+                     title="Enable Window Event Reports"
+                     not-implemented="true">
+                <ctlseq><param-single/> = 2E ; <param-single symbol="Size"/> </ctlseq>
+                <ref src="vws:106"/>
+                <p>
+                    The VWS documentation gives this the "function code" as AI
+                    both in the table of OSCs and in the section describing
+                    VTEEWR, while the VTEEWR example gives the OSC as "2E".
+                    It is not clear which is correct; the true behavior
+                    probably needs to be confirmed via testing against VWS.
+                </p>
+                <p>
+                    Reports generated by this feature are OSC-2R.
+                </p>
+            </section>
+            <section role="parameter" mnemonic="VTECTF" todo="true"
+                     title="Redraw Window with New Font or Size"
+                     not-implemented="true">
+                <ctlseq><param-single/> = 2F ;
+                    <param-single symbol="Size"/> ;
+                    <param-single symbol="Spacing"/> ;
+                    <param-single symbol="FamilyName"/></ctlseq>
+                <ref src="vws:106"/>
+            </section>
+            <!--
+              2G - ?   \
+              2H - ?    \
+              2I - ?     +- These not used? Or just not documented on the web?
+              2J - ?    /
+              2K - ?   /
+              2R - VTEEWR Window report (sent by terminal to host)
+            -->
+            <!-- 2L isn't documented in the VWS documentation, but perhaps
+             it was given the Function Code 'L' because G-R were already used
+             by something?
+            -->
+            <section role="parameter" not-implemented="true" id="decsin"
+                     mnemonic="DECSIN" title="Set Icon Title">
+                <ctlseq><param-single/> = 2L</ctlseq>
+
+                <ref src="vt52x:288"/>
+                <termsupp first="vt520" series="vt" additional="tt"/>
+                <p>Set Icon Title (VT520)</p>
+                <p>Not supported: Windows doesn't provide a way of setting a
+                    value for the task bar label that is different from the
+                    window title.</p>
             </section>
             <section role="parameter" id="osc-46" mnemonic=""
                      title="Change log file"
