@@ -157,6 +157,9 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST html todo-terminals CDATA #IMPLIED>  <!-- for "todo" type only -->
         <!ATTLIST html todo-ids CDATA #IMPLIED>  <!-- for "todo" type only -->
         <!ATTLIST html todo-mnemonics CDATA #IMPLIED>  <!-- for "todo" type only -->
+        <!ATTLIST html compare CDATA #IMPLIED> <!-- for "term-ctlseqs" type only -->
+        <!ATTLIST html include CDATA #IMPLIED> <!-- for "term-ctlseqs" type only -->
+        <!ATTLIST html show-refs (true|false) "false"> <!-- for table outputs only -->
 
         <!ELEMENT outputs (html)*>
 
@@ -939,7 +942,16 @@ DECTSR		462
         </html>
 
         <html type="term-ctlseqs" filename="term-ctlseqs.html"
-              title="Control Sequences by Terminal">
+              title="Control Sequences by Terminal"
+              compare="vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty"
+              include="vws vt320 vt330 decterm vt1000"
+              show-refs="true">
+            <!--
+                compare attribute: terminals that get columns in the table
+                include attribute: Also include rows for any escape sequences
+                                   supported by these terminals, but don't give
+                                   them columns.
+            -->
             <style>
                 table {
                 border-collapse: collapse;
@@ -1019,7 +1031,8 @@ DECTSR		462
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
-              todo-terminals="vt102 vt220 vt420 k95 xterm tt putty">
+              todo-terminals="vt102 vt220 vt420 k95 xterm tt putty"
+              show-refs="true">
             <style>
                 table {
                 border-collapse: collapse;

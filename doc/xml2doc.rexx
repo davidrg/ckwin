@@ -66,8 +66,14 @@ parse arg param_devmode, param_bannerfile, param_verbose, param_inputfile
 
 settings.output_file = ""            /* Comes from the XML file */
 
-/* Which terminals should be included in the term-ctlseqs comparison tables */
-settings.compare_terminals = 'vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty'
+/* show-refs attribute - include references column on table-type outputs */
+settings.show_refs = 0
+
+/* Which terminals should be included in the term-ctlseqs comparison tables.
+ * These live in the xml document.
+ */
+settings.compare_terminals = ''
+settings.include_terminals = ''
 
 /* Filtering for the to-do output - these are stored in the XML document.
  * Additional filtering is included in the "todoOutputFilter" procedure
@@ -637,6 +643,11 @@ produceOutputs: procedure expose g. toc. badgeSet. settings. refSet. k95info.
                     if hasAttribute(outChild, "todo-terminals") then settings.todo_terminals = getAttribute(outChild, "todo-terminals")
                     if hasAttribute(outChild, "todo-mnemonics") then settings.todo_mnemonics = getAttribute(outChild, "todo-mnemonics")
                     if hasAttribute(outChild, "todo-ids") then settings.todo_ids = getAttribute(outChild, "todo-ids")
+                    if hasAttribute(outChild, "compare") then settings.compare_terminals = getAttribute(outChild, "compare")
+                    if hasAttribute(outChild, "include") then settings.include_terminals = getAttribute(outChild, "include")
+                    if hasAttribute(outChild, "show-refs") then do
+                        if getAttribute(outChild, "show-refs") = "true" then settings.show_refs = 1
+                    end
 
                     htmlChild = getFirstChild(outChild)
                     do while htmlChild <> ''
@@ -1111,26 +1122,32 @@ outputSectionReferences: procedure expose g. refSet. settings.
             call outputHtml indentLevel,'</'contanerElement'>'
         end
     end
-    else if role = 'ctlseq' | role = 'ctlchar' | role = 'parameter' & docType = 'outline' then do
-        /* Output whenever we encounter a contol sequence/character or a
-         * parameter for a control sequence/character that doesn't have
-         * any references. Ideally *all* control sequences should have
-         * references so we know why K95 implements it, and how it *should*
-         * be implemented.
-         *
-         * We only output this for the outline document just so its not all
-         * being output twice.
-         */
-        if settings.verbose = 1 then do
-            title = ''
-            if hasAttribute(el, "title") then title = strip(getAttribute(el, "title"))
+    else do
+        if checkReferencesOnly = 0 then do
+            call outputHtml indentLevel,'<'contanerElement' class="sec_references"></'contanerElement'>'
+        end
 
-            mnemonic = ''
-            if hasAttribute(el, "mnemonic") then mnemonic = strip(getAttribute(el, "mnemonic"))
+        if role = 'ctlseq' | role = 'ctlchar' | role = 'parameter' & docType = 'outline' then do
+            /* Output whenever we encounter a contol sequence/character or a
+             * parameter for a control sequence/character that doesn't have
+             * any references. Ideally *all* control sequences should have
+             * references so we know why K95 implements it, and how it *should*
+             * be implemented.
+             *
+             * We only output this for the outline document just so its not all
+             * being output twice.
+             */
+            if settings.verbose = 1 then do
+                title = ''
+                if hasAttribute(el, "title") then title = strip(getAttribute(el, "title"))
 
-            ctlseqs = getSectionCtlSeqs(el,1)
+                mnemonic = ''
+                if hasAttribute(el, "mnemonic") then mnemonic = strip(getAttribute(el, "mnemonic"))
 
-            say "NOTE:" role "section has no references! Mnemonic: '"mnemonic"'   Title: '"title"'   Ctlseqs: '"ctlseqs"'"
+                ctlseqs = getSectionCtlSeqs(el,1)
+
+                say "NOTE:" role "section has no references! Mnemonic: '"mnemonic"'   Title: '"title"'   Ctlseqs: '"ctlseqs"'"
+            end
         end
     end
 
@@ -1523,7 +1540,7 @@ doTableHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
 
 
 ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info. column_totals.
-    parse arg el, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges
+    parse arg el, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges, compareBadges, references
 
     is_implemented = 1
     if hasAttribute(el, "not-implemented") then is_implemented = 0
@@ -1646,12 +1663,13 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
 
     /* TODO: Ensure exclusions are being handled correctly */
 
-    if docType = 'term-ctlseqs' | docType = 'todo' then badgeNames = allowedBadges
+    if docType = 'term-ctlseqs' then badgeNames = compareBadges
+    else if docType = 'todo' then badgeNames = allowedBadges
     else badgeNames = badgeSet.badgeNames
     do I = 1 by 1 until badgeNames = ""
         parse var badgeNames badge" "badgeNames
         if badge <> '' then do
-            if wordpos(badge, allowedBadges) <> 0 then do
+            if wordpos(badge, compareBadges) <> 0 then do
                 if wordpos(badge, hiddenBadges) == 0 then do
                     td_classes = badge
                     if docType = 'term-ctlseqs' | docType = 'todo' then do
@@ -1689,7 +1707,7 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
     end
 
     /* References column */
-    if docType = 'todo' then call outputSectionReferences el, indentLevel, 'td', docType, 0
+    if references = 1 then call outputSectionReferences el, indentLevel, 'td', docType, 0
 
     indentLevel = indentLevel - 1
     call outputHtml indentLevel,'</tr>'
@@ -1702,7 +1720,7 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
         if name = 'section' & hasAttribute(child, 'role') then do
             role = getAttribute(child, 'role')
             if role = 'parameter' then do
-                call ctlsecTableRowHTML child, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges
+                call ctlsecTableRowHTML child, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges, compareBadges, references
             end
             else if role = 'group' then do
                 group_child = getFirstChild(child)
@@ -1712,7 +1730,7 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
                     if name = 'section' & hasAttribute(group_child, 'role') then do
                         role = getAttribute(group_child, 'role')
                         if role = 'parameter' then do
-                            call ctlsecTableRowHTML group_child, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges
+                            call ctlsecTableRowHTML group_child, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges, compareBadges, references
                         end
                     end
 
@@ -1728,6 +1746,8 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
 
 ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info.
     parse arg el, sectionLevel, indentLevel, linkFile, hiddenBadges, docType
+
+    references = settings.show_refs
 
     call outputHtml indentLevel,'<table class="ctlseq-table">'
     indentLevel = indentLevel + 1
@@ -1747,7 +1767,8 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
     else if docType = 'todo' then badgeNames = settings.todo_terminals
     else badgeNames = badgeSet.badgeNames
 
-    allowedBadges = badgeNames
+    allowedBadges = badgeNames " " settings.include_terminals
+    compareBadges = badgeNames
 
     column_totals. = ''
 
@@ -1766,7 +1787,7 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
     end
 
     /* References column */
-    if docType = 'todo' then call outputHtml indentlevel,'<th>Documentation References</th>'
+    if references = 1 then call outputHtml indentlevel,'<th class="sec_references">Documentation References</th>'
 
     indentLevel = indentLevel - 1
     call outputHtml indentLevel,'</tr>'
@@ -1785,7 +1806,7 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
         if name = 'section' & hasAttribute(child, 'role') then do
             role = getAttribute(child, 'role')
             if role = 'ctlseq' | role = 'ctlchar' then do
-                call ctlsecTableRowHTML child, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges
+                call ctlsecTableRowHTML child, sectionLevel, indentLevel, linkFile, hiddenBadges, docType, allowedBadges, compareBadges, references
             end
         end
 
@@ -1795,7 +1816,7 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
     /* totals at the bottom of each column for term-ctlseqs output */
     if docType = 'term-ctlseqs' then do
         call outputHtml indentLevel,'<th colspan=3 class="totals">Totals:</th>'
-        badgeNames = allowedBadges
+        badgeNames = compareBadges
         do I = 1 by 1 until badgeNames = ""
             parse var badgeNames badge" "badgeNames
             if badge <> '' then do
@@ -1810,6 +1831,8 @@ ctlseqTableSectionHTML: procedure expose g. toc. badgeSet. settings. refSet. k95
                 end
             end
         end
+
+        if references = 1 then call outputHtml indentLevel, '<td></td>'
     end
 
     indentLevel = indentLevel - 1
