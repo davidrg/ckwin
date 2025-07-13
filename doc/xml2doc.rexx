@@ -1303,6 +1303,7 @@ getTextHtml: procedure expose g. toc. badgeSet. settings. refSet. k95info.
         else if name = 'u' then return doTextHtmlWithChildren(el, '<u>', '</u>')
         else if name = 'tt' then return doTextHtmlWithChildren(el, '<tt>', '</tt>')
         else if name = 'em' then return doTextHtmlWithChildren(el, '<em>', '</em>')
+        else if name = 'cc' then return doTextHtmlWithChildren(el, '<span class="ctlchar">', '</span>')
         else if name = 'a' then do
             if hasAttribute(el, "href") then do
                 openTag = '<a href="'getAttribute(el, "href")'">'

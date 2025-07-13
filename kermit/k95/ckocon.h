@@ -1412,6 +1412,7 @@ enum helpscreen { hlp_normal, hlp_rollback, hlp_markmode, hlp_compose,
 
 _PROTOTYP( void rdcomwrtscr, (void *) ) ;
 _PROTOTYP( int  scriptwrtbuf, (unsigned short) ) ;
+_PROTOTYP( int  vt_macro_in, (void) );
 _PROTOTYP( void savescreen, (ascreen *,int,int) ) ;
 _PROTOTYP( int restorescreen, (ascreen *) ) ;
 _PROTOTYP( void reverserange, (SHORT, SHORT, SHORT, SHORT) ) ;

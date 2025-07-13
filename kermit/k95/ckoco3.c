@@ -615,11 +615,11 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;28;44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;28;32;44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
-				rectangular-editing;PCTerm */
+				rectangular-editing;text-macros;PCTerm */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
@@ -700,6 +700,53 @@ int sni_chcode_8 = TRUE;                /* 97801 CH.CODE key enabled 8-bit mode 
 int sni_bitmode = 8;                    /* 97801 CH.CODE 8-bit mode */
 CHAR sni_kbd_firmware[7]="920031";      /* 97801 Keyboard Firmware Version */
 CHAR sni_term_firmware[7]="830851";     /* 97801 Terminal Firmware Version */
+
+/* VT level 4 Macro Support
+ * ------------------------
+ * Both the VT420 (EK-VT420-RM.002) and VT520 (EK-VT520-RM.A01) manuals claim
+ * there is 6KB of space for storing macros ("The VT520 has 6 Kbytes of memory
+ * available for the storage of macros"). While I believe this number is
+ * probably true for the VT420, testing on my VT520 (FW v2.1) indicates it
+ * actually has 10KB of macro space. For the K95 terminal type, the limit is
+ * arbitrarily set at a nice round 256KB for now, but could be easily lifted
+ * higher if there is ever a need. Perhaps it could even be made a settable
+ * option (SET TERM MACRO-LIMIT?)
+ *
+ * The VT520 (in FW v2.1 at least, perhaps all versions) also treats tail calls
+ * specially - these aren't pushed on to the stack, instead reusing the calling
+ * macros stack entry. On my VT520, this *does* allow for creating infinite
+ * loops which we do not emulate here. Instead, we only allow tail calls up to
+ * the arbitrary limit specified in MACRO_CALL_DEPTH_LIMIT, after that they're
+ * forced on to the stack which will protect against infinite loops as it does
+ * with non-tail-calls.
+ */
+#define MACRO_SIZE_LIMIT_VT420 0x01800 	/* 6KB for the VT420 */
+#define MACRO_SIZE_LIMIT_VT520 0x02800  /* 10KB for the VT520 */
+#define MACRO_SIZE_LIMIT_K95   0x40000  /* 256KB for K95 */
+#define MACRO_SIZE_LIMIT(tt) (ISK95((tt)) \
+	? MACRO_SIZE_LIMIT_K95 \
+	: ISVT520((tt)) \
+		? MACRO_SIZE_LIMIT_VT520 \
+		: MACRO_SIZE_LIMIT_VT420)
+#define MACRO_CALL_DEPTH_LIMIT 256      /* Limit for vt_macro_call_depth */
+#define MACRO_STACK_SIZE 16
+bool vt_macro_invocation = FALSE;		/* Currently executing a macro? */
+bool vt_macro_hard_reset = FALSE;		/* Terminal was hard reset, clear macros */
+/* Stack and stack pointer - calls up to 16 levels deep as standard */
+signed char vt_macro_stack[MACRO_STACK_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1};
+signed char vt_macro_sp = -1;
+/* Current position in a macro */
+int vt_macro_position[MACRO_STACK_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1};
+signed short vt_macro_call_depth = -1;  /* To stop infinite loops from tail calls */
+unsigned int vt_macro_size=0;   		/* length of all macro definitions */
+char* vt_macro_definitions[64] = {      /* And the macro definitions themselves */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+void vt_macro_reset();		/* Halts macro execution and resets the stack, etc */
+void vt_macro_clear();		/* Calls vt_macro_reset(), then clears all definitions */
+/* ------------------------*/
 
 /* Escape-sequence processing buffer */
 
@@ -5196,7 +5243,7 @@ sendescseq(CHAR *s) {
 
     /* Handle 7-bit vs 8-bit escape sequences...*/
 
-    if (send_c1 && ((*s == '[' || *s == 'O'))) /* 8-bit C1 controls... */
+    if (send_c1 && ((*s == '[' || *s == 'O' || *s == 'P'))) /* 8-bit C1 controls... */
     {
        sendstr[0] = (*s++ ^ (CHAR) 0x40) | (CHAR) 0x80;
     }
@@ -7665,6 +7712,18 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     debug(F111,"doreset","x",x);
 
+	/* Halt any executing macros */
+	vt_macro_reset();
+	if (x) {
+		if (vt_macro_invocation) {
+			/* Not safe to wipe macros here just in case one is in the middle of
+		 	* executing. Setting this will cause all macros to be wiped later. */
+			vt_macro_hard_reset = TRUE;
+		} else {
+			vt_macro_clear();
+		}
+	}
+
     tt_type_mode = tt_type ;
 
     decstglt = DECSTGLT_COLOR;
@@ -7990,6 +8049,129 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     VscrnIsDirty(VTERM) ;
 }
 
+/* Stops macro execution and resets all state ready for a new invocation */
+void vt_macro_reset() {
+	vt_macro_invocation = FALSE;
+	memset(vt_macro_stack, -1, MACRO_STACK_SIZE);
+	memset(vt_macro_position, -1, MACRO_STACK_SIZE);
+	vt_macro_sp = -1;
+	vt_macro_call_depth = -1;
+}
+
+/* Stops macro execution and clears all macro space */
+void vt_macro_clear() {
+	int i;
+
+	vt_macro_reset();
+	vt_macro_hard_reset = FALSE;
+	vt_macro_size=0;
+
+	/* Clear *all* macro definitions */
+	for (i = 0; i < 64; i++) {
+		if (vt_macro_definitions[i]) {
+			free(vt_macro_definitions[i]);
+			vt_macro_definitions[i] = NULL;
+		}
+	}
+}
+
+/* Function: DECINVM */
+void vt_invoke_macro(char macro_id) {
+	if (macro_id < 0 || macro_id > 63) return;
+
+	/* If we aren't already processing a macro, start from
+	 * the bottom of the stack */
+	if (!vt_macro_invocation) vt_macro_reset();
+
+	/* Macro must exist */
+	if (vt_macro_definitions[macro_id] == NULL) return;
+
+	if (ISVT520(tt_type_mode) && vt_macro_invocation) {
+		/* While the VT520 is limited to macros nested 16
+		 * levels deep, it implements a kind of tail call
+		 * optimisation. If the final action of a macro is
+		 * to invoke another macro, the invoked macro reuses
+		 * the calling macros position on the stack allowing
+		 * for recursion deeper than 16 levels. This has
+		 * been observed in VT520 v2.1 and may be new to the
+		 * VT520 in general - the VT420 apparently doesn't
+		 * have this behaviour, though I don't own one to
+		 * confirm this myself.
+		 *
+		 * Using this mechanism it is possible to put the
+		 * VT520 v2.1 into an infinite loop. Resetting the
+		 * terminal from the setup menu gets out of it, but
+		 * we don't want to allow that here so K95 keeps
+		 * track of the call depth and aborts if it goes on
+		 * too long.
+		 */
+		int mac_id = vt_macro_stack[vt_macro_sp];
+		char* macro = vt_macro_definitions[mac_id];
+		int pos = vt_macro_position[vt_macro_sp];
+		if (macro[pos+1] == '\0') {
+			if (vt_macro_call_depth <= MACRO_CALL_DEPTH_LIMIT) {
+				vt_macro_sp -= 1;
+				vt_macro_call_depth += 1;
+			} else {
+				debug(F101, "DECINVM - call depth limit", "", vt_macro_call_depth);
+			}
+		}
+	}
+
+	/* Increment stack pointer */
+	vt_macro_sp += 1;
+
+	/* Macros can only be called 16 levels deep */
+	if (vt_macro_sp >= MACRO_STACK_SIZE) {
+		debug(F100, "DECINVM - stack limit", "", 0);
+		vt_macro_sp = MACRO_STACK_SIZE - 1;
+		return;
+	}
+
+	vt_macro_stack[vt_macro_sp] = macro_id;
+	vt_macro_position[vt_macro_sp] = -1;
+	vt_macro_invocation = TRUE;
+}
+
+/* Gets the next character from the currently executing macro (if any). Will
+ * also clear all macro space if it has been asked to do so by doreset() */
+int vt_macro_in() {
+	int id, pos, c;
+	char* macro = NULL;
+
+	if (vt_macro_hard_reset) {  /* Set by doreset(1) */
+		vt_macro_clear();
+	}
+
+	if (!vt_macro_invocation) {
+		return -1; /* No macro in progress */
+	}
+
+	if (vt_macro_sp < 0) {
+		/* Finished processing the macro at the bottom of the stack. All done. */
+		vt_macro_reset();
+		return -1;
+	}
+
+	/* get the current macro */
+	pos = vt_macro_position[vt_macro_sp] + 1;
+	id = vt_macro_stack[vt_macro_sp];
+	macro = vt_macro_definitions[id];
+
+	if (macro == NULL || macro[pos] == '\0') {
+		/* Invalid macro, or end of macro. Pop the stack and try again. */
+		vt_macro_sp = vt_macro_sp - 1;
+		if (vt_macro_call_depth > 0) vt_macro_call_depth = vt_macro_call_depth - 1;
+		debug(F100, "DECINVM - vt_macro_in - invalid or end of macro", "", 0);
+		return vt_macro_in();
+	}
+
+	/* Get the next character and update the current position */
+	c = macro[pos];
+	vt_macro_position[vt_macro_sp] = pos;
+
+	return c;
+}
 
 /*
   The flow of characters from the communication device to the screen is:
@@ -12653,7 +12835,7 @@ doosc( void ) {
                         /* Allocate memory for the maximum length the base64
                          * encoded data could be */
                         int rc;
-                        int encodedLen = 1 + ceil(clipboardDataLen/3.0)*4;
+                        int encodedLen = 1 + (int)(ceil(clipboardDataLen/3.0)*4);
                         char* encodedData = malloc(encodedLen);
                         memset(encodedData, 0, encodedLen);
 
@@ -12782,7 +12964,7 @@ doosc( void ) {
                             int i;
 
                             memset(decoded, 0, cliplen);
-                            for (i = 0; ucs2_string[i] != NULL; i++) {
+                            for (i = 0; ucs2_string[i] != '\0'; i++) {
                                 decoded[i] = ucs2_string[i] >= 128 ?
                                     (*xl_tx[tcsl])(ucs2_string[i]) : ucs2_string[i];
                             }
@@ -13808,6 +13990,248 @@ dodcs( void )
                 }   /* achar */
                 break;
             }  /* + */
+			case '!': {
+				achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                switch ( achar ) {
+                case 'z': {  /* DECDMAC - Define Macro */
+					/* VT level 4 or higher only. Macros can not define macros*/
+					if (ISVT420(tt_type_mode) && !vt_macro_invocation) {
+						int macid;
+						int delact = 0;
+						int fmt = 0;
+						/* pn[1] is the macro ID
+				     	 * pn[2] is optional delete action, default 0
+					 	 * pn[3] is optional format, default ASCII
+					 	 */
+
+						/* Macro ID required */
+						if (k < 1) break;
+						macid = pn[1];
+
+						if (k > 1)
+							delact = pn[2];
+						if (k > 2)
+							fmt = pn[3];
+
+						/* Check macro ID is valid */
+						if (macid < 0 || macid > 63) break;
+
+						/* Check delete action is valid. */
+						if (delact < 0 || delact > 1) break;
+
+						/* Check format is valid */
+						if (fmt < 0 || fmt > 1) break;
+
+						if (delact == 0) {
+							/* Delete this macro if it exists */
+							if (vt_macro_definitions[macid]) {
+								vt_macro_size -= strlen(vt_macro_definitions[macid]);
+								free(vt_macro_definitions[macid]);
+								vt_macro_definitions[macid] = NULL;
+							}
+						} else if (delact == 1) {
+							/* Clear *all* macro definitions */
+							vt_macro_clear();
+						}
+
+						if (fmt == 0) {
+							/* ASCII text format. Graphic characters only. That
+							 * is: SP through ~ inclusive
+							 * and: 10/00 through 15/15 (whatever those codes
+							 * turn out to be). Characters 8-13 (BS-CR) are
+							 * ignored. */
+
+							char* mac = (char*)malloc(apclength - dcsnext + 1);
+							char* p = mac;
+							int maclen;
+							memset(mac, 0, apclength - dcsnext + 1);
+
+							achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+							while ( achar )
+                        	{
+								if ((achar >= ' ' && achar <= '~') ||
+									(achar >= 160 && achar <= 255)) {
+                            		*p++ = achar;
+								} /* Else ignore it - the VT520 seems to */
+                             	achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        	}
+
+							maclen = strlen(mac);
+							if (maclen > 0 && vt_macro_size+maclen < MACRO_SIZE_LIMIT(tt_type_mode)) {
+								vt_macro_size += maclen;
+								vt_macro_definitions[macid] = mac;
+							} else {
+								/* Error - out of macro space or zero length macro */
+								free(mac);
+							}
+						} else {
+							/* HEX format. Two hex digits decode to one
+						     * character. NULLs should be ignored.
+							 * If a ! is encountered, the format is:
+							 *   ! Pn ; D....D ;
+							 * Where Pn indicates the number of times the HEX
+							 * string D...D should be repeated.
+							 */
+
+							/* We may need to run though the string twice - once
+							 * to figure out how much memory we need to allocate
+							 * taking into account repetitions, etc, and again to
+							 * actually decode and expand the macro.
+							 */
+
+							int expanded_length = 0; /* in hex digits to start */
+							int macstart = dcsnext;
+							char* mac = 0;
+							char* p = 0;
+							int repeat_count = 1;
+							char hex[3] = "  ";
+
+							/* Ensure a semicolon appears at the end so that
+							 * repeat sequences are terminated properly */
+							if (apcbuf[apclength - 1] != ';' &&
+								apclength < apcbuflen) {
+
+								apcbuf[apclength++] = ';';
+								apcbuf[apclength++] = '\0';
+							}
+
+							/* validate the string and compute size when
+						     * repetitions are expanded */
+							achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+							while ( achar )
+                        	{
+								if (achar == '!') {
+									/* Number and semicolon should follow... */
+									repeat_count = 0;
+									achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+									while (isdigit(achar)) {                /* Get number */
+                    					repeat_count = (repeat_count * 10) + achar - 48;
+                    					achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                					}
+
+									/* skip over the semicolon... */
+									if (achar == ';') {
+										achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+									} else {
+										/* Error - expected a semicolon */
+										debug(F101, "DECDMAC - expected semicolon, got", "", achar);
+										debug(F101, "DECDMAC - ... at position", "", dcsnext);
+										expanded_length = -1;
+										break;
+									}
+
+									/* The repeat count is optional and indicates
+									 * a single occurrence of the sequence. */
+									if (repeat_count == 0) {
+										repeat_count = 1;
+									}
+
+									continue;
+								} else if (achar == ';') {
+									repeat_count = 1;
+									achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+									continue;
+								}
+
+								if ((achar >= 48 && achar <= 57) ||   /* 0-9 */
+									(achar >= 65 && achar <= 70) ||   /* A-F */
+									(achar >= 97 && achar <= 102)) {  /* a-f */
+
+									expanded_length += repeat_count;
+								} else if ((achar >= 9 && achar <= 13)) {
+									/* Ignored: HR - CR are allowed to be used
+									 * for formatting the DCS sequence. */
+								} else {
+									/* Error */
+									debug(F101, "DECDMAC invalid character", "", achar);
+									expanded_length = -1;
+									break;
+								}
+
+                             	achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        	}
+
+							if (expanded_length <= 0) break; /* Nothing to do */
+
+							if (expanded_length % 2) {
+								/* Error - Must be two hex digits per character */
+								debug(F100, "DECDMAC invalid hex format", "", 0);
+								break;
+							}
+
+							/* to bytes: two hex digits = 1 byte */
+							expanded_length = expanded_length / 2;
+
+							mac = (char*)malloc(expanded_length + 1);
+							memset(mac, 0, expanded_length + 1);
+							dcsnext = macstart;
+							p = mac;
+
+							/* Expand the macro! */
+							repeat_count = 1;
+							achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+							while ( achar )
+                        	{
+
+								if (achar == '!') {
+									/* Number and semicolon should follow... */
+									repeat_count = 0;
+									achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+									while (isdigit(achar)) {                /* Get number */
+                    					repeat_count = (repeat_count * 10) + achar - 48;
+                    					achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                					}
+
+									/* skip over the semicolon... */
+									if (achar == ';') {
+										macstart = dcsnext;
+										achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+									}
+									continue;
+								} else if (achar == ';') {
+									if (repeat_count > 1) {
+										/* Rewind and do it again! */
+										repeat_count -= 1;
+										dcsnext = macstart;
+									}
+									achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+									continue;
+								}
+
+								if ((achar >= 48 && achar <= 57) ||   /* 0-9 */
+									(achar >= 65 && achar <= 70) ||   /* A-F */
+									(achar >= 97 && achar <= 102)) {  /* a-f */
+
+									if (hex[0] == ' ') {
+										hex[0] = (char)achar;
+									} else {
+										char thechar;
+										hex[1] = (char)achar;
+										thechar = (char)strtol(hex, NULL, 16);
+										hex[0] = ' ';
+
+										/* Throw away null characters - these
+										 * can't appear in the expanded macro */
+										if (thechar != '\0') *p++ = thechar;
+									}
+								}
+
+                             	achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
+                        	}
+
+							expanded_length = strlen(mac);
+							if (vt_macro_size+expanded_length < MACRO_SIZE_LIMIT(tt_type_mode)) {
+								vt_macro_size += expanded_length;
+								vt_macro_definitions[macid] = mac;
+							} else {
+								/* Error - out of macro space */
+								free(mac);
+							}
+						}
+					} /* ISVT420 */
+				} /* z - DECDMAC */
+				} /* fourth level */
+			}  /* ! */
             }   /* third level */
         }
     }
@@ -14275,8 +14699,12 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
             }
             else if ( escstate == ES_STRING ) {
 #ifdef CK_APC
-                if ( apclength > 0 )
-                    apclength-- ;
+                if ( apclength > 0) {
+					/* The VT520 doesn't seem to act on a BS appearing in a
+					 * macro definition (DECDMAC) */
+					if (!(dcsrecv && ISVT420(tt_type_mode)))
+                    	apclength-- ;
+				}
                 else
 #endif /* CK_APC */
                 {
@@ -14306,7 +14734,10 @@ cwrite(unsigned short ch) {             /* Used by ckcnet.c for */
              * as that signals end of string. If BEL is in fact not the string
              * terminator then that could be a problem but not as big a problem
              * as if it is and we miss it. */
-            if (ch != NUL) {
+
+			/* If we're absorbing a DCS string, just discard control characters
+               - this appears to be what the VT520 does */
+            if (ch != NUL && !(escstate == ES_STRING && dcsrecv)) {
                 wrtch(ch);
             }
             return;
@@ -15445,7 +15876,7 @@ line25(int vmode) {
 }
 
 /* CHSTR  --  Make a printable string out of a character  */
-char*
+/*char*
 chstr(int c) {
     static char s[8];
     char *cp = s;
@@ -15456,7 +15887,7 @@ chstr(int c) {
       sprintf(cp, "'%c'\n", c);
     cp = s;
     return (cp);
-}
+}*/
 
 /* DOESC  --  Process an escape character argument  */
 
@@ -17561,6 +17992,9 @@ vtcsi(void)
                             }
                         }
                         debug(F111, "DECRQCRA", "checksum", checksum);
+
+						/* TODO: Use sendescseq and ST below if send_c1.
+								Note that sendescseq buffer may need enlarging */
                         sprintf(buf, "\033P%d!~%04X\033\\", pid, checksum);
 
                         // TODO: Call sendesqseq instead (and check for any other places
@@ -17570,7 +18004,15 @@ vtcsi(void)
 
                     break;
                 }
-                }
+				case 'z': {
+					if (ISVT420(tt_type_mode)) {	/* DECINVM - Invoke Macro */
+						/* pn[1] is the macro to invoke. */
+						vt_invoke_macro(pn[1]);
+						break;
+					} /* ISVT420 */
+				} /* 'z' */
+				break;
+                } /* '*' */
                 break;
             case '`':
                 /* Horizontal Position Absolute (HPA) */
@@ -19664,6 +20106,54 @@ vtcsi(void)
                                "[?27;1n" );
                     break;
                 }
+				case 62: {
+					/*
+					  DECDSR Macro Space Report (VT420+)
+						Responds with a DECMSR containing available macro space.
+						Limit is different for K95 terminal type.
+					 */
+					if (ISVT420(tt_type_mode)) {
+						int limit = MACRO_SIZE_LIMIT(tt_type_mode);
+						unsigned int result = (unsigned int)floor((limit - vt_macro_size) / 16);
+						char buf[20];
+						_snprintf(buf, 20, "[%d*{", result);
+						sendescseq(buf);
+					}
+					break;
+				}
+				case 63: {
+					/*
+					  DECDSR Memory Checksum (DECCKSR)
+						Responds with a simple checksum of any stored text
+						macros.
+					 */
+					if (ISVT420(tt_type_mode)) {
+						int pid = k > 1 ? pn[2] : 0;
+						unsigned short result = 0;
+						char buf[20];
+						int i;
+
+						for (i = 0; i < 64; i++) {
+							if (vt_macro_definitions[i]) {
+								int j;
+								int len = strlen(vt_macro_definitions[i]);
+								for (j = 0; j < len; j++) {
+									result -= vt_macro_definitions[i][j];
+								}
+							}
+						}
+
+						if ( send_c1) {
+							_snprintf(buf, 20, "%c%d!~%04X%c",
+								_DCS, pid, result, _ST8);
+						} else {
+							_snprintf(buf, 20, "\033P%d!~%04X\033\\",
+								pid, result, send_c1 ? 0x9C : 0x1B);
+						}
+						sendchars(buf, strlen(buf));
+					}
+					break;
+				}
                 }
                 break;
             case 'o': 

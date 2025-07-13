@@ -115,6 +115,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    to any visible/audible bell setting.
  - Synchronized Output mode
  - Crossed-out character attribute
+ - VT420 text macros
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -254,6 +255,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
  - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)
  - [SGR-9](https://davidrg.github.io/ckwin/dev/ctlseqs.html#sgr-9-co): Crossed-out character attribute (all terminal types except QANSI)
+ - VT420 text macros: 
+   [DECDMAC](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decdmac),
+   [DECINVM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decinvm),
+   [DECMSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-msr),
+   [DECCKSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccksr)
 
 ### Fixed Bugs
  - Fixed a potential memory leak in the status line display. Cov-462304.

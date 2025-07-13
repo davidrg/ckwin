@@ -6249,6 +6249,19 @@ ttinc(int timo) {
     int tt, tr, interval;
 #endif /* NT */
     int t ;
+#ifndef NOTERM
+    extern bool vt_macro_invocation;  /* ckoco3.c */
+    extern int tt_type_mode;
+
+    /* VT level 4 text macros: If a macro has being invoked, get the next
+     * character from there rather than the communication line. */
+    if (ISVT420(tt_type_mode) && vt_macro_invocation) {
+        int c = vt_macro_in();
+        if (c > 0) {
+            return c;
+        }
+    }
+#endif /* NOTERM */
 
     m = (ttprty) ? 0177 : 0377;         /* Parity stripping mask. */
 
