@@ -6175,9 +6175,18 @@ shotrm() {
            (tt_type >= 0 && tt_type <= max_tt) ?
            tt_info[tt_type].x_name :
            "unknown" );
-    if (tt_type >= 0 && tt_type <= max_tt)
-      if (strlen(tt_info[tt_type].x_id))
-        printf("  %13s: <ESC>%s","ID",tt_info[tt_type].x_id);
+    if ((tt_type >= 0 && tt_type <= max_tt) && strlen(tt_info[tt_type].x_id)) {
+      char idbuf[100] = "";
+      strcat(idbuf, tt_info[tt_type].x_id);
+      if (ISK95(tt_type) && tt_clipboard_write >= CLIPBOARD_ALLOW) {
+        idbuf[strlen(idbuf)-1] = '\0';
+        strcat(idbuf, ";52c");
+      }
+      if (strlen(tt_info[tt_type].x_id) <= 23)
+        printf("  %13s: <ESC>%s","ID", idbuf);
+      else
+        printf("\n %19s: <ESC>%s","ID", idbuf);
+    }
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return; else lines = 0; }
     printf(" %19s: %-13s  %13s: %-15s\n","Echo",

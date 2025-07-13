@@ -1016,4 +1016,5 @@ Change logs going back to the release of the first version in October 1995 (1.1)
      [ckoker.bwr](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.bwr),
      [ckoker.doc](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.doc)
  * [OS/2 C-Kermit 1.0b](https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu/pub/kermit/old/misc/ck4e/ckoker.ann) - 5 August 1988
+   * First release with terminal emulation?
  * [OS/2 C-Kermit 1.0a](https://groups.google.com/g/comp.protocols.kermit/c/KZ0P49Za-JA/m/ZpzhtBJOyT4J) - 29 July 1988
