@@ -8060,12 +8060,14 @@ void vt_macro_reset() {
 
 /* Stops macro execution and clears all macro space */
 void vt_macro_clear() {
+	int i;
+
 	vt_macro_reset();
 	vt_macro_hard_reset = FALSE;
 	vt_macro_size=0;
 
 	/* Clear *all* macro definitions */
-	for (int i = 0; i < 64; i++) {
+	for (i = 0; i < 64; i++) {
 		if (vt_macro_definitions[i]) {
 			free(vt_macro_definitions[i]);
 			vt_macro_definitions[i] = NULL;
@@ -20149,8 +20151,9 @@ vtcsi(void)
 						int pid = k > 1 ? pn[2] : 0;
 						unsigned short result = 0;
 						char buf[20];
+						int i;
 
-						for (int i = 0; i < 64; i++) {
+						for (i = 0; i < 64; i++) {
 							if (vt_macro_definitions[i]) {
 								int len = strlen(vt_macro_definitions[i]);
 								for (int j = 0; j < len; j++) {
