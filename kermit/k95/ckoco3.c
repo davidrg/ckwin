@@ -20155,8 +20155,9 @@ vtcsi(void)
 
 						for (i = 0; i < 64; i++) {
 							if (vt_macro_definitions[i]) {
+								int j;
 								int len = strlen(vt_macro_definitions[i]);
-								for (int j = 0; j < len; j++) {
+								for (j = 0; j < len; j++) {
 									result -= vt_macro_definitions[i][j];
 								}
 							}
