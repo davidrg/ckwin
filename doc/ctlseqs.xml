@@ -48,12 +48,13 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ELEMENT br EMPTY>
 
         <!ELEMENT em (#PCDATA)>
-        <!ELEMENT tt (#PCDATA|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
-        <!ELEMENT pre (#PCDATA|b)*>
+        <!ELEMENT cc (#PCDATA)>
+        <!ELEMENT tt (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ELEMENT pre (#PCDATA|b|cc)*>
         <!ELEMENT b (#PCDATA)>
         <!ELEMENT u (#PCDATA)>
 
-        <!ELEMENT li (#PCDATA|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ELEMENT li (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
 
         <!ELEMENT ul (li)*>
 
@@ -61,12 +62,12 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT dt (#PCDATA)>
         <!ATTLIST dt not-implemented (true|false) #IMPLIED>
-        <!ELEMENT dd (#PCDATA|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ELEMENT dd (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
 
 
         <!ELEMENT dl (dt,dd)*>
 
-        <!ELEMENT a (#PCDATA|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ELEMENT a (#PCDATA|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
         <!ATTLIST a href CDATA #REQUIRED>
 
         <!ELEMENT param-single EMPTY>
@@ -89,15 +90,15 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST param-text value CDATA #IMPLIED>
         <!ATTLIST param-text description CDATA #IMPLIED>
 
-        <!ELEMENT p (#PCDATA|br|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ELEMENT p (#PCDATA|br|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
         <!ATTLIST p role (code-reference|note|warning) #IMPLIED>
         <!ATTLIST p badges IDREFS #IMPLIED>
         <!ATTLIST p groups IDREFS #IMPLIED>
         <!ATTLIST p exclude-badges IDREFS #IMPLIED>
 
-        <!ELEMENT th (#PCDATA|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
+        <!ELEMENT th (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info)*>
 
-        <!ELEMENT td (#PCDATA|a|em|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info|br|table)*>
+        <!ELEMENT td (#PCDATA|a|em|cc|badge|tt|b|u|param-char|param-single|param-multi|param-text|k95info|br|table)*>
         <!ATTLIST td not-implemented (true|false) "false">
         <!ATTLIST td style CDATA #IMPLIED>
         <!ATTLIST td colspan CDATA #IMPLIED>
@@ -745,6 +746,13 @@ DECTSR		462
                 div.sec_group h4 {
                     margin-top: 0px;
                     margin-bottom: 0px;
+                }
+                span.ctlchar {
+                    font-family: monospace;
+                    border-radius: 5px;
+                    text-transform: uppercase;
+                    background-color: black;
+                    color: white;
                 }
             </style>
         </html>
@@ -1689,7 +1697,7 @@ DECTSR		462
                 Respond with the following escape sequence (ETX control char in bold)
                 regardless of the answerback setting:
             </p>
-            <pre>7813  P GC  A<b>ETX</b></pre>
+            <pre>7813  P GC  A<cc>ETX</cc></pre>
         </section>
         <section id="enq" role="ctlchar" mnemonic="ENQ" ctlseq="ENQ" title="Return Terminal Status" exclude-badges="vip7809">
             <ref src="e48:57"/>
@@ -3196,14 +3204,178 @@ DECTSR		462
 
         </section>
 
-        <section role="ctlseq" id="decdmac" mnemonic="DECDMAC" title="Define Macro"
-                 not-implemented="true" todo="true">
-            <ctlseq>DCS <param-single/> ; <param-single/> ; <param-single/> ! z ... ST</ctlseq>
+        <section role="ctlseq" id="decdmac" mnemonic="DECDMAC" groups="isvt420"
+                 title="Define Macro">
+            <ctlseq>DCS <param-single symbol="Pid"/> ;
+                <param-single symbol="Pdt"/> ;
+                <param-single symbol="Pen"/> ! z
+                <param-single symbol="D...D"/> ST</ctlseq>
             <ref src="070:437"/>
             <ref src="vt420:66"/>
             <ref src="vt510:DECDMAC.html"/>
             <ref src="vt52x:199"/>
             <termsupp first="vt420" series="vt" additional="vt510"/>
+            <p>
+                Defines a macro that can later be invoked with
+                <a href="#decinvm">DECINVM</a>. A macro consists of a string of
+                text and control sequences that are executed by the terminal
+                emulator as though they were sent by the remote host.
+            </p>
+            <p>
+                Up to 64 macros can be defined, numbered from 0. Total space
+                available for storing macros depends on the terminal being
+                emulated. 6KB for the VT420, 10KB for the VT520, and 256KB for
+                the K95 terminal type. You can check how much space is available
+                by requesting a <a href="#dsr-msr">Macro Space Report (DECMSR)</a>.
+                Macro definitions are cleared during a hard terminal reset.
+            </p>
+            <p>
+                The first parameter, <param-single symbol="Pid"/>, is the ID of
+                the macro to define. Acceptable values are 0-63. Values outside
+                of this range cause the macro definition to be ignored.
+            </p>
+            <p>
+                The second parameter, <param-single symbol="Pdt"/>, specifies what
+                the terminal emulator should do with any existing macros when
+                defining this macro. A value of 0 causes this macro to replace
+                any existing macro with the same ID, while a value of 1 causes
+                all macros to be erased before this one is defined, leaving this
+                macro as the only macro in memory. Any other values cause the
+                macro definition to be ignored. If the macro is unable to be
+                defined for other reasons (invalid format, out of space, etc),
+                this action is still taken.
+            </p>
+            <p>
+                The third parameter, <param-single symbol="Pen"/>, indicates
+                which of two encodings this macro is being sent in - graphic
+                ascii characters (0), or pairs of hex digits each representing
+                a single character (1).
+            </p>
+            <p>
+                The string, <param-single symbol="D...D"/>, is the macro itself
+                encoded in the format specified by <param-single symbol="Pen"/>.
+            </p>
+
+            <section role="text" title="ASCII Encoding">
+                <p>
+                    The ASCII encoding (<param-single symbol="Pen"/> = 0) only
+                    consists of graphic characters. This is Space (0x20) through
+                    to Tilde (~, 0x7E) and for 8-bit encodings the characters
+                    0xA0 through 0xFF. Control characters cannot be included in
+                    a macro definition using this encoding, and most are simply
+                    discarded.
+                </p>
+            </section>
+            <section role="text" title="Hex Encoding">
+                <p>
+                    In the Hex encoding, each character is encoded as two hex
+                    digits. This encoding allows you to include control
+                    characters in addition to graphic characters. It also
+                    includes a repeat feature allowing part or all of the macro
+                    to be repeated multiple times.
+                </p>
+                <p>
+                    To repeat part or all of a macro, the syntax is
+                    <tt>! <param-single symbol="Pn"/> ;
+                        <param-single symbol="D...D"/> ;</tt> where
+                    <param-single symbol="Pn"/> specifies the number of times
+                    that <param-single symbol="D...D"/> should be repeated.
+                    Repetitions are expanded at time of definition and so have
+                    an impact on macro storage space used. If a number of
+                    repetitions is not specified, then the repetition count is 1.
+                    The end of the overall macro definition terminates any
+                    macro sequences. Any non-numeric characters between the <tt>!</tt>
+                    and the <tt>;</tt> (eg, <tt>!5x;</tt>
+                </p>
+
+                <p>
+                    The only characters allowed inside the Hex encoded macro
+                    definition are 0-9, A-F, and the characters '!' and ';' for
+                    repetitions. The characters 0x09 through 0x0D (HR to CR) are
+                    also allowed for formatting and so are ignored.
+                </p>
+            </section>
+            <section role="text" title="Invoking Other Macros">
+                <p>
+                    Macros can invoke other macros using <a href="#decinvm">DECINVM</a>
+                    but only to a depth of 16 in the VT420 emulation. They cannot
+                    define other macros (DECDMAC is ignored during macro
+                    processing).
+                </p>
+                <p groups="isvt520">
+                    In the VT520 and K95 emulations, a macro invocation at the
+                    very end of a macro does not increase the invocation depth
+                    allowing for more than 16 macros to be chained together.
+                    To prevent infinite loops, Kermit 95 does place a limit on
+                    the number of macro invocations that can be chained in this
+                    manner. This is an intentional deviation from the VT520 which
+                    includes no such limit and allows infinite loops of macros to
+                    be formed.
+                </p>
+            </section>
+            <section role="text" title="Examples">
+                <section role="text" title="ASCII Encoding">
+                    <p>First define a macro containing the desired text. The
+                        following will define a macro with ID 5 which will
+                        replace any existing macro with the same ID and uses
+                        the ASCII format:
+                    <tt>
+                        <cc>DCS</cc>5;0;0!zKermit-95 supports Macros!<cc>ST</cc>
+                    </tt>
+                    </p>
+                    <p>
+                        When invoked with <tt><cc>CSI</cc>5*z</tt> the text
+                        <tt>Kermit-95 supports Macros!</tt> will be output to the
+                        terminal.
+                    </p>
+                </section>
+                <section role="text" title="Hex Encoding">
+                    <p>
+                        Say we want to output the previous example using italics.
+                        The string we want the macro to produce is:
+                        <tt><cc>ESC</cc>[3mKermit-95 supports Macros!<cc>ESC</cc>[0m</tt>
+                    </p>
+                    <p>
+                        As this string includes the escape character, the Hex
+                        encoding must be used. Each character in the string must
+                        be recorded as two hex digits. <cc>ESC</cc> becomes
+                        <tt>1B</tt>, <tt>[</tt> becomes <tt>5B</tt>, <tt>3</tt>
+                        becomes <tt>33</tt>, etc.
+                    </p>
+                    <p>
+                        We'll define this as Macro ID 6 again replacing any
+                        prior macro with that ID, and this time we specify <tt>1</tt>
+                        as the third parameter to indicate Hex format.
+                        <tt>
+                            <cc>DCS</cc>6;0;1!z1B5B336D4B65726D69742D393520737570706F727473204D6163726F73211B5B306D<cc>ST</cc>
+                        </tt>
+                    </p>
+                    <p>
+                        When invoked with <tt><cc>CSI</cc>6*z</tt> the text
+                        <tt><em>Kermit-95 supports Macros!</em></tt> will be
+                        output to the terminal in italics.
+                    </p>
+                </section>
+                <section role="text" title="Adding Repetition">
+                    <p>
+                        With the previous example in hand, we can now easily
+                        change it to repeat "Kermit-95 " three times by wrapping
+                        the hex digits that represent that part of the string
+                        with <tt>!3; ... ;</tt>
+                    </p>
+                    <p>
+                        We'll define this one as Macro 7:
+                        <tt>
+                            <cc>DCS</cc>7;0;1!z1B5B336D!3;4B65726D69742D393520;737570706F727473204D6163726F73211B5B306D<cc>ST</cc>
+                        </tt>
+                    </p>
+                    <p>
+                        When invoked with <tt><cc>CSI</cc>7*z</tt> the text
+                        <tt><em>Kermit-95 Kermit-95 Kermit-95 supports Macros!</em></tt> will be
+                        output to the terminal in italics.
+                    </p>
+                </section>
+            </section>
         </section>
 
         <section role="ctlseq" id="decaupss" mnemonic="DECAUPSS"
@@ -5459,7 +5631,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>K95</td>
-                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 4 4 ; 5 2 c</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 3 2 ; 4 4 ; 5 2 c</td>
                 </tr>
             </table>
 
@@ -5594,7 +5766,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">31</dt>    <!-- ? -->
                 <dd>Not allocated/used/reserved?</dd>
 
-                <dt not-implemented="true">32</dt>    <!-- ? -->
+                <dt>32</dt>                           <!-- ? -->
                 <dd>Text Macros</dd>
 
                 <dt not-implemented="true">33</dt>    <!-- ? -->
@@ -10105,8 +10277,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="dsr-msr" mnemonic="DECMSR"
-                     title="Macro Space Report"
-                     not-implemented="true" todo="true">
+                     title="Macro Space Report" groups="isvt420">
                 <ctlseq><param-single/> = 62</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-n:Ps-=-6-2.1ED1"/>
                 <ref src="070:440"/>
@@ -10114,17 +10285,31 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DSR-MSR.html"/>
                 <ref src="vt52x:330"/>
                 <termsupp first="vt420" series="vt" additional="vt510"/>
+                <p>
+                    Returns a DECMSR response which indicates the available space
+                    for macro definitions. Multiply this value by 16 to get the
+                    number of bytes available.
+                </p>
+                <p>
+                    The size limit varies by terminal type. See
+                    <a href="#decdmac">DECDMAC</a> for more information.
+                </p>
             </section>
             <section role="parameter" id="deccksr" mnemonic="DECCKSR"
-                     title="Memory Checksum"
-                     not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 63</ctlseq>
+                     title="Memory Checksum" groups="isvt420">
+                <ctlseq><param-single/> = 63; <param-single symbol="Pid"/> </ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-n:Ps-=-6-3.1ED2"/>
                 <ref src="070:436"/>
                 <ref src="vt420:262"/>
                 <ref src="vt510:DECCKSR.html"/>
                 <ref src="vt52x:187"/>
                 <termsupp first="vt420" series="vt" additional="vt510"/>
+                <p>
+                    Computes a simple checksum of stored macros returning the
+                    response via the DCS sequence <tt><cc>DCS</cc> <param-single symbol="Pid"/> ! ~ <param-single symbol="D...D"/> <cc>ST</cc></tt>
+                    where Pid is an optional numeric value to help you tell
+                    responses apart.
+                </p>
             </section>
             <section role="parameter" id="dsr-dir"
                      title="Data Integrity Report"
@@ -13406,14 +13591,29 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Pu-'-z.1E0E"/>
             <termsupp first="xterm" series="xt" additional="tt"/>
         </section>
-        <section role="ctlseq" id="decinvm" mnemonic="DECINVM" title="Invoke Macro"
-                 not-implemented="true" todo="true">
+        <section role="ctlseq" id="decinvm" mnemonic="DECINVM" groups="isvt420"
+                 title="Invoke Macro">
             <ctlseq>CSI <param-single/> * z</ctlseq>
             <ref src="070:439"/>
             <ref src="vt420:69"/>
             <ref src="vt510:DECINVM.html"/>
             <ref src="vt52x:215"/>
             <termsupp first="vt420" series="vt" additional="vt510"/>
+            <p>
+                Invokes a macro previously defined with <a href="#decdmac">DECDMAC</a>.
+                The parameter <param-single/> is the ID of the macro to invoke.
+            </p>
+            <p>
+                When invoked, the terminal emulator processes data from the macro
+                as though it were received from the remote host. Data from the
+                remote host is not processed until the macro completes. Any
+                changes made to the state of the terminal emulator remain in
+                effect at the conclusion of the macro.
+            </p>
+            <p>
+                For more information on defining macros to be invoked with
+                DECINVM, see <a href="#decdmac"><em>DECDMAC</em></a>.
+            </p>
         </section>
         <section role="ctlseq" id="decpka" mnemonic="DECPKA"
                  title="Program Action Key"
