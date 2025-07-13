@@ -32,12 +32,13 @@ F_STRIKETHROUGH=1  # New in beta 8
 F_RULED_LINES=0    # -- not supported --
 F_EXTENDED_UL=0    # -- not supported --
 F_SOFT_FONT=0      # -- not supported --
-F_VT420_FEATURES=0 # -- not enough supported to be worth mentioning --
+F_VT420_FEATURES=1 # Rectangular area operations mostly present in 2.1 (2002)
+                   # Text macros new in beta 8
 
 # If F_VT420_FEATURES=1, then:
-# Eventually:  "rectangular operations, text macros, page memory, left/right/margins"
-VT420_FEATURES="rectangular area operations"
-#              "|------Max Length-----------------------------------------------------|"
+# Eventually:  "rectangular area operations, page memory, L/R margins"
+VT420_FEATURES='rectangular area operations'
+#              "|------Max Length----------------------------------------|"
 
 # Eventually: "PCTERM, VTNT, win32 and emacs keyboard modes"
 KB_MODES="PCTERM and VTNT direct keyboard modes"
@@ -211,7 +212,12 @@ fi
 printf ' * VT320 host-programmable status line (see the bottom of the terminal)\n'
 
 if [ "$F_VT420_FEATURES" = "1" ]; then
-	printf ' * VT420 %s\n' "$VT420_FEATURES"
+	# Define a text macro with ID 0. If it works, "text macros" should
+	# appear in the list of features!
+	printf '\x1bP0;0;0!ztext macros, \x1b\\'
+
+	# Output the VT420 features list
+	printf ' * VT420 \x1b[0*z%s\n' "$VT420_FEATURES"
 	SPACE="$(($SPACE-1))"
 fi
 
