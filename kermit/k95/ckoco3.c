@@ -8264,26 +8264,6 @@ rdcomwrtscr(void * pArgList)
             prtyboost = 0;
         }
 
-		if (ISVT420(tt_type_mode) && vt_macro_invocation) {
-			c = vt_macro_in();
-			if (c > 0) {
-				/* We got a character from a macro - go process it */
-            	scriptwrtbuf(c);
-
-            	if (prtyboost == 0) {
-#ifdef NT
-                	SetThreadPrty(priority,(isWin95() ? 3 : 11)+10);
-#else /* NT */
-                	SetThreadPrty(priority,13);
-#endif /* NT */
-                	prtyboost = 1;
-            	}
-				/* Skip reading from the network until we've reached the end of
-				   the macro */
-				continue;
-        	}
-		}
-
         c = ttinc(-500);           /* Get a character from the host */
         if ( c < 0 ) {
             if ( ttyfd == -1
