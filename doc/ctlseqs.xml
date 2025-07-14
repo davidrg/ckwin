@@ -6699,6 +6699,8 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 53</ctlseq>
                 <p>Switches to 132-character mode</p>
             </section>
+            <!-- TODO: The VT510 manual shows this as being DEC Private ( ? 81 h )
+                    while the VT420 and VT520 manuals disagree. Need to test. -->
             <section role="parameter" id="sm-81" mnemonic="DECKPM" title="Key Position Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 81</ctlseq>
