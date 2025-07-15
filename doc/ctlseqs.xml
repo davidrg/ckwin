@@ -15919,7 +15919,7 @@ DCS $ q 3 , } ST</pre>
             <li>The range of color indexes available for customization via
                 <a href="#osc-4">OSC-4</a></li>
             <li>The range of color indexes that can be set via
-                <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>
+                <a href="#sgr-38-ic">SGR-38</a> and <a href="#sgr-48-ic">SGR-48</a>
             </li>
         </ul>
         <p>
@@ -15951,7 +15951,7 @@ DCS $ q 3 , } ST</pre>
                 color palette is not one with RGB support (something other than
                 <tt>xterm-rgb</tt>), Kermit 95 uses color quantization to select
                 the nearest color in the current color palette to 24bit RGB colors
-                set via <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>.
+                set via <a href="#sgr-38-ic">SGR-38</a> and <a href="#sgr-48-ic">SGR-48</a>.
                 That palette color is then stored, rather than the RGB value.
             </p>
             <p>
@@ -16019,7 +16019,7 @@ DCS $ q 3 , } ST</pre>
                 To retain compatibility with software blindly expecting 256-color or
                 24-bit RGB color support, 16-color versions of Kermit 95 still
                 support the <tt>SET TERM COLOR PALETTE</tt> command and implement
-                <a href="sgr-38-ic">SGR-38</a> and <a href="sgr-48-ic">SGR-48</a>.
+                <a href="#sgr-38-ic">SGR-38</a> and <a href="#sgr-48-ic">SGR-48</a>.
                 When the host tries to set a color via SGR-38 or SGR-48, that
                 request is translated into something valid for the aixterm-16
                 color palette.
