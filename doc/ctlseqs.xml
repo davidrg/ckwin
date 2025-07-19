@@ -1116,7 +1116,7 @@ DECTSR		462
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
-              todo-terminals="vt102 vt220 vt420 k95 xterm tt putty"
+              todo-terminals="vt102 vt220 vt420 vt525 k95 xterm tt putty"
               show-refs="true">
             <style>
                 table {
@@ -3674,7 +3674,11 @@ DECTSR		462
             <ref src="vt420:268"/>
             <ref src="vt510:DECRSTS.html"/>
             <ref src="vt52x:271"/>
-            <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510"/>
+            <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 vt520"/>
+
+            <!-- TODO: Note! The VT520/VT525 supports an additional
+                for Ps. 0 and 1 are as in the VT420 and 510, while
+                2 is new - it restores colours -->
         </section>
 
         <section role="ctlseq" id="decrsps" mnemonic="DECRSPS"
@@ -3687,9 +3691,6 @@ DECTSR		462
             <ref src="vt510:DECRSPS.html"/>
             <ref src="vt52x:270"/>
             <termsupp first="vt420" series="vt" additional="vt510"/>
-            <!-- TODO: Note! The VT520/VT525 supports an additional
-                     for Ps. 0 and 1 are as in the VT420 and 510, while
-                        2 is new - it restores colours -->
         </section>
 
         <section role="ctlseq" id="decckd" mnemonic="DECCKD"
@@ -10893,6 +10894,18 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:264"/>
                 <termsupp first="vt420" series="vt" additional=""/>
             </section>
+        </section>
+
+        <section role="parameter" id="msk-ssr"
+                 title="MS-DOS Kermit Screen Size Report"
+                 not-implemented="true" todo="true">
+            <ctlseq><param-single/> = 85</ctlseq>
+            <ref src="msk:338"/>
+            <p>
+                Response is <tt>ESC [ ? 256; Ph; Pw; Pc n</tt> where Ph is
+                the screen height in pixels, Pw is the width in pixels, Pc is
+                the number of colors (0=none, 1=mono, 16=EGA/VGA).
+            </p>
         </section>
 
         <section role="ctlseq" mnemonic="TCP" id="tcp" title="Transmit Cursor Position"

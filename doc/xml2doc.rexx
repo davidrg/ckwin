@@ -240,6 +240,7 @@ todoOutputFilter: procedure expose g.
     is_vt102 = 0
     is_vt220 = 0
     is_vt420 = 0
+    is_vt525 = 0
     is_xterm = 0
     is_tt = 0
     is_linux = 0
@@ -248,12 +249,13 @@ todoOutputFilter: procedure expose g.
     if wordpos('vt102', supportedTerminals) <> 0 then is_vt102 = 1
     if wordpos('vt220', supportedTerminals) <> 0 then is_vt220 = 1
     if wordpos('vt420', supportedTerminals) <> 0 then is_vt420 = 1
+    if wordpos('vt525', supportedTerminals) <> 0 then is_vt525 = 1
     if wordpos('xterm', supportedTerminals) <> 0 then is_xterm = 1
     if wordpos('tt', supportedTerminals) <> 0 then is_tt = 1
     if wordpos('putty', supportedTerminals) <> 0 then is_putty = 1
     if wordpos('linux', supportedTerminals) <> 0 then is_linux = 1
 
-    if is_vt102 = 1 | is_vt220 = 1 | is_vt420 = 1 | (is_xterm = 1 & is_tt = 1) | (is_xterm = 1 & is_putty = 1) | (is_xterm = 1 & is_linux = 1) then do
+    if is_vt102 = 1 | is_vt220 = 1 | is_vt420 = 1 | (is_xterm = 1 & is_vt525 = 1) | (is_tt = 1 & is_vt525 = 1) |(is_xterm = 1 & is_tt = 1) | (is_xterm = 1 & is_putty = 1) | (is_xterm = 1 & is_linux = 1) then do
         return 1
     end
 
