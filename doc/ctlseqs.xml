@@ -1115,7 +1115,7 @@ DECTSR		462
         -->
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
-              todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC"
+              todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC XTPUSHCOLORS XTPOPCOLORS XTREPORTCOLORS"
               todo-terminals="vt102 vt220 vt420 vt525 k95 xterm tt putty"
               show-refs="true">
             <style>
