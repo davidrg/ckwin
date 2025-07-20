@@ -1001,9 +1001,11 @@ Change logs going back to the release of the first version in October 1995 (1.1)
  * 1.1 - First Release - 2 October 1995
  * [OS/2 C-Kermit 5A(191)](https://www.columbia.edu/kermit/cko191.html) - 23 April 1995
    * Last free release before it was renamed [Kermit 95 for OS/2](https://www.columbia.edu/kermit/os2.html), ported to Windows and sold commercially
+   * [Binaries](http://www.columbia.edu/kermit/ftp/archives/cko191.zip) (source never released)
  * [OS/2 C-Kermit 5A(190)](https://www.columbia.edu/kermit/os2new.html) - 4 October 1994 
    * Last release to include 16-bit OS/2 1.x support
    * Last release for which source code was publicly available until the Kermit 95 2.2 code was open-sourced in 2011
+   * [Source](http://www.columbia.edu/kermit/ftp/archives/ckc190.zip), [Binaries](http://www.columbia.edu/kermit/ftp/archives/cko190.zip)
  * [OS/2 C-Kermit 5A(189)](https://groups.google.com/g/bit.listserv.os2-l/c/BSURfg2ufek/m/GjcIh14Jt_QJ) - 18 July 1993
  * [OS/2 C-Kermit 5A(188) (update)](https://groups.google.com/g/comp.os.os2.apps/c/DesD23imeHI/m/I6-udyEnNhAJ) - 3 February 1993
  * [OS/2 C-Kermit 5A(188)](https://groups.google.com/g/bit.listserv.i-amiga/c/DvS37Mfjj8s/m/sYYcpymJ3woJ) - 23 November 1992
