@@ -420,7 +420,7 @@ cell_video_attr_t                       /* Video attribute bytes */
 
 cell_video_attr_t decatc_colors[16];
 
-vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
+vtattrib attrib={0,0,0,0,0,0,0,0,0,0,0,0,0,0},
          savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
                             {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}},
          cmdattrib={0,0,0,0,0,0,0,0,0,0};
@@ -13513,6 +13513,24 @@ dodcs( void )
 
                         if (attrib.italic) strcat(sgrbuf, ";3");
                         if (attrib.underlined) strcat(sgrbuf, ";4");
+#ifdef KUI_EXTENDED_UL
+                        if (attrib.ul_style != UL_STYLE_NORMAL) {
+                            switch(attrib.ul_style) {
+                            case UL_STYLE_DOUBLE:
+                                strcat(sgrbuf, ":2");
+                                break;
+                            case UL_STYLE_WAVY:
+                                strcat(sgrbuf, ":3");
+                                break;
+                            case UL_STYLE_DOTTED:
+                                strcat(sgrbuf, ":4");
+                                break;
+                            case UL_STYLE_DASHED:
+                                strcat(sgrbuf, ":5");
+                                break;
+                            }
+                        }
+#endif /* KUI_EXTENDED_UL */
                         if (attrib.blinking) strcat(sgrbuf, ";5");
                         if (attrib.reversed) strcat(sgrbuf, ";7");
                         if (attrib.invisible) strcat(sgrbuf, ";8");
@@ -20660,6 +20678,7 @@ vtcsi(void)
                             attrib.bold = FALSE;
                             attrib.invisible = FALSE;
                             attrib.underlined = FALSE;
+                            attrib.ul_style = UL_STYLE_NORMAL;
                             attrib.reversed = FALSE;
                             attrib.graphic = FALSE ;
                             attrib.dim = FALSE ;
@@ -20733,9 +20752,46 @@ vtcsi(void)
                                 attribute = underlineattribute;
                             }
                             else {
-                                if (attrib.underlined)
-                                    break;
-                                attrib.underlined = TRUE;
+                                if (pn_pe_start[j] == -1) {
+                                    attrib.underlined = TRUE;
+                                    attrib.ul_style = UL_STYLE_NORMAL;
+                                } else {
+                                    /* We have parameter elements! */
+                                    int pe_start = pn_pe_start[j];
+								    int pe_count = pn_pe_count[j];
+
+                                    if (pe_count >= 1) {
+                                        int ul_style = pe[pe_start];
+                                        switch(ul_style) {
+                                        case 0:
+                                            attrib.underlined = FALSE;
+                                            attrib.ul_style = UL_STYLE_NORMAL;
+                                            break;
+                                        case 1:
+                                            attrib.underlined = TRUE;
+                                            attrib.ul_style = UL_STYLE_NORMAL;
+                                            break;
+#ifdef KUI_EXTENDED_UL
+                                        case 2:
+                                            attrib.underlined = TRUE;
+                                            attrib.ul_style = UL_STYLE_DOUBLE;
+                                            break;
+                                        case 3:
+                                            attrib.underlined = TRUE;
+                                            attrib.ul_style = UL_STYLE_WAVY;
+                                            break;
+                                        case 4:
+                                            attrib.underlined = TRUE;
+                                            attrib.ul_style = UL_STYLE_DOTTED;
+                                            break;
+                                        case 5:
+                                            attrib.underlined = TRUE;
+                                            attrib.ul_style = UL_STYLE_DASHED;
+                                            break;
+#endif /* KUI_EXTENDED_UL */
+                                        }
+                                    }
+                                }
                             }
                             break;
                         case 5:
@@ -20914,7 +20970,11 @@ vtcsi(void)
 								/* Since linux 4.17. Prior to this, it was normal
 								 * intensity */
 								attrib.underlined = TRUE;
-							} else {
+                                attrib.ul_style = UL_STYLE_NORMAL;
+							} else if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
+                                attrib.underlined = TRUE;
+                                attrib.ul_style = UL_STYLE_DOUBLE;
+                            } else {
 	                            if (attrib.bold)
 	                                attrib.bold = FALSE;
                             	if (attrib.dim)
