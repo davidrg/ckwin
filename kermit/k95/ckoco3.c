@@ -20983,44 +20983,90 @@ vtcsi(void)
                         case 35:
                         case 36:
                         case 37:
-                            /* Select foreground color preserving the intensity*/
+                            /* Select foreground color */
                             if ( !sgrcolors )
                                 break;
 
-                            /* Commented out to suppress unreachable code
-                             * compile warning. Not sure why the ISQANSI
-                             * branch is disabled -- DG
-                            if ( 0 && ISQANSI(tt_type_mode) )
-                                l = pn[j] - 30;
-                            else */
+                            /* Historically, Kermit 95 preserved the intensity
+                             * bit here. I don't know why, but I *assume* it was
+                             * intentional. Perhaps aixterm or one of the other
+                             * terminals it emulates originally did this too.
+                             * Whatever the reason, the result is that something
+                             * like '\033[96m\033[36m' would give in intense
+                             * cyan instead of regular cyan. I can't find any
+                             * other common terminals that behave this way which
+                             * results in this behaviour being somewhat unexpected
+                             * to most software. So for now, for the K95 terminal
+                             * type only, we do not preserve the intensity bit */
+                            if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
                                 l = sgrcols[pn[j] - 30];
-                            if (decscnm) {
-                                attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
+                                if (decscnm) {
+                                    attribute = cell_video_attr_set_bg_color(attribute, l);
 
-                                if ( ISSCO(tt_type_mode) ) {
-                                    /* set the default attribute as well */
-                                    defaultattribute = cell_video_attr_set_3bit_bg_color(defaultattribute, l);
+                                    if ( ISSCO(tt_type_mode) ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_bg_color(defaultattribute, l);
 
-                                    graphicattribute = cell_video_attr_set_3bit_bg_color(graphicattribute, l);
+                                        graphicattribute = cell_video_attr_set_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
 #else
-                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #endif
+                                    }
+                                } else {
+                                    attribute = cell_video_attr_set_fg_color(attribute, l);
+
+                                    if ( ISSCO(tt_type_mode) ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_fg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_fg_color(graphicattribute, l);
+#ifdef COMMENT
+                                        reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
+#else
+                                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
+#endif
+                                    }
                                 }
                             } else {
-                                attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
+                                /* Select foreground color, preserving the intensity*/
 
-                                if ( ISSCO(tt_type_mode) ) {
-                                    /* set the default attribute as well */
-                                    defaultattribute = cell_video_attr_set_3bit_fg_color(defaultattribute, l);
+                                /* Commented out to suppress unreachable code
+                                 * compile warning. Not sure why the ISQANSI
+                                 * branch is disabled -- DG
+                                if ( 0 && ISQANSI(tt_type_mode) )
+                                    l = pn[j] - 30;
+                                else */
+                                    l = sgrcols[pn[j] - 30];
+                                if (decscnm) {
+                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
 
-                                    graphicattribute = cell_video_attr_set_3bit_fg_color(graphicattribute, l);
+                                    if ( ISSCO(tt_type_mode) ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_3bit_bg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_3bit_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
 #else
-                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
 #endif
+                                    }
+                                } else {
+                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
+
+                                    if ( ISSCO(tt_type_mode) ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_3bit_fg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_3bit_fg_color(graphicattribute, l);
+#ifdef COMMENT
+                                        reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
+#else
+                                        reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
+#endif
+                                    }
                                 }
                             }
                             break;
@@ -21194,40 +21240,74 @@ vtcsi(void)
                             if ( !sgrcolors )
                                 break;
 
-                            /* Commented out to suppress unreachable code
-                             * compile warning. Not sure why the ISQANSI
-                             * branch is disabled -- DG
-                            if ( 0 && ISQANSI(tt_type_mode) )
-                                l = pn[j] - 40;
-                            else */
+                            /* See comment for Select foreground color */
+                            if (ISK95(tt_type_mode) || ISXTERM(tt_type_mode)) {
                                 l = sgrcols[pn[j] - 40];
-                            if (!decscnm) {
-                                attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
+                                if (!decscnm) {
+                                    attribute = cell_video_attr_set_bg_color(attribute, l);
 
-                                if ( tt_type_mode == TT_SCOANSI ) {
-                                    /* set the default attribute as well */
-                                    defaultattribute = cell_video_attr_set_3bit_bg_color(defaultattribute, l);
+                                    if ( tt_type_mode == TT_SCOANSI ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_bg_color(defaultattribute, l);
 
-                                    graphicattribute = cell_video_attr_set_3bit_bg_color(graphicattribute, l);
+                                        graphicattribute = cell_video_attr_set_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
 #else
-                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
 #endif
+                                    }
+                                } else {
+                                    attribute = cell_video_attr_set_fg_color(attribute, l);
+
+                                    if ( tt_type_mode == TT_SCOANSI ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_fg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_fg_color(graphicattribute, l);
+#ifdef COMMENT
+                                        reverseattribute = cell_video_attr_set_fg_color(reverseattribute, l);
+#else
+                                        reverseattribute = cell_video_attr_set_bg_color(reverseattribute, l);
+#endif
+                                    }
                                 }
                             } else {
-                                attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
+                                /* Commented out to suppress unreachable code
+                                 * compile warning. Not sure why the ISQANSI
+                                 * branch is disabled -- DG
+                                if ( 0 && ISQANSI(tt_type_mode) )
+                                    l = pn[j] - 40;
+                                else */
+                                    l = sgrcols[pn[j] - 40];
+                                if (!decscnm) {
+                                    attribute = cell_video_attr_set_3bit_bg_color(attribute, l);
 
-                                if ( tt_type_mode == TT_SCOANSI ) {
-                                    /* set the default attribute as well */
-                                    defaultattribute = cell_video_attr_set_3bit_fg_color(defaultattribute, l);
+                                    if ( tt_type_mode == TT_SCOANSI ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_3bit_bg_color(defaultattribute, l);
 
-                                    graphicattribute = cell_video_attr_set_3bit_fg_color(graphicattribute, l);
+                                        graphicattribute = cell_video_attr_set_3bit_bg_color(graphicattribute, l);
 #ifdef COMMENT
-                                    reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
 #else
-                                    reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
+                                        reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
 #endif
+                                    }
+                                } else {
+                                    attribute = cell_video_attr_set_3bit_fg_color(attribute, l);
+
+                                    if ( tt_type_mode == TT_SCOANSI ) {
+                                        /* set the default attribute as well */
+                                        defaultattribute = cell_video_attr_set_3bit_fg_color(defaultattribute, l);
+
+                                        graphicattribute = cell_video_attr_set_3bit_fg_color(graphicattribute, l);
+#ifdef COMMENT
+                                        reverseattribute = cell_video_attr_set_3bit_fg_color(reverseattribute, l);
+#else
+                                        reverseattribute = cell_video_attr_set_3bit_bg_color(reverseattribute, l);
+#endif
+                                    }
                                 }
                             }
                             break;

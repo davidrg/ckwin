@@ -10172,12 +10172,47 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
-                        sets the foreground color preserving its intensity.
+                        sets the foreground color <em>preserving its intensity</em>.
+                        This means that if the previously set color was one of the
+                        eight intense aixterm colors (<a href="#sgr-90">SGR-90</a>
+                        through SGR-97), <em>the result will be an intense
+                        color</em>. The sequence <tt><cc>CSI</cc>92m<cc>CSI</cc>36m</tt>
+                        will result in Bright Cyan even though the last control
+                        sequence set normal Cyan (<tt><cc>CSI</cc>92m</tt> sets
+                        the intensity bit, and <tt><cc>CSI</cc>36m</tt> preserves
+                        it).
+                    </p>
+                    <p>
+                        SGR-30 through -37 and -40 through -47 preserving intensity
+                        is a longstanding behavior for Kermit 95 dating all the way
+                        back to the early versions of OS/2 C-Kermit from the late 80s.
+                        The original reason for this was likely due to its use of
+                        intense colors for the bold attribute, a behavior common
+                        to many hardware terminals at the time. This made the
+                        sequence <tt><cc>CSI</cc>1;36m</tt> equivalent to
+                        <tt><cc>CSI</cc>96m</tt>, though OS/2 C-Kermit didn't
+                        support the AIXTERM extensions for setting intense colors
+                        directly at this time. This behavior of preserving intensity
+                        probably should have changed when the AIXTERM color
+                        extension was later added to allow directly setting bright
+                        colors, but for whatever reason it was not.
                     </p>
                     <p badges="scoansi">
                         Also sets the default foreground color, reverse video
                         background color, and the graphic attribute foreground
                         colour
+                    </p>
+                    <!-- TODO: Does the Linux console terminal preserve intensity?
+                               What about real aixterm? -->
+                    <p badges="k95 xterm">
+                        As modern software tends to not expect a previous colors
+                        intensity to be preserved outside explicit use of the bold
+                        attribute, the K95 terminal type does not preserve intensity
+                        for SGR-30 through -37 and -40 through -47. This change was
+                        specifically to improve compatibility with other terminal
+                        emulators and does not apply to other terminal types which
+                        may be used for any older software that may rely on this
+                        behavior (if there is any).
                     </p>
                 </section>
             </section>
@@ -10232,15 +10267,19 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
             <section role="parameter" id="sgr-38-rgb-alt" mnemonic=""
-                     title="Set foreground to RGB values">
+                     title="Set foreground to RGB values (alternative/legacy)">
                 <ctlseq><param-single/> = 38 ; 2 ;  <param-single symbol="Pr"/> ;
                     <param-single symbol="Pg"/> ; <param-single symbol="Pb"/></ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-8;2;Pr;Pg;Pb.21AA"/>
                 <termsupp first="xterm" series="xt" additional="tt linux putty"/>
-                <p>
-                    This does not properly conform to ISO-8613-6 and is implemented
+                <p> <b>Warning:</b>
+                    This does not properly conform to ISO-8613-6 and and is likely
+                    to produce surprising results (such as blinking text) in
+                    terminals and terminal emulators that <em>do not specifically
+                    support this extension</em>. It is supported by Kermit 95
                     only for compatibility with older xterm releases and Konsole.
-                    Using <a href="#sgr-38-rgb">the standard syntax</a> is recommended.
+                    Using <a href="#sgr-38-rgb">the standard syntax</a> is
+                    strongly recommended.
                 </p>
                 <p>
                     Sets the foreground color to the supplied 24-bit RGB value.
@@ -10256,14 +10295,18 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
             <section role="parameter" id="sgr-38-ic-alt" mnemonic=""
-                     title="Set foreground to indexed color">
+                     title="Set foreground to indexed color (alternative/legacy)">
                 <ctlseq><param-single/> = 38 ; 5 ; <param-single/></ctlseq>
                 <!-- xterm documentation doesn't mention support for this -->
                 <termsupp first="xterm" series="xt" additional="tt linux putty"/>
-                <p>
-                    This does not properly conform to ISO-8613-6 and is implemented
-                    only for compatibility other terminal emulators.
-                    Using <a href="#sgr-38-ic">the standard syntax</a> is recommended.
+                <p> <b>Warning:</b>
+                    This does not properly conform to ISO-8613-6 and and is likely
+                    to produce surprising results (such as blinking text) in
+                    terminals and terminal emulators that <em>do not specifically
+                    support this extension</em>. It is supported by Kermit 95
+                    only for compatibility with older xterm releases and Konsole.
+                    Using <a href="#sgr-38-ic">the standard syntax</a> is
+                    strongly recommended.
                 </p>
                 <p>
                     Sets the foreground color to the specified color in the
@@ -10370,12 +10413,25 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
-                        sets the background color preserving its intensity.
+                        sets the background color <em>preserving its intensity</em>.
+                        This means that if the previously set color was one of the
+                        eight intense aixterm colors (<a href="#sgr-100">SGR-100</a>
+                        through SGR-107), <em>the result will be an intense
+                        color</em>. The sequence <tt><cc>CSI</cc>102m<cc>CSI</cc>46m</tt>
+                        will result in Bright Cyan even though the last control
+                        sequence set normal Cyan (<tt><cc>CSI</cc>102m</tt> sets
+                        the intensity bit, and <tt><cc>CSI</cc>46m</tt> preserves
+                        it).
                     </p>
                     <p badges="scoansi">
                         Also sets the default background color, reverse video
                         foreground color, and the graphic attribute background
                         colour
+                    </p>
+                    <p badges="k95 xterm">
+                        The K95 terminal type <em>does not</em> preserve the
+                        intensity bit. For more information, see the discussion
+                        under <a href="#sgr-47">SGR-47</a>.
                     </p>
                 </section>
             </section>
