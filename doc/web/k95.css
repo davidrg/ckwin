@@ -1,0 +1,12 @@
+h1#top {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+h1#top > img {
+    width: 32px;
+}
+
+body {
+    max-width: 800px;
+}
