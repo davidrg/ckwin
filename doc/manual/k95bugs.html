@@ -1009,6 +1009,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[ ] (K)</tt> <a href="#b834">834. Switching between command and terminal via \Kexit doesn't toggle the toolbar button</a>
 <li><tt>[ ] (K)</tt> <a href="#b835">835. The SET HOST command does nothing when the network type is NETBIOS</a>
 <li><tt>[+] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
+<li><tt>[ ] (K)</tt> <a href="#b837">837. CLEAR APC prevents input or switching back to connect mode</a>
 
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
@@ -8084,6 +8085,23 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/99">Issue #99 on Github</a>
+
+<h3><a name="b837">837. CLEAR APC prevents input or switching back to connect mode</a></h3>
+<p>
+    If the <tt>CLEAR APC</tt> command appears in an APC sequence, Kermit 95 returns
+    the user to the command screen and stops executing the APC sequence. The
+    command screen prompt does not appear and the user can not switch back to
+    connect mode via Alt+X or the toolbar button. If the user chooses to Hangup
+    from the File menu, the user will be returned to the terminal screen if exit
+    on disconnect was not enabled. The user still can not interact with the
+    terminal, and can not get back to the command screen. The only way to recover
+    is to exit.
+</p>
+
+<p>This bug first appeared in Kermit 95 v1.1.21.</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/478">Issue #478 on Github</a>
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
