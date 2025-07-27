@@ -851,6 +851,7 @@ int timelimit = 0, asktimer = 0;        /* Timers for time-limited commands */
 #ifdef CK_APC                           /* Application Program Command (APC) */
 int apcactive = APC_INACTIVE;
 int apcstatus = APC_OFF;                /* OFF by default everywhere */
+int apccmd = 0;                         /* Remain on command screen after APC? */
 #ifdef DCMDBUF
 char *apcbuf;
 #else

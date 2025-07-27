@@ -3113,7 +3113,7 @@ static char * hmxxcle[] = {
 " ",
 "  ALARM            Clears any pending alarm (see SET ALARM).",
 #ifdef CK_APC
-"  APC-STATUS       Clears Application Program Command status.",
+"  APC              Clears Application Program Command status.",
 #endif /* CK_APC */
 #ifdef PATTERNS
 "  BINARY-PATTERNS  Clears the file binary-patterns list.",

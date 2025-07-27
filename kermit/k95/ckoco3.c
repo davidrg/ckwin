@@ -356,6 +356,7 @@ char termessage[MAXTERMCOL];
 
 #ifdef CK_APC
 extern int apcactive;                   /* Application Program Command (APC) */
+extern int apccmd;						/* Remain on command screen after APC */
 int apcrecv = 0;
 int dcsrecv = 0;                        /* Device Control String (DCS) */
 int oscrecv = 0;                        /* Operating System Command (OSC) */
@@ -25178,6 +25179,7 @@ apc_command(int type, char * cmd)
         ckstrncpy(apcbuf,cmd,APCBUFLEN);
     apcactive = type;
     apclength = strlen(apcbuf) ;
+    apccmd = 0;
 
     if (apcstatus & APC_NOINP) {
         debug(F110,"apc_command (no input) about to execute APC",apcbuf,0);
@@ -25185,7 +25187,7 @@ apc_command(int type, char * cmd)
         debug(F110,"apc_command finished executing APC",apcbuf,0);
         delmac("_apc_commands",1);
         cmini(ckxech);
-        if ( apcactive == APC_INACTIVE
+        if ( apcactive == APC_INACTIVE || apccmd
 #ifndef NOXFER
              || (apcactive == APC_LOCAL && !xferstat && adl_err != 0)
 #endif /* NOXFER */
@@ -25211,7 +25213,7 @@ apc_command(int type, char * cmd)
             vmode = vmsave;
             VscrnIsDirty(VCMD);
             VscrnIsDirty(vmode);
-            if ( apcactive == APC_INACTIVE
+            if ( apcactive == APC_INACTIVE || apccmd
 #ifndef NOXFER
                  || (apcactive == APC_LOCAL && !xferstat && adl_err != 0)
 #endif /* NOXFER */

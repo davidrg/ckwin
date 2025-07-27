@@ -145,11 +145,6 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    coordinates may be required in multi-monitor setups to place the window on
    a display to the left of or above of the primary display.
  
-### Bug fixes
- - Fixed an inssue introduced in beta 7 which could cause SSH connections made
-   via the dialer to cause K95 to crash
- - Fixed a typo on the `help screen` output (was SCRSTR, should be SCRNSTR)
-
 ### New terminal control sequences
 > [!NOTE]
 > Until Kermit 95 gets a VT525 terminal type option, control sequences marked
@@ -262,6 +257,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    [DECCKSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccksr)
 
 ### Fixed Bugs
+ - Fixed an issue introduced in beta 7 which could cause SSH connections made
+   via the dialer to cause K95 to crash
+ - Fixed a typo on the `help screen` output (was SCRSTR, should be SCRNSTR)
  - Fixed a potential memory leak in the status line display. Cov-462304.
  - Fix control flow issue which could cause a DECRQM to do both the DECRQM
    and a Delete lines. Cov-462454.
@@ -276,6 +274,14 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    (K95 bug 815).
  - Fixed a bug in the previous release that caused the backspace key to not work
    correctly for some "SET SSH" commands
+ - Fixed `CLEAR APC` preventing execution of further commands in the APC sequence,
+   access to the kermit prompt or the ability to switch back to the terminal. This
+   bug first appeared in Kermit 95 v1.1.21. (K95 bug 837).
+ - Fixed `CLEAR APC` defeating all safeguards around APC commands allowing a
+   malicious host to switch APC processing to UNCHECKED. This bug first appeared
+   in or prior to Kermit 95 v1.1.15. (K95 bug 838).
+ - Fixed an error in the `help clear` output: the command is CLEAR APC, not 
+   CLEAR APC-STATUS. This error first appeared in K95 1.1.19.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

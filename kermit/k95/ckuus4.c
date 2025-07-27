@@ -359,6 +359,7 @@ int isjoin = 0;
 #ifdef CK_APC
 extern int apcactive;                   /* Nonzero = APC command was rec'd */
 extern int apcstatus;                   /* Are APC commands being processed? */
+extern int apccmd;                      /* Stay on command screen after APC? */
 #ifdef DCMDBUF
 extern char *apcbuf;                    /* APC command buffer */
 #else
@@ -2360,6 +2361,7 @@ doconect(q,async) int q, async;
                          (apcactive == APC_REMOTE && apcstatus != APC_OFF))) {
             debug(F101,"doconect justone 3","",justone);
             if (mlook(mactab,"_apc_commands",nmac) == -1) {
+                apccmd = 0; /* So we can catch any CLEAR APC */
                 debug(F110,"doconect about to execute APC",apcbuf,0);
                 domac("_apc_commands",apcbuf,cmdstk[cmdlvl].ccflgs|CF_APC);
                 delmac("_apc_commands",1);
@@ -2369,7 +2371,8 @@ doconect(q,async) int q, async;
 #endif /* DEBUG */
             }
             debug(F101,"doconect apcactive after domac","",apcactive);
-            if (!apcactive) {               /* In case CLEAR APC was in APC */
+            if (!apcactive || apccmd) {     /* In case CLEAR APC was in APC */
+                apcactive = APC_INACTIVE;
                 debug(F101,"doconect quit APC loop: apcactive","",apcactive);
                 break;
             }
