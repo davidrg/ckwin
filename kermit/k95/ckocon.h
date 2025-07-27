@@ -1248,9 +1248,26 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
     unsigned wyseattr:1;        /* Wyse Attribute */
     unsigned italic:1;          /* Italic */
 	unsigned crossedout:1;		/* Crossed out */
+    unsigned ul_style:3;        /* Extended underline styles */
     unsigned hyperlink:1;       /* Hyperlink */
     unsigned short linkid;      /* Hyperlink Index */
 } vtattrib ;
+
+/* Underline styles for the ul_style field above, and the three
+ * VT_CHAR_ATTR_UNDERLINE_{A,B,C} bit fields in the virtual buffer field below.
+ * Someday "Normal" underline may be moved in here too, to free up the attribute
+ * bit currently occupited by VT_CHAR_ATTR_UNDERLINE. For now, the underline
+ * style is ignored if that bit is not set.
+ */
+#define UL_STYLE_NORMAL  0
+#define UL_STYLE_DOUBLE  1
+#define UL_STYLE_DASHED  2
+#define UL_STYLE_DOTTED  3
+#define UL_STYLE_WAVY    4
+#define UL_STYLE_RES_A   5        /* Unused */
+#define UL_STYLE_RES_B   6        /* Unused */
+#define UL_STYLE_RES_C   7        /* Unused */
+#define UL_STYLE_MAX     UL_STYLE_WAVY
 
 /*
  *
@@ -1267,14 +1284,18 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 #define VT_CHAR_ATTR_GRAPHIC          ((USHORT) 0x0040)
 #define VT_CHAR_ATTR_DIM              ((USHORT) 0x0080)
 #define WY_CHAR_ATTR                  ((USHORT) 0x0100)
-#define KUI_CHAR_ATTR_UPPER_HALF      ((USHORT) 0x0200)
-#define KUI_CHAR_ATTR_LOWER_HALF      ((USHORT) 0x0400)
+#define VT_CHAR_ATTR_CROSSEDOUT       ((USHORT) 0x0200)
+#define VT_CHAR_UNUSED                ((USHORT) 0x0400)  /* Available */
 #define VT_CHAR_ATTR_ITALIC           ((USHORT) 0x0800)
 #define VT_CHAR_ATTR_HYPERLINK        ((USHORT) 0x1000)
-#define VT_CHAR_ATTR_CROSSEDOUT      ((USHORT) 0x2000)
-/* These three are available for use */
-#define VT_CHAR_RESERVED_2            ((USHORT) 0x4000)  /* Doubly-underlined */
-#define VT_CHAR_RESERVED_1            ((USHORT) 0x8000)
+#define VT_CHAR_ATTR_UNDERLINE_A      ((USHORT) 0x2000)
+#define VT_CHAR_ATTR_UNDERLINE_B      ((USHORT) 0x4000)
+#define VT_CHAR_ATTR_UNDERLINE_C      ((USHORT) 0x8000)
+
+/* The three fields VT_CHAR_ATTR_UNDERLINE_{A,B,C} together are a three bit
+ * field that specifies the extended underline style. See UL_STYLE_* above. */
+#define VT_CHAR_ATTR_GET_UL_STYLE(x)  ((x & 0xE000) >> 13)
+#define VT_CHAR_ATTR_SET_UL_STYLE(x)  ((x & 0x0007) << 13)
 
 #define VT_LINE_ATTR_NORMAL           ((USHORT) 0x00)
 #define VT_LINE_ATTR_DOUBLE_WIDE      ((USHORT) 0x01)

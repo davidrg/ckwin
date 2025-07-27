@@ -870,6 +870,10 @@ void KClient::writeMe()
             SetTextColor( hdc(), cell_video_attr_foreground_rgb(prevAttr));
         }
 
+#ifdef KUI_EXTENDED_UL
+        char underlineType = -1;
+#endif /* KUI_EXTENDED_UL */
+
         if( prevEffect != kws->effect )
         {
             prevEffect = kws->effect;
@@ -892,6 +896,15 @@ void KClient::writeMe()
 
                 normal = !underline && !blink;
             }
+
+#ifdef KUI_EXTENDED_UL
+            if (underline && VT_CHAR_ATTR_GET_UL_STYLE(prevEffect) != UL_STYLE_NORMAL) {
+                /* Its not a regular underline, so we'll take care of drawing it
+                 * rather than using an underlined font. */
+                underline = FALSE;
+                underlineType = VT_CHAR_ATTR_GET_UL_STYLE(prevEffect);
+            }
+#endif /* KUI_EXTENDED_UL */
 
             if( normal )
                 getFont()->resetFont( hdc() );
@@ -963,6 +976,19 @@ void KClient::writeMe()
 			(wchar_t*) &(textBuffer[ kws->offset ]),
 			kws->length,
 			(int*)&interSpace );
+
+#ifdef KUI_EXTENDED_UL
+            if (underlineType != -1) {
+                // TODO: We're drawing the underline ourselves.
+
+                switch(underlineType) {
+                case UL_STYLE_DOUBLE:
+                case UL_STYLE_DASHED:
+                case UL_STYLE_DOTTED:
+                case UL_STYLE_WAVY:
+                }
+            }
+#endif /* KUI_EXTENDED_UL */
         }
         else {
             ExtTextOut( hdc(), rect.left, rect.top, 
