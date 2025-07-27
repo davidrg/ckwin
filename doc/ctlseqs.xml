@@ -1848,10 +1848,14 @@ DECTSR		462
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
             <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
-            <p>Carriage Return. Sends the cursor to the start of the line.</p>
+            <p>Carriage Return. Sends the cursor to the start of the line
+                and cancels wrapping</p>
 
             <p badges="s97801" groups="ishp">
                 Sends the cursor to the left margin
+            </p>
+            <p badges="hft" groups="isansi">
+                Does not cancel wrapping.
             </p>
         </section>
         <section id="dc4" role="ctlchar" mnemonic="DC4" ctlseq="DC4" title="Device Control 4"
@@ -4247,14 +4251,15 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:162"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> A</ctlseq>
-            <p>Cursor Up <param-single/> lines (default = 1)</p>
+            <p>Cursor Up <param-single/> lines (default = 1). Cancels Wrapping
+                (clears the last column flag)
+            </p>
 
             <p badges="s97801">Ignored if outside scroll region</p>
 
-            <!--
-                For LINUX, and any other terminal that is not SCOANSI, AT386 and ANSI:
-                wrapit=FALSE
-                -->
+            <p badges="scoansi at386 ansi">
+                Does not cancel wrapping.
+            </p>
         </section>
         <section role="ctlseq" id="sbc" mnemonic="SBC" title="Set Border Color (ANSI)" groups="isansi">
             <ctlseq>CSI = <param-single/> A</ctlseq>
@@ -4297,12 +4302,12 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:161"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> B</ctlseq>
-            <p>Cursor Down <param-single/> lines (default = 1)</p>
+            <p>Cursor Down <param-single/> lines (default = 1).
+                Cancels wrapping (clears the last column flag).</p>
             <p badges="s97801">Ignored if outside scroll region</p>
-            <!--
-            For LINUX, and any other terminal that is not SCOANSI, AT386 and ANSI:
-            wrapit=FALSE
-            -->
+            <p groups="isansi">
+                Wrapping is not canceled.
+            </p>
         </section>
         <section role="ctlseq" id="sbp" title="Set Beep Frequency and Duration"
                  mnemonic="SBP" groups="isansi">
@@ -6366,7 +6371,8 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:337"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty"/>
             <ctlseq>CSI <param-single/> ; <param-single/> f</ctlseq>
-            <p>Send cursor to row;column. Default is 1;1.</p>
+            <p>Send cursor to row;column. Default is 1;1. Cancels Wrapping
+                (clears the last column flag)</p>
             <p badges="s97801">
                 If DECSASD is set to the status line, it is reset to terminal.
             </p>

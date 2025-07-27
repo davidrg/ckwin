@@ -489,7 +489,7 @@ bool     cprint         = FALSE; /* Copy-print in progress (for debug) */
 bool     uprint         = FALSE; /* Transparent print */
 bool     turnoffprinter = FALSE; /* Time to turn it off */
 
-bool     wrapit    = FALSE;
+bool     wrapit    = FALSE;        /* Last column flag */
 bool     literal_ch= FALSE;
 bool     screenon  = TRUE;
 extern bool     cursorena[];       /* Cursor enabled / disabled */
