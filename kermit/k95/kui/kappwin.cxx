@@ -208,6 +208,24 @@ int KAppWin::sizeFont( LPRECT lpr, int force )
         return 0;
     }
 
+    if (kfont->getFontW() == wishFontW + 1 &&
+        kglob->mouseEffect == TERM_MOUSE_CHANGE_FONT) {
+        // For some reason I've not been able to identify so far, certain fonts
+        // get us stuck in a continuous resizing loop. If we ask for a font
+        // width of 5, we're given a font width of 6 causing the window to grow.
+        // Next time around, we ask for a font size of 6, and we're given 7
+        // causing the window to grow again. This only happens with
+        // reisze-changes-font, and only with certain fonts (Cascadia Light
+        // being one of them). For now this ugly workaround solves the immediate
+        // problem, but the font still appears stretched horizontally. At least
+        // K95 window doesn't keep growing wider which was really the main
+        // problem.
+        if( !kfont->tryFont( wishFontW - 1, wishFontH, client->hdc() ) ) {
+            memcpy( lpr, &rect, sizeof(RECT) );
+            return 0;
+        }
+    }
+
     client->setInterSpacing( kfont );
     setFont( kfont->getFaceName(), kfont->getFontPointsH() );
 

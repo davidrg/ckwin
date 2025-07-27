@@ -9,7 +9,7 @@ if [%2] NEQ [] set SUFFIX=-%2
 @echo ==== Build K95G.EXE ====
 SET KERMITDIR=..
 SET OUTDIR=.\win95%SUFFIX%
-SET NODEBUG=1
+SET NODEBUG=
 SET PLATFORM=NT
 cd kui
 %MAKE% /e /f makefile || exit /B %errorlevel%
