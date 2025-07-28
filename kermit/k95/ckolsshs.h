@@ -96,7 +96,7 @@
 /* TODO: Confirm which of these are still used */
 #define SSH_ERR_NO_ERROR 0              /* Everything is OK */
 #define SSH_ERR_OK SSH_ERR_NO_ERROR
-#define SSH_ERR_TIMEOUT -1 /* -1 is a timeout for for some K95 functions */
+#define SSH_ERR_TIMEOUT -1          /* -1 is a timeout for some K95 functions */
 #define SSH_ERR_NEW_SESSION_FAILED -2   /* Failed to create new SSH session */
 #define SSH_ERR_HOST_NOT_SPECIFIED -3   /* Hostname was null */
 #define SSH_ERR_SSH_ERROR -4            /* Libssh error, call ssh_get_error(session) */
