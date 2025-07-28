@@ -9010,6 +9010,7 @@ dosetssh() {
           int val;
           y = cmnum("SSH verbosity level, 0-7","2",10,&x,xxstring);
           success = setnum(&val,x,y,7);
+          if (success != 0) return success;
           return(success = ssh_set_iparam(SSH_IPARAM_VRB, val));
       }
 
