@@ -96,7 +96,7 @@
 /* TODO: Confirm which of these are still used */
 #define SSH_ERR_NO_ERROR 0              /* Everything is OK */
 #define SSH_ERR_OK SSH_ERR_NO_ERROR
-#define SSH_ERR_UNSPECIFIED -1          /* Unspecified error */
+#define SSH_ERR_TIMEOUT -1 /* -1 is a timeout for for some K95 functions */
 #define SSH_ERR_NEW_SESSION_FAILED -2   /* Failed to create new SSH session */
 #define SSH_ERR_HOST_NOT_SPECIFIED -3   /* Hostname was null */
 #define SSH_ERR_SSH_ERROR -4            /* Libssh error, call ssh_get_error(session) */
@@ -127,6 +127,7 @@
 #define SSH_ERR_DIRECTFWD_BIND_FAILED -29 /* Call to bind failed while setting up direct forward server */
 #define SSH_ERR_DIRECTFWD_LISTEN_FAILED -30 /* Call to listen failed while setting up direct forward server */
 #define SSH_ERR_MUTEX_TIMEOUT -31       /* Timeout waiting for mutext */
+#define SSH_ERR_UNSPECIFIED -32          /* Unspecified error */
 
 #ifndef SSH_PF_T
 #define SSH_PF_T

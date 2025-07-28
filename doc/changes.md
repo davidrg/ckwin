@@ -272,8 +272,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    K95 will now do the same, using unicode character 0x2426 for VT220 and up.
    Not all fonts include this symbol, but on modern Windows Cascadia Mono does.
    (K95 bug 815).
- - Fixed a bug in the previous release that caused the backspace key to not work
-   correctly for some "SET SSH" commands
+- Fixed a bug in the previous release that caused the backspace key to not work
+  correctly for some "SET SSH" commands
  - Fixed `CLEAR APC` preventing execution of further commands in the APC sequence,
    access to the kermit prompt or the ability to switch back to the terminal. This
    bug first appeared in Kermit 95 v1.1.21. (K95 bug 837).
@@ -282,6 +282,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    in or prior to Kermit 95 v1.1.15. (K95 bug 838).
  - Fixed an error in the `help clear` output: the command is CLEAR APC, not 
    CLEAR APC-STATUS. This error first appeared in K95 1.1.19.
+ - Fixed connect command not reconnecting disconnected SSH sessions
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

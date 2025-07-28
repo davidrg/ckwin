@@ -1534,8 +1534,8 @@ static int get_ssh_error(void) {
         return SSH_ERR_NO_INSTANCE;
     }
 
-    /* Check if the client thread is alive. If not we're disconnected, and we
-     * can just return whatever its error state is */
+    /* Check if the client thread is alive. If not we're disconnected, we can
+     * just return whatever its error state is */
     if (WaitForSingleObject(hSSHClientThread, 0) == WAIT_OBJECT_0) {
         /* Thread is not running - send back whatever status it set when it
          * stopped. No need to acquire the mutex.
@@ -1816,7 +1816,7 @@ int ssh_open(void) {
     }
 
     /* This will be used to communicate with the SSH subsystem. It has
-     * ring buffers, mutexes, semaphores, et. *WE* own this and must free it
+     * ring buffers, mutexes, semaphores, etc. *WE* own this and must free it
      * on disconnect. */
     debug(F100, "ssh_open() - create client", NULL, 0);
     ssh_client = ssh_client_new();
@@ -1866,10 +1866,16 @@ int ssh_clos(void) {
             debug(F100, "Warning: SSH thread did not terminate on disconnect "
                         "request within the allocated time. SSH thread is "
                         "still live!", "", 0);
+#ifndef SSH_DLL
+            ttclos(0);
+#endif /* SSH_DLL */
             return SSH_ERR_ZOMBIE_THREAD;
         } else if (result == WAIT_FAILED) {
             debug(F101, "Warning: failed to wait for SSH thread terminate. "
                         "error", "", GetLastError());
+#ifndef SSH_DLL
+            ttclos(0);
+#endif /* SSH_DLL */
             return SSH_ERR_UNSPECIFIED;
         } else {
             ssh_client_t *temp;
@@ -1892,6 +1898,9 @@ int ssh_clos(void) {
         }
     } else {
         debug(F100, "Warning: Failed to signal SSH thread to disconnect", "", 0);
+#ifndef SSH_DLL
+        ttclos(0);
+#endif /* SSH_DLL */
         return SSH_ERR_DISCONNECT_FAILED;
     }
 }
@@ -1916,11 +1925,6 @@ int ssh_tchk(void) {
      * is whatever is in the threads output buffer */
 
     if (ring_buffer_lock(ssh_client->outputBuffer, 0)) {
-        if (ssh_client == NULL) {
-            debug(F100, "ssh_tchk - error: no instance!", "", 0);
-            return SSH_ERR_NO_INSTANCE;
-        }
-
         rc = ring_buffer_length(ssh_client->outputBuffer);
         ring_buffer_unlock(ssh_client->outputBuffer);
     } else {
@@ -1952,6 +1956,10 @@ int ssh_tchk(void) {
                   "", 0);
         }
     }
+
+#ifndef SSH_DLL
+    if (rc < 0) ttclos(0);
+#endif /* SSH_DLL */
     return rc;
 }
 
@@ -2034,6 +2042,9 @@ int ssh_inc(int timeout) {
     }
 
     /* Else some error occurred */
+#ifndef SSH_DLL
+    if (rc < -1) ttclos(0);
+#endif /* SSH_DLL */
     return rc;
 }
 
@@ -2083,6 +2094,9 @@ int ssh_xin(int count, char * buffer) {
         debug(F100, "ssh_xin - failed to get lock on output buffer", "", 0);
     }
 
+#ifndef SSH_DLL
+    if (rc < -1) ttclos(0);
+#endif /* SSH_DLL */
     return rc;
 }
 
@@ -2110,15 +2124,18 @@ int ssh_toc(int c) {
         }
 
         return SSH_ERR_NO_ERROR;
-    } else if (rc == RING_BUFFER_TIMEOUT) {
+    } else if (rc == RING_BUFFER_TIMEOUT || rc == SSH_ERR_MUTEX_TIMEOUT) {
         /* This should never happen */
         debug(F100, "ssh_toc() unexpected timeout on infinite timeout put",
               "", 0);
-        return rc;
+        return SSH_ERR_TIMEOUT;
     }
 
     /* Else an error occurred */
     debug(F111, "ssh_toc() call to blocking ringbuf put failed", "error", rc);
+#ifndef SSH_DLL
+    if (rc < -1) ttclos(0);
+#endif /* SSH_DLL */
     return rc;
 }
 
@@ -2149,6 +2166,9 @@ int ssh_tol(char * buffer, int count) {
     } /* Else couldn't get a lock immediately. Report zero bytes written - the
        * caller can try again */
 
+#ifndef SSH_DLL
+    if (rc < -1) ttclos(0);
+#endif /* SSH_DLL */
     return rc;
 }
 

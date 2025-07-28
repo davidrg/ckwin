@@ -896,13 +896,15 @@ int ssh_open(void){
  * @return  0 on success, < 0 on failure.
  */
 int ssh_clos(void) {
-    if (dllfuncp_ssh_clos)
-        return dllfuncp_ssh_clos();
+    if (dllfuncp_ssh_clos) {
+        int rc = dllfuncp_ssh_close();
+        if (rc < 0) ttclos(0);
+        return rc;
+    }
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
     ssh_subsystem_loaded = FALSE;
-
     return -1;
 }
 
@@ -914,8 +916,14 @@ int ssh_clos(void) {
  *          < 0 indicates a fatal error and the connection should be closed.
  */
 int ssh_tchk(void) {
-    if (dllfuncp_ssh_tchk)
-        return dllfuncp_ssh_tchk();
+    if (dllfuncp_ssh_tchk) {
+        int rc = dllfuncp_ssh_tchk();
+        if (rc < 0) {
+            debug(F111, "ssh_tchk returning error. Calling ttclos()", "rc", rc);
+            ttclos(0);
+        }
+        return rc;
+    }
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -962,8 +970,11 @@ int ssh_break(void) {
  * @return -1 for timeout, >= 0 is a valid character, < -1 is a fatal error
  */
 int ssh_inc(int timeout) {
-    if (dllfuncp_ssh_inc)
-        return dllfuncp_ssh_inc(timeout);
+    if (dllfuncp_ssh_inc) {
+        int rc = dllfuncp_ssh_inc(timeout);
+        if (rc < -1) ttclos(0);
+        return rc;
+    }
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -983,8 +994,11 @@ int ssh_inc(int timeout) {
  * @return >= 0 indicates the number of characters read, < 0 indicates error
  */
 int ssh_xin(int count, char * buffer) {
-    if (dllfuncp_ssh_xin)
-        return dllfuncp_ssh_xin(count, buffer);
+    if (dllfuncp_ssh_xin) {
+        int rc = dllfuncp_ssh_xin(count, buffer);
+        if (rc < -1) ttclos(0);
+        return rc;
+    }
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -1000,8 +1014,11 @@ int ssh_xin(int count, char * buffer) {
  * @return 0 for success, <0 for error
  */
 int ssh_toc(int c) {
-    if (dllfuncp_ssh_toc)
-        return dllfuncp_ssh_toc(c);
+    if (dllfuncp_ssh_toc) {
+        int rc = dllfuncp_ssh_toc(c);
+        if (rc < -1) ttclos(0);
+        return rc;
+    }
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
@@ -1017,8 +1034,11 @@ int ssh_toc(int c) {
  * @return  >= 0 for number of characters sent, <0 for a fatal error.
  */
 int ssh_tol(char * buffer, int count) {
-    if (dllfuncp_ssh_tol)
-        return dllfuncp_ssh_tol(buffer, count);
+    if (dllfuncp_ssh_tol) {
+        int rc = dllfuncp_ssh_tol(buffer, count);
+        if (rc < -1) ttclos(0);
+        return rc;
+    }
 
     /* ERROR - this function is mandatory. This should never happen.
      * Mark SSH as unavailable.*/
