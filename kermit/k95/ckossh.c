@@ -897,7 +897,7 @@ int ssh_open(void){
  */
 int ssh_clos(void) {
     if (dllfuncp_ssh_clos) {
-        int rc = dllfuncp_ssh_close();
+        int rc = dllfuncp_ssh_clos();
         if (rc < 0) ttclos(0);
         return rc;
     }
