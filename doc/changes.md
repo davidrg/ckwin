@@ -283,6 +283,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed an error in the `help clear` output: the command is CLEAR APC, not 
    CLEAR APC-STATUS. This error first appeared in K95 1.1.19.
  - Fixed connect command not reconnecting disconnected SSH sessions
+ - Fixed certain menu items not being disabled when they should be if they
+   appear in the system menu rather than menubar
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

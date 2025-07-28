@@ -398,7 +398,15 @@ void KTerminal::disableMenuItem(UINT menuItemId) {
     }
 
     if (sysActions != NULL) {
+        // This the menubar is hidden and we're disabling menu items that live
+        // somewhere in the system menu. Start by checking if its in the
+        // Actions submenu.
         EnableMenuItem( sysActions, menuItemId, MF_BYCOMMAND | MF_GRAYED );
+
+        // Just in case this menu item lives in the system menu, rather than
+        // the actions menu
+        HMENU hSys = GetSystemMenu(hwnd(), FALSE);
+        EnableMenuItem( hSys, menuItemId, MF_BYCOMMAND | MF_GRAYED );
     }
 }
 
