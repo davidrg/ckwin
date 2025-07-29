@@ -178,18 +178,23 @@ jobs:
           - id: x86
           - id: x64
           - id: x64_arm
-            # temporary setup Windows SDK version for 32-bit ARM to 10.0.22621.0 because
-            # latest SDK version 10.0.26100.0 doesn't contains 32-bit ARM files
+            # This is the last version of the Windows SDK to contain files for
+            # targeting ARM32
             sdk: 10.0.22621.0
           - id: x64_arm64
-        version:
+        toolset:
+          - ver: 14.29
+            name: VC2019-1429
+          - ver: 14.44
+            name: VC2022-1444
+#        version:
 # windows-2019 is no longer available, and with it Visual Studio 2019.
 #          - vs: 2019
 #            image: windows-2019
-          - vs: 2022
-            image: windows-2022
-    runs-on: ${{matrix.version.image}}
-    name: Build-VS${{matrix.version.vs}} (${{matrix.arch.id}})
+#          - vs: 2022
+#            image: windows-2022
+    runs-on: windows-2022
+    name: Build-${{matrix.toolset.name}} (${{matrix.arch.id}})
 
     steps:
       - uses: actions/checkout@v4
@@ -210,7 +215,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{matrix.arch.id}}
-          vsversion: ${{matrix.version.vs}}
+          toolset: ${{matrix.toolset.ver}}
           sdk: ${{matrix.arch.sdk}}
           #spectre: # set true to use VC libraries with sepctre mitigations
       - name: Load Build Tools
