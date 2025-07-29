@@ -1328,6 +1328,7 @@ struct stringint {			/* String and (wide) integer */
 #define   XYTLSP    64  /* SET TERM LINE-SPACING */
 #define   XYTLFD    65	/* SET TERM LF-DISPLAY   */
 #define   XYTCLP    66  /* SET TERM CLIPBOARD-ACCESS */
+#define   XYTSIZE   67  /* SET TERM SIZE */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */

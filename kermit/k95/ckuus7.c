@@ -1065,6 +1065,7 @@ static struct keytab trmtab[] = {
     { "send-data",         XYTSEND, 0 },
     { "send-end-of-block", XYTSEOB, 0 },
     { "sgr-colors",            XYTSGRC,  0 },
+    { "size",                  XYTSIZE,  0 },
     { "sni-ch.code",           XYTSNICC, 0 },
     { "sni-firmware-versions", XYTSNIFV, 0 },
     { "sni-language",          XYTVTLNG, 0 },
@@ -5613,6 +5614,26 @@ settrm() {
         if ((x = cmcfm()) < 0) return(x);
         sgrcolors = y;
         return(1);
+
+#ifdef OS2
+      case XYTSIZE: {
+        int width, height;
+        if ((y = cmnum("number of columns in display window during CONNECT",
+                       "80",10,&width,xxstring)) < 0) {
+            return(y);
+        }
+        if ((y = cmnum("number of rows in display window during CONNECT, not "
+                       "including status line", tt_status[VTERM]?"24":"25",
+                       10,&height,xxstring)) < 0) {
+            return(y);
+        }
+        if ((y = cmcfm()) < 0) return(y);
+
+        success = os2_settermwidth(width);
+        if (!success) return success;
+        return (success = os2_settermheight(height));
+        }
+#endif /* OS2 */
 
       case XYTSEND:
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);

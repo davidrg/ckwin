@@ -8513,6 +8513,13 @@ static char *hxyterm[] = {
 "  escape sequences to set color.",
 " ",
 
+#ifdef OS2
+"SET TERMINAL SIZE <cols> <rows>",
+"  Sets the number of columns and rows in the terminal screen. This is",
+"  shorthand for SET TERMINAL WIDTH <cols>, SET TERMINAL HEIGHT <rows>",
+" ",
+#endif /* OS2 */
+
 "SET TERMINAL SNI-CH.CODE { ON, OFF }",
 "  This command controls the state of the CH.CODE key.  It is the equivalent",
 "  to the SNI_CH_CODE Keyboard verb.  The SNI terminal uses CH.CODE to",

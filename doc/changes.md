@@ -144,6 +144,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    (`--xpos`, `--ypos`) and in the `SET GUI WINDOW POSITION` command. Negative
    coordinates may be required in multi-monitor setups to place the window on
    a display to the left of or above of the primary display.
+ - New SET TERMINAL SIZE command allowing both width and height to be set in one
+   go.
  
 ### New terminal control sequences
 > [!NOTE]
