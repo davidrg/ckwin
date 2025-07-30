@@ -183,10 +183,12 @@ jobs:
           - 14.29
           - 14.44
         exclude: 
-          # Libssh can't currently be built for ARM64 using Visual C++ 2019, and it doesn't 
-          # really make sense to any; Visual C++ 2022 supports any version opf Windows that 
-          # runs on ARM64
+          # Libssh can't currently be built for ARM using Visual C++ 2019, and it doesn't
+          # really make sense to any; Visual C++ 2022 supports any version of Windows that
+          # runs on ARM
           - arch: x64_arm64
+            toolset: 14.29
+          - arch: x64_arm
             toolset: 14.29
     runs-on: windows-2022
     name: Build-${{matrix.toolset}} (${{matrix.arch}})
