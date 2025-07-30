@@ -209,6 +209,10 @@ jobs:
           # This is the last version of the Windows SDK to support targeting ARM32
           if [[ "${{matrix.arch}}" = "x64_arm" ]]; then
             echo "winsdk=10.0.22621.0" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "x64" ]]; then
+            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "x86" ]]; then
+            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"          
           fi
 
           if [[ "${{matrix.toolset}}" = "14.29" ]]; then
