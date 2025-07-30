@@ -230,6 +230,10 @@ jobs:
         uses: "./.github/actions/load-tools"
         with:
           nocache: ${{vars.NOCACHE}}
+      - name: checking
+        shell: cmd
+        run: |
+          echo %PATH%
       ##########################################################################
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
