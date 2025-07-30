@@ -375,7 +375,7 @@ jobs:
         shell: cmd
 
       - name: Build openssl
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
