@@ -47,6 +47,8 @@ env:
   JOM: https://download.qt.io/official_releases/jom/jom.zip
   # Download it from sourceforge distribution page
   # expected filename: https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.6/regina-rexx-3.9.6.tar.gz/download
+  # Note: Regina 3.9.7 currently has a compatibility issue with Windows XP (at
+  #       least when built with Visual C++ 2019) - a dependency on flsAlloc, etc.
   REGINA_VERSION: 3.9.6
   # OS/2 Developer's Toolkit v4.5 is available on David Azarewicz's 88watts.net
   # *supposedly* with permission from IBM - or so Arca Noae (which David is
@@ -206,13 +208,18 @@ jobs:
             echo "k4w=kerberos\current\Kerberos" >> "$GITHUB_OUTPUT"
           fi
 
-          # This is the last version of the Windows SDK to support targeting ARM32
           if [[ "${{matrix.arch}}" = "x64_arm" ]]; then
+            # This is the last version of the Windows SDK to support targeting ARM32
             echo "winsdk=10.0.22621.0" >> "$GITHUB_ENV"
+            echo "openssl_arch=VC-WIN32-ARM" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "x64_arm64" ]]; then
+            echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64" ]]; then
-            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            # echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            echo "openssl_arch=VC-WIN64A" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x86" ]]; then
-            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"          
+            # echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            echo "openssl_arch=VC-WIN32" >> "$GITHUB_ENV"
           fi
 
           if [[ "${{matrix.toolset}}" = "14.29" ]]; then
@@ -234,13 +241,6 @@ jobs:
         uses: "./.github/actions/load-tools"
         with:
           nocache: ${{vars.NOCACHE}}
-      - name: checking
-        shell: cmd
-        run: |
-          echo %PATH%
-          dir "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC"
-          dir "C:\Program Files\Microsoft Visual Studio\"
-          dir "C:\Program Files (x86)\Microsoft SDKs\Windows\"
       ##########################################################################
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
@@ -258,7 +258,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.version.vs}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
+          key: vs${{matrix.toolset}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver1
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -374,56 +374,24 @@ jobs:
           nmake
         shell: cmd
 
-      - name: Build openssl (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+      - name: Build openssl
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
           echo %PATH%
-          perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+          perl Configure ${{env.openssl_arch}} zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
+          if "${{env.openssl_arch}}" == "VC-WIN32-ARM" goto :build
+          if "${{env.openssl_arch}}" == "VC-WIN64-ARM" goto :build
+          
           REM The linker by default marks the subsystem version too high for XP
           REM and there isn't a way to fix that from the configure script, so
           REM do it the hard way.
           sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
+          
+          :build
         
-          ${{env.OPENSSL_MAKE}}
-        shell: cmd
-
-      - name: Build openssl (x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
-        working-directory: openssl/current
-        run: |
-          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-          echo %PATH%
-          perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
-        
-          REM The linker by default marks the subsystem version too high for XP
-          REM and there isn't a way to fix that from the configure script, so
-          REM do it the hard way.
-          sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
-        
-          ${{env.OPENSSL_MAKE}}
-        shell: cmd
-
-      - name: Build openssl (ARM)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
-        working-directory: openssl/current
-        run: |
-          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-          echo %PATH%
-          perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}} 
-        
-          ${{env.OPENSSL_MAKE}}
-        shell: cmd
-
-      - name: Build openssl (ARM-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-        working-directory: openssl/current
-        run: |
-          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-          echo %PATH%
-          perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
           ${{env.OPENSSL_MAKE}}
         shell: cmd
 
