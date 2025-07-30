@@ -267,7 +267,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.toolset}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver2
+          key: vs${{matrix.toolset}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
