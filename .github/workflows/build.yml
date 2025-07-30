@@ -218,11 +218,15 @@ jobs:
             echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
             echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64" ]]; then
-            # echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            # An old windows SDK is required for Regina 3.9.6 to be compatible
+            # with Windows XP. newer SDKs introduce a dependency on FlsAlloc.
+            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN64A" >> "$GITHUB_ENV"
             echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x86" ]]; then
-            # echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            # An old windows SDK is required for Regina 3.9.6 to be compatible
+            # with Windows XP. newer SDKs introduce a dependency on FlsAlloc.
+            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN32" >> "$GITHUB_ENV"
             echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           fi
