@@ -200,6 +200,9 @@ jobs:
       - name: Select configuration
         id: cfg
         run: |
+          # OpenSSL doesn't really support Windows on ARM currently, so
+          # there are occasionally issues with it which may require ARM builds
+          # to use a different version from x86
           if [[ "${{matrix.arch}}" = "x64_arm" || "${{matrix.arch}}" = "x64_arm64" ]]; then
             echo "openssl=${{env.OPENSSL_ARM_VERSION}}" >> "$GITHUB_OUTPUT"
             echo "k4w=." >> "$GITHUB_OUTPUT"
@@ -209,23 +212,32 @@ jobs:
           fi
 
           if [[ "${{matrix.arch}}" = "x64_arm" ]]; then
-            # This is the last version of the Windows SDK to support targeting ARM32
+            # Cross-compiling from x86-64 to ARM32, a platform Microsoft never
+            # really supported building desktop applications for. Support for
+            # running them was dropped in Windows 11 24H2, and support for
+            # *building* them was dropped after Windows SDK 10.0.22621.0
             echo "winsdk=10.0.22621.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN32-ARM" >> "$GITHUB_ENV"
+            # No regina platform: it can't be cross-compiled.
+            echo "regina_platform=" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64_arm64" ]]; then
+            # Cross-compiling from x86-64 to ARM64
             echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
+            # No regina platform: it can't be cross-compiled.
+            echo "regina_platform=" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "arm64" ]]; then
             echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
             echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64" ]]; then
-            # An old windows SDK is required for Regina 3.9.6 to be compatible
-            # with Windows XP. newer SDKs introduce a dependency on FlsAlloc.
+            # An older windows SDK is required for compatibiliy with Windows XP.
+            # Newer SDKs introduce a dependency on FlsAlloc. I'm not sure which
+            # Windows 10 SDK makes this change, but this is the oldest one
+            # available on the GitHub runners at the moment and it works
             echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN64A" >> "$GITHUB_ENV"
             echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x86" ]]; then
-            # An old windows SDK is required for Regina 3.9.6 to be compatible
-            # with Windows XP. newer SDKs introduce a dependency on FlsAlloc.
+            # See comment above
             echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN32" >> "$GITHUB_ENV"
             echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
@@ -267,7 +279,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.toolset}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
+          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -402,6 +414,9 @@ jobs:
           :build
         
           ${{env.OPENSSL_MAKE}}
+          
+          # TODO: Clean the build directories a bit to reduce cache usage. We
+          #       don't need to keep the tests, object files, etc., around.
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+)
@@ -530,7 +545,7 @@ jobs:
       #  build of trex I think.
       #
       - name: Build Regina REXX
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64' || matrix.arch == 'arm64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && env.regina_platform != ''
         working-directory: rexx
         run: |
           set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
