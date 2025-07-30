@@ -47,8 +47,6 @@ env:
   JOM: https://download.qt.io/official_releases/jom/jom.zip
   # Download it from sourceforge distribution page
   # expected filename: https://sourceforge.net/projects/regina-rexx/files/regina-rexx/3.9.6/regina-rexx-3.9.6.tar.gz/download
-  # Note: Regina 3.9.7 currently has a compatibility issue with Windows XP (at
-  #       least when built with Visual C++ 2019) - a dependency on flsAlloc, etc.
   REGINA_VERSION: 3.9.7
   # OS/2 Developer's Toolkit v4.5 is available on David Azarewicz's 88watts.net
   # *supposedly* with permission from IBM - or so Arca Noae (which David is
