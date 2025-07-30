@@ -175,41 +175,44 @@ jobs:
     strategy:
       matrix:
         arch:
-          - id: x86
-          - id: x64
-          - id: x64_arm
-            # This is the last version of the Windows SDK to contain files for
-            # targeting ARM32
-            sdk: 10.0.22621.0
-          - id: x64_arm64
+          - x86
+          - x64
+          - x64_arm
+          - x64_arm64
         toolset:
-          - ver: 14.29
-            name: VC2019-1429
-          - ver: 14.44
-            name: VC2022-1444
+          - 14.29
+          - 14.44
         exclude: 
-          - arch.id: x64_arm64
-            toolset.ver: 14.29
-#        version:
-# windows-2019 is no longer available, and with it Visual Studio 2019.
-#          - vs: 2019
-#            image: windows-2019
-#          - vs: 2022
-#            image: windows-2022
+          # Libssh can't currently be built for ARM64 using Visual C++ 2019, and it doesn't 
+          # really make sense to any; Visual C++ 2022 supports any version opf Windows that 
+          # runs on ARM64
+          - arch: x64_arm64
+            toolset: 14.29
     runs-on: windows-2022
-    name: Build-${{matrix.toolset.name}} (${{matrix.arch.id}})
+    name: Build-${{matrix.toolset}} (${{matrix.arch}})
 
     steps:
       - uses: actions/checkout@v4
       - name: Select configuration
         id: cfg
         run: |
-          if [[ "${{matrix.arch.id}}" = "x64_arm" || "${{matrix.arch.id}}" = "x64_arm64" ]]; then
+          if [[ "${{matrix.arch}}" = "x64_arm" || "${{matrix.arch}}" = "x64_arm64" ]]; then
             echo "openssl=${{env.OPENSSL_ARM_VERSION}}" >> "$GITHUB_OUTPUT"
             echo "k4w=." >> "$GITHUB_OUTPUT"
           else
             echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
             echo "k4w=kerberos\current\Kerberos" >> "$GITHUB_OUTPUT"
+          fi
+
+          # This is the last version of the Windows SDK to support targeting ARM32
+          if [[ "${{matrix.arch}}" = "x64_arm" ]]; then
+            echo "winsdk=10.0.22621.0" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ "${{matrix.toolset}}" = "14.29" ]]; then
+            echo "toolsetvc=2019" >> "$GITHUB_OUTPUT"
+          else
+            echo "toolsetvc=2022" >> "$GITHUB_OUTPUT"
           fi
         shell: bash
       - name: Enable Developer Command Prompt
@@ -217,9 +220,9 @@ jobs:
         # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{matrix.arch.id}}
-          toolset: ${{matrix.toolset.ver}}
-          sdk: ${{matrix.arch.sdk}}
+          arch: ${{matrix.arch}}
+          toolset: ${{matrix.toolset}}
+          sdk: ${{env.winsdk}}
           #spectre: # set true to use VC libraries with sepctre mitigations
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
@@ -242,7 +245,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.version.vs}}-${{matrix.arch.id}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
+          key: vs${{matrix.version.vs}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -303,7 +306,7 @@ jobs:
           # Get KFW
           echo Get KFW...
           cd kerberos
-          if ("${{matrix.arch.id}}" -eq "x86") {
+          if ("${{matrix.arch}}" -eq "x86") {
             echo x86 platform: ${{env.KFW_x86}}
             wget ${{env.KFW_x86}} -outfile kfw.msi
           } else {
@@ -343,7 +346,7 @@ jobs:
         shell: powershell
 
       - name: Build zlib (x86/x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         working-directory: zlib/current
         run: |
           cmake .
@@ -351,7 +354,7 @@ jobs:
         shell: cmd
 
       - name: Build zlib (arm32/arm64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x64_arm' || matrix.arch.id == 'x64_arm64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
         working-directory: zlib/current
         run: |
           cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
@@ -359,7 +362,7 @@ jobs:
         shell: cmd
 
       - name: Build openssl (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x86'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -375,7 +378,7 @@ jobs:
         shell: cmd
 
       - name: Build openssl (x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -391,7 +394,7 @@ jobs:
         shell: cmd
 
       - name: Build openssl (ARM)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -402,7 +405,7 @@ jobs:
         shell: cmd
 
       - name: Build openssl (ARM-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
@@ -412,7 +415,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -431,7 +434,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -453,7 +456,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64') && (matrix.version.vs == '2015' || matrix.version.vs == '2017' || matrix.version.vs == '2019')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && matrix.toolset == '14.29'
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -474,7 +477,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP, GSSAPI)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64') && (matrix.version.vs == '2015' || matrix.version.vs == '2017' || matrix.version.vs == '2019')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && matrix.toolset == '14.29'
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -498,7 +501,7 @@ jobs:
         # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
         # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
       - name: Build libssh (arm32)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
         working-directory: libssh/current/build
         run: |
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
@@ -507,7 +510,7 @@ jobs:
 
         # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
       - name: Build libssh (arm64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
         working-directory: libssh/current/build
         run: |
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
@@ -525,7 +528,7 @@ jobs:
         shell: cmd
 
       - name: Build Regina REXX (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x86'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
         working-directory: rexx
         run: |
           set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
@@ -550,7 +553,7 @@ jobs:
         shell: cmd
 
       - name: Build Regina REXX (x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
         working-directory: rexx
         run: |
           set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
@@ -584,7 +587,7 @@ jobs:
 #                contact the software publisher.
 #  
 #      - name: Build Regina REXX (arm64)
-#        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+#        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
 #        working-directory: rexx
 #        run: |
 #          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
@@ -609,7 +612,7 @@ jobs:
 
       - name: Fetch x86 wart
         uses: actions/download-artifact@v4
-        if: matrix.arch.id != 'x86' && matrix.arch.id != 'x64'
+        if: matrix.arch != 'x86' && matrix.arch != 'x64'
         with:
           name: wart-x86
           path: ${{github.workspace}}
@@ -725,7 +728,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k95-vs${{matrix.version.vs}}-${{matrix.arch.id}}
+          name: k95-vs${{env.toolsetvc}}-${{matrix.arch}}
           path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
