@@ -214,12 +214,17 @@ jobs:
             echo "openssl_arch=VC-WIN32-ARM" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64_arm64" ]]; then
             echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "arm64" ]]; then
+            echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
+            echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64" ]]; then
             # echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN64A" >> "$GITHUB_ENV"
+            echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x86" ]]; then
             # echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN32" >> "$GITHUB_ENV"
+            echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
           fi
 
           if [[ "${{matrix.toolset}}" = "14.29" ]]; then
@@ -258,7 +263,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.toolset}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver1
+          key: vs${{matrix.toolset}}-${{matrix.arch}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver2
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -508,12 +513,24 @@ jobs:
           call mknt.bat
         shell: cmd
 
-      - name: Build Regina REXX (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x86'
+      #  TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to an
+      #        incompatible target architecture:
+      #
+      #         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
+      #        NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
+      #                This version of %1 is not compatible with the version of Windows
+      #                you're running. Check your computer's system information and then
+      #                contact the software publisher.
+      #
+      #  For ARM32 support we'll need to find a way of substituting a different
+      #  build of trex I think.
+      #
+      - name: Build Regina REXX
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64' || matrix.arch == 'arm64')
         working-directory: rexx
         run: |
           set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-          set PLATFORM=x86
+          set PLATFORM=${{env.regina_platform}}
           
           cd regina
           nmake -f makefile.win.vc
@@ -532,64 +549,6 @@ jobs:
           if not exist rexxre.dll exit /b 1
           cd ..
         shell: cmd
-
-      - name: Build Regina REXX (x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64'
-        working-directory: rexx
-        run: |
-          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-          set PLATFORM=x64
-          
-          cd regina
-          nmake -f makefile.win.vc
-          if not exist regina.dll exit /b 1
-          
-          mkdir include
-          copy rexxsaa.h include
-          mkdir lib
-          copy regina.lib lib
-          cd ..
-
-          echo Building RexxRE
-          cd rexxre
-          patch -p1 < ..\rexxre.patch
-          nmake -f Makefile.NT
-          if not exist rexxre.dll exit /b 1
-          cd ..
-        shell: cmd
-
-#      TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
-#            an incompatible target architecture:
-#  
-#         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
-#        NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
-#                This version of %1 is not compatible with the version of Windows
-#                you're running. Check your computer's system information and then
-#                contact the software publisher.
-#  
-#      - name: Build Regina REXX (arm64)
-#        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
-#        working-directory: rexx
-#        run: |
-#          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-#          set PLATFORM=arm64
-#  
-#          cd regina
-#          nmake -f makefile.win.vc
-#          if not exist regina.dll exit /b 1
-#  
-#          mkdir include
-#          copy rexxsaa.h include
-#          mkdir lib
-#          copy regina.lib lib
-#          cd ..
-#  
-#          echo Building RexxRE
-#          cd rexxre
-#          patch -p1 < ..\rexxre.patch
-#          nmake -f Makefile.NT
-#          cd ..
-#        shell: cmd
 
       - name: Fetch x86 wart
         uses: actions/download-artifact@v4
