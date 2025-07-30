@@ -187,6 +187,9 @@ jobs:
             name: VC2019-1429
           - ver: 14.44
             name: VC2022-1444
+        exclude: 
+          - arch.id: x64_arm64
+            toolset.ver: 14.29
 #        version:
 # windows-2019 is no longer available, and with it Visual Studio 2019.
 #          - vs: 2019
