@@ -235,7 +235,8 @@ jobs:
         run: |
           echo %PATH%
           dir "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC"
-          dir "C:\Program Files\Microsoft Visual Studio\2022\"
+          dir "C:\Program Files\Microsoft Visual Studio\"
+          dir "C:\Program Files (x86)\Microsoft SDKs\Windows\"
       ##########################################################################
       # Build optional dependencies (zlib, openssl, libssh)                    #
       ##########################################################################
