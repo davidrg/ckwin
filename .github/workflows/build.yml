@@ -179,13 +179,13 @@ jobs:
           - x64
           - x64_arm
           - x64_arm64
-          - arm64
+          #- arm64
         toolset:
           - 14.29
           - 14.44
         image:
           - windows-2022
-          - windows-11-arm
+          #- windows-11-arm
         exclude: 
           # Libssh can't currently be built for ARM using Visual C++ 2019, and it doesn't
           # really make sense to any; Visual C++ 2022 supports any version of Windows that
@@ -2311,8 +2311,8 @@ jobs:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
         with:
-          #name: k95-vs2022-x64_arm64
-          name: k95-vs2022-arm64
+          name: k95-vs2022-x64_arm64
+          #name: k95-vs2022-arm64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4

@@ -11,7 +11,7 @@
 #define K95_VERSION_BUILD 0
 #endif
 #define K95_VERSION_L 3000L
-#define K95_TEST "Pre-Beta"
+#define K95_TEST "Beta"
 #define K95_TEST_VER 8
 /* Remember to update the news text (newstxt)
  * in ckuus2.c with a summary of what's new! */
