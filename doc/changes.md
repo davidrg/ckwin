@@ -116,6 +116,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Synchronized Output mode
  - Crossed-out character attribute
  - VT420 text macros
+ - REXX support has been extended to ARM64 systems
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
