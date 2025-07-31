@@ -454,8 +454,8 @@ jobs:
         
           ${{env.OPENSSL_MAKE}}
           
-          # TODO: Clean the build directories a bit to reduce cache usage. We
-          #       don't need to keep the tests, object files, etc., around.
+          REM TODO: Clean the build directories a bit to reduce cache usage. We
+          REM       don't need to keep the tests, object files, etc., around.
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+)
