@@ -175,33 +175,117 @@ jobs:
     strategy:
       matrix:
         arch:
-          - id: x86
-          - id: x64
-          - id: x64_arm
-            # temporary setup Windows SDK version for 32-bit ARM to 10.0.22621.0 because
-            # latest SDK version 10.0.26100.0 doesn't contains 32-bit ARM files
-            sdk: 10.0.22621.0
-          - id: x64_arm64
-        version:
-# windows-2019 is no longer available, and with it Visual Studio 2019.
-#          - vs: 2019
-#            image: windows-2019
-          - vs: 2022
+          - x86
+          - x64
+          - x64_arm
+          - x64_arm64
+          #- arm64
+        toolset:
+          - 14.29
+          - 14.44
+        image:
+          - windows-2022
+          #- windows-11-arm
+        exclude: 
+          # Libssh can't currently be built for ARM using Visual C++ 2019, and it doesn't
+          # really make sense to any; Visual C++ 2022 supports any version of Windows that
+          # runs on ARM
+          - arch: x64_arm64
+            toolset: 14.29
             image: windows-2022
-    runs-on: ${{matrix.version.image}}
-    name: Build-VS${{matrix.version.vs}} (${{matrix.arch.id}})
+          - arch: x64_arm
+            toolset: 14.29
+            image: windows-2022
+          - arch: arm64
+            toolset: 14.29
+            image: windows-11-arm
+          # ARM64 can't build on windows-2022   
+          - arch: arm64
+            toolset: 14.29
+            image: windows-2022
+          - arch: arm64
+            toolset: 14.44
+            image: windows-2022
+          # {x86, x86, x64_arm, x64_arm64} don't run on windows-11-arm regardless of toolset
+          - arch: x64_arm64
+            toolset: 14.29
+            image: windows-11-arm		
+          - arch: x64_arm
+            toolset: 14.29
+            image: windows-11-arm
+          - arch: x64
+            toolset: 14.29
+            image: windows-11-arm
+          - arch: x86
+            toolset: 14.29
+            image: windows-11-arm
+          - arch: x64_arm64
+            toolset: 14.44
+            image: windows-11-arm	
+          - arch: x64_arm
+            toolset: 14.44
+            image: windows-11-arm
+          - arch: x64
+            toolset: 14.44
+            image: windows-11-arm					
+          - arch: x86
+            toolset: 14.44
+            image: windows-11-arm					
+    runs-on: ${{matrix.image}}
+    name: Build-${{matrix.toolset}} (${{matrix.arch}})
 
     steps:
       - uses: actions/checkout@v4
       - name: Select configuration
         id: cfg
         run: |
-          if [[ "${{matrix.arch.id}}" = "x64_arm" || "${{matrix.arch.id}}" = "x64_arm64" ]]; then
+          # OpenSSL doesn't really support Windows on ARM currently, so
+          # there are occasionally issues with it which may require ARM builds
+          # to use a different version from x86
+          if [[ "${{matrix.arch}}" = "x64_arm" || "${{matrix.arch}}" = "x64_arm64" || "${{matrix.arch}}" = "arm64" ]]; then
             echo "openssl=${{env.OPENSSL_ARM_VERSION}}" >> "$GITHUB_OUTPUT"
             echo "k4w=." >> "$GITHUB_OUTPUT"
           else
             echo "openssl=${{env.OPENSSL_VERSION}}" >> "$GITHUB_OUTPUT"
             echo "k4w=kerberos\current\Kerberos" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ "${{matrix.arch}}" = "x64_arm" ]]; then
+            # Cross-compiling from x86-64 to ARM32, a platform Microsoft never
+            # really supported building desktop applications for. Support for
+            # running them was dropped in Windows 11 24H2, and support for
+            # *building* them was dropped after Windows SDK 10.0.22621.0
+            echo "winsdk=10.0.22621.0" >> "$GITHUB_ENV"
+            echo "openssl_arch=VC-WIN32-ARM" >> "$GITHUB_ENV"
+            # No regina platform: it can't be cross-compiled.
+            echo "regina_platform=" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "x64_arm64" ]]; then
+            # Cross-compiling from x86-64 to ARM64
+            echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
+            # No regina platform: it can't be cross-compiled.
+            echo "regina_platform=" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "arm64" ]]; then
+            echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
+            echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "x64" ]]; then
+            # An older windows SDK is required for compatibiliy with Windows XP.
+            # Newer SDKs introduce a dependency on FlsAlloc. I'm not sure which
+            # Windows 10 SDK makes this change, but this is the oldest one
+            # available on the GitHub runners at the moment and it works
+            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            echo "openssl_arch=VC-WIN64A" >> "$GITHUB_ENV"
+            echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
+          elif [[ "${{matrix.arch}}" = "x86" ]]; then
+            # See comment above
+            echo "winsdk=10.0.17763.0" >> "$GITHUB_ENV"
+            echo "openssl_arch=VC-WIN32" >> "$GITHUB_ENV"
+            echo "regina_platform=${{matrix.arch}}" >> "$GITHUB_ENV"
+          fi
+
+          if [[ "${{matrix.toolset}}" = "14.29" ]]; then
+            echo "toolsetvc=2019" >> "$GITHUB_ENV"
+          else
+            echo "toolsetvc=2022" >> "$GITHUB_ENV"
           fi
         shell: bash
       - name: Enable Developer Command Prompt
@@ -209,9 +293,9 @@ jobs:
         # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{matrix.arch.id}}
-          vsversion: ${{matrix.version.vs}}
-          sdk: ${{matrix.arch.sdk}}
+          arch: ${{matrix.arch}}
+          toolset: ${{matrix.toolset}}
+          sdk: ${{env.winsdk}}
           #spectre: # set true to use VC libraries with sepctre mitigations
       - name: Load Build Tools
         uses: "./.github/actions/load-tools"
@@ -234,7 +318,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.version.vs}}-${{matrix.arch.id}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
+          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -295,7 +379,7 @@ jobs:
           # Get KFW
           echo Get KFW...
           cd kerberos
-          if ("${{matrix.arch.id}}" -eq "x86") {
+          if ("${{matrix.arch}}" -eq "x86") {
             echo x86 platform: ${{env.KFW_x86}}
             wget ${{env.KFW_x86}} -outfile kfw.msi
           } else {
@@ -335,7 +419,7 @@ jobs:
         shell: powershell
 
       - name: Build zlib (x86/x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         working-directory: zlib/current
         run: |
           cmake .
@@ -343,68 +427,39 @@ jobs:
         shell: cmd
 
       - name: Build zlib (arm32/arm64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x64_arm' || matrix.arch.id == 'x64_arm64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64' || matrix.arch == 'arm64')
         working-directory: zlib/current
         run: |
           cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
           nmake
         shell: cmd
 
-      - name: Build openssl (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x86'
+      - name: Build openssl
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
         working-directory: openssl/current
         run: |
           set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
           echo %PATH%
-          perl Configure VC-WIN32 zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
+          perl Configure ${{env.openssl_arch}} zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
         
+          if "${{env.openssl_arch}}" == "VC-WIN32-ARM" goto :build
+          if "${{env.openssl_arch}}" == "VC-WIN64-ARM" goto :build
+          
           REM The linker by default marks the subsystem version too high for XP
           REM and there isn't a way to fix that from the configure script, so
           REM do it the hard way.
           sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
+          
+          :build
         
           ${{env.OPENSSL_MAKE}}
-        shell: cmd
-
-      - name: Build openssl (x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64'
-        working-directory: openssl/current
-        run: |
-          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-          echo %PATH%
-          perl Configure VC-WIN64A zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}
-        
-          REM The linker by default marks the subsystem version too high for XP
-          REM and there isn't a way to fix that from the configure script, so
-          REM do it the hard way.
-          sed -i "s/subsystem:console/subsystem:console,5.01/g" makefile
-        
-          ${{env.OPENSSL_MAKE}}
-        shell: cmd
-
-      - name: Build openssl (ARM)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
-        working-directory: openssl/current
-        run: |
-          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-          echo %PATH%
-          perl Configure VC-WIN32-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}} 
-        
-          ${{env.OPENSSL_MAKE}}
-        shell: cmd
-
-      - name: Build openssl (ARM-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
-        working-directory: openssl/current
-        run: |
-          set PATH=%PATH%;${{github.workspace}}\tools\jom;${{github.workspace}}\tools\nasm
-          echo %PATH%
-          perl Configure VC-WIN64-ARM zlib-dynamic --with-zlib-include=${{github.workspace}}\zlib\current ${{env.OPENSSL_EXTRA_BUILD_FLAGS}}    
-          ${{env.OPENSSL_MAKE}}
+          
+          REM TODO: Clean the build directories a bit to reduce cache usage. We
+          REM       don't need to keep the tests, object files, etc., around.
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -423,7 +478,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, Vista+, GSSAPI)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -445,7 +500,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64') && (matrix.version.vs == '2015' || matrix.version.vs == '2017' || matrix.version.vs == '2019')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && matrix.toolset == '14.29'
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -466,7 +521,7 @@ jobs:
         shell: cmd
 
       - name: Build libssh (x86/x86-64, XP, GSSAPI)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch.id == 'x86' || matrix.arch.id == 'x64') && (matrix.version.vs == '2015' || matrix.version.vs == '2017' || matrix.version.vs == '2019')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64') && matrix.toolset == '14.29'
         env:
           ROOT: ${{github.workspace}}
         working-directory: libssh
@@ -487,19 +542,17 @@ jobs:
           call build.bat /M out /N gx /G /C /R /F /X current
         shell: cmd
 
-        # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
         # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
       - name: Build libssh (arm32)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
         working-directory: libssh/current/build
         run: |
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5" -DCMAKE_C_STANDARD_LIBRARIES="kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib"
           nmake
         shell: powershell
 
-        # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
       - name: Build libssh (arm64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
         working-directory: libssh/current/build
         run: |
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
@@ -516,14 +569,37 @@ jobs:
           call mknt.bat
         shell: cmd
 
-      - name: Build Regina REXX (x86)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x86'
+      #  TODO: Regina REXX doesn't support being cross-compiled to an
+      #        incompatible target architecture:
+      #
+      #         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
+      #        NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
+      #                This version of %1 is not compatible with the version of Windows
+      #                you're running. Check your computer's system information and then
+      #                contact the software publisher.
+      #
+      #  For ARM32 support we'll need to find a way of substituting a different
+      #  build of trex I think.
+      #
+      - name: Build Regina REXX
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && env.regina_platform != ''
         working-directory: rexx
         run: |
           set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-          set PLATFORM=x86
+          set PLATFORM=${{env.regina_platform}}
           
           cd regina
+
+          REM for ARM64 builds: in 3.9.7 at least, the way the makefile is
+          REM setup results in it looking for mt_winarm64.{c,h} which don't
+          REM exist in the distribution. I assume WARCH/BWARCH should just be
+          REM set to win64, but this is easier than patching the makefile:
+          copy mt_win64.c mt_winarm64.c
+          copy mt_win64.h mt_winarm64.h
+          cd gci
+          copy gci_convert.win64.vc gci_convert.winarm64.vc
+          cd ..
+          
           nmake -f makefile.win.vc
           if not exist regina.dll exit /b 1
           
@@ -540,68 +616,10 @@ jobs:
           if not exist rexxre.dll exit /b 1
           cd ..
         shell: cmd
-
-      - name: Build Regina REXX (x86-64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64'
-        working-directory: rexx
-        run: |
-          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-          set PLATFORM=x64
-          
-          cd regina
-          nmake -f makefile.win.vc
-          if not exist regina.dll exit /b 1
-          
-          mkdir include
-          copy rexxsaa.h include
-          mkdir lib
-          copy regina.lib lib
-          cd ..
-
-          echo Building RexxRE
-          cd rexxre
-          patch -p1 < ..\rexxre.patch
-          nmake -f Makefile.NT
-          if not exist rexxre.dll exit /b 1
-          cd ..
-        shell: cmd
-
-#      TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to
-#            an incompatible target architecture:
-#  
-#         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
-#        NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
-#                This version of %1 is not compatible with the version of Windows
-#                you're running. Check your computer's system information and then
-#                contact the software publisher.
-#  
-#      - name: Build Regina REXX (arm64)
-#        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch.id == 'x64_arm64'
-#        working-directory: rexx
-#        run: |
-#          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-#          set PLATFORM=arm64
-#  
-#          cd regina
-#          nmake -f makefile.win.vc
-#          if not exist regina.dll exit /b 1
-#  
-#          mkdir include
-#          copy rexxsaa.h include
-#          mkdir lib
-#          copy regina.lib lib
-#          cd ..
-#  
-#          echo Building RexxRE
-#          cd rexxre
-#          patch -p1 < ..\rexxre.patch
-#          nmake -f Makefile.NT
-#          cd ..
-#        shell: cmd
 
       - name: Fetch x86 wart
         uses: actions/download-artifact@v4
-        if: matrix.arch.id != 'x86' && matrix.arch.id != 'x64'
+        if: matrix.arch != 'x86' && matrix.arch != 'x64' && matrix.arch != 'arm64'
         with:
           name: wart-x86
           path: ${{github.workspace}}
@@ -717,7 +735,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: k95-vs${{matrix.version.vs}}-${{matrix.arch.id}}
+          name: k95-vs${{env.toolsetvc}}-${{matrix.arch}}
           path: ${{github.workspace}}/ckwin
           if-no-files-found: error
           retention-days: 7
@@ -2184,71 +2202,71 @@ jobs:
   # The results are all k95-${arch}.zip
   #
 
-#  Update-x86-Artifact:
-#    runs-on: windows-latest
-#    needs:
-#      - Build-Manual-Dist
-#      - Build-Ctlseqs-Doc
-#      - Build-VisualCxx
-#    steps:
-#      - name: Fetch K95 x86
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: k95-vs2019-x86
-#          path: ${{ github.workspace }}\k95
-#      - name: Fetch Manual
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: k95-manual-dist
-#          path: ${{ github.workspace }}\k95\docs\manual
-#      - name: Fetch ctlseqs doc
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: k95-ctlseqs-doc
-#          path: ${{ github.workspace }}\ctlseqs
-#      - name: Move ctlseqs doc
-#        run: |
-#          del ${{ github.workspace }}\ctlseqs\todo.html
-#          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
-#      - name: Upload artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: k95-x86
-#          path: ${{ github.workspace }}\k95
-#          retention-days: 1
+  Update-x86-Artifact:
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - name: Fetch K95 x86
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x86
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86
+          path: ${{ github.workspace }}\k95
+          retention-days: 1
 
-#  Update-x86-64-Artifact:
-#    runs-on: windows-latest
-#    needs:
-#      - Build-Manual-Dist
-#      - Build-Ctlseqs-Doc
-#      - Build-VisualCxx
-#    steps:
-#      - name: Fetch K95 x86-64
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: k95-vs2019-x64
-#          path: ${{ github.workspace }}\k95
-#      - name: Fetch Manual
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: k95-manual-dist
-#          path: ${{ github.workspace }}\k95\docs\manual
-#      - name: Fetch ctlseqs doc
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: k95-ctlseqs-doc
-#          path: ${{ github.workspace }}\ctlseqs
-#      - name: Move ctlseqs doc
-#        run: |
-#          del ${{ github.workspace }}\ctlseqs\todo.html
-#          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
-#      - name: Upload artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: k95-x86-64
-#          path: ${{ github.workspace }}\k95
-#          retention-days: 7
+  Update-x86-64-Artifact:
+    runs-on: windows-latest
+    needs:
+      - Build-Manual-Dist
+      - Build-Ctlseqs-Doc
+      - Build-VisualCxx
+    steps:
+      - name: Fetch K95 x86-64
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x64
+          path: ${{ github.workspace }}\k95
+      - name: Fetch Manual
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-manual-dist
+          path: ${{ github.workspace }}\k95\docs\manual
+      - name: Fetch ctlseqs doc
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-ctlseqs-doc
+          path: ${{ github.workspace }}\ctlseqs
+      - name: Move ctlseqs doc
+        run: |
+          del ${{ github.workspace }}\ctlseqs\todo.html
+          move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k95-x86-64
+          path: ${{ github.workspace }}\k95
+          retention-days: 7
 
   Update-arm32-Artifact:
     runs-on: windows-latest
@@ -2294,6 +2312,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: k95-vs2022-x64_arm64
+          #name: k95-vs2022-arm64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
