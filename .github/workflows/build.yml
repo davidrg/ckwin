@@ -196,6 +196,13 @@ jobs:
           - arch: x64_arm
             toolset: 14.29
             image: windows-2022
+          # ARM64 can't build on windows-2022   
+          - arch: arm64
+            toolset: 14.29
+            image: windows-2022
+          - arch: arm64
+            toolset: 14.44
+            image: windows-2022
           # {x86, x86, x64_arm, x64_arm64} don't run on windows-11-arm regardless of toolset
           - arch: x64_arm64
             toolset: 14.29
