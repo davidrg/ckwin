@@ -596,6 +596,9 @@ jobs:
           REM set to win64, but this is easier than patching the makefile:
           copy mt_win64.c mt_winarm64.c
           copy mt_win64.h mt_winarm64.h
+          cd gci
+          copy gci_convert.win64.vc gci_convert.winarm64.vc
+          cd ..
           
           nmake -f makefile.win.vc
           if not exist regina.dll exit /b 1
