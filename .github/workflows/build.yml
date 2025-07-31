@@ -589,6 +589,14 @@ jobs:
           set PLATFORM=${{env.regina_platform}}
           
           cd regina
+
+          REM for ARM64 builds: in 3.9.7 at least, the way the makefile is
+          REM setup results in it looking for mt_winarm64.{c,h} which don't
+          REM exist in the distribution. I assume WARCH/BWARCH should just be
+          REM set to win64, but this is easier than patching the makefile:
+          copy mt_win64.c mt_winarm64.c
+          copy mt_win64.h mt_winarm64.h
+          
           nmake -f makefile.win.vc
           if not exist regina.dll exit /b 1
           
