@@ -2311,7 +2311,8 @@ jobs:
       - name: Fetch K95 arm32
         uses: actions/download-artifact@v4
         with:
-          name: k95-vs2022-x64_arm64
+          #name: k95-vs2022-x64_arm64
+          name: k95-vs2022-arm64
           path: ${{ github.workspace }}\k95
       - name: Fetch Manual
         uses: actions/download-artifact@v4
