@@ -179,18 +179,49 @@ jobs:
           - x64
           - x64_arm
           - x64_arm64
+          - arm64
         toolset:
           - 14.29
           - 14.44
+        image:
+          - windows-2022
+          - windows-11-arm
         exclude: 
           # Libssh can't currently be built for ARM using Visual C++ 2019, and it doesn't
           # really make sense to any; Visual C++ 2022 supports any version of Windows that
           # runs on ARM
           - arch: x64_arm64
             toolset: 14.29
+            image: windows-2022
           - arch: x64_arm
             toolset: 14.29
-    runs-on: windows-2022
+            image: windows-2022
+          # {x86, x86, x64_arm, x64_arm64} don't run on windows-11-arm regardless of toolset
+          - arch: x64_arm64
+            toolset: 14.29
+            image: windows-11-arm		
+          - arch: x64_arm
+            toolset: 14.29
+            image: windows-11-arm
+          - arch: x64
+            toolset: 14.29
+            image: windows-11-arm
+          - arch: x86
+            toolset: 14.29
+            image: windows-11-arm
+          - arch: x64_arm64
+            toolset: 14.44
+            image: windows-11-arm	
+          - arch: x64_arm
+            toolset: 14.44
+            image: windows-11-arm
+          - arch: x64
+            toolset: 14.44
+            image: windows-11-arm					
+          - arch: x86
+            toolset: 14.44
+            image: windows-11-arm					
+    runs-on: ${{matrix.image}}
     name: Build-${{matrix.toolset}} (${{matrix.arch}})
 
     steps:
@@ -201,7 +232,7 @@ jobs:
           # OpenSSL doesn't really support Windows on ARM currently, so
           # there are occasionally issues with it which may require ARM builds
           # to use a different version from x86
-          if [[ "${{matrix.arch}}" = "x64_arm" || "${{matrix.arch}}" = "x64_arm64" ]]; then
+          if [[ "${{matrix.arch}}" = "x64_arm" || "${{matrix.arch}}" = "x64_arm64" || "${{matrix.arch}}" = "arm64" ]]; then
             echo "openssl=${{env.OPENSSL_ARM_VERSION}}" >> "$GITHUB_OUTPUT"
             echo "k4w=." >> "$GITHUB_OUTPUT"
           else
@@ -386,7 +417,7 @@ jobs:
         shell: cmd
 
       - name: Build zlib (arm32/arm64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64')
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm' || matrix.arch == 'x64_arm64' || matrix.arch == 'arm64')
         working-directory: zlib/current
         run: |
           cmake . -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
@@ -501,7 +532,6 @@ jobs:
           call build.bat /M out /N gx /G /C /R /F /X current
         shell: cmd
 
-        # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
         # On ARM32 we've got to specify the list of standard libraries ourselves as for some unknown reason advapi32.lib gets left off by default.
       - name: Build libssh (arm32)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm'
@@ -511,7 +541,6 @@ jobs:
           nmake
         shell: powershell
 
-        # zlib is currently disabled for ARM builds as it doesn't currently build for ARM
       - name: Build libssh (arm64)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
         working-directory: libssh/current/build
@@ -530,7 +559,7 @@ jobs:
           call mknt.bat
         shell: cmd
 
-      #  TODO: Regina REXX 3.9.6 doesn't support being cross-compiled to an
+      #  TODO: Regina REXX doesn't support being cross-compiled to an
       #        incompatible target architecture:
       #
       #         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
@@ -569,7 +598,7 @@ jobs:
 
       - name: Fetch x86 wart
         uses: actions/download-artifact@v4
-        if: matrix.arch != 'x86' && matrix.arch != 'x64'
+        if: matrix.arch != 'x86' && matrix.arch != 'x64' && matrix.arch != 'arm64'
         with:
           name: wart-x86
           path: ${{github.workspace}}
