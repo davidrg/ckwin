@@ -116,7 +116,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Synchronized Output mode
  - Crossed-out character attribute
  - VT420 text macros
- - REXX support has been extended to ARM32 and ARM64 systems
+ - REXX support has been extended to all Windows systems except for: NT 3.50 or
+   older, and 64bit Windows systems with an Alpha or Itanium CPU. Newly
+   supported includes: Windows 95/98/ME, Windows NT 3.51/4.0/2000 on 
+   x86/Alpha/MIPS/PowerPC, and Windows 8/10/11 on 32bit and 64bit ARM.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))

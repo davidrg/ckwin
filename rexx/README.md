@@ -19,6 +19,12 @@ mkdir lib
 copy regina.lib lib\
 ```
 
+Starting with Regina REXX 3.9.7, building with older compilers such as Visual
+C++ 6.0 and 4.0 is possible allowing it to run on Windows NT 3.51 or newer
+(including RISC platforms) as well as Windows 9x. When building with these older
+compilers, you must append `HAVE_MT=no` to the nmake line, for example: 
+`nmake -f makefile.win.vc HAVE_MT=no`
+
 Building for 32bit ARM
 ----------------------
 Regina REXX doesn't support ARM32 (just like Microsoft!), but Kermit 95 does.
