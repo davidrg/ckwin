@@ -661,7 +661,7 @@ jobs:
         shell: powershell
 
       - name: Build libssh (arm64)
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && matrix.arch == 'x64_arm64'
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x64_arm64' || matrix.arch == 'arm64')
         working-directory: libssh/current/build
         run: |
           cmake .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{github.workspace}}\openssl\current -DZLIB_ROOT:PATH=${{github.workspace}}\zlib\current -DWITH_DSA=ON -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
