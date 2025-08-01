@@ -140,13 +140,21 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Cache Wart
+        uses: "./.github/actions/cache"
+        id: cache-wart
+        with:
+          path: |
+            ${{github.workspace}}\ckwart.exe
+          key: wart-${{env.C_KERMIT_VERSION}}
+          nocache: ${{vars.NOCACHE}}
       - name: Enable Developer Command Prompt
-        # You may pin to the exact commit or the version.
-        # uses: ilammy/msvc-dev-cmd@d8610e2b41c6d0f0c3b4c46dad8df0fd826c68e1
+        if: steps.cache-wart.outputs.cache-hit != 'true'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
       - name: Build ckwart
+        if: steps.cache-wart.outputs.cache-hit != 'true'
         env:
           ROOT: ${{github.workspace}}
         working-directory: kermit/k95
@@ -164,6 +172,54 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # Build an x86 copy of trexx - this is required for cross-compiling Regina
+  # to an incompatible target architecture such as arm32
+  Build-TREXX:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache TREXX
+        uses: "./.github/actions/cache"
+        id: cache-trexx
+        with:
+          path: |
+            ${{github.workspace}}\trexx
+          key: regina-${{env.REGINA_VERSION}}
+          nocache: ${{vars.NOCACHE}}
+      - name: Enable Developer Command Prompt
+        if: steps.cache-trexx.outputs.cache-hit != 'true'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+      - name: Build TREXX
+        if: steps.cache-trexx.outputs.cache-hit != 'true'
+        env:
+          ROOT: ${{github.workspace}}
+          REGINA_SRCDIR: ${{github.workspace}}\trexx\regina
+          PLATFORM: x86
+        working-directory: ${{github.workspace}}
+        shell: powershell
+        run: |
+          mkdir trexx
+          cd trexx
+          Invoke-WebRequest -UserAgent "Wget" -OutFile regina.tar.gz -Uri https://sourceforge.net/projects/regina-rexx/files/regina-rexx/${{env.REGINA_VERSION}}/regina-rexx-${{env.REGINA_VERSION}}.tar.gz/download
+          7z x regina.tar.gz
+          7z x regina.tar
+          del regina.tar
+          del regina.tar.gz
+          ren regina-rexx-${{env.REGINA_VERSION}} regina
+          dir regina
+          cd regina
+          
+          nmake -f makefile.win.vc trexx.exe
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trexx-x86
+          path: ${{github.workspace}}/trexx/regina/trexx.exe
+          if-no-files-found: error
+          retention-days: 1
+
   ##############################################################################
   # Build with Visual C++ (2019/2022)                                          #
   ##############################################################################
@@ -171,7 +227,7 @@ jobs:
   # capable of still targeting Windows XP (2017). All support x86, x86-64, ARM32
   # and ARM64.
   Build-VisualCxx:
-    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart]
+    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart, Build-TREXX]
     strategy:
       matrix:
         arch:
@@ -257,8 +313,7 @@ jobs:
             # *building* them was dropped after Windows SDK 10.0.22621.0
             echo "winsdk=10.0.22621.0" >> "$GITHUB_ENV"
             echo "openssl_arch=VC-WIN32-ARM" >> "$GITHUB_ENV"
-            # No regina platform: it can't be cross-compiled.
-            echo "regina_platform=" >> "$GITHUB_ENV"
+            echo "regina_platform=arm32" >> "$GITHUB_ENV"
           elif [[ "${{matrix.arch}}" = "x64_arm64" ]]; then
             # Cross-compiling from x86-64 to ARM64
             echo "openssl_arch=VC-WIN64-ARM" >> "$GITHUB_ENV"
@@ -318,7 +373,7 @@ jobs:
             ${{github.workspace}}\libdes\Debug
             ${{github.workspace}}\kerberos\current
             ${{github.workspace}}\rexx
-          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver3
+          key: vs${{matrix.toolset}}-${{matrix.arch}}-sdk${{env.winsdk}}+zlib-${{env.ZLIB_VERSION}}+openssl-${{steps.cfg.outputs.openssl}}+${{env.OPENSSL_MAKE}}+libssh-${{env.LIBSSH_VERSION}}+dynamic+regina-${{env.REGINA_VERSION}}+rexxre+ver4
           nocache: ${{vars.NOCACHE}}
       - name: Get libssh url group
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true'
@@ -417,6 +472,60 @@ jobs:
           # Install perl modules required by OpenSSL build
           cpan -i Text::Template
         shell: powershell
+
+
+      - name: Fetch x86 trexx
+        uses: actions/download-artifact@v4
+        if: matrix.arch != 'x86' && matrix.arch != 'x64' && matrix.arch != 'arm64'
+        with:
+          name: trexx-x86
+          path: ${{github.workspace}}
+
+      - name: Build Regina REXX
+        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && env.regina_platform != ''
+        working-directory: rexx
+        run: |
+          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
+          set PLATFORM=${{env.regina_platform}}
+          
+          cd regina
+
+          REM for ARM64 builds: in 3.9.7 at least, the way the makefile is
+          REM setup results in it looking for mt_winarm64.{c,h} which don't
+          REM exist in the distribution. I assume WARCH/BWARCH should just be
+          REM set to win64, but this is easier than patching the makefile:
+          copy mt_win64.c mt_winarm64.c
+          copy mt_win64.h mt_winarm64.h
+          cd gci
+          copy gci_convert.win64.vc gci_convert.winarm64.vc
+          cd ..
+          
+          REM The makefile needs patching for ARM32 to add an ARM32 platform and
+          REM to not build trexx (as we can't run an ARM32 trexx on anything in
+          REM GitHub). We also need to fetch an x86 build of trexx we prepared
+          REM earlier.
+          if "%PLATFORM%" NEQ "arm32" goto :not_arm32 
+          patch < ..\arm32.patch
+          copy ${{github.workspace}}\trexx.exe trexx.exe
+          type makefile.win.vc
+          :not_arm32
+          
+          nmake -f makefile.win.vc
+          if not exist regina.dll exit /b 1
+          
+          mkdir include
+          copy rexxsaa.h include
+          mkdir lib
+          copy regina.lib lib
+          cd ..
+
+          echo Building RexxRE
+          cd rexxre
+          patch -p1 < ..\rexxre.patch
+          nmake -f Makefile.NT
+          if not exist rexxre.dll exit /b 1
+          cd ..
+        shell: cmd
 
       - name: Build zlib (x86/x86-64)
         if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && (matrix.arch == 'x86' || matrix.arch == 'x64')
@@ -567,54 +676,6 @@ jobs:
           set MAKE=jom
           
           call mknt.bat
-        shell: cmd
-
-      #  TODO: Regina REXX doesn't support being cross-compiled to an
-      #        incompatible target architecture:
-      #
-      #         .\trexx D:\a\ckwin\ckwin\rexx\regina\common\fixrc.rexx D:\a\ckwin\ckwin\rexx\regina\rexxwinexe.rc .\rexxexe.rc 3.9.6 arm64 regina "29 Apr 2024"
-      #        NMAKE : fatal error U1045: spawn failed for '.\trexx.EXE' : 0x800700d8
-      #                This version of %1 is not compatible with the version of Windows
-      #                you're running. Check your computer's system information and then
-      #                contact the software publisher.
-      #
-      #  For ARM32 support we'll need to find a way of substituting a different
-      #  build of trex I think.
-      #
-      - name: Build Regina REXX
-        if: steps.cache-optional-dependencies.outputs.cache-hit != 'true' && env.regina_platform != ''
-        working-directory: rexx
-        run: |
-          set REGINA_SRCDIR=${{github.workspace}}\rexx\regina
-          set PLATFORM=${{env.regina_platform}}
-          
-          cd regina
-
-          REM for ARM64 builds: in 3.9.7 at least, the way the makefile is
-          REM setup results in it looking for mt_winarm64.{c,h} which don't
-          REM exist in the distribution. I assume WARCH/BWARCH should just be
-          REM set to win64, but this is easier than patching the makefile:
-          copy mt_win64.c mt_winarm64.c
-          copy mt_win64.h mt_winarm64.h
-          cd gci
-          copy gci_convert.win64.vc gci_convert.winarm64.vc
-          cd ..
-          
-          nmake -f makefile.win.vc
-          if not exist regina.dll exit /b 1
-          
-          mkdir include
-          copy rexxsaa.h include
-          mkdir lib
-          copy regina.lib lib
-          cd ..
-
-          echo Building RexxRE
-          cd rexxre
-          patch -p1 < ..\rexxre.patch
-          nmake -f Makefile.NT
-          if not exist rexxre.dll exit /b 1
-          cd ..
         shell: cmd
 
       - name: Fetch x86 wart

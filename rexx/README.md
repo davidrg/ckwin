@@ -19,6 +19,21 @@ mkdir lib
 copy regina.lib lib\
 ```
 
+Building for 32bit ARM
+----------------------
+Regina REXX doesn't support ARM32 (just like Microsoft!), but Kermit 95 does.
+The process for building it is a bit annoying:
+
+1. Build Regina from source for x86 (or arm64 if that's the platform you're on)
+   using the instructions above
+2. Grab a copy of `trexx.exe` that is produced during the build process and put
+   it somewhere safe
+3. Do a clean: `nmake -f makefile.win.vc clean`
+4. Put `trexx.exe` back where you found it
+5. Patch the makefile: `patch < ..\arm32.patch` - this will add an arm32 target,
+   and disable building of `trexx.exe`
+6. Switch to an ARM32 cross-compiler and build Regina as above setting `PLATFORM=arm32`
+
 RexxRE
 -------
 RexxRE is a handy regular expressions library for REXX available from

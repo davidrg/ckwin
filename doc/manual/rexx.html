@@ -135,16 +135,16 @@ statement assigns the value of REXX variable RC to the REXX variable parity.
 </p>
 <ul>
     <li>The REXX interface is only available on IBM OS/2, and Windows XP or
-        newer on an x86, x86-64 or ARM64 processor.
+        newer on a 32bit or 64bit x86 or ARM processor.
     </li>
     <li>On Windows, only the Regina REXX implementation is supported.
-        Object REXX uses a different interface making it difficult to support
+        Object REXX uses a different interface, making it difficult to support
         both. On IBM OS/2, the system REXX interpreter is used.</li>
     <li>The console I/O functions in regutil.dll (such as RxMessageBox,
-        SysGetKey, etc) are not supported in K95G at this time.</li>
+        SysGetKey, etc.) are not supported in K95G at this time.</li>
     <li>The charin()/linein()/charout()/lineout() built-in functions do not
         work in K95G at this time.</li>
-    <li>REXX scripts containing Kermit 95 commands can not be run with a
+    <li>REXX scripts containing Kermit 95 commands cannot be run with a
         normal REXX interpreter - they must be run from within Kermit 95.
     </li>
 </ul>
