@@ -5,9 +5,9 @@ if exist dist-os2\NUL rmdir /S /Q dist-os2
 
 @echo Create directories...
 if not exist dist-os2\NUL mkdir dist-os2
-if not exist dist-os2\docs\NUL mkdir dist-os2\docs
-if not exist dist-os2\docs\manual\NUL mkdir dist-os2\docs\manual
-if not exist dist-os2\download\NUL mkdir dist-os2\download
+if not exist dist-os2\DOCS\NUL mkdir dist-os2\DOCS
+if not exist dist-os2\DOCS\manual\NUL mkdir dist-os2\DOCS\manual
+if not exist dist-os2\DOWNLOAD\NUL mkdir dist-os2\DOWNLOAD
 REM TODO: Kermit 95 2.1.2 had an EAS directory - what is it for? Is it still
 REM       needed?
 if not exist dist-os2\EAS\NUL mkdir dist-os2\EAS
@@ -39,7 +39,7 @@ if exist ..\p95\p2.dll copy ..\p95\p2.dll dist-os2\
 :nop
 
 @echo Copy manual...
-copy ..\..\doc\manual\ckos2.htm dist-os2\docs\manual\
+copy ..\..\DOCS\manual\ckos2.htm dist-os2\DOCS\manual\
 if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt
 
 @echo Copy resources...
@@ -78,8 +78,8 @@ REM   ftp://kermit.columbia.edu/pub/kermit/archives/k95keymaps.zip
 REM Now archived at:
 REM   https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu-2/pub/kermit/archives/k95keymaps.zip
 
-for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\keymaps\
-copy keymaps-readme.txt dist\keymaps\readme.txt
+for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\KEYMAPS\
+copy keymaps-readme.txt dist\KEYMAPS\readme.txt
 
 REM Ideally we'd generate default.ksc here, but we can't run OS/2 binaries
 REM on Windows.
@@ -109,8 +109,8 @@ REM SCRIPTS directory
 set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc
 set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc
 set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% npage.ksc recover.ksc review.ksc rgrep.ksc host.cfg
-for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\scripts\
-copy scripts-readme.txt dist\scripts\readme.txt
+for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\SCRIPTS\
+copy scripts-readme.txt dist\SCRIPTS\readme.txt
 
 REM TMP directory
 REM TODO: TMP\readme.txt

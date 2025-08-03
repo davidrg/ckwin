@@ -167,14 +167,18 @@ pushd %docs_root%
 popd
 
 REM the control-sequences documentation isn't currently a part of the manual,
-REM but for
+REM but for the web we'll put them there
+if "%WEB_MODE%" == "true" goto :web_mode
+del %docs_root%\todo.html
+goto :end_web_mode
+
+:web_mode
 copy %docs_root%\ctlseqs.html %OUT_DIR%
 copy %docs_root%\outline.html %OUT_DIR%
 copy %docs_root%\term-ctlseqs.html %OUT_DIR%
 copy %docs_root%\tt-ctlseqs.html %OUT_DIR%
 copy %docs_root%\todo.html %OUT_DIR%
 copy %docs_root%\keyb.html %OUT_DIR%
-if "%WEB_MODE%" == "false" del %docs_root%\todo.html
 
 :end_web_mode
 echo manual done.

@@ -1930,6 +1930,7 @@ jobs:
             ${{ github.workspace }}\doc\term-ctlseqs.html
             ${{ github.workspace }}\doc\tt-ctlseqs.html
             ${{ github.workspace }}\doc\todo.html
+            ${{ github.workspace }}\doc\keyb.html
           retention-days: 1
 
   # This version is for publishing on the internet elsewhere. HTML files end

@@ -911,6 +911,9 @@ goto :check_zinc16
 REM Compiler detection finished. If Zinc is supported for this compiler,
 REM go set it up.
 echo Compiler: %CK_COMPILER_NAME%
+
+if "%CKB_TARGET_ARCH" neq "x86" CKB_9X_COMPATIBLE=no
+
 if "%ZINCBUILD%" == "" echo Can not setup Zinc for this compiler
 if "%ZINCBUILD%" NEQ "" goto :check_zinc
 

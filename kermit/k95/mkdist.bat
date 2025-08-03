@@ -34,7 +34,18 @@ ren dist\cknker.exe k95.exe
 if exist dist\cknker.pdb ren dist\cknker.pdb k95.pdb
 ren dist\cknker.exe.manifest k95.exe.manifest
 if exist dist\cknker.exe.manifest del dist\cknker.exe.manifest
-REM del dist\ctl3dins.exe   -- this can trip up virus scanners but its required by the dialer
+
+REM Only include ctl3dins on platforms the dialer can actually run on
+if "%CKB_TARGET_ARCH%" == "x86" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "AMD64" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "PPC" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "MIPS" goto :dialerok
+if "%CKB_TARGET_ARCH%" == "ALPHA" goto :dialerok
+REM Dialer can only run on x86 and x86-64. No point including ctl3dins for
+REM other platforms
+del dist\ctl3dins.exe
+:dialerok
+
 move dist\ckwart.exe .\
 move dist\telnet-old.* .\
 move dist\rlogin-old.* .\
