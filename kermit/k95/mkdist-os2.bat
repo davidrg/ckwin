@@ -38,6 +38,7 @@ if exist ..\p95\p2.dll copy ..\p95\p2.dll dist-os2\
 
 @echo Copy resources...
 copy k2.ini dist-os2
+copy hostmode.cmd dist-os2
 
 if "%WATCOM%"=="" goto :nortdll
 if "%CKB_STATIC_CRT_OS2%"=="yes" goto :noowrtdll
