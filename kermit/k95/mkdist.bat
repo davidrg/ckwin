@@ -14,7 +14,7 @@ REM These directories would normally go in: %ALLUSERSPROFILE%\Kermit 95
 REM if not exist dist\certs\NUL mkdir dist\certs
 REM if not exist dist\crls\NUL mkdir dist\crls
 if not exist dist\keymaps\NUL mkdir dist\keymaps
-REM if not exist dist\phones\NUL mkdir dist\phones
+if not exist dist\phones\NUL mkdir dist\phones
 if not exist dist\printer\NUL mkdir dist\printer
 if not exist dist\public\NUL mkdir dist\public
 if not exist dist\scripts\NUL mkdir dist\scripts
@@ -143,8 +143,14 @@ cd ..
 :skipkm
 
 REM PHONES
-REM Contains dialing directories. All the files previously distributed here are
-REM completely obsolete - none of the dial-in BBS still exist 20+ years later.
+@echo Copy dialing directories...
+set CK_DIST_KEYMAPS=ckermit.kdd ckermit.knd
+REM All of the services previously listed are long gone now. What remains are
+REM empty files with a message to get in touch if you'd like to be listed.
+
+for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\PHONES\
+copy phones-readme.txt dist\PHONES\readme.txt
+
 
 REM PRINTER directory
 REM originally contained:
