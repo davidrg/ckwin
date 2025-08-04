@@ -1908,13 +1908,13 @@ jobs:
           REM No tag? not release build
           if "%TAG%" == "" goto :dev_doc
           %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc, exit" || goto :failed
-          %dist_root%\k95.exe -Y -# 94 -C "take xml2doc.ksc 0 {} 1 keyb.xml, exit" || goto :failed
+          %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc 0 {} 1 keyb.xml, exit" || goto :failed
           
           goto :done
           
           :dev_doc          
           %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc 1 {preliminary-ctlseqs.html}, exit" || goto :failed
-          %dist_root%\k95.exe -Y -# 94 -C "take xml2doc.ksc 1 {preliminary-ctlseqs.html} 1 keyb.xml, exit" || goto :failed
+          %root%\dist\k95.exe -Y -# 94 -C "take xml2doc.ksc 1 {preliminary-ctlseqs.html} 1 keyb.xml, exit" || goto :failed
           
           goto :done
           
