@@ -2438,6 +2438,11 @@ jobs:
         uses: "./.github/actions/load-tools"
         with:
           nocache: ${{vars.NOCACHE}}
+      - name: Fetch K95 x86
+        uses: actions/download-artifact@v4
+        with:
+          name: k95-vs2019-x86
+          path: ${{ github.workspace }}\k95
       - name: Fetch K95 os2 full
         uses: actions/download-artifact@v4
         with:
@@ -2475,11 +2480,17 @@ jobs:
           
           echo :: Repack K2-FULL
           cd ${{ github.workspace }}\k2-full
+          cd KEYMAPS
+          copy ${{ github.workspace }}\k95-vs2019-x86\keymaps\default.ksc
+          cd ..
           ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack *
           copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
           
           echo :: Repack K2-MINI
           cd ${{ github.workspace }}\k2-mini
+          cd KEYMAPS
+          copy ${{ github.workspace }}\k95-vs2019-x86\keymaps\default.ksc
+          cd ..
           ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack *
           copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
           
