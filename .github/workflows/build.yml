@@ -2475,12 +2475,12 @@ jobs:
           
           echo :: Repack K2-FULL
           cd ${{ github.workspace }}\k2-full
-          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack *
           copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
           
           echo :: Repack K2-MINI
           cd ${{ github.workspace }}\k2-mini
-          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack * -x setup.exe
+          ${{ github.workspace }}\info-zip\zip.exe -r -5 -v -o k2pack *
           copy /b ${{ github.workspace }}\info-zip\os2\unzipsfx.exe + k2pack.zip K2PACK.EXE
           
           echo :: Prepare DIST-MINI

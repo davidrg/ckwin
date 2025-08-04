@@ -40,7 +40,7 @@ if exist ..\p95\p2.dll copy ..\p95\p2.dll dist-os2\
 
 @echo Copy manual...
 copy ..\..\DOCS\manual\ckos2.htm dist-os2\DOCS\manual\
-if exist dist\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt
+if exist dist-os2\ssh.dll copy ..\..\doc\ssh-readme.md dist-os2\ssh-readme.txt
 
 @echo Copy resources...
 copy k2.ini dist-os2
@@ -53,12 +53,14 @@ copy %WATCOM%\binp\dll\clbr*.dll dist-os2
 copy %WATCOM%\binp\dll\plbr*.dll dist-os2
 :noowrtdll
 
+REN DOCS download
+REM TODO: DOCS\readme.txt
+
 REM DOWNLOAD directory
 copy download-readme.txt dist-os2\DOWNLOAD\readme.txt
 
 REM EAS directory
-REM k2.eas, k2dial.eas, k2reg.eas  - Extended Attributes? Is this something
-REM                                  Unzip does?
+REM k2.eas, k2dial.eas, k2reg.eas  - Extended Attributes. Made with eautil.
 
 REM ICONS directory
 @echo Copy icons...
@@ -72,14 +74,14 @@ REM KEYMAPS directory
 @echo Copy keymaps...
 set CK_DIST_KEYMAPS=vt220.ksc keycodes.txt capslock.ksc
 REM These also used to be distributed but aren't very useful anymore:
-REM       emacs.ksc keypad.ksc sni.ksc  wp50.ksc wp51.ksc
+REM       emacs.ksc keypad.ksc sni.ksc  wp50.ksc wp51.ksc keypad.ksc
 REM They *were* available at:
 REM   ftp://kermit.columbia.edu/pub/kermit/archives/k95keymaps.zip
 REM Now archived at:
 REM   https://ftp.zx.net.nz/pub/archive/kermit.columbia.edu-2/pub/kermit/archives/k95keymaps.zip
 
-for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist\KEYMAPS\
-copy keymaps-readme.txt dist\KEYMAPS\readme.txt
+for %%I in (%CK_DIST_KEYMAPS%) do copy %%I dist-os2\KEYMAPS\
+copy keymaps-readme.txt dist-os2\KEYMAPS\readme.txt
 
 REM Ideally we'd generate default.ksc here, but we can't run OS/2 binaries
 REM on Windows.
@@ -99,6 +101,11 @@ REM     textps.txt
 REM         Documentation for the textps utility
 REM     readme.txt
 REM         Document describing the contents of this directory
+@echo Copy printer files...
+set CK_DIST_PRINTER=pcprint.sh pcprint.man pcprint.com pcaprint.sh textps.txt
+REM TODO: readme.txt
+for %%I in (%CK_DIST_PRINTER%) do copy %%I dist\printer\
+copy printer-readme.txt dist-os2\printer\readme.txt
 
 REM PUBLIC directory
 @echo Copy public files...
@@ -109,8 +116,8 @@ REM SCRIPTS directory
 set CK_DIST_SCRIPTS=apage.ksc autotel.ksc iksdpy.ksc login.ksc host.ksc
 set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% hostcom.ksc hostmdm.ksc hostmode.ksc hosttcp.ksc
 set CK_DIST_SCRIPTS=%CK_DIST_SCRIPTS% npage.ksc recover.ksc review.ksc rgrep.ksc host.cfg
-for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist\SCRIPTS\
-copy scripts-readme.txt dist\SCRIPTS\readme.txt
+for %%I in (%CK_DIST_SCRIPTS%) do copy %%I dist-os2\SCRIPTS\
+copy scripts-readme.txt dist-os2\SCRIPTS\readme.txt
 
 REM TMP directory
 REM TODO: TMP\readme.txt
