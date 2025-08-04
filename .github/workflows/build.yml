@@ -1155,7 +1155,7 @@ jobs:
             echo Making minimal distribution
             REM This is basically everything but the dialer. Its small enough to fit on a
             REM single floppy disk alongisde setup.exe
-            ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe docs download eas icons keymaps phones printer public scripts tmp users
+            ${{github.workspace}}\info-zip\zip.exe -r -5 -v -o k2pack-mini k2.* k2clip.exe cko32*.dll p*.dll pcfonts.dll rlogin.exe telnetpm*.exe textps.exe DOCS DOWNLOAD EAS ICONS KEYMAPS PHONES PRINTER PUBLIC SCRIPTS TMP USERS
             copy /b ${{github.workspace}}\info-zip\os2\unzipsfx.exe + k2pack-mini.zip K2PACK.EXE
             del k2pack-mini.zip
             mkdir ${{github.workspace}}\dist-mini
