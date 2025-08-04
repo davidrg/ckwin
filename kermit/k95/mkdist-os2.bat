@@ -104,7 +104,7 @@ REM         Document describing the contents of this directory
 @echo Copy printer files...
 set CK_DIST_PRINTER=pcprint.sh pcprint.man pcprint.com pcaprint.sh textps.txt
 REM TODO: readme.txt
-for %%I in (%CK_DIST_PRINTER%) do copy %%I dist\printer\
+for %%I in (%CK_DIST_PRINTER%) do copy %%I dist-os2\printer\
 copy printer-readme.txt dist-os2\printer\readme.txt
 
 REM PUBLIC directory
