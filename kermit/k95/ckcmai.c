@@ -1244,6 +1244,11 @@ extern int mdmtyp;                      /* Modem (/network) type */
 
 #ifdef NT
 extern int StartedFromDialer;
+#ifndef NOSPL
+#ifndef NORANDOM
+DWORD srandThreadId = 0;
+#endif /*NORANDOM*/
+#endif /*NOSPL*/
 #ifdef NTSIG
 extern int TlsIndex;
 #endif /* NTSIG */
@@ -3353,6 +3358,13 @@ MAINNAME( argc, argv ) int argc; char **argv;
         for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
 	  c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
         srand((unsigned int)c);
+#ifdef NT
+        /* In Windows, the random number generator seed is per-thread. And the
+         * thread we're on right now probably isn't the thread that \frandom()
+         * will get executed on later. Store the thread ID so we know later if
+         * we need to do this again */
+        srandThreadId = GetCurrentThreadId();
+#endif /* NT */
     }
 #endif /* NORANDOM */
 #endif /* NOSPL */

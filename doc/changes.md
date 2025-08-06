@@ -291,6 +291,11 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed connect command not reconnecting disconnected SSH sessions
  - Fixed certain menu items not being disabled when they should be if they
    appear in the system menu rather than menubar
+ - Fixed a bug where the random number generator would not be initialized on the
+   thread that runs the command screen resulting in `\frandom()` producing the
+   same sequence every time. This only affected builds without SSL support
+   (those targeting Windows versions older than XP), as when OpenSSL is 
+   available its random number generator is used instead.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

@@ -70,6 +70,7 @@ _PROTOTYP(int vmsttyfd, (void) );
 #include "ckodir.h" /* [jt] 2013/11/21 - for MAXPATHLEN */
 #include "ckoetc.h"
 int StartedFromDialer = 0;
+extern DWORD srandThreadId;
 HWND hwndDialer = 0;
 LONG KermitDialerID = 0;
 #ifdef NT
@@ -10294,7 +10295,26 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
 #ifdef CK_SSL
         if (RAND_bytes((unsigned char *)&k,sizeof(k)) < 0)
 #endif /* CK_SSL */
+        {
+#ifdef NT
+            if (srandThreadId != GetCurrentThreadId()) {
+                /* The RNG was last seeded on a different thread, so may not
+                 * have been seeded on *this* thread. Better do it now to be
+                 * sure! The logic here is a copy of what ckcmai.c does. */
+                char stackdata[256];
+                unsigned int c = 1234, n;
+                /* try to make a random unsigned int to feed srand() */
+                c = time(NULL);                 /* Get current time */
+                c *= getpid();                  /* multiply it by our PID */
+                /* Referenced before set... DELIBERATELY */
+                for (n = 0; n < sizeof(stackdata); n++) /* IGNORE WARNING */
+                    c += stackdata[n];		/* DELIBERATELY USED BEFORE SET */
+                srand((unsigned int)c);
+                srandThreadId = GetCurrentThreadId();
+            }
+#endif /* NT */
           k = rand();
+        }
         x = 0;
         if (argn > 0) {
             if (!chknum(bp[0])) {
