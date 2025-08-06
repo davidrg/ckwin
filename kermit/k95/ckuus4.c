@@ -70,7 +70,7 @@ _PROTOTYP(int vmsttyfd, (void) );
 #include "ckodir.h" /* [jt] 2013/11/21 - for MAXPATHLEN */
 #include "ckoetc.h"
 int StartedFromDialer = 0;
-extern DWORD srandThreadId;
+extern unsigned long srandThreadId;
 HWND hwndDialer = 0;
 LONG KermitDialerID = 0;
 #ifdef NT

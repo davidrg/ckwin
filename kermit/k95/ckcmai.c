@@ -1246,7 +1246,7 @@ extern int mdmtyp;                      /* Modem (/network) type */
 extern int StartedFromDialer;
 #ifndef NOSPL
 #ifndef NORANDOM
-DWORD srandThreadId = 0;
+unsigned long srandThreadId = 0;
 #endif /*NORANDOM*/
 #endif /*NOSPL*/
 #ifdef NTSIG
