@@ -1011,7 +1011,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
 <li><tt>[+] (K)</tt> <a href="#b837">837. CLEAR APC prevents input or switching back to connect mode</a>
 <li><tt>[+] (K)</tt> <a href="#b838">838. CLEAR APC allows execution of dangerous commands via APC</a>
-
+<li><tt>[ ] (K)</tt> <a href="#b839">839. REDIRECT command sometimes fails to detect when the subprocess exits</a>
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
     -->
@@ -8114,6 +8114,22 @@ Fixed in 3.0
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/478">Issue #478 on Github</a>
+
+<h3><a name="b839">839. REDIRECT command sometimes fails to detect when the subprocess exits</a></h3>
+<p>
+    Kermit 95 may fail to detect when another program run via the REDIRECT
+    command exits. You can hit Ctrl+C to get back to the Kermit prompt, but this
+    isn't helpful in scripts. There is currently no workaround.
+</p>
+
+<p>This issue affects at least Kermit 95 v2.1.3 and newer when run on modern
+    Windows hosts. Its possible that on older or slower machines the issue may
+    occur less frequently or not at all.
+</p>
+
+<p>This is also logged as
+    <a href="https://github.com/davidrg/ckwin/issues/482">Issue #482 on Github</a>
+
 
 <!--
 <h3><a name="bxxx">xxx. </a></h3>
