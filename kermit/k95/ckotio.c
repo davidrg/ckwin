@@ -9203,6 +9203,11 @@ ttruncmd(char * cmd)
 
       memset( &startinfo, 0, sizeof(STARTUPINFO) ) ;
       startinfo.cb = sizeof(STARTUPINFO) ;
+      startinfo.dwFlags |= STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+      startinfo.wShowWindow = SW_HIDE;
+      startinfo.hStdInput = hChildStdinRd;
+      startinfo.hStdOutput = hChildStdoutWr;
+      startinfo.hStdError = hChildStdoutWr;
 
       fSuccess = CreateProcess( NULL,       /* application name */
                      cmd_line,              /* command line */
@@ -9233,9 +9238,6 @@ ttruncmd(char * cmd)
             CloseHandle(hChildStdinWrDup);  hChildStdinWrDup = NULL;
             return(0);
         }
-
-        CloseHandle(procinfo.hProcess);
-        CloseHandle(procinfo.hThread);
 
         exitcode = STILL_ACTIVE;
         _beginthread( ttruncmd2, 65536, (void *)hChildStdoutRd );

@@ -1011,7 +1011,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
 <li><tt>[+] (K)</tt> <a href="#b837">837. CLEAR APC prevents input or switching back to connect mode</a>
 <li><tt>[+] (K)</tt> <a href="#b838">838. CLEAR APC allows execution of dangerous commands via APC</a>
-<li><tt>[ ] (K)</tt> <a href="#b839">839. REDIRECT command sometimes fails to detect when the subprocess exits</a>
+<li><tt>[+] (K)</tt> <a href="#b839">839. REDIRECT command sometimes fails to detect when the subprocess exits</a>
     <!--
     <li><tt>[ ] (K)</tt> <a href="#bxxx">xxx. </a>
     -->
@@ -6431,7 +6431,7 @@ If you launch a K95G connection from the Dialer, and the Dialer entry changes
 the terminal dimensions, and then if you move the K95G window (and only the
 first time you move it), the Terminal screen is cleared (but not lost; the
 cleared material is still available in the scrollback buffer).  Should be
-fixed in K95 2.1.3.
+fixed in K95 2.1.3. And it has been totally fixed in K95 3.0.
 
 
 <h3><a name="b664">664.  Everson Mono Terminal Font Side Effects</a></h3>
@@ -8117,14 +8117,28 @@ Fixed in 3.0
 
 <h3><a name="b839">839. REDIRECT command sometimes fails to detect when the subprocess exits</a></h3>
 <p>
-    Kermit 95 may fail to detect when another program run via the REDIRECT
-    command exits. You can hit Ctrl+C to get back to the Kermit prompt, but this
-    isn't helpful in scripts. There is currently no workaround.
+    The REDIRECT command has two issues:
+</p>
+<ul>
+    <li>Kermit 95 may fail to detect when a subprocess started via the REDIRECT
+    command exists.</li>
+    <li>I/O is not redirected in K95G - the subprocess is launched in a new
+        console window and its output is not transmitted to the remote host.
+    </li>
+</ul>
+<p>
+    These issues affect at least Kermit 95 v2.1.3 and newer.
+    There is no workaround for either issue. If K95 fails to detect the
+    subprocess ending you <em>may</em> be able to get back to the command screen
+    with Ctrl+C, but this isn't helpful in scripts.
 </p>
 
-<p>This issue affects at least Kermit 95 v2.1.3 and newer when run on modern
-    Windows hosts. Its possible that on older or slower machines the issue may
-    occur less frequently or not at all.
+<p>
+    The cause of the first issue was Kermit 95 closing the process handle before
+    waiting on it, potentially resulting in it waiting on an invalid handle. The
+    second issue was caused by the stdin/stdout pipes not being setup at process
+    creation time. The Pipe command suffered from the same issues. Both issues
+    are fixed for the PIPE and REDIRECT commands in Kermit 95 v3.0.
 </p>
 
 <p>This is also logged as

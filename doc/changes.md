@@ -296,6 +296,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    same sequence every time. This only affected builds without SSL support
    (those targeting Windows versions older than XP), as when OpenSSL is 
    available its random number generator is used instead.
+ - Fixed two bugs in the REDIRECT command, both of which were previously fixed
+   in the PIPE command:
+   - Fixed Kermit 95 not detecting when the subprocess ends
+   - Fixed I/O not being redirected in K95G
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
