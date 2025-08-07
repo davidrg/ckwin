@@ -1293,13 +1293,9 @@ os2_netopen(name, lcl, nett) char *name; int *lcl, nett; {
 #ifdef NETCMD
     if ( nettype == NET_CMD  || nettype == NET_PTY ) {
         char cmd_line[256];
-#ifdef OS2ONLY
         char *cmd_exe, *args;
         char *p;
-#endif
-#ifdef COMMENT
         int argslen;
-#endif /* COMMENT */
 
 #ifdef NT
         cmd_line[0] = '\0' ;
