@@ -199,6 +199,7 @@ static char *ckxrev = "32-bit";
 /* Regina REXX wants to typedef char to CHAR, but we already do that */
 #define CHAR_TYPEDEFED
 #define USHORT_TYPEDEFED
+#define ULONG_TYPEDEFED
 #endif
 
 #define  INCL_REXXSAA
