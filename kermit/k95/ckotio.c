@@ -9268,6 +9268,8 @@ ttruncmd(char * cmd)
         if ( exitcode == STILL_ACTIVE )
             exitcode = 128;
 
+        pexitstat = exitcode;
+
         /* Close the pipe handle so the child stops reading. */
         CloseHandle(hChildStdoutRd);    hChildStdoutRd = NULL;
         CloseHandle(hChildStdoutWr);    hChildStdoutWr = NULL;
@@ -9277,7 +9279,6 @@ ttruncmd(char * cmd)
         CloseHandle( procinfo.hProcess ) ;
         CloseHandle( procinfo.hThread ) ;
 
-        pexitstat = exitcode;
         return 1; /* DWORD is unsigned : (exitcode>=0 ? 1 : 0); */
     }
     return 0;   /* Should never be reached */
