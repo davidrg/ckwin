@@ -140,7 +140,7 @@ if %errorlevel% == 0 goto :mips
 REM Win32 SDK Final Release MIPS compiler (NT 3.1)
 REM Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
 cl 2>&1 | findstr /C:"Microsoft (R) C Centaur Optimizing Compiler" > nul
-if %errorlevel% == 0 goto :mips
+if %errorlevel% == 0 goto :mipsc
 
 cl 2>&1 | findstr /C:"for PowerPC" > nul
 if %errorlevel% == 0 goto :ppc
@@ -171,19 +171,20 @@ goto :bits32
 
 :axp64
 REM Alpha AXP Windows 2000/XP - 64bits
-REM TODO: Check
 set CKB_TARGET_ARCH=ALPHA64
 goto :bits64
 
+:mipsc
+REM MIPS Windows NT 3.1 SDK can't build P95, so turn it off for now.
+set CKF_XYZ=no
+
 :mips
 REM MIPS Windows NT - 32bits
-REM TODO: Check
 set CKB_TARGET_ARCH=MIPS
 goto :bits32
 
 :ppc
 REM PowerPC Windows NT - 32bits
-REM TODO: Check
 set CKB_TARGET_ARCH=PPC
 goto :bits32
 
@@ -912,7 +913,7 @@ REM Compiler detection finished. If Zinc is supported for this compiler,
 REM go set it up.
 echo Compiler: %CK_COMPILER_NAME%
 
-if "%CKB_TARGET_ARCH" neq "x86" CKB_9X_COMPATIBLE=no
+if "%CKB_TARGET_ARCH%" NEQ "x86" set CKB_9X_COMPATIBLE=no
 
 if "%ZINCBUILD%" == "" echo Can not setup Zinc for this compiler
 if "%ZINCBUILD%" NEQ "" goto :check_zinc
