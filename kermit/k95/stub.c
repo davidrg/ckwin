@@ -21,6 +21,10 @@
 #define _spawnl spawnl
 #endif
 
+#ifndef spawnv
+#define spawnv _spawnv
+#endif
+
 char k95path[512];
 
 int
