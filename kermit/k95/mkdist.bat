@@ -29,6 +29,7 @@ if exist dist\nullssh.pdb del dist\nullssh.pdb
 if exist k95ssh*.dll move k95ssh*.dll dist
 if exist k95crypt.dll move k95crypt.dll dist
 copy *.manifest dist
+if not exist dist\k95g.exe del dist\k95g.manifest
 copy iksd.ksc dist\iksd.ksc.sample
 ren dist\cknker.exe k95.exe
 if exist dist\cknker.pdb ren dist\cknker.pdb k95.pdb
@@ -45,6 +46,11 @@ REM Dialer can only run on x86 and x86-64. No point including ctl3dins for
 REM other platforms
 del dist\ctl3dins.exe
 :dialerok
+
+REM These compilers are used to target NT 3.10 and NT 3.50, which can't
+REM currently run the dialer regardless of CPU architecture 
+if "%CKB_MSC_VER%" == "80" del dist\ctl3dins.exe
+if "%CKB_MSC_VER%" == "90" del dist\ctl3dins.exe
 
 move dist\ckwart.exe .\
 move dist\telnet-old.* .\

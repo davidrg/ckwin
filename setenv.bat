@@ -140,7 +140,7 @@ if %errorlevel% == 0 goto :mips
 REM Win32 SDK Final Release MIPS compiler (NT 3.1)
 REM Microsoft (R) C Centaur Optimizing Compiler Version 8.00.081
 cl 2>&1 | findstr /C:"Microsoft (R) C Centaur Optimizing Compiler" > nul
-if %errorlevel% == 0 goto :mipsc
+if %errorlevel% == 0 goto :mips
 
 cl 2>&1 | findstr /C:"for PowerPC" > nul
 if %errorlevel% == 0 goto :ppc
@@ -173,10 +173,6 @@ goto :bits32
 REM Alpha AXP Windows 2000/XP - 64bits
 set CKB_TARGET_ARCH=ALPHA64
 goto :bits64
-
-:mipsc
-REM MIPS Windows NT 3.1 SDK can't build P95, so turn it off for now.
-set CKF_XYZ=no
 
 :mips
 REM MIPS Windows NT - 32bits
@@ -718,6 +714,7 @@ set CKF_SSL=unsupported
 set CKF_LIBDES=unsupported
 set CKF_CRYPTDLL=no
 set CKF_K4W=unsupported
+set CKF_XYZ=unsupported
 set CKB_STATIC_CRT_NT=yes
 set CKB_NT_COMPATIBLE=yes
 goto :cvcdone

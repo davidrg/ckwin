@@ -20,12 +20,14 @@ if "%CKB_STAT_PREFIX%" NEQ "" echo %CKB_STAT_PREFIX%Zinc Build...%CKB_STAT_SUFFI
 call mkzinc.bat
 
 :buildp
-if "%CKF_XYZ%" == "no" goto :buildkermit
+if "%CKF_XYZ%" == "no" goto :builddes
+if "%CKF_XYZ%" == "unsupported" goto :builddes
 if "%CKB_STAT_PREFIX%" NEQ "" echo %CKB_STAT_PREFIX%P95 Build...%CKB_STAT_SUFFIX%
 cd kermit\p95
 call mknt.bat
 cd ..\..
 
+:builddes
 if "%CKF_LIBDES%" NEQ "yes" goto :buildkermit
 if "%CKB_STAT_PREFIX%" NEQ "" echo %CKB_STAT_PREFIX%libdes Build...%CKB_STAT_SUFFIX%
 cd libdes
