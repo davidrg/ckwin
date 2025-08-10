@@ -541,6 +541,8 @@ void KClient::endSizing( Bool doAnyway )
 
     if( vmode /* clientID */ == VCS )
         return;
+    if( vmode /* clientID */ == VSTATUS)
+        return;
 
     int w, h;
     getEndSize( w, h );

@@ -300,6 +300,14 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    in the PIPE command:
    - Fixed Kermit 95 not detecting when the subprocess ends
    - Fixed I/O not being redirected in K95G
+ - Fixed a whole host of problems with the host-writable status line:
+   - The K95G window no longer tries to resize to the dimensions of the status
+     line (80x1) when the cursor is moved there via DECSASD
+   - K95G should no longer crash if the host tries to write to the status line
+     shortly after moving the cursor there
+   - You can now resize the terminal while the cursor is in the status line, and
+     doing so no longer breaks the host-writable status line.
+   - Text-mode popups now work when the cursor is in the status line
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

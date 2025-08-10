@@ -3725,6 +3725,8 @@ kui_setheightwidth(int x, int y)
     tt_cols_usr = x;
     VscrnSetWidth( VTERM, x);
     VscrnInit( VTERM );         /* Height set here */
+    VscrnSetWidth (VSTATUS, x);  /* And the status line too */
+    VscrnInit( VSTATUS );
     term_dimensions_changed(x, y - (tt_status[VTERM]?1:0));
 
     tt_szchng[VCMD] = (tt_status[VCMD]?2:1);

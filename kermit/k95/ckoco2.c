@@ -2316,8 +2316,22 @@ VscrnSetWidth( BYTE vmode, int width )
     int y=0;
     videoline * pline = NULL;
 
+    /* If we end up in here while the cursor is on the status line
+       (DECSASD_STATUS), then we end up setting the width of the status line
+       instead of the terminal screen! The terminal screen ends up being messed
+       up and the status line breaks too. The terminal and status line should
+       always be the same width anyway, so it doesn't make any sense to do funny
+       things here.
+            -- DG, 2025-08-10
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
+*/
+
+    if (vmode == VTERM) {
+        /* Keep the status line and terminal the same width. */
+        VscrnSetWidth(VSTATUS, width);
+    }
 
     if ( vscrn[vmode].lines == NULL )
         return;
@@ -2350,8 +2364,12 @@ VOID
 VscrnSetHeight( BYTE vmode, int height )
 {
 
+    /* If we're SASD_STATUS, that doesn't mean we should be setting the height
+       of the status line when VTERM is specified - the status line has a fixed
+       height!
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
+    */
 
     vscrn[vmode].height = height ;
 #ifdef KUI
@@ -2374,8 +2392,10 @@ VOID
 VscrnSetDisplayHeight( BYTE vmode, int height )
 {
 
+    /* The status line has a height of 1. Its a line. If we've been asked to set
+       the height of VTERM, the caller will have meant VTERM.
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     vscrn[vmode].display_height = height ;
 }
@@ -2386,8 +2406,12 @@ VscrnSetDisplayHeight( BYTE vmode, int height )
 int
 VscrnGetWidth( BYTE vmode )
 {
+    /* Doesn't make sense to do this. VTERM and VSTATUS should be the same width.
+        -- DG 2025-08-10
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
+    */
 
    return vscrn[vmode].width ? vscrn[vmode].width : MAXTERMCOL;
 }
@@ -2395,23 +2419,45 @@ VscrnGetWidth( BYTE vmode )
 /* VscrnGetHeight                                                            */
 /*---------------------------------------------------------------------------*/
 int
-VscrnGetHeight( BYTE vmode )
+VscrnGetHeightEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
    return vscrn[vmode].height ? vscrn[vmode].height : MAXTERMROW;
 }
+
+/* All callers of this function should be checked to see if they should *always*
+ * get VTERM when they ask for it, rather than VTERM or maybe VSTATUS depending
+ * on what the host is up to. Many of them probably should maybe get VSTATUS,
+ * but for some when they say VTERM they really do mean VTERM and so should be
+ * calling VscrnGetHeightEx. */
+int VscrnGetHeight( BYTE vmode ) {
+    return VscrnGetHeightEx(vmode, TRUE);
+}
+
 /*---------------------------------------------------------------------------*/
 /* VscrnGetDisplayHeight                                                            */
 /*---------------------------------------------------------------------------*/
 int
 VscrnGetDisplayHeight( BYTE vmode )
 {
+    /*  This caused the KUI window to shrink whenever the cursor was on the
+        status line, as VscrnGetDisplayHeight() would end up returning the
+        status line height (1) instead of the terminal height. Same problem with
+        the call to VscrnGetHeight, though its less clear that that one should
+        disregard DECSASD in all cases.
+            -- DG, 2025-08-10
+
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
    return vscrn[vmode].display_height ? vscrn[vmode].display_height : VscrnGetHeight(vmode);
+    */
+
+    return vscrn[vmode].display_height
+        ? vscrn[vmode].display_height
+        : VscrnGetHeightEx(vmode, FALSE);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2897,8 +2943,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
     videoline * line ;
     ULONG rc = FALSE ;  /* Determines whether clearscreen needs to be called */
 
+    /* Don't see why VscrnSetBufferSize should act on the status line rather
+       than terminal if the host happens to put the cursor there.
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     debug(F111,"SetBufferSize","vmode",vmode);
     debug(F111,"SetBufferSize","newsize",newsize);
@@ -3516,8 +3564,9 @@ VscrnIsPopup( BYTE vmode )
 void
 VscrnSetPopup( BYTE vmode, videopopup * pu )
 {
+    /* Popups on the status line? I don't think so!
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     /* Wait for exclusive access to the screen */
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
@@ -4864,6 +4913,15 @@ VscrnInit( BYTE vmode )
    CK_VIDEOMODEINFO m;
 #endif /* KUI */
 
+    /* Because a bunch of Vscrn functions act on VSTATUS rather than VTERM when
+     * DECSASD is SASD_STATUS, if we want to be sure everything acts on VTERM
+     * (as thats what we're initialising), we have to switch back to
+     * SASD_TERMINAL while we do this. Ideally we'd go through all those
+     * functions and make them less surprising, but that would be a substantial
+     * amount of work that may just introduce more bugs. */
+    int decsasd_backup = decsasd;
+    decsasd = SASD_TERMINAL;
+
    debug(F111,"VscrnInit","vmode",vmode);
 #ifndef KUI
    if (GetMode(&m))
@@ -4993,6 +5051,10 @@ VscrnInit( BYTE vmode )
         cleartermscreen(vmode);
     }
     scrninitialized[vmode] = TRUE ;
+
+    /* Restore DECSASD status */
+    decsasd = decsasd_backup;
+
     return 0;
 }
 
