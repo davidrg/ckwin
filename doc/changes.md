@@ -308,6 +308,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - You can now resize the terminal while the cursor is in the status line, and
      doing so no longer breaks the host-writable status line.
    - Text-mode popups now work when the cursor is in the status line
+   - The cursor no longer vanishes while the host is in the status line in K95G
+   - Fixed mark mode when the cursor is in the status line
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

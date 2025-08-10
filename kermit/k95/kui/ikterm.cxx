@@ -420,7 +420,7 @@ BOOL IKTerm::getCursorPos()
         cursor_offset = 0;
     }
 
-    ys = VscrnGetHeight( vnum );
+    ys = VscrnGetHeightEx( vnum, FALSE );
     if( !cursorena[vnum] || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0) ) {
         kcp->cursorVisible = FALSE;
     }

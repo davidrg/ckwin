@@ -568,7 +568,7 @@ mousecurpos( int mode, USHORT orow, USHORT ocol, USHORT nrow, USHORT ncol, BOOL 
     /* only set the scroll flag if we are using kverbs and not keystrokes */
     if ( kverb ) {
         win32ScrollUp = (nrow < 1);
-        win32ScrollDown = (nrow >= (VscrnGetHeight(mode)
+        win32ScrollDown = (nrow >= (VscrnGetHeightEx(mode, FALSE)
                                      -1 -(tt_status[mode]?1:0)));
     }
 #endif /* NT */
@@ -935,13 +935,13 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
                 r.dwMousePosition.Y, r.dwMousePosition.X) ;
        debug(F110,"win32MouseEvent",buffer,0) ;
 
-       ppos = VscrnGetCurPos(mode) ;
+       ppos = VscrnGetCurPosEx(mode,FALSE) ;
        Vrow = ppos->y ;
        Vcol = ppos->x ;
 
-       if ( r.dwMousePosition.Y >= VscrnGetHeight(mode)
+       if ( r.dwMousePosition.Y >= VscrnGetHeightEx(mode,FALSE)
             -(tt_status[mode]?1:0) )
-           r.dwMousePosition.Y = VscrnGetHeight(mode) -(1+(tt_status[mode]?1:0)) ;
+           r.dwMousePosition.Y = VscrnGetHeightEx(mode,FALSE) -(1+(tt_status[mode]?1:0)) ;
        if ( r.dwMousePosition.Y < 0 )
            r.dwMousePosition.Y = 0 ;
        if ( r.dwMousePosition.X >= VscrnGetWidth(mode) )
@@ -1476,16 +1476,16 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
    else  /* No Mouse Event */ {
    char buffer[1024] ;
       if ( SelectionValid ) {
-         ppos = VscrnGetCurPos(mode) ;
+         ppos = VscrnGetCurPosEx(mode,FALSE) ;
          Vrow = ppos->y ;
          Vcol = ppos->x ;
 
          if ( lastrow == 0 &&
-               VscrnGetBegin(mode) != VscrnGetScrollTop(mode)+Vrow ) {
+               VscrnGetBeginEx(mode,FALSE) != VscrnGetScrollTopEx(mode,FALSE)+Vrow ) {
                putkverb( mode, F_KVERB | K_UPONE ) ;
                }
-         else if ( lastrow == VscrnGetHeight(mode) -2 &&
-               VscrnGetEnd(mode) != VscrnGetScrollTop(mode)+Vrow ) {
+         else if ( lastrow == VscrnGetHeightEx(mode,FALSE) -2 &&
+               VscrnGetEndEx(mode,FALSE) != VscrnGetScrollTopEx(mode,FALSE)+Vrow ) {
                putkverb( mode, F_KVERB | K_DNONE ) ;
                }
          sprintf(buffer, "AutoScroll: fs:%3x row:%3d col:%3d",
@@ -1556,11 +1556,11 @@ while (hMouse)
             MouseCurX = MouseEventInfo.col;
             MouseCurY = MouseEventInfo.row;
 
-            ppos = VscrnGetCurPos(vmode) ;
+            ppos = VscrnGetCurPosEx(vmode, FALSE) ;
             Vrow = ppos->y ;
             Vcol = ppos->x ;
 
-        if ( MouseEventInfo.row == VscrnGetHeight(vmode)
+        if ( MouseEventInfo.row == VscrnGetHeightEx(vmode, FALSE)
              -(tt_status[vmode]?1:0) )
             MouseEventInfo.row-- ;
 
@@ -1925,16 +1925,16 @@ while (hMouse)
         else  /* No Mouse Event */ {
         char buffer[1024] ;
             if ( SelectionValid ) {
-            ppos = VscrnGetCurPos(vmode) ;
+            ppos = VscrnGetCurPosEx(vmode, FALSE) ;
             Vrow = ppos->y ;
             Vcol = ppos->x ;
 
             if ( lastrow == 0 &&
-                VscrnGetBegin(vmode) != VscrnGetScrollTop(vmode)+Vrow ) {
+                VscrnGetBeginEx(vmode,FALSE) != VscrnGetScrollTopEx(vmode,FALSE)+Vrow ) {
                 putkverb( vmode, F_KVERB | K_UPONE ) ;
                 }
-            else if ( lastrow == VscrnGetHeight(vmode) -(tt_status[vmode]?2:1) &&
-                VscrnGetEnd(vmode) != VscrnGetScrollTop(vmode)+Vrow
+            else if ( lastrow == VscrnGetHeightEx(vmode,FALSE) -(tt_status[vmode]?2:1) &&
+                VscrnGetEndEx(vmode,FALSE) != VscrnGetScrollTopEx(vmode,FALSE)+Vrow
                        ) {
                 putkverb( vmode, F_KVERB | K_DNONE ) ;
                 }

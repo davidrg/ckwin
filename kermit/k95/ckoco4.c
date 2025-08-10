@@ -925,7 +925,7 @@ markstart( BYTE vmode )
         VscrnUnmarkAll(vmode) ;
         }
     markmodeflag[vmode] = marking ;
-    VscrnMark( vmode,(VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y)%vscrn[vmode].linecount,
+    VscrnMark( vmode,(VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y)%vscrn[vmode].linecount,
         vscrn[vmode].cursor.x, vscrn[vmode].cursor.x ) ;
 }
 
@@ -939,11 +939,11 @@ markcancel( BYTE vmode )
 void
 markdownone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetEnd(vmode)) {
+        curline != VscrnGetEndEx(vmode,FALSE)) {
         if ( vscrn[vmode].marktop == curline &&
             vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
             if ( vscrn[vmode].marktop == vscrn[vmode].markbot ) {
@@ -982,9 +982,9 @@ markdownone( BYTE vmode )
         }
 
     if ( markmodeflag[vmode] == inmarkmode ||
-        markmodeflag[vmode] == marking && curline != VscrnGetEnd(vmode) ) {
-        if ( vscrn[vmode].cursor.y == VscrnGetHeight(vmode)-(tt_status[vmode]?2:1) ) {
-            if ( VscrnMoveScrollTop(vmode,1) < 0 )
+        markmodeflag[vmode] == marking && curline != VscrnGetEndEx(vmode,FALSE) ) {
+        if ( vscrn[vmode].cursor.y == VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?2:1) ) {
+            if ( VscrnMoveScrollTopEx(vmode,1,FALSE) < 0 )
                 bleep(BP_FAIL);
             }
         else
@@ -999,11 +999,11 @@ markdownone( BYTE vmode )
 void
 markupone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetBegin(vmode) ) {
+        curline != VscrnGetBeginEx(vmode, FALSE) ) {
         if ( vscrn[vmode].markbot == curline &&
             vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
             if ( vscrn[vmode].marktop == vscrn[vmode].markbot ) {
@@ -1046,9 +1046,9 @@ markupone( BYTE vmode )
 
     if ( markmodeflag[vmode] == inmarkmode ||
         markmodeflag[vmode] == marking &&
-        curline != VscrnGetBegin(vmode) ) {
+        curline != VscrnGetBeginEx(vmode, FALSE) ) {
         if ( vscrn[vmode].cursor.y == 0 ) {
-            if ( VscrnMoveScrollTop(vmode,-1) < 0 )
+            if ( VscrnMoveScrollTopEx(vmode,-1,FALSE) < 0 )
                 bleep(BP_FAIL);
             }
         else
@@ -1062,7 +1062,7 @@ markupone( BYTE vmode )
 void
 markleftone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking && vscrn[vmode].cursor.x > 0 ) {
@@ -1084,7 +1084,7 @@ markleftone( BYTE vmode )
 void
 markrightone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking && vscrn[vmode].cursor.x < VscrnGetWidth(VTERM)-1 ) {
@@ -1107,15 +1107,15 @@ void
 markdownscreen( BYTE vmode )
 {
    int count = (tt_status[vmode]?1:0) ;
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetEnd(vmode) ) {
+        curline != VscrnGetEndEx(vmode,FALSE) ) {
         if ( vscrn[vmode].marktop == curline &&
              vscrn[vmode].marktop != vscrn[vmode].markbot &&
             vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
-            while ( count < VscrnGetHeight(vmode) &&
+            while ( count < VscrnGetHeightEx(vmode,FALSE) &&
                     ( vscrn[vmode].marktop < ( vscrn[vmode].markbot - 1 + vscrn[vmode].linecount)%vscrn[vmode].linecount ) )
             {
                count++ ;
@@ -1126,7 +1126,7 @@ markdownscreen( BYTE vmode )
             }
         }
 
-        if ( count < VscrnGetHeight(vmode) && vscrn[vmode].marktop ==
+        if ( count < VscrnGetHeightEx(vmode,FALSE) && vscrn[vmode].marktop ==
             (vscrn[vmode].markbot-1+vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
             count++ ;
             VscrnUnmark( vmode, vscrn[vmode].marktop, 0, MAXTERMCOL ) ;
@@ -1141,7 +1141,7 @@ markdownscreen( BYTE vmode )
                 }
             }
 
-        if ( count < VscrnGetHeight(vmode) &&
+        if ( count < VscrnGetHeightEx(vmode,FALSE) &&
             vscrn[vmode].marktop == vscrn[vmode].markbot ) {
             count++ ;
             if ( vscrn[vmode].cursor.x == vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) {
@@ -1155,7 +1155,7 @@ markdownscreen( BYTE vmode )
                     vscrn[vmode].cursor.x ) ;
             }
 
-        while ( count < VscrnGetHeight(vmode) &&
+        while ( count < VscrnGetHeightEx(vmode,FALSE) &&
                 vscrn[vmode].markbot != vscrn[vmode].end ) {
             count++ ;
             VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x,
@@ -1166,16 +1166,16 @@ markdownscreen( BYTE vmode )
             }
         }
 
-    if ( VscrnMoveScrollTop(vmode, VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) < 0 ) {
-        LONG oldscrolltop = VscrnGetScrollTop(vmode);
-        if ( VscrnSetScrollTop(vmode, VscrnGetTop(vmode)) < 0 )
+    if ( VscrnMoveScrollTopEx(vmode, VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0), FALSE) < 0 ) {
+        LONG oldscrolltop = VscrnGetScrollTopEx(vmode, FALSE);
+        if ( VscrnSetScrollTopEx(vmode, VscrnGetTopEx(vmode,FALSE), FALSE) < 0 )
             bleep(BP_WARN);
-        else if ( oldscrolltop != VscrnGetScrollTop(vmode) )
+        else if ( oldscrolltop != VscrnGetScrollTopEx(vmode, FALSE) )
             vscrn[vmode].cursor.y +=
-            (VscrnGetHeight(vmode) - (tt_status[vmode]?1:0)
+            (VscrnGetHeightEx(vmode,FALSE) - (tt_status[vmode]?1:0)
               - (vscrn[vmode].scrolltop - oldscrolltop)
               + vscrn[vmode].linecount) % vscrn[vmode].linecount ;
-        else vscrn[vmode].cursor.y = VscrnGetHeight(vmode)
+        else vscrn[vmode].cursor.y = VscrnGetHeightEx(vmode,FALSE)
             -(tt_status[vmode]?1:0)-1 /* zero based */ ;
         }
 }
@@ -1189,7 +1189,7 @@ void markdownhalfscreen(BYTE vmode) {
      * it works.
      */
 
-    int lines = VscrnGetHeight(vmode) / 2;
+    int lines = VscrnGetHeightEx(vmode,FALSE) / 2;
     for (i = 0; i < lines; i++) {
         markdownone(vmode);
     }
@@ -1199,15 +1199,15 @@ void
 markupscreen( BYTE vmode )
 {
     int count = 0 ;
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetBegin(vmode) ) {
+        curline != VscrnGetBeginEx(vmode,FALSE) ) {
         if ( vscrn[vmode].markbot == curline &&
              vscrn[vmode].marktop != vscrn[vmode].markbot &&
             vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
-            while ( count < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) && ( vscrn[vmode].markbot >
+            while ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0) && ( vscrn[vmode].markbot >
                 ( vscrn[vmode].marktop + 1 + vscrn[vmode].linecount)%vscrn[vmode].linecount ) ) {
                 count++ ;
                 VscrnUnmark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
@@ -1218,7 +1218,7 @@ markupscreen( BYTE vmode )
                 }
             }
 
-        if ( count < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)
+        if ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)
              && vscrn[vmode].markbot ==
             (vscrn[vmode].marktop+1+vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
             count++ ;
@@ -1234,7 +1234,7 @@ markupscreen( BYTE vmode )
                 }
             }
 
-        if ( count < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) &&
+        if ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0) &&
             vscrn[vmode].marktop == vscrn[vmode].markbot ) {
             count++ ;
             if ( vscrn[vmode].cursor.x == vscrn[vmode].lines[vscrn[vmode].marktop].markend ) {
@@ -1247,7 +1247,7 @@ markupscreen( BYTE vmode )
                 MAXTERMCOL ) ;
             }
 
-        while ( count < VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)
+        while ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)
                 && vscrn[vmode].marktop != vscrn[vmode].beg ) {
             count++ ;
             VscrnMark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].cursor.x );
@@ -1257,11 +1257,11 @@ markupscreen( BYTE vmode )
             }
         }
 
-    if ( VscrnMoveScrollTop(vmode,-(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))) < 0 ) {
-        LONG oldscrolltop = VscrnGetScrollTop(vmode);
-        if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode)) < 0 )
+    if ( VscrnMoveScrollTopEx(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)),FALSE) < 0 ) {
+        LONG oldscrolltop = VscrnGetScrollTopEx(vmode, FALSE);
+        if ( VscrnSetScrollTopEx(vmode,VscrnGetBeginEx(vmode,FALSE),FALSE) < 0 )
             bleep(BP_WARN);
-        else if ( oldscrolltop != VscrnGetScrollTop(vmode) )
+        else if ( oldscrolltop != VscrnGetScrollTopEx(vmode, FALSE) )
             vscrn[vmode].cursor.y -=
             (oldscrolltop - vscrn[vmode].scrolltop + vscrn[vmode].linecount) % vscrn[vmode].linecount ;
         else vscrn[vmode].cursor.y = 0 ;
@@ -1278,7 +1278,7 @@ markuphalfscreen( BYTE vmode ) {
      * it works.
      */
 
-    int lines = VscrnGetHeight(vmode) / 2;
+    int lines = VscrnGetHeightEx(vmode,FALSE) / 2;
     for (i = 0; i < lines; i++) {
         markupone(vmode);
     }
@@ -1288,12 +1288,12 @@ markuphalfscreen( BYTE vmode ) {
 void
 markhomescreen(BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        ( curline != VscrnGetBegin(vmode) ||
-        curline == VscrnGetBegin(vmode) &&
+        ( curline != VscrnGetBeginEx(vmode,FALSE) ||
+        curline == VscrnGetBeginEx(vmode,FALSE) &&
         vscrn[vmode].cursor.x != 0 ) ) {
         if ( vscrn[vmode].markbot == curline &&
             vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
@@ -1343,7 +1343,7 @@ markhomescreen(BYTE vmode )
         }
 
 
-    if ( VscrnSetScrollTop( vmode, VscrnGetBegin(vmode) ) < 0 )
+    if ( VscrnSetScrollTopEx( vmode, VscrnGetBeginEx(vmode,FALSE), FALSE ) < 0 )
         bleep( BP_FAIL ) ;
     else {
         vscrn[vmode].cursor.x = 0 ;
@@ -1354,12 +1354,12 @@ markhomescreen(BYTE vmode )
 void
 markendscreen( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTop(vmode)+vscrn[vmode].cursor.y
+   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
       +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        ( curline != VscrnGetEnd(vmode) ||
-        curline == VscrnGetEnd(vmode) &&
+        ( curline != VscrnGetEndEx(vmode,FALSE) ||
+        curline == VscrnGetEndEx(vmode,FALSE) &&
         vscrn[vmode].cursor.x != VscrnGetWidth(vmode)-1 ) ) {
         if ( vscrn[vmode].marktop == curline &&
             vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
@@ -1409,11 +1409,11 @@ markendscreen( BYTE vmode )
         VscrnMark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
         }
 
-    if ( VscrnSetScrollTop( vmode, VscrnGetTop(vmode) ) < 0 )
+    if ( VscrnSetScrollTopEx( vmode, VscrnGetTopEx(vmode,FALSE), FALSE ) < 0 )
         bleep( BP_FAIL ) ;
     else {
         vscrn[vmode].cursor.x = VscrnGetWidth(vmode)-1 ;
-        vscrn[vmode].cursor.y = VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)-1 ;
+        vscrn[vmode].cursor.y = VscrnGetHeightEx(vmode, FALSE)-(tt_status[vmode]?1:0)-1 ;
         }
 
 }

@@ -2633,11 +2633,11 @@ VscrnMoveTop( BYTE vmode, LONG y )
 /* VscrnMoveScrollTop                                                        */
 /*---------------------------------------------------------------------------*/
 LONG
-VscrnMoveScrollTop( BYTE vmode, LONG y )
+VscrnMoveScrollTopEx( BYTE vmode, LONG y, BOOL orStatusLine )
 {
     LONG newscrolltop, top, beg, end ;
 
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     if (!scrollflag[vmode])
@@ -2658,10 +2658,10 @@ VscrnMoveScrollTop( BYTE vmode, LONG y )
 
     debug(F111,"VscrnMoveScrollTop","newscrolltop",newscrolltop);
     debug(F111,"VscrnMoveScrollTop","end---",
-           end-(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1);
+           end-(VscrnGetHeightEx(vmode,orStatusLine)-(tt_status[vmode]?1:0))+1);
     if ( newscrolltop < beg ||
          newscrolltop > end
-         - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) + 1)
+         - (VscrnGetHeightEx(vmode,orStatusLine)-(tt_status[vmode]?1:0)) + 1)
         return -1 ;
 
     while ( newscrolltop < 0 )
@@ -2671,6 +2671,10 @@ VscrnMoveScrollTop( BYTE vmode, LONG y )
     vscrn[vmode].scrolltop = (newscrolltop)%vscrn[vmode].linecount ;
     ReleaseVscrnMutex( vmode ) ;
     return vscrn[vmode].scrolltop ;
+}
+
+LONG VscrnMoveScrollTop( BYTE vmode, LONG y ) {
+    return VscrnMoveScrollTopEx(vmode, y, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2736,24 +2740,32 @@ VscrnGetLineWidth( BYTE vmode, SHORT y )
 /* VscrnGetTop                                                               */
 /*---------------------------------------------------------------------------*/
 ULONG
-VscrnGetTop( BYTE vmode )
+VscrnGetTopEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     return vscrn[vmode].top ;
+}
+
+ULONG VscrnGetTop( BYTE vmode ) {
+    return VscrnGetTopEx(vmode, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/
 /* VscrnGetScrollTop                                                         */
 /*---------------------------------------------------------------------------*/
 ULONG
-VscrnGetScrollTop( BYTE vmode )
+VscrnGetScrollTopEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine)
         vmode = VSTATUS ;
 
     return vscrn[vmode].scrolltop ;
+}
+
+ULONG VscrnGetScrollTop( BYTE vmode ) {
+    return VscrnGetScrollTopEx(vmode, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2772,24 +2784,34 @@ VscrnGetScrollHorz( BYTE vmode )
 /* VscrnGetBegin                                                             */
 /*---------------------------------------------------------------------------*/
 ULONG
-VscrnGetBegin( BYTE vmode )
+VscrnGetBeginEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     return vscrn[vmode].beg ;
+}
+
+ULONG VscrnGetBegin( BYTE vmode ) {
+    return VscrnGetBeginEx(vmode, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/
 /* VscrnGetEnd                                                               */
 /*---------------------------------------------------------------------------*/
 ULONG
-VscrnGetEnd( BYTE vmode )
+VscrnGetEndEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     return vscrn[vmode].end ;
+}
+
+ULONG
+VscrnGetEnd( BYTE vmode )
+{
+    return VscrnGetEndEx(vmode, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2814,9 +2836,9 @@ VscrnSetTop( BYTE vmode, LONG y )
 /* VscrnSetScrollTop                                                         */
 /*---------------------------------------------------------------------------*/
 LONG
-VscrnSetScrollTop( BYTE vmode, LONG y )
+VscrnSetScrollTopEx( BYTE vmode, LONG y, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine)
         vmode = VSTATUS ;
 
     while ( y < 0 )
@@ -2825,6 +2847,10 @@ VscrnSetScrollTop( BYTE vmode, LONG y )
     vscrn[vmode].scrolltop = y%vscrn[vmode].linecount ;
     ReleaseVscrnMutex( vmode );
     return vscrn[vmode].scrolltop ;
+}
+
+LONG VscrnSetScrollTop( BYTE vmode, LONG y ) {
+    return VscrnSetScrollTopEx(vmode, y, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2918,12 +2944,17 @@ VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y )
 /* VscrnGetCurPos                                                            */
 /*---------------------------------------------------------------------------*/
 position *
-VscrnGetCurPos( BYTE vmode )
+VscrnGetCurPosEx( BYTE vmode, BOOL orStatusLine )
 {
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     return &vscrn[vmode].cursor ;
+}
+
+position *
+VscrnGetCurPos( BYTE vmode ) {
+    return VscrnGetCurPosEx(vmode, TRUE);
 }
 
 
@@ -3313,8 +3344,9 @@ VscrnMark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
     if ( xbeg < 0 || xend < 0 )
         return ;
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     if ( vscrn[vmode].lines == NULL )
         return;
@@ -3386,8 +3418,9 @@ VscrnUnmark( BYTE vmode, LONG y, SHORT xbeg, SHORT xend )
     if ( xbeg < 0 || xend < 0 )
         return ;
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     if ( vscrn[vmode].lines == NULL )
         return;
@@ -3456,8 +3489,9 @@ VscrnUnmarkAll( BYTE vmode )
 {
     long y ;
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     if ( vscrn[vmode].lines == NULL )
         return;
@@ -3491,8 +3525,9 @@ VscrnIsLineMarked( BYTE vmode, LONG y )
 {
     BOOL rc = FALSE ;
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     if ( vscrn[vmode].lines == NULL )
         return rc;
@@ -3521,8 +3556,9 @@ VscrnIsMarked( BYTE vmode, LONG y, SHORT x )
 {
     BOOL rc = FALSE ;
 
+    /* No marking on the status line, even if it is host-writable
     if ( vmode == VTERM && decsasd == SASD_STATUS )
-        vmode = VSTATUS ;
+        vmode = VSTATUS ; */
 
     if ( vscrn[vmode].lines == NULL )
         return rc;
