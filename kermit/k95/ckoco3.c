@@ -9991,6 +9991,9 @@ dokcompose( int mode, int ucs2 )
     int i;
     USHORT x[4]={SP,SP,SP,SP}, c=0;
     con_event evt;
+#ifdef KUI
+    int term_status_backup = tt_status[vmode];
+#endif /* KUI */
 
     if (txrinfo[GL->designation]->family != AL_ROMAN ||
          txrinfo[GR->designation]->family != AL_ROMAN ) {
@@ -9998,6 +10001,10 @@ dokcompose( int mode, int ucs2 )
         goto compose_exit;
     }
     save_status_line();
+    decssdt_override=TRUE; /* Force rendering of SSDT_INDICATOR temporarily */
+#ifdef KUI
+    settermstatus(TRUE);   /* Force the status line on if it isn't already */
+#endif /* KUI */
     escapestatus[mode] = TRUE ;
     strcpy(exittext,"Cancel: Space"); /* Make special one */
     if (vik.help > 255 && keyname(vik.help))
@@ -10111,6 +10118,10 @@ dokcompose( int mode, int ucs2 )
     msleep(333);                /* Some time to look at minibuffer */
 
   compose_exit:                 /* Common exit point */
+#ifdef KUI
+    settermstatus(term_status_backup);  /* Restore previous setting */
+#endif /* KUI */
+    decssdt_override=FALSE;           /* Done with temporarily SSDT_INDICATOR */
     restore_status_line();      /* Restore status line */
     escapestatus[mode] = FALSE ;
 }
