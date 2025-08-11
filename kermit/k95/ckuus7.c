@@ -1418,6 +1418,7 @@ int tt_ctstmo = 15;                     /* Terminal transmit-timeout */
 int tt_codepage = -1;                   /* Terminal code-page */
 int tt_update = 100;                    /* Terminal screen-update interval */
 int tt_updmode = TTU_FAST;              /* Terminal screen-update mode FAST */
+extern int decssdt;
 extern int updmode;
 #ifndef KUI
 int tt_status[VNUM] = {1,1,0,0};        /* Terminal status line displayed */
@@ -5563,6 +5564,14 @@ settrm() {
                 }
               tt_status_usr[VTERM] = tt_status[VTERM] = y;
               if (y) {
+                    /* If the status line is turned off before a connection is
+                     * made (or the terminal reset), the status line type gets
+                     * set to blank. If we don't change the type here, then it
+                     * gets turned on but left blank so there is just a black
+                     * line at the bottom of the screen showing nothing. */
+                    if (decssdt == SSDT_BLANK) {
+                        decssdt = SSDT_INDICATOR;
+                    }
                     tt_szchng[VTERM] = 2;
                     tt_rows[VTERM]--;
                     VscrnInit(VTERM);  /* Height set here */

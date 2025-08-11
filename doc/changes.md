@@ -316,6 +316,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Indicator status line is now shown during scrollback for host-writable status line
  - The status line is now temporarily shown by enlarging the K95G window when 
    searching or using bookmarks if it is currently off. 
+ - Fixed turning the status line on after making a connection (or resetting the
+   terminal) giving a black empty status line rather than the indicator status
+   line you were likely. This issue was particularly noticeable with the linux
+   terminal type which has the status line off by default.
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
