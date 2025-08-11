@@ -355,7 +355,7 @@ BOOL IKTerm::getDrawInfo()
          vnum != VTERM && tt_status[vnum] || decssdt_override)
     {
         if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
-                  && !decssdt_override) {
+                  && !decssdt_override && !scrollflag[vnum]) {
             line = &vscrn[VSTATUS].lines[0] ;
             for ( x = 0 ; x < xs ; x++ ) {
                 textBuffer[c+x] = line->cells[x].c;

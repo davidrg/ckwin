@@ -4558,7 +4558,7 @@ TermScrnUpd( void * threadinfo)
              avm != VTERM && tt_status[avm] /* TODO || decssdt_override */ )
         {                    /* TODO: when we sort out terminal resizing on modern windows */
             if ( avm == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[VTERM] == 1
-                    && !decssdt_override) {
+                    && !decssdt_override && !scrollflag[VTERM]) {
                 line = &vscrn[VSTATUS].lines[0] ;
                 if ( line != NULL )
                 for ( x = 0 ; x < xs ; x++ ) {
