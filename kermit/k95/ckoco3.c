@@ -514,6 +514,7 @@ bool     decnrcm = FALSE ;              /* National Replacement Charset mode */
 int      decnrcm_usr = FALSE;           /* NRC mode - user default */
 bool     decsasd = SASD_TERMINAL ;      /* Active Status Display */
 int      decssdt = SSDT_INDICATOR ;     /* Status Display Type */
+bool     decssdt_override = FALSE;      /* Render SSDT_INDICATOR regardless of decssdt */
 bool     deckbum = FALSE ;              /* Keyboard (Typewriter/DP) */
 bool     decsace = FALSE;               /* DECSACE */
 int      savdecbkm = 0 ;                /* User default Backspace Mode */
@@ -9348,8 +9349,15 @@ bookmarkset( int vmode )
     int mark = 0 ;
     CHAR x1;
     con_event evt ;
+#ifdef KUI
+    int term_status_backup = tt_status[VTERM];
+#endif /* KUI */
 
     save_status_line();
+    decssdt_override=TRUE; /* Force rendering of SSDT_INDICATOR temporarily */
+#ifdef KUI
+    settermstatus(TRUE);   /* Force the status line on if it isn't already */
+#endif /* KUI */
     escapestatus[vmode] = TRUE ;
     strcpy(exittext,"Cancel: Space"); /* Make special one */
     strcpy(usertext," SET MARK: [ ]"); /* with mini-echo-buffer */
@@ -9400,10 +9408,14 @@ bookmarkset( int vmode )
     mark = x1 - '0' ;
     VscrnSetBookmark( vmode, mark,
                       (tt_roll[vmode] && scrollflag[vmode]) ?
-                      VscrnGetScrollTop(vmode) : VscrnGetTop(vmode) ) ;
+                      VscrnGetScrollTopEx(vmode,FALSE) : VscrnGetTopEx(vmode,FALSE) ) ;
 
   bookmark_exit:                        /* Common exit point */
     escapestatus[vmode] = FALSE ;
+#ifdef KUI
+    settermstatus(term_status_backup);  /* Restore previous setting */
+#endif /* KUI */
+    decssdt_override=FALSE;           /* Done with temporarily SSDT_INDICATOR */
     restore_status_line();              /* Restore status line */
     return;
 }
@@ -9428,6 +9440,7 @@ bookmarkjump( int vmode )
     con_event evt ;
 
     save_status_line();
+    decssdt_override=TRUE; /* Force rendering of SSDT_INDICATOR temporarily */
     escapestatus[vmode] = TRUE ;
     strcpy(exittext,"Cancel: Space"); /* Make special one */
     strcpy(usertext," GO MARK: [ ]"); /* with mini-echo-buffer */
@@ -9485,7 +9498,7 @@ bookmarkjump( int vmode )
     }
 
     if (!tt_roll[vmode]) {
-        if ( VscrnSetTop(vmode, bookmark) < 0 )
+        if ( VscrnSetTopEx(vmode, bookmark, FALSE) < 0 )
             bleep(BP_WARN) ;
     }
     else {
@@ -9494,6 +9507,7 @@ bookmarkjump( int vmode )
     }
 
   bookmark_exit:                        /* Common exit point */
+    decssdt_override=FALSE;           /* Done with temporarily SSDT_INDICATOR */
     restore_status_line();              /* Restore status line */
     escapestatus[vmode] = FALSE ;
     return;
@@ -9510,8 +9524,8 @@ gotojump( int vmode )
    escapestatus[vmode] = TRUE ;
 
    do {
-      maxval = (VscrnGetEnd(vmode) - VscrnGetBegin(vmode) - VscrnGetHeight(vmode)
-                 + VscrnGetBufferSize(vmode))%VscrnGetBufferSize(vmode) ;
+      maxval = (VscrnGetEndEx(vmode, FALSE) - VscrnGetBeginEx(vmode, FALSE) - VscrnGetHeightEx(vmode, FALSE)
+                 + VscrnGetBufferSizeEx(vmode, FALSE))%VscrnGetBufferSizeEx(vmode, FALSE) ;
 
       if ( negative && line < -maxval )
       {
@@ -9597,22 +9611,22 @@ gotojump( int vmode )
     if ( line <= 0 )
     {
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTop(vmode, VscrnGetEnd(vmode)-VscrnGetHeight(vmode)+line) < 0 )
+            if ( VscrnSetTopEx(vmode, VscrnGetEndEx(vmode, FALSE)-VscrnGetHeightEx(vmode,FALSE)+line, FALSE) < 0 )
                 bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnSetScrollTop(vmode, VscrnGetEnd(vmode)-VscrnGetHeight(vmode)+line) < 0 )
+            if ( VscrnSetScrollTop(vmode, VscrnGetEndEx(vmode, FALSE)-VscrnGetHeightEx(vmode, FALSE)+line) < 0 )
                 bleep(BP_WARN);
         }
     }
     else
     {
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTop(vmode, VscrnGetBegin(vmode)+line-1) < 0 )
+            if ( VscrnSetTopEx(vmode, VscrnGetBeginEx(vmode,FALSE)+line-1, FALSE) < 0 )
                 bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnSetScrollTop(vmode, VscrnGetBegin(vmode)+line-1) < 0 )
+            if ( VscrnSetScrollTop(vmode, VscrnGetBeginEx(vmode,FALSE)+line-1) < 0 )
                 bleep(BP_WARN);
         }
     }
@@ -11815,37 +11829,37 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 
     case K_HOMSCN:              /* Scrolling UP (backwards) ... */
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTop(vmode, VscrnGetBegin(vmode)) < 0 )
+            if ( VscrnSetTopEx(vmode, VscrnGetBeginEx(vmode,FALSE), FALSE) < 0 )
               bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode)) < 0 )
+            if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
               bleep(BP_WARN);
         }
         break;
 
     case K_UPSCN:
         if (!tt_roll[vmode]) {
-            if ( VscrnMoveTop(vmode,-(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))) < 0 )
-              if ( VscrnSetTop(vmode,VscrnGetBegin(vmode)) < 0 )
+            if ( VscrnMoveTop(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))) < 0 )
+              if ( VscrnSetTopEx(vmode,VscrnGetBegin(vmode),FALSE) < 0 )
                 bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnMoveScrollTop(vmode,-(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))) < 0 )
-              if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode)) < 0 )
+            if ( VscrnMoveScrollTop(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))) < 0 )
+              if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
                 bleep(BP_WARN);
         }
         break;
 
     case K_UPHSCN:
         if (!tt_roll[vmode]) {
-            if ( VscrnMoveTop(vmode,-((VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2)) < 0 )
-                if ( VscrnSetTop(vmode,VscrnGetBegin(vmode)) < 0 )
+            if ( VscrnMoveTop(vmode,-((VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2)) < 0 )
+                if ( VscrnSetTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
                     bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnMoveScrollTop(vmode,-((VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2)) < 0 )
-                if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode)) < 0 )
+            if ( VscrnMoveScrollTop(vmode,-((VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2)) < 0 )
+                if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
                     bleep(BP_WARN);
         }
         break;
@@ -11868,25 +11882,25 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
                 bleep(BP_WARN);
         }
         else {
-            if ( VscrnMoveScrollTop(vmode,VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) < 0 )
-              if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode)
-                                      - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1) < 0 )
+            if ( VscrnMoveScrollTop(vmode,VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)) < 0 )
+              if ( VscrnSetScrollTop(vmode,VscrnGetEndEx(vmode,FALSE)
+                                      - (VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))+1) < 0 )
                 bleep(BP_WARN);
         }
         break;
 
     case K_DNHSCN:                       /* Go down half a screen */
         if (!tt_roll[vmode]) {
-            if ( VscrnMoveTop(vmode,(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2) < 0 ) {
-                if ( VscrnSetTop(vmode,VscrnGetEnd(vmode) - VscrnGetHeight(vmode)+1) < 0 ) {
+            if ( VscrnMoveTop(vmode,(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2) < 0 ) {
+                if ( VscrnSetTopEx(vmode,VscrnGetEndEx(vmode,FALSE) - VscrnGetHeightEx(vmode,FALSE)+1,FALSE) < 0 ) {
                     bleep(BP_WARN);
                 }
             }
         }
         else {
-            if ( VscrnMoveScrollTop(vmode,(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))/2) < 0 ) {
-                if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode)
-                                        - (VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))+1) < 0 ) {
+            if ( VscrnMoveScrollTop(vmode,(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2) < 0 ) {
+                if ( VscrnSetScrollTop(vmode,VscrnGetEndEx(vmode,FALSE)
+                                        - (VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))+1) < 0 ) {
                     bleep(BP_WARN);
                 }
             }
@@ -11906,11 +11920,11 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 
     case K_ENDSCN:              /* Scroll to bottom */
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTop(vmode,VscrnGetEnd(vmode) - VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) + 1) < 0 )
+            if ( VscrnSetTopEx(vmode,VscrnGetEndEx(vmode,FALSE) - VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0) + 1,FALSE) < 0 )
               bleep(BP_WARN);
         }
         else {
-            if ( VscrnSetScrollTop(vmode,VscrnGetTop(vmode)) < 0 )
+            if ( VscrnSetScrollTop(vmode,VscrnGetTopEx(vmode,FALSE)) < 0 )
               bleep(BP_WARN);
         }
         break;
@@ -11918,7 +11932,7 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
     case K_DUMP: {              /* Print/Dump current screen */
         int x;
         x = xprintff; xprintff = 0;
-        prtscreen(vmode,1,VscrnGetHeight(vmode)-(tt_status[vmode]?1:0));
+        prtscreen(vmode,1,VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0));
         xprintff = x;
         break;
     }
@@ -11964,7 +11978,7 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 
     } /* switch (k) */
 
-    scrollflag[vmode] = tt_roll[vmode] && ( VscrnGetTop(vmode) != VscrnGetScrollTop(vmode) ) ;
+    scrollflag[vmode] = tt_roll[vmode] && ( VscrnGetTopEx(vmode,FALSE) != VscrnGetScrollTopEx(vmode,FALSE) ) ;
 
     if ( !scrollstatus[vmode] ) {
         scrollstatus[vmode] = TRUE ;
@@ -11978,7 +11992,7 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 */
     if ( !scrollflag[vmode] ) {
         if (tt_roll[vmode] ||
-             (VscrnGetTop(vmode)+VscrnGetHeight(vmode)-(tt_status[vmode]?2:1))%VscrnGetBufferSize(vmode) == VscrnGetEnd(vmode))
+             (VscrnGetTopEx(vmode,FALSE)+VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?2:1))%VscrnGetBufferSizeEx(vmode,FALSE) == VscrnGetEndEx(vmode,FALSE))
         {
             scrollstatus[vmode] = FALSE ;
             ipadl25();                  /* Put back normal status line */
@@ -15914,7 +15928,9 @@ settermstatus( int y )
 	 * be minimized". Changing the number of terminal lines requires doing
 	 * VScrnInit() which wipes the screen - certainly not minimal, and it
 	 * breaks terminfo applications that want to turn on the status line. So
-	 * instead for the K95 terminal type we'll do as the VT520 does - show
+	 * instead for the K95 and VT520 terminal types, as well as when we're
+     * temporarily forcing the status line to INDICATOR for input (eg search,
+     * compose, and set bookmark), we'll do as the VT520  does - show
 	 * and hide the status line while leaving the number of terminal lines
 	 * alone. The VT520 reserves space at the bottom of the screen for the
 	 * status line which is simply blank if its off. Instead we'll grow and
@@ -15922,13 +15938,13 @@ settermstatus( int y )
 	 *
 	 * This behaviour should *probably* apply to the VT320 and VT420, but
 	 * as I don't have either of them I can't confirm they behave the same
-	 * as the VT520. So for now this is for the K95 terminal type only, and
-	 * if/when a VT520 terminal type appears it will probably be for that
-	 * too. For everything else, well leave the window size alone and instead
+	 * as the VT520. So for now this is for the K95 and VT520 terminal types
+     * only, and if/when I get a VT320 and VT420 it may be for those too.
+     * For everything else, well leave the window size alone and instead
 	 * add or remove one line from the terminal as K95 has always done in the
 	 * past */
 
-	if (ISK95(tt_type_mode)) {
+	if (ISK95(tt_type_mode) || ISVT520(tt_type_mode) || decssdt_override) {
 		/* Change screen height only - not terminal height */
 		tt_status[VTERM] = y;
 		VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );

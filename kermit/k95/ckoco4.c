@@ -984,7 +984,7 @@ markdownone( BYTE vmode )
     if ( markmodeflag[vmode] == inmarkmode ||
         markmodeflag[vmode] == marking && curline != VscrnGetEndEx(vmode,FALSE) ) {
         if ( vscrn[vmode].cursor.y == VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?2:1) ) {
-            if ( VscrnMoveScrollTopEx(vmode,1,FALSE) < 0 )
+            if ( VscrnMoveScrollTop(vmode,1) < 0 )
                 bleep(BP_FAIL);
             }
         else
@@ -1048,7 +1048,7 @@ markupone( BYTE vmode )
         markmodeflag[vmode] == marking &&
         curline != VscrnGetBeginEx(vmode, FALSE) ) {
         if ( vscrn[vmode].cursor.y == 0 ) {
-            if ( VscrnMoveScrollTopEx(vmode,-1,FALSE) < 0 )
+            if ( VscrnMoveScrollTop(vmode,-1) < 0 )
                 bleep(BP_FAIL);
             }
         else
@@ -1166,9 +1166,9 @@ markdownscreen( BYTE vmode )
             }
         }
 
-    if ( VscrnMoveScrollTopEx(vmode, VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0), FALSE) < 0 ) {
+    if ( VscrnMoveScrollTop(vmode, VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)) < 0 ) {
         LONG oldscrolltop = VscrnGetScrollTopEx(vmode, FALSE);
-        if ( VscrnSetScrollTopEx(vmode, VscrnGetTopEx(vmode,FALSE), FALSE) < 0 )
+        if ( VscrnSetScrollTop(vmode, VscrnGetTopEx(vmode,FALSE)) < 0 )
             bleep(BP_WARN);
         else if ( oldscrolltop != VscrnGetScrollTopEx(vmode, FALSE) )
             vscrn[vmode].cursor.y +=
@@ -1257,9 +1257,9 @@ markupscreen( BYTE vmode )
             }
         }
 
-    if ( VscrnMoveScrollTopEx(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)),FALSE) < 0 ) {
+    if ( VscrnMoveScrollTop(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))) < 0 ) {
         LONG oldscrolltop = VscrnGetScrollTopEx(vmode, FALSE);
-        if ( VscrnSetScrollTopEx(vmode,VscrnGetBeginEx(vmode,FALSE),FALSE) < 0 )
+        if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
             bleep(BP_WARN);
         else if ( oldscrolltop != VscrnGetScrollTopEx(vmode, FALSE) )
             vscrn[vmode].cursor.y -=
@@ -1343,7 +1343,7 @@ markhomescreen(BYTE vmode )
         }
 
 
-    if ( VscrnSetScrollTopEx( vmode, VscrnGetBeginEx(vmode,FALSE), FALSE ) < 0 )
+    if ( VscrnSetScrollTop( vmode, VscrnGetBeginEx(vmode,FALSE) ) < 0 )
         bleep( BP_FAIL ) ;
     else {
         vscrn[vmode].cursor.x = 0 ;
@@ -1409,7 +1409,7 @@ markendscreen( BYTE vmode )
         VscrnMark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
         }
 
-    if ( VscrnSetScrollTopEx( vmode, VscrnGetTopEx(vmode,FALSE), FALSE ) < 0 )
+    if ( VscrnSetScrollTop( vmode, VscrnGetTopEx(vmode,FALSE) ) < 0 )
         bleep( BP_FAIL ) ;
     else {
         vscrn[vmode].cursor.x = VscrnGetWidth(vmode)-1 ;

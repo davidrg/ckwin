@@ -12,6 +12,7 @@ extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor, scrninitialized[], ttyfd, viewonly, carrier, network,
            tt_scrsize[], tt_modechg, pheight, pwidth, tt_status[], screenon, 
            decssdt, tt_url_hilite, tt_url_hilite_attr, tt_type_mode, ttnum;
+extern bool decssdt_override;
 extern TID tidTermScrnUpd ;
 extern cell_video_attr_t     colorstatus;
 extern cell_video_attr_t     colorselect;
@@ -351,9 +352,10 @@ BOOL IKTerm::getDrawInfo()
 
     /* Status Line Display */
     if ( vnum == VTERM && tt_status[vnum] && decssdt != SSDT_BLANK ||
-         vnum != VTERM && tt_status[vnum])
+         vnum != VTERM && tt_status[vnum] || decssdt_override)
     {
-        if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1) {
+        if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
+                  && !decssdt_override) {
             line = &vscrn[VSTATUS].lines[0] ;
             for ( x = 0 ; x < xs ; x++ ) {
                 textBuffer[c+x] = line->cells[x].c;
