@@ -2925,18 +2925,18 @@ ULONG VscrnGetBufferSize( BYTE vmode ) {
 /* VscrnSetCurPos                                                            */
 /*---------------------------------------------------------------------------*/
 position *
-VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y )
+VscrnSetCurPosEx( BYTE vmode, SHORT x, SHORT y, BOOL orStatusLine )
 {
 #ifdef KUI_COMMENT
     char buf[30];
 #endif /* KUI */
 
-    if ( vmode == VTERM && decsasd == SASD_STATUS )
+    if ( vmode == VTERM && decsasd == SASD_STATUS && orStatusLine )
         vmode = VSTATUS ;
 
     vscrn[vmode].cursor.x = x%VscrnGetWidth(vmode)  ;
     vscrn[vmode].cursor.y = y
-      %(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) ;
+      %(VscrnGetHeightEx(vmode, orStatusLine)-(tt_status[vmode]?1:0)) ;
 
 #ifdef KUI_COMMENT
     ckmakmsg(buf,30,ckitoa(vscrn[vmode].cursor.x+1),", ",
@@ -2945,6 +2945,11 @@ VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y )
 #endif /* KUI */
 
     return &vscrn[vmode].cursor ;
+}
+
+position *
+VscrnSetCurPos( BYTE vmode, SHORT x, SHORT y ) {
+    return VscrnSetCurPosEx(vmode, x, y, TRUE);
 }
 
 /*---------------------------------------------------------------------------*/

@@ -9350,7 +9350,7 @@ bookmarkset( int vmode )
     CHAR x1;
     con_event evt ;
 #ifdef KUI
-    int term_status_backup = tt_status[VTERM];
+    int term_status_backup = tt_status[vmode];
 #endif /* KUI */
 
     save_status_line();
@@ -9654,9 +9654,16 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
    int found = 0 ;
    static int len = 0 ;
    static int row=-1, col=-1 ;
+#ifdef KUI
+    int term_status_backup = tt_status[vmode];
+#endif /* KUI */
 
     if ( prompt )
     {
+        decssdt_override=TRUE; /* Force rendering of SSDT_INDICATOR temporarily */
+#ifdef KUI
+        settermstatus(TRUE);   /* Force the status line on if it isn't already */
+#endif /* KUI */
         save_status_line();
         escapestatus[vmode] = TRUE ;
 
@@ -9738,12 +9745,16 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
         } while ( TRUE );
 
         msleep(500);      /* let the user see it for a bit */
+#ifdef KUI
+        settermstatus(term_status_backup);  /* Restore previous setting */
+#endif /* KUI */
+        decssdt_override=FALSE;         /* Done with temporarily SSDT_INDICATOR */
         restore_status_line();          /* Restore status line */
         escapestatus[vmode] = FALSE ;
 
-        col = VscrnGetCurPos(vmode)->x ;
-        row = (( markmodeflag[vmode] ? VscrnGetTop(vmode) : VscrnGetScrollTop(vmode) )
-                + VscrnGetCurPos(vmode)->y)%VscrnGetBufferSize(vmode) ;
+        col = VscrnGetCurPosEx(vmode,FALSE)->x ;
+        row = (( markmodeflag[vmode] ? VscrnGetTopEx(vmode,FALSE) : VscrnGetScrollTopEx(vmode,FALSE) )
+                + VscrnGetCurPosEx(vmode,FALSE)->y)%VscrnGetBufferSizeEx(vmode,FALSE) ;
     }
     else
     {
@@ -9759,7 +9770,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             col++ ;
             if ( col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width )
             {
-                if ( row != VscrnGetEnd(vmode) )
+                if ( row != VscrnGetEndEx(vmode,FALSE) )
                 {
                     col = 0 ;
                     row++ ;
@@ -9770,7 +9781,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                     goto search_exit;
                 }
             }
-            if ( row >= VscrnGetBufferSize( vmode ) )
+            if ( row >= VscrnGetBufferSizeEx( vmode, FALSE ) )
                 row = 0 ;
         }
         else
@@ -9778,7 +9789,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             col-- ;
             if ( col < 0 )
             {
-                if ( row != VscrnGetBegin(vmode) )
+                if ( row != VscrnGetBeginEx(vmode, FALSE) )
                 {
                     row-- ;
                     col = vscrn[vmode].lines[row%vscrn[vmode].linecount].width - 1 ;
@@ -9790,7 +9801,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                 }
             }
             if ( row < 0 )
-                row = VscrnGetBufferSize(vmode) -1 ;
+                row = VscrnGetBufferSizeEx(vmode,FALSE) -1 ;
         }
     }
 
@@ -9888,8 +9899,8 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
 
             /* check to see if we hit the begin or end of vscrn */
-            if ( forward && row == VscrnGetEnd(vmode) && col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width-1 ||
-                 !forward && row == VscrnGetBegin(vmode) && col == 0 )
+            if ( forward && row == VscrnGetEndEx(vmode,FALSE) && col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width-1 ||
+                 !forward && row == VscrnGetBeginEx(vmode,FALSE) && col == 0 )
                 break;    /* search string not found */
 
             /* advance the cursor */
@@ -9898,7 +9909,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                 col++ ;
                 if ( col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width )
                 {
-                    if ( row != VscrnGetEnd(vmode) )
+                    if ( row != VscrnGetEndEx(vmode,FALSE) )
                     {
                         col = 0 ;
                         row++ ;
@@ -9909,7 +9920,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                         break;
                     }
                 }
-                if ( row >= VscrnGetBufferSize( vmode ) )
+                if ( row >= VscrnGetBufferSizeEx( vmode, FALSE ) )
                     row = 0 ;
             }
             else
@@ -9917,7 +9928,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                 col-- ;
                 if ( col < 0 )
                 {
-                    if ( row != VscrnGetBegin(vmode) )
+                    if ( row != VscrnGetBeginEx(vmode,FALSE) )
                     {
                         row-- ;
                         col = vscrn[vmode].lines[row%vscrn[vmode].linecount].width - 1 ;
@@ -9929,7 +9940,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                     }
                 }
                 if ( row < 0 )
-                    row = VscrnGetBufferSize(vmode) -1 ;
+                    row = VscrnGetBufferSizeEx(vmode,FALSE) -1 ;
             }
         }
 
@@ -9940,26 +9951,27 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
     /* okay, did we find it?  if so, go there */
     if ( found )
     {
-        if ( row >= VscrnGetTop(vmode) && row <= VscrnGetEnd(vmode) ||
-             row <= VscrnGetEnd(vmode)
-             && (row+VscrnGetBufferSize(vmode)) > VscrnGetTop(vmode)
-             && VscrnGetEnd(vmode) < VscrnGetTop(vmode)
+        if ( row >= VscrnGetTopEx(vmode,FALSE) && row <= VscrnGetEndEx(vmode,FALSE) ||
+             row <= VscrnGetEndEx(vmode,FALSE)
+             && (row+VscrnGetBufferSizeEx(vmode,FALSE)) > VscrnGetTopEx(vmode,FALSE)
+             && VscrnGetEndEx(vmode,FALSE) < VscrnGetTopEx(vmode,FALSE)
              )
         {
             if ( tt_roll[vmode] )
-                VscrnSetScrollTop(vmode, VscrnGetTop(vmode) ) ;
-            VscrnSetCurPos( vmode, col,
-                            (row - VscrnGetTop(vmode) +
-                              VscrnGetHeight(vmode)-(tt_status[vmode]?1:0))
-                            %(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) ) ;
+                VscrnSetScrollTop(vmode, VscrnGetTopEx(vmode,FALSE) ) ;
+            VscrnSetCurPosEx( vmode, col,
+                            (row - VscrnGetTopEx(vmode,FALSE) +
+                              VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))
+                            %(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)),
+                            FALSE ) ;
         }
         else
         {
             if(tt_roll[vmode])
                 VscrnSetScrollTop( vmode, row ) ;
             else
-                VscrnSetTop( vmode, row ) ;
-            VscrnSetCurPos( vmode, col, 0 ) ;
+                VscrnSetTopEx( vmode, row, FALSE ) ;
+            VscrnSetCurPosEx( vmode, col, 0, FALSE ) ;
         }
     }
 
@@ -11750,7 +11762,7 @@ markmode( BYTE vmode, int k )
         scrollflag[vmode] = scrollstate[vmode] ;
         tt_roll[vmode] = rollstate[vmode] ;
 
-        VscrnSetCurPos( vmode, wherex[vmode] -1, wherey[vmode]-1 ) ;
+        VscrnSetCurPosEx( vmode, wherex[vmode] -1, wherey[vmode]-1, FALSE ) ;
 
         /* Restore Macro and KeyMap settings for Arrow keys */
 

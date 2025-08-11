@@ -1005,7 +1005,7 @@ that users of Windows NT 4.0 download and install this and all later fixes.
 <li><tt>[+] (K)</tt> <a href="#b830">830. Switching between command and terminal screens via the keyboard does not update the toolbar button state</a>
 <li><tt>[ ] (M)</tt> <a href="#b831">831. On Windows NT 3.50 for Alpha, K95G causes Windows to crash</a>
 <li><tt>[+] (K)</tt> <a href="#b832">832. K95G crashes on exit if a connection is active and GUI dialogs are off</a>
-<li><tt>[ ] (K)</tt> <a href="#b833">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
+<li><tt>[-] (K)</tt> <a href="#b833">833. Scrollback search input box isn't visible if the terminal status line is turned off</a>
 <li><tt>[+] (K)</tt> <a href="#b834">834. Switching between command and terminal via \Kexit doesn't toggle the toolbar button</a>
 <li><tt>[+] (K)</tt> <a href="#b835">835. The SET HOST command does nothing when the network type is NETBIOS</a>
 <li><tt>[+] (K)</tt> <a href="#b836">836. Canceling an Auto-Download with Ctrl+C causes Kermit to crash or stop responding</a>
@@ -8039,6 +8039,10 @@ Fixed in 3.0
     don't know about it - you hit Alt+Left and nothing visibly changed but your
     keystrokes aren't going anywhere obvious now.
 </p>
+
+<p>This is fixed in the GUI version of k95 v3.0 by temporarily enlarging the
+    window and showing the status line while taking input. The console version
+    still has the invisible search box problem.</p>
 
 <p>This is also logged as
     <a href="https://github.com/davidrg/ckwin/issues/326">Issue #326 on Github</a>

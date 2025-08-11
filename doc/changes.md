@@ -312,7 +312,9 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Fixed mark mode when the cursor is in the status line
    - Fixed setting and going to bookmarks while the cursor is in the status line
    - Fixed viewing the scrollback while the cursor is in the status line
-
+   - Fixed searching the scrollback when the cursor is in the status line
+ - The status line is now temporarily shown by enlarging the K95G window when 
+   searching or using bookmarks if it is currently off. 
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
