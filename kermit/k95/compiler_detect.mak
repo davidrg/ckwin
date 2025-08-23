@@ -250,6 +250,14 @@ TARGET_CPU=AXP
 
 TARGET_CPU=AXP64
 
+!ELSEIF ([cl 2>&1 | findstr /R /C:"Digital.*Alpha" > nul] == 0)
+# Assuming normal 32bit Alpha compiler. Visual C++ 6.0 for Alpha calls itself:
+# Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 12.00.8217
+# While Visual C++ 4.0 for Alpha is:
+# Microsoft (R) & Digital (TM) Alpha C/C++ Optimizing Compiler Version 10.01.AAa
+
+TARGET_CPU=AXP
+
 !ELSEIF ([cl 2>&1 | findstr /C:"for x64" > nul] == 0)
 # We're using the 64bit x86 compiler
 TARGET_CPU = x86-64
