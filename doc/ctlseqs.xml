@@ -1789,7 +1789,7 @@ DECTSR		462
             <ref src="vt420:53"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>
                 Makes an audible bell (<tt>set term bell audible</tt>),
                 or flashes the screen (<tt>set term bell visible</tt>),
@@ -1808,7 +1808,7 @@ DECTSR		462
             <ref src="vt420:53"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>Moves the cursor left 1 column</p>
             <p badges="qnx">
                 If the cursor is already at the start of the line, the cursor
@@ -1847,7 +1847,7 @@ DECTSR		462
             <ref src="vt420:54"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>Carriage Return. Sends the cursor to the start of the line
                 and cancels wrapping</p>
 
@@ -1910,7 +1910,7 @@ DECTSR		462
             <ref src="vt420:53"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>If answerback is enabled (off by default, enabled with
                 <tt>set term answerback on</tt>). By default,
                 the answer back is &quot;K-95&quot; followed by the C-Kermit numeric version
@@ -1931,7 +1931,7 @@ DECTSR		462
             <ref src="vt420:54"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>Treated the same as LF for most emulations.</p>
             <!--- TODO: Except in no-emulation mode - see wrtch -->
 
@@ -1958,7 +1958,7 @@ DECTSR		462
             <ref src="vt420:54"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>If autoscroll is on (<tt>set term autoscroll on</tt>), the cursor is at
                 the bottom margin, and the cursor is not in a protected region
                 the terminal scrolls up one line. Otherwise, the cursor remains at the end
@@ -2008,7 +2008,7 @@ DECTSR		462
             <ref src="vt420:120"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:341"/>
-            <termsupp first="vt132" series="vt" additional="vt220 vt330 vt340 vt420 vt510"/>
+            <termsupp first="vt132" series="vt" additional="vt220 vt330 vt340 vt420 vt510 putty"/>
             <p>
                 Switch to Standard Character set (invoke G0 character set as GL).
             </p>
@@ -2037,7 +2037,7 @@ DECTSR		462
             <ref src="vt420:120"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:341"/>
-            <termsupp first="vt100" series="vt" additional="vt220 vt330 vt340 vt420 vt510"/>
+            <termsupp first="vt100" series="vt" additional="vt220 vt330 vt340 vt420 vt510 putty"/>
             <p>
                 Switch to Alternate Character set (invoke G1 character set as GL)
             </p>
@@ -2064,7 +2064,7 @@ DECTSR		462
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
             <ref src="vt52x:336"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>Horizontal Tab—sends the cursor to the next tabstop</p>
         </section>
         <section id="vt" role="ctlchar" mnemonic="VT" ctlseq="VT" title="Vertical Tab">
@@ -2079,7 +2079,7 @@ DECTSR		462
             <ref src="vt420:54"/>
             <ref src="vt510:chapter4.html#S4.2"/>
             <ref src="vt52x:110"/>
-            <termsupp first="vt100" series="vt" additional="vt330 vt340"/>
+            <termsupp first="vt100" series="vt" additional="vt330 vt340 putty"/>
             <p>Vertical Tab. This is treated the same as LF</p>
 
             <!-- TODO: If ISWYSE, ISTVI or ISHZL and a VT gets into wrtch() then if at
