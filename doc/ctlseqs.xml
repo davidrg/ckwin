@@ -7762,9 +7762,9 @@ DCS $ q 3 , } ST</pre>
                     Disables scheduled updating of the terminal screen from the
                     terminal buffer. While disabled, the terminal screen can
                     still be manually updated via
-                    <a href="#xtwinops-refresh">XTWINOPS Refresh</a>.
-                    Only available on Windows in the GUI version of Kermit 95
-                    (K95G).
+                    <a href="#xtwinops-refresh">XTWINOPS Refresh</a>. Screen
+                    updates are re-enabled with <a href="#esu">ESU</a>. Only
+                    available on Windows in the GUI version of Kermit 95 (K95G).
                 </p>
                 <p>
                     A timeout applies to this mode to prevent a crashed or
@@ -13369,7 +13369,7 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     Refreshes the terminal window from the terminal buffer
                     immediately. Not affected by
-                    <a href="#bsu">Scynrhonized Output Mode</a>. Only available
+                    <a href="#bsu">Synchronized Output Mode</a>. Only available
                     on Windows in the GUI version of Kermit 95 (K95G).
                 </p>
             </section>
