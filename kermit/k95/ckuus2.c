@@ -208,7 +208,7 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 char *newstxt[] = {
 #ifdef OS2
         "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
-        "to Columbia Columbia University's Kermit 95 package."
+        "to Columbia Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
 " ",
