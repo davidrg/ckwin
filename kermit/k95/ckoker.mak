@@ -235,8 +235,14 @@ LINKFLAGS = $(LINKFLAGS) /debugtype:both
 # Vista (you get the "is not a valid win32 application" error). Visual C++ 2012
 # through to 2019 are capable of targeting Windows XP so we set the subsystem
 # version to 5.1 so the generated binaries are compatible.
+!if "$(TARGET_CPU)" == "x86"
 SUBSYSTEM_CONSOLE=console,5.1
 SUBSYSTEM_WIN32=windows,5.1
+!elseif "$(TARGET_CPU)" == "x86-64"
+# AMD64 was first supported in Windows NT 5.2 (Server 2003, XP x64 Edition)
+SUBSYSTEM_CONSOLE=console,5.2
+SUBSYSTEM_WIN32=windows,5.2
+!endif
 !endif  # EndIf MSC_VER >= 170 and MSC_VER <= 192
 
 !if ($(MSC_VER) == 80) && ("$(TARGET_CPU)" == "AXP")
