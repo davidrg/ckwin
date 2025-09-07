@@ -60,6 +60,10 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
+#ifdef COMMIT_SHA
+#define K95_COMMIT_SHA STR(COMMIT_SHA)
+#endif /* COMMIT_SHA */
+
 /* Version number with just the major and minor numbers */
 #define K95_VERSION_MAJ_MIN STR(K95_VERSION_MAJOR) "." STR(K95_VERSION_MINOR)
 #define K95_VERSION_MAJ_MIN_REV K95_VERSION_MAJ_MIN "." STR(K95_VERSION_REVISION)

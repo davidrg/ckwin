@@ -63,6 +63,7 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 
 #ifdef OS2
 #include "ckoetc.h"
+#include "ckover.h"
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO /* Needed for ckocon.h */
@@ -5658,6 +5659,9 @@ shover() {
     printf("\nVersions:\n %s\n",versio);
     printf(" Numeric: %ld\n",vernum);
 #ifdef OS2
+#ifdef K95_COMMIT_SHA
+    printf(" Commit: %s\n", K95_COMMIT_SHA);
+#endif /* K95_COMMIT_SHA */
     printf(" Operating System: %s\n", ckxsystem);
 #else /* OS2 */
     printf(" Built for: %s\n", ckxsys);
