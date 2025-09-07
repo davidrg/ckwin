@@ -1,5 +1,6 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
+#ifndef OS2
 #ifdef COMMENT
 #define EDITDATE  "22 Mar 2025"       /* Last edit date dd mmm yyyy */
 #else
@@ -7,6 +8,7 @@
 #endif  /* COMMENT */
 
 #define EDITNDATE "20250322"          /* Keep them in sync */
+#endif /* OS2 */
 /* Thu Aug  8 12:25:04 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
@@ -52,7 +54,8 @@ char * ck_cryear = "2025"; 		/* C-Kermit copyright year */
 */
 
 #ifdef OS2
-/* Kermit 95 version numbers come from here */
+/* Kermit 95 version numbers come from here as they're needed in a bunch of
+ * different places like resource scripts. */
 #include "ckover.h"
 #endif
 
@@ -78,6 +81,7 @@ char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 
+#ifndef OS2
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
 #else
@@ -85,6 +89,13 @@ char *ck_s_date = EDITDATE;		/* See top */
 
 #endif /* BETADATE */
 char *buildid = EDITNDATE;		/* See top */
+
+#else /* OS2 */
+/* On OS/2 and Windows, these come from ckover.h which contains all
+ * of the version number bits */
+char *ck_s_date = K95_REL_DATE;
+char *buildid = K95_REL_DATE_N;
+#endif /* OS2 */
 
 #ifdef UNIX
 static char sccsid[] = "@(#)C-Kermit 10.0";
