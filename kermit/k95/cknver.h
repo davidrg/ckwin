@@ -16,6 +16,31 @@
 #define APP_VERSION_STR APP_VERSION_MAJ_MIN "." STR(K95_VERSION_REVISION)
 
 
+/* File Flags */
+#ifdef _DEBUG
+#define K95_FF_DEBUG VS_FF_DEBUG
+#else
+#define K95_FF_DEBUG 0
+#endif
+#ifdef DEVBUILD
+#define K95_FF_DEVBUILD VS_FF_PRERELEASE
+#else
+#define K95_FF_DEVBUILD 0
+#endif
+#ifndef K95_COMMIT_SHA
+#define K95_FF_PRIVATEBUILD VS_FF_PRIVATEBUILD
+#define K95_PRIVATEBUILD_INFO "Developer test build (not from release build system)"
+#else
+#define K95_FF_PRIVATEBUILD 0
+#endif
+#ifdef CKB_BUILD_DESC
+#define K95_FF_SPECIALBUILD VS_FF_SPECIALBUILD
+#define K95_SPECIALBUILD_INFO STR(CKB_BUILD_DESC)
+#else
+#define K95_FF_SPECIALBUILD 0
+#endif
+
+
 /*
  * Version numbers used in the Windows Resource File
  */
