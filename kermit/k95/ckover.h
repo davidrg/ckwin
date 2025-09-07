@@ -17,6 +17,8 @@
 /* The test build type and release number, if any */
 #define K95_TEST_TYPE "Beta"
 #define K95_TEST_VER 8
+/* This primarily goes in the windows resource scripts */
+#define K95_VERSION_YEAR "2024"
 
 /*******************************************
  * -> Remember to update the news text (newstxt)
@@ -25,6 +27,8 @@
  *      in ckcmai.c with the release date.
  * -> The edit number should probably be bumped over in ckcmai.c.
  *      This affects C-Kermit too, so it should be done sparingly.
+ * -> Version numbers and dates should be bumped in various cko*.c
+ *      modules where necessary
  ********************************************/
 
 /* Nothing below here should need updating for a release

@@ -6,7 +6,6 @@
 /*
  * Version numbers used in Windows Resource Files
  */
-#define K95_VERSION_YEAR "2024"
 #define K95_VERSION_PRODUCT "Kermit 95"
 #define K95_VERSION_PRODUCT_SHORT "K95"
 

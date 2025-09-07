@@ -1,6 +1,5 @@
 /* ckcmai.c - Main program for C-Kermit plus some miscellaneous functions */
 
-#ifndef OS2
 #ifdef COMMENT
 #define EDITDATE  "22 Mar 2025"       /* Last edit date dd mmm yyyy */
 #else
@@ -8,7 +7,6 @@
 #endif  /* COMMENT */
 
 #define EDITNDATE "20250322"          /* Keep them in sync */
-#endif /* OS2 */
 /* Thu Aug  8 12:25:04 2024 */
 /*
   As of 27 September 2022 BETATEST is defined in ckcdeb.h, not here, 
