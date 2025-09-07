@@ -64,7 +64,9 @@
 
 /* Moved here from ckcmai.c October 2022... REMOVE THIS AFTER BETA TEST! */
 #ifndef BETATEST
+#ifndef OS2
 #define BETATEST
+#endif /* OS2 */
 #endif  /* BETATEST */
 
 /* Now that WTMP and Syslog are "deprecated" don't include them by default */
