@@ -583,13 +583,16 @@ DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNO_ENCRYPTION
 !endif
 !endif
 
+!if "$(CKF_DEVBUILD)" != "no"
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DDEVBUILD
+
+# Force beta-test on for development test builds
+CKF_BETATEST=yes
+!endif
+
 # If beta-test mode hasn't been explicitly turned off then assume its on.
 !if "$(CKF_BETATEST)" != "no"
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DBETATEST
-!endif
-
-!if "$(CKF_DEVBUILD)" != "no"
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DDEVBUILD
 !endif
 
 !if "$(CKB_COMMIT_SHA)" != ""
