@@ -150,6 +150,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    a display to the left of or above of the primary display.
  - New SET TERMINAL SIZE command allowing both width and height to be set in one
    go.
+ - Release builds should now include the Git commit SHA they were built from in
+   the `SHOW VERSIONS` output going forward
  
 ### New terminal control sequences
 > [!NOTE]

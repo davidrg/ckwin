@@ -52,7 +52,8 @@ char * ck_cryear = "2025"; 		/* C-Kermit copyright year */
 */
 
 #ifdef OS2
-/* Kermit 95 version numbers come from here */
+/* Kermit 95 version numbers come from here as they're needed in a bunch of
+ * different places like resource scripts. */
 #include "ckover.h"
 #endif
 
@@ -78,6 +79,7 @@ char *ck_s_test = "";			/* Not development */
 char *ck_s_tver = "";
 #endif /* BETATEST */
 
+#ifndef OS2
 #ifdef BETADATE                         /* Date of this version or edit */
 char *ck_s_date = __DATE__;             /* Compilation date */
 #else
@@ -85,6 +87,13 @@ char *ck_s_date = EDITDATE;		/* See top */
 
 #endif /* BETADATE */
 char *buildid = EDITNDATE;		/* See top */
+
+#else /* OS2 */
+/* On OS/2 and Windows, these come from ckover.h which contains all
+ * of the version number bits */
+char *ck_s_date = K95_REL_DATE;
+char *buildid = K95_REL_DATE_N;
+#endif /* OS2 */
 
 #ifdef UNIX
 static char sccsid[] = "@(#)C-Kermit 10.0";
