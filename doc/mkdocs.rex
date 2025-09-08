@@ -340,7 +340,7 @@ get_version_tags: procedure expose tags.
 
     tags.herald=CKermit("return \v(herald)")
 
-    heraldre = ReComp('([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+) ([[:alpha:][:digit:].]+), ([[:alpha:]]+) +([[:digit:]]+) ([[:digit:]]+),', 'x')
+    heraldre = ReComp('([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+) ([[:alpha:][:digit:].-]+), ([[:alpha:]]+) +([[:digit:]]+) ([[:digit:]]+),', 'x')
     matched = ReExec(heraldre, tags.herald, 'FIELDS')
     call ReFree heraldre
 
