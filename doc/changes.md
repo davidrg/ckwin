@@ -20,6 +20,26 @@ missed. If you notice any unexpected color changes from beta 7 in applications
 and terminal emulations that *do not* use the new 256-color/24-bit color modes,
 *please log a bug* so it can be fixed!
 
+### Default character set for the Linux Console Terminal emulation has changed
+
+In past releases, Kermit 95 used ASCII for the remote character set when
+emulating the linux console terminal (the drop-down may have said latin-1 but
+this was a bug). As most linux distributions and other terminal emulators 
+switched to UTF-8 by default well over a decade ago, Kermit 95 now does the same
+starting with 3.0 Beta 8
+
+If this causes problems, you can restore the previous default character set
+by placing the following macro in your k95custom.ini file which will be executed
+whenever you switch to the linux terminal type:
+```
+def tt_linux {
+	set term remote dec-special G3
+	set term remote latin1 G2
+	set term remote latin1 G1
+	set term remote ascii G0
+}
+```
+
 ### A New Terminal Type: K95
 This release of Kermit 95 includes a new "K95" terminal type which aims for
 compatibility with modern terminal software expecting something
@@ -152,6 +172,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    go.
  - Release builds should now include the Git commit SHA they were built from in
    the `SHOW VERSIONS` output going forward
+ - The linux console terminal emulation now uses the UTF-8 character set by
+   default as most linux distributions moved to UTF-8 long ago now. 
  
 ### New terminal control sequences
 > [!NOTE]
