@@ -340,9 +340,71 @@ get_version_tags: procedure expose tags.
 
     tags.herald=CKermit("return \v(herald)")
 
+    /* Accepted herald formats:
+        1: Kermit 95 3.0.0 Pre-Beta.8, Sep  8 2025, for Windows
+        2: Kermit 95 3.0.0, 8 Sep 2025, for Windows
+        3: Kermit 95 3.0.0, Sep  8 2025, for Windows
+        4: Kermit 95 3.0.0, 2025/03/22, for Windows
+
+        Format 1 is standard for development-test and pre-stable release builds.
+        The other formats are all for stable release builds with varying date
+        formats. Format 2 was used by 2.1.3 and earlier, Format 3 is the same as
+        Beta/RC/etc builds (the format __DATE__ gives), while Format 4 is what
+        C-Kermit has used recently.
+    */
+
+    /* This regex should work for all development test and "unstable"
+     * (alpha/beta/RC) release builds which have a herald of the form:
+     *           Kermit 95 3.0.0 Pre-Beta.8, Sep  8 2025, for Windows
+     * Fields:             --1-- -----2----  -3- -4- -5-
+     */
     heraldre = ReComp('([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+) ([[:alpha:][:digit:].-]+), ([[:alpha:]]+) +([[:digit:]]+) ([[:digit:]]+),', 'x')
     matched = ReExec(heraldre, tags.herald, 'FIELDS')
     call ReFree heraldre
+
+    herald_format = 1
+
+    if length(fields.1) = 0 then do
+        /* Failed to parse herald. Maybe its a stable release build? Those
+         * traditionally have a herald of the form:
+         *           Kermit 95 2.1.3, 1 Jan 2003, for 32-bit Windows
+         * Fields:             --1-- -2 -3- --4-
+         */
+        Say "Herald format 1 failed, trying format 2"
+        heraldre = ReComp('([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+), ([[:digit:]]+) ([[:alpha:]]+) ([[:digit:]]+),', 'x')
+        matched = ReExec(heraldre, tags.herald, 'FIELDS')
+        call ReFree heraldre
+
+        herald_format = 2
+    end
+
+    if length(fields.1) = 0 then do
+        /* Failed to parse herald. Maybe its a stable release build with a
+         * beta-style date format?
+         *           Kermit 95 2.1.3, Sep  8 2025, for 32-bit Windows
+         * Fields:             --1--  -2- -3 --4-
+         */
+        Say "Herald format 2 failed, trying format 3"
+        heraldre = ReComp('([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+), ([[:alpha:]]+) +([[:digit:]]+) ([[:digit:]]+),', 'x')
+        matched = ReExec(heraldre, tags.herald, 'FIELDS')
+        call ReFree heraldre
+
+        herald_format = 3
+    end
+
+    if length(fields.1) = 0 then do
+        /* Failed to parse herald. Maybe its a stable release build with a
+         * C-Kermit style date format?
+         *           Kermit 95 2.1.3, 2025/03/22, for 32-bit Windows
+         * Fields:             --1--  -2-- -3 -4
+         */
+        Say "Herald format 2 failed, trying format 3"
+        heraldre = ReComp('([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+), ([[:digit:]]+)/([[:digit:]]+)/([[:digit:]]+),', 'x')
+        matched = ReExec(heraldre, tags.herald, 'FIELDS')
+        call ReFree heraldre
+
+        herald_format = 4
+    end
 
     /* For debugging: output each of the things found in the herald
     say fields.0 'fields'
@@ -350,29 +412,80 @@ get_version_tags: procedure expose tags.
     say i '?'fields.i'?'
     end*/
 
-    tags.ver_num = fields.1                             /* $ver$ */
-
-    if length(tags.ver_num) = 0 then do
+    if length(fields.1) = 0 then do
         say "Failed to parse herald!"
         exit 0
     end
 
-    tags.ver_rel_actual = fields.2
+    tags.ver_num = fields.1                             /* $ver$ */
 
-    if dev_mode = 0 then do
+    if herald_format = 1 then do
+        /*
+         *           Kermit 95 3.0.0 Pre-Beta.8, Sep  8 2025, for Windows
+         * Fields:             --1-- -----2----  -3- -4- -5-
+         */
+
+        /* Development builds add the "Pre-" prefix to the release tag. That isn't
+         * really part of the actual release tag though. This value primarily
+         * appears in preliminary banner, and it doesn't really make sense to say
+         * "this is for an upcoming version of K95 (3.0 Pre-Beta 8)", so strip it
+         * off. */
+        tags.ver_rel_actual = changestr("Pre-",changestr(".0",fields.2,""),"")
+
         tags.ver_rel = fields.2                             /* $ver_rel$ */
+
+        ver_month_short = fields.3
+        ver_day = fields.4
+        ver_year = fields.5
     end
-    else
-    do
+    else if herald_format = 2 then do
+        /*           Kermit 95 2.1.3, 1 Jan 2003, for 32-bit Windows
+         * Fields:             --1-- -2 -3- --4-
+         */
+
+         tags.ver_rel_actual = ""
+         tags.ver_rel = ""
+
+        ver_day = fields.2
+         ver_month_short = fields.3
+         ver_year = fields.4
+    end
+    else if herald_format = 3 then do
+         /*           Kermit 95 2.1.3, Sep  8 2025, for 32-bit Windows
+          * Fields:             --1--  -2- -3 --4-
+          */
+
+         tags.ver_rel_actual = ""
+         tags.ver_rel = ""
+
+         ver_month_short = fields.1
+         ver_day = fields.2
+         ver_year = fields.4
+    end
+    else if herald_format = 4 then do
+         /*           Kermit 95 2.1.3, 2025/03/22, for 32-bit Windows
+          * Fields:             --1--  -2-- -3 -4
+          */
+
+         tags.ver_rel_actual = ""
+         tags.ver_rel = ""
+
+         ver_year = fields.2
+         ver_month_short = mnum_to_mshort(fields.3)
+         ver_day = fields.4
+    end
+
+    if dev_mode = 1 then do
         tags.ver_rel = 'DEV'
     end
 
     tags.ver_full = tags.ver_num tags.ver_rel           /* $ver-full$ */
-    ver_month_short = fields.3
+
+    if tags.ver_rel_actual = "" then tags.ver_full_actual = tags.ver_num
+    else tags.ver_full_actual = tags.ver_num tags.ver_rel_actual
+
     ver_month_num = mshort_to_num(ver_month_short)
     ver_month = mnum_to_word(ver_month_num)
-    ver_day = fields.4
-    ver_year = fields.5
 
     tags.ver_short_date = ver_day ver_month_short ver_year       /* $ver-short-date$ */
     tags.ver_date = ver_day ver_month ver_year                   /* $ver-date$ */
@@ -418,6 +531,23 @@ mnum_to_word: procedure
   mw.10 = 'October'
   mw.11 = 'November'
   mw.12 = 'December'
+
+  arg mon
+  return mw.mon
+
+mnum_to_mshort: procedure
+  mw.01 = 'Jan'
+  mw.02 = 'Feb'
+  mw.03 = 'Mar'
+  mw.04 = 'Apr'
+  mw.05 = 'May'
+  mw.06 = 'Jun'
+  mw.07 = 'Jul'
+  mw.08 = 'Aug'
+  mw.09 = 'Sep'
+  mw.10 = 'Oct'
+  mw.11 = 'Nov'
+  mw.12 = 'Dec'
 
   arg mon
   return mw.mon
