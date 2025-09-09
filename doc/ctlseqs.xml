@@ -15214,10 +15214,14 @@ DCS $ q 3 , } ST</pre>
                 can be terminated with either an ST
                 (<tt>OSC <param-single/> ; <param-text/> ST)</tt>
                 or, for compatibility with other terminal emulators, a BEL
-                (<tt>OSC <param-single/> ; <param-text/> BEL</tt>)
+                (<tt>OSC <param-single/> ; <param-text/> BEL</tt>). New
+                applications should terminate OSCs with ST - terminating them
+                with BEL is non-standard and can cause problems with terminals
+                that don't understand this.
             </p>
 
-            <p><param-single/> specifies the type of operation:</p>
+            <p><param-single/> is usually <em>but not always</em> a number,
+                and specifies the type of operation:</p>
 
             <section role="parameter" id="xt-wti"
                      title="Set Icon Name and Window Title (xterm)">
@@ -15378,8 +15382,15 @@ DCS $ q 3 , } ST</pre>
                     https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
                     Also mentioned in: https://github.com/davidrg/ckwin/issues/413
 
-                    Some of these features are a security risk.
+                    Some of these features are a security risk. Like:
                     Ps = 7 ; cmd - should only be if APC is set to unsafe
+
+                    Others are probably fine:
+                    Ps = 4 ; st ; pr - set progress on taskbar icon
+                        This is implemented by Windows Terminal and a few others
+                        these days too
+                    Ps = 9 ; cwd - inform terminal about shell working directory
+                        Same idea as to OSC-7?
                 -->
             </section>
 
