@@ -174,6 +174,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    the `SHOW VERSIONS` output going forward
  - The linux console terminal emulation now uses the UTF-8 character set by
    default as most linux distributions moved to UTF-8 long ago now. 
+ - Upgrade OpenSSL to 3.5.2
  
 ### New terminal control sequences
 > [!NOTE]
