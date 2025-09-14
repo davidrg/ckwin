@@ -1437,6 +1437,17 @@ DECTSR		462
             supported by a particular terminal.
         </p>
         <p>
+            As Kermit 95 does not currently offer a VT420 or VT520 emulation,
+            any VT420 and VT520 control sequences currently implemented are
+            <em>temporarily</em> made available to VT320-compatible emulations.
+            As a result you may see VT420/VT520 features with badges for other
+            terminals that never actually supported these features. For example,
+            <a href="#decdmac">DECDMAC</a> is currently available for VT320,
+            WY370, S97801, AAA and K95. In the future when a VT420 mode is
+            added, control sequences such as DECDMAC will only be available to
+            VT420 and K95.
+        </p>
+        <p>
             Where possible, links to applicable standards and terminal
             documentation are provided. This is usually on the same line the
             section heading. This currently includes the following reference
