@@ -96,6 +96,19 @@ unsigned char* get_display(void);
 #endif /* NT */
 #endif /* SSH_AGENT_SUPPORT */
 
+/* Copy data in blocks from the ring buffer in ssh_inc rather than relying on a
+ * blocking read from the ring buffer for every single character with all the
+ * mutex wrangling that comes with it. This increases throughput significantly
+ * when you do something like accidentally cat a huge log file. */
+#define LOCAL_INPUT_BUFFER
+
+#ifdef LOCAL_INPUT_BUFFER
+#define INPUT_BUFFER_SIZE 1024
+static char input_buffer[INPUT_BUFFER_SIZE];
+static int input_buffer_idx = INPUT_BUFFER_SIZE;
+static int input_buffer_len = 0;
+#endif /* LOCAL_INPUT_BUFFER */
+
 /* Global Variables:
  *   These used to be all declared in ckuus3.c around like 8040, but since
  *   the SSH_DLL refactoring they now live here and are no longer global.
@@ -1924,6 +1937,20 @@ int ssh_tchk(void) {
     /* If the client is connected then the number of bytes waiting to be read
      * is whatever is in the threads output buffer */
 
+#ifdef LOCAL_INPUT_BUFFER
+    /* If there is data waiting in the local buffer, report that. Because this
+     * may be called from multiple different threads, its possible we may end
+     * up returning out-of-date information, but that mostly shouldn't matter.
+     * This function is mostly called by the doicp thread after making a
+     * connection to check it succeeded, and periodically by the isconnect
+     * thread to see if we're still connected. Neither care about how much data
+     * is waiting. */
+    rc = INPUT_BUFFER_SIZE - input_buffer_idx;
+    if (rc > 0) {
+        return rc;
+    }
+#endif /* LOCAL_INPUT_BUFFER */
+
     if (ring_buffer_lock(ssh_client->outputBuffer, 0)) {
         rc = ring_buffer_length(ssh_client->outputBuffer);
         ring_buffer_unlock(ssh_client->outputBuffer);
@@ -2014,6 +2041,42 @@ int ssh_inc(int timeout) {
     if (ssh_client == NULL)
         return SSH_ERR_NO_INSTANCE;
 
+#ifdef LOCAL_INPUT_BUFFER
+    /* We *really* should be using locks around this. But the whole point of
+     * this code is to improve throughput, and we do that by *not* using
+     * locking. This code *should*, I hope, be safe enough without locks though
+     * because this function should never be called from two threads at the
+     * same time. The doicp thread will call it for handling commands like
+     * input, while the rdcomwrtscr thread will call it for terminal emulation
+     * but only one of those threads will be active at any given time. */
+    if (input_buffer_idx >= input_buffer_len) {
+        if (ring_buffer_lock(ssh_client->outputBuffer, 0)) {
+            if (ring_buffer_length(ssh_client->outputBuffer) > 1) {
+                rc = ring_buffer_read(ssh_client->outputBuffer,
+                                      &input_buffer,
+                                      INPUT_BUFFER_SIZE);
+                input_buffer_idx = 0;
+                input_buffer_len = rc;
+
+                if (!SetEvent(ssh_client->dataConsumedEvent)) {
+                    debug(F100, "ssh_inc - failed to signal data consumed event!",
+                          "", 0);
+                }
+            }
+        }
+        ring_buffer_unlock(ssh_client->outputBuffer);
+    }
+
+    /* Return a character from the local buffer if its not empty */
+    if (input_buffer_idx < input_buffer_len) {
+        rc = input_buffer[input_buffer_idx++];
+        return rc;
+    }
+
+    /* If the local buffer is empty, then do a blocking read from the ring
+     * buffer with a timeout to wait for data to arrive. */
+#endif /* LOCAL_INPUT_BUFFER */
+
     if (timeout == 0) {
         timeout_ms = INFINITE; /* Infinite timeout */
     } else if (timeout < 0) {
@@ -2069,6 +2132,20 @@ int ssh_xin(int count, char * buffer) {
         debug(F100, "ssh_xin - no instance", "", 0);
         return SSH_ERR_NO_INSTANCE;
     }
+
+#ifdef LOCAL_INPUT_BUFFER
+    /* If we have some data buffered locally, just return it from there */
+    if (input_buffer_idx < input_buffer_len) {
+        int len = input_buffer_len - input_buffer_idx;
+        if (count < len) len = count;
+
+        memset(buffer, 0, count);
+        memcpy(buffer, &input_buffer[input_buffer_idx], len);
+        input_buffer_idx = input_buffer_idx + len;
+
+        return len;
+    }
+#endif /* LOCAL_INPUT_BUFFER */
 
     if(ring_buffer_lock(ssh_client->outputBuffer, 0)) {
         if (ssh_client == NULL) {
