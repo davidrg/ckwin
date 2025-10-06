@@ -177,6 +177,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Upgrade OpenSSL to 3.5.2
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
+ - Doubled maximum terminal lines to 256 in K95G on modern systems
  
 ### New terminal control sequences
 > [!NOTE]
