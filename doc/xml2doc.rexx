@@ -1598,10 +1598,16 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
             end
         end
 
+        found = 0
+
+        /* If any badges are allowed, then no further checks required */
+        if wordpos('*', allowedBadges) <> 0 then do
+            found = 1
+        end
+
         /* Check to see that at least one of the badges is in the list of
            allowed badges */
 
-        found = 0
         tt = badges
         do I = 1 by 1 until tt = ""
             parse var tt badge' 'tt
@@ -1894,6 +1900,12 @@ sectionHasUnimplementedParameterChildren: procedure expose g.
                    allowed badges */
 
                 found = 0
+
+                /* If any badges are allowed, then no further checks required */
+                if wordpos('*', allowedBadges) <> 0 then do
+                    found = 1
+                end
+
                 tt = badges
                 do I = 1 by 1 until tt = ""
                     parse var tt badge' 'tt

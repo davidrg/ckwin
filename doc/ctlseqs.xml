@@ -115,8 +115,8 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ATTLIST ref comment CDATA #IMPLIED>
 
         <!ELEMENT termsupp EMPTY>
-        <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100) #REQUIRED>
+        <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lj250|lg06) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -333,8 +333,11 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
        xterm).
 
        Including Terminal Emulators does require a certain amount of ongoing
-       maintenance work to keep the information up-to-date:
+       maintenance work to keep the information up-to-date, so there needs to
+       be a good reason to include one here.
        -> PuTTY
+                 Because: It was probably the most popular terminal on Windows
+                          for the last 20 years.
             Last Updated: 27 April 2025
                    As of: commit 01043ce4fc90cee578a00872a64fd69e4bb7203a
               Change Log: https://www.chiark.greenend.org.uk/~sgtatham/putty/changes.html
@@ -343,20 +346,36 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                           (Changes to this file may indicate support for new
                            control sequences)
        -> Tera Term
+                 Because: It is the only free terminal with a similar feature
+                          set to Kermit 95.
             Last Updated: 16 September 2025
                    As of: v5.5.0
               Change Log: https://teratermproject.github.io/manual/5/en/about/history.html
        -> Xterm
+                 Because: It is the de-facto standard extended-VT terminal
             Last Updated: 8 September 2025
                    As of: Patch #402
               Change Log: https://invisible-island.net/xterm/xterm.log.html
        -> Windows Terminal
+                 Because: It is the standard terminal on recent Windows releases
             Last Updated: 10 October 2025
                    As of: commit 5f311506dcaa93c24214819e02fa027151c47fe1
               Change Log: https://github.com/microsoft/terminal/commits/main/src/terminal/parser/OutputStateMachineEngine.cpp
                           (changes to this source file may indicate new
                            control sequences)
-
+       -> CDE dtterm
+          Capabilities should be current as of CDE 2.1.30 - dtterm doesn't
+          appear to have received any new features since it was open-sourced
+          back in 2012.
+                 Because: It was the standard terminal on many proprietary unix
+                          variants alongside xterm for many years, and it isn't
+                          a moving target anymore which makes it a possible
+                          candidate for future emulation.
+            Last Updated: 27 August 2025
+                   As of: commit 16fbb15ecc8cedfad6ce03e1891eed6fe28cedb0 (31 May 2018)
+              Change Log: https://sourceforge.net/p/cdesktopenv/code/ci/9f0f015c4daf7d3eacb21c19b4f3912cac56e68e/log/?path=/cde/lib/DtTerm/Term/TermParseTable.c
+                          (changes to this source file may indicate new
+                           control sequences)
     -->
 
     <!-- TODO  - Add reference links for everything in the designate character
@@ -617,6 +636,45 @@ DECTSR		462
                 uri="https://vt100.net/mirror/mds-199909/cd3/printer/pplv2pmb.pdf"
                 uri-type="pdf-page"
                 sort-order="20"/>
+        <refsrc name="vt105"
+                key="vt105"
+                uri="https://bitsavers.org/pdf/dec/terminal/vt105/EK-VT105-TM-001_VT105_Graphic_Terminal_Technical_Manual_Sep79.pdf"
+                uri-type="pdf-page"
+                sort-order="21"
+                badge="vt105"/>
+        <refsrc name="vk100"
+                key="vk100"
+                uri="http://www.bitsavers.org/www.computer.museum.uq.edu.au/pdf/EK-VK100-IN-002%20GIGI%20Terminal%20Installation%20And%20Owner's%20Manual.pdf"
+                uri-type="pdf-page"
+                sort-order="22"
+                badge="vk100"/>
+        <refsrc name="dtc01"
+                key="dtc01"
+                uri="https://www.vaxhaven.com/images/3/3d/EK-DTC01-RM-003.pdf"
+                uri-type="pdf-page"
+                pdf-page-offset="13"
+                sort-order="23"
+                badge="dtc01"/>
+        <refsrc name="tphb87"
+                key="tphb87"
+                uri="https://bitsavers.org/pdf/dec/handbooks/1987_Terminals_and_Printers_Handbook.pdf"
+                uri-type="pdf-page"
+                sort-order="24"/>
+        <refsrc name="vt125"
+                key="vt125"
+                uri="https://bitsavers.org/pdf/dec/terminal/vt125/EK-VT125-UG-001_VT125_User_Guide_Sept81.pdf"
+                uri-type="pdf-page"
+                sort-order="25"/>
+        <refsrc name="vt382"
+                key="vt382"
+                uri="https://vt100.net/dec/ek-vt382-rm-001.pdf"
+                uri-type="pdf-page"
+                sort-order="26"/>
+        <refsrc name="lj250"
+                key="lj250"
+                uri="https://bitsavers.org/pdf/dec/printer/lj250/EK-LJ250-RM-001.pdf"
+                uri-type="pdf-page"
+                sort-order="27"/>
     </references>
 
     <badges>
@@ -661,7 +719,7 @@ DECTSR		462
         <badge-def sort-order="36" name="vt220pc" colour="" comment="DEC VT-220 with PC keyboard"/> <!-- Hide -->
         <badge-def sort-order="37" name="vt320" colour="#1E88E5" comment="DEC VT-320"/>
         <badge-def sort-order="38" name="vt320pc" colour="" comment="DEC VT-320 with PC keyboard"/> <!-- Hide -->
-        <!-- Not implemented yet -->
+        <!-- Not implemented in K95 yet -->
         <badge-def sort-order="53" name="vt330" colour="" comment="DEC VT-330"/>
         <badge-def sort-order="54" name="vt340" colour="" comment="DEC VT-340"/>
         <badge-def sort-order="39" name="vt420" colour="" comment="DEC VT-420"/> <!-- colour: #1976D2 -->
@@ -676,14 +734,23 @@ DECTSR		462
         <badge-def sort-order="45" name="wy60" colour="#00796B" comment="WYSE-60"/>
         <badge-def sort-order="46" name="wy160" colour="#00695C" comment="WYSE-160"/>
         <badge-def sort-order="47" name="wy370" colour="#004D40" comment="WYSE 370 ANSI Terminal"/>
-        <badge-def sort-order="48" name="xterm" colour="#F44336" comment="Xterm"/>
+        <badge-def sort-order="48" name="xterm" colour="#F44336" comment="Xterm"/> <!-- Not implemented -->
         <badge-def sort-order="49" name="tt" colour="" comment="Tera Term"/> <!-- Not implemented -->
         <badge-def sort-order="50" name="putty" colour="" comment="PuTTY"/> <!-- Not implemented -->
         <badge-def sort-order="51" name="vws" colour="" comment="VAX Workstation Software"/> <!-- Not implemented -->
-        <badge-def sort-order="52" name="decterm" colour="" comment="DECterm"/> <!-- Not implemented -->
+        <badge-def sort-order="52" name="decterm" colour="" comment="DECterm (dxterm)"/> <!-- Not implemented -->
         <badge-def sort-order="53" name="dtterm" colour="" comment="CDE dtterm"/> <!-- Not implemented -->
-            <!-- dtterm supported control sequences current as of 2025-08-27 (in the unlikely event
-                someone suddenly decides to try and upgrade it a bunch) -->
+        <badge-def sort-order="54" name="wt" colour="" comment="Windows Terminal"/> <!-- Not implemented -->
+        <badge-def sort-order="55" name="wz" colour="" comment="WezTerm"/> <!-- Not implemented -->
+        <badge-def sort-order="56" name="la100" colour="" comment="DEC LA100 ANSI printer"/> <!-- Not implemented -->
+        <badge-def sort-order="57" name="vt105" colour="" comment="DEC VT-105"/> <!-- Not implemented -->
+        <badge-def sort-order="58" name="lqp02" colour="" comment="DEC LQP02 ANSI printer"/> <!-- Not implemented -->
+        <badge-def sort-order="59" name="lcg01" colour="" comment="DEC LGC01 ANSI printer"/> <!-- Not implemented -->
+        <badge-def sort-order="59" name="ln05" colour="" comment="DEC LN05 ANSI printer"/> <!-- Not implemented -->
+        <badge-def sort-order="60" name="vk100" colour="" comment="DEC VK100 GIGI"/> <!-- Not implemented -->
+        <badge-def sort-order="61" name="dtc01" colour="" comment="DEC DTC01"/> <!-- Not implemented -->
+        <badge-def sort-order="61" name="la75" colour="" comment="DEC LA75 ANSI printer"/> <!-- Not implemented -->
+        <badge-def sort-order="62" name="vt382" colour="" comment="DEC VT382 Kanji Display Terminal"/> <!-- Not implemented -->
     </badges>
     <!--
      Badge groups should be kept in sync with the matching macros in ckuusr.h
@@ -1125,11 +1192,10 @@ DECTSR		462
         <!-- For testing: a variant that includes everything but without the
             comparison columns. Like the outline document, but in table form
             and including not-implemented stuff.
-
         <html type="term-ctlseqs" filename="all-ctlseqs.html"
               title="All Known Control Sequences"
               compare=""
-              include="vws vt320 vt330 decterm vt1000 vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty aaa aixterm ansi at386 avatar ba80 beos h19 hft linux qansi s97801 scoansi sun vip7809 vt52 wy370"
+              include="*"
               show-refs="true">
             <style>
                 table {
@@ -1196,8 +1262,7 @@ DECTSR		462
                 }
 
             </style>
-        </html>
-        -->
+        </html>-->
 
         <!-- The todo-* attributes filter what is included in todo.html. A
              control sequence or parameter must be marked for one of the listed
@@ -2257,8 +2322,17 @@ DECTSR		462
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm wt"/>
             <p>Switches to sending 8 bit control characters</p>
         </section>
+        <section role="ctlseq" id="dectc1" ctlseq="ESC SP 6" mnemonic="DECTC1"
+                 title="Truncate 8-bit (C1) control characters (S7C1R)"
+                 not-implemented="true" todo="true">
+            <ref src="dap:144"/>
+            <termsupp first="la100" series="print" additional="wt"/>
+            <p>Disables processing of received 8-bit control characters.
+                The high bit is cleared
+            </p>
+        </section>
         <section role="ctlseq" id="decac1" ctlseq="ESC SP 7" mnemonic="DECAC1"
-                 title="Accept 8-bit (C1) control characters"
+                 title="Accept 8-bit (C1) control characters (S8C1R)"
                  not-implemented="true" todo="true">
             <ref src="dap:103"/>
             <termsupp first="la100" series="print" additional="wt"/>
@@ -2396,6 +2470,11 @@ DECTSR		462
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
             <p>Fills the screen with "E"</p>
         </section>
+        <section role="ctlseq" id="decfpp" ctlseq="ESC # 9"
+                 mnemonic="DECFPP" title="Positioning" not-implemented="true">
+            <termsupp first="lqp02" series="print" additional=""/>
+            <ref src="tphb87:757"/>
+        </section>
         <section role="ctlseq" id="wydhl-top" ctlseq="ESC # :" mnemonic="WYDHL" title="Wyse double-height line, top half">
             <ref src="wy370:99"/>
             <p>Wyse double-height line, top half, single-wide characters</p>
@@ -2404,14 +2483,40 @@ DECTSR		462
             <ref src="wy370:99"/>
             <p>Wyse double-height line, bottom half, single-wide characters</p>
         </section>
+        <section role="ctlseq" id="decbar" not-implemented="true" todo="true"
+                 mnemonic="DECBAR" ctlseq="ESC % SP 0" title="Start Bar Code">
+            <termsupp first="la30" series="print" additional=""/>
+            <ref src="dps:108"/>
+        </section>
+        <section role="ctlseq" id="dectcs" not-implemented="true" todo="true"
+                 mnemonic="DECTCS" ctlseq="ESC % 0" title="Exit NAPLPS">
+            <termsupp first="lcg01" series="print" additional=""/>
+            <ref src="tphb87:793"/>
+        </section>
+        <section role="ctlseq" id="decsccs" not-implemented="true" todo="true"
+                 mnemonic="DECSCCS" ctlseq="ESC % 4" title="Enter NAPLPS">
+            <termsupp first="lcg01" series="print" additional=""/>
+            <ref src="tphb87:793"/>
+        </section>
+        <section role="ctlseq" id="dechppcl" not-implemented="true" todo="true"
+                 mnemonic="DECHPPCL" ctlseq="ESC % 8" title="Enter HP PCL emulation mode">
+            <termsupp first="lj250" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlfunc_dec.html -->
+        </section>
         <section role="ctlseq" ctlseq="ESC % 8" title="Select default character set"
                  badges="putty" not-implemented="true" todo="true">
             <termsupp first="putty" series="putty" additional=""/>
             <p>other coding system/old linux code</p>
         </section>
+        <section role="ctlseq" id="socs" mnemonic="SOCS" title="Select Other Coding System"
+                 not-implemented="true" todo="true">
+            <ref src="dps:170"/>
+            <p>Select IBM Proprinter emulation mode</p>
+        </section>
         <section role="ctlseq" id="sdc" ctlseq="ESC % @" title="Select default character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
             <termsupp first="xterm" series="xt" additional="putty wt"/>
+            <ref src="dps:160"/>
             <p>Return to ISO 2002 mode</p>
         </section>
         <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
@@ -2857,8 +2962,35 @@ DECTSR		462
         <section role="ctlseq" id="gp-on" ctlseq="ESC 1" title="Graphic Processor On" not-implemented="true" groups="isvt100">
             <p>Graphic Processor On</p>
         </section>
-        <section role="ctlseq" id="gp-off" ctlseq="ESC 2" title="Graphic Processor Off" not-implemented="true" groups="isvt100">
+        <section role="ctlseq" id="dechts" not-implemented="true" todo="true"
+                 mnemonic="DECHTS" ctlseq="ESC 1" title="Horizontal Tab Set">
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:126"/>
+        </section>
+        <section role="ctlseq" id="decgon" not-implemented="true" todo="true"
+                 mnemonic="DECGON" ctlseq="ESC 1" title="Graphics Waveform Generator On">
+            <termsupp first="vt105" series="vt" additional=""/>
+            <ref src="vt105:52"/>
+        </section>
+        <section role="ctlseq" id="decgoff" not-implemented="true" groups="isvt100"
+                 mnemonic="DECGOFF" ctlseq="ESC 2" title="Graphic Processor Off">
             <p>Graphic Processor Off</p>
+            <ref src="vt105:51"/>
+        </section>
+        <section role="ctlseq" id="deccaht" not-implemented="true" todo="true"
+                 mnemonic="DECCAHT" ctlseq="ESC 2" title="Clear All Horizontal Tabs">
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:110"/>
+        </section>
+        <section role="ctlseq" id="decvts" not-implemented="true" todo="true"
+                 mnemonic="DECVTS" ctlseq="ESC 3" title="Vertical Tab Set">
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:149"/>
+        </section>
+        <section role="ctlseq" id="deccavt" not-implemented="true" todo="true"
+                 mnemonic="DECCAVT" ctlseq="ESC 4" title="Clear All Vertical Tabs">
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:111"/>
         </section>
         <!-- TODO: ESC 5 (the integer 5, not '5' - this is likely a bug)
                 WY75 - Transmit Character at Cursor
@@ -3561,6 +3693,17 @@ DECTSR		462
              The dodcs() function is not called for any other terminal types!
              ================================================================ -->
 
+        <!-- Additional (printer) DCS sequences for which I can't find in any
+            DEC documentation, but are mentioned here:
+                https://vt100.net/emu/dcsseq_dec.html
+            DECLFM      DCS & p     Loading Forms Sequence
+            DECDFM      DCS & q     Delete Forms Sequence
+            DECIFM      DCS & r     Start Forms Sequence
+            DECRFMS     DCS & s     Form Status Report
+            DECLLG      DCS & t     Loading Logos Sequence
+            DECLGSR     DCS & w     Logo Status Report
+        -->
+
         <section role="ctlseq" id="decudk" mnemonic="DECUDK" title="User Defined Keys"
                  badges="vt220 vt220pc vt320 vt320pc wy370 xterm k95">
             <ref src="070:976"/>
@@ -3608,14 +3751,28 @@ DECTSR		462
             <ctlseq>DCS <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/>  { .... ST</ctlseq>
         </section>
 
-        <section role="ctlseq" title="ReGIS Mode" todo="true" not-implemented="true">
+        <section role="ctlseq" id="decatff" not-implemented="true" todo="true"
+                 mnemonic="DECATFF" title="Assign Type Family or Font">
+            <ctlseq>DCS <param-single/> ; <param-single/> } D...D </ctlseq>
+            <termsupp first="ln01" series="print" additional=""/>
+            <ref src="tphb87:776"/>
+        </section>
+
+        <section role="ctlseq" id="decdtff" not-implemented="true" todo="true"
+                 mnemonic="DECDTFF" title="Delete Type Family or Font">
+            <ctlseq>DCS <param-single/> ~ D...D </ctlseq>
+            <termsupp first="ln03" series="print" additional=""/>
+            <ref src="tphb87:776"/>
+        </section>
+
+        <section role="ctlseq" title="ReGIS Mode" mnemonic="decREGIS" todo="true" not-implemented="true">
             <ref src="vt340g:29"/>
             <ref src="xt:h3-ReGIS-Graphics"/>
             <termsupp first="vt330" series="vt" additional="vt340"/>
             <ctlseq>DCS <param-single/> p D...D ST</ctlseq>
         </section>
 
-        <section role="ctlseq" title="Sixel" not-implemented="true" todo="true">
+        <section role="ctlseq" title="Sixel" mnemonic="decSIXEL" not-implemented="true" todo="true">
             <ctlseq>DCS <param-single symbol="P1"/> ; <param-single symbol="P2"/> ;
                 <param-single symbol="P3"/> q D...D ST</ctlseq>
             <ref src="vt340g:248"/>
@@ -3797,6 +3954,13 @@ DECTSR		462
             </section>
         </section>
 
+        <section role="ctlseq" id="decgids" not-implemented="true" todo="true"
+                 mnemonic="decGIDIS" title="Enter GIDS mode">
+            <ctlseq>DCS <param-single/> ! q D...D </ctlseq>
+            <termsupp first="lcg01" series="print" additional=""/>
+            <ref src="tphb87:793"/>
+        </section>
+
         <section role="ctlseq" id="decaupss" mnemonic="DECAUPSS"
                  title="Assigning User-Preferred Supplemental Sets"
                  not-implemented="true" todo="true">
@@ -3844,6 +4008,14 @@ DECTSR		462
             <termsupp first="vt420" series="vt" additional="vt510 wt"/>
         </section>
 
+        <section role="ctlseq" id="declbd" mnemonic="DECLBD"
+                 title="Locator Button Definition"
+                 not-implemented="true" todo="true">
+            <ctlseq>DCS <param-char/> $ w D...D ST</ctlseq>
+            <ref src="vt340g:266"/>
+            <termsupp first="vt330" series="vt" additional=""/>
+        </section>
+
         <section role="ctlseq" id="decckd" mnemonic="DECCKD"
                  title="Copy Key Default"
                  not-implemented="true" todo="true">
@@ -3851,6 +4023,15 @@ DECTSR		462
             <ref src="vt52x:185"/>
             <termsupp first="vt520" series="vt" additional=""/>
         </section>
+
+        <!-- Printer to Host report
+        <section role="ctlseq" id="decfsr" mnemonic="DECFSR"
+                 title="Font Status Report"
+                 not-implemented="true" todo="true">
+            <ctlseq>DCS <param-single/> &quot; { D...D ST</ctlseq>
+            <termsupp first="ln03" series="print" additional=""/>
+            <ref src="dps:123"/>
+        </section>-->
 
         <section role="ctlseq" id="declans" mnemonic="DECLANS"
                  title="Load Answerback Message"
@@ -3861,6 +4042,13 @@ DECTSR		462
             <termsupp first="vt510" series="vt" additional=""/>
         </section>
 
+        <section role="ctlseq" id="decvkset" mnemonic="decVKSET"
+                 title="GIGI set-up data"
+                 not-implemented="true" todo="true">
+            <ctlseq>DCS <param-single/> r D...D ST</ctlseq>
+            <ref src="vk100:93"/>
+        </section>
+
         <section role="ctlseq" id="declban" mnemonic="DECLBAN"
                  title="Load Banner Message"
                  not-implemented="true" todo="true">
@@ -3869,6 +4057,37 @@ DECTSR		462
             <ref src="vt52x:223"/>
             <termsupp first="vt510" series="vt" additional=""/>
         </section>
+
+        <section role="ctlseq" id="decvkpk" mnemonic="decVKPK"
+                 title="GIGI program keys"
+                 not-implemented="true" todo="true">
+            <ctlseq>DCS <param-single/> s D...D ST</ctlseq>
+            <ref src="vk100:93"/>
+        </section>
+
+        <section role="ctlseq" id="decvt105g" mnemonic="decVT105G"
+                 title="Emulate VT105 graphics"
+                 not-implemented="true" todo="true">
+            <ctlseq>DCS <param-single/> t D...D ST</ctlseq>
+            <ref src="vt125:91"/>
+        </section>
+
+        <!-- decPPTL - DCS u  Printwheel Parameter Table Load (LQP02) -->
+
+        <section role="ctlseq" id="declff" not-implemented="true" todo="true"
+                 mnemonic="DECLFF" title="Load Font File">
+            <ctlseq>DCS 0 ; <param-single/> ; <param-single/> y </ctlseq>
+            <termsupp first="ln01" series="print" additional=""/>
+            <ref src="tphb87:776"/>
+        </section>
+
+        <section role="ctlseq" id="dectalk" not-implemented="true" todo="true"
+                 mnemonic="decTALK" title="DECtalk Commands">
+            <ctlseq>DCS <param-multi/> z </ctlseq>
+            <termsupp first="dtc01" series="print" additional=""/>
+            <ref src="dtc01:16"/>
+        </section>
+
 
         <section role="ctlseq" id="decpak" mnemonic="DECPAK"
                  title="Program Alphanumeric Key"
@@ -7055,6 +7274,12 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
+            <section role="parameter" id="deckanam" mnemonic="DECKANAM" title="Katakana Shift Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 12</ctlseq>
+                <ref src="vt382:142"/>
+                <termsupp first="vt382" series="vt" additional=""/>
+            </section>
             <section role="parameter" id="att610-sbc" mnemonic=""
                      title="Start blinking cursor (AT&amp;T 610)">
                 <ctlseq><param-single/> = 12</ctlseq>
@@ -7132,6 +7357,42 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt"/>
                 <p>Set print extent to print the entire screen</p>
             </section>
+            <section role="parameter" id="ov1" mnemonic="OV1" title="Overstrike"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 20</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="ba1" mnemonic="BA1" title="Local BASIC"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 21</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="ba2" mnemonic="BA2" title="Host BASIC"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 22</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="pk" mnemonic="PK" title="Programmed Keypad"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 23</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="ah" mnemonic="AH" title="Auto Hardcopy"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 24</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" title="Low Density Printing"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 24</ctlseq>
+                <ref src="tphb87:688"/>
+                <!--<termsupp first="" series="print" additional=""/>-->
+            </section>
             <section role="parameter" id="dectcem" mnemonic="DECTCEM" title="Cursor On">
                 <ctlseq><param-single/> = 25</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-5.1EC4"/>
@@ -7144,6 +7405,18 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:311"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
                 <p>Turn on the cursor</p>
+            </section>
+            <section role="parameter" id="decpsp" mnemonic="DECPSP" title="Proportional Spacing"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 27</ctlseq>
+                <ref src="tphb87:759"/>
+                <!--<termsupp first="" series="print" additional=""/>-->
+            </section>
+            <section role="parameter" id="decpsm" mnemonic="DECPSM" title="Pitch Select Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 29</ctlseq>
+                <ref src="tphb87:710"/>
+                <!--<termsupp first="" series="print" additional=""/>-->
             </section>
             <section role="parameter" id="rxvt-show-scrollbar" mnemonic=""
                      title="Show scrollbar (rxvt)"
@@ -7189,10 +7462,24 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt330" series="vt" additional="vt340 xt tt"/>
                 <p>Not Implemented: K95 does not (yet) support the Tektronix mode</p>
             </section>
+            <section role="parameter" id="deccrnlm" mnemonic="DECCRNLM"
+                     title="Carriage Return/New Line Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 40</ctlseq>
+                <ref src="dps:112"/>
+                <termsupp first="la30" series="print" additional=""/>
+            </section>
             <section role="parameter" not-implemented="true" title="XTERM - Allow 80 - 132 Mode">
                 <ctlseq><param-single/> = 40</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-4-0.1EC1"/>
                 <termsupp first="xterm" series="xt" additional="dtterm wt"/>
+            </section>
+            <section role="parameter" id="decupm" mnemonic="DECUPM"
+                     title="Unidirectional Print Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 41</ctlseq>
+                <ref src="dps:145"/>
+                <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" title="XTERM - more(1) fix">
                 <ctlseq><param-single/> = 41</ctlseq>
@@ -7258,21 +7545,36 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-4-7.1EC8"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
+            <!-- TODO: Mode 49 - DECTHAIM - Thai Input Mode -->
+            <!-- TODO: Mode 50 - DECTHAICM - Thai Cursor Mode -->
+            <section role="parameter" id="decbwrm" mnemonic="DECBWRM"
+                     title="Black/White Reversal Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 51</ctlseq>
+                <ref src="tphb87:790"/>
+                <termsupp first="lgp01" series="print" additional=""/>
+            </section>
+            <section role="parameter" id="decopm" mnemonic="DECOPM"
+                     title="Origin Placement Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 52</ctlseq>
+                <ref src="tphb87:777"/>
+                <termsupp first="ln03" series="print" additional=""/>
+            </section>
             <section role="parameter" not-implemented="true" id="dec131tm"
                      mnemonic="DEC131TM" title="VT131 Transmit">
                 <ctlseq><param-single/> = 53</ctlseq>
                 <ref src="vt340:154"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
             </section>
-            <section role="parameter" id="decnakb" mnemonic="DECNAKB"
-                     title="Greek/N-A Keyboard Mapping Mode"
+            <section role="parameter" id="decbpm" mnemonic="DECBPM"
+                     title="Bold Page Mode"
                      not-implemented="true" todo="true">
-                <ctlseq><param-single/> = 57</ctlseq>
-                <ref src="vt510:DECNAKB.html"/>
-                <ref src="vt52x:228"/>
-                <termsupp first="vt510" series="vt" additional=""/>
+                <ctlseq><param-single/> = 55</ctlseq>
+                <ref src="tphb87:790"/>
+                <termsupp first="lgp01" series="print" additional=""/>
             </section>
-            <section role="parameter" id="r-decnakb" mnemonic="DECNAKB"
+            <section role="parameter" id="decnakb" mnemonic="DECNAKB"
                      title="Greek/N-A Keyboard Mapping Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 57</ctlseq>
@@ -7321,6 +7623,13 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:234"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            </section>
+            <section role="parameter" id="decbcmm" mnemonic="DECBCMM"
+                     title="Business Color Matching Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 65</ctlseq>
+                <ref src="lj250:130"/>
+                <termsupp first="lj250" series="print" additional=""/>
             </section>
             <section role="parameter" id="decnkm" mnemonic="DECNKM" title="Numeric Keyboard - Application">
                 <ctlseq><param-single/> = 66</ctlseq>
@@ -7374,6 +7683,13 @@ DCS $ q 3 , } ST</pre>
                     <a href="#decdwl">DECDWL</a> are disabled.
                 </p>
             </section>
+            <section role="parameter" id="decfpm" mnemonic="DECFPM"
+                     title="Force Plot Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 70</ctlseq>
+                <ref src=""/>
+                <termsupp first="lg06" series="print" additional=""/>
+            </section>
             <section role="parameter" not-implemented="true" id="decxrlm" mnemonic="DECXRLM" title="Transmit rate limiting">
                 <ctlseq><param-single/> = 73</ctlseq>
                 <ref src="070:389"/>
@@ -7409,6 +7725,9 @@ DCS $ q 3 , } ST</pre>
                 <ref src="wy370:26"/>
                 <p>Switch to 161-column mode</p>
             </section>
+            <!-- TODO: Mode 81 - DECKPM - Key Position Mode
+                        Currently down as non-private as thats what the VT420 and VT520
+                        manuals say, while the VT510 manual claims its private. Need to test.-->
             <section role="parameter" id="wy52" badges="wy370" mnemonic="WY52" title="52 line mode ">
                 <ctlseq><param-single/> = 83</ctlseq>
                 <ref src="wy370:26"/>
@@ -7429,7 +7748,7 @@ DCS $ q 3 , } ST</pre>
                     color
                 </p>
             </section>
-
+            <!-- TODO: Mode 90 - DECTHAISCM - Thai Space Compensating Mode -->
             <section role="parameter" id="decncsm" mnemonic="DECNCSM"
                      title="No Clearing Screen on Column Change Mode"
                      not-implemented="true" todo="true">
@@ -8794,6 +9113,12 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                 <p>Not Implemented: K95 does not support the VT132 block mode</p>
             </section>
+            <section role="parameter" id="r-deckanam" mnemonic="DECKANAM" title="Katakana Shift Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 12</ctlseq>
+                <ref src="vt382:142"/>
+                <termsupp first="vt382" series="vt" additional=""/>
+            </section>
             <section role="parameter" id="decrst-12" mnemonic=""
                      title="Stop blinking cursor (AT&amp;T 610)">
                 <ctlseq><param-single/> = 12</ctlseq>
@@ -8878,6 +9203,42 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt102" series="vt" additional="vt220 vt420 vt510 tt"/>
                 <p>Print scrolling region, not full screen</p>
             </section>
+            <section role="parameter" id="r-ov1" mnemonic="OV1" title="Overstrike"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 20</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="r-ba1" mnemonic="BA1" title="Local BASIC"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 21</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="r-ba2" mnemonic="BA2" title="Host BASIC"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 22</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="r-pk" mnemonic="PK" title="Programmed Keypad"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 23</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" id="r-ah" mnemonic="AH" title="Auto Hardcopy"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 24</ctlseq>
+                <ref src="vk100:92"/>
+                <termsupp first="vk100" series="vt" additional=""/>
+            </section>
+            <section role="parameter" title="High Density Printing"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 24</ctlseq>
+                <ref src="tphb87:688"/>
+                <!--<termsupp first="" series="print" additional=""/>-->
+            </section>
             <section role="parameter" mnemonic="DECTCEM" id="r-dectcem" title="Cursor Off">
                 <ctlseq><param-single/> = 25</ctlseq>
                 <ref src="wy370:26"/>
@@ -8889,6 +9250,18 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
                 <p>Turn off cursor</p>
+            </section>
+            <section role="parameter" id="r-decpsp" mnemonic="DECPSP" title="Proportional Spacing"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 27</ctlseq>
+                <ref src="tphb87:759"/>
+                <!--<termsupp first="" series="print" additional=""/>-->
+            </section>
+            <section role="parameter" id="r-decpsm" mnemonic="DECPSM" title="Pitch Select Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 29</ctlseq>
+                <ref src="tphb87:710"/>
+                <!--<termsupp first="" series="print" additional=""/>-->
             </section>
             <section role="parameter" id="decrst-30" mnemonic=""
                      title="Don't show scrollbar (rxvt)"
@@ -8933,11 +9306,25 @@ DCS $ q 3 , } ST</pre>
                     Tektronix mode doesn't currently do anything in K95.
                 </p>
             </section>
+            <section role="parameter" id="r-deccrnlm" mnemonic="DECCRNLM"
+                     title="Carriage Return/New Line Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 40</ctlseq>
+                <ref src="dps:112"/>
+                <termsupp first="la30" series="print" additional=""/>
+            </section>
             <section role="parameter" not-implemented="true" id="decrst-40"
                      title="XTERM - Disallow 80 - 132 mode switch">
                 <ctlseq><param-single/> = 40</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-4-0.1EC5"/>
                 <termsupp first="xterm" series="xt" additional="dtterm wt"/>
+            </section>
+            <section role="parameter" id="r-decupm" mnemonic="DECUPM"
+                     title="Unidirectional Print Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 41</ctlseq>
+                <ref src="dps:145"/>
+                <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-41"
                      title="XTERM - No more(1) fix">
@@ -9008,11 +9395,32 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-4-7.1ECC"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
             </section>
+            <section role="parameter" id="r-decbwrm" mnemonic="DECBWRM"
+                     title="Black/White Reversal Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 51</ctlseq>
+                <ref src="tphb87:790"/>
+                <termsupp first="lcg01" series="print" additional=""/>
+            </section>
+            <section role="parameter" id="r-decopm" mnemonic="DECOPM"
+                     title="Origin Placement Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 52</ctlseq>
+                <ref src="tphb87:777"/>
+                <termsupp first="ln03" series="print" additional=""/>
+            </section>
             <section role="parameter" not-implemented="true" id="decrst-53"
                      mnemonic="DEC131TM" title="VT131 Transmit">
                 <ctlseq><param-single/> = 53</ctlseq>
                 <ref src="vt340:154"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
+            </section>
+            <section role="parameter" id="r-decbpm" mnemonic="DECBPM"
+                     title="Bold Page Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 55</ctlseq>
+                <ref src="tphb87:790"/>
+                <termsupp first="lgp01" series="print" additional=""/>
             </section>
             <section role="parameter" id="decrst-57" mnemonic="DECNAKB"
                      title="Greek keyboard mapping"
@@ -9065,6 +9473,13 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:234"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            </section>
+            <section role="parameter" id="r-decbcmm" mnemonic="DECBCMM"
+                     title="Business Color Matching Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 65</ctlseq>
+                <ref src="lj250:130"/>
+                <termsupp first="lj250" series="print" additional=""/>
             </section>
             <section role="parameter" mnemonic="DECNKM" id="decrst-66"
                      title="Numeric Keyboard - Numeric">
@@ -9120,6 +9535,13 @@ DCS $ q 3 , } ST</pre>
                     DECSLRMM is enabled, <a href="#decdhl">DECDHL</a> and
                     <a href="#decdwl">DECDWL</a> are disabled.
                 </p>
+            </section>
+            <section role="parameter" id="r-decfpm" mnemonic="DECFPM"
+                     title="Force Plot Mode"
+                     not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 70</ctlseq>
+                <ref src=""/>
+                <termsupp first="lg06" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-73"
                      mnemonic="DECXRLM" title="Transmit rate limiting">
@@ -10084,6 +10506,19 @@ DCS $ q 3 , } ST</pre>
                     are reset.-->
                 </p>
             </section>
+
+            <!--
+            SGR 10-19 are used for selecting fonts in DEC printers
+            -->
+            <section role="parameter" id="sgr-10-19" title="Select Font"
+                    not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 10-19</ctlseq>
+                <ref src="dps:169"/>
+                <p>
+                    DEC Printers - select a font
+                </p>
+            </section>
+
             <section role="parameter" badges="qansi linux" id="sgr-10-linux"
                      title="Select Primary Font">
                 <ctlseq><param-single/> = 10</ctlseq>
@@ -10197,7 +10632,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 21</ctlseq>
                 <ref src="e48:75"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-2-1.1E59"/>
-                <termsupp first="xt" series="xt" additional="wt"/>
+                <termsupp first="xterm" series="xt" additional="wt"/>
             </section>
             <section role="parameter" id="sgr-22" title="Normal (turn off bold and dim)">
                 <ctlseq><param-single/> = 22</ctlseq>
@@ -10777,20 +11212,42 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
 
-            <!-- WezTerm
-                53 - Overline On
-                54 - Overline Off
-                58 - Underline color (same format as SGR-38/48)
-                59 - UnderlineColorDefault
-                73 - VerticalAlignSuperScript
-                74 - VerticalAlignSubScript
-                75 - VerticalAlignBaseLine
+            <section role="parameter" title="Overline On" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 53</ctlseq>
+                <ref src="dps:166"/>
+                <termsupp first="wz" series="wz" additional="wt"/>
+            </section>
 
-                Windows Terminal
-                53 - Overline On
-                55 - Overline Off
-                59 - UnderlineColorDefault
-            -->
+            <section role="parameter" title="Overline Off" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 55</ctlseq>
+                <ref src="dps:166"/>
+                <termsupp first="wz" series="wz" additional="wt"/>
+            </section>
+
+            <section role="parameter" title="Set Underline Color" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 58</ctlseq>
+                <termsupp first="wz" series="wz" additional="wt"/>
+            </section>
+
+            <section role="parameter" title="Set Underline Color to Default" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 59</ctlseq>
+                <termsupp first="wz" series="wz" additional="wt"/>
+            </section>
+
+            <section role="parameter" title="Vertical Align Super Script" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 73</ctlseq>
+                <termsupp first="wz" series="wz" additional=""/>
+            </section>
+
+            <section role="parameter" title="Vertical Align Sub Script" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 74</ctlseq>
+                <termsupp first="wz" series="wz" additional=""/>
+            </section>
+
+            <section role="parameter" title="Vertical Align Base Line" not-implemented="true" todo="true">
+                <ctlseq><param-single/> = 75</ctlseq>
+                <termsupp first="wz" series="wz" additional=""/>
+            </section>
 
             <section style="group" role="group">
                 <section role="parameter" id="sgr-90" title="Set Bright Black Foreground">
@@ -10934,6 +11391,41 @@ DCS $ q 3 , } ST</pre>
             </section>
 
         </section> <!-- end SGR -->
+
+        <section role="ctlseq" id="dec-sgr" mnemonic="SGR" title="Select Graphic Rendition (DEC Private)">
+            <ctlseq>CSI ? <param-multi/> m </ctlseq>
+            <ref src="dps:166"/>
+            <p>DEC Private Character Attributes - these are used by DEC printers.</p>
+            <section role="parameter" id="sgrp-0" title="Turn off all private attributes">
+                <ctlseq><param-single/> = 0</ctlseq>
+                <ref src="dps:166"/>
+                <p>
+                    Deprecated - use <a href="#sgr-0">SGR-0</a> instead.
+                </p>
+            </section>
+            <section role="parameter" id="sgrp-4" title="Turn on superscript, turn off subscript">
+                <ctlseq><param-single/> = 4</ctlseq>
+                <ref src="dps:166"/>
+            </section>
+            <section role="parameter" id="sgrp-5" title="Turn on subscript, turn off superscript">
+                <ctlseq><param-single/> = 5</ctlseq>
+                <ref src="dps:166"/>
+            </section>
+            <section role="parameter" id="sgrp-6" title="Turn on overline">
+                <ctlseq><param-single/> = 6</ctlseq>
+                <ref src="dps:166"/>
+                <p>Deprecated - use <a href="sgr-53">SGR-53</a> instead</p>
+            </section>
+            <section role="parameter" id="sgrp-24" title="Turn off superscript and subscript">
+                <ctlseq><param-single/> = 24</ctlseq>
+                <ref src="dps:166"/>
+            </section>
+            <section role="parameter" id="sgrp-26" title="Turn off overline">
+                <ctlseq><param-single/> = 26</ctlseq>
+                <ref src="dps:166"/>
+                <p>Deprecated - use <a href="sgr-55">SGR-55</a> instead</p>
+            </section>
+        </section> <!-- End DEC SGR -->
 
         <section role="ctlseq" id="xtmodkeys-a" mnemonic="XTMODKEYS"
                  title="Set/reset key modifier options"
@@ -11227,7 +11719,7 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### p ######################### -->
-
+        <!-- CSI ' p        DECRLGS     Request Logo Status (supposedly) -->
         <section role="ctlseq" ctlseq="CSI p" not-implemented="true" badges="sun"
                  mnemonic="SUNBOW" id="sunbow" title="Black On White" >
             <!-- TODO: This should be easy to implement!
@@ -11972,6 +12464,12 @@ DCS $ q 3 , } ST</pre>
                     <ref src="vt340:234"/>
                     <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
                     <p>Not Implemented: K95 does not support the VT132 block mode</p>
+                </section>
+                <section role="parameter" id="decrqm-deckanam" mnemonic="DECKANAM" title="Katakana Shift Mode"
+                         not-implemented="true" todo="true">
+                    <ctlseq><param-single/> = 12</ctlseq>
+                    <ref src="vt382:181"/>
+                    <termsupp first="vt382" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="decrqm-12p" mnemonic=""
                          title="Blinking cursor (AT&amp;T 610)">
@@ -12848,6 +13346,28 @@ DCS $ q 3 , } ST</pre>
         <!-- ######################### q ######################### -->
         <!-- TODO: xterm: CSI > Ps q: Report xterm name and version (XTVERSION) -->
 
+        <section role="ctlseq" id="decvkppi" not-implemented="true" todo="true"
+                 mnemonic="decVKPPI" title="Print Partial Image">
+            <ctlseq>CSI <param-single/> ; <param-single/> ! q</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <ref src="vk100:93"/>
+        </section>
+        <section role="ctlseq" id="decsnc" not-implemented="true" todo="true"
+                 mnemonic="DECSNC" title="Set Number of Copies">
+            <ctlseq>CSI <param-single/> &amp; q</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <ref src="tphb87:792"/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+        <section role="ctlseq" id="decsbca" not-implemented="true" todo="true"
+                 mnemonic="DECSBCA" title="Select Bar Code Attributes">
+            <ctlseq>CSI </ctlseq>
+            <termsupp first="la30" series="print" additional=""/>
+            <ref src="dap:130"/>
+        </section>
+
         <section role="ctlseq" ctlseq="CSI q" not-implemented="true"
                  badges="h19" title="Transmit 25th line to host"/>
         <section role="ctlseq" ctlseq="CSI q" badges="sun" mnemonic="SUNWOB"
@@ -13100,6 +13620,21 @@ DCS $ q 3 , } ST</pre>
 
 
         <!-- ######################### r ######################### -->
+        <section role="ctlseq" id="decnvr" not-implemented="true" todo="true"
+                 mnemonic="DECNVR" title="NVR Feature Settings">
+            <ctlseq>CSI <param-multi/> ! r</ctlseq>
+            <termsupp first="dtc01" series="dtc" additional=""/>
+            <ref src="dtc01:70"/>
+        </section>
+        <section role="ctlseq" id="decbcs" not-implemented="true" todo="true"
+                 mnemonic="DECBCS" title="Setting Block Character Parameters">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> ;
+                <param-single/> ; <param-single/> ' r</ctlseq>
+            <termsupp first="lg31" series="print" additional=""/>
+            <!-- Mentioned here:
+                http://ftp.xenya.si/sup/info/digital/MDS/jun99/Cd3/PRINTER/LG31EUG2.PDF
+                 -->
+        </section>
         <section role="ctlseq" not-implemented="true" id="h19-setbaud" badges="h19" title="Set Baud Rate">
             <ctlseq>CSI <param-single/> r</ctlseq>
             <p>Set Baud Rate to <param-single/>.</p>
@@ -13375,6 +13910,27 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### s ######################### -->
+        <section role="ctlseq" id="decns" not-implemented="true" todo="true"
+                 mnemonic="DECNS" title="New Sheet">
+            <ctlseq>CSI SP s</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: http://ftp.xenya.si/sup/info/digital/MDS/jun99/Cd3/PRINTER/DCL11OP2.PDF
+                       -->
+        </section>
+        <section role="ctlseq" id="decfil" not-implemented="true" todo="true"
+                 mnemonic="DECFIL" title="Right Justification">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ! s</ctlseq>
+            <termsupp first="lqp02" series="print" additional=""/>
+            <ref src="tphb87:769"/>
+        </section>
+        <section role="ctlseq" id="decpwa" not-implemented="true" todo="true"
+                 mnemonic="DECHPWA" title="Page Width Alignment">
+            <ctlseq>CSI <param-single/> ; <param-single/> &quot; s</ctlseq>
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="tphb87:709"/>
+            <ref src="dap:124"/>
+        </section>
         <section role="ctlseq" not-implemented="true" groups="ishft" title="Save Modes">
             <ctlseq>CSI ? <param-multi/> s</ctlseq>
             <!-- TODO: This is also XTSAVE - Save DEC Private Mode Values
@@ -13783,6 +14339,13 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:308"/>
             <termsupp first="vt510" series="vt" additional=""/>
         </section>
+        <section role="ctlseq" id="decsrfr" mnemonic="DECSRFR"
+                 title="Select Refresh Rate"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single/> &quot; t</ctlseq>
+            <ref src="vt510:DECSRFR.html"/>
+            <termsupp first="vt510" series="vt" additional=""/>
+        </section>
         <section role="ctlseq" groups="isvt420" id="decrara"
                  mnemonic="DECRARA" title="Reverse attributes in rectangular area">
             <ctlseq>
@@ -13873,6 +14436,18 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-u.1BC5"/>
             <ref src="vt52x:371"/>
             <termsupp first="sco" series="sco" additional="tt xterm linux putty wt"/>
+        </section>
+        <section role="ctlseq" id="decshts" not-implemented="true" todo="true"
+                 mnemonic="DECSHTS" title="Set Horizontal Tab Stops">
+            <ctlseq>CSI <param-multi/> u</ctlseq>
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:135"/>
+        </section>
+        <section role="ctlseq" id="decfnvr" not-implemented="true" todo="true"
+                 mnemonic="DECFNVR" title="Loading Factory NVR settings">
+            <ctlseq>CSI <param-multi/> ! u</ctlseq>
+            <termsupp first="la75" series="print" additional=""/>
+            <ref src="tphb87:805"/>
         </section>
         <section role="ctlseq" badges="s97801" id="sni-mode" title="SNI97801 Various mode options">
             <ctlseq>CSI <param-single/> u</ctlseq>
@@ -14003,7 +14578,28 @@ DCS $ q 3 , } ST</pre>
 
         <!-- ######################### v ######################### -->
         <section role="ctlseq" badges="aaa" not-implemented="true" id="zsrc"
-                 ctlseq="CSI v" mnemonic="zSRC" title="Start Remote Copy"/>
+                 ctlseq="CSI v" mnemonic="zSRC" title="Start Remote Copy">
+        </section>
+        <section role="ctlseq" id="decsvts" not-implemented="true" todo="true"
+                 mnemonic="DECSVTS" title="Set Vertical Tab Stops">
+            <ctlseq>CSI <param-multi/> v</ctlseq>
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:143"/>
+        </section>
+        <section role="ctlseq" id="decasfc" not-implemented="true" todo="true"
+                 mnemonic="DECASFC" title="Automatic Sheet Feeder Control">
+            <ctlseq>CSI <param-single/> ! v</ctlseq>
+            <termsupp first="la75" series="print" additional=""/>
+            <ref src="dap:104"/>
+        </section>
+        <section role="ctlseq" id="decmm" not-implemented="true" todo="true"
+                 mnemonic="DECMM" title="Memory Management">
+            <ctlseq>CSI <param-single/> + v</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
         <section role="ctlseq" badges="s97801" id="sni-misc">
             <ctlseq>CSI <param-single/> v</ctlseq>
             <section role="parameter" id="sni-sg0" title=" Switch within G0 (national/international, 7-bit mode)">
@@ -14138,6 +14734,26 @@ DCS $ q 3 , } ST</pre>
         <!-- ######################### w ######################### -->
         <section role="ctlseq" groups="ishft" not-implemented="true" id="vtrki"
                  ctlseq="CSI w" title="VT raw keyboard input"/>
+        <section role="ctlseq" id="decsitf" not-implemented="true" todo="true"
+                 mnemonic="DECSITF" title="Select Input Tray Failover">
+            <ctlseq>CSI <param-multi/> SP w</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+        <section role="ctlseq" id="decshorp" not-implemented="true" todo="true"
+                 mnemonic="DECSHORP" title="Set Horizontal Pitch">
+            <ctlseq>CSI <param-single/> w</ctlseq>
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:133"/>
+        </section>
+        <section role="ctlseq" id="decund" not-implemented="true" todo="true"
+                 mnemonic="DECUND" title="Programmable Underline Character">
+            <ctlseq>CSI <param-single/> ! w</ctlseq>
+            <termsupp first="lqp02" series="print" additional=""/>
+            <ref src="tphb87:769"/>
+        </section>
         <section role="ctlseq" not-implemented="true" badges="s97801"
             title="Transmit keylock switch status / Reinitialize character generator">
             <ctlseq>CSI <param-single/> w</ctlseq>
@@ -14212,6 +14828,28 @@ DCS $ q 3 , } ST</pre>
                 -->
 
         <!-- ######################### x ######################### -->
+
+        <section role="ctlseq" id="decsdpm" not-implemented="true" todo="true"
+                 mnemonic="DECSDPM" title="Set Duplex Print Mode">
+            <ctlseq>CSI <param-single/> SP x</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+        <section role="ctlseq" id="decpts" not-implemented="true" todo="true"
+                 mnemonic="DECPTS" title="Printwheel Table Select">
+            <ctlseq>CSI <param-single/> ! x</ctlseq>
+            <termsupp first="lqp02" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+               -->
+        </section>
+        <section role="ctlseq" id="decfcr" not-implemented="true" todo="true"
+                 mnemonic="DECFCR" title="Font Configuration Request">
+            <ctlseq>CSI </ctlseq>
+            <termsupp first="lcg01" series="print" additional=""/>
+            <ref src="tphb87:791"/>
+        </section>
 
         <section role="ctlseq" ctlseq="CSI &amp; x" not-implemented="true"
                  id="deces" mnemonic="DECES" title="Enable Session">
@@ -14510,6 +15148,13 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" ctlseq="CSI y" groups="ishft" id="vtlr"
                  not-implemented="true" title="Virtual Terminal locator report"/>
 
+        <section role="ctlseq" id="decss" not-implemented="true" todo="true"
+                 mnemonic="DECSS" title="Set Space Size">
+            <ctlseq>CSI <param-single/> ! y</ctlseq>
+            <termsupp first="lqp02" series="print" additional=""/>
+            <ref src="tphb87:766"/>
+        </section>
+
         <section role="ctlseq" badges="s97801" id="sni-test">
             <ctlseq>CSI <param-single/> y</ctlseq>
             <p>Mostly various test functions most of which don't make a lot of sense
@@ -14620,6 +15265,30 @@ DCS $ q 3 , } ST</pre>
             <termsupp series="sco" first="sco"/>
             <p>Switch to screen <param-single/></p>
         </section>
+
+        <section role="ctlseq" id="decvpfs" not-implemented="true" todo="true"
+                 mnemonic="DECVPFS" title="Variable Page Format Select">
+            <ctlseq>CSI <param-multi/> SP z</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+        <section role="ctlseq" id="decden" not-implemented="true" todo="true"
+                 mnemonic="DECDEN" title="Density Selection">
+            <ctlseq>CSI <param-single/> &quot; z</ctlseq>
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:113"/>
+        </section>
+
+        <!-- CSI & z - DECSPO - Set Page Orientation (supposedly) -->
+
+        <section role="ctlseq" id="decverp" not-implemented="true" todo="true"
+                 mnemonic="DECVERP" title="Set Vertical Pitch">
+            <ctlseq>CSI <param-single/> z</ctlseq>
+            <termsupp first="la100" series="print" additional=""/>
+            <ref src="dap:146"/>
+        </section>
         <section role="ctlseq" not-implemented="true" badges="s97801"
             id="sni-slrm" title="Define left and right margins">
             <ctlseq>CSI <param-single/> ; <param-single/> z</ctlseq>
@@ -14714,6 +15383,23 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### { ######################### -->
+        <section role="ctlseq" id="decsss" not-implemented="true" todo="true"
+                 mnemonic="DECSSS" title="Set Sheet Size">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> SP {</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+        <section role="ctlseq" id="decrfs" not-implemented="true" todo="true"
+                 mnemonic="DECRFS" title="Request Font Status">
+            <ctlseq>CSI <param-single/> &quot; {</ctlseq>
+            <termsupp first="ln03" series="print" additional=""/>
+            <ref src="dap:129"/>
+        </section>
+
+        <!-- CSI & {    DECSGD      Set Graphics Density (supposedly) -->
+
         <section role="ctlseq" id="decsle" mnemonic="DECSLE"
                  title="Select Locator Events"
                  not-implemented="true" todo="true">
@@ -14838,6 +15524,26 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### | ######################### -->
+        <section role="ctlseq" id="decrvec" not-implemented="true" todo="true"
+                 mnemonic="DECRVEC" title="Draw Relative Vector">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> SP |</ctlseq>
+            <termsupp first="ln05" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+        <section role="ctlseq" id="decvec" not-implemented="true" todo="true"
+                 mnemonic="DECVEC" title="Draw Vector">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> ;
+                <param-single/> ; <param-single/> ! |</ctlseq>
+            <termsupp first="ln01" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+
+        <!-- CSI & |    DECDLG      Deleting Logos Sequence (supposedly) -->
+
         <section role="ctlseq" id="decttc" mnemonic="DECTTC" title="Transmit Termination Character"
                  not-implemented="true" todo="true" >
             <ctlseq>CSI <param-single/> |</ctlseq>
@@ -14969,6 +15675,17 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### } ######################### -->
+        <section role="ctlseq" id="decfin" not-implemented="true" todo="true"
+                 mnemonic="DECFIN" title="Document Finishing">
+            <ctlseq>CSI <param-single/> ! }</ctlseq>
+            <termsupp first="ln08" series="print" additional=""/>
+            <!-- Mentioned here: https://vt100.net/emu/ctrlseq_dec.html
+                       and here: https://www.zx.net.nz/mirror/deathrow.vistech.net/_cvisors/DEC94MDS/dc32pop1.pdf
+               -->
+        </section>
+
+        <!-- CSI & }    DECILG      Select Logo Sequence (supposedly) -->
+
         <section role="ctlseq" id="decpro" mnemonic="DECPRO" title="Protected Fields Attribute"
                  not-implemented="true" todo="true">
             <ctlseq>CSI <param-single/> }</ctlseq>
@@ -15153,6 +15870,7 @@ DCS $ q 3 , } ST</pre>
         </section>
 
         <!-- ######################### ~ ######################### -->
+        <!-- CSI & ~        DECFMSR     Request Forms Status (supposedly) -->
         <section role="ctlseq" id="dectme"
                  mnemonic="DECTME" title="Terminal Mode Emulation">
             <ctlseq>
