@@ -428,6 +428,13 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                  descriptions (as described by this document) with terminfo/termcap
                  descriptions, or generating a starting point for terminfo/termcap
                  descriptions from this document.
+               - This document should, ideally, move away from just being a
+                 collection of control sequences that K95 implements (or
+                 doesn't) towards more of a proper reference manual for K95s
+                 terminal emulator. Ideally readers wouldn't have to follow
+                 links to, eg, the VT520 manual to find out what a control
+                 sequence does.
+
     -->
 
     <!-- Page numbers for std 070
@@ -1491,9 +1498,9 @@ DECTSR		462
                 not without switching terminal emulation modes first).
             </p>
             <p>
-                For example, the VT100 supports <tt>ESC A</tt>, but only if the
+                For example, the VT100 supports <tt><cc>ESC</cc> A</tt>, but only if the
                 terminal is switched to VT52 emulation mode first. As a result,
-                while both the VT100 and Kermit 95 support <tt>ESC A</tt>, K95s
+                while both the VT100 and Kermit 95 support <tt><cc>ESC</cc> A</tt>, K95s
                 VT100 emulation does not so it gets an 'O' in the VT100 column.
             </p>
             <p>
@@ -2754,11 +2761,11 @@ DECTSR		462
             <p>Select 94 Character Set into G1. If in National Replacement Character Set
                 mode, and parameter c is a valid NRC, then this is also selected into G0,
                 G2 and G3. Valid values for parameter <em>C</em> are the same as for
-                <a href="#sg0"><tt>ESC ( <param-single symbol="C"/></tt></a>.</p>
+                <a href="#sg0"><tt><cc>ESC</cc> ( <param-single symbol="C"/></tt></a>.</p>
             <section role="text" title="Additional linux character sets" badges="linux">
                 <p>
                     The following differences apply for Linux emulation for the list of
-                    values for <a href="#sg0"><tt>ESC ( <param-single symbol="C"/></tt></a>:
+                    values for <a href="#sg0"><tt><cc>ESC</cc> ( <param-single symbol="C"/></tt></a>:
                 </p>
                 <table>
                     <tr>
@@ -2795,7 +2802,7 @@ DECTSR		462
                 mode, and parameter c is a valid NRC, then this is also selected into G0,
                 G1 and G3. Valid values for parameter
                 <em>C</em> are the same as for
-                <tt>ESC ( C</tt>.
+                <tt><cc>ESC</cc> ( C</tt>.
             </p>
         </section>
         <section role="ctlseq" id="sg3" ctlseq="ESC + C" mnemonic="SCS" title="Designate G3 Character Set" groups="isvt220 isansi" exclude-badges="linux">
@@ -2811,7 +2818,7 @@ DECTSR		462
                 mode, and parameter c is a valid NRC, then this is also selected into G0,
                 G1 and G2. Valid values for parameter
                 <em>C</em> are the same as for
-                <a href="#sg0"><tt>ESC ( <param-single symbol="C"/></tt></a>.
+                <a href="#sg0"><tt><cc>ESC</cc> ( <param-single symbol="C"/></tt></a>.
             </p>
         </section>
         <section role="ctlseq" id="sg1-vt300" ctlseq="ESC - C" mnemonic="SCS" title="Designate G1 Character Set (VT300)">
@@ -2940,7 +2947,7 @@ DECTSR		462
             <p>
                 Select 96 character set into G2. Valid values for parameter
                 <em>C</em> are the same as those for
-                <a href="#sg1-vt300"><tt>ESC - C</tt></a>
+                <a href="#sg1-vt300"><tt><cc>ESC</cc> - C</tt></a>
             </p>
         </section>
         <section role="ctlseq" id="sg3-vt300" ctlseq="ESC / C" mnemonic="SCS" title="Designate G3 Character Set (VT300)" groups="isvt220 isansi">
@@ -2953,7 +2960,7 @@ DECTSR		462
             <p>
                 Select 96 character set into G3. Valid values for parameter
                 <em>C</em> are the same as those for
-                <a href="#sg1-vt300"><tt>ESC - C</tt></a>
+                <a href="#sg1-vt300"><tt><cc>ESC</cc> - C</tt></a>
             </p>
         </section>
         <section role="ctlseq" id="h19-keypad-shift" ctlseq="ESC 1" title="Enter keypad shift mode (H19)" badges="h19">
@@ -4273,7 +4280,7 @@ DECTSR		462
                 <p>
                     Responds with the current state of <a href="decsca">DECSCA</a>.
                     For example, if DECSCA is set to Designate Character
-                    Erasable (2), then the response will be: <tt>DCS 1 $ r 1 " q ST</tt>
+                    Erasable (2), then the response will be: <tt><cc>DCS</cc> 1 $ r 1 " q <cc>ST</cc></tt>
                 </p>
             </section>
             <section role="parameter" id="decrqss-decscl" mnemonic="DECSCL"
@@ -4292,7 +4299,7 @@ DECTSR		462
                     A real DEC VT520 has two conformance levels: VT100 mode, and
                     VT520 mode. So setting the conformance level to 62, 63, 64 or 65
                     will result in the conformance level being set to 65 giving you
-                    a response of <tt>DCS 1 $ r 6 5 ; 1 " p ST</tt> if using 7-bit
+                    a response of <tt><cc>DCS</cc> 1 $ r 6 5 ; 1 " p <cc>ST</cc></tt> if using 7-bit
                     controls. And if you set the conformance level to 61 (VT100),
                     a real VT520 will not respond to DECRQSS because a real VT100
                     wouldn't.
@@ -4314,7 +4321,7 @@ DECTSR		462
                 <p>
                     Reports the current <a href="#decslpp">DECSCUSR</a> setting -
                     the cursor style. A response for a blinking block, for example,
-                    looks like <tt>DCS 1 $ r 1 SP q ST</tt> (where SP is the space
+                    looks like <tt><cc>DCS</cc> 1 $ r 1 SP q <cc>ST</cc></tt> (where SP is the space
                     character)
                 </p>
             </section>
@@ -4330,7 +4337,7 @@ DECTSR		462
                 <p>
                     Reports the current <a href="#decstbm">DECSTBM</a> setting.
                     For example, if the top margin is 5 and the bottom margin
-                    is 20 the response would be: <tt>DCS 1 $ r 5 ; 2 0 r ST</tt>
+                    is 20 the response would be: <tt><cc>DCS</cc> 1 $ r 5 ; 2 0 r <cc>ST</cc></tt>
                 </p>
             </section>
             <section not-implemented="true" role="parameter" id="decrqss-decslrm"
@@ -4358,7 +4365,7 @@ DECTSR		462
                     Reports the current <a href="#decslpp">DECSLPP</a> setting -
                     the number of lines in the terminal screen. A response for
                     a terminal with a height of 24 lines looks
-                    like: <tt>DCS 1 $ r 2 4 t ST</tt>
+                    like: <tt><cc>DCS</cc> 1 $ r 2 4 t <cc>ST</cc></tt>
                 </p>
                 <p>
                     Unlike a real terminal, Kermit 95s terminal height is not
@@ -4387,7 +4394,7 @@ DECTSR		462
                 <termsupp first="vt330" series="vt" additional="vt340"/>
                 <p>Kermit 95 responds with the width of the terminal Window. If,
                 for example, the terminal is 132 columns wide, the response would
-                be: <tt>DCS 1 $ r 1 3 2 $ | ST</tt></p>
+                be: <tt><cc>DCS</cc> 1 $ r 1 3 2 $ | <cc>ST</cc></tt></p>
                 <p>
                     Unlike a real terminal, Kermit 95s terminal width is not
                     limited to being only 80 or 132 columns wide. If the
@@ -4407,7 +4414,7 @@ DECTSR		462
                 <p>
                     Responds with the current <a href="#decsasd">DECSASD</a>
                     selection. If DECSASD is set to Terminal (the default), the
-                    response would be: <tt>DCS 1 $ r 0 $ } ST</tt>
+                    response would be: <tt><cc>DCS</cc> 1 $ r 0 $ } <cc>ST</cc></tt>
                 </p>
             </section>
             <section role="parameter" id="decrqss-decssdt" mnemonic="DECSSDT"
@@ -4422,7 +4429,7 @@ DECTSR		462
                 <p>
                     Responds with the current <a href="#decssdt">DECSSDT</a>
                     selection. If DECSSD is set to Indicator (the default), the
-                    response would be: <tt>DCS 1 $ r 1 $ ~ ST</tt>
+                    response would be: <tt><cc>DCS</cc> 1 $ r 1 $ ~ <cc>ST</cc></tt>
                 </p>
             </section>
             <section role="parameter" id="decrqss-decstglt" mnemonic="DECSTGLT"
@@ -4446,7 +4453,7 @@ DECTSR		462
                 <p>
                     Reports the current <a href="#decsace">DECSACE</a> setting.
                     For example, if DECSACE is set to 2 (Rectangle, exact) then
-                    the response would be <tt>DCS 1 $ r 2 * x ST</tt>
+                    the response would be <tt><cc>DCS</cc> 1 $ r 2 * x <cc>ST</cc></tt>
                 </p>
             </section>
             <section not-implemented="true" role="parameter" id="decrqss-decsnls"
@@ -4477,7 +4484,7 @@ DECTSR		462
                 </p>
                 <pre>DCS 1 $ q , } ST
                     DCS $ q 1 , } ST</pre>
-                <p>And the response might be something like: <tt>DCS 1 $ r 1 ; 1 4 ; 4 , } ST</tt></p>
+                <p>And the response might be something like: <tt><cc>DCS</cc> 1 $ r 1 ; 1 4 ; 4 , } <cc>ST</cc></tt></p>
             </section>
             <section role="parameter" id="decrqss-decatc" mnemonic="DECATC"
                      title="Alternate Text Color" groups="isvt525">
@@ -4496,7 +4503,7 @@ DECTSR		462
                 </p>
                 <pre>DCS 3 $ q , } ST
 DCS $ q 3 , } ST</pre>
-                <p>And the response might be something like: <tt>DCS 1 $ r 3 ; 1 4 ; 4 , } ST</tt></p>
+                <p>And the response might be something like: <tt><cc>DCS</cc> 1 $ r 3 ; 1 4 ; 4 , } <cc>ST</cc></tt></p>
             </section>
             <section not-implemented="true" role="parameter" id="decrqss-decttc"
                      mnemonic="DECTTC" title="">
@@ -5885,12 +5892,12 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="sco-dl" title="Delete lines (SCO)" badges="scoansi">
             <ctlseq>CSI <param-single/> $ R</ctlseq>
-            <p>Delete lines—alternate form of <tt>CSI <param-single/> M</tt></p>
+            <p>Delete lines—alternate form of <tt><cc>CSI</cc> <param-single/> M</tt></p>
         </section>
         <section role="ctlseq" id="sco-dl2" title="Delete lines (SCO)"
                 badges="scoansi" not-implemented="true" todo="true">
             <ctlseq>CSI <param-single/> R</ctlseq>
-            <p>Delete lines—alternate form of <tt>CSI <param-single/> M</tt></p>
+            <p>Delete lines—alternate form of <tt><cc>CSI</cc> <param-single/> M</tt></p>
             <!-- TODO: The CSI Ps $ R variant is not mentioned below, but this is:
                 http://osr600doc.xinuos.com/en/man/html.HW/screen.HW.html -->
         </section>
@@ -6557,42 +6564,42 @@ DCS $ q 3 , } ST</pre>
                     <th>Option Present</th>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 0 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 0 c</tt></td>
                     <td>No options</td>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 1 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 1 c</tt></td>
                     <td>Processor option (STP)</td>
                 </tr>
                 <tr>
-                    <td><tt>CSI ? 1 ; 2 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 2 c</tt></td>
                     <td>Advanced video option (AVO)</td>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 3 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 3 c</tt></td>
                     <td>AVO and STP</td>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 4 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 4 c</tt></td>
                     <td>Graphics option (GPO)</td>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 5 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 5 c</tt></td>
                     <td>GPO and STP</td>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 6 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 6 c</tt></td>
                     <td>GPO and AVO</td>
                 </tr>
                 <tr not-implemented="true">
-                    <td><tt>CSI ? 1 ; 7 c</tt></td>
+                    <td><tt><cc>CSI</cc> ? 1 ; 7 c</tt></td>
                     <td>AGPO, STP and AVO</td>
                 </tr>
             </table>
 
             <p>
                 The DEC VT102 uses a different format again, just responding
-                with <tt>CSI ? 6 c</tt>
+                with <tt><cc>CSI</cc> ? 6 c</tt>
             </p>
         </section>
         <section role="ctlseq" id="da3" mnemonic="DA3" title="Tertiary Device Attributes" groups="isvt220">
@@ -6611,7 +6618,7 @@ DCS $ q 3 , } ST</pre>
             -->
             <p>
                 Tertiary Device Attributes Report Request. If <param-single/>
-                is 0 then K95 responds with <tt>DCS ~ | 0 0 0 0 0 0 0 0 ESC</tt>
+                is 0 then K95 responds with <tt><cc>DCS</cc> ~ | 0 0 0 0 0 0 0 0 <cc>ESC</cc></tt>
             </p>
 
         </section>
@@ -6650,7 +6657,7 @@ DCS $ q 3 , } ST</pre>
                 Secondary Device Attributes Report Request. If <param-single/>
                 is 0 then K95 claims to be a VT320 with firmware version 0 and ROM
                 cartridge registration number 0 by responding with:
-                <tt>CSI > 2 4 ; 0 ; 0 c</tt>
+                <tt><cc>CSI</cc> > 2 4 ; 0 ; 0 c</tt>
             </p>
             <!-- Windows Terminal responds as xterm does: 0;10;1c -->
         </section>
@@ -6763,7 +6770,7 @@ DCS $ q 3 , } ST</pre>
                 This allows displaying character codes outside the normal
                 printable range (eg, the C0 control codes) as graphic
                 characters. For example, if the current remote character set
-                is CP437 then <tt>CSI 26 g</tt> would display the right arrow
+                is CP437 then <tt><cc>CSI</cc> 26 g</tt> would display the right arrow
                 character (→).
             </p>
         </section>
@@ -7948,8 +7955,8 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     K95G (Windows) only: send Focus-In and Focus-Out events.
                     When the Kermit terminal window is given focus, K95 will
-                    transmit <tt>CSI I</tt>, and when it looses focus it will
-                    transmit <tt>CSI O</tt>
+                    transmit <tt><cc>CSI</cc> I</tt>, and when it looses focus it will
+                    transmit <tt><cc>CSI</cc> O</tt>
                 </p>
             </section>
             <section role="parameter" id="xt-utf8m" title="XTERM - Enable UTF-8 Mouse Mode">
@@ -8211,8 +8218,8 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 2004</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-2-0-0-4.1F7D"/>
                 <termsupp first="xterm" series="xt" additional="tt putty wt"/>
-                <p>Enables bracketed paste mode. <tt>ESC [ 2 0 0 ~</tt> will be sent before the
-                    pasted text, and <tt>ESC [ 2 0 1 ~</tt> after it.
+                <p>Enables bracketed paste mode. <tt><cc>ESC</cc> [ 2 0 0 ~</tt> will be sent before the
+                    pasted text, and <tt><cc>ESC</cc> [ 2 0 1 ~</tt> after it.
                 </p>
             </section>
             <section role="parameter" id="xt-2005" mnemonic=""
@@ -10256,7 +10263,7 @@ DCS $ q 3 , } ST</pre>
                 Margins are numbered 0-3 top/bottom/left/right.
             </p>
             <p>The form of this control sequence ending with a `}` (
-                <tt>CSI = <param-single/> ; <param-single/> }</tt>)
+                <tt><cc>CSI</cc> = <param-single/> ; <param-single/> }</tt>)
                 is marked with the comment &quot;why this?&quot; in the K95 source code
                 &mdash; it is at this time uncertain if some particular terminal also
                 accepts this form (or some particular application expects it), or if it is
@@ -10969,7 +10976,7 @@ DCS $ q 3 , } ST</pre>
                 <p>This is processed for all terminal types, where it resets the foreground
                     color to the default value. The comments say:
                     Supported by SCO ANSI, for QANSI restore
-                    foreground color saved with <tt>CSI = Pn F</tt>.
+                    foreground color saved with <tt><cc>CSI</cc> = Pn F</tt>.
                 </p>
                 <p>
                     If the default foreground color is one of the standard 16
@@ -10979,7 +10986,7 @@ DCS $ q 3 , } ST</pre>
                 </p>
                 <p>
                     The comments also indicate this is used for "disable underline option"
-                    on some unspecified terminal; presumably the inverse of <tt>CSI 38 m</tt>
+                    on some unspecified terminal; presumably the inverse of <tt><cc>CSI</cc> 38 m</tt>
                 </p>
             </section>
             <section style="group" role="group">
@@ -11172,7 +11179,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 <p>This is processed for all terminal types, where it resets the background
                     color to the default value. The comments say: &quot;Supported by SCO ANSI.
-                    QANSI - restore bg color saved with <tt>CSI = Pn G</tt>&quot;
+                    QANSI - restore bg color saved with <tt><cc>CSI</cc> = Pn G</tt>&quot;
                 </p>
             </section>
             <section role="parameter" not-implemented="true" badges="s97801" title="Save Attributes">
@@ -11495,7 +11502,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DSR-OS.html"/>
                 <ref src="vt52x:331"/>
                 <termsupp first="vt100" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt linux wt"/>
-                <p>Responds with <tt>CSI 0 n</tt> indicating the terminal is OK</p>
+                <p>Responds with <tt><cc>CSI</cc> 0 n</tt> indicating the terminal is OK</p>
                 <!-- Pages 103-104, VT220 manual -->
             </section>
             <section role="parameter" mnemonic="CPR" id="dsr-cpr" title="Cursor position report">
@@ -11510,9 +11517,9 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DSR-CPR.html"/>
                 <ref src="vt52x:327"/>
                 <termsupp first="vt100" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt linux putty wt"/>
-                <p>If the request was <tt>CSI 6 n</tt>, transmits the cursor
+                <p>If the request was <tt><cc>CSI</cc> 6 n</tt>, transmits the cursor
                     position is transmitted to the host. Response is:
-                    <tt>CSI x ; y R</tt> where x and y are the cursor coordinates
+                    <tt><cc>CSI</cc> x ; y R</tt> where x and y are the cursor coordinates
                 </p>
                 <!-- Pages 103-104, VT220 manual -->
             </section>
@@ -11526,9 +11533,9 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:324"/>
                 <ref src="vt52x:328"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
-                <p>If the request was <tt>CSI ? 6 n</tt>, transmits the cursor
+                <p>If the request was <tt><cc>CSI</cc> ? 6 n</tt>, transmits the cursor
                     position to the host. Response is:
-                    <tt>CSI x ; y ; p R</tt> where x and y are the cursor coordinates,
+                    <tt><cc>CSI</cc> x ; y ; p R</tt> where x and y are the cursor coordinates,
                     and p is the page (always 1 in K95)
                 </p>
                 <!-- Pages 103-104, VT220 manual -->
@@ -11550,7 +11557,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DSR-PP.html"/>
                 <ref src="vt52x:332"/>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 dtterm wt"/>
-                <p>K95 responds with printer ready: <tt>CSI ? 1 0 n</tt></p>
+                <p>K95 responds with printer ready: <tt><cc>CSI</cc> ? 1 0 n</tt></p>
                 <!-- dtterm responds with ?13n (no printer -->
             </section>
             <section role="parameter" mnemonic="DECDSR" id="dsr-udk" title="UDK status">
@@ -11563,7 +11570,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 25</ctlseq>
                 <p>
                     If User Defined Keys are locked, K95 responds with
-                    <tt>CSI ? 2 1 n</tt> or <tt>CSI ? 2 0 n</tt> if they're
+                    <tt><cc>CSI</cc> ? 2 1 n</tt> or <tt><cc>CSI</cc> ? 2 0 n</tt> if they're
                     unlocked
                 </p>
                 <!-- Windows Terminal responds with Not Supported -->
@@ -11577,8 +11584,8 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 dtterm wt"/>
                 <ctlseq><param-single/> = 26</ctlseq>
                 <p>
-                    Sends <tt>CSI ? 2 7 ; 2 n</tt> if G0 is British ISO 646,
-                    otherwise K95 sends <tt>CSI ? 2 7 ; 1 n</tt>
+                    Sends <tt><cc>CSI</cc> ? 2 7 ; 2 n</tt> if G0 is British ISO 646,
+                    otherwise K95 sends <tt><cc>CSI</cc> ? 2 7 ; 1 n</tt>
                 </p>
             </section>
             <section role="parameter" id="decdsr-55" mnemonic=""
@@ -11660,7 +11667,7 @@ DCS $ q 3 , } ST</pre>
             <ctlseq><param-single/> = 85</ctlseq>
             <ref src="msk:338"/>
             <p>
-                Response is <tt>ESC [ ? 256; Ph; Pw; Pc n</tt> where Ph is
+                Response is <tt><cc>ESC</cc> [ ? 256; Ph; Pw; Pc n</tt> where Ph is
                 the screen height in pixels, Pw is the width in pixels, Pc is
                 the number of colors (0=none, 1=mono, 16=EGA/VGA).
             </p>
@@ -12104,7 +12111,7 @@ DCS $ q 3 , } ST</pre>
                 <a href="#sm">SM</a>/<a href="#rm">RM</a>. Only those listed
                 below are currently supported by DECRQM in K95 at this time.
                 Kermit 95 response with a DECRPM response in the form:
-                <tt>CSI Ps; Ps $ y</tt>
+                <tt><cc>CSI</cc> Ps; Ps $ y</tt>
             </p>
             <p>
                 In the DECRPPM response, the first parameter is the mode being
@@ -12336,7 +12343,7 @@ DCS $ q 3 , } ST</pre>
             <p><param-single/> is the mode number as in
                 <a href="#sm">SM</a>/<a href="#rm">RM</a>. Only those listed
                 below are currently supported by DECRQM in K95 at this time.
-                Response is in the form: <tt>CSI ? Ps; Pm $ y</tt></p>
+                Response is in the form: <tt><cc>CSI</cc> ? Ps; Pm $ y</tt></p>
             <!-- TODO: Need to check xterm, but *all* modes from SM/RM should
                     probably be supported here! -->
             <section style="group" role="group">
@@ -13292,8 +13299,8 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:298"/>
             <termsupp first="vt420" series="vt" additional=""/>
             <p>
-                The VT420 manual gives the control sequence as starting with <tt>ESC [</tt>
-                rather than <tt>CSI</tt>; I'm not sure if DECSR is treated specially
+                The VT420 manual gives the control sequence as starting with <tt><cc>ESC</cc> [</tt>
+                rather than <tt><cc>CSI</cc></tt>; I'm not sure if DECSR is treated specially
                 in some way here.
             </p>
         </section>
@@ -14054,9 +14061,9 @@ DCS $ q 3 , } ST</pre>
                 <p>
                     K95 provides the &quot;ID Card Reader broken or missing&quot; response.
                     If 8-bit controls are enabled, that is:
-                    <tt>DCS P t A ST</tt>
+                    <tt><cc>DCS</cc> P t A <cc>ST</cc></tt>
                     Otherwise its;
-                    <tt>ESC P P t A ESC</tt>
+                    <tt><cc>ESC</cc> P P t A <cc>ESC</cc></tt>
                 </p>
             </section>
         </section>
@@ -14082,7 +14089,7 @@ DCS $ q 3 , } ST</pre>
             </p>
             <p badges="s97801">
                 DECSLPP does not apply to SNI-97801 emulation which uses the
-                <tt>CSI <param-single/> t</tt> control sequence for
+                <tt><cc>CSI</cc> <param-single/> t</tt> control sequence for
                 querying an ID card reader (see above).
             </p>
         </section>
@@ -14194,7 +14201,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="dtterm" series="xt" additional="tt"/>
                 <p>
                     Kermit 95 responds with the current state of the window:
-                    <tt>CSI 1 t</tt> (normal), or <tt>CSI 2 t</tt> (minimized).
+                    <tt><cc>CSI</cc> 1 t</tt> (normal), or <tt><cc>CSI</cc> 2 t</tt> (minimized).
                 </p>
                 <p>
                     This is supported on Windows only in the GUI version of
@@ -14228,7 +14235,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <p>
                     Kermit 95 responds with the screen size in characters:
-                    <tt>CSI 9 ; height ; width t</tt>
+                    <tt><cc>CSI</cc> 9 ; height ; width t</tt>
                 </p>
                 <p>
                     This is supported on Windows only in the GUI version of
@@ -14248,7 +14255,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps;Ps;Ps-t:Ps-=-1-8.2068"/>
                 <termsupp first="dtterm" series="xt" additional="tt wt"/>
                 <p>
-                    Responds with: <tt>CSI 8 ; height ; width t</tt>
+                    Responds with: <tt><cc>CSI</cc> 8 ; height ; width t</tt>
                 </p>
             </section>
             <section role="parameter" id="xtwinops-19" title="Report the size of the screen in characters">
@@ -14257,7 +14264,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional="tt"/>
                 <p>
                     Kermit 95 responds with the size its window would be if it
-                    were maximized, in pixels: <tt>CSI 9 ; height ; width t</tt>
+                    were maximized, in pixels: <tt><cc>CSI</cc> 9 ; height ; width t</tt>
                 </p>
                 <p>
                     This is supported on Windows only in the GUI version of
@@ -14482,13 +14489,13 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sni-rm" title="Roll Mode">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <p>Turns off scroll mode - only affects RD/SD -
-                    <tt>CSI <param-single/> T</tt></p>
+                    <tt><cc>CSI</cc> <param-single/> T</tt></p>
             </section>
             <section role="parameter" id="sni-sm" title="Scroll mode">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <p>
                     Turns on scroll mode - only affects RD/SD -
-                    <tt>CSI <param-single/> T</tt>
+                    <tt><cc>CSI</cc> <param-single/> T</tt>
                 </p>
             </section>
             <section role="parameter" not-implemented="true" id="sni-ric" title="Reduced-intensity character display">
@@ -14632,8 +14639,8 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sni-qcct" title="Query current code table">
                 <ctlseq><param-single/> = 13</ctlseq>
                 <p>
-                    Responds with <tt>ESC P 1 3 v STATUS ESC</tt> if using 7-bit controls,
-                    or <tt>DCS 1 3 v STATUS ST</tt> if using 8-bit controls. STATUS is either 0
+                    Responds with <tt><cc>ESC</cc> P 1 3 v STATUS <cc>ESC</cc></tt> if using 7-bit controls,
+                    or <tt><cc>DCS</cc> 1 3 v STATUS <cc>ST</cc></tt> if using 8-bit controls. STATUS is either 0
                     (SI: G0FEST active), 1 (SI: G0 active), 2 (SO: G0FEST active) or 3
                     (SO: G0 active).
                 </p>
@@ -14645,8 +14652,8 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sni-qkat" title="Query current key assignment table (CH.CODE status, 8-bit mode)">
                 <ctlseq><param-single/> = 21</ctlseq>
                 <p>
-                    Responds with <tt>ESC P 2 1 v STATUS ESC</tt> if using 7-bit controls,
-                    or <tt>DCS 2 1 v STATUS ST</tt> if using 8-bit controls. STATUS is either 0
+                    Responds with <tt><cc>ESC</cc> P 2 1 v STATUS <cc>ESC</cc></tt> if using 7-bit controls,
+                    or <tt><cc>DCS</cc> 2 1 v STATUS <cc>ST</cc></tt> if using 8-bit controls. STATUS is either 0
                     (not in CH.CODE mode) or 1 (CH.CODE mode)
                 </p>
             </section>
@@ -14940,7 +14947,7 @@ DCS $ q 3 , } ST</pre>
             <!-- dtterm responds with CSI 1;1;112;112;1;0x -->
 
             <p>The response is of the form:
-                <tt>CSI <param-single symbol="Ps"/> ;
+                <tt><cc>CSI</cc> <param-single symbol="Ps"/> ;
                     <param-single symbol="Pp"/> ;
                     <param-single symbol="Pb"/> ;
                     <param-single symbol="Px"/> ;
@@ -15174,7 +15181,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 22</ctlseq>
                 <p>
                     K95 responds with either:
-                    <tt>DCS 2 2 y 7 ST</tt> (7-bit mode) or <tt>DCS 2 2 y 8 ST</tt> (8-bit mode)
+                    <tt><cc>DCS</cc> 2 2 y 7 <cc>ST</cc></tt> (7-bit mode) or <tt><cc>DCS</cc> 2 2 y 8 <cc>ST</cc></tt> (8-bit mode)
                 </p>
             </section>
         </section>
@@ -16127,12 +16134,12 @@ DCS $ q 3 , } ST</pre>
 
             <p>Kermit 95 supports a selection of operating system commands for
                 setting the window title and manipulating color handling. These
-                can be terminated with either an ST
-                (<tt>OSC <param-single/> ; <param-text/> ST)</tt>
-                or, for compatibility with other terminal emulators, a BEL
-                (<tt>OSC <param-single/> ; <param-text/> BEL</tt>). New
+                can be terminated with either an <cc>ST</cc>
+                (<tt><cc>OSC</cc> <param-single/> ; <param-text/> <cc>ST</cc></tt>)
+                or, for compatibility with other terminal emulators, a <cc>BEL</cc>
+                (<tt><cc>OSC</cc> <param-single/> ; <param-text/> <cc>BEL</cc></tt>). New
                 applications should terminate OSCs with ST - terminating them
-                with BEL is non-standard and can cause problems with terminals
+                with <cc>BEL</cc> is non-standard and can cause problems with terminals
                 that don't understand this.
             </p>
 
@@ -16214,12 +16221,12 @@ DCS $ q 3 , } ST</pre>
                     specified color index, the current color is returned in the
                     form of an OSC sequence suitable for restoring the current
                     value. The returned OSC sequence uses the same terminator
-                    (BEL or ST) as the original query OSC sequence.
+                    (<cc>BEL</cc> or <cc>ST</cc>) as the original query OSC sequence.
                 </p>
-                <p>For example, <tt>OSC 4 ; 1 ; ? ST</tt> will cause K95 to
-                    send back <tt>OSC 4 ; 1 ; r g b : 0 0 0 0 / 0 0 0 0 / 8 0 8 0 ST</tt>
+                <p>For example, <tt><cc>OSC</cc> 4 ; 1 ; ? <cc>ST</cc></tt> will cause K95 to
+                    send back <tt><cc>OSC</cc> 4 ; 1 ; r g b : 0 0 0 0 / 0 0 0 0 / 8 0 8 0 <cc>ST</cc></tt>
                     for the default RGB value of 0/0/128 for color index 1.
-                    If multiple query parameters are supplied (eg <tt>OSC 4 ; 1 ; ? ; 2 ; ? ; 3 ; ? ST</tt>
+                    If multiple query parameters are supplied (eg <tt><cc>OSC</cc> 4 ; 1 ; ? ; 2 ; ? ; 3 ; ? <cc>ST</cc></tt>
                     then multiple responses will be sent back.
                 </p>
                 <p>If a color was set by name rather than an RGB value, then
@@ -16261,7 +16268,7 @@ DCS $ q 3 , } ST</pre>
                     by adding the above numbers to the maximum number of colors
                     in the current palette (as set by <tt>SET TERM COLOR PALETTE</tt>).
                     For example, if the current palette is xterm-256, then
-                    <tt>OSC 4 ; 257 ; r g b : f f f f / 0 0 0 0 / 0 0 0 0</tt>
+                    <tt><cc>OSC</cc> 4 ; 257 ; r g b : f f f f / 0 0 0 0 / 0 0 0 0</tt>
                     would set the underline attribute to red.
                 </p>
             </section>
@@ -16662,7 +16669,7 @@ DCS $ q 3 , } ST</pre>
                     parameter is the question-mark character (?), Kermit 95 will
                     convert the current clipboard data to the remote character
                     set, base64 encode it, and return it in the form:
-                    <tt>OSC 52 ;; Pd ST</tt>
+                    <tt><cc>OSC</cc> 52 ;; Pd <cc>ST</cc></tt>
                 </p>
                 <p>
                     By default, aside from producing a notification in K95G on
@@ -16702,11 +16709,11 @@ DCS $ q 3 , } ST</pre>
                     Resets one or more colors in the color palette to defaults
                     or values specified by the user via <tt>SET GUI RGBCOLOR</tt>.
                     Multiple color numbers can be specified separated by ';'
-                    (e.g., <tt>OSC 1 0 4 ; 1 ; 2 ; 3 ST</tt>).  Only supported in
+                    (e.g., <tt><cc>OSC</cc> 1 0 4 ; 1 ; 2 ; 3 <cc>ST</cc></tt>).  Only supported in
                     GUI versions of Kermit 95.
                 </p>
                 <p>
-                    If no parameters are given (eg, <tt>OSC 104 ST</tt>), then
+                    If no parameters are given (eg, <tt><cc>OSC</cc> 104 <cc>ST</cc></tt>), then
                     the entire color palette is reset.
                 </p>
                 <p>
@@ -16913,7 +16920,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = R</ctlseq>
                 <p>
                     This OSC <em>is not terminated!</em> At all! The OSC is,
-                    verbatim, <tt>OSC R</tt>. No ST or BEL to terminate! For
+                    verbatim, <tt><cc>OSC</cc> R</tt>. No <cc>ST</cc> or <cc>BEL</cc> to terminate! For
                     this reason its limited to the linux terminal type.
                 </p>
                 <p>
@@ -16929,7 +16936,7 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = P nrrggbb</ctlseq>
                 <p>
                     This OSC <em>is not terminated!</em> At all!
-                    No ST or BEL to terminate! For this reason its limited to
+                    No <cc>ST</cc> or <cc>BEL</cc> to terminate! For this reason its limited to
                     the linux terminal type.
                 </p>
                 <p>
