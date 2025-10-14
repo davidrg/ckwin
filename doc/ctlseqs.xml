@@ -382,7 +382,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                  set tables
                - Add reference links to and any new escape sequences found in:
                    - The VT320 manual: EK-VT320-RM manual (if/when it turns up online)
-                   - The WY-370 manual
+                   - The WY-370 manual - currently on page 80
                    - VT240, VT340 manuals
                    - The Sun console (man wscons)
                    - The SCO console (?)
@@ -2399,6 +2399,10 @@ DECTSR		462
             <p>There is code present to implement this in K95, but it is currently disabled
                 for unknown reasons.</p>
         </section>
+        <section role="ctlseq" id="wystr" ctlseq="ESC ! p" mnemonic="WYSTR"
+                 title="Terminal mode reset" not-implemented="true" todo="true">
+            <ref src="wy370:38"/>
+        </section>
         <section role="ctlseq" id="h19-transmit-page" ctlseq="ESC #" title="Transmit Page (H19)" not-implemented="true" badges="h19">
             <p>Transmit page (lines 1–24) to host</p>
         </section>
@@ -2821,6 +2825,10 @@ DECTSR		462
                 <a href="#sg0"><tt><cc>ESC</cc> ( <param-single symbol="C"/></tt></a>.
             </p>
         </section>
+        <section role="ctlseq" id="wydelay" mnemonic="WYDELAY" ctlseq="ESC ,"
+                 title="Delay terminal processing" not-implemented="true" todo="true">
+            <ref src="wy370:36"/>
+        </section>
         <section role="ctlseq" id="sg1-vt300" ctlseq="ESC - C" mnemonic="SCS" title="Designate G1 Character Set (VT300)">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC---C.CCB"/>
             <ref src="vt340:88"/>
@@ -3011,6 +3019,11 @@ DECTSR		462
             <termsupp first="vt132" series="vt" additional="vt330 vt340"/>
             <p>Not Implemented: K95 does not support the VT132 block mode</p>
         </section>
+        <section role="ctlseq" id="wyxch" mnemonic="WYXCH" todo="true"
+                 not-implemented="true" title="Send cursor character"
+                 ctlseq="ESC 5">
+            <ref src="wy370:132"/>
+        </section>
         <section role="ctlseq" id="zti" ctlseq="ESC 6" mnemonic="zTI" title="Toggle IRM" badges="aaa" not-implemented="true">
             <p>Does nothing. Should be: zTI - Toggle IRM</p>
         </section>
@@ -3089,6 +3102,7 @@ DECTSR		462
             <ref src="vt420:350"/>
             <ref src="vt510:DECANM.html"/>
             <ref src="vt52x:173"/>
+            <ref src="wy370:74"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt330 vt340 vt510 putty wt"/>
             <p>Switches from VT52 mode to VT102 mode</p>
             <p badges="h19">If the true terminal type is H19, then K95 switches
@@ -3721,6 +3735,7 @@ DECTSR		462
             <ref src="vt510:DECUDK.html"/>
             <ref src="vt52x:317"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt dtterm"/>
+            <!-- aka WYUDK -->
             <ctlseq>
                 DCS <param-single/> ; <param-single/> | <param-text/> ST
             </ctlseq>
@@ -3753,9 +3768,15 @@ DECTSR		462
             <ref src="vt420:136"/>
             <ref src="vt510:DECDLD.html"/>
             <ref src="vt52x:183"/>
+            <ref src="wy370:49"/>  <!-- WY370 populates all characters initially as reverse questionmark -->
             <!-- dtterm recognises it, but doesn't do anything with it -->
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 wt"/>
             <ctlseq>DCS <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/>  { .... ST</ctlseq>
+        </section>
+
+        <section role="ctlseq" id="wylsfnt" mnemonic="WYLSFNT" title="Load softfont">
+            <ref src="wy370:63"/>
+            <ctlseq>DCS 0 ; <param-single/> ; <param-single/> } ... ST</ctlseq>
         </section>
 
         <section role="ctlseq" id="decatff" not-implemented="true" todo="true"
@@ -3977,6 +3998,7 @@ DECTSR		462
             <ref src="vt420:122"/>
             <ref src="vt510:DECAUPSS.html"/>
             <ref src="vt52x:178"/>
+            <ref src="wy370:47"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
             <ctlseq>DCS <param-single/> ! u <param-text/> ST</ctlseq>
         </section>
@@ -3996,6 +4018,7 @@ DECTSR		462
             <ref src="vt420:268"/>
             <ref src="vt510:DECRSTS.html"/>
             <ref src="vt52x:271"/>
+            <ref src="wy370:140"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 vt520 wt"/>
 
             <!-- TODO: Note! The VT520/VT525 supports an additional
@@ -4012,6 +4035,7 @@ DECTSR		462
             <ref src="vt420:277"/>
             <ref src="vt510:DECRSPS.html"/>
             <ref src="vt52x:270"/>
+            <ref src="wy370:143"/>
             <termsupp first="vt420" series="vt" additional="vt510 wt"/>
         </section>
 
@@ -4182,6 +4206,7 @@ DECTSR		462
             <ref src="vt510:DECRQSS.html"/>
             <ref src="vt52x:266"/>
             <ref src="vws:112"/>
+            <ref src="wy370:145"/>
             <termsupp first="vt420" series="vt" additional="vt510 tt wt"/>
             <ctlseq>
                 DCS $ q <param-text/> ST
@@ -4276,6 +4301,7 @@ DECTSR		462
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <ref src="vt340:240"/>
+                <ref src="wy370:76"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt510 tt"/>
                 <p>
                     Responds with the current state of <a href="decsca">DECSCA</a>.
@@ -4291,6 +4317,7 @@ DECTSR		462
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
                 <ref src="vt340:240"/>
+                <ref src="wy370:74"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt510 tt"/>
                 <p>Reports the conformance level set with <a href="#decscl">DECSCL</a>,
                     the result of which <em>may</em> be non-obvious!
@@ -4509,6 +4536,7 @@ DCS $ q 3 , } ST</pre>
                      mnemonic="DECTTC" title="">
                 <ctlseq><param-text/> = |</ctlseq>
                 <ref src="vt340:240"/>
+                <ref src="wy370:132"/>
                 <termsupp first="vt330" series="vt" additional="vt340"/>
                 <p>Not Implemented: K95 responds with:</p>
                 <pre>DCS 0 $ r | ST</pre>
@@ -4595,6 +4623,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:174"/>
             <ref src="vt510:ICH.html"/>
             <ref src="vt52x:337"/>
+            <ref src="wy370:125"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
             <ctlseq>CSI <param-single/> @</ctlseq>
             <p>Insert <param-single/> characters.</p>
@@ -4622,6 +4651,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:202"/>
             <ref src="vt510:CUU.html"/>
             <ref src="vt52x:162"/>
+            <ref src="wy370:119"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> A</ctlseq>
             <p>Cursor Up <param-single/> lines (default = 1). Cancels Wrapping
@@ -4673,6 +4703,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:202"/>
             <ref src="vt510:CUD.html"/>
             <ref src="vt52x:161"/>
+            <ref src="wy370:119"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> B</ctlseq>
             <p>Cursor Down <param-single/> lines (default = 1).
@@ -4717,6 +4748,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:201"/>
             <ref src="vt510:CUF.html"/>
             <ref src="vt52x:161"/>
+            <ref src="wy370:120"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> C</ctlseq>
             <p>Cursor Right <param-single/> times (default = 1) staying on the
@@ -4750,6 +4782,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:201"/>
             <ref src="vt510:CUB.html"/>
             <ref src="vt52x:161"/>
+            <ref src="wy370:120"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> D</ctlseq>
             <p>Cursor left <param-single/> characters</p>
@@ -4781,6 +4814,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-E.1C85"/>
             <ref src="vt510:CNL.html"/>
             <ref src="vt52x:158"/>
+            <ref src="wy370:121"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> E</ctlseq>
             <p>Cursor next line <param-single/> times (default = 1)</p>
@@ -4805,6 +4839,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-F.1C86"/>
             <ref src="vt510:CPL.html"/>
             <ref src="vt52x:159"/>
+            <ref src="wy370:121"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> F</ctlseq>
             <p>Cursor previous line <param-single/> times (default = 1)</p>
@@ -4841,6 +4876,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-G.1C87"/>
             <ref src="vt510:CHA.html"/>
             <ref src="vt52x:157"/>
+            <ref src="wy370:119"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco xterm putty dtterm wt"/>
             <ctlseq>CSI <param-single/> G</ctlseq>
             <p>Move cursor to column <param-single/></p>
@@ -4890,6 +4926,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-I.1C89"/>
             <ref src="vt510:CHT.html"/>
             <ref src="vt52x:158"/>
+            <ref src="wy370:127"/>
             <termsupp first="vt510" series="vt" additional="tt wt"/>
             <ctlseq>CSI <param-single/> I</ctlseq>
             <p>Cursor Horizontal Tab <param-single/> tab stops</p>
@@ -5573,6 +5610,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:173"/>
             <ref src="vt510:IL.html"/>
             <ref src="vt52x:338"/>
+            <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> L</ctlseq>
             <p>Insert <param-single/> lines.</p>
@@ -5690,6 +5728,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:172"/>
             <ref src="vt510:DL.html"/>
             <ref src="vt52x:326"/>
+            <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> M</ctlseq>
             <p>Delete <param-single/> lines.</p>
@@ -5790,6 +5829,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:174"/>
             <ref src="vt510:DCH.html"/>
             <ref src="vt52x:167"/>
+            <ref src="wy370:126"/>
             <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> P</ctlseq>
             <p>Delete <param-single/> characters.</p>
@@ -5804,7 +5844,15 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:160"/>
             <ref src="vt510:PPA.html"/>
             <ref src="vt52x:346"/>
+            <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+        </section>
+
+        <section role="ctlseq" id="wyppa" mnemonic="WYPPA"
+                 title="Address cursor to a specific page"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single/> ; <param-single/> SP P</ctlseq>
+            <ref src="wy370:111"/>
         </section>
 
         <section role="ctlseq" id="xtpushcolors-a" mnemonic="XTPUSHCOLORS"
@@ -5838,7 +5886,15 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:161"/>
             <ref src="vt510:PPR.html"/>
             <ref src="vt52x:347"/>
+            <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+        </section>
+
+        <section role="ctlseq" id="wyppr" mnemonic="WYPPR"
+                 title="Display a following page"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single/> ; <param-single/> SP Q</ctlseq>
+            <ref src="wy370:111"/>
         </section>
 
         <section role="ctlseq" id="xtpopcolors-a" mnemonic="XTPOPCOLORS"
@@ -5888,6 +5944,13 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:PPB.html"/>
             <ref src="vt52x:347"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+        </section>
+
+        <section role="ctlseq" id="wyppb" mnemonic="WYPPB"
+                 title="Display a preceding page"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single/> ; <param-single/> SP R</ctlseq>
+            <ref src="wy370:111"/>
         </section>
 
         <section role="ctlseq" id="sco-dl" title="Delete lines (SCO)" badges="scoansi">
@@ -6037,6 +6100,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:158"/>
             <ref src="vt510:NP.html"/>
             <ref src="vt52x:345"/>
+            <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
         </section>
 
@@ -6075,12 +6139,14 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:159"/>
             <ref src="vt510:PP.html"/>
             <ref src="vt52x:346"/>
+            <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
         </section>
 
         <!-- ######################### W ######################### -->
         <section role="ctlseq" id="hft-ctc" mnemonic="CTC" title="Cursor Tab Stop Control"  groups="ishft" badges="linux aaa">
             <ref src="e48:50"/>
+            <ref src="wy370:126"/>
             <ctlseq>CSI <param-single/> W</ctlseq>
             <p>Cursor Tab Stop Control</p>
         </section>
@@ -6105,6 +6171,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:176"/>
             <ref src="vt510:ECH.html"/>
             <ref src="vt52x:333"/>
+            <ref src="wy370:124"/>
             <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt sco putty dtterm wt"/>
             <ctlseq>CSI <param-single/> X</ctlseq>
             <p>Erase <param-single/> characters</p>
@@ -6729,6 +6796,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="wy370:119"/>
             <ref src="vt510:VPR.html"/>
             <ref src="vt52x:362"/>
+            <ref src="wy370:119"/>
             <termsupp first="vt510" series="vt" additional="tt linux sco putty wt"/>
             <ctlseq>CSI <param-single/> e</ctlseq>
             <p>Vertical Position Relative—moves active position <param-single/>
@@ -6864,6 +6932,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:210"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:339"/>
+                <ref src="wy370:31"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt sco dtterm"/>
                 <p>Locks the keyboard</p>
             </section>
@@ -6877,6 +6946,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="e48:79"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:160"/>
+                <ref src="wy370:33"/>
                 <termsupp first="vt510" series="vt" additional="vt510 linux"/>
                 <p>Controls Mode On</p>
             </section>
@@ -6902,6 +6972,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:171"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:339"/>
+                <ref src="wy370:28"/>
                 <termsupp first="vt102" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
                 <p>
                     Enable insert mode
@@ -6936,12 +7007,14 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:238"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:358"/>
+                <ref src="wy370:32"/>
                 <termsupp first="vt220" series="vt" additional="vt330 vt340 vt420 vt510 tt putty dtterm"/>
                 <p>Switches to full duplex mode</p>
                 <p badges="scoansi">Ignored</p>
             </section>
-            <section role="parameter" not-implemented="true" id="sm-13"
+            <section role="parameter" mnemonic="FEAM" not-implemented="true" id="sm-13"
                      title="Control execution off">
+                <ref src="wy370:33"/>
                 <ctlseq><param-single/> = 13</ctlseq>
                 <p>display control codes</p>
                 <p badges="scoansi">Ignored</p>
@@ -6979,6 +7052,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:211"/>
                 <ref src="vt510:DECRQM.html#T5-7"/>
                 <ref src="vt52x:340"/>
+                <ref src="wy370:29"/>
                 <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
                 <p>Turns on terminal new line and display crlf
                     (equivalent to <tt>set terminal cr-display crlf</tt> and
@@ -6991,7 +7065,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="sco" series="sco" additional=""/>
                 <p>Turns on the cursor</p>
             </section>
-            <section role="parameter" badges="wy370" id="sm-30" title="Turn display off">
+            <section role="parameter" badges="wy370" mnemonic="WYDSCM" id="sm-30" title="Turn display off">
                 <ctlseq><param-single/> = 30</ctlseq>
                 <ref src="wy370:26"/>
                 <p>Turns the screen off</p>
@@ -7001,13 +7075,13 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="sco" series="sco" additional=""/>
                 <ctlseq><param-single/> = 30</ctlseq>
             </section>
-            <section role="parameter" mnemonic="WYSTLINM" id="sm-31"
+            <section role="parameter" mnemonic="WYLINM" id="sm-31"
                      not-implemented="true" title="Display status line">
                 <ctlseq><param-single/> = 31</ctlseq>
                 <ref src="wy370:26"/>
                 <p badges="scoansi">Ignored</p>
             </section>
-            <section role="parameter" mnemonic="WYCTRSAVM" id="sm-32"
+            <section role="parameter" mnemonic="WYCRTSAVM" id="sm-32"
                      not-implemented="true" title="Screen Saver off">
                 <ctlseq><param-single/> = 32</ctlseq>
                 <ref src="wy370:26"/>
@@ -7748,7 +7822,9 @@ DCS $ q 3 , } ST</pre>
                     and non-erasable characters
                 </p>
             </section>
-            <section role="parameter" id="wyrepl" not-implemented="true" mnemonic="WYREPL" title="Replacement character color">
+            <section role="parameter" id="wyrepl" not-implemented="true"
+                     mnemonic="WYREPL" title="Replacement character color">
+                <ref src="wy370:26"/>
                 <ctlseq><param-single/> = 85</ctlseq>
                 <p>
                     set replacement character to current character background
@@ -8462,6 +8538,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:234"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
+                <ref src="wy370:131"/>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-i:Ps-=-0.1DFB"/>
                 <!-- New in cko190. Apparently caused stack overflow on 16-bit OS/2 -->
@@ -8470,7 +8547,10 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 2</ctlseq>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
+                <ref src="wy370:131"/>
                 <termsupp first="vt510" series="vt" additional="sco"/>
+                <!-- For the WY370, MC-2 sends the current page data to the host
+                    so it might not be related to DOUBLEVISION -->
                 <p>This is <em>possibly</em> to support the &quot;Instant Screen Read&quot;
                     feature of <a href="https://web.archive.org/web/19961110065943/http://www.maxtech.com/doublevision/index.html">
                         DOUBLEVISION</a> v1.x by Maxim Computer Technologies. This looks to be
@@ -8491,6 +8571,7 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:234"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
+                <ref src="wy370:131"/>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt putty"/>
                 <p>Turns off Printer Controller (Transparent Print) mode</p>
             </section>
@@ -8504,8 +8585,19 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:234"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:342"/>
+                <ref src="wy370:131"/>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt putty"/>
                 <p>Sends every character received to the configured printer</p>
+            </section>
+            <section role="parameter" id="mc-6wy" not-implemented="true"
+                     title="Disable printer port receive" todo="true">
+                <ctlseq><param-single/> = 6</ctlseq>
+                <ref src="wy370:131"/>
+            </section>
+            <section role="parameter" id="mc-7wy" not-implemented="true"
+                     title="Enable printer port receive" todo="true">
+                <ctlseq><param-single/> = 7</ctlseq>
+                <ref src="wy370:131"/>
             </section>
             <section role="parameter" id="mc-6" title="Turn off screen display">
                 <ctlseq><param-single/> = 6</ctlseq>
@@ -8551,9 +8643,15 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt420:235"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:343"/>
+                <ref src="wy370:132"/>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt"/>
                 <p>Sends the line the cursor is currently on to the configured printer</p>
                 <!-- New in cko190. Apparently caused stack overflow on 16-bit OS/2 -->
+            </section>
+            <section role="parameter" id="decmc-3" title="Send line" todo="true"
+                     not-implemented="true">
+                <ctlseq><param-single/> = 3</ctlseq>
+                <ref src="wy370:132"/>
             </section>
             <section role="parameter" id="decmc-4" title="Turn off Auto-print">
                 <ctlseq><param-single/> = 4</ctlseq>
@@ -10755,6 +10853,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-0.1E59"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-31" title="Set Red Foreground">
@@ -10763,6 +10862,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-1.1E5A"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-32" title="Set Green Foreground">
@@ -10771,6 +10871,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-2.1E5B"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-33" title="Set Brown Foreground">
@@ -10779,6 +10880,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-3.1E5C"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                     <!-- VWS calls this Yellow -->
                 </section>
@@ -10788,6 +10890,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-4.1E5D"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-35" title="Set Magenta Foreground">
@@ -10796,6 +10899,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-5.1E5E"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-36" title="Set Cyan Foreground">
@@ -10804,6 +10908,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-6.1E5F"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-37" title="Set White Foreground">
@@ -10812,6 +10917,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-3-7.1E60"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:111"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
@@ -10996,6 +11102,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-0.1E5A"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-41" title="Set Red Background">
@@ -11004,6 +11111,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-1.1E5B"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-42" title="Set Green Background">
@@ -11012,6 +11120,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-2.1E5C"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-43" title="Set Brown Background">
@@ -11020,6 +11129,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-3.1E5D"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                     <!-- VWS calls this Yellow -->
                 </section>
@@ -11029,6 +11139,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-4.1E5E"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-45" title="Set Magenta Background">
@@ -11037,6 +11148,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-5.1E5F"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-46" title="Set Cyan Background">
@@ -11045,6 +11157,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-6.1E60"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                 </section>
                 <section role="parameter" id="sgr-47" title="Set White Background">
@@ -11053,6 +11166,7 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Pm-m:Ps-=-4-7.1E61"/>
                     <ref src="vt52x:356"/>
                     <ref src="vws:112"/>
+                    <ref src="wy370:92"/>
                     <termsupp first="vt525" series="vt" additional="tt linux sco putty dtterm wt"/>
                     <p>
                         If processing of SGR colors is enabled (<tt>set term sgr-colors on</tt>),
@@ -11724,7 +11838,11 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 4</ctlseq>
             </section>
         </section>
-
+        <section role="ctlseq" id="wyclbx" mnemonic="WYCLBX" todo="true"
+                 not-implemented="true" title="Clear a box">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> o</ctlseq>
+            <ref src="wy370:127"/>
+        </section>
         <!-- ######################### p ######################### -->
         <!-- CSI ' p        DECRLGS     Request Logo Status (supposedly) -->
         <section role="ctlseq" ctlseq="CSI p" not-implemented="true" badges="sun"
@@ -11823,6 +11941,11 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:DECSSL.html"/>
             <ref src="vt52x:302"/>
             <termsupp first="vt510" series="vt" additional=""/>
+        </section>
+        <section role="ctlseq" id="wydrbx" mnemonic="WYDRBX" todo="true"
+                 not-implemented="true" title="Draw box">
+            <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> p</ctlseq>
+            <ref src="wy370:127"/>
         </section>
         <section role="ctlseq" badges="aaa" id="aaa-sdp" title="Set Display Parameters">
             <ctlseq>
@@ -13957,6 +14080,7 @@ DCS $ q 3 , } ST</pre>
                  title="Save Cursor Position" badges="linux xterm" groups="isansi">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-s.1BC3"/>
             <ref src="vt52x:371"/>
+            <ref src="wy370:35"/>
             <termsupp first="sco" series="sco" additional="xterm tt linux putty"/>
                 <!-- Supposedly for SNI-97801 too, but for that the `CSI Ps s`
                      code path will be taken first resulting in this being
@@ -14066,6 +14190,16 @@ DCS $ q 3 , } ST</pre>
                     <tt><cc>ESC</cc> P P t A <cc>ESC</cc></tt>
                 </p>
             </section>
+        </section>
+        <section role="ctlseq" id="wyswdw" mnemonic="WYSWDW"
+                 title="Activate other window" not-implemented="true" todo="true">
+            <ctlseq>CSI <param-single/> t</ctlseq>
+            <ref src="wy370:110"/>
+            <p>
+                Page 110 of the WY-370 manual gives this sequence as <tt>CSI Ps w</tt>,
+                while page 192 gives it as <tt>CSI Ps t</tt>. The first one is probably
+                an error as it conflicts with other WY-370 control sequences.
+            </p>
         </section>
         <section role="ctlseq" mnemonic="DECSLPP" id="decslpp" title="Set Lines Per Page">
             <ctlseq>CSI <param-single/> t</ctlseq>
@@ -14442,6 +14576,7 @@ DCS $ q 3 , } ST</pre>
                  badges="scoansi linux xterm" title="Restore cursor position">
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-u.1BC5"/>
             <ref src="vt52x:371"/>
+            <ref src="wy370:35"/>
             <termsupp first="sco" series="sco" additional="tt xterm linux putty wt"/>
         </section>
         <section role="ctlseq" id="decshts" not-implemented="true" todo="true"
@@ -14530,6 +14665,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:267"/>
             <ref src="vt510:DECRQTSR.html"/>
             <ref src="vt52x:267"/>
+            <ref src="wy370:139"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
             <!-- VT340:
                 0 - ignored
@@ -14592,6 +14728,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-multi/> v</ctlseq>
             <termsupp first="la100" series="print" additional=""/>
             <ref src="dap:143"/>
+        </section>
+        <section role="ctlseq" id="wyssplt" not-implemented="true" todo="true"
+                 mnemonic="WYSSPLT" title="Split screen between pages">
+            <ctlseq>CSI <param-single/> v</ctlseq>
+            <ref src="wy370:109"/>
         </section>
         <section role="ctlseq" id="decasfc" not-implemented="true" todo="true"
                  mnemonic="DECASFC" title="Automatic Sheet Feeder Control">
@@ -14791,6 +14932,7 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:270"/>
             <ref src="vt510:DECRQPSR.html"/>
             <ref src="vt52x:265"/>
+            <ref src="wy370:140"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
         </section>
         <section role="ctlseq" id="decefr" mnemonic="DECEFR"
@@ -14824,15 +14966,122 @@ DCS $ q 3 , } ST</pre>
             <termsupp first="vt510" series="vt" additional=""/>
         </section>
 
-        <!-- TODO
-                WY370: CSI Ps ; Ps ; Ps ; ... w
-                    All sorts of color controls, for example WYCOLOR (page 83 of the WY-370
-                    programmers manual) - CSI 48 ; Ps w select foreground color palette
-
-                    K95 has 16 case statements for these but none of them actually do anything
-                    so not much point in documenting them here until we implement them which
-                    will require indexed or direct colour support.
-                -->
+        <!-- Various WYSE settings. K95 has 16 case statements for a bunch of
+            these, but none are implemented -->
+        <section role="ctlseq" id="wycaa" mnemonic="WYCAA"
+                 title="Select foreground color" not-implemented="true" todo="true">
+            <ctlseq>CSI 0-47 ; <param-single/> ; <param-single/> ; <param-single/> w</ctlseq>
+            <ref src="wy370:87"/>
+        </section>
+        <section role="ctlseq" id="wycolor-fg" mnemonic="WYCOLOR"
+                 title="Select foreground color" not-implemented="true" todo="true">
+            <ctlseq>CSI 48 ; <param-single/> w</ctlseq>
+            <ref src="wy370:83"/>
+        </section>
+        <section role="ctlseq" id="wycolor-bg" mnemonic="WYCOLOR"
+                 title="Select background color" not-implemented="true" todo="true">
+            <ctlseq>CSI 49 ; <param-single/> w</ctlseq>
+            <ref src="wy370:85"/>
+        </section>
+        <section role="ctlseq" id="wycolor-restore" mnemonic="WYCOLOR"
+                 title="Restore saved foreground and background colors" not-implemented="true" todo="true">
+            <ctlseq>CSI 50 w</ctlseq>
+            <ref src="wy370:92"/>
+        </section>
+        <section role="ctlseq" id="wycolor-border" mnemonic="WYCOLOR"
+                 title="Select border color" not-implemented="true" todo="true">
+            <ctlseq>CSI 51 ; <param-single/> w</ctlseq>
+            <ref src="wy370:97"/>
+        </section>
+        <section role="ctlseq" id="wycolor-cursor" mnemonic="WYCOLOR"
+                 title="Select cursor color" not-implemented="true" todo="true">
+            <ctlseq>CSI 52 ; <param-single/> w</ctlseq>
+            <ref src="wy370:98"/>
+        </section>
+        <section role="ctlseq" id="wysovr" mnemonic="WYSOVR" todo="true"
+                 title="Select overstrike position" not-implemented="true">
+            <ctlseq>CSI 53 ; <param-single/> w</ctlseq>
+            <ref src="wy370:79"/>
+            <p>
+                <param-single/> specifies one of 20 overstrike positions in the
+                character cell from 0 through 19. This affects the position of
+                the <a href="#sgr-9-co">SGR-9 crossed-out attribute</a>.
+                Position 8 is the normal strike-through setting, while you can
+                produce a double-underline by turning on
+                <a href="#sgr-4">SGR-4</a> and SGR-9 and setting the overstrike
+                position to 13.
+            </p>
+        </section>
+        <section role="ctlseq" id="wycolor-user-sl" mnemonic="WYCOLOR"
+                 title="Select user status line attributes and colors"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI 54 ; <param-single/> w</ctlseq>
+            <ref src="wy370:98"/>
+        </section>
+        <section role="ctlseq" id="wycolor-sys-sl" mnemonic="WYCOLOR"
+                 title="Select system status line attributes and colors"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI 55 ; <param-single/> w</ctlseq>
+            <ref src="wy370:98"/>
+        </section>
+        <section role="ctlseq" id="wycolor-rca" mnemonic="WYCOLOR"
+                 title="Select replacement character attributes and colors"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI 56 ; <param-single/> w</ctlseq>
+            <ref src="wy370:98"/>
+        </section>
+        <section role="ctlseq" id="wycolor-nca" mnemonic="WYCOLOR"
+                 title="Select nonerasable character attributes and color"
+                 not-implemented="true" todo="true">
+            <ctlseq>CSI 57 ; <param-single/> w</ctlseq>
+            <ref src="wy370:99"/>
+        </section>
+        <section role="ctlseq" id="wydtset" mnemonic="WYDTSET"
+                 title="Set date and time" not-implemented="true" todo="true">
+            <ctlseq>CSI 58 ; <param-single/> ; <param-single/> ;
+                <param-single/> ; <param-single/> ; <param-single/> w</ctlseq>
+            <ref src="wy370:35"/>
+        </section>
+        <section role="ctlseq" id="wydfpg" mnemonic="WYDFPG" todo="true"
+                 title="Define page for session" not-implemented="true">
+            <ctlseq>CSI 59 ; <param-single/> ; <param-single/> w</ctlseq>
+            <ref src="wy370:106"/>
+        </section>
+        <section role="ctlseq" id="wyind-rd" mnemonic="WYIND" todo="true"
+                 title="Restore default color index values" not-implemented="true">
+            <ctlseq>CSI 60 ; <param-single/> ; <param-single/> w</ctlseq>
+            <ref src="wy370:96"/>
+        </section>
+        <section role="ctlseq" id="wyind-acf" mnemonic="WYIND"
+                 title="Assign current character foreground" not-implemented="true" todo="true">
+            <ctlseq>CSI 61 ; <param-single/>  w</ctlseq>
+            <ref src="wy370:96"/>
+        </section>
+        <section role="ctlseq" id="wyind-acb" mnemonic="WYIND"
+                 title="Assign current character background" not-implemented="true" todo="true">
+            <ctlseq>CSI 62 ; <param-single/>  w</ctlseq>
+            <ref src="wy370:96"/>
+        </section>
+        <section role="ctlseq" id="wyind-ci" mnemonic="WYIND"
+                 title="Turn color index mode on/off" not-implemented="true" todo="true">
+            <ctlseq>CSI 63 ; <param-single/>  w</ctlseq>
+            <ref src="wy370:96"/>
+        </section>
+        <section role="ctlseq" id="wyind-nrf" mnemonic="WYIND" todo="true"
+                 title="Assign nonerasable character foreground" not-implemented="true">
+            <ctlseq>CSI 64 ; <param-single/> w</ctlseq>
+            <ref src="wy370:97"/>
+        </section>
+        <section role="ctlseq" id="wyind-nrb" mnemonic="WYIND" todo="true"
+                 title="Assign nonerasable character background" not-implemented="true">
+            <ctlseq>CSI 65 ; <param-single/> w</ctlseq>
+            <ref src="wy370:97"/>
+        </section>
+        <section role="ctlseq" id="wyind-rc" mnemonic="WYIND" todo="true"
+                 title="Redefine color index value" not-implemented="true">
+            <ctlseq>CSI 66 ; <param-single/> ; <param-single/> w</ctlseq>
+            <ref src="wy370:96"/>
+        </section>
 
         <!-- ######################### x ######################### -->
 
@@ -15185,6 +15434,11 @@ DCS $ q 3 , } ST</pre>
                 </p>
             </section>
         </section>
+        <section role="ctlseq" not-implemented="true" todo="true" id="wymsplm"
+                 mnemonic="WYMSPLM" title="Move split">
+            <ctlseq>CSI <param-single/> ; <param-single/> y</ctlseq>
+            <ref src="wy370:110"/>
+        </section>
         <section role="ctlseq" not-implemented="true" id="dectst"
                  mnemonic="DECTST" title="VT100 confidence tests">
             <ctlseq>CSI 2 ; <param-single/> y</ctlseq>
@@ -15194,6 +15448,8 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt420:313"/>
             <ref src="vt510:DECTST.html"/>
             <ref src="vt52x:316"/>
+            <!-- TODO: WY370 should be excluded from this - WY370 doesn't implement
+                        it, and it conflicts with WYMSPLM -->
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510"/>
             <p>power-up self-test,
                 data loop back test, EIA modem control test,
@@ -15295,6 +15551,11 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> z</ctlseq>
             <termsupp first="la100" series="print" additional=""/>
             <ref src="dap:146"/>
+        </section>
+        <section role="ctlseq" id="wyscrate" not-implemented="true" todo="true"
+                 mnemonic="WYSCRATE" title="Set smooth scroll rate">
+            <ctlseq>CSI <param-single/> z</ctlseq>
+            <ref src="wy370:76"/>
         </section>
         <section role="ctlseq" not-implemented="true" badges="s97801"
             id="sni-slrm" title="Define left and right margins">
