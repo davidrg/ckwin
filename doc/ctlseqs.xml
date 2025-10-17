@@ -382,7 +382,6 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
                  set tables
                - Add reference links to and any new escape sequences found in:
                    - The VT320 manual: EK-VT320-RM manual (if/when it turns up online)
-                   - The WY-370 manual - currently on page 80
                    - VT240, VT340 manuals
                    - The Sun console (man wscons)
                    - The SCO console (?)
@@ -2481,7 +2480,7 @@ DECTSR		462
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt420 vt510 tt linux putty dtterm wt"/>
             <p>Fills the screen with "E"</p>
         </section>
-        <section role="ctlseq" id="decfpp" ctlseq="ESC # 9"
+        <section role="ctlseq" id="decfpp" ctlseq="ESC # 9" todo="true"
                  mnemonic="DECFPP" title="Positioning" not-implemented="true">
             <termsupp first="lqp02" series="print" additional=""/>
             <ref src="tphb87:757"/>
@@ -3774,7 +3773,8 @@ DECTSR		462
             <ctlseq>DCS <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> ; <param-single/>  { .... ST</ctlseq>
         </section>
 
-        <section role="ctlseq" id="wylsfnt" mnemonic="WYLSFNT" title="Load softfont">
+        <section role="ctlseq" id="wylsfnt" mnemonic="WYLSFNT" title="Load softfont"
+                 not-implemented="true" todo="true">
             <ref src="wy370:63"/>
             <ctlseq>DCS 0 ; <param-single/> ; <param-single/> } ... ST</ctlseq>
         </section>
@@ -11513,35 +11513,42 @@ DCS $ q 3 , } ST</pre>
 
         </section> <!-- end SGR -->
 
-        <section role="ctlseq" id="dec-sgr" mnemonic="SGR" title="Select Graphic Rendition (DEC Private)">
+        <section role="ctlseq" id="dec-sgr" mnemonic="SGR" title="Select Graphic Rendition (DEC Private)"
+            not-implemented="true" todo="true">
             <ctlseq>CSI ? <param-multi/> m </ctlseq>
             <ref src="dps:166"/>
             <p>DEC Private Character Attributes - these are used by DEC printers.</p>
-            <section role="parameter" id="sgrp-0" title="Turn off all private attributes">
+            <section role="parameter" id="sgrp-0" title="Turn off all private attributes"
+                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 0</ctlseq>
                 <ref src="dps:166"/>
                 <p>
                     Deprecated - use <a href="#sgr-0">SGR-0</a> instead.
                 </p>
             </section>
-            <section role="parameter" id="sgrp-4" title="Turn on superscript, turn off subscript">
+            <section role="parameter" id="sgrp-4" title="Turn on superscript, turn off subscript"
+                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 4</ctlseq>
                 <ref src="dps:166"/>
             </section>
-            <section role="parameter" id="sgrp-5" title="Turn on subscript, turn off superscript">
+            <section role="parameter" id="sgrp-5" title="Turn on subscript, turn off superscript"
+                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 5</ctlseq>
                 <ref src="dps:166"/>
             </section>
-            <section role="parameter" id="sgrp-6" title="Turn on overline">
+            <section role="parameter" id="sgrp-6" title="Turn on overline"
+                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 6</ctlseq>
                 <ref src="dps:166"/>
                 <p>Deprecated - use <a href="sgr-53">SGR-53</a> instead</p>
             </section>
-            <section role="parameter" id="sgrp-24" title="Turn off superscript and subscript">
+            <section role="parameter" id="sgrp-24" title="Turn off superscript and subscript"
+                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 24</ctlseq>
                 <ref src="dps:166"/>
             </section>
-            <section role="parameter" id="sgrp-26" title="Turn off overline">
+            <section role="parameter" id="sgrp-26" title="Turn off overline"
+                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 26</ctlseq>
                 <ref src="dps:166"/>
                 <p>Deprecated - use <a href="sgr-55">SGR-55</a> instead</p>
