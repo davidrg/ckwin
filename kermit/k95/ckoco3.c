@@ -577,6 +577,7 @@ int saved_cursor_page = -1;
     22 - Color
     23 - Greek
   * 24 - Turkish
+	39 - Page Memory Extension
     42 - ISO Latin-2
     44 - PC Term
     45 - Soft-key mapping
@@ -631,11 +632,11 @@ struct tt_info_rec tt_info[] = {        /* Indexed by terminal type */
     "VT420", {"DEC-VT420","DEC-VT400","VT400",NULL},    "[?64;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT420 */
     "VT525", {"DEC-VT525","DEC-VT500","VT500",NULL},    "[?65;1;2;6;8;9;15;22;23;42;44;45;46c",       /* DEC VT520 */
 #endif /* COMMENT */
-    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;28;32;44c",     /* Kermit 95 self-personality */
+    "K95",    {"K95",NULL}, "[?63;1;2;6;8;9;15;28;32;39;44c",     /* Kermit 95 self-personality */
             /* K95 Device Attributes:
 				VT320;132-columns;printer;selective-erase;user-defined-keys;
                 national-replacement-character-sets;technical-characters;
-				rectangular-editing;text-macros;PCTerm */
+				rectangular-editing;text-macros;page-memory-extension;PCTerm */
     "TVI910", {"TELEVIDEO-910","TVI910+""910",NULL},    "TVS 910 REV.I\r",        /* TVI 910+ */
     "TVI925", {"TELEVIDEO-925","925",NULL},     "TVS 925 REV.I\r",        /* TVI 925  */
     "TVI950", {"TELEVIDEO-950","950",NULL},     "1.0,0\r",                /* TVI 950  */
