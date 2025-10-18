@@ -99,13 +99,15 @@
  * maximum to be changed at runtime solving this problem properly.
  */
 #define MAXSCRNCOL  512            /* Maximum screen columns */
+#define MAXSCRNROW  256            /* Maximum screen rows    */
 #else
 #define MAXSCRNCOL  256            /* Maximum screen columns */
+#define MAXSCRNROW  128            /* Maximum screen rows    */
 #endif
 #else /* KUI */
 #define MAXSCRNCOL  256            /* Maximum screen columns */
-#endif /* KUI */
 #define MAXSCRNROW  128            /* Maximum screen rows    */
+#endif /* KUI */
 #define MAXTERMSIZE (MAXSCRNCOL*MAXSCRNROW)
 #else /* NT */
 /* OS/2 WARP allows for screen widths up to 255 characters.

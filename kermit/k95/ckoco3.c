@@ -8360,14 +8360,14 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     hzgraphics = 0;                     /* Hazeltine Graphics Mode */
 
     switch ( tt_type_mode ) {           /* Do Attributes occupy a space in */
-    case TT_WY30:
+    case TT_WY30:                       /* LINE or PAGE modes              */
     case TT_WY50:
     case TT_TVI910:
     case TT_TVI925:
     case TT_TVI950:
         tt_hidattr = FALSE;
         break;
-    case TT_HP2621:                     /* LINE or PAGE modes              */
+    case TT_HP2621:
     case TT_HPTERM:
     default:
         tt_hidattr = TRUE ;
@@ -16662,6 +16662,16 @@ settermtype( int x, int prompts )
                 G[3].def_c1 = G[3].c1 = FALSE;
                 G[3].size = cs94;
                 G[3].national = FALSE;
+
+#ifdef UNICODE
+#ifdef CKOUNI
+				/* Modern linux uses UTF-8 by default, so if we have unicode
+				 * support then override all of the above with UTF-8. Second
+				 * parameter is ignored for TX_UTF8. */
+				setremcharset(TX_UTF8, -1);
+#endif /* CKOUNI */
+#endif /* UNICODE */
+
             } else {
                 tcsr = tcsl = TX_ASCII;     /* Make them both the same */
                 y = os2getcp();             /* Default is current code page */

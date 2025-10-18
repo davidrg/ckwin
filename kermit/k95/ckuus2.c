@@ -208,11 +208,11 @@ static char *tophlpi[] = {              /* Top-level help for IKSD */
 char *newstxt[] = {
 #ifdef OS2
         "Welcome to Kermit 95 " K95_VERSION_MAJ_MIN_REV ", the Open-Source Successor",
-        "to Columbia Columbia University's Kermit 95 package."
+        "to Columbia Columbia University's Kermit 95 package.",
 
 #ifdef BETATEST
 " ",
-"THIS IS A PRERELEASE TEST VERSION NOT YES SUITABLE FOR PRODUCTION USE.",
+"THIS IS A PRERELEASE TEST VERSION NOT YET SUITABLE FOR PRODUCTION USE.",
 "FOR DETAILS, SEE http://www.kermitproject.org/ckw10beta.html",
 #endif /* BETATEST */
 
@@ -226,14 +226,29 @@ char *newstxt[] = {
 #ifdef OS2
 " . Source code! Kermit 95 is now available under the Revised 3-Clause",
 "   BSD Open Source license.",
-" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0"
-" . Up-to-date fully exportable SSH v2 client",
-" . Up-to-date TLS support for http, ftp and telnet",
+" . Upgraded from C-Kermit 8.0.206 to the latest C-Kermit 10.0",
+#ifdef NT
+/* These features are currently Windows-only */
+" . Up-to-date fully exportable SSH v2 client (Windows XP or newer only)",
+" . Up-to-date TLS support for http, ftp and telnet (Windows XP or newer only)",
 " . PTY support on Windows 10 version 1809 and newer",
+" . Named Pipe connections",
 " . Now available as a 64bit application (x86-64, ARM64, Itanium)",
 " . Mouse wheel support, customizable with SET MOUSE WHEEL",
 "    (see HELP SET MOUSE for details)",
 " . X10, X11, URXVT and SGR mouse reporting",
+" . REXX script interface on Windows NT 3.51 and newer",
+" . 24-bit RGB color support and xterms 256-color mode",
+" . Screen update interval can be changed in K95G",
+" . The Toolbar, Statusbar and menubar can now be shown and hidden without ",
+"   restarting K95. When the menubar is off, a menu is available on the titlebar",
+#endif
+" . ADM5 and ADDS Regent 25 terminal emulations",
+" . Support for additional escape sequences from the VT420, VT520 and xterm",
+"   including OSC-52 clipboard integration, VT420 text macros and more",
+" . New K95 terminal type with its own terminfo entry",
+" . Half-screen scroll kverbs",
+" . Lots of bug fixes and other improvements",
 #endif /* OS2 */
 #ifndef OS2
 #ifdef COMMENT
@@ -279,8 +294,11 @@ char *newstxt[] = {
 " . https://www.kermitproject.org/ckbindex.html",
 "    Online index to C-Kermit documentation.",
 #ifdef OS2
+/* The manual has been updated for K95 v3.0, so we should link to that instead.
 " . https://kermitproject.org/k95manual/index.html",
-"    The Kermit 95 manual from 1995-2003.",
+"    The Kermit 95 manual from 1995-2003.",   */
+" . https://davidrg.github.io/ckwin/current/",
+"    The latest Kermit 95 manual.",
 #endif /* OS2 */
 " . https://www.kermitproject.org/ckututor.html",
 "    C-Kermit tutorial.",

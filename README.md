@@ -30,12 +30,12 @@ Highlights
   Secure Telnet (TLS, Kerberos)†, rlogin, and PTY. Additionally, NetBIOS is 
   supported on OS/2
 * [LAT and CTERM supported with DEC/Compaq/HP Pathworks32](https://davidrg.github.io/ckwin/current/dec.html)
-* RFC2217 Serial-over-telnet support
+* [RFC2217 Serial-over-telnet support](https://kermitproject.org/ckermit80.html#x14)
 * Supports Windows _natively_ on x86, x86-64, ARM32, ARM64, Alpha, MIPS, 
   PowerPC, and Itanium CPUs
 * Runs as a _native_ multithreaded 32-bit OS/2 application
 * Full-featured Kermit protocol implementation including server mode and IKSD (based on C-Kermit)
-* Built-in X/Y/Z-MODEM support
+* [Built-in X/Y/Z-MODEM support](https://davidrg.github.io/ckwin/current/#c8proto)
 * Scriptable [FTP(s)](https://kermitproject.org/ckermit80.html#ftp)† and [HTTP(s)](https://kermitproject.org/ckermit80.html#x2.2)† clients
 * Scriptable via its own scripting language (shared with 
   [C-Kermit](https://www.kermitproject.org/ckermit.html)) and 
@@ -91,7 +91,8 @@ If you don't have a GitHub account, or would rather not ask a question in public
 space, you can also email [ckw@kermitproject.org](mailto:ckw@kermitproject.org).
 
 There is also a [Kermit 95 How-To](https://www.kermitproject.org/ckwhowto.html)
-which may be useful for new users. The [Kermit 95 FAQ](https://www.kermitproject.org/k95faq.html), while not updated for v3.0, still contains some relevant information too.
+which may be useful for new users. The [Kermit 95 FAQ](https://www.kermitproject.org/k95faq.html), while not updated 
+for v3.0, still contains some relevant information too.
 
 If you think you may have found a bug, you can check the 
 [K95 Bugs List](https://davidrg.github.io/ckwin/current/k95bugs.html) or the 

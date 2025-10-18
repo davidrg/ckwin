@@ -8,6 +8,14 @@ on:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
+    inputs:
+      stable_release:
+        description:
+          This a *stable* (not alpha/beta/RC) *release* build. Do not build with
+          BETATEST defined.
+        required: false
+        type: boolean
+        default: false
 
 env:
   # Expected filename: https://zlib.net/zlib-1.3.1.tar.gz
@@ -17,10 +25,10 @@ env:
   # fine, so we've switched back to zlib.net.
   ZLIB_VERSION: 1.3.1
   # Expected filename: https://github.com/openssl/openssl/releases/download/openssl-${{env.CK_OPENSSL_VERSION}}/openssl-${{env.CK_OPENSSL_VERSION}}.tar.gz
-  OPENSSL_VERSION: 3.4.2
+  OPENSSL_VERSION: 3.5.4
   # OpenSSL 3.0 and 3.1 aren't properly compatible with Windows on ARM, so we've
   # got to use 3.2 or newer for that.
-  OPENSSL_ARM_VERSION: 3.4.2
+  OPENSSL_ARM_VERSION: 3.5.4
   # Make tool for openssl builds. Jom works fine with OpenSSL 1.1.1 but is broken with 3.0.10.
   # If jom works ideally we use that as it results in shorter build times.
   OPENSSL_MAKE: nmake
@@ -220,6 +228,39 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # This checks to see if the commit we're building is tagged. We assume tagged
+  # commits indicate a release build of some kind, meaning we should adjust
+  # the version number shown in the generated documentation, and deploy the
+  # manual to the stable directory in the github pages artifact.
+  # *Probably* we could do this check as part of the other jobs to shave
+  # 20 seconds off the overall build time.
+  Check-Build-Type:
+    runs-on: windows-latest
+    outputs:
+      commit-tag: ${{ steps.check-for-tag.outputs.tag }}
+      commit-sha: ${{ steps.check-for-tag.outputs.commit_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check if commit is tagged
+        id: check-for-tag
+        shell: bash
+        run: |
+          SHA=`git rev-parse HEAD`
+          echo "SHA: $SHA"
+          echo "commit_sha=$SHA" >> "$GITHUB_OUTPUT"
+          TAG=`git describe --tags --exact-match $SHA` || true
+          echo "Tag: $TAG"
+          if [[ $TAG == v* ]] ; then 
+              echo "Tagged as release"
+              echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          else 
+              echo "Not a release tag"
+              echo "tag=" >> "$GITHUB_OUTPUT"
+          fi
+          
+          echo "Stable release? ${{ github.event.inputs.stable_release }}"
+
   ##############################################################################
   # Build with Visual C++ (2019/2022)                                          #
   ##############################################################################
@@ -227,7 +268,7 @@ jobs:
   # capable of still targeting Windows XP (2017). All support x86, x86-64, ARM32
   # and ARM64.
   Build-VisualCxx:
-    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart, Build-TREXX]
+    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart, Build-TREXX, Check-Build-Type]
     strategy:
       matrix:
         arch:
@@ -691,6 +732,8 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+          CKB_COMMIT_SHA: ${{needs.Check-Build-Type.outputs.commit-sha}}
         working-directory: kermit
         run: |
           set k4w_root_override=${{github.workspace}}\${{steps.cfg.outputs.k4w}}
@@ -699,6 +742,15 @@ jobs:
           set libssh_root_override=${{github.workspace}}\libssh\current
           set libssh_build_override=%libssh_root_override%\build
           set rexx_root_override=${{github.workspace}}\rexx\regina\
+          
+          if "%TAG%" == "" goto :dev_build
+          REM If the commit is tagged, assume its a release (or beta/rc) build,
+          REM rather than a "Pre-Beta" or similar
+          set CKF_DEVBUILD=no
+          :dev_build
+          if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
+          set CKF_BETATEST=no
+          :unstable
             
           call ${{github.workspace}}\setenv.bat
             
@@ -809,7 +861,7 @@ jobs:
   # OpenSSL 1.1.1t is supported however.
   Build-VS2010-PSDK71:
     runs-on: windows-latest
-    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart]
+    needs: [Get-CACerts-Bundle, Prepare-Docs, Build-Wart, Check-Build-Type]
     strategy:
       matrix:
         arch:
@@ -962,6 +1014,8 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+          CKB_COMMIT_SHA: ${{needs.Check-Build-Type.outputs.commit-sha}}
         working-directory: kermit
         run: |         
           echo Configure Platform SDK Build Environment...
@@ -971,6 +1025,15 @@ jobs:
           
           echo Configure build environment...
           set openssl_root_override=${{github.workspace}}\openssl\current
+
+          if "%TAG%" == "" goto :dev_build
+          REM If the commit is tagged, assume its a release (or beta/rc) build,
+          REM rather than a "Pre-Beta" or similar
+          set CKF_DEVBUILD=no
+          :dev_build
+          if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
+          set CKF_BETATEST=no
+          :unstable
 
           call ${{github.workspace}}\setenv.bat
           
@@ -1032,7 +1095,7 @@ jobs:
   # which reduces the likelihood of accidentally breaking that compiler.        #
   ###############################################################################
   Build-Open-Watcom:
-    needs: Prepare-Docs
+    needs: [Prepare-Docs, Check-Build-Type]
     strategy:
       matrix:
         ver:
@@ -1082,12 +1145,23 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+          CKB_COMMIT_SHA: ${{needs.Check-Build-Type.outputs.commit-sha}}
         working-directory: kermit/p95
         run: |
           if "${{matrix.os.id}}" == "os2" set ibm20dir_override=${{github.workspace}}\tools\os2tk45
 
           REM Build for Windows NT 3.50 (and, someday, NT 3.1)
           if "${{matrix.os.id}}" == "nt-legacy" set CKT_NT31=yes
+
+          if "%TAG%" == "" goto :dev_build
+          REM If the commit is tagged, assume its a release (or beta/rc) build,
+          REM rather than a "Pre-Beta" or similar
+          set CKF_DEVBUILD=no
+          :dev_build
+          if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
+          set CKF_BETATEST=no
+          :unstable
 
           call ${{github.workspace}}\setenv.bat
         
@@ -1248,7 +1322,7 @@ jobs:
   # https://epics.anl.gov/base/msvctk.php
   Build-VS2003-PSDK2003SP1:
     runs-on: windows-latest
-    needs: [Get-CACerts-Bundle, Prepare-Docs]
+    needs: [Get-CACerts-Bundle, Prepare-Docs, Check-Build-Type]
     strategy:
       matrix:
         arch:
@@ -1424,11 +1498,22 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+          CKB_COMMIT_SHA: ${{needs.Check-Build-Type.outputs.commit-sha}}
         working-directory: kermit
         run: |
           set openssl_root_override=${{github.workspace}}\openssl\1.0.1u
           set srp_root_override=${{github.workspace}}\srp-2.1.2
           set k4w_root_override=${{github.workspace}}\kerberos\kfw-2.6.5\src
+          
+          if "%TAG%" == "" goto :dev_build
+          REM If the commit is tagged, assume its a release (or beta/rc) build,
+          REM rather than a "Pre-Beta" or similar
+          set CKF_DEVBUILD=no
+          :dev_build
+          if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
+          set CKF_BETATEST=no
+          :unstable
   
           call ${{github.workspace}}\setenv.bat
           
@@ -1566,7 +1651,7 @@ jobs:
   #
   Build-VS2005-PSDK2003SP1:
     runs-on: windows-latest
-    needs: [Prepare-Docs, Build-Wart]
+    needs: [Prepare-Docs, Build-Wart, Check-Build-Type]
     strategy:
       matrix:
         arch:
@@ -1637,8 +1722,19 @@ jobs:
       - name: Full Build
         env:
           ROOT: ${{github.workspace}}
+          TAG: ${{needs.Check-Build-Type.outputs.commit-tag}}
+          CKB_COMMIT_SHA: ${{needs.Check-Build-Type.outputs.commit-sha}}
         working-directory: kermit
         run: |
+          if "%TAG%" == "" goto :dev_build
+          REM If the commit is tagged, assume its a release (or beta/rc) build,
+          REM rather than a "Pre-Beta" or similar
+          set CKF_DEVBUILD=no
+          :dev_build
+          if "${{ github.event.inputs.stable_release }}" NEQ "true" goto :unstable
+          set CKF_BETATEST=no
+          :unstable
+          
           call ${{github.workspace}}\setenv.bat
           
           REM Use the supplied x86 build of wart rather than building it for
@@ -1855,34 +1951,6 @@ jobs:
   # A built version of Kermit 95 with REXX support is required to do this, so
   # we can't do it until after the Build-VisualCxx job has completed as all
   # the x86 builds have REXX support included
-
-  # This checks to see if the commit we're building is tagged. We assume tagged
-  # commits indicate a release build of some kind, meaning we should adjust
-  # the version number shown in the generated documentation, and deploy the
-  # manual to the stable directory in the github pages artifact.
-  # *Probably* we could do this check as part of the other earlier jobs to shave
-  # 20 seconds off the overall build time.
-  Check-Build-Type:
-    runs-on: windows-latest
-    outputs:
-      commit-tag: ${{ steps.check-for-tag.outputs.tag }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Check if commit is tagged
-        id: check-for-tag
-        shell: bash
-        run: |
-          SHA=`git rev-parse HEAD`
-          echo "SHA: $SHA"
-          TAG=`git describe --tags --exact-match $SHA` || true
-          echo "Tag: $TAG"
-          if [[ $TAG == v* ]] ; then 
-              echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          else 
-              echo "Not a release tag"
-              echo "tag=" >> "$GITHUB_OUTPUT"
-          fi
 
   # This version is for publishing on the internet elsewhere. HTML files end
   # in .html, and index.html is the front page of the manual.

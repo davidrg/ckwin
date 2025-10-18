@@ -137,6 +137,15 @@ settings.preliminary_banner_file = strip(param_bannerfile)
  *         be rendered like a parameter section. Then in SetMode, you could just
  *         do:  <mode-group-ref group-id="mode-ansi" operation="set"/>
  *         and it all gets included at that point.
+ *       - Add more formal way of representing control sequences, rather than
+ *         just free text. If we could specify the start, number of parameters
+ *         (potentially with specific values for some), and final character(s)
+ *         then we could format them better in the document like how they appear
+ *         in some terminal manuals, and do other potentially interesting things
+ *         like emit warnings when there are conflicts.
+ *       - Add some alternative output formats:
+ *         - Page-per-control sequence HTML
+ *         - Plain text
  */
 
 /*****************************************************************************
@@ -1598,10 +1607,16 @@ ctlsecTableRowHTML: procedure expose g. toc. badgeSet. settings. refSet. k95info
             end
         end
 
+        found = 0
+
+        /* If any badges are allowed, then no further checks required */
+        if wordpos('*', allowedBadges) <> 0 then do
+            found = 1
+        end
+
         /* Check to see that at least one of the badges is in the list of
            allowed badges */
 
-        found = 0
         tt = badges
         do I = 1 by 1 until tt = ""
             parse var tt badge' 'tt
@@ -1894,6 +1909,12 @@ sectionHasUnimplementedParameterChildren: procedure expose g.
                    allowed badges */
 
                 found = 0
+
+                /* If any badges are allowed, then no further checks required */
+                if wordpos('*', allowedBadges) <> 0 then do
+                    found = 1
+                end
+
                 tt = badges
                 do I = 1 by 1 until tt = ""
                     parse var tt badge' 'tt

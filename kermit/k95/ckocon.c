@@ -1,7 +1,7 @@
 #ifdef NT
-char *connv = "Win32 CONNECT command 10.0, 23 Jun 2023";
+char *connv = "Win32 CONNECT command 10.0.234, 7 Sep 2025";
 #else /* NT */
-char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
+char *connv = "OS/2 CONNECT command 10.0.234, 7 Sep 2025";
 #endif /* NT */
 
 /* C K O C O N  --  Kermit CONNECT command for OS/2 and Windows */
@@ -33,13 +33,17 @@ char *connv = "OS/2 CONNECT command 8.0.232, 20 Oct 2003";
   of character attribute handling & screen reversal and rollback, addition of
   VT220 and ANSI emulations, keyboard verbs, Compose key, Hebrew features,
   Cyrillic features, context-sensitive popup screens, cosmetic improvements,
-  commentary, etc: 1992-present.  (Hopefully much of the funny-looking code
+  commentary, etc: 1992-2011.  (Hopefully much of the funny-looking code
   looks less funny now.)
 
   Massive improvements by Jeffrey Altman <jaltman@secure-endpoints.com>:
-  changes to keyboard handling, mouse support, ...: 1993 to present.
+  changes to keyboard handling, mouse support, ...: 1993 to 2007.
   (191) new connect mode screen handling, scrollback, ...
-  (192) Win32 support, many new emulations, new keyboard scan codes, ... */
+  (192) Win32 support, many new emulations, new keyboard scan codes, ...
+
+  Further improvements by David Goodwin <david@zx.net.nz>: 2022 to present
+  24-bit color, VT420 macros, mouse reporting, xterm features, ...
+*/
 
 /*
  * =============================#includes=====================================

@@ -63,6 +63,7 @@ extern char * ck_cryear;       /* (ckcmai.c) Latest C-Kermit copyright year */
 
 #ifdef OS2
 #include "ckoetc.h"
+#include "ckover.h"
 #ifndef NT
 #define INCL_NOPM
 #define INCL_VIO /* Needed for ckocon.h */
@@ -291,8 +292,8 @@ char * ikprompt = "\\v(dir) IKSD>";
 #ifdef UNIX
 /* Note: parens, not brackets, because of ISO646 */
 /* Collapse long paths using ~ notation if in home directory tree */
-char * ckprompt = "(\\freplace(\\v(dir),\\fpathname(\\v(home)),~/)) C-Kermit>";
-char * ikprompt = "(\\freplace(\\v(dir),\\fpathname(\\v(home)),~/)) IKSD>";
+char * ckprompt = "(\\fsubstr(\\freplace(X\\v(dir),X\\fpathname(\\v(home)),X~/),2)) C-Kermit>";
+char * ikprompt = "(\\fsubstr(\\freplace(X\\v(dir),X\\fpathname(\\v(home)),X~/),2)) IKSD>";
 #else
 /* Default prompt for other platforms */
 char * ckprompt = "(\\v(dir)) C-Kermit>"; /* Default prompt for others */
@@ -5658,6 +5659,9 @@ shover() {
     printf("\nVersions:\n %s\n",versio);
     printf(" Numeric: %ld\n",vernum);
 #ifdef OS2
+#ifdef K95_COMMIT_SHA
+    printf(" Commit: %s\n", K95_COMMIT_SHA);
+#endif /* K95_COMMIT_SHA */
     printf(" Operating System: %s\n", ckxsystem);
 #else /* OS2 */
     printf(" Built for: %s\n", ckxsys);
