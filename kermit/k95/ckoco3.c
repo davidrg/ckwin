@@ -17724,6 +17724,10 @@ vtcsi(void)
                         case 42: /* DECNRCM */
                             pn[2] = decnrcm ? 1 : 2 ;
                             break;
+						case 64: /* DECPCCM */
+                            /* Page cursor coupling */
+							pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
+                            break;
                         case 66: /* DECNKM */
                             pn[2] = tt_keypad == TTK_APPL ? 1 : 2 ;
                             break;
@@ -19291,6 +19295,8 @@ vtcsi(void)
                             break;
                         case 64: /* DECPCCM */
                             /* Page cursor coupling */
+							vscrn[VTERM].page_cursor_coupling = TRUE;
+							vscrn[vmode].view_page = vscrn[vmode].cursor.p;
                             break;
                         case 66: /* DECNKM */
                             /* Numeric Keyboard - Application */
@@ -19955,6 +19961,7 @@ vtcsi(void)
                                break;
                            case 64: /* DECPCCM */
                                /* Page cursor coupling */
+							   vscrn[VTERM].page_cursor_coupling = FALSE;
                                break;
                            case 66: /* DECNKM */
                                /* Numeric Keyboard - Numeric */

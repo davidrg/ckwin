@@ -7759,7 +7759,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:324"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510"/>
             </section>
-            <section role="parameter" not-implemented="true" id="decpccm" mnemonic="DECPCCM" title="Page cursor coupling">
+            <section role="parameter" id="decpccm" mnemonic="DECPCCM"
+                     title="Page cursor coupling" groups="isvt330 isvt420">
                 <ctlseq><param-single/> = 64</ctlseq>
                 <ref src="wy370:26"/>
                 <ref src="070:342"/>
@@ -7768,6 +7769,15 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:234"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+                <p>
+                    Enable Page Cursor Coupling. When the cursor moves to another
+                    page, the display will follow to keep the cursor visible.
+                </p>
+                <p>
+                    If the cursor is on a different page from the one on screen
+                    when DECPCCM is turned on, the display switches to the page
+                    the cursor is on.
+                </p>
             </section>
             <section role="parameter" id="decbcmm" mnemonic="DECBCMM"
                      title="Business Color Matching Mode"
@@ -9650,8 +9660,8 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:324"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt520 vt510"/>
             </section>
-            <section role="parameter" not-implemented="true" id="decrst-64"
-                     mnemonic="DECPCCM" title="Page cursor coupling">
+            <section role="parameter" id="decrst-64" mnemonic="DECPCCM"
+                     title="Page cursor coupling" groups="isvt330 isvt420">
                 <ctlseq><param-single/> = 64</ctlseq>
                 <ref src="wy370:26"/>
                 <ref src="070:342"/>
@@ -9660,6 +9670,12 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:DECRQM.html#T5-8"/>
                 <ref src="vt52x:234"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+                <p>
+                    Disable Page Cursor Coupling. When the cursor moves to another
+                    page, the display stays where it is. Any updates to the screen
+                    made while the cursor is on another page will not be visible
+                    as that page will not be on screen.
+                </p>
             </section>
             <section role="parameter" id="r-decbcmm" mnemonic="DECBCMM"
                      title="Business Color Matching Mode"
@@ -12920,8 +12936,7 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt330" series="vt" additional="vt340 vt420"/>
                 </section>
                 <section role="parameter" id="decrqm-64" mnemonic="DECPCCM"
-                         title="Page cursor coupling"
-                         not-implemented="true" todo="true">
+                         title="Page cursor coupling" groups="isvt330 isvt420">
                     <ctlseq><param-single/> = 64</ctlseq>
                     <ref src="070:342"/>
                     <ref src="vt420:282"/>

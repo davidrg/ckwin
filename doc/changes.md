@@ -142,6 +142,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    x86/Alpha/MIPS/PowerPC, and Windows 8/10/11 on 32bit and 64bit ARM.
  - Xterm alternate screen (K95 terminal type only). Can be disabled with the
    new command `SET TERMINAL ALTERNATE-BUFFER DISABLED`
+ - VT330/VT420 page memory - available to the K95 terminal type and (until a
+   VT420 emulation is added) the VT320 terminal type.
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -278,6 +280,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECSM/DECRM/DECRQM modes
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
+   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
@@ -295,6 +298,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    [DECINVM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decinvm),
    [DECMSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-msr),
    [DECCKSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccksr)
+ - VT330/VT420 paging - marked as available for VT420 (and so, temporarily, VT320):
+   - [NP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#np) - Next Page
+   - [PP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#pp) - Previous Page
+   - [PPA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppa) - Page Position Absolute
+   - [PPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppr) - Page Position Relative
+   - [PPB](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppb) - Page Position Backward
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
