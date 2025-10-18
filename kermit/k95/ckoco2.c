@@ -5331,20 +5331,20 @@ shovscrn(void)
     printf("                ____VCMD____ ___VTERM____ ____VCS_____\n");
 	for (i = 0; i < maxPages; i++) {
 #define SHOVSCRN_OUTPARAM(fmt) printf(fmt, i+1);
-#define SHOVSCRN_OUTVAL(fmt, field) \
-		if (vscrn_page_valid(VCMD, i)) \
-			printf(fmt, vscrn[VCMD].pages[i].##field); \
-		else printf("             "); \
-		if (vscrn_page_valid(VTERM, i)) \
-			printf(fmt, vscrn[VTERM].pages[i].##field); \
-		else printf("             "); \
-		if (vscrn_page_valid(VCS, i)) \
-			printf(fmt, vscrn[VCS].pages[i].##field); \
-		else printf("             "); \
-		printf("\n");
 
 		SHOVSCRN_OUTPARAM(" p%02d linecount:");
-		SHOVSCRN_OUTVAL(" %12d", linecount);
+        if (vscrn_page_valid(VCMD, i))
+            printf(" %12d", vscrn[VCMD].pages[i].linecount);
+		else printf("             ");
+
+		if (vscrn_page_valid(VTERM, i))
+            printf(" %12d", vscrn[VTERM].pages[i].linecount);
+		else printf("             ");
+
+		if (vscrn_page_valid(VCS, i))
+            printf(" %12d", vscrn[VCS].pages[i].linecount);
+		else printf("             ");
+		printf("\n");
 
 		SHOVSCRN_OUTPARAM("     p%02d lines:");
 		if (vscrn_page_valid(VCMD, i))
@@ -5361,13 +5361,54 @@ shovscrn(void)
 		printf("\n");
 
 		SHOVSCRN_OUTPARAM("       p%02d beg:");
-		SHOVSCRN_OUTVAL(" %12d", beg);
+		if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].beg);
+		else printf("             ");
+
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].beg);
+		else printf("             ");
+
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].beg);
+		else printf("             ");
+        printf("\n");
+
 		SHOVSCRN_OUTPARAM("       p%02d top:");
-		SHOVSCRN_OUTVAL(" %12d", top);
+        if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].top);
+		else printf("             ");
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].top);
+		else printf("             ");
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].top);
+		else printf("             ");
+		printf("\n");
+
 		SHOVSCRN_OUTPARAM(" p%02d scrolltop:");
-		SHOVSCRN_OUTVAL(" %12d", scrolltop);
+        if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].scrolltop);
+		else printf("             ");
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].scrolltop);
+		else printf("             ");
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].scrolltop);
+		else printf("             ");
+		printf("\n");
+
 		SHOVSCRN_OUTPARAM("       p%02d end:");
-		SHOVSCRN_OUTVAL(" %12d", end);
+        if (vscrn_page_valid(VCMD, i))
+			printf(" %12d", vscrn[VCMD].pages[i].end);
+		else printf("             ");
+		if (vscrn_page_valid(VTERM, i))
+			printf(" %12d", vscrn[VTERM].pages[i].end);
+		else printf("             ");
+		if (vscrn_page_valid(VCS, i))
+			printf(" %12d", vscrn[VCS].pages[i].end);
+		else printf("             ");
+		printf("\n");
 	}
     printf("        cursor:  %02d(%03d,%03d)  %02d(%03d,%03d)  %02d(%03d,%03d)\n",
             vscrn[VCMD].cursor.p, vscrn[VCMD].cursor.x, vscrn[VCMD].cursor.y,
