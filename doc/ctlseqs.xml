@@ -14953,8 +14953,13 @@ DCS $ q 3 , } ST</pre>
                 <dt>Pr</dt>
                 <dd>1 - the row number at the top-left of the terminal</dd>
                 <dt>Pp</dt>
-                <dd>1 - the current page number (K95 only supports one page)</dd>
+                <dd>1 - the current page number</dd>
             </dl>
+            <p badges="k95">
+                If the terminal is on the alternate screen, the reported page
+                number will be one greater than the total number of available
+                pages.
+            </p>
         </section>
         <section role="ctlseq" id="decslck" mnemonic="DECSLCK"
                  title="Set Lock Key Style"

@@ -17615,7 +17615,7 @@ vtcsi(void)
                                  VscrnGetWidth(VTERM),
                                  1,
                                  1,
-                                 1);
+                                 vscrn[vmode].cursor.p+1);
                         sendescseq(decrpde);
                     }
                     break;
