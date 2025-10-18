@@ -5518,6 +5518,7 @@ settrm() {
 #ifndef KUI
           if (x != tt_modechg) {
               int p;
+              extern vscrn_t vscrn[];
               switch (x) {
                 case TVC_DIS:
                   /* When disabled the heights of all of the virtual screens */
