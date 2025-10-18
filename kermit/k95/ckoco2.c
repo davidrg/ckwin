@@ -5534,7 +5534,8 @@ VscrnInit( BYTE vmode )
         /* Wait for exclusive access to the screen */
         RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
         if ( !clrscr ) {
-			for (int p = 0; p < vscrn[vmode].page_count; p++) {
+            int p;
+			for (p = 0; p < vscrn[vmode].page_count; p++) {
         		sz = (VscrnGetPageEnd(vmode,FALSE,p) - VscrnGetPageTop(vmode,FALSE,p)
                		+ VscrnGetPageBufferSize(vmode, FALSE,p) + 1)%VscrnGetPageBufferSize(vmode,FALSE,p) ;
             	if ( sz > tt_rows[vmode] )

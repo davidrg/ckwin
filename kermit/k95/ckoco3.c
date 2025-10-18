@@ -8285,7 +8285,8 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 
     if (x) {                            /* Now clear the screen and home the cursor*/
         if ( VscrnGetBufferSize(VTERM,TRUE,TRUE) > 0 ) {
-			for (int p = 0; p < vscrn[VTERM].page_count; p++) {
+            int p;
+			for (p = 0; p < vscrn[VTERM].page_count; p++) {
 				if ( !VscrnIsClear(VTERM, p)) {
             		clrpage(VTERM,SP,p);
 				}
