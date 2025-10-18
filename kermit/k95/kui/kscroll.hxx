@@ -50,6 +50,7 @@ private:
     KWinMethod method;
 
     long prevMaxVal;
+	int prevTtScroll;
     Bool disableNoScroll;
 };
 

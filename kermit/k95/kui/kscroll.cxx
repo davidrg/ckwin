@@ -14,6 +14,7 @@ KScroll::KScroll( K_GLOBAL* kg, Bool isVertical, Bool thumbtrack )
     , pageAmt( 1L )
     , method( 0 )
     , prevMaxVal( 0L )
+	, prevTtScroll( 1 )
     , disableNoScroll( 0 )
 {
 }
@@ -56,7 +57,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
 
     maxVal = max - 1/* viewable */;
 
-    if( maxVal == prevMaxVal )
+    if( maxVal == prevMaxVal && tt_scroll == prevTtScroll )
         return;
 
     if( vertical ) {
@@ -66,6 +67,7 @@ void KScroll::setRange( int max, int viewable, Bool trackPos )
             currentPos += maxVal - prevMaxVal;
     }
     prevMaxVal = maxVal;
+	prevTtScroll = tt_scroll;
 
 #ifndef CKT_NT35_OR_31
     UINT mask = SIF_PAGE | SIF_RANGE | SIF_POS;
