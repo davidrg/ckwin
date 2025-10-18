@@ -2057,7 +2057,7 @@ i31ascii( int ch )
                 if ( debses )
                     break;
                 VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                             marginbot - 1, 1, FALSE, NUL);
+                             marginbot - 1, 1, FALSE, NUL, FALSE);
                 break;
             case 'O':
                 /* 3101-2x and 3161 - Delete cursor line */
@@ -2069,7 +2069,8 @@ i31ascii( int ch )
                              marginbot - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'P': {
                 /* Insert Character Command */

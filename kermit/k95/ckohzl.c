@@ -345,7 +345,8 @@ hzlascii( int ch )
                          marginbot - 1,
                          1,
                          FALSE,
-                         SP);
+                         SP,
+                         FALSE);
             break;
         case ETB: {
             /* Home Cursor and Clear Screen to Protected Spaces */
@@ -379,7 +380,8 @@ hzlascii( int ch )
                          marginbot - 1,
                          1,
                          FALSE,
-                         SP);
+                         SP,
+                         FALSE);
             break;
         case XFS:
             /* Home Cursor and Clear Screen to spaces */

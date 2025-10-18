@@ -1050,7 +1050,7 @@ void KClient::writeMe()
 
     // adjust the vertical scrollbar
     //
-    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : tt_scrsize[vmode];
+    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : clientPaint->page_length;
     vert->setRange( max, thi - (tt_status[vmode]?1:0), FALSE );
     horz->setRange( clientPaint->maxWidth, VscrnGetWidth(vmode) );
 

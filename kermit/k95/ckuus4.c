@@ -10012,7 +10012,7 @@ fneval(fn,argp,argn,xp) char *fn, *argp[]; int argn; char * xp;
                   goto fnend;
               }
           }
-          line = VscrnGetLineFromTop( VTERM, (USHORT) row );
+          line = VscrnGetLineFromTop( VTERM, (USHORT) row, TRUE );
           if (line != NULL) {
               if (bp[1] == NULL || bp[1][0] == '\0')
                 col = 0;

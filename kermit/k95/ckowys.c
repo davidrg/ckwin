@@ -1285,7 +1285,7 @@ wyseascii( int ch )
 
                 for ( x=0;x<=wherex[VTERM]-1;x++ ) {
                     if ( !VscrnGetVtCharAttr(VTERM, x, wherey[VTERM]-1).unerasable ) {
-                        int ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                        int ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -1333,7 +1333,7 @@ wyseascii( int ch )
                         xe = VscrnGetWidth(VTERM)-1;
                     for ( x=0;x<=xe;x++ )
                         if ( !VscrnGetVtCharAttr(VTERM, x, y).unerasable ) {
-                            int ch = VscrnGetCell( VTERM, x, y )->c ;
+                            int ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                             if ( ch || !wy_nullsuppress ) {
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
@@ -1395,7 +1395,7 @@ wyseascii( int ch )
                         sendchars("\x1b)",2);
                         fs = 1 ;
                     }
-                    ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                    ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                     if ( ch  || !wy_nullsuppress ) {
                         if ( tt_senddata ) {
                             unsigned char * bytes;
@@ -1446,7 +1446,7 @@ wyseascii( int ch )
                             sendchars("\x1b)",2);
                             fs = 1 ;
                         }
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -1676,7 +1676,7 @@ wyseascii( int ch )
                     break;
                 if ( !protect )
                     VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                                 marginbot - 1, 1, FALSE, SP);
+                                 marginbot - 1, 1, FALSE, SP, FALSE);
                 break;
             case 'F': {
                 /* Enters a message in the host message field.  This has     */
@@ -1866,7 +1866,7 @@ wyseascii( int ch )
                     unsigned char * bytes;
                     int nbytes;
                     unsigned short ch = VscrnGetCell( VTERM, wherex[VTERM]-1,
-                                       wherey[VTERM]-1 )->c;
+                                       wherey[VTERM]-1, TRUE )->c;
                     if ( ck_isunicode() )
                         nbytes = utorxlat(ch,&bytes);
                     else
@@ -1928,7 +1928,8 @@ wyseascii( int ch )
                              marginbot - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'S': {
                 /* Sends a message unprotected */
@@ -1948,7 +1949,7 @@ wyseascii( int ch )
                 /* First figure out if we have markers, STX then ETX */
                 for ( y=0;y<h;y++ )
                     for ( x=0;x<w;x++ ) {
-                        ch = VscrnGetCell( VTERM, x, y )->c ;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                         if ( ch == STX && xs < 0 && ys < 0 ) {
                             xs = x+1 ;
                             ys = y ;
@@ -1968,7 +1969,7 @@ wyseascii( int ch )
                 for ( y=ys;y<=ye; y++ ) {
                     for ( x=(y==ys)?xs:0 ; x <= (y==ye?xe:w-1) ; x++ )
                         if ( !VscrnGetVtCharAttr(VTERM, x, y).unerasable ) {
-                            ch = VscrnGetCell( VTERM, x, y )->c;
+                            ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                             if ( ch || !wy_nullsuppress ) {
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
@@ -4177,7 +4178,7 @@ wyseascii( int ch )
                 /* First figure out if we have markers, STX then ETX */
                 for ( y=0;y<h;y++ )
                     for ( x=0;x<w;x++ ) {
-                        ch = VscrnGetCell( VTERM, x, y )->c ;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                         if ( ch == STX && xs < 0 && ys < 0 ) {
                             xs = x+1 ;
                             ys = y ;
@@ -4206,7 +4207,7 @@ wyseascii( int ch )
                             sendchars("\x1b)",2);
                             fs = 1 ;
                         }
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;

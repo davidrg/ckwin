@@ -2,7 +2,7 @@
 extern "C" {
 #include "ikui.h"
 extern enum markmodes markmodeflag[] ;
-extern videobuffer vscrn[VNUM]; /* = {0,0,0,0,0,0,{0,0},0,-1,-1}; */
+extern vscrn_t vscrn[VNUM]; /* = {0,0,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0}; */
 extern int inecho;          /* do we echo script INPUT output? */
 extern int updmode ;
 extern int priority ;
@@ -101,7 +101,8 @@ BOOL IKTerm::getDrawInfo()
     incnt = 0;
 
     vbuf = &(vscrn[vnum]);
-    if ( vbuf->lines == NULL ) {
+    vscrn_page_t *page = &vscrn_view_page(vnum);
+    if ( !vscrn_view_page_valid(vnum) ) {
         ReleaseVscrnMutex(vnum) ;
         return FALSE;
     }
@@ -148,9 +149,9 @@ BOOL IKTerm::getDrawInfo()
 #endif /* NEW_EXCLUSIVE */
             /* Get the next line */
             if (!scrollflag[vnum])
-                line = &vbuf->lines[(vbuf->top+y)%vbuf->linecount] ;
+                line = &page->lines[(page->top+y)%page->linecount] ;
             else
-                line = &vbuf->lines[(vbuf->scrolltop+y)%vbuf->linecount] ;
+                line = &page->lines[(page->scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -208,8 +209,8 @@ BOOL IKTerm::getDrawInfo()
                 }
 
 #ifdef VSCRN_DEBUG
-                debug(F101,"OUCH!","",(scrollflag?(vbuf->scrolltop+y)
-                                    :(vbuf->top+y))%vbuf->linecount);
+                debug(F101,"OUCH!","",(scrollflag?(page->scrolltop+y)
+                                    :(page->top+y))%page->linecount);
 #endif /* VSCRN_DEBUG */
             }
 
@@ -247,7 +248,7 @@ BOOL IKTerm::getDrawInfo()
             if ( RequestVscrnMutex( vnum, -1 ) )
                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
-            line = &vbuf->lines[(vbuf->scrolltop+y)%vbuf->linecount] ;
+            line = &page->lines[(page->scrolltop+y)%page->linecount] ;
             lineAttr[y] = line->vt_line_attr;
 #ifdef NEW_EXCLUSIVE
             /* Give mutex back */
@@ -256,7 +257,7 @@ BOOL IKTerm::getDrawInfo()
 
             if (line->cells)
             {
-                if ( VscrnIsLineMarked(vnum,vbuf->scrolltop+y) )
+                if ( VscrnIsLineMarked(vnum,page->scrolltop+y) )
                 {
                     for ( x = 0 ; x < xs ; x++ )
                     {
@@ -356,7 +357,7 @@ BOOL IKTerm::getDrawInfo()
     {
         if ( vnum == VTERM && decssdt == SSDT_HOST_WRITABLE && tt_status[vnum] == 1
                   && !decssdt_override && !scrollflag[vnum]) {
-            line = &vscrn[VSTATUS].lines[0] ;
+            line = &vscrn_view_page(VSTATUS).lines[0] ;
             for ( x = 0 ; x < xs ; x++ ) {
                 textBuffer[c+x] = line->cells[x].c;
                 attrBuffer[c+x] = ComputeColorFromAttr(vnum,
@@ -388,12 +389,14 @@ BOOL IKTerm::getDrawInfo()
 
     getCursorPos();
 
-    kcp->beg = vbuf->beg;
-    kcp->top = vbuf->top;
-    kcp->scrolltop = vbuf->scrolltop;
-    kcp->end = vbuf->end;
+    kcp->beg = page->beg;
+    kcp->top = page->top;
+    kcp->scrolltop = page->scrolltop;
+    kcp->end = page->end;
     kcp->maxWidth = maxWidth;
     kcp->len = c;
+    kcp->page = vscrn[vnum].view_page;
+    kcp->page_length = page->linecount;
     return TRUE;
 }
 
@@ -407,6 +410,7 @@ BOOL IKTerm::getCursorPos()
         return FALSE;
 
     vbuf = &(vscrn[vnum]);
+    vscrn_page_t *page = &vscrn_view_page(vmode);
 
     char buf[30];
     ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
@@ -415,8 +419,8 @@ BOOL IKTerm::getCursorPos()
 
     /* only calculated an offset if Roll mode is INSERT */
     if( scrollstatus[vnum] && tt_roll[vnum] && markmodeflag[vnum] == notmarking ) {
-        cursor_offset = (vbuf->top + vbuf->linecount - vbuf->scrolltop)
-                        % vbuf->linecount;
+        cursor_offset = (page->top + page->linecount - page->scrolltop)
+                        % page->linecount;
     }
     else {
         cursor_offset = 0;

@@ -2530,7 +2530,8 @@ hpascii( int ch )
                              marginbot - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'M':
                 /* Delete Line */
@@ -2548,7 +2549,8 @@ hpascii( int ch )
                              marginbot - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
 #ifdef COMMENT
             case 'N':
@@ -2612,7 +2614,8 @@ hpascii( int ch )
                              -(tt_status[VTERM]?2:1),
                              1,
                              TRUE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'T':
                 /* Roll Down */
@@ -2630,7 +2633,8 @@ hpascii( int ch )
                              -(tt_status[VTERM]?2:1),
                              1,
                              TRUE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'U':
                 /* Next Page */
@@ -2779,7 +2783,7 @@ hpascii( int ch )
                     int x;
                     for ( x=wherex[VTERM]-1;x<VscrnGetWidth(VTERM);x++ ) {
                         if ( !VscrnGetVtCharAttr(VTERM, x, wherey[VTERM]-1).unerasable ) {
-                            unsigned short ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                            unsigned short ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;

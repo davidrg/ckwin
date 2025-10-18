@@ -217,7 +217,7 @@ extern int      mouse_reporting_mode;
 extern long     speed, vernum;
 extern int      local, escape, duplex, parity, flow, seslog, pmask,
                 cmdmsk, cmask, sosi, xitsta, debses, mdmtyp, carrier, what;
-extern int      cflg, cnflg, stayflg, tt_escape, tt_scroll;
+extern int      cflg, cnflg, stayflg, tt_escape, tt_scroll, tt_scroll_usr;
 extern int      network, nettype, ttnproto, protocol, inautodl;
 extern int cmdlvl,tlevel, ckxech;
 extern int ttnum;                               /* from ckcnet.c */
@@ -386,7 +386,7 @@ extern int tt_timelimit;                /* Auto-exit Connect after time */
 extern bool flipscrnflag[] ;
 
 
-extern videobuffer vscrn[];
+extern vscrn_t vscrn[];
 
 extern ascreen                          /* For saving screens: */
   vt100screen,                          /* terminal screen */
@@ -4134,8 +4134,8 @@ prtscreen(BYTE vmode, int top, int bot) {
             /* Internally, screen lines are 0-based, so "i-1". */
 
             if (scrollflag[vmode]&& tt_roll[vmode])
-              memcpy(cells,VscrnGetCells(vmode,VscrnGetScrollTop(vmode)
-                                          -VscrnGetTop(vmode)+i),n) ;
+              memcpy(cells,VscrnGetCells(vmode,VscrnGetScrollTop(vmode, TRUE)
+                                          -VscrnGetTop(vmode, FALSE, TRUE)+i),n) ;
             else
               memcpy(cells,VscrnGetCells(vmode,i),n);
 
@@ -5277,9 +5277,11 @@ sendescseq(CHAR *s) {
 
 
 
-/* ------------------------------------------------------------------ */
-/* IsDoubleWidth -                                                    */
-/* ------------------------------------------------------------------ */
+/*---------------------------------------------------------------------------*/
+/* IsDoubleWidth -                                          | Page: Cursor   */
+/*---------------------------------------------------------------------------*/
+/* Determines if the specified line is a double-width line. Primarily Used to
+ * find out how far the cursor can move horizontally. */
 bool
 isdoublewidth( unsigned short y )     /* based from 1 */
 {
@@ -5466,54 +5468,163 @@ cursorleft(int wrap) {
         wrapit = FALSE;
 }
 
-/* ------------------------------------------------------------------ */
-/* ReverseScreen                                                                              */
-/* ------------------------------------------------------------------ */
+
+
+/*---------------------------------------------------------------------------*/
+/* switch_to_page                                           | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Go to a specific page */
+void
+switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
+    int max_page = vscrn[vmode].page_count - 1;
+
+    if (page > max_page) page = max_page;
+    if (page < 0) page = 0;
+
+    vscrn[vmode].cursor.p = page;
+    if (view_page_too) vscrn[vmode].view_page = page;
+
+    /* Disable scrollback if we're not on page 0 */
+    if (page != 0) {
+        tt_scroll = 0;
+    } else {
+        /* As scrollback can be disabled via the NOSCROLL and LOCKDOWN commands
+         * (restart required to re-enable), we don't want to accidentally
+         * re-enable it so restore the previous setting rather than just turning
+         * it on. */
+        tt_scroll = tt_scroll_usr;
+    }
+
+    VscrnIsDirty(vmode);  /* status line needs to be updated */
+}
+
+/*---------------------------------------------------------------------------*/
+/* term_max_page                                            | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Maximum page number for a given terminal type */
+int term_max_page(BYTE vmode) {
+    int result = vscrn[vmode].page_count;
+
+    switch(tt_type) {
+    case TT_VT330:
+    case TT_VT340:
+        result = 6;
+        break;
+    case TT_VT520:
+    case TT_VT420:
+    case TT_VT320: /* TODO: REMOVE WHEN VT420 TERM TYPE ADDED */
+        result = 8;
+        break;
+    case TT_VT525:
+    case TT_K95:
+        result = 9;
+        break;
+    default:
+        result = 1;
+        break;
+    }
+
+    if (result <= vscrn[vmode].page_count)
+        return result;
+
+    return vscrn[vmode].page_count;
+}
+
+
+/*---------------------------------------------------------------------------*/
+/* next_page                                                | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Go forward by the specified number of pages. If the page count is zero, then
+ * we go forward one page. */
+void
+next_page(BYTE vmode, int count) {
+    int page = vscrn[vmode].cursor.p;
+    int max_page = term_max_page(vmode);
+
+    if (max_page <= 0) max_page = 1;
+    if (count <= 0) count = 1;
+    page += count;
+
+    if (page > max_page) page = max_page;
+
+    switch_to_page(vmode, page, vscrn[vmode].page_cursor_coupling);
+}
+
+/*---------------------------------------------------------------------------*/
+/* previous_page                                            | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Goes back to a previous page by the specified number of pages (count). If
+ * count is zero, then we go back one page */
+void
+previous_page(BYTE vmode, int count) {
+    int page = vscrn[vmode].cursor.p;
+    int max_page = term_max_page(vmode);
+
+    if (page > max_page) page = max_page;
+
+    if (count <= 0) count = 1;
+    page -= count;
+
+    if (page < 0) page = 0;
+
+    switch_to_page(vmode, page, vscrn[vmode].page_cursor_coupling);
+}
+
+
+
+/*---------------------------------------------------------------------------*/
+/* ReverseScreen                                            | Page: All      */
+/*---------------------------------------------------------------------------*/
 void
 reversescreen(BYTE vmode) {
-    int         r, c, width;
+    int         r, c, width, p;
+
+	/* Reverse the content on *all* pages */
+	for (p = 0; p < vscrn[vmode].page_count; p++) {
 
 #ifdef ONETERMUPD
-    viocell *   cell=NULL ;
+    	viocell *   cell=NULL ;
 
-    for (r = 0; r < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); r++) {          /* Loop for each row */
-        width = VscrnGetLineWidth(vmode,r) ;
-        for (c = 0;c < width;c++) { /* Loop for each character in row */
-            cell = VscrnGetCell( vmode, c, r ) ;
-            cell->video_attr = byteswapcolors(cell->video_attr);
-        }
-    }
+    	for (r = 0; r < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); r++) {          /* Loop for each row */
+        	width = VscrnGetLineWidthEx(vmode,r, p) ;
+        	for (c = 0;c < width;c++) { /* Loop for each character in row */
+            	cell = VscrnGetCellEx( vmode, c, r, p ) ;
+            	cell->video_attr = byteswapcolors(cell->video_attr);
+        	}
+    	}
 #else
-    if ( IsConnectMode() ) {  /* In Terminal Mode */
-        viocell *   cell=NULL ;
+   	 	if ( IsConnectMode() ) {  /* In Terminal Mode */
+        	viocell *   cell=NULL ;
 
-        for (r = 0; r < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); r++) {      /* Loop for each row */
-            width = VscrnGetLineWidth(vmode,r) ;
-            for (c = 0;c < width;c++) { /* Loop for each character in row */
-                cell = VscrnGetCell( vmode, c, r ) ;
-                cell->video_attr = byteswapcolors(cell->video_attr);
+        	for (r = 0; r < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); r++) {      /* Loop for each row */
+            	width = VscrnGetLineWidthEx(vmode,r, p) ;
+            	for (c = 0;c < width;c++) { /* Loop for each character in row */
+                	cell = VscrnGetCellEx( vmode, c, r, p) ;
+                	cell->video_attr = byteswapcolors(cell->video_attr);
                 }
             }
         }
-    else {
-        int x =0;
-        USHORT          n=0;
-        viocell   cells[MAXSCRNCOL];
+    	else {
+        	int x =0;
+        	USHORT          n=0;
+        	viocell   cells[MAXSCRNCOL];
 
-        n = cmd_cols ;
-        for (r = 0; r < cmd_rows; r++) {        /* Loop for each row */
-           ReadCellStr(cells, &n, r, 0);        /* Read this row from the screen */
-           for (c = 0; c < cmd_cols; c++) {     /* Loop for each character in row */
-                cells[c].video_attr = swapcolors(cells[c].video_attr);
+        	n = cmd_cols ;
+        	for (r = 0; r < cmd_rows; r++) {        /* Loop for each row */
+           		ReadCellStr(cells, &n, r, 0);        /* Read this row from the screen */
+           		for (c = 0; c < cmd_cols; c++) {     /* Loop for each character in row */
+                	cells[c].video_attr = swapcolors(cells[c].video_attr);
                 }
-            WrtCellStr(cells, n, r, 0);  /* Write the row back. */
-        }
-    }
+            	WrtCellStr(cells, n, r, 0);  /* Write the row back. */
+        	}
+    	}
 #endif /* ONETERMUPD */
+
+	}
 }
 
 /* ------------------------------------------------------------------ */
-/* FlipScreen                                                                             */
+/* FlipScreen                                                         */
 /* ------------------------------------------------------------------ */
 void                            /* Flip screen between */
 flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
@@ -5538,6 +5649,9 @@ flipscreen(BYTE vmode) {        /* tell Vscrn code to swap foreground     */
     reversescreen(vmode);
 }
 
+/*---------------------------------------------------------------------------*/
+/* savscrbk                                                 | Page: View     */
+/*---------------------------------------------------------------------------*/
 /* Saves scrollback Vscrn (vmode) to the file (name), either overwriting or
  * appending depending on the (disp) parameter.
  *
@@ -5568,12 +5682,12 @@ savscrbk(mode,name,disp,term) int mode; char * name; int disp; int term; {
         char    outbuf[MAXTERMCOL + 1];
         ULONG   beg, top, end;
 
-        beg = VscrnGetBegin(mode);
-        top = VscrnGetTop(mode);
-        end = VscrnGetEnd(mode);
+        beg = VscrnGetBegin(vmode, FALSE, TRUE);
+        top = VscrnGetTop(mode, FALSE, TRUE);
+        end = VscrnGetEnd(mode, FALSE, TRUE);
 
         n = VscrnGetWidth(mode) * sizeof(viocell);      /* Line width, incl attributes */
-        for (i = term ? top : beg; i != end; i = (i+1)%VscrnGetBufferSize(mode)) {
+        for (i = term ? top : beg; i != end; i = (i+1)%VscrnGetBufferSize(mode,FALSE,TRUE)) {
             /* For each scrollback line, i... */
             memcpy(cells,VscrnGetCells(mode,i-top),n);
 
@@ -5645,8 +5759,11 @@ geterasecolor( int vmode )
     return erasecolor;
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrpage                                                  | Page: Specified*/
+/*----------------------------------------------------------+----------------*/
 void
-clrscreen( BYTE vmode, CHAR fillchar ) {
+clrpage( BYTE vmode, CHAR fillchar, int page ) {
     /* This function becomes really simple with the new model
        since all we do is move the top of the screen down in
        the vscrn buffer by the size of the screen.
@@ -5658,21 +5775,46 @@ clrscreen( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     if ( IS97801(tt_type_mode) ) {
-        VscrnScroll(vmode,UPWARD,margintop-1,
-                     marginbot-1,
-                     marginbot-margintop+1,
-                     margintop==1 &&
-                     marginbot==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
-                     fillchar);
+        VscrnScrollPage(vmode,UPWARD,margintop-1,
+                     	marginbot-1,
+                     	marginbot-margintop+1,
+                     	margintop==1 &&
+                     	marginbot==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
+                     	fillchar,
+						page);
     }
     else {
-        VscrnScroll(vmode,UPWARD,
-                     0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
-                     VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
-                     TRUE,fillchar);
+        VscrnScrollPage(vmode,UPWARD,
+                     	0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
+                     	VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),
+                     	TRUE,fillchar, page);
     }
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrscreen                                                | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+void
+clrscreen( BYTE vmode, CHAR fillchar ) {
+    clrpage(vmode, fillchar, vscrn[vmode].cursor.p);
+}
+
+/*----------------------------------------------------------+----------------*/
+/* clrtoeoln                                                | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clears from the current cursor position to the end of the line. This may
+ * include the status line.
+ *
+ * While this function can be invoked by the user (via CLEAR TERMMINAL), it only
+ * operates on the page the cursor is currently on (which may not be the page
+ * currently on screen) as it clears from the cursors current position.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clrtoeoln( BYTE vmode, CHAR fillchar ) {
     int x ;
@@ -5685,7 +5827,7 @@ clrtoeoln( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop( vmode,wherey[vmode]-1 ) ;
+    line = VscrnGetLineFromTop( vmode, wherey[vmode]-1, FALSE ) ;
     for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
         {
         line->cells[x].c = fillchar ;
@@ -5694,6 +5836,22 @@ clrtoeoln( BYTE vmode, CHAR fillchar ) {
         }
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clreoscr_escape                                          | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clears from the current cursor position to the end of the screen. This may
+ * include the status line.
+ *
+ * While this function can be invoked by the user (via CLEAR TERMMINAL), it only
+ * operates on the page the cursor is currently on (which may not be the page
+ * currently on screen) as it clears from the cursors current position.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
@@ -5712,7 +5870,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
 
     RequestVscrnMutex(vmode, SEM_INDEFINITE_WAIT) ;
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=wherex[vmode]-1 ; x <MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
@@ -5725,10 +5883,10 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     if ( IS97801(tt_type_mode) )
         h = marginbot-1;
     else
-        h = VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;
+        h = VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;  /* TODO */
     for ( y=wherey[vmode] ; y<h ; y++)
     {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
         for ( x=0 ; x <MAXTERMCOL ; x++ )
         {
             line->cells[x].c = fillchar ;
@@ -5740,6 +5898,22 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     ReleaseVscrnMutex(vmode);
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrboscr_escape                                          | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clears from the current cursor position to the beginning of the screen. This
+ * may include the status line.
+ *
+ * While this function can be invoked by the user (via CLEAR TERMMINAL), it only
+ * operates on the page the cursor is currently on (which may not be the page
+ * currently on screen) as it clears from the cursors current position.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clrboscr_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
@@ -5758,7 +5932,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
         h = 0;
     for ( y=h ; y<wherey[vmode]-1 ; y++ )
         {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
         for ( x=0 ; x <MAXTERMCOL ; x++ )
             {
             line->cells[x].c = fillchar ;
@@ -5769,7 +5943,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
         }
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         line->cells[x].c = fillchar ;
@@ -5779,6 +5953,9 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 }
 
+/*---------------------------------------------------------------------------*/
+/* clrregion                                                | Page: Cursor   */
+/*---------------------------------------------------------------------------*/
 void
 clrregion( BYTE vmode, CHAR fillchar ) {
     /* This function becomes really simple with the new model
@@ -5800,9 +5977,22 @@ clrregion( BYTE vmode, CHAR fillchar ) {
                  marginbot-margintop+1,
                  margintop==1 &&
                  marginbot==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
-                 fillchar);
+                 fillchar, FALSE) ;
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clreoreg_escape                                          | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clears to the end of the current region within set margins. If the cursor
+ * is outside the set margins, no action is taken. Only used by SCO and
+ * SNI-97801 emulations at this time.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
@@ -5825,7 +6015,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
 
     RequestVscrnMutex(vmode, SEM_INDEFINITE_WAIT) ;
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=wherex[vmode]-1 ; x <MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
@@ -5838,7 +6028,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     h = marginbot-1;
     for ( y=wherey[vmode] ; y<h ; y++)
     {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
         for ( x=0 ; x <MAXTERMCOL ; x++ )
         {
             line->cells[x].c = fillchar ;
@@ -5850,6 +6040,19 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     ReleaseVscrnMutex(vmode);
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrboreg_escape                                          | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clears to the beginning of the current region within set margins. If the
+ * cursor is outside the set margins, no action is taken. Only used by SCO and
+ * SNI-97801 emulations at this time.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clrboreg_escape( BYTE vmode, CHAR fillchar ) {
     int x,y,h;
@@ -5869,7 +6072,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
     h = margintop-1;
     for ( y=h ; y<wherey[vmode]-1 ; y++ )
         {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
         for ( x=0 ; x <MAXTERMCOL ; x++ )
             {
             line->cells[x].c = fillchar ;
@@ -5880,7 +6083,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
         }
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         line->cells[x].c = fillchar ;
@@ -5890,6 +6093,22 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrbol_escape                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clears from the current cursor position to the beginning of the line. This
+ * may include the status line.
+ *
+ * While this function can be invoked by the user (via CLEAR TERMMINAL), it only
+ * operates on the page the cursor is currently on (which may not be the page
+ * currently on screen) as it clears from the cursors current position.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clrbol_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
@@ -5902,7 +6121,7 @@ clrbol_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         line->cells[x].c = fillchar ;
@@ -5911,7 +6130,22 @@ clrbol_escape( BYTE vmode, CHAR fillchar ) {
         }
 }
 
-/* Clear from current cursor position to end of line */
+/*----------------------------------------------------------+----------------*/
+/* clreol_escape                                            | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clear from current cursor position to end of line. This may include the
+ * status line.
+ *
+ * While this function can be invoked by the user (via CLEAR TERMMINAL), it only
+ * operates on the page the cursor is currently on (which may not be the page
+ * currently on screen) as it clears from the cursors current position.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clreol_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
@@ -5924,7 +6158,7 @@ clreol_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
@@ -5933,6 +6167,22 @@ clreol_escape( BYTE vmode, CHAR fillchar ) {
     }
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrline_escape                                           | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
+/* Clear from current cursor position to end of line. This may include the
+ * status line.
+ *
+ * While this function can be invoked by the user (via CLEAR TERMMINAL), it only
+ * operates on the page the cursor is currently on (which may not be the page
+ * currently on screen) as it clears from the cursors current position.
+ *
+ * Parameters:
+ *  vmode
+ *  	The screen buffer to operate on
+ *	fillchar
+ *		The character to fill (clear) with
+ */
 void
 clrline_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL ;
@@ -5945,7 +6195,7 @@ clrline_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < MAXTERMCOL ; x++ )
     {
         line->cells[x].c = fillchar ;
@@ -5982,6 +6232,9 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
         VscrnWrtCell( VTERM, cell, vta, y, x ) ;
 }
 
+/*----------------------------------------------------------+----------------*/
+/* clrrect_escape                                           | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
 /* Clears a rectangle from current cursor position to row,col */
 /* using fillchar.                                            */
 void
@@ -6018,13 +6271,13 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
     /* if so, abort                                   */
 
     for ( l=starty ; l <= endy ; l++ )
-        if ( VscrnGetLineFromTop( vmode, l )->vt_line_attr & WY_LINE_ATTR_PROTECTED )
+        if ( VscrnGetLineFromTop( vmode, l, FALSE )->vt_line_attr & WY_LINE_ATTR_PROTECTED )
             return ;
 
     /* so now we just need to clear each row */
 
     for ( l=starty ; l <= endy ; l++ ) {
-        line = VscrnGetLineFromTop( vmode, l ) ;
+        line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
             line->cells[x].c = fillchar ;
@@ -6038,9 +6291,13 @@ clrrect_escape( BYTE vmode, int top, int left, int bot, int right, CHAR fillchar
 /* ----------------------------------------------------------------- */
 /* Selective Clear Functions                                         */
 /* ----------------------------------------------------------------- */
+
+/*----------------------------------------------------------+----------------*/
+/* selclrscreen                                             | Page: Cursor   */
+/*----------------------------------------------------------+----------------*/
 void
 selclrscreen( BYTE vmode, CHAR fillchar ) {
-    int             x=0, y=0, y2=0, linecount = VscrnGetBufferSize(vmode) ;
+    int             x=0, y=0, y2=0, linecount = VscrnGetBufferSize(vmode,TRUE,FALSE) ;
     videoline *     line=NULL, * newline = NULL ;
 
     if ( fillchar == NUL )
@@ -6049,15 +6306,15 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     VscrnScroll(vmode,UPWARD,0,VscrnGetHeight(vmode)-(tt_status[vmode]?2:1),
-                 VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),TRUE,fillchar);
+                 VscrnGetHeight(vmode)-(tt_status[vmode]?1:0),TRUE,fillchar, FALSE);
 
     /* Okay, so now we have scrolled the screen.  But the protected */
     /* fields need to be copied back to the new current screen      */
 
     for ( y = linecount - VscrnGetHeight(vmode) + (tt_status[vmode]?1:0) ;
           y < linecount ; y++,y2++ ) {
-        line = VscrnGetLineFromTop( vmode,y ) ;
-        newline = VscrnGetLineFromTop( vmode,y2 ) ;
+        line = VscrnGetLineFromTop( vmode, y, FALSE ) ;
+        newline = VscrnGetLineFromTop( vmode, y2, FALSE ) ;
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
             if ( line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) {
                 newline->cells[x] = line->cells[x] ;
@@ -6069,7 +6326,7 @@ selclrscreen( BYTE vmode, CHAR fillchar ) {
 
 
 void
-selclrtoeoln( BYTE vmode, CHAR fillchar ) {
+selclrtoeoln( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
     int x ;
     videoline * line = NULL ;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
@@ -6080,7 +6337,7 @@ selclrtoeoln( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop( vmode,wherey[vmode]-1 ) ;
+    line = VscrnGetLineFromTop( vmode, wherey[vmode]-1, FALSE ) ;
     for ( x=wherex[vmode]-1 ; x < MAXTERMCOL ; x++ )
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6092,7 +6349,7 @@ selclrtoeoln( BYTE vmode, CHAR fillchar ) {
 }
 
 void
-selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
+selclreoscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
     int x,y;
     videoline * line = NULL;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
@@ -6108,7 +6365,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
     }
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=wherex[vmode]-1 ; x <MAXTERMCOL ; x++ )
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6121,7 +6378,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
     /* now take care of additional lines */
     for ( y=wherey[vmode] ; y<VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ; y++ )
         {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
         for ( x=0 ; x <MAXTERMCOL ; x++ )
             {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6134,7 +6391,7 @@ selclreoscr_escape( BYTE vmode, CHAR fillchar ) {
 }
 
 void
-selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
+selclrboscr_escape( BYTE vmode, CHAR fillchar ) {  /* | Page: Cursor */
     int x,y;
     videoline * line = NULL;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
@@ -6147,7 +6404,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
     /* now take care of first wherey[vmode]-1 lines */
     for ( y=0 ; y<wherey[vmode]-1 ; y++ )
         {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetLineFromTop(vmode, y, FALSE) ;
         for ( x=0 ; x <MAXTERMCOL ; x++ )
             {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6159,7 +6416,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
         }
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6171,7 +6428,7 @@ selclrboscr_escape( BYTE vmode, CHAR fillchar ) {
 }
 
 void
-selclrbol_escape( BYTE vmode, CHAR fillchar ) {
+selclrbol_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
     videoline * line = NULL ;
     int x ;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
@@ -6182,7 +6439,7 @@ selclrbol_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < wherex[vmode] ; x++ )
         {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6194,7 +6451,7 @@ selclrbol_escape( BYTE vmode, CHAR fillchar ) {
 }
 
 void
-selclrline_escape( BYTE vmode, CHAR fillchar ) {
+selclrline_escape( BYTE vmode, CHAR fillchar ) { /* | Page: Cursor */
     videoline * line = NULL ;
     int x ;
     cell_video_attr_t cellcolor = geterasecolor(vmode);
@@ -6205,7 +6462,7 @@ selclrline_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* take care of current line */
-    line = VscrnGetLineFromTop(vmode,wherey[vmode]-1) ;
+    line = VscrnGetLineFromTop(vmode, wherey[vmode]-1, FALSE) ;
     for ( x=0 ; x < MAXTERMCOL ; x++ )
     {
         if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6276,13 +6533,13 @@ selclrrect_escape( BYTE vmode, int top, int left, int bot, int right,
     /* if so, abort                                   */
 
     for ( l=starty ; l <= endy ; l++ )
-        if ( VscrnGetLineFromTop( vmode, l )->vt_line_attr & WY_LINE_ATTR_PROTECTED )
+        if ( VscrnGetLineFromTop( vmode, l, FALSE )->vt_line_attr & WY_LINE_ATTR_PROTECTED )
             return ;
 
     /* so now we just need to clear each row */
 
     for ( l=starty ; l <= endy ; l++ ) {
-        line = VscrnGetLineFromTop( vmode, l ) ;
+        line = VscrnGetLineFromTop( vmode, l, FALSE ) ;
         for ( x=startx ; x <= endx ; x++ )
         {
             if ( !(line->vt_char_attrs[x] & VT_CHAR_ATTR_PROTECTED ) ) {
@@ -6352,7 +6609,7 @@ decdwl_escape(bool dwlflag) {
     viocell       * cells = NULL ;
 
     /* DECDWL */
-    line = VscrnGetLineFromTop(VTERM,wherey[VTERM]-1) ;
+    line = VscrnGetLineFromTop(VTERM, wherey[VTERM]-1, FALSE) ;
     cells = line->cells ;
 
      if ( dwlflag != line->vt_line_attr ) {
@@ -7459,6 +7716,12 @@ SNI_bitmode(int bits) {
     }
 }
 
+/*---------------------------------------------------------------------------*/
+/* SNI_chcode                                               | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* *Assumed* this should only affect the View page. I don't have access to an
+ * SNI terminal to test with, but I don't think they support the DEC VT paging
+ * escape sequences */
 void
 SNI_chcode( int state ) {
     int    x,y;
@@ -7480,7 +7743,7 @@ SNI_chcode( int state ) {
                 h = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 for (y = 0; y < h; y++) {
                     for ( x = 0 ; x < w; x++ ) {
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( !ck_isunicode() )
                             ch = xl_u[tcsl](ch);
                         switch ( ch ) {
@@ -7495,11 +7758,11 @@ SNI_chcode( int state ) {
                         default:
                             continue;
                         }
-                        VscrnGetCell( VTERM, x, y )->c = ch;
+                        VscrnGetCell( VTERM, x, y, TRUE )->c = ch;
                     }
                 }
                 for ( x = 0 ; x < w; x++ ) {
-                    ch = VscrnGetCell( VSTATUS, x, 0 )->c;
+                    ch = VscrnGetCell( VSTATUS, x, 0, TRUE )->c;
                     if ( !ck_isunicode() )
                         ch = xl_u[tcsl](ch);
                     switch ( ch ) {
@@ -7514,7 +7777,7 @@ SNI_chcode( int state ) {
                     default:
                         continue;
                     }
-                    VscrnGetCell( VSTATUS, x, 0 )->c = ch;
+                    VscrnGetCell( VSTATUS, x, 0, TRUE )->c = ch;
                 }
                 VscrnIsDirty(VTERM);
             }
@@ -7527,7 +7790,7 @@ SNI_chcode( int state ) {
                 h = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 for (y = 0; y < h; y++) {
                     for ( x = 0 ; x < w; x++ ) {
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( !ck_isunicode() )
                             ch = xl_u[tcsl](ch);
                         switch ( ch ) {
@@ -7545,11 +7808,11 @@ SNI_chcode( int state ) {
                         if ( !ck_isunicode() ) {
                             ch = xl_tx[tcsl](ch);
                         }
-                        VscrnGetCell( VTERM, x, y )->c = ch;
+                        VscrnGetCell( VTERM, x, y, TRUE )->c = ch;
                     }
                 }
                 for ( x = 0 ; x < w; x++ ) {
-                    ch = VscrnGetCell( VSTATUS, x, 0 )->c;
+                    ch = VscrnGetCell( VSTATUS, x, 0, TRUE )->c;
                     if ( !ck_isunicode() )
                         ch = xl_u[tcsl](ch);
                     switch ( ch ) {
@@ -7567,7 +7830,7 @@ SNI_chcode( int state ) {
                     if ( !ck_isunicode() ) {
                         ch = xl_tx[tcsl](ch);
                     }
-                    VscrnGetCell( VSTATUS, x, 0 )->c = ch;
+                    VscrnGetCell( VSTATUS, x, 0, TRUE )->c = ch;
                 }
                 VscrnIsDirty(VTERM);
             }
@@ -7887,6 +8150,10 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     send_c1 = send_c1_usr;              /* Don't send C1 controls */
     keylock = FALSE;                    /* Keyboard is not locked */
 
+    /* Reset paging */
+    vscrn[VTERM].page_cursor_coupling = TRUE;
+    switch_to_page(VTERM, 0, TRUE);
+
     udkreset() ;                        /* Reset UDKs     */
     deccolm = FALSE;                    /* default column mode */
     tt_cols[VTERM] = tt_cols_usr ;
@@ -7930,9 +8197,13 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     setborder();                        /* Restore border color */
 
     if (x) {                            /* Now clear the screen and home the cursor*/
-        if ( VscrnGetBufferSize(VTERM) > 0 && !VscrnIsClear(VTERM)) {
-            clrscreen(VTERM,SP);
-            lgotoxy(VTERM,1,1);       /* and home the cursor */
+        if ( VscrnGetBufferSize(VTERM,TRUE,TRUE) > 0 ) {
+			for (int p = 0; p < vscrn[VTERM].page_count; p++) {
+				if ( !VscrnIsClear(VTERM, p)) {
+            		clrpage(VTERM,SP,p);
+				}
+			}
+			lgotoxy(VTERM,1,1);       /* and home the cursor */
         }
     }
     VscrnSetDisplayHeight(VTERM,0);
@@ -9408,7 +9679,7 @@ bookmarkset( int vmode )
     mark = x1 - '0' ;
     VscrnSetBookmark( vmode, mark,
                       (tt_roll[vmode] && scrollflag[vmode]) ?
-                      VscrnGetScrollTopEx(vmode,FALSE) : VscrnGetTopEx(vmode,FALSE) ) ;
+                      VscrnGetScrollTop(vmode, FALSE) : VscrnGetTop(vmode, FALSE, TRUE) ) ;
 
   bookmark_exit:                        /* Common exit point */
     escapestatus[vmode] = FALSE ;
@@ -9498,7 +9769,7 @@ bookmarkjump( int vmode )
     }
 
     if (!tt_roll[vmode]) {
-        if ( VscrnSetTopEx(vmode, bookmark, FALSE) < 0 )
+        if ( VscrnSetTop(vmode, bookmark, FALSE, TRUE) < 0 )
             bleep(BP_WARN) ;
     }
     else {
@@ -9513,6 +9784,9 @@ bookmarkjump( int vmode )
     return;
 }
 
+/*---------------------------------------------------------------------------*/
+/* gotojump                                                 | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 gotojump( int vmode )
 {
@@ -9524,8 +9798,8 @@ gotojump( int vmode )
    escapestatus[vmode] = TRUE ;
 
    do {
-      maxval = (VscrnGetEndEx(vmode, FALSE) - VscrnGetBeginEx(vmode, FALSE) - VscrnGetHeightEx(vmode, FALSE)
-                 + VscrnGetBufferSizeEx(vmode, FALSE))%VscrnGetBufferSizeEx(vmode, FALSE) ;
+      maxval = (VscrnGetEnd(vmode, FALSE, TRUE) - VscrnGetBegin(vmode, FALSE, TRUE) - VscrnGetHeightEx(vmode, FALSE)
+                 + VscrnGetBufferSize(vmode, FALSE, TRUE))%VscrnGetBufferSize(vmode, FALSE, TRUE) ;
 
       if ( negative && line < -maxval )
       {
@@ -9611,22 +9885,22 @@ gotojump( int vmode )
     if ( line <= 0 )
     {
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTopEx(vmode, VscrnGetEndEx(vmode, FALSE)-VscrnGetHeightEx(vmode,FALSE)+line, FALSE) < 0 )
+            if ( VscrnSetTop(vmode, VscrnGetEnd(vmode, FALSE, TRUE)-VscrnGetHeightEx(vmode,FALSE)+line, FALSE, TRUE) < 0 )
                 bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnSetScrollTop(vmode, VscrnGetEndEx(vmode, FALSE)-VscrnGetHeightEx(vmode, FALSE)+line) < 0 )
+            if ( VscrnSetScrollTop(vmode, VscrnGetEnd(vmode, FALSE, TRUE)-VscrnGetHeightEx(vmode, FALSE)+line) < 0 )
                 bleep(BP_WARN);
         }
     }
     else
     {
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTopEx(vmode, VscrnGetBeginEx(vmode,FALSE)+line-1, FALSE) < 0 )
+            if ( VscrnSetTop(vmode, VscrnGetBegin(vmode,FALSE,TRUE)+line-1, FALSE, TRUE) < 0 )
                 bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnSetScrollTop(vmode, VscrnGetBeginEx(vmode,FALSE)+line-1) < 0 )
+            if ( VscrnSetScrollTop(vmode, VscrnGetBegin(vmode,FALSE,TRUE)+line-1) < 0 )
                 bleep(BP_WARN);
         }
     }
@@ -9639,6 +9913,9 @@ gotojump( int vmode )
 
 #define SEARCHSTRING_LEN    63
 
+/*---------------------------------------------------------------------------*/
+/* search                                                   | Page: View     */
+/*---------------------------------------------------------------------------*/
 BOOL
 search( BYTE vmode, BOOL forward, BOOL prompt )
 {
@@ -9657,6 +9934,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
 #ifdef KUI
     int term_status_backup = tt_status[vmode];
 #endif /* KUI */
+	vscrn_page_t *page = &vscrn_view_page(vmode);
 
     if ( prompt )
     {
@@ -9753,8 +10031,8 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
         escapestatus[vmode] = FALSE ;
 
         col = VscrnGetCurPosEx(vmode,FALSE)->x ;
-        row = (( markmodeflag[vmode] ? VscrnGetTopEx(vmode,FALSE) : VscrnGetScrollTopEx(vmode,FALSE) )
-                + VscrnGetCurPosEx(vmode,FALSE)->y)%VscrnGetBufferSizeEx(vmode,FALSE) ;
+        row = (( markmodeflag[vmode] ? VscrnGetTop(vmode, FALSE, TRUE) : VscrnGetScrollTop(vmode, FALSE) )
+                + VscrnGetCurPosEx(vmode,FALSE)->y) % VscrnGetBufferSize(vmode, FALSE, TRUE) ;
     }
     else
     {
@@ -9768,9 +10046,9 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
         if ( forward )
         {
             col++ ;
-            if ( col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width )
+            if ( col == page->lines[row%page->linecount].width )
             {
-                if ( row != VscrnGetEndEx(vmode,FALSE) )
+                if ( row != VscrnGetEnd(vmode,FALSE,TRUE) )
                 {
                     col = 0 ;
                     row++ ;
@@ -9781,7 +10059,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                     goto search_exit;
                 }
             }
-            if ( row >= VscrnGetBufferSizeEx( vmode, FALSE ) )
+            if ( row >= VscrnGetBufferSize( vmode, FALSE, TRUE ) )
                 row = 0 ;
         }
         else
@@ -9789,10 +10067,10 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             col-- ;
             if ( col < 0 )
             {
-                if ( row != VscrnGetBeginEx(vmode, FALSE) )
+                if ( row != VscrnGetBegin(vmode, FALSE, TRUE) )
                 {
                     row-- ;
-                    col = vscrn[vmode].lines[row%vscrn[vmode].linecount].width - 1 ;
+                    col = page->lines[row%page->linecount].width - 1 ;
                 }
                 else
                 {
@@ -9801,7 +10079,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                 }
             }
             if ( row < 0 )
-                row = VscrnGetBufferSizeEx(vmode,FALSE) -1 ;
+                row = VscrnGetBufferSize(vmode, FALSE, TRUE) -1 ;
         }
     }
 
@@ -9850,7 +10128,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
 
         while (TRUE)
         {
-            c = vscrn[vmode].lines[row].cells[col].c;                   /* Get next character */
+            c = page->lines[row].cells[col].c;                   /* Get next character */
             if (!inpcas[cmdlvl])
             {           /* Ignore alphabetic case? */
                 if (isupper(c))
@@ -9899,17 +10177,17 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             }
 
             /* check to see if we hit the begin or end of vscrn */
-            if ( forward && row == VscrnGetEndEx(vmode,FALSE) && col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width-1 ||
-                 !forward && row == VscrnGetBeginEx(vmode,FALSE) && col == 0 )
+            if ( forward && row == VscrnGetEnd(vmode,FALSE,TRUE) && col == page->lines[row%page->linecount].width-1 ||
+                 !forward && row == VscrnGetBegin(vmode,FALSE,TRUE) && col == 0 )
                 break;    /* search string not found */
 
             /* advance the cursor */
             if ( forward )
             {
                 col++ ;
-                if ( col == vscrn[vmode].lines[row%vscrn[vmode].linecount].width )
+                if ( col == page->lines[row%page->linecount].width )
                 {
-                    if ( row != VscrnGetEndEx(vmode,FALSE) )
+                    if ( row != VscrnGetEnd(vmode,FALSE,TRUE) )
                     {
                         col = 0 ;
                         row++ ;
@@ -9920,7 +10198,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                         break;
                     }
                 }
-                if ( row >= VscrnGetBufferSizeEx( vmode, FALSE ) )
+                if ( row >= VscrnGetBufferSize( vmode, FALSE, TRUE ) )
                     row = 0 ;
             }
             else
@@ -9928,10 +10206,10 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                 col-- ;
                 if ( col < 0 )
                 {
-                    if ( row != VscrnGetBeginEx(vmode,FALSE) )
+                    if ( row != VscrnGetBegin(vmode, FALSE, TRUE) )
                     {
                         row-- ;
-                        col = vscrn[vmode].lines[row%vscrn[vmode].linecount].width - 1 ;
+                        col = page->lines[row%page->linecount].width - 1 ;
                     }
                     else
                     {
@@ -9940,7 +10218,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
                     }
                 }
                 if ( row < 0 )
-                    row = VscrnGetBufferSizeEx(vmode,FALSE) -1 ;
+                    row = VscrnGetBufferSize(vmode, FALSE, TRUE) -1 ;
             }
         }
 
@@ -9951,16 +10229,16 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
     /* okay, did we find it?  if so, go there */
     if ( found )
     {
-        if ( row >= VscrnGetTopEx(vmode,FALSE) && row <= VscrnGetEndEx(vmode,FALSE) ||
-             row <= VscrnGetEndEx(vmode,FALSE)
-             && (row+VscrnGetBufferSizeEx(vmode,FALSE)) > VscrnGetTopEx(vmode,FALSE)
-             && VscrnGetEndEx(vmode,FALSE) < VscrnGetTopEx(vmode,FALSE)
+        if ( row >= VscrnGetTop(vmode,FALSE,TRUE) && row <= VscrnGetEnd(vmode,FALSE,TRUE) ||
+             row <= VscrnGetEnd(vmode,FALSE,TRUE)
+             && (row + VscrnGetBufferSize(vmode, FALSE, TRUE)) > VscrnGetTop(vmode,FALSE,TRUE)
+             && VscrnGetEnd(vmode,FALSE,TRUE) < VscrnGetTop(vmode,FALSE,TRUE)
              )
         {
             if ( tt_roll[vmode] )
-                VscrnSetScrollTop(vmode, VscrnGetTopEx(vmode,FALSE) ) ;
+                VscrnSetScrollTop(vmode, VscrnGetTop(vmode,FALSE,TRUE) ) ;
             VscrnSetCurPosEx( vmode, col,
-                            (row - VscrnGetTopEx(vmode,FALSE) +
+                            (row - VscrnGetTop(vmode,FALSE,TRUE) +
                               VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))
                             %(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)),
                             FALSE ) ;
@@ -9970,7 +10248,7 @@ search( BYTE vmode, BOOL forward, BOOL prompt )
             if(tt_roll[vmode])
                 VscrnSetScrollTop( vmode, row ) ;
             else
-                VscrnSetTopEx( vmode, row, FALSE ) ;
+                VscrnSetTop( vmode, row, FALSE, TRUE ) ;
             VscrnSetCurPosEx( vmode, col, 0, FALSE ) ;
         }
     }
@@ -10477,7 +10755,7 @@ dokverb(int mode, int k) {                        /* 'k' is the kverbs[] table i
                         VscrnGetHeight(mode)-(tt_status[mode]?2:1),
                         VscrnGetHeight(mode)-(tt_status[mode]?1:0),
                         TRUE,
-                        SP );
+                        SP, TRUE );
             cleartermscreen(mode) ;    /* Clear the terminal screen */
             VscrnIsDirty(mode);
             return;
@@ -11616,7 +11894,7 @@ markmode( BYTE vmode, int k )
         scrollstatusline() ;
         scrollflag[vmode] = TRUE ;
         if ( !scrollstate[vmode] )
-            VscrnSetScrollTop( vmode, VscrnGetTop(vmode) ) ;
+            VscrnSetScrollTop( vmode, VscrnGetTop(vmode, FALSE, TRUE) ) ;
         VscrnIsDirty(vmode) ;
         return ;
         }  /* if (markmode[vmode] == notmarking) */
@@ -11852,11 +12130,11 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 
     case K_HOMSCN:              /* Scrolling UP (backwards) ... */
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTopEx(vmode, VscrnGetBeginEx(vmode,FALSE), FALSE) < 0 )
+            if ( VscrnSetTop(vmode, VscrnGetBegin(vmode, FALSE, TRUE), FALSE, TRUE) < 0 )
               bleep(BP_WARN) ;
         }
         else {
-            if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
+            if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode, FALSE, TRUE)) < 0 )
               bleep(BP_WARN);
         }
         break;
@@ -11864,12 +12142,12 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
     case K_UPSCN:
         if (!tt_roll[vmode]) {
             if ( VscrnMoveTop(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))) < 0 )
-              if ( VscrnSetTopEx(vmode,VscrnGetBegin(vmode),FALSE) < 0 )
+              if ( VscrnSetTop(vmode,VscrnGetBegin(vmode, FALSE, TRUE),FALSE, TRUE) < 0 )
                 bleep(BP_WARN) ;
         }
         else {
             if ( VscrnMoveScrollTop(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))) < 0 )
-              if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
+              if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode, FALSE, TRUE)) < 0 )
                 bleep(BP_WARN);
         }
         break;
@@ -11877,12 +12155,12 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
     case K_UPHSCN:
         if (!tt_roll[vmode]) {
             if ( VscrnMoveTop(vmode,-((VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2)) < 0 )
-                if ( VscrnSetTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
+                if ( VscrnSetTop(vmode,VscrnGetBegin(vmode, FALSE, TRUE), FALSE, TRUE) < 0 )
                     bleep(BP_WARN) ;
         }
         else {
             if ( VscrnMoveScrollTop(vmode,-((VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2)) < 0 )
-                if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
+                if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode, FALSE, TRUE)) < 0 )
                     bleep(BP_WARN);
         }
         break;
@@ -11901,12 +12179,12 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
     case K_DNSCN:                       /* Go down */
         if (!tt_roll[vmode]) {
             if ( VscrnMoveTop(vmode,VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)) < 0 )
-              if ( VscrnSetTop(vmode,VscrnGetEnd(vmode) - VscrnGetHeight(vmode)+1) < 0 )
+              if ( VscrnSetTop(vmode,VscrnGetEnd(vmode,FALSE,TRUE) - VscrnGetHeight(vmode)+1, FALSE, TRUE) < 0 )
                 bleep(BP_WARN);
         }
         else {
             if ( VscrnMoveScrollTop(vmode,VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)) < 0 )
-              if ( VscrnSetScrollTop(vmode,VscrnGetEndEx(vmode,FALSE)
+              if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode,FALSE,TRUE)
                                       - (VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))+1) < 0 )
                 bleep(BP_WARN);
         }
@@ -11915,14 +12193,14 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
     case K_DNHSCN:                       /* Go down half a screen */
         if (!tt_roll[vmode]) {
             if ( VscrnMoveTop(vmode,(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2) < 0 ) {
-                if ( VscrnSetTopEx(vmode,VscrnGetEndEx(vmode,FALSE) - VscrnGetHeightEx(vmode,FALSE)+1,FALSE) < 0 ) {
+                if ( VscrnSetTop(vmode,VscrnGetEnd(vmode,FALSE,TRUE) - VscrnGetHeightEx(vmode,FALSE)+1,FALSE,TRUE) < 0 ) {
                     bleep(BP_WARN);
                 }
             }
         }
         else {
             if ( VscrnMoveScrollTop(vmode,(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))/2) < 0 ) {
-                if ( VscrnSetScrollTop(vmode,VscrnGetEndEx(vmode,FALSE)
+                if ( VscrnSetScrollTop(vmode,VscrnGetEnd(vmode,FALSE,TRUE)
                                         - (VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))+1) < 0 ) {
                     bleep(BP_WARN);
                 }
@@ -11943,11 +12221,15 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 
     case K_ENDSCN:              /* Scroll to bottom */
         if (!tt_roll[vmode]) {
-            if ( VscrnSetTopEx(vmode,VscrnGetEndEx(vmode,FALSE) - VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0) + 1,FALSE) < 0 )
+            if ( VscrnSetTop(vmode,
+                VscrnGetEnd(vmode,FALSE,TRUE)
+                - VscrnGetHeightEx(vmode,FALSE) - (tt_status[vmode]?1:0) + 1,
+                FALSE,TRUE) < 0 ) {
               bleep(BP_WARN);
+            }
         }
         else {
-            if ( VscrnSetScrollTop(vmode,VscrnGetTopEx(vmode,FALSE)) < 0 )
+            if ( VscrnSetScrollTop(vmode,VscrnGetTop(vmode,FALSE,TRUE)) < 0 )
               bleep(BP_WARN);
         }
         break;
@@ -12001,7 +12283,7 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 
     } /* switch (k) */
 
-    scrollflag[vmode] = tt_roll[vmode] && ( VscrnGetTopEx(vmode,FALSE) != VscrnGetScrollTopEx(vmode,FALSE) ) ;
+    scrollflag[vmode] = tt_roll[vmode] && ( VscrnGetTop(vmode,FALSE,TRUE) != VscrnGetScrollTop(vmode,FALSE) ) ;
 
     if ( !scrollstatus[vmode] ) {
         scrollstatus[vmode] = TRUE ;
@@ -12015,7 +12297,8 @@ scrollback(BYTE vmode, int k) {                 /* Keycode */
 */
     if ( !scrollflag[vmode] ) {
         if (tt_roll[vmode] ||
-             (VscrnGetTopEx(vmode,FALSE)+VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?2:1))%VscrnGetBufferSizeEx(vmode,FALSE) == VscrnGetEndEx(vmode,FALSE))
+             (VscrnGetTop(vmode,FALSE,TRUE)+VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?2:1))
+				% VscrnGetBufferSize(vmode, FALSE, TRUE) == VscrnGetEnd(vmode,FALSE,TRUE))
         {
             scrollstatus[vmode] = FALSE ;
             ipadl25();                  /* Put back normal status line */
@@ -15430,12 +15713,12 @@ wrtch(unsigned short ch) {
                     if ( IS97801(tt_type_mode) ) {
                         if ( !sni_pagemode )
                             VscrnScroll(vmode,UPWARD, margintop - 1, marginbot - 1, 1,
-                                         (margintop == 1), SP ) ;
+                                         (margintop == 1), SP, FALSE ) ;
                         else /* Page Mode */
                             wherex[VTERM] = 1;
                     } else if ( autoscroll && !protect ) {
                         VscrnScroll(vmode,UPWARD, margintop - 1, marginbot - 1, 1,
-                                     (margintop == 1), SP ) ;
+                                     (margintop == 1), SP, FALSE ) ;
                     } else if ( wherex[vmode] > VscrnGetWidth(vmode) )
                         wherex[vmode] = VscrnGetWidth(vmode);
                 } else {
@@ -15522,7 +15805,7 @@ wrtch(unsigned short ch) {
                 if ( wherey[vmode] == margintop ) {
                     if ( autoscroll && !protect )
                         VscrnScroll(vmode,DOWNWARD, margintop - 1, marginbot - 1, 1,
-                                     FALSE, SP ) ;
+                                     FALSE, SP, FALSE ) ;
                 } else {
                     cursorup(0);
                 }
@@ -15718,6 +16001,11 @@ strinsert(char *d, char *s) {
       *d++ = *s++;
 }
 
+/*---------------------------------------------------------------------------*/
+/* line25                                                   | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* Assembles the content of the indicator status line.
+ */
 char *
 line25(int vmode) {
     char *s = statusline, * mode = NULL;
@@ -15729,20 +16017,20 @@ line25(int vmode) {
 
     if ( scrollstatus[vmode] && !escapestatus[vmode] ) {
         /* we are in scrollback mode -- dynamicly update the status line */
-        numlines = ( VscrnGetBegin(vmode) == 0 ) ?
-            VscrnGetEnd(vmode) + 1 : VscrnGetBufferSize(vmode) ;
+        numlines = ( VscrnGetBegin(vmode, FALSE, TRUE) == 0 ) ?
+            VscrnGetEnd(vmode, FALSE, TRUE) + 1 : VscrnGetBufferSize(vmode, FALSE, TRUE) ;
 
         if (tt_roll[vmode]) {
-            linesleft = ( VscrnGetScrollTop(vmode) >= VscrnGetBegin(vmode) ) ?
-                    VscrnGetScrollTop(vmode) - VscrnGetBegin(vmode) :
-                    VscrnGetScrollTop(vmode) - VscrnGetBegin(vmode)
-                        + VscrnGetBufferSize(vmode) ;
+            linesleft = ( VscrnGetScrollTop(vmode, FALSE) >= VscrnGetBegin(vmode, FALSE, TRUE) ) ?
+                    VscrnGetScrollTop(vmode, FALSE) - VscrnGetBegin(vmode, FALSE, TRUE) :
+                    VscrnGetScrollTop(vmode, FALSE) - VscrnGetBegin(vmode, FALSE, TRUE)
+                        + VscrnGetBufferSize(vmode, FALSE, TRUE) ;
         }
         else {
-            linesleft = ( VscrnGetTop(vmode) >= VscrnGetBegin(vmode) ) ?
-                VscrnGetTop(vmode) - VscrnGetBegin(vmode) :
-                    VscrnGetTop(vmode) - VscrnGetBegin(vmode)
-                        + VscrnGetBufferSize(vmode) ;
+            linesleft = ( VscrnGetTop(vmode, FALSE, TRUE) >= VscrnGetBegin(vmode, FALSE, TRUE) ) ?
+                VscrnGetTop(vmode, FALSE, TRUE) - VscrnGetBegin(vmode, FALSE, TRUE) :
+                    VscrnGetTop(vmode, FALSE, TRUE) - VscrnGetBegin(vmode, FALSE, TRUE)
+                        + VscrnGetBufferSize(vmode, FALSE, TRUE) ;
         }
 
        switch (markmodeflag[vmode]) {
@@ -17474,7 +17762,8 @@ vtcsi(void)
                                          marginbot - 1,
                                          1,
                                          FALSE,
-                                         SP);
+                                         SP,
+                                         FALSE);
                         }
                         VscrnIsDirty(VTERM);
                     }
@@ -17520,7 +17809,7 @@ vtcsi(void)
 
                         if ( decsace ) {        /* rectangle */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM,pn[1]+y-1);
+                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
                                 for ( x=0; x<w; x++ ) {
                                     for ( z=5; z<=k; z++ ) {
                                         USHORT a = line->vt_char_attrs[pn[2]+x-1];
@@ -17559,7 +17848,7 @@ vtcsi(void)
                             }
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM,pn[1]+y-1);
+                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
                                 for ( x = (y==0 ? pn[2] - 1 : 0);
                                       x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
                                       x++ ) {
@@ -17640,7 +17929,7 @@ vtcsi(void)
 
                         if ( decsace ) {        /* rectangle */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM,pn[1]+y-1);
+                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
                                 for ( x=0; x<w; x++ ) {
                                     for ( z=5; z<=k; z++ ) {
                                         USHORT a = line->vt_char_attrs[pn[2]+x-1];
@@ -17674,7 +17963,7 @@ vtcsi(void)
                             }
                         } else {                /* stream */
                             for ( y=0; y<h; y++ ) {
-                                videoline * line = VscrnGetLineFromTop(VTERM,pn[1]+y-1);
+                                videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
                                 for ( x = (y==0 ? pn[2] - 1 : 0);
                                       x < ((y==h-1) ? pn[4] : VscrnGetWidth(VTERM));
                                       x++ ) {
@@ -17758,14 +18047,14 @@ vtcsi(void)
                         if ( !data )
                             break;
                         for ( y=0; y<h; y++ ) {
-                            videoline * line = VscrnGetLineFromTop(VTERM,pn[1]+y-1);
+                            videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
                             for ( x=0; x<w; x++ ) {
                                 data[y*w + x] = line->cells[pn[2]+x-1].c;
                             }
                         }
 
                         for ( y=0; y<h; y++ ) {
-                            videoline * line = VscrnGetLineFromTop(VTERM,pn[6]+y-1);
+                            videoline * line = VscrnGetLineFromTop(VTERM, pn[6]+y-1, FALSE);
                             for ( x=0; x<w && (pn[7]+x <= VscrnGetWidth(VTERM)); x++ ) {
                                 line->cells[pn[7]+x-1].c = data[y*w + x];
                             }
@@ -17966,7 +18255,7 @@ vtcsi(void)
                         debug(F111, "DECRQCRA", "right", right);
 
                         for ( y=top-1; y<bot; y++ ) {
-                            videoline * line = VscrnGetLineFromTop(VTERM,y);
+                            videoline * line = VscrnGetLineFromTop(VTERM, y, FALSE);
                             for ( x=left-1; x<right; x++ ) {
                                 unsigned short c, a;
                                 unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
@@ -19303,7 +19592,8 @@ vtcsi(void)
                                  wherey[VTERM] - 1,
                                  1,
                                  FALSE,
-                                 SP);
+                                 SP,
+                                 FALSE);
                     break;
                 }
                 else if (ansiext && ISSCO(tt_type_mode)) {
@@ -19988,7 +20278,7 @@ vtcsi(void)
                     /* Now send the data */
                     for ( y=ys;y<=ye; y++ ) {
                         for ( x=(y==ys)?xs:0 ; x <= (y==ye?xe:w-1) ; x++ ) {
-                            ch = VscrnGetCell( VTERM, x, y )->c;
+                            ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                             if ( tt_senddata ) {
                                     unsigned char * bytes;
                                 int nbytes;
@@ -20671,7 +20961,8 @@ vtcsi(void)
                                 wherey[VTERM] - 1,
                                 1,
                                 FALSE,
-                                SP);
+                                SP,
+                                FALSE);
                     break;
                 } else if ( ansiext && ISSCO(tt_type_mode) ) {
                     switch ( pn[1] ) {
@@ -22305,7 +22596,8 @@ vtcsi(void)
                                          marginbot - 1,
                                          1,
                                          FALSE,
-                                         SP);
+                                         SP,
+                                         FALSE);
                         }
                     }
                 }
@@ -22420,7 +22712,8 @@ vtcsi(void)
                                          marginbot - 1,
                                          1,
                                          FALSE,
-                                         SP);
+                                         SP,
+                                         FALSE);
                         }
                     }
                 }
@@ -22589,20 +22882,22 @@ vtcsi(void)
                                          margintop-1, wherex[VTERM]-1,
                                          pn[1],
                                          margintop == 1,
-                                         SP);
+                                         SP,
+                                         FALSE);
                         } else { /* Roll Mode */
                             VscrnScroll(VTERM, UPWARD,
                                          margintop-1, marginbot-1,
                                          pn[1],
                                          margintop == 1,
-                                         SP);
+                                         SP,
+                                         FALSE);
                         }
                     }
                     /* No paged memory, so do nothing */
                     else if (ISHFT(tt_type_mode) || ISANSI(tt_type_mode)) {
                             VscrnScroll(VTERM, UPWARD,
                                          0, VscrnGetHeight(VTERM)-((tt_status)?2:1),
-                                         pn[1], TRUE, SP);
+                                         pn[1], TRUE, SP, FALSE);
                     }
                 }
                 break;
@@ -22667,7 +22962,8 @@ vtcsi(void)
                              -(tt_status[VTERM]?2:1),
                              pn[1],
                              TRUE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'T':
                 /* (SD) Scroll down-scrolls the characters down */
@@ -22709,7 +23005,8 @@ vtcsi(void)
                                      marginbot-1,
                                      pn[1],
                                      FALSE,
-                                     SP);
+                                     SP,
+                                     FALSE);
                     } else { /* Roll Mode */
                         VscrnScroll(VTERM,
                                      DOWNWARD,
@@ -22717,7 +23014,8 @@ vtcsi(void)
                                      marginbot-1,
                                      pn[1],
                                      FALSE,
-                                     SP);
+                                     SP,
+                                     FALSE);
                     }
                 }
                 /* We don't support paged memory so it does nothing */
@@ -22729,7 +23027,8 @@ vtcsi(void)
                              -(tt_status[VTERM]?2:1),
                              pn[1],
                              TRUE,
-                             SP);
+                             SP,
+                             FALSE);
                 }
                 break;
             case 't':   /* Proprietary */
@@ -24077,7 +24376,7 @@ vtescape( void )
 		  for ( x=start_x; 
 			x < (start_y == end_y ? end_x : MAXTERMCOL); 
 			x++ ) {
-		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1);
+		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, TRUE);
 		      pcell->video_attr = attribute;
 		      VscrnWrtCell( VTERM, *pcell, attrib,
 				    start_y - 1,
@@ -24086,7 +24385,7 @@ vtescape( void )
 		  if ( start_y != end_y ) {
 		      for ( y=start_y+1; y<end_y; y++) {
 			  for ( x=0; x<MAXTERMCOL; x++ ) {
-			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1);
+			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, TRUE);
 			      pcell->video_attr = attribute;
 			      VscrnWrtCell( VTERM, *pcell, attrib,
 					    y - 1,
@@ -24096,7 +24395,7 @@ vtescape( void )
 		      for ( x=0; 
 			    x <= end_x; 
 			    x++ ) {
-			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1);
+			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, TRUE);
 			  pcell->video_attr = attribute;
 			  VscrnWrtCell( VTERM, *pcell, attrib,
 					end_y - 1,
@@ -24183,7 +24482,8 @@ vtescape( void )
                                  marginbot - 1,
                                  1,
                                  (margintop==1),
-                                 SP);
+                                 SP,
+                                 FALSE);
                 } else
                     cursordown(0);
             }
@@ -24236,8 +24536,8 @@ vtescape( void )
                                  marginbot - 1,
                                  1,
                                   FALSE,
-                                  SP
-                                  );
+                                  SP,
+                                 FALSE );
                 else
                     cursorup(0);
             }
@@ -24273,7 +24573,8 @@ vtescape( void )
                              marginbot - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
             }
             break;
         case 'l':
@@ -24298,8 +24599,8 @@ vtescape( void )
                                  marginbot - 1,
                                  1,
                                   FALSE,
-                                  SP
-                                  );
+                                  SP,
+                                 FALSE );
                 else
                     cursorup(0);
             }
@@ -24311,7 +24612,8 @@ vtescape( void )
                              marginbot - 1,
                                  1,
                                  FALSE,
-                                 SP);
+                                 SP,
+                             FALSE);
             }
             break;
         case 'm':
@@ -24615,7 +24917,7 @@ vtescape( void )
                     /* Self Test */
                     /* 24 lines of MAXTERMCOL cols of cells */
                     for ( y=0 ; y < 24 ; y++ ) {
-                        line = VscrnGetLineFromTop(VTERM, y) ;
+                        line = VscrnGetLineFromTop(VTERM, y, FALSE) ;
                         for ( x=0 ; x < MAXTERMCOL ; x++ ) {
                             line->cells[x] = cell ;
                             line->vt_char_attrs[x] = VT_CHAR_ATTR_NORMAL;

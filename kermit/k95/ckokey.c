@@ -1522,6 +1522,9 @@ KbdHandlerCleanup( void ) {
    resizing events */
 
 #ifndef NOLOCAL
+/*---------------------------------------------------------------------------*/
+/* win32WindowEven                                          | Page: View     */
+/*---------------------------------------------------------------------------*/
 void win32WindowEvent( int mode, WINDOW_BUFFER_SIZE_RECORD r )
 {
     LONG sz ;
@@ -1538,11 +1541,11 @@ _PROTOTYP( int rlog_naws, (void) ) ;
      debug(F100,buf,"",0) ;
 #endif /* COMMENT */
      if ( VscrnGetWidth(mode) != r.dwSize.X || VscrnGetHeight(mode) != r.dwSize.Y ){
-         sz = (VscrnGetEnd(mode) - VscrnGetTop(mode)
-                + VscrnGetBufferSize(mode) + 1)%VscrnGetBufferSize(mode) ;
+         sz = (VscrnGetEnd(mode, FALSE, TRUE) - VscrnGetTop(mode, FALSE, TRUE)
+                + VscrnGetBufferSize(mode, FALSE, TRUE) + 1)%VscrnGetBufferSize(mode, FALSE, TRUE) ;
          VscrnSetWidth( mode, r.dwSize.X ) ;
          VscrnSetHeight( mode, r.dwSize.Y ) ;
-         VscrnScroll( mode, UPWARD, 1, sz, sz, TRUE, SP ) ;
+         VscrnScroll( mode, UPWARD, 1, sz, sz, TRUE, SP, TRUE ) ;
          cleartermscreen(mode);
 #ifdef TCPSOCKET
          if (ttmdm < 0 && TELOPT_ME(TELOPT_NAWS)) {

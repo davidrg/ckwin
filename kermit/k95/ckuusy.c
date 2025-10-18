@@ -177,7 +177,7 @@ extern int nopush;
 extern struct keytab os2devtab[];
 extern int nos2dev;
 extern int ttslip;
-extern int tt_scroll, tt_escape;
+extern int tt_scroll, tt_escape, tt_scroll_usr;
 #ifdef OS2PM
 extern int os2pm;
 #endif /* OS2PM */
@@ -2895,7 +2895,7 @@ doxarg(s,pre) char ** s; int pre;
 #endif /* NOPUSH */
 #ifdef OS2
     case XA_LOCK:
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         tt_escape = 0;
 #ifndef NOPUSH
         nopush = 1;
@@ -2912,7 +2912,7 @@ doxarg(s,pre) char ** s; int pre;
         break;
 #endif /* KUI */
       case XA_NOSCROLL:
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         break;
       case XA_NOESCAPE:
         tt_escape = 0;

@@ -420,7 +420,8 @@ qnxascii( int ch )
                              marginbot - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'F':
                 /* Delete Line */
@@ -433,7 +434,8 @@ qnxascii( int ch )
                              marginbot - 1,
                                  1,
                                  FALSE,
-                                 SP);
+                                 SP,
+                            FALSE);
                 break;
             case 'G':
                 break;
@@ -456,8 +458,8 @@ qnxascii( int ch )
                                  marginbot - 1,
                                  1,
                                   FALSE,
-                                  SP
-                                  );
+                                  SP,
+                                 FALSE );
                 else
                     cursorup(0);
                 break;

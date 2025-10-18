@@ -1580,7 +1580,8 @@ dgascii( int ch )
                              wherex[VTERM]-1,
                              1,
                              margintop == 1,
-                             SP);
+                             SP,
+                             FALSE);
                 break; 
             case 'I':
                 debug(F110,"Data General 4xx","Scroll Down",0);
@@ -1590,7 +1591,8 @@ dgascii( int ch )
                              marginbot-1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 break;
             case 'J':
                 debug(F110,"Data General 4xx","Insert Character",0);

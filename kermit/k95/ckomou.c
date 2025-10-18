@@ -749,6 +749,9 @@ void mouse_report(int x_coord, int y_coord, int button, BOOL ctrl, BOOL shift, B
                 (mousemap[button][event].kverb.id & ~(F_KVERB)) == K_IGNORE)
 #define MOUSE_DRAG_EVENT_IGNORED(button, event) (MOUSE_EVENT_IGNORED(button, event | MMDRAG))
 
+/*---------------------------------------------------------------------------*/
+/* win32MouseEvent                                          | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 {
@@ -1481,11 +1484,11 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
          Vcol = ppos->x ;
 
          if ( lastrow == 0 &&
-               VscrnGetBeginEx(mode,FALSE) != VscrnGetScrollTopEx(mode,FALSE)+Vrow ) {
+               VscrnGetBegin(mode,FALSE,TRUE) != VscrnGetScrollTop(mode,FALSE)+Vrow ) {
                putkverb( mode, F_KVERB | K_UPONE ) ;
                }
          else if ( lastrow == VscrnGetHeightEx(mode,FALSE) -2 &&
-               VscrnGetEndEx(mode,FALSE) != VscrnGetScrollTopEx(mode,FALSE)+Vrow ) {
+               VscrnGetEnd(mode,FALSE,TRUE) != VscrnGetScrollTop(mode,FALSE)+Vrow ) {
                putkverb( mode, F_KVERB | K_DNONE ) ;
                }
          sprintf(buffer, "AutoScroll: fs:%3x row:%3d col:%3d",
@@ -1505,6 +1508,9 @@ win32MouseEvent( int mode, MOUSE_EVENT_RECORD r )
 }
 
 #else /* NT */
+/*---------------------------------------------------------------------------*/
+/* os2_mouseevt                                             | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 os2_mouseevt(void *pArgList) {
 APIRET rc ;
@@ -1930,11 +1936,11 @@ while (hMouse)
             Vcol = ppos->x ;
 
             if ( lastrow == 0 &&
-                VscrnGetBeginEx(vmode,FALSE) != VscrnGetScrollTopEx(vmode,FALSE)+Vrow ) {
+                VscrnGetBegin(vmode,FALSE,TRUE) != VscrnGetScrollTop(vmode,FALSE)+Vrow ) {
                 putkverb( vmode, F_KVERB | K_UPONE ) ;
                 }
             else if ( lastrow == VscrnGetHeightEx(vmode,FALSE) -(tt_status[vmode]?2:1) &&
-                VscrnGetEndEx(vmode,FALSE) != VscrnGetScrollTopEx(vmode,FALSE)+Vrow
+                VscrnGetEnd(vmode,FALSE,TRUE) != VscrnGetScrollTop(vmode,FALSE)+Vrow
                        ) {
                 putkverb( vmode, F_KVERB | K_DNONE ) ;
                 }
