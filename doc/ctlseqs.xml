@@ -1281,8 +1281,8 @@ DECTSR		462
         -->
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
-              todo-mnemonics="SUNBOW SUNWOB SUNSCRL CHA REP SCORC SCOSC XTPUSHCOLORS XTPOPCOLORS XTREPORTCOLORS"
-              todo-terminals="vt102 vt220 vt420 vt525 k95 xterm tt putty"
+              todo-mnemonics="SUNBOW SUNWOB SUNSCRL XTPUSHCOLORS XTPOPCOLORS XTREPORTCOLORS"
+              todo-terminals="vt220 vt420 vt525 k95 xterm tt putty wt"
               show-refs="true">
             <style>
                 table {
@@ -1541,7 +1541,6 @@ DECTSR		462
             current rules are:
         </p>
         <ul>
-            <li>Must be supported by VT102 <b>OR</b></li>
             <li>Must be supported by VT220 <b>OR</b></li>
             <li>Must be supported by VT420 <b>OR</b></li>
             <li>Must be supported by both xterm and teraterm <b>OR</b></li>
@@ -5846,7 +5845,7 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="ppa" mnemonic="PPA"
                  title="Page Position Absolute"
-                 not-implemented="true" todo="true">
+                 groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> SP P</ctlseq>
             <ref src="070:336"/>
             <ref src="vt340:124"/>
@@ -5855,6 +5854,18 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:346"/>
             <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Moves the cursor to the specified page without changing the cursors
+                position. If the specified page number is greater than the number
+                of pages available, the last page is selected. If the page specified
+                page number is less than 1, then the first page is selected.
+            </p>
+            <p>
+                If no parameter is specified, PPA moves to page 1.
+            </p>
+            <p badges="k95">
+                Not available while on the alternate screen.
+            </p>
         </section>
 
         <section role="ctlseq" id="wyppa" mnemonic="WYPPA"
@@ -5888,7 +5899,7 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="ppr" mnemonic="PPR"
                  title="Page Position Relative"
-                 not-implemented="true" todo="true">
+                 groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> SP Q</ctlseq>
             <ref src="070:337"/>
             <ref src="vt340:125"/>
@@ -5897,6 +5908,15 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:347"/>
             <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Moves the cursor forward the specified number of pages, without
+                changing the cursors position. Attempts to move past the last
+                available page will move to the last available page. The default
+                is to move forward one page.
+            </p>
+            <p badges="k95">
+                Not available while on the alternate screen.
+            </p>
         </section>
 
         <section role="ctlseq" id="wyppr" mnemonic="WYPPR"
@@ -5945,7 +5965,7 @@ DCS $ q 3 , } ST</pre>
 
         <section role="ctlseq" id="ppb" mnemonic="PPB"
                  title="Page Position Backward"
-                 not-implemented="true" todo="true">
+                 groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> SP R</ctlseq>
             <ref src="070:338"/>
             <ref src="vt340:124"/>
@@ -5953,6 +5973,15 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:PPB.html"/>
             <ref src="vt52x:347"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Moves the cursor back the specified number of pages, without
+                changing the cursors position. Attempts to move past the first
+                page will move to the first page. The default is to move back
+                one page.
+            </p>
+            <p badges="k95">
+                Not available while on the alternate screen.
+            </p>
         </section>
 
         <section role="ctlseq" id="wyppb" mnemonic="WYPPB"
@@ -6102,7 +6131,7 @@ DCS $ q 3 , } ST</pre>
             <p>Reset Terminal</p>
         </section>
         <section role="ctlseq" id="np" mnemonic="NP" title="Next Page"
-                 not-implemented="true" todo="true">
+                 groups="isvt330 isvt420">
             <ctlseq>CSI <param-single/> U</ctlseq>
             <ref src="070:332"/>
             <ref src="vt340:123"/>
@@ -6111,9 +6140,41 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:345"/>
             <ref src="wy370:111"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Moves the cursor to the home position on a following page. The
+                parameter, <param-single/>, specifies how many pages to move
+                forward. If not specified or a value of 0 is given then the
+                cursor will move forward to the next page. Attempts to move past
+                the last available page will place the cursor on the last page.
+            </p>
+            <p badges="k95">
+                Not available while on the alternate screen.
+            </p>
         </section>
 
         <!-- ######################### V ######################### -->
+        <section role="ctlseq" id="pp" mnemonic="PP" title="Preceding Page"
+                 groups="isvt330 isvt420">
+            <ctlseq>CSI <param-single/> V</ctlseq>
+            <ref src="070:334"/>
+            <ref src="vt340:123"/>
+            <ref src="vt420:159"/>
+            <ref src="vt510:PP.html"/>
+            <ref src="vt52x:346"/>
+            <ref src="wy370:111"/>
+            <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
+            <p>
+                Moves the cursor to the home position on a preceding page. The
+                parameter, <param-single/>, specifies how many pages to move
+                backward. If not specified or a value of 0 is given then the
+                cursor will move backward to the previous page. Attempts to move
+                past the first available page will place the cursor on the first
+                page.
+            </p>
+            <p badges="k95">
+                Not available while on the alternate screen.
+            </p>
+        </section>
         <section role="ctlseq" id="er" mnemonic="ER" title="Erase in region (SCO)" badges="scoansi">
             <ctlseq>CSI <param-single/> V</ctlseq>
             <termsupp first="sco" series="sco" additional=""/>
@@ -6139,17 +6200,6 @@ DCS $ q 3 , } ST</pre>
                     attributes
                 </p>
             </section>
-        </section>
-        <section role="ctlseq" id="pp" mnemonic="PP" title="Preceding Page"
-                 not-implemented="true" todo="true">
-            <ctlseq>CSI <param-single/> V</ctlseq>
-            <ref src="070:334"/>
-            <ref src="vt340:123"/>
-            <ref src="vt420:159"/>
-            <ref src="vt510:PP.html"/>
-            <ref src="vt52x:346"/>
-            <ref src="wy370:111"/>
-            <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
         </section>
 
         <!-- ######################### W ######################### -->

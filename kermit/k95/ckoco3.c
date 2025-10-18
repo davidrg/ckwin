@@ -5492,6 +5492,7 @@ void
 switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
     int max_page = vscrn[vmode].page_count - 1;
 
+	if (max_page == 0) return; /* No other pages, nothing to do */
     if (page > max_page) page = max_page;
     if (page < 0) page = 0;
 
@@ -5535,6 +5536,15 @@ to_alternate_buffer(BYTE vmode) {
 }
 
 /*---------------------------------------------------------------------------*/
+/* on_alternate_buffer                                      | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+BOOL
+on_alternate_buffer(BYTE vmode) {
+	if (!ISK95(tt_type_mode)) return FALSE;
+	return vscrn[vmode].cursor.p == ALTERNATE_BUFFER_PAGE(vmode);
+}
+
+/*---------------------------------------------------------------------------*/
 /* from_alternate_buffer                                    | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 void
@@ -5567,26 +5577,29 @@ set_alternate_buffer_enabled(BYTE vmode, BOOL enabled) {
 /*---------------------------------------------------------------------------*/
 /* term_max_page                                            | Page: n/a      */
 /*---------------------------------------------------------------------------*/
-/* Maximum page number for a given terminal type */
+/* Maximum page number for a given terminal type
+ * VT330/340 has 6 (pages 0-5)
+ * VT420/510/520 has 8 (pages 0-7)
+ * VT525 and K95 have 9 (pages 0-8) */
 int term_max_page(BYTE vmode) {
     int result = vscrn[vmode].page_count;
 
     switch(tt_type) {
     case TT_VT330:
     case TT_VT340:
-        result = 6;
+        result = 5;
         break;
     case TT_VT520:
     case TT_VT420:
     case TT_VT320: /* TODO: REMOVE WHEN VT420 TERM TYPE ADDED */
-        result = 8;
+        result = 7;
         break;
     case TT_VT525:
     case TT_K95:
-        result = 9;
+        result = 8;
         break;
     default:
-        result = 1;
+        result = 0;
         break;
     }
 
@@ -8240,6 +8253,9 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     from_alternate_buffer(VTERM);
     vscrn[VTERM].page_cursor_coupling = TRUE;
     switch_to_page(VTERM, 0, TRUE);
+	saved_view_page = -1;
+    saved_cursor_page = -1;
+	tt_scroll = tt_scroll_usr;
 
     udkreset() ;                        /* Reset UDKs     */
     deccolm = FALSE;                    /* default column mode */
@@ -14139,6 +14155,7 @@ dodcs( void )
                                 );
                             break;
                         } /* 'q' */
+
                         } /* achar */
                         break;
                     } /* SP */
@@ -17292,8 +17309,14 @@ vtcsi(void)
                 clreoscr_escape(VTERM,SP);
             }
             break;
-        case 'V': /* Erase from cursor to end of region */
-            if ( ISSCO(tt_type_mode) )
+        case 'V': /* PP - Preceding Page */
+			if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+				if (!on_alternate_buffer(VTERM)) {
+					previous_page(VTERM, pn[1]);
+					lgotoxy(VTERM,1,1);
+				}
+            } /* Erase from cursor to end of region */
+            else if ( ISSCO(tt_type_mode) )
                 clreoreg_escape(VTERM,SP);
             break;
         case 'K':
@@ -17409,9 +17432,15 @@ vtcsi(void)
                 IS97801(tt_type_mode))
                 restorecurpos(VTERM,0);
             break;
-        case 'U': /* SCO ANSI Reset Initial Screen */
-            if ( ISSCO(tt_type_mode) )
+        case 'U': /* NP - Next Page */
+            if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+				if (!on_alternate_buffer(VTERM)) {
+					next_page(VTERM, 0);
+					lgotoxy(VTERM,1,1);
+				}
+			} else if ( ISSCO(tt_type_mode) ) { /* SCO ANSI Reset Initial Screen */
                 doreset(1);   /* Hard Reset */
+			}
             break;
         case '!':
             achar = (escnext<=esclast)?escbuffer[escnext++]:0;
@@ -22353,8 +22382,21 @@ vtcsi(void)
                     }
                 }
                 break;
-            case 'V':
-                if (ISSCO(tt_type_mode)) {
+			case 'U': /* NP - Next Page */
+				if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+					if (!on_alternate_buffer(VTERM)) {
+						next_page(VTERM, pn[1]);
+						lgotoxy(VTERM,1,1);
+					}
+				}
+				break;
+            case 'V': /* PP - Preceding Page */
+				if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+					if (!on_alternate_buffer(VTERM)) {
+						previous_page(VTERM, pn[1]);
+						lgotoxy(VTERM,1,1);
+					}
+                } else if (ISSCO(tt_type_mode)) {
                     /* Erase in Region (ER) */
                     switch ((pn[1])) {
                     case 0:
@@ -23906,6 +23948,39 @@ vtcsi(void)
                                        cell);
                         break;
                 }
+				case 'P':	/* PPA - Page Position Absolute */
+					if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+						int page = pn[1] - 1;
+
+						/* Don't allow switching to the alternate buffer page */
+						if (ISK95(tt_type_mode)) {
+							if (page == ALTERNATE_BUFFER_PAGE(VTERM)) {
+								page = vscrn[vmode].cursor.p;
+							}
+						}
+
+						if (!on_alternate_buffer(VTERM)) {
+							switch_to_page(
+								VTERM,
+								page,
+								vscrn[VTERM].page_cursor_coupling);
+						}
+					}
+					break;
+				case 'Q':	/* PPR - Page Position Relative */
+					if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+						if (!on_alternate_buffer(VTERM)) {
+							next_page(VTERM, pn[1]);
+						}
+					}
+					break;
+				case 'R':	/* PPB - Page Position Backward */
+					if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+						if (!on_alternate_buffer(VTERM)) {
+							previous_page(VTERM, pn[1]);
+						}
+					}
+					break;
                 case 'q':       /* DECSCUSR - Set Cursor Type - VT520 */
                     switch ( pn[1] ) {
                     case 0:
