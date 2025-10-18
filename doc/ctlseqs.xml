@@ -6472,7 +6472,7 @@ DCS $ q 3 , } ST</pre>
                 </tr>
                 <tr>
                     <td>K95</td>
-                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 3 2 ; 3 9 ; 4 4 ; 5 2 c</td>
+                    <td>CSI ? 6 3 ; 1 ; 2 ; 6 ; 8 ; 9 ; 1 5 ; 2 8 ; 3 2 ; 4 4 ; 5 2 c</td>
                 </tr>
             </table>
 
@@ -6640,7 +6640,7 @@ DCS $ q 3 , } ST</pre>
                 <dt not-implemented="true">38</dt>    <!-- ? -->
                 <dd>Character Outlining</dd>
 
-                <dt>39</dt>                           <!-- VT1000 -->
+                <dt not-implemented="true">39</dt>    <!-- VT1000 -->
                 <dd>Page Memory Extension</dd>
 
                 <!-- Can't find anything that reports these. Perhaps one of the
