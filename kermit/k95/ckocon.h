@@ -1332,6 +1332,7 @@ typedef struct vscrn_page_struct {
                   top,         /* first line of write to terminal screen */
                   scrolltop,   /* top of scroll screen */
                   end ;        /* end of scrollable region */
+	int margintop, marginbot, marginleft, marginright;
 } vscrn_page_t ;
 
 typedef struct vscrn_struct {
@@ -1394,6 +1395,26 @@ typedef struct vscrn_struct {
 /* Checks if the specified page has been initialised */
 #define vscrn_page_valid(m,p) (\
     vscrn[(m)].pages != NULL && p < vscrn[(m)].page_count && vscrn[(m)].pages[(p)].lines != NULL )
+
+#define vscrn_set_page_margin_top(m,p,v) (vscrn[(m)].pages[(p)].margintop = (v))
+#define vscrn_set_page_margin_bot(m,p,v) (vscrn[(m)].pages[(p)].marginbot = (v))
+#define vscrn_set_page_margin_left(m,p,v) (vscrn[(m)].pages[(p)].marginleft = (v))
+#define vscrn_set_page_margin_right(m,p,v) (vscrn[(m)].pages[(p)].marginright = (v))
+
+#define vscrn_setc_page_margin_top(m,v) (vscrn_set_page_margin_top((m),vscrn[(m)].cursor.p,(v)))
+#define vscrn_setc_page_margin_bot(m,v) (vscrn_set_page_margin_bot((m),vscrn[(m)].cursor.p,(v)))
+#define vscrn_setc_page_margin_left(m,v) (vscrn_set_page_margin_left((m),vscrn[(m)].cursor.p,(v)))
+#define vscrn_setc_page_margin_right(m,v) (vscrn_set_page_margin_right((m),vscrn[(m)].cursor.p,(v)))
+
+#define vscrn_page_margin_top(m,p) (vscrn[(m)].pages[(p)].margintop)
+#define vscrn_page_margin_bot(m,p) (vscrn[(m)].pages[(p)].marginbot)
+#define vscrn_page_margin_left(m,p) (vscrn[(m)].pages[(p)].marginleft)
+#define vscrn_page_margin_right(m,p) (vscrn[(m)].pages[(p)].marginright)
+
+#define vscrn_c_page_margin_top(m) (vscrn_page_margin_top((m),vscrn[(m)].cursor.p))
+#define vscrn_c_page_margin_bot(m) (vscrn_page_margin_bot((m),vscrn[(m)].cursor.p))
+#define vscrn_c_page_margin_left(m) (vscrn_page_margin_left((m),vscrn[(m)].cursor.p))
+#define vscrn_c_page_margin_right(m) (vscrn_page_margin_right((m),vscrn[(m)].cursor.p))
 
 /* Video Buffer IDs */
 #define VCMD    0   /* command mode */
@@ -1674,6 +1695,7 @@ _PROTOTYP(void SaveCmdMode, (int, int));
 _PROTOTYP(void scrollback, (BYTE,int));
 _PROTOTYP(void setcursormode, (void));
 _PROTOTYP(void setmargins, (int, int));
+_PROTOTYP(void set_page_margins, (int, int, int, int, int));
 _PROTOTYP(void strinsert, (char *, char *));
 _PROTOTYP(void wrtch, (unsigned short));
 _PROTOTYP(int sendescseq, (CHAR *));

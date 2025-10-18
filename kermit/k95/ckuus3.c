@@ -11918,7 +11918,6 @@ case XYCARR:                            /* CARRIER-WATCH */
             return(success = 1);
 
           case SCMD_STA: {
-              extern int marginbot;
               if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
               if ((x = cmcfm()) < 0) return(x);
               if (y != tt_status[VCMD]) {

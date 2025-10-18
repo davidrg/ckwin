@@ -39,7 +39,7 @@ extern int  insertmode, tnlm, decssdt ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap, tt_modechg ;
-extern int  wherex[], wherey[], margintop, marginbot, marginleft, marginright ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
@@ -154,6 +154,7 @@ void
 hpctrl( int ch )
 {
     int i;
+    extern vscrn_t vscrn[];
 
     switch ( ch ) {
     case ETX:
@@ -195,15 +196,15 @@ hpctrl( int ch )
             break;
 
         i = wherex[VTERM];
-        if (i < marginright)
+        if (i < vscrn_c_page_margin_right(VTERM))
         {
             do {
                 i++;
                 cursorright(0);
             } while ((htab[i] != 'T') &&
-                      (i <= marginright-1));
+                      (i <= vscrn_c_page_margin_right(VTERM)-1));
         }
-        if ( i == marginright ) {
+        if ( i == vscrn_c_page_margin_right(VTERM) ) {
             wrtch(CK_CR);
             wrtch(LF);
         }
@@ -354,6 +355,7 @@ hpascii( int ch )
     vtattrib attr={0,0,0,0,0,0,0,0,0,0,0} ;
     viocell blankvcell;
     char debbuf[256]="";
+    extern vscrn_t vscrn[];
 
     if ( xprint ) {
         /* RECORD MODE */
@@ -2220,7 +2222,7 @@ hpascii( int ch )
                 }
                 if ( debses )
                     break;
-                marginleft = wherex[VTERM];
+                vscrn_setc_page_margin_left(VTERM, wherex[VTERM]);
                 break;
             case '5':
                 /* Set Right Margin */
@@ -2231,7 +2233,7 @@ hpascii( int ch )
                 }
                 if ( debses )
                     break;
-                marginright = wherex[VTERM];
+                vscrn_setc_page_margin_right(VTERM, wherex[VTERM]);
                 break;
 #ifdef COMMENT
             case '6':
@@ -2250,10 +2252,10 @@ hpascii( int ch )
                 }
                 if ( debses )
                     break;
-                margintop = 1;
-                marginbot = VscrnGetHeight(VTERM);
-                marginleft =1;
-                marginright=VscrnGetWidth(VTERM);
+                vscrn_setc_page_margin_top(VTERM, 1);
+                vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM));
+                vscrn_setc_page_margin_left(VTERM, 1);
+                vscrn_setc_page_margin_right(VTERM, VscrnGetWidth(VTERM));
                 break;
 #ifdef COMMENT
             case ':':
@@ -2477,15 +2479,15 @@ hpascii( int ch )
                     break;
 
                 i = wherex[VTERM];
-                if (i < marginright)
+                if (i < vscrn_c_page_margin_right(VTERM))
                 {
                     do {
                         i++;
                         cursorright(0);
                     } while ((htab[i] != 'T') &&
-                              (i <= marginright-1));
+                              (i <= vscrn_c_page_margin_right(VTERM)-1));
                 }
-                if ( i == marginright ) {
+                if ( i == vscrn_c_page_margin_right(VTERM) ) {
                     wrtch(CK_CR);
                     wrtch(LF);
                 }
@@ -2527,7 +2529,7 @@ hpascii( int ch )
                 VscrnScroll(VTERM,
                              DOWNWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
                              SP,
@@ -2546,7 +2548,7 @@ hpascii( int ch )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
                              SP,

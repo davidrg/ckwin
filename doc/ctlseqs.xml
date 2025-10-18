@@ -13943,8 +13943,9 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:DECSTBM.html"/>
             <ref src="vt52x:303"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
-            <p>Sets the scrolling region (top;bottom). You can query the
-                current state of DECSTBM with <a href="#decrqss">DECRQSS</a>.
+            <p>Sets the scrolling region (top;bottom) for the page the cursor is
+                currently on. You can query the current state of DECSTBM with
+                <a href="#decrqss">DECRQSS</a>.
             </p>
             <p badges="s97801">
                 The bottom margin may include the status line even when it is

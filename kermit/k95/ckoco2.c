@@ -3328,7 +3328,11 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
             vscrn[vmode].pages[pagenum].top = 0 ;
             vscrn[vmode].pages[pagenum].scrolltop = 0 ;
             vscrn[vmode].pages[pagenum].beg = 0 ;
-            vscrn[vmode].pages[pagenum].end = vscrn[vmode].height - 1 ;
+            vscrn[vmode].pages[pagenum].end = vscrn[vmode].height - 1;
+			vscrn[vmode].pages[pagenum].margintop = 1;
+			vscrn[vmode].pages[pagenum].marginbot = vscrn[vmode].height;
+			vscrn[vmode].pages[pagenum].marginleft = 1;
+			vscrn[vmode].pages[pagenum].marginright = vscrn[vmode].width;
         }
 
         vscrn[vmode].cursor.x = 0 ;
@@ -5476,7 +5480,7 @@ APIRET
 VscrnInit( BYTE vmode )
 {
    extern int tt_szchng[], tt_scrsize[] ;
-   extern int cmd_rows, cmd_cols, marginbot ;
+   extern int cmd_rows, cmd_cols ;
    extern int updmode, tt_updmode, SysInited ;
    extern ascreen commandscreen, vt100screen ;
    extern cell_video_attr_t           /* Video attribute bytes */
@@ -5558,10 +5562,6 @@ VscrnInit( BYTE vmode )
           dimattribute = colordim ;
           updmode = tt_updmode ;  /* Set screen update mode */
       }
-      if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0) ||
-           VscrnGetHeight(VTERM) < 0 ||
-           marginbot > tt_rows[VTERM] )
-         marginbot = tt_rows[VTERM];
    }
 
    VscrnSetWidth( vmode, tt_cols[vmode] ) ;
@@ -5569,6 +5569,17 @@ VscrnInit( BYTE vmode )
 
     /* Initialize paging info */
     clrscr = VscrnSetBufferSize( vmode, tt_scrsize[vmode] ) ;
+
+    if ( vmode == VTERM ) {
+        int p;
+        for (p = 0; p < vscrn[VTERM].page_count; p++) {
+            int margin = vscrn_page_margin_bot(VTERM,p);
+            if ( margin == VscrnGetHeight(VTERM)-(tt_status[vmode]?1:0) ||
+               VscrnGetHeight(VTERM) < 0 || margin > tt_rows[VTERM] ) {
+               vscrn_set_page_margin_bot(VTERM, p, tt_rows[VTERM]);
+            }
+        }
+    }
 
     if ( tt_szchng[vmode] ) {
         LONG sz ;

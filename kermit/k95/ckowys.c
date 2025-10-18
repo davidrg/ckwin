@@ -72,7 +72,7 @@ VOID setpcterm(int);
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_modechg ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
@@ -344,6 +344,7 @@ wyse_backtab( VOID )
 void
 wysectrl( int ch )
 {
+    extern vscrn_t vscrn[];
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -397,7 +398,7 @@ wysectrl( int ch )
         debug(F110,"Wyse Ctrl","Line Feed",0);
         if ( debses )
             break;
-        if ( autoscroll && !protect || wherey[VTERM] < marginbot )
+        if ( autoscroll && !protect || wherey[VTERM] < vscrn_c_page_margin_bot(VTERM) )
             wrtch((char) LF);
         break;
     case VT:
@@ -819,6 +820,7 @@ void
 ApplyPageAttribute( int vmode, int x, int y, vtattrib vta )
 {
     vtattrib oldvta, prevvta ;
+    extern vscrn_t vscrn[];
 
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
     prevvta = VscrnGetVtCharAttr( vmode, x-1, y-1 ) ;
@@ -831,7 +833,7 @@ ApplyPageAttribute( int vmode, int x, int y, vtattrib vta )
     oldvta = prevvta ;
     while ( TRUE ) {
         if ( ++x > VscrnGetWidth(vmode) ) {
-            if ( ++y > marginbot ) {
+            if ( ++y > vscrn_c_page_margin_bot(VTERM) ) {
                 break  ;                /* we are done */
             }
             x = 1 ;
@@ -988,6 +990,7 @@ wyseascii( int ch )
     int j,x,y,z;
     vtattrib attr ;
     viocell blankvcell;
+    extern vscrn_t vscrn[];
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
@@ -1676,7 +1679,8 @@ wyseascii( int ch )
                     break;
                 if ( !protect )
                     VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                                 marginbot - 1, 1, FALSE, SP, FALSE);
+                                 vscrn_c_page_margin_bot(VTERM) - 1,
+                                 1, FALSE, SP, FALSE);
                 break;
             case 'F': {
                 /* Enters a message in the host message field.  This has     */
@@ -1925,7 +1929,7 @@ wyseascii( int ch )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
                              SP,

@@ -38,7 +38,7 @@ extern int  insertmode, tnlm, decssdt ;
 extern int  escstate, debses, decscnm, tt_cursor, ttmdm ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap, tt_modechg ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
@@ -175,6 +175,7 @@ void
 tvictrl( int ch )
 {
     int x,y;
+    extern vscrn_t vscrn[];
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -219,7 +220,7 @@ tvictrl( int ch )
     case LF:
         if ( debses )
             break;
-        if ( autoscroll && !protect || wherey[VTERM] < marginbot )  {
+        if ( autoscroll && !protect || wherey[VTERM] < vscrn_c_page_margin_bot(VTERM) )  {
             wrtch((char) LF);
         }
         break;
@@ -360,6 +361,7 @@ tviascii( int ch )
     int j,x,y;
     vtattrib attr ;
     viocell blankvcell;
+    extern vscrn_t vscrn[];
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
@@ -1036,7 +1038,7 @@ tviascii( int ch )
                      ISTVI950(tt_type_mode) ) {
                     if ( !protect )
                         VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                                     marginbot - 1, 1, FALSE, SP, FALSE);
+                                     vscrn_c_page_margin_bot(VTERM) - 1, 1, FALSE, SP, FALSE);
                 }
                 break;
             case 'F':
@@ -1242,7 +1244,7 @@ tviascii( int ch )
                     VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
                              SP,

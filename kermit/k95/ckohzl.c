@@ -46,7 +46,7 @@ extern int  insertmode, tnlm ;
 extern int  escstate, debses, decscnm, tt_cursor ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
@@ -255,6 +255,7 @@ void
 hzlascii( int ch )
 {
     int x,y;
+    extern vscrn_t vscrn[];
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
@@ -342,7 +343,7 @@ hzlascii( int ch )
             VscrnScroll(VTERM,
                          UPWARD,
                          wherey[VTERM] - 1,
-                         marginbot - 1,
+                         vscrn_c_page_margin_bot(VTERM) - 1,
                          1,
                          FALSE,
                          SP,
@@ -377,7 +378,7 @@ hzlascii( int ch )
             VscrnScroll(VTERM,
                          DOWNWARD,
                          wherey[VTERM] - 1,
-                         marginbot - 1,
+                         vscrn_c_page_margin_bot(VTERM) - 1,
                          1,
                          FALSE,
                          SP,

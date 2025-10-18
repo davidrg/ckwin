@@ -435,10 +435,6 @@ vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
 
 extern int wherex[];                    /* Screen column, 1-based */
 extern int wherey[];                    /* Screen row, 1-based */
-int margintop = 1 ;                     /* Top of scrolling region, 1-based */
-int marginbot = 24 ;                    /* Bottom of same, 1-based */
-int marginleft = 1;
-int marginright = 80;
 
 extern int quitnow, hangnow, outshift, tcs, langsv;
 
@@ -5312,7 +5308,7 @@ cursornextline() {
         /* cursornextline() or cursorprevline() is affected by */
         /* Origin mode                                         */
 
-        if (marginbot > wherey[VTERM]) {
+        if (vscrn_c_page_margin_bot(VTERM) > wherey[VTERM]) {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
@@ -5321,7 +5317,7 @@ cursornextline() {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
-            lgotoxy(VTERM, 1, margintop);
+            lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
         } else if (ISVT100(tt_type_mode) || ISANSI(tt_type_mode)) {
             wrtch(CK_CR);
             wrtch(LF);
@@ -5350,10 +5346,10 @@ cursorprevline() {
         /* cursornextline() or cursorprevline() is affected by */
         /* Origin mode                                         */
 
-        if (margintop != wherey[VTERM])
+        if (vscrn_c_page_margin_top(VTERM) != wherey[VTERM])
             lgotoxy(VTERM, 1, wherey[VTERM] - 1);
         else if ( wy_autopage )
-            lgotoxy(VTERM, 1, marginbot);
+            lgotoxy(VTERM, 1, vscrn_c_page_margin_bot(VTERM));
     }
     if ( wrapit )
         wrapit = FALSE;
@@ -5368,7 +5364,7 @@ cursorup(int wrap) {
         prtline( wherey[VTERM], LF ) ;
     }
     if ( decsasd == SASD_TERMINAL ) {
-        if ((relcursor ? margintop : 1) != wherey[VTERM])
+        if ((relcursor ? vscrn_c_page_margin_top(VTERM) : 1) != wherey[VTERM])
             lgotoxy(VTERM, wherex[VTERM], wherey[VTERM] - 1);
         else if ( wrap ||
                   ISWYSE(tt_type_mode) ||
@@ -5376,7 +5372,7 @@ cursorup(int wrap) {
                   ISHZL(tt_type_mode) ||
                   ISDG200(tt_type_mode))
             lgotoxy(VTERM, wherex[VTERM],
-                     (relcursor ? marginbot :
+                     (relcursor ? vscrn_c_page_margin_bot(VTERM) :
                        VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)));
     }
     if ( wrapit )
@@ -5389,7 +5385,7 @@ cursorup(int wrap) {
 void
 cursordown(int wrap) {
     if ( decsasd == SASD_TERMINAL ) {
-        if ((relcursor ? marginbot :
+        if ((relcursor ? vscrn_c_page_margin_bot(VTERM) :
               VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)) > wherey[VTERM])
         {
             if ( printon && is_aprint() ) {
@@ -5407,7 +5403,7 @@ cursordown(int wrap) {
             if ( printon && is_aprint() ) {
                 prtline( wherey[VTERM], LF ) ;
             }
-            lgotoxy(VTERM, wherex[VTERM], (relcursor ? margintop : 1));
+            lgotoxy(VTERM, wherex[VTERM], (relcursor ? vscrn_c_page_margin_top(VTERM) : 1));
         } else if ( (ISWYSE(tt_type_mode) || ISTVI(tt_type_mode) || ISREGENT25(tt_type_mode)) &&
                   autoscroll && !protect) {
             wrtch(LF);
@@ -5854,11 +5850,11 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
         vmode = VSTATUS ;
 
     if ( IS97801(tt_type_mode) ) {
-        VscrnScrollPage(vmode,UPWARD,margintop-1,
-                     	marginbot-1,
-                     	marginbot-margintop+1,
-                     	margintop==1 &&
-                     	marginbot==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
+        VscrnScrollPage(vmode,UPWARD,vscrn_c_page_margin_top(VTERM)-1,
+                     	vscrn_c_page_margin_bot(VTERM)-1,
+                     	vscrn_c_page_margin_bot(VTERM)-vscrn_c_page_margin_top(VTERM)+1,
+                     	vscrn_c_page_margin_top(VTERM)==1 &&
+                     	vscrn_c_page_margin_bot(VTERM)==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
                      	fillchar,
 						page);
     }
@@ -5960,7 +5956,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
 
     /* now take care of additional lines */
     if ( IS97801(tt_type_mode) )
-        h = marginbot-1;
+        h = vscrn_c_page_margin_bot(VTERM)-1;
     else
         h = VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;  /* TODO */
     for ( y=wherey[vmode] ; y<h ; y++)
@@ -6006,7 +6002,7 @@ clrboscr_escape( BYTE vmode, CHAR fillchar ) {
 
     /* now take care of first wherey[VTERM]-1 lines */
     if ( IS97801(tt_type_mode) )
-        h = margintop-1;
+        h = vscrn_c_page_margin_top(VTERM)-1;
     else
         h = 0;
     for ( y=h ; y<wherey[vmode]-1 ; y++ )
@@ -6042,8 +6038,8 @@ clrregion( BYTE vmode, CHAR fillchar ) {
        the vscrn buffer by the size of the screen.
     */
 
-    if ( wherey[VTERM] < margintop ||
-         wherey[VTERM] > marginbot )
+    if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+         wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
         return;
 
     if ( fillchar == NUL )
@@ -6051,11 +6047,11 @@ clrregion( BYTE vmode, CHAR fillchar ) {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    VscrnScroll(vmode,UPWARD,margintop-1,
-                 marginbot-1,
-                 marginbot-margintop+1,
-                 margintop==1 &&
-                 marginbot==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
+    VscrnScroll(vmode,UPWARD,vscrn_c_page_margin_top(VTERM)-1,
+                 vscrn_c_page_margin_bot(VTERM)-1,
+                 vscrn_c_page_margin_bot(VTERM)-vscrn_c_page_margin_top(VTERM)+1,
+                 vscrn_c_page_margin_top(VTERM)==1 &&
+                 vscrn_c_page_margin_bot(VTERM)==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
                  fillchar, FALSE) ;
 }
 
@@ -6078,8 +6074,8 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
-    if ( wherey[VTERM] < margintop ||
-         wherey[VTERM] > marginbot )
+    if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+         wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
         return;
 
     if ( fillchar == NUL )
@@ -6104,7 +6100,7 @@ clreoreg_escape( BYTE vmode, CHAR fillchar ) {
     line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
 
     /* now take care of additional lines */
-    h = marginbot-1;
+    h = vscrn_c_page_margin_bot(VTERM)-1;
     for ( y=wherey[vmode] ; y<h ; y++)
     {
         line = VscrnGetLineFromTop(vmode, y, FALSE) ;
@@ -6138,8 +6134,8 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
     videoline * line = NULL;
     cell_video_attr_t cellcolor = geterasecolor(vmode) ;
 
-    if ( wherey[VTERM] < margintop ||
-         wherey[VTERM] > marginbot )
+    if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+         wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
         return;
 
     if ( fillchar == NUL )
@@ -6148,7 +6144,7 @@ clrboreg_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     /* now take care of first wherey[VTERM]-1 lines */
-    h = margintop-1;
+    h = vscrn_c_page_margin_top(VTERM)-1;
     for ( y=h ; y<wherey[vmode]-1 ; y++ )
         {
         line = VscrnGetLineFromTop(vmode, y, FALSE) ;
@@ -6300,8 +6296,8 @@ clrcol_escape( BYTE vmode, CHAR fillchar ) {
         vmode = VSTATUS ;
 
     if ( IS97801(tt_type_mode) ) {
-        y = margintop-1;
-        ys = marginbot-1;
+        y = vscrn_c_page_margin_top(VTERM)-1;
+        ys = vscrn_c_page_margin_bot(VTERM)-1;
     }
     else {
         ys = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
@@ -7978,7 +7974,7 @@ restorecurpos(int vmode, int x) {
     }
 
     if (saved[slot] == FALSE) {                /* Nothing saved, home the cursor */
-        lgotoxy(vmode, 1, relcursor ? margintop : 1);
+        lgotoxy(vmode, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
     }
     else {
         lgotoxy(vmode, savedcol[slot], savedrow[slot]);/* Goto saved position */
@@ -8292,9 +8288,10 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     relcursor = FALSE;                  /* Cursor position is absolute */
 
     /* Real terminal sets margins to (1,24) */
-    setmargins(1, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));/* Scrolling region is whole screen */
-    marginleft=1;
-    marginright=VscrnGetWidth(VTERM);
+	for (i = 0; i < vscrn[VTERM].page_count; i++) {
+		set_page_margins(i, 1, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
+							1, VscrnGetWidth(VTERM));
+	}
 
     escstate = ES_NORMAL;               /* In case we're stuck in a string */
     setborder();                        /* Restore border color */
@@ -13898,7 +13895,9 @@ dodcs( void )
                     }
                     case 'r': {         /* DECSTBM */
                         char buf[20];
-                        _snprintf(buf, sizeof(buf), "%d;%dr", margintop, marginbot);
+                        _snprintf(buf, sizeof(buf), "%d;%dr",
+							vscrn_c_page_margin_top(VTERM),
+							vscrn_c_page_margin_bot(VTERM));
                         _snprintf(decrpss, DECRPSS_LEN, fmt, 1, buf);
                         break;
                     }
@@ -15678,7 +15677,7 @@ wrtch(unsigned short ch) {
                     x++;
                     if ( x > width ) {
                         y++;
-                        if ( y >= marginbot ) {
+                        if ( y >= vscrn_c_page_margin_bot(VTERM) ) {
                             x-- ;
                             y-- ;
                             return ;    /* Can't write this character */
@@ -15726,7 +15725,7 @@ wrtch(unsigned short ch) {
             /* don't wrap if autowrap is off */
             if ( tt_wrap || wherex[vmode] < VscrnGetWidth(vmode) ) {
                 if (++wherex[vmode] > VscrnGetWidth(vmode)) {
-                    if ( autoscroll && !protect || wherey[vmode] < marginbot ) {
+                    if ( autoscroll && !protect || wherey[vmode] < vscrn_c_page_margin_bot(VTERM) ) {
                         wherex[vmode] = 1;
                         wrtch((char) LF);
                     }
@@ -15755,7 +15754,7 @@ wrtch(unsigned short ch) {
                     if ( !vta.unerasable )  /* MSVC 5.0 bug */
                         break;
                     if ( ++wherex[vmode] > width ) {
-                        if ( ++wherey[vmode] >= marginbot ) {
+                        if ( ++wherey[vmode] >= vscrn_c_page_margin_bot(VTERM) ) {
                             wherex[vmode]-- ;
                             wherey[vmode]-- ;
                             return ;    /* Can't write this character */
@@ -15791,11 +15790,11 @@ wrtch(unsigned short ch) {
                             wrtch((char) LF);
                         }
                         else {  /* Page Mode */
-                            lgotoxy(VTERM,1,margintop);
+                            lgotoxy(VTERM,1,vscrn_c_page_margin_top(VTERM));
                         }
 
                     }
-                    else if ( autoscroll && !protect || wherey[vmode] < marginbot ) {
+                    else if ( autoscroll && !protect || wherey[vmode] < vscrn_c_page_margin_bot(VTERM) ) {
                         wherex[vmode] = 1;
                         wrtch((char) LF);
                     }
@@ -15814,16 +15813,16 @@ wrtch(unsigned short ch) {
                 prtline( wherey[VTERM], LF ) ;
             }
             if ( decsasd == SASD_TERMINAL ) {
-                if (wherey[vmode] == marginbot) {
+                if (wherey[vmode] == vscrn_c_page_margin_bot(VTERM)) {
                     if ( IS97801(tt_type_mode) ) {
                         if ( !sni_pagemode )
-                            VscrnScroll(vmode,UPWARD, margintop - 1, marginbot - 1, 1,
-                                         (margintop == 1), SP, FALSE ) ;
+                            VscrnScroll(vmode,UPWARD, vscrn_c_page_margin_top(VTERM) - 1, vscrn_c_page_margin_bot(VTERM) - 1, 1,
+                                         (vscrn_c_page_margin_top(VTERM) == 1), SP, FALSE ) ;
                         else /* Page Mode */
                             wherex[VTERM] = 1;
                     } else if ( autoscroll && !protect ) {
-                        VscrnScroll(vmode,UPWARD, margintop - 1, marginbot - 1, 1,
-                                     (margintop == 1), SP, FALSE ) ;
+                        VscrnScroll(vmode,UPWARD, vscrn_c_page_margin_top(VTERM) - 1, vscrn_c_page_margin_bot(VTERM) - 1, 1,
+                                     (vscrn_c_page_margin_top(VTERM) == 1), SP, FALSE ) ;
                     } else if ( wherex[vmode] > VscrnGetWidth(vmode) )
                         wherex[vmode] = VscrnGetWidth(vmode);
                 } else {
@@ -15833,7 +15832,7 @@ wrtch(unsigned short ch) {
                             if (wherey[vmode] == VscrnGetHeight(vmode)+(tt_status[VTERM]?0:1)
                                  && decssdt == SSDT_HOST_WRITABLE)
                                 setdecsasd(SASD_STATUS);
-                            wherey[vmode] = margintop;
+                            wherey[vmode] = vscrn_c_page_margin_top(VTERM);
                         } else
                             wherey[vmode] = VscrnGetHeight(vmode)+(tt_status[VTERM]?0:1)-1;
                     }
@@ -15843,7 +15842,7 @@ wrtch(unsigned short ch) {
         case CK_CR:
             if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM )
-                wherex[vmode] = marginleft;
+                wherex[vmode] = vscrn_c_page_margin_left(vmode);
             else
                 wherex[vmode] = 1;
             if ( !(ISANSI(tt_type_mode) || ISHFT(tt_type_mode)) )
@@ -15852,7 +15851,7 @@ wrtch(unsigned short ch) {
         case BS:
             if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM ) {
-                if (wherex[vmode] > marginleft)
+                if (wherex[vmode] > vscrn_c_page_margin_left(vmode))
                     wherex[vmode]--;
             }
             else if ( ISQNX(tt_type_mode) && vmode == VTERM ) {
@@ -15886,7 +15885,7 @@ wrtch(unsigned short ch) {
             } 
             else if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) &&
                  vmode == VTERM ) {
-                if (wherex[vmode] < marginright)
+                if (wherex[vmode] < vscrn_c_page_margin_right(vmode))
                     wherex[vmode]++;
             }
             else {
@@ -15907,9 +15906,9 @@ wrtch(unsigned short ch) {
                  ISTVI(tt_type_mode) ||
                  ISHZL(tt_type_mode) ) 
             {
-                if ( wherey[vmode] == margintop ) {
+                if ( wherey[vmode] == vscrn_c_page_margin_top(VTERM) ) {
                     if ( autoscroll && !protect )
-                        VscrnScroll(vmode,DOWNWARD, margintop - 1, marginbot - 1, 1,
+                        VscrnScroll(vmode,DOWNWARD, vscrn_c_page_margin_top(VTERM) - 1, vscrn_c_page_margin_bot(VTERM) - 1, 1,
                                      FALSE, SP, FALSE ) ;
                 } else {
                     cursorup(0);
@@ -15968,8 +15967,8 @@ lgotoxy(BYTE vmode, int x, int y) {
             x++;
             if ( x > width ) {
                 y++;
-                if ( y > marginbot ) {
-                    y=margintop ;
+                if ( y > vscrn_c_page_margin_bot(VTERM) ) {
+                    y=vscrn_c_page_margin_top(VTERM) ;
                 }
                 x = 1 ;
             }
@@ -15994,12 +15993,24 @@ lgotoxy(BYTE vmode, int x, int y) {
 }
 
 /*---------------------------------------------------------------------------*/
+/* set_page_margins                                                          */
+/*---------------------------------------------------------------------------*/
+void
+set_page_margins(int page, int topmargin, int bottommargin,
+				 int leftmargin, int rightmargin) {
+ 	vscrn_set_page_margin_top(VTERM,page,topmargin);
+ 	vscrn_set_page_margin_bot(VTERM,page,bottommargin);
+ 	vscrn_set_page_margin_left(VTERM,page,leftmargin);
+ 	vscrn_set_page_margin_right(VTERM,page,rightmargin);
+}
+
+/*---------------------------------------------------------------------------*/
 /* setmargins                                                                */
 /*---------------------------------------------------------------------------*/
 void
 setmargins(int topmargin, int bottommargin) {
-    margintop = topmargin;
-    marginbot = bottommargin;
+ 	vscrn_setc_page_margin_top(VTERM,topmargin);
+ 	vscrn_setc_page_margin_bot(VTERM,bottommargin);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -16366,14 +16377,20 @@ settermstatus( int y )
 		VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
 	}
 	else if ( y != tt_status[VTERM] ) {
+        int p;
         /* might need to fixup the margins */
-        if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
-            if ( y ) {
-                marginbot-- ;
+        for (p = 0; p < vscrn[VTERM].page_count; p++) {
+            int margin = vscrn_page_margin_bot(VTERM,p);
+            if ( margin == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
+                if ( y ) {
+                    margin-- ;
+                }
+                else {
+                    margin++ ;
+                }
+                vscrn_set_page_margin_bot(VTERM, p, margin);
             }
-            else {
-                marginbot++ ;
-            }
+        }
         tt_status[VTERM] = y;
         if ( y ){
             tt_szchng[VTERM] = 2 ;
@@ -17240,8 +17257,8 @@ vtcsi(void)
         case 'A':               /* Cursor up one line */
             if ( IS97801(tt_type_mode) ) {
                 /* ignored if outside scroll region */
-                if ( wherey[VTERM] < margintop ||
-                    wherey[VTERM] > marginbot )
+                if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                    wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                     break;
             }
             cursorup(0);
@@ -17251,8 +17268,8 @@ vtcsi(void)
         case 'B':               /* Cursor down one line */
             if ( IS97801(tt_type_mode) ) {
                 /* ignored if outside scroll region */
-                if ( wherey[VTERM] < margintop ||
-                    wherey[VTERM] > marginbot )
+                if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                    wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                     break;
             }
             cursordown(0);
@@ -17302,8 +17319,8 @@ vtcsi(void)
             else {
                 if ( IS97801(tt_type_mode) ) {
                     /* ignored if outside scroll region */
-                    if ( wherey[VTERM] < margintop ||
-                        wherey[VTERM] > marginbot )
+                    if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                        wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                         break;
                 }
                 clreoscr_escape(VTERM,SP);
@@ -17356,7 +17373,7 @@ vtcsi(void)
         case 'f':
             if ( IS97801(tt_type_mode) && decsasd == SASD_STATUS )
                 setdecsasd(SASD_TERMINAL);
-            lgotoxy(VTERM, 1, relcursor ? margintop : 1);
+            lgotoxy(VTERM, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
             break;
         case 'g':
             if ( !ISSCO(tt_type_mode) ) {
@@ -17912,7 +17929,7 @@ vtcsi(void)
                             VscrnScroll(VTERM,
                                          UPWARD,
                                          wherey[ VTERM] - 1,
-                                         marginbot - 1,
+                                         vscrn_c_page_margin_bot(VTERM) - 1,
                                          1,
                                          FALSE,
                                          SP,
@@ -18375,8 +18392,8 @@ vtcsi(void)
                         /*checksum &= 0xffff;*/
                         pid = pn[1];
                         /* Ignore pn[2] - we don't support multiple pages */
-                        top = pn[3] + (margintop > 1 ? margintop : 0);
-                        left = pn[4] + (marginleft > 1 ? marginleft : 0);
+                        top = pn[3] + (vscrn_c_page_margin_top(VTERM) > 1 ? vscrn_c_page_margin_top(VTERM) : 0);
+                        left = pn[4] + (vscrn_c_page_margin_left(VTERM) > 1 ? vscrn_c_page_margin_left(VTERM) : 0);
                         bot = pn[5];
                         right = pn[6];
 
@@ -18387,19 +18404,19 @@ vtcsi(void)
                         debug(F111, "DECRQCRA", "init-right", pn[6]);
 
 
-                        debug(F111, "DECRQCRA", "margintop", margintop);
-                        debug(F111, "DECRQCRA", "marginleft", marginleft);
-                        debug(F111, "DECRQCRA", "marginbot", marginbot);
-                        debug(F111, "DECRQCRA", "marginright", marginright);
+                        debug(F111, "DECRQCRA", "margintop", vscrn_c_page_margin_top(VTERM));
+                        debug(F111, "DECRQCRA", "marginleft", vscrn_c_page_margin_left(VTERM));
+                        debug(F111, "DECRQCRA", "marginbot", vscrn_c_page_margin_bot(VTERM));
+                        debug(F111, "DECRQCRA", "marginright", vscrn_c_page_margin_right(VTERM));
 
-                        if (top < margintop) top = margintop;
-                        if (top > marginbot + 1) top = marginbot + 1;
-                        if (left < marginleft) left = marginleft;
-                        if (left > marginright + 1) left = marginright + 1;
-                        if (bot < margintop) bot = margintop;
-                        if (bot > marginbot) bot = marginbot;
-                        if (right < marginleft) right = marginleft;
-                        if (right > marginright) right = marginright;
+                        if (top < vscrn_c_page_margin_top(VTERM)) top = vscrn_c_page_margin_top(VTERM);
+                        if (top > vscrn_c_page_margin_bot(VTERM) + 1) top = vscrn_c_page_margin_bot(VTERM) + 1;
+                        if (left < vscrn_c_page_margin_left(VTERM)) left = vscrn_c_page_margin_left(VTERM);
+                        if (left > vscrn_c_page_margin_right(VTERM) + 1) left = vscrn_c_page_margin_right(VTERM) + 1;
+                        if (bot < vscrn_c_page_margin_top(VTERM)) bot = vscrn_c_page_margin_top(VTERM);
+                        if (bot > vscrn_c_page_margin_bot(VTERM)) bot = vscrn_c_page_margin_bot(VTERM);
+                        if (right < vscrn_c_page_margin_left(VTERM)) right = vscrn_c_page_margin_left(VTERM);
+                        if (right > vscrn_c_page_margin_right(VTERM)) right = vscrn_c_page_margin_right(VTERM);
 
 
                         debug(F111, "DECRQCRA", "top", top);
@@ -18534,8 +18551,8 @@ vtcsi(void)
                 else { /* CUU - Cursor up Pn lines */
                     if ( IS97801(tt_type_mode) ) {
                         /* ignored if outside scroll region */
-                        if ( wherey[VTERM] < margintop ||
-                             wherey[VTERM] > marginbot )
+                        if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                             wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                             break;
                     }
                     do {
@@ -18592,8 +18609,8 @@ vtcsi(void)
                 else {  /* CUD - Cursor down pn lines */
                     if ( IS97801(tt_type_mode) ) {
                         /* ignored if outside scroll region */
-                        if ( wherey[VTERM] < margintop ||
-                             wherey[VTERM] > marginbot )
+                        if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                             wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                             break;
                     }
                     do {
@@ -18962,7 +18979,7 @@ vtcsi(void)
                 if (pn[1] == 0)
                     pn[1] = 1;
                 if (relcursor)
-                    pn[1] += margintop - 1;
+                    pn[1] += vscrn_c_page_margin_top(VTERM) - 1;
                 if (pn[1] > VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0))
                     pn[1] = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
                 if (pn[2] == 0)
@@ -19139,7 +19156,7 @@ vtcsi(void)
                             if ( decsasd == SASD_STATUS )
                                 lgotoxy( VSTATUS, 1, 1 );
                             else
-                                lgotoxy(VTERM, 1, margintop);
+                                lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
                             break;
                         case 7: /* DECAWM - Auto Wrap mode */
                             tt_wrap = TRUE;
@@ -19637,7 +19654,7 @@ vtcsi(void)
                                 if ( decsasd == SASD_STATUS )
                                     lgotoxy( VSTATUS, 1, 1 );
                                 else
-                                    lgotoxy(VTERM, 1, margintop);
+                                    lgotoxy(VTERM, 1, vscrn_c_page_margin_top(VTERM));
                                 break;
                             case 7: /* Auto Wrap mode */
                                 tt_wrap = TRUE;
@@ -20434,10 +20451,10 @@ vtcsi(void)
                 if (pn[1] == 0)  /* Print whole screen */
                     prtscreen(VTERM,
                                printregion ?
-                               margintop :
+                               vscrn_c_page_margin_top(VTERM) :
                                1,
                                printregion ?
-                               marginbot :
+                               vscrn_c_page_margin_bot(VTERM) :
                                VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)
                                );
                 else if (pn[1] == 1 &&  /* Print cursor line */
@@ -20697,38 +20714,38 @@ vtcsi(void)
                     case '0': /* all margins */
                         sprintf(tempstr,
                                  "%d %d %d %d\n",
-                                 margintop,
-                                 marginbot,
-                                 marginleft,
-                                 marginright
+                                 vscrn_c_page_margin_top(VTERM),
+                                 vscrn_c_page_margin_bot(VTERM),
+                                 vscrn_c_page_margin_left(VTERM),
+                                 vscrn_c_page_margin_right(VTERM)
                                  );
                         sendchars(tempstr,strlen(tempstr));
                         break;
                     case '1':
                         sprintf(tempstr,
                                  "%d\n",
-                                 margintop
+                                 vscrn_c_page_margin_top(VTERM)
                                  );
                         sendchars(tempstr,strlen(tempstr));
                         break;
                     case '2':
                         sprintf(tempstr,
                                  "%d\n",
-                                 marginbot
+                                 vscrn_c_page_margin_bot(VTERM)
                                  );
                         sendchars(tempstr,strlen(tempstr));
                         break;
                     case '3':
                         sprintf(tempstr,
                                  "%d\n",
-                                 marginleft
+                                 vscrn_c_page_margin_left(VTERM)
                                  );
                         sendchars(tempstr,strlen(tempstr));
                         break;
                     case '4':
                         sprintf(tempstr,
                                  "%d\n",
-                                 marginright
+                                 vscrn_c_page_margin_right(VTERM)
                                  );
                         sendchars(tempstr,strlen(tempstr));
                         break;
@@ -20762,6 +20779,12 @@ vtcsi(void)
 		     * than the actual screen size, we ignore everything
 		     * but the memory lines
 		     */
+            /* Actually, we *could* do the right thing - memory pages wider
+             * than the screen have been supported for years, and VT420
+             * emulation will eventually require support for taller memory
+             * pages too. Problem is getting access to an AAA to confirm what
+             * exactly the right thing is...
+             *     - DavidG */
 #ifdef KUI
                     tt_linespacing[VTERM] = (CKFLOAT)pn[1] / (CKFLOAT)pn[4];
                     gui_resize_mode(0);
@@ -20771,7 +20794,7 @@ vtcsi(void)
                     tt_rows[VTERM] = pn[4];
 #else
                     tt_rows[VTERM] = pn[1];
-                    marginbot = pn[4];
+                    vscrn_setc_page_margin_bot(VTERM, pn[4]);
 #endif /* COMMENT */
                     if (k > 4)
                         tt_cols[VTERM] = pn[5];
@@ -21170,16 +21193,16 @@ vtcsi(void)
                 } else if ( ansiext && ISSCO(tt_type_mode) ) {
                     switch ( pn[1] ) {
                     case 0: /* top margin */
-                        margintop = pn[2];
+						vscrn_setc_page_margin_top(VTERM, pn[2]);
                         break;
                     case 1: /* bottom margin */
-                        marginbot = pn[2];
+                        vscrn_setc_page_margin_bot(VTERM, pn[2]);
                         break;
                     case 2: /* left margin */
-                        marginleft = pn[2];
+                        vscrn_setc_page_margin_left(VTERM, pn[2]);
                         break;
                     case 3: /* right margin */
-                        marginright = pn[2];
+                        vscrn_setc_page_margin_right(VTERM, pn[2]);
                         break;
                     }
                 } else { /* Select Graphic Rendition (SGR) */
@@ -22081,10 +22104,10 @@ vtcsi(void)
                     */
                 }
                 else if ( ansiext && ISSCO(tt_type_mode) ) {
-                    margintop = 1;
-                    marginbot = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
-                    marginleft = 1;
-                    marginright = VscrnGetWidth(VTERM);
+					vscrn_setc_page_margin_top(VTERM, 1);
+                    vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+                    vscrn_setc_page_margin_left(VTERM, 1);
+                    vscrn_setc_page_margin_right(VTERM, VscrnGetWidth(VTERM));
                     break;
                 } else if ( private ) {
                     /* Restore Modes */
@@ -22129,15 +22152,15 @@ vtcsi(void)
                     {
                         setmargins(pn[1], pn[2]);
                         if ( ISSCO(tt_type_mode) ) {
-                            marginleft = pn[3];
-                            marginright = pn[4];
-                            lgotoxy(VTERM, relcursor ? marginleft : 1,
-                                     relcursor ? marginbot : 1);
+                            vscrn_setc_page_margin_left(VTERM, pn[3]);
+                            vscrn_setc_page_margin_right(VTERM, pn[4]);
+                            lgotoxy(VTERM, relcursor ? vscrn_c_page_margin_left(VTERM) : 1,
+                                     relcursor ? vscrn_c_page_margin_bot(VTERM) : 1);
                         } else if ( !IS97801(tt_type_mode) ) {
                             if ( decsasd == SASD_STATUS )
                                 lgotoxy( VSTATUS, 1, 1 );
                             else
-                                lgotoxy(VTERM, 1, relcursor ? margintop : 1);
+                                lgotoxy(VTERM, 1, relcursor ? vscrn_c_page_margin_top(VTERM) : 1);
                         }
                     }
                     else if (!ISSCO(tt_type_mode)) {
@@ -22150,7 +22173,7 @@ vtcsi(void)
                                 lgotoxy( VSTATUS, 1, 1 );
                             else
                                 lgotoxy(VTERM, 1, relcursor ?
-                                        margintop : 1);
+                                        vscrn_c_page_margin_top(VTERM) : 1);
                         }
                     }
                     break;
@@ -22205,8 +22228,8 @@ vtcsi(void)
                     /* with both vertical and horizontal boundaries.   */
                     if ( IS97801(tt_type_mode) ) {
                         /* ignored if outside scroll region */
-                        if ( wherey[VTERM] < margintop ||
-                            wherey[VTERM] > marginbot )
+                        if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                            wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                             break;
                     }
                     switch ((pn[1])) {
@@ -22801,15 +22824,15 @@ vtcsi(void)
                         /* IL - Insert lines */
                         if ( IS97801(tt_type_mode) ) {
                             /* ignored if outside scroll region */
-                            if ( wherey[VTERM] < margintop ||
-                                 wherey[VTERM] > marginbot )
+                            if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                                 wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                                 break;
                         }
                         for (i = 1; i <= pn[1]; ++i) {
                             VscrnScroll(VTERM,
                                          DOWNWARD,
                                          wherey[VTERM] - 1,
-                                         marginbot - 1,
+                                         vscrn_c_page_margin_bot(VTERM) - 1,
                                          1,
                                          FALSE,
                                          SP,
@@ -22925,7 +22948,7 @@ vtcsi(void)
                             VscrnScroll(VTERM,
                                          UPWARD,
                                          wherey[VTERM] - 1,
-                                         marginbot - 1,
+                                         vscrn_c_page_margin_bot(VTERM) - 1,
                                          1,
                                          FALSE,
                                          SP,
@@ -23083,28 +23106,28 @@ vtcsi(void)
                     /* Also (RU) Roll up with SNI 97801 */
                     if ( IS97801(tt_type_mode) ) {
                         /* ignored if outside scroll region */
-                        if ( wherey[VTERM] < margintop ||
-                             wherey[VTERM] > marginbot )
+                        if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                             wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                             break;
                     }
                     if ( pn[1] == 0 )
                         pn[1] = 1 ;
-                    else if ( pn[1] > marginbot )
-                        pn[1] = marginbot ;
+                    else if ( pn[1] > vscrn_c_page_margin_bot(VTERM) )
+                        pn[1] = vscrn_c_page_margin_bot(VTERM) ;
                     
                     if ( ISVT320(tt_type_mode) || IS97801(tt_type_mode) ) {
                         if ( sni_scroll_mode ) {
                             VscrnScroll(VTERM, UPWARD,
-                                         margintop-1, wherex[VTERM]-1,
+                                         vscrn_c_page_margin_top(VTERM)-1, wherex[VTERM]-1,
                                          pn[1],
-                                         margintop == 1,
+                                         vscrn_c_page_margin_top(VTERM) == 1,
                                          SP,
                                          FALSE);
                         } else { /* Roll Mode */
                             VscrnScroll(VTERM, UPWARD,
-                                         margintop-1, marginbot-1,
+                                         vscrn_c_page_margin_top(VTERM)-1, vscrn_c_page_margin_bot(VTERM)-1,
                                          pn[1],
-                                         margintop == 1,
+                                         vscrn_c_page_margin_top(VTERM) == 1,
                                          SP,
                                          FALSE);
                         }
@@ -23166,9 +23189,9 @@ vtcsi(void)
                 if ( pn[1] == 0 )
                     pn[1] = 1 ;
                 else if ( pn[1] > VscrnGetHeight(VTERM)
-                          -((tt_status)?2:1) - margintop )
+                          -((tt_status)?2:1) - vscrn_c_page_margin_top(VTERM) )
                     pn[1] = VscrnGetHeight(VTERM)
-                        -((tt_status)?2:1) - margintop ;
+                        -((tt_status)?2:1) - vscrn_c_page_margin_top(VTERM) ;
                 if ( debses )
                     break;
                 VscrnScroll(VTERM,
@@ -23191,17 +23214,17 @@ vtcsi(void)
 
                 if ( IS97801(tt_type_mode) ) {
                     /* ignored if outside scroll region */
-                    if ( wherey[VTERM] < margintop ||
-                         wherey[VTERM] > marginbot )
+                    if ( wherey[VTERM] < vscrn_c_page_margin_top(VTERM) ||
+                         wherey[VTERM] > vscrn_c_page_margin_bot(VTERM) )
                         break;
                 }
 
                 if ( pn[1] == 0 )
                     pn[1] = 1 ;
                 else if ( pn[1] > VscrnGetHeight(VTERM)
-                          -((tt_status)?2:1) - margintop )
+                          -((tt_status)?2:1) - vscrn_c_page_margin_top(VTERM) )
                     pn[1] = VscrnGetHeight(VTERM)
-                        -((tt_status)?2:1) - margintop ;
+                        -((tt_status)?2:1) - vscrn_c_page_margin_top(VTERM) ;
 
                 if ( private ) {
                     if ( ISAIXTERM(tt_type_mode) ) {
@@ -23218,7 +23241,7 @@ vtcsi(void)
                         VscrnScroll(VTERM,
                                      DOWNWARD,
                                      wherex[VTERM]-1,
-                                     marginbot-1,
+                                     vscrn_c_page_margin_bot(VTERM)-1,
                                      pn[1],
                                      FALSE,
                                      SP,
@@ -23226,8 +23249,8 @@ vtcsi(void)
                     } else { /* Roll Mode */
                         VscrnScroll(VTERM,
                                      DOWNWARD,
-                                     margintop-1,
-                                     marginbot-1,
+                                     vscrn_c_page_margin_top(VTERM)-1,
+                                     vscrn_c_page_margin_bot(VTERM)-1,
                                      pn[1],
                                      FALSE,
                                      SP,
@@ -23542,15 +23565,15 @@ vtcsi(void)
                         if ( debses )
                             break;
                         setdecssdt(SSDT_BLANK);
-                        margintop = 1;
-                        marginbot = VscrnGetHeight(VTERM);
+                        vscrn_setc_page_margin_top(VTERM, 1);
+                        vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM));
                         break;
                     case 1: /* 24-line mode on */
                         if ( debses )
                             break;
                         setdecssdt(SSDT_HOST_WRITABLE);
-                        margintop = 1;
-                        marginbot = VscrnGetHeight(VTERM)-1;
+                        vscrn_setc_page_margin_top(VTERM, 1);
+                        vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM)-1);
                         break;
                     case 2: /* Clear character NUL */
                         break;
@@ -23787,8 +23810,8 @@ vtcsi(void)
                         break;
 #ifdef COMMENT
                     /* Not implemented yet. (see above note.) */
-                    marginleft = pn[1];
-                    marginright = pn[2];
+                    vscrn_setc_page_margin_left(VTERM, pn[1]);
+                    vscrn_setc_page_margin_right(VTERM, pn[2]);
 #endif /* COMMENT */
                     break;
                 } else if ( ISSCO(tt_type_mode) ) {
@@ -23872,9 +23895,9 @@ vtcsi(void)
                             pn[1] = VscrnGetWidth(VTERM)-1 ;
 
                         VscrnScrollLf( VTERM,
-                                       relcursor ? margintop - 1 : 0, /* top row */
+                                       relcursor ? vscrn_c_page_margin_top(VTERM) - 1 : 0, /* top row */
                                        wherex[VTERM], /* left col */
-                                       relcursor ? marginbot - 1 :
+                                       relcursor ? vscrn_c_page_margin_bot(VTERM) - 1 :
                                        VscrnGetHeight(VTERM)
                                        -(tt_status[VTERM]?2:1), /* bot row */
                                        VscrnGetWidth(VTERM)-1,  /* right col */
@@ -23894,9 +23917,9 @@ vtcsi(void)
                             pn[1] = VscrnGetWidth(VTERM)-1 ;
 
                         VscrnScrollRt( VTERM,
-                                       relcursor ? margintop - 1 : 0, /* top row */
+                                       relcursor ? vscrn_c_page_margin_top(VTERM) - 1 : 0, /* top row */
                                        wherex[VTERM], /* left col */
-                                       relcursor ? marginbot - 1 :
+                                       relcursor ? vscrn_c_page_margin_bot(VTERM) - 1 :
                                        VscrnGetHeight(VTERM)
                                        -(tt_status[VTERM]?2:1), /* bot row */
                                        VscrnGetWidth(VTERM)-1,  /* right col */
@@ -24724,13 +24747,13 @@ vtescape( void )
             if ( ISVT52(tt_type_mode) ) /* VT52 control */
                 cursorleft(0);
             else if ( ISVT100(tt_type_mode) ) {/* IND - Index */
-                if (wherey[VTERM] == marginbot) {
+                if (wherey[VTERM] == vscrn_c_page_margin_bot(VTERM)) {
                     VscrnScroll(VTERM,
                                  UPWARD,
-                                 margintop - 1,
-                                 marginbot - 1,
+                                 vscrn_c_page_margin_top(VTERM) - 1,
+                                 vscrn_c_page_margin_bot(VTERM) - 1,
                                  1,
-                                 (margintop==1),
+                                 (vscrn_c_page_margin_top(VTERM)==1),
                                  SP,
                                  FALSE);
                 } else
@@ -24778,11 +24801,11 @@ vtescape( void )
                 ;
             } else if (ISVT52(tt_type_mode)) {
                 /* Reverse Linefeed */
-                if (margintop == wherey[VTERM])
+                if (vscrn_c_page_margin_top(VTERM) == wherey[VTERM])
                     VscrnScroll(VTERM,
                                  DOWNWARD,
-                                 margintop - 1,
-                                 marginbot - 1,
+                                 vscrn_c_page_margin_top(VTERM) - 1,
+                                 vscrn_c_page_margin_bot(VTERM) - 1,
                                  1,
                                   FALSE,
                                   SP,
@@ -24819,7 +24842,7 @@ vtescape( void )
                 VscrnScroll(VTERM,
                              DOWNWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
                              SP,
@@ -24834,18 +24857,18 @@ vtescape( void )
 							|| ISXTERM(tt_type_mode) ) {
                   /* Lock Memory Area */
                   setmargins(wherey[VTERM],VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
-                  lgotoxy(VTERM, relcursor ? marginleft : 1,
-                           relcursor ? marginbot : 1);
+                  lgotoxy(VTERM, relcursor ? vscrn_c_page_margin_left(VTERM) : 1,
+                           relcursor ? vscrn_c_page_margin_bot(VTERM) : 1);
               }
               break;
         case 'M':                       
             /* RI - Reverse Index, VT102 */
             if (ISVT100(tt_type_mode)) {
-                if (margintop == wherey[VTERM])
+                if (vscrn_c_page_margin_top(VTERM) == wherey[VTERM])
                     VscrnScroll(VTERM,
                                  DOWNWARD,
-                                 margintop - 1,
-                                 marginbot - 1,
+                                 vscrn_c_page_margin_top(VTERM) - 1,
+                                 vscrn_c_page_margin_bot(VTERM) - 1,
                                  1,
                                   FALSE,
                                   SP,
@@ -24858,7 +24881,7 @@ vtescape( void )
                 VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                                  1,
                                  FALSE,
                                  SP,
@@ -25566,7 +25589,7 @@ vt100(unsigned short vtch) {
                  VscrnIsDirty(vmode);
              }
              else if ( (IS97801(tt_type_mode) || ISHP(tt_type_mode)) ) {
-                 if (wherex[vmode] < marginright)
+                 if (wherex[vmode] < vscrn_c_page_margin_right(vmode))
                      wherex[vmode]++;
              }
              else if ( ISANSI(tt_type_mode) ) {
@@ -25711,7 +25734,7 @@ vt100(unsigned short vtch) {
                     literal_ch = FALSE;
                     if (tt_wrap) { /* If TERM WRAP ON */
                         if ( IS97801(tt_type_mode) ) {
-                            if ( wherey[vmode] == marginbot ) {
+                            if ( wherey[vmode] == vscrn_c_page_margin_bot(VTERM) ) {
                                 if ( !sni_pagemode ) {
                                     wrtch(CK_CR);
                                     wrtch(LF);

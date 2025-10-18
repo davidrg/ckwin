@@ -5510,13 +5510,14 @@ settrm() {
 #endif /* PCFONTS */
 
       case XYTVCH: {
-          extern int pheight, marginbot, cmd_rows, cmd_cols;
+          extern int pheight, cmd_rows, cmd_cols;
           if ((x = cmkey(tvctab,ntvctab,"",isWin95()?"win95-safe":"enabled",
                          xxstring)) < 0)
             return(x);
           if ((y = cmcfm()) < 0) return(y);
 #ifndef KUI
           if (x != tt_modechg) {
+              int p;
               switch (x) {
                 case TVC_DIS:
                   /* When disabled the heights of all of the virtual screens */
@@ -5524,8 +5525,11 @@ settrm() {
                   /* window and may not be changed.                          */
                   /* The width of the window may not be altered.             */
                   tt_modechg = TVC_ENA;                 /* Temporary */
-                  if (marginbot > pheight-(tt_status[VTERM]?1:0))
-                    marginbot = pheight-(tt_status[VTERM]?1:0);
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      if (vscrn_page_margin_bot(VTERM,p) > pheight-(tt_status[VTERM]?1:0)) {
+                          vscrn_set_page_margin_bot(VTERM, p, pheight-(tt_status[VTERM]?1:0));
+                      }
+                  }
                   tt_szchng[VCMD] = 1 ;
                   tt_rows[VCMD] = pheight;
                   VscrnInit(VCMD);
@@ -5570,7 +5574,9 @@ settrm() {
                   cmd_rows = y;
                   cmd_cols = 80;
 
-                  marginbot = y-(tt_status[VTERM]?1:0);
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      vscrn_set_page_margin_bot(VTERM, p, y-(tt_status[VTERM]?1:0));
+                  }
                   tt_szchng[VTERM] = 2;
                   tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
                   tt_cols[VTERM] = 80;
@@ -5585,17 +5591,23 @@ settrm() {
 #endif /* KUI */
       }
       case XYTSTAT: {
-          extern int marginbot;
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
           if ((x = cmcfm()) < 0) return(x);
           if (y != tt_status[VTERM] || y != tt_status_usr[VTERM]) {
+              int p;
+              extern vscrn_t vscrn[];
               /* Might need to fixup the margins */
-              if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
-                if (y) {
-                    marginbot--;
-                } else {
-                    marginbot++;
-                }
+              for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                  int margin = vscrn_page_margin_bot(VTERM,p);
+                  if ( margin == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
+                      if ( y ) {
+                          margin-- ;
+                      } else {
+                          margin++ ;
+                      }
+                      vscrn_set_page_margin_bot(VTERM, p, margin);
+                  }
+              }
               tt_status_usr[VTERM] = tt_status[VTERM] = y;
               if (y) {
                     /* If the status line is turned off before a connection is
