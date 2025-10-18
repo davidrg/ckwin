@@ -120,6 +120,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    older, and 64bit Windows systems with an Alpha or Itanium CPU. Newly
    supported includes: Windows 95/98/ME, Windows NT 3.51/4.0/2000 on 
    x86/Alpha/MIPS/PowerPC, and Windows 8/10/11 on 32bit and 64bit ARM.
+ - Xterm alternate screen (K95 terminal type only). Can be disabled with the
+   new command `SET TERMINAL ALTERNATE-BUFFER DISABLED`
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -252,6 +254,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
    - [1043](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-raise-window): Due to windows limitations, same behavior as above
+   - [1046](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-ena-altbuf): Enable switching to/from alternate screen buffer
+   - [1047](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-use-altbuf): Switch to alternate screen
+   - [1048](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-1048): Save cursor as with DECSC
+   - [1049](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-1049): Switch to alternate screen saving and clearing
    - [2026](https://davidrg.github.io/ckwin/dev/ctlseqs.html#bsu): Synchronized Output Mode (K95 terminal type only)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
  - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)

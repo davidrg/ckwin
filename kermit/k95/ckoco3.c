@@ -394,36 +394,43 @@ extern ascreen                          /* For saving screens: */
 
 extern ascreen mousescreen; /* Screen during mouse actions */
 
+/* How many saved cursor slots - one for each vscrn, plus one for the xterm
+ * alternate screen. */
+#define SAVED_CURSORS VNUM+1
+#define XT_ALTBUF_CURSOR_SLOT VNUM
+
 cell_video_attr_t                       /* Video attribute bytes */
     attribute=cell_video_attr_init_vio_attribute(0), /* Current video attribute byte */
     underlineattribute=cell_video_attr_init_vio_attribute(0),
-    savedattribute[VNUM]={0,0,0,0},       /* Saved video attribute byte */
-    saveddefaultattribute[VNUM]={0,0,0,0},/* Saved video attribute byte */
-    savedunderlineattribute[VNUM]={0,0,0,0},/* Saved video attribute byte */
+    savedattribute[SAVED_CURSORS]={0,0,0,0,0},       /* Saved video attribute byte */
+    saveddefaultattribute[SAVED_CURSORS]={0,0,0,0,0},/* Saved video attribute byte */
+    savedunderlineattribute[SAVED_CURSORS]={0,0,0,0,0},/* Saved video attribute byte */
     defaultattribute=cell_video_attr_init_vio_attribute(0),  /* Default video attribute byte */
     italicattribute=cell_video_attr_init_vio_attribute(0),   /* Default video attribute byte */
-    saveditalicattribute[VNUM]={0,0,0,0},
+    saveditalicattribute[SAVED_CURSORS]={0,0,0,0,0},
     reverseattribute=cell_video_attr_init_vio_attribute(0),
-    savedreverseattribute[VNUM]={0,0,0,0},
+    savedreverseattribute[SAVED_CURSORS]={0,0,0,0,0},
     graphicattribute=cell_video_attr_init_vio_attribute(0),
-    savedgraphicattribute[VNUM]={0,0,0,0},
+    savedgraphicattribute[SAVED_CURSORS]={0,0,0,0,0},
     borderattribute=cell_video_attr_init_vio_attribute(0),
-    savedborderattribute[VNUM]={0,0,0,0},
+    savedborderattribute[SAVED_CURSORS]={0,0,0,0,0},
     blinkattribute=cell_video_attr_init_vio_attribute(0),
-    savedblinkattribute[VNUM]={0,0,0,0},
+    savedblinkattribute[SAVED_CURSORS]={0,0,0,0,0},
     boldattribute=cell_video_attr_init_vio_attribute(0),
-    savedboldattribute[VNUM]={0,0,0,0},
+    savedboldattribute[SAVED_CURSORS]={0,0,0,0,0},
 	dimattribute=cell_video_attr_init_vio_attribute(0),
-    saveddimattribute[VNUM]={0,0,0,0},
+    saveddimattribute[SAVED_CURSORS]={0,0,0,0,0},
     crossedoutattribute=cell_video_attr_init_vio_attribute(0),
-    savedcrossedoutattribute[VNUM]={0,0,0,0}
+    savedcrossedoutattribute[SAVED_CURSORS]={0,0,0,0,0}
     ;
 
 cell_video_attr_t decatc_colors[16];
 
 vtattrib attrib={0,0,0,0,0,0,0,0,0,0},
-         savedattrib[VNUM]={{0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
-                            {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0}},
+         savedattrib[SAVED_CURSORS]={
+                {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0},
+                {0,0,0,0,0,0,0,0,0,0}},
          cmdattrib={0,0,0,0,0,0,0,0,0,0};
 
 extern int wherex[];                    /* Screen column, 1-based */
@@ -471,10 +478,10 @@ struct _vtG G[4] = {
 struct _vtG *GL = &G[0], *SSGL = NULL;   /* GL and single shift GL */
 struct _vtG *GR = &G[2];                 /* GR */
 struct _vtG *GNOW = &G[0];
-struct _vtG savedG[VNUM][4];
-struct _vtG *savedGL[VNUM] = {NULL,NULL,NULL,NULL},
-            *savedGR[VNUM] = {NULL,NULL,NULL,NULL},
-            *savedSSGL[VNUM] = {NULL,NULL,NULL,NULL} ;
+struct _vtG savedG[SAVED_CURSORS][4];
+struct _vtG *savedGL[SAVED_CURSORS] = {NULL,NULL,NULL,NULL,NULL},
+            *savedGR[SAVED_CURSORS] = {NULL,NULL,NULL,NULL,NULL},
+            *savedSSGL[SAVED_CURSORS] = {NULL,NULL,NULL,NULL,NULL} ;
 static int  Qsaved = FALSE;              /* QANSI charset shifts */
 struct _vtG QsavedG[4],
             *QsavedGL = NULL,
@@ -500,11 +507,11 @@ bool     relcursor = FALSE;
 bool     keylock   = FALSE;
 bool     vt52graphics = FALSE;
 
-bool     saverelcursor[VNUM]={FALSE,FALSE,FALSE,FALSE},
-         saved[VNUM]={FALSE,FALSE,FALSE,FALSE};
-int      savedwrap[VNUM]={FALSE,FALSE,FALSE,FALSE} ;
-int      savedrow[VNUM] = {0,0,0,0};
-int      savedcol[VNUM] = {0,0,0,0};
+bool     saverelcursor[SAVED_CURSORS]={FALSE,FALSE,FALSE,FALSE,FALSE},
+         saved[SAVED_CURSORS]={FALSE,FALSE,FALSE,FALSE,FALSE};
+int      savedwrap[SAVED_CURSORS]={FALSE,FALSE,FALSE,FALSE,FALSE} ;
+int      savedrow[SAVED_CURSORS] = {0,0,0,0,0};
+int      savedcol[SAVED_CURSORS] = {0,0,0,0,0};
 extern int      tt_rkeys_saved[], tt_rkeys[];
 
 bool     deccolm = FALSE;               /* 80/132-column mode */
@@ -542,6 +549,13 @@ int tt_kb_mode = KBM_EN ;               /* Keyboard is in English mode */
 int tt_kb_glgr = FALSE;                 /* Kbd Follows GL/GR charset */
 bool send_c1 = FALSE;                   /* Flag for sending C1 controls */
 extern int send_c1_usr ;                /* User default for send_c1 */
+
+/* When switching to the alternate screen, the page the terminal *was* on is
+ * saved here so it can be restored when switching back. In the unlikely event
+ * someone wants to use both VT paging and the xterm alternate screen at the
+ * same time. */
+int saved_view_page = -1;
+int saved_cursor_page = -1;
 
 /*
   VT220 and higher Pn's for terminal ID string are (* = Not supported):
@@ -5499,6 +5513,58 @@ switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
 }
 
 /*---------------------------------------------------------------------------*/
+/* to_alternate_buffer                                      | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+#define ALTERNATE_BUFFER_PAGE(v) (vscrn[(v)].page_count - 1)
+
+void
+to_alternate_buffer(BYTE vmode) {
+    int alt_buf_page = ALTERNATE_BUFFER_PAGE(vmode);
+
+    if (vscrn[vmode].cursor.p == alt_buf_page) {
+        /* Already on the alternate screen */
+        return;
+    }
+
+    saved_cursor_page = vscrn[vmode].cursor.p;
+    saved_view_page = vscrn[vmode].view_page;
+
+    switch_to_page(vmode,
+                   alt_buf_page,
+                   TRUE);
+}
+
+/*---------------------------------------------------------------------------*/
+/* from_alternate_buffer                                    | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+void
+from_alternate_buffer(BYTE vmode) {
+    if (saved_view_page == -1) return;
+
+    if (vscrn[vmode].page_cursor_coupling) {
+        switch_to_page(vmode, saved_view_page, TRUE);
+    } else {
+        /* Page cursor coupling is off. First call will set both the view and
+         * the cursor to the view page. Then with the second call, we'll restore
+         * the cursor to whatever page it was on before without affecting the
+         * view page */
+        switch_to_page(vmode, saved_view_page, TRUE);
+        switch_to_page(vmode, saved_cursor_page, FALSE);
+    }
+
+    saved_view_page = -1;
+    saved_cursor_page = -1;
+}
+
+/*---------------------------------------------------------------------------*/
+/* set_alternate_buffer_enabled                             | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+void
+set_alternate_buffer_enabled(BYTE vmode, BOOL enabled) {
+    vscrn[vmode].allow_alt_buf = enabled;
+}
+
+/*---------------------------------------------------------------------------*/
 /* term_max_page                                            | Page: n/a      */
 /*---------------------------------------------------------------------------*/
 /* Maximum page number for a given terminal type */
@@ -7846,31 +7912,41 @@ SNI_chcode( int state ) {
 void
 savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
     int i ;
-    saved[vmode] = TRUE;                        /* Remember they are saved */
-    savedrow[vmode] = wherey[vmode];            /* Current row (absolute) */
-    savedcol[vmode] = wherex[vmode];            /* Current column (absolute) */
+    int slot = vmode;
+
+    if (vmode == VTERM
+            && ISK95(tt_type)
+            && vscrn[vmode].cursor.p == ALTERNATE_BUFFER_PAGE(vmode)) {
+        /* We're on the xterm alternate screen - store the cursor in the
+         * special alternate screen slot */
+        slot = XT_ALTBUF_CURSOR_SLOT;
+    }
+
+    saved[slot] = TRUE;                        /* Remember they are saved */
+    savedrow[slot] = wherey[vmode];            /* Current row (absolute) */
+    savedcol[slot] = wherex[vmode];            /* Current column (absolute) */
     if (x) {
-        savedattribute[vmode] = attribute;      /* Current PC video attributes */
-        saveddefaultattribute[vmode] = defaultattribute ;
-        savedunderlineattribute[vmode] = underlineattribute;
-        saveditalicattribute[vmode] = italicattribute;
-        savedreverseattribute[vmode]= reverseattribute;
-        savedgraphicattribute[vmode]= graphicattribute;
-        savedborderattribute[vmode]= borderattribute;
-        savedblinkattribute[vmode]= blinkattribute;
-        savedboldattribute[vmode] = boldattribute;
-		saveddimattribute[vmode] = dimattribute;
-        savedcrossedoutattribute[vmode] = crossedoutattribute;
-        savedattrib[vmode] = attrib;            /* Current DEC character attributes */
-        saverelcursor[vmode] = relcursor;       /* Cursor addressing mode */
-        savedwrap[vmode]     = tt_wrap;         /* Wrap mode */
+        savedattribute[slot] = attribute;      /* Current PC video attributes */
+        saveddefaultattribute[slot] = defaultattribute ;
+        savedunderlineattribute[slot] = underlineattribute;
+        saveditalicattribute[slot] = italicattribute;
+        savedreverseattribute[slot]= reverseattribute;
+        savedgraphicattribute[slot]= graphicattribute;
+        savedborderattribute[slot]= borderattribute;
+        savedblinkattribute[slot]= blinkattribute;
+        savedboldattribute[slot] = boldattribute;
+		saveddimattribute[slot] = dimattribute;
+        savedcrossedoutattribute[slot] = crossedoutattribute;
+        savedattrib[slot] = attrib;            /* Current DEC character attributes */
+        saverelcursor[slot] = relcursor;       /* Cursor addressing mode */
+        savedwrap[slot]     = tt_wrap;         /* Wrap mode */
 
         if ( x==1 ) {
             for (i=0; i<4; i++)
-                savedG[vmode][i] = G[i] ;
-            savedGL[vmode] = GL ;
-            savedGR[vmode] = GR ;
-            savedSSGL[vmode] = SSGL ;
+                savedG[slot][i] = G[i] ;
+            savedGL[slot] = GL ;
+            savedGR[slot] = GR ;
+            savedSSGL[slot] = SSGL ;
         }
     }
 }
@@ -7878,33 +7954,43 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
 void
 restorecurpos(int vmode, int x) {
     int i ;
-    if (saved[vmode] == FALSE) {                /* Nothing saved, home the cursor */
+    int slot = vmode;
+
+    if (vmode == VTERM
+            && ISK95(tt_type)
+            && vscrn[vmode].cursor.p == ALTERNATE_BUFFER_PAGE(vmode)) {
+        /* We're on the xterm alternate screen - restore the cursor from the
+         * special alternate screen slot */
+        slot = XT_ALTBUF_CURSOR_SLOT;
+    }
+
+    if (saved[slot] == FALSE) {                /* Nothing saved, home the cursor */
         lgotoxy(vmode, 1, relcursor ? margintop : 1);
     }
     else {
-        lgotoxy(vmode, savedcol[vmode], savedrow[vmode]);/* Goto saved position */
+        lgotoxy(vmode, savedcol[slot], savedrow[slot]);/* Goto saved position */
         if (x) {
-            attribute = savedattribute[vmode];  /* Restore saved attributes */
-            defaultattribute=saveddefaultattribute[vmode];
-            underlineattribute=savedunderlineattribute[vmode];
-            italicattribute=saveditalicattribute[vmode];
-            reverseattribute=savedreverseattribute[vmode];
-            graphicattribute=savedgraphicattribute[vmode];
-            borderattribute=savedborderattribute[vmode];
-            blinkattribute=savedblinkattribute[vmode];
-            boldattribute=savedboldattribute[vmode];
-			dimattribute=saveddimattribute[vmode];
-            crossedoutattribute=savedcrossedoutattribute[vmode];
-            attrib = savedattrib[vmode];
-            relcursor = saverelcursor[vmode];   /* Restore cursor addressing mode */
-            tt_wrap = savedwrap[vmode] ;       /* Restore wrap mode */
+            attribute = savedattribute[slot];  /* Restore saved attributes */
+            defaultattribute=saveddefaultattribute[slot];
+            underlineattribute=savedunderlineattribute[slot];
+            italicattribute=saveditalicattribute[slot];
+            reverseattribute=savedreverseattribute[slot];
+            graphicattribute=savedgraphicattribute[slot];
+            borderattribute=savedborderattribute[slot];
+            blinkattribute=savedblinkattribute[slot];
+            boldattribute=savedboldattribute[slot];
+			dimattribute=saveddimattribute[slot];
+            crossedoutattribute=savedcrossedoutattribute[slot];
+            attrib = savedattrib[slot];
+            relcursor = saverelcursor[slot];   /* Restore cursor addressing mode */
+            tt_wrap = savedwrap[slot] ;       /* Restore wrap mode */
 
             if ( x==1 ) {                       /* Restore char sets */
                 for (i=0; i<4; i++)
-                    G[i] = savedG[vmode][i] ;
-                GL = savedGL[vmode] ;
-                GR = savedGR[vmode] ;
-                SSGL = savedSSGL[vmode] ;
+                    G[i] = savedG[slot][i] ;
+                GL = savedGL[slot] ;
+                GR = savedGR[slot] ;
+                SSGL = savedSSGL[slot] ;
             }
         }
     }
@@ -8151,6 +8237,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     keylock = FALSE;                    /* Keyboard is not locked */
 
     /* Reset paging */
+    from_alternate_buffer(VTERM);
     vscrn[VTERM].page_cursor_coupling = TRUE;
     switch_to_page(VTERM, 0, TRUE);
 
@@ -17702,6 +17789,28 @@ vtcsi(void)
                             pn[2] = 4; /* Permanently reset */
 #endif /* KUI */
                             break;
+                        case 1046:    /* xterm - disallow switching to alternate screen? */
+                            if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                pn[2] = vscrn[vmode].allow_alt_buf ? 1 : 2;
+                            } else {
+                                pn[2] = 4; /* Permanently reset */
+                            }
+                            break;
+                        case 1047:    /* xterm - alternate screen */
+                        case 1049:
+                            if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                int page, alternate_screen_page;
+                                page = vscrn[vmode].cursor.p;
+                                alternate_screen_page = ALTERNATE_BUFFER_PAGE(vmode);
+                                pn[2] = page == alternate_screen_page ? 1 : 2;
+                            } else {
+                                pn[2] = 4; /* Permanently reset */
+                            }
+                            break;
+                        case 1048:    /* xterm - cursor saved? */
+                            pn[2] = saved[vmode] ? 1 : 2 ;
+                            break;
+
                         case 2004:
                             pn[2] = bracketed_paste[vmode] ? 1 : 2;
                             break;
@@ -19297,6 +19406,28 @@ vtcsi(void)
                             tt_bell_raise = TRUE;
 #endif /* KUI */
                             break;
+                        case 1046:    /* xterm - allow switching to alternate buffer */
+                            if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                set_alternate_buffer_enabled(vmode, TRUE);
+                            }
+                            break;
+                        case 1047:    /* xterm - go to alternate screen */
+                            if ((ISK95(tt_type) || ISXTERM(tt_type)) && vscrn[vmode].allow_alt_buf) {
+                                to_alternate_buffer(vmode);
+                            }
+                            break;
+                        case 1048:    /* xterm - save cursor as in DECSC */
+                            savecurpos(vmode, 1);
+                            break;
+                        case 1049:    /* xterm - to alt buffer, clearing and saving ? */
+                            if ((ISK95(tt_type) || ISXTERM(tt_type)) && vscrn[vmode].allow_alt_buf) {
+                                savecurpos(vmode, 1);
+                                to_alternate_buffer(vmode);
+                                clrpage(vmode,
+                                        ' ',
+                                        ALTERNATE_BUFFER_PAGE(vmode));
+                            }
+                            break;
                         case 2004:
                             /* xterm - Set Bracketed Paste Mode */
                             bracketed_paste[vmode] = TRUE;
@@ -19938,6 +20069,31 @@ vtcsi(void)
 #ifdef KUI
                                 tt_bell_raise = FALSE;
 #endif /* KUI */
+                                break;
+                            case 1046:    /* xterm - prevent switching to alternate buffer */
+                                if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                    set_alternate_buffer_enabled(vmode, FALSE);
+                                    from_alternate_buffer(vmode);
+                                }
+                                break;
+                            case 1047:    /* xterm - return from alternate screen */
+                                if ((ISK95(tt_type) || ISXTERM(tt_type)) && vscrn[vmode].allow_alt_buf) {
+                                    /* Clear the alternate screen */
+                                    clrpage(vmode,
+                                            ' ',
+                                            ALTERNATE_BUFFER_PAGE(vmode));
+                                    /* and switch back to the normal screen */
+                                    from_alternate_buffer(vmode);
+                                }
+                                break;
+                            case 1048:    /* xterm - restore cursor as in DECSC */
+                                restorecurpos(vmode, 1);
+                                break;
+                            case 1049:    /* xterm - to normal screen */
+                                if ((ISK95(tt_type) || ISXTERM(tt_type)) && vscrn[vmode].allow_alt_buf) {
+                                    from_alternate_buffer(vmode);
+                                    restorecurpos(vmode, 1);
+                                }
                                 break;
                             case 2004:
                             	/* xterm - Disable Bracketed Paste Mode */

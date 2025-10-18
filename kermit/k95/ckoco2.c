@@ -68,15 +68,16 @@ extern int OSVer;
 #include "ckocon.h"                     /* defs common to console routines */
 #include "ckokey.h"
 
-vscrn_t vscrn[VNUM]/*CMD*/=  {{0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1},
-                   /*VTERM*/  {0,9 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1},
-                   /*VCS*/    {0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1},
-                   /*VSTATUS*/{0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1}};
-/*                             ^ ^  ^ Cursor  ^  ^  ^  ^  H  ---- Bookmarks --------------  ^ ^ ^
-                               | |  |  X Y P  |  |  |  Width                                | | |
-                               | |  Pages     |  |  markbot                           Hscroll | |
-                               | Page count   |  marktop                        Display Height  |
-                               View page      Popup                          Page Cursor Coupling
+vscrn_t vscrn[VNUM]/*CMD*/=  {{0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
+                   /*VTERM*/  {0,10,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,1},
+                   /*VCS*/    {0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
+                   /*VSTATUS*/{0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0}};
+/*                             ^ ^  ^ Cursor  ^  ^  ^  ^  H  ---- Bookmarks --------------  ^ ^ ^ ^
+                               | |  |  X Y P  |  |  |  Width                                | | | |
+                               | |  Pages     |  |  markbot                           Hscroll | | |
+                               | Page count   |  marktop                         Display Height | |
+                               View page      Popup                          Page Cursor Coupling Allow alternate buffer
+ VTERM gets 10 pages as TT_K95 has 9 normal pages, plus one for the alternate screen
 */
 extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor;

@@ -941,6 +941,7 @@ int nfntab = (sizeof(fntab) / sizeof(struct keytab));
 /* Terminal parameters table */
 static struct keytab trmtab[] = {
 #ifdef OS2
+    { "alternate-buffer", XYTALTBUF, 0 },
     { "answerback",    XYTANS,    0 },
 #endif /* OS2 */
 #ifdef CK_APC
@@ -1187,6 +1188,14 @@ struct keytab graphsettab[] = {  /* DEC VT Graphic Sets */
     { "keyboard", TT_GR_KBD, 0 }
 };
 int ngraphset = (sizeof(graphsettab) / sizeof(struct keytab));
+
+struct keytab altbufktab[] = {		/* Set TERM ALTERNATE-BUFFER */
+        { "active",    AB_ACTIVE,   CM_INV},
+        { "disabled",  AB_DISABLED, 0 },
+        { "enabled",   AB_ENABLED,  0 },
+        { "inactive",  AB_INACTIVE, CM_INV }
+};
+int naltbuf = (sizeof(altbufktab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 struct keytab adltab[] = {              /* Autodownload Options */
@@ -4983,6 +4992,31 @@ settrm() {
         return(success = 1);
 
 #ifdef OS2
+      case XYTALTBUF: {                 /* SET TERMINAL ALTERNATE-BUFFER */
+          if ((x = cmkey(altbufktab,naltbuf,"Alternate Buffer setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+          switch(x) {
+            case AB_DISABLED:
+              set_alternate_buffer_enabled(VTERM, FALSE);
+              break;
+            case AB_ENABLED:
+              set_alternate_buffer_enabled(VTERM, TRUE);
+              break;
+            case AB_INACTIVE: {
+                from_alternate_buffer(VTERM);
+              }
+              break;
+            case AB_ACTIVE: {
+                to_alternate_buffer(VTERM);
+              }
+              break;
+          }
+        }
+        return(success = 1);
+        break;
+
       case XYTANS: {                    /* SET TERMINAL ANSWERBACK */
 /*
   NOTE: We let them enable and disable the answerback sequence, but we

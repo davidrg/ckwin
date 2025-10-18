@@ -2755,7 +2755,16 @@ DECTSR		462
             <ref src="vt510:DECSC.html"/>
             <ref src="vt52x:274"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 linux tt putty"/>
-            <p>Saves the cursor position and attributes</p>
+            <p>Saves the cursor position and attributes.</p>
+
+            <p badges="k95" groups="isxterm">
+                The terminal has two slots for storing the cursor position and
+                attributes - one for when the terminal is on the normal screen,
+                and another for when the terminal is on the alternate screen.
+                So saving the cursor while on the alternate screen won't affect
+                any cursor position and attributes that were saved while on the
+                normal screen.
+            </p>
         </section>
         <section role="ctlseq" id="rcp" mnemonic="RCP" ctlseq="ESC 8" title="Restore Cursor (ANSI)"
                  groups="isansi" badges="aaa">
@@ -7102,6 +7111,11 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 47</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-4-7.1EC8"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Not currently implemented as it conflicts with DECGRCM which
+                    Kermit 95 may someday prefer to implement for the K95
+                    terminal type.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" id="dec131tm"
                      mnemonic="DEC131TM" title="VT131 Transmit">
@@ -7643,31 +7657,44 @@ DCS $ q 3 , } ST</pre>
             </section>
             <section role="parameter" id="xt-ena-altbuf" mnemonic=""
                      title="Enable switching to/from alternate screen buffer"
-                     not-implemented="true" todo="true">
+                     badges="k95" groups="isxterm">
                 <ctlseq><param-single/> = 1046</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-6.1F82"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Enables switching to the alternate screen - equivalent to
+                    <tt>SET TERM ALTERNATE-BUFFER ENABLED</tt>.
+                </p>
             </section>
-            <section role="parameter" id="xt-use-altbuf" mnemonic=""
-                     title="Use alternate screen buffer"
-                     not-implemented="true" todo="true">
+            <section role="parameter" id="xt-use-altbuf" mnemonic="" groups="isxterm"
+                     title="Use alternate screen buffer" badges="k95">
                 <ctlseq><param-single/> = 1047</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-7.1F83"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Switch to the alternate screen
+                </p>
             </section>
-            <section role="parameter" id="xt-1048" mnemonic=""
-                     title="Save cursor as in DECSC"
-                     not-implemented="true" todo="true">
+            <section role="parameter" id="xt-1048" mnemonic="" badges="k95"
+                     title="Save cursor as in DECSC" groups="isxterm">
                 <ctlseq><param-single/> = 1048</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-8.1F84"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Identical behavior to <a href="#decsc">DECSC</a>. You can
+                    restore the saved cursor by either resetting this mode, or
+                    using <a href="#decrc">DECRC</a>.
+                </p>
             </section>
-            <section role="parameter" id="xt-1049" mnemonic=""
-                     title="Save cursor as in DECSC"
-                     not-implemented="true" todo="true">
+            <section role="parameter" id="xt-1049" mnemonic="" badges="k95" groups="isxterm"
+                     title="Use alternate screen buffer, saving and clearing">
                 <ctlseq><param-single/> = 1049</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-9.1F85"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Saves the cursor using <a href="#decsc">DECSC</a>, switches
+                    to the alternate screen, and clears the alternate screen.
+                </p>
             </section>
             <section role="parameter" id="xt-1050" mnemonic=""
                      title="Set terminfo/termcap function-key mode"
@@ -8830,6 +8857,11 @@ DCS $ q 3 , } ST</pre>
                 <ctlseq><param-single/> = 47</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-4-7.1ECC"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Not currently implemented as it conflicts with DECGRCM which
+                    Kermit 95 may someday prefer to implement for the K95
+                    terminal type.
+                </p>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-53"
                      mnemonic="DEC131TM" title="VT131 Transmit">
@@ -9341,33 +9373,48 @@ DCS $ q 3 , } ST</pre>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-5.1F85"/>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
-            <section role="parameter" id="decrst-1046" mnemonic=""
-                     title="Disable switching to/from alternate screen buffer"
-                     not-implemented="true" todo="true">
+            <section role="parameter" id="decrst-1046" mnemonic="" badges="k95" groups="isxterm"
+                     title="Disable switching to/from alternate screen buffer">
                 <ctlseq><param-single/> = 1046</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-6.1F86"/>
                 <termsupp first="xterm" series="xt" additional=""/>
+                <p>
+                    Disables switching to the alternate screen - equivalent to
+                    <tt>SET TERM ALTERNATE-BUFFER DISABLED</tt>.
+                </p>
             </section>
             <section role="parameter" id="decrst-1047" mnemonic=""
-                     title="Use normal screen buffer"
-                     not-implemented="true" todo="true">
+                     title="Use normal screen buffer" badges="k95" groups="isxterm">
                 <ctlseq><param-single/> = 1047</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-7.1F87"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Clear the alternate screen and switch back to the normal
+                    screen, restoring which ever pages were active when
+                    switching to the alternate screen.
+                </p>
             </section>
             <section role="parameter" id="decrst-1048" mnemonic=""
-                     title="Restore cursor as in DECSC"
-                     not-implemented="true" todo="true">
+                     title="Restore cursor as in DECRC" badges="k95" groups="isxterm">
                 <ctlseq><param-single/> = 1048</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-8.1F88"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Identical behavior to <a href="#decrc">DECRC</a>.
+                </p>
             </section>
             <section role="parameter" id="decrst-1049" mnemonic=""
-                     title="Normal screen buffer and restore cursor as in DECSC"
-                     not-implemented="true" todo="true">
+                     title="Return from alternate screen and restore cursor"
+                     badges="k95" groups="isxterm">
                 <ctlseq><param-single/> = 1049</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-4-9.1F89"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
+                <p>
+                    Returns from the alternate screen, and restores
+                    the cursor using <a href="#decrc">DECRC</a>. Which ever
+                    pages were active when switching to the alternate screen are
+                    restored.
+                </p>
             </section>
             <section role="parameter" id="decrst-1050" mnemonic=""
                      title="Reset terminfo/termcap function-key mode"
@@ -11926,6 +11973,11 @@ DCS $ q 3 , } ST</pre>
                     <ctlseq><param-single/> = 47</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-4-7.1ECC"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
+                    <p>
+                        Not currently implemented as it conflicts with DECGRCM which
+                        Kermit 95 may someday prefer to implement for the K95
+                        terminal type.
+                    </p>
                 </section>
                 <section role="parameter" not-implemented="true" id="decrqm-53"
                          mnemonic="DEC131TM" title="VT131 Transmit">
@@ -12420,33 +12472,47 @@ DCS $ q 3 , } ST</pre>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-5.1F81"/>
                     <termsupp first="xterm" series="xt" additional=""/>
                 </section>
-                <section role="parameter" id="rqm-1046" mnemonic=""
+                <section role="parameter" id="rqm-1046" mnemonic="" badges="k95"
                          title="Switching to/from alternate screen buffer"
-                         not-implemented="true" todo="true">
+                         groups="isxterm">
                     <ctlseq><param-single/> = 1046</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-6.1F82"/>
                     <termsupp first="xterm" series="xt" additional=""/>
+                    <p>
+                        Reports whether switching to the alternate buffer is
+                        currently enabled or not.
+                    </p>
                 </section>
-                <section role="parameter" id="rqm-1047" mnemonic=""
-                         title="Use alternate screen buffer"
-                         not-implemented="true" todo="true">
+                <section role="parameter" id="rqm-1047" mnemonic="" badges="k95"
+                         title="Use alternate screen buffer" groups="isxterm">
                     <ctlseq><param-single/> = 1047</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-7.1F83"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
+                    <p>
+                        Reports if the terminal is currently on the alternate
+                        buffer or not
+                    </p>
                 </section>
-                <section role="parameter" id="rqm-1048" mnemonic=""
-                         title="Save cursor as in DECSC"
-                         not-implemented="true" todo="true">
+                <section role="parameter" id="rqm-1048" mnemonic="" badges="k95"
+                         title="Save cursor as in DECSC" groups="isxterm">
                     <ctlseq><param-single/> = 1048</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-8.1F84"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
+                    <p>
+                        Reports if the cursor has been saved with either
+                        <a href="#decsc">DECSC</a> or
+                        <a href="#xt-1048">DECSET-1048</a> and not yet restored.
+                    </p>
                 </section>
-                <section role="parameter" id="rqm-1049" mnemonic=""
-                         title="Save cursor as in DECSC"
-                         not-implemented="true" todo="true">
+                <section role="parameter" id="rqm-1049" mnemonic="" badges="k95"
+                         title="Use alternate screen buffer" groups="isxterm">
                     <ctlseq><param-single/> = 1049</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-1-0-4-9.1F85"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
+                    <p>
+                        Reports if the terminal is currently on the alternate
+                        buffer or not (same as <a href="#rqm-1047">1047</a>)
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1050" mnemonic=""
                          title="Set terminfo/termcap function-key mode"

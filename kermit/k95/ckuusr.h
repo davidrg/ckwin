@@ -1332,8 +1332,15 @@ struct stringint {			/* String and (wide) integer */
 #define   XYTIACT   63  /* SET TERM IDLE-ACTION  */
 #define   XYTLSP    64  /* SET TERM LINE-SPACING */
 #define   XYTLFD    65	/* SET TERM LF-DISPLAY   */
+#ifdef OS2
 #define   XYTCLP    66  /* SET TERM CLIPBOARD-ACCESS */
 #define   XYTSIZE   67  /* SET TERM SIZE */
+#define   XYTALTBUF 68  /* SET TERM ALTERNATE-BUFFER */
+#define     AB_ENABLED 0
+#define     AB_DISABLED 1
+#define     AB_INACTIVE 2  /* Force the terminal out of the alternate screen buffer */
+#define     AB_ACTIVE 3    /* Force the terminal into the alternate screen buffer */
+#endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */
 #define XYSERV 35	/* Server parameters  */
