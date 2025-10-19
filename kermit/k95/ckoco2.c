@@ -5032,7 +5032,7 @@ TermScrnUpd( void * threadinfo)
                          && markmodeflag[avm] == notmarking ) ?
                              (page->top + page->linecount
                               - page->scrolltop)%page->linecount : 0 ;
-        if ( VscrnIsPopup(avm) || !cursorena[avm] ||
+        if ( VscrnIsPopup(avm) || !cursorena[avm] || !cursor_on_visible_page(avm) ||
             vscrn[avm].cursor.x - xho < 0 ||  vscrn[avm].cursor.x - xho >= pwidth ||
             vscrn[avm].cursor.y + cursor_offset >= VscrnGetDisplayHeight(avm)
             -(tt_status[avm]?1:0) ) {

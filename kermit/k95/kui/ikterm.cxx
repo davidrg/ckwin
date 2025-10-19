@@ -427,7 +427,8 @@ BOOL IKTerm::getCursorPos()
     }
 
     ys = VscrnGetHeightEx( vnum, FALSE );
-    if( !cursorena[vnum] || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0) ) {
+    if( !cursorena[vnum] || !cursor_on_visible_page(vnum)
+            || vbuf->cursor.y + cursor_offset >= ys -(tt_status[vnum]?1:0) ) {
         kcp->cursorVisible = FALSE;
     }
     else {
