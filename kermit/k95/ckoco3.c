@@ -18429,7 +18429,7 @@ vtcsi(void)
                          *       setting of origin mode
                          */
                         int checksum=0, pid=1;
-                        int top, left, bot, right;
+                        int top, left, bot, right, page, max_page;
                         int row, col;
                         int x, y;
                         char buf[20];
@@ -18442,11 +18442,15 @@ vtcsi(void)
 
                         /*checksum &= 0xffff;*/
                         pid = pn[1];
-                        /* Ignore pn[2] - we don't support multiple pages */
+                        page = pn[2];
                         top = pn[3] + (vscrn_c_page_margin_top(VTERM) > 1 ? vscrn_c_page_margin_top(VTERM) : 0);
                         left = pn[4] + (vscrn_c_page_margin_left(VTERM) > 1 ? vscrn_c_page_margin_left(VTERM) : 0);
                         bot = pn[5];
                         right = pn[6];
+
+                        max_page = term_max_page(VTERM);
+						if (page < 0) page = 0;
+						if (page > max_page) page = max_page;
 
                         debug(F111, "DECRQCRA", "pid", pid);
                         debug(F111, "DECRQCRA", "init-top", pn[3]);
@@ -18476,7 +18480,7 @@ vtcsi(void)
                         debug(F111, "DECRQCRA", "right", right);
 
                         for ( y=top-1; y<bot; y++ ) {
-                            videoline * line = VscrnGetLineFromTop(VTERM, y, FALSE);
+                            videoline * line = VscrnGetPageLineFromTop(VTERM, y, page);
                             for ( x=left-1; x<right; x++ ) {
                                 unsigned short c, a;
                                 unsigned char cellattr, fgcoloridx = 0, bgcoloridx = 0;
