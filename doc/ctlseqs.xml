@@ -15059,6 +15059,11 @@ DCS $ q 3 , } ST</pre>
                 rectangle exceed those of the page, the rectangle is clipped to
                 fit on the page.
             </p>
+            <p>
+                If the terminal is on the XTerm Alternate Screen, then the
+                source and destination pages are ignored; DECCRA operates only
+                on the alternate screen.
+            </p>
         </section>
 
         <!-- ######################### w ######################### -->
@@ -15684,6 +15689,11 @@ DCS $ q 3 , } ST</pre>
                 <param-single symbol="Pr"/></tt> is the rectangle to calculate
                 the checksum for. Only available if send-data is enabled
                 (<tt>set terminal send-data on</tt>).
+            </p>
+            <p>
+                If the terminal is on the XTerm Alternate Screen, then the
+                page is ignored and DECRQCRA operates only on the alternate
+                screen.
             </p>
         </section>
         <section role="ctlseq" id="decpkfmr" mnemonic="DECPKFMR"

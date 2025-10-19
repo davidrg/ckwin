@@ -18307,6 +18307,10 @@ vtcsi(void)
 						if (dest_page < 0) dest_page = 0;
 						if (dest_page > max_page) dest_page = max_page;
 
+                        if (on_alternate_buffer(VTERM)) {
+                            src_page = dest_page = ALTERNATE_BUFFER_PAGE(VTERM);
+                        }
+
 						if (relcursor) { /* DECOM enabled? */
                             int src_margintop, src_marginleft, dest_margintop, dest_marginleft;
                             src_margintop = vscrn_page_margin_top(VTERM, src_page);
@@ -18544,6 +18548,10 @@ vtcsi(void)
                         max_page = term_max_page(VTERM);
 						if (page < 0) page = 0;
 						if (page > max_page) page = max_page;
+
+                        if (on_alternate_buffer(VTERM)) {
+                            page = ALTERNATE_BUFFER_PAGE(VTERM);
+                        }
 
                         debug(F111, "DECRQCRA", "pid", pid);
                         debug(F111, "DECRQCRA", "init-top", pn[3]);
