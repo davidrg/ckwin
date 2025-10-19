@@ -20667,11 +20667,10 @@ vtcsi(void)
                     for (p = 0; p < term_max_page(VTERM); p++) {
                         prtpage(VTERM,
                                 printregion ?
-                                vscrn_c_page_margin_top(VTERM) :
-                                1,
+                                    vscrn[VTERM].pages[[].margintop : 1,
                                 printregion ?
-                                vscrn_c_page_margin_bot(VTERM) :
-                                VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
+                                    vscrn[VTERM].pages[[].marginbot :
+                                    VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
                                 p);
                     }
                 }
