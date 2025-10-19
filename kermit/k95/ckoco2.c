@@ -2567,12 +2567,12 @@ VscrnSetLineVtAttr( BYTE vmode, SHORT y, USHORT attr ) /* zero based * /
  * view page currently.
  */
 viocell *
-VscrnGetCells( BYTE vmode, SHORT y )
+VscrnGetCells( BYTE vmode, SHORT y, int page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
 
-    return VscrnGetLineFromTop(vmode,y,TRUE)->cells ;
+    return VscrnGetPageLineFromTop(vmode,y,page)->cells ;
 }
 
 /*---------------------------------------------------------------------------*/

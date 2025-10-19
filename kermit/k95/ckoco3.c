@@ -4090,7 +4090,7 @@ prtline(int line, unsigned short achar) {
     if (printon) {                              /* If printer on */
         n = VscrnGetWidth(VTERM) * sizeof(viocell);     /* Line width, incl attributes */
         /* Internally, screen lines are 0-based, so "i-1". */
-        memcpy(cells,VscrnGetCells(VTERM,line-1),n);
+        memcpy(cells,VscrnGetCells(VTERM,line-1,vscrn[VTERM].cursor.p),n);
 
         for (j = 0; j < VscrnGetWidth(VTERM); j++) {    /* Strip away the attribute bytes */
             if ( ck_isunicode() )
@@ -4120,11 +4120,11 @@ prtline(int line, unsigned short achar) {
 }
 
 /* ----------------------------------------------------------------- */
-/* PrtScreen - Copy lines on screen to printer.                      */
+/* PrtPage - Copy lines on page to printer.                          */
 /* parameters = Top line to print, bottom line to print, 1-based.    */
 /* ----------------------------------------------------------------- */
 void
-prtscreen(BYTE vmode, int top, int bot) {
+prtpage(BYTE vmode, int top, int bot, int page) {
     int    i, j, ch;
     USHORT n;
     viocell cells[MAXTERMCOL];
@@ -4146,10 +4146,14 @@ prtscreen(BYTE vmode, int top, int bot) {
             /* Internally, screen lines are 0-based, so "i-1". */
 
             if (scrollflag[vmode]&& tt_roll[vmode])
-              memcpy(cells,VscrnGetCells(vmode,VscrnGetScrollTop(vmode, TRUE)
-                                          -VscrnGetTop(vmode, FALSE, TRUE)+i),n) ;
+              memcpy(cells,
+                     VscrnGetCells(vmode,
+                                   VscrnGetPageScrollTop(vmode, FALSE, page)
+                                        -VscrnGetTop(vmode, FALSE, TRUE)+i,
+                                   page),
+                     n) ;
             else
-              memcpy(cells,VscrnGetCells(vmode,i),n);
+              memcpy(cells,VscrnGetCells(vmode,i,page),n);
 
             for (j = 0; j < VscrnGetWidth(vmode); j++) { /* Strip away the attribute bytes */
                 if ( ck_isunicode() )
@@ -4184,6 +4188,15 @@ prtscreen(BYTE vmode, int top, int bot) {
         if ( turnoffprinter )
             printeroff();
     }
+}
+
+/* ----------------------------------------------------------------- */
+/* PrtScreen - Copy lines on screen to printer.                      */
+/* parameters = Top line to print, bottom line to print, 1-based.    */
+/* ----------------------------------------------------------------- */
+void
+prtscreen(BYTE vmode, int top, int bot) {
+    prtpage(vmode, top, bot, vscrn[vmode].view_page);
 }
 
 /* ------------------------------------------------------------------ */
@@ -5769,7 +5782,7 @@ savscrbk(mode,name,disp,term) int mode; char * name; int disp; int term; {
         n = VscrnGetWidth(mode) * sizeof(viocell);      /* Line width, incl attributes */
         for (i = term ? top : beg; i != end; i = (i+1)%VscrnGetBufferSize(mode,FALSE,TRUE)) {
             /* For each scrollback line, i... */
-            memcpy(cells,VscrnGetCells(mode,i-top),n);
+            memcpy(cells,VscrnGetCells(mode,i-top,0),n);
 
             for (j = 0; j < VscrnGetWidth(mode); j++) { /* Strip away the attribute bytes */
                 if ( ck_isunicode() )
@@ -20518,18 +20531,19 @@ vtcsi(void)
                   Print-Whole-Screen & Print-Cursor-Line support added in edit 190, fdc.
                 */
                 if (pn[1] == 0)  /* Print whole screen */
-                    prtscreen(VTERM,
+                    prtpage(VTERM,
                                printregion ?
                                vscrn_c_page_margin_top(VTERM) :
                                1,
                                printregion ?
                                vscrn_c_page_margin_bot(VTERM) :
-                               VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0)
+                               VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
+                               vscrn[VTERM].cursor.p
                                );
                 else if (pn[1] == 1 &&  /* Print cursor line */
                           /* Only if ESC [?1i */
                           private == TRUE)
-                    prtscreen(VTERM,wherey[VTERM],wherey[VTERM]);
+                    prtpage(VTERM,wherey[VTERM],wherey[VTERM],vscrn[VTERM].cursor.p);
                 /*
                 Send Screen to Host computer
                 #******************************************************************************#
@@ -20635,6 +20649,30 @@ vtcsi(void)
                             /* Update status line */
                             VscrnIsDirty(VTERM);
                         }
+                    }
+                } else if (pn[1] == 8 && private) {
+                    /* TODO: Disables communication from the printer port
+                        to the host. Multi-session related? */
+                } else if (pn[1] == 9 && private) {
+                    /* TODO: Enables communication from the printer port
+                        to the host. Multi-session related? */
+                } else if (pn[1] == 10 && private && ISVT420(tt_type_mode)) {
+                    /* Print data on screen. DECPEX doesn't affect it. */
+                    prtscreen(VTERM,
+                              1,
+                              VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+                } else if (pn[1] == 11 && private && ISVT420(tt_type_mode)) {
+                    int p;
+                    /* Print all pages. */
+                    for (p = 0; p < term_max_page(VTERM); p++) {
+                        prtpage(VTERM,
+                                printregion ?
+                                vscrn_c_page_margin_top(VTERM) :
+                                1,
+                                printregion ?
+                                vscrn_c_page_margin_bot(VTERM) :
+                                VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0),
+                                p);
                     }
                 }
                 break;

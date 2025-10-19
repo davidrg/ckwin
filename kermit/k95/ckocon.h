@@ -1528,7 +1528,7 @@ _PROTOTYP( USHORT VscrnGetLineVtAttr, ( BYTE, SHORT ) ) ;
 /*_PROTOTYP( USHORT VscrnSetLineVtAttr, ( BYTE, SHORT, USHORT ) ) ;*/
 _PROTOTYP( vtattrib VscrnGetVtCharAttr, ( BYTE, SHORT, SHORT ) ) ;
 _PROTOTYP( USHORT VscrnSetVtCharAttr, ( BYTE, SHORT, SHORT, vtattrib ) ) ;
-_PROTOTYP( viocell * VscrnGetCells, ( BYTE, SHORT ) ) ;
+_PROTOTYP( viocell * VscrnGetCells, ( BYTE, SHORT, INT ) ) ;
 _PROTOTYP( viocell * VscrnGetCellEx, ( BYTE, SHORT, SHORT, int ) ) ;
 _PROTOTYP( viocell * VscrnGetCell, ( BYTE, SHORT, SHORT, BOOL ) ) ;
 _PROTOTYP( LONG VscrnMoveTop, ( BYTE, LONG ) ) ;
@@ -1681,6 +1681,7 @@ _PROTOTYP(int  is_uprint,(void));
 _PROTOTYP(void prtchar, (BYTE));
 _PROTOTYP(void prtstr, (char *,int));
 _PROTOTYP(void prtscreen, (BYTE,int, int));
+_PROTOTYP(void prtpage, (BYTE,int, int, int));
 #ifdef BPRINT
     _PROTOTYP(int bprtstart, ( void ));
     _PROTOTYP(int bprtstop, ( void ));

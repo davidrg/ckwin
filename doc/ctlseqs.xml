@@ -8651,12 +8651,14 @@ DCS $ q 3 , } ST</pre>
                 <ref src="wy370:131"/>
                 <termsupp first="vt510" series="vt" additional="sco"/>
                 <!-- For the WY370, MC-2 sends the current page data to the host
-                    so it might not be related to DOUBLEVISION -->
+                    so it might not be related to DOUBLEVISION. The VT520 manual
+                    also says this "Sends screen data through host port".
+
                 <p>This is <em>possibly</em> to support the &quot;Instant Screen Read&quot;
                     feature of <a href="https://web.archive.org/web/19961110065943/http://www.maxtech.com/doublevision/index.html">
                         DOUBLEVISION</a> v1.x by Maxim Computer Technologies. This looks to be
                     a kind of remote control package - like TeamViewer but for terminals.
-                </p>
+                </p>-->
                 <p>If send-data is enabled (<tt>set terminal send-data on</tt>), every character
                     on the screen is transmitted to the host. If send-data is off, it sends
                     space characters instead. Attributes are not sent.
@@ -8802,8 +8804,8 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510"/>
                 <p>Related to multiple-session support</p>
             </section>
-            <section role="parameter" id="decmc-10" title="Print Composed Main Display"
-                     not-implemented="true" todo="true">
+            <section role="parameter" id="decmc-10" groups="isvt420 isvt330"
+                     title="Print Composed Main Display">
                 <ctlseq><param-single/> = 10</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-i:Ps-=-1-0.1EC5"/>
                 <ref src="vt340:198"/>
@@ -8811,16 +8813,25 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:343"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510"/>
+                <p>
+                    Prints the visible screen regardless of which page the
+                    cursor is on. Not affected by printer extent mode
+                    (<a href="#decpex">DECPEX</a>).
+                </p>
             </section>
             <section role="parameter" id="decmc-11" title="Print All Pages"
-                     not-implemented="true" todo="true">
+                     groups="isvt420 isvt330">
                 <ctlseq><param-single/> = 11</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Ps-i:Ps-=-1-1.1EC6"/>
                 <ref src="vt340:198"/>
                 <ref src="vt420:235"/>
                 <ref src="vt510:MC.html"/>
                 <ref src="vt52x:344"/>
+                <ref src="070:709"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510"/>
+                <p>
+                    Prints all pages. Affected by <a href="#decpex">DECPEX</a>.
+                </p>
             </section>
             <section role="parameter" id="decmc-18"
                      title="Assign Printer to Active Host Session"
