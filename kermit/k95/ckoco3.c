@@ -18281,12 +18281,17 @@ vtcsi(void)
                             break;
 
 						color_data = malloc(sizeof(cell_video_attr_t) * w * h);
-                        if ( !color_data ) /* sizeof(viocell.video_attr) */
+                        if ( !color_data ) { /* sizeof(viocell.video_attr) */
+                            if ( data ) free(data);
                             break;
+                        }
 
 						attr_data = malloc(sizeof(USHORT) * w * h);
-                        if ( !attr_data ) /* sizeof(videoline.vt_char_attrs) */
+                        if ( !attr_data ) {/* sizeof(videoline.vt_char_attrs) */
+                            if ( data ) free(data);
+                            if (color_data) free(color_data);
                             break;
+                        }
 
 						/* Read data from source page */
                         for ( y=0; y<h; y++ ) {
@@ -18308,6 +18313,8 @@ vtcsi(void)
                             }
                         }
                         free(data);
+                        free(color_data);
+                        free(attr_data);
                         VscrnIsDirty(VTERM);
                     }
                     break;
