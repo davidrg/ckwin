@@ -1511,6 +1511,7 @@ _PROTOTYP( USHORT ShowBuf, ( USHORT, USHORT ) );
 _PROTOTYP( USHORT Set132Cols, ( int ) );
 _PROTOTYP( USHORT Set80Cols, ( int ) );
 _PROTOTYP( USHORT SetCols, ( int ) );
+_PROTOTYP( ULONG VscrnSetBufferSize, ( BYTE, ULONG, int) );
 _PROTOTYP( APIRET VscrnInit, ( BYTE ) ) ;
 _PROTOTYP( USHORT VscrnScrollLf, ( BYTE, USHORT, USHORT, USHORT, USHORT, USHORT, viocell ) );
 _PROTOTYP( USHORT VscrnScrollRt, ( BYTE, USHORT, USHORT, USHORT, USHORT, USHORT, viocell ) );

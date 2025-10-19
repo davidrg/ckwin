@@ -1419,6 +1419,7 @@ int tt_cursorena_usr = 1;               /* Users Terminal cursor enabled */
 int tt_cursor_blink = 1;                /* Terminal Cursor Blink */
 int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
+int tt_pages[VNUM] = {1,1,1,1};         /* Number of terminal pages */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
 int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
 int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */

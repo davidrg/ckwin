@@ -747,8 +747,8 @@ void
 clearscrollback( BYTE vmode ) {
     ULONG bufsize = VscrnGetPageBufferSize(vmode, FALSE, 0) ;
 
-    VscrnSetBufferSize( vmode, 256 ) ;
-    VscrnSetBufferSize( vmode, bufsize ) ;
+    VscrnSetBufferSize( vmode, 256, vscrn[vmode].page_count ) ;
+    VscrnSetBufferSize( vmode, bufsize, vscrn[vmode].page_count ) ;
     scrollstatus[vmode] = FALSE ;
     scrollflag[vmode] = FALSE ;
     cursoron[vmode] = FALSE ;

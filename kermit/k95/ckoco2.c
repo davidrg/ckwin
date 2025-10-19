@@ -68,16 +68,15 @@ extern int OSVer;
 #include "ckocon.h"                     /* defs common to console routines */
 #include "ckokey.h"
 
-vscrn_t vscrn[VNUM]/*CMD*/=  {{0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
-                   /*VTERM*/  {0,10,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,1},
-                   /*VCS*/    {0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
-                   /*VSTATUS*/{0,1 ,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0}};
-/*                             ^ ^  ^ Cursor  ^  ^  ^  ^  H  ---- Bookmarks --------------  ^ ^ ^ ^
-                               | |  |  X Y P  |  |  |  Width                                | | | |
-                               | |  Pages     |  |  markbot                           Hscroll | | |
+vscrn_t vscrn[VNUM]/*CMD*/=  {{0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
+                   /*VTERM*/  {0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,1},
+                   /*VCS*/    {0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0},
+                   /*VSTATUS*/{0,1,0,{0,0,0},0,-1,-1,-1,-1,{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},0,0,1,0}};
+/*                             ^ ^ ^ Cursor  ^  ^  ^  ^  H  ---- Bookmarks --------------  ^ ^ ^ ^
+                               | | |  X Y P  |  |  |  Width                                | | | |
+                               | | Pages     |  |  markbot                           Hscroll | | |
                                | Page count   |  marktop                         Display Height | |
                                View page      Popup                          Page Cursor Coupling Allow alternate buffer
- VTERM gets 10 pages as TT_K95 has 9 normal pages, plus one for the alternate screen
 */
 extern int tt_update, tt_updmode, tt_rows[], tt_cols[], tt_font, tt_roll[],
            tt_cursor;
@@ -3201,13 +3200,15 @@ static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
  *      MAXTERMROW is the most K95 will ever render on screen.
  */
 ULONG
-VscrnSetBufferSize( BYTE vmode, ULONG newsize )
+VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
 {
     /* Old sizes for page 0 only */
     static ULONG oldsize[VNUM]={0,0,0,0} ;
+    static int   old_page_count[VNUM] = {1,1,1,1};
     int i, pagenum, total_lines = 0 ;
     videoline * line ;
     ULONG rc = FALSE ;  /* Determines whether clearscreen needs to be called */
+    bool reset_pages = FALSE;
 
     /* Don't see why VscrnSetBufferSize should act on the status line rather
        than terminal if the host happens to put the cursor there.
@@ -3249,10 +3250,11 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
     /* Wait for exclusive access to the screen */
     RequestVscrnMutex( vmode, SEM_INDEFINITE_WAIT ) ;
 
-    if ( newsize < oldsize[vmode] ) { /* erase entire buffer and start again. */
+    if ( newsize < oldsize[vmode] || new_page_count != old_page_count[vmode]) {
+         /* erase entire buffer and start again. */
         debug(F100, "SetBufferSize discarding old buffer", "", 0);
         if (vscrn[vmode].pages != NULL) {
-		    for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
+		    for (pagenum = 0; pagenum < old_page_count[vmode]; pagenum++ ) {
 			    free(vscrn[vmode].pages[pagenum].lines);
 			    vscrn[vmode].pages[pagenum].linecount = 0 ;
 			    vscrn[vmode].pages[pagenum].lines = 0 ;
@@ -3284,6 +3286,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
 
     if (vscrn[vmode].pages == NULL) {
         debug(F111, "SetBufferSize allocating space for", "page_count", vscrn[vmode].page_count);
+        vscrn[vmode].page_count = new_page_count;
         vscrn[vmode].pages = (vscrn_page_t*)malloc(
             sizeof(vscrn_page_t) * vscrn[vmode].page_count);
         memset(vscrn[vmode].pages, 0,
@@ -3374,14 +3377,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
 		for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
 			int end_line = i + vscrn[vmode].pages[pagenum].linecount;
             int j, mem_offset;
-            debug(F111, "VscrnSetBufferSize allocating cell memory to lines", "pagenum", pagenum);
-            debug(F111, "VscrnSetBufferSize allocating cell memory to lines", "end_line", end_line);
         	for (j = 0 ; j < vscrn[vmode].pages[pagenum].linecount ; j++ ) {
                 i++;
                 mem_offset = i * MAXTERMCOL;
 
-                debug(F111, "VscrnSetBufferSize allocating cell memory to lines", "i", i);
-                debug(F111, "VscrnSetBufferSize allocating cell memory to lines", "mem_offet", mem_offset);
             	vscrn[vmode].pages[pagenum].lines[j].width = 0 ;
             	vscrn[vmode].pages[pagenum].lines[j].cells = cellmem[vmode] + mem_offset ;
             	vscrn[vmode].pages[pagenum].lines[j].vt_char_attrs = attrmem[vmode] + mem_offset ;
@@ -3534,6 +3533,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize )
     debug(F101,"SetBufferSize cursor.y","",vscrn[vmode].cursor.y);
 
     oldsize[vmode] = newsize ;
+    old_page_count[vmode] = vscrn[vmode].page_count;
     return rc ;
 }
 
@@ -5479,7 +5479,7 @@ shovscrn(void)
 APIRET
 VscrnInit( BYTE vmode )
 {
-   extern int tt_szchng[], tt_scrsize[] ;
+   extern int tt_szchng[], tt_scrsize[], tt_pages[] ;
    extern int cmd_rows, cmd_cols ;
    extern int updmode, tt_updmode, SysInited ;
    extern ascreen commandscreen, vt100screen ;
@@ -5568,7 +5568,7 @@ VscrnInit( BYTE vmode )
    VscrnSetHeight( vmode, tt_rows[vmode]+(tt_status[vmode]?1:0) );
 
     /* Initialize paging info */
-    clrscr = VscrnSetBufferSize( vmode, tt_scrsize[vmode] ) ;
+    clrscr = VscrnSetBufferSize( vmode, tt_scrsize[vmode], tt_pages[vmode] ) ;
 
     if ( vmode == VTERM ) {
         int p;

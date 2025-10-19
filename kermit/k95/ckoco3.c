@@ -553,7 +553,8 @@ extern int send_c1_usr ;                /* User default for send_c1 */
  * same time. */
 int saved_view_page = -1;
 int saved_cursor_page = -1;
-int decspma_max_page = -1;
+int decspma_max_page = -1;  /* How many pages does the host want (DECSPMA) */
+int user_pages = -1; /* How many pages does the user want (SET TERM PAGE COUNT) */
 
 /*
   VT220 and higher Pn's for terminal ID string are (* = Not supported):
@@ -5587,6 +5588,31 @@ set_alternate_buffer_enabled(BYTE vmode, BOOL enabled) {
     vscrn[vmode].allow_alt_buf = enabled;
 }
 
+int ttype_pages() {
+    int result;
+    switch(tt_type) {
+    case TT_VT330:
+    case TT_VT340:
+        result = 6;
+        break;
+    case TT_VT520:
+    case TT_VT420:
+    case TT_VT320: /* TODO: REMOVE WHEN VT420 TERM TYPE ADDED */
+        result = 8;
+        break;
+    case TT_VT525:
+        result = 9;
+        break;
+    case TT_K95:
+        result = 10; /* +1 for the xterm alternate screen */
+        break;
+    default:
+        result = 1;
+        break;
+    }
+    return result;
+}
+
 /*---------------------------------------------------------------------------*/
 /* term_max_page                                            | Page: n/a      */
 /*---------------------------------------------------------------------------*/
@@ -5595,7 +5621,12 @@ set_alternate_buffer_enabled(BYTE vmode, BOOL enabled) {
  * VT420/510/520 has 8 (pages 0-7)
  * VT525 and K95 have 9 (pages 0-8) */
 int term_max_page(BYTE vmode) {
+    int max_allowed = vscrn[vmode].page_count;
     int result = vscrn[vmode].page_count;
+
+    if (user_pages > 0 && user_pages < max_allowed) {
+        max_allowed = user_pages;
+    }
 
     switch(tt_type) {
     case TT_VT330:
@@ -5619,10 +5650,10 @@ int term_max_page(BYTE vmode) {
     if (decspma_max_page >= 0 && decspma_max_page < result)
         result = decspma_max_page;
 
-    if (result <= vscrn[vmode].page_count)
+    if (result < max_allowed)
         return result;
 
-    return vscrn[vmode].page_count;
+    return max_allowed - 1;
 }
 
 
@@ -16978,6 +17009,16 @@ settermtype( int x, int prompts )
         colorreset = TRUE;
 
     updanswerbk() ;
+
+    /* only allocate as many pages as required */
+    {
+        extern int tt_pages[];
+
+        tt_pages[VTERM] = ttype_pages();
+        if (user_pages > 0 && user_pages < tt_pages[VTERM]) {
+            tt_pages[VTERM] = user_pages;
+        }
+    }
 
     VscrnInit(VTERM);
     initvik = TRUE;     /* Tell doreset() to initialize the vik table */
