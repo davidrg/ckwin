@@ -5588,23 +5588,26 @@ set_alternate_buffer_enabled(BYTE vmode, BOOL enabled) {
     vscrn[vmode].allow_alt_buf = enabled;
 }
 
+/*---------------------------------------------------------------------------*/
+/* ttype_pages                                              | Page: n/a      */
+/*---------------------------------------------------------------------------*/
+/* Maximum number of pages each terminal gets - this is used when allocating
+ * buffers to determine how many pages to allocate */
 int ttype_pages() {
     int result;
     switch(tt_type) {
+    case TT_VT320: /* TODO: REMOVE WHEN VT420 TERM TYPE ADDED */
     case TT_VT330:
     case TT_VT340:
+    case TT_VT420:
         result = 6;
         break;
     case TT_VT520:
-    case TT_VT420:
-    case TT_VT320: /* TODO: REMOVE WHEN VT420 TERM TYPE ADDED */
         result = 8;
         break;
     case TT_VT525:
-        result = 9;
-        break;
     case TT_K95:
-        result = 10; /* +1 for the xterm alternate screen */
+        result = 9;
         break;
     default:
         result = 1;
@@ -17017,6 +17020,11 @@ settermtype( int x, int prompts )
         tt_pages[VTERM] = ttype_pages();
         if (user_pages > 0 && user_pages < tt_pages[VTERM]) {
             tt_pages[VTERM] = user_pages;
+        }
+
+        /* Add on one page for the alternate screen */
+        if (ISK95(tt_type)) {
+            tt_pages[VTERM] += 1;
         }
     }
 
