@@ -508,6 +508,7 @@ bool     saverelcursor[SAVED_CURSORS]={FALSE,FALSE,FALSE,FALSE,FALSE},
 int      savedwrap[SAVED_CURSORS]={FALSE,FALSE,FALSE,FALSE,FALSE} ;
 int      savedrow[SAVED_CURSORS] = {0,0,0,0,0};
 int      savedcol[SAVED_CURSORS] = {0,0,0,0,0};
+int      savedpage[SAVED_CURSORS] = {0,0,0,0,0};
 extern int      tt_rkeys_saved[], tt_rkeys[];
 
 bool     deccolm = FALSE;               /* 80/132-column mode */
@@ -7934,6 +7935,7 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
     saved[slot] = TRUE;                        /* Remember they are saved */
     savedrow[slot] = wherey[vmode];            /* Current row (absolute) */
     savedcol[slot] = wherex[vmode];            /* Current column (absolute) */
+    savedpage[slot] = vscrn[vmode].cursor.p;   /* Current page */
     if (x) {
         savedattribute[slot] = attribute;      /* Current PC video attributes */
         saveddefaultattribute[slot] = defaultattribute ;
@@ -7978,6 +7980,13 @@ restorecurpos(int vmode, int x) {
     }
     else {
         lgotoxy(vmode, savedcol[slot], savedrow[slot]);/* Goto saved position */
+
+        /* The Xterm alternate screen doesn't participate in the multi-page stuff,
+         * So saving and restoring the cursor shouldn't result in switching pages */
+        if (slot != XT_ALTBUF_CURSOR_SLOT) {
+            switch_to_page(vmode, savedpage[slot], vscrn[vmode].page_cursor_coupling);
+        }
+
         if (x) {
             attribute = savedattribute[slot];  /* Restore saved attributes */
             defaultattribute=saveddefaultattribute[slot];

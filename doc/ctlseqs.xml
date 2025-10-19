@@ -3052,7 +3052,8 @@ DECTSR		462
             <ref src="vt510:DECSC.html"/>
             <ref src="vt52x:274"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 linux tt putty dtterm wt"/>
-            <p>Saves the cursor position and attributes.</p>
+            <p>Saves the cursor position and attributes, including the current
+                page number.</p>
 
             <p badges="k95" groups="isxterm">
                 The terminal has two slots for storing the cursor position and
@@ -3080,7 +3081,9 @@ DECTSR		462
             <ref src="vt510:DECRC.html"/>
             <ref src="vt52x:246"/>
             <termsupp first="vt100" series="vt" additional="vt132 vt220 vt330 vt340 vt420 vt510 tt linux putty dtterm wt"/>
-            <p>Restores the cursor position and attributes</p>
+            <p>Restores the cursor position and attributes, including the page
+                number
+            </p>
         </section>
         <section role="ctlseq" id="zcgr" ctlseq="ESC 9" mnemonic="zCGR"
                  title="Change Graphic Rendition to Qualified Area" badges="aaa">
