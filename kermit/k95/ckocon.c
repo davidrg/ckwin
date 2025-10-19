@@ -2382,7 +2382,9 @@ checkscreenmode() {
             VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
         }
 
-        vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+        if (vscrn[VTERM].pages != NULL) {
+            vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+        }
     }
 
 #ifndef KUI
