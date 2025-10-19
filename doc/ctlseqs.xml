@@ -15011,15 +15011,28 @@ DCS $ q 3 , } ST</pre>
                 this will only be available to VT420 and higher emulations.
             </p>
             <p>
+                Copies both characters and their attributes in a rectangle from
+                one page to another. Line attributes are not copied - those of
+                the affected lines on the destination page take effect. Source
+                and Destination rectangles can overlap.
+            </p>
+            <p>
                 <tt><param-single symbol="Pts"/> ;
                     <param-single symbol="Pls"/> ; <param-single symbol="Pbs"/> ;
-                <param-single symbol="Prs"/></tt> is the source rectangle,
+                <param-single symbol="Prs"/></tt> is the source rectangle (top,
+                left,bottom,right) and
                 <param-single symbol="Pps"/> is the source page number,
                 <tt><param-single symbol="Ptd"/> ;
-                    <param-single symbol="Pld"/></tt> is the destination,
-                and <param-single symbol="Ppd"/> is the destination page.
+                    <param-single symbol="Pld"/></tt> is the destination
+                rectangle (top, left) and <param-single symbol="Ppd"/> is the
+                destination page.
             </p>
-            <p>K95 doesn't support pages, so the page numbers are ignored.
+            <p>
+                If the source or destination page is less than 1, then the first
+                page is used as. If the source or destination page is past the
+                last page, then the last page is used. If the dimensions of the
+                rectangle exceed those of the page, the rectangle is clipped to
+                fit on the page.
             </p>
         </section>
 

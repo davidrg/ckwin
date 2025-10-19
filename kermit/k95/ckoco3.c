@@ -18175,7 +18175,10 @@ vtcsi(void)
                     if ( ISVT420( tt_type_mode) )
                     {
                         USHORT * data = NULL;
+						cell_video_attr_t *color_data = NULL;
+						USHORT * attr_data = NULL;
                         int w, h, x, y;
+						int src_page, dest_page, max_page;
 
                         /* Area to be copied:
                          * pn[1] - top-line border      default=1
@@ -18209,24 +18212,63 @@ vtcsi(void)
                         if ( pn[3] < pn[1] || pn[4] < pn[2] )
                             break;
 
-                        /* we ignore pages, since we only support one */
+						src_page = pn[5] - 1;
+						dest_page = pn[8] - 1;
+						max_page = term_max_page(VTERM);
+						if (src_page < 0) src_page = 0;
+						if (src_page > max_page) src_page = max_page;
+						if (dest_page < 0) dest_page = 0;
+						if (dest_page > max_page) dest_page = max_page;
+
+						if (relcursor) { /* DECOM enabled? */
+                            int src_margintop, src_marginleft, dest_margintop, dest_marginleft;
+                            src_margintop = vscrn_page_margin_top(VTERM, src_page);
+                            src_marginleft = vscrn_page_margin_left(VTERM, src_page);
+                            dest_margintop = vscrn_page_margin_top(VTERM, dest_page);
+                            dest_marginleft = vscrn_page_margin_left(VTERM, dest_page);
+
+							pn[1] += src_margintop - 1;  /* Top border */
+							pn[2] += src_marginleft - 1; /* Left border */
+							pn[3] += src_margintop - 1;  /* Bottom border */
+							pn[4] += src_marginleft - 1; /* Right border */
+							/* pn[5] - source page */
+							pn[6] += dest_margintop - 1;  /* Top border */
+							pn[7] += dest_marginleft - 1; /* left border */
+                            /* pn[7] - dest page */
+						}
 
                         w = pn[4] - pn[2] + 1;
                         h = pn[3] - pn[1] + 1;
+
                         data = malloc(sizeof(USHORT) * w * h);
-                        if ( !data )
+                        if ( !data )	/* sizeof(viocell.c) */
                             break;
+
+						color_data = malloc(sizeof(cell_video_attr_t) * w * h);
+                        if ( !color_data ) /* sizeof(viocell.video_attr) */
+                            break;
+
+						attr_data = malloc(sizeof(USHORT) * w * h);
+                        if ( !attr_data ) /* sizeof(videoline.vt_char_attrs) */
+                            break;
+
+						/* Read data from source page */
                         for ( y=0; y<h; y++ ) {
-                            videoline * line = VscrnGetLineFromTop(VTERM, pn[1]+y-1, FALSE);
+                            videoline * line = VscrnGetPageLineFromTop(VTERM, pn[1]+y-1, src_page);
                             for ( x=0; x<w; x++ ) {
                                 data[y*w + x] = line->cells[pn[2]+x-1].c;
+								color_data[y*w + x] = line->cells[pn[2]+x-1].video_attr;
+								attr_data[y*w + x] = line->vt_char_attrs[pn[2]+x-1];
                             }
                         }
 
+						/* Write out to destination page */
                         for ( y=0; y<h; y++ ) {
-                            videoline * line = VscrnGetLineFromTop(VTERM, pn[6]+y-1, FALSE);
+                            videoline * line = VscrnGetPageLineFromTop(VTERM, pn[6]+y-1, dest_page);
                             for ( x=0; x<w && (pn[7]+x <= VscrnGetWidth(VTERM)); x++ ) {
                                 line->cells[pn[7]+x-1].c = data[y*w + x];
+								line->cells[pn[7]+x-1].video_attr = color_data[y*w + x];
+								line->vt_char_attrs[pn[7]+x-1] = attr_data[y*w + x];
                             }
                         }
                         free(data);

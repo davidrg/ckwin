@@ -12,13 +12,16 @@
 #
 # When run in other terminal emulators the things that are most likely to not
 # work include:
+#  * Multiple pages - almost never supported. Lack of support will result one
+#    of the first few bullet points being overwritten, and possibly a bunch
+#    of blank lines before the VT420 features bullet point.
 #  * Host programmable status line - rarely supported feature
 #  * 24-bit and indexed colors (this script uses the correct ':' syntax, while
 #    while some terminals only support the older and incorrect ';' syntax. K95
 #    does support the older incorrect syntax for compatibility with other
 #    terminals)
 #  * Blinking text attribute - often not supported
-#  * Double hight lines - often not supported
+#  * Double height lines - often not supported
 #
 
 # Top Banner
@@ -29,16 +32,11 @@ BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
 #            in releases prior to beta 8.
 F_TRUE_COLOR=1     # New in beta 8
 F_STRIKETHROUGH=1  # New in beta 8
-F_RULED_LINES=0    # -- not supported --
-F_EXTENDED_UL=0    # -- not supported --
-F_SOFT_FONT=0      # -- not supported --
-F_VT420_FEATURES=1 # Rectangular area operations mostly present in 2.1 (2002)
-                   # Text macros new in beta 8
-
-# If F_VT420_FEATURES=1, then:
-# Eventually:  "rectangular area operations, page memory, L/R margins"
-VT420_FEATURES='rectangular area operations'
-#              "|------Max Length----------------------------------------|"
+F_RULED_LINES=0    # -- not supported -- | When turning one of these on, check
+F_EXTENDED_UL=0    # -- not supported -- | a gap still appears above the VT420
+F_SOFT_FONT=0      # -- not supported -- | line in non-paged terminals
+F_VT420_FEATURES=1 # Rectangular area operations mostly present but buggy in
+                   # version 2.1 (2002), Text macros and paging new in beta 8
 
 # Eventually: "PCTERM, VTNT, win32 and emacs keyboard modes"
 KB_MODES="PCTERM and VTNT direct keyboard modes"
@@ -51,6 +49,12 @@ printf '\x1b[2J'
 
 # Normal attributes
 printf '\x1b[0m'
+
+# DECOM off
+printf '\x1b[?6l'
+
+# Clear margins
+printf '\x1b[r'
 
 # Go to 1,1
 printf '\x1b[1;1f'
@@ -73,7 +77,7 @@ fi
 printf '\n'
 
 # Line 4 - Standard Attributes
-printf ' * \x1b[3mOptional\x1b[0m true attribute support:'
+printf ' \u25CF \x1b[3mOptional\x1b[0m true attribute support:'
 printf ' \x1b[2mDim\x1b[0m'
 printf ' \x1b[1mBold\x1b[0m'
 printf ' \x1b[3mItalic\x1b[0m'
@@ -86,7 +90,7 @@ printf '\n'
 
 # Line 5 - Extended Underline Attributes
 if [ "$F_EXTENDED_UL" = "1" ]; then
-	printf ' * Extended underline styles:'
+	printf ' \u25CF Extended underline styles:'
 	printf ' \x1b[4:2mDouble\x1b[0m'
 	printf ' \x1b[4:4mDotted\x1b[0m'
 	printf ' \x1b[4:5mDashed\x1b[0m'
@@ -96,11 +100,11 @@ if [ "$F_EXTENDED_UL" = "1" ]; then
 	SPACE="$(($SPACE-1))"
 fi
 
-# Line 4 or 5: 24-bit colour
+# Line 5 or 6: 24-bit colour
 if [ "$F_TRUE_COLOR" = "1" ]; then
 	# K95 supports both the correct format (below), and the old incorrect
 	# semicolon-delimited color specifier used by some other terminals.
-	printf ' * Full '
+	printf ' \u25CF Full '
 	printf '\x1b[38:2:63:158:82m2'
 	printf '\x1b[38:2:175:201:147m4'
 	printf '\x1b[38:2:242:0:72m-'
@@ -126,7 +130,7 @@ if [ "$F_RULED_LINES" = "1" ]; then
 		LINE=7
 	fi
 
-	printf ' * DECterm Ruled Lines\n'
+	printf ' \u25CF DECterm Ruled Lines\n'
 
 	# This should put a box around the "Ruled Lines" text.
 	printf '\x1b[15;12;10;%d;1,r' $LINE
@@ -135,7 +139,7 @@ fi
 
 if [ "$F_SOFT_FONT" = "1" ]; then
 
-	printf ' * VT220 '
+	printf ' \u25CF VT220 '
 
 	# Download the Jetpac font by Paul Flo Williams
 	# https://vt100.net/dec/vt320/fonts (no license stated)
@@ -209,20 +213,50 @@ if [ "$F_SOFT_FONT" = "1" ]; then
 	SPACE="$(($SPACE-1))"
 fi
 
-printf ' * VT320 host-programmable status line (see the bottom of the terminal)\n'
+printf ' \u25CF VT320 host-programmable status line (see the bottom of the terminal)\n'
 
 if [ "$F_VT420_FEATURES" = "1" ]; then
 	# Define a text macro with ID 0. If it works, "text macros" should
 	# appear in the list of features!
 	printf '\x1bP0;0;0!ztext macros, \x1b\\'
 
-	# Output the VT420 features list
-	printf ' * VT420 \x1b[0*z%s\n' "$VT420_FEATURES"
+  # Switch to page 2, switch off DECOM, clear margins and go to line 5, column 5
+  printf '\x1b[U\x1b[?6l\x1b[r\x1b[6;5H'
+
+  # Output some text that we'll copy to page 1 later
+  printf ' , page memory: if your terminal had it, you would not see this line'
+  # If the terminal doesn't support paging, the above line will be dumped over
+  # the top of the '24-bit colour' line (second bullet point)
+
+  # Set a top margin. Margins are per-page, so the only thing that this should
+  # affect is the coordinates we have to supply to DECCRA. If the terminal
+  # incorrectly applies the margins to all pages then a few blank lines will
+  # appear before the VT420 bullet point, and for some reason a few things from
+  # above the margin may disappear
+  printf '\x1b[?6h\x1b[4r'
+
+  # TODO: Set a left margin when we support them, and update the DECCRA call
+
+  # Switch back to page 1, line 7
+  printf '\x1b[V\x1b[7H'
+
+	# Output the VT420 features list, leaving a gap we'll fill with DECCRA
+	printf ' \u25CF VT420 \x1b[0*zrectangular area operations,            \n'
+
+  # Copy the text we put on page 2 over to page 1 using DECCRA. Coordinates on
+  # the source page are affected by the margins set on that page.
+  printf '\x1b[3;6;3;18;2;7;50;1$v'
+
+  # The feature list should look something like this if the terminal supports
+  # all required features:
+#        1         2         3         4         5         6         7         8
+#2345678901234567890123456789012345678901234567890123456789012345678901234567890
+#* VT420 text macros, rectangular area operations, page memory
+
 	SPACE="$(($SPACE-1))"
 fi
 
-
-printf ' * Dozens of other emulations:\tADDS25\tADM3A\tADM5\tAIXTERM\tANNARBOR'
+printf ' \u25CF Dozens of other emulations:\tADDS25\tADM3A\tADM5\tAIXTERM\tANNARBOR'
 printf '\n\tANSI-BBS\tAT386\tBA80\tBETERM\tDG200\tDG210\tDG217\tHEATH19'
 printf '\n\tHFT\tHP2621A\tHPTERM\tHZ1500\tIBM3151\tLINUX\tQANSI\tQNX\tSCOANSI'
 printf '\n\tSNI-97801\tSUN\tTTY\tTVI910+\tTVI925\tTVI950\tVC404\tVIP7809'
@@ -230,12 +264,12 @@ printf '\n\tVT52\tVT100\tVT102\tVT220\tVT320\tVTNT\tWY30\tWY50\tWY60'
 printf '\n\tWY160\tWY360\t\t\x1b[3m(completeness varies, see manual for details)\x1b[0m'
 printf '\n'
 
-printf ' * Full keyboard remapping, plus %s\n' "$KB_MODES"
-printf ' * Connect via SSH, Serial, Modem, Named Pipe, Telnet, Rlogin, PTY, RFC2271...\n'
-printf ' * Fully scriptable with Kermit script and REXX\n'
-printf ' * In-band file transfer with complete Kermit protocol implementation '
+printf ' \u25CF Full keyboard remapping, plus %s\n' "$KB_MODES"
+printf ' \u25CF Connect via SSH, Serial, Modem, Named Pipe, Telnet, Rlogin, PTY, RFC2271...\n'
+printf ' \u25CF Fully scriptable with Kermit script and REXX\n'
+printf ' \u25CF In-band file transfer with complete Kermit protocol implementation '
 printf 'including\n   server mode, plus X/Y/Z-MODEM\n'
-printf ' * Available for 32bit and 64bit Microsoft Windows on all CPU '
+printf ' \u25CF Available for 32bit and 64bit Microsoft Windows on all CPU '
 printf 'architectures,\n   with reduced feature builds for vintage Windows '
 printf 'and 32bit IBM OS/2 Systems\n'
 
@@ -296,7 +330,14 @@ if [ "$F_SOFT_FONT" = "1" ]; then
 	printf '\x1bP0;0;2{ @\x1b\\'
 fi
 
+# DECOM off
+printf '\x1b[?6l'
+
+# Clear margins
+printf '\x1b[r'
+
+# Go to the bottom line, as clearing the margins will have put the cursor at 1,1
+# which is a double-height line.
+printf '\x1b[24H'
+
 # Done!
-
-
-

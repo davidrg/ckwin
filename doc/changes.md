@@ -366,6 +366,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed an issue in the dialer which could cause it to crash if the path was
    too long
  - The x86-64 version of Kermit 95 now works on Windows XP x64 Edition
+ - Fixed DECCRA not copying attributes or obeying DECOM
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
