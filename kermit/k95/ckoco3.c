@@ -7973,7 +7973,7 @@ SNI_chcode( int state ) {
 }
 
 void
-savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
+savecurpos(int vmode, int x) {          /* x: 0 = cursor X/Y only, 1 = all */
     int i ;
     int slot = vmode;
 
@@ -7988,8 +7988,9 @@ savecurpos(int vmode, int x) {          /* x: 0 = cursor only, 1 = all */
     saved[slot] = TRUE;                        /* Remember they are saved */
     savedrow[slot] = wherey[vmode];            /* Current row (absolute) */
     savedcol[slot] = wherex[vmode];            /* Current column (absolute) */
-    savedpage[slot] = vscrn[vmode].cursor.p;   /* Current page */
+
     if (x) {
+        savedpage[slot] = vscrn[vmode].cursor.p;   /* Current page */
         savedattribute[slot] = attribute;      /* Current PC video attributes */
         saveddefaultattribute[slot] = defaultattribute ;
         savedunderlineattribute[slot] = underlineattribute;
@@ -8034,13 +8035,14 @@ restorecurpos(int vmode, int x) {
     else {
         lgotoxy(vmode, savedcol[slot], savedrow[slot]);/* Goto saved position */
 
-        /* The Xterm alternate screen doesn't participate in the multi-page stuff,
-         * So saving and restoring the cursor shouldn't result in switching pages */
-        if (slot != XT_ALTBUF_CURSOR_SLOT) {
-            switch_to_page(vmode, savedpage[slot], vscrn[vmode].page_cursor_coupling);
-        }
-
         if (x) {
+            /* The Xterm alternate screen doesn't participate in the multi-page
+             * stuff, so saving and restoring the cursor shouldn't result in
+             * switching pages */
+            if (slot != XT_ALTBUF_CURSOR_SLOT) {
+                switch_to_page(vmode, savedpage[slot], vscrn[vmode].page_cursor_coupling);
+            }
+
             attribute = savedattribute[slot];  /* Restore saved attributes */
             defaultattribute=saveddefaultattribute[slot];
             underlineattribute=savedunderlineattribute[slot];

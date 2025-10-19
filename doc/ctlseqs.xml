@@ -14250,6 +14250,10 @@ DCS $ q 3 , } ST</pre>
                      code path will be taken first resulting in this being
                      skipped -->
             <!-- TODO: xterm: available only when DECLRMM is disabled (SCOSC, also ANSI.SYS) -->
+            <p>
+                Saves the cursor X,Y position only. Does not save attributes or
+                the current page.
+            </p>
         </section>
         <section role="ctlseq" id="sunreset" ctlseq="CSI s"
                  mnemonic="SUNRESET" title="Reset terminal emulator" badges="sun">
@@ -14742,6 +14746,10 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt52x:371"/>
             <ref src="wy370:35"/>
             <termsupp first="sco" series="sco" additional="tt xterm linux putty wt"/>
+            <p>
+                Restores the cursor X,Y position only. Does not restore
+                attributes or the current page.
+            </p>
         </section>
         <section role="ctlseq" id="decshts" not-implemented="true" todo="true"
                  mnemonic="DECSHTS" title="Set Horizontal Tab Stops">
@@ -15729,6 +15737,10 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI <param-single/> z</ctlseq>
             <termsupp series="sco" first="sco"/>
             <p>Switch to screen <param-single/></p>
+            <!-- TODO: This *could* be supported now that we have paging. Would
+                    need to reevaluate calls to VscrnIsDirty for SCO-only escape
+                    sequences.
+            -->
         </section>
 
         <section role="ctlseq" id="decvpfs" not-implemented="true" todo="true"
