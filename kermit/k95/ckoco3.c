@@ -20671,7 +20671,7 @@ vtcsi(void)
                                 "[%d;%d;%dR",
                                 pos->y+1,
                                 pos->x+1,
-                                1
+                                pos->p+1
                                 );
                     else
                         sprintf(tempstr,"[%d;%dR",
