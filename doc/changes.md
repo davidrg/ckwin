@@ -304,6 +304,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [PPA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppa) - Page Position Absolute
    - [PPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppr) - Page Position Relative
    - [PPB](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppb) - Page Position Backward
+   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Session Page Memory Allocation
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made

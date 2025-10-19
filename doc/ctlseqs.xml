@@ -4524,6 +4524,17 @@ DECTSR		462
                     DCS $ q 1 , } ST</pre>
                 <p>And the response might be something like: <tt><cc>DCS</cc> 1 $ r 1 ; 1 4 ; 4 , } <cc>ST</cc></tt></p>
             </section>
+            <section role="parameter" id="decrqss-decspma" mnemonic="DECSPMA"
+                     title="Session Page Memory Allocation" groups="isvt520">
+                <ctlseq><param-text/> = , x</ctlseq>
+                <ref src="vt52x:257"/>
+                <p>
+                    Reports the number of pages available
+                </p>
+                <pre><cc>DCS</cc> 3 $ q , x <cc>ST</cc></pre>
+                <p>And the response might be something like:
+                    <tt><cc>DCS</cc> 1 $ r 9 ; 0 ; 0 ; 0 , x <cc>ST</cc></tt></p>
+            </section>
             <section role="parameter" id="decrqss-decatc" mnemonic="DECATC"
                      title="Alternate Text Color" groups="isvt525">
                 <ctlseq><param-text/> = , }</ctlseq>
@@ -15513,11 +15524,21 @@ DCS $ q 3 , } ST</pre>
 
         </section>
         <section role="ctlseq" id="decspma" mnemonic="DECSPMA"
-                 title="Session Page Memory Allocation"
-                 not-implemented="true" todo="true">
+                 title="Session Page Memory Allocation" groups="isvt520">
             <ctlseq>CSI <param-single/> ; <param-single/> ; <param-single/> ; <param-single/> , x</ctlseq>
             <ref src="vt52x:295"/>
             <termsupp first="vt520" series="vt" additional=""/>
+            <p>
+                On the VT520 and VT525, this allows you to set the number of
+                pages available to each of its four sessions. As K95 does not
+                support multiple sessions, the first parameter sets the total
+                number of pages available to applications while subsequent
+                parameters are ignored.
+            </p>
+            <p>
+                You can query the state of DECSCL with with
+                <a href="#decrqss">DECRQSS</a>
+            </p>
         </section>
         <section role="ctlseq" groups="isvt420" id="decfra"
                  mnemonic="DECFRA" title="Fill rectangular area">
@@ -15646,7 +15667,7 @@ DCS $ q 3 , } ST</pre>
             </p>
             <p>
                 <param-single symbol="Pi"/> is the request ID,
-                <param-single symbol="Pg"/> is the page number (ignored),
+                <param-single symbol="Pg"/> is the page number,
                 and <tt><param-single symbol="Pt"/> ;
                 <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                 <param-single symbol="Pr"/></tt> is the rectangle to calculate

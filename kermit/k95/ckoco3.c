@@ -553,6 +553,7 @@ extern int send_c1_usr ;                /* User default for send_c1 */
  * same time. */
 int saved_view_page = -1;
 int saved_cursor_page = -1;
+int decspma_max_page = -1;
 
 /*
   VT220 and higher Pn's for terminal ID string are (* = Not supported):
@@ -5600,6 +5601,9 @@ int term_max_page(BYTE vmode) {
         break;
     }
 
+    if (decspma_max_page >= 0 && decspma_max_page < result)
+        result = decspma_max_page;
+
     if (result <= vscrn[vmode].page_count)
         return result;
 
@@ -8261,6 +8265,7 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
 	saved_view_page = -1;
     saved_cursor_page = -1;
 	tt_scroll = tt_scroll_usr;
+    decspma_max_page = -1;
 
     udkreset() ;                        /* Reset UDKs     */
     deccolm = FALSE;                    /* default column mode */
@@ -14170,6 +14175,15 @@ dodcs( void )
                     case ',': {
                         achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
                         switch ( achar ) {
+                        case 'x':     /*  DECSPMA */
+                            if (ISVT520(tt_type_mode)) {
+                                char buf[20];
+                                _snprintf(buf, sizeof(buf), "%d;0;0;0,x",
+                                    term_max_page(VTERM) + 1);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                         fmt, 1, buf);
+                            }
+                            break;
                         case '}': {    /*  DECATC  */
                             char buf[20];
 
@@ -23891,6 +23905,18 @@ vtcsi(void)
                     if ( k < 1 )
                         pn[1] = 8 ;
                     loadtod( pn[1], pn[2] ) ;
+                    break;
+                case 'x':     /* DECSPMA - Session Page Memory Allocation */
+                    if (ISVT520(tt_type_mode)) {
+                        /* We don't support multiple sessions, so this just
+                         * changes the maximum number of pages available to
+                         * applications. Not much validation of set values is
+                         * required here, as term_max_page() will do that for
+                         * us. */
+                        if (k >= 1 && pn[1] > 0) {
+                            decspma_max_page = pn[1] - 1; /* Session 1 */
+                        }
+                    }
                     break;
                 case '}': {    /* DECATC - Alternate Text Color */
                     if (ISVT525(tt_type_mode)) {
