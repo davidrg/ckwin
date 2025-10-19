@@ -11795,7 +11795,7 @@ DCS $ q 3 , } ST</pre>
                 <p>If the request was <tt><cc>CSI</cc> ? 6 n</tt>, transmits the cursor
                     position to the host. Response is:
                     <tt><cc>CSI</cc> x ; y ; p R</tt> where x and y are the cursor coordinates,
-                    and p is the page (always 1 in K95)
+                    and p is the page.
                 </p>
                 <!-- Pages 103-104, VT220 manual -->
                 <!-- TODO: XTERM responds with CSI ? x ; y R -->
@@ -13561,7 +13561,7 @@ DCS $ q 3 , } ST</pre>
                     <ctlseq><param-single/> = 8200</ctlseq>
                     <termsupp first="tt" series="tt" additional="tt"/>
                 </section>
-                <section role="parameter" id="decrst-9001" mnemonic=""
+                <section role="parameter" id="decrqm-9001" mnemonic=""
                          title="Win32 Input Mode"
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 9001</ctlseq>
@@ -17588,6 +17588,164 @@ DCS $ q 3 , } ST</pre>
                 of K95 only have 4 bits each for the foreground and background
                 colors, making them incapable of actually storing color indexes
                 above 16 or per-cell RGB values.
+            </p>
+        </section>
+    </section>
+    <section toc="true" role="text" id="paging" formats="html:document"
+             title="Paging">
+        <p>
+            Starting with version 3.0 beta 8 Kermit 95 includes full support for
+            both Paging as found on the VT330 and up, and XTerms Alternate
+            Screen mode.
+        </p>
+        <section role="text" id="vtpaging" title="VT Paging"
+            groups="isvt330 isvt420">
+            <p>
+                DEC terminals starting with the VT330 included support for
+                multiple pages which the cursor and display could be moved
+                between independently. When Kermit 95 is emulating one of these
+                terminals, or when it is set to its "self" personality (the K95
+                terminal type) it provides compatible paging support.
+            </p>
+            <p>
+                As Kermit 95 does not currently emulate any DEC terminals that
+                supported paging, paging features are <em>temporarily</em>
+                available via the VT320 emulation. When a VT420 emulation is
+                eventually added to Kermit 95, paging will no longer be
+                available on the VT320 emulation.
+            </p>
+            <p>
+                Terminals supporting scrollback (called <em>Review previous
+                lines</em> on the VT520) only supported either scrollback or
+                multiple pages, not both - Kermit 95 does not enforce this
+                restriction in its emulation. The first page always has
+                scrollback (unless you turn it off), while subsequent pages are
+                only the size of the window (the scrollbar and scrolling KVerbs
+                are disabled).
+            </p>
+
+            <p>
+                To move the cursor to another page, you can use one of the
+                following control sequences:
+            </p>
+            <ul>
+                <li><a href="#np">NP</a> - Move forward to another page and home the cursor</li>
+                <li><a href="#pp">PP</a> - Move backward to another page and home the cursor</li>
+                <li><a href="#ppa">PPA</a> - Move to a specific page</li>
+                <li><a href="#ppr">PPR</a> - Move forward to another page</li>
+                <li><a href="#ppr">PPB</a> - Move backward to another page</li>
+                <li><a href="#decrc">DECRC</a> - Moves the cursor to the page
+                    it was on when the cursor was last saved with
+                    <a href="#decsc">DECSC</a></li>
+            </ul>
+            <p>
+                In all cases trying to move beyond the first or last page will
+                put the cursor on the first or last page.
+            </p>
+
+            <p>
+                The page the cursor is currently on can be requested with an
+                <a href="#dsr-decxcpr">Extended Cursor Position Report</a>, and
+                you can find out which page is currently being displayed with
+                <em>Request Displayed Extent</em> (<a href="#decrqde">DECRQDE</a>)
+            </p>
+
+            <p>
+                If <em>Page Cursor Coupling</em> (<a href="#decpccm">PCCM</a>) is
+                enabled (the default), when the cursor moves to another page the
+                display will also move to that page. If you want to be able to
+                make changes to the content of a page without the user seeing,
+                you can turn PCCM off before moving the cursor. When you turn
+                PCCM back on, the display will automatically move to the page
+                with the cursor on.
+            </p>
+            <p>
+                You can also use <a href="#deccra">DECCRA</a> to copy characters
+                and attributes between pages allowing the screen to be quickly
+                updated with pre-prepared content, and
+                <a href="#decrqcra">DECRQCRA</a> can be used to compute a
+                checksum of the content in an area of a particular page.
+            </p>
+
+            <p>
+                When setting margins with <a href="#decstbm">DECSTBM</a>,
+                margins are set for the current page only - each page can have
+                its own set of margins. <a href="#decom">DECOM</a> is not set
+                per-page however.
+            </p>
+        </section>
+        <section role="text" id="altscreen" badges="k95"
+                 title="Xterm Alternate Screen">
+            <p>
+                XTerm has long provided a feature that is similar to a subset of
+                VT paging which many other terminal emulators also now support.
+                Kermit 95, when using the k95 terminal type, also supports this
+                feature. The main differences from VT paging are:
+            </p>
+            <ul>
+                <li>Only two pages - the normal and alternate screens</li>
+                <li>Page Cursor Coupling is always on - moving between screens
+                    moves both the cursor and the display</li>
+                <li>The current page is selected via one of a number of DEC Private
+                    Modes, such as <a href="#xt-1049">Mode 1049</a>.
+                </li>
+                <li>The VT page movement control sequences (NP, etc) are not
+                    supported</li>
+                <li><a href="#deccra">DECCRA</a> and
+                    <a href="#decrqcra">DECRQCRA</a> only act on the current
+                    page - you can not copy data between pages</li>
+                <li><a href="#decsc">DECSC</a> and <a href="#decrc">DECRC</a>
+                    do not save and restore the active page</li>
+                <li>When the cursor is saved on the alternate screen with
+                    DECSC, it does not overwrite any saved cursor on the normal
+                    screen
+                </li>
+            </ul>
+            <p>
+                At the time of writing few terminal emulators support both VT
+                paging and the Xterm alternate screen, and those that do tend to
+                implement the Xterm alternate screen feature specially.
+                Kermit 95 however just treats the Xterm alternate screen as an
+                extra page with some special rules: You can't get to/from the
+                Xterm alternate screen using DEC VT paging functions, and when
+                on the Xterm alternate screen DECCRA and DECRQCRA can only
+                access the current page while DECSC saves the cursor in a
+                different location.
+            </p>
+            <p>
+                As the Alternate Screen is mostly a subset of VT Paging,
+                you can get a similar effect on DEC terminals (or emulations)
+                that support that feature:
+            </p>
+            <table>
+                <tr>
+                    <th>XTerm Mode</th>
+                    <th>Set</th>
+                    <th>Reset</th>
+                </tr>
+                <tr>
+                    <td><a href="#xt-use-altbuf">1047</a></td>
+                    <td><a href="#np"><tt><cc>CSI</cc> U</tt></a></td>
+                    <td><tt><a href="#ed"><cc>CSI</cc> 2 J</a> <a href="#pp"><cc>CSI</cc> V</a></tt></td>
+                </tr>
+                <tr>
+                    <td><a href="#xt-1048">1048</a></td>
+                    <td><tt><a href="#decsc"><cc>ESC</cc> 7</a></tt></td>
+                    <td><tt><a href="#decrc"><cc>ESC</cc> 8</a></tt></td>
+                </tr>
+                <tr>
+                    <td><a href="#xt-1049">1049</a></td>
+                    <td><tt><a href="#decsc">ESC 7</a> <a href="#np"><cc>CSI</cc> U</a> <a href="#ed"><cc>CSI</cc> 2 J</a></tt></td>
+                    <td><a href="#pp"><cc>CSI</cc> V</a> <tt><a href="#decrc"><cc>ESC</cc> 8</a></tt></td>
+                </tr>
+            </table>
+
+            <p>
+                If you do not wish for applications to make use of the XTerm
+                Alternate Screen, you can try disabling it with the command
+                <tt>SET TERMINAL ALTERNATE-BUFFER DISABLED</tt> but note that
+                the host can also change this setting via
+                <a href="#xt-ena-altbuf">Mode 1046</a>.
             </p>
         </section>
     </section>
