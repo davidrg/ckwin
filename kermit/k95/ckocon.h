@@ -1396,6 +1396,9 @@ typedef struct vscrn_struct {
 #define vscrn_page_valid(m,p) (\
     vscrn[(m)].pages != NULL && p < vscrn[(m)].page_count && vscrn[(m)].pages[(p)].lines != NULL )
 
+/* Checks if the cursor is currently on the visible page */
+#define cursor_on_visible_page(m) (vscrn[(m)].view_page == vscrn[(m)].cursor.p)
+
 #define vscrn_set_page_margin_top(m,p,v) (vscrn[(m)].pages[(p)].margintop = (v))
 #define vscrn_set_page_margin_bot(m,p,v) (vscrn[(m)].pages[(p)].marginbot = (v))
 #define vscrn_set_page_margin_left(m,p,v) (vscrn[(m)].pages[(p)].marginleft = (v))

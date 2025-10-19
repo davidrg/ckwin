@@ -5510,18 +5510,20 @@ switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
     vscrn[vmode].cursor.p = page;
     if (view_page_too) vscrn[vmode].view_page = page;
 
-    /* Disable scrollback if we're not on page 0 */
-    if (page != 0) {
-        tt_scroll = 0;
-    } else {
-        /* As scrollback can be disabled via the NOSCROLL and LOCKDOWN commands
-         * (restart required to re-enable), we don't want to accidentally
-         * re-enable it so restore the previous setting rather than just turning
-         * it on. */
-        tt_scroll = tt_scroll_usr;
-    }
+    if (cursor_on_visible_page(VTERM)) {
+        /* Disable scrollback if we're not on page 0 */
+        if (page != 0) {
+            tt_scroll = 0;
+        } else {
+            /* As scrollback can be disabled via the NOSCROLL and LOCKDOWN
+             * commands (restart required to re-enable), we don't want to
+             * re-enable it so restore the previous setting rather than just
+             * turning it on. */
+            tt_scroll = tt_scroll_usr;
+        }
 
-    VscrnIsDirty(vmode);  /* status line needs to be updated */
+        VscrnIsDirty(VTERM);
+    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -15964,7 +15966,11 @@ wrtch(unsigned short ch) {
         }
     }
     lgotoxy(vmode,wherex[vmode],wherey[vmode]);
-    VscrnIsDirty(VTERM);  /* always mark the Terminal as requiring the update */
+    if (cursor_on_visible_page(vmode)) {
+        /* always mark the Terminal as requiring the update.. if the cursor is
+         * on the visible page. */
+        VscrnIsDirty(VTERM);
+    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -18094,7 +18100,9 @@ vtcsi(void)
                                 }
                             }
                         }
-                        VscrnIsDirty(VTERM);
+                        if (cursor_on_visible_page(VTERM)) {
+                            VscrnIsDirty(VTERM);
+                        }
                     }
                     break;
                 case 't':       /* DECRARA - Reverse Attr in Rect Area */
@@ -18204,7 +18212,9 @@ vtcsi(void)
                                 }
                             }
                         }
-                        VscrnIsDirty(VTERM);
+                        if (cursor_on_visible_page(VTERM)) {
+                            VscrnIsDirty(VTERM);
+                        }
                     }
                     break;
                 case 'v':       /* DECCRA - Copy Rect Area */
@@ -18315,7 +18325,9 @@ vtcsi(void)
                         free(data);
                         free(color_data);
                         free(attr_data);
-                        VscrnIsDirty(VTERM);
+                        if (cursor_on_visible_page(VTERM)) {
+                            VscrnIsDirty(VTERM);
+                        }
                     }
                     break;
                 case 'x':       /* DECFRA - Fill Rect Area */
@@ -18340,7 +18352,9 @@ vtcsi(void)
                             pn[1] = SP ;
                         clrrect_escape( VTERM, pn[2], pn[3],
                                         pn[4], pn[5], pn[1] ) ;
-                        VscrnIsDirty(VTERM);
+                        if (cursor_on_visible_page(VTERM)) {
+                            VscrnIsDirty(VTERM);
+                        }
                     }
                     break;
                 case 'z':       /* DECERA - Erase Rect Area */
@@ -18362,7 +18376,9 @@ vtcsi(void)
                             pn[1] = 1 ;
                         clrrect_escape( VTERM, pn[1], pn[2],
                                         pn[3], pn[4], SP ) ;
-                        VscrnIsDirty(VTERM);
+                        if (cursor_on_visible_page(VTERM)) {
+                            VscrnIsDirty(VTERM);
+                        }
                     }
                     break;
                 case '{':       /* DECSERA - Selective Erase Rect Area */
@@ -18384,7 +18400,9 @@ vtcsi(void)
                             pn[1] = 1 ;
                         selclrrect_escape( VTERM, pn[1], pn[2],
                                         pn[3], pn[4], SP ) ;
-                        VscrnIsDirty(VTERM);
+                        if (cursor_on_visible_page(VTERM)) {
+                            VscrnIsDirty(VTERM);
+                        }
                     }
                     break;
                 }
@@ -19132,7 +19150,9 @@ vtcsi(void)
                         }
                         pn[1]--;
                     }
-                    VscrnIsDirty(VTERM);
+                    if (cursor_on_visible_page(VTERM)) {
+                        VscrnIsDirty(VTERM);
+                    }
                 }
                 break;
             case 'g':
@@ -23895,7 +23915,9 @@ vtcsi(void)
                         }
                         pn[1]--;
                     }
-                    VscrnIsDirty(VTERM);
+                    if (cursor_on_visible_page(VTERM)) {
+                        VscrnIsDirty(VTERM);
+                    }
                 }
                 break;
             case 'z':   /* Proprietary */
@@ -24814,7 +24836,9 @@ vtescape( void )
                                  1, blankvcell);
                   }
               }
-	    VscrnIsDirty(VTERM);
+	          if (cursor_on_visible_page(VTERM)) {
+                  VscrnIsDirty(VTERM);
+              }
             break;
         case ':':
             if ( ISAAA(tt_type_mode) ) {
@@ -25326,7 +25350,9 @@ vtescape( void )
                         lgotoxy( VSTATUS, 1, 1 );
                     else
                         lgotoxy(VTERM,1, 1);
-                    VscrnIsDirty(VTERM);
+                    if (cursor_on_visible_page(VTERM)) {
+                        VscrnIsDirty(VTERM);
+                    }
                 }
                 break;
             case ':':   /* WYDHL */
@@ -25777,7 +25803,9 @@ vt100(unsigned short vtch) {
                      cursorright(0);
                   } while ((htab[i] != 'T') &&
                             (i <= VscrnGetWidth(vmode)-1));
-                  VscrnIsDirty(vmode);
+                 if (cursor_on_visible_page(VTERM)) {
+                     VscrnIsDirty(VTERM);
+                 }
              }
              break;
          case SYN:      /* Ctrl-V - AVATAR AVTCODE */
@@ -25855,7 +25883,9 @@ vt100(unsigned short vtch) {
                     else
                         VscrnWrtCell(vmode, cell,attrib,wherey[vmode]-1,
                                       VscrnGetWidth(vmode)-1) ;
-                    VscrnIsDirty(vmode);
+                    if (cursor_on_visible_page(VTERM)) {
+                        VscrnIsDirty(VTERM);
+                    }
                     literal_ch = FALSE;
                     if (tt_wrap) { /* If TERM WRAP ON */
                         if ( IS97801(tt_type_mode) ) {
