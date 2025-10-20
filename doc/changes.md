@@ -143,7 +143,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Xterm alternate screen (K95 terminal type only). Can be disabled with the
    new command `SET TERMINAL ALTERNATE-BUFFER DISABLED`
  - VT330/VT420 page memory - available to the K95 terminal type and (until a
-   VT420 emulation is added) the VT320 terminal type.
+   VT420 emulation is added) the VT320 terminal type. 
+   [DECCRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccra) and
+   [DECRQCRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqcra) can now
+   work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
+   and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
+   now include page information
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -307,6 +312,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Session Page Memory Allocation
    - [DECMC-10](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-10) - Print Composed Main Display
    - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
+   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
