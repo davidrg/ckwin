@@ -413,8 +413,18 @@ BOOL IKTerm::getCursorPos()
     vscrn_page_t *page = &vscrn_view_page(vmode);
 
     char buf[30];
-    ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
-              ckitoa(vbuf->cursor.y+1),NULL);
+    if (vscrn[vnum].cursor.p == 0) {
+        ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
+                  ckitoa(vbuf->cursor.y+1),NULL);
+    } else if (!on_alternate_buffer(vnum)) {
+        ckmakxmsg(buf,30,ckitoa(vscrn[vnum].cursor.p+1),"0(",
+                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  NULL,NULL,NULL,NULL,NULL,NULL);
+    } else { /* cursor is on the alternate screen */
+        ckmakxmsg(buf,30,"A(",
+                  ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
+                  NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+    }
     KuiSetTerminalStatusText(STATUS_CURPOS, buf);
 
     /* only calculated an offset if Roll mode is INSERT */

@@ -1765,6 +1765,7 @@ _PROTOTYP( USHORT * GetUnicodeClipboardContent, (void));
 _PROTOTYP(void to_alternate_buffer, (BYTE));
 _PROTOTYP(void from_alternate_buffer, (BYTE));
 _PROTOTYP(void set_alternate_buffer_enabled, (BYTE,BOOL));
+_PROTOTYP(BOOL on_alternate_buffer, (BYTE));
 
 typedef struct _hyperlink {
     int index;
