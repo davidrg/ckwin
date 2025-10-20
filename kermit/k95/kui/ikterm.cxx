@@ -417,7 +417,7 @@ BOOL IKTerm::getCursorPos()
         ckmakmsg(buf,30,ckitoa(vbuf->cursor.x+1),", ",
                   ckitoa(vbuf->cursor.y+1),NULL);
     } else if (!on_alternate_buffer(vnum)) {
-        ckmakxmsg(buf,30,ckitoa(vscrn[vnum].cursor.p+1),"0(",
+        ckmakxmsg(buf,30,ckitoa(vscrn[vnum].cursor.p+1),"(",
                   ckitoa(vbuf->cursor.x+1),", ", ckitoa(vbuf->cursor.y+1), ")",
                   NULL,NULL,NULL,NULL,NULL,NULL);
     } else { /* cursor is on the alternate screen */
