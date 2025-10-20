@@ -10,18 +10,25 @@
 # for the k95 terminal type), but it should work for larger sizes too. It won't
 # attempt to turn the status line off if it wasn't on when the script was run.
 #
-# When run in other terminal emulators the things that are most likely to not
-# work include:
-#  * Multiple pages - almost never supported. Lack of support will result one
-#    of the first few bullet points being overwritten, and possibly a bunch
-#    of blank lines before the VT420 features bullet point.
-#  * Host programmable status line - rarely supported feature
-#  * 24-bit and indexed colors (this script uses the correct ':' syntax, while
-#    while some terminals only support the older and incorrect ';' syntax. K95
-#    does support the older incorrect syntax for compatibility with other
-#    terminals)
-#  * Blinking text attribute - often not supported
-#  * Double height lines - often not supported
+# This script should also display correctly on a VT520 terminal with the
+# following exceptions:
+#  * The unicode bullet points will show as some other character
+#  * No colour at all
+#  * No crossed-out attribute
+#
+# In most other terminal emulators, the output will appear fairly broken due to
+# missing or incorrectly implemented features, especially those from the VT420.
+# In particular the following tends to cause trouble:
+#  * The VT320 host-programmable status line is rarely supported.
+#  * VT420 rectangular area operations are often not supported or buggy
+#  * VT420 paging is almost never supported, and when it is there can be bugs
+#    like not treating margins as a per-page setting
+#  * VT420 macros are almost never supported
+#  * 24-bit indexed colors - while Kermit 95 supports both formats, this script
+#    just uses the more standards-compliant format which not all terminals
+#    support.
+#  * Blinking text attribute - often not supported (because its annoying)
+#  * Double-height lines - often not supported
 #
 
 # Top Banner
@@ -37,6 +44,9 @@ F_EXTENDED_UL=0    # -- not supported -- | a gap still appears above the VT420
 F_SOFT_FONT=0      # -- not supported -- | line in non-paged terminals
 F_VT420_FEATURES=1 # Rectangular area operations mostly present but buggy in
                    # version 2.1 (2002), Text macros and paging new in beta 8
+
+# which line is the VT420 bullet point on?
+VT420_LINE=7
 
 # Eventually: "PCTERM, VTNT, win32 and emacs keyboard modes"
 KB_MODES="PCTERM and VTNT direct keyboard modes"
@@ -102,9 +112,11 @@ fi
 
 # Line 5 or 6: 24-bit colour
 if [ "$F_TRUE_COLOR" = "1" ]; then
-	# K95 supports both the correct format (below), and the old incorrect
-	# semicolon-delimited color specifier used by some other terminals.
-	printf ' \u25CF Full '
+	# K95 supports both the correct standards-compliant format (below), and the
+	# old incorrect semicolon-delimited color specifier used by some other
+	# terminals. To catch out any other terminals not using the standards-
+	# compliant form, we set some simple colors too.
+	printf ' \u25CF Full \x1b[30m'
 	printf '\x1b[38:2:63:158:82m2'
 	printf '\x1b[38:2:175:201:147m4'
 	printf '\x1b[38:2:242:0:72m-'
@@ -117,7 +129,7 @@ if [ "$F_TRUE_COLOR" = "1" ]; then
 	printf '\x1b[38:2:108:181:108mo'
 	printf '\x1b[38:2:211:93:57mu'
 	printf '\x1b[38:2:27:226:107mr'
-	printf '\x1b[38:2:164:229:13m!'
+	printf '\x1b[92m\x1b[38:2:164:229:13m!'
 	printf '\x1b[0m\n'
 
 	SPACE="$(($SPACE-1))"
@@ -215,37 +227,66 @@ fi
 
 printf ' \u25CF VT320 host-programmable status line (see the bottom of the terminal)\n'
 
+# This section is a bit mean. It uses a bunch of VT420 features (macros, pages,
+# copy/erase rectangle, change attributes in rectangle). Any terminal not
+# supporting all of these *correctly* will end up making a mess.
 if [ "$F_VT420_FEATURES" = "1" ]; then
-	# Define a text macro with ID 0. If it works, "text macros" should
-	# appear in the list of features!
-	printf '\x1bP0;0;0!ztext macros, \x1b\\'
+  # Define a text macro with ID 0. If it works, "text macros" should
+  # appear in the list of features!
+  printf '\x1bP0;0;0!ztext macros, \x1b\\'
+
+  # We'll store a backup copy of the "KERMIT-95" heading at this location
+  BACKUP_AREA_TOP_LINE=22
+  BACKUP_AREA_BOT_LINE=24
+
+  # Try out some rectangular area operations. Back up a chunk of the
+  # double-height header by copying it elsewhere.
+  printf '\x1b[1;1;2;40;1;%s;10;1$v' $BACKUP_AREA_TOP_LINE
+
+  # Save cursor, go to line 1 and output some stuff, restore cursor
+  printf '\x1b7\x1b[1Hrectangular area operations are\n'
+  printf 'rectangular area operations are\n---->not supported<----\x1b8'
 
   # Switch to page 2, switch off DECOM, clear margins and go to line 5, column 5
   printf '\x1b[U\x1b[?6l\x1b[r\x1b[6;5H'
 
-  # Output some text that we'll copy to page 1 later
+  # Output some text, some of which we'll copy to page 1 later
   printf ' , page memory: if your terminal had it, you would not see this line'
   # If the terminal doesn't support paging, the above line will be dumped over
-  # the top of the '24-bit colour' line (second bullet point)
+  # the top of the '24-bit colour' line (second bullet point), though other
+  # breakage caused by the margins might prevent this from being visible
 
   # Set a top margin. Margins are per-page, so the only thing that this should
-  # affect is the coordinates we have to supply to DECCRA. If the terminal
-  # incorrectly applies the margins to all pages then a few blank lines will
-  # appear before the VT420 bullet point, and for some reason a few things from
-  # above the margin may disappear
+  # affect is the coordinates we have to supply to DECCRA on page 2. If the
+  # terminal incorrectly applies the margins to all pages then a few blank
+  # lines will appear before the VT420 bullet point, and for some reason a few
+  # things from above the margin may disappear
   printf '\x1b[?6h\x1b[4r'
 
-  # TODO: Set a left margin when we support them, and update the DECCRA call
+  # TODO: Set a left margin on page 2 when we support them, and update the
+  # DECCRA that copies data from there
 
-  # Switch back to page 1, line 7
-  printf '\x1b[V\x1b[7H'
+  # Switch back to page 1, and go to the VT420 line
+  printf '\x1b[V\x1b[%sH' $VT420_LINE
 
-	# Output the VT420 features list, leaving a gap we'll fill with DECCRA
-	printf ' \u25CF VT420 \x1b[0*zrectangular area operations,            \n'
+  # Output the VT420 features list, leaving gaps that we'll fill with DECCRA
+  printf ' \u25CF VT420 \x1b[0*z not supported-> \x1b[5moperations,\x1b[0m            \n'
 
   # Copy the text we put on page 2 over to page 1 using DECCRA. Coordinates on
   # the source page are affected by the margins set on that page.
-  printf '\x1b[3;6;3;18;2;7;50;1$v'
+  printf '\x1b[3;6;3;18;2;%s;50;1$v' $VT420_LINE
+
+  # And copy the text we put in line 1 too
+  printf '\x1b[1;1;1;16;1;%s;23;1$v' $VT420_LINE
+
+  # Then restore the bit of line 1 we overwrote earlier
+  printf '\x1b[%s;10;%s;40;1;1;1;1$v' $BACKUP_AREA_TOP_LINE $BACKUP_AREA_BOT_LINE
+
+  # And wipe the temp copy
+  printf '\x1b[%s;10;%s;70$z' $BACKUP_AREA_TOP_LINE $BACKUP_AREA_BOT_LINE
+
+  # Stop "operations" from blinking.
+  printf '\x1b[%s;40;%s;50;0$r' $VT420_LINE $VT420_LINE
 
   # The feature list should look something like this if the terminal supports
   # all required features:
@@ -253,7 +294,7 @@ if [ "$F_VT420_FEATURES" = "1" ]; then
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890
 #* VT420 text macros, rectangular area operations, page memory
 
-	SPACE="$(($SPACE-1))"
+  SPACE="$(($SPACE-1))"
 fi
 
 printf ' \u25CF Dozens of other emulations:\tADDS25\tADM3A\tADM5\tAIXTERM\tANNARBOR'
