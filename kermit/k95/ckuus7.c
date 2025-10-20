@@ -1037,6 +1037,7 @@ static struct keytab trmtab[] = {
     { "newline-mode",  XYTNL,     0 },
 #ifdef OS2
     { "output-pacing", XYTPAC,    0 },
+    { "page",          XYTPAGE,   0 },
 #ifdef PCTERM
     { "pcterm",        XYTPCTERM, 0 },
 #endif /* PCTERM */
@@ -1196,6 +1197,13 @@ struct keytab altbufktab[] = {		/* Set TERM ALTERNATE-BUFFER */
         { "inactive",  AB_INACTIVE, CM_INV }
 };
 int naltbuf = (sizeof(altbufktab) / sizeof(struct keytab));
+
+struct keytab tpagektab[] = {		/* Set TERM PAGE */
+        { "active",            P_ACTIVE, 0 },
+        { "count",             P_COUNT,  0 },
+        { "cursor-coupling",   P_PCCM,   0 }
+};
+int npage = (sizeof(tpagektab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 struct keytab adltab[] = {              /* Autodownload Options */
@@ -4998,6 +5006,10 @@ settrm() {
                          xxstring)) < 0) {
               return (x);
           }
+
+          if ((y = cmcfm()) < 0)
+              return(y);
+
           switch(x) {
             case AB_DISABLED:
               set_alternate_buffer_enabled(VTERM, FALSE);
@@ -6137,6 +6149,54 @@ settrm() {
           initvik = 1;                  /* Update VIK table */
           return(1);
       }
+
+      case XYTPAGE: {                   /* Paging settings */
+          extern int user_pages;
+          extern vscrn_t vscrn[];
+
+          if ((x = cmkey(tpagektab,npage,"Paging setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+
+          switch(x) {
+            case P_COUNT:
+              /* Set current number of pages. Prompt for a number */
+              y = cmnum("Number of pages",
+                    ckitoa(ttype_pages()),10,&x,xxstring);
+              if ((x = setnum(&user_pages,x,y,ttype_pages())) < 0)
+                    return(x);
+              if (ISK95(tt_type))  tt_pages[VTERM] += 1;
+              return(success = 1);
+              break;
+
+            case P_PCCM:
+              /* Set PCCM on or off. Prompt for on/off */
+              if ((x = seton(&vscrn[VTERM].page_cursor_coupling)) < 0) return(x);
+              vscrn[VTERM].view_page = vscrn[VTERM].cursor.p;
+              return(success = 1);
+              break;
+
+            case P_ACTIVE: {
+              int pn;
+
+              /* Set current number of pages. Prompt for a number */
+              y = cmnum("Move cursor to page", "1",10,&x,xxstring);
+              if ((x = setnum(&pn,x,y,term_max_page(VTERM) + 1)) < 0)
+                    return(x);
+
+              pn -= 1;    /* page numbers are 0-based internally */
+              switch_to_page(VTERM, pn, vscrn[VTERM].page_cursor_coupling);
+
+              return(success = 1);
+              }
+              break;
+          }
+
+          return(success = 1);
+      }
+      break;
+
 
 #ifdef PCTERM
       case XYTPCTERM:                   /* PCTERM Keyboard Mode */

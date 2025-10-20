@@ -14044,11 +14044,12 @@ DCS $ q 3 , } ST</pre>
                 <tt><param-single symbol="Pt"/> ;
                 <param-single symbol="Pl"/> ;
                 <param-single symbol="Pb"/> ; <param-single symbol="Pr"/></tt> is
-                the rectangle. If <a href="#decsace">DECSACE</a> is off (1 or 0)
-                then the DECCARA affects the
+                the rectangle (top line, left column, bottom line, right column).
+                If <a href="#decsace">DECSACE</a> is off (1 or 0) then the
+                DECCARA affects the
                 stream of characters between the first and second character positions
-                specified. The <param-single symbol="Pm"/> is the SGR attributes
-                to change, one of:
+                specified. <param-single symbol="Pm"/> is the SGR attributes
+                to change, one or more of:
             </p>
             <table>
                 <tr>
@@ -15806,6 +15807,9 @@ DCS $ q 3 , } ST</pre>
                     <param-single symbol="Pl"/> ;
                     <param-single symbol="Pb"/> ;
                     <param-single symbol="Pr"/></tt> is the rectangle to erase.
+            </p>
+            <p>Pt is the top line, Pb is the bottom line, Pl is the left column,
+                and Pr is the right column.
             </p>
         </section>
         <section role="ctlseq" id="decelr" mnemonic="DECELR"
@@ -17672,6 +17676,11 @@ DCS $ q 3 , } ST</pre>
                 margins are set for the current page only - each page can have
                 its own set of margins. <a href="#decom">DECOM</a> is not set
                 per-page however.
+            </p>
+
+            <p>Paging can be configured with the <tt>SET TERM PAGE</tt> command,
+                allowing the number of pages and cursor page to be changed, and
+                page cursor coupling to be enabled/disabled.
             </p>
         </section>
         <section role="text" id="altscreen" badges="k95"

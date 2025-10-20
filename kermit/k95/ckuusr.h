@@ -1340,6 +1340,10 @@ struct stringint {			/* String and (wide) integer */
 #define     AB_DISABLED 1
 #define     AB_INACTIVE 2  /* Force the terminal out of the alternate screen buffer */
 #define     AB_ACTIVE 3    /* Force the terminal into the alternate screen buffer */
+#define   XYTPAGE   69  /* SET TERM PAGE */
+#define     P_PCCM    0
+#define     P_COUNT   1
+#define     P_ACTIVE  2
 #endif /* OS2 */
 
 #define XYATTR 34       /* Attribute packets  */

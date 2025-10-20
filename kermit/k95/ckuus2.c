@@ -8443,6 +8443,21 @@ static char *hxyterm[] = {
 "  TRANSMISSION BLOCKED conditions when pasting into the terminal window.",
 " ",
 
+"SET TERMINAL PAGE ACTIVE <page>",
+"  Moves the cursor to the specified page. If Page Cursor Coupling is enabled,",
+"  the display will move to that page also. The cursor is not sent to home.",
+" ",
+
+"SET TERMINAL PAGE COUNT <number>",
+"  Specifies the number of pages available, up to the maximum supported by the",
+"  currently selected terminal type.",
+" ",
+
+"SET TERMINAL PAGE CURSOR-COUPLING { ON, OFF}",
+"  Enables or disables Page Cursor Coupling. When enabled, moving the cursor",
+"  to another page moves the display to that page to keep the cursor visible.",
+" ",
+
 #ifdef PCTERM
 "SET TERMINAL PCTERM { ON, OFF }",
 "  Activates or deactivates the PCTERM terminal emulation keyboard mode.",
