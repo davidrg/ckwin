@@ -14153,10 +14153,12 @@ dodcs( void )
                                 decsace? "2*x" : "1*x");
                             break;
                         case '|':       /* DECSNLS - Set Num Lines Per Screen */
-                            if ( send_c1 )
-                                sprintf(decrpss,"%c1$r*|%c",_DCS,_ST8);
-                            else
-                                sprintf(decrpss,"%cP1$r*|%c\\",ESC,ESC);
+                            if (ISVT525(tt_type_mode)) {
+                                char buf[10];
+                                _snprintf(buf, sizeof(buf), "%d*|", tt_rows[VTERM]);
+                                _snprintf(decrpss, DECRPSS_LEN,
+                                        fmt, 1, buf);
+                            }
                             break;
                         }
                         break;
@@ -14197,9 +14199,6 @@ dodcs( void )
                                 _snprintf(buf, sizeof(buf), "%d){", decstglt);
                                 _snprintf(decrpss, DECRPSS_LEN,
                                         fmt, 1, buf);
-                            } else {
-                                _snprintf(decrpss, DECRPSS_LEN,
-                                         fmt, 0, "){");
                             }
                             break;
                         } /* '}' */
@@ -17044,6 +17043,34 @@ settermtype( int x, int prompts )
     msleep(10);
 }
 
+
+/*---------------------------------------------------------------------------*/
+/* set_term_height                                                           */
+/*---------------------------------------------------------------------------*/
+/* Sets the terminal height in lines.
+ * Used to implement: DECSLPP, DECSNLS, WY52, WY24 */
+void
+set_term_height(int rows) {
+    if ( tt_modechg == TVC_ENA ) {
+        tt_szchng[VTERM] = 1 ;
+        tt_rows[VTERM] = rows ;
+        VscrnInit( VTERM ) ;  /* Height set here */
+#ifdef TCPSOCKET
+#ifdef CK_NAWS
+        if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
+            tn_snaws();
+#ifdef RLOGCODE
+            rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+            ssh_snaws();
+#endif /* SSHBUILTIN */
+        }
+#endif /* CK_NAWS */
+#endif /* TCPSOCKET */
+    }
+}
+
 cell_video_attr_t
 ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
 {
@@ -18676,6 +18703,13 @@ vtcsi(void)
 						break;
 					} /* ISVT420 */
 				} /* 'z' */
+                break;
+
+                case '|':      /* DECSNLS */
+                    if (ISVT420(tt_type_mode)) {
+                        set_term_height(pn[1]);
+                    }
+                    break;
 				break;
                 } /* '*' */
                 break;
@@ -19522,24 +19556,8 @@ vtcsi(void)
                             }
                             break;
                             case 83:    /* WY52 - 52 line mode */
-                            if ( ISWY370(tt_type_mode)
-                                 && tt_modechg == TVC_ENA) {
-                                tt_szchng[VTERM] = 1 ;
-                                tt_rows[VTERM] = 52 ;
-                                VscrnInit( VTERM ) ;          /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                    tn_snaws();
-#ifdef RLOGCODE
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                                }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                            if ( ISWY370(tt_type_mode)) {
+                                set_term_height(52);
                             }
                             break;
                         case 84:        /* WYENAT */
@@ -20187,25 +20205,8 @@ vtcsi(void)
                                }
                                break;
                            case 83:        /* WY52 - 24 line mode */
-                               if ( ISWY370(tt_type_mode)
-                                   && tt_modechg == TVC_ENA )
-                               {
-                                   tt_szchng[VTERM] = 1 ;
-                                   tt_rows[VTERM] = 24 ;
-                                   VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET
-#ifdef CK_NAWS
-                                   if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                       tn_snaws();
-#ifdef RLOGCODE
-                                       rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                       ssh_snaws();
-#endif /* SSHBUILTIN */
-                                   }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
+                               if ( ISWY370(tt_type_mode)) {
+                                    set_term_height(24);
                                }
                                break;
                            case 84:        /* WYENAT */
@@ -23522,24 +23523,7 @@ vtcsi(void)
                     case 52:
                     case 53:
                     case 72:
-                        if ( tt_modechg == TVC_ENA ) {
-                            tt_szchng[VTERM] = 1 ;
-                            tt_rows[VTERM] = pn[1] ;
-                            VscrnInit( VTERM ) ;  /* Height set here */
-#ifdef TCPSOCKET    
-#ifdef CK_NAWS      
-                                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0){
-                                    tn_snaws();
-#ifdef RLOGCODE     
-                                    rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                                    ssh_snaws();
-#endif /* SSHBUILTIN */
-                                }
-#endif /* CK_NAWS */
-#endif /* TCPSOCKET */
-                        }
+                        set_term_height(pn[1]);
                         break;
 
                         /* These are XTERM functions */

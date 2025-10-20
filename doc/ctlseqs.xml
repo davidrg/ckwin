@@ -4501,9 +4501,11 @@ DECTSR		462
                 <ref src="070:451"/>
                 <ref src="vt510:DECRQSS.html"/>
                 <ref src="vt52x:266"/>
-                <p>Not Implemented: K95 responds with:</p>
-                <pre>DCS 1 $ r * | ST</pre>
-                <!-- VT520 responds with 26*| by default -->
+                <p>Reports the current number of lines in the terminal screen.
+                    For example, if the terminal height was currently 30 lines,
+                    the response would be:
+                    <tt><cc>DCS</cc> 1 $ r 3 0 * | <cc>ST</cc></tt>
+                </p>
             </section>
             <section role="parameter" id="decrqss-decac" mnemonic="DECAC"
                      title="Assign Color">
@@ -10072,8 +10074,7 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="xterm" series="xt" additional=""/>
             </section>
             <section role="parameter" id="decrst-1015" mnemonic=""
-                     title="Disable urxvt mouse mode"
-                     not-implemented="true" todo="true">
+                     title="Disable urxvt mouse mode">
                 <ctlseq><param-single/> = 1015</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-1-0-1-5.1F82"/>
                 <termsupp first="xterm" series="xt" additional="tt putty"/>
@@ -16101,7 +16102,7 @@ DCS $ q 3 , } ST</pre>
         </section>
         <section role="ctlseq" id="decsnls" mnemonic="DECSNLS"
                  title="Select Number of Lines/Screen"
-                 not-implemented="true" todo="true">
+                 groups="isvt420">
             <ctlseq>CSI <param-single/> * |</ctlseq>
             <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-*-%7C.1D36"/>
             <ref src="070:344"/>
@@ -16109,6 +16110,9 @@ DCS $ q 3 , } ST</pre>
             <ref src="vt510:DECSNLS.html"/>
             <ref src="vt52x:294"/>
             <termsupp first="vt420" series="vt" additional="vt510 putty"/>
+            <p>
+                Sets the number of lines in the terminal screen.
+            </p>
         </section>
         <section role="ctlseq" id="xtpopsgr" mnemonic="XTPOPSGR"
                  title="Pop video attributes from stack"
