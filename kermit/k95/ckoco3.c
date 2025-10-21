@@ -21160,6 +21160,12 @@ vtcsi(void)
 									r = pe[st+1];
 									g = pe[st+2];
 									b = pe[st+3];
+								} else if (c == 5 && pe[st] == 2) {
+									mode = pe[st];
+									/* colorspace = pe[st+1];  Not used */
+									r = pe[st+2];
+									g = pe[st+3];
+									b = pe[st+4];
 								} else if (c == 2 && pe[st] == 5) {
 									mode = pe[st];
 									index = pe[st+1];

@@ -101,19 +101,19 @@ if [ "$F_TRUE_COLOR" = "1" ]; then
 	# K95 supports both the correct format (below), and the old incorrect
 	# semicolon-delimited color specifier used by some other terminals.
 	printf ' * Full '
-	printf '\x1b[38:2:63:158:82m2'
-	printf '\x1b[38:2:175:201:147m4'
-	printf '\x1b[38:2:242:0:72m-'
-	printf '\x1b[38:2:160:24:149mb'
-	printf '\x1b[38:2:29:193:136mi'
-	printf '\x1b[38:2:150:106:138mt '
-	printf '\x1b[38:2:192:247:226mc'
-	printf '\x1b[38:2:93:173:247mo'
-	printf '\x1b[38:2:27:80:160ml'
-	printf '\x1b[38:2:108:181:108mo'
-	printf '\x1b[38:2:211:93:57mu'
-	printf '\x1b[38:2:27:226:107mr'
-	printf '\x1b[38:2:164:229:13m!'
+	printf '\x1b[38:2:0:63:158:82m2'
+	printf '\x1b[38:2:0:175:201:147m4'
+	printf '\x1b[38:2:0:242:0:72m-'
+	printf '\x1b[38:2:0:160:24:149mb'
+	printf '\x1b[38:2:0:29:193:136mi'
+	printf '\x1b[38:2:0:150:106:138mt '
+	printf '\x1b[38:2:0:192:247:226mc'
+	printf '\x1b[38:2:0:93:173:247mo'
+	printf '\x1b[38:2:0:27:80:160ml'
+	printf '\x1b[38:2:0:108:181:108mo'
+	printf '\x1b[38:2:0:211:93:57mu'
+	printf '\x1b[38:2:0:27:226:107mr'
+	printf '\x1b[38:2:0:164:229:13m!'
 	printf '\x1b[0m\n'
 
 	SPACE="$(($SPACE-1))"
@@ -255,9 +255,9 @@ printf '\x1b[0`'
 
 # Output some demo text to the status line
 if [ "$F_TRUE_COLOR" = "1" ]; then
-	for ((i = 255 ; i > 0; i -= 37)); do printf '\x1b[48:2:0:0:%dm ' $i; done
+	for ((i = 255 ; i > 0; i -= 37)); do printf '\x1b[48:2:0:0:0:%dm ' $i; done
 	printf '\x1b[0mHost-programmable status line!'
-	for ((i = 0 ; i <= 255; i += 6)); do printf '\x1b[48:2:0:0:%dm ' $i; done
+	for ((i = 0 ; i <= 255; i += 6)); do printf '\x1b[48:2:0:0:0:%dm ' $i; done
 else
 	printf ' >>> Host-programmable status line! <<<'
 fi
