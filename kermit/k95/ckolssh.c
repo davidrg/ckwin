@@ -1945,7 +1945,7 @@ int ssh_tchk(void) {
      * connection to check it succeeded, and periodically by the isconnect
      * thread to see if we're still connected. Neither care about how much data
      * is waiting. */
-    rc = INPUT_BUFFER_SIZE - input_buffer_idx;
+    rc = input_buffer_len - input_buffer_idx;
     if (rc > 0) {
         return rc;
     }
