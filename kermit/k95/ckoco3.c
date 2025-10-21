@@ -5515,6 +5515,12 @@ switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
         /* Disable scrollback if we're not on page 0 */
         if (page != 0) {
             tt_scroll = 0;
+
+            /* If we were scrolled back, we're not anymore! */
+            scrollflag[VTERM] = 0;
+            scrollstatus[VTERM] = 0;
+            ipadl25();
+
         } else {
             /* As scrollback can be disabled via the NOSCROLL and LOCKDOWN
              * commands (restart required to re-enable), we don't want to
