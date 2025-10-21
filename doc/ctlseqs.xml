@@ -17641,7 +17641,7 @@ DCS $ q 3 , } ST</pre>
                 <li><a href="#pp">PP</a> - Move backward to another page and home the cursor</li>
                 <li><a href="#ppa">PPA</a> - Move to a specific page</li>
                 <li><a href="#ppr">PPR</a> - Move forward to another page</li>
-                <li><a href="#ppr">PPB</a> - Move backward to another page</li>
+                <li><a href="#ppb">PPB</a> - Move backward to another page</li>
                 <li><a href="#decrc">DECRC</a> - Moves the cursor to the page
                     it was on when the cursor was last saved with
                     <a href="#decsc">DECSC</a></li>
