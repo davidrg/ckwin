@@ -43,7 +43,9 @@ F_RULED_LINES=0    # -- not supported -- | When turning one of these on, check
 F_EXTENDED_UL=0    # -- not supported -- | a gap still appears above the VT420
 F_SOFT_FONT=0      # -- not supported -- | line in non-paged terminals
 F_VT420_FEATURES=1 # Rectangular area operations mostly present but buggy in
-                   # version 2.1 (2002), Text macros and paging new in beta 8
+                   # version 2.1 (2002), Text macros and paging new in 3.0 b.8
+F_PAGING=1         # Lack of Paging really breaks this script, so it can be
+                   # turned off separately as its rarely implemented.
 
 # which line is the VT420 bullet point on?
 VT420_LINE=7
@@ -116,7 +118,7 @@ if [ "$F_TRUE_COLOR" = "1" ]; then
 	# old incorrect semicolon-delimited color specifier used by some other
 	# terminals. To catch out any other terminals not using the standards-
 	# compliant form, we set some simple colors too.
-	printf ' * Full \x1b[30m'
+	printf ' \u25CF Full \x1b[30m'
 	printf '\x1b[38:2:0:63:158:82m2'
 	printf '\x1b[38:2:0:175:201:147m4'
 	printf '\x1b[38:2:0:242:0:72m-'
@@ -245,36 +247,40 @@ if [ "$F_VT420_FEATURES" = "1" ]; then
 
   # Save cursor, go to line 1 and output some stuff, restore cursor
   printf '\x1b7\x1b[1Hrectangular area operations are\n'
-  printf 'rectangular area operations are\n---->not supported<----\x1b8'
+  printf 'rectangular area operations are\n--->not supported properly<---\x1b8'
 
-  # Switch to page 2, switch off DECOM, clear margins and go to line 5, column 5
-  printf '\x1b[U\x1b[?6l\x1b[r\x1b[6;5H'
+  if [ "$F_PAGING" = "1" ]; then
+    # Switch to page 2, switch off DECOM, clear margins and go to line 5, col 5
+    printf '\x1b[U\x1b[?6l\x1b[r\x1b[6;5H'
 
-  # Output some text, some of which we'll copy to page 1 later
-  printf ' , page memory: if your terminal had it, you would not see this line'
-  # If the terminal doesn't support paging, the above line will be dumped over
-  # the top of the '24-bit colour' line (second bullet point), though other
-  # breakage caused by the margins might prevent this from being visible
+    # Output some text, some of which we'll copy to page 1 later
+    printf ' , page memory: if your terminal had it, you would not see this line'
+    # If the terminal doesn't support paging, the above line will be dumped over
+    # the top of the '24-bit colour' line (second bullet point), though other
+    # breakage caused by the margins might prevent this from being visible
 
-  # Set a top margin. Margins are per-page, so the only thing that this should
-  # affect is the coordinates we have to supply to DECCRA on page 2. If the
-  # terminal incorrectly applies the margins to all pages then a few blank
-  # lines will appear before the VT420 bullet point, and for some reason a few
-  # things from above the margin may disappear
-  printf '\x1b[?6h\x1b[4r'
+    # Set a top margin. Margins are per-page, so the only thing that this should
+    # affect is the coordinates we have to supply to DECCRA on page 2. If the
+    # terminal incorrectly applies the margins to all pages then a few blank
+    # lines will appear before the VT420 bullet point, and for some reason a few
+    # things from above the margin may disappear
+    printf '\x1b[?6h\x1b[4r'
 
-  # TODO: Set a left margin on page 2 when we support them, and update the
-  # DECCRA that copies data from there
+    # TODO: Set a left margin on page 2 when we support them, and update the
+    # DECCRA that copies data from there
 
-  # Switch back to page 1, and go to the VT420 line
-  printf '\x1b[V\x1b[%sH' $VT420_LINE
+    # Switch back to page 1, and go to the VT420 line
+    printf '\x1b[V\x1b[%sH' $VT420_LINE
+  fi
 
   # Output the VT420 features list, leaving gaps that we'll fill with DECCRA
-  printf ' \u25CF VT420 \x1b[0*z not supported-> \x1b[5moperations,\x1b[0m            \n'
+  printf ' \u25CF VT420 \x1b[0*z not supported-> \x1b[5moperations\x1b[0m            \n'
 
-  # Copy the text we put on page 2 over to page 1 using DECCRA. Coordinates on
-  # the source page are affected by the margins set on that page.
-  printf '\x1b[3;6;3;18;2;%s;50;1$v' $VT420_LINE
+  if [ "$F_PAGING" = "1" ]; then
+    # Copy the text we put on page 2 over to page 1 using DECCRA. Coordinates on
+    # the source page are affected by the margins set on that page.
+    printf '\x1b[3;6;3;18;2;%s;50;1$v' $VT420_LINE
+  fi
 
   # And copy the text we put in line 1 too
   printf '\x1b[1;1;1;16;1;%s;23;1$v' $VT420_LINE
