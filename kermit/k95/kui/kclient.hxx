@@ -93,7 +93,6 @@ private:    // this section is for performance
 
     cell_video_attr_t prevAttr;
     ushort prevEffect;
-
     int wc;
     int vscrollpos;
     int hscrollpos;
