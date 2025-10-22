@@ -7389,7 +7389,8 @@ DCS $ q 3 , } ST</pre>
                     supported on Windows. On OS/2, DECARM is permanently set.
                 </p>
             </section>
-            <section role="parameter" id="x10mr" title="X10 mouse reporting" groups="isansi" badges="linux">
+            <section role="parameter" id="x10mr" title="X10 mouse reporting"
+                     groups="isansi" badges="linux k95 xterm">
                 <ctlseq><param-single/> = 9</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-h:Ps-=-9.1E69"/>
                 <termsupp first="xterm" series="xt" additional="tt linux"/>
@@ -9303,7 +9304,7 @@ DCS $ q 3 , } ST</pre>
                 <p>Turn off interlaced video</p>
             </section>
             <section role="parameter" title="Turn off X10 mouse reporting"
-                     id="decrst-9-x10" groups="isansi" badges="linux">
+                     id="decrst-9-x10" groups="isansi" badges="linux k95 xterm">
                 <ctlseq><param-single/> = 9</ctlseq>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9.1E6D"/>
                 <termsupp first="xterm" series="xt" additional="tt linux"/>
@@ -12709,7 +12710,7 @@ DCS $ q 3 , } ST</pre>
                 </section>
                 <section role="parameter" title="X10 mouse reporting"
                          id="decrqm-9-x10" groups="isansi"
-                         badges="linux k95 xterm">
+                         badges="linux k95 xterm k95">
                     <ctlseq><param-single/> = 9</ctlseq>
                     <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-?-Pm-l:Ps-=-9.1E6D"/>
                     <termsupp first="xterm" series="xt" additional="tt"/>
