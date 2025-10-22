@@ -5533,6 +5533,12 @@ switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
         markcancel(vmode);
 
         VscrnIsDirty(VTERM);
+
+#ifndef KUI
+        /* Give the console-mode render a moment to catch up, otherwise it
+         * new page may not get drawn.*/
+        msleep(50);
+#endif /* KUI */
     }
 }
 
