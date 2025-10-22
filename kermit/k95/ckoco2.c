@@ -3401,10 +3401,17 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         viocell *        oldcellmem = cellmem[vmode] ;
         unsigned short * oldattrmem = attrmem[vmode] ;
         unsigned short * oldhyperlinkmem = hyperlinkmem[vmode] ;
+        int              old_lines;
 
 		/* Allocate a new vscrn of the desired size */
         memset(&TmpScrn,0,sizeof(TmpScrn));
 		total_lines = 0;
+        old_lines = 0;
+
+        TmpScrn.page_count = new_page_count;
+        TmpScrn.pages = (vscrn_page_t*)malloc(
+            sizeof(vscrn_page_t) * TmpScrn.page_count);
+        memset(TmpScrn.pages, 0, sizeof(vscrn_page_t) * TmpScrn.page_count);
 
 		for (pagenum = 0; pagenum < vscrn[vmode].page_count; pagenum++ ) {
 			/* newsize only applies to the first page. Subsequent pages are all
@@ -3413,6 +3420,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
                 ? newsize
                 : newsize < MAXTERMROW ? newsize : MAXTERMROW;
             total_lines += page_lines;
+            old_lines += vscrn[vmode].pages[pagenum].linecount;
 
 			TmpScrn.pages[pagenum].linecount = page_lines ;
 			TmpScrn.pages[pagenum].lines = malloc(page_lines * sizeof(videoline)) ;
@@ -3438,8 +3446,8 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         TmpScrn.cursor = vscrn[vmode].cursor ;
         TmpScrn.popup = vscrn[vmode].popup ;
         TmpScrn.marktop = TmpScrn.markbot = -1 ;
-                TmpScrn.width = vscrn[vmode].width ;
-                TmpScrn.height = vscrn[vmode].height ;
+        TmpScrn.width = vscrn[vmode].width ;
+        TmpScrn.height = vscrn[vmode].height ;
 
         for ( i = 0 ; i < 10 ; i++ ) {
 			/* Bookmarks are only supported on page 0 as thats the only one with
@@ -3452,19 +3460,19 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         cellmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(viocell) ) ;
         if ( !cellmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for cellmem[]!");
-        memcpy( cellmem[vmode], oldcellmem, (total_lines + 1)
+        memcpy( cellmem[vmode], oldcellmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(viocell) ) ;
 
         attrmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !attrmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for attrmem[]!");
-        memcpy( attrmem[vmode], oldattrmem, (total_lines + 1)
+        memcpy( attrmem[vmode], oldattrmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(short) ) ;
 
         hyperlinkmem[vmode] = malloc( (total_lines + 1) * MAXTERMCOL * sizeof(short) ) ;
         if ( !hyperlinkmem[vmode] )
             fatal("VscrnSetBufferSize: unable to allocate memory for hyperlinkmem[]!");
-        memcpy( hyperlinkmem[vmode], oldhyperlinkmem, (total_lines + 1)
+        memcpy( hyperlinkmem[vmode], oldhyperlinkmem, (old_lines + 1)
                 * MAXTERMCOL * sizeof(short) ) ;
 
 		total_lines = 0;
