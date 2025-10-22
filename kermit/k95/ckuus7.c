@@ -5610,59 +5610,77 @@ settrm() {
           if (y != tt_status[VTERM] || y != tt_status_usr[VTERM]) {
               int p;
               extern vscrn_t vscrn[];
-              /* Might need to fixup the margins */
-              for (p = 0; p < vscrn[VTERM].page_count; p++) {
-                  int margin = vscrn_page_margin_bot(VTERM,p);
-                  if ( margin == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
-                      if ( y ) {
-                          margin-- ;
-                      } else {
-                          margin++ ;
-                      }
-                      vscrn_set_page_margin_bot(VTERM, p, margin);
+              extern bool decssdt_override;
+
+              /* See the comment in ckoco3.c, function settermstatus for a
+               * description of what this is and why. */
+              int resize_window = ISK95(tt_type_mode) || ISVT520(tt_type_mode)
+                    || decssdt_override;
+
+              if (y) {
+                  /* If the status line is turned off before a connection is
+                   * made (or the terminal reset), the status line type gets
+                   * set to blank. If we don't change the type here, then it
+                   * gets turned on but left blank so there is just a black
+                   * line at the bottom of the screen showing nothing. */
+                  if (decssdt == SSDT_BLANK) {
+                      decssdt = SSDT_INDICATOR;
                   }
               }
-              tt_status_usr[VTERM] = tt_status[VTERM] = y;
-              if (y) {
-                    /* If the status line is turned off before a connection is
-                     * made (or the terminal reset), the status line type gets
-                     * set to blank. If we don't change the type here, then it
-                     * gets turned on but left blank so there is just a black
-                     * line at the bottom of the screen showing nothing. */
-                    if (decssdt == SSDT_BLANK) {
-                        decssdt = SSDT_INDICATOR;
-                    }
-                    tt_szchng[VTERM] = 2;
-                    tt_rows[VTERM]--;
-                    VscrnInit(VTERM);  /* Height set here */
-#ifdef TNCODE
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      ssh_snaws();
-#endif /* SSHBUILTIN */
+
+              if (resize_window) {
+                  /* Change screen height only - not terminal height */
+		          tt_status[VTERM] = y;
+		          VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
               } else {
-                  tt_szchng[VTERM] = 1;
-                  tt_rows[VTERM]++;
-                  VscrnInit(VTERM);     /* Height set here */
+                  /* Might need to fixup the margins */
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      int margin = vscrn_page_margin_bot(VTERM,p);
+                      if ( margin == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
+                          if ( y ) {
+                              margin-- ;
+                          } else {
+                              margin++ ;
+                          }
+                          vscrn_set_page_margin_bot(VTERM, p, margin);
+                      }
+                  }
+                  tt_status_usr[VTERM] = tt_status[VTERM] = y;
+                  if (y) {
+                        tt_szchng[VTERM] = 2;
+                        tt_rows[VTERM]--;
+                        VscrnInit(VTERM);  /* Height set here */
 #ifdef TNCODE
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    tn_snaws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          tn_snaws();
 #endif /* TNCODE */
 #ifdef RLOGCODE
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    rlog_naws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          rlog_naws();
 #endif /* RLOGCODE */
 #ifdef SSHBUILTIN
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    ssh_snaws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          ssh_snaws();
 #endif /* SSHBUILTIN */
+
+
+                  } else {
+                      tt_szchng[VTERM] = 1;
+                      tt_rows[VTERM]++;
+                      VscrnInit(VTERM);     /* Height set here */
+#ifdef TNCODE
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        tn_snaws();
+#endif /* TNCODE */
+#ifdef RLOGCODE
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        ssh_snaws();
+#endif /* SSHBUILTIN */
+                  }
               }
           }
           return(1);
