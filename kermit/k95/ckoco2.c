@@ -3333,7 +3333,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             vscrn[vmode].pages[pagenum].beg = 0 ;
             vscrn[vmode].pages[pagenum].end = vscrn[vmode].height - 1;
 			vscrn[vmode].pages[pagenum].margintop = 1;
-			vscrn[vmode].pages[pagenum].marginbot = vscrn[vmode].height;
+			vscrn[vmode].pages[pagenum].marginbot = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
 			vscrn[vmode].pages[pagenum].marginleft = 1;
 			vscrn[vmode].pages[pagenum].marginright = vscrn[vmode].width;
         }
@@ -3441,6 +3441,10 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
         	TmpScrn.pages[pagenum].end = (TmpScrn.pages[pagenum].top
 					+ vscrn[vmode].height - 1) %
 						TmpScrn.pages[pagenum].linecount ;
+            TmpScrn.pages[pagenum].margintop = vscrn[vmode].pages[pagenum].margintop;
+            TmpScrn.pages[pagenum].marginbot = vscrn[vmode].pages[pagenum].marginbot;
+            TmpScrn.pages[pagenum].marginleft = vscrn[vmode].pages[pagenum].marginleft;
+            TmpScrn.pages[pagenum].marginright = vscrn[vmode].pages[pagenum].marginright;
 		}
 
         TmpScrn.cursor = vscrn[vmode].cursor ;
