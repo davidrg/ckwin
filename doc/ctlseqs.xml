@@ -3898,6 +3898,14 @@ DECTSR		462
                     repetitions. The characters 0x09 through 0x0D (HR to CR) are
                     also allowed for formatting and so are ignored.
                 </p>
+                <p>
+                    Kermits 95s <tt>\fhexify</tt> function may be useful for
+                    converting strings to hex format. For example, typing
+                    <tt>echo \fhexify(Hello!)</tt> at the K95 prompt will output
+                    <tt>48656C6C6F21</tt> which you can then use with DECDMAC.
+                    The reverse of this function, <tt>\funhexify</tt>, is also
+                    available if you wish to decode macros in hex format.
+                </p>    
             </section>
             <section role="text" title="Invoking Other Macros">
                 <p>
