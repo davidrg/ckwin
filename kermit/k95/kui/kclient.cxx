@@ -36,6 +36,7 @@ extern int tt_status[];
 extern int tt_update;
 extern vscrn_t vscrn[];
 extern int scrollflag[];
+extern enum markmodes markmodeflag[] ;
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic, truedim, truebold,
@@ -714,7 +715,7 @@ void KClient::checkBlink()
             cursorRect.right = cursorRect.left + font->getFontW();
             cursorRect.bottom = cursorRect.top + adjustedH;
 
-            if ( cursorena[vmode] && cursor_on_visible_page(vmode) ) {
+            if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking ) {
                 if ( !tt_cursor_blink ) {
                     if (!cursor_displayed && _inFocus || cursor_displayed && !_inFocus) {
                         ToggleCursor( hdcScreen(), &cursorRect );
@@ -842,7 +843,7 @@ void KClient::writeMe()
     if (cursorCount%300 == 0) {
         if (ikterm->getCursorPos() && (_inFocus || (!_inFocus && cursor_displayed)))
         {
-            if ( cursorena[vmode] && cursor_on_visible_page(vmode)) {
+            if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking) {
                 if ( !tt_cursor_blink ) {
                     if (!cursor_displayed && _inFocus || cursor_displayed && !_inFocus) {
                         cursor_displayed = _inFocus;
