@@ -5529,6 +5529,9 @@ switch_to_page(BYTE vmode, int page, BOOL view_page_too) {
             tt_scroll = tt_scroll_usr;
         }
 
+        /* If we were in mark mode, we're not anymore!*/
+        markcancel(vmode);
+
         VscrnIsDirty(VTERM);
     }
 }
