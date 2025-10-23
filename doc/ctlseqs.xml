@@ -8646,6 +8646,9 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt102" series="vt" additional="vt220 vt330 vt340 vt420 vt510 tt"/>
                 <ref src="xt:h4-Functions-using-CSI-_-ordered-by-the-final-character-lparen-s-rparen:CSI-Ps-i:Ps-=-0.1DFB"/>
                 <!-- New in cko190. Apparently caused stack overflow on 16-bit OS/2 -->
+                <p>
+                    Prints the page that has the cursor.
+                </p>
             </section>
             <section role="parameter" id="mc-2" title="Transmit Screen">
                 <ctlseq><param-single/> = 2</ctlseq>
