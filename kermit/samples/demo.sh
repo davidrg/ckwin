@@ -308,7 +308,7 @@ printf '\n\tANSI-BBS\tAT386\tBA80\tBETERM\tDG200\tDG210\tDG217\tHEATH19'
 printf '\n\tHFT\tHP2621A\tHPTERM\tHZ1500\tIBM3151\tLINUX\tQANSI\tQNX\tSCOANSI'
 printf '\n\tSNI-97801\tSUN\tTTY\tTVI910+\tTVI925\tTVI950\tVC404\tVIP7809'
 printf '\n\tVT52\tVT100\tVT102\tVT220\tVT320\tVTNT\tWY30\tWY50\tWY60'
-printf '\n\tWY160\tWY360\t\t\x1b[3m(completeness varies, see manual for details)\x1b[0m'
+printf '\n\tWY160\tWY370\t\t\x1b[3m(completeness varies, see manual for details)\x1b[0m'
 printf '\n'
 
 printf ' \u25CF Full keyboard remapping, plus %s\n' "$KB_MODES"
