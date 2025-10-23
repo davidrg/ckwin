@@ -3494,7 +3494,7 @@ VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )
             	line->width = 0 ;
 
 				/* Assign it some memory */
-            	TmpScrn.pages[pagenum].lines[i].cells = line->cells + (cellmem[vmode] - oldcellmem) ;
+                TmpScrn.pages[pagenum].lines[i].cells = cellmem[vmode] + (line->cells - oldcellmem);
             	line->cells = NULL ;
 
             	TmpScrn.pages[pagenum].lines[i].vt_char_attrs = line->vt_char_attrs
