@@ -17054,8 +17054,14 @@ vtcsi(void)
                 break;
             }
             break;
-        case '$':
-            achar = (escnext<=esclast)?escbuffer[escnext++]:0;
+        case '$': {/* These things below should probably only appear in a DCS string */
+            int acharTmp = (escnext <= esclast) ? escbuffer[escnext + 1] : 0;
+            if (acharTmp != '}' && acharTmp != '-' && acharTmp != '~') {
+                /* Next character isn't something we handle here - skip ahead */
+                goto LB2003;
+            }
+
+            achar = (escnext <= esclast) ? escbuffer[escnext++] : 0;
             switch (achar) {
             case '}':
                 /* DECSASD - Select Active Status Display */
@@ -17068,6 +17074,7 @@ vtcsi(void)
                 break;
             }
             break;
+        }
         case 'S':
             if ( private && ISAIXTERM(tt_type_mode) ) {
                 /* Show Status Line */
@@ -17824,20 +17831,46 @@ vtcsi(void)
                         /* pn[2] - left-col border default=1 */
                         /* pn[3] - bot-line border default=Height */
                         /* pn[4] - Right border    default=Width */
-                        if ( k < 4 || pn[4] > VscrnGetWidth(VTERM) ||
-                             pn[4] < 1 )
-                            pn[4] = VscrnGetWidth(VTERM);
-                        if ( k < 3 || pn[3] > VscrnGetHeight(VTERM)
-                             -(tt_status[VTERM]?1:0) || pn[3] < 1 )
-                            pn[3] = VscrnGetHeight(VTERM)
-                                -(tt_status[VTERM]?1:0);
-                        if ( k < 2 || pn[2] < 1 )
-                            pn[2] = 1 ;
-                        if ( k < 1 || pn[1] < 1 )
-                            pn[1] = 1 ;
-                        clrrect_escape( VTERM, pn[1], pn[2],
-                                        pn[3], pn[4], SP ) ;
-                        VscrnIsDirty(VTERM);
+
+                        int maxHeight, maxWidth;
+                        int top, left, bot, right;
+
+                        maxHeight = VscrnGetHeight(VTERM)
+                                    -(tt_status[VTERM]?1:0);
+                        maxWidth = VscrnGetWidth(VTERM);
+
+                        top = pn[1];
+                        left = pn[2];
+                        bot = pn[3];
+                        right = pn[4];
+
+                        /* Defaults: the entire screen */
+                        if (k < 4 || right < 1) right = maxWidth;
+                        if (k < 3 || bot < 1) bot = maxHeight;
+                        if (k < 2 || left < 1) left = 1;
+                        if (k < 1 || top < 1) top = 1;
+
+                        /* Coordinates are all relative to DECOM setting */
+                        if (relcursor) {
+                            top += margintop - 1;
+                            bot += margintop - 1;
+                            left += marginleft - 1;
+                            right += marginleft - 1;
+                        }
+
+                        if (right > maxWidth) right = maxWidth;
+                        if (bot > maxHeight) bot = maxHeight;
+
+                        /* Do nothing if the rect is invalid (bottom > top
+                         * or left > right) */
+                        if (top <= bot && left <= right
+                            && top > 0 && left > 0) {
+                            clrrect_escape(VTERM, top, left,
+                                           bot, right, SP);
+                            VscrnIsDirty(VTERM);
+                        } else {
+                            debug(F111, "DECERA", "bad parameter(s) - ignore", 0);
+                        }
                     }
                     break;
                 case '{':       /* DECSERA - Selective Erase Rect Area */
