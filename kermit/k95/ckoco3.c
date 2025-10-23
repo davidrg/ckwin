@@ -12913,6 +12913,8 @@ doosc( void ) {
                     char* encoded = malloc(cliplen);
                     char* decoded = malloc(cliplen);
                     int rc;
+					memset( encoded, 0, cliplen ) ;
+				    memset( decoded, 0, cliplen ) ;
 
 #ifdef KUI
 #ifdef CK_SHELL_NOTIFY
@@ -12927,8 +12929,15 @@ doosc( void ) {
 
                     strncpy(encoded, apcbuf+apcnext - 1, cliplen);
 
+					/* Reset the base64 decoder */
+					b64tob8(NULL, 0, NULL, 0);
+
                     /* Base64 decode the clipboard data and set it */
                     rc = b64tob8(encoded, cliplen, decoded, cliplen);
+
+					/* Reset the base64 decoder some more */
+					b64tob8(NULL, 0, NULL, 0);
+
                     if (rc > 0) {
                         /* Worst case: each UTF-8 character becomes one UCS-2
                          * character. */
