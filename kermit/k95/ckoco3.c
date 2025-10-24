@@ -17878,7 +17878,11 @@ vtcsi(void)
                             break;
 						case 64: /* DECPCCM */
                             /* Page cursor coupling */
-							pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
+                            if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+							    pn[2] = vscrn[VTERM].page_cursor_coupling ? 1 : 2;
+                            } else {
+                                pn[2] = 3; /* permanently set */
+                            }
                             break;
                         case 66: /* DECNKM */
                             pn[2] = tt_keypad == TTK_APPL ? 1 : 2 ;
@@ -18004,7 +18008,11 @@ vtcsi(void)
                             }
                             break;
                         case 1048:    /* xterm - cursor saved? */
-                            pn[2] = saved[vmode] ? 1 : 2 ;
+                            if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                pn[2] = saved[vmode] ? 1 : 2 ;
+                            } else {
+                                pn[2] = 0;
+                            }
                             break;
 
                         case 2004:
@@ -19529,8 +19537,10 @@ vtcsi(void)
                             break;
                         case 64: /* DECPCCM */
                             /* Page cursor coupling */
-							vscrn[VTERM].page_cursor_coupling = TRUE;
-							vscrn[vmode].view_page = vscrn[vmode].cursor.p;
+                            if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+							    vscrn[VTERM].page_cursor_coupling = TRUE;
+							    vscrn[vmode].view_page = vscrn[vmode].cursor.p;
+                            }
                             break;
                         case 66: /* DECNKM */
                             /* Numeric Keyboard - Application */
@@ -19681,7 +19691,9 @@ vtcsi(void)
                             }
                             break;
                         case 1048:    /* xterm - save cursor as in DECSC */
-                            savecurpos(vmode, 1);
+                            if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                savecurpos(vmode, 1);
+                            }
                             break;
                         case 1049:    /* xterm - to alt buffer, clearing and saving ? */
                             if ((ISK95(tt_type) || ISXTERM(tt_type)) && vscrn[vmode].allow_alt_buf) {
@@ -20179,7 +20191,9 @@ vtcsi(void)
                                break;
                            case 64: /* DECPCCM */
                                /* Page cursor coupling */
-							   vscrn[VTERM].page_cursor_coupling = FALSE;
+                               if (ISVT330(tt_type_mode) || ISVT420(tt_type_mode)) {
+							       vscrn[VTERM].page_cursor_coupling = FALSE;
+                               }
                                break;
                            case 66: /* DECNKM */
                                /* Numeric Keyboard - Numeric */
@@ -20335,7 +20349,9 @@ vtcsi(void)
                                 }
                                 break;
                             case 1048:    /* xterm - restore cursor as in DECSC */
-                                restorecurpos(vmode, 1);
+                                if (ISK95(tt_type) || ISXTERM(tt_type)) {
+                                    restorecurpos(vmode, 1);
+                                }
                                 break;
                             case 1049:    /* xterm - to normal screen */
                                 if ((ISK95(tt_type) || ISXTERM(tt_type)) && vscrn[vmode].allow_alt_buf) {
@@ -20758,12 +20774,14 @@ vtcsi(void)
                 } else if (pn[1] == 9 && private) {
                     /* TODO: Enables communication from the printer port
                         to the host. Multi-session related? */
-                } else if (pn[1] == 10 && private && ISVT420(tt_type_mode)) {
+                } else if (pn[1] == 10 && private
+                        && (ISVT330(tt_type_mode) || ISVT420(tt_type_mode))) {
                     /* Print data on screen. DECPEX doesn't affect it. */
                     prtscreen(VTERM,
                               1,
                               VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
-                } else if (pn[1] == 11 && private && ISVT420(tt_type_mode)) {
+                } else if (pn[1] == 11 && private
+                        && (ISVT330(tt_type_mode) || ISVT420(tt_type_mode))) {
                     int p;
                     /* Print all pages. */
                     for (p = 0; p < term_max_page(VTERM); p++) {
