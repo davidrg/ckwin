@@ -5730,9 +5730,9 @@ reversescreen(BYTE vmode) {
     	viocell *   cell=NULL ;
 
     	for (r = 0; r < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); r++) {          /* Loop for each row */
-        	width = VscrnGetLineWidthEx(vmode,r, p) ;
+        	width = VscrnGetPageLineWidth(vmode,r, p) ;
         	for (c = 0;c < width;c++) { /* Loop for each character in row */
-            	cell = VscrnGetCellEx( vmode, c, r, p ) ;
+            	cell = VscrnGetPageCell( vmode, c, r, p ) ;
             	cell->video_attr = byteswapcolors(cell->video_attr);
         	}
     	}
@@ -5741,9 +5741,9 @@ reversescreen(BYTE vmode) {
         	viocell *   cell=NULL ;
 
         	for (r = 0; r < VscrnGetHeight(vmode)-(tt_status[VTERM]?1:0); r++) {      /* Loop for each row */
-            	width = VscrnGetLineWidthEx(vmode,r, p) ;
+            	width = VscrnGetPageLineWidth(vmode,r, p) ;
             	for (c = 0;c < width;c++) { /* Loop for each character in row */
-                	cell = VscrnGetCellEx( vmode, c, r, p) ;
+                	cell = VscrnGetPageCell( vmode, c, r, p) ;
                 	cell->video_attr = byteswapcolors(cell->video_attr);
                 }
             }
@@ -5826,12 +5826,12 @@ savscrbk(mode,name,disp,term) int mode; char * name; int disp; int term; {
         char    outbuf[MAXTERMCOL + 1];
         ULONG   beg, top, end;
 
-        beg = VscrnGetBegin(vmode, FALSE, TRUE);
-        top = VscrnGetTop(mode, FALSE, TRUE);
-        end = VscrnGetEnd(mode, FALSE, TRUE);
+        beg = VscrnGetPageBegin(vmode, FALSE, 0);
+        top = VscrnGetPageTop(mode, FALSE, 0);
+        end = VscrnGetPageEnd(mode, FALSE, 0);
 
         n = VscrnGetWidth(mode) * sizeof(viocell);      /* Line width, incl attributes */
-        for (i = term ? top : beg; i != end; i = (i+1)%VscrnGetBufferSize(mode,FALSE,TRUE)) {
+        for (i = term ? top : beg; i != end; i = (i+1)%VscrnGetPageBufferSize(mode,FALSE,0)) {
             /* For each scrollback line, i... */
             memcpy(cells,VscrnGetCells(mode,i-top,0),n);
 
