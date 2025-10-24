@@ -16556,6 +16556,7 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     static cell_video_attr_t colorval = cell_video_attr_init_vio_attribute(0x00);
     static cell_video_attr_t _colorattr = cell_video_attr_init_vio_attribute(0x00);
     static USHORT _vtattr=0x00;
+	static int _decstglt=100;
 
     /* We've been asked to be monochrome (or monochrome plus
      * attributes-as-color). Rather than forcing everything to black and white,
@@ -16568,11 +16569,12 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
         else colorattr = colornormal;
     }
 
-    if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr )
+    if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr && decstglt == _decstglt )
         goto done;
 
     colorval = _colorattr = colorattr;
     _vtattr = vtattr;
+	_decstglt = decstglt;
 
     if (vtattr == VT_CHAR_ATTR_NORMAL)
         goto done;
