@@ -2315,7 +2315,7 @@ videoline *
 VscrnGetLineFromTop( BYTE vmode, SHORT y, BOOL view_page )
 {
 	return VscrnGetPageLineFromTop(
-		vmode, y, view_page ? vscrn[vmode].view_page : vscrn[vmode].cursor.p);
+		vmode, y, vscrn_current_page_number(vmode, view_page));
 }
 
 /*----------------------------------------------------------+----------------*/
@@ -2559,11 +2559,9 @@ VscrnSetLineVtAttr( BYTE vmode, SHORT y, USHORT attr ) /* zero based * /
 */
 
 /*---------------------------------------------------------------------------*/
-/* VscrnGetCells                                            | Page: View     */
+/* VscrnGetCells                                            | Page: Specified*/
 /*---------------------------------------------------------------------------*/
-/* Currently this is only called by functions for printing what is on screen
- * (prtline, prtscreen) and saving the scrollback buffer. These all work on the
- * view page currently.
+/* Currently this is only called by functions for printing.
  */
 viocell *
 VscrnGetCells( BYTE vmode, SHORT y, int page )
@@ -2578,7 +2576,7 @@ VscrnGetCells( BYTE vmode, SHORT y, int page )
 /* VscrnGetCell                                             | Page: Specified*/
 /*---------------------------------------------------------------------------*/
 viocell *
-VscrnGetCellEx( BYTE vmode, SHORT x, SHORT y, int page )
+VscrnGetPageCell( BYTE vmode, SHORT x, SHORT y, int page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
@@ -2816,7 +2814,7 @@ VscrnGetLineWidth( BYTE vmode, SHORT y, BOOL view_page )
 }
 
 UCHAR
-VscrnGetLineWidthEx( BYTE vmode, SHORT y, int page )
+VscrnGetPageLineWidth( BYTE vmode, SHORT y, int page )
 {
     if ( vmode == VTERM && decsasd == SASD_STATUS )
         vmode = VSTATUS ;
@@ -2844,7 +2842,7 @@ VscrnGetTop( BYTE vmode, BOOL orStatusLine, BOOL view )
 {
     return VscrnGetPageTop(
 		vmode, orStatusLine,
-		view ? vscrn[vmode].view_page : vscrn[vmode].cursor.p);
+		vscrn_current_page_number(vmode, view));
 }
 
 
@@ -3002,7 +3000,7 @@ LONG
 VscrnSetTop( BYTE vmode, LONG y, BOOL orStatusLine, BOOL view )
 {
     return VscrnSetPageTop(vmode, y, orStatusLine,
-		view ? vscrn[vmode].view_page : vscrn[vmode].cursor.p);
+		vscrn_current_page_number(vmode, view));
 }
 
 
@@ -3073,7 +3071,7 @@ LONG
 VscrnSetBegin( BYTE vmode, LONG y, BOOL view )
 {
    return VscrnSetPageBegin(
-		vmode, y, view ? vscrn[vmode].view_page : vscrn[vmode].cursor.p);
+		vmode, y, vscrn_current_page_number(vmode, view));
 }
 
 /*----------------------------------------------------------+----------------*/
@@ -3101,8 +3099,7 @@ LONG
 VscrnSetEnd( BYTE vmode, LONG y, BOOL view )
 {
     return VscrnSetPageEnd(
-		vmode, y,
-		view ? vscrn[vmode].view_page : vscrn[vmode].cursor.p);
+		vmode, y, vscrn_current_page_number(vmode, view));
 }
 
 /*----------------------------------------------------------+----------------*/
@@ -3129,7 +3126,7 @@ VscrnGetBufferSize( BYTE vmode, BOOL orStatusLine, BOOL view )
 {
     return VscrnGetPageBufferSize(
 		vmode, orStatusLine,
-		view ? vscrn[vmode].view_page : vscrn[vmode].cursor.p);
+		vscrn_current_page_number(vmode, view));
 }
 
 /*----------------------------------------------------------+----------------*/
@@ -3198,6 +3195,11 @@ static unsigned short * hyperlinkmem[VNUM] = { NULL, NULL, NULL, NULL } ;
  *      Number of *scrollback lines* for page zero. All other pages have no
  *      scrollback and use MAXTERMROW or newsize, whichever is *smaller* as
  *      MAXTERMROW is the most K95 will ever render on screen.
+ *  new_page_count
+ *      Number of pages the vscrn should have.
+ *
+ * If newsize is smaller than the last call, or new_page_count different, the
+ * existing vscrn is discarded and a new one allocated.
  */
 ULONG
 VscrnSetBufferSize( BYTE vmode, ULONG newsize, int new_page_count )

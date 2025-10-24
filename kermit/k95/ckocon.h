@@ -1533,12 +1533,13 @@ _PROTOTYP( USHORT VscrnGetLineVtAttr, ( BYTE, SHORT ) ) ;
 _PROTOTYP( vtattrib VscrnGetVtCharAttr, ( BYTE, SHORT, SHORT ) ) ;
 _PROTOTYP( USHORT VscrnSetVtCharAttr, ( BYTE, SHORT, SHORT, vtattrib ) ) ;
 _PROTOTYP( viocell * VscrnGetCells, ( BYTE, SHORT, INT ) ) ;
-_PROTOTYP( viocell * VscrnGetCellEx, ( BYTE, SHORT, SHORT, int ) ) ;
+_PROTOTYP( viocell * VscrnGetPageCell, ( BYTE, SHORT, SHORT, int ) ) ;
 _PROTOTYP( viocell * VscrnGetCell, ( BYTE, SHORT, SHORT, BOOL ) ) ;
 _PROTOTYP( LONG VscrnMoveTop, ( BYTE, LONG ) ) ;
 _PROTOTYP( LONG VscrnMoveScrollTop, ( BYTE, LONG ) ) ;
 /*_PROTOTYP( LONG VscrnMoveBegin, ( BYTE, LONG ) ) ;
 _PROTOTYP( LONG VscrnMoveEnd, ( BYTE, LONG ) ) ;*/
+_PROTOTYP( UCHAR VscrnGetPageLineWidth, ( BYTE, SHORT, int ) ) ;
 _PROTOTYP( UCHAR VscrnGetLineWidth, ( BYTE, SHORT, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageTop, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetTop, ( BYTE, BOOL, BOOL ) ) ;
