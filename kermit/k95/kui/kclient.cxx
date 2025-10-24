@@ -34,7 +34,9 @@ extern int tt_cursor_blink;
 extern int tt_scrsize[];	/* Scrollback buffer size */
 extern int tt_status[];
 extern int tt_update;
+extern vscrn_t vscrn[];
 extern int scrollflag[];
+extern enum markmodes markmodeflag[] ;
 extern BYTE vmode;
 extern int win32ScrollUp, win32ScrollDown;
 extern int trueblink, trueunderline, trueitalic, truedim, truebold,
@@ -713,7 +715,7 @@ void KClient::checkBlink()
             cursorRect.right = cursorRect.left + font->getFontW();
             cursorRect.bottom = cursorRect.top + adjustedH;
 
-            if ( cursorena[vmode] ) {
+            if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking ) {
                 if ( !tt_cursor_blink ) {
                     if (!cursor_displayed && _inFocus || cursor_displayed && !_inFocus) {
                         ToggleCursor( hdcScreen(), &cursorRect );
@@ -841,7 +843,7 @@ void KClient::writeMe()
     if (cursorCount%300 == 0) {
         if (ikterm->getCursorPos() && (_inFocus || (!_inFocus && cursor_displayed)))
         {
-            if ( cursorena[vmode] ) {
+            if ( cursorena[vmode] && cursor_on_visible_page(vmode) || markmodeflag[vmode] != notmarking) {
                 if ( !tt_cursor_blink ) {
                     if (!cursor_displayed && _inFocus || cursor_displayed && !_inFocus) {
                         cursor_displayed = _inFocus;
@@ -1050,7 +1052,7 @@ void KClient::writeMe()
 
     // adjust the vertical scrollbar
     //
-    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : tt_scrsize[vmode];
+    int max = (clientPaint->beg == 0) ? clientPaint->end + 1 : clientPaint->page_length;
     vert->setRange( max, thi - (tt_status[vmode]?1:0), FALSE );
     horz->setRange( clientPaint->maxWidth, VscrnGetWidth(vmode) );
 

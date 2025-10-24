@@ -234,7 +234,7 @@ char * keydefptr = NULL;
 int keymac = 0;
 int keymacx = -1 ;
 int pmask = 0377 ;
-extern videobuffer vscrn[];
+extern vscrn_t vscrn[];
 
 ascreen                                 /* For saving screens: */
   vt100screen,                          /* terminal screen */
@@ -326,7 +326,6 @@ extern int tt_timelimit;
 static time_t keypress_t=0;             /* Time of last keypress */
 static time_t idlesnd_t=0;              /* Time of last idle send */
 extern int escstate ;
-extern int marginbot;                   /* Bottom of same, 1-based */
 int tt_async = 0;                       /* asynchronous connect mode? */
 int col_init = 0, row_init = 0;
 /*
@@ -741,30 +740,33 @@ clearcmdscreen(void) {
 #endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
-/* clearscrollback                                                           */
+/* clearscrollback                                          | Page: First    */
 /*---------------------------------------------------------------------------*/
+/* Clears the scrollback, which is associated with the first page only       */
 void
 clearscrollback( BYTE vmode ) {
-    ULONG bufsize = VscrnGetBufferSize(vmode) ;
+    ULONG bufsize = VscrnGetPageBufferSize(vmode, FALSE, 0) ;
 
-    VscrnSetBufferSize( vmode, 256 ) ;
-    VscrnSetBufferSize( vmode, bufsize ) ;
+    VscrnSetBufferSize( vmode, 256, vscrn[vmode].page_count ) ;
+    VscrnSetBufferSize( vmode, bufsize, vscrn[vmode].page_count ) ;
     scrollstatus[vmode] = FALSE ;
     scrollflag[vmode] = FALSE ;
     cursoron[vmode] = FALSE ;
-    cleartermscreen(vmode) ;
+    cleartermpage(vmode, 0) ;
 }
 
 /*---------------------------------------------------------------------------*/
-/* cleartermscreen                                                               */
+/* cleartermpage                                            | Page: Specified*/
 /*---------------------------------------------------------------------------*/
+/* Clears the specified terminal page without saving its contents to scrollback
+ */
 void
-cleartermscreen( BYTE vmode ) {
+cleartermpage( BYTE vmode, int page ) {
     int             x,y ;
     videoline *     line ;
 
     for ( y = 0 ; y < VscrnGetHeight(vmode) ; y++ ) {
-        line = VscrnGetLineFromTop(vmode,y) ;
+        line = VscrnGetPageLineFromTop(vmode,y,page) ;
         line->width = VscrnGetWidth(vmode) ;
         line->vt_line_attr = VT_LINE_ATTR_NORMAL ;
         for ( x = 0 ; x < MAXTERMCOL ; x++ ) {
@@ -779,6 +781,15 @@ cleartermscreen( BYTE vmode ) {
     else {
         vt100screen.ox = vt100screen.oy = 1 ;
         }
+}
+
+/*---------------------------------------------------------------------------*/
+/* cleartermscreen                                          | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* Clears the terminal page currently on screen */
+void
+cleartermscreen( BYTE vmode ) {
+	cleartermpage(vmode, vscrn[vmode].view_page);
 }
 
 /* POPUPHELP  --  Give help message for connect.  */
@@ -1755,7 +1766,7 @@ popuphelp(int mode, enum helpscreen x) {
                  " ROLL-MODE is OVERWRITE: New data appears on current screen."
                  );                     /* 22 */
         sprintf(line, " Scrollback buffer size: %d lines.",
-                VscrnGetBufferSize(mode)
+                VscrnGetBufferSize(mode, FALSE, TRUE)
                 );              /* 23 */
         helpline(pPopup, line); /* 24 */
         helpline(pPopup," Use SET TERMINAL SCROLLBACK to change it."); /* 25 */
@@ -2317,9 +2328,19 @@ ttgcwsz() {                             /* Get Command Window Size */
 }
 
 #ifndef NOLOCAL
+/*---------------------------------------------------------------------------*/
+/* checkscreenmode                                          | Page: View     */
+/*---------------------------------------------------------------------------*/
 /* CHECKSCREENMODE  --  Make sure we are in a usable mode */
 /* JEFFA ??? - I don't know what checkscreenmode() should do */
-
+/* DAVIDG - Back in February 1989 this function carried the comment
+ *     "Make sure we are in a 25 x 80 mode". I assume that was talking about
+ *     video modes on text-mode OS/2. By 1994 (C-Kermit 5A(190), the final open
+ *     source release until 2011), the comment was as above. The comment from
+ *     Jeff must have appeared sometime during the closed-source period. Here in
+ *     September 2025 I'm not really sure what this function should be/is doing
+ *     either, but it seems to need to care about the first page, rather than
+ *     the page the cursor is on (if there is any difference). */
 void
 checkscreenmode() {
 #ifndef KUI
@@ -2334,7 +2355,8 @@ checkscreenmode() {
     ttgcwsz();
 #endif /* KUI */
 
-    if ( VscrnGetBufferSize(VTERM) != tt_scrsize[VTERM] || VscrnGetWidth(VTERM) <= 0
+    if ( VscrnGetPageBufferSize(VTERM, FALSE, 0) != tt_scrsize[VTERM]
+        || VscrnGetWidth(VTERM) <= 0
         || VscrnGetHeight(VTERM) <= 0 || tt_cols[VTERM] <= 0 || tt_rows[VTERM] <= 0 ) {
         scrninitialized[VTERM] = 0;
 
@@ -2359,7 +2381,9 @@ checkscreenmode() {
             VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
         }
 
-        marginbot = VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0);
+        if (vscrn[VTERM].pages != NULL) {
+            vscrn_set_page_margin_bot(VTERM, 0, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+        }
     }
 
 #ifndef KUI
@@ -3400,9 +3424,12 @@ conect(int async) {
 
     /* configure cursor */
     {
-        int cursor_offset = (scrollstatus[VTERM] && tt_roll[VTERM]) ?
-          (vscrn[VTERM].top + vscrn[VTERM].linecount
-           - vscrn[VTERM].scrolltop)%vscrn[VTERM].linecount : 0 ;
+        int cursor_offset;
+        vscrn_page_t *page = &vscrn_view_page(VTERM);
+
+        cursor_offset = (scrollstatus[VTERM] && tt_roll[VTERM]) ?
+          (page->top + page->linecount
+           - page->scrolltop)%page->linecount : 0 ;
         if ( !cursorena[VTERM] ||
             vscrn[VTERM].cursor.y + cursor_offset >= VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
             cursoron[VTERM] = TRUE ;

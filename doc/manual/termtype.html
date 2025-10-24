@@ -132,7 +132,8 @@ forms modes are (yet) implemented.
 <dt><b>K95</b>
 <dd>A modern terminal personality that isn't an emulation of any particular
     hardware terminal but instead aims for compatibility with modern terminal
-    software typically developed for "xterm compatible" terminals. For more
+    software typically developed for "xterm compatible" terminals without
+    sacrificing compatibility with software expecting the DEC VT series. For more
     information, see <a href="tt_k95.html">The "k95" Terminal Type</a>.
 
 <p>
@@ -284,7 +285,7 @@ other features such as multiple pages.
     K95G supports 256-colors except on modern versions of windows were full
     24-bit color is supported.
 <li>Local editing is not currently supported.
-<li>Multiple pages are not supported.
+<li>Multiple pages are only supported for the VT320 and K95 terminal types
 <li>AIXTERM and HPTERM emulations are not X servers; they are terminal types
 that support the same escape and key sequences as the X-based terminal windows
 on AIX and HP-UX, respectively.

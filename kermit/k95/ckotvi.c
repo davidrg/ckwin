@@ -38,7 +38,7 @@ extern int  insertmode, tnlm, decssdt ;
 extern int  escstate, debses, decscnm, tt_cursor, ttmdm ;
 extern int  tt_type, tt_type_mode, tt_max, tt_answer, tt_status[VNUM], tt_szchng[] ;
 extern int  tt_cols[], tt_rows[], tt_wrap, tt_modechg ;
-extern int  wherex[], wherey[], margintop, marginbot ;
+extern int  wherex[], wherey[] ;
 extern int  marginbell, marginbellcol ;
 extern char answerback[], htab[] ;
 extern struct tt_info_rec tt_info[] ;
@@ -175,6 +175,7 @@ void
 tvictrl( int ch )
 {
     int x,y;
+    extern vscrn_t vscrn[];
 
     if ( !xprint ) {
     switch ( ch ) {
@@ -219,7 +220,7 @@ tvictrl( int ch )
     case LF:
         if ( debses )
             break;
-        if ( autoscroll && !protect || wherey[VTERM] < marginbot )  {
+        if ( autoscroll && !protect || wherey[VTERM] < vscrn_c_page_margin_bot(VTERM) )  {
             wrtch((char) LF);
         }
         break;
@@ -360,6 +361,7 @@ tviascii( int ch )
     int j,x,y;
     vtattrib attr ;
     viocell blankvcell;
+    extern vscrn_t vscrn[];
 
     if (printon && (is_xprint() || is_uprint()))
         prtchar(ch);
@@ -697,7 +699,7 @@ tviascii( int ch )
 
                 for ( x=0;x<=wherex[VTERM]-1;x++ ) {
                     if ( !VscrnGetVtCharAttr(VTERM, x, wherey[VTERM]-1).unerasable ) {
-                        int ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                        int ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -735,7 +737,7 @@ tviascii( int ch )
                 for ( y=0;y<=wherey[VTERM]-1; y++ ) {
                     for ( x=0;x<=wherex[VTERM]-1;x++ )
                         if ( !VscrnGetVtCharAttr(VTERM, x, y).unerasable ) {
-                            int ch = VscrnGetCell( VTERM, x, y )->c ;
+                            int ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                             if ( ch || !wy_nullsuppress ) {
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;
@@ -790,7 +792,7 @@ tviascii( int ch )
                                        strlen(tvi_send_start_protected_field));
                         fs = 1 ;
                     }
-                    ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1 )->c ;
+                    ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
                     if ( ch  || !wy_nullsuppress ) {
                         if ( tt_senddata ) {
                             unsigned char * bytes;
@@ -833,7 +835,7 @@ tviascii( int ch )
                                            strlen(tvi_send_start_protected_field));
                             fs = 1 ;
                         }
-                        ch = VscrnGetCell( VTERM, x, y )->c;
+                        ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                         if ( ch || !wy_nullsuppress ) {
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
@@ -1036,7 +1038,7 @@ tviascii( int ch )
                      ISTVI950(tt_type_mode) ) {
                     if ( !protect )
                         VscrnScroll(VTERM, DOWNWARD, wherey[VTERM] - 1,
-                                     marginbot - 1, 1, FALSE, SP);
+                                     vscrn_c_page_margin_bot(VTERM) - 1, 1, FALSE, SP, FALSE);
                 }
                 break;
             case 'F':
@@ -1242,10 +1244,11 @@ tviascii( int ch )
                     VscrnScroll(VTERM,
                              UPWARD,
                              wherey[VTERM] - 1,
-                             marginbot - 1,
+                             vscrn_c_page_margin_bot(VTERM) - 1,
                              1,
                              FALSE,
-                             SP);
+                             SP,
+                             FALSE);
                 }
                 break;
             case 'S': {
@@ -1270,7 +1273,7 @@ tviascii( int ch )
                     /* First figure out if we have markers, STX then ETX */
                     for ( y=0;y<h;y++ )
                         for ( x=0;x<w;x++ ) {
-                            ch = VscrnGetCell( VTERM, x, y )->c ;
+                            ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                             if ( ch == STX && xs < 0 && ys < 0 ) {
                                 xs = x+1 ;
                                 ys = y ;
@@ -1290,7 +1293,7 @@ tviascii( int ch )
                     for ( y=ys;y<=ye; y++ ) {
                         for ( x=(y==ys)?xs:0 ; x <= (y==ye?xe:w-1) ; x++ )
                             if ( !VscrnGetVtCharAttr(VTERM, x, y).unerasable ) {
-                                ch = VscrnGetCell( VTERM, x, y )->c;
+                                ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                                 if ( ch || !wy_nullsuppress ) {
                                     if ( tt_senddata ) {
                                         unsigned char * bytes;
@@ -1756,7 +1759,7 @@ tviascii( int ch )
                     /* First figure out if we have markers, STX then ETX */
                     for ( y=0;y<h;y++ )
                         for ( x=0;x<w;x++ ) {
-                            ch = VscrnGetCell( VTERM, x, y )->c ;
+                            ch = VscrnGetCell( VTERM, x, y, TRUE )->c ;
                             if ( ch == STX && xs < 0 && ys < 0 ) {
                                 xs = x+1 ;
                                 ys = y ;
@@ -1789,7 +1792,7 @@ tviascii( int ch )
                                                strlen(tvi_send_start_protected_field));
                                 fs = 1 ;
                             }
-                            ch = VscrnGetCell( VTERM, x, y )->c;
+                            ch = VscrnGetCell( VTERM, x, y, TRUE )->c;
                             if ( ch || !wy_nullsuppress ) {
                                 if ( tt_senddata ) {
                                     unsigned char * bytes;

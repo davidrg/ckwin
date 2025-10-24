@@ -7904,6 +7904,11 @@ static char *hxyterm[] = {
 "  Selects type type of terminal to emulate.  Type SET TERMINAL TYPE ? to",
 "  see a complete list.",
 " ",
+"SET TERMINAL ALTERNATE-BUFFER { ENABLED, DISABLED }",
+"  Enables or disables the escape sequence for switching to the alternate",
+"  terminal screen buffer. This setting can also be changed via an escape",
+"  sequence so setting it to disabled may not prevent its use entirely.",
+" ",
 "SET TERMINAL ANSWERBACK { OFF, ON }",
 "  Disables/enables the ENQ/Answerback sequence (Kermit version term-type).",
 " ",
@@ -8436,6 +8441,21 @@ static char *hxyterm[] = {
 "  Tells how long to pause between sending each character to the host during",
 "  CONNECT mode.  Normally not needed but sometimes required to work around",
 "  TRANSMISSION BLOCKED conditions when pasting into the terminal window.",
+" ",
+
+"SET TERMINAL PAGE ACTIVE <page>",
+"  Moves the cursor to the specified page. If Page Cursor Coupling is enabled,",
+"  the display will move to that page also. The cursor is not sent to home.",
+" ",
+
+"SET TERMINAL PAGE COUNT <number>",
+"  Specifies the number of pages available, up to the maximum supported by the",
+"  currently selected terminal type.",
+" ",
+
+"SET TERMINAL PAGE CURSOR-COUPLING { ON, OFF}",
+"  Enables or disables Page Cursor Coupling. When enabled, moving the cursor",
+"  to another page moves the display to that page to keep the cursor visible.",
 " ",
 
 #ifdef PCTERM

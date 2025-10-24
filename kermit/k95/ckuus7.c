@@ -941,6 +941,7 @@ int nfntab = (sizeof(fntab) / sizeof(struct keytab));
 /* Terminal parameters table */
 static struct keytab trmtab[] = {
 #ifdef OS2
+    { "alternate-buffer", XYTALTBUF, 0 },
     { "answerback",    XYTANS,    0 },
 #endif /* OS2 */
 #ifdef CK_APC
@@ -1036,6 +1037,7 @@ static struct keytab trmtab[] = {
     { "newline-mode",  XYTNL,     0 },
 #ifdef OS2
     { "output-pacing", XYTPAC,    0 },
+    { "page",          XYTPAGE,   0 },
 #ifdef PCTERM
     { "pcterm",        XYTPCTERM, 0 },
 #endif /* PCTERM */
@@ -1187,6 +1189,21 @@ struct keytab graphsettab[] = {  /* DEC VT Graphic Sets */
     { "keyboard", TT_GR_KBD, 0 }
 };
 int ngraphset = (sizeof(graphsettab) / sizeof(struct keytab));
+
+struct keytab altbufktab[] = {		/* Set TERM ALTERNATE-BUFFER */
+        { "active",    AB_ACTIVE,   CM_INV},
+        { "disabled",  AB_DISABLED, 0 },
+        { "enabled",   AB_ENABLED,  0 },
+        { "inactive",  AB_INACTIVE, CM_INV }
+};
+int naltbuf = (sizeof(altbufktab) / sizeof(struct keytab));
+
+struct keytab tpagektab[] = {		/* Set TERM PAGE */
+        { "active",            P_ACTIVE, 0 },
+        { "count",             P_COUNT,  0 },
+        { "cursor-coupling",   P_PCCM,   0 }
+};
+int npage = (sizeof(tpagektab) / sizeof(struct keytab));
 #endif /* OS2 */
 
 struct keytab adltab[] = {              /* Autodownload Options */
@@ -1410,6 +1427,7 @@ int tt_cursorena_usr = 1;               /* Users Terminal cursor enabled */
 int tt_cursor_blink = 1;                /* Terminal Cursor Blink */
 int tt_answer = 0;                      /* Terminal answerback (disabled) */
 int tt_scrsize[VNUM] = {512,512,512,1}; /* Terminal scrollback buffer size */
+int tt_pages[VNUM] = {1,1,1,1};         /* Number of terminal pages */
 int tt_roll[VNUM] = {1,1,1,1};          /* Terminal roll (on) */
 int tt_rkeys[VNUM] = {1,1,1,1};		/* Terminal roll keys (send) */
 int tt_rkeys_saved[VNUM] = {1,1,1,1};   /* Terminal roll keys (send, saved) */
@@ -4983,6 +5001,35 @@ settrm() {
         return(success = 1);
 
 #ifdef OS2
+      case XYTALTBUF: {                 /* SET TERMINAL ALTERNATE-BUFFER */
+          if ((x = cmkey(altbufktab,naltbuf,"Alternate Buffer setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+
+          if ((y = cmcfm()) < 0)
+              return(y);
+
+          switch(x) {
+            case AB_DISABLED:
+              set_alternate_buffer_enabled(VTERM, FALSE);
+              break;
+            case AB_ENABLED:
+              set_alternate_buffer_enabled(VTERM, TRUE);
+              break;
+            case AB_INACTIVE: {
+                from_alternate_buffer(VTERM);
+              }
+              break;
+            case AB_ACTIVE: {
+                to_alternate_buffer(VTERM);
+              }
+              break;
+          }
+        }
+        return(success = 1);
+        break;
+
       case XYTANS: {                    /* SET TERMINAL ANSWERBACK */
 /*
   NOTE: We let them enable and disable the answerback sequence, but we
@@ -5476,13 +5523,15 @@ settrm() {
 #endif /* PCFONTS */
 
       case XYTVCH: {
-          extern int pheight, marginbot, cmd_rows, cmd_cols;
+          extern int pheight, cmd_rows, cmd_cols;
           if ((x = cmkey(tvctab,ntvctab,"",isWin95()?"win95-safe":"enabled",
                          xxstring)) < 0)
             return(x);
           if ((y = cmcfm()) < 0) return(y);
 #ifndef KUI
           if (x != tt_modechg) {
+              int p;
+              extern vscrn_t vscrn[];
               switch (x) {
                 case TVC_DIS:
                   /* When disabled the heights of all of the virtual screens */
@@ -5490,8 +5539,11 @@ settrm() {
                   /* window and may not be changed.                          */
                   /* The width of the window may not be altered.             */
                   tt_modechg = TVC_ENA;                 /* Temporary */
-                  if (marginbot > pheight-(tt_status[VTERM]?1:0))
-                    marginbot = pheight-(tt_status[VTERM]?1:0);
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      if (vscrn_page_margin_bot(VTERM,p) > pheight-(tt_status[VTERM]?1:0)) {
+                          vscrn_set_page_margin_bot(VTERM, p, pheight-(tt_status[VTERM]?1:0));
+                      }
+                  }
                   tt_szchng[VCMD] = 1 ;
                   tt_rows[VCMD] = pheight;
                   VscrnInit(VCMD);
@@ -5536,7 +5588,9 @@ settrm() {
                   cmd_rows = y;
                   cmd_cols = 80;
 
-                  marginbot = y-(tt_status[VTERM]?1:0);
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      vscrn_set_page_margin_bot(VTERM, p, y-(tt_status[VTERM]?1:0));
+                  }
                   tt_szchng[VTERM] = 2;
                   tt_rows[VTERM] = y - (tt_status[VTERM]?1:0);
                   tt_cols[VTERM] = 80;
@@ -5551,58 +5605,82 @@ settrm() {
 #endif /* KUI */
       }
       case XYTSTAT: {
-          extern int marginbot;
           if ((y = cmkey(onoff,2,"","on",xxstring)) < 0) return(y);
           if ((x = cmcfm()) < 0) return(x);
           if (y != tt_status[VTERM] || y != tt_status_usr[VTERM]) {
-              /* Might need to fixup the margins */
-              if ( marginbot == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) )
-                if (y) {
-                    marginbot--;
-                } else {
-                    marginbot++;
-                }
-              tt_status_usr[VTERM] = tt_status[VTERM] = y;
+              int p;
+              extern vscrn_t vscrn[];
+              extern bool decssdt_override;
+
+              /* See the comment in ckoco3.c, function settermstatus for a
+               * description of what this is and why. */
+              int resize_window = ISK95(tt_type_mode) || ISVT520(tt_type_mode)
+                    || decssdt_override;
+
               if (y) {
-                    /* If the status line is turned off before a connection is
-                     * made (or the terminal reset), the status line type gets
-                     * set to blank. If we don't change the type here, then it
-                     * gets turned on but left blank so there is just a black
-                     * line at the bottom of the screen showing nothing. */
-                    if (decssdt == SSDT_BLANK) {
-                        decssdt = SSDT_INDICATOR;
-                    }
-                    tt_szchng[VTERM] = 2;
-                    tt_rows[VTERM]--;
-                    VscrnInit(VTERM);  /* Height set here */
-#ifdef TNCODE
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      tn_snaws();
-#endif /* TNCODE */
-#ifdef RLOGCODE
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      rlog_naws();
-#endif /* RLOGCODE */
-#ifdef SSHBUILTIN
-                    if (TELOPT_ME(TELOPT_NAWS))
-                      ssh_snaws();
-#endif /* SSHBUILTIN */
+                  /* If the status line is turned off before a connection is
+                   * made (or the terminal reset), the status line type gets
+                   * set to blank. If we don't change the type here, then it
+                   * gets turned on but left blank so there is just a black
+                   * line at the bottom of the screen showing nothing. */
+                  if (decssdt == SSDT_BLANK) {
+                      decssdt = SSDT_INDICATOR;
+                  }
+              }
+
+              if (resize_window) {
+                  /* Change screen height only - not terminal height */
+		          tt_status[VTERM] = y;
+		          VscrnSetHeight( VTERM, tt_rows[VTERM]+(tt_status[VTERM]?1:0) );
               } else {
-                  tt_szchng[VTERM] = 1;
-                  tt_rows[VTERM]++;
-                  VscrnInit(VTERM);     /* Height set here */
+                  /* Might need to fixup the margins */
+                  for (p = 0; p < vscrn[VTERM].page_count; p++) {
+                      int margin = vscrn_page_margin_bot(VTERM,p);
+                      if ( margin == VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0) ) {
+                          if ( y ) {
+                              margin-- ;
+                          } else {
+                              margin++ ;
+                          }
+                          vscrn_set_page_margin_bot(VTERM, p, margin);
+                      }
+                  }
+                  tt_status_usr[VTERM] = tt_status[VTERM] = y;
+                  if (y) {
+                        tt_szchng[VTERM] = 2;
+                        tt_rows[VTERM]--;
+                        VscrnInit(VTERM);  /* Height set here */
 #ifdef TNCODE
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    tn_snaws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          tn_snaws();
 #endif /* TNCODE */
 #ifdef RLOGCODE
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    rlog_naws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          rlog_naws();
 #endif /* RLOGCODE */
 #ifdef SSHBUILTIN
-                  if (TELOPT_ME(TELOPT_NAWS))
-                    ssh_snaws();
+                        if (TELOPT_ME(TELOPT_NAWS))
+                          ssh_snaws();
 #endif /* SSHBUILTIN */
+
+
+                  } else {
+                      tt_szchng[VTERM] = 1;
+                      tt_rows[VTERM]++;
+                      VscrnInit(VTERM);     /* Height set here */
+#ifdef TNCODE
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        tn_snaws();
+#endif /* TNCODE */
+#ifdef RLOGCODE
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+                      if (TELOPT_ME(TELOPT_NAWS))
+                        ssh_snaws();
+#endif /* SSHBUILTIN */
+                  }
               }
           }
           return(1);
@@ -6089,6 +6167,54 @@ settrm() {
           initvik = 1;                  /* Update VIK table */
           return(1);
       }
+
+      case XYTPAGE: {                   /* Paging settings */
+          extern int user_pages;
+          extern vscrn_t vscrn[];
+
+          if ((x = cmkey(tpagektab,npage,"Paging setting","",
+                         xxstring)) < 0) {
+              return (x);
+          }
+
+          switch(x) {
+            case P_COUNT:
+              /* Set current number of pages. Prompt for a number */
+              y = cmnum("Number of pages",
+                    ckitoa(ttype_pages()),10,&x,xxstring);
+              if ((x = setnum(&user_pages,x,y,ttype_pages())) < 0)
+                    return(x);
+              if (ISK95(tt_type))  tt_pages[VTERM] += 1;
+              return(success = 1);
+              break;
+
+            case P_PCCM:
+              /* Set PCCM on or off. Prompt for on/off */
+              if ((x = seton(&vscrn[VTERM].page_cursor_coupling)) < 0) return(x);
+              vscrn[VTERM].view_page = vscrn[VTERM].cursor.p;
+              return(success = 1);
+              break;
+
+            case P_ACTIVE: {
+              int pn;
+
+              /* Set current number of pages. Prompt for a number */
+              y = cmnum("Move cursor to page", "1",10,&x,xxstring);
+              if ((x = setnum(&pn,x,y,term_max_page(VTERM) + 1)) < 0)
+                    return(x);
+
+              pn -= 1;    /* page numbers are 0-based internally */
+              switch_to_page(VTERM, pn, vscrn[VTERM].page_cursor_coupling);
+
+              return(success = 1);
+              }
+              break;
+          }
+
+          return(success = 1);
+      }
+      break;
+
 
 #ifdef PCTERM
       case XYTPCTERM:                   /* PCTERM Keyboard Mode */

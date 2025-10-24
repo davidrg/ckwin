@@ -140,6 +140,15 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    older, and 64bit Windows systems with an Alpha or Itanium CPU. Newly
    supported includes: Windows 95/98/ME, Windows NT 3.51/4.0/2000 on 
    x86/Alpha/MIPS/PowerPC, and Windows 8/10/11 on 32bit and 64bit ARM.
+ - Xterm alternate screen (K95 terminal type only). Can be disabled with the
+   new command `SET TERMINAL ALTERNATE-BUFFER DISABLED`
+ - VT330/VT420 page memory - available to the K95 terminal type and (until a
+   VT420 emulation is added) the VT320 terminal type. 
+   [DECCRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccra) and
+   [DECRQCRA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqcra) can now
+   work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
+   and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
+   now include page information
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -276,10 +285,15 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - DECSM/DECRM/DECRQM modes
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
+   - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell
    - [1043](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-raise-window): Due to windows limitations, same behavior as above
+   - [1046](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-ena-altbuf): Enable switching to/from alternate screen buffer
+   - [1047](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-use-altbuf): Switch to alternate screen
+   - [1048](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-1048): Save cursor as with DECSC
+   - [1049](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-1049): Switch to alternate screen saving and clearing
    - [2026](https://davidrg.github.io/ckwin/dev/ctlseqs.html#bsu): Synchronized Output Mode (K95 terminal type only)
  - DECRQM 9, 1000, 1002, 1003, 1006, 1015, 2004
  - [XTWINOPS Refresh Window](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xtwinops-refresh)
@@ -289,6 +303,17 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    [DECINVM](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decinvm),
    [DECMSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-msr),
    [DECCKSR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#deccksr)
+ - VT330/VT420 paging - marked as available for VT420 (and so, temporarily, VT320):
+   - [NP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#np) - Next Page
+   - [PP](https://davidrg.github.io/ckwin/dev/ctlseqs.html#pp) - Previous Page
+   - [PPA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppa) - Page Position Absolute
+   - [PPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppr) - Page Position Relative
+   - [PPB](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppb) - Page Position Backward
+   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Session Page Memory Allocation
+   - [DECMC-10](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-10) - Print Composed Main Display
+   - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
+   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages
+   - [DECSNLS](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decsnls) - Set number of lines per screen
 
 ### Fixed Bugs
  - Fixed an issue introduced in beta 7 which could cause SSH connections made
@@ -351,6 +376,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Fixed an issue in the dialer which could cause it to crash if the path was
    too long
  - The x86-64 version of Kermit 95 now works on Windows XP x64 Edition
+ - Fixed DECCRA not copying attributes or obeying DECOM
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 
