@@ -5919,9 +5919,9 @@ clrpage( BYTE vmode, CHAR fillchar, int page ) {
         vmode = VSTATUS ;
 
     if ( IS97801(tt_type_mode) ) {
-        VscrnScrollPage(vmode,UPWARD,vscrn_c_page_margin_top(VTERM)-1,
+        VscrnScrollPage(vmode,UPWARD,vscrn_page_margin_top(VTERM,page)-1,
                      	vscrn_c_page_margin_bot(VTERM)-1,
-                     	vscrn_c_page_margin_bot(VTERM)-vscrn_c_page_margin_top(VTERM)+1,
+                     	vscrn_c_page_margin_bot(VTERM)-vscrn_page_margin_top(VTERM,page)+1,
                      	vscrn_c_page_margin_top(VTERM)==1 &&
                      	vscrn_c_page_margin_bot(VTERM)==(VscrnGetHeight(vmode)-(tt_status[vmode]?1:0)),
                      	fillchar,
@@ -6027,7 +6027,7 @@ clreoscr_escape( BYTE vmode, CHAR fillchar ) {
     if ( IS97801(tt_type_mode) )
         h = vscrn_c_page_margin_bot(VTERM)-1;
     else
-        h = VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;  /* TODO */
+        h = VscrnGetHeight(vmode)-(tt_status[vmode]?1:0) ;
     for ( y=wherey[vmode] ; y<h ; y++)
     {
         line = VscrnGetLineFromTop(vmode, y, FALSE) ;
@@ -24859,7 +24859,7 @@ vtescape( void )
 		  for ( x=start_x; 
 			x < (start_y == end_y ? end_x : MAXTERMCOL); 
 			x++ ) {
-		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, TRUE);
+		      viocell * pcell = VscrnGetCell(VTERM,x-1,start_y-1, FALSE);
 		      pcell->video_attr = attribute;
 		      VscrnWrtCell( VTERM, *pcell, attrib,
 				    start_y - 1,
@@ -24868,7 +24868,7 @@ vtescape( void )
 		  if ( start_y != end_y ) {
 		      for ( y=start_y+1; y<end_y; y++) {
 			  for ( x=0; x<MAXTERMCOL; x++ ) {
-			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, TRUE);
+			      viocell * pcell = VscrnGetCell(VTERM,x-1,y-1, FALSE);
 			      pcell->video_attr = attribute;
 			      VscrnWrtCell( VTERM, *pcell, attrib,
 					    y - 1,
@@ -24878,7 +24878,7 @@ vtescape( void )
 		      for ( x=0; 
 			    x <= end_x; 
 			    x++ ) {
-			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, TRUE);
+			  viocell * pcell = VscrnGetCell(VTERM,x-1,end_y-1, FALSE);
 			  pcell->video_attr = attribute;
 			  VscrnWrtCell( VTERM, *pcell, attrib,
 					end_y - 1,

@@ -2785,7 +2785,7 @@ hpascii( int ch )
                     int x;
                     for ( x=wherex[VTERM]-1;x<VscrnGetWidth(VTERM);x++ ) {
                         if ( !VscrnGetVtCharAttr(VTERM, x, wherey[VTERM]-1).unerasable ) {
-                            unsigned short ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, TRUE )->c ;
+                            unsigned short ch = VscrnGetCell( VTERM, x, wherey[VTERM]-1, FALSE )->c ;
                             if ( tt_senddata ) {
                                 unsigned char * bytes;
                                 int nbytes;

@@ -1232,7 +1232,7 @@ void markdownhalfscreen(BYTE vmode) {
 }
 
 /*---------------------------------------------------------------------------*/
-/* markupscreen                                             | Page: VIEW     */
+/* markupscreen                                             | Page: View     */
 /*---------------------------------------------------------------------------*/
 /* Mark mode: up one screen */
 void
@@ -1326,7 +1326,7 @@ markuphalfscreen( BYTE vmode ) {
 }
 
 /*---------------------------------------------------------------------------*/
-/* markhomescreen                                           | Page: VIEW     */
+/* markhomescreen                                           | Page: View     */
 /*---------------------------------------------------------------------------*/
 void
 markhomescreen(BYTE vmode )
@@ -1396,7 +1396,7 @@ markhomescreen(BYTE vmode )
 }
 
 /*---------------------------------------------------------------------------*/
-/* markendscreen                                            | Page: VIEW     */
+/* markendscreen                                            | Page: View     */
 /*---------------------------------------------------------------------------*/
 /* Mark to the end of the screen */
 void

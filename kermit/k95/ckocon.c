@@ -740,7 +740,7 @@ clearcmdscreen(void) {
 #endif /* KUI */
 
 /*---------------------------------------------------------------------------*/
-/* clearscrollback                                          | Page: FIRST    */
+/* clearscrollback                                          | Page: First    */
 /*---------------------------------------------------------------------------*/
 /* Clears the scrollback, which is associated with the first page only       */
 void
@@ -756,7 +756,7 @@ clearscrollback( BYTE vmode ) {
 }
 
 /*---------------------------------------------------------------------------*/
-/* cleartermpage                                            | Page: SPECIFIED*/
+/* cleartermpage                                            | Page: Specified*/
 /*---------------------------------------------------------------------------*/
 /* Clears the specified terminal page without saving its contents to scrollback
  */
@@ -784,7 +784,7 @@ cleartermpage( BYTE vmode, int page ) {
 }
 
 /*---------------------------------------------------------------------------*/
-/* cleartermscreen                                          | Page: VIEW     */
+/* cleartermscreen                                          | Page: View     */
 /*---------------------------------------------------------------------------*/
 /* Clears the terminal page currently on screen */
 void
@@ -2329,7 +2329,7 @@ ttgcwsz() {                             /* Get Command Window Size */
 
 #ifndef NOLOCAL
 /*---------------------------------------------------------------------------*/
-/* checkscreenmode                                          | Page: VIEW     */
+/* checkscreenmode                                          | Page: View     */
 /*---------------------------------------------------------------------------*/
 /* CHECKSCREENMODE  --  Make sure we are in a usable mode */
 /* JEFFA ??? - I don't know what checkscreenmode() should do */
@@ -2339,9 +2339,8 @@ ttgcwsz() {                             /* Get Command Window Size */
  *     source release until 2011), the comment was as above. The comment from
  *     Jeff must have appeared sometime during the closed-source period. Here in
  *     September 2025 I'm not really sure what this function should be/is doing
- *     either, but I'm going to assume it should care about the page that is
- *     on screen, rather than the page the cursor is on (if there is any
- *     difference). */
+ *     either, but it seems to need to care about the first page, rather than
+ *     the page the cursor is on (if there is any difference). */
 void
 checkscreenmode() {
 #ifndef KUI
@@ -2383,7 +2382,7 @@ checkscreenmode() {
         }
 
         if (vscrn[VTERM].pages != NULL) {
-            vscrn_setc_page_margin_bot(VTERM, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
+            vscrn_set_page_margin_bot(VTERM, 0, VscrnGetHeight(VTERM)-(tt_status[VTERM]?1:0));
         }
     }
 

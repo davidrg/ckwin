@@ -2835,7 +2835,7 @@ VscrnGetPageTop( BYTE vmode, BOOL orStatusLine, int page )
 }
 
 /*----------------------------------------------------------+----------------*/
-/* VscrnGetTop                                              | Page: Cursor   */
+/* VscrnGetTop                                              | Page: Specified*/
 /*----------------------------------------------------------+----------------*/
 ULONG
 VscrnGetTop( BYTE vmode, BOOL orStatusLine, BOOL view )
