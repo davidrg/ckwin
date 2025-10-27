@@ -104,6 +104,7 @@ extern vtattrib attrib, cmdattrib;
 extern bool cursoron[], cursorena[],scrollflag[], scrollstatus[], flipscrnflag[] ;
 extern TID tidTermScrnUpd ;
 
+#ifndef KUI
 extern
 #ifdef NT
 HANDLE
@@ -111,6 +112,7 @@ HANDLE
 HVIO
 #endif
 VioHandle;
+#endif /* ! KUI */
 
 #ifdef OS2MOUSE
 extern int tt_mouse ;
@@ -143,6 +145,7 @@ int pwidth, pheight;            /* Physical screen width, height */
 int ttgcwsz();                  /* ckocon.c */
 int os2settitle(char *, int);   /* ckotio.c */
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* ReadCellStr                                                               */
 /*---------------------------------------------------------------------------*/
@@ -277,7 +280,9 @@ ReadCellStr( viocell * CellStr, PUSHORT Length, USHORT Row, USHORT Column )
     return VioReadCellStr( (PCH) CellStr, Length, Row, Column, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* KUI */
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* WrtCellStr                                                                */
 /*---------------------------------------------------------------------------*/
@@ -514,7 +519,7 @@ WrtCellStr( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column )
    return VioWrtCellStr( (PCH) CellStr, Length*sizeof(viocell), Row, Column, VioHandle ) ;
 #endif /* NT */
 }
-
+#endif /* ! KUI */
 
 
 
@@ -533,6 +538,7 @@ VscrnForceFullUpdate(void)
     os2settitle(NULL,1);                /* Force a Title update */
 }
 
+#ifndef KUI
 USHORT
 WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
                 USHORT Height, USHORT Width )
@@ -618,6 +624,7 @@ WrtCellStrDiff( viocell * CellStr, USHORT Length, USHORT Row, USHORT Column,
     return rc ;
 
 }
+#endif /* ! KUI */
 
 #ifndef KUI
 /*---------------------------------------------------------------------------*/
@@ -760,6 +767,7 @@ WrtNCell( viocell Cell, USHORT Times, USHORT Row, USHORT Column )
 }
 #endif /* KUI */
 
+#ifndef ONETERMUPD
 /*---------------------------------------------------------------------------*/
 /* WrtCharStrAtt                                                             */
 /*---------------------------------------------------------------------------*/
@@ -900,6 +908,7 @@ WrtCharStrAtt( PCH CharStr, USHORT Length, USHORT Row, USHORT Column,
    return VioWrtCharStrAtt( CharStr, Length, Row, Column, Attr, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* ! ONETERMUPD */
 
 #ifndef KUI
 /*---------------------------------------------------------------------------*/
@@ -1311,6 +1320,7 @@ SetMode( PCK_VIDEOMODEINFO ModeData )
 }
 #endif /* KUI */
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* GetCurPos                                                                 */
 /*---------------------------------------------------------------------------*/
@@ -1340,7 +1350,9 @@ USHORT GetCurPos( PUSHORT Row, PUSHORT Column )
     return VioGetCurPos( Row, Column, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* !KUI */
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* SetCurPos                                                                 */
 /*---------------------------------------------------------------------------*/
@@ -1367,7 +1379,9 @@ USHORT SetCurPos( USHORT Row, USHORT Column )
    return VioSetCurPos( Row, Column, VioHandle ) ;
 #endif /* NT */
 }
+#endif /* ! KUI */
 
+#ifndef KUI
 /*---------------------------------------------------------------------------*/
 /* GetCurType                                                                */
 /*---------------------------------------------------------------------------*/
@@ -1445,6 +1459,7 @@ USHORT SetCurType( PCK_CURSORINFO CursorData )
 #endif /* NT */
     return rc ;
 }
+#endif /* !KUI */
 
 BOOL
 IsOS2FullScreen( void )
@@ -4385,6 +4400,7 @@ IsCellPartOfURL( BYTE mode, USHORT row, USHORT col )
  */
 #define URLMINCNT 4096
 #define NEW_EXCLUSIVE 1
+
 void
 TermScrnUpd( void * threadinfo)
 {
@@ -5245,6 +5261,7 @@ os2ResetFont( void )
 /*---------------------------------------------------------------------------*/
 void
 killcursor( BYTE vmode ) {
+#ifndef KUI
     CK_CURSORINFO crsr_info;
     debug(F100,"killcursor","",0);
     if (!cursoron[vmode])                       /* It's already off */
@@ -5255,6 +5272,7 @@ killcursor( BYTE vmode ) {
     {
         cursoron[vmode] = FALSE;
     }
+#endif /* ! KUI */
 }
 
 /*---------------------------------------------------------------------------*/
@@ -5262,6 +5280,7 @@ killcursor( BYTE vmode ) {
 /*---------------------------------------------------------------------------*/
 void
 newcursor( BYTE vmode ) {
+#ifndef KUI
     CK_CURSORINFO vci;
 
     debug(F100,"newcursor","",0);
@@ -5303,6 +5322,7 @@ newcursor( BYTE vmode ) {
         cursoron[vmode] = TRUE;
         VscrnIsDirty(vmode);
     }
+#endif /* ! KUI */
 }
 
 /*---------------------------------------------------------------------------*/
