@@ -1291,6 +1291,19 @@ typedef struct _vtattrib {      /* Character (SGR) attributes, 1 bit each */
 
 #define WY_LINE_ATTR_PROTECTED        ((USHORT) 0x08)
 
+#ifdef KUI
+/* These currently only used by K95G */
+#define CA_ATTR_NONE                  ((CHAR) 0x00)
+#define CA_ATTR_LEFT_BORDER           ((CHAR) 0x01)
+#define CA_ATTR_TOP_BORDER            ((CHAR) 0x02)
+#define CA_ATTR_RIGHT_BORDER          ((CHAR) 0x04)
+#define CA_ATTR_BOTTOM_BORDER         ((CHAR) 0x08)
+#define CA_ATTR_RESERVED_4            ((CHAR) 0x10)
+#define CA_ATTR_RESERVED_3            ((CHAR) 0x20)
+#define CA_ATTR_RESERVED_2            ((CHAR) 0x40)
+#define CA_ATTR_RESERVED_1            ((CHAR) 0x80)
+#endif /* KUI */
+
 /* On OS/2, this struct must be a pair of unsigned chars - the first a
  * character, the second its attributes. */
 typedef struct cell_struct {          /* to be used with VioWrtNCell() */
@@ -1306,6 +1319,9 @@ typedef struct videoline_struct {
     unsigned short      width ;           /* number of valid chars */
     viocell *           cells ;           /* valid to length width */
     unsigned short *    vt_char_attrs ;   /* bitwise & of VT_CHAR_ATTR Values */
+#ifdef KUI
+    unsigned char  *    cell_attrs;       /* bitwise & of CA_ATTR Values */
+#endif /* KUI */
     unsigned short *    hyperlinks;       /* hyperlink index values */
     unsigned short      vt_line_attr ;
     short               markbeg ;

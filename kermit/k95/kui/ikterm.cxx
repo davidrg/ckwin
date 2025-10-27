@@ -65,7 +65,7 @@ void getMaxSizes( int* column, int* row )
 ------------------------------------------------------------------------*/
 IKTerm::IKTerm( BYTE whichbuffer, K_CLIENT_PAINT* clipaint )
     : vnum( whichbuffer )
-    , kcp( clipaint ), mouseCaptured(0), vt_char_attrs(0)
+    , kcp( clipaint ), mouseCaptured(0), vt_char_attrs(0), cell_attrs(0)
 {
 }
 
@@ -126,6 +126,7 @@ BOOL IKTerm::getDrawInfo()
     textBuffer = kcp->textBuffer;
     attrBuffer = kcp->attrBuffer;
     effectBuffer = kcp->effectBuffer;
+    cellAttrBuffer = kcp->cellAttrBuffer;
     lineAttr = kcp->lineAttr;
     unsigned long maxWidth = 0;
 
@@ -135,6 +136,7 @@ BOOL IKTerm::getDrawInfo()
             for ( x= 0; x < xs ; x++ ) {
                 textBuffer[c++] =' ';
                 attrBuffer[c++] = defaultattribute;
+                cellAttrBuffer[c++] = '\0';
                 effectBuffer[c++] = '\0';
             }
     }
@@ -169,6 +171,7 @@ BOOL IKTerm::getDrawInfo()
                         return FALSE;
 #endif /* NEW_EXCLUSIVE */
                     vt_char_attrs = line->vt_char_attrs[x+xho];
+                    cell_attrs = line->cell_attrs[x+xho];
 #ifdef NEW_EXCLUSIVE
                     /* Give mutex back */
                     ReleaseVscrnMutex(vnum) ;
@@ -192,6 +195,7 @@ BOOL IKTerm::getDrawInfo()
                                 cell.video_attr,
                                 vt_char_attrs);
                     effectBuffer[c+x] = vt_char_attrs;
+                    cellAttrBuffer[c+x] = cell_attrs;
                 }
             }
             else
@@ -199,6 +203,7 @@ BOOL IKTerm::getDrawInfo()
                 /* In case we are in the middle of a scroll */
                 memset( &(textBuffer[c]), ' ', xs );
                 memset( &(effectBuffer[c]), '\0', xs );
+                memset( &(cellAttrBuffer[c]), '\0', xs );
 
                 // memset( &(attrBuffer[c]), defaultattribute, xs );
                 {
@@ -232,6 +237,7 @@ BOOL IKTerm::getDrawInfo()
                         textBuffer[c+xo+i] = vscrn[vnum].popup->c[y-yo][i];
                     attrBuffer[c+xo+i] = vscrn[vnum].popup->video_attr;
                     effectBuffer[c+xo+i] = '\0';
+                    cellAttrBuffer[c+xo+i] = '\0';
                 }
             }
             c += xs;        /* advance the pointer in the buffer */
@@ -268,6 +274,7 @@ BOOL IKTerm::getDrawInfo()
                             textBuffer[c+x] = line->cells[x+xho].c ;
                             attrBuffer[c+x] = colorselect ;
                             effectBuffer[c+x] = line->vt_char_attrs[x+xho];
+                            cellAttrBuffer[c+x] = line->cell_attrs[x+xho];
                         }
                         else
                         {
@@ -277,6 +284,7 @@ BOOL IKTerm::getDrawInfo()
                                 return FALSE;
 #endif /* NEW_EXCLUSIVE */
                             vt_char_attrs = line->vt_char_attrs[x+xho];
+                            cell_attrs = line->cell_attrs[x+xho];
 #ifdef NEW_EXCLUSIVE
                             /* Give mutex back */
                             ReleaseVscrnMutex(vnum) ;
@@ -295,6 +303,7 @@ BOOL IKTerm::getDrawInfo()
                                     line->cells[x+xho].video_attr,
                                     vt_char_attrs );
                             effectBuffer[c+x] = vt_char_attrs;
+                            cellAttrBuffer[c+x] = cell_attrs;
                         }
                     }
                 }
@@ -308,6 +317,7 @@ BOOL IKTerm::getDrawInfo()
                             return FALSE;
 #endif /* NEW_EXCLUSIVE */
                         vt_char_attrs = line->vt_char_attrs[x+xho];
+                        cell_attrs = line->cell_attrs[x+xho];
 #ifdef NEW_EXCLUSIVE
                         /* Give mutex back */
                         ReleaseVscrnMutex(vnum) ;
@@ -326,6 +336,7 @@ BOOL IKTerm::getDrawInfo()
                             line->cells[x+xho].video_attr,
                             vt_char_attrs);
                         effectBuffer[c+x] = vt_char_attrs;
+                        cellAttrBuffer[c+x] = cell_attrs;
                     }
                 }
             }
@@ -338,6 +349,7 @@ BOOL IKTerm::getDrawInfo()
                     attrBuffer[c+x] = ComputeColorFromAttr(vnum,
                         defaultattribute,0);
                     effectBuffer[c+x] = 0;
+                    cellAttrBuffer[c+x] = 0;
                 }
             }
             c += xs;
@@ -364,6 +376,7 @@ BOOL IKTerm::getDrawInfo()
                                                         line->cells[x].video_attr,
                                                         line->vt_char_attrs[x]);
                 effectBuffer[c+x] = line->vt_char_attrs[x];
+                cellAttrBuffer[c+x] = line->cell_attrs[x];
             }
             c += xs ;
         }
@@ -382,6 +395,7 @@ BOOL IKTerm::getDrawInfo()
                     textBuffer[c] = status[x] ;
                 attrBuffer[c] = colorstatus ;
                 effectBuffer[c] = '\0';
+                cellAttrBuffer[c] = '\0';
                 c++ ;
             }
         }

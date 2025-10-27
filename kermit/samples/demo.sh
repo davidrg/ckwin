@@ -39,9 +39,11 @@ BANNER_FMT="  K E R M I T - 9 5 \x1b[3m%s\x1b[0m\n"
 #            in releases prior to beta 8.
 F_TRUE_COLOR=1     # New in beta 8
 F_STRIKETHROUGH=1  # New in beta 8
-F_RULED_LINES=0    # -- not supported -- | When turning one of these on, check
-F_EXTENDED_UL=0    # -- not supported -- | a gap still appears above the VT420
-F_SOFT_FONT=0      # -- not supported -- | line in non-paged terminals
+F_RULED_LINES=1    # New in beta 8
+F_EXTENDED_UL=0    # -- not supported -- | When turning one of these on, check
+F_SOFT_FONT=0      # -- not supported -- | a gap still appears above the VT420
+#                                        | line in non-paged terminals
+
 F_VT420_FEATURES=1 # Rectangular area operations mostly present but buggy in
                    # version 2.1 (2002), Text macros and paging new in 3.0 b.8
 F_PAGING=1         # Lack of Paging really breaks this script, so it can be
@@ -147,8 +149,9 @@ if [ "$F_RULED_LINES" = "1" ]; then
 	printf ' \u25CF DECterm Ruled Lines\n'
 
 	# This should put a box around the "Ruled Lines" text.
-	printf '\x1b[15;12;10;%d;1,r' $LINE
+	printf '\x1b[15;12;11;%d;1,r' $LINE
 	SPACE="$(($SPACE-1))"
+	VT420_LINE="$((VT420_LINE+1))"
 fi
 
 if [ "$F_SOFT_FONT" = "1" ]; then
