@@ -20836,7 +20836,7 @@ vtcsi(void)
                     position * pos = VscrnGetCurPos(VTERM);
                     if (private)
                         sprintf(tempstr,
-                                "[%d;%d;%dR",
+                                "[?%d;%d;%dR",
                                 pos->y+1,
                                 pos->x+1,
                                 pos->p+1
@@ -20850,6 +20850,9 @@ vtcsi(void)
                     break;
                 }
 #ifdef COMMENT
+				/* My VT520 doesn't respond to either of these, and I don't see
+					them in any DEC documentation. I wonder what terminal they
+					were for?  -DG */
                 case 7:
                     if ( private ) {
                         /* Request Time ("HH:MM:SS"<CR>) */

@@ -11805,10 +11805,17 @@ DCS $ q 3 , } ST</pre>
                 <ref src="vt52x:324"/>
                 <ref src="vt52x:328"/>
                 <termsupp first="vt330" series="vt" additional="vt340 vt420 vt510 wt"/>
-                <p>If the request was <tt><cc>CSI</cc> ? 6 n</tt>, transmits the cursor
-                    position to the host. Response is:
-                    <tt><cc>CSI</cc> x ; y ; p R</tt> where x and y are the cursor coordinates,
-                    and p is the page.
+                <p>If the request was <tt><cc>CSI</cc> ? 6 n</tt>, transmits
+                    the cursor position including page number to the host.
+                    Response is:
+                    <tt><cc>CSI</cc> ? x ; y ; p R</tt> where x and y are the
+                    cursor coordinates, and p is the page.
+                </p>
+                <p>
+                    Note that the VT340, VT420, VT510 and VT520 manuals all leave
+                    the <tt>?</tt> character out of the response - this is an
+                    error in the documentation. DEC STD-070 gives the correct
+                    behavior which has been confirmed against a real terminal.
                 </p>
                 <!-- Pages 103-104, VT220 manual -->
                 <!-- TODO: XTERM responds with CSI ? x ; y R -->
