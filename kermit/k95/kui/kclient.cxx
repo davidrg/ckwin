@@ -16,6 +16,7 @@ typedef struct _K_WORK_STORE {
     int               y;
     cell_video_attr_t attr;
     unsigned short    effect;
+    char              cellAttr;
 } K_WORK_STORE;
 
 extern UINT keyArray [];    // from kuikey.cxx
@@ -161,6 +162,7 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     , prevAttr( cell_video_attr_init_vio_attribute(255) )
 #endif /* CK_COLORS_24BIT */
     , prevEffect( uchar(-1) )
+    , prevCellAttr( 0 )
     , _xoffset( 0 )
     , _yoffset( 0 )
     , _msgret( 1 )
@@ -188,14 +190,15 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
     int column, row;
     ::getMaxSizes( &column, &row );
     //  workTempSize = (maxcells * sizeof(ushort) * 5) + (row * sizeof(ushort));  // This seems to allocate almost twice as much memory as actually needed!
-    workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t))) + (MAXSCRNROW * sizeof(ushort));
+    workTempSize = (maxcells * ((sizeof(ushort) * 2) + sizeof(cell_video_attr_t) + sizeof(char))) + (MAXSCRNROW * sizeof(ushort));
     workTemp = new uchar[ workTempSize ];
     memset( workTemp, '\0', workTempSize);
 
-    clientPaint->textBuffer = textBuffer     = (ushort*)            &(workTemp[0]); /* One per cell */
-    clientPaint->attrBuffer = attrBuffer     = (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
-    clientPaint->effectBuffer = effectBuffer = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
-    clientPaint->lineAttr = lineAttr         = (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
+    clientPaint->textBuffer = textBuffer         = (ushort*)            &(workTemp[0]); /* One per cell */
+    clientPaint->attrBuffer = attrBuffer         = (cell_video_attr_t*) &(workTemp[ maxcells * sizeof(ushort)]); /* One per cell */
+    clientPaint->effectBuffer = effectBuffer     = (ushort*)            &(workTemp[maxcells * (sizeof(cell_video_attr_t) + sizeof(ushort))]); /* One per cell */
+    clientPaint->lineAttr = lineAttr             = (ushort*)            &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 2 * sizeof(ushort))]); /* One per line */
+    clientPaint->cellAttrBuffer = cellAttrBuffer = (char*)              &(workTemp[ maxcells * (sizeof(cell_video_attr_t) + 3 * sizeof(ushort))]); /* One per line */
 
 
     workStore = new K_WORK_STORE[ maxcells ];
@@ -213,6 +216,8 @@ KClient::KClient( K_GLOBAL* kg, BYTE cid )
 
     /* Save initial window size so we can tell when it changes */
     getEndSize(previousWidth, previousHeight);
+
+    ruledLinePen = (HPEN) GetStockObject( WHITE_PEN );
 }
 
 /*------------------------------------------------------------------------
@@ -228,6 +233,7 @@ KClient::~KClient()
     DeleteObject( hrgnPaint );
     DeleteObject( disabledBrush );
     DeleteObject( bgBrush );
+    DeleteObject (ruledLinePen);
 
     if( timerID )
         KillTimer( hWnd, timerID );
@@ -809,10 +815,16 @@ void KClient::writeMe()
     cell_video_attr_t attr = cell_video_attr_init_vio_attribute(255);
     ushort lattr = ushort(-1);
     ushort effect = ushort(-1);
+    char cellAttr = 0;
+    // The following collects up contiguous strings of text that are all on the
+    // same line and have the same attributes, allowing the text to be painted
+    // in one go rather than a character at a time.
     for( i = 0; i < totlen; i++ )
     {
         xpos = i % twid;
-        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr) || effectBuffer[i] != effect )
+        if( !xpos || !cell_video_attr_equal(attrBuffer[i], attr)
+                || effectBuffer[i] != effect
+                || cellAttrBuffer[i] != cellAttr )
         {
             kws = &(workStore[wc]);
 
@@ -824,6 +836,7 @@ void KClient::writeMe()
                 workStore[wc-1].length = i - workStore[wc-1].offset;
             attr = kws->attr = attrBuffer[i];
             effect = kws->effect = effectBuffer[i];
+            cellAttr = kws->cellAttr = cellAttrBuffer[i];
             wc++;
         }
     }
@@ -859,6 +872,7 @@ void KClient::writeMe()
     }
 
     RECT rect;
+    Bool rlLeft = FALSE, rlTop = FALSE, rlRight = FALSE, rlBottom = FALSE;
     for( i = 0; i < wc; i++ )
     {
         kws = &(workStore[i]);
@@ -949,6 +963,18 @@ void KClient::writeMe()
                 getFont()->setItalic( hdc() );
         }
 
+        if (prevCellAttr != kws->cellAttr ) {
+            prevCellAttr = kws->cellAttr;
+
+            rlLeft = prevCellAttr & CA_ATTR_LEFT_BORDER;
+            rlTop = prevCellAttr & CA_ATTR_TOP_BORDER;
+            rlRight = prevCellAttr & CA_ATTR_RIGHT_BORDER;
+            rlBottom = prevCellAttr & CA_ATTR_BOTTOM_BORDER;
+        }
+
+        // This rect covers the area we've gathered common attributes for. All
+        // text that belongs in this rect will be painted in one go with the
+        // selected attributes.
         rect.left = kws->x;
         rect.top = kws->y;
         rect.right = rect.left + kws->length * font->getFontW();
@@ -972,6 +998,54 @@ void KClient::writeMe()
             ExtTextOut( hdc(), rect.left, rect.top, 
 			ETO_CLIPPED | ETO_OPAQUE, 
 			&rect, 0, 0, 0 );
+        }
+
+        // DECterm Ruled Lines
+        // These are drawn on the inside of the cell boundary.
+        if (rlTop || rlBottom || rlLeft || rlRight) {
+            HPEN oldPen = (HPEN)SelectObject( hdc(), ruledLinePen );
+
+            // Top ruled line along the extent of this string. Offsets are to
+            // account for the offsets on the vertical lines
+            if (rlTop) {
+                // Line from [rect.left, rect.top] to [rect.right, rect.top]
+                MoveToEx(hdc(), rect.left , rect.top, NULL);
+                LineTo(hdc(), rect.right, rect.top);
+            }
+
+            // Bottom ruled line along the extent of this string
+            if (rlBottom) {
+                // Line from [rect.left, rect.bottom] to [rect.right, rect.bottom]
+                MoveToEx(hdc(), rect.left , rect.bottom-1, NULL);
+                LineTo(hdc(), rect.right, rect.bottom-1);
+            }
+
+            // Vertical ruled lines on the left/right borders of cells.
+            if (rlLeft || rlRight) {
+                for (int i = 0; i < kws->length; i++) {
+                    //int left = rect.left + 1 + i * font->getFontW();
+                    //int right = left + font->getFontW() -1;
+
+                    int left = rect.left + i * font->getFontW();
+                    int right = left + font->getFontW() - 1;
+
+                    if (rlLeft) {
+                        // Line on the left cell border. DECterm draws this one inside
+                        // the cell causing left and right borders to double up in to
+                        // a thicker line
+                        MoveToEx(hdc(), left, rect.top, NULL);
+                        LineTo(hdc(), left, rect.bottom);
+                    }
+
+                    if (rlRight) {
+                        // Line on the right cell border
+                        MoveToEx(hdc(), right, rect.top, NULL);
+                        LineTo(hdc(), right, rect.bottom);
+                    }
+                }
+            }
+
+            SelectObject(hdc(), oldPen);
         }
     }
 

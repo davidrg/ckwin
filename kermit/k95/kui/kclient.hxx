@@ -89,10 +89,12 @@ private:    // this section is for performance
     cell_video_attr_t* attrBuffer;
     ushort* effectBuffer;
     ushort* lineAttr;
+    char* cellAttrBuffer;
     _K_WORK_STORE* kws;
 
     cell_video_attr_t prevAttr;
     ushort prevEffect;
+    char prevCellAttr;
 
     int wc;
     int vscrollpos;
@@ -115,6 +117,7 @@ private:    // this section is for performance
     HRGN hrgnPaint;
     HBRUSH disabledBrush;
     HBRUSH bgBrush;
+    HPEN ruledLinePen;
     DWORD savebgcolor;
     int interSpace[MAXNUMCOL];
 

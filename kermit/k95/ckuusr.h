@@ -1070,8 +1070,9 @@ struct stringint {			/* String and (wide) integer */
 #define     TT_VT420   96	/*    DEC VT-420 */
 #define     TT_VT520   97	/*    DEC VT-520 */
 #define     TT_VT525   98   /*    DEC VT-525 */
-#define     TT_XTERM   98   /*    XTerm */
-#define     TT_TEK40   99	/*    Tektronix 401x */
+#define     TT_DECTERM 99   /*    DECterm */
+#define     TT_XTERM  100   /*    XTerm */
+#define     TT_TEK40  101	/*    Tektronix 401x */
 /* Other ADDS Regent terminals - not currently emulated */
 #define     TT_REGENT20 100     /* ADDS Regent 20  */
 #define     TT_REGENT40 101     /* ADDS Regent 40  */
@@ -1161,6 +1162,7 @@ struct stringint {			/* String and (wide) integer */
                             || x == TT_REGENT20 || x == TT_REGENT200)
 #define ISXTERM(x) (x == TT_XTERM)
 #define ISK95(x)   (x == TT_K95)
+#define ISDECTERM(x) (x == TT_DECTERM)
 #endif /* OS2 */
 
 #define   XYTCS  2      /*  Terminal Character Set */
