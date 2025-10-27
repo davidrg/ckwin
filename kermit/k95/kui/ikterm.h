@@ -17,9 +17,11 @@ typedef struct _K_CLIENT_PAINT {
     unsigned long   scrolltop;
     unsigned long   end; 
     unsigned long   maxWidth;
+    int             page;
+    int             page_length;
 } K_CLIENT_PAINT;
 
-struct videobuffer_struct;
+struct vscrn_struct;
 struct videoline_struct;
 class IKTerm 
 {
@@ -43,7 +45,7 @@ private:
 
     int x, y;
     int xs, ys, c, xo, yo, xho;
-    videobuffer_struct* vbuf;
+    vscrn_struct* vbuf;
     videoline_struct* line;
     int cursor_offset;
     unsigned short *textBuffer;

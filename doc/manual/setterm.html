@@ -35,6 +35,11 @@ window.  <a href="termtype.html">CLICK HERE</a> for a complete list.  If you
 choose an <a href="gloss.html#g_ansi">ANSI</a> type, the appropropriate
 coloration, character set, and screen size are chosen for you automatically.
 <p>
+<dt><tt>SET TERMINAL ALTERNATE-BUFFER <i>{</i> ENABLED, DISABLED <i>}</i></tt>
+<dd>Enables or disables the escape sequence for switching to the alternate
+terminal screen buffer. This setting can also be changed via an escape
+sequence so setting it to disabled may not prevent its use entirely.
+<p>
 <dt><tt>SET TERMINAL ANSWERBACK <i>{</i> OFF, ON, <i>}</i></tt>
 <dd>  Disables/enables the ENQ/Answerback sequence, which is:
 <p>
@@ -464,6 +469,18 @@ but in the other direction.
 Terminal screen is active.  Normally not needed but sometimes required to
 work around "TRANSMISSION BLOCKED" conditions when using the mouse to paste
 into the terminal screen.
+<p>
+<dt><tt>SET TERMINAL PAGE ACTIVE <i>page</i></tt>
+<dd> Moves the cursor to the specified page. If Page Cursor Coupling is enabled,
+     the display will move to that page also. The cursor is not sent to home.
+<p>
+<dt><tt>SET TERMINAL PAGE COUNT <i>number</i></tt>
+<dd> Specifies the number of pages available, up to the maximum supported by the
+    currently selected terminal type.
+<p>
+<dt><tt>SET TERMINAL PAGE CURSOR-COUPLING <i>{</i> OFF, ON <i>}</i></tt>
+<dd> Enables or disables Page Cursor Coupling. When enabled, moving the cursor
+     to another page moves the display to that page to keep the cursor visible.
 <p>
 <dt><tt>SET TERMINAL PCTERM <i>{</i> ON, OFF <i>}</i></tt>
 <dd>Used to activate or deactivate the PCTERM

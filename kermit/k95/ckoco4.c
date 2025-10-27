@@ -45,7 +45,7 @@ extern int tt_status[VNUM] ;
 extern bool bracketed_paste[VNUM];
 #endif /* NOTERM */
 #ifndef NOLOCAL
-extern videobuffer vscrn[] ;
+extern vscrn_t vscrn[] ;
 extern enum markmodes markmodeflag[] ;
 extern bool xprintff, printon ;
 #ifndef NT
@@ -173,6 +173,9 @@ FindURL( const char * s )
 }
 
 
+/*----------------------------------------------------------+----------------*/
+/* VscrnURL                                                 | Page: View     */
+/*----------------------------------------------------------+----------------*/
 APIRET
 VscrnURL( BYTE mode, USHORT row, USHORT col )
 {
@@ -195,9 +198,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
 
     /* First check the hyperlink attribute */
     if ( scrollflag[mode] )
-        line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + row );
+        line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + row );
     else
-        line = VscrnGetLineFromTop( mode, row );
+        line = VscrnGetLineFromTop( mode, row, TRUE );
     if ( line->vt_char_attrs[col] & VT_CHAR_ATTR_HYPERLINK ) {
         hyperlink * link = hyperlink_get(line->hyperlinks[col]);
         if ( link ) {
@@ -227,9 +230,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
     bcol = col;
     while(1) {
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
         else
-            line = VscrnGetLineFromTop( mode, brow );
+            line = VscrnGetLineFromTop( mode, brow, TRUE );
         cells = line->cells;
 
         while ( bcol >= 0 ) {
@@ -260,9 +263,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
     ecol = col;
     while(1) {
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
         else
-            line = VscrnGetLineFromTop( mode, erow );
+            line = VscrnGetLineFromTop( mode, erow, TRUE );
         cells = line->cells;
 
         while ( ecol < line->width ) {
@@ -294,9 +297,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
 
     if ( brow == erow ) {
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
         else
-            line = VscrnGetLineFromTop( mode, brow );
+            line = VscrnGetLineFromTop( mode, brow, TRUE );
         cells = line->cells;
 
         for ( i=bcol,len=0;i<=ecol;i++,len++ )
@@ -305,9 +308,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
     } else {
         /* handle the first row - bcol to end */
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + brow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + brow );
         else
-            line = VscrnGetLineFromTop( mode, brow );
+            line = VscrnGetLineFromTop( mode, brow, TRUE );
         cells = line->cells;
 
         for ( i=bcol,len=0;i<line->width;i++,len++ )
@@ -316,9 +319,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
         /* handle the complete rows if there are any */
         for ( j=brow+1; j<erow; j++ ) {
             if ( scrollflag[mode] )
-                line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + j );
+                line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + j );
             else
-                line = VscrnGetLineFromTop( mode, j );
+                line = VscrnGetLineFromTop( mode, j, TRUE );
             cells = line->cells;
 
             for ( i=0;i<line->width;i++,len++ )
@@ -327,9 +330,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
 
         /* handle the last row - begin to ecol */
         if ( scrollflag[mode] )
-            line = VscrnGetLine( mode, VscrnGetScrollTop(mode) + erow );
+            line = VscrnGetLine( mode, VscrnGetScrollTop(mode, TRUE) + erow );
         else
-            line = VscrnGetLineFromTop( mode, erow );
+            line = VscrnGetLineFromTop( mode, erow, TRUE );
         cells = line->cells;
 
         for ( i=0;i<=ecol;i++,len++ )
@@ -355,6 +358,9 @@ VscrnURL( BYTE mode, USHORT row, USHORT col )
     return -1;                  /* failure to find a valid URL */
 }
 
+/*---------------------------------------------------------------------------*/
+/* VscrnSelect                                              | Page: View     */
+/*---------------------------------------------------------------------------*/
 /* 
  * mode = 0 - word wrap with EOL
  * mode = 1 - word wrap without EOL
@@ -371,6 +377,7 @@ VscrnSelect( BYTE vmode, int mode )
     BYTE   *p = NULL;
     USHORT *pU = NULL;
     APIRET rc = 0 ;
+	int view_page = vscrn[vmode].view_page;
 
     if ( selection )
     {
@@ -392,7 +399,7 @@ VscrnSelect( BYTE vmode, int mode )
 
     y = vscrn[vmode].marktop ;
     while (1) {
-        line = &vscrn[vmode].lines[y] ;
+        line = &vscrn[vmode].pages[view_page].lines[y] ;
         if ( line->markbeg != -1 && line->markshowend != -1 ) {
             for ( x  = line->markbeg ; x <= line->markshowend ; x++ )
                 nselect++ ;
@@ -414,7 +421,7 @@ VscrnSelect( BYTE vmode, int mode )
             }
             /* Advance counter */
             y++ ;
-            if ( y == vscrn[vmode].linecount )
+            if ( y == vscrn[vmode].pages[view_page].linecount )
                 y = 0 ;
         }
     }
@@ -440,7 +447,7 @@ VscrnSelect( BYTE vmode, int mode )
     pU = Uselection ;
 
     while (1) {
-        line = &vscrn[vmode].lines[vscrn[vmode].marktop] ;
+        line = &vscrn[vmode].pages[view_page].lines[vscrn[vmode].marktop] ;
         if ( line->markbeg != -1 && line->markshowend != -1 )
             for ( /*line->markbeg*/ ;
                 line->markbeg <= line->markshowend;
@@ -473,7 +480,7 @@ VscrnSelect( BYTE vmode, int mode )
 
             /* Advance counter */
             vscrn[vmode].marktop++ ;
-            if ( vscrn[vmode].marktop == vscrn[vmode].linecount )
+            if ( vscrn[vmode].marktop == vscrn[vmode].pages[view_page].linecount )
                 vscrn[vmode].marktop = 0 ;
         }
     }
@@ -918,17 +925,25 @@ CopyVscrnToPrinter(BYTE vmode, int select_mode)
 }
 
 
+/*---------------------------------------------------------------------------*/
+/* markstart                                                | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 markstart( BYTE vmode )
 {
+	int linecount = vscrn[vmode].pages[vscrn[vmode].view_page].linecount;
     if ( markmodeflag[vmode] == marking ) {
         VscrnUnmarkAll(vmode) ;
-        }
+    }
+
     markmodeflag[vmode] = marking ;
-    VscrnMark( vmode,(VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y)%vscrn[vmode].linecount,
+    VscrnMark( vmode,(VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y)%linecount,
         vscrn[vmode].cursor.x, vscrn[vmode].cursor.x ) ;
 }
 
+/*---------------------------------------------------------------------------*/
+/* markcancel                                               | Page: n/a      */
+/*---------------------------------------------------------------------------*/
 void
 markcancel( BYTE vmode )
 {
@@ -936,35 +951,39 @@ markcancel( BYTE vmode )
     VscrnUnmarkAll(vmode) ;
 }
 
+/*---------------------------------------------------------------------------*/
+/* markdownone                                              | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 markdownone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+	vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetEndEx(vmode,FALSE)) {
+        curline != VscrnGetEnd(vmode,FALSE,TRUE)) {
         if ( vscrn[vmode].marktop == curline &&
-            vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
             if ( vscrn[vmode].marktop == vscrn[vmode].markbot ) {
-                if ( vscrn[vmode].lines[vscrn[vmode].marktop].markbeg !=
-                     vscrn[vmode].lines[vscrn[vmode].marktop].markend )
+                if ( page->lines[vscrn[vmode].marktop].markbeg !=
+                     page->lines[vscrn[vmode].marktop].markend )
                    VscrnUnmark( vmode, vscrn[vmode].marktop,
-                                 vscrn[vmode].lines[vscrn[vmode].marktop].markbeg,
-                                 vscrn[vmode].lines[vscrn[vmode].marktop].markend-1 ) ;
-               VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].lines[vscrn[vmode].markbot].markend,
-                           vscrn[vmode].lines[vscrn[vmode].markbot].width ) ;
-               VscrnMark( vmode, (vscrn[vmode].markbot+1)%vscrn[vmode].linecount, 0,
+                                 page->lines[vscrn[vmode].marktop].markbeg,
+                                 page->lines[vscrn[vmode].marktop].markend-1 ) ;
+               VscrnMark( vmode, vscrn[vmode].markbot, page->lines[vscrn[vmode].markbot].markend,
+                           page->lines[vscrn[vmode].markbot].width ) ;
+               VscrnMark( vmode, (vscrn[vmode].markbot+1)%page->linecount, 0,
                            vscrn[vmode].cursor.x ) ;
             }
             else {
                 VscrnUnmark( vmode, vscrn[vmode].marktop, vscrn[vmode].cursor.x, MAXTERMCOL ) ;
                 if ( vscrn[vmode].marktop == vscrn[vmode].markbot &&
-                    vscrn[vmode].cursor.x >= vscrn[vmode].lines[vscrn[vmode].markbot].markend ) {
+                    vscrn[vmode].cursor.x >= page->lines[vscrn[vmode].markbot].markend ) {
                     VscrnUnmark( vmode, vscrn[vmode].marktop, 0,
-                        vscrn[vmode].lines[vscrn[vmode].markbot].markend-1 ) ;
+                        page->lines[vscrn[vmode].markbot].markend-1 ) ;
                     VscrnMark( vmode, vscrn[vmode].markbot,
-                        vscrn[vmode].lines[vscrn[vmode].markbot].markend, vscrn[vmode].cursor.x ) ;
+                        page->lines[vscrn[vmode].markbot].markend, vscrn[vmode].cursor.x ) ;
                     }
                 else {
                     if ( vscrn[vmode].cursor.x > 0 )
@@ -974,15 +993,15 @@ markdownone( BYTE vmode )
             }
         else {
             VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x,
-                vscrn[vmode].lines[vscrn[vmode].markbot].width ) ;
-            if ( vscrn[vmode].markbot != vscrn[vmode].end )
-                VscrnMark( vmode, (vscrn[vmode].markbot+1)%vscrn[vmode].linecount, 0,
+                page->lines[vscrn[vmode].markbot].width ) ;
+            if ( vscrn[vmode].markbot != page->end )
+                VscrnMark( vmode, (vscrn[vmode].markbot+1)%page->linecount, 0,
                     vscrn[vmode].cursor.x ) ;
             }
         }
 
     if ( markmodeflag[vmode] == inmarkmode ||
-        markmodeflag[vmode] == marking && curline != VscrnGetEndEx(vmode,FALSE) ) {
+        markmodeflag[vmode] == marking && curline != VscrnGetEnd(vmode,FALSE,TRUE) ) {
         if ( vscrn[vmode].cursor.y == VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?2:1) ) {
             if ( VscrnMoveScrollTop(vmode,1) < 0 )
                 bleep(BP_FAIL);
@@ -996,37 +1015,42 @@ markdownone( BYTE vmode )
 
 }
 
+/*---------------------------------------------------------------------------*/
+/* markupone                                                | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* Mark mode: mark up one line */
 void
 markupone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+	vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetBeginEx(vmode, FALSE) ) {
+        curline != VscrnGetBegin(vmode, FALSE, TRUE) ) {
         if ( vscrn[vmode].markbot == curline &&
-            vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
             if ( vscrn[vmode].marktop == vscrn[vmode].markbot ) {
-                if ( vscrn[vmode].lines[vscrn[vmode].markbot].markbeg !=
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markend )
+                if ( page->lines[vscrn[vmode].markbot].markbeg !=
+                    page->lines[vscrn[vmode].markbot].markend )
                     VscrnUnmark( vmode, vscrn[vmode].markbot,
-                        vscrn[vmode].lines[vscrn[vmode].markbot].markbeg+1,
-                        vscrn[vmode].lines[vscrn[vmode].markbot].markend ) ;
+                        page->lines[vscrn[vmode].markbot].markbeg+1,
+                        page->lines[vscrn[vmode].markbot].markend ) ;
                 VscrnMark( vmode, vscrn[vmode].marktop, 0,
-                    vscrn[vmode].lines[vscrn[vmode].marktop].markbeg ) ;
-                VscrnMark( vmode, (vscrn[vmode].marktop-1+vscrn[vmode].linecount)%vscrn[vmode].linecount,
+                    page->lines[vscrn[vmode].marktop].markbeg ) ;
+                VscrnMark( vmode, (vscrn[vmode].marktop-1+page->linecount)%page->linecount,
                     vscrn[vmode].cursor.x,
-                    vscrn[vmode].lines[(vscrn[vmode].marktop-1+vscrn[vmode].linecount)
-                    %vscrn[vmode].linecount].width ) ;
+                    page->lines[(vscrn[vmode].marktop-1+page->linecount)
+                    %page->linecount].width ) ;
                 }
             else {
                 VscrnUnmark( vmode, vscrn[vmode].markbot, 0, vscrn[vmode].cursor.x ) ;
                 if ( vscrn[vmode].marktop == vscrn[vmode].markbot &&
-                    vscrn[vmode].cursor.x <= vscrn[vmode].lines[vscrn[vmode].marktop].markbeg ) {
+                    vscrn[vmode].cursor.x <= page->lines[vscrn[vmode].marktop].markbeg ) {
                     VscrnUnmark( vmode, vscrn[vmode].marktop,
-                        vscrn[vmode].lines[vscrn[vmode].marktop].markbeg+1, MAXTERMCOL ) ;
+                        page->lines[vscrn[vmode].marktop].markbeg+1, MAXTERMCOL ) ;
                     VscrnMark( vmode, vscrn[vmode].marktop, vscrn[vmode].cursor.x,
-                        vscrn[vmode].lines[vscrn[vmode].marktop].markbeg ) ;
+                        page->lines[vscrn[vmode].marktop].markbeg ) ;
                     }
                 else {
                     VscrnUnmark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x+1, MAXTERMCOL );
@@ -1035,18 +1059,18 @@ markupone( BYTE vmode )
             }
         else {
             VscrnMark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].cursor.x ) ;
-            if ( vscrn[vmode].marktop != vscrn[vmode].beg )
-                VscrnMark( vmode, (vscrn[vmode].marktop-1+vscrn[vmode].linecount)%vscrn[vmode].linecount,
+            if ( vscrn[vmode].marktop != page->beg )
+                VscrnMark( vmode, (vscrn[vmode].marktop-1+page->linecount)%page->linecount,
                     vscrn[vmode].cursor.x,
-                    vscrn[vmode].lines[(vscrn[vmode].marktop-1+vscrn[vmode].linecount)
-                    %vscrn[vmode].linecount].width ) ;
+                    page->lines[(vscrn[vmode].marktop-1+page->linecount)
+                    %page->linecount].width ) ;
             }
 
         }
 
     if ( markmodeflag[vmode] == inmarkmode ||
         markmodeflag[vmode] == marking &&
-        curline != VscrnGetBeginEx(vmode, FALSE) ) {
+        curline != VscrnGetBegin(vmode, FALSE, TRUE) ) {
         if ( vscrn[vmode].cursor.y == 0 ) {
             if ( VscrnMoveScrollTop(vmode,-1) < 0 )
                 bleep(BP_FAIL);
@@ -1059,15 +1083,19 @@ markupone( BYTE vmode )
         }
 }
 
+/*---------------------------------------------------------------------------*/
+/* markleftone                                              | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 markleftone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+    vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking && vscrn[vmode].cursor.x > 0 ) {
         if ( vscrn[vmode].marktop == curline &&
-            vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
             VscrnMark( vmode, vscrn[vmode].marktop, vscrn[vmode].cursor.x-1, vscrn[vmode].cursor.x-1 ) ;
         }
         else {
@@ -1081,15 +1109,19 @@ markleftone( BYTE vmode )
         vscrn[vmode].cursor.x-- ;
 }
 
+/*---------------------------------------------------------------------------*/
+/* markrightone                                             | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 markrightone( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+    vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking && vscrn[vmode].cursor.x < VscrnGetWidth(VTERM)-1 ) {
         if ( vscrn[vmode].markbot == curline &&
-            vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
+           page->lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
             VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x+1, vscrn[vmode].cursor.x+1 ) ;
         }
         else {
@@ -1103,20 +1135,24 @@ markrightone( BYTE vmode )
         vscrn[vmode].cursor.x++ ;
 }
 
+/*---------------------------------------------------------------------------*/
+/* markdownscreen                                           | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 markdownscreen( BYTE vmode )
 {
+    vscrn_page_t *page = &vscrn_view_page(vmode);
    int count = (tt_status[vmode]?1:0) ;
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetEndEx(vmode,FALSE) ) {
+        curline != VscrnGetEnd(vmode,FALSE,TRUE) ) {
         if ( vscrn[vmode].marktop == curline &&
              vscrn[vmode].marktop != vscrn[vmode].markbot &&
-            vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
             while ( count < VscrnGetHeightEx(vmode,FALSE) &&
-                    ( vscrn[vmode].marktop < ( vscrn[vmode].markbot - 1 + vscrn[vmode].linecount)%vscrn[vmode].linecount ) )
+                    ( vscrn[vmode].marktop < ( vscrn[vmode].markbot - 1 + page->linecount)%page->linecount ) )
             {
                count++ ;
                VscrnUnmark( vmode, vscrn[vmode].marktop, 0, MAXTERMCOL ) ;
@@ -1127,16 +1163,16 @@ markdownscreen( BYTE vmode )
         }
 
         if ( count < VscrnGetHeightEx(vmode,FALSE) && vscrn[vmode].marktop ==
-            (vscrn[vmode].markbot-1+vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
+            (vscrn[vmode].markbot-1+page->linecount)%page->linecount ) {
             count++ ;
             VscrnUnmark( vmode, vscrn[vmode].marktop, 0, MAXTERMCOL ) ;
-            if ( vscrn[vmode].cursor.x <= vscrn[vmode].lines[vscrn[vmode].marktop].markend ) {
+            if ( vscrn[vmode].cursor.x <= page->lines[vscrn[vmode].marktop].markend ) {
                 VscrnUnmark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].cursor.x-1 ) ;
                 }
-            else { /* vscrn[vmode].cursor.x > vscrn[vmode].lines[vscrn[vmode].marktop].markend */
+            else { /* vscrn[vmode].cursor.x > page->lines[vscrn[vmode].marktop].markend */
                 VscrnUnmark( vmode, vscrn[vmode].marktop, 0,
-                    vscrn[vmode].lines[vscrn[vmode].marktop].markend-1 ) ;
-                VscrnMark( vmode, vscrn[vmode].marktop, vscrn[vmode].lines[vscrn[vmode].marktop].markend,
+                    page->lines[vscrn[vmode].marktop].markend-1 ) ;
+                VscrnMark( vmode, vscrn[vmode].marktop, page->lines[vscrn[vmode].marktop].markend,
                     vscrn[vmode].cursor.x ) ;
                 }
             }
@@ -1144,37 +1180,37 @@ markdownscreen( BYTE vmode )
         if ( count < VscrnGetHeightEx(vmode,FALSE) &&
             vscrn[vmode].marktop == vscrn[vmode].markbot ) {
             count++ ;
-            if ( vscrn[vmode].cursor.x == vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) {
+            if ( vscrn[vmode].cursor.x == page->lines[vscrn[vmode].markbot].markbeg ) {
                 VscrnUnmark( vmode, vscrn[vmode].markbot, 0,
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markend-1 ) ;
+                    page->lines[vscrn[vmode].markbot].markend-1 ) ;
                 }
-            VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].lines[vscrn[vmode].markbot].markend,
+            VscrnMark( vmode, vscrn[vmode].markbot, page->lines[vscrn[vmode].markbot].markend,
                 MAXTERMCOL ) ;
-            if ( vscrn[vmode].markbot != vscrn[vmode].end )
-                VscrnMark( vmode, (vscrn[vmode].markbot+1)%vscrn[vmode].linecount, 0,
+            if ( vscrn[vmode].markbot != page->end )
+                VscrnMark( vmode, (vscrn[vmode].markbot+1)%page->linecount, 0,
                     vscrn[vmode].cursor.x ) ;
             }
 
         while ( count < VscrnGetHeightEx(vmode,FALSE) &&
-                vscrn[vmode].markbot != vscrn[vmode].end ) {
+                vscrn[vmode].markbot != page->end ) {
             count++ ;
             VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x,
-                vscrn[vmode].lines[vscrn[vmode].markbot].width ) ;
-            if ( vscrn[vmode].markbot != vscrn[vmode].end )
-                VscrnMark( vmode, (vscrn[vmode].markbot+1)%vscrn[vmode].linecount, 0,
+                page->lines[vscrn[vmode].markbot].width ) ;
+            if ( vscrn[vmode].markbot != page->end )
+                VscrnMark( vmode, (vscrn[vmode].markbot+1)%page->linecount, 0,
                 vscrn[vmode].cursor.x ) ;
             }
         }
 
     if ( VscrnMoveScrollTop(vmode, VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)) < 0 ) {
-        LONG oldscrolltop = VscrnGetScrollTopEx(vmode, FALSE);
-        if ( VscrnSetScrollTop(vmode, VscrnGetTopEx(vmode,FALSE)) < 0 )
+        LONG oldscrolltop = VscrnGetScrollTop(vmode, FALSE);
+        if ( VscrnSetScrollTop(vmode, VscrnGetTop(vmode, FALSE, TRUE)) < 0 )
             bleep(BP_WARN);
-        else if ( oldscrolltop != VscrnGetScrollTopEx(vmode, FALSE) )
+        else if ( oldscrolltop != VscrnGetScrollTop(vmode, FALSE) )
             vscrn[vmode].cursor.y +=
             (VscrnGetHeightEx(vmode,FALSE) - (tt_status[vmode]?1:0)
-              - (vscrn[vmode].scrolltop - oldscrolltop)
-              + vscrn[vmode].linecount) % vscrn[vmode].linecount ;
+              - (page->scrolltop - oldscrolltop)
+              + page->linecount) % page->linecount ;
         else vscrn[vmode].cursor.y = VscrnGetHeightEx(vmode,FALSE)
             -(tt_status[vmode]?1:0)-1 /* zero based */ ;
         }
@@ -1195,20 +1231,25 @@ void markdownhalfscreen(BYTE vmode) {
     }
 }
 
+/*---------------------------------------------------------------------------*/
+/* markupscreen                                             | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* Mark mode: up one screen */
 void
 markupscreen( BYTE vmode )
 {
     int count = 0 ;
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+	vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        curline != VscrnGetBeginEx(vmode,FALSE) ) {
+        curline != VscrnGetBegin(vmode,FALSE,TRUE) ) {
         if ( vscrn[vmode].markbot == curline &&
              vscrn[vmode].marktop != vscrn[vmode].markbot &&
-            vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
             while ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0) && ( vscrn[vmode].markbot >
-                ( vscrn[vmode].marktop + 1 + vscrn[vmode].linecount)%vscrn[vmode].linecount ) ) {
+                ( vscrn[vmode].marktop + 1 + page->linecount)%page->linecount ) ) {
                 count++ ;
                 VscrnUnmark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
                 if ( vscrn[vmode].cursor.x > 0 ) {
@@ -1220,50 +1261,50 @@ markupscreen( BYTE vmode )
 
         if ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)
              && vscrn[vmode].markbot ==
-            (vscrn[vmode].marktop+1+vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
+            (vscrn[vmode].marktop+1+page->linecount)%page->linecount ) {
             count++ ;
             VscrnUnmark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
-            if ( vscrn[vmode].cursor.x >= vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) {
+            if ( vscrn[vmode].cursor.x >= page->lines[vscrn[vmode].markbot].markbeg ) {
                 VscrnUnmark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x+1, MAXTERMCOL ) ;
                 }
-            else { /* vscrn[vmode].cursor.x < vscrn[vmode].lines[vscrn[vmode].markbot].markbeg */
+            else { /* vscrn[vmode].cursor.x < page->lines[vscrn[vmode].markbot].markbeg */
                 VscrnUnmark( vmode, vscrn[vmode].markbot,
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markbeg+1, MAXTERMCOL ) ;
+                    page->lines[vscrn[vmode].markbot].markbeg+1, MAXTERMCOL ) ;
                 VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x,
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) ;
+                    page->lines[vscrn[vmode].markbot].markbeg ) ;
                 }
             }
 
         if ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0) &&
             vscrn[vmode].marktop == vscrn[vmode].markbot ) {
             count++ ;
-            if ( vscrn[vmode].cursor.x == vscrn[vmode].lines[vscrn[vmode].marktop].markend ) {
+            if ( vscrn[vmode].cursor.x == page->lines[vscrn[vmode].marktop].markend ) {
                 VscrnUnmark( vmode, vscrn[vmode].marktop,
-                    vscrn[vmode].lines[vscrn[vmode].marktop].markbeg+1, MAXTERMCOL ) ;
+                    page->lines[vscrn[vmode].marktop].markbeg+1, MAXTERMCOL ) ;
                 }
-            VscrnMark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].lines[vscrn[vmode].marktop].markbeg );
-            if ( vscrn[vmode].marktop != vscrn[vmode].beg )
-                VscrnMark( vmode, (vscrn[vmode].marktop-1+vscrn[vmode].linecount)%vscrn[vmode].linecount, vscrn[vmode].cursor.x,
+            VscrnMark( vmode, vscrn[vmode].marktop, 0, page->lines[vscrn[vmode].marktop].markbeg );
+            if ( vscrn[vmode].marktop != page->beg )
+                VscrnMark( vmode, (vscrn[vmode].marktop-1+page->linecount)%page->linecount, vscrn[vmode].cursor.x,
                 MAXTERMCOL ) ;
             }
 
         while ( count < VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0)
-                && vscrn[vmode].marktop != vscrn[vmode].beg ) {
+                && vscrn[vmode].marktop != page->beg ) {
             count++ ;
             VscrnMark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].cursor.x );
-            if ( vscrn[vmode].marktop != vscrn[vmode].beg )
-                VscrnMark( vmode, (vscrn[vmode].marktop-1+vscrn[vmode].linecount)%vscrn[vmode].linecount, vscrn[vmode].cursor.x,
+            if ( vscrn[vmode].marktop != page->beg )
+                VscrnMark( vmode, (vscrn[vmode].marktop-1+page->linecount)%page->linecount, vscrn[vmode].cursor.x,
                     MAXTERMCOL) ;
             }
         }
 
     if ( VscrnMoveScrollTop(vmode,-(VscrnGetHeightEx(vmode,FALSE)-(tt_status[vmode]?1:0))) < 0 ) {
-        LONG oldscrolltop = VscrnGetScrollTopEx(vmode, FALSE);
-        if ( VscrnSetScrollTop(vmode,VscrnGetBeginEx(vmode,FALSE)) < 0 )
+        LONG oldscrolltop = VscrnGetScrollTop(vmode, FALSE);
+        if ( VscrnSetScrollTop(vmode,VscrnGetBegin(vmode,FALSE,TRUE)) < 0 )
             bleep(BP_WARN);
-        else if ( oldscrolltop != VscrnGetScrollTopEx(vmode, FALSE) )
+        else if ( oldscrolltop != VscrnGetScrollTop(vmode, FALSE) )
             vscrn[vmode].cursor.y -=
-            (oldscrolltop - vscrn[vmode].scrolltop + vscrn[vmode].linecount) % vscrn[vmode].linecount ;
+            (oldscrolltop - page->scrolltop + page->linecount) % page->linecount ;
         else vscrn[vmode].cursor.y = 0 ;
         }
 }
@@ -1284,21 +1325,24 @@ markuphalfscreen( BYTE vmode ) {
     }
 }
 
-
+/*---------------------------------------------------------------------------*/
+/* markhomescreen                                           | Page: View     */
+/*---------------------------------------------------------------------------*/
 void
 markhomescreen(BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+	vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        ( curline != VscrnGetBeginEx(vmode,FALSE) ||
-        curline == VscrnGetBeginEx(vmode,FALSE) &&
+        ( curline != VscrnGetBegin(vmode,FALSE,TRUE) ||
+        curline == VscrnGetBegin(vmode,FALSE,TRUE) &&
         vscrn[vmode].cursor.x != 0 ) ) {
         if ( vscrn[vmode].markbot == curline &&
-            vscrn[vmode].lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].markbot].markend == vscrn[vmode].cursor.x ) {
             while ( vscrn[vmode].markbot >
-                ( vscrn[vmode].marktop + 1 + vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
+                ( vscrn[vmode].marktop + 1 + page->linecount)%page->linecount ) {
                 VscrnUnmark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
                 if ( vscrn[vmode].cursor.x > 0 ) {
                     VscrnUnmark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x+1,
@@ -1308,34 +1352,34 @@ markhomescreen(BYTE vmode )
             }
 
         if ( vscrn[vmode].markbot ==
-            (vscrn[vmode].marktop+1+vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
+            (vscrn[vmode].marktop+1+page->linecount)%page->linecount ) {
             VscrnUnmark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
-            if ( vscrn[vmode].cursor.x >= vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) {
+            if ( vscrn[vmode].cursor.x >= page->lines[vscrn[vmode].markbot].markbeg ) {
                 VscrnUnmark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x+1, MAXTERMCOL ) ;
                 }
-            else { /* vscrn[vmode].cursor.x < vscrn[vmode].lines[vscrn[vmode].markbot].markbeg */
+            else { /* vscrn[vmode].cursor.x < page->lines[vscrn[vmode].markbot].markbeg */
                 VscrnUnmark( vmode, vscrn[vmode].markbot,
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markbeg+1, MAXTERMCOL ) ;
+                    page->lines[vscrn[vmode].markbot].markbeg+1, MAXTERMCOL ) ;
                 VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x,
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) ;
+                    page->lines[vscrn[vmode].markbot].markbeg ) ;
                 }
             }
 
         if ( vscrn[vmode].marktop == vscrn[vmode].markbot ) {
-            if ( vscrn[vmode].cursor.x == vscrn[vmode].lines[vscrn[vmode].marktop].markend ) {
+            if ( vscrn[vmode].cursor.x == page->lines[vscrn[vmode].marktop].markend ) {
                 VscrnUnmark( vmode, vscrn[vmode].marktop,
-                    vscrn[vmode].lines[vscrn[vmode].marktop].markbeg+1, MAXTERMCOL ) ;
+                    page->lines[vscrn[vmode].marktop].markbeg+1, MAXTERMCOL ) ;
                 }
-            VscrnMark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].lines[vscrn[vmode].marktop].markbeg );
-            if ( vscrn[vmode].marktop != vscrn[vmode].beg )
-                VscrnMark( vmode, (vscrn[vmode].marktop-1+vscrn[vmode].linecount)%vscrn[vmode].linecount, vscrn[vmode].cursor.x,
+            VscrnMark( vmode, vscrn[vmode].marktop, 0, page->lines[vscrn[vmode].marktop].markbeg );
+            if ( vscrn[vmode].marktop != page->beg )
+                VscrnMark( vmode, (vscrn[vmode].marktop-1+page->linecount)%page->linecount, vscrn[vmode].cursor.x,
                 MAXTERMCOL ) ;
             }
 
-        while ( vscrn[vmode].marktop != vscrn[vmode].beg ) {
+        while ( vscrn[vmode].marktop != page->beg ) {
             VscrnMark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].cursor.x );
-            if ( vscrn[vmode].marktop != vscrn[vmode].beg )
-                VscrnMark( vmode, (vscrn[vmode].marktop-1+vscrn[vmode].linecount)%vscrn[vmode].linecount, vscrn[vmode].cursor.x,
+            if ( vscrn[vmode].marktop != page->beg )
+                VscrnMark( vmode, (vscrn[vmode].marktop-1+page->linecount)%page->linecount, vscrn[vmode].cursor.x,
                     MAXTERMCOL) ;
             }
 
@@ -1343,7 +1387,7 @@ markhomescreen(BYTE vmode )
         }
 
 
-    if ( VscrnSetScrollTop( vmode, VscrnGetBeginEx(vmode,FALSE) ) < 0 )
+    if ( VscrnSetScrollTop( vmode, VscrnGetBegin(vmode,FALSE,TRUE) ) < 0 )
         bleep( BP_FAIL ) ;
     else {
         vscrn[vmode].cursor.x = 0 ;
@@ -1351,20 +1395,25 @@ markhomescreen(BYTE vmode )
         }
 }
 
+/*---------------------------------------------------------------------------*/
+/* markendscreen                                            | Page: View     */
+/*---------------------------------------------------------------------------*/
+/* Mark to the end of the screen */
 void
 markendscreen( BYTE vmode )
 {
-   LONG curline = (VscrnGetScrollTopEx(vmode, FALSE)+vscrn[vmode].cursor.y
-      +vscrn[vmode].linecount)%vscrn[vmode].linecount ;
+	vscrn_page_t *page = &vscrn_view_page(vmode);
+   LONG curline = (VscrnGetScrollTop(vmode, FALSE)+vscrn[vmode].cursor.y
+      +page->linecount)%page->linecount ;
 
     if ( markmodeflag[vmode] == marking &&
-        ( curline != VscrnGetEndEx(vmode,FALSE) ||
-        curline == VscrnGetEndEx(vmode,FALSE) &&
+        ( curline != VscrnGetEnd(vmode,FALSE,TRUE) ||
+        curline == VscrnGetEnd(vmode,FALSE,TRUE) &&
         vscrn[vmode].cursor.x != VscrnGetWidth(vmode)-1 ) ) {
         if ( vscrn[vmode].marktop == curline &&
-            vscrn[vmode].lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
+            page->lines[vscrn[vmode].marktop].markbeg == vscrn[vmode].cursor.x ) {
             while ( vscrn[vmode].marktop <
-                ( vscrn[vmode].markbot - 1 + vscrn[vmode].linecount)%vscrn[vmode].linecount &&
+                ( vscrn[vmode].markbot - 1 + page->linecount)%page->linecount &&
                vscrn[vmode].markbot != vscrn[vmode].marktop ) {
                 VscrnUnmark( vmode, vscrn[vmode].marktop, 0, MAXTERMCOL ) ;
                 if ( vscrn[vmode].cursor.x > 0 ) {
@@ -1374,42 +1423,42 @@ markendscreen( BYTE vmode )
             }
 
         if ( vscrn[vmode].marktop ==
-            (vscrn[vmode].markbot-1+vscrn[vmode].linecount)%vscrn[vmode].linecount ) {
+            (vscrn[vmode].markbot-1+page->linecount)%page->linecount ) {
             VscrnUnmark( vmode, vscrn[vmode].marktop, 0, MAXTERMCOL ) ;
-            if ( vscrn[vmode].cursor.x <= vscrn[vmode].lines[vscrn[vmode].marktop].markend ) {
+            if ( vscrn[vmode].cursor.x <= page->lines[vscrn[vmode].marktop].markend ) {
                 VscrnUnmark( vmode, vscrn[vmode].marktop, 0, vscrn[vmode].cursor.x-1 ) ;
                 }
-            else { /* vscrn[vmode].cursor.x > vscrn[vmode].lines[vscrn[vmode].marktop].markend */
+            else { /* vscrn[vmode].cursor.x > page->lines[vscrn[vmode].marktop].markend */
                 VscrnUnmark( vmode, vscrn[vmode].marktop, 0,
-                    vscrn[vmode].lines[vscrn[vmode].marktop].markend-1 ) ;
-                VscrnMark( vmode, vscrn[vmode].marktop, vscrn[vmode].lines[vscrn[vmode].marktop].markend,
+                    page->lines[vscrn[vmode].marktop].markend-1 ) ;
+                VscrnMark( vmode, vscrn[vmode].marktop, page->lines[vscrn[vmode].marktop].markend,
                     vscrn[vmode].cursor.x ) ;
                 }
             }
 
         if ( vscrn[vmode].marktop == vscrn[vmode].markbot ) {
-            if ( vscrn[vmode].cursor.x == vscrn[vmode].lines[vscrn[vmode].markbot].markbeg ) {
+            if ( vscrn[vmode].cursor.x == page->lines[vscrn[vmode].markbot].markbeg ) {
                 VscrnUnmark( vmode, vscrn[vmode].markbot, 0,
-                    vscrn[vmode].lines[vscrn[vmode].markbot].markend-1 ) ;
+                    page->lines[vscrn[vmode].markbot].markend-1 ) ;
                 }
-            VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].lines[vscrn[vmode].markbot].markend,
+            VscrnMark( vmode, vscrn[vmode].markbot, page->lines[vscrn[vmode].markbot].markend,
                 MAXTERMCOL ) ;
-            if ( vscrn[vmode].markbot != vscrn[vmode].end )
-                VscrnMark( vmode, (vscrn[vmode].markbot+1)%vscrn[vmode].linecount, 0,
+            if ( vscrn[vmode].markbot != page->end )
+                VscrnMark( vmode, (vscrn[vmode].markbot+1)%page->linecount, 0,
                     vscrn[vmode].cursor.x ) ;
             }
 
-        while ( vscrn[vmode].markbot != vscrn[vmode].end-(tt_status[vmode]?1:0) ) {
+        while ( vscrn[vmode].markbot != page->end-(tt_status[vmode]?1:0) ) {
             VscrnMark( vmode, vscrn[vmode].markbot, vscrn[vmode].cursor.x,
-                vscrn[vmode].lines[vscrn[vmode].markbot].width ) ;
-            if ( vscrn[vmode].markbot != vscrn[vmode].end )
-                VscrnMark( vmode, (vscrn[vmode].markbot+1)%vscrn[vmode].linecount, 0,
+                page->lines[vscrn[vmode].markbot].width ) ;
+            if ( vscrn[vmode].markbot != page->end )
+                VscrnMark( vmode, (vscrn[vmode].markbot+1)%page->linecount, 0,
                     vscrn[vmode].cursor.x ) ;
             }
         VscrnMark( vmode, vscrn[vmode].markbot, 0, MAXTERMCOL ) ;
         }
 
-    if ( VscrnSetScrollTop( vmode, VscrnGetTopEx(vmode,FALSE) ) < 0 )
+    if ( VscrnSetScrollTop( vmode, VscrnGetTop(vmode, FALSE, TRUE) ) < 0 )
         bleep( BP_FAIL ) ;
     else {
         vscrn[vmode].cursor.x = VscrnGetWidth(vmode)-1 ;

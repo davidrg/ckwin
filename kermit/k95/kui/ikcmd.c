@@ -16,6 +16,7 @@
 #include "ikextern.h"
 #include "ikcmd.h"
 
+int mlook( struct mtab [], char *, int );
 extern int local, xitwarn, ttyfd;
 extern char ttname[];			/* Communication device name */
 extern BYTE vmode;

@@ -1285,6 +1285,7 @@ int cmd_rows = -1, cmd_cols = -1;       /* Command/console screen dimensions */
 #endif /* KUI */
 int k95stdio = 0;                       /* Stdio threads */
 int tt_bell = XYB_AUD | XYB_SYS;        /* BELL AUDIBLE (system sounds) */
+int tt_scroll_usr = 1;                  /* Saved value for tt_scroll */
 #else /* OS2 */
 int tt_rows = -1;                       /* Rows (height) */
 int tt_cols = -1;                       /* Columns (width) */

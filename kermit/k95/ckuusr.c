@@ -140,7 +140,7 @@ int type_intrp = 0;
 extern int tcp_avail;
 extern bool viewonly;
 extern int k95stdout;
-extern int tt_scroll;
+extern int tt_scroll, tt_scroll_usr;
 #ifndef NOTERM
 extern int tt_status[VNUM];
 #endif /* NOTERM */
@@ -6842,11 +6842,11 @@ doclear() {
       case CLR_TRM:
 	 switch ( z ) {
 	  case CLR_C_ALL:
-	     if (VscrnGetBufferSize(VTERM) > 0 ) {
+	     if (VscrnGetBufferSize(VTERM, FALSE, TRUE) > 0 ) {
 		 VscrnScroll(VTERM, UPWARD, 0,
 			     VscrnGetHeight(VTERM)-(tt_status[VTERM]?2:1),
 			     VscrnGetHeight(VTERM) -
-			     (tt_status[VTERM]?1:0), TRUE, SP
+			     (tt_status[VTERM]?1:0), TRUE, SP, TRUE
 			     );
 		 cleartermscreen(VTERM);
 	     }
@@ -13418,7 +13418,7 @@ necessary DLLs did not load.  Use SHOW NETWORK to check network status.\n"
 #ifdef OS2
     if (cx == XXNSCR) {
 	if ((z = cmcfm()) < 0) return(z);
-        tt_scroll = 0;
+        tt_scroll = tt_scroll_usr = 0;
         return(success = 1);
     }
 #endif /* OS2 */

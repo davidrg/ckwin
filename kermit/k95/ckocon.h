@@ -1314,8 +1314,8 @@ typedef struct videoline_struct {
     } videoline ;
 
 typedef struct pos_struct {
-    unsigned short x, y ;
-    } position ;
+    unsigned short x, y, p ;  /* p for page */
+} position ;
 
 typedef struct popup_struct {
     unsigned short height,
@@ -1325,13 +1325,20 @@ typedef struct popup_struct {
     unsigned char  gui;                        /* gui? */
     } videopopup ;
 
-typedef struct videobuffer_struct {
+typedef struct vscrn_page_struct {
     unsigned long linecount ;
     videoline *   lines ;      /* of count linecount */
     unsigned long beg,         /* beginning of scrollable region */
                   top,         /* first line of write to terminal screen */
                   scrolltop,   /* top of scroll screen */
                   end ;        /* end of scrollable region */
+	int margintop, marginbot, marginleft, marginright;
+} vscrn_page_t ;
+
+typedef struct vscrn_struct {
+    int           view_page,   /* Which page is on screen */
+                  page_count;
+    vscrn_page_t* pages;       /* of count page_count */
     position      cursor ;     /* cursor position */
     videopopup *  popup ;      /* popup menu      */
     long          marktop,     /* first line marked */
@@ -1341,7 +1348,76 @@ typedef struct videobuffer_struct {
     int           bookmark[10];/* bookmarks */
     int           hscroll ;    /* column to display from */
     int           display_height;
-   } videobuffer ;
+    BOOL          page_cursor_coupling;
+    BOOL          allow_alt_buf; /* Allow switching to alternate buffer? */
+} vscrn_t;
+
+/* Multiple Page support
+ * ---------------------
+ * There are at all times *two* current pages which may or may not be the same
+ * page. There is the page that the cursor is on (cursor.p), and the page that
+ * is currently on screen (view_page).
+ *
+ * Code that is rendering the vscrn to the real screen should use the view page.
+ * Code that is modifying whatever is on screen should use the cursor page.
+ *
+ * User-initiated actions (eg, mark mode) happen on the view screen.
+ *
+ * None of this applies to the status line which, while it is a vscrn, only has
+ * a single page.
+ *
+ * Paging is *currently* only supported for VT420 and newer, plus the
+ * K95 terminal type. For all other terminals, the view and cursor page are
+ * assumed to always be page 1.
+ *
+ * The WY370 appears to support DEC-compatible paging, so it *could* be extended
+ * to that terminal type at some point in the future. Any changes to WY370
+ * emulation present a testing challenge however: I don't have access to one.
+ */
+
+/* Gets the vscrn page currently being viewed */
+#define vscrn_view_page(m) (vscrn[(m)].pages[vscrn[(m)].view_page])
+
+/* Gets the vscrn page that the cursor is currently on */
+#define vscrn_cursor_page(m) (vscrn[(m)].pages[vscrn[(m)].cursor.p])
+
+#define vscrn_current_page_number(m, view) ( \
+	view ? vscrn[(m)].view_page : vscrn[(m)].cursor.p )
+
+/* Checks if the view page has been initialised */
+#define vscrn_view_page_valid(m) (\
+    vscrn[(m)].pages != NULL &&  vscrn_view_page(m).lines != NULL )
+
+/* Checks if the cursor page has been initialised */
+#define vscrn_cursor_page_valid(m) (\
+    vscrn[(m)].pages != NULL && vscrn_cursor_page(m).lines != NULL )
+
+/* Checks if the specified page has been initialised */
+#define vscrn_page_valid(m,p) (\
+    vscrn[(m)].pages != NULL && p < vscrn[(m)].page_count && vscrn[(m)].pages[(p)].lines != NULL )
+
+/* Checks if the cursor is currently on the visible page */
+#define cursor_on_visible_page(m) (vscrn[(m)].view_page == vscrn[(m)].cursor.p)
+
+#define vscrn_set_page_margin_top(m,p,v) (vscrn[(m)].pages[(p)].margintop = (v))
+#define vscrn_set_page_margin_bot(m,p,v) (vscrn[(m)].pages[(p)].marginbot = (v))
+#define vscrn_set_page_margin_left(m,p,v) (vscrn[(m)].pages[(p)].marginleft = (v))
+#define vscrn_set_page_margin_right(m,p,v) (vscrn[(m)].pages[(p)].marginright = (v))
+
+#define vscrn_setc_page_margin_top(m,v) (vscrn_set_page_margin_top((m),vscrn[(m)].cursor.p,(v)))
+#define vscrn_setc_page_margin_bot(m,v) (vscrn_set_page_margin_bot((m),vscrn[(m)].cursor.p,(v)))
+#define vscrn_setc_page_margin_left(m,v) (vscrn_set_page_margin_left((m),vscrn[(m)].cursor.p,(v)))
+#define vscrn_setc_page_margin_right(m,v) (vscrn_set_page_margin_right((m),vscrn[(m)].cursor.p,(v)))
+
+#define vscrn_page_margin_top(m,p) (vscrn[(m)].pages[(p)].margintop)
+#define vscrn_page_margin_bot(m,p) (vscrn[(m)].pages[(p)].marginbot)
+#define vscrn_page_margin_left(m,p) (vscrn[(m)].pages[(p)].marginleft)
+#define vscrn_page_margin_right(m,p) (vscrn[(m)].pages[(p)].marginright)
+
+#define vscrn_c_page_margin_top(m) (vscrn_page_margin_top((m),vscrn[(m)].cursor.p))
+#define vscrn_c_page_margin_bot(m) (vscrn_page_margin_bot((m),vscrn[(m)].cursor.p))
+#define vscrn_c_page_margin_left(m) (vscrn_page_margin_left((m),vscrn[(m)].cursor.p))
+#define vscrn_c_page_margin_right(m) (vscrn_page_margin_right((m),vscrn[(m)].cursor.p))
 
 /* Video Buffer IDs */
 #define VCMD    0   /* command mode */
@@ -1435,6 +1511,7 @@ _PROTOTYP( USHORT ShowBuf, ( USHORT, USHORT ) );
 _PROTOTYP( USHORT Set132Cols, ( int ) );
 _PROTOTYP( USHORT Set80Cols, ( int ) );
 _PROTOTYP( USHORT SetCols, ( int ) );
+_PROTOTYP( ULONG VscrnSetBufferSize, ( BYTE, ULONG, int) );
 _PROTOTYP( APIRET VscrnInit, ( BYTE ) ) ;
 _PROTOTYP( USHORT VscrnScrollLf, ( BYTE, USHORT, USHORT, USHORT, USHORT, USHORT, viocell ) );
 _PROTOTYP( USHORT VscrnScrollRt, ( BYTE, USHORT, USHORT, USHORT, USHORT, USHORT, viocell ) );
@@ -1448,37 +1525,40 @@ _PROTOTYP( USHORT VscrnWrtUCS2StrAtt, ( BYTE vmode, PUSHORT UCS2Str, USHORT Leng
 #ifndef KUI
 _PROTOTYP( void   TermScrnUpd, ( void * ) ) ;
 #endif /* KUI */
-_PROTOTYP( videoline * VscrnGetLineFromTop, ( BYTE, SHORT ) ) ;
+_PROTOTYP( videoline * VscrnGetPageLineFromTop, ( BYTE, SHORT, int ) ) ;
+_PROTOTYP( videoline * VscrnGetLineFromTop, ( BYTE, SHORT, BOOL ) ) ;
 _PROTOTYP( videoline * VscrnGetLine, ( BYTE, SHORT ) ) ;
 _PROTOTYP( USHORT VscrnGetLineVtAttr, ( BYTE, SHORT ) ) ;
-_PROTOTYP( USHORT VscrnSetLineVtAttr, ( BYTE, SHORT, USHORT ) ) ;
+/*_PROTOTYP( USHORT VscrnSetLineVtAttr, ( BYTE, SHORT, USHORT ) ) ;*/
 _PROTOTYP( vtattrib VscrnGetVtCharAttr, ( BYTE, SHORT, SHORT ) ) ;
 _PROTOTYP( USHORT VscrnSetVtCharAttr, ( BYTE, SHORT, SHORT, vtattrib ) ) ;
-_PROTOTYP( viocell * VscrnGetCells, ( BYTE, SHORT ) ) ;
-_PROTOTYP( viocell * VscrnGetCell, ( BYTE, SHORT, SHORT ) ) ;
+_PROTOTYP( viocell * VscrnGetCells, ( BYTE, SHORT, INT ) ) ;
+_PROTOTYP( viocell * VscrnGetPageCell, ( BYTE, SHORT, SHORT, int ) ) ;
+_PROTOTYP( viocell * VscrnGetCell, ( BYTE, SHORT, SHORT, BOOL ) ) ;
 _PROTOTYP( LONG VscrnMoveTop, ( BYTE, LONG ) ) ;
 _PROTOTYP( LONG VscrnMoveScrollTop, ( BYTE, LONG ) ) ;
-_PROTOTYP( LONG VscrnMoveBegin, ( BYTE, LONG ) ) ;
-_PROTOTYP( LONG VscrnMoveEnd, ( BYTE, LONG ) ) ;
-_PROTOTYP( UCHAR VscrnGetLineWidth, ( BYTE, SHORT ) ) ;
-_PROTOTYP( ULONG VscrnGetTopEx, ( BYTE, BOOL ) ) ;
-_PROTOTYP( ULONG VscrnGetTop, ( BYTE ) ) ;
-_PROTOTYP( ULONG VscrnGetScrollTopEx, ( BYTE, BOOL ) ) ;
-_PROTOTYP( ULONG VscrnGetScrollTop, ( BYTE ) ) ;
+/*_PROTOTYP( LONG VscrnMoveBegin, ( BYTE, LONG ) ) ;
+_PROTOTYP( LONG VscrnMoveEnd, ( BYTE, LONG ) ) ;*/
+_PROTOTYP( UCHAR VscrnGetPageLineWidth, ( BYTE, SHORT, int ) ) ;
+_PROTOTYP( UCHAR VscrnGetLineWidth, ( BYTE, SHORT, BOOL ) ) ;
+_PROTOTYP( ULONG VscrnGetPageTop, ( BYTE, BOOL, int ) ) ;
+_PROTOTYP( ULONG VscrnGetTop, ( BYTE, BOOL, BOOL ) ) ;
+_PROTOTYP( ULONG VscrnGetPageScrollTop, ( BYTE, BOOL, int ) ) ;
+_PROTOTYP( ULONG VscrnGetScrollTop, ( BYTE, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetScrollHorz, ( BYTE ) ) ;
-_PROTOTYP( ULONG VscrnGetBeginEx, ( BYTE, BOOL ) ) ;
-_PROTOTYP( ULONG VscrnGetBegin, ( BYTE ) ) ;
-_PROTOTYP( ULONG VscrnGetEndEx, ( BYTE, BOOL ) ) ;
-_PROTOTYP( ULONG VscrnGetEnd, ( BYTE ) ) ;
-_PROTOTYP( LONG VscrnSetTopEx, ( BYTE, LONG, BOOL ) ) ;
-_PROTOTYP( LONG VscrnSetTop, ( BYTE, LONG ) ) ;
+_PROTOTYP( ULONG VscrnGetBegin, ( BYTE, BOOL, BOOL ) ) ;
+_PROTOTYP( ULONG VscrnGetPageEnd, ( BYTE, BOOL, int ) ) ;
+_PROTOTYP( ULONG VscrnGetEnd, ( BYTE, BOOL, BOOL ) ) ;
+_PROTOTYP( LONG VscrnSetPageTop, ( BYTE, LONG, BOOL, int ) ) ;
+_PROTOTYP( LONG VscrnSetTop, ( BYTE, LONG, BOOL, BOOL ) ) ;
 _PROTOTYP( LONG VscrnSetScrollTop, ( BYTE, LONG ) ) ;
-_PROTOTYP( LONG VscrnSetScrollHorz, ( BYTE, LONG ) ) ;
-_PROTOTYP( LONG VscrnSetBegin, ( BYTE, LONG ) ) ;
-_PROTOTYP( LONG VscrnSetEnd, ( BYTE, LONG ) ) ;
-_PROTOTYP( ULONG VscrnGetBufferSizeEx, ( BYTE, BOOL ) ) ;
-_PROTOTYP( ULONG VscrnGetBufferSize, ( BYTE ) ) ;
-_PROTOTYP( ULONG VscrnSetBufferSize, ( BYTE, ULONG ) ) ;
+/*_PROTOTYP( LONG VscrnSetScrollHorz, ( BYTE, LONG ) ) ;*/
+_PROTOTYP( LONG VscrnSetPageBegin, ( BYTE, LONG, int ) ) ;
+_PROTOTYP( LONG VscrnSetBegin, ( BYTE, LONG, BOOL ) ) ;
+_PROTOTYP( LONG VscrnSetPageEnd, ( BYTE, LONG, int ) ) ;
+_PROTOTYP( LONG VscrnSetEnd, ( BYTE, LONG, BOOL ) ) ;
+_PROTOTYP( ULONG VscrnGetPageBufferSize, ( BYTE, BOOL, int ) ) ;
+_PROTOTYP( ULONG VscrnGetBufferSize, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( VOID VscrnSetWidth, ( BYTE, int ) ) ;
 _PROTOTYP( VOID VscrnSetHeight, ( BYTE, int ) ) ;
 _PROTOTYP( VOID VscrnSetDisplayHeight, ( BYTE, int ) ) ;
@@ -1496,7 +1576,8 @@ _PROTOTYP( int VscrnGetBookmark, ( BYTE, int ) ) ;
 
 _PROTOTYP( bool IsWARPed, ( void ) ) ;
 _PROTOTYP( APIRET VscrnIsDirty, ( int ) ) ;
-_PROTOTYP( void VscrnScroll, (BYTE, int, int, int, int,int, CHAR) ) ;
+_PROTOTYP( void VscrnScroll, (BYTE, int, int, int, int,int, CHAR, BOOL) ) ;
+_PROTOTYP( void VscrnScrollPage, (BYTE, int, int, int, int, int, CHAR, int) ) ;
 _PROTOTYP( BOOL IsOS2FullScreen, (void) ) ;
 _PROTOTYP( void SmoothScroll, (void) ) ;
 _PROTOTYP( void JumpScroll, (void ) ) ;
@@ -1511,7 +1592,7 @@ _PROTOTYP( APIRET CopyVscrnToPrinter, ( BYTE, int ) ) ;
 _PROTOTYP( APIRET CopyClipboardToKbdBuffer, ( BYTE ) ) ;
 _PROTOTYP( BOOL   VscrnIsLineMarked, ( BYTE, LONG ) ) ;
 _PROTOTYP( BOOL   VscrnIsMarked, ( BYTE, LONG, SHORT ) ) ;
-_PROTOTYP( BOOL   VscrnIsClear, ( BYTE ) ) ;
+_PROTOTYP( BOOL   VscrnIsClear, ( BYTE, int ) ) ;
 _PROTOTYP( void   VscrnSetPopup, ( BYTE, videopopup * ) ) ;
 _PROTOTYP( void   VscrnResetPopup, ( BYTE ) ) ;
 _PROTOTYP( bool   VscrnIsPopup, ( BYTE) ) ;
@@ -1564,6 +1645,7 @@ _PROTOTYP(void checkscreenmode, (void));
 #ifndef KUI
 _PROTOTYP(void clearcmdscreen, (void));
 #endif /* KUI */
+_PROTOTYP(void cleartermpage, (BYTE,int));
 _PROTOTYP(void cleartermscreen, (BYTE));
 _PROTOTYP(void clearscrollback, (BYTE) ) ;
 _PROTOTYP(cell_video_attr_t geterasecolor, (int));
@@ -1604,6 +1686,7 @@ _PROTOTYP(int  is_uprint,(void));
 _PROTOTYP(void prtchar, (BYTE));
 _PROTOTYP(void prtstr, (char *,int));
 _PROTOTYP(void prtscreen, (BYTE,int, int));
+_PROTOTYP(void prtpage, (BYTE,int, int, int));
 #ifdef BPRINT
     _PROTOTYP(int bprtstart, ( void ));
     _PROTOTYP(int bprtstop, ( void ));
@@ -1618,6 +1701,7 @@ _PROTOTYP(void SaveCmdMode, (int, int));
 _PROTOTYP(void scrollback, (BYTE,int));
 _PROTOTYP(void setcursormode, (void));
 _PROTOTYP(void setmargins, (int, int));
+_PROTOTYP(void set_page_margins, (int, int, int, int, int));
 _PROTOTYP(void strinsert, (char *, char *));
 _PROTOTYP(void wrtch, (unsigned short));
 _PROTOTYP(int sendescseq, (CHAR *));
@@ -1678,6 +1762,11 @@ _PROTOTYP( BYTE * GetClipboardContent, (void));
 #ifdef NT
 _PROTOTYP( USHORT * GetUnicodeClipboardContent, (void));
 #endif /* NT */
+
+_PROTOTYP(void to_alternate_buffer, (BYTE));
+_PROTOTYP(void from_alternate_buffer, (BYTE));
+_PROTOTYP(void set_alternate_buffer_enabled, (BYTE,BOOL));
+_PROTOTYP(BOOL on_alternate_buffer, (BYTE));
 
 typedef struct _hyperlink {
     int index;
