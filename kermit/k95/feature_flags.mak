@@ -80,6 +80,10 @@ WIN32_VERSION=0x0500
 # for JumpLists
 CKF_JUMPLISTS=yes
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKMODERNSHELL
+
+# Visual C++ 2010 also can't target anything older than Windows XP, so its safe
+# to take a dependency on GDI+
+CKF_GDIPLUS=yes
 !endif
 
 !if ($(MSC_VER) > 120)
@@ -743,4 +747,17 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) REXX
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) REXX
 DISABLED_FEATURE_DEFS = $(DISABLED_FEATURE_DEFS) -DNOREXX
+!endif
+
+# GDI+ is used for PNG and GIF image output (SAVE TERM SCREEN /FORMAT:png foo.png)
+# It ships with Windows XP and newer, but was available for Windows NT4/2000
+# and 98/ME. The redistributable for these platforms can be found here:
+# http://web.archive.org/web/20051028034316/http://download.microsoft.com/download/a/b/c/abc45517-97a0-4cee-a362-1957be2f24e1/gdiplus_dnld.exe
+# However, building K95 with GDI+ support means it won't run on Windows 95 or
+# NT 3.51, so its only enabled automatically when building for XP or newer.
+!if "$(CKF_GDIPLUS)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) GDI+
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_GDIPLUS
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) GDI+
 !endif

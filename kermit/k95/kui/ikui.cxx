@@ -324,3 +324,20 @@ void KuiShowNotification(int icon, char* title, char * message) {
 void KuiRefreshTerminal() {
     kui->getTerminal()->getClient()->getDrawInfo();
 }
+
+BOOL KuiRenderToEmfFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToEmfFile(vmode, filename);
+}
+
+BOOL KuiRenderToBmpFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToBmpFile(vmode, filename);
+}
+
+#ifdef CK_HAVE_GDIPLUS
+BOOL KuiRenderToPngFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToPngFile(vmode, filename);
+}
+BOOL KuiRenderToGifFile(int vmode, char* filename) {
+    return kui->getTerminal()->getClient()->renderToGifFile(vmode, filename);
+}
+#endif /* CK_HAVE_GDIPLUS */

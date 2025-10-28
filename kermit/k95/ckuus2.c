@@ -1181,6 +1181,19 @@ static char *hmxxsave[] = {
 #ifdef OS2
 "    COMMAND SCROLLBACK   Saves the current command-screen scrollback buffer",
 "    TERMINAL SCROLLBACK  Saves the current terminal-screen scrollback buffer",
+"    TERMINAL SCREEN      Saves the current terminal-screen",
+#ifdef KUI
+" ",
+"  K95G has the additional ability to save the terminal screen as an image file",
+"  This can be done with the syntax: ",
+#ifdef CK_HAVE_GDIPLUS
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF, GIF, PNG } filename ",
+#else /* CK_HAVE_GDIPLUS */
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF } filename ",
+#endif  /* CK_HAVE_GDIPLUS */
+"  When saving as an image, a new file is always created. The EMF format does",
+"  not currently support saving double-height/double-wide lines",
+#endif /* KUI */
 #endif /* OS2 */
 ""
 };
