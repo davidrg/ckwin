@@ -80,9 +80,13 @@ IKTerm::~IKTerm()
 #define URLMINCNT 4096
 #define EXCLUSIVE 1
 
-BOOL IKTerm::getDrawInfo()
+BOOL IKTerm::getDrawInfo() {
+    return getDrawInfo( vmode );
+}
+
+BOOL IKTerm::getDrawInfo(BYTE vscrn_number)
 {
-	vnum = vmode;
+	vnum = vscrn_number;
 #ifdef EXCLUSIVE
     /* Wait for exclusive access to the screen */
     if ( RequestVscrnMutex( vnum, 200 ) ) {

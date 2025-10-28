@@ -2754,6 +2754,16 @@ struct stringint {			/* String and (wide) integer */
 #define XSKEY   0			/* Key map file */
 #define XSCMD   1                       /* Command mode */
 #define XSTERM  2                       /* Terminal mode */
+#ifdef KUI
+#define XSTERM_FMT 0
+
+#define XSTERM_FMT_TEXT 0
+#define XSTERM_FMT_EMF  1
+#define XSTERM_FMT_BMP  2
+#define XSTERM_FMT_PNG  3
+#define XSTERM_FMT_GIF  4
+
+#endif
 #endif /* NOICP */
 
 #ifndef NODIAL

@@ -149,6 +149,13 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
    and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
    now include page information
+ - K95G can now save the terminal screen as an image rather than plain text.
+   For example, `SAVE TERMINAL SCREEN /FORMAT:PNG screenshot.png`. The following
+   output formats are available:
+   - Windows Bitmap (.bmp)
+   - Windows Enhanced Metafile (.emf)
+   - PNG (Windows XP+ only)
+   - GIF (Windows XP+ only)
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))

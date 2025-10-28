@@ -942,6 +942,10 @@ KUILIBS = kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib \
 KUILIBS = $(KUILIBS) $(SSH_LIB) ws2_32.lib
 !endif
 
+!if "$(CKF_GDIPLUS)" == "yes"
+KUILIBS = $(KUILIBS) Gdiplus.lib
+!endif
+
 !if "$(CKF_REXX)" == "yes"
 KUILIBS = $(KUILIBS) $(REXX_LIB)
 !endif
