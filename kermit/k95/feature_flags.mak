@@ -82,13 +82,15 @@ CKF_JUMPLISTS=yes
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCKMODERNSHELL
 
 # Visual C++ 2010 also can't target anything older than Windows XP, so its safe
-# to take a dependency on GDI+
+# to take a dependency on GDI+ by default.
+!if "$(CKF_GDIPLUS)" != "no"
 CKF_GDIPLUS=yes
 !endif
+!endif
 
-!if ($(MSC_VER) > 120)
+!if ($(MSC_VER) > 120) && "$(CKF_SHELLNOTIFY)" != "no"
 # Shell Notify requires Windows 2000 and Visual C++ 2002 (7.0) or newer
-ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY
+CKF_SHELLNOTIFY=yes
 !endif
 
 !if "$(CMP)" == "OWCL"
@@ -760,4 +762,13 @@ ENABLED_FEATURES = $(ENABLED_FEATURES) GDI+
 ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_HAVE_GDIPLUS
 !else
 DISABLED_FEATURES = $(DISABLED_FEATURES) GDI+
+!endif
+
+# Shell notifications apparently need IE 5.01 installed to work. They're only
+# used at this time for notifications about OSC-52 clipboard read/write.
+!if "$(CKF_SHELLNOTIFY)" == "yes"
+ENABLED_FEATURES = $(ENABLED_FEATURES) ShellNotify
+ENABLED_FEATURE_DEFS = $(ENABLED_FEATURE_DEFS) -DCK_SHELL_NOTIFY -D_WIN32_IE=0x0501
+!else
+DISABLED_FEATURES = $(DISABLED_FEATURES) ShellNotify
 !endif
