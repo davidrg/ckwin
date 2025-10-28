@@ -1196,7 +1196,7 @@ BOOL KClient::renderToDc(HDC hdc, KFont *font, int vnum, int margin) {
 
     int interSpace[MAXNUMCOL];
     int fontw = font->getFontW();
-    for( int i = 0; i < MAXNUMCOL; i++ )
+    for( i = 0; i < MAXNUMCOL; i++ )
         interSpace[i] = fontw;
 
     // Output text in runs with matching attributes
@@ -1651,8 +1651,8 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
     pbi = CreateBitmapInfoStruct(NULL, hbmp);
     if(pbi == NULL) {
         printf("Failed to create bitmap\n");
-        success = FALSE;
-        goto close_bmp;
+        DeleteObject(hbmp);
+        return FALSE;
     }
     pbih = (PBITMAPINFOHEADER) pbi;
 
@@ -1665,8 +1665,9 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
                            (HANDLE) NULL);
     if (hf == INVALID_HANDLE_VALUE) {
         printf("Failed to create output file %s\n", filename);
-        success = FALSE;
-        goto close_bmp;
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
     }
 
     BITMAPFILEHEADER hdr;
@@ -1687,8 +1688,10 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
     if (!WriteFile(hf, (LPVOID) &hdr, sizeof(BITMAPFILEHEADER),
         (LPDWORD) &dwTmp,  NULL)) {
         printf("Error writing to output file %s\n", filename);
-        success = FALSE;
-        goto close_bmp;
+        CloseHandle(hf);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
     }
 
     // Copy the BITMAPINFOHEADER and RGBQUAD array into the file.
@@ -1696,8 +1699,10 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
                   + pbih->biClrUsed * sizeof (RGBQUAD),
                   (LPDWORD) &dwTmp, ( NULL))) {
         printf("Error writing to output file %s\n", filename);
-        success = FALSE;
-        goto close_bmp;
+        CloseHandle(hf);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
     }
 
     // Copy the array of color indices into the .BMP file.
@@ -1705,19 +1710,15 @@ BOOL KClient::renderToBmpFile(int vnum, char* filename) {
 
     if (!WriteFile(hf, (LPSTR) pixels, (int) cb, (LPDWORD) &dwTmp,NULL)) {
         printf("Error writing to output file %s\n", filename);
-        success = FALSE;
-        goto close_bmp;
+        CloseHandle(hf);
+        free(pbi);
+        DeleteObject(hbmp);
+        return FALSE;
     }
 
-close_bmp:
-    // Close the file
-    if (hf != INVALID_HANDLE_VALUE && !CloseHandle(hf)) {
-        printf("Failed to close output file %s\n", filename);
-        success = FALSE;
-    }
-
-    if(hbmp != NULL) DeleteObject(hbmp);
-    if(pbi != NULL) free(pbi);
+    CloseHandle(hf);
+    free(pbi);
+    DeleteObject(hbmp);
 
     return success;
 }
