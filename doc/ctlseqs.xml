@@ -15716,13 +15716,24 @@ DCS $ q 3 , } ST</pre>
                 and <tt><param-single symbol="Pt"/> ;
                 <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                 <param-single symbol="Pr"/></tt> is the rectangle to calculate
-                the checksum for. Only available if send-data is enabled
-                (<tt>set terminal send-data on</tt>).
+                the checksum for. Coordinates are affected by origin mode
+                (<a href="#decom">DECOM</a>). Only available if send-data is
+                enabled (<tt>set terminal send-data on</tt>) - if it is disabled
+                (the default), this control sequence is ignored.
             </p>
             <p>
                 If the terminal is on the XTerm Alternate Screen, then the
                 page is ignored and DECRQCRA operates only on the alternate
                 screen.
+            </p>
+            <p>
+                The response is <tt><cc>DCS</cc> <em>Pi</em> ! ~ D...D <cc>ST</cc></tt>
+                where <em>Pi</em> is the request ID, and D...D is a string of
+                four hexadecimal digits indicating the checksum.
+            </p>
+            <p>
+                You can also compute a checksum using the same algorithm with
+                the K95 function <tt>\fterminalchecksum()</tt>.
             </p>
         </section>
         <section role="ctlseq" id="decpkfmr" mnemonic="DECPKFMR"

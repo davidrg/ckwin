@@ -2695,6 +2695,10 @@ struct stringint {			/* String and (wide) integer */
 #define FN_DAYNAME 170			/* Day name according to locale */
 #define FN_MONNAME 171			/* Month name according to locale */
 
+#ifdef OS2
+#define FN_TERMCKS 172          /* Checksum of the terminal screen */
+#endif /* OS2 */
+
 #endif /* NOSPL */
 
 /* Time Units */
