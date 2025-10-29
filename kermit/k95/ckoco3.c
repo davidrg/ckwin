@@ -17625,6 +17625,21 @@ vtcsi(void)
                 /* DECSSDT - Select Status Line Type */
                 setdecssdt( SSDT_BLANK );
                 break;
+            case '|':   /* DECSCPP */
+                tt_cols[VTERM] = 80;
+                VscrnSetWidth( VTERM, 80);
+#ifdef TCPSOCKET
+                if (TELOPT_ME(TELOPT_NAWS) && ttmdm < 0) {
+                    tn_snaws();
+#ifdef RLOGCODE
+                    rlog_naws();
+#endif /* RLOGCODE */
+#ifdef SSHBUILTIN
+                    ssh_snaws();
+#endif /* SSHBUILTIN */
+                }
+#endif /* TCPSOCKET */
+                break;
             }
             break;
         case 'S':
@@ -17800,6 +17815,7 @@ vtcsi(void)
                     break;
                 case '|':
                     /* DECSCPP - Set Columns Per Page */
+                    if (pn[1] < 80) pn[1] = 80;
                     tt_cols[VTERM] = pn[1];
                     VscrnSetWidth( VTERM, pn[1]);
 #ifdef TCPSOCKET
