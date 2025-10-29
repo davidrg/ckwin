@@ -12338,6 +12338,19 @@ represent.\n");
         hmsga(hmfmonname);              /* Literal string was too long */
         break;
 
+#ifdef OS2
+      case FN_TERMCKS:
+        printf("\\fterminalchecksum(n1,n2,n3,n4,n5)\n\
+  Returns a checksum of the terminal screen using the same algorithm as the\n\
+  DECRQCRA control sequence found on the DEC VT420 and VT520 terminals.\n\
+  n1 is the top line, n2 is the left column, n3 is the bottom line and n4 is\n\
+  the right column, and n5 is the page number. Unlike DECRQCRA, any margins \n\
+  set do not apply. All parameters are optional and default to a checksum of\n\
+  the entire page that is currently being displayed. All coordinates and page\n\
+  numbers start from 1.");
+        break;
+#endif /* OS2 */
+
       default:
         printf("Sorry, help not available for \"%s\"\n",cmdbuf);
     }

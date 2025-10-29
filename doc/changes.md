@@ -194,6 +194,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
+ - Added a new function, `\fterminalchecksum`, which produces a checksum of the
+   terminal screen using the same algorithm as DECRQCRA. Parameters allow you
+   to specify a region of a particular page to calculate a checksum off. If
+   parameters are left off it calculates the checksum of the entire page on
+   screen. Unlike DECRQCRA, it is not bound by page margins.
+   
  
 ### New terminal control sequences
 > [!NOTE]
