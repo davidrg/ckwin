@@ -12683,7 +12683,7 @@ z_out(channel,s,length,flags) int channel, flags, length; char * s;
 #endif /* DEBUG */
     if (!z_inited)                      /* File i/o inited? */
       return(z_error = FX_NOP);
-    if (channel >= z_maxchan)           /* Channel in range? */
+    if (channel >= z_maxchan || channel < 0)   /* Channel in range? */
       return(z_error = FX_CHN);
     if (!z_file[channel])
       return(z_error = FX_NOP);
