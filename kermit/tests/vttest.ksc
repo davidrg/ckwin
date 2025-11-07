@@ -1,0 +1,3643 @@
+# Kermit 95 VTTEST Automation Script  
+# ----------------------------------------------------------------------------
+#
+# This script launches VTTEST and steps through its various menus running all
+# tests which can be run without human (keyboard) input. For each test it:
+#   - Saves the terminal buffer as an image
+#   - Computes a checksum of the contents of the terminal terminal buffer
+# As it goes, it adds the screenshots to an HTML file for easy viewing. If a
+# checksum of a passing result is known, the computed checksum can be compared
+# with that to automatically determine if the test passed or failed.
+#
+# The script is written in the macro programming language common to C-Kermit
+# and Kermit 95. The ability to take screenshots and compute checksums of the
+# terminal screen is a feature specific to Kermit 95 (C-Kermit doesn't have a
+# terminal emulator), making this script Kermit 95-specific.
+#
+# If the script fails to run, try it again - timeouts do happen sometimes if
+# vttest (or K95) doesn't respond quite fast enough. If it keeps failing, 
+# possible causes include:
+#	- High latency connection may result in responses to queries from VTTEST
+#	  not being delivered in time causing tests (or even VTTEST itself) to
+#	  fail. 
+#	- Changes in VTTEST (new or removed tests, menu items, etc). This script
+#	  is known to work with at least the following versions of VTTEST:
+#			version 2.7 (20241208)
+#
+# The full test takes a little over 34 minutes to run depending on options
+# selected, and produces around 7,800 image files.
+#
+# TODO
+#  - The various tests that loop through a bunch of margin combinations aren't
+#	 getting enough time to render the menus properly either.
+#  - more outputs: separate pages for passing/failing/unknown results in
+#	 addition to the giant all-in-one output.
+#  - test_11_3_2_v420_cursor_movement isn't getting enough time to paint the blue
+#    backgrounds in the colour outputs (I assume)
+#  - Two tests want a RETURN hit part way through - one in the VT52 tests
+#    and one in terminal reports
+#  - Test 11.1.2.1 needs the cursor to be visible
+#	 These tests also need it - and they need to show if its blinking or not:
+# 	    test_11_4_5_vt520_reporting_functions
+# 		test_11_4_6_v520_screen_display
+#  - Option to run for the various terminal emultaion options: vt100, 102
+#		220, 320 and K95 as the results may be (should be?) different.
+#  - Test 5.1 needs the status line to be covered by the checksum
+#  - A way of injecting keyboard scancodes so keyboard tests can be done
+#  - Provide a way of updating checksums automatically if/when the DECRQCRA
+#	 algorithm changes. Probably something like:
+#		- Run test with old checksum algorithm writing passing test IDs to one
+#		  file and failing to another
+#		- Run test with new checksum algorithm 10 times, and if the resulting
+#		  checksums.dat files all agree, build a new vttest.dat from that using
+#		  the two files recorded previously to determine which tests should be
+#		  passing or failing.
+#  - A way to run vttest locally - as Windows PTYs aren't transparent, perhaps
+#		its time for a Cygwin terminal option? Or find some way of building
+#		vttest for Windows and running via stdin/stdout without PTYs involved?
+
+
+##############################################################################
+# Settings ###################################################################
+##############################################################################
+local vttest_name output_directory test_procedure image_format color_tests
+local mono_tests line_drawing_chars
+
+# What command should be run on the remote machine to start VTTEST 
+.vttest_name = "vttest/vttest-20241208/vttest"
+
+# Where on the local machine should the output files go
+.output_directory = "vttest"
+
+# What image format to use?
+.image_format = "png"
+
+# Record checksums to checksums.dat?
+.record_checksums = 1
+
+# Some tests are available in both color and mono versions. Which should be 
+# run? Selecting only colour tests with line drawing characters can cut down
+# the number of test permutations significantly reducing overall run time.
+.color_tests = 1
+.mono_tests = 1
+.line_drawing_chars = 1
+.no_line_drawing_chars = 1
+
+# What tests should run?
+def test_procedure {
+	init_terminal		# This configures the terminal emulator for testing
+	start_vttest		# Start VTTEST 
+	
+	# Do tests on the main menu
+	test_1_cursor_movements
+	test_2_screen_features
+	test_3_character_sets
+	test_4_double_sized
+	test_5_keyboard
+	test_6_terminal_reports
+	test_7_vt52
+	test_8_vt102
+	#test_9_known_bugs	# Not currently implemented - K95 doesn't "implement" any of the bugs 
+	#test_10_reset		# Not implemented (nothing to see)
+	
+	# Non-VT100 Tests: VT220
+	test_11_1_1_vt220_reporting
+	test_11_1_2_vt220_screen_display
+	test_11_1_3_vt220_8bit_controls
+	#test_11_1_4_vt220_printer			 # TODO: Implement this
+	#test_11_1_5_vt220_soft_characters   # Not implemented here or in K95
+	#test_11_1_6_vt220_soft_reset 		 # Not implemented (nothing to see)
+	#test_11_1_7_vt220_user_defined_keys # Not implemented (needs keyboard input)
+	
+	# Non-VT100 Tests: VT320
+	test_11_2_2_vt320_cursor_movement
+	test_11_2_3_vt320_page_format
+	#test_11_2_4_vt320_page_movement_controls	# Not implemented by VTTEST
+	test_11_2_5_vt320_reporting_functions
+	test_11_2_6_vt320_screen_display
+	
+	# Non-VT100 Tests: VT420
+	test_11_3_2_v420_cursor_movement
+	test_11_3_3_v420_editing_sequences
+	#test_11_3_4_v420_keyboard_control  # Not implemented (needs keyboard input)
+	#test_11_3_5_v420_macros			# Not implemented by VTTEST
+	test_11_3_6_v420_rectangular_operations  # This one says "should not work" - is the test wrong in some way?
+	test_11_3_7_vt420_reporting_functions
+	test_11_3_8_v420_screen_display
+	
+	# Non-VT100 Tests: VT520
+	test_11_4_2_v520_cursor_movement
+	#test_11_4_3_v520_editing_sequences # Not implemented by VTTEST
+	#test_11_4_4_v520_keyboard_control  # Not implemented by VTTEST
+	test_11_4_5_vt520_reporting_functions
+	test_11_4_6_v520_screen_display
+	
+	# Non-VT100 Tests: ISO-6429 / ECMA-38
+	test_11_5_ecma48_cursor_movement
+	test_11_6_ecma48_colors
+	test_11_7_ecma48_misc
+	
+	# Non-VT100 Tests: XTERM special features
+	test_11_8_xterm_features
+	
+	exit_vttest			# Exit VTTEST
+	
+	# Wait for a prompt, then logout
+	input 1 {:~$}
+	lineout logout
+	close
+}
+
+# No changes should be required below this point
+
+##############################################################################
+# Variables ##################################################################
+##############################################################################
+# These variables track state for everything
+#
+# Documentation on variables can be found here:
+#	https://kermitproject.org/onlinebooks/uck2ep2.pdf#page=347
+# The dot syntax and :=, ::=, is described here:
+#	https://www.columbia.edu/kermit/ckermit70.html#x7.9
+#
+local vttest_version \&a[] \&b[] \%c \%d \%f \%n \%o \%p \%r \%s \%u \%v 
+local line test checksum_file
+
+# Single letter variables used at the script level:
+# \&a - menu title stack
+# \&b - temporary array 
+# \%c - checksum file
+# \%d - output data file
+# \%f - test fail count
+# \%n - checksum note/comment
+# \%o - output file
+# \%p - test pass count
+# \%r - Start time (seconds since midnight)
+# \%s - menu title stack pointer
+# \%u - test unknown count
+# \%v - return value
+
+# Version of vttest being run
+.vttest_version := unknown 
+
+# File containing test checksums
+.checksum_file := vttest.dat
+
+# Stack of menus
+array declare \&a[10]
+
+# And the stack pointer 
+.%s := 0
+
+# Test result counts
+.%f := 0
+.%p := 0
+.%u := 0
+
+# Record current seconds since midnight for calculating execution time
+.%r ::= \v(ntime)
+
+##############################################################################
+# Base Macros ################################################################
+##############################################################################
+# These are macros used for navigating VTTTESTs menus, taking screenshots,
+# generating HTML, etc.
+#
+# Documentation on macros can be found here:
+#	https://kermitproject.org/onlinebooks/uck2ep2.pdf#page=332
+# Boolean expressions for IF/WHILE statements are here:
+#	https://www.columbia.edu/kermit/ckermit70.html#x7.20.2
+#
+local init_terminal push_menu pop_menu start_vttest exit_vttest screenshot
+local putout screen_contains_string wait_for_menu_prompt add_test_result
+local choose_single_test_option choose_multi_test_option choose_submenu_option
+local wait_for_push_return_prompt do_test finish close_output fail_and_stop
+
+# Setup the terminal emulator for testing
+# Parameters:
+#	none
+def init_terminal {
+	set term type vt320
+	set term remote latin1
+	set term answerback on
+	set term send-data on
+	set term color term lgray black
+}
+
+# Save an image of the current terminal screen state
+# Parameters:
+# 	1 - filename
+def screenshot {
+	save terminal screen /format:\M(image_format) vttest/\%1.\m(image_format)
+}
+
+# Output to HTML flie
+# Parameters:
+#	1 - string to output
+def putout {
+	local out
+	
+    if > \v(argc) 2 {
+        echo "PUTOUT: Line \%n - Too many args:"
+        show args
+        fail_and_stop 4 "Too many arguments"
+    }
+    .out := \fcontents(\%1)
+    fwrite /line \%o \m(out)
+    if fail fail_and_stop 3 "FILE WRITE ERROR: \m(output_directory)/index.html"
+}
+
+# Push a menu onto the stack
+# Parameters:
+#	1 - menu ID string - used to save a screenshot
+#	2 - menu name
+def push_menu {
+	# Push it on to the stack
+	.%s ::= \%s + 1
+	.&a[\%s] := \%2
+
+	# And take a screenshot
+	if = \%s 1 {
+		screenshot menu
+	} else if > \flength(\%1) 0 {
+		screenshot menu-\%1
+	}
+}
+
+# Pop a menu from the stack
+# Parameters:
+#   1 - A value of 1 to skip waiting for a menu prompt, 0 (default) to wait.
+#	2 - If this is a retry or not. Failure to pop on retry ends the script.
+def pop_menu {
+	# Check if we're currently at a menu
+	if = 0 \findex(Menu,\fscrnstr(2,9,20)) {
+		# Couldn't find Menu header. Check for the main menu 
+		if = 0 \findex(VT100,\fscrnstr(2,9,20)) {
+			# Not at the main menu either.
+			if not = \%2 1 {
+				echo *** ERROR: Attempt to pop menu while not at menu. Retrying in 2
+				sleep 2
+				pop_menu 0 1
+			} else {
+				fail_and_stop 1 "*** ERROR: Attempt to pop menu while not at menu."
+			}
+		}
+	}
+
+	# Pop the stack
+	.&a[\%s] := ""
+	.%s ::= \%s - 1
+	
+	# And choose the exit/return option which is always option 0
+	lineout 0
+	
+	if not defined \%1 {
+		.%1 = 0		
+	}
+
+	if not = \%1 1 {
+		wait_for_menu_prompt
+	}
+}
+
+
+# Checks if the terminal screen currently contains the specified string.
+# Returns:
+#	1 - string found
+#	0 - string not found
+def screen_contains_string {
+	local \%i \%l
+
+	; First check if its already on screen
+	for \%i 1 25 1 {
+		if > \findex({\%1},\fscrnstr(\%i,0,80)) 0 {
+			; Found it on the screen already - no need to wait.
+			return 1
+		}
+	}
+	
+	#echo \nString [\%1] not found in the following screen:
+	#echo {-----------------------------------------------}
+	#for \%i 1 25 1 {
+	#	echo \fscrnstr(\%i,0,80)
+	#}
+	#echo {-----------------------------------------------}
+	
+	return 0
+}
+
+
+# Checks if the menu prompt is currently on screen. If it is not, it waits for
+# it to arrive.
+def wait_for_menu_prompt {
+	echo "-- Waiting for menu prompt --"
+	screen_contains_string {Enter choice number}
+	if = \v(return) 1 {
+		# Found it in the screen already.
+		return 
+	}
+
+	# Not on screen - wait up to two seconds for it to arrive.
+	input 5 {Enter choice number}
+	if fail {
+		fail_and_stop 5 "Timeout waiting menu prompt"
+	}
+}
+
+# checks if the end-of-test "Push <RETURN>" prompt is currently on screen. if
+# it is not, it waits for it to arrve.
+def wait_for_push_return_prompt {
+	echo "-- Waiting for Push <RETURN> prompt --"
+	screen_contains_string {Push <RETURN>}
+	if = \v(return) 1 {
+		# Found it in the screen already.
+		return 
+	}
+
+	# Not on screen - wait up to two seconds for it to arrive.
+	input 5 {Push <RETURN>}
+	if fail {
+		fail_and_stop 6 "Timeout waiting Push RETURN prompt "
+	}
+}
+
+# Chooses a menu option that results in a submenu
+# Parameters:
+#   1 - Option number 
+#	2 - Submenu ID
+#	3 - Submenu Name. This must appear on the menu screen!
+def choose_submenu_option {
+	echo "-- choose submenu \%1 - \%3 --"
+	# Make sure we're currently at a menu before trying to select something
+	wait_for_menu_prompt
+	
+	# Clear the terminal screen to make sure we get the *new* menu
+	clear terminal-screen 
+	
+	# Select the menu option number 
+	lineout \%1 
+	
+	# Make sure the expected menu is what comes through
+	screen_contains_string \%3
+	if = \v(return) 0 {
+		input 2 \%3
+		if fail {
+			# Arrived at wrong menu somehow?
+			fail_and_stop 7 {Unexpected menu - was expecting \%3}
+		}
+	}
+	
+	# Wait for the next menu to appear
+	wait_for_menu_prompt
+	
+	# Push it on to the stack
+	push_menu \%2 \%3
+	
+	# And add it to the HTML file. But only if it has an ID. 
+	if > \flength(\%2) 0 {
+		putout {	<tr>}
+		putout {		<td><a href="\menu-\%2.\m(image_format)"><img src="menu-\%2.\m(image_format)"></a></td>}
+		putout {		<td colspan="2"> Menu \%2: \fjoin(&a[2:\%s],-)</td>}
+		putout {	</tr>}
+	}
+}
+
+# Fetches the checksum for a test
+# Parameters:
+#	1 - Test ID
+# Returns:
+# 	Passing checksum via \%v
+#
+def get_test_checksum {
+	local pass_checksum line n test
+	.pass_checksum := ""
+	
+	.%v := ""
+	.%n := ""
+	
+	# Fall back to the checksum file
+	if > \flength(\m(checksum_file)) 0 {
+		if not defined \%c {
+			fopen /read \%c \m(checksum_file)
+			if fail fail_and_stop 8 "Failed to open checksum file"
+		} else {
+			# Always search from the beginning. This will be slower, but will
+			# mean the file doesn't need to be sorted by the order in which
+			# tests are executed.
+			fseek \%c 0
+		}
+	
+		# Read file line-by-line looking for the Test ID
+		while true {
+			fread /line \%c line
+			if fail {
+				.%v := \m(pass_checksum)
+				return
+			}
+			void \fsplit(\m(line),&b," ")       # Extract data items into array '&a'
+			
+			if equal "\&b[1]" "\%1" {
+				.%v := \&b[2]
+				echo test checksum: \%v
+				
+				# Grab the comment if any
+				#if = \m(record_checksums) 1 {
+					.%2 := \findex(\{35},\m(line))
+					echo comment at: \%2
+					if > \%2 0 {
+						.%n := \fsubstring(\m(line),\%2)
+						echo comment: \%n
+					}
+				#}
+				
+				return
+			}
+		}	
+	}
+	
+	.%v := \m(pass_checksum)
+	return
+}
+
+
+# Records a test result to the HTML file. Assumes the test has already been
+# completed and is ready for screenshotting, etc.
+# Parameters:
+#	1 - Test ID
+#	2 - Test Name
+def add_test_result {
+	local checksum pass_checksum checksum_id outline comment
+	.checksum := \fupper(\fntohex(\fterminalchecksum()))
+	
+	.checksum_id := \freplace(\%1,.,_)
+	.checksum_id := \freplace(\m(checksum_id),-,_)
+	.checksum_id := \freplace(\m(checksum_id),\{32},_)
+	
+	screenshot \%1
+	
+	putout {	<tr>}
+	putout {		<td><a href="\%1.\m(image_format)"><img src="\%1.\m(image_format)"></a><br>}
+	putout {			<tt>\m(checksum_id) \m(checksum)</tt>}
+	putout {		</td>}
+
+	get_test_checksum \m(checksum_id)
+	.pass_checksum := \%v
+	
+	if equal \m(pass_checksum) 0 { 
+		.outline := {\m(checksum_id) !\m(checksum) \%n}
+	} else if = \flength(\m(pass_checksum)) 0 {
+		.outline := {\m(checksum_id) ?\m(checksum) \%n}
+	} else {
+		.outline := {\m(checksum_id) \m(pass_checksum) \%n}
+	}
+	
+	fwrite /line \%d \m(outline)
+	
+	.comment := \fsubstring(\%n, 2)
+	
+	if equal \m(checksum) \m(pass_checksum) {
+		putout {		<td bgcolor="lightseagreen">Pass}
+		.%p ::= \%p + 1
+	} else if ( equal \m(pass_checksum) 0 or equal "\fleft(\m(pass_checksum),1)" "!" ) {
+		# Failing test, don't know what the right checksum is
+		putout {<td bgcolor="firebrick">Fail}
+		.%f ::= \%f + 1
+	} else if ( = \flength(\m(pass_checksum)) 0 or equal "\fleft(\m(pass_checksum),1)" "?" ) {
+		# Unknown/unevaluated result
+		putout {		<td bgcolor="khaki">}
+		.%u ::= \%u + 1
+	} else if > \flength(\m(pass_checksum)) 0 {
+		# Failing test - checksum mismatch
+		putout {		<td bgcolor="firebrick">}
+		putout {			Fail - expected \m(pass_checksum)}
+		.%f ::= \%f + 1
+	} else {
+		putout {		<td>}
+	}
+	putout {		</td>}
+	
+	# Output the test ID, stack of menus and the test name
+	putout {		<td>}
+	putout {			\%1 \fjoin(&a[2:\%s],-) - \%2}
+	if > \flength(\m(comment)) 0 {
+		putout {			<br><br>Comment: \m(comment)}
+	}
+	putout {		</td>}
+	putout {	</tr>}
+}
+
+
+# Waits for a test to complete, records the result, and pushes RETURN to 
+# proceed.
+# Parameters:
+#	1 - Test ID
+#	2 - Test Name
+#   3 - Test string
+#   4 - Wait time
+def do_test {
+	echo "-- test \%1 - \%2 --"
+	if > \flength("\%3") 0 {
+		input 2 "\%3"
+	}
+	
+	if not def \%4 {
+		.%4 = 0
+	}
+	
+	# Wait for a while before proceeding - some tests need this to ensure
+	# requested responses get delivered (if we're not waiting on input,
+	# escape sequences aren't being processed)
+	if > \%4 0 {
+		echo {  --waiting for \%4 seconds--  }
+		input /nomatch \%4
+	}
+
+	# The test will say "Push <RETURN>" when its done
+	wait_for_push_return_prompt
+	
+	# Record the test result
+	add_test_result \%1 \%2
+	
+	# Push return
+	lineout
+}
+
+
+# Chooses a menu option that performs a test, and records the result
+# for the first test. For subsequent tests, use do_test and after the
+# last test, use wait_for_menu_prompt to ensure we're back at the menu.
+# Parameters:
+#	1 - menu option
+#	2 - Test ID
+#	3 - Test Name
+#   4 - Test string
+#	5 - Wait time 
+def choose_multi_test_option {
+	echo "-- choose multitest option \%1 - \%2 - \%3 --"
+	if not def \%5 {
+		.%5 = 0
+	}
+
+	# make sure we're at the menu before trying to select menu options
+	wait_for_menu_prompt
+	
+	# Select the menu option number 
+	lineout \%1
+	
+	# Record the test result
+	do_test \%2 \%3 \%4 \%5
+}
+
+# Chooses a menu option that performs a single test before returning to
+# the menu.
+# Parameters:
+#	1 - menu option
+#	2 - Test ID
+#	3 - Test Name
+#	4 - Test string
+#   5 - Wait time  
+def choose_single_test_option {
+	echo "-- choose single tst option \%1 - \%2 - \%3 --"
+	if not def \%5 {
+		.%5 = 0
+	}
+	choose_multi_test_option \%1 \%2 \%3 \%4 \%5
+	
+	# And make sure we're back at the menu
+	wait_for_menu_prompt
+}
+
+# Chooses a menu option that toggles a setting
+# Parameters:
+#	1 - menu option
+def choose_toggle_option {
+	# make sure we're at the menu before trying to select menu options
+	wait_for_menu_prompt
+	
+	# Select the menu option number 
+	lineout \%1
+	
+	# And make sure we're back at the menu
+	wait_for_menu_prompt
+}
+
+
+
+# Starts VTTEST
+# Parameters:
+#	none 
+def start_vttest {
+	echo Starting VTTEST...
+	# Open the output file and get ready.
+	fopen /write \%o \m(output_directory)/index.html 
+	if fail {
+		fail_and_stop 2 "Failed to open output file"
+	}
+	echo file \m(output_directory)/index.html open for output
+
+	fopen /write \%d \m(output_directory)/checksums.dat
+	if fail {
+		fail_and_stop 2 "Failed to open checksums output file"
+	}
+	echo file \m(output_directory)/checksums.dat open for output
+	fwrite /line \%d {# Test Checksums}
+
+	# Start logging
+	#log session \m(output_directory)/session.log
+	#log debug \m(output_directory)/debug.log
+
+	# Start VTTEST
+	lineout \m(vttest_name)
+	
+	# Continue processing the connection while VTTEST starts up, as it asks
+	# the terminal emulator a few questions which need answering
+	input /nomatch 1
+	
+	# Sometimes a DA response gets dumped into the menu prompt for some reason.
+	# Delete it.
+	for \%i 1 30 1 {
+		output \{127}
+	}
+
+	# Wait for the menu to display
+	wait_for_menu_prompt
+	
+	# Add the main menu onto the menu stack
+	push_menu main "Main Menu"
+	
+	# Take a screenshot and grab the VTTEST version string
+	.vttest_version := \fscrnstr(2,37,22)
+	screenshot menu
+	
+	# And get started on the HTML file
+	putout {<!DOCTYPE HTML>}
+	putout {<html lang="en">}
+	putout {<head>}
+	putout {	<title>Kermit 95 VTTEST results - \v(herald)</title>}
+	putout {</head>}
+	putout {<body>}
+	putout {	<h1>Kermit 95 VTTEST Results</h1>}
+	putout {	<hr>}
+	putout {	<dl>}
+	putout {		<dt>Release</dt><dd>\v(herald)</dd>}
+	putout {		<dt>VTTEST Version</dt><dd>\m(vttest_version)</dd>}
+	putout {	</dl>}
+	putout {	<p>This page and all the screenshots on it were automatically}
+	putout {        produced by a Kermit script which navigates through}
+	putout {   		VTTESTs various menus recording an image and checksum of}
+	putout {   		the terminal buffer for each test. The checksum is}
+	putout {   		compared to known values to identify failing tests. This}
+	putout {        script both helps to catch bugs in Kermit 95s terminal}
+	putout {        emulation, and also serves as an example automating a}
+	putout {        process not designed for automation.</p>}
+	putout {	<p>As this process is automated, tests that require keyboard}
+	putout {   		interaction are skipped</p>}
+	putout {    <p>Test results have been verfied manually, with some spot-checking}
+	putout {		on a DEC VT520 terminal. As there are <i>thousands</i> of often}
+	putout {        very similar looking test results there are no doubt some tests}
+	putout {        that have been mis-classified as passing or failing when they}
+	putout {		haven't. If you see an instance of this, please raise it so it}
+	putout {		can be corrected.</p>	}
+	putout {	<table border=1>}
+	putout {	<tr><th>Screenshot</th><th>Pass/Fail</th><th>Test</th></tr>}
+	putout {	<tr>}
+	putout {		<td><a href="menu.\m(image_format)"><img src="menu.\m(image_format)"></a></td>}
+	putout {		<td colspan=2>Main Menu</td>}
+	putout {	</tr>}
+
+}
+
+# Close output file
+# Parameters:
+#	none
+def close_output {
+	.%1 ::= \v(ntime) - \%r
+	# Finish output file, and close it
+	putout {	</table>}
+	putout {	<p>Results: \%p passed, \%f failed, \%u unknown. Total test run time: \%1 seconds</p>}
+	putout {</body>}
+	putout {</html>}
+	fclose \%o
+	fclose \%d
+}
+
+# Exits VTTEST
+# Parameters:
+#	none
+def exit_vttest {
+	local \%i
+
+	close_output
+	
+	# Pop all the  to exit
+	for \%i \%s 1 -1 {
+		pop_menu 1
+	}
+
+	close session-log
+	close debug-log
+
+	# if the menu stack hasn't been cleared, we haven't exited.
+	if > \%s 0 {
+		fail_and_stop 2 "Failed to exit VTEST"
+	}
+}
+
+
+
+
+# Closes files, etc, then fails
+# Parameters:
+#	1 - exit code
+#	2 - exit message
+def fail_and_stop {
+	close_output
+	stop \%1 \%2
+}
+
+
+##############################################################################
+# Test Macros - Main Menu ####################################################
+##############################################################################
+# Macros for wrapping up the various VTTEST groups off of the main menu.
+#
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+# ->  1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_1_cursor_movements
+def test_1_cursor_movements {
+	# Screen-1.1 	Text inside frame of E's inside frame of *'s and +'s, 80 columns
+	choose_multi_test_option 1 "1.1" "Test of cursor movements" "with  one (1) free position around it."
+
+	# Screen-1.2	Text inside frame of E's inside frame of *'s and +'s, 132 columns
+	do_test "1.2" "Test of cursor movements" "with  one (1) free position around it."
+
+	# Screen-1.3    Test of autowrap, mixing control and print characters, 80 columns
+	do_test "1.3" "Test of cursor movements" "Test of autowrap, mixing control and print characters."
+
+	# Screen-1.4    Test of autowrap, mixing control and print characters, 132 columns
+	do_test "1.4" "Test of cursor movements" "Test of autowrap, mixing control and print characters."
+
+	# Screen-1.5	Cursor-control chars inside ESC sequences
+	# TODO: This one currently fails
+	do_test "1.5" "Test of cursor movements" "Below should be four identical lines:"
+
+	# Screen-1.6	Leading 0's in ESC sequences
+	do_test "1.6" "Test of cursor movements" "This is a correct sentence"
+	
+	# And we're done
+	wait_for_menu_prompt
+}
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+# ->  2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_2_screen_features
+def test_2_screen_features {
+	# Screen-2.1	Three identical lines of *'s (test of wrap mode)
+	choose_multi_test_option 2 "2.1" "Test of screen features" "Test of WRAP AROUND"
+
+	# Screen-2.2	Test of tab setting/resetting
+	do_test "2.2" "Test of screen features" "Test of TAB setting"
+
+	# Screen-2.3	132-column mode, light 
+	do_test "2.3" "Test of screen features" "This is 132 column mode, light background"
+
+	# Screen-2.4	80-column mode, light background
+	do_test "2.4" "Test of screen features" "This is 80 column mode, light background"
+
+	# Screen-2.5	132-column mode, dark background
+	do_test "2.5" "Test of screen features" "This is 132 column mode, dark background"
+
+	# Screen-2.6	80-column mode, dark background
+	do_test "2.6" "Test of screen features" "This is 80 column mode, dark background"
+
+	# Screen-2.7	Soft scroll down regin [12..13] size 2 line 29
+	do_test "2.7" "Test of screen features" "Soft scroll down region [12..13] size 2 Line 29"
+
+	# Screen-2.8	Soft scroll down region [1..24] size 24 line ...
+	do_test "2.8" "Test of screen features" "Soft scroll down region [1..24] size 24 Line 29"
+	
+	# Screen-2.9    Jump scroll down region [12..13] size 2 line 29
+	do_test "2.9" "Test of screen features" "Jump scroll down region [12..13] size 2 Line 29"
+	
+	# Screen-2.10   Jump scroll down region [1..24] size 24 line ...
+	do_test "2.10" "Test of screen features" "Jump scroll down region [1..24] size 24 Line 29"
+	
+	# Screen-2.11	Origin mode test - two lines
+	do_test "2.11" "Test of screen features" "This line should be the one above the bottom of the screen."
+
+	# Screen-2.12  Origin mode test pt2 - one line at top, one line at bottom 
+	do_test "2.12" "Test of screen features" "This line should be at the top of the screen."
+
+	# Screen-2.13	SGR test pattern, dark background
+	do_test "2.13" "Test of screen features" "Dark background."
+
+	# Screen-2.14	SGR test pattern, light background
+	do_test "2.14" "Test of screen features" "Light background."
+
+	# Screen-2.15	Save/Restore cursor
+	do_test "2.15" "Test of screen features" "of 5 x 4 A's filling the top left of the screen."
+	
+	# And we're done
+	wait_for_menu_prompt
+}
+
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+# ->  3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local cs_tests test_3_character_sets
+def cs_tests {
+	choose_single_test_option 8 "3.8-\%1" "Test VT100 Character Sets - \%2" "These are the installed character sets."
+	choose_single_test_option 9 "3.9-\%1" "Test Shift In/Shift Out (SI/SO) - \%2" "These are the G0 and G1 character sets." 
+	choose_single_test_option 10 "3.10-\%1" "Test VT220 Locking Shifts - \%2" "Locking shifts"
+	
+	# This one has two test screens
+	choose_multi_test_option 11 "3.11.1-\%1" "Test VT220 Single Shifts, G2 - \%2" "Testing single-shift G2 into GL (SS2)"
+	do_test "3.11.2-\%1" "Test VT220 Single Shifts, G3 - \%2" "Testing single-shift G3 into GL (SS3)"
+	wait_for_menu_prompt 
+	
+	# Reset everything for next test
+	choose_toggle_option 1
+	
+	# Wait for the menu...
+	wait_for_menu_prompt
+}
+
+def test_3_character_sets {
+	choose_submenu_option 3 "3" "Character-Set Tests"
+
+	# Sub menu!
+	#	0. Exit
+	#	1. Reset (G0 ASCII, G1 Latin-1, no NRC mode)
+	#	2. Enable highlighting of non-ISO-8859-1 mapping
+	#	3. Enable National Replacement Character (NRC) mode
+	#	4. Specify G0 (now US ASCII)
+	#	5. Specify G1 (now ISO Latin-1)
+	#	6. Specify G2 (now ISO Latin-1)
+	#	7. Specify G3 (now ISO Latin-1)
+	#	8. Test VT100 Character Sets
+	#	9. Test Shift In/Shift Out (SI/SO)
+	#	10. Test VT220 Locking Shifts
+	#	11. Test VT220 Single Shifts
+	#	12* Test Soft Character Sets
+	#	13. Test Keyboard Layout with G0 Selection
+
+	choose_toggle_option 1
+	cs_tests "reset" "Defaults"
+
+	#choose_toggle_option 2
+	#cs_tests "2" "Enable highlighting of non-ISO-88591-1 mapping"
+
+	#choose_toggle_option 3
+	#cs_tests "3" "Enable National Replacement Character (NRC) mode""
+
+	#choose_toggle_option 2	
+	#choose_toggle_option 3
+	#cs_tests "2+3" "Enable highlighting of non-ISO-88591-1 mapping and Enable highlighting of non-ISO-88591-1 mapping""
+	
+
+	# ------------------------------------------
+	# TODO: Designate a bunch of character sets?
+	# ------------------------------------------
+
+	# And also DRCS, etc
+
+	# Done
+	pop_menu
+}
+
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+# ->  4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_4_double_sized
+def test_4_double_sized {
+	# Screen-4.1 	80 column mode, not double width line
+	choose_multi_test_option 4 "4.1" "Test of double-sized characters" "This is not a double-width line"
+
+	# Screen-4.2	80 column mode, double width line
+	do_test "4.2" "Test of double-sized characters" "This **is** a double-width line"
+
+	# Screen-4.3    132 column mode, not double width line
+	do_test "4.3" "Test of double-sized characters" "This is not a double-width line"
+
+	# Screen-4.4    132 column mode, double width line
+	do_test "4.4" "Test of double-sized characters" "This **is** a double-width line"
+
+	# Screen-4.5	Frame with blinking bold text, all double-height double-wide
+	do_test "4.5" "Test of double-sized characters" "all in double-height double-width size."
+
+	# Screen-4.6	Half gone
+	do_test "4.6" "Test of double-sized characters" "Exactly half of the box should remain."
+	
+	# Make sure we're back at the main menu before proceeding
+	wait_for_menu_prompt
+}
+
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+# ->  5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_5_keyboard
+def test_5_keyboard {
+	choose_submenu_option 5 "5" "Keyboard Tests"
+
+	# Submenu!
+	#          0. Exit
+	#  ->      1. LED Lights
+	#          2. Auto Repeat
+	#          3. KeyBoard Layout
+	#          4. Cursor Keys
+	#          5. Numeric Keypad
+	#          6. Editing Keypad
+	#          7. Function Keys
+	#          8. AnswerBack
+	#          9. Control Keys
+	
+	choose_multi_test_option 1 "5.1.1" "All LEDs on" "should be on: L1 L2 L3 L4"
+
+	# Screen-5.1.2 	All LEDs 2/3/4 on
+	do_test "5.1.2" "LEDs 2/3/4 on" "should be on:    L2 L3 L4"
+
+	# Screen-5.1.3 	All LEDs 2/3 on
+	do_test "5.1.3" "LEDs 2/3 on" "should be on:    L2 L3"
+
+	# Screen-5.1.4 	All LEDs 1/2 on
+	do_test "5.1.4" "LEDs 1/2 on" "should be on: L1 L2"
+
+	# Screen-5.1.5 	All LEDs 1 on
+	do_test "5.1.5" "LED 1 on" "should be on: L1"
+
+	# Screen-5.1.6 	No LEDs  on
+	do_test "5.1.6" "No LEDs on" "should be on:"
+	
+	# Finished test sequence
+	wait_for_menu_prompt
+
+	# TODO: All the other tests. That would require some way of doing scripted
+	#		keyboard input
+
+	# Done with keyboard tests
+	pop_menu
+}
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+# ->  6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_6_terminal_reports
+def test_6_terminal_reports {
+	choose_submenu_option 6 "6" "Terminal Reports/Responses"
+
+	# Submenu!
+	# 	 0. Exit
+	#    1. <ENQ> (AnswerBack Message)
+	#    2. Set/Reset Mode - LineFeed / Newline
+	#    3. Device Status Report (DSR)                 VT100 & up
+	#    4. Primary Device Attributes (DA)             VT100 & up
+	#    5. Secondary Device Attributes (DA)           VT220 & up
+	#    6. Tertiary Device Attributes (DA)            VT420
+	#    7. Request Terminal Parameters (DECREQTPARM)  VT100
+	
+	# A bunch of these tests make a request and expect a response back within
+	# a certain (small) time. If K95 is in command mode and not waiting on
+	# input then its not processing escape sequences so the responses may not
+	# arrive in time. All tests here are set to wait three seconds before
+	# doing anything - the last parameter.
+	
+	choose_single_test_option 1 "6.1" "Answerback" "Finish this test with RETURN." 3
+	
+
+	# This next one wants is to press enter twice before finishing the test 
+	wait_for_menu_prompt
+	lineout 2
+	input 2 "Push the RETURN key"
+	lineout
+	input 2 "NewLine mode reset."
+	lineout
+	wait_for_push_return_prompt
+	# Record the test result
+	add_test_result "6.2" "LineFeed/NewLine Mode"
+	lineout
+	wait_for_menu_prompt
+
+	choose_single_test_option 3 "6.3" "Device Status Report (DSR)" "Test of Device Status Report" 3
+	choose_single_test_option 4 "6.4" "Device Attributes report" "Test of Device Attributes report" 3
+	choose_single_test_option 5 "6.5" "Secondary Device Attributes" "Firmware version" 3
+	choose_single_test_option 6 "6.6" "Tertiary Device Attributes" "Tertiary Device Attributes" 3
+	choose_single_test_option 7 "6.7" "Request Terminal Parameters" "feature, argument 1." 3
+
+	# Done with terminal reports
+	pop_menu
+}
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+# ->  7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_7_vt52
+def test_7_vt52 {
+	choose_multi_test_option 7 "7.1" "Test of VT52 mode" "Only this, and nothing more"
+	do_test "7.2" "Test of VT52 mode - charset" "graphics character set"
+	
+	# This next one wants is to press half way through. 
+	wait_for_push_return_prompt
+	lineout
+	input 3 "(means VT100 emulating VT52)"  # Extra time to allow sending responses
+	lineout
+	input 3 /nowait   # Process comms a bit to let request/response chatter happen
+	wait_for_push_return_prompt
+	add_test_result "7.3" "Test of VT52 mode - responses"
+	lineout
+	wait_for_menu_prompt
+}
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+# ->  8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_8_vt102
+def test_8_vt102 {
+	# Choose option 8 - Test of VT102 features (Insert/Delete Char/Line)
+	choose_multi_test_option 8 "8.1" "Test of VT102 features (Insert/Delete Char/Line): Screen accordion test" "Screen accordion test"
+
+	do_test "8.2" "Test of VT102 features (Insert/Delete Char/Line): Top line" "this line, nothing more"
+	do_test "8.3" "Test of VT102 features (Insert/Delete Char/Line): Insert mode test" "The top line should"
+	do_test "8.4" "Test of VT102 features (Insert/Delete Char/Line): Delete Character" "should be 'AB'"
+	do_test "8.5" "Test of VT102 features (Insert/Delete Char/Line): Staggered Right Column" "right column should be staggered"
+	do_test "8.6" "Test of VT102 features (Insert/Delete Char/Line): Staggered Rightr Column DHL" "by one."
+	do_test "8.7" "Test of VT102 features (Insert/Delete Char/Line): Insert Character" "then you should see a line like this"
+	do_test "8.8" "Test of VT102 features (Insert/Delete Char/Line): Accordion test, 132col" "Screen accordion test"
+	do_test "8.9" "Test of VT102 features (Insert/Delete Char/Line): Top line, 132col" "this line, nothing more"
+	do_test "8.10" "Test of VT102 features (Insert/Delete Char/Line): Insert Mode, 132col" "The top line should be"
+	do_test "8.11" "Test of VT102 features (Insert/Delete Char/Line): Delete Character, 132col" "The top line should be 'AB'"
+	do_test "8.12" "Test of VT102 features (Insert/Delete Char/Line): Right column staggered, 132col" "The right column should be staggered"
+	do_test "8.13" "Test of VT102 features (Insert/Delete Char/Line): Right column staggered DHL, 132col" "by one."
+	do_test "8.14" "Test of VT102 features (Insert/Delete Char/Line): Insert Character, 132col" "then you should see a line like"
+	wait_for_menu_prompt
+}
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+# ->  9 - Test of known bugs
+#    10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+local test_9_known_bugs
+def test_9_known_bugs {
+
+	##### TODO: do the bugs?
+	
+	echo test not implemented  
+}
+
+
+# -----------------------------------------------------------------------------
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+# -> 10 - Test of reset and self-test
+#    11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+def test_10_reset {
+	##### TODO: Is it worth testing reset and self-reset? Nothing is really visible.
+	echo test not implemented
+}
+
+##############################################################################
+# Test Macros - non-VT100 ####################################################
+##############################################################################
+# Macros for wrapping up the various tests of non-VT100 terminals. All of
+# these are buried several menus deep.
+#
+# VT100 test program, version 2.7 (20221229)
+#     Line speed 38400bd
+#     Choose test type:
+#
+#     0 - Exit
+#     1 - Test of cursor movements
+#     2 - Test of screen features
+#     3 - Test of character sets
+#     4 - Test of double-sized characters
+#     5 - Test of keyboard
+#     6 - Test of terminal reports
+#     7 - Test of VT52 mode 
+#     8 - Test of VT102 features (Insert/Delete Char/Line)
+#     9 - Test of known bugs
+#    10 - Test of reset and self-test
+# -> 11 - Test of non-VT100 (e.g., VT220, XTERM) terminals
+#    12 - Modify test-parameters
+
+
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#  ->      1. Test reporting functions
+#          2. Test screen-display functions
+#          3. Test 8-bit controls (S7C1T/S8C1T)
+#          4. Test Printer (MC)
+#          5. Test Soft Character Sets (DECDLD)
+#          6. Test Soft Terminal Reset (DECSTR)
+#          7. Test User-Defined Keys (DECUDK)
+local test_11_1_1_vt220_reporting
+def test_11_1_1_vt220_reporting {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	choose_submenu_option 1 "11.1.1" "VT220 Reports"
+	choose_submenu_option 1 "11.1.1.1" "VT220 Device Status Reports"
+	
+	#	 Menu 11.1.1.1: VT220 Device Status Reports
+	#
+	#         Choose test type:
+	#
+	#          0. Exit
+	#  ->      1. Test Keyboard Status
+	#  ->      2. Test Operating Status
+	#  ->      3. Test Printer Status
+	#  ->      4. Test UDK Status
+	
+	# Test Keyboard Status
+	choose_single_test_option 1 "11.1.1.1.1" "Test Keyboard Status" "<27> [ ?" 3
+
+	# Test Operating Status
+	choose_single_test_option 2 "11.1.1.1.2" "Test Operating Statys" "<27> [" 3
+
+	# Test Printer Status
+	choose_single_test_option 3 "11.1.1.1.3" "Test Printer Status" "<27> [ ?" 3
+
+	# Test UDK Status
+	choose_single_test_option 4 "11.1.1.1.4" "Test UDK Status" "<27> [ ?" 3	
+	
+	pop_menu # 11.1.1.1 VT220 Device Status reports
+	pop_menu # 11.1.1 VT220 Reports
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test reporting functions
+#  ->      2. Test screen-display functions
+#          3. Test 8-bit controls (S7C1T/S8C1T)
+#          4. Test Printer (MC)
+#          5. Test Soft Character Sets (DECDLD)
+#          6. Test Soft Terminal Reset (DECSTR)
+#          7. Test User-Defined Keys (DECUDK)
+local test_11_1_2_vt220_screen_display
+def test_11_1_2_vt220_screen_display {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	choose_submenu_option 2 "11.1.2" "VT220 Screen-Display Tests"
+	
+	#	Menu 11.1.2: VT220 Screen-Display Tests
+	#
+	#         Choose test type:
+	#
+	#          0. Exit
+	#          1. Test Send/Receive mode (SRM)
+	#  ->      2. Test Visible/Invisible Cursor (DECTCEM)
+	#  ->      3. Test Erase Char (ECH)
+	#  ->      4. Test Protected-Areas (DECSCA)
+
+	# 1 - Test Send/Receive mode (SRM) 
+	# TODO: This one requires keyboard input so not easily automated
+
+	# Test Visible/Invisible Cursor (DECTCEM)
+	choose_multi_test_option 2 "11.1.2.2.1" "Test Visible/Invisible Cursor (DECTCEM): Invisible Cursor" "The cursor should be invisible"
+	do_test "11.1.2.2.2" "Test Visible/Invisible Cursor (DECTCEM): Visible Cursor" "The cursor should be visible again"
+
+	# Test Erase Char (ECH)
+	choose_single_test_option 3 "11.1.2.3" "Erase Char (ECH)" "diagonal region should be cleared"
+
+	# Test Protected-Areas (DECSCA)
+	choose_multi_test_option 4 "11.1.2.4.1" "Test Protected-Areas (DECSCA)" "middle of the screen"
+	do_test "11.1.2.4.2" "Test Protected-Areas (DECSCA) - ignoring EL/ED" "ignoring EL/ED"
+	do_test "11.1.2.4.3" "Test Protected-Areas (DECSCA) - ignoring ECH/ICH/DCH" "ignoring ECH/ICH/DCH"
+	wait_for_menu_prompt
+	
+	pop_menu # 11.1.1 VT220 Screen-Display Tests
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test reporting functions
+#          2. Test screen-display functions
+#  ->      3. Test 8-bit controls (S7C1T/S8C1T)
+#          4. Test Printer (MC)
+#          5. Test Soft Character Sets (DECDLD)
+#          6. Test Soft Terminal Reset (DECSTR)
+#          7. Test User-Defined Keys (DECUDK)
+local test_11_1_3_vt220_8bit_controls
+def test_11_1_3_vt220_8bit_controls {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	
+	# Test 8-bit controls (S7C1T/S8C1T)
+	choose_single_test_option 3 "11.1.3" "Test 8-bit controls (S7C1T/S8C1T)" "8-bit controls disabled" 3
+
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test reporting functions
+#          2. Test screen-display functions
+#          3. Test 8-bit controls (S7C1T/S8C1T)
+#  ->      4. Test Printer (MC)
+#          5. Test Soft Character Sets (DECDLD)
+#          6. Test Soft Terminal Reset (DECSTR)
+#          7. Test User-Defined Keys (DECUDK)
+local test_11_1_4_vt220_printer
+def test_11_1_4_vt220_printer {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	choose_submenu_option 2 "11.1.4" "Printing-Control Tests"
+	
+	#	Menu 11.1.4: Printing-Control Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Assign printer to active session (MC)
+    #     2. Start printer-to-host session (MC)
+    #     3. Enable Printer-Extent mode (DECPEX)
+    #     4. Enable Print Form Feed Mode (DECPFF)
+    #     5. Test Auto-print mode (MC - DEC private mode)
+    #     6. Test Printer-controller mode (MC)
+    #     7. Test Print-page (MC)
+    #     8. Test Print composed main-display (MC)
+    #     9. Test Print all pages (MC)
+    #     10. Test Print cursor line (MC)
+
+	# TODO: Not implemented right now, but certainly *could* be:
+	#	- Set printer to print to file
+	#	- Compute checksum of file
+	#	- Link to file in test entry
+
+	pop_menu # 11.1.4 Printing-Control Tests
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test reporting functions
+#          2. Test screen-display functions
+#          3. Test 8-bit controls (S7C1T/S8C1T)
+#          4. Test Printer (MC)
+#  ->      5. Test Soft Character Sets (DECDLD)
+#          6. Test Soft Terminal Reset (DECSTR)
+#          7. Test User-Defined Keys (DECUDK)
+local test_11_1_5_vt220_soft_characters
+def test_11_1_5_vt220_soft_characters {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	
+	# TODO: Not implemented right now. VTTEST wants a font file specified 
+	# (-f option), and K95 doesn't implement this feature yet anyway
+
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test reporting functions
+#          2. Test screen-display functions
+#          3. Test 8-bit controls (S7C1T/S8C1T)
+#          4. Test Printer (MC)
+#          5. Test Soft Character Sets (DECDLD)
+#  ->      6. Test Soft Terminal Reset (DECSTR)
+#          7. Test User-Defined Keys (DECUDK)
+local test_11_1_6_vt220_soft_reset
+def test_11_1_6_vt220_soft_reset {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	
+	# Not implemented - nothing to see
+	echo Test not implemented
+
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.1: VT220 Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test reporting functions
+#          2. Test screen-display functions
+#          3. Test 8-bit controls (S7C1T/S8C1T)
+#          4. Test Printer (MC)
+#          5. Test Soft Character Sets (DECDLD)
+#          6. Test Soft Terminal Reset (DECSTR)
+#  ->      7. Test User-Defined Keys (DECUDK)
+local test_11_1_7_vt220_user_defined_keys
+def test_11_1_7_vt220_user_defined_keys {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 1 "11.1" "VT220 Tests"
+	
+	# TODO: Not implemented - requires keyboard input
+	echo Test not implemented
+
+	pop_menu # 11.1 VT220 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.2: VT320 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT220 features
+#  ->     2. Test cursor-movement
+#         3. Test page-format controls
+#         4. Test page-movement controls
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_2_2_vt320_cursor_movement
+def test_11_2_2_vt320_cursor_movement {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 2 "11.2" "VT320 Tests"
+	choose_submenu_option 2 "11.2.2" "Cursor-Movement Tests"
+	
+	#	 Menu 11.2.2: VT320 Cursor-Movement Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    # ->  1. Test Pan down (SU)
+    # ->  2. Test Pan up (SD)
+    #     3* Test Vertical Cursor Coupling (DECVCCM)
+    #     4* Test Page Cursor Coupling (DECPCCM)
+	
+	# These two tests fail on my real VT520 (is the test wrong? VT520 bug/intentionally
+	# different? doesn't support SU/SD?). As its under VT320 tests, I guess I'd have
+	# to get my hands on a VT320 to know whats up. For now K95 behaves the same as
+	# xterm and so passes the test whether its correct or not.
+	choose_single_test_option 1 "11.2.2.1" "Test Pan down (SU)" "on the top row."
+	choose_single_test_option 2 "11.2.2.2" "Test Pan up (SD)" "just above the message."
+
+	# TODO: Test 3 - DECVCCM - not implemented in this version of vttest
+
+	# TODO: Test 4 - DECPCCM - not implemented in this version of vttest
+
+	pop_menu # 11.2.2 Cursor-Movement Tests
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.2: VT320 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT220 features
+#         2. Test cursor-movement
+#  ->     3. Test page-format controls
+#         4. Test page-movement controls
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_2_3_vt320_page_format
+def test_11_2_3_vt320_page_format {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 2 "11.2" "VT320 Tests"
+	choose_submenu_option 3 "11.2.3" "Page Format Tests"
+	
+	#	  Menu 11.2.3: Page Format Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    # ->  1. Test set columns per page (DECSCPP)
+    # ->  2. Test set lines per page (DECSLPP)
+	
+	# The tests here have 3 second waits attached to give K95 time to respond
+	# to the terminal screen size changes.
+	
+	choose_multi_test_option 1 "11.2.3.1.1" "Test set columns per page (DECSCPP) - 80 columns" "Screen should be filled (80 of 80 columns)"
+	do_test "11.2.3.1.2" "Test set columns per page (DECSCPP) - 80 columns - part 2" "Screen should be filled (80 of 80 columns)" 3
+	do_test "11.2.3.1.3" "Test set columns per page (DECSCPP) - 80 columns - part 3" "Screen should be filled (80 of 80 columns)" 3
+	do_test "11.2.3.1.4" "Test set columns per page (DECSCPP) - 132 columns" "Screen should be filled (80 of 132 columns)" 3
+	do_test "11.2.3.1.5" "Test set columns per page (DECSCPP) - normal" "Screen is reset to original width" 3
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 2 "11.2.3.2.1" "Test set lines per page (DECSLPP) - 24 rows" "(24 of 24 rows)"
+	do_test "11.2.3.2.2" "Test set lines per page (DECSLPP) - 25 rows" "(24 of 25 rows)" 3
+	do_test "11.2.3.2.3" "Test set lines per page (DECSLPP) - 36 rows" "(24 of 36 rows)" 3
+	do_test "11.2.3.2.4" "Test set lines per page (DECSLPP) - 48 rows" "(24 of 48 rows)" 3
+	do_test "11.2.3.2.5" "Test set lines per page (DECSLPP) - 72 rows" "(24 of 72 rows)" 3
+	do_test "11.2.3.2.6" "Test set lines per page (DECSLPP) - 144 rows" "(24 of 144 rows)" 3
+	do_test "11.2.3.2.7" "Test set lines per page (DECSLPP) - height restored" "Screen is reset to original height" 3
+	wait_for_menu_prompt
+	
+	pop_menu # 11.2.3 Page Format Tests
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.2: VT320 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT220 features
+#         2. Test cursor-movement
+#         3. Test page-format controls
+#  ->     4. Test page-movement controls
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_2_4_vt320_page_movement_controls
+def test_11_2_4_vt320_page_movement_controls {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 2 "11.2" "VT320 Tests"
+	choose_submenu_option 2 "11.2.4" "Page Format Tests"	# VTTEST bug - menu title is wrong
+	
+	#  Menu 11.2.4: Page Format Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1* Test Next Page (NP)
+    #     2* Test Preceding Page (PP)
+    #     3* Test Page Position Absolute (PPA)
+    #     4* Test Page Position Backward (PPB)
+    #     5* Test Page Position Relative (PPR)
+	
+
+	# TODO: None of these tests implemented in this version of vttest
+
+	pop_menu # 11.2.4: Page Movement Tests
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.2: VT320 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT220 features
+#         2. Test cursor-movement
+#         3. Test page-format controls
+#         4. Test page-movement controls
+#  ->     5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_2_5_vt320_reporting_functions
+def test_11_2_5_vt320_reporting_functions {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 2 "11.2" "VT320 Tests"
+	choose_submenu_option 5 "11.2.5" "VT320 Reports"
+	
+	# These are divided up into a selection of submenus
+	
+	#  Menu 11.2.5: VT320 Reports
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT220 features
+    # ->  2. Test Device Status Report (DSR)
+    # ->  3. Test Presentation State Reports
+    # ->  4. Test Terminal State Reports
+    # ->  5. Test User-Preferred Supplemental Set
+    # ->  6. Test Window Report (DECRPDE)
+	
+	
+	#	 Menu 11.2.5.2: VT320 Device Status Reports (DSR)
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT220 features
+    # ->  2. Test Keyboard Status
+    # ->  3. Test Printer Status
+    # ->  4. Test UDK Status
+    # ->  5. Test Locator Status
+    # ->  6. Identify Locator
+    # ->  7. Test Extended Cursor-Position (DECXCPR)
+	choose_submenu_option 2 "11.2.5.2" "VT320 Device Status Reports (DSR)"
+	
+	# This seems to be the same as 11.1.1.1.1
+	choose_single_test_option 2 "11.2.5.2.2" "Test Keyboard Status" " <27> [ ?" 3
+	
+	# This seems to be the same as 11.1.1.1.3
+	choose_single_test_option 3 "11.2.5.2.3" "Test Printer Status" "<27> [ ?" 3
+	
+	# This seems to be the same as 11.1.1.1.4
+	choose_single_test_option 4 "11.2.5.2.4" "Test UDK Status" " <27> [ ?" 3
+	
+	choose_single_test_option 5 "11.2.5.2.5" "Test Locator Status" "Test Locator Status" 3
+	choose_single_test_option 6 "11.2.5.2.6" "Identify Locator" "Identify Locator" 3
+	choose_single_test_option 7 "11.2.5.2.7" "Test Extended Cursor-Position (DECXCPR)" "Column" 3
+	
+	pop_menu # VT320 Device Status Reports (DSR)
+	
+	
+	#	Menu 11.2.5.3: VT320 Presentation State Reports
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #  -> 1. Cursor Information Report (DECCIR)
+    #  -> 2. Tab Stop Report (DECTABSR)
+    #  -> 3. Request Mode (DECRQM)/Report Mode (DECRPM)
+    #  -> 4. Restore Presentation State (DECRSPS): cursor
+    #  -> 5. Restore Presentation State (DECRSPS): tabstops
+    #  -> 6. Status-String Report (DECRQSS)
+	choose_submenu_option 3 "11.2.5.3" "VT320 Presentation State Reports"
+	
+	# VTTEST Bug? submenu name seems wrong. And why is it here anyway?
+	#	Menu 11.2.5.3.1: Character-Set Tests
+	#
+    #    Choose test type:
+	#
+    #      0. Exit
+    #      1. Reset (G0 ASCII, G1 Latin-1, no NRC mode)
+    #      2. Enable National Replacement Character (NRC) mode
+    #      3. Specify G0 (now US ASCII)
+    #      4. Specify G1 (now ISO Latin-1)
+    #      5. Specify G2 (now ISO Latin-1)
+    #      6. Specify G3 (now ISO Latin-1)
+    #      7. Cursor Information Report (DECCIR)
+	choose_submenu_option 1 "11.2.5.3.1" "Character-Set Tests"   
+	choose_single_test_option 7 "11.2.5.3.1.7" "Cursor Information Report (DECCIR)" "DECCIR"
+	pop_menu # VT320 Cursor Information Report
+	
+	#	Menu 11.2.5.3.2: Tab Stop Report (DECTABSR)
+	#
+    #     Choose test type:
+	#
+    #     0. Exit
+    #     1. Reset Tab Stops
+    #     2. Set Tabs: 8
+    #      3. Tab Stop Report (DECTABSR)
+	choose_submenu_option 2 "11.2.5.3.2" "Tab Stop Report (DECTABSR)"
+	local \%i
+	for \%i 1 7 1 {
+		choose_single_test_option 3 {11.2.5.3.2.\%i} {Tab Stop Report - \%i} 3
+		choose_toggle_option 2
+	}
+	choose toggles 1
+	pop_menu # Tab Stop Report (DECTABSR)
+
+	#	Menu 11.2.5.3.3: Request Mode (DECRQM)/Report Mode (DECRPM)
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. ANSI Mode Report (DECRPM)
+    #     2. DEC Mode Report (DECRPM)
+	choose_submenu_option 3 "11.2.5.3.3" "Request Mode (DECRQM)/Report Mode (DECRPM)"
+	choose_single_test_option 1 "11.2.5.3.3.1" "ANSI Mode Report (DECRPM)" 15
+	choose_multi_test_option 2 "11.2.5.3.3.2.1" "DEC Mode Report (DECRPM) - 1" 15
+	do_test "11.2.5.3.3.2.2" "DEC Mode Report (DECRPM) - 2" 10
+	wait_for_menu_prompt
+	pop_menu # Request Mode (DECRQM)/Report Mode (DECRPM)
+	
+	choose_single_test_option 4 "11.2.5.3.4" "Restore Presentation State (DECRSPS): cursor" "(DECRSPS): cursor"
+	choose_single_test_option 5 "11.2.5.3.5" " Restore Presentation State (DECRSPS): tabstops" "tabstops" 5
+	
+	
+	#	Menu 11.2.5.3.6: VT320 Status-String Reports
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Protected fields attributes (DECPRO)
+    #     2. Select active status display (DECSASD)
+    #     3. Select graphic rendition (SGR)
+    #     4. Set character attribute (DECSCA)
+    #     5. Set columns per page (DECSCPP)
+    #     6. Set conformance level (DECSCL)
+    #     7. Set lines per page (DECSLPP)
+    #     8. Set status line type (DECSSDT)
+    #     9. Set top and bottom margins (DECSTBM)
+    #     10. Set transmit termination character (DECTTC)
+    #     11. Transmission line termination character (DECTLTC)
+	choose_submenu_option 6 "11.2.5.3.6" "VT320 Status-String Reports"
+	choose_single_test_option 1 "11.2.5.3.6.1" "Protected fields attributes (DECPRO)" "DECPRO" 3
+	choose_single_test_option 2 "11.2.5.3.6.2" "Select active status display (DECSASD)" "DECSASD" 3
+	choose_single_test_option 3 "11.2.5.3.6.3" "Select graphic rendition (SGR)" "SGR" 3
+	choose_single_test_option 4 "11.2.5.3.6.4" "Set character attribute (DECSCA)" "DECSCA" 3
+	choose_single_test_option 5 "11.2.5.3.6.5" "Set columns per page (DECSCPP)" "DECSCPP" 3
+	choose_single_test_option 6 "11.2.5.3.6.6" "Set conformance level (DECSCL)" "DECSCL" 3
+	choose_single_test_option 7 "11.2.5.3.6.7" "Set lines per page (DECSLPP)" "DECSLPP" 3
+	choose_single_test_option 8 "11.2.5.3.6.8" "Set status line type (DECSSDT)" "DECSSDT" 3
+	choose_single_test_option 9 "11.2.5.3.6.9" "Set top and bottom margins (DECSTBM)" "DECSTBM" 3
+	choose_single_test_option 10 "11.2.5.3.6.10" "Set transmit termination character (DECTTC)" "DECTTC" 3
+	choose_single_test_option 11 "11.2.5.3.6.11" "Transmission line termination character (DECTLTC)" "DECTLTC" 3
+	pop_menu # VT320 Status-String Reports
+
+	pop_menu # VT320 Presentation State Reports
+
+	#	Menu 11.2.5.4: VT320 Terminal State Reports
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1* Restore Terminal State (DECRSTS)
+    #  -> 2. Terminal State Report (DECRQTS/DECTSR)
+	choose_submenu_option 4 "11.2.5.4" "VT320 Terminal State Reports"
+	choose_single_test_option 2 "11.2.5.4.2" "Terminal State Report (DECRQTS/DECTSR)" "DECTSR" 3
+	pop_menu # VT320 Terminal State Reports
+	
+	#	Menu 11.2.5.5: User-Preferred Supplemental Sets Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test character sets
+    #     2. Reset UPSS (User-Preferred Supplemental Sets)
+    #     3. Assign UPSS (now US ASCII)
+    #     4. Test DECRQUPSS
+	choose_submenu_option 5 "11.2.5.5" "User-Preferred Supplemental Sets Tests"
+	choose_single_test_option 4 "11.2.5.5.4.1" "Test DECRQPSS - initial" "Report" 3
+	choose_toggle_option 2
+	choose_single_test_option 4 "11.2.5.5.4.2" "Test DECRQPSS - reset" "Report" 3
+	
+	choose_toggle_option 3
+	choose_single_test_option 0 "11.2.5.5.3.0" "Assign US ASCII" ""
+	choose_single_test_option 4 "11.2.5.5.4.3" "Test DECRQPSS - US ASCII" "Report" 3
+	
+	choose_toggle_option 3
+	choose_single_test_option 1 "11.2.5.5.3.1" "Assign ISO Latin-1" ""
+	choose_single_test_option 4 "11.2.5.5.4.4" "Test DECRQPSS - ISO Latin-1" "Report" 3
+	
+	choose_toggle_option 3
+	choose_single_test_option 2 "11.2.5.5.3.2" "Assign Special graphics and line drawing" ""
+	choose_single_test_option 4 "11.2.5.5.4.5" "Test DECRQPSS - Special graphics and line drawing" "Report" 3
+	
+	choose_toggle_option 3
+	choose_single_test_option 3 "11.2.5.5.3.3" "Assign DEC Supplemental Graphic" ""
+	choose_single_test_option 4 "11.2.5.5.4.6" "Test DECRQPSS - DEC Supplemental Graphic" "Report" 3
+	
+	choose_toggle_option 3
+	choose_single_test_option 4 "11.2.5.5.3.4" "Assign DEC Technical" ""
+	choose_single_test_option 4 "11.2.5.5.4.7" "Test DECRQPSS - DEC Technical" "Report" 3
+	
+	choose_toggle_option 2
+	choose_single_test_option 4 "11.2.5.5.4.8" "Test DECRQPSS - reset" "Report" 3
+	
+	pop_menu # User-Preferred Supplemental Sets Tests
+	
+	choose_single_test_option 6 "11.2.5.6" "Test Window Report (DECRPDE)" "<27> [" 3
+
+	pop_menu # 11.2.5: VT320 Reports
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#-----------------------------------------------
+#	Menu 11.2: VT320 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT220 features
+#         2. Test cursor-movement
+#         3. Test page-format controls
+#         4. Test page-movement controls
+#  ->     5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_2_6_vt320_screen_display
+def test_11_2_6_vt320_screen_display {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 2 "11.2" "VT320 Tests"
+	choose_submenu_option 6 "11.2.6" "VT320 Screen-Display Tests"
+	choose_submenu_option 2 "11.2.6.2" "Test Status line (DECSASD/DECSSDT)"
+
+	choose_multi_test_option 1 "11.2.6.2.1.1" "Simple Status line Test - text in the status line" "TEXT IN THE STATUS LINE" 2
+	do_test "11.2.6.2.1.2" "Simple Status line Test - no status line" "no status line" 2
+	do_test "11.2.6.2.1.3" "Simple Status line Test - indicator status line" "indicator)" 2
+	wait_for_menu_prompt
+
+	choose_multi_test_option 2 "11.2.6.2.2.1" "SGR in Status Line" "status-line" 2
+	do_test "11.2.6.2.2.2" "SGR in Status Line - on" "NORMAL" 2
+	do_test "11.2.6.2.2.3" "SGR in status line - indicator" "" 2
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 3 "11.2.6.2.3.1" "Cursor-movement in Status Line" "in the status-line" 2
+	do_test "11.2.6.2.3.2" "Cursor-movement in Status Line - test" "word" 2
+	do_test "11.2.6.2.3.3" "Cursor-movement in Status Line - normal" "" 2
+	wait_for_menu_prompt	
+
+	pop_menu # 11.2.6.2: Test Status line (DECSASD/DECSSDT)
+	pop_menu # 11.2.6: VT320 Screen-Display Tests
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#  ->      2. Test cursor-movement
+#          3. Test editing sequences
+#          4. Test keyboard-control
+#          5* Test macro-definition (DECDMAC)
+#          6. Test rectangular area functions
+#          7. Test reporting functions
+#          8. Test screen-display functions
+local test_11_3_2_v420_cursor_movement test_11_3_2_v420_cm_tests
+
+# Helper macro to run all four VT420 cursor movement tests. VTTEST should
+# already be in menu 11.3.2.
+# Parameters:
+#	1 - DECOM on/off
+#	2 - DECLRMM on/off
+#   3 - Top/Bottom margin setting
+# 	4 - Left/Right margin setting
+#   5 - Color setting 
+def test_11_3_2_v420_cm_tests {
+
+	# Screenshot the menu to show the state of all the settings
+	wait_for_menu_prompt
+	screenshot "menu-11.3.2-\%1-\%2-\%3-\%4-\%5"
+	putout {	<tr>}
+	putout {		<td><a href="menu-11.3.2-\%1-\%2-\%3-\%4-\%5.\m(image_format)"><img src="menu-11.3.2-\%1-\%2-\%3-\%4-\%5.\m(image_format)"></a></td>}
+	putout {		<td colspan="2"> Menu 11.3.2: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5</td>}
+	putout {	</tr>}
+
+	choose_single_test_option 7 "11.3.2.7-\%1-\%2-\%3-\%4-\%5" "Test Back Index (DECBI) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "through"
+	choose_single_test_option 8 "11.3.2.8-\%1-\%2-\%3-\%4-\%5" "Test Forward Index (DECFI) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "through"
+	choose_single_test_option 9 "11.3.2.9-\%1-\%2-\%3-\%4-\%5" "Test Cursor Movement within Margins - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "margins"
+	choose_single_test_option 10 "11.3.2.10-\%1-\%2-\%3-\%4-\%5" "Test Other Movement within Margins - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "margins"
+}
+
+def test_11_3_2_v420_cursor_movement {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	choose_submenu_option 2 "11.3.2" "VT420 Cursor-Movement Tests"
+	
+	#	Menu 11.3.2: VT420 Cursor-Movement Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT320 features
+    #     2. Enable DECOM (origin mode)
+    #     3. Enable DECLRMM (left/right mode)
+    #     4. Top/Bottom margins are reset
+    #     5. Left/right margins are reset
+    #     6. Do not color test-regions (xterm)
+    # ->  7. Test Back Index (DECBI)
+    # ->  8. Test Forward Index (DECFI)
+    # ->  9. Test cursor movement within margins
+    # ->  10. Test other movement (CR/HT/LF/FF) within margins
+
+	# Options 2-6 are toggles, with 4 & 5 having four settings and the others
+	# being on/off.
+	# Options 7-10 are single tests.
+	
+	local decom declrmm tbmargin lrmargin color run_test
+	.decom = "disabled"
+	.declrmm = "disabled"
+	.tbmargin = "reset"
+	.lrmargin = "reset"
+	.color = "no-color"
+	.run_test = 1
+	
+	# Now go through all of the setting combinations - 128 all up :(
+	# and four tests per iteration, thats 512 test runs total.
+	.%6 := 128
+	
+	# DECOM
+	for \%1 0 1 1 {
+		if = \%1 0 {  # Default State
+			.decom = "disabled"
+		} else {
+			.decom = "enabled"
+			choose_toggle_option 2
+		}
+		
+		# DECLRMM
+		for \%2 0 1 1 {
+			if = \%2 0 {  # Default State
+				.declrmm = "disabled"
+			} else {
+				.declrmm = "enabled"
+				choose_toggle_option 3
+			}
+			
+			# Top/Bottom Margin
+			for \%3 0 3 1 { 
+				if = \%3 0 {  # Default State
+					.tbmargin = "reset"
+				} else if = \%3 1 {
+					.tbmargin = "top half"
+					choose_toggle_option 4
+				} else if = \%3 2 {
+					.tbmargin = "bottom half"
+					choose_toggle_option 4
+				} else if = \%3 3 {
+					.tbmargin = "middle half"
+					choose_toggle_option 4
+				}
+				
+				# Left/Right Margin
+				for \%4 0 3 1 { 
+					if = \%4 0 {  # Default State
+						.lrmargin = "reset"
+					} else if = \%4 1 {
+						.lrmargin = "left half"
+						choose_toggle_option 5
+					} else if = \%4 2 {
+						.lrmargin = "right half"
+						choose_toggle_option 5
+					} else if = \%4 3 {
+						.lrmargin = "middle half"
+						choose_toggle_option 5
+					}
+				
+					# Colour
+					for \%5 0 1 1 {
+						.run_test = 1
+						if = \%5 0 {  # Default State
+							.color = "no-color"
+							if = \m(mono_tests) 0 {
+								.run_test = 0
+							}
+						} else {
+							.color = "color"
+							choose_toggle_option 6
+							if = \m(color_tests) 0 {
+								.run_test = 0
+							}
+						}
+					
+						# Run tests
+						if = \m(run_test) 1 {
+							test_11_3_2_v420_cm_tests \m(decom) \m(declrmm) \m(tbmargin) \m(lrmargin) "\m(color)"
+						}
+						
+						.%6 ::= \%6 - 1
+						echo "---- VT420 Cursor-Movement Test Iterations Remaining: \%6 ----"
+					}
+					
+					# Turn colour back off
+					choose_toggle_option 6
+				}
+				
+				# L/R margin back to reset
+				choose_toggle_option 5
+			}
+			# T/B margin back to reset
+			choose_toggle_option 4
+		}
+		# DECLRMM back to disabled
+		choose_toggle_option 3
+	}
+	
+	# DECOM back to disabled
+	choose_toggle_option 2
+	
+	pop_menu # 11.3.2: VT420 Cursor-Movement Tests
+	pop_menu # 11.3 VT420 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#          2. Test cursor-movement
+#  ->      3. Test editing sequences
+#          4. Test keyboard-control
+#          5* Test macro-definition (DECDMAC)
+#          6. Test rectangular area functions
+#          7. Test reporting functions
+#          8. Test screen-display functions
+local test_11_3_3_v420_editing_sequences test_11_3_3_v420_es_tests
+
+# Helper macro to run all five VT420 editing sequence tests. VTTEST should
+# already be in menu 11.3.3.
+# Parameters:
+#	1 - DECOM on/off
+#	2 - DECLRMM on/off
+#   3 - Top/Bottom margin setting
+# 	4 - Left/Right margin setting
+#   5 - Color setting 
+def test_11_3_3_v420_es_tests {
+
+	# Screenshot the menu to show the state of all the settings
+	wait_for_menu_prompt
+	screenshot "menu-11.3.3-\%1-\%2-\%3-\%4-\%5"
+	putout {	<tr>}
+	putout {		<td><a href="menu-11.3.3-\%1-\%2-\%3-\%4-\%5.\m(image_format)"><img src="menu-11.3.3-\%1-\%2-\%3-\%4-\%5.\m(image_format)"></a></td>}
+	putout {		<td colspan="2"> Menu 11.3.3: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5</td>}
+	putout {	</tr>}
+
+	choose_multi_test_option 9 "11.3.3.9.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete column (DECIC, DECDC) 1/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "are on column" 1
+	do_test "11.3.3.9.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete column (DECIC, DECDC) 2/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "column" 1
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 10 "11.3.3.10.1-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	do_test "11.3.3.10.2-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at top."
+	do_test "11.3.3.10.3-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	do_test "11.3.3.10.4-\%1-\%2-\%3-\%4-\%5" "Test vertical scrolling (IND, RI) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at bottom."
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 11 "11.3.3.11.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	do_test "11.3.3.11.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at bottom."
+	do_test "11.3.3.11.3-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "zab"
+	do_test "11.3.3.11.4-\%1-\%2-\%3-\%4-\%5" "Test insert/delete line (IL, DL) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "at top."
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 12 "11.3.3.12.1-\%1-\%2-\%3-\%4-\%5" "Test insert/delete char (ICH, DCH) (1/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "column" 1
+	do_test "11.3.3.12.2-\%1-\%2-\%3-\%4-\%5" "Test insert/delete char (ICH, DCH) (2/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "column"
+	wait_for_menu_prompt
+	
+	choose_single_test_option 13 "11.3.3.13-\%1-\%2-\%3-\%4-\%5" "Test ASCII formatting (BS, CR, TAB) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "margins"
+}
+
+def test_11_3_3_v420_editing_sequences {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	choose_submenu_option 3 "11.3.3" "VT420 Editing Sequence Tests"
+	
+	#	Menu 11.3.3: VT420 Editing Sequence Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Enable DECOM (origin mode)
+    #     2. Enable DECLRMM (left/right mode)
+    #     3. Top/Bottom margins are reset
+    #     4. Left/right margins are reset
+    #     5. Do not color test-regions (xterm)
+    # ->  6. Show DECRQM response for DECLRMM
+    # ->  7. Show DECRQSS response for DECSTBM
+    # ->  8. Show DECRQSS response for DECSLRM
+    # ->  9. Test insert/delete column (DECIC, DECDC)
+    # ->  10. Test vertical scrolling (IND, RI)
+    # ->  11. Test insert/delete line (IL, DL)
+    # ->  12. Test insert/delete char (ICH, DCH)
+    # ->  13. Test ASCII formatting (BS, CR, TAB)
+
+	# Options 1-5 are toggles, with 3 & 4 having four settings and the others
+	# being on/off.
+	
+	choose_single_test_option 6 "11.3.3.6-off" "Show DECRQM response for DECLRMM - DECLRMM off" "<27> [ ?"
+	choose_toggle_option 2 # Turn DECLRMM on 
+	choose_single_test_option 6 "11.3.3.6-on" "Show DECRQM response for DECLRMM - DECLRMM on" "<27> [ ?"	
+	choose_toggle_option 2 # Turn DECLRMM back off 
+	
+	choose_single_test_option 7 "11.3.3.7-reset" "Show DECRQSS response for DECSTBM - DECSTBM reset" "<27> ["
+	choose_toggle_option 3 # Top
+	choose_single_test_option 7 "11.3.3.7-top" "Show DECRQSS response for DECSTBM - DECSTBM top half" "<27> ["	
+	choose_toggle_option 3 # Bottom
+	choose_single_test_option 7 "11.3.3.7-bottom" "Show DECRQSS response for DECSTBM - DECSTBM bottom half" "<27> ["	
+	choose_toggle_option 3 # Middle
+	choose_single_test_option 7 "11.3.3.7-middle" "Show DECRQSS response for DECSTBM - DECSTBM middle" "<27> ["	
+	choose_toggle_option 3 # Reset
+	
+	# On a real VT520, the DECSLRM response is the same whether DECSLRMM is on or not
+	choose_single_test_option 8 "11.3.3.8-reset" "Show DECRQSS response for DECSLRM - DECSLRM reset" "<27> ["
+	choose_toggle_option 4 # Left
+	choose_single_test_option 8 "11.3.3.8-left" "Show DECRQSS response for DECSLRM - DECSLRM left half" "<27> ["	
+	choose_toggle_option 4 # Right
+	choose_single_test_option 8 "11.3.3.8-right" "Show DECRQSS response for DECSLRM - DECSLRM right half" "<27> ["	
+	choose_toggle_option 4 # Middle
+	choose_single_test_option 8 "11.3.3.8-middle" "Show DECRQSS response for DECSLRM - DECSLRM middle" "<27> ["	
+	choose_toggle_option 4 # Reset
+	
+
+	local decom declrmm tbmargin lrmargin color run_test
+	.decom = "disabled"
+	.declrmm = "disabled"
+	.tbmargin = "reset"
+	.lrmargin = "reset"
+	.color = "no-color"
+	.run_test = 1
+	
+	# Now go through all of the setting combinations - 128 all up :(
+	# and thirteen tests per iteration, thats 1664 test runs total.
+	.%6 := 128
+	
+	# DECOM
+	for \%1 0 1 1 {
+		if = \%1 0 {  # Default State
+			.decom = "disabled"
+		} else {
+			.decom = "enabled"
+			choose_toggle_option 1
+		}
+		
+		# DECLRMM
+		for \%2 0 1 1 {
+			if = \%2 0 {  # Default State
+				.declrmm = "disabled"
+			} else {
+				.declrmm = "enabled"
+				choose_toggle_option 2
+			}
+			
+			# Top/Bottom Margin
+			for \%3 0 3 1 { 
+				if = \%3 0 {  # Default State
+					.tbmargin = "reset"
+				} else if = \%3 1 {
+					.tbmargin = "top half"
+					choose_toggle_option 3
+				} else if = \%3 2 {
+					.tbmargin = "bottom half"
+					choose_toggle_option 3
+				} else if = \%3 3 {
+					.tbmargin = "middle half"
+					choose_toggle_option 3
+				}
+				
+				# Left/Right Margin
+				for \%4 0 3 1 { 
+					if = \%4 0 {  # Default State
+						.lrmargin = "reset"
+					} else if = \%4 1 {
+						.lrmargin = "left half"
+						choose_toggle_option 4
+					} else if = \%4 2 {
+						.lrmargin = "right half"
+						choose_toggle_option 4
+					} else if = \%4 3 {
+						.lrmargin = "middle half"
+						choose_toggle_option 4
+					}
+				
+					# Colour
+					for \%5 0 1 1 {
+						.run_test = 1
+						if = \%5 0 {  # Default State
+							.color = "no-color"
+							if = \m(mono_tests) 0 {
+								.run_test = 0
+							}
+						} else {
+							.color = "color"
+							choose_toggle_option 5
+							if = \m(color_tests) 0 {
+								.run_test = 0
+							}
+						}
+					
+						# Run tests
+						if = \m(run_test) 1 {
+							test_11_3_3_v420_es_tests \m(decom) \m(declrmm) \m(tbmargin) \m(lrmargin) "\m(color)"
+						}
+						
+						.%6 ::= \%6 - 1
+						echo "---- VT420 Editing Sequence Test Iterations Remaining: \%6 ----"
+					}
+					
+					# Turn colour back off
+					choose_toggle_option 5
+				}
+				
+				# L/R margin back to reset
+				choose_toggle_option 4
+			}
+			
+			# T/B margin back to reset
+			choose_toggle_option 3
+		}
+		
+		# DECLRMM back to disabled
+		choose_toggle_option 2
+	}
+	
+	# DECOM back to disabled
+	choose_toggle_option 2
+	
+	pop_menu # 11.3.3: VT420 Editing Sequence Tests
+	pop_menu # 11.3 VT420 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#          2. Test cursor-movement
+#          3. Test editing sequences
+#  ->      4. Test keyboard-control
+#          5* Test macro-definition (DECDMAC)
+#          6. Test rectangular area functions
+#          7. Test reporting functions
+#          8. Test screen-display functions
+local test_11_3_4_v420_keyboard_control
+def test_11_3_4_v420_keyboard_control {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	choose_submenu_option 4 "11.3.4" "VT420 Keyboard-Control Tests"
+	
+	#	Menu 11.3.4: VT420 Keyboard-Control Tests
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test Backarrow key (DECBKM)
+    #     2. Test Numeric keypad (DECNKM)
+    #     3. Test Keyboard usage (DECKBUM)
+    #     4. Test Key position (DECKPM)
+    #     5* Test Enable Local Functions (DECELF)
+    #     6* Test Local Function-Key Control (DECLFKC)
+    #     7* Test Select Modifier-Key Reporting (DECSMKR)
+	
+	# All of these require keyboard input.
+	echo "Test not implemented"
+	
+	pop_menu # 11.3.4: VT420 Keyboard-Control Tests
+	pop_menu # 11.3 VT420 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#          2. Test cursor-movement
+#          3. Test editing sequences
+#          4. Test keyboard-control
+#  ->      5* Test macro-definition (DECDMAC)
+#          6. Test rectangular area functions
+#          7. Test reporting functions
+#          8. Test screen-display functions
+local test_11_3_5_v420_macros
+def test_11_3_5_v420_macros {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	
+	echo Test not supported by VTTEST
+	
+	pop_menu # 11.3 VT420 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#          2. Test cursor-movement
+#          3. Test editing sequences
+#          4. Test keyboard-control
+#          5* Test macro-definition (DECDMAC)
+#  ->      6. Test rectangular area functions
+#          7. Test reporting functions
+#          8. Test screen-display functions
+local test_11_3_6_v420_rectangular_operations test_11_3_6_v420_ro_tests
+
+# Helper macro to run all five VT420 rectangular operation tests. VTTEST should
+# already be in menu 11.3.6.
+# Parameters:
+#	1 - DECOM on/off
+#	2 - DECLRMM on/off
+#   3 - Top/Bottom margin setting
+# 	4 - Left/Right margin setting
+#   5 - Color setting 
+#   6 - Line drawing characters
+def test_11_3_6_v420_ro_tests {
+
+	# Screenshot the menu to show the state of all the settings
+	wait_for_menu_prompt
+	screenshot "menu-11.3.3-\%1-\%2-\%3-\%4-\%5-\%6"
+	putout {	<tr>}
+	putout {		<td><a href="menu-11.3.3-\%1-\%2-\%3-\%4-\%5-\%6.\m(image_format)"><img src="menu-11.3.3-\%1-\%2-\%3-\%4-\%5-\%6.\m(image_format)"></a></td>}
+	putout {		<td colspan="2"> Menu 11.3.3: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6</td>}
+	putout {	</tr>}
+
+	# Change-Attributes in Rectangular Area
+	choose_multi_test_option 7 "11.3.6.7.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Change-Attributes in Rectangular Area (DECCARA) 1/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "reverse-video E's"
+	do_test "11.3.6.7.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Change-Attributes in Rectangular Area (DECCARA) 2/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "the margins."
+	wait_for_menu_prompt
+	
+	# Test Copy Rectangular area (DECCRA)
+	# This test will throw an error with particular margin combinations, so we
+	# need to select the menu item then wait on both possible outcomes before
+	# proceeding.
+	wait_for_menu_prompt
+	lineout 8
+	minput 2 "right 4)" "too small"
+	#choose_multi_test_option 8 "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "right 4)"
+	screen_contains_string "The screen is too small"
+	if = \v(return) 1 {
+		# An error!
+		do_test "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6"
+		wait_for_push_return_prompt
+		lineout
+		wait_for_menu_prompt
+	} else {
+		# No error - do remaining tests
+		do_test "11.3.6.8.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6"
+		do_test "11.3.6.8.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "overlapping (down 3, right 4)"
+		do_test "11.3.6.8.3-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "copied (down 3, right 4)"
+		do_test "11.3.6.8.4-\%1-\%2-\%3-\%4-\%5-\%6" "Test Copy Rectangular area (DECCRA) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" " overlapping (down 3, right 4)"
+		wait_for_menu_prompt
+	}
+	
+	# Test Erase Rectangular area (DECERA)
+	# This one has an extra step when in colour
+	if equal "\%5" "no-color" {
+		choose_single_test_option 9 "11.3.6.9-\%1-\%2-\%3-\%4-\%5-\%6" "Test Erase Rectangular area (DECERA) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
+	} else {
+		choose_multi_test_option 9 "11.3.6.9.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Erase Rectangular area (DECERA) (1/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
+		do_test "11.3.6.9.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Erase Rectangular area (DECERA) (2/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
+		wait_for_menu_prompt
+	}
+	
+	# Test Fill Rectangular area (DECFRA)
+	choose_multi_test_option 10 "11.3.6.10.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Fill Rectangular area (DECFRA) (1/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
+	do_test "11.3.6.10.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Fill Rectangular area (DECFRA) (2/2) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "."
+	wait_for_menu_prompt
+	
+	# Test Reverse-Attributes in Rectangular Area (DECRARA)
+	# Change-Attributes in Rectangular Area
+	choose_multi_test_option 11 "11.3.6.11.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Reverse-Attributes in Rectangular Area (DECRARA) 1/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "reverse-video E's"
+	do_test "11.3.6.11.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Reverse-Attributes in Rectangular Area (DECRARA) 2/2 - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "the margins."
+	wait_for_menu_prompt
+	
+	# Test Selective-Erase Rectangular area (DECSERA)
+	choose_multi_test_option 12 "11.3.6.12.1-\%1-\%2-\%3-\%4-\%5-\%6" "Test Selective-Erase Rectangular area (DECSERA) (1/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "DECFRA"
+	do_test "11.3.6.12.2-\%1-\%2-\%3-\%4-\%5-\%6" "Test Selective-Erase Rectangular area (DECSERA) (2/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "using DECSERA"
+	do_test "11.3.6.12.3-\%1-\%2-\%3-\%4-\%5-\%6" "Test Selective-Erase Rectangular area (DECSERA) (3/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "using DECFRA"
+	do_test "11.3.6.12.4-\%1-\%2-\%3-\%4-\%5-\%6" "Test Selective-Erase Rectangular area (DECSERA) (4/4) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5, \%6" "using DECSERA"
+	wait_for_menu_prompt
+}
+
+def test_11_3_6_v420_rectangular_operations {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	choose_submenu_option 6 "11.3.6" "VT420 Rectangular Area Tests"
+	
+	#	 Menu 11.3.6: VT420 Rectangular Area Tests (should not work)
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Enable DECOM (origin mode)
+    #      2. Enable DECLRMM (left/right mode)
+    #      3. Top/Bottom margins are reset
+    #      4. Left/right margins are reset
+    #      5. Do not color test-regions (xterm)
+    #      6. Use line-drawing characters
+    #      7. Test Change-Attributes in Rectangular Area (DECCARA)
+    #      8. Test Copy Rectangular area (DECCRA)
+    #      9. Test Erase Rectangular area (DECERA)
+    #      10. Test Fill Rectangular area (DECFRA)
+    #      11. Test Reverse-Attributes in Rectangular Area (DECRARA)
+    #      12. Test Selective-Erase Rectangular area (DECSERA)
+
+	# Options 1-6 are toggles, with 3 & 4 having four settings and the others
+	# being on/off.
+	
+
+	local decom declrmm tbmargin lrmargin color run_test
+	.decom = "disabled"
+	.declrmm = "disabled"
+	.tbmargin = "reset"
+	.lrmargin = "reset"
+	.color = "no-color"
+	.lines = "no-lines"
+	.run_test = 1
+	
+	# Now go through all of the setting combinations - 256 all up :(
+	# and fifteen tests per iteration, thats 3,840 test runs total.
+	.%7 := 256
+	
+	# DECOM
+	for \%1 0 1 1 {
+		if = \%1 0 {  # Default State
+			.decom = "disabled"
+		} else {
+			.decom = "enabled"
+			choose_toggle_option 1
+		}
+		
+		# DECLRMM
+		for \%2 0 1 1 {
+			if = \%2 0 {  # Default State
+				.declrmm = "disabled"
+			} else {
+				.declrmm = "enabled"
+				choose_toggle_option 2
+			}
+			
+			# Top/Bottom Margin
+			for \%3 0 3 1 { 
+				if = \%3 0 {  # Default State
+					.tbmargin = "reset"
+				} else if = \%3 1 {
+					.tbmargin = "top half"
+					choose_toggle_option 3
+				} else if = \%3 2 {
+					.tbmargin = "bottom half"
+					choose_toggle_option 3
+				} else if = \%3 3 {
+					.tbmargin = "middle half"
+					choose_toggle_option 3
+				}
+				
+				# Left/Right Margin
+				for \%4 0 3 1 { 
+					if = \%4 0 {  # Default State
+						.lrmargin = "reset"
+					} else if = \%4 1 {
+						.lrmargin = "left half"
+						choose_toggle_option 4
+					} else if = \%4 2 {
+						.lrmargin = "right half"
+						choose_toggle_option 4
+					} else if = \%4 3 {
+						.lrmargin = "middle half"
+						choose_toggle_option 4
+					}
+				
+					# Colour
+					for \%5 0 1 1 {
+						.run_test = 1
+						if = \%5 0 {  # Default State
+							.color = "no-color"
+							if = \m(mono_tests) 0 {
+								.run_test = 0
+							}
+						} else {
+							.color = "color"
+							choose_toggle_option 5
+							if = \m(color_tests) 0 {
+								.run_test = 0
+							}
+						}
+					
+						# Line drawing characters
+						for \%6 0 1 1 {
+							if = \%6 0 {  # Default State
+								.lines = "no-lines"
+								if = \m(no_line_drawing_chars) 0 {
+									.run_test = 0
+								}
+							} else {
+								.lines = "lines"
+								choose_toggle_option 6
+								if = \m(line_drawing_chars) 0 {
+									.run_test = 0
+								}
+							}
+					
+							# Run tests
+							if = \m(run_test) 1 {
+								test_11_3_6_v420_ro_tests \m(decom) \m(declrmm) \m(tbmargin) \m(lrmargin) "\m(color)" "\m(lines)"
+							}
+						
+							.%7 ::= \%7 - 1
+							echo "---- VT420 Rectangular Operation Test Iterations Remaining: \%7 ----"
+						}
+					
+						# Turn line drawing characters back off
+						choose_toggle_option 6
+					}
+					
+					# Turn colour back off
+					choose_toggle_option 5
+				}
+				
+				# L/R margin back to reset
+				choose_toggle_option 4
+			}
+			
+			# T/B margin back to reset
+			choose_toggle_option 3
+		}
+		
+		# DECLRMM back to disabled
+		choose_toggle_option 2
+	}
+	
+	# DECOM back to disabled
+	choose_toggle_option 2
+	
+	pop_menu # 11.3.6: VT420 Rectangular Area Tests
+	pop_menu # 11.3 VT420 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+
+#-----------------------------------------------
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#          2. Test cursor-movement
+#          3. Test editing sequences
+#          4. Test keyboard-control
+#          5* Test macro-definition (DECDMAC)
+#          6. Test rectangular area functions
+#  ->      7. Test reporting functions
+#          8. Test screen-display functions
+local test_11_3_7_vt420_reporting_functions
+def test_11_3_7_vt420_reporting_functions {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	choose_submenu_option 7 "11.3.7" "VT420 Reports"
+	
+	# These are divided up into a selection of submenus
+	
+	#  Menu 11.3.7: VT420 Reports
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT320 features
+    # ->   2. Test Presentation State Reports
+    # ->   3. Test Device Status Reports (DSR)
+	
+	
+	
+	#	Menu 11.3.7.2: VT420 Presentation State Reports
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT320 features
+    #  ->  2. Request Mode (DECRQM)/Report Mode (DECRPM)
+    #  ->  3. Status-String Report (DECRQSS)
+	#
+    #      Enter choice number (0 - 3):
+	choose_submenu_option 2 "11.3.7.2" "VT420 Presentation State Reports"
+
+
+	#	 Menu 11.3.7.2.2: Request Mode (DECRQM)/Report Mode (DECRPM)
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. ANSI Mode Report (DECRPM)
+    #      2. DEC Mode Report (DECRPM)
+	choose_submenu_option 2 "11.3.7.2.2" "Request Mode (DECRQM)/Report Mode (DECRPM)"
+	choose_single_test_option 1 "11.3.7.2.1" "ANSI Mode Report (DECRPM)" 15
+	choose_multi_test_option 2 "11.3.7.2.2.1" "DEC Mode Report (DECRPM) - 1" 15
+	do_test "11.3.7.2.2.2" "DEC Mode Report (DECRPM) - 2" 10
+	wait_for_menu_prompt
+	pop_menu # Request Mode (DECRQM)/Report Mode (DECRPM)
+	
+	#  Menu 11.3.7.2.3: VT420 Status-Strings Reports
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT320 features (DECRQSS)
+    #     2. Enable local functions (DECELF)
+    #     3. Local function key control (DECLFKC)
+    #     4. Select attribute change extent (DECSACE)
+    #     5. Select modifier key reporting (DECSMKR)
+    #     6. Set left and right margins (DECSLRM)
+    #      7. Set number of lines per screen (DECSNLS)
+	choose_submenu_option 3 "11.3.7.2.3" "VT420 Status-Strings Reports"
+	
+	choose_single_test_option 2 "11.3.7.2.3.2" "Enable local functions (DECELF)" " <27> P" 3
+	choose_single_test_option 3 "11.3.7.2.3.3" "Local function key control (DECLFKC)" " <27> P" 3
+	choose_single_test_option 4 "11.3.7.2.3.4" "Select attribute change extent (DECSACE)" " <27> P" 3
+	choose_single_test_option 5 "11.3.7.2.3.5" "Select modifier key reporting (DECSMKR)" " <27> P" 3
+	choose_single_test_option 6 "11.3.7.2.3.6" "Set left and right margins (DECSLRM)" " <27> P" 3
+	choose_single_test_option 7 "11.3.7.2.3.7" "Set number of lines per screen (DECSNLS)" " <27> P" 3
+	
+	wait_for_menu_prompt
+	pop_menu # VT420 Status-Strings Reports
+	
+	wait_for_menu_prompt
+	pop_menu # "VT420 Presentation State Reports
+	
+	
+	#	 Menu 11.3.7.3: VT420 Device Status Reports (DSR)
+	#
+    #    Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT320 features
+    #      2. Test Printer Status
+    #      3. Test UDK Status
+    #      4. Test Keyboard Status
+    #      5. Test Macro Space
+    #      6. Test Memory Checksum
+    #      7. Test Data Integrity
+    #      8. Test Multiple Session Status
+    #      9. Test Checksum of Rectangular Area (DECRQCRA): GL
+    #      10. Test Checksum of Rectangular Area (DECRQCRA): GR
+    #      11. Test Extended Cursor-Position (DECXCPR)
+	choose_submenu_option 3 "11.3.7.3" "VT420 Device Status Reports (DSR)"
+	
+	# This seems to be the same as 11.1.1.1.3 and 11.2.5.2.3
+	choose_single_test_option 2 "11.3.7.3.2" "Test Printer Status" "<27> [ ?" 3
+	
+	# This seems to be the same as 11.1.1.1.4 and 11.2.5.2.4
+	choose_single_test_option 3 "11.3.7.3.3" "Test UDK Status" " <27> [ ?" 3
+	
+	# This seems to be the same as 11.1.1.1.1 and 11.2.5.2.2
+	choose_single_test_option 4 "11.3.7.3.4" "Test Keyboard Status" " <27> [ ?" 3
+	
+	choose_single_test_option 5 "11.3.7.3.5" "Test Macro Space" " <27> [" 3
+	choose_single_test_option 6 "11.3.7.3.6" "Test Memory Checksum" " <27> P" 3
+	choose_single_test_option 7 "11.3.7.3.7" "Test Data Integrity" "" 3
+	choose_single_test_option 8 "11.3.7.3.8" "Test Multiple Session Status" "" 3
+	
+	# These two tests take quite a while to run
+	choose_single_test_option 9 "11.3.7.3.9" "Test Checksum of Rectangular Area (DECRQCRA): GL" "mismatched." 28
+	choose_single_test_option 10 "11.3.7.3.10" "Test Checksum of Rectangular Area (DECRQCRA): GR" "mismatched." 28
+	
+	# This seems to be the same as 11.2.5.2.7
+	choose_single_test_option 11 "11.3.7.3.11" "Test Extended Cursor-Position (DECXCPR)" "Page" 3
+	
+	pop_menu # VT420 Device Status Reports (DSR)
+
+	pop_menu # 11.2.5: VT320 Reports
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.3: VT420 Tests
+#
+#        Choose test type:
+#
+#          0. Exit
+#          1. Test VT320 features
+#          2. Test cursor-movement
+#          3. Test editing sequences
+#          4. Test keyboard-control
+#          5* Test macro-definition (DECDMAC)
+#          6. Test rectangular area functions
+#          7. Test reporting functions
+#  -->     8. Test screen-display functions
+local test_11_3_8_v420_screen_display
+def test_11_3_8_v420_screen_display {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 3 "11.3" "VT420 Tests"
+	choose_submenu_option 8 "11.3.8" "VT420 Screen-Display Tests"
+	
+	#         Menu 11.3.8: VT420 Screen-Display Tests
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT320 features
+    # ->   2. Test Select Number of Lines per Screen (DECSNLS)
+	
+	choose_multi_test_option 2 "11.3.8.2.1" "Test Select Number of Lines per Screen (DECSNLS) (1/3)" "<27>" 3
+	do_test "11.3.8.2.2" "Test Select Number of Lines per Screen (DECSNLS) (2/3)" "<27>" 3
+	do_test "11.3.8.2.3" "Test Select Number of Lines per Screen (DECSNLS) (3/3)" "<27>" 3
+	wait_for_menu_prompt
+	
+	pop_menu # 11.8 VT420 Screen-Display Tests
+	pop_menu # 11.3 VT420 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+
+#	Menu 11.4: VT520 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT420 features
+# ->      2. Test cursor-movement
+#         3* Test editing sequences
+#         4* Test keyboard-control
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_4_2_v520_cursor_movement test_11_4_2_v520_cm_tests
+
+# Helper macro to run all five VT420 editing sequence tests. VTTEST should
+# already be in menu 11.3.3.
+# Parameters:
+#	1 - DECOM on/off
+#	2 - DECLRMM on/off
+#   3 - Top/Bottom margin setting
+# 	4 - Left/Right margin setting
+#   5 - Color setting 
+def test_11_4_2_v520_cm_tests {
+
+	# Screenshot the menu to show the state of all the settings
+	wait_for_menu_prompt
+	screenshot "menu-11.3.3-\%1-\%2-\%3-\%4-\%5"
+	putout {	<tr>}
+	putout {		<td><a href="menu-11.3.3-\%1-\%2-\%3-\%4-\%5.\m(image_format)"><img src="menu-11.3.3-\%1-\%2-\%3-\%4-\%5.\m(image_format)"></a></td>}
+	putout {		<td colspan="2"> Menu 11.3.3: \fjoin(&a[2:\%s],-) - Settings: DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5</td>}
+	putout {	</tr>}
+	
+	choose_single_test_option 7 "11.4.2.7-\%1-\%2-\%3-\%4-\%5" "Test Character-Position-Absolute (HPA) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+	choose_single_test_option 8 "11.4.2.8-\%1-\%2-\%3-\%4-\%5" "Test Cursor-Back-Tab (CBT) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+	choose_single_test_option 9 "11.4.2.9-\%1-\%2-\%3-\%4-\%5" "Test Cursor-Character-Absolute (CHA) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+	choose_single_test_option 10 "11.4.2.10-\%1-\%2-\%3-\%4-\%5" "Test Cursor-Horizontal-Index (CHT) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "once)"
+	choose_single_test_option 11 "11.4.2.11-\%1-\%2-\%3-\%4-\%5" "Test Horizontal-Position-Relative (HPR) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+	choose_single_test_option 12 "11.4.2.12-\%1-\%2-\%3-\%4-\%5" "Test Line-Position-Absolute (VPA) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+	choose_single_test_option 13 "11.4.2.13-\%1-\%2-\%3-\%4-\%5" "Test Next-Line (CNL) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+	choose_single_test_option 14 "11.4.2.14-\%1-\%2-\%3-\%4-\%5" "Test Previous-Line (CPL) - DECOM \%1, DECLRMM \%2, Top/Bottom Margins \%3, Left/Right Margins \%4, \%5" "."
+}
+
+def test_11_4_2_v520_cursor_movement {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 4 "11.4" "VT520 Tests"
+	choose_submenu_option 2 "11.4.2" "VT520 Cursor-Movement"
+	
+	#	Menu 11.4.2: VT520 Cursor-Movement
+	#
+    #    Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT420 features
+    #     2. Enable DECOM (origin mode)
+    #     3. Enable DECLRMM (left/right mode)
+    #     4. Top/Bottom margins are reset
+    #     5. Left/right margins are reset
+    #     6. Do not color test-regions (xterm)
+    # ->  7. Test Character-Position-Absolute (HPA)
+    # ->  8. Test Cursor-Back-Tab (CBT)
+    # ->  9. Test Cursor-Character-Absolute (CHA)
+    # ->  10. Test Cursor-Horizontal-Index (CHT)
+    # ->  11. Test Horizontal-Position-Relative (HPR)
+    # ->  12. Test Line-Position-Absolute (VPA)
+    # ->  13. Test Next-Line (CNL)
+    # ->  14. Test Previous-Line (CPL)
+
+	# Options 2-6 are toggles, with 4 & 5 having four settings and the others
+	# being on/off.
+	
+	
+	local decom declrmm tbmargin lrmargin color run_test
+	.decom = "disabled"
+	.declrmm = "disabled"
+	.tbmargin = "reset"
+	.lrmargin = "reset"
+	.color = "no-color"
+	.run_test = 1
+	
+	# Now go through all of the setting combinations - 128 all up :(
+	# and thirteen tests per iteration, thats 1664 test runs total.
+	.%6 := 128
+	
+	# DECOM
+	for \%1 0 1 1 {
+		if = \%1 0 {  # Default State
+			.decom = "disabled"
+		} else {
+			.decom = "enabled"
+			choose_toggle_option 2
+		}
+		
+		# DECLRMM
+		for \%2 0 1 1 {
+			if = \%2 0 {  # Default State
+				.declrmm = "disabled"
+			} else {
+				.declrmm = "enabled"
+				choose_toggle_option 3
+			}
+			
+			# Top/Bottom Margin
+			for \%3 0 3 1 { 
+				if = \%3 0 {  # Default State
+					.tbmargin = "reset"
+				} else if = \%3 1 {
+					.tbmargin = "top half"
+					choose_toggle_option 4
+				} else if = \%3 2 {
+					.tbmargin = "bottom half"
+					choose_toggle_option 4
+				} else if = \%3 3 {
+					.tbmargin = "middle half"
+					choose_toggle_option 4
+				}
+				
+				# Left/Right Margin
+				for \%4 0 3 1 { 
+					if = \%4 0 {  # Default State
+						.lrmargin = "reset"
+					} else if = \%4 1 {
+						.lrmargin = "left half"
+						choose_toggle_option 5
+					} else if = \%4 2 {
+						.lrmargin = "right half"
+						choose_toggle_option 5
+					} else if = \%4 3 {
+						.lrmargin = "middle half"
+						choose_toggle_option 5
+					}
+				
+					# Colour
+					for \%5 0 1 1 {
+						.run_test = 1
+						if = \%5 0 {  # Default State
+							.color = "no-color"
+							if = \m(mono_tests) 0 {
+								.run_test = 0
+							}
+						} else {
+							.color = "color"
+							choose_toggle_option 6
+							if = \m(color_tests) 0 {
+								.run_test = 0
+							}
+						}
+					
+						# Run tests
+						if = \m(run_test) 1 {
+							test_11_4_2_v520_cm_tests \m(decom) \m(declrmm) \m(tbmargin) \m(lrmargin) "\m(color)"
+						}
+						
+						.%6 ::= \%6 - 1
+						echo "---- VT520 Cursor-Movement Test Iterations Remaining: \%6 ----"
+					}
+					
+					# Turn colour back off
+					choose_toggle_option 6
+				}
+				
+				# L/R margin back to reset
+				choose_toggle_option 5
+			}
+			
+			# T/B margin back to reset
+			choose_toggle_option 4
+		}
+		
+		# DECLRMM back to disabled
+		choose_toggle_option 3
+	}
+	
+	# DECOM back to disabled
+	choose_toggle_option 2
+	
+	pop_menu # 11.4.2: VT520 Cursor-Movement
+	pop_menu # 11.4 VT520 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.4: VT520 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT420 features
+#         2. Test cursor-movement
+#  ->     3* Test editing sequences
+#         4* Test keyboard-control
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_4_3_v520_editing_sequences
+def test_11_4_3_v520_editing_sequences {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 4 "11.4" "VT520 Tests"
+	
+	echo Test not supported by VTTEST
+	
+	pop_menu # 11.4 VT520 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.4: VT520 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT420 features
+#         2. Test cursor-movement
+#         3* Test editing sequences
+#  ->     4* Test keyboard-control
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_4_4_v520_keyboard_control
+def test_11_4_4_v520_keyboard_control {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 4 "11.4" "VT520 Tests"
+	
+	echo Test not supported by VTTEST
+	
+	pop_menu # 11.4 VT520 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+
+
+#-----------------------------------------------
+#	Menu 11.4: VT520 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT420 features
+#         2. Test cursor-movement
+#         3* Test editing sequences
+#         4* Test keyboard-control
+# ->      5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_4_5_vt520_reporting_functions
+def test_11_4_5_vt520_reporting_functions {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 4 "11.4" "VT520 Tests"
+	choose_submenu_option 5 "11.4.5" "VT520 Reports"
+	
+	# These are divided up into a selection of submenus
+	
+	#  Menu 11.4.5: VT520 Reports
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT420 features
+    # ->   2. Test Presentation State Reports
+    #      3. Test Device Status Reports (DSR)
+	
+	# Option 3 (DSR) just goes to the VT420 DSR tests, so no point repeating
+	# it here.
+	
+	
+	#	Menu 11.4.5.2: VT520 Presentation State Reports
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT420 features
+    #  ->  2. Request Mode (DECRQM)/Report Mode (DECRPM)
+    #  ->  3. Status-String Report (DECRQSS)
+	#
+    #      Enter choice number (0 - 3):
+	choose_submenu_option 2 "11.4.5.2" "VT520 Presentation State Reports"
+
+
+	#	 Menu 11.4.5.2.2: Request Mode (DECRQM)/Report Mode (DECRPM)
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. ANSI Mode Report (DECRPM)
+    #      2. DEC Mode Report (DECRPM)
+	choose_submenu_option 2 "11.4.5.2.2" "Request Mode (DECRQM)/Report Mode (DECRPM)"
+	choose_single_test_option 1 "11.4.5.2.1" "ANSI Mode Report (DECRPM)" "" 8
+	choose_multi_test_option 2 "11.4.5.2.2.1" "DEC Mode Report (DECRPM) - 1" "" 8
+	do_test "11.4.5.2.2.2" "DEC Mode Report (DECRPM) - 2" "" 8
+	do_test "11.4.5.2.2.3" "DEC Mode Report (DECRPM) - 3" "" 10
+	wait_for_menu_prompt
+	pop_menu # Request Mode (DECRQM)/Report Mode (DECRPM)
+	
+	#   Menu 11.4.5.2.3: VT520 Status-Strings Reports
+	#
+    #   Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT510 features (DECRQSS)
+    #     2. Alternate Text Color (DECATC)
+    #     3. Assign Color (DECAC)
+    #     4. CRT Saver Timing (DECCRTST)
+    #     5. Down Line Load Allocation (DECDLDA)
+    #     6. Energy Save Timing (DECSEST)
+    #     7. Select Auto Repeat Rate (DECARR)
+    #     8. Select Color Lookup Table (DECSTGLT)
+    #     9. Select Zero Symbol (DECSZS)
+    #     10. Session Page Memory Allocation (DECSPMA)
+    #     11. Terminal Mode Emulation (DECTME)
+    #     12. Update Session (DECUS)
+	choose_submenu_option 3 "11.4.5.2.3" "VT520 Status-Strings Reports"
+	choose_single_test_option 2 "11.4.5.2.3.2" "Alternate Text Color (DECATC)" "bold reverse underline blink" 3
+	choose_single_test_option 3 "11.4.5.2.3.3" "Assign Color (DECAC)" "window frame" 3
+	choose_single_test_option 4 "11.4.5.2.3.4" "CRT Saver Timing (DECCRTST)" "<27> P" 3
+	choose_single_test_option 5 "11.4.5.2.3.5" "Down Line Load Allocation (DECDLDA)" "<27> P" 3
+	choose_single_test_option 6 "11.4.5.2.3.6" "Energy Save Timing (DECSEST)" "<27> P" 3
+	choose_single_test_option 7 "11.4.5.2.3.7" "Select Auto Repeat Rate (DECARR)" "<27> P" 3
+	choose_single_test_option 8 "11.4.5.2.3.8" "Select Color Lookup Table (DECSTGLT)" "<27> P" 3
+	choose_single_test_option 9 "11.4.5.2.3.9" "Select Zero Symbol (DECSZS)" "<27> P" 3
+	choose_single_test_option 10 "11.4.5.2.3.10" "Session Page Memory Allocation (DECSPMA)" "<27> P" 3
+	choose_single_test_option 11 "11.4.5.2.3.11" "Terminal Mode Emulation (DECTME)" "<27> P" 3
+	choose_single_test_option 12 "11.4.5.2.3.12" "Update Session (DECUS)" "<27> P" 3
+
+	#	Menu 11.4.5.2.3.1: VT510 Status-Strings Reports
+	#
+    #   Choose test type:
+	#
+    #     0. Exit
+    #     1. Test VT420 features (DECRQSS)
+    #     2. Select Communication Port (DECSCP)
+    #     3. Select Communication Speed (DECSCS)
+    #     4. Select Digital Printed Data Type (DECSDPT)
+    #     5. Select Disconnect Delay Time (DECSDDT)
+    #     6. Select Flow Control Type (DECSFC)
+    #     7. Select Printer Type (DECSPRTT)
+    #     8. Select ProPrinter Character Set (DECSPPCS)
+    #     9. Select Refresh Rate Selection (DECSRFR)
+    #     10. Select Set-Up Language (DECSSL)
+    #     11. Set Cursor Style (DECSCUSR)
+    #     12. Set Key Click Volume (DECSKCV)
+    #     13. Set Lock Key Style (DECSLCK)
+    #     14. Set Margin Bell Volume (DECSMBV)
+	choose_submenu_option 1 "11.4.5.2.3.1" "VT510 Status-Strings Reports"
+	
+	choose_single_test_option 2 "11.4.5.2.3.1.2" "Select Communication Port (DECSCP)" "<27> P" 3
+	choose_single_test_option 3 "11.4.5.2.3.1.3" "Select Communication Speed (DECSCS)" "<27> P" 3
+	choose_single_test_option 4 "11.4.5.2.3.1.4" "Select Digital Printed Data Type (DECSDPT)" "<27> P" 3
+	choose_single_test_option 5 "11.4.5.2.3.1.5" "Select Disconnect Delay Time (DECSDDT)" "<27> P" 3
+	choose_single_test_option 6 "11.4.5.2.3.1.6" "Select Flow Control Type (DECSFC)" "<27> P" 3
+	choose_single_test_option 7 "11.4.5.2.3.1.7" "Select Printer Type (DECSPRTT)" "<27> P" 3
+	choose_single_test_option 8 "11.4.5.2.3.1.8" "Select ProPrinter Character Set (DECSPPCS)" "<27> P" 3
+	choose_single_test_option 9 "11.4.5.2.3.1.9" "Select Refresh Rate Selection (DECSRFR)" "<27> P" 3
+	choose_single_test_option 10 "11.4.5.2.3.1.10" "Select Set-Up Language (DECSSL)" "<27> P" 3
+	
+	choose_multi_test_option 11 "11.4.5.2.3.1.11.1" "Set Cursor Style (DECSCUSR) - Blinking Rectangle 1/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.2" "Set Cursor Style (DECSCUSR) - Blinking Rectangle 2/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.3" "Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle 3/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.4" "Set Cursor Style (DECSCUSR) - Blinking Underline 4/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.5" "Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle 5/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.6" "Set Cursor Style (DECSCUSR) - Blinking Vertical Bar 6/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.7" "Set Cursor Style (DECSCUSR) - Non-Blinking Vertical Bar 7/8" "<27> P" 3
+	do_test "11.4.5.2.3.11.8" "Set Cursor Style (DECSCUSR) - Rectangle 8/8" "<27> P" 3
+	wait_for_menu_prompt
+	
+	choose_single_test_option 12 "11.4.5.2.3.1.12" "Set Key Click Volume (DECSKCV)" "<27> P" 3
+	choose_single_test_option 13 "11.4.5.2.3.1.13" "Set Lock Key Style (DECSLCK)" "<27> P" 3
+	choose_single_test_option 14 "11.4.5.2.3.1.14" "Set Margin Bell Volume (DECSMBV)" "<27> P" 3
+	
+	pop_menu # 11.4.5.2.3.1: VT510 Status-Strings Reports
+	
+	wait_for_menu_prompt
+	pop_menu # VT420 Status-Strings Reports
+	
+	wait_for_menu_prompt
+	pop_menu # "VT420 Presentation State Reports
+	
+	pop_menu # 11.2.5: VT320 Reports
+	pop_menu # 11.2 VT320 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+
+#	Menu 11.4: VT520 Tests
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test VT420 features
+#         2. Test cursor-movement
+#         3* Test editing sequences
+#  ->     4* Test keyboard-control
+#         5. Test reporting functions
+#         6. Test screen-display functions
+local test_11_4_6_v520_screen_display  
+def test_11_4_6_v520_screen_display {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 4 "11.4" "VT520 Tests"
+	choose_submenu_option 6 "11.4.6" "VT520 Screen-Display Tests"
+	
+	choose_multi_test_option 1 "11.4.6.1.1" "Test No Clear on Column Change (DECNCSM) - 80 columns cleared" "cleared (80-columns)" 3
+	do_test "11.4.6.1.2" "Test No Clear on Column Change (DECNCSM) - 132 columns cleared" "cleared (132-columns)" 3
+	do_test "11.4.6.1.3" "Test No Clear on Column Change (DECNCSM) - 80 columns filled" "filled (80-columns)" 3
+	do_test "11.4.6.1.4" "Test No Clear on Column Change (DECNCSM) - 132 columns filled" "filled (80 of 132-columns)" 3
+	do_test "11.4.6.1.5" "Test No Clear on Column Change (DECNCSM) - 80 columns cleared" "cleared (80-columns)" 3
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 2 "11.4.6.2.1" "Test Set Cursor Style (DECSCUSR) - Blinking Rectangle" "blinking rectangle"
+	do_test "11.4.6.2.2" "Test Set Cursor Style (DECSCUSR) - Blinking Rectangle" "blinking rectangle"
+	do_test "11.4.6.2.3" "Test Set Cursor Style (DECSCUSR) - Non-Blinking Rectangle" " nonblinking rectangle"
+	do_test "11.4.6.2.4" "Test Set Cursor Style (DECSCUSR) - Blinking Underline" "blinking underline"
+	do_test "11.4.6.2.5" "Test Set Cursor Style (DECSCUSR) - Non-Blinking Underline" "nonblinking underline"
+	do_test "11.4.6.2.6" "Test Set Cursor Style (DECSCUSR) - Blinking Vertical Bar" "blinking vertical bar"
+	do_test "11.4.6.2.7" "Test Set Cursor Style (DECSCUSR) - Non-Blinking Vertical Bar" "nonblinking vertical bar"
+	do_test "11.4.6.2.8" "Test Set Cursor Style (DECSCUSR) - Rectangle" "rectangle again"
+	wait_for_menu_prompt
+	
+	choose_single_test_option 3 "11.4.6.3" "Test Alternate Text Color (DECATC)" "Bold reverse underline blink"
+	
+	pop_menu # 11.4.6 VT520 Screen-Display Tests
+	pop_menu # 11.4 VT520 Tests 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.5: ISO-6429 (ECMA-48) Cursor-Movement
+#
+#        Choose test type:
+#
+#         0. Exit
+#         1. Test Character-Position-Absolute (HPA)
+#         2. Test Cursor-Back-Tab (CBT)
+#         3. Test Cursor-Character-Absolute (CHA)
+#         4. Test Cursor-Horizontal-Index (CHT)
+#         5. Test Horizontal-Position-Relative (HPR)
+#         6. Test Line-Position-Absolute (VPA)
+#         7. Test Next-Line (CNL)
+#         8. Test Previous-Line (CPL)
+#         9. Test Vertical-Position-Relative (VPR)
+local test_11_5_ecma48_cursor_movement  
+def test_11_5_ecma48_cursor_movement {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 5 "11.5" "ISO-6429 (ECMA-48) Cursor-Movement"
+	
+	choose_single_test_option 1 "11.5.1" "Test Character-Position-Absolute (HPA)" "."
+	choose_single_test_option 2 "11.5.2" "Test Cursor-Back-Tab (CBT)" "."
+	choose_single_test_option 3 "11.5.3" "Test Cursor-Character-Absolute (CHA)" "."
+	choose_single_test_option 4 "11.5.4" "Test Cursor-Horizontal-Index (CHT)" "once)"
+	choose_single_test_option 5 "11.5.5" "Test Horizontal-Position-Relative (HPR)" "."
+	choose_single_test_option 6 "11.5.6" "Test Line-Position-Absolute (VPA)" "."
+	choose_single_test_option 7 "11.5.7" "Test Next-Line (CNL)" "."
+	choose_single_test_option 8 "11.5.8" "Test Previous-Line (CPL)" "."
+	choose_single_test_option 9 "11.5.9" " Test Vertical-Position-Relative (VPR)" "."
+	
+	pop_menu # 11.5 ISO-6429 (ECMA-48) Cursor-Movement 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	Menu 11.6: ISO 6429 colors
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Disable color-switching
+#          2. Display color test-pattern
+#          3. Test SGR-0 color reset
+#          4. Test BCE-style clear line/display (ED, EL)
+#          5. Test BCE-style clear line/display (ECH, Indexing)
+#          6. Test of VT102-style features with BCE
+#          7. Test other ISO-6429 features with BCE
+#          8. Test screen features with BCE
+#          9. Test screen features with ISO 6429 SGR 22-27 codes
+local test_11_6_ecma48_colors  
+def test_11_6_ecma48_colors {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 6 "11.6" "ISO 6429 colors"
+	
+	local run_test color
+	
+	# Colour
+	for \%1 0 1 1 {
+		.run_test = 1
+		if = \%1 0 {  # Default State
+			.color = "color"
+			if = \m(color_tests) 0 {
+				.run_test = 0
+			}
+		} else {
+			.color = "no-color"
+			choose_toggle_option 1
+			if = \m(mono_tests) 0 {
+				.run_test = 0
+			}
+		}
+	
+		# Run tests
+		if = \m(run_test) 1 {
+			choose_single_test_option 2 "11.6.2" "Display color test-pattern - \m(color)" "white   Hello   Hello   Hello   Hello   Hello   Hello   Hello   Hello"
+			choose_single_test_option 3 "11.6.3" "Test SGR-0 color reset" "works (default param)"
+			
+			choose_multi_test_option 4 "11.6.4.1" "Test BCE-style clear line/display (ED, EL) 1/2" "*" 1
+			do_test "11.6.4.2" "Test BCE-style clear line/display (ED, EL) 2/2" "*" 1
+			wait_for_menu_prompt
+			
+			choose_multi_test_option 5 "11.6.5.1" "Test BCE-style clear line/display (ECH, Indexing) 1/2" "*" 1
+			do_test "11.6.5.2" "Test BCE-style clear line/display (ECH, Indexing) 2/2" "*" 1
+			wait_for_menu_prompt
+			
+			choose_multi_test_option 8 "11.6.8.1" "Test screen features with BCE 1/6" "Line 29"
+			do_test "11.6.8.2" "Test screen features with BCE 2/6" "Line 29"
+			do_test "11.6.8.3" "Test screen features with BCE 3/6" "Line 29"
+			do_test "11.6.8.4" "Test screen features with BCE 4/6" "Line 29"
+			do_test "11.6.8.5" "Test screen features with BCE 5/6" "Dark background."
+			do_test "11.6.8.6" "Test screen features with BCE 6/6" "Light background."
+			wait_for_menu_prompt
+			
+			choose_multi_test_option 9 "11.6.9.1" "Test screen features with ISO 6429 SGR 22-27 codes 1/" "Dark background."
+			do_test "11.6.9.2" "Test screen features with ISO 6429 SGR 22-27 codes 2/" "Light background."
+			do_test "11.6.9.3" "Test screen features with ISO 6429 SGR 22-27 codes 3/" "Dark background."
+			wait_for_menu_prompt
+			
+			
+			# Menu 11.6.6: Test VT102-style features with BCE
+			#
+			#	Choose test type:
+			#
+			#	0. Exit
+			#	1. Test of cursor movements
+			#	2. Test of screen features
+			#	3. Test Insert/Delete Char/Line
+			choose_submenu_option 6 "11.6.6" "Test VT102-style features with BCE"
+			
+			choose_multi_test_option 1 "11.6.6.1.1" "Test of cursor movements 1/5" "around it."
+			do_test "11.6.6.1.2" "Test of cursor movements 2/5" "around it."
+			do_test "11.6.6.1.3" "Test of cursor movements 3/5" "order:"
+			do_test "11.6.6.1.4" "Test of cursor movements 4/5" "order:"
+			do_test "11.6.6.1.5" "Test of cursor movements 5/5" "lines:"
+			wait_for_menu_prompt
+			
+			choose_multi_test_option 2 "11.6.6.2.1" "Test of screen features 1/14" "setting.)"
+			do_test "11.6.6.2.2" "Test of screen features 2/14" "same."
+			do_test "11.6.6.2.3" "Test of screen features 3/14" "light background."
+			do_test "11.6.6.2.4" "Test of screen features 4/14" "light background."
+			do_test "11.6.6.2.5" "Test of screen features 5/14" "dark background."
+			do_test "11.6.6.2.6" "Test of screen features 6/14" "dark background."
+			do_test "11.6.6.2.7" "Test of screen features 7/14" "Line 29"
+			do_test "11.6.6.2.8" "Test of screen features 8/14" "Line 29"
+			do_test "11.6.6.2.9" "Test of screen features 9/14" "Line 29"
+			do_test "11.6.6.2.10" "Test of screen features 10/14" "Line 29"
+			do_test "11.6.6.2.11" "Test of screen features 11/14" "the screen."
+			do_test "11.6.6.2.12" "Test of screen features 12/14" "the screen."
+			do_test "11.6.6.2.13" "Test of screen features 13/14" "Dark background."
+			do_test "11.6.6.2.14" "Test of screen features 14/14" "Light background."
+			wait_for_menu_prompt
+			
+			choose_multi_test_option 3 "11.6.6.3.1" "Test of screen features 1/16" "row  18:"
+			do_test "11.6.6.3.2" "Test of screen features 2/16" "row  24:"
+			do_test "11.6.6.3.3" "Test of screen features 3/16" "Screen accordion test"
+			do_test "11.6.6.3.4" "Test of screen features 4/16" "nothing more."
+			do_test "11.6.6.3.5" "Test of screen features 5/16" "***B'."
+			do_test "11.6.6.3.6" "Test of screen features 6/16" "should be 'AB'."
+			do_test "11.6.6.3.7" "Test of screen features 7/16" "by one."
+			do_test "11.6.6.3.8" "Test of screen features 8/16" "by one."
+			do_test "11.6.6.3.9" "Test of screen features 9/16" "like this"
+			do_test "11.6.6.3.10" "Test of screen features 10/16" "Delete Line)."
+			do_test "11.6.6.3.11" "Test of screen features 11/16" "nothing more."
+			do_test "11.6.6.3.12" "Test of screen features 12/16" "***B'."
+			do_test "11.6.6.3.13" "Test of screen features 13/16" "be 'AB'."
+			do_test "11.6.6.3.14" "Test of screen features 14/16" "by one."
+			do_test "11.6.6.3.15" "Test of screen features 14/16" "by one."
+			do_test "11.6.6.3.16" "Test of screen features 14/16" "below:"
+			wait_for_menu_prompt
+			
+			pop_menu # 11.6.6 Test VT102-style features with BCE
+			
+			#	Menu 11.6.7: Miscellaneous ISO-6429 (ECMA-48) Tests
+			#
+			#	Choose test type:
+			#
+			#	0. Exit
+			#	1. Protected-Area Tests
+			#	2. Test Repeat (REP)
+			#	3. Test Scroll-Down (SD)
+			#	4. Test Scroll-Left (SL)
+			#	5. Test Scroll-Right (SR)
+			#	6. Test Scroll-Up (SU)
+			choose_submenu_option 7 "11.6.7" "Miscellaneous ISO-6429 (ECMA-48) Tests"
+			
+			choose_single_test_option 2 "11.6.7.2" "Test Repeat (REP)" "(still nonstandard)."
+			choose_single_test_option 3 "11.6.7.3" "Test Scroll-Down (SD)" "message."
+			choose_single_test_option 4 "11.6.7.4" "Test Scroll-Left (SL)" "above."
+			choose_single_test_option 5 "11.6.7.5" "Test Scroll-Right (SR)" "above."
+			choose_single_test_option 6 "11.6.7.6" "Test Scroll-Up (SU)" "row."
+			
+			# Menu 11.6.7.1: Protected-Areas Tests
+			#
+			#	Choose test type:
+			#
+			#	0. Exit
+			#	1. Enable ERM (erase mode)
+			#	2. Test Protected-Areas (SPA)
+			choose_submenu_option 1 "11.6.7.1" "Protected-Areas Tests"
+			
+			choose_single_test_option 2 "11.6.7.1.2" "Test Protected-Areas (SPA) - ERM Disabled" "mode)."
+			choose_toggle_option 1
+			choose_single_test_option 2 "11.6.7.1.2" "Test Protected-Areas (SPA) - ERM Enabled" "mode)."
+			choose_toggle_option 1
+			
+			pop_menu # 11.6.7.1 Protected-Areas Tests
+			
+			pop_menu # 11.6.7 Miscellaneous ISO-6429 (ECMA-48) Tests			
+		}
+	}
+	
+	pop_menu # 11.6 ISO 6429 colors 
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	 Menu 11.7: Miscellaneous ISO-6429 (ECMA-48) Tests
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Protected-Area Tests
+#          2. Test Repeat (REP)
+#          3. Test Scroll-Down (SD)
+#          4. Test Scroll-Left (SL)
+#          5. Test Scroll-Right (SR)
+#          6. Test Scroll-Up (SU)
+local test_11_7_ecma48_misc 
+def test_11_7_ecma48_misc {
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 7 "11.7" "Miscellaneous ISO-6429 (ECMA-48) Tests"
+			
+	choose_single_test_option 2 "11.6.7.2" "Test Repeat (REP)" "(still nonstandard)."
+	choose_single_test_option 3 "11.6.7.3" "Test Scroll-Down (SD)" "message."
+	choose_single_test_option 4 "11.6.7.4" "Test Scroll-Left (SL)" "above."
+	choose_single_test_option 5 "11.6.7.5" "Test Scroll-Right (SR)" "above."
+	choose_single_test_option 6 "11.6.7.6" "Test Scroll-Up (SU)" "row."
+	
+	# Menu 11.6.7.1: Protected-Areas Tests
+	#
+	#	Choose test type:
+	#
+	#	0. Exit
+	#	1. Enable ERM (erase mode)
+	#	2. Test Protected-Areas (SPA)
+	choose_submenu_option 1 "11.6.7.1" "Protected-Areas Tests"
+	
+	choose_single_test_option 2 "11.6.7.1.2" "Test Protected-Areas (SPA) - ERM Disabled" "mode)."
+	choose_toggle_option 1
+	choose_single_test_option 2 "11.6.7.1.2" "Test Protected-Areas (SPA) - ERM Enabled" "mode)."
+	choose_toggle_option 1
+	
+	pop_menu # 11.7 Miscellaneous ISO-6429 (ECMA-48) Tests
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+#	 Menu 11.8: XTERM special features
+#
+#         Choose test type:
+#
+#          0. Exit
+#          1. Test VT520 features
+#          2. Test reporting functions
+#          3. Set window title
+#          4. Font features
+#          5. Mouse features
+#          6. Tektronix 4014 features
+#          7. Alternate-Screen features (xterm)
+#          8. Window modify-operations (dtterm)
+#          9. Window report-operations (dtterm)
+local test_11_8_xterm_features
+def test_11_8_xterm_features {
+	#	Menu 11.8.2: XTERM miscellaneous reports
+	#
+    #     Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT520 features
+    #  ->  2. Report version (XTVERSION)
+    #      3. Request Mode (DECRQM)/Report Mode (DECRPM)
+    #      4. Status-String Report (DECRQSS)
+    #      5. Title-Stack Position
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 8 "11.8" "XTERM special features"
+	choose_submenu_option 2 "11.8.2" "XTERM miscellaneous reports"
+	
+	choose_single_test_option 2 "11.8.2.2" "Report version (XTVERSION)" ""
+	
+	choose_multi_test_option 3 "11.8.2.3.1" "Request Mode (DECRQM)/Report Mode (DECRPM) 1/4" "XT_FONTSWT"
+	do_test "11.8.2.3.2" "Request Mode (DECRQM)/Report Mode (DECRPM) 2/4" "XT_MSE_HL"
+	do_test "11.8.2.3.3" "Request Mode (DECRQM)/Report Mode (DECRPM) 3/4" "XT_POPBELL"
+	do_test "11.8.2.3.4" "Request Mode (DECRQM)/Report Mode (DECRPM) 4/4" "RL_LIT_NL"
+	wait_for_menu_prompt
+	
+	choose_single_test_option 5 "11.8.2.3.5" "Title-Stack Position" ""
+	
+	# Menu 11.8.2.4: XTerm Status-Strings Reports
+	#
+	#	Choose test type:
+	#
+    #      0. Exit
+    #      1. Test VT520 features (DECRQSS)
+    #      2. Query Key Modifier Options
+    #      3. Query Title Modes
+	choose_submenu_option 4 "11.8.2.3.4" "XTerm Status-Strings Reports"
+	
+	choose_multi_test_option 2 "11.8.2.4.2.1" "Query Key Modifier Options 1/4 - modifyKeyboard" "(modifyKeyboard)"
+	do_test "11.8.2.4.2.2" "Query Key Modifier Options 2/4 - modifyCursorKeys" "modifyCursorKeys)"
+	do_test "11.8.2.4.2.3" "Query Key Modifier Options 3/4 - modifyFunctionKeys" "modifyFunctionKeys"
+	do_test "11.8.2.4.2.4" "Query Key Modifier Options 4/4 - modifyOtherKeys" "modifyOtherKeys)"
+	wait_for_menu_prompt
+	
+	choose_multi_test_option 3 "11.8.2.4.3.1" "Query Title Modes 1/4" "<27> P"
+	do_test "11.8.2.4.3.2" "Query Title Modes 2/4" "<27> P"
+	do_test "11.8.2.4.3.3" "Query Title Modes 3/4" "<27> P"
+	do_test "11.8.2.4.3.4" "Query Title Modes 4/4" "<27> P"
+	wait_for_menu_prompt
+	
+	pop_menu # 11.8.2.3.5 XTerm Status-Strings Reports	
+	
+	pop_menu # 11.8.2 XTERM miscellaneous reports
+	pop_menu # 11.8  XTERM special features
+	pop_menu # 11 Non-VT100 Tests
+	
+	
+	# 11.8.3 Set Window Title
+	#	Skipped - this sets the window title, but K95 can't currently
+	#		screenshot its entire window so the title wouldn't be visible.
+	
+	# 11.8.4 XTERM Font Features
+	#	Skipped - K95 doesn't support it currently, and it requires input
+	
+	# 11.8.5 XTERM mouse features
+	#	Skipped - Can't simulate mouse input
+
+	# 11.8.6 XTERM/tek4014 features
+	#	Skipped - K95 doesn't support it, and won't any time soon
+	
+	
+	# Menu 11.8.7: XTERM Alternate-Screen features
+	#
+    #     Choose test type:
+	#
+    #     0. Exit
+    #     1. Do not color after switching to alternate
+    #     2. Use DECALN after switching to alternate
+    #     3. Switch to/from alternate screen (xterm)
+    #     4. Improved alternate screen (XFree86 xterm mode 1047)
+    #     5. Better alternate screen (XFree86 xterm mode 1049)
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 8 "11.8" "XTERM special features"
+	choose_submenu_option 7 "11.8.7" "XTERM Alternate-Screen features"
+	
+	local run_test color decaln
+	
+	# Use DECALN after switching to alternate
+	for \%1 0 1 1 {
+		if = \%2 0 {  # Default State
+			.decaln = "no-decaln"
+		} else {
+			.decaln = "decaln"
+			choose_toggle_option 2
+		}
+	
+		# Colour
+		for \%2 0 1 1 {
+			.run_test = 1
+			if = \%2 0 {  # Default State
+				.color = "color"
+				if = \m(color_tests) 0 {
+					.run_test = 0
+				}
+			} else {
+				.color = "no-color"
+				choose_toggle_option 1
+				if = \m(mono_tests) 0 {
+					.run_test = 0
+				}
+			}
+	
+			# Run tests
+			if = \m(run_test) 1 {
+				choose_multi_test_option 3 "11.8.7.3.1" "Switch to/from alternate screen (xterm) 1/3" ""
+				do_test "11.8.7.3.2" "Switch to/from alternate screen (xterm) 2/3" ""
+				do_test "11.8.7.3.3" "Switch to/from alternate screen (xterm) 3/3" "this line." 5
+				wait_for_menu_prompt
+				
+				choose_multi_test_option 4 "11.8.7.4.1" "Improved alternate screen (XFree86 xterm mode 1047) 1/4" ""
+				do_test "11.8.7.4.2" "Improved alternate screen (XFree86 xterm mode 1047) 2/4" ""
+				do_test "11.8.7.4.3" "Improved alternate screen (XFree86 xterm mode 1047) 3/4" ""
+				do_test "11.8.7.4.4" "Improved alternate screen (XFree86 xterm mode 1047) 4/4" "this line." 5
+				wait_for_menu_prompt
+				
+				choose_multi_test_option 5 "11.8.7.5.1" "Better alternate screen (XFree86 xterm mode 1049) 1/3" ""
+				do_test "11.8.7.5.2" "Better alternate screen (XFree86 xterm mode 1049) 2/3" ""
+				do_test "11.8.7.5.3" "Better alternate screen (XFree86 xterm mode 1049) 3/3" "line." 5
+				wait_for_menu_prompt
+			}
+		}
+	}
+	
+	pop_menu # 11.8.7 XTERM Alternate-Screen features
+	pop_menu # 11.8  XTERM special features
+	pop_menu # 11 Non-VT100 Tests
+	
+	
+	# 11.8.8  Window modify-operations (dtterm)
+	#	Skipped - this test moves the window around and resizes it. It doesn't
+	#		prompt for input (no Push <RETURN> prompts), and we couldn't
+	#		screenshot the results even if there were prompts.
+	
+	
+	choose_submenu_option 11 "11" "Non-VT100 Tests"
+	choose_submenu_option 8 "11.8" "XTERM special features"
+	
+	choose_multi_test_option 9 "11.8.9.1" "Window report-operations (dtterm) 1/2" "" 2
+	do_test "11.8.9.2" "Window report-operations (dtterm) 2/2" "" 2
+	wait_for_menu_prompt
+	
+	pop_menu # 11.8  XTERM special features
+	pop_menu # 11 Non-VT100 Tests
+}
+
+
+
+##############################################################################
+# Run Program ################################################################
+##############################################################################
+# Run the test procedure, then clean up before finishing.
+
+if defined test_procedureX {
+	test_procedureX
+} else {
+	test_procedure
+}
+
+.%r ::= \v(ntime) - \%r
+
+echo Done in \%r seconds!
