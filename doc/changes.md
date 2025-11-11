@@ -205,6 +205,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    to specify a region of a particular page to calculate a checksum off. If
    parameters are left off it calculates the checksum of the entire page on
    screen. Unlike DECRQCRA, it is not bound by page margins.
+ - `SET TERM COLOR ERASE` now takes effect immediately rather than requiring a
+   terminal reset to take effect.
    
  
 ### New terminal control sequences
@@ -305,6 +307,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [8](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decarm): DECARM - Keyboard autorepeat
    - [10 (rxvt)](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-show-toolbar): show/hide toolbar (rxvt, xterm)
    - [64](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decpccm): Page Cursor Coupling
+   - [117](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dececm): Erase Color Mode
    - [1004](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-sf): Send FocusIn/FocusOut events
    - [1011](https://davidrg.github.io/ckwin/dev/ctlseqs.html#rxvt-stbk): scroll to bottom on key press (rxvt, xterm)
    - [1042](https://davidrg.github.io/ckwin/dev/ctlseqs.html#xt-urgency): Flash titlebar and taskbar button on bell

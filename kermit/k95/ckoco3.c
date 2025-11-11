@@ -18203,6 +18203,13 @@ vtcsi(void)
                         case 115: /* DECATCBM */
                             pn[2] = decatcbm ? 1 : 2;
                             break;
+                        case 116: /* DECBBSM */
+                            break;
+                        case 117: /* DECECM */
+                            /* On - erase with default/normal colour,
+                             * Off - erase with current attribute colour */
+                            pn[2] = erasemode == 0 ? 2 : 1;
+                            break;
                         case 1000:
 #ifdef OS2MOUSE
                             /* X11 mouse reporting */
@@ -19842,6 +19849,15 @@ vtcsi(void)
                         case 115:      /* DECATCBM */
                             decatcbm = TRUE;
                             break;
+                        case 116: /* DECBBSM */
+                            break;
+                        case 117: /* DECECM */
+                            /* On - erase with default/normal colour,
+                             * Off - erase with current attribute colour */
+                            if (ISVT525(tt_type_mode)) {
+                                erasemode = 1;
+                            }
+                            break;
                         case 1000:
                             /* XTERM - Send Mouse X&Y on button press and release */
 #ifdef OS2MOUSE
@@ -20488,12 +20504,21 @@ vtcsi(void)
                                    /* color map background color   */
                                    ;
                                break;
-                            case 114:      /* DECATCUM */
-                                decatcum = FALSE;
-                                break;
-                            case 115:      /* DECATCBM */
-                                decatcbm = FALSE;
-                                break;
+                           case 114:      /* DECATCUM */
+                               decatcum = FALSE;
+                               break;
+                           case 115:      /* DECATCBM */
+                               decatcbm = FALSE;
+                               break;
+                           case 116: /* DECBBSM */
+                               break;
+                           case 117: /* DECECM */
+                               /* On - erase with default/normal colour,
+                                * Off - erase with current attribute colour */
+                               if (ISVT525(tt_type_mode)) {
+                                   erasemode = 0;
+                               }
+                               break;
                            case 1000:
                                /* XTERM - Don't Send Mouse X&Y on button press and release */
 #ifdef OS2MOUSE

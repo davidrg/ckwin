@@ -8100,11 +8100,15 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt520" series="vt" additional=""/>
             </section>
             <section role="parameter" id="dececm" mnemonic="DECECM"
-                     title="Erase Color Mode"
-                     not-implemented="true" todo="true">
+                     title="Erase Color Mode">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
                 <termsupp first="vt520" series="vt" additional="wt"/>
+                <p>
+                    Causes the default attribute as set by <tt>SET TERMINAL COLOR TERMINAL-SCREEN</tt>
+                    to be used when clearing parts of the screen. This setting
+                    can also be enabled with <tt>SET TERMINAL COLOR ERASE DEFAULT-COLOR</tt>.
+                </p>
             </section>
             <section role="parameter" id="xt-sxym" title="XTERM - Send Mouse X&amp;Y on button press and release">
                 <ctlseq><param-single/> = 1000</ctlseq>
@@ -10007,11 +10011,16 @@ DCS $ q 3 , } ST</pre>
                 <termsupp first="vt520" series="vt" additional=""/>
             </section>
             <section role="parameter" id="r-dececm" mnemonic="DECECM"
-                     title="Erase Color Mode"
-                     not-implemented="true" todo="true">
+                     title="Erase Color Mode">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
                 <termsupp first="vt520" series="vt" additional="wt"/>
+                <p>
+                    Causes the current color as set by <a href="#sgr">SGR</a>
+                    to be used when clearing parts of the screen. This setting
+                    can also be enabled with
+                    <tt>SET TERMINAL COLOR ERASE CURRENT-COLOR</tt>.
+                </p>
             </section>
             <section role="parameter" id="decrst-1000"
                      title="XTERM - Don't Send Mouse X&amp;Y on button press and release">
@@ -13234,11 +13243,15 @@ DCS $ q 3 , } ST</pre>
                     <termsupp first="vt520" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-117" mnemonic="DECECM"
-                         title="Erase Color Mode"
-                         not-implemented="true" todo="true">
+                         title="Erase Color Mode">
                     <ctlseq><param-single/> = 117</ctlseq>
                     <ref src="vt52x:202"/>
                     <termsupp first="vt520" series="vt" additional="wt"/>
+                    <p>
+                        Reports the current <tt>SET TERMINAL COLOR ERASE</tt>
+                        setting: Set for <tt>DEFAULT-COLOR</tt>, reset for
+                        <tt>CURRENT-COLOR</tt>
+                    </p>
                 </section>
                 <section role="parameter" id="rqm-1000" groups="isansi"
                          badges="linux xterm k95"
@@ -17594,7 +17607,7 @@ DCS $ q 3 , } ST</pre>
             scroll-back buffer. Switching from a larger palette to a smaller one
             mid-session will result in incorrect colors being displayed. As this
             is just a rendering setting, switching back to the previous palette will
-            imediately restore correct color for the terminal screen and scrollback
+            immediately restore correct color for the terminal screen and scrollback
             buffer.
         </p>
 

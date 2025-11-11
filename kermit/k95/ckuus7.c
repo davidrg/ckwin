@@ -4459,7 +4459,7 @@ int
 settrm() {
     int i = 0;
 #ifdef OS2
-    extern int colorreset, user_erasemode;
+    extern int colorreset, erasemode, user_erasemode;
 #endif /* OS2 */
     if ((y = cmkey(trmtab,ntrm,"", "",xxstring)) < 0) return(y);
 #ifdef MAC
@@ -4515,7 +4515,7 @@ settrm() {
               return(y);
             if ((z = cmcfm()) < 0)
               return(z);
-            user_erasemode = y;
+            erasemode = user_erasemode = y;
             return(success=1);
         } else if (x == TTCOLPAL) {
           extern int colorpalette;
