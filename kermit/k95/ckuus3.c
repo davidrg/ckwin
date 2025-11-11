@@ -9140,6 +9140,9 @@ dosetsftp() {
 #include "ikui.h"
 extern ULONG RGBTable256[], RGBTable88[], SavedRGBTable256[], SavedRGBTable88[];
 extern ULONG RGBTable[], SavedRGBTable[];
+extern ULONG VT525RGBTable[], SavedVT525RGBTable[];
+extern ULONG VT525MonoRGBTable[], SavedVT525MonoRGBTable[];
+extern ULONG VT525ATCRGBTable[], SavedVT525ATCRGBTable[];
 extern int colorpalette;
 #ifdef CK_PALETTE_WY370
 extern ULONG WY370RGBTable[], SavedWY370RGBTable[];
@@ -9631,6 +9634,10 @@ shogui() {
         } else if (colorpalette == CK_PALETTE_WY370) {
             printf("RGB Color Table for Wyse WY-370 Palette:\n");
 #endif /* CK_PALETTE_WY370 */
+        } else if (colorpalette == CK_PALETTE_VT525) {
+            printf("RGB Color Table for VT525 16-Color Palette:\n");
+        } else if (colorpalette == CK_PALETTE_VT525_M) {
+            printf("RGB Color Table for VT525 Mono Palette:\n");
         } else {
             printf("RGB Color Table for aixterm 16-Color Palette:\n");
         }
@@ -9722,6 +9729,15 @@ setrgb() {
         WY370RGBTable[cx] = new_value;
         SavedWY370RGBTable[cx] = new_value;
 #endif
+    } else if (colorpalette == CK_PALETTE_VT525) {
+        VT525RGBTable[cx] = new_value;
+        SavedVT525RGBTable[cx] = new_value;
+    } else if (colorpalette == CK_PALETTE_VT525_M) {
+        VT525MonoRGBTable[cx] = new_value;
+        SavedVT525MonoRGBTable[cx] = new_value;
+    } else if (colorpalette == CK_PALETTE_VT525_A) {
+        VT525ATCRGBTable[cx] = new_value;
+        SavedVT525ATCRGBTable[cx] = new_value;
     } else { /* CK_PALETTE_ANSI */
         RGBTable[cx] = new_value;
         SavedRGBTable[cx] = new_value;

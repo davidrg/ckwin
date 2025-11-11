@@ -775,10 +775,6 @@ static int f_pushed = 0, c_pushed = 0, f_popped = 0;
 
 int sgrcolors = TRUE;                   /* Process SGR Color Commands */
 
-#define DECSTGLT_MONO           0
-#define DECSTGLT_ALTERNATE      1
-#define DECSTGLT_ALTERNATE_2    2
-#define DECSTGLT_COLOR          3
 int decstglt = DECSTGLT_COLOR;
 
 /* These only apply to decstgly == DECSTGLT_ALTERNATE.
@@ -788,12 +784,19 @@ int decatcbm = FALSE;        /* True blink as well as blink color */
 int decatcum = FALSE;        /* True underline as well as underline color */
 
 int colorpalette = CK_DEFAULT_PALETTE;  /* Color palette to use */
-#ifdef KUI
-extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+int savedcolorpalette = CK_DEFAULT_PALETTE;
+
+/* Copies of the RGB tables so that resetting the terminal can reset the
+ * the colour palettes. */
+ULONG SavedRGBTable256[256];
+ULONG SavedRGBTable88[88];
+ULONG SavedRGBTable[16];
 #ifdef CK_PALETTE_WY370
-extern ULONG SavedWY370RGBTable[];
+ULONG SavedWY370RGBTable[65];
 #endif /* CK_PALETTE_WY370 */
-#endif /* KUI */
+ULONG SavedVT525RGBTable[16];
+ULONG SavedVT525MonoRGBTable[16];
+ULONG SavedVT525ATCRGBTable[16];
 
 /* The Wyse WY370 65-color palette.
  * The first 16 colors are *NOT* ANSI/AIXTERM-compatible!
@@ -1269,8 +1272,81 @@ ULONG RGBTable[16] = {
     0xffffff,  /*  15 - White                    255/255/255 */
 };
 
-/* X11 color names - required by OSC 4/5 various other operating system commands
- * that set colors */
+/* The VT525 16 color palette - same as the standard one, just
+ * with different defaults.
+ */
+ULONG VT525RGBTable[16] = {
+    /* First 8 are the standard SGR colors on the VT525, and the
+     * second 8 are lighter versions. These are in OS/2 VIO order
+     * (swapped red and blue), *not* SGR color order (the number
+     * in the comments is the SGR color number */
+    0x000000,  /*   0 - Black                      0/  0/  0 */
+    0xcc3333,  /*   4 - Blue                      51/ 51/204 */
+    0x33cc33,  /*   2 - Green                     51/204/ 51 */
+    0xcccc33,  /*   3 - Yellow                   204/204/ 51 */
+    0x2424cc,  /*   1 - Red                      204/ 36/ 36 */
+    0xcc33cc,  /*   5 - Magenta                  204/ 51/204 */
+    0x33cccc,  /*   6 - Cyan                      51/204/204 */
+    0x787878,  /*   7 - Grey                     120/120/120 */
+    0x000000,  /*   8 - Black                      0/  0/  0 */
+    0xFF0000,  /*  12 - Light Blue                 0/  0/255 */
+    0x00FF00,  /*  10 - Light Green                0/255/  0 */
+    0xFFFF00,  /*  11 - Light Yellow             255/255/  0 */
+    0x0000FF,  /*   9 - Light Red                255/  0/  0 */
+    0xFF00FF,  /*  13 - Light Magenta            255/  0/255 */
+    0x00ffff,  /*  14 - Light Cyan                 0/255/255 */
+    0xFFFFFF,  /*  15 - White                    255/255/255 */
+};
+
+/* VT525 Alternate Colors - selected via DECSTGLT only, so colors
+ * are in DECATC order. */
+ULONG VT525ATCRGBTable[16] = {
+    /* In DECATC order, as colors from this palette aren't selected
+     * via SGR color attributes. */
+    0x000000,  /*   0 - Black                      0/  0/  0 */
+    0xcc3333,  /*   1 - Blue                      51/ 51/204 */
+    0x2424cc,  /*   2 - Red                      204/ 36/ 36 */
+    0x33cc33,  /*   3 - Green                     51/204/ 51 */
+    0xcc33cc,  /*   4 - Magenta                  204/ 51/204 */
+    0xcccc33,  /*   5 - Cyan                      51/204/204 */
+    0x33cccc,  /*   6 - Yellow                   204/204/ 51 */
+    0x787878,  /*   7 - Gray 50%                 120/120/120 */
+    0x454545,  /*   8 - Gray 25%                  69/ 69/ 69 */
+    0x995757,  /*   9 - Light Blue                87/ 87/153 */
+    0x454599,  /*  10 - Light Red                153/ 69/ 69 */
+    0x579957,  /*  11 - Light Green               87/153/ 87 */
+    0x995799,  /*  12 - Light Magenta            153/ 87/153 */
+    0x999957,  /*  13 - Light Cyan                87/153/153 */
+    0x579999,  /*  14 - Light Yellow             153/153/ 87 */
+    0xcccccc,  /*  15 - Gray 75%                 204/204/204 */
+};
+
+/* The VT525 mono palette, in OS/2 VIO order */
+ULONG VT525MonoRGBTable[16] = {  /* VT
+    /* First 8 are the standard SGR colors on the VT525, and the
+     * second 8 are lighter versions. These are in OS/2 VIO order
+     * (swapped red and blue), *not* SGR color order (the number
+     * in the comments is the SGR color number */
+    0x000000,  /*   0                              0/  0/  0 */
+    0x242424,  /*   4                             36/ 36/ 36 */
+    0x8a8a8a,  /*   2                            138/138/138 */
+    0xcccccc,  /*   3                            204/204/204 */
+    0x454545,  /*   1                             69/ 69/ 69 */
+    0x666666,  /*   5                            102/102/102 */
+    0xababab,  /*   6                            171/171/171 */
+    0x787878,  /*   7                            120/120/120 */
+    0x121212,  /*   8                             18/ 18/ 18 */
+    0x333333,  /*  12                             51/ 51/ 51 */
+    0x999999,  /*  10                            153/153/153 */
+    0xdedede,  /*  11                            222/222/222 */
+    0x575757,  /*   9                             87/ 87/ 87 */
+    0x787878,  /*  13                            120/120/120 */
+    0xbdbdbd,  /*  14                            189/189/189 */
+    0xcccccc,  /*  15                            204/204/204 */
+};
+
+/* X11 color names - required by OSC 4/5 and various other operating system
+ * commands that set colors */
 typedef struct _x11color {
     char* name;
     unsigned char red;
@@ -2660,6 +2736,12 @@ ULONG* palette_rgb_table(int palette_id) {
         case CK_PALETTE_XT256:
         case CK_PALETTE_XTRGB:
             return RGBTable256;
+        case CK_PALETTE_VT525:
+            return VT525RGBTable;
+        case CK_PALETTE_VT525_M:
+            return VT525MonoRGBTable;
+        case CK_PALETTE_VT525_A:
+            return VT525ATCRGBTable;
     }
     return RGBTable;
 }
@@ -2668,7 +2750,6 @@ ULONG* current_palette_rgb_table() {
     return palette_rgb_table(colorpalette);
 }
 
-#ifdef KUI
 ULONG* palette_saved_rgb_table(int palette_id) {
     switch(palette_id) {
         case CK_PALETTE_XT88:
@@ -2681,6 +2762,12 @@ ULONG* palette_saved_rgb_table(int palette_id) {
         case CK_PALETTE_XT256:
         case CK_PALETTE_XTRGB:
             return SavedRGBTable256;
+        case CK_PALETTE_VT525:
+            return SavedVT525RGBTable;
+        case CK_PALETTE_VT525_M:
+            return SavedVT525MonoRGBTable;
+        case CK_PALETTE_VT525_A:
+            return SavedVT525ATCRGBTable;
     }
     return SavedRGBTable;
 }
@@ -2688,18 +2775,57 @@ ULONG* palette_saved_rgb_table(int palette_id) {
 ULONG* current_palette_saved_rgb_table() {
     return palette_saved_rgb_table(colorpalette);
 }
-#endif /* KUI */
+
+void reset_palette(int palette_id) {
+    int palmax, i;
+    ULONG *saved;
+    ULONG *current;
+
+    palmax = current_palette_max_index(palette_id);
+    saved = palette_saved_rgb_table(palette_id);
+    current = palette_rgb_table(palette_id);
+
+    debug(F111, "DECSTGLT RESET PALETTE", "palmax", palmax);
+
+    for (i = 0; i <= palmax; i++) {
+        debug(F111, "DECSTGLT RESET PALETTE", "i", i);
+        current[i] = saved[i];
+    }
+}
 
 void reset_palettes() {
-#ifdef KUI
     int i;
     for (i = 0; i < 256; i++) RGBTable256[i] = SavedRGBTable256[i];
     for (i = 0; i < 88; i++) RGBTable88[i] = SavedRGBTable88[i];
-    for (i = 0; i < 16; i++) RGBTable[i] = SavedRGBTable[i];
+    for (i = 0; i < 16; i++) {
+        RGBTable[i] = SavedRGBTable[i];
+        VT525RGBTable[i] = SavedVT525RGBTable[i];
+        VT525MonoRGBTable[i] = SavedVT525MonoRGBTable[i];
+        VT525ATCRGBTable[i] = SavedVT525ATCRGBTable[i];
+    }
 #ifdef CK_PALETTE_WY370
     for (i = 0; i < 65; i++) WY370RGBTable[i] = SavedWY370RGBTable[i];
 #endif /* CK_PALETTE_WY370 */
-#endif /* KUI */
+}
+
+void reset_decatc_assignments() {
+    /* TODO: These should probably be customisable by the user somehow */
+    decatc_colors[0] = cell_video_attr_set_colors(2,0);
+    decatc_colors[1] = cell_video_attr_set_colors(1,0);
+    decatc_colors[2] = cell_video_attr_set_colors(6,4);
+    decatc_colors[3] = cell_video_attr_set_colors(6,0);
+    decatc_colors[4] = cell_video_attr_set_colors(3,0);
+    decatc_colors[5] = cell_video_attr_set_colors(1,4);
+    decatc_colors[6] = cell_video_attr_set_colors(7,0);
+    decatc_colors[7] = cell_video_attr_set_colors(1,0);
+    decatc_colors[8] = cell_video_attr_set_colors(6,4);
+    decatc_colors[9] = cell_video_attr_set_colors(3,4);
+    decatc_colors[10] = cell_video_attr_set_colors(7,0);
+    decatc_colors[11] = cell_video_attr_set_colors(7,4);
+    decatc_colors[12] = cell_video_attr_set_colors(5,4);
+    decatc_colors[13] = cell_video_attr_set_colors(5,0);
+    decatc_colors[14] = cell_video_attr_set_colors(7,4);
+    decatc_colors[15] = cell_video_attr_set_colors(5,4);
 }
 
 /** Finds the nearest color in the current palette to the supplied RGB values
@@ -2717,9 +2843,10 @@ int nearest_palette_color_rgb(int palette_id, unsigned char r, unsigned char g, 
     /* Figure out which palette we're using. In 16-color builds, there are only
      * 4-bits per color in cell_video_attr_t, so we always convert to the
      * 16-color palette. The other palettes only exist in such builds as a
-     * source of RGB values to convert *from*. */
+     * source of RGB values to convert *from*. Use the Saved version of the
+     * 16-color palette in case the host has customised it. */
 #ifdef CK_COLORS_16
-    palette = RGBTable;
+    palette = SavedRGBTable;
     palette_max = 15;
 #else /* CK_COLORS_16 */
     palette_max = palette_max_index(palette_id);
@@ -2750,21 +2877,8 @@ int nearest_palette_color_palette(int palette_id, int palette_index) {
     ULONG *palette;
 
     /* Figure out which palette we're using */
-    if (palette_id == CK_PALETTE_XT256 || palette_id == CK_PALETTE_XTRGB) {
-    	palette = RGBTable256;
-        palette_max = 255;
-    } else if (palette_id == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
-		palette = RGBTable88;
-		palette_max = 87;
-#ifdef CK_PALETTE_WY370
-    } else if (colorpalette == CK_PALETTE_WY370) {
-        palette = WY370RGBTable;
-        palette_max = 64;
-#endif
-	} else { /* CK_PALETTE_ANSI */
-		palette = RGBTable;
-	    palette_max = 15;
-	}
+    palette = palette_rgb_table(palette_id);
+    palette_max = palette_max_index(palette_id);
 
 	if (palette_index > palette_max) return -1;
 
@@ -2773,6 +2887,27 @@ int nearest_palette_color_palette(int palette_id, int palette_index) {
     r = (palette[palette_index] & 0x000000FF);
 
     return nearest_palette_color_rgb(colorpalette, r, g, b);
+}
+
+/* Converts a color attribute in the specified palette to a color attribute
+ * in the current palette. */
+cell_video_attr_t cell_video_attr_to_palette(int source_palette_id,
+        cell_video_attr_t attr) {
+    int src_fg_idx, src_bg_idx;
+    int fg_idx, bg_idx;
+    src_fg_idx = cell_video_attr_foreground(attr);
+    src_bg_idx = cell_video_attr_background(attr);
+
+    fg_idx = nearest_palette_color_palette(
+        source_palette_id, src_fg_idx);
+    bg_idx = nearest_palette_color_palette(
+        source_palette_id, src_bg_idx);
+
+    if (fg_idx >= 0 && bg_idx >= 0) {
+        return cell_video_attr_set_colors(fg_idx, bg_idx);
+    } else { /* should never happen */
+        return cell_video_attr_set_colors(8,0);
+    }
 }
 
 /* Only required for Visual C++ 2012 and older which don't support compound
@@ -2797,6 +2932,43 @@ cell_video_attr_t cell_video_attr_set(unsigned char value) {
 #endif /* CK_COLORS_DEBUG */
 #endif /* CK_COLORS_24BIT */
 #endif /* _MSC_VER < 1800 */
+
+
+#ifndef CK_COLORS_DEBUG
+ULONG cell_video_attr_foreground_rgb(cell_video_attr_t attr) {
+    ULONG *pal;
+    int palmax, idx;
+
+#ifdef CK_COLORS_24BIT
+    if (!cell_video_attr_fg_is_indexed(attr)) {
+        return cell_video_attr_fg_to_rgb(attr);
+    }
+#endif /* CK_COLORS_24BIT */
+
+    pal = current_palette_rgb_table();
+    palmax = current_palette_max_index() + 1;
+    idx = cell_video_attr_foreground(attr);
+
+    return pal[idx % palmax];
+}
+
+ULONG cell_video_attr_background_rgb(cell_video_attr_t attr) {
+    ULONG *pal;
+    int palmax, idx;
+
+#ifdef CK_COLORS_24BIT
+    if (!cell_video_attr_bg_is_indexed(attr)) {
+        return cell_video_attr_bg_to_rgb(attr);
+    }
+#endif /* CK_COLORS_24BIT */
+
+    pal = current_palette_rgb_table();
+    palmax = current_palette_max_index() + 1;
+    idx = cell_video_attr_background(attr);
+
+    return pal[idx % palmax];
+}
+#endif /* CK_COLORS_DEBUG */
 
 USHORT
 xldecgrph( CHAR c ) {
@@ -8276,28 +8448,8 @@ doreset(int x) {                        /* x = 0 (soft), nonzero (hard) */
     tt_type_mode = tt_type ;
 
     decstglt = DECSTGLT_COLOR;
-
-    /* TODO: What are the defaults for these on a VT525? No idea, I don't have
-             access to one to test against, which is proving painful. These
-             below are just some, I hope, sensible defaults.
-       TODO: All of these should probably be customisable by the user via
-             SET TERMINAL COLOR. At the moment only the first five are.*/
-    decatc_colors[0] = colornormal;
-    decatc_colors[1] = colorbold;
-    decatc_colors[2] = colorreverse;
-    decatc_colors[3] = colorunderline;
-    decatc_colors[4] = colorblink;
-    decatc_colors[5] = swapcolors(colorbold);
-    decatc_colors[6] = colorbold;  /* TODO: Bold+Underline */
-    decatc_colors[7] = colorbold;  /* TODO: Bold+Blink */
-    decatc_colors[8] = swapcolors(colorunderline); /* Reverse+Underline */
-    decatc_colors[9] = swapcolors(colorblink); /* Reverse+Blink */
-    decatc_colors[10] = colorunderline; /* TODO: Underline+Blink */
-    decatc_colors[11] = swapcolors(colorbold); /* TODO: Reverse+Bold+Underline */
-    decatc_colors[12] = swapcolors(colorbold); /* TODO: Reverse+Bold+Blink */
-    decatc_colors[13] = colorbold; /* TODO: Bold+Underline+Blink */
-    decatc_colors[14] = swapcolors(colorunderline); /* TODO: Reverse+Underline+Blink */
-    decatc_colors[15] = swapcolors(colorbold); /* TODO: Reverse+Bold+Underline+Blink */
+    colorpalette = savedcolorpalette;
+    reset_decatc_assignments();
 
     attribute = defaultattribute = colornormal; /* Normal colors */
     underlineattribute = colorunderline ;
@@ -17213,25 +17365,23 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
     static USHORT _vtattr=0x00;
 	static int _decstglt=100;
 
-    /* We've been asked to be monochrome (or monochrome plus
-     * attributes-as-color). Rather than forcing everything to black and white,
-     * we'll force it to the default attribute. This still leaves the user (or
-     * application via DECATC) some level of control.
-     *
-     */
-    if (decstglt == DECSTGLT_MONO) {
-        if (decscnm) colorattr = byteswapcolors(colornormal);
-        else colorattr = colornormal;
-    }
-
-    if ( cell_video_attr_equal(_colorattr, colorattr) && vtattr == _vtattr && decstglt == _decstglt )
+    if (cell_video_attr_equal(_colorattr, colorattr)
+           && vtattr == _vtattr && decstglt == _decstglt)
         goto done;
 
     colorval = _colorattr = colorattr;
     _vtattr = vtattr;
 	_decstglt = decstglt;
 
-    if (vtattr == VT_CHAR_ATTR_NORMAL)
+#ifndef KUI
+    if (decstglt == DECSTGLT_MONO) {
+        /* Non-KUI builds can't display colours from the VT525 Mono palette, so
+         * we need to convert to the nearest colour in current fixed palette */
+        colorval = cell_video_attr_to_palette(CK_PALETTE_VT525_M, colorval);
+    }
+#endif /* KUI */
+
+    if (vtattr == VT_CHAR_ATTR_NORMAL && decstglt != DECSTGLT_ALTERNATE)
         goto done;
 
     if (!(vtattr & WY_CHAR_ATTR) || tt_hidattr)
@@ -17321,7 +17471,24 @@ ComputeColorFromAttr( int mode, cell_video_attr_t colorattr, USHORT vtattr )
                 idx = 1;
             else idx = 0;
 
+#ifndef KUI
+            /* In console builds, color indexes are passed straight to the
+             * operating system (OS/2 VIO APIs, or Windows Console Host APIs).
+             * So we need to convert the DECATC palette indexes to regular
+             * 16-color palette indexes. We *could* do this statically, but
+             * converting from one palette to the other lets us handle the host
+             * changing the contents of the palette.
+             */
+            {
+                colorval = cell_video_attr_to_palette(CK_PALETTE_VT525_A,
+                    decatc_colors[idx]);
+            }
+#else
+            /* In KUI builds, DECSTGLT switches to a compatible color palette
+             * so everything just works even though the color indexes are
+             * weird */
             colorval = decatc_colors[idx];
+#endif /* KUI */
 
         } else {  /* decstglt != DECSTGLT_ALTERNATE */
 
@@ -18658,17 +18825,32 @@ vtcsi(void)
                             /* New mode is in pn[1] */
                             switch (pn[1]) {
                             case 0:   /* Monochrome */
-                                decstglt = DECSTGLT_MONO;
+                                if (decstglt != DECSTGLT_MONO) {
+                                    decstglt = DECSTGLT_MONO;
+                                    colorpalette = CK_PALETTE_VT525_M;
+                                    reset_palette(colorpalette);
+                                    VscrnIsDirty(VTERM);
+                                }
                                 break;
                             case 1:   /* Alternate Color */
                             case 2:   /* Alternate Color */
                                 /* Show attributes as colors. The VT525 manual only
                                  * documents this behaviour for blink, bold, reverse
                                  * and underline. */
-                                decstglt = DECSTGLT_ALTERNATE;
+                                if (decstglt != DECSTGLT_ALTERNATE) {
+                                    decstglt = DECSTGLT_ALTERNATE;
+                                    colorpalette = CK_PALETTE_VT525_A;
+                                    reset_palette(colorpalette);
+                                    VscrnIsDirty(VTERM);
+                                }
                                 break;
                             case 3:   /* ANSI SGR */
-                                decstglt = DECSTGLT_COLOR;
+                                if (decstglt != DECSTGLT_COLOR) {
+                                    decstglt = DECSTGLT_COLOR;
+                                    colorpalette = savedcolorpalette;
+                                    reset_palette(colorpalette);
+                                    VscrnIsDirty(VTERM);
+                                }
                                 break;
                             } /* pn[1] */
                         }

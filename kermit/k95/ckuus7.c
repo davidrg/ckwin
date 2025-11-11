@@ -1540,6 +1540,12 @@ int ncolors = (sizeof(ttycoltab) / sizeof(struct keytab));
 struct keytab ttypaltab[] = {
     { "aixterm-16",   CK_PALETTE_16,     0 },
     { "rgb",          CK_PALETTE_XTRGB,  CM_INV|CM_ABR },
+    { "vt525",        CK_PALETTE_VT525,   0},
+    { "vt525-alternate",  CK_PALETTE_VT525_A, 0},
+    { "vt525-mono",   CK_PALETTE_VT525_M, 0},
+#ifdef CK_PALETTE_WY370
+    { "wy-370",       CK_PALETTE_WY370,   0 },
+#endif /* CK_PALETTE_WY370 */
     { "xt256",        CK_PALETTE_XT256,  CM_INV|CM_ABR },
     { "xt88",         CK_PALETTE_XT88,   CM_INV|CM_ABR },
     { "xterm-256",    CK_PALETTE_XT256,  0 },
@@ -1549,9 +1555,6 @@ struct keytab ttypaltab[] = {
     { "xterm-rgb256", CK_PALETTE_XTRGB,   CM_INV|CM_ABR },
     { "xterm-rgb88",  CK_PALETTE_XTRGB88, CM_INV },
 #endif /* CK_COLORS_24BIT */
-#ifdef CK_PALETTE_WY370
-    { "wy-370",       CK_PALETTE_WY370,   0 },
-#endif /* CK_PALETTE_WY370 */
 };
 int npalette = (sizeof(ttypaltab) / sizeof(struct keytab));
 
@@ -4516,6 +4519,8 @@ settrm() {
             return(success=1);
         } else if (x == TTCOLPAL) {
           extern int colorpalette;
+          extern int savedcolorpalette;
+          extern int decstglt;
           y = cmkey(ttypaltab, npalette, "Color palette to use",
 #ifdef CK_COLORS_24BIT
                     "xterm-rgb",
@@ -4525,7 +4530,21 @@ settrm() {
                     xxstring);
           if (y < 0) return y;
           /* TODO: We should backup attribute colors set below on changing */
-          colorpalette = y;
+
+          if (y == CK_PALETTE_VT525_M) {
+                colorpalette = CK_PALETTE_VT525_M;
+                decstglt = DECSTGLT_MONO;
+          }
+          else if (y == CK_PALETTE_VT525_A) {
+                colorpalette = CK_PALETTE_VT525_A;
+                decstglt = DECSTGLT_ALTERNATE;
+          }
+          else {
+                colorpalette = savedcolorpalette = y;
+                decstglt = DECSTGLT_COLOR;
+          }
+
+
 #ifdef SSHBUILTIN
           if (colorpalette == CK_PALETTE_XTRGB || colorpalette == CK_PALETTE_XTRGB88) {
               ssh_set_environment_variable("COLORTERM", "truecolor");

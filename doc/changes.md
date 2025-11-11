@@ -71,6 +71,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - Included palettes are: 
      - xterm 256-colors (the new default palette)
      - xterm 88-colors
+     - vt525 16-colors
+     - vt525 monochrome
+     - vt525 alternate (uses bold, underline, blink and reverse attributes for
+       color instead of normal ANSI color attributes)
      - aixterm 16-colors (the palette used by prior Kermit 95 releases)
    - Screen colors can be set to values from the larger palette with the
      `SET TERMINAL COLOR` command by using the new INDEX keyword followed by
@@ -104,6 +108,8 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      configured to accept the COLORTERM environment variable; to make it work, 
      it will likely have to be added to the `AcceptEnv` list in 
      `/etc/ssh/sshd_config` on the server.
+ - Support for VT525 color including its alternate color and mono SGR color 
+   modes. 
  - New screen elements can be given color via `SET TERMINAL COLOR`
    - Blinking text (if the blink attribute is disabled with the new 
      `SET TERMINAL ATTRIBUTE BLINK OFF COLOR` command)

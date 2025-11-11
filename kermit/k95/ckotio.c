@@ -213,13 +213,15 @@ static char *ckxrev = "32-bit";
 #include "ckokey.h"
 #include "ckoslp.h"
 
-#ifdef KUI
-extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[];
+
+extern ULONG SavedRGBTable[], SavedRGBTable256[], SavedRGBTable88[],
+             SavedVT525RGBTable[], SavedVT525MonoRGBTable[],
+             SavedVT525ATCRGBTable[];
 #ifdef CK_PALETTE_WY370
 extern ULONG SavedWY370RGBTable[];
 #endif /* CK_PALETTE_WY370 */
-#endif /* KUI */
-extern ULONG RGBTable[], RGBTable256[], RGBTable88[];
+extern ULONG RGBTable[], RGBTable256[], RGBTable88[], VT525RGBTable[],
+             VT525MonoRGBTable[], VT525ATCRGBTable[];
 #ifdef CK_PALETTE_WY370
 extern ULONG WY370RGBTable[];
 #endif /* CK_PALETTE_WY370 */
@@ -2150,18 +2152,21 @@ sysinit() {
             ttgwsiz() ;
     }
 
-#ifdef KUI
     {
         int i;
         // Initialise the backup copies of the RGB colour tables
         for (i = 0; i < 256; i++) SavedRGBTable256[i] = RGBTable256[i];
         for (i = 0; i < 88; i++) SavedRGBTable88[i] = RGBTable88[i];
-        for (i = 0; i < 16; i++) SavedRGBTable[i] = RGBTable[i];
+        for (i = 0; i < 16; i++) {
+            SavedRGBTable[i] = RGBTable[i];
+            SavedVT525RGBTable[i] = VT525RGBTable[i];
+            SavedVT525MonoRGBTable[i] = VT525MonoRGBTable[i];
+            SavedVT525ATCRGBTable[i] = VT525ATCRGBTable[i];
+        }
 #ifdef CK_PALETTE_WY370
         for (i = 0; i < 65; i++) SavedWY370RGBTable[i] = WY370RGBTable[i];
 #endif /* CK_PALETTE_WY370 */
     }
-#endif /* KUI*/
 
     debug(F100,"about to VscrnInit()","",0);
     /* Setup the Virtual Screens */
