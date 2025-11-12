@@ -10,7 +10,7 @@ log living in the [Whats New in 3.0](whats-new.md) document. When the final
 release of v3.0 eventually happens, the details about the various v3.0 
 eventually be moved elsewhere, with the full v3.0 change log taking their place.
 
-## Kermit 95 v3.0 beta 8 - Date TBD, likely late 2025
+## Kermit 95 v3.0 beta 8 - Date TBD, likely early 2026
 
 This release comes with *significant* changes to the way Kermit 95 handles
 color. While every effort has been made to ensure there are no unexpected
@@ -109,7 +109,7 @@ as part of K95 at this time, the default terminal remains VT220 for now.
      it will likely have to be added to the `AcceptEnv` list in 
      `/etc/ssh/sshd_config` on the server.
  - Support for VT525 color including its alternate color and mono SGR color 
-   modes. 
+   modes.
  - New screen elements can be given color via `SET TERMINAL COLOR`
    - Blinking text (if the blink attribute is disabled with the new 
      `SET TERMINAL ATTRIBUTE BLINK OFF COLOR` command)
@@ -331,7 +331,6 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    - [PPA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppa) - Page Position Absolute
    - [PPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppr) - Page Position Relative
    - [PPB](https://davidrg.github.io/ckwin/dev/ctlseqs.html#ppb) - Page Position Backward
-   - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Session Page Memory Allocation
    - [DECMC-10](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-10) - Print Composed Main Display
    - [DECMC-11](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decmc-11) - Print All Pages
    - [DECSPMA](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decspma) - Set and query the number of available pages

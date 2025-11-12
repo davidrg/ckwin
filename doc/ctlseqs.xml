@@ -4525,6 +4525,7 @@ DECTSR		462
                 <ctlseq><param-text/> = , |</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Reports one of the 16 color pairs set with
                     <a href="#decac">DECAC</a>. A parameter must be supplied
@@ -4555,6 +4556,7 @@ DECTSR		462
                 <ctlseq><param-text/> = , }</ctlseq>
                 <ref src="xt:h4-Device-Control-functions:DCS-$-q-Pt-ST.DF5"/>
                 <ref src="vt52x:266"/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Reports one of the 16 color pairs set with
                     <a href="#decatc">DECATC</a>. A parameter must be supplied
@@ -8074,7 +8076,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Underline Mode">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Enables true underline when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> allowing underlined text combined with
@@ -8085,7 +8087,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Color Blink Mode">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Enables true blink when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> allowing blinking text combined with
@@ -8097,13 +8099,13 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 116</ctlseq>
                 <ref src="vt52x:179"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
             </section>
             <section role="parameter" id="dececm" mnemonic="DECECM"
-                     title="Erase Color Mode">
+                     title="Erase Color Mode" badges="isvt525">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
-                <termsupp first="vt520" series="vt" additional="wt"/>
+                <termsupp first="vt525" series="vt" additional="wt"/>
                 <p>
                     Causes the default attribute as set by <tt>SET TERMINAL COLOR TERMINAL-SCREEN</tt>
                     to be used when clearing parts of the screen. This setting
@@ -9985,7 +9987,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Underline Mode">
                 <ctlseq><param-single/> = 114</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Disables true underline when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> causing the underline attribute to only
@@ -9996,7 +9998,7 @@ DCS $ q 3 , } ST</pre>
                      title="Set/Reset Alternate Text Color Blink Mode">
                 <ctlseq><param-single/> = 115</ctlseq>
                 <ref src="vt52x:177"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
                 <p>
                     Disables true blink when in <a href="#decstglt-2">DECSTGLT
                     Alternate Color mode</a> causing the blink attribute to only
@@ -10008,13 +10010,13 @@ DCS $ q 3 , } ST</pre>
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 116</ctlseq>
                 <ref src="vt52x:179"/>
-                <termsupp first="vt520" series="vt" additional=""/>
+                <termsupp first="vt525" series="vt" additional=""/>
             </section>
             <section role="parameter" id="r-dececm" mnemonic="DECECM"
-                     title="Erase Color Mode">
+                     title="Erase Color Mode" badges="isvt525">
                 <ctlseq><param-single/> = 117</ctlseq>
                 <ref src="vt52x:202"/>
-                <termsupp first="vt520" series="vt" additional="wt"/>
+                <termsupp first="vt525" series="vt" additional="wt"/>
                 <p>
                     Causes the current color as set by <a href="#sgr">SGR</a>
                     to be used when clearing parts of the screen. This setting
@@ -13225,14 +13227,14 @@ DCS $ q 3 , } ST</pre>
                          title="Alternate Text Underline Mode">
                     <ctlseq><param-single/> = 114</ctlseq>
                     <ref src="vt52x:177"/>
-                    <termsupp first="vt520" series="vt" additional=""/>
+                    <termsupp first="vt525" series="vt" additional=""/>
                     <p>Reports the current DECATCUM setting</p>
                 </section>
                 <section role="parameter" id="rqm-115" mnemonic="DECATCBM"
                          title="Alternate Text Color Blink Mode">
                     <ctlseq><param-single/> = 115</ctlseq>
                     <ref src="vt52x:177"/>
-                    <termsupp first="vt520" series="vt" additional=""/>
+                    <termsupp first="vt525" series="vt" additional=""/>
                     <p>Reports the current DECATCBM setting</p>
                 </section>
                 <section role="parameter" id="rqm-116" mnemonic="DECBBSM"
@@ -13240,13 +13242,13 @@ DCS $ q 3 , } ST</pre>
                          not-implemented="true" todo="true">
                     <ctlseq><param-single/> = 116</ctlseq>
                     <ref src="vt52x:179"/>
-                    <termsupp first="vt520" series="vt" additional=""/>
+                    <termsupp first="vt525" series="vt" additional=""/>
                 </section>
                 <section role="parameter" id="rqm-117" mnemonic="DECECM"
                          title="Erase Color Mode">
                     <ctlseq><param-single/> = 117</ctlseq>
                     <ref src="vt52x:202"/>
-                    <termsupp first="vt520" series="vt" additional="wt"/>
+                    <termsupp first="vt525" series="vt" additional="wt"/>
                     <p>
                         Reports the current <tt>SET TERMINAL COLOR ERASE</tt>
                         setting: Set for <tt>DEFAULT-COLOR</tt>, reset for
@@ -14890,7 +14892,7 @@ DCS $ q 3 , } ST</pre>
             <ctlseq>CSI 2 ; <param-single/> $ u</ctlseq>
             <ref src="070:364"/>
             <ref src="vt52x:268"/>
-            <termsupp first="vt520" series="vt" additional=""/>
+            <termsupp first="vt525" series="vt" additional=""/>
         </section>
         <section role="ctlseq" id="decrqupss" mnemonic="DECRQUPSS"
                  title="User-Preferred Supplemental Set"
