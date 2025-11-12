@@ -123,6 +123,12 @@ USHORT tx_lucidasub(USHORT);    /* ckcuni.c */
 USHORT tx_usub(USHORT);         /* ckcuni.c */
 USHORT tx_hslsub(USHORT);       /* ckcuni.c */
 
+#ifndef NOSPL
+/* struct mtab [] exists only if NOSPL isn't defined */
+int mlook( struct mtab [], char *, int );
+int mxlook( struct mtab [], char *, int );
+#endif /* NOSPL */
+
 #ifdef OS2MOUSE
 void mouseurl(int, USHORT, USHORT); /* ckomou.c */
 #endif /* OS2MOUSE */

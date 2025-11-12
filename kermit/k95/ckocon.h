@@ -1489,6 +1489,7 @@ _PROTOTYP( ULONG VscrnGetTop, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageScrollTop, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetScrollTop, ( BYTE, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetScrollHorz, ( BYTE ) ) ;
+_PROTOTYP( ULONG VscrnGetPageBegin, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetBegin, ( BYTE, BOOL, BOOL ) ) ;
 _PROTOTYP( ULONG VscrnGetPageEnd, ( BYTE, BOOL, int ) ) ;
 _PROTOTYP( ULONG VscrnGetEnd, ( BYTE, BOOL, BOOL ) ) ;
