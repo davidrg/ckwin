@@ -2787,7 +2787,7 @@ void reset_palette(int palette_id) {
     ULONG *saved;
     ULONG *current;
 
-    palmax = current_palette_max_index(palette_id);
+    palmax = current_palette_max_index();
     saved = palette_saved_rgb_table(palette_id);
     current = palette_rgb_table(palette_id);
 
