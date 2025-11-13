@@ -149,6 +149,13 @@ as part of K95 at this time, the default terminal remains VT220 for now.
    work across pages, while [DECRQDE](https://davidrg.github.io/ckwin/dev/ctlseqs.html#decrqde)
    and [DECXCPR](https://davidrg.github.io/ckwin/dev/ctlseqs.html#dsr-decxcpr)
    now include page information
+ - K95G can now save the terminal screen as an image rather than plain text.
+   For example, `SAVE TERMINAL SCREEN /FORMAT:PNG screenshot.png`. The following
+   output formats are available:
+   - Windows Bitmap (.bmp)
+   - Windows Enhanced Metafile (.emf)
+   - PNG (Windows XP+ only)
+   - GIF (Windows XP+ only)
 
 ### Enhancements
  - The Control Sequences documentation ([preliminary version available online](https://davidrg.github.io/ckwin/dev/ctlseqs.html))
@@ -187,6 +194,12 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - Improved terminal throughput for SSH connections by around seven times, which
    helps when you accidentally cat a large log file.
  - Doubled maximum terminal lines to 256 in K95G on modern systems
+ - Added a new function, `\fterminalchecksum`, which produces a checksum of the
+   terminal screen using the same algorithm as DECRQCRA. Parameters allow you
+   to specify a region of a particular page to calculate a checksum off. If
+   parameters are left off it calculates the checksum of the entire page on
+   screen. Unlike DECRQCRA, it is not bound by page margins.
+   
  
 ### New terminal control sequences
 > [!NOTE]
@@ -378,6 +391,10 @@ as part of K95 at this time, the default terminal remains VT220 for now.
  - The x86-64 version of Kermit 95 now works on Windows XP x64 Edition
  - Fixed DECCRA not copying attributes or obeying DECOM
  - Fixed DECXCPR response - it was leaving the '?' character out
+ - Fixed DECSCPP parameter not being optional, and setting the terminal to maximum
+   width if the parameters value is 0. Any value less than 80 will now produce an
+   80 column terminal.
+ - Fixed crash writing to unopened file
 
 ## Kermit 95 v3.0 beta 7 - 27 January 2025
 

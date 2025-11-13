@@ -15763,13 +15763,24 @@ DCS $ q 3 , } ST</pre>
                 and <tt><param-single symbol="Pt"/> ;
                 <param-single symbol="Pl"/> ; <param-single symbol="Pb"/> ;
                 <param-single symbol="Pr"/></tt> is the rectangle to calculate
-                the checksum for. Only available if send-data is enabled
-                (<tt>set terminal send-data on</tt>).
+                the checksum for. Coordinates are affected by origin mode
+                (<a href="#decom">DECOM</a>). Only available if send-data is
+                enabled (<tt>set terminal send-data on</tt>) - if it is disabled
+                (the default), this control sequence is ignored.
             </p>
             <p>
                 If the terminal is on the XTerm Alternate Screen, then the
                 page is ignored and DECRQCRA operates only on the alternate
                 screen.
+            </p>
+            <p>
+                The response is <tt><cc>DCS</cc> <em>Pi</em> ! ~ D...D <cc>ST</cc></tt>
+                where <em>Pi</em> is the request ID, and D...D is a string of
+                four hexadecimal digits indicating the checksum.
+            </p>
+            <p>
+                You can also compute a checksum using the same algorithm with
+                the K95 function <tt>\fterminalchecksum()</tt>.
             </p>
         </section>
         <section role="ctlseq" id="decpkfmr" mnemonic="DECPKFMR"
@@ -16124,13 +16135,9 @@ DCS $ q 3 , } ST</pre>
             <ref src="vws:108"/>
             <termsupp first="vt330" series="vt" additional="vt340 vt420 v510 putty"/>
             <p>
-                The parameter <param-single/>
-                is required and specifies the new width of the terminal. Supplying 0, which
-                <em>should</em> set the width to 80 columns, actually results in the terminal
-                being set to the maximum width (512 columns on modern Windows, 256 on
-                vintage windows and OS/2) - this is a bug.
-                <!-- TODO: Ps should be optional (sets to 80 columns), and Ps=0
-                             should also set to 80 columns-->
+                The parameter <param-single/> specifies the new width of the
+                terminal. If no width is specified, or the width specified is
+                less than 80, then the terminal will be set to 80 columns.
             </p>
             <section style="group" role="group">
                 <section title="80 columns" id="decscpp-0" role="parameter">

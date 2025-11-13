@@ -1181,6 +1181,19 @@ static char *hmxxsave[] = {
 #ifdef OS2
 "    COMMAND SCROLLBACK   Saves the current command-screen scrollback buffer",
 "    TERMINAL SCROLLBACK  Saves the current terminal-screen scrollback buffer",
+"    TERMINAL SCREEN      Saves the current terminal-screen",
+#ifdef KUI
+" ",
+"  K95G has the additional ability to save the terminal screen as an image file",
+"  This can be done with the syntax: ",
+#ifdef CK_HAVE_GDIPLUS
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF, GIF, PNG } filename ",
+#else /* CK_HAVE_GDIPLUS */
+"    SAVE TERMINAL SCREEN /FORMAT:{ BMP, EMF } filename ",
+#endif  /* CK_HAVE_GDIPLUS */
+"  When saving as an image, a new file is always created. The EMF format does",
+"  not currently support saving double-height/double-wide lines",
+#endif /* KUI */
 #endif /* OS2 */
 ""
 };
@@ -12324,6 +12337,19 @@ represent.\n");
       case FN_MONNAME:                  /* fdc 12 November 2022 */
         hmsga(hmfmonname);              /* Literal string was too long */
         break;
+
+#ifdef OS2
+      case FN_TERMCKS:
+        printf("\\fterminalchecksum(n1,n2,n3,n4,n5)\n\
+  Returns a checksum of the terminal screen using the same algorithm as the\n\
+  DECRQCRA control sequence found on the DEC VT420 and VT520 terminals.\n\
+  n1 is the top line, n2 is the left column, n3 is the bottom line and n4 is\n\
+  the right column, and n5 is the page number. Unlike DECRQCRA, any margins \n\
+  set do not apply. All parameters are optional and default to a checksum of\n\
+  the entire page that is currently being displayed. All coordinates and page\n\
+  numbers start from 1.");
+        break;
+#endif /* OS2 */
 
       default:
         printf("Sorry, help not available for \"%s\"\n",cmdbuf);
