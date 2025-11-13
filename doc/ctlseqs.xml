@@ -116,7 +116,7 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
 
         <!ELEMENT termsupp EMPTY>
         <!ATTLIST termsupp series (vt|wyse|xt|k95|sco|rxvt|ansi|tt|linux|putty|wt|print|wz|dtc) #REQUIRED>
-        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lj250|lg06) #REQUIRED>
+        <!ATTLIST termsupp first (vt50|vt50h|vt52|vt100|vt102|vt105|vt132|vt220|vt320|vt330|vt340|vt420|vt510|vt520|vt525|msk|k95|xterm|tt|wy370|ansi|sco|vt382|linux|putty|decterm|vt1000|vws|uws|dtterm|wt|la100|wz|lqp02|lcg01|lj250|ln05|vk100|dtc01|la75|ln01|ln08|ln03|la30|lg31|lgp01|lg06) #REQUIRED>
         <!ATTLIST termsupp additional CDATA #IMPLIED>
         <!ATTLIST termsupp excluded CDATA #IMPLIED>
 
@@ -153,14 +153,16 @@ this document to HTML isn't quite as strict, and the DTD is not comprehensive.
         <!ELEMENT script (#PCDATA)>
         <!ELEMENT html (style?|script?)>
         <!ATTLIST html filename CDATA #REQUIRED>
-        <!ATTLIST html type (document|outline|ctlseq-table|term-ctlseqs|todo) #REQUIRED>
+        <!ATTLIST html type (document|outline|ctlseq-table|term-ctlseqs|all-ctlseqs|todo) #REQUIRED>
         <!ATTLIST html title CDATA #IMPLIED>
-        <!ATTLIST html todo-terminals CDATA #IMPLIED>  <!-- for "todo" type only -->
+        <!ATTLIST html terminals CDATA #IMPLIED>
         <!ATTLIST html todo-ids CDATA #IMPLIED>  <!-- for "todo" type only -->
         <!ATTLIST html todo-mnemonics CDATA #IMPLIED>  <!-- for "todo" type only -->
-        <!ATTLIST html compare CDATA #IMPLIED> <!-- for "term-ctlseqs" type only -->
         <!ATTLIST html include CDATA #IMPLIED> <!-- for "term-ctlseqs" type only -->
         <!ATTLIST html show-refs (true|false) "false"> <!-- for table outputs only -->
+        <!ATTLIST html as-table (true|false) "false"> <!-- as table output -->
+        <!ATTLIST html show-not-implemented (true|false) "false">
+        <!ATTLIST html show-termsupp (true|false) "false"> <!-- for table outputs only -->
 
         <!ELEMENT outputs (html)*>
 
@@ -876,7 +878,8 @@ DECTSR		462
           This is the "full" document detailing all the control sequences
           *implemented* by Kermit 95.
          -->
-        <html type="document" filename="ctlseqs.html">
+        <html type="document" filename="ctlseqs.html"
+              show-not-implemented="true">
             <style>
                 h2 { border-bottom: solid 2px; }
                 h3 { border-bottom: solid 1px; }
@@ -978,7 +981,8 @@ DECTSR		462
           included in full in the outline document
         -->
         <html type="outline" filename="outline.html"
-              title="Kermit 95 Control Sequences (Outline)">
+              title="Kermit 95 Control Sequences (Outline)"
+              show-not-implemented="true">
             <style>
                 h3 {
                     margin-left: 2em;
@@ -1080,7 +1084,8 @@ DECTSR		462
         -->
         <!-- TODO: rename to termtype-ctlseqs.html -->
         <html type="ctlseq-table" filename="tt-ctlseqs.html"
-              title="Kermit 95 Control Sequences by Terminal Type">
+              title="Kermit 95 Control Sequences by Terminal Type"
+              as-table="true">
             <style>
                 table {
                     border-collapse: collapse;
@@ -1119,9 +1124,11 @@ DECTSR		462
 
         <html type="term-ctlseqs" filename="term-ctlseqs.html"
               title="Control Sequences by Terminal"
-              compare="vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty"
+              terminals="vt100 vt102 vt132 vt220 vt340 vt420 vt510 vt520 vt525 k95 xterm tt putty"
               include="vws vt320 vt330 decterm vt1000"
-              show-refs="true">
+              show-not-implemented="true"
+              show-refs="true"
+              as-table="true">
             <!--
                 compare attribute: terminals that get columns in the table
                 include attribute: Also include rows for any escape sequences
@@ -1195,14 +1202,17 @@ DECTSR		462
             </style>
         </html>
 
-        <!-- For testing: a variant that includes everything but without the
+        <!--  a variant that includes everything but without the
             comparison columns. Like the outline document, but in table form
-            and including not-implemented stuff.
-        <html type="term-ctlseqs" filename="all-ctlseqs.html"
+            and including all not-implemented stuff. -->
+        <html type="all-ctlseqs" filename="all-ctlseqs.html"
               title="All Known Control Sequences"
-              compare=""
+              terminals="-none-"
               include="*"
-              show-refs="true">
+              show-termsupp="false"
+              show-refs="true"
+              show-not-implemented="true"
+              as-table="true">
             <style>
                 table {
                 border-collapse: collapse;
@@ -1233,10 +1243,12 @@ DECTSR		462
                 border-right: 1px solid black;
                 }
                 td.sec_references {
-                white-space: nowrap;
-                background-color: gray;
+                    white-space: nowrap;
                 }
-                th.sec_references {
+                td.sec_termsupp {
+                    white-space: nowrap;
+                }
+                thead {
                 background-color: gray;
                 }
                 thead tr {
@@ -1268,7 +1280,7 @@ DECTSR		462
                 }
 
             </style>
-        </html>-->
+        </html>
 
         <!-- The todo-* attributes filter what is included in todo.html. A
              control sequence or parameter must be marked for one of the listed
@@ -1282,8 +1294,10 @@ DECTSR		462
         <html type="todo" filename="todo.html" title="TO-DO"
               todo-ids="rxvt-stbt rxvt-stbk rxvt-show-toolbar cursor-steady-block steady-underline xt-urgency xt-raise-window osc-7 osc-8 decdrlbr decerlbrp decerlbra"
               todo-mnemonics="SUNBOW SUNWOB SUNSCRL XTPUSHCOLORS XTPOPCOLORS XTREPORTCOLORS"
-              todo-terminals="vt220 vt420 vt525 k95 xterm tt putty wt"
-              show-refs="true">
+              terminals="vt220 vt420 vt525 k95 xterm tt putty wt"
+              show-refs="true"
+              show-not-implemented="true"
+              as-table="true">
             <style>
                 table {
                 border-collapse: collapse;
@@ -1572,6 +1586,39 @@ DECTSR		462
 
     </section>
 
+    <section role="text" formats="html:all-ctlseqs">
+        <p>
+            <b>Kermit 95 Release:</b> <k95info val="version-full"/><br/>
+            <b>Build Date:</b> <k95info val="version-date"/>
+        </p>
+        <p>
+            This document doesn't <em>really</em> attempt to list
+            <em>All Known Control Sequences</em>, nor does it aim to &mdash; that
+            would be a large job indeed. But the XML document from which
+            <a href="ctlseqs.html">Kermit 95's Control Sequences Documentation</a>
+            is generated does contain basic information on a great many
+            additional control sequences. Many of these are unlikely ever to be
+            supported by Kermit 95 for one reason or another, but it's still
+            useful to know they exist. Hence, this document.
+        </p>
+        <p>
+            The criteria for inclusion here is similar to the criteria for
+            inclusion in Kermit 95 itself: It exists now, and it is
+            not likely to change in some breaking way in the future. Either it
+            shipped in some hardware, or the terminal emulators that currently
+            support it have an apparent commitment to backwards compatibility
+            and are wide-spread enough to discourage other terminal emulators
+            from being incompatible.
+        </p>
+        <p>
+            Rows highlighted in yellow indicate control sequences (or parameters)
+            not supported by any of Kermit 95s emulations. Features that <em>are</em>
+            supported by Kermit 95 have links to documentation describing
+            Kermit 95s implementation of that feature.
+        </p>
+
+    </section>
+
     <section role="text">
         <p>
             <b>Kermit 95 Release:</b> <k95info val="version-full"/><br/>
@@ -1689,7 +1736,7 @@ DECTSR		462
     <index/>
 
     <section role="text"
-             formats="html:document html:outline html:ctlseq-table html:term-ctlseqs html:todo"
+             formats="html:document html:outline html:ctlseq-table html:term-ctlseqs html:todo html:all-ctlseqs"
              hide-groups="ishp iswyse isdg200 istvi"
              hide-badges="qnx ibm31 vc4404 adm3a adm5 hzl1500 vc4404 vtnt xterm tek40">
         <!-- ANSI-compatible, VT52 and H19 emulations -->

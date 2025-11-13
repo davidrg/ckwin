@@ -1999,6 +1999,7 @@ jobs:
             ${{ github.workspace }}\doc\outline.html
             ${{ github.workspace }}\doc\term-ctlseqs.html
             ${{ github.workspace }}\doc\tt-ctlseqs.html
+            ${{ github.workspace }}\doc\all-ctlseqs.html
             ${{ github.workspace }}\doc\todo.html
             ${{ github.workspace }}\doc\keyb.html
           retention-days: 1
@@ -2359,6 +2360,7 @@ jobs:
       - name: Move ctlseqs doc
         run: |
           del ${{ github.workspace }}\ctlseqs\todo.html
+          del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -2392,6 +2394,7 @@ jobs:
       - name: Move ctlseqs doc
         run: |
           del ${{ github.workspace }}\ctlseqs\todo.html
+          del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -2425,6 +2428,7 @@ jobs:
       - name: Move ctlseqs doc
         run: |
           del ${{ github.workspace }}\ctlseqs\todo.html
+          del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -2459,6 +2463,7 @@ jobs:
       - name: Move ctlseqs doc
         run: |
           del ${{ github.workspace }}\ctlseqs\todo.html
+          del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -2489,6 +2494,7 @@ jobs:
       - name: Move ctlseqs doc
         run: |
           del ${{ github.workspace }}\ctlseqs\todo.html
+          del ${{ github.workspace }}\ctlseqs\all-ctlseqs.html
           move ${{ github.workspace }}\ctlseqs\*.html ${{ github.workspace }}\k95\docs\
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -177,6 +177,7 @@ copy %docs_root%\ctlseqs.html %OUT_DIR%
 copy %docs_root%\outline.html %OUT_DIR%
 copy %docs_root%\term-ctlseqs.html %OUT_DIR%
 copy %docs_root%\tt-ctlseqs.html %OUT_DIR%
+copy %docs_root%\all-ctlseqs.html %OUT_DIR%
 copy %docs_root%\todo.html %OUT_DIR%
 copy %docs_root%\keyb.html %OUT_DIR%
 
