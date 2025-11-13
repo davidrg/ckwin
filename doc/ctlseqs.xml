@@ -2542,7 +2542,7 @@ DECTSR		462
         <section role="ctlseq" id="decbar" not-implemented="true" todo="true"
                  mnemonic="DECBAR" ctlseq="ESC % SP 0" title="Start Bar Code">
             <termsupp first="la30" series="print" additional=""/>
-            <ref src="dps:108"/>
+            <ref src="dap:109"/>
         </section>
         <section role="ctlseq" id="dectcs" not-implemented="true" todo="true"
                  mnemonic="DECTCS" ctlseq="ESC % 0" title="Exit NAPLPS">
@@ -2566,13 +2566,13 @@ DECTSR		462
         </section>
         <section role="ctlseq" id="socs" mnemonic="SOCS" title="Select Other Coding System"
                  not-implemented="true" todo="true">
-            <ref src="dps:170"/>
+            <ref src="dap:170"/>
             <p>Select IBM Proprinter emulation mode</p>
         </section>
-        <section role="ctlseq" id="sdc" ctlseq="ESC % @" title="Select default character set">
+        <section role="ctlseq" id="sdc" mnemonic="ROCS" ctlseq="ESC % @" title="Select default character set">
             <ref src="xt:h4-Controls-beginning-with-ESC:ESC-percent-@.F8C"/>
             <termsupp first="xterm" series="xt" additional="putty wt"/>
-            <ref src="dps:160"/>
+            <ref src="dap:160"/>
             <p>Return to ISO 2002 mode</p>
         </section>
         <section role="ctlseq" id="sutf8" ctlseq="ESC % G" title="Select UTF-8 character set">
@@ -4127,7 +4127,7 @@ DECTSR		462
                  not-implemented="true" todo="true">
             <ctlseq>DCS <param-single/> &quot; { D...D ST</ctlseq>
             <termsupp first="ln03" series="print" additional=""/>
-            <ref src="dps:123"/>
+            <ref src="dap:123"/>
         </section>-->
 
         <section role="ctlseq" id="declans" mnemonic="DECLANS"
@@ -7678,7 +7678,7 @@ DCS $ q 3 , } ST</pre>
                      title="Carriage Return/New Line Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 40</ctlseq>
-                <ref src="dps:112"/>
+                <ref src="dap:112"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" title="XTERM - Allow 80 - 132 Mode">
@@ -7690,7 +7690,7 @@ DCS $ q 3 , } ST</pre>
                      title="Unidirectional Print Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 41</ctlseq>
-                <ref src="dps:145"/>
+                <ref src="dap:145"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" title="XTERM - more(1) fix">
@@ -9588,7 +9588,7 @@ DCS $ q 3 , } ST</pre>
                      title="Carriage Return/New Line Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 40</ctlseq>
-                <ref src="dps:112"/>
+                <ref src="dap:112"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-40"
@@ -9601,7 +9601,7 @@ DCS $ q 3 , } ST</pre>
                      title="Unidirectional Print Mode"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 41</ctlseq>
-                <ref src="dps:145"/>
+                <ref src="dap:145"/>
                 <termsupp first="la30" series="print" additional=""/>
             </section>
             <section role="parameter" not-implemented="true" id="decrst-41"
@@ -10816,7 +10816,7 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgr-10-19" title="Select Font"
                     not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 10-19</ctlseq>
-                <ref src="dps:169"/>
+                <ref src="dap:169"/>
                 <p>
                     DEC Printers - select a font
                 </p>
@@ -11533,13 +11533,13 @@ DCS $ q 3 , } ST</pre>
 
             <section role="parameter" title="Overline On" not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 53</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <termsupp first="wz" series="wz" additional="wt"/>
             </section>
 
             <section role="parameter" title="Overline Off" not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 55</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <termsupp first="wz" series="wz" additional="wt"/>
             </section>
 
@@ -11714,12 +11714,12 @@ DCS $ q 3 , } ST</pre>
         <section role="ctlseq" id="dec-sgr" mnemonic="SGR" title="Select Graphic Rendition (DEC Private)"
             not-implemented="true" todo="true">
             <ctlseq>CSI ? <param-multi/> m </ctlseq>
-            <ref src="dps:166"/>
+            <ref src="dap:166"/>
             <p>DEC Private Character Attributes - these are used by DEC printers.</p>
             <section role="parameter" id="sgrp-0" title="Turn off all private attributes"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 0</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <p>
                     Deprecated - use <a href="#sgr-0">SGR-0</a> instead.
                 </p>
@@ -11727,28 +11727,28 @@ DCS $ q 3 , } ST</pre>
             <section role="parameter" id="sgrp-4" title="Turn on superscript, turn off subscript"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 4</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
             </section>
             <section role="parameter" id="sgrp-5" title="Turn on subscript, turn off superscript"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 5</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
             </section>
             <section role="parameter" id="sgrp-6" title="Turn on overline"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 6</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <p>Deprecated - use <a href="sgr-53">SGR-53</a> instead</p>
             </section>
             <section role="parameter" id="sgrp-24" title="Turn off superscript and subscript"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 24</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
             </section>
             <section role="parameter" id="sgrp-26" title="Turn off overline"
                      not-implemented="true" todo="true">
                 <ctlseq><param-single/> = 26</ctlseq>
-                <ref src="dps:166"/>
+                <ref src="dap:166"/>
                 <p>Deprecated - use <a href="sgr-55">SGR-55</a> instead</p>
             </section>
         </section> <!-- End DEC SGR -->
