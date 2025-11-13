@@ -9580,21 +9580,8 @@ shogui() {
     printf("\n");
     if (++lines > cmd_rows - 3) { if (!askmore()) return(success=1); else lines = 0; }
 
-    if (colorpalette == CK_PALETTE_XT256 || colorpalette == CK_PALETTE_XTRGB) {
-    	palette = RGBTable256;
-        palette_size = 256;
-    } else if (colorpalette == CK_PALETTE_XT88 || colorpalette == CK_PALETTE_XTRGB88) {
-    	palette = RGBTable88;
-        palette_size = 88;
-#ifdef CK_PALETTE_WY370
-    } else if (colorpalette == CK_PALETTE_WY370) {
-        palette = WY370RGBTable;
-        palette_max = 64;
-#endif
-    } else { /* CK_PALETTE_ANSI */
-        palette = RGBTable;
-        palette_size =16;
-    }
+	palette = palette_rgb_table(colorpalette);
+	palette_size = palette_max_index(colorpalette) + 1;
 
     if (!show_palette) {
    		printf("RGB Color Table:\n");

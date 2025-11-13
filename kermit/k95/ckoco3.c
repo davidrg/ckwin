@@ -294,16 +294,22 @@ cell_video_attr_t     colorstatus     = cell_video_attr_init_vio_attribute(0x71)
 cell_video_attr_t     colorhelp       = cell_video_attr_init_vio_attribute(0x71);
 #endif /* COMMENT */
 cell_video_attr_t     colorselect     = cell_video_attr_init_vio_attribute(0xe0);
+cell_video_attr_t     savedcolorselect= cell_video_attr_init_vio_attribute(0xe0);
 cell_video_attr_t     colorborder     = cell_video_attr_init_vio_attribute(0x01);
 cell_video_attr_t     coloritalic     = cell_video_attr_init_vio_attribute(0x27);
 cell_video_attr_t     colorblink      = cell_video_attr_init_vio_attribute(0x87);
 cell_video_attr_t     colorbold       = cell_video_attr_init_vio_attribute(0x0F);
 cell_video_attr_t     colorcrossedout = cell_video_attr_init_vio_attribute(0x10);
+#ifdef CK_COLORS_24BIT
+/* Entry 8 in the VT525 palette is black, so if we can default these to RGB */
+cell_video_attr_t     colordim        = cell_video_attr_init_rgb_attribute(192, 192, 192, 0, 0, 0);
+cell_video_attr_t     colorcursor     = cell_video_attr_init_rgb_attribute(0, 0, 0, 192, 192, 192);
+cell_video_attr_t     savedcolorcursor= cell_video_attr_init_rgb_attribute(0, 0, 0, 192, 192, 192);
+#else /* CK_COLORS_24BIT */
 cell_video_attr_t     colordim        = cell_video_attr_init_vio_attribute(0x08);
 cell_video_attr_t     colorcursor     = cell_video_attr_init_vio_attribute(0x80);
-
-cell_video_attr_t     savedcolorselect = cell_video_attr_init_vio_attribute(0xe0);
-cell_video_attr_t     savedcolorcursor = cell_video_attr_init_vio_attribute(0x80);
+cell_video_attr_t     savedcolorcursor= cell_video_attr_init_vio_attribute(0x80);
+#endif /* CK_COLORS_24BIT */
 
 int bgi = FALSE, fgi = FALSE ;
 cell_video_attr_t colorcmd        = cell_video_attr_init_vio_attribute(0x07);
@@ -2791,10 +2797,7 @@ void reset_palette(int palette_id) {
     saved = palette_saved_rgb_table(palette_id);
     current = palette_rgb_table(palette_id);
 
-    debug(F111, "DECSTGLT RESET PALETTE", "palmax", palmax);
-
     for (i = 0; i <= palmax; i++) {
-        debug(F111, "DECSTGLT RESET PALETTE", "i", i);
         current[i] = saved[i];
     }
 }

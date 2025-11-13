@@ -332,6 +332,14 @@ cell_video_attr_t cell_video_attr_set(
     0, 0, cell_video_attr8_background(value) \
 }
 
+/* Initialise a colour attribute at declaration time with a constant RGB color
+ */
+#define cell_video_attr_init_rgb_attribute(fgr, fgg, fgb, bgr, bgg, bgb) { \
+    CK_RGB_FLAG_RGB, \
+    (fgr), (fgg), (fgb), \
+    (bgr), (bgg), (bgb) \
+}
+
 /* Set a colour attribute to a 16-colour value pair packed into an unsigned
  * char
  */
@@ -1717,6 +1725,8 @@ _PROTOTYP(void reset_palettes, (void));
 _PROTOTYP(ULONG cell_video_attr_foreground_rgb, (cell_video_attr_t));
 _PROTOTYP(ULONG cell_video_attr_background_rgb, (cell_video_attr_t));
 #endif /* CK_COLORS_DEBUG */
+_PROTOTYP(ULONG* palette_rgb_table, (int));
+_PROTOTYP(unsigned char palette_max_index, (int));
 
 typedef struct _hyperlink {
     int index;

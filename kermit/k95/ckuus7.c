@@ -1462,7 +1462,7 @@ extern cell_video_attr_t colornormal, colorselect,
 colorunderline, colorstatus, colorhelp, colorborder,
 colorgraphic, colordebug, colorreverse, coloritalic,
 colorblink, colorbold, savedcolorselect, colordim,
-colorcursor, colorcrossedout;
+savedcolorcursor, colorcursor, colorcrossedout;
 
 extern int trueblink, trueunderline, truereverse, trueitalic, truedim, truebold,
             truecrossedout;
@@ -4724,7 +4724,7 @@ settrm() {
                 colordim = attr;
                 break;
 			  case TTCOLCUR:
-				colorcursor = attr;
+				savedcolorcursor = colorcursor = attr;
 			    break;
               default:
                 printf("%s - invalid\n",cmdbuf);
