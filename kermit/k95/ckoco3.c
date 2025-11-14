@@ -14716,16 +14716,8 @@ dodcs( void )
 							char* mac = 0;
 							char* p = 0;
 							int repeat_count = 1;
+							int in_repetition = 0;
 							char hex[3] = "  ";
-
-							/* Ensure a semicolon appears at the end so that
-							 * repeat sequences are terminated properly */
-							if (apcbuf[apclength - 1] != ';' &&
-								apclength < apcbuflen) {
-
-								apcbuf[apclength++] = ';';
-								apcbuf[apclength++] = '\0';
-							}
 
 							/* validate the string and compute size when
 						     * repetitions are expanded */
@@ -14758,8 +14750,20 @@ dodcs( void )
 										repeat_count = 1;
 									}
 
+									in_repetition = 1;
+
 									continue;
 								} else if (achar == ';') {
+									/* The VT420 rejects macro definitions that
+									 * contain unexpected semicolons not
+									 * associated with a repetition, while the
+									 * VT520 just throws them away */
+									if (!ISVT520(tt_type_mode) &&  in_repetition == 0) {
+										debug(F101, "DECDMAC unexpected semicolon at position", "", dcsnext);
+										expanded_length = -1;
+										break;
+									}
+									in_repetition = 0;
 									repeat_count = 1;
 									achar = (dcsnext<apclength)?apcbuf[dcsnext++]:0;
 									continue;
@@ -14798,6 +14802,15 @@ dodcs( void )
 							memset(mac, 0, expanded_length + 1);
 							dcsnext = macstart;
 							p = mac;
+
+						    /* Ensure a semicolon appears at the end so that
+							 * repeat sequences are terminated properly */
+							if (apcbuf[apclength - 1] != ';' &&
+								apclength < apcbuflen) {
+
+								apcbuf[apclength++] = ';';
+								apcbuf[apclength++] = '\0';
+							}
 
 							/* Expand the macro! */
 							repeat_count = 1;

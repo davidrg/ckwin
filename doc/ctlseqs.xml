@@ -3960,10 +3960,16 @@ DECTSR		462
                     an impact on macro storage space used. If a number of
                     repetitions is not specified, then the repetition count is 1.
                     The end of the overall macro definition terminates any
-                    macro sequences. Any non-numeric characters between the <tt>!</tt>
-                    and the <tt>;</tt> (eg, <tt>!5x;</tt>
+                    macro sequences.
                 </p>
-
+                <p>
+                    Any non-numeric characters between the <tt>!</tt>
+                    and the <tt>;</tt> (eg, <tt>!5x;</tt>) are counted as an error
+                    and the macro is discarded. When emulating a VT420 (rather
+                    than VT5xx or the K95 terminal type), extra semicolons not
+                    associated with a repetition will also cause the macro to
+                    be discarded.
+                </p>
                 <p>
                     The only characters allowed inside the Hex encoded macro
                     definition are 0-9, A-F, and the characters '!' and ';' for
