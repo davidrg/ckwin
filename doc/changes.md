@@ -10,7 +10,7 @@ log living in the [Whats New in 3.0](whats-new.md) document. When the final
 release of v3.0 eventually happens, the details about the various v3.0 
 eventually be moved elsewhere, with the full v3.0 change log taking their place.
 
-## Kermit 95 v3.0 beta 8 - Date TBD, likely late 2025
+## Kermit 95 v3.0 beta 8 - Date TBD, likely early 2026
 
 This release comes with *significant* changes to the way Kermit 95 handles
 color. While every effort has been made to ensure there are no unexpected
